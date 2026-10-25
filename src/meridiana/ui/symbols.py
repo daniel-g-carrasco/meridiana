@@ -104,7 +104,7 @@ def paint(painter: QPainter, rect: QRectF, name: str, dark: bool | None = None) 
 
 
 def sign(name: str, rect: QRectF) -> QPainterPath:
-    """The sign alone (✓, ✕, —, i, !) as a path in `rect`, for a pill already in the level's colour."""
+    """The sign alone (the check, the cross, the stop's bar, the i, the !) as a path in `rect`, for a pill already in the level's colour."""
     path = _parse(SHAPES[name][2])
     scale = rect.width() / 16
     return QTransform().translate(rect.x(), rect.y()).scale(scale, scale).map(path)
