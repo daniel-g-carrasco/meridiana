@@ -82,6 +82,29 @@ class Symbols(unittest.TestCase):
         self.assertGreater(centre.lightness(), 220)                         # the stop's bar
         self.assertGreater(top.red(), top.green() + 60)                     # on its red disc
 
+    def test_the_dialogs_buttons_and_the_messages_have_the_symbols_on_every_system(self):
+        """R154 (Daniel, 25/10/2026: «non hai applicato i simboli nuovi dappertutto»: on Linux OK and Cancel had the
+        desktop theme's arrow and cross): the window's style answers the standard icons with the symbols."""
+        from PySide6.QtGui import QImage
+        from PySide6.QtWidgets import QStyle
+
+        from meridiana.ui import symbols
+        from meridiana.ui.scrollbars import ScrollStyle
+        style = ScrollStyle()
+        self.addCleanup(style.deleteLater)
+        SP = QStyle.StandardPixmap
+
+        def pixels(icon) -> QImage:
+            return icon.pixmap(32, 32).toImage().convertToFormat(QImage.Format.Format_ARGB32)
+
+        for standard, name in ((SP.SP_DialogOkButton, "check"), (SP.SP_DialogCancelButton, "cross"),
+                               (SP.SP_MessageBoxWarning, "warning"), (SP.SP_MessageBoxCritical, "error"),
+                               (SP.SP_MessageBoxInformation, "info")):
+            with self.subTest(name):
+                self.assertEqual(pixels(style.standardIcon(standard)), pixels(symbols.icon(name)))
+        self.assertTrue(style.standardIcon(SP.SP_DialogSaveButton).isNull())      # no symbol of its own: none
+        self.assertEqual(style.styleHint(QStyle.StyleHint.SH_DialogButtonBox_ButtonsHaveIcons), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

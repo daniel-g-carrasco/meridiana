@@ -17,7 +17,7 @@ reaches a QScrollBar (one would make QStyleSheetStyle draw the bar itself, with 
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, Qt
-from PySide6.QtGui import QColor, QPainter, QPalette
+from PySide6.QtGui import QColor, QIcon, QPainter, QPalette
 from PySide6.QtWidgets import (QAbstractScrollArea, QGraphicsView, QPlainTextEdit, QProxyStyle, QStyle,
                                QStyleFactory, QTextEdit)
 
@@ -53,6 +53,36 @@ class ScrollStyle(QProxyStyle):
     def __init__(self, base=None):
         super().__init__(base if base is not None else QStyleFactory.create("Fusion"))
         self.tokens: dict = {}
+
+    # the standard icons as the window's symbols (R154, Daniel 25/10/2026: «non hai applicato i simboli nuovi
+    # dappertutto»: on Linux OK and Cancel had the desktop theme's green arrow and red cross); a button with no
+    # symbol of its own has no icon, the same on every system
+    SYMBOLS = {
+        QStyle.StandardPixmap.SP_DialogOkButton: "check", QStyle.StandardPixmap.SP_DialogApplyButton: "check",
+        QStyle.StandardPixmap.SP_DialogYesButton: "check", QStyle.StandardPixmap.SP_DialogYesToAllButton: "check",
+        QStyle.StandardPixmap.SP_DialogCancelButton: "cross", QStyle.StandardPixmap.SP_DialogNoButton: "cross",
+        QStyle.StandardPixmap.SP_DialogNoToAllButton: "cross", QStyle.StandardPixmap.SP_DialogCloseButton: "cross",
+        QStyle.StandardPixmap.SP_DialogAbortButton: "cross", QStyle.StandardPixmap.SP_DialogDiscardButton: "cross",
+        QStyle.StandardPixmap.SP_MessageBoxInformation: "info", QStyle.StandardPixmap.SP_MessageBoxQuestion: "info",
+        QStyle.StandardPixmap.SP_MessageBoxWarning: "warning", QStyle.StandardPixmap.SP_MessageBoxCritical: "error",
+    }
+    PLAIN = {QStyle.StandardPixmap.SP_DialogSaveButton, QStyle.StandardPixmap.SP_DialogOpenButton,
+             QStyle.StandardPixmap.SP_DialogResetButton, QStyle.StandardPixmap.SP_DialogHelpButton,
+             QStyle.StandardPixmap.SP_DialogRetryButton, QStyle.StandardPixmap.SP_DialogIgnoreButton,
+             QStyle.StandardPixmap.SP_DialogSaveAllButton}
+
+    def standardIcon(self, standard, option=None, widget=None):
+        if standard in self.SYMBOLS:
+            from . import symbols
+            return symbols.icon(self.SYMBOLS[standard])
+        if standard in self.PLAIN:
+            return QIcon()
+        return super().standardIcon(standard, option, widget)
+
+    def styleHint(self, hint, option=None, widget=None, returnData=None):
+        if hint == QStyle.StyleHint.SH_DialogButtonBox_ButtonsHaveIcons:
+            return 1                                    # the symbols on Windows too: one look on every system
+        return super().styleHint(hint, option, widget, returnData)
 
     def pixelMetric(self, metric, option=None, widget=None):
         if metric == QStyle.PixelMetric.PM_ScrollBarExtent:
