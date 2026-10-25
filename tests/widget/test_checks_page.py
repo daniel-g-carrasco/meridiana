@@ -72,7 +72,10 @@ class ChecksPanel(unittest.TestCase):
         self.assertEqual([h.text(1) for h in heads], ["To fix", "To check", "To know", "Passed"])
         self.assertEqual([h.data(1, SECTION_ROLE) for h in heads], [1, 2, 1, 1])
         self.assertEqual([h.isExpanded() for h in heads], [True, True, True, False])
-        self.assertEqual([h.text(0) for h in heads], ["✘", "⚠", "ℹ", "✔"])
+        from meridiana.ui.checks_page import SYMBOL_ROLE           # the window's symbols (R138), not characters
+        self.assertEqual([h.data(0, SYMBOL_ROLE) for h in heads], ["stop", "warning", "info", "check"])
+        self.assertFalse(any(h.icon(0).isNull() for h in heads))
+        self.assertEqual([r.data(0, SYMBOL_ROLE) for r in self.rows()], ["stop", "warning", "warning", "info", "check"])
         self.assertTrue(all(not (h.flags() & Qt.ItemFlag.ItemIsSelectable) for h in heads))      # never selectable
         self.assertEqual([self.items[r.data(1, USER)].text for r in self.rows()], ["b", "a", "e", "c", "d"])
 
@@ -485,7 +488,8 @@ class ChecksPanel(unittest.TestCase):
         self.assertEqual([g.text(1) for g in self.heads()], ["Layout", "Connection"])
         self.assertEqual([g.data(1, SECTION_ROLE) for g in self.heads()], [2, 1])
         self.assertTrue(all(not (g.flags() & Qt.ItemFlag.ItemIsSelectable) for g in self.heads()))
-        self.assertEqual(self.heads()[0].text(0), "✘")                 # the worst mark of the area stays
+        from meridiana.ui.checks_page import SYMBOL_ROLE
+        self.assertEqual(self.heads()[0].data(0, SYMBOL_ROLE), "stop")     # the worst mark of the area stays
 
     def test_a_headers_icon_is_drawn_once(self):
         """The by-object headers carry the kind's icon in the column before the name: the ground was drawn with it

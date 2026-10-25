@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QFrame, QHBoxLayout, QHeaderVi
 
 from .. import checks, theme_colors
 from ..i18n import _
-from . import icons
+from . import icons, symbols
 from .sections import SectionDelegate, is_section, section
 from .theme import symbol_font
 
@@ -32,6 +32,7 @@ COLOURS = {"fail": "#d03b3b", "warn": "#fab219", "ok": "#0ca30c"}
 DETAIL_ROLE = Qt.ItemDataRole.UserRole + 9      # on the row under an item: its detail, drawn wrapped
 GROUP_ROLE = Qt.ItemDataRole.UserRole + 10      # on a header: the key of its group (checks.Group.key)
 CLOSED_ROLE = Qt.ItemDataRole.UserRole + 11     # on a header: shown closed by default
+SYMBOL_ROLE = Qt.ItemDataRole.UserRole + 12     # on a header or an item: the name of its symbol (ui/symbols.py)
 PAD = 6                                         # around the detail's text (Space.S)
 DETAIL_BOTTOM = 10                              # under the detail, before the line to the next item
 ROW_HEIGHT = 34         # an item's row: «Fix…» and the eye (Size.CHIP) inside it with air (R124: «Correggi» was cut)
@@ -436,10 +437,10 @@ class ChecksPage(QWidget):
         self.preview_text.setObjectName("fix-preview-text")
         self.preview_text.setWordWrap(True)
         bar.addWidget(self.preview_text, 1)
-        self.preview_keep = QPushButton(_("Keep"))
+        self.preview_keep = QPushButton(symbols.icon("check"), _("Keep"))
         self.preview_keep.clicked.connect(lambda: self._answer(True))
         bar.addWidget(self.preview_keep)
-        self.preview_drop = QPushButton(_("Take back"))
+        self.preview_drop = QPushButton(symbols.icon("cross"), _("Take back"))
         self.preview_drop.clicked.connect(lambda: self._answer(False))
         bar.addWidget(self.preview_drop)
         self.preview.hide()
@@ -556,12 +557,10 @@ class ChecksPage(QWidget):
             head.setData(0, CLOSED_ROLE, g.closed)
             if g.kind:                                  # by object: the icon of the kind, as in the tree
                 head.setIcon(0, icons.icon(g.kind))
-            else:                                       # the worst mark inside
-                head.setText(0, MARKS[g.level])
-                head.setFont(0, font)
+            else:                                       # the worst mark inside, the window's symbol (R138)
+                head.setIcon(0, symbols.icon(symbols.LEVEL[g.level]))
+                head.setData(0, SYMBOL_ROLE, symbols.LEVEL[g.level])
                 head.setToolTip(0, level_names()[g.level])
-                if g.level in COLOURS:
-                    head.setForeground(0, QBrush(QColor(COLOURS[g.level])))
             if self.view in ("object", "area"):         # the counts by level, beside the name
                 n = checks.counts([source[i] for i in g.items])
                 head.setText(2, "  ".join(f"{MARKS[lv]} {n[lv]}" for lv in checks.LEVELS if n[lv]))
@@ -570,11 +569,10 @@ class ChecksPage(QWidget):
             self.groups[g.key] = head
             for n in g.items:
                 it = source[n]
-                row = QTreeWidgetItem(head, [MARKS[it.level], it.text, it.source, ""])
-                row.setFont(0, font)
+                row = QTreeWidgetItem(head, ["", it.text, it.source, ""])
+                row.setIcon(0, symbols.icon(symbols.LEVEL[it.level]))       # the window's symbol (R138)
+                row.setData(0, SYMBOL_ROLE, symbols.LEVEL[it.level])
                 row.setForeground(2, muted)                 # the source, quiet (F2)
-                if it.level in COLOURS:
-                    row.setForeground(0, QBrush(QColor(COLOURS[it.level])))
                 row.setToolTip(0, level_names()[it.level])
                 row.setToolTip(1, it.text)
                 row.setToolTip(2, it.source)

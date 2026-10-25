@@ -1,6 +1,7 @@
 """The marks of the checks on the views (study 12, C1; study 13, rule 3.1): each level has a shape and a sign as well
-as a colour, so that it reads without the colour (WCAG 1.4.1): what to fix a red disc with a cross, what to check a
-yellow triangle with «!», what to know a dark disc with «i»; a number beside it when the object has more than one.
+as a colour, so that it reads without the colour (WCAG 1.4.1). Since R138 (25/10/2026) they are the window's symbols
+(ui/symbols.py, from Spola): what to fix the stop, what to check the warning, what to know the info, what passed
+the check; a number beside it when the object has more than one.
 The same drawing on the plan (an item that keeps its size at every zoom), over the 3D view and in the tree. Drawn by
 the painter, never an image enlarged: sharp at the screen's density (Daniel, R30: «piccolissimi e renderizzati male»).
 In the tree it is as tall as the text of the row, with its number beside it in the row's font."""
@@ -8,40 +9,27 @@ In the tree it is as tall as the text of the row, with its number beside it in t
 from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
-from PySide6.QtGui import QColor, QFont, QIcon, QIconEngine, QPainter, QPainterPath, QPen, QPixmap, QPolygonF
+from PySide6.QtGui import QColor, QFont, QIcon, QIconEngine, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import QGraphicsItem, QStyledItemDelegate, QWidget
 
 from .. import theme_colors
-from .theme import symbol_font
 
 FILL = {"fail": theme_colors.STATUS["critical"], "warn": theme_colors.STATUS["warning"], "info": "#2e4a6b",
         "ok": theme_colors.STATUS["good"]}
-INK = {"fail": "#ffffff", "warn": "#1e1c19", "info": "#ffffff", "ok": "#ffffff"}
-SIGN = {"fail": "✕", "warn": "!", "info": "i", "ok": "✓"}
 SIZE = 18.0
 
 
-def paint(p: QPainter, centre: QPointF, level: str, count: int = 1, size: float = SIZE) -> None:
-    """A mark of `level` centred at `centre`, `size` pixels across, with its number when `count` > 1."""
+def paint(p: QPainter, centre: QPointF, level: str, count: int = 1, size: float = SIZE, views: bool = False) -> None:
+    """A mark of `level` centred at `centre`, `size` pixels across, with its number when `count` > 1; on the `views`
+    (the plan, the 3D view) in the light theme's colours, which keep theirs in both themes (R16)."""
+    from . import symbols
     p.save()
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
     r = size / 2
-    p.setPen(QPen(QColor("#1e1c19") if level != "warn" else QColor("#6b4a00"), 1.0))
-    p.setBrush(QColor(FILL.get(level, FILL["info"])))
-    if level == "warn":
-        tri = QPolygonF([QPointF(centre.x(), centre.y() - r), QPointF(centre.x() + r, centre.y() + r * 0.85),
-                         QPointF(centre.x() - r, centre.y() + r * 0.85)])
-        p.drawPolygon(tri)
-    else:
-        p.drawEllipse(centre, r, r)
+    symbols.paint(p, QRectF(centre.x() - r, centre.y() - r, size, size), symbols.LEVEL.get(level, "info"),
+                  dark=False if views else None)
     font = QFont()
     font.setBold(True)
-    font.setPixelSize(int(size * 0.62))
-    p.setFont(font)
-    p.setPen(QColor(INK.get(level, "#ffffff")))
-    box = QRectF(centre.x() - r, centre.y() - r + (r * 0.18 if level == "warn" else 0), size, size)
-    p.setFont(symbol_font(font))
-    p.drawText(box, Qt.AlignmentFlag.AlignCenter, SIGN.get(level, "i"))
     if count > 1:
         badge = QRectF(centre.x() + r * 0.45, centre.y() - r * 1.25, size * 0.72, size * 0.62)
         p.setPen(Qt.PenStyle.NoPen)
@@ -128,11 +116,13 @@ class MarkDelegate(QStyledItemDelegate):
             r.adjust(0, AIR, 0, 0)
         from .design import Text, text_font
         font = text_font(Text.LABEL, option.font)          # the count: the catalogue's label (R121)
-        sign, text = SIGN.get(level, "i"), str(count)
+        text = str(count)
         from PySide6.QtGui import QFontMetricsF
-        metrics = QFontMetricsF(symbol_font(font))
-        width = metrics.horizontalAdvance(sign) + 4 + QFontMetricsF(font).horizontalAdvance(text)
+
+        from . import symbols
         height = round(option.fontMetrics.height() * 0.85)
+        mark = height * 0.8                                     # the sign alone, the symbols' (R138)
+        width = mark + 3 + QFontMetricsF(font).horizontalAdvance(text)
         pill = QRectF(r.right() - self.EDGE - width - 2 * self.INSET - 2, r.center().y() - height / 2,
                       width + 2 * self.INSET + 2, height)
         dark = option.palette.color(option.palette.ColorRole.Window).lightnessF() < 0.5
@@ -142,13 +132,12 @@ class MarkDelegate(QStyledItemDelegate):
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(ground)
         painter.drawRoundedRect(pill, pill.height() / 2, pill.height() / 2)
-        painter.setPen(ink)
         x = pill.x() + self.INSET + 1
-        painter.setFont(symbol_font(font))
-        painter.drawText(QRectF(x, pill.y(), metrics.horizontalAdvance(sign) + 1, pill.height()),
-                         Qt.AlignmentFlag.AlignCenter, sign)
+        painter.fillPath(symbols.sign(symbols.LEVEL.get(level, "info"),
+                                      QRectF(x - mark * 0.06, pill.center().y() - mark / 2, mark, mark)), ink)
+        painter.setPen(ink)
         painter.setFont(font)
-        painter.drawText(QRectF(x + metrics.horizontalAdvance(sign) + 4, pill.y(), pill.right() - x, pill.height()),
+        painter.drawText(QRectF(x + mark + 3, pill.y(), pill.right() - x, pill.height()),
                          Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, text)
         painter.restore()
 
@@ -194,7 +183,7 @@ class MarkItem(QGraphicsItem):
         return path
 
     def paint(self, painter, _option, _widget=None) -> None:
-        paint(painter, QPointF(0, 0), self.level, self.count)
+        paint(painter, QPointF(0, 0), self.level, self.count, views=True)
 
 
 class MarksOverlay(QWidget):
@@ -225,4 +214,4 @@ class MarksOverlay(QWidget):
     def paintEvent(self, _event) -> None:
         p = QPainter(self)
         for x, y, level, count, _target in self.where():
-            paint(p, QPointF(x, y - SIZE * 0.7), level, count)
+            paint(p, QPointF(x, y - SIZE * 0.7), level, count, views=True)
