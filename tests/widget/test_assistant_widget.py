@@ -138,7 +138,8 @@ class Alone(unittest.TestCase):
         a.reposition()
         a.set_tab("production")                             # another place (the Plant shares the Model's)
         self.assertEqual(a.animation.state(), QAbstractAnimation.State.Running)
-        self.assertEqual(a.animation.duration(), 320)
+        from meridiana.ui.design import Motion
+        self.assertEqual(a.animation.duration(), Motion.QUICK)       # 130 ms (review point 15)
         a.reduced_motion = True
         a.set_tab("economics")
         self.assertEqual(a.animation.state(), QAbstractAnimation.State.Stopped)

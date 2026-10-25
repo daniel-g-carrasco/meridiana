@@ -22,7 +22,7 @@ class InTheWindow(unittest.TestCase):
 
     def setUp(self):
         _setup.window(self, cfg=config.Config(background="none", theme="light"))
-        self.win.assistant.reduced_motion = True            # the place at once, not after 320 ms
+        self.win.assistant.reduced_motion = True            # the place at once, not after 130 ms
         self.app.processEvents()
 
     def again(self):

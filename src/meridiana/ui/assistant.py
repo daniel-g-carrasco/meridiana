@@ -1,6 +1,6 @@
 """Meridio in the window (study 14, 7.3 and 8; study 17, theme G; design 3.9): one widget for the window, a child
 of the central area, the character alone in a circle of 46 px that floats over the views, moves to its place when
-the tab changes (sliding in 320 ms, at once when the desktop asks for less motion), can be dragged and keeps the
+the tab changes (sliding in 130 ms, at once when the desktop asks for less motion), can be dragged and keeps the
 place of each tab. A click or Ctrl+L opens his speech bubble beside him (R33: never over him, the tail towards
 him, from his free side towards the middle of the view; no room there, he slides to a free corner first), with
 the conversation, the three questions ready numbered 1, 2, 3, the field; Esc closes it. The bubble grows from
@@ -43,10 +43,10 @@ from .design import Icon, Motion, Space, Text, Type, set_text, text_font
 
 MIN_OPEN_HEIGHT = 220
 QUESTIONS_HEIGHT = 260          # below this the questions ready are hidden: the field and the conversation stay
-SLIDE_MS = 320
+SLIDE_MS = Motion.QUICK         # 320 until 25/10/2026: «130 ms» (Daniel)
 # the bubble at its size from the start, fading in as it slides a few pixels from his side, and out the same way:
 # growing from the tail laid its content out again at every frame, in jerks (Daniel, 24/10/2026)
-OPEN_MS, CLOSE_MS = Motion.NORMAL, Motion.FAST + 20     # the bubble comes, it goes (ui/design.py)
+OPEN_MS, CLOSE_MS = Motion.NORMAL, Motion.QUICK         # the bubble comes, it goes (ui/design.py)
 SLIDE_IN = 10                   # pixels the bubble comes from, towards the character
 FRAME_MS = 50                   # twenty frames a second
 ANSWER_WAIT_MS = 600            # without a conversation behind him (a widget alone): the turn lasts this long

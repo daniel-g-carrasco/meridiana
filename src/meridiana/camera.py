@@ -1,7 +1,7 @@
 """The camera of the 3D view, without Qt (study 15, 2.6 B; study 12a, 2.4-2.5): the orbit as a turntable (the
 vertical stays vertical, the default for buildings) or an arcball, around the point under the cursor with the
 ground plane as the fallback; the zoom towards the cursor; the pan that keeps the point under the cursor; a short
-middle click that recentres; the standard views; and the animation from one camera to another (250 ms with an
+middle click that recentres; the standard views; and the animation from one camera to another (240 ms with an
 ease-out, none when the system asks for less motion).
 
 Coordinates are Qt Quick 3D's (mesh.to_qt): x East, y up, z South. The camera looks along its own -z with its
@@ -15,7 +15,7 @@ from dataclasses import dataclass, field, replace
 
 import numpy as np
 
-ANIMATION_MS = 250
+ANIMATION_MS = 240              # Motion.SLOW of ui/design.py (the core does not import the window's modules)
 DEGREES_PER_PIXEL = 0.35
 ZOOM_STEP = 0.8                 # each wheel step brings the camera this much closer to the point (FreeCAD: 0.2)
 MIN_DISTANCE = 0.5

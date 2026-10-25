@@ -147,8 +147,10 @@ Il pulsante «File» è un `PUSH` del velo; diventa pieno di accento solo quando
 
 ### Movimento (`Motion`)
 
-**110 ms** (`FAST`), **180 ms** (`NORMAL`) e **240 ms** (`SLOW`), con curva in uscita (OutCubic). Con «meno
-movimento», chiesto dal sistema o dalle preferenze, sono zero.
+**110 ms** (`FAST`), **130 ms** (`QUICK`), **180 ms** (`NORMAL`) e **240 ms** (`SLOW`), con curva in uscita
+(OutCubic). Con «meno movimento», chiesto dal sistema o dalle preferenze, sono zero. `QUICK` è di Meridio: il suo
+scivolare al posto nuovo (era 320 ms) e la chiusura del fumetto (Daniel, 25/10/2026: «130 ms»). La camera della
+vista 3D va da una vista all'altra in `SLOW`.
 
 Regole del movimento (R83, misurate il 24/10/2026):
 - si muove solo una zona piccola: mai l'intera pagina (un fotogramma della pagina costava 23-45 ms, uno
@@ -233,7 +235,7 @@ Regole:
   110 ms; gli effetti di Qt, che a 200 % scattano, sono spenti. Su Windows 11 il sistema li arrotonda e disegna la
   loro ombra e il bordo nel colore `line`.
 - **Cambio di fase** (`ui/phasebar.Phases._changed`, come la barra multifunzione di Office): la pagina e gli
-  strumenti della barra cambiano subito; scorre soltanto la linguetta scelta, fino alla nuova fase (240 ms). Gli
+  strumenti della barra cambiano subito; scorre soltanto la linguetta scelta, fino alla nuova fase (110 ms, R97). Gli
   strumenti che entravano scorrendo sfarfallavano (Daniel, 24/10/2026): niente movimento dentro una barra piena di
   controlli.
 - **Cambio di argomento** (`ui/motion.crossfade`): l'argomento delle Proprietà sfuma nel successivo in 180 ms; lo
