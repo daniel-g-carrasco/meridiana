@@ -92,7 +92,11 @@ class ChecksPanel(unittest.TestCase):
         self.assertEqual([h.text(1) for h in heads], ["Sud", "Site: Prova", "Capannone"])  # the worst object first
         self.assertEqual([h.data(1, SECTION_ROLE) for h in heads], [2, 2, 1])
         self.assertFalse(heads[0].icon(0).isNull())                      # the icon of the kind, as in the tree
-        self.assertEqual(heads[0].text(2), "✘ 1  ⚠ 1")                  # the counts by level beside the name
+        # the counts by level beside the name, with the window's symbols (they were «✘ 1  ⚠ 1»), named in the tooltip
+        from meridiana.ui.checks_page import COUNTS_ROLE
+        self.assertEqual(heads[0].data(2, COUNTS_ROLE), [("stop", 1), ("warning", 1)])
+        self.assertEqual(heads[0].text(2), "")
+        self.assertEqual(len(heads[0].toolTip(2).splitlines()), 2)
         self.assertEqual(page.selected().text, "e")                      # still in hand
         page.set_view("area")
         self.assertEqual([h.text(1) for h in self.heads()], ["Layout", "Strings (CEI 64-8/7)", "Connection"])

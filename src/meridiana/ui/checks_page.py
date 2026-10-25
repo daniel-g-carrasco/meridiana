@@ -25,9 +25,7 @@ from . import icons, symbols
 from .cards import default_tokens
 from .design import Radius, Space
 from .sections import SectionDelegate, is_section, section
-from .theme import symbol_font
 
-MARKS = {"fail": "✘", "warn": "⚠", "info": "ℹ", "ok": "✔"}
 # the status colours of the charts' palette (critical, warning, good), on the mark only: the mark and the words
 # carry the meaning, the colour helps; what is only worth knowing keeps the colour of the text
 COLOURS = {"fail": theme_colors.STATUS["critical"], "warn": theme_colors.STATUS["warning"],
@@ -36,6 +34,9 @@ DETAIL_ROLE = Qt.ItemDataRole.UserRole + 9      # on the row under an item: its 
 GROUP_ROLE = Qt.ItemDataRole.UserRole + 10      # on a header: the key of its group (checks.Group.key)
 CLOSED_ROLE = Qt.ItemDataRole.UserRole + 11     # on a header: shown closed by default
 SYMBOL_ROLE = Qt.ItemDataRole.UserRole + 12     # on a header or an item: the name of its symbol (ui/symbols.py)
+COUNTS_ROLE = Qt.ItemDataRole.UserRole + 13     # on a header by object or by area: [(symbol, count), ...]
+COUNT_SYMBOL = 14                               # a count's symbol, the size of a symbol in a line of text
+COUNT_GAP = (3, 10)                             # from a count's symbol to its number, from a number to the next
 RESIZE_SETTLE_MS = 90
 PAD = Space.S                                   # around the detail's text
 DETAIL_BOTTOM = 10                              # under the detail, before the line to the next item
@@ -89,6 +90,10 @@ class ChecksDelegate(SectionDelegate):
         return scaled(Type.SMALL, Type.REGULAR, font)
 
     def paint(self, painter, option, index) -> None:
+        counts = index.data(COUNTS_ROLE)
+        if counts:
+            self._paint_counts(painter, option, counts)
+            return
         if index.data(DETAIL_ROLE) is None:
             # the selection and the hover are the card's pill (ChecksTree._card_slice): the cells draw as at rest,
             # so the mark keeps its colour
@@ -105,6 +110,26 @@ class ChecksDelegate(SectionDelegate):
         painter.drawText(self._detail_rect(index, option).adjusted(0, 0, 0, -DETAIL_BOTTOM),
                          Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop | Qt.TextFlag.TextWordWrap,
                          index.data(Qt.ItemDataRole.DisplayRole) or "")
+        painter.restore()
+
+    def _paint_counts(self, painter, option, counts) -> None:
+        """The counts by level of a header: each its symbol and its number, muted, on the header's line (below
+        the air above it); the levels' names are in the tooltip (R138: they were the characters ✘ ⚠ ℹ ✔)."""
+        r = option.rect
+        middle = (r.top() + self.air + r.bottom() + 1) / 2
+        x = float(r.left() + PAD)
+        painter.save()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setFont(option.font)
+        painter.setPen(option.palette.color(QPalette.ColorGroup.Active, QPalette.ColorRole.PlaceholderText))
+        metrics = QFontMetrics(option.font)
+        for name, n in counts:
+            symbols.paint(painter, QRectF(x, middle - COUNT_SYMBOL / 2, COUNT_SYMBOL, COUNT_SYMBOL), name)
+            x += COUNT_SYMBOL + COUNT_GAP[0]
+            text = str(n)
+            painter.drawText(QRectF(x, r.top() + self.air, metrics.horizontalAdvance(text) + 2, r.height() - self.air),
+                             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, text)
+            x += metrics.horizontalAdvance(text) + COUNT_GAP[1]
         painter.restore()
 
     def sizeHint(self, option, index) -> QSize:
@@ -174,6 +199,11 @@ class ChecksTree(QTreeWidget):
             it = stack.pop()
             if it.text(2):
                 want = max(want, QFontMetrics(it.font(2)).horizontalAdvance(it.text(2)))
+            counts = it.data(2, COUNTS_ROLE)
+            if counts:
+                metrics = QFontMetrics(self.font())
+                want = max(want, sum(COUNT_SYMBOL + COUNT_GAP[0] + metrics.horizontalAdvance(str(n)) + COUNT_GAP[1]
+                                     for _name, n in counts))
             stack.extend(it.child(i) for i in range(it.childCount()) if not it.child(i).data(0, DETAIL_ROLE))
         want += 2 * PAD + 8 if want else 0              # the item's padding and the style's margin
         width = min(want, int(self.viewport().width() * self.SOURCE_SHARE))
@@ -578,7 +608,6 @@ class ChecksPage(QWidget):
         self.tree.clear()
         self.rows, self.groups = {}, {}
         source = self.all if self.view == "delivery" else self.items
-        font = symbol_font(self.tree.font())
         muted = QBrush(self.palette().color(QPalette.ColorGroup.Active, QPalette.ColorRole.PlaceholderText))
         for g in checks.grouped(source, self.view, self.names):
             # a section's header (study 17, T2 and F2), drawn by SectionDelegate with its count
@@ -591,11 +620,11 @@ class ChecksPage(QWidget):
                 head.setIcon(0, symbols.icon(symbols.LEVEL[g.level]))
                 head.setData(0, SYMBOL_ROLE, symbols.LEVEL[g.level])
                 head.setToolTip(0, level_names()[g.level])
-            if self.view in ("object", "area"):         # the counts by level, beside the name
+            if self.view in ("object", "area"):         # the counts by level, beside the name, with the symbols
                 n = checks.counts([source[i] for i in g.items])
-                head.setText(2, "  ".join(f"{MARKS[lv]} {n[lv]}" for lv in checks.LEVELS if n[lv]))
-                head.setFont(2, font)
-                head.setForeground(2, muted)
+                levels = [lv for lv in checks.LEVELS if n[lv]]
+                head.setData(2, COUNTS_ROLE, [(symbols.LEVEL[lv], n[lv]) for lv in levels])
+                head.setToolTip(2, "\n".join(f"{level_names()[lv]}: {n[lv]}" for lv in levels))
             self.groups[g.key] = head
             for n in g.items:
                 it = source[n]
