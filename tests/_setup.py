@@ -8,7 +8,13 @@ environment variable). The projects and the data they share are in _fixtures.py.
 
 import os
 import sys
+import tempfile
 from pathlib import Path
+
+_TEST_HOME = tempfile.TemporaryDirectory(prefix="meridiana-tests-")
+os.environ["HOME"] = _TEST_HOME.name
+os.environ["USERPROFILE"] = _TEST_HOME.name
+os.environ.pop("MERIDIANA_KOKORO_DIR", None)
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
