@@ -56,6 +56,8 @@ class Pictures(unittest.TestCase):
         run = subprocess.run([sys.executable, "-c", SCRIPT, str(out)], env=env, capture_output=True, text=True,
                              timeout=240)
         self.assertEqual(run.returncode, 0, run.stderr[-2000:])
+        if "No GLSL shader code found" in run.stderr and "Failed to build graphics pipeline state" in run.stderr:
+            self.skipTest("Qt Quick cannot build the report's graphics pipeline here")
         words = run.stdout.split()
         if words[:1] == ["unavailable"]:
             self.skipTest("Qt Quick has no RHI here: the report leaves its 3D pictures out")
