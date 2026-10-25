@@ -325,19 +325,40 @@ class InTheWindow(unittest.TestCase):
             widths.add(props.viewport().width() - props.width())
         self.assertEqual(len(widths), 1, widths)                            # the bar's room the same at every width
 
+    def stray_accents(self, allowed) -> list:
+        from PySide6.QtGui import QColor
+
+        win = self.win
+        accent = QColor(win.theme.tokens["accent"])
+        image = win.grab().toImage()
+        ratio = image.devicePixelRatio()
+
+        def is_accent(x, y):
+            c = image.pixelColor(x, y)
+            return abs(c.red() - accent.red()) + abs(c.green() - accent.green()) + abs(c.blue() - accent.blue()) < 24
+
+        stray = []
+        for y in range(0, win.height(), 3):
+            for x in range(0, win.width(), 3):
+                px, py = int((x + 0.5) * ratio), int((y + 0.5) * ratio)
+                neighbours = ((px - 1, py), (px + 1, py), (px, py - 1), (px, py + 1))
+                if is_accent(px, py) and any(0 <= nx < image.width() and 0 <= ny < image.height()
+                                             and is_accent(nx, ny) for nx, ny in neighbours):
+                    if not any(r.contains(x, y) for r in allowed):
+                        stray.append((x, y, win.childAt(x, y).__class__.__name__ if win.childAt(x, y) else ""))
+        return stray
+
     def test_the_accent_shows_only_on_the_phase_in_hand_and_the_one_action(self):
         """R104: on the window at rest the accent is the disc of the phase in hand and the primary button; the
         drawings (plan and 3D) keep their colours. No chosen tool, tab or pill in the accent."""
         from PySide6.QtCore import QPoint, QRect
-        from PySide6.QtGui import QColor
-        from PySide6.QtWidgets import QAbstractButton
+        from PySide6.QtWidgets import QAbstractButton, QAbstractSpinBox, QApplication, QComboBox, QLineEdit
 
         win = self.win
         win.show_phase("model")
         self.app.processEvents()
         win.setFocus()
         self.app.processEvents()
-        accent = QColor(win.theme.tokens["accent"])
         allowed = [QRect(win.plan.mapTo(win, QPoint(0, 0)), win.plan.size()),
                    QRect(win.view3d_box.mapTo(win, QPoint(0, 0)), win.view3d_box.size())]
         bar = win.tabs.tabBar()
@@ -346,16 +367,23 @@ class InTheWindow(unittest.TestCase):
         for b in win.findChildren(QAbstractButton):
             if b.isVisible() and (b.property("primary") or b.hasFocus()):
                 allowed.append(QRect(b.mapTo(win, QPoint(0, 0)), b.size()).adjusted(-2, -2, 2, 2))
-        image = win.grab().toImage()
-        ratio = image.devicePixelRatio()
-        stray = []
-        for y in range(0, win.height(), 3):
-            for x in range(0, win.width(), 3):
-                c = image.pixelColor(int((x + 0.5) * ratio), int((y + 0.5) * ratio))
-                if abs(c.red() - accent.red()) + abs(c.green() - accent.green()) + abs(c.blue() - accent.blue()) < 24:
-                    if not any(r.contains(x, y) for r in allowed):
-                        stray.append((x, y, win.childAt(x, y).__class__.__name__ if win.childAt(x, y) else ""))
+        focus = QApplication.focusWidget()
+        if isinstance(focus, (QLineEdit, QAbstractSpinBox, QComboBox)):
+            allowed.append(QRect(focus.mapTo(win, QPoint(0, 0)), focus.size()).adjusted(-2, -2, 2, 2))
+        stray = self.stray_accents(allowed)
         self.assertEqual(stray[:10], [], f"{len(stray)} points in the accent outside its places")
+
+    def test_an_accent_label_is_still_found(self):
+        from PySide6.QtWidgets import QLabel
+
+        label = QLabel("Wrong accent", self.win)
+        label.setStyleSheet(f"color: {self.win.theme.tokens['accent']};")
+        label.setGeometry(600, 400, 200, 30)
+        label.show()
+        label.raise_()
+        self.app.processEvents()
+        stray = self.stray_accents([])
+        self.assertTrue(any(label.geometry().contains(x, y) for x, y, _w in stray))
 
     def test_no_dashed_line_between_the_cards(self):
         """Daniel, 25/10/2026: «togli le linee tratteggiate che compaiono quando si vuole ridimensionare delle schede.
