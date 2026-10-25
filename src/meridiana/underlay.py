@@ -16,6 +16,8 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, replace
 
+from .i18n import _
+
 MAX_SIDE = 4096                 # pixels: a larger image is made smaller on import (the project carries it)
 MIN_DISTANCE = 1e-6             # metres: two points closer than this give no scale
 
@@ -62,7 +64,7 @@ class Underlay:
         they truly are (metres). The image grows or shrinks about `a`, which stays where it is."""
         now = math.dist(a, b)
         if now < MIN_DISTANCE or not distance > 0:
-            raise ValueError("two distinct points and a distance above zero are needed")
+            raise ValueError(_("two distinct points and a distance above zero are needed"))
         k = distance / now
         return replace(self, scale=self.scale * k, x=a[0] + (self.x - a[0]) * k, y=a[1] + (self.y - a[1]) * k)
 

@@ -153,6 +153,21 @@ class ProjectFiles(unittest.TestCase):
         self.assertEqual(p.name, "Capannone Rho")
         self.assertIn("UnicodeDecodeError", notice)
 
+    def test_project_file_errors_speak_italian(self):
+        from meridiana import i18n
+        before = i18n._translation
+        self.addCleanup(lambda: setattr(i18n, "_translation", before))
+        i18n.setup("it")
+        self.file.write_text("{}", encoding="utf-8")
+        with self.assertRaises(ValueError) as caught:
+            model.Project.load(self.file)
+        self.assertEqual(str(caught.exception), "non è un progetto di Meridiana")
+        self.put("progetto-futuro.meridiana")
+        with self.assertRaises(ValueError) as caught:
+            model.Project.load(self.file)
+        self.assertEqual(str(caught.exception), "creato da una versione più recente di Meridiana (formato 99); "
+                         "aggiorna il programma per aprirlo")
+
     def test_a_project_of_a_newer_version_is_refused_with_the_reason_and_the_file_stays(self):
         self.put("progetto-futuro.meridiana")
         before = self.file.read_bytes()

@@ -92,6 +92,18 @@ class PVGIS53(unittest.TestCase):
         self.assertAlmostEqual(float(h.at(26.25)), (1.1 + 1.9) / 2)    # between 22,5 and 30 degrees, interpolated
         self.assertGreater(h.diffuse_factor(15.0, 180.0), 0.99)        # a horizon this low hides little sky
 
+    def test_a_damaged_horizon_profile_speaks_italian(self):
+        from meridiana import i18n
+        path = meteo._cache_file(self.cache, "horizon", 45.5226, 9.03)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"fetched": "2026-10-25", "azimuth": [0.0], "elevation": [1.0]}), encoding="utf-8")
+        before = i18n._translation
+        self.addCleanup(lambda: setattr(i18n, "_translation", before))
+        i18n.setup("it")
+        with self.assertRaises(meteo.MeteoError) as caught:
+            meteo.horizon(45.5226, 9.03, self.cache)
+        self.assertEqual(str(caught.exception), "profilo dell'orizzonte danneggiato")
+
     def test_a_point_at_sea_is_said_with_pvgis_s_own_words(self):
         with self.network(answer(recorded("pvgis53-tmy-mare-400.json"), 400)), \
                 mock.patch.object(meteo, "_get_json", side_effect=requests.ConnectionError("no network")):

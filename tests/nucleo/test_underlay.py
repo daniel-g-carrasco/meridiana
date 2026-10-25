@@ -73,6 +73,15 @@ class InScale(unittest.TestCase):
         self.assertAlmostEqual(v.scale, 12.0 / 500)
         self.assertEqual(v.rotation, -20.0)
 
+    def test_the_scale_error_speaks_italian(self):
+        from meridiana import i18n
+        before = i18n._translation
+        self.addCleanup(lambda: setattr(i18n, "_translation", before))
+        i18n.setup("it")
+        with self.assertRaises(ValueError) as caught:
+            sheet().scaled((1.0, 1.0), (1.0, 1.0), 5.0)
+        self.assertEqual(str(caught.exception), "servono due punti distinti e una distanza maggiore di zero")
+
     def test_the_same_point_twice_or_no_distance_is_refused(self):
         u = sheet()
         with self.assertRaises(ValueError):

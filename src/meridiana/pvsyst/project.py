@@ -13,6 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ..i18n import _
 from . import pvobject, records
 from .pvobject import Node, number, numbers
 
@@ -204,7 +205,7 @@ def read_project(path: Path) -> ProjectFile:
     doc = pvobject.read(path)
     top = doc.top
     if top is None or top.type != "pvProject":
-        raise pvobject.FormatError(f"{Path(path).name}: not a PVsyst project")
+        raise pvobject.FormatError(_("{file}: not a PVsyst project").format(file=Path(path).name))
     out = ProjectFile(Path(path), name=top.get("Comment") or Path(path).stem, version=top.get("Version") or "")
     out.site = _site(top.find(type="pvSite"))
     out.albedo = numbers(top.get("Albedo"))[:12]
@@ -219,7 +220,7 @@ def read_variant(path: Path) -> Variant:
     doc = pvobject.read(path)
     top = doc.top
     if top is None or top.type != "pvVCalcul":
-        raise pvobject.FormatError(f"{Path(path).name}: not a PVsyst variant")
+        raise pvobject.FormatError(_("{file}: not a PVsyst variant").format(file=Path(path).name))
     v = Variant(Path(path), comment=top.get("Comment") or "", version=top.get("Version") or "",
                 system_kind=top.get("SystemKind") or "", transposition=top.get("TranspositionAlgorithm") or "")
     v.site = _site(top.find(type="pvSite", name="SiteSimul") or top.find(type="pvSite"))
@@ -358,7 +359,7 @@ def read_met(path: Path) -> dict:
     doc = pvobject.read(path)
     top = doc.top
     if top is None or top.type != "pvMeteo":
-        raise pvobject.FormatError(f"{Path(path).name}: not a PVsyst weather file")
+        raise pvobject.FormatError(_("{file}: not a PVsyst weather file").format(file=Path(path).name))
     v = records.variables(top)
     out = {"site": _site(top.find(type="pvSite")), "source": top.get("SourceM") or "",
            "source_type": (top.find(type="pvSite") or top).get("SourceType") or ""}

@@ -228,7 +228,7 @@ def horizon(lat: float, lon: float, cache_dir: Path, refresh: bool = False, time
     except (KeyError, TypeError, ValueError) as error:
         raise MeteoError(f"damaged horizon cache: {error}") from error
     if len(az) < 2 or len(az) != len(el) or not all(math.isfinite(v) for v in el):
-        raise MeteoError("damaged horizon profile")
+        raise MeteoError(_("damaged horizon profile"))
     if raw.get("version") == "6":
         return Horizon(az, el, Source("data", _("PVGIS 6 (beta), horizon from the terrain model, fetched {date}").format(
             date=raw["fetched"]), PVGIS6_URL + "topography/horizon-profile"))

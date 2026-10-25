@@ -42,6 +42,31 @@ class Format(unittest.TestCase):
             pvobject.read(path)
         self.assertIn("6.39", str(caught.exception))
 
+    def test_reading_errors_speak_italian(self):
+        from meridiana import i18n
+        before = i18n._translation
+        self.addCleanup(lambda: setattr(i18n, "_translation", before))
+        i18n.setup("it")
+        folder = Path(tempfile.mkdtemp())
+        binary = folder / "old.PAN"
+        binary.write_bytes(b"\x1a\x00\x05PVsyst binary")
+        with self.assertRaises(pvobject.FormatError) as caught:
+            pvobject.read(binary)
+        self.assertEqual(str(caught.exception), "old.PAN: non è un file di testo PVsyst "
+                         "(PVsyst scriveva file binari fino a 6.39)")
+        wrong = folder / "wrong.PRJ"
+        wrong.write_text("PVObject_=pvSite\nEnd of PVObject pvSite\n", encoding="utf-8")
+        for read, expected in ((pvproject.read_project, "non è un progetto PVsyst"),
+                               (pvproject.read_variant, "non è una variante PVsyst"),
+                               (pvproject.read_met, "non è un file meteo PVsyst")):
+            with self.subTest(reader=read.__name__), self.assertRaises(pvobject.FormatError) as caught:
+                read(wrong)
+            self.assertEqual(str(caught.exception), f"wrong.PRJ: {expected}")
+        var = pvobject.Node("var", "", attrs=[("Day_0101", "+0+1")])
+        with self.assertRaises(ValueError) as caught:
+            records.series(var)
+        self.assertEqual(str(caught.exception), "Day_0101: 2 valori invece di 24")
+
     def test_the_hourly_records_in_base_62(self):
         self.assertEqual(records.day("+0+w+RE-1C"), [0, 58, 1688, -74])
         var = pvobject.read(DATA / "Prova Rho_Project.VC0").root.find(type="E_Grid")

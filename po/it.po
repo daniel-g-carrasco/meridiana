@@ -12139,3 +12139,45 @@ msgstr "l'area racchiusa è inferiore a 1 m²"
 #: src/meridiana/layout.py:409
 msgid "no room left inside the margins"
 msgstr "non resta spazio dentro i margini"
+
+#: src/meridiana/model.py:1113
+msgid "not a Meridiana project"
+msgstr "non è un progetto di Meridiana"
+
+#: src/meridiana/model.py:1118
+#, python-brace-format
+msgid "made by a newer Meridiana (format {version}); update the program to open it"
+msgstr "creato da una versione più recente di Meridiana (formato {version}); aggiorna il programma per aprirlo"
+
+#: src/meridiana/pvsyst/project.py:207
+#, python-brace-format
+msgid "{file}: not a PVsyst project"
+msgstr "{file}: non è un progetto PVsyst"
+
+#: src/meridiana/pvsyst/project.py:222
+#, python-brace-format
+msgid "{file}: not a PVsyst variant"
+msgstr "{file}: non è una variante PVsyst"
+
+#: src/meridiana/pvsyst/project.py:361
+#, python-brace-format
+msgid "{file}: not a PVsyst weather file"
+msgstr "{file}: non è un file meteo PVsyst"
+
+#: src/meridiana/pvsyst/pvobject.py:97
+#, python-brace-format
+msgid "{file}: not a PVsyst text file (PVsyst wrote binary files up to 6.39)"
+msgstr "{file}: non è un file di testo PVsyst (PVsyst scriveva file binari fino a 6.39)"
+
+#: src/meridiana/pvsyst/records.py:49
+#, python-brace-format
+msgid "{key}: {count} values instead of {expected}"
+msgstr "{key}: {count} valori invece di {expected}"
+
+#: src/meridiana/underlay.py:65
+msgid "two distinct points and a distance above zero are needed"
+msgstr "servono due punti distinti e una distanza maggiore di zero"
+
+#: src/meridiana/energy/meteo.py:231
+msgid "damaged horizon profile"
+msgstr "profilo dell'orizzonte danneggiato"

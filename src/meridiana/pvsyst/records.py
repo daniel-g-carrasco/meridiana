@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..i18n import _
 from .pvobject import Node, numbers
 
 DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -46,7 +47,8 @@ def series(var: Node, per_day: int = 24) -> np.ndarray:
     for i, (k, v) in enumerate(days):
         vals = day(v)
         if len(vals) != per_day:
-            raise ValueError(f"{k}: {len(vals)} values instead of {per_day}")
+            raise ValueError(_("{key}: {count} values instead of {expected}").format(
+                key=k, count=len(vals), expected=per_day))
         out[i * per_day:(i + 1) * per_day] = vals
     return out / factor
 

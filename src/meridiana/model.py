@@ -1109,13 +1109,15 @@ class Project:
         ValueError with the path of the key; `unknown`, if given, collects the keys the program does not
         know; `notes`, if given, what the migration changed that the designer should look at. The window's own
         snapshots pass `check=False`: they were written by `to_json` a moment ago."""
+        from .i18n import _
         if not isinstance(data, dict) or data.get("format") != FORMAT:
-            raise ValueError("not a Meridiana project")
+            raise ValueError(_("not a Meridiana project"))
         version = data.get("version", 0)
         if version.__class__ is not int or version < 1:
             raise ValueError(f"version: {version!r} is not a format number")
         if version > FORMAT_VERSION:
-            raise ValueError(f"made by a newer Meridiana (format {version}); update the program to open it")
+            raise ValueError(_("made by a newer Meridiana (format {version}); update the program to open it").format(
+                version=version))
         if version < 9 and notes is not None:
             reshaped = _reshaped(data)
             if reshaped:

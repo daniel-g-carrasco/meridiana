@@ -21,6 +21,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ..i18n import _
+
 # closers PVsyst writes that do not name what they close
 IRREGULAR = {"TInterpolenD": "TInterpole2D", "TSimulFich": "pvSimulFile", "TOrientGroup": "pvOrient",
              "TAgeing": "pvAgeing"}
@@ -94,7 +96,8 @@ def read(path: Path) -> Document:
     text, enc = decode(data)
     head = text.lstrip()[:64]
     if not head.startswith("PVObject_"):
-        raise FormatError(f"{Path(path).name}: not a PVsyst text file (PVsyst wrote binary files up to 6.39)")
+        raise FormatError(_("{file}: not a PVsyst text file (PVsyst wrote binary files up to 6.39)").format(
+            file=Path(path).name))
     doc = parse(text)
     doc.encoding = enc
     return doc
