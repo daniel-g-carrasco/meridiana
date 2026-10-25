@@ -1,7 +1,8 @@
 """Meridio in the window (study 14, 7.3 and 8; study 17, theme G; design 3.9): one widget for the window, a child
-of the central area, the character alone in a circle of 46 px that floats over the views, moves to its place when
-the tab changes (sliding in 130 ms, at once when the desktop asks for less motion), can be dragged and keeps the
-place of each tab. A click or Ctrl+L opens his speech bubble beside him (R33: never over him, the tail towards
+of the central area, the character alone in a circle of 46 px that floats over the views, can be dragged and
+stays where he is when the phase changes (R155): he moves only off what the new phase keeps at the bottom of its card
+(the sun bar of the model), sliding in 320 ms (at once when the desktop asks for less motion), his bubble open
+sliding with him. A click or Ctrl+L opens his speech bubble beside him (R33: never over him, the tail towards
 him, from his free side towards the middle of the view; no room there, he slides to a free corner first), with
 the conversation, the three questions ready numbered 1, 2, 3, the field; Esc closes it. The bubble grows from
 the character in 220 ms and fades out in 160 ms, is resized from the corner opposite the tail (QSizeGrip) and
@@ -17,8 +18,9 @@ when the window is not active, when the character is hidden, with «less motion�
 «Meridio animated» off in the preferences: then the face only changes state (G3). The two drawings, smooth and
 pixel (R34), are computed in meridiana/assistant/__init__.py, as where he stands.
 
-What he answers is the conversation's (ui/assistant_chat.Chat, task 14): his bubble shows the words as they come
-(`stream`, drawn again at most twenty times a second), what he read or did as small lines (`note`), the cards of his
+What he answers is the conversation's (ui/assistant_chat.Chat, task 14): his bubble shows the words as he says
+them (R156: a few characters at every frame, steadier than the pieces the model sends, an answer that came whole
+said in three seconds at most; all at once when nothing is to move), what he read or did as small lines (`note`), the cards of his
 proposals and of the consent above the field, the line of the tokens and the cost; at its head the chip of where he
 thinks, with its menu, and the speaker of his voice; on the character, a house or a cloud. A widget alone, without a
 conversation behind it, still ends each turn by saying that it is not connected."""
@@ -26,6 +28,7 @@ conversation behind it, still ends each turn by saying that it is not connected.
 from __future__ import annotations
 
 import functools
+import math
 import time
 
 from PySide6.QtCore import (QByteArray, QEasingCurve, QEvent, QParallelAnimationGroup, QPoint, QPointF,
@@ -44,7 +47,8 @@ from .design import Icon, Motion, Space, Text, Type, set_text, text_font
 
 MIN_OPEN_HEIGHT = 220
 QUESTIONS_HEIGHT = 260          # below this the questions ready are hidden: the field and the conversation stay
-SLIDE_MS = Motion.QUICK         # 320 until 25/10/2026: «130 ms» (Daniel)
+SLIDE_MS = 320                  # his own pace (R155, Daniel 25/10/2026: at 130 ms «troppo rapido, meglio com'era
+                                # prima»)
 # the bubble at its size from the start, fading in as it slides a few pixels from his side, and out the same way:
 # growing from the tail laid its content out again at every frame, in jerks (Daniel, 24/10/2026)
 OPEN_MS, CLOSE_MS = Motion.NORMAL, Motion.QUICK         # the bubble comes, it goes (ui/design.py)
@@ -53,6 +57,8 @@ FRAME_MS = 50                   # twenty frames a second
 ANSWER_WAIT_MS = 600            # without a conversation behind him (a widget alone): the turn lasts this long
 RENDER_MS = 50                  # the answer as it comes is drawn again at most twenty times a second
 DOTS_MS = 300
+SPEAK_CPS = 60                  # his words as he says them (R156): this many characters a second at least,
+SPEAK_MAX_S = 3.0               # and what he has still to say said in this long at most
 RADIUS = 10                     # the bubble's corners
 
 
@@ -380,12 +386,18 @@ class Assistant(QFrame):
         self.where = ""                                     # "local" or "cloud": the mark on the character
         self.render_timer = QTimer(self, singleShot=True, interval=RENDER_MS)
         self.render_timer.timeout.connect(self._show_messages)
+        self.told = 0                                       # the characters of his words shown so far (R156)
+        self.heard = 0                                      # and of those he had to say at the last frame
+        self.speak_until = 0.0                              # when what he has to say is to be said (monotonic)
+        self.speak_timer = QTimer(self, interval=FRAME_MS)
+        self.speak_timer.timeout.connect(self._speak)
         self.animation = QPropertyAnimation(self, b"pos", self)
         self.animation.setDuration(SLIDE_MS)
         self.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
         self.bubble_animation: QParallelAnimationGroup | None = None
         self.after_slide = None                             # what to do when the slide ends (open the bubble)
         self.animation.finished.connect(self._slide_done)
+        self.bubble_slide: QPropertyAnimation | None = None  # the bubble open going with him (R155)
 
         self.setFixedSize(assistant.SIZE, assistant.SIZE)
         box = QVBoxLayout(self)
@@ -656,7 +668,35 @@ class Assistant(QFrame):
         if self.tab not in self.places and home.isValid() and not home.isEmpty():
             return self.at_home(self.anchor())
         x, y = assistant.place(self.anchor(), self.size_now(), (w, h))
-        return QPoint(x, y + top)
+        return self.off_band(QPoint(x, y + top))
+
+    def band(self) -> QRect:
+        """The strip at the bottom of the card in the middle he does not stand on (`reserved`: the sun bar on the
+        model, the plan's attribution on the plant), with his margin above it, in the area's pixels; none when
+        nothing is kept."""
+        kept = self.reserved()
+        if kept <= 0:
+            return QRect()
+        home = self.home()
+        if not home.isValid() or home.isEmpty():
+            top, w, h = self.free()
+            home = QRect(0, top, w, h)
+        return QRect(home.left(), home.bottom() + 1 - kept - assistant.MARGIN, home.width(), kept + assistant.MARGIN)
+
+    def off_band(self, at: QPoint) -> QPoint:
+        """`at`, or just above the band when he would stand on it there."""
+        band = self.band()
+        if band.isEmpty() or not band.intersects(QRect(at, QSize(*self.size_now()))):
+            return at
+        return QPoint(at.x(), max(self.top(), band.top() - assistant.SIZE))
+
+    def stay(self) -> None:
+        """The phase changed: his place in it is where he stands now, clamped to the free part and off its band
+        (R155: he no longer goes to a place of each phase)."""
+        top, w, h = self.free()
+        x, y = assistant.clamp((self.x(), self.y() - top), (w, h), self.size_now())
+        at = self.off_band(QPoint(x, y + top))
+        self.places[self.tab] = assistant.anchor_of((at.x(), at.y() - top), self.size_now(), (w, h))
 
     def at_home(self, anchor: assistant.Anchor) -> QPoint:
         """Where `anchor` puts him on the home card (the views), in the area's pixels."""
@@ -680,8 +720,11 @@ class Assistant(QFrame):
         widget.installEventFilter(self)
 
     def set_tab(self, tab: str, animate: bool = True) -> None:
-        """The tab changed: the same widget, the same conversation, moved to the place of that tab."""
+        """The tab changed: the same widget, the same conversation, where he stands (R155); before he is shown, at
+        the tab's place."""
         self.tab = tab
+        if self.isVisible() and not self.docked and self.drag is None:
+            self.stay()
         names = {"model": _("Model"), "production": _("Production"), "consumption": _("Consumption"),
                  "economics": _("Balance and economics")}
         self.context.setText(_("Tab: {tab}").format(tab=names.get(tab, tab)))
@@ -703,20 +746,55 @@ class Assistant(QFrame):
             row.setVisible(bool(text))
 
     def reposition(self, animate: bool = False) -> None:
-        self.animation.stop()
+        self._stop_slide()
         self.after_slide = None
         goal = self.target()
         if animate and self.moving() and self.isVisible() and goal != self.pos():
+            self._bubble_along(goal)
             self.animation.setStartValue(self.pos())
             self.animation.setEndValue(goal)
             self.animation.start()
-        else:
-            self.move(goal)
+            self.raise_()
+            return
+        self.move(goal)
         self.raise_()
         if self.opened and not self.docked:
             self.place_bubble()
 
+    def _bubble_along(self, goal: QPoint) -> None:
+        """The bubble open slides with him to where it opens for him at `goal`, in step with him (R155: it stayed
+        behind and jumped there at the end)."""
+        if not self.opened or self.docked or not self.bubble.isVisible() or self.bubble_animation is not None:
+            return
+        shape = self.bubble_shape(goal)
+        if shape is None:
+            final = self.bubble.geometry().translated(goal - self.pos())
+        else:
+            final = QRect(shape.x, shape.y + self.top(), shape.width, shape.height)
+        slide = QPropertyAnimation(self.bubble, b"geometry", self)
+        slide.setDuration(SLIDE_MS)
+        slide.setEasingCurve(self.animation.easingCurve())
+        slide.setStartValue(self.bubble.geometry())
+        slide.setEndValue(final)
+        self.bubble.placing = True                          # moved with him, not resized by hand
+        self.bubble_slide = slide
+        slide.start()
+
+    def _stop_slide(self) -> None:
+        """His slide stopped where it is (a new place, a drag), the bubble's with it."""
+        self.animation.stop()
+        if self.bubble_slide is not None:
+            self.bubble_slide.stop()
+            self.bubble_slide.deleteLater()
+            self.bubble_slide = None
+            self.bubble.placing = False
+
     def _slide_done(self) -> None:
+        if self.bubble_slide is not None:
+            self.bubble_slide.stop()
+            self.bubble_slide.deleteLater()
+            self.bubble_slide = None
+            self.bubble.placing = False
         todo, self.after_slide = self.after_slide, None
         if todo is not None:
             todo()
@@ -900,7 +978,7 @@ class Assistant(QFrame):
         if self.docked or watched not in (self.face, self.small, self.head):
             return False
         if kind == QEvent.Type.MouseButtonPress and event.button() == Qt.MouseButton.LeftButton:
-            self.animation.stop()
+            self._stop_slide()
             self.drag = (event.globalPosition().toPoint(), self.pos())
             self.moved = False
             return True
@@ -925,7 +1003,7 @@ class Assistant(QFrame):
         return False
 
     def dropped(self) -> None:
-        """Dragged: this is the tab's place from now on."""
+        """Dragged: this is his place from now on, in every phase (R155)."""
         top, w, h = self.free()
         self.places[self.tab] = assistant.anchor_of((self.x(), self.y() - top), self.size_now(), (w, h))
         if self.opened:
@@ -1048,6 +1126,7 @@ class Assistant(QFrame):
         if not text or self.mood.state != assistant.IDLE:
             return
         self.field.clear()
+        self.told = self.heard = self._speech()            # what he was still saying, said: the question after it
         self.messages.append(("you", text))
         self._show_messages()
         self.set_state(assistant.THINKING)
@@ -1068,7 +1147,10 @@ class Assistant(QFrame):
             self.set_state(assistant.ANSWERING)
             self.dots.hide()
         self.live += piece
-        if not self.render_timer.isActive():
+        if self.moving():
+            if not self.speak_timer.isActive():
+                self.speak_timer.start()                    # he says it at his pace, frame by frame
+        elif not self.render_timer.isActive():
             self.render_timer.start()
 
     def settle(self) -> None:
@@ -1129,7 +1211,7 @@ class Assistant(QFrame):
 
     def clear(self) -> None:
         """A new conversation."""
-        self.messages, self.live = [], ""
+        self.messages, self.live, self.told, self.heard = [], "", 0, 0
         self.finish()
 
     # what the conversation shows besides the words
@@ -1172,12 +1254,53 @@ class Assistant(QFrame):
             self.voice_button.setToolTip(_("{name} reads his answers aloud: on").format(name=assistant.NAME) if on
                                          else _("{name} reads his answers aloud: off").format(name=assistant.NAME))
 
+    def _speech(self) -> int:
+        """The characters of all he said, the answer being written included, as shown (the names put back)."""
+        said = [t for who, t in self.messages if who == "assistant"] + ([self.live] if self.live else [])
+        return sum(len(self.restore(t)) for t in said)
+
+    def _speak(self) -> None:
+        """A frame of his speech: a few characters more, as many as it takes to say what is left by SPEAK_MAX_S
+        after the last words came."""
+        total = self._speech()
+        now = time.monotonic()
+        if total > self.heard:
+            self.heard, self.speak_until = total, now + SPEAK_MAX_S
+        if not self.moving() or self.told >= total:
+            self.told = total
+            self.speak_timer.stop()
+        else:
+            frames = max(1.0, (self.speak_until - now) * 1000 / FRAME_MS)
+            step = max(math.ceil(SPEAK_CPS * FRAME_MS / 1000), math.ceil((total - self.told) / frames))
+            self.told = min(total, self.told + step)
+            if self.told >= total:
+                self.speak_timer.stop()                     # all said
+        self._show_messages()
+
     def _show_messages(self) -> None:
         self.render_timer.stop()
         muted = self.colours["muted"]
         rows = []
         shown = list(self.messages) + ([("assistant", self.live)] if self.live else [])
+        # his words as far as he has said them (R156); what comes after them waits for them
+        if not self.moving():
+            self.told = self._speech()
+        elif self.told < self._speech() and not self.speak_timer.isActive():
+            self.speak_timer.start()
+        budget, cut = self.told, False
         for who, text in shown:
+            if cut:
+                break
+            if who == "assistant":
+                said = self.restore(text)
+                if budget <= 0 and said:
+                    break
+                if budget < len(said):
+                    said, cut = said[:budget], True
+                budget -= len(said)
+                rows.append(f'<p style="margin-bottom:0"><span style="color:{muted}">{assistant.NAME}</span></p>'
+                            f'{words.html(said)}')
+                continue
             if who == "info":                               # what Meridio says of himself (the consent)
                 rows.append(f'<div style="color:{muted}">{words.html(text)}</div>')
                 continue
@@ -1187,12 +1310,8 @@ class Assistant(QFrame):
                 mark = "› " if who == "tool" else ""
                 rows.append(f'<p><span style="color:{muted};{size}"><i>{mark}{safe}</i></span></p>')
                 continue
-            if who == "you":
-                body = "<p>" + text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") + "</p>"
-                name = _("You")
-            else:
-                body = words.html(self.restore(text))
-                name = assistant.NAME
+            body = "<p>" + text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") + "</p>"
+            name = _("You")
             rows.append(f'<p style="margin-bottom:0"><span style="color:{muted}">{name}</span></p>{body}')
         if not rows and self.empty:                         # an empty conversation: his greeting, attenuated
             safe = self.empty.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

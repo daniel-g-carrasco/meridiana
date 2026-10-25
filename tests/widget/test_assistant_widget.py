@@ -1,9 +1,9 @@
 """Meridio alone over an area (ui/assistant.py; study 17, theme G; design 3.9): the speech bubble beside him and never
 over him, the tail towards him, inside a low area with the field still there, a free corner when there is no room;
-his place on each tab, sliding unless less motion is asked; the bubble that grows and fades and is resized from the
+his place, kept across the tabs and off what a tab keeps below, sliding with his bubble unless less motion is asked; the bubble that grows and fades and is resized from the
 corner opposite the tail; Esc; the numbered questions and the keys 1, 2, 3; the turn with the dots and «Stop»; the
 cost of a frame, the pixel style, the timer that runs only when something may move, the gaze; a place dragged and
-kept per tab. He is made alone over a plain area of 1000 x 700, as the window makes him over its tabs; what the
+kept in every phase (R155); his words appearing as he says them (R156). He is made alone over a plain area of 1000 x 700, as the window makes him over its tabs; what the
 window adds (the tabs, the sun bar, the selection to keep off, the dock, the settings, the preferences) is in
 finestra/test_assistant_window.py. PySide6 and a display (offscreen will do)."""
 
@@ -59,8 +59,9 @@ class Alone(unittest.TestCase):
         self.assertEqual(a.bubble.y() + shape.at, a.y() + 23)                     # pointing at his centre
         self.assertEqual((a.bubble.width(), a.bubble.height()), (320, 400))
         self.assertTrue(QRect(0, 0, self.area.width(), self.area.height()).contains(a.bubble.geometry()))
-        a.places["production"] = ("left", "bottom", 12, 12)                    # dragged to the left
-        a.set_tab("production")                                                   # he is at the left
+        a.move(12, self.area.height() - 46 - 12)                                  # dragged to the left
+        a.dropped()
+        a.set_tab("production")                                                   # and there he stays
         self.app.processEvents()
         self.assertEqual(a.bubble.shape.tail, "left")
         self.assertEqual(a.bubble.x(), a.x() + 46 + assistant.GAP)
@@ -111,36 +112,64 @@ class Alone(unittest.TestCase):
         self.assertFalse(a.bubble.geometry().intersects(a.geometry()))
         self.assertEqual(a.places["model"], ("left", "top", 12, 12))
 
-    def test_its_place_on_each_tab_above_what_is_reserved_below_and_under_what_is_at_the_top(self):
+    def test_he_stays_where_he_is_across_the_phases_and_moves_only_off_what_a_phase_keeps_below(self):
+        """R155 (Daniel, 25/10/2026: «io eviterei che Meridio si debba spostare a ogni cambio di fase»): his first
+        place is above what the model keeps at the bottom (the sun bar); in the other phases he stays there; brought
+        to the bottom in one of them, back on the model he goes up just above the sun bar, no further."""
         from meridiana import assistant as core
         a, w, h = self.a, self.area.width(), self.area.height()
-        a.reserved = lambda: 30                             # the sun bar of the model (the window's: finestra)
+        kept = {"model": 30}
+        a.reserved = lambda: kept.get(a.tab, 0)             # the sun bar of the model (the window's: finestra)
         a.top = lambda: 50                                  # the row of the phases and the bar
         a.reposition()
         left, top, right, bottom = self.corner()
         self.assertEqual(right, w - core.MARGIN)                         # by the properties
         self.assertEqual(bottom, h - core.MARGIN - 30)                   # above the sun bar
+        for tab in ("production", "economics", "model"):
+            a.set_tab(tab)
+            self.assertEqual(self.corner()[2:], (w - core.MARGIN, h - core.MARGIN - 30), tab)   # not moved
         a.set_tab("production")
-        left, top, right, bottom = self.corner()
-        self.assertEqual((right, bottom), (w - core.MARGIN, h - core.MARGIN))   # bottom right, nothing below
-        a.set_tab("economics")
-        left, top, right, bottom = self.corner()
-        self.assertEqual((right, bottom), (w - core.MARGIN, h - core.MARGIN))
+        a.move(300, h - 46 - core.MARGIN)                                # dragged to the bottom
+        a.dropped()
+        a.set_tab("model")
+        self.assertEqual((a.x(), self.corner()[3]), (300, h - core.MARGIN - 30))       # up off the sun bar only
+        a.set_tab("consumption")
+        self.assertEqual((a.x(), self.corner()[3]), (300, h - core.MARGIN - 30))
         a.open_panel()
         self.app.processEvents()
         self.assertGreaterEqual(a.bubble.y(), 50)            # never over the phases and the bar
 
-    def test_it_slides_to_its_place_unless_less_motion_is_asked(self):
+    def test_it_slides_at_its_pace_with_the_bubble_unless_less_motion_is_asked(self):
+        """R155 (Daniel, 25/10/2026): at 130 ms «troppo rapido, meglio com'era prima, ma il fumetto se aperto deve
+        seguire Meridio, non scomparire e ricomparire nella nuova posizione»."""
         from PySide6.QtCore import QAbstractAnimation
+
+        from meridiana.ui.assistant import SLIDE_MS
         a = self.a
+        h = self.area.height()
         a.reduced_motion = False
-        a.reserved = lambda: 30                             # the model above its sun bar, production lower
+        kept = {"model": 60}
+        a.reserved = lambda: kept.get(a.tab, 0)             # the model keeps its sun bar, production nothing
+        a.set_tab("production")
         a.reposition()
-        a.set_tab("production")                             # another place (the Plant shares the Model's)
+        a.move(a.x(), h - 46 - 12)                         # at the bottom, where the model's sun bar is
+        a.dropped()
+        a.open_panel()
+        self.wait(lambda: a.bubble_animation is None)
+        before = a.bubble.geometry()
+        a.set_tab("model")                                  # up, off the sun bar
         self.assertEqual(a.animation.state(), QAbstractAnimation.State.Running)
-        from meridiana.ui.design import Motion
-        self.assertEqual(a.animation.duration(), Motion.QUICK)       # 130 ms (review point 15)
+        self.assertEqual((a.animation.duration(), SLIDE_MS), (320, 320))
+        self.assertIsNotNone(a.bubble_slide)                # the bubble goes with him, seen all the way
+        self.assertTrue(a.bubble.isVisible())
+        self.wait(lambda: a.animation.state() == QAbstractAnimation.State.Stopped)
+        self.app.processEvents()
+        self.assertTrue(a.bubble.isVisible())
+        self.assertEqual(a.bubble.geometry(), before.translated(0, -60))
+        self.assertFalse(a.bubble.placing)                  # resizing by hand works again
+        self.assertFalse(a.bubble.geometry().intersects(a.geometry()))
         a.reduced_motion = True
+        kept["economics"] = 200
         a.set_tab("economics")
         self.assertEqual(a.animation.state(), QAbstractAnimation.State.Stopped)
         self.assertEqual(a.pos(), a.target())
@@ -355,16 +384,48 @@ class Alone(unittest.TestCase):
         a._look_at_global(QPointF(centre.x() + 2, centre.y()))
         self.assertEqual(a.mood.point, (0, 0))
 
-    def test_dragged_it_keeps_the_place_of_each_tab(self):
+    def test_dragged_he_stays_there_in_every_phase(self):
         from PySide6.QtCore import QPoint
         a = self.a
         a.move(QPoint(200, 150))
         a.dropped()
         self.assertEqual(a.places["model"], ("left", "top", 200, 150))
-        a.set_tab("economics")
-        self.assertNotEqual((a.x(), a.y()), (200, 150))
-        a.set_tab("model")
-        self.assertEqual((a.x(), a.y()), (200, 150))
+        for tab in ("economics", "production", "model"):
+            a.set_tab(tab)
+            self.assertEqual((a.x(), a.y()), (200, 150), tab)
+            self.assertEqual(a.places[tab], ("left", "top", 200, 150))
+
+    def test_his_words_appear_as_he_says_them_and_what_follows_waits_for_them(self):
+        """R156 (Daniel, 25/10/2026: «quando parla Meridio il suo testo deve apparire gradualmente come se stesse
+        parlando»): a few characters at every frame, an answer that came whole said in three seconds at most; a
+        line after his words waits for them; a question asked meanwhile has them all said first; with less motion,
+        all at once."""
+        from meridiana.ui.assistant import SPEAK_MAX_S
+        a = self.a
+        a.reduced_motion = False
+        a.open_panel()
+        words = "Il sottocampo sud ha due file troppo vicine: la seconda fila prende ombra alle nove. " * 4
+        a.answer(words.strip())
+        a.note("ho letto il progetto", who="tool")
+        self.app.processEvents()
+        start = time.monotonic()
+        shown = a.conversation.toPlainText()
+        self.assertNotIn(words.strip(), shown)                          # not all of it yet
+        self.assertNotIn("ho letto il progetto", shown)                 # the line waits for his words
+        self.assertTrue(a.speak_timer.isActive())
+        self.assertTrue(self.wait(lambda: "ho letto il progetto" in a.conversation.toPlainText(), SPEAK_MAX_S + 2))
+        self.assertLess(time.monotonic() - start, SPEAK_MAX_S + 0.5)
+        self.assertIn(words.strip(), a.conversation.toPlainText().replace("\n", " "))
+        self.assertFalse(a.speak_timer.isActive())
+        # a question asked while he still speaks: his words all said, then the question
+        a.answer("Una risposta breve ma non brevissima, per avere il tempo di interromperla.")
+        a.ask("E la terza fila?")
+        self.assertIn("non brevissima, per avere il tempo di interromperla.", a.conversation.toPlainText())
+        self.assertIn("E la terza fila?", a.conversation.toPlainText())
+        a.stop()
+        a.reduced_motion = True
+        a.answer("Tutto in una volta.")
+        self.assertIn("Tutto in una volta.", a.conversation.toPlainText())
 
 
 if __name__ == "__main__":

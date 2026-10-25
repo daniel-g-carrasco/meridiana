@@ -87,7 +87,8 @@ testo ricco diventa semigrassetto (`design.strong`, `design.semibold`, il foglio
 | `control` | 13 | normale | `text` | linguette (fasi, grafici, schede accorpate, Preferenze), pillole delle varianti, gettoni e conteggi delle Verifiche, pulsanti strumento con la parola accanto, stati delle consegne |
 | `secondary` | 12 | normale | `text2` | note sotto i campi, barra di stato, parole sotto gli strumenti, etichetta e dettaglio dei riquadri, titoli degli assi, tasti della pagina File, scala e fonte sulla pianta |
 | `caption` | 11 | normale | `muted` | tacche dei grafici, formati dei riquadri File, costo della conversazione |
-| `label` | 11 | semigrassetto | `muted` | in maiuscolo con spaziatura del 4 %: intestazioni delle sezioni (albero, Verifiche, pagina File), gruppi della barra della fase, numeri nei dischi delle fasi e nei segni, facce del cubo, «N» della pianta, «Domande pronte» di Meridio |
+| `group` | 10 | normale | `muted` | in maiuscolo con spaziatura del 4 %: i nomi dei gruppi della barra della fase, 4 px sotto i comandi (R159: «più leggeri, piccoli, e distanziati») |
+| `label` | 11 | semigrassetto | `muted` | in maiuscolo con spaziatura del 4 %: intestazioni delle sezioni (albero, Verifiche, pagina File), numeri nei dischi delle fasi e nei segni, facce del cubo, «N» della pianta, «Domande pronte» di Meridio |
 
 Perché queste differenze:
 - **13 il testo e i comandi**: linguette, pillole e pulsanti hanno la grandezza del testo (le linguette a 15
@@ -164,8 +165,11 @@ caratteristiche di delta colore». Una regola sola, in tutti e due i temi:
 ### Movimento (`Motion`)
 
 **110 ms** (`FAST`), **130 ms** (`QUICK`), **180 ms** (`NORMAL`) e **240 ms** (`SLOW`), con curva in uscita
-(OutCubic). Con «meno movimento», chiesto dal sistema o dalle preferenze, sono zero. `QUICK` è di Meridio: il suo
-scivolare al posto nuovo (era 320 ms) e la chiusura del fumetto (Daniel, 25/10/2026: «130 ms»). La camera della
+(OutCubic). Con «meno movimento», chiesto dal sistema o dalle preferenze, sono zero. `QUICK` è la chiusura del
+fumetto di Meridio (Daniel, 25/10/2026: «130 ms»). Meridio scivola al posto nuovo col passo suo, 320 ms, col fumetto
+aperto che scivola con lui (R155: a 130 ms era «troppo rapido, meglio com'era prima»); cambiando fase resta dov'è e
+si sposta solo quanto basta per non stare sulla barra del sole. Le sue parole compaiono come se le dicesse (R156):
+almeno 60 caratteri al secondo, quello che resta da dire detto entro 3 secondi dall'ultimo pezzo arrivato. La camera della
 vista 3D va da una vista all'altra in `SLOW`.
 
 Regole del movimento (R83, misurate il 24/10/2026):

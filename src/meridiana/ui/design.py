@@ -151,7 +151,7 @@ class Line:
 class Motion:
     """Durations in milliseconds; with less motion they are nought (Motion.of)."""
     FAST = 110          # a little window comes, a hover
-    QUICK = 130         # Meridio moves to his new place, his bubble goes (Daniel, 25/10/2026: «130 ms»)
+    QUICK = 130         # Meridio's bubble goes (Daniel, 25/10/2026: «130 ms»; his slide is his own, 320, R155)
     NORMAL = 180        # a page changes, a section opens
     SLOW = 240          # something large moves (a panel slides), the 3D camera glides to a view
 
