@@ -190,6 +190,35 @@ class ChecksPanel(unittest.TestCase):
                          page.tree.visualItemRect(self.row_of("c")).center())
         self.assertEqual((page.tree.selectedItems(), asked, a.isExpanded()), ([], [], False))
 
+    def test_the_item_under_the_pointer_is_tinted_whole_and_a_click_on_its_detail_does_nothing(self):
+        """R153 (Daniel, 25/10/2026: «di modo che cambia solo leggermente colore di tutto il suo contenitore ... quando
+        clicco nel testo della sua espansione è come se un pezzetto a sinistra dell'evidenziatura si cancellasse»):
+        the row and its open detail are one container under the pointer; a click on the detail moves nothing."""
+        from PySide6.QtCore import QPoint, Qt
+        from PySide6.QtGui import QColor
+        from PySide6.QtTest import QTest
+        page = self.page
+        b = self.row_of("b")
+        b.setExpanded(True)
+        self.app.processEvents()
+        detail = page.tree.visualItemRect(b.child(0))
+        QTest.mouseMove(page.tree.viewport(), detail.center())
+        self.app.processEvents()
+        self.assertIs(page.tree.hover_item, b)                               # the detail counts as its item
+        grab = page.tree.viewport().grab().toImage()
+        ratio = page.tree.viewport().devicePixelRatioF()
+        at = lambda p: QColor(grab.pixel(int(p.x() * ratio), int(p.y() * ratio)))      # noqa: E731
+        row = page.tree.visualItemRect(b)
+        left = QPoint(14, row.center().y())                                 # the card's left, not a pill's
+        other = page.tree.visualItemRect(self.row_of("e"))
+        self.assertNotEqual(at(left).name(), at(QPoint(14, other.center().y())).name())
+        self.assertEqual(at(left).name(), at(QPoint(14, detail.center().y())).name())    # row and detail alike
+        current = page.tree.currentItem()
+        QTest.mouseClick(page.tree.viewport(), Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier,
+                         detail.center())
+        self.assertIs(page.tree.currentItem(), current)
+        self.assertTrue(b.isExpanded())
+
     def test_the_rows_are_tall_enough_for_their_buttons(self):
         """R124 (Daniel, 25/10/2026: «il tasto Correggi è tagliato in basso? please, dai maggiore altezza alle
         singole righe»): every item's row is ROW_HEIGHT at least, and «Fix…» and the eye stand inside it."""

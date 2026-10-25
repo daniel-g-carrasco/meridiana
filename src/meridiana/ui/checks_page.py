@@ -136,6 +136,9 @@ class ChecksTree(QTreeWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("checks-tree")
+        self.hover_item: QTreeWidgetItem | None = None     # the item under the pointer, its detail counted in
+        self.keyboard = False                               # the last move came from the keyboard
+        self.viewport().setMouseTracking(True)
         t = default_tokens()
         hover = QColor(t["text"])
         hover.setAlpha(18)
@@ -198,10 +201,37 @@ class ChecksTree(QTreeWidget):
             return None
         return item
 
+    def _item_at(self, pos) -> QTreeWidgetItem | None:
+        """The item at `pos`, the one its detail belongs to when the detail is there; none on a section's header."""
+        index = self.indexAt(pos)
+        item = self.itemFromIndex(index.siblingAtColumn(0)) if index.isValid() else None
+        if item is not None and item.data(0, DETAIL_ROLE):
+            item = item.parent()
+        return item if item is not None and item.parent() is not None else None
+
+    def mouseMoveEvent(self, event) -> None:
+        item = self._item_at(event.position().toPoint())
+        if item is not self.hover_item or self.keyboard:
+            self.hover_item, self.keyboard = item, False
+            self.viewport().update()
+        super().mouseMoveEvent(event)
+
+    def leaveEvent(self, event) -> None:
+        if self.hover_item is not None:
+            self.hover_item = None
+            self.viewport().update()
+        super().leaveEvent(event)
+
     def mousePressEvent(self, event) -> None:
         """A click on a row, or on its arrow, opens and closes its detail and does nothing else: no selection
-        (R125), the list and the views stay where they are (Daniel, 24/10/2026: opening a row moved the list)."""
+        (R125), the list and the views stay where they are (Daniel, 24/10/2026: opening a row moved the list). A click
+        on an open detail does nothing (R153: it moved the keyboard's row there and half erased the tint)."""
         pos = event.position().toPoint()
+        self.keyboard = False
+        index = self.indexAt(pos)
+        if index.isValid() and index.siblingAtColumn(0).data(DETAIL_ROLE):
+            event.accept()
+            return
         if event.button() == Qt.MouseButton.LeftButton:
             row = self._arrow_of(pos) or self._row_of(pos)
             if row is not None:
@@ -229,6 +259,8 @@ class ChecksTree(QTreeWidget):
 
     def keyPressEvent(self, event) -> None:
         """Space opens and closes the detail of the row the keyboard is on, Enter shows where its problem is."""
+        self.keyboard = True
+        self.viewport().update()
         row = self.currentItem()
         if row is not None and row.parent() is not None and not row.data(0, DETAIL_ROLE):
             if event.key() == Qt.Key.Key_Space and row.childCount():
@@ -285,17 +317,11 @@ class ChecksTree(QTreeWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setClipRect(QRectF(r.left() - 1, r.top() - 0.5, r.width() + 2, r.height()))
         painter.fillPath(shape, QColor(c["card"]))           # the detail on the card, as libadwaita's expander rows
-        # the row under the pointer: a pill inside the card, never the card's whole width; the one the keyboard is
-        # on, with the focus, the same pill with a thin line. Nothing stays selected (R125)
-        hovered = option.state & QStyle.StateFlag.State_MouseOver
-        keyed = self.hasFocus() and self.currentItem() is item
-        if not detail and (hovered or keyed):
-            pill = QPainterPath()
-            pill.addRoundedRect(QRectF(r.left() + 4, r.top() + 2, r.width() - 8, r.height() - 4), 4, 4)
-            painter.fillPath(pill, QColor(c["hover"]))
-            if keyed:
-                painter.setPen(QPen(QColor(c["focus"]), 1.0))
-                painter.drawPath(pill)
+        # the item under the pointer, its detail with it, a little darker as one container; the one the keyboard
+        # moved to the same; nothing stays selected (R125, R153: «cambia solo leggermente colore di tutto il suo
+        # contenitore»: the pill inside the card, half drawn when the detail was clicked, is gone)
+        if row is self.hover_item or (self.keyboard and self.hasFocus() and self.currentItem() is row):
+            painter.fillPath(shape, QColor(c["hover"]))
         painter.setPen(QPen(QColor(c["line"]), 1.0))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawPath(shape)

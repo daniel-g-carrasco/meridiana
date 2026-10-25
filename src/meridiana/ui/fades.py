@@ -11,13 +11,15 @@ from __future__ import annotations
 import weakref
 
 from PySide6.QtCore import QEvent, QObject, Qt
-from PySide6.QtGui import QColor, QLinearGradient, QPainter
+from PySide6.QtCore import QRectF
+from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPainterPath
 from PySide6.QtWidgets import QAbstractScrollArea, QWidget
 
 from .cards import default_tokens
-from .design import Space
+from .design import Radius, Space
 
-HEIGHT = Space.XXL               # logical pixels of a band
+HEIGHT = Space.XL                # logical pixels of a band (24 until R161: «troppo accentuate» on a small screen)
+SOLID = 0.85                     # the band's opacity at the edge: what is under it still shows (R161)
 _COLOUR = [default_tokens()["panel"]]  # the panels' colour of the theme in use
 _LIVE: "weakref.WeakSet[Fades]" = weakref.WeakSet()
 
@@ -31,14 +33,27 @@ class Edge(QWidget):
         self.hide()
 
     def paintEvent(self, event) -> None:
+        """The band inside the card's line and its rounded corners: it went over the border of the pages' cards
+        (R161: «come se la sfumatura del contenuto finisse sopra i bordi»)."""
         p = QPainter(self)
-        solid = QColor(_COLOUR[0])
-        clear = QColor(solid)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        edge = QColor(_COLOUR[0])
+        edge.setAlphaF(SOLID)
+        half = QColor(edge)
+        half.setAlphaF(SOLID * 0.35)
+        clear = QColor(edge)
         clear.setAlpha(0)
         g = QLinearGradient(0, 0, 0, self.height())
-        g.setColorAt(0.0, solid if self.top else clear)
-        g.setColorAt(1.0, clear if self.top else solid)
-        p.fillRect(self.rect(), g)
+        for at, colour in ((0.0, edge), (0.45, half), (1.0, clear)):
+            g.setColorAt(at if self.top else 1.0 - at, colour)
+        r = QRectF(self.rect()).adjusted(1, 1 if self.top else 0, -1, 0 if self.top else -1)
+        radius = Radius.CARD - 1
+        # rounded on the side of the card's edge only: the rectangle runs on past the other side
+        outline = QRectF(r.x(), r.y() if self.top else r.y() - radius, r.width(), r.height() + radius)
+        path = QPainterPath()
+        path.addRoundedRect(outline, radius, radius)
+        p.setClipRect(r)
+        p.fillPath(path, g)
 
 
 class Fades(QObject):
@@ -63,7 +78,7 @@ class Fades(QObject):
         port = self.area.viewport().geometry()
         bar = self.area.verticalScrollBar()
         top, bottom = self.edges
-        h = min(HEIGHT, max(0, port.height() // 3))
+        h = min(HEIGHT, max(0, port.height() // 5))
         top.setGeometry(port.x(), port.y(), port.width(), h)
         bottom.setGeometry(port.x(), port.y() + port.height() - h, port.width(), h)
         top.setVisible(bar.value() > bar.minimum())
