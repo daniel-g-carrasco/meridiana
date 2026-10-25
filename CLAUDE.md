@@ -49,12 +49,54 @@ needs to know is here or in `docs/`.
   change bumps the format version and adds a migration. The user's settings are in `config.py`: a field with a
   typed default, and a format change is a migration step with `CONFIG_VERSION + 1`.
 - Qt lessons already paid for:
-  - the 3D view stays a `QQuickWidget`: `QQuickView` in `createWindowContainer` deadlocks with the threaded
-    render loop (Python instancing called from the render thread);
+  - the 3D view is a `QuickImage` (`ui/quick_image.py`: `QQuickRenderControl` into a texture, read back into an
+    image the raster window paints) since 25/10/2026: a `QQuickWidget` made every repaint of the 4K window slow
+    (`docs/prestazioni`), and `QQuickView` in `createWindowContainer` deadlocks with the threaded render loop
+    (Python instancing called from the render thread);
   - values for the 3D scene go in as QML bindings: a value set from Python overrides the binding;
   - `QScrollArea.setWidget` deletes the old page at once: use `takeWidget` and `deleteLater`;
   - Qt Quick 3D takes at most 4 directional lights;
   - spin boxes and combo boxes must not take the wheel without focus (`ui/wheel.py`).
+
+## How Meridiana runs
+
+Read this before judging how much a defect matters.
+
+- **One main window per process** (`app.py`): no `WA_DeleteOnClose`, alive until `exec()` returns; closing it quits
+  the program and nothing is dispatched after `exec()`. The File page, Meridio and the docks are its children;
+  dialogs are modal or short-lived.
+- **Threads**: layout, energy, plant, IFC, comparisons run as `QRunnable` jobs on the global pool and answer with
+  queued signals on the main thread; the report and the map tiles go in steps on the event loop
+  (`ui/tileloader.py`); the 3D view renders on the main thread through `QQuickRenderControl` (`ui/quick_image.py`).
+- **What the user meets**: the window and its status bar, the log (`log.file()`), and the files written next to the
+  project: the project itself (whole or not at all, the previous copy as `.bak`), the revisions `_Rnn`, the report
+  (written as `.pdf.part`, renamed at the end).
+- **The tests are not the program**: the suite builds and disposes many windows in one process, offscreen. A
+  use-after-delete that fires only after `dispose()`, or a picture that differs only offscreen, is a test matter,
+  not a user's.
+
+**Severity**, the same words in every review:
+- **high**: loses or corrupts the user's data, crashes or freezes in normal use, a wrong number in a computation or
+  in the report;
+- **medium**: something the user sees wrong or that gets in the way (a text in the wrong language, a file left next
+  to the project, a control that does nothing), with a way around it;
+- **low**: cosmetic, or only on an unusual path;
+- **tests only**: happens only in the suite; fixed when cheap, never called a user's bug.
+
+## Diagnosing a failure
+
+- **A diagnosis counts only when it reproduces the observed symptom**: the same message, the same numbers, the same
+  place (for a CI failure, the same values in the assertion, the same pixel). A similar failure found locally is a
+  different failure until shown otherwise: say which one was reproduced.
+- **Start from the raw evidence and quote it**: the CI run's log (the repository is public:
+  `https://github.com/daniel-g-carrasco/meridiana/actions`, or `gh run view <id> --log-failed`), the traceback, the
+  user's screenshot.
+- **Say what differs** between where it failed and where it is reproduced: platform, fonts and their antialiasing,
+  screen scale, offscreen or a real screen, Python version, models or programs installed in the home.
+- Every claim [V] verified (and how) or [I] inferred; a fix for an [I] diagnosis says so.
+- **A test fixed by loosening it must still catch what it was written for**: add the case that proves it.
+  (25/10/2026: a review blamed the accent test's CI failure on a field's focus ring, 62 points; the CI had one
+  pixel, coloured by the subpixel antialiasing of a title. The fix proposed would have left the CI red.)
 
 ## Tests, lint, translations
 
