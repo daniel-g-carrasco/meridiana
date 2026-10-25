@@ -132,6 +132,8 @@ class QuickImage(QWidget):
     # the size: the scene's items in the widget's units, the texture in the screen's pixels
 
     def _fit(self) -> None:
+        if self.held.quick is None:
+            return
         w, h = max(1, self.width()), max(1, self.height())
         self.quick.resize(w, h)
         if self.root is not None:
@@ -141,6 +143,8 @@ class QuickImage(QWidget):
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
+        if self.held.quick is None:
+            return
         if self.image.isNull() or not event.oldSize().isValid():
             self._fit()
             return
