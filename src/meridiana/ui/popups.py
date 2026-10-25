@@ -26,7 +26,7 @@ import sys
 
 from PySide6 import QtGui
 from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, QRect, Qt
-from PySide6.QtGui import QColor, QKeySequence
+from PySide6.QtGui import QColor, QGuiApplication, QKeySequence
 from PySide6.QtWidgets import QApplication, QLabel, QWidget
 
 from .. import theme_colors
@@ -148,6 +148,9 @@ class Popups(QObject):
     def __init__(self, app: QApplication):
         super().__init__(app)
         self.native = native_corners()
+        # Wayland gives a window no opacity of its own: there each little window comes at once (it printed «This
+        # plugin does not support setting window opacity» at every one, and faded nothing)
+        self.fades = not QGuiApplication.platformName().startswith("wayland")
         self.tips = TipLayout(self)
         from .app_events import events     # the application's one filter (R120)
         events().on((QEvent.Type.Show,), self, self.eventFilter)
@@ -171,7 +174,7 @@ class Popups(QObject):
         try:
             if self.native:
                 _dwm(obj, kind == Qt.WindowType.ToolTip)
-            if _STATE["motion"]:
+            if _STATE["motion"] and self.fades:
                 obj.setWindowOpacity(0.0)                   # the Show event comes before the window is on screen
                 fade = QPropertyAnimation(obj, b"windowOpacity", obj)
                 fade.setDuration(FADE_MS)
@@ -179,7 +182,7 @@ class Popups(QObject):
                 fade.setEndValue(1.0)
                 fade.setEasingCurve(QEasingCurve.Type.OutCubic)
                 fade.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
-            elif obj.windowOpacity() < 1.0:
+            elif self.fades and obj.windowOpacity() < 1.0:
                 obj.setWindowOpacity(1.0)
         except RuntimeError:                                # a window going while it shows
             pass
