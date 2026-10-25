@@ -499,6 +499,15 @@ class Backend(QObject):
             self.user_moved = False
             self.frame(*self.scene, animate=True, view="home")
 
+    def frame_part(self, centre, radius: float) -> None:
+        """A part of the scene framed from where the camera looks now (the eye of a check, R127), gliding there; the
+        scene's own frame stays for Home, and a resize keeps this view."""
+        target = self.camera.copy()
+        w, h = self.size
+        target.fit(np.asarray(centre, dtype=float), float(radius), w / h)
+        self.user_moved = True
+        self.go(target, True)
+
     def frame(self, centre, radius: float, animate: bool = False, view: str = "") -> None:
         """The scene (Qt axes) framed, from where the camera looks now or from a standard view."""
         self.scene = (np.asarray(centre, dtype=float), float(radius))

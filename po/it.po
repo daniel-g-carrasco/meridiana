@@ -12066,3 +12066,60 @@ msgstr "va bene (da {lo} a {hi})"
 
 msgid "The string being drawn was given up: the project changed under it."
 msgstr "La stringa che stavi disegnando è stata annullata: il progetto è cambiato sotto di lei."
+
+msgid "Fix…"
+msgstr "Correggi…"
+
+msgid "Keep"
+msgstr "Tieni"
+
+msgid "Take back"
+msgstr "Annulla"
+
+msgid "{fix}: shown first, then you keep it or take it back"
+msgstr "{fix}: prima te la mostro, poi la tieni o la annulli"
+
+msgid "Show where it is: the object framed in the plan and in the 3D view, the rest dimmed"
+msgstr "Mostra dov'è: l'oggetto inquadrato in pianta e nella vista 3D, il resto attenuato"
+
+msgid "Go to the {phase} phase, where it is decided"
+msgstr "Vai alla fase {phase}, dove si decide"
+
+msgid "Show the site in the views"
+msgstr "Mostra il sito nelle viste"
+
+msgid "Show where it is"
+msgstr "Mostra dov'è"
+
+msgid "Copy the text"
+msgstr "Copia il testo"
+
+msgid "Preview of the fix «{fix}»: the views show the result. Keep it?"
+msgstr "Anteprima della correzione «{fix}»: le viste mostrano il risultato. La tieni?"
+
+msgid "The fix «{fix}»: apply it?"
+msgstr "La correzione «{fix}»: la applico?"
+
+msgid "{n} {level}: a click shows every level again"
+msgstr "{n} {level}: un clic mostra di nuovo tutti i livelli"
+
+msgid "{n} {level}: a click shows only these (the others pressed stay)"
+msgstr "{n} {level}: un clic mostra solo questi (restano gli altri premuti)"
+
+msgid "This check has no fix: its detail says what to do."
+msgstr "Questa verifica non ha una correzione: il suo dettaglio dice cosa fare."
+
+msgid "No check under the keyboard: go to one with the arrows first."
+msgstr "Nessuna verifica sotto la tastiera: raggiungine una con le frecce."
+
+msgid "The fix «{fix}» changed nothing."
+msgstr "La correzione «{fix}» non ha cambiato nulla."
+
+msgid "Fix taken back: the project is as it was."
+msgstr "Correzione annullata: il progetto è com'era."
+
+msgid "Fix kept: Ctrl+Z undoes it like any change."
+msgstr "Correzione tenuta: Ctrl+Z la annulla come ogni modifica."
+
+msgid "Fix undone."
+msgstr "Correzione annullata."

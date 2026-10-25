@@ -351,6 +351,21 @@ class PlanView(QGraphicsView):
                 it.setOpacity(1.0 if mine else 0.3)
         self.viewport().update()
 
+    def frame_target(self, target: tuple) -> None:
+        """An object framed, its items found as `focus` finds them (the eye of a check, R127); the view stays so
+        until the designer moves it."""
+        rect = QRectF()
+        for kind, items in self.items_by_kind.items():
+            if kind in ("selection", "arrows", "wiring", "underlays", "draft", "draft_band"):
+                continue
+            for it in items:
+                if it.data(0) in (target[0], "modules") and it.data(1) == target[1]:
+                    rect = rect.united(it.sceneBoundingRect())
+        if rect.isEmpty():
+            return
+        self.fit(rect)
+        self.user_moved = True
+
     def set_laying(self, on: bool) -> None:
         """A layout on its way (on) or back (off): the arc in the top right corner, under the north arrow, only if it
         takes longer than the threshold, gone as soon as it comes back (study 16, F3; Daniel 23/10/2026)."""

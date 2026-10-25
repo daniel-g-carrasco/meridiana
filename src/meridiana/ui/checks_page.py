@@ -2,27 +2,27 @@
 TO CHECK, TO KNOW, PASSED closed), by object or by area from the menu in the head, and «ready for delivery»
 for the Report phase (what is to fix and to check, the values still at their default, the estimates in use);
 the sections are the headers of the project's tree (SectionDelegate). Each row is one short sentence with its
-mark and its source; the arrow opens the detail (why, and what to do) as a wrapped row under it; «Fix» and the
-eye sit on the row where they serve. A click shows the object an item is about in the views, the rest dimmed,
-and the arrows go through the list with the views following; a double click leads to the object or the page;
-the items of the object selected in the views stand out (study 12, C4). The filters are «This phase» and «This
-object» (the marks of the tree set the latter, R30); the counts in the head and in the status bar lead to the
-section (C9). «Fix» below applies the fix of the item in hand (Ctrl+.); the notes of the rules that apply can be
-copied for the technical report."""
+mark and its source; a click on a row opens its detail (why, and what to do) as a wrapped row under it, no row is
+ever selected (R125). «Fix…» and the eye sit on the row where they serve: the eye takes the views to where the
+problem is, framed, the rest dimmed (R127); «Fix…» shows the fix before it is kept (R126). The items of the object
+selected in the views stand out (study 12, C4). The filters are the counts in the head, each a level that stays
+pressed (R130), «This phase» and «This object» (the marks of the tree set the latter, R30); the counts in the
+status bar lead to the section. Ctrl+. asks the fix of the row the keyboard is on; the notes of the rules that
+apply can be copied for the technical report."""
 
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import (QActionGroup, QBrush, QColor, QFont, QFontMetrics, QGuiApplication, QPainter,
+from PySide6.QtGui import (QActionGroup, QBrush, QColor, QFont, QFontMetrics, QGuiApplication, QIcon, QPainter,
                            QPainterPath, QPalette, QPen)
-from PySide6.QtWidgets import (QAbstractItemView, QHBoxLayout, QHeaderView, QLabel, QMenu, QPushButton, QSizePolicy,
-                               QStyle, QStyleOptionViewItem, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
-                               QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QFrame, QHBoxLayout, QHeaderView, QLabel, QMenu, QPushButton,
+                               QSizePolicy, QStyle, QStyleOptionToolButton, QStyleOptionViewItem, QStylePainter,
+                               QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from .. import checks, theme_colors
 from ..i18n import _
 from . import icons
-from .sections import SectionDelegate, section
+from .sections import SectionDelegate, is_section, section
 from .theme import symbol_font
 
 MARKS = {"fail": "✘", "warn": "⚠", "info": "ℹ", "ok": "✔"}
@@ -34,6 +34,9 @@ GROUP_ROLE = Qt.ItemDataRole.UserRole + 10      # on a header: the key of its gr
 CLOSED_ROLE = Qt.ItemDataRole.UserRole + 11     # on a header: shown closed by default
 PAD = 6                                         # around the detail's text (Space.S)
 DETAIL_BOTTOM = 10                              # under the detail, before the line to the next item
+ROW_HEIGHT = 34         # an item's row: «Fix…» and the eye (Size.CHIP) inside it with air (R124: «Correggi» was cut)
+SECTION_AIR = 16        # above a section's header: the sections a little further apart than the tree's (R136)
+DETAIL_CHARS = 100      # the detail wraps at about this many characters, not at the panel's edge (R129)
 
 level_names = checks.level_names
 
@@ -71,7 +74,8 @@ class ChecksDelegate(SectionDelegate):
         from .checks_page import CARD_INSET
         left = max(option.rect.left(), self._text_left(index))
         right = tree.viewport().width() - CARD_INSET - 2 * PAD
-        return QRect(left, option.rect.top(), max(80, right - left), option.rect.height())
+        measure = QFontMetrics(self.detail_font(option.font)).averageCharWidth() * DETAIL_CHARS
+        return QRect(left, option.rect.top(), max(80, min(right - left, measure)), option.rect.height())
 
     @staticmethod
     def detail_font(font):
@@ -100,7 +104,10 @@ class ChecksDelegate(SectionDelegate):
 
     def sizeHint(self, option, index) -> QSize:
         if index.data(DETAIL_ROLE) is None:
-            return super().sizeHint(option, index)
+            size = super().sizeHint(option, index)
+            if index.parent().isValid():                # an item's row, not a section's header
+                size.setHeight(max(size.height(), ROW_HEIGHT))
+            return size
         r = self._detail_rect(index, option)
         rect = QFontMetrics(self.detail_font(option.font)).boundingRect(
             QRect(0, 0, r.width(), 0), Qt.TextFlag.TextWordWrap, index.data(Qt.ItemDataRole.DisplayRole) or "")
@@ -115,13 +122,17 @@ class ChecksTree(QTreeWidget):
     """A tree whose rows are laid out again when its width changes: the details wrap to the width. The items of
     a section stand in one card (F2, the target of 24/10/2026): each row draws its slice of it before its
     cells, the first with the top corners, the last with the bottom ones, a soft line between two items, the
-    detail on the tonal veil; the selection a rounded ground inside the card. `colours` are the theme's."""
+    detail on the tonal veil. Nothing is selected (R125): the row under the pointer has a rounded ground, the one
+    the keyboard is on a thin line too. A click on a row opens or closes its detail; Enter shows where the problem
+    is (`shown`). `colours` are the theme's."""
+
+    shown = Signal(object)          # the row whose place the keyboard asked for (Enter)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("checks-tree")
         self.colours = {"card": "#ffffff", "line": "#d9d5cc", "sink": "#ebeae7", "select": "#f5e3c8",
-                        "hover": "#1e1c190f"}
+                        "hover": "#1e1c190f", "focus": "#b3541e"}
         # the rows laid out again once the width rests: at every step of a panel's edge dragged it measured every
         # row's wrapped detail (4 500 times in 40 steps, R120)
         self.relayout = QTimer(self)
@@ -145,11 +156,28 @@ class ChecksTree(QTreeWidget):
 
     def fit_source(self) -> None:
         """The source as wide as its longest, up to SOURCE_SHARE of the width; longer ones are shortened (their
-        whole text in the tooltip). The column of what is checked takes the rest."""
-        want = self.sizeHintForColumn(2)
+        whole text in the tooltip). The column of what is checked takes the rest. Measured on every row, the closed
+        sections' too: Qt's measure saw only the rows shown, none while the sections were still closed, and the
+        sources came out as «C…» (R128)."""
+        want = 0
+        stack = [self.topLevelItem(i) for i in range(self.topLevelItemCount())]
+        while stack:
+            it = stack.pop()
+            if it.text(2):
+                want = max(want, QFontMetrics(it.font(2)).horizontalAdvance(it.text(2)))
+            stack.extend(it.child(i) for i in range(it.childCount()) if not it.child(i).data(0, DETAIL_ROLE))
+        want += 2 * PAD + 8 if want else 0              # the item's padding and the style's margin
         width = min(want, int(self.viewport().width() * self.SOURCE_SHARE))
         if self.header().sectionSize(2) != width:
             self.header().resizeSection(2, max(0, width))
+
+    def _row_of(self, pos) -> QTreeWidgetItem | None:
+        """The item's row at `pos` (not a section's header, not a detail)."""
+        index = self.indexAt(pos)
+        item = self.itemFromIndex(index.siblingAtColumn(0)) if index.isValid() else None
+        if item is None or item.parent() is None or item.data(0, DETAIL_ROLE):
+            return None
+        return item
 
     def _arrow_of(self, pos) -> QTreeWidgetItem | None:
         """The item whose arrow is at `pos`, if it has one there."""
@@ -163,22 +191,62 @@ class ChecksTree(QTreeWidget):
         return item
 
     def mousePressEvent(self, event) -> None:
-        """The arrow opens and closes the detail and does nothing else: the item in hand, the list and the views stay
-        where they are (Daniel, 24/10/2026: opening a row moved the list)."""
-        item = self._arrow_of(event.position().toPoint()) if event.button() == Qt.MouseButton.LeftButton else None
-        if item is not None:
-            item.setExpanded(not item.isExpanded())
-            event.accept()
+        """A click on a row, or on its arrow, opens and closes its detail and does nothing else: no selection
+        (R125), the list and the views stay where they are (Daniel, 24/10/2026: opening a row moved the list)."""
+        pos = event.position().toPoint()
+        if event.button() == Qt.MouseButton.LeftButton:
+            row = self._arrow_of(pos) or self._row_of(pos)
+            if row is not None:
+                self.blockSignals(True)
+                self.setCurrentItem(row)                # where the keyboard goes on from, drawn only with the focus
+                self.blockSignals(False)
+                if row.childCount():
+                    row.setExpanded(not row.isExpanded())
+                self.setFocus(Qt.FocusReason.MouseFocusReason)
+                self.viewport().update()
+                event.accept()
+                return
+        elif event.button() == Qt.MouseButton.RightButton and self._row_of(pos) is not None:
+            event.accept()                              # the menu, without taking the row (customContextMenuRequested)
             return
         super().mousePressEvent(event)
 
     def mouseDoubleClickEvent(self, event) -> None:
-        item = self._arrow_of(event.position().toPoint()) if event.button() == Qt.MouseButton.LeftButton else None
-        if item is not None:
-            item.setExpanded(not item.isExpanded())
+        """A double click is a click: the detail opened once, never opened and closed again."""
+        pos = event.position().toPoint()
+        if event.button() == Qt.MouseButton.LeftButton and (self._arrow_of(pos) or self._row_of(pos)) is not None:
             event.accept()
             return
         super().mouseDoubleClickEvent(event)
+
+    def keyPressEvent(self, event) -> None:
+        """Space opens and closes the detail of the row the keyboard is on, Enter shows where its problem is."""
+        row = self.currentItem()
+        if row is not None and row.parent() is not None and not row.data(0, DETAIL_ROLE):
+            if event.key() == Qt.Key.Key_Space and row.childCount():
+                row.setExpanded(not row.isExpanded())
+                event.accept()
+                return
+            if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                self.shown.emit(row)
+                event.accept()
+                return
+        super().keyPressEvent(event)
+
+    def focusInEvent(self, event) -> None:
+        super().focusInEvent(event)
+        self.viewport().update()
+
+    def focusOutEvent(self, event) -> None:
+        super().focusOutEvent(event)
+        self.viewport().update()
+
+    def drawBranches(self, painter, rect, index) -> None:
+        """A section's arrow at the height of its name, under the air above it, not in the middle of the whole row
+        (R136: it stood higher than the text)."""
+        if is_section(index):
+            rect = rect.adjusted(0, SECTION_AIR, 0, 0)
+        super().drawBranches(painter, rect, index)
 
     def drawRow(self, painter, option, index) -> None:
         item = self.itemFromIndex(index)
@@ -209,12 +277,17 @@ class ChecksTree(QTreeWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setClipRect(QRectF(r.left() - 1, r.top() - 0.5, r.width() + 2, r.height()))
         painter.fillPath(shape, QColor(c["card"]))           # the detail on the card, as libadwaita's expander rows
-        # the item in hand and the one under the pointer: a pill inside the card, never the card's whole width
+        # the row under the pointer: a pill inside the card, never the card's whole width; the one the keyboard is
+        # on, with the focus, the same pill with a thin line. Nothing stays selected (R125)
         hovered = option.state & QStyle.StateFlag.State_MouseOver
-        if not detail and (self.currentItem() is item or hovered):
+        keyed = self.hasFocus() and self.currentItem() is item
+        if not detail and (hovered or keyed):
             pill = QPainterPath()
             pill.addRoundedRect(QRectF(r.left() + 4, r.top() + 2, r.width() - 8, r.height() - 4), 4, 4)
-            painter.fillPath(pill, QColor(c["select"] if self.currentItem() is item else c["hover"]))
+            painter.fillPath(pill, QColor(c["hover"]))
+            if keyed:
+                painter.setPen(QPen(QColor(c["focus"]), 1.0))
+                painter.drawPath(pill)
         painter.setPen(QPen(QColor(c["line"]), 1.0))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawPath(shape)
@@ -224,11 +297,50 @@ class ChecksTree(QTreeWidget):
         painter.restore()
 
 
+class CountChip(QToolButton):
+    """A count of the head (R130): its mark at the left, its number at the right, the same room on both sides and
+    the same width for the four; pressed while its level is among those shown (Daniel, 24/10/2026: «uno deve stare
+    a destra e l'altro a sinistra, e se ne seleziono uno non rimane schiacciato visibilmente»). The pill is the
+    sheet's (Button.CHIP); the mark and the number are drawn here."""
+
+    def __init__(self, level: str):
+        super().__init__()
+        from .marks import icon as mark_icon
+        self.level = level
+        self.setObjectName("count")
+        self.setCheckable(True)
+        self.setAutoRaise(True)
+        self.setIcon(mark_icon(level))
+        self.ink = {"text": "#1e1c19", "muted": "#8a857c", "on": "#1e1c19"}
+
+    def sizeHint(self) -> QSize:
+        from .design import Icon, Size, Space
+        digits = QFontMetrics(self.font()).horizontalAdvance(self.text() if len(self.text()) > 2 else "88")
+        return QSize(Space.M + 1 + Icon.CONTROL + Space.S + digits + Space.M + 1, Size.CHIP)
+
+    def minimumSizeHint(self) -> QSize:
+        return self.sizeHint()
+
+    def paintEvent(self, event) -> None:
+        from .design import Icon, Space
+        p = QStylePainter(self)
+        opt = QStyleOptionToolButton()
+        self.initStyleOption(opt)
+        opt.text, opt.icon = "", QIcon()
+        p.drawComplexControl(QStyle.ComplexControl.CC_ToolButton, opt)
+        r, size, side = self.rect(), Icon.CONTROL, Space.M + 1
+        self.icon().paint(p, QRect(side, (r.height() - size) // 2, size, size))
+        p.setPen(QColor(self.ink["on"] if self.isChecked() else self.ink["text"] if self.isEnabled()
+                        else self.ink["muted"]))
+        p.drawText(r.adjusted(0, 0, -side, 0), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, self.text())
+
+
 class ChecksPage(QWidget):
     navigate = Signal(tuple)          # an item's target: ("subfield", id), ("building", id), ("phase", id), ("site",)
-    fix = Signal(object)              # the item whose fix the designer asked for
+    fix = Signal(object)              # the item whose fix the designer asked for: shown first (R126)
+    previewAnswered = Signal(bool)    # the fix shown: kept (True) or taken back (False)
     ask = Signal(object)              # the item the designer asks Meridio about (task 14)
-    focusRequested = Signal(tuple)    # the item in hand changed: its target, to show in the views
+    focusRequested = Signal(tuple)    # the eye, Enter: the place of an item's problem, to show (R127)
     viewChanged = Signal(str)         # the view chosen in the head (checks.BY), for the settings
 
     def __init__(self, parent=None, view: str = "level"):
@@ -248,6 +360,8 @@ class ChecksPage(QWidget):
         self.subset_name = ""
         self.subset: set | None = None
         self.related: tuple = ()
+        self.levels: set = set()                    # the levels the counts keep (R130); none pressed, all
+        self.ask_on = True                          # Meridio is there to be asked (the window says)
         self.notes_text = lambda: ""                # the window gives the text of the notes
         self.expand_pending = False
         box = QVBoxLayout(self)
@@ -281,17 +395,11 @@ class ChecksPage(QWidget):
         self.summary.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
         self.summary.linkActivated.connect(self.go_to)
         head.addWidget(self.summary, 1)
-        # the counts as pills, each with its mark drawn and leading to its section (the target of 24/10/2026, F2)
+        # the counts as pills, each with its mark and its number, each a filter that stays pressed (R130)
         self.counts: dict = {}
-        from .marks import icon as mark_icon
         for lv in checks.LEVELS:
-            b = QToolButton()
-            b.setObjectName("count")
-            b.setAutoRaise(True)
-            b.setIcon(mark_icon(lv))
-            b.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-            b.setToolTip(level_names()[lv])
-            b.clicked.connect(lambda _c=False, lv=lv: self.go_to(lv))
+            b = CountChip(lv)
+            b.toggled.connect(lambda on, lv=lv: self._level_toggled(lv, on))
             head.addWidget(b)
             self.counts[lv] = b
         head.addSpacing(8)
@@ -314,6 +422,28 @@ class ChecksPage(QWidget):
         head.addWidget(self.object_button)
         # the chips and the counts: pills of the global sheet (ui/theme.py, Button.CHIP)
         box.addLayout(head)
+        # a fix asked for, said before it is kept (R126: «"correggi" dovrebbe presentare le correzioni proposte
+        # prima di applicarle all'istante»): an edit is made as a preview with the views on it, Keep or Take back;
+        # what is not an edit waits for Apply
+        from .design import Space
+        self.preview = QFrame()
+        self.preview.setObjectName("fix-preview")
+        self.preview.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
+        bar = QHBoxLayout(self.preview)
+        bar.setContentsMargins(Space.L, Space.XS, Space.XS, Space.XS)
+        bar.setSpacing(Space.S)
+        self.preview_text = QLabel()
+        self.preview_text.setObjectName("fix-preview-text")
+        self.preview_text.setWordWrap(True)
+        bar.addWidget(self.preview_text, 1)
+        self.preview_keep = QPushButton(_("Keep"))
+        self.preview_keep.clicked.connect(lambda: self._answer(True))
+        bar.addWidget(self.preview_keep)
+        self.preview_drop = QPushButton(_("Take back"))
+        self.preview_drop.clicked.connect(lambda: self._answer(False))
+        bar.addWidget(self.preview_drop)
+        self.preview.hide()
+        box.addWidget(self.preview)
         self.tree = ChecksTree()
         self.tree.setColumnCount(4)
         self.tree.setHeaderLabels(["", _("What"), _("Source"), ""])
@@ -324,34 +454,24 @@ class ChecksPage(QWidget):
         self.tree.setRootIsDecorated(True)
         self.tree.setWordWrap(True)
         self.tree.setUniformRowHeights(False)
-        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        self.tree.setItemDelegate(ChecksDelegate(self.tree, column=1))      # the sections (T2), the details
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)      # R125
+        self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tree.setItemDelegate(ChecksDelegate(self.tree, column=1, air=SECTION_AIR))   # the sections, the details
         header = self.tree.header()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)          # ChecksTree.fit_source
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         header.setStretchLastSection(False)
-        self.tree.itemDoubleClicked.connect(self._open)
-        self.tree.currentItemChanged.connect(lambda *_a: self._current(focus=True))
+        self.tree.customContextMenuRequested.connect(self._menu)
+        self.tree.shown.connect(lambda row: self._eye(row.data(1, Qt.ItemDataRole.UserRole)))
         self.tree.itemExpanded.connect(lambda it: self._remember(it, True))
         self.tree.itemCollapsed.connect(lambda it: self._remember(it, False))
         box.addWidget(self.tree, 1)
+        # below, what is about the whole list: «Fix» and «Ask Meridio» are on each row and in its menu (R125: no row
+        # is in hand to act on from here)
         row = QHBoxLayout()
-        self.fix_button = QPushButton(_("Fix"))         # the fix of the item in hand, for the keyboard (Ctrl+.)
-        self.fix_button.setEnabled(False)
-        self.fix_button.clicked.connect(self._fix)
-        row.addWidget(self.fix_button)
-        from ..assistant import NAME
-        self.ask_button = QPushButton(_("Ask {name}").format(name=NAME))      # beside «Fix» (study 14, 7.1)
-        self.ask_button.setToolTip(_("Ask {name} about the item in hand: why it matters and what to do").format(
-            name=NAME))
-        self.ask_button.setEnabled(False)
-        self.ask_button.clicked.connect(self._ask)
-        row.addWidget(self.ask_button)
-        self.fix_label = QLabel()
-        self.fix_label.setWordWrap(True)
-        row.addWidget(self.fix_label, 1)
+        row.addStretch(1)
         self.copy_button = QPushButton(_("Copy the notes for the report"))
         self.copy_button.setToolTip(_("The paragraphs of the rules that apply, with their sources, to paste into the "
                                       "technical report"))
@@ -402,7 +522,10 @@ class ChecksPage(QWidget):
         self.viewChanged.emit(view)
 
     def set_colours(self, t: dict) -> None:
-        """The theme's colours for the cards of the items (F2)."""
+        """The theme's colours for the cards of the items (F2) and the counts' ink."""
+        for b in self.counts.values():
+            b.ink = {"text": t["text"], "muted": t["muted"], "on": t["select_fg"]}
+            b.update()
         # the cards of the items stand apart from the panel in both themes: in the dark one the card is the panel,
         # so a veil of white lifts them, and their line is the full one (Daniel, 24/10/2026: «non si intuiscono i
         # confini delle sottoschede»)
@@ -411,7 +534,7 @@ class ChecksPage(QWidget):
         hover = QColor(t["text"])
         hover.setAlpha(18)
         self.tree.colours = {"card": card, "line": t["line"], "sink": t["field"], "select": t["select_bg"],
-                             "hover": hover.name(QColor.NameFormat.HexArgb)}
+                             "hover": hover.name(QColor.NameFormat.HexArgb), "focus": t["accent"]}
         self.tree.viewport().update()
 
     def _view_texts(self) -> None:
@@ -472,29 +595,51 @@ class ChecksPage(QWidget):
         else:
             self.expand_pending = True
 
+    @staticmethod
+    def place_of(it: checks.Item) -> str:
+        """What the eye of an item shows (R127): "object" (the views, framed), "phase" (its page), "site", or ""."""
+        t = tuple(it.target)
+        if len(t) >= 2 and t[0] in checks.OBJECTS:
+            return "object"
+        if len(t) >= 2 and t[0] == "phase":
+            return "phase"
+        return "site" if t[:1] == ("site",) else ""
+
+    def _eye_tip(self, it: checks.Item) -> str:
+        place = self.place_of(it)
+        if place == "object":
+            return _("Show where it is: the object framed in the plan and in the 3D view, the rest dimmed")
+        if place == "phase":
+            from .. import phases
+            title = next((ph.title for ph in phases.phases() if ph.id == it.target[1]), it.target[1])
+            return _("Go to the {phase} phase, where it is decided").format(phase=title)
+        return _("Show the site in the views")
+
     def _buttons(self, row: QTreeWidgetItem, it: checks.Item, n: int) -> None:
-        """«Fix» and the eye on the row, only where they serve (study 17, F.5)."""
-        on_object = len(it.target) >= 2 and it.target[0] in checks.OBJECTS
-        if not it.fix and not on_object:
+        """«Fix…» and the eye on the row, only where they serve (study 17, F.5): the eye wherever the problem has a
+        place, the views or a phase (R127)."""
+        placed = bool(self.place_of(it))
+        if not it.fix and not placed:
             return
         box = QWidget()
         lay = QHBoxLayout(box)
         lay.setContentsMargins(0, 0, CARD_INSET + 6, 0)    # inside the item's card, off its edge
         lay.setSpacing(2)
+        lay.addStretch(1)               # against the right edge: every eye in one column, with or without «Fix…»
         if it.fix:
             b = QToolButton()
             b.setObjectName("rowfix")
-            b.setText(_("Fix"))
+            b.setText(_("Fix…"))
             b.setAutoRaise(True)
-            b.setToolTip(it.fix_label)
+            b.setToolTip(_("{fix}: shown first, then you keep it or take it back").format(fix=it.fix_label))
             b.clicked.connect(lambda _c=False, n=n: self._fix_row(n))
             lay.addWidget(b)
-        if on_object:
+        if placed:
             e = QToolButton()
             e.setObjectName("roweye")
             e.setIcon(icons.icon("eye"))
             e.setAutoRaise(True)
-            e.setToolTip(_("Show the object in the views, the rest dimmed"))
+            e.setToolTip(self._eye_tip(it))
             e.clicked.connect(lambda _c=False, n=n: self._eye(n))
             lay.addWidget(e)
         self.tree.setItemWidget(row, 3, box)
@@ -529,6 +674,8 @@ class ChecksPage(QWidget):
 
     def _hidden(self, n: int) -> bool:
         it = self.all[n]
+        if self.levels and it.level not in self.levels:
+            return True
         if self.phase_only and not checks.shown_in_phase(it, self.phase):
             return True
         return self.subset is not None and n not in self.subset
@@ -538,6 +685,24 @@ class ChecksPage(QWidget):
         self.phase = pid
         if self.phase_only:
             self._apply()
+
+    def _level_toggled(self, level: str, on: bool) -> None:
+        """A count pressed: its level kept with the others pressed; none pressed, every level (R130)."""
+        (self.levels.add if on else self.levels.discard)(level)
+        self._apply()
+        head = self.groups.get(("level", level)) if on else None
+        if head is not None and not head.isHidden():
+            head.setExpanded(True)
+            self.tree.scrollToItem(head, QAbstractItemView.ScrollHint.PositionAtTop)
+
+    def set_levels(self, levels) -> None:
+        """The levels the counts keep, pressed as they are."""
+        self.levels = set(levels) & set(checks.LEVELS)
+        for lv, b in self.counts.items():
+            b.blockSignals(True)
+            b.setChecked(lv in self.levels)
+            b.blockSignals(False)
+        self._apply()
 
     def _phase_toggled(self, on: bool) -> None:
         self.phase_only = on
@@ -609,8 +774,12 @@ class ChecksPage(QWidget):
         words = level_names()
         for lv, b in getattr(self, "counts", {}).items():
             b.setText(str(n[lv]))
-            b.setEnabled(bool(n[lv]))
-            b.setToolTip(f"{n[lv]} {words[lv]}")
+            b.setEnabled(bool(n[lv]) or b.isChecked())      # a pressed one can always be let go
+            b.setToolTip(_("{n} {level}: a click shows every level again").format(n=n[lv], level=words[lv])
+                         if b.isChecked() else
+                         _("{n} {level}: a click shows only these (the others pressed stay)").format(
+                             n=n[lv], level=words[lv]))
+            b.updateGeometry()
         text = ""
         if self.phase_only:
             text += " " + _("Only this phase.")
@@ -623,6 +792,8 @@ class ChecksPage(QWidget):
         item in hand (the views are not moved)."""
         if level not in checks.LEVELS:
             return
+        if self.levels and level not in self.levels:
+            self.set_levels(())                     # a level the counts were hiding: every level again
         if self.view != "level":
             self.set_view("level")
         head = self.groups.get(("level", level))
@@ -635,7 +806,6 @@ class ChecksPage(QWidget):
             self.tree.blockSignals(True)
             self.tree.setCurrentItem(first)
             self.tree.blockSignals(False)
-            self._current()
 
     def _keep_current_shown(self) -> None:
         """The item in hand stays one the list shows: a filter that hid it left «Fix» offering the fix of an item
@@ -648,10 +818,7 @@ class ChecksPage(QWidget):
                          None)
             self.tree.blockSignals(True)
             self.tree.setCurrentItem(first)
-            if first is None:
-                self.tree.clearSelection()
             self.tree.blockSignals(False)
-        self._current()
 
     def _restore(self, n: int | None) -> None:
         """The item that was in hand, in hand again in the new rows (the views are not moved)."""
@@ -696,7 +863,6 @@ class ChecksPage(QWidget):
             self.tree.setCurrentItem(first)
             self.tree.blockSignals(False)
             self.tree.scrollToItem(first)
-            self._current()
 
     def title(self, base: str) -> str:
         n = checks.counts(self.items)
@@ -712,60 +878,91 @@ class ChecksPage(QWidget):
         n = self.selected_index()
         return self.all[n] if n is not None else None
 
-    def _current(self, focus: bool = False) -> None:
-        it = self.selected()
-        if focus and it is not None:
-            self.focusRequested.emit(tuple(it.target))
-        can = it is not None and bool(it.fix)
-        self.fix_button.setEnabled(can)
-        self.fix_label.setText(it.fix_label if can else "")
-        self.ask_button.setEnabled(it is not None)
-
-    def _fix(self) -> None:
-        self.apply_fix()
-
-    def _ask(self) -> None:
-        it = self.selected()
-        if it is not None:
-            self.ask.emit(it)
+    def _ask(self, n: int) -> None:
+        if isinstance(n, int) and 0 <= n < len(self.all):
+            self.ask.emit(self.all[n])
 
     def apply_fix(self) -> bool:
-        """The fix of the item in hand asked for (the button below, Ctrl+.); False when it has none, and the
-        head says so."""
+        """The fix of the row the keyboard is on asked for (Ctrl+.); False when it has none, and the head says
+        so."""
         it = self.selected()
         if it is not None and it.fix:
             self.fix.emit(it)
             return True
-        self.summary.setText(_("The item in hand has no fix: its detail says what to do.") if it is not None else
-                             _("No item in hand: choose one in the list first."))
+        self.summary.setText(_("This check has no fix: its detail says what to do.") if it is not None else
+                             _("No check under the keyboard: go to one with the arrows first."))
         return False
 
     def _fix_row(self, n: int) -> None:
-        """«Fix» on a row: the item in hand (the views follow), and its fix asked for."""
-        row = self.rows.get(n)
-        if row is not None and self.tree.currentItem() is not row:
-            self.tree.setCurrentItem(row)
-        it = self.all[n]
-        if it.fix:
-            self.fix.emit(it)
-
-    def _eye(self, n: int) -> None:
-        """The eye on a row: its object shown in the views, the rest dimmed (what a click on the row does, said)."""
+        """«Fix…» on a row: its fix asked for, shown before it is kept (R126)."""
         row = self.rows.get(n)
         if row is not None:
             self.tree.blockSignals(True)
             self.tree.setCurrentItem(row)
             self.tree.blockSignals(False)
-            self._current()
+        it = self.all[n]
+        if it.fix:
+            self.fix.emit(it)
+
+    def _eye(self, n) -> None:
+        """The eye on a row, Enter: where the problem is, shown (R127)."""
+        if not isinstance(n, int) or not 0 <= n < len(self.all):
+            return
+        row = self.rows.get(n)
+        if row is not None:
+            self.tree.blockSignals(True)
+            self.tree.setCurrentItem(row)
+            self.tree.blockSignals(False)
         self.focusRequested.emit(tuple(self.all[n].target))
+
+    def _menu(self, pos) -> None:
+        """The row's menu: where it is, its fix, Meridio, its text."""
+        row = self.tree._row_of(pos)
+        n = row.data(1, Qt.ItemDataRole.UserRole) if row is not None else None
+        if not isinstance(n, int) or not 0 <= n < len(self.all):
+            return
+        it = self.all[n]
+        menu = QMenu(self.tree)
+        if self.place_of(it):
+            menu.addAction(icons.icon("eye"), _("Show where it is"), lambda: self._eye(n))
+        if it.fix:
+            menu.addAction(_("Fix…"), lambda: self._fix_row(n)).setToolTip(it.fix_label)
+        if self.ask_on:
+            from ..assistant import NAME
+            menu.addAction(_("Ask {name}").format(name=NAME), lambda: self._ask(n))
+        menu.addSeparator()
+        menu.addAction(_("Copy the text"), lambda: QGuiApplication.clipboard().setText(
+            it.text + (chr(10) + it.detail if it.detail else "")))
+        menu.exec(self.tree.viewport().mapToGlobal(pos))
+
+    # ----- a fix shown before it is kept (R126)
+
+    def show_preview(self, label: str, applied: bool) -> None:
+        """The fix asked for, said: `applied`, made as a preview with the views on it (Keep or Take back); else
+        waiting for Apply (Apply or Cancel)."""
+        if applied:
+            self.preview_text.setText(_("Preview of the fix «{fix}»: the views show the result. Keep it?").format(
+                fix=label))
+            self.preview_keep.setText(_("Keep"))
+            self.preview_drop.setText(_("Take back"))
+        else:
+            self.preview_text.setText(_("The fix «{fix}»: apply it?").format(fix=label))
+            self.preview_keep.setText(_("Apply"))
+            self.preview_drop.setText(_("Cancel"))
+        self.preview.show()
+        self.preview_keep.setFocus(Qt.FocusReason.OtherFocusReason)
+
+    def end_preview(self) -> None:
+        self.preview.hide()
+
+    def previewing(self) -> bool:
+        return not self.preview.isHidden()
+
+    def _answer(self, keep: bool) -> None:
+        self.previewAnswered.emit(keep)
 
     def _copy(self) -> None:
         text = self.notes_text()
         if text.strip():
             QGuiApplication.clipboard().setText(text)
             self.summary.setText(_("The notes for the report are in the clipboard: paste them into the document."))
-
-    def _open(self, item: QTreeWidgetItem, _column: int) -> None:
-        target = item.data(0, Qt.ItemDataRole.UserRole)
-        if target:
-            self.navigate.emit(tuple(target))

@@ -13,13 +13,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QRectF, QSize, Qt, QTimer, Signal
+from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy,
                                QStackedWidget, QToolButton, QVBoxLayout, QWidget)
 
 from ..i18n import _
 from . import icons
-from .design import Icon, Layout, Size, Space, Text, text_font
+from .design import Icon, Layout, Radius, Size, Space, Text, text_font
 
 NAV_WIDTH = 250
 
@@ -119,7 +120,10 @@ class FilePage(QFrame):
         super().__init__(window)
         self.host = window
         self.setObjectName("file-page")
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
+        # opaque, drawn whole by paintEvent: Qt then paints nothing of what lies under it, the views and the panels,
+        # at its opening (R132: the first frame took 75-115 ms on the 4K screen, all of it hidden under the page)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
+        self.colours = ("#efede8", "#f8f7f4", "#d9d5cc")     # the window's, the panel's and the card's line
         row = QHBoxLayout(self)
         row.setContentsMargins(1, 1, 1, 1)
         row.setSpacing(0)
@@ -138,6 +142,22 @@ class FilePage(QFrame):
         self._build()
         self.hide()
         window.installEventFilter(self)
+
+    def set_colours(self, t: dict) -> None:
+        self.colours = (t["window"], t["panel"], t["card_line"])
+        self.update()
+
+    def paintEvent(self, event) -> None:
+        """The window's ground in the corners, the card with its line: every pixel, as WA_OpaquePaintEvent promises."""
+        window, panel, line = self.colours
+        p = QPainter(self)
+        p.fillRect(self.rect(), QColor(window))
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        card = QPainterPath()
+        card.addRoundedRect(QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5), Radius.CARD, Radius.CARD)
+        p.fillPath(card, QColor(panel))
+        p.setPen(QPen(QColor(line), 1.0))
+        p.drawPath(card)
 
     def eventFilter(self, obj, event) -> bool:
         if self.isVisible() and event.type() in (QEvent.Type.Resize, QEvent.Type.LayoutRequest):

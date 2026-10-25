@@ -125,7 +125,8 @@ class Button:
     PUSH = (Size.CONTROL, Radius.CONTROL)   # a command («Calcola», «Esporta…»), primary (accent) or destructive
     TOOL = (Size.CONTROL, Radius.CONTROL)   # a tool with its icon alone; with its word under it, as tall as both
     CHIP = (Size.CHIP, Size.CHIP // 2)      # a filter, a count, a pill of a segmented control, a tab
-    SMALL = (20, Radius.INNER)              # on a row or a title: the card's cross, the help's pin, a row's fix
+    SMALL = (20, Radius.INNER)              # on a title: the card's cross, the help's pin (a row's fix and eye are
+                                            # CHIP tall, R124)
     HELP = (16, 8)                          # the «?» of a group or a tile
     NAV = (Size.NAV, Radius.CONTROL)        # an item of a list of places (the File page)
 

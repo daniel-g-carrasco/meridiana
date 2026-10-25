@@ -165,7 +165,6 @@ def style_sheet(t: dict, dark: bool = False) -> str:
     button_focus = padding(S.XS, S.L, Line.FOCUS)
     chip_inner = Button.CHIP[0] - 2                            # 22: a chip's inside, its border around
     pill = Radius.pill(Size.CHIP)
-    small_inner = Button.SMALL[0] - 2
     return f"""
 QMainWindow {{ background: {t['window']}; }}
 QTabBar {{ background: transparent; }}
@@ -203,10 +202,12 @@ QTreeView#checks-tree::item {{ padding: {S.XS}px {S.XXS}px; border: none; }}
 QTreeView#checks-tree::item:selected, QTreeView#checks-tree::item:hover {{ background: transparent;
     color: {t['text']}; }}
 QToolButton#rowfix {{ background: {t['field']}; color: {t['text']}; border: none; border-radius: {Button.SMALL[1]}px;
-                      padding: 0 {S.M}px; min-height: {Button.SMALL[0]}px; max-height: {Button.SMALL[0]}px; }}
+                      padding: 0 {S.M}px; min-height: {Button.CHIP[0]}px; max-height: {Button.CHIP[0]}px; }}
 QToolButton#rowfix:hover {{ background: {hover}; }}
 QToolButton#roweye {{ border: 1px solid {t['line']}; border-radius: {Button.SMALL[1]}px; padding: 0 {S.XS}px;
-                      min-height: {small_inner}px; max-height: {small_inner}px; }}
+                      min-height: {chip_inner}px; max-height: {chip_inner}px; }}
+QFrame#fix-preview {{ background: {t['select_bg']}; border-radius: {R.CONTROL}px; }}
+QLabel#fix-preview-text {{ color: {t['select_fg']}; }}
 QTreeView#project-tree {{ outline: 0; }}
 QTreeView#project-tree::item {{ padding: {S.XS}px {S.XS}px; border: none; }}
 QTreeView#project-tree::item:selected, QTreeView#project-tree::item:hover {{ background: transparent;
@@ -266,7 +267,8 @@ QToolButton#filter, QToolButton#count {{ border: 1px solid {t['line']}; border-r
 QToolButton#count {{ padding-left: {S.M - 1}px; }}
 QToolButton#filter:hover, QToolButton#count:hover {{ background: {hover}; }}
 QToolButton#filter:pressed, QToolButton#count:pressed {{ background: {press}; }}
-QToolButton#filter:checked {{ background: {t['select_bg']}; color: {t['select_fg']}; }}
+QToolButton#filter:checked, QToolButton#count:checked {{ background: {t['select_bg']}; color: {t['select_fg']};
+    border-color: {t['select_bg']}; }}
 QToolButton#filter[popupMode="2"] {{ padding-right: {S.XXL}px; }}
 QToolButton#count:disabled {{ color: {t['muted']}; }}
 QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QTextEdit, QPlainTextEdit, QDateEdit, QTimeEdit {{
@@ -350,7 +352,6 @@ QLabel#row-empty, QLabel#grid-head {{ color: {t['muted']}; }}
 QLabel#row-problem {{ color: {t['danger']}; }}
 QLabel#problem {{ color: {t['danger']}; }}
 QFrame#card {{ background: {t['panel']}; border: 1px solid {t['card_line']}; border-radius: {R.CARD}px; }}
-QFrame#file-page {{ background: {t['panel']}; border: 1px solid {t['card_line']}; border-radius: {R.CARD}px; }}
 QFrame#file-nav {{ background: transparent; border: none; border-right: 1px solid {t['line_soft']}; }}
 QFrame#file-rule {{ background: {t['line_soft']}; margin: 0 {S.M}px; }}
 QToolButton#file-item {{ text-align: left; padding: 0 {S.M}px; border-radius: {Button.NAV[1]}px; color: {t['text']}; }}
@@ -430,6 +431,9 @@ class SystemAccent(QObject):
         if self._processes.get(key) is not process:
             return                                  # an answer already taken (an error, then the end)
         del self._processes[key]
+        from shiboken6 import isValid
+        if not isValid(process):
+            return          # the program quitting while gdbus still ran: Qt ends it and says so (seen on Linux)
         text = bytes(process.readAllStandardOutput()).decode("utf-8", "replace")
         process.deleteLater()
         if key == "reduced-motion":

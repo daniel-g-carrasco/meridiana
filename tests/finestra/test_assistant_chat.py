@@ -238,15 +238,14 @@ class Chat(unittest.TestCase):
         self.assertEqual((self.chat.cards, self.a.messages), ({}, []))
 
     def test_ask_meridio_on_a_check_opens_him_with_the_question_written(self):
+        """From the row's menu (R125: no row in hand for a button below)."""
         page = self.win.checks_page
-        self.assertFalse(page.ask_button.isEnabled())
-        page.tree.setCurrentItem(page.rows[0])
-        self.assertTrue(page.ask_button.isEnabled())
-        page.ask_button.click()
+        self.assertTrue(page.ask_on)
+        page._ask(0)
         self.assertTrue(self.a.opened)
         self.assertIn(page.items[0].text, self.a.field.text())
-        self.win._show_assistant(False)                            # Meridio off: the button goes with him
-        self.assertFalse(page.ask_button.isVisible())
+        self.win._show_assistant(False)                            # Meridio off: not offered in the menu
+        self.assertFalse(page.ask_on)
 
 
 class Character(unittest.TestCase):

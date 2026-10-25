@@ -274,6 +274,10 @@ class MainWindow(QMainWindow):
         self.checks_page.navigate.connect(self._navigate)
         self.checks_page.focusRequested.connect(self._focus_check)
         self.checks_page.fix.connect(self._fix)
+        self.checks_page.previewAnswered.connect(self._fix_answered)
+        self.fix_preview = None                     # the step of a fix shown and not yet kept (R126)
+        self.fix_waiting = None                     # the check whose fix waits for Apply (not an edit)
+        self.session.undo.listeners.append(self._undo_moved)
         self.checks_page.viewChanged.connect(self._checks_view_changed)
         self.checks_page.notes_text = self._report_notes
         self.setCentralWidget(self.tabs)
@@ -593,8 +597,7 @@ class MainWindow(QMainWindow):
             self.tabs.header.set_file_open(True)
             self.tabs.bars.hide()
             self.tabs.header.file_button.setChecked(True)
-            if self.layout() is not None:
-                self.layout().activate()
+            self._settle_layouts()
             self.file_page.open_page(section)
         finally:
             self.setUpdatesEnabled(True)
@@ -606,8 +609,18 @@ class MainWindow(QMainWindow):
             self.tabs.header.set_file_open(False)
             if not self.bars_before_file:
                 self.tabs.bars.show()
+            self._settle_layouts()
         finally:
             self.setUpdatesEnabled(True)
+
+    def _settle_layouts(self) -> None:
+        """The layouts the bar's going or coming asked for, done now and not on the loop's next turns: the header
+        shrank by the bar a frame later, and the File page, placed on the panels as they were, grew 56 px under the
+        pointer, the «animation in jerks» of R132 (25/10/2026)."""
+        for _round in range(3):
+            QApplication.sendPostedEvents(None, QEvent.Type.LayoutRequest)
+        if self.layout() is not None:
+            self.layout().activate()
 
     def _menu_bar_always(self, on: bool) -> None:
         self.cfg.menu_bar = bool(on)
@@ -1067,6 +1080,10 @@ class MainWindow(QMainWindow):
         self.tabs.set_colours(t)
         self.checks_page.set_colours(t)
         self.assistant.set_colours(t)
+        from . import sections
+        sections.set_colours(t)                     # a section's name in the secondary text's tone (R136)
+        if getattr(self, "file_page", None) is not None:
+            self.file_page.set_colours(t)
         # the soft ends of what scrolls in the cards (Daniel, 24/10/2026): made once, in the panels' colour
         from . import fades
         fades.set_colour(t["panel"])
@@ -1374,7 +1391,7 @@ class MainWindow(QMainWindow):
             self.assistant.close_panel()
         self.assistant.setVisible(on and not self.assistant.docked)
         self.assistant_button.setVisible(on)
-        self.checks_page.ask_button.setVisible(on)
+        self.checks_page.ask_on = on
         self.commands["assistant"].setVisible(on)
         self.commands["assistant"].setEnabled(on)
 
@@ -2314,12 +2331,13 @@ class MainWindow(QMainWindow):
             return
         self._row_edit(_("Turn the module"), lambda res: manual.turn(self.project, sfid, rid, res), sfid)
 
-    def _relayout_subfield(self, sfid: str) -> None:
-        """«Lay again automatically»: asked first when the rows are by hand (PVsyst warns before it rebuilds)."""
+    def _relayout_subfield(self, sfid: str, ask: bool = True) -> None:
+        """«Lay again automatically»: asked first when the rows are by hand (PVsyst warns before it rebuilds); not
+        when it comes as a fix shown before it is kept (R126)."""
         sf = self.project_subfield(sfid)
         if sf is None:
             return
-        if sf.manual:
+        if sf.manual and ask:
             answer = QMessageBox.question(self, _("Lay again automatically"),
                                           _("The rows by hand give way to the automatic layout, and the modules taken "
                                             "out by hand come back. Undo brings them back. Go on?"),
@@ -3173,12 +3191,29 @@ class MainWindow(QMainWindow):
             self._select(kind, made[0])
 
     def _focus_check(self, target: tuple) -> None:
-        """An item of the checks in hand: its object selected and the rest dimmed in the plan (Navisworks, PVsyst)."""
+        """The eye of a check, or Enter on it (R127: «l'occhio non porta direttamente alla vista 2d / 3d dove si
+        trova il problema»): its object selected and framed in the plan and in the 3D view, the rest dimmed
+        (Navisworks, PVsyst), from the Model phase when the phase shown has no views; a phase's problem, that
+        phase; the site, the site."""
         if len(target) >= 2 and target[0] in checks.OBJECTS:
+            if self.phase() not in ("model", "plant"):
+                self.show_phase("model")
             self._select(target[0], target[1])
             self.plan.focus(target)
+            self.plan.frame_target(target)
+            self._frame_3d(target[0], target[1])
         else:
             self.plan.focus(None)
+            self._navigate(tuple(target))
+
+    def _frame_3d(self, kind: str, oid: str) -> None:
+        """An object framed in the 3D view: a sphere round its outline, at its height."""
+        found, centre = self._outline(kind, oid), self._centre_3d(kind, oid)
+        if found is None or centre is None or not len(found[1]):
+            return
+        ring = np.asarray([(float(q[0]), float(q[1])) for q in found[1]])
+        radius = float(np.hypot(*(ring - ring.mean(axis=0)).T).max())
+        self.view3d.backend.frame_part(centre, max(radius * 1.15, 4.0))
 
     def _mark_clicked(self, kind: str, oid: str) -> None:
         """A mark on the plan: its object selected and its items found in the panel of the checks."""
@@ -3203,14 +3238,75 @@ class MainWindow(QMainWindow):
             self._select("site", "")
 
     def _fix(self, item) -> None:
-        """Apply the fix of a check: an edit (undoable like any other) or what a button would do."""
+        """«Fix…» on a check (R126: «"correggi" dovrebbe presentare le correzioni proposte prima di applicarle
+        all'istante»): an edit is made at once as a preview, with the views on its place, and the Checks panel asks
+        Keep or Take back (taken back, it leaves no redo); what is not an edit (a computation) waits for Apply."""
         fix = tuple(item.fix or ())
         if not fix:
             return
+        self._end_fix_preview(True)                 # one shown before and still open is kept
+        if fix[0] == "compute":
+            self.fix_waiting = item
+            self.checks_page.show_preview(item.fix_label, applied=False)
+            return
+        undo = self.session.undo
+        top = undo.steps[undo.index - 1] if undo.can_undo() else None
+        self._apply_fix(fix, ask=False)             # the preview is the question: no message box before it
+        new = undo.steps[undo.index - 1] if undo.can_undo() else None
+        if new is None or new is top or undo.can_redo():
+            self.checks_page.end_preview()
+            self.tell(_("The fix «{fix}» changed nothing.").format(fix=item.fix_label))
+            return
+        self.fix_preview = new
+        self._focus_check(tuple(item.target))
+        self.checks_page.show_preview(item.fix_label, applied=True)
+
+    def _fix_answered(self, keep: bool) -> None:
+        """Keep or Take back on a fix in preview; Apply or Cancel on one that waited."""
+        if self.fix_waiting is not None:
+            item, self.fix_waiting = self.fix_waiting, None
+            self.checks_page.end_preview()
+            if keep:
+                self._apply_fix(tuple(item.fix), ask=True)
+            return
+        self._end_fix_preview(keep)
+
+    def _end_fix_preview(self, keep: bool) -> None:
+        step, self.fix_preview, self.fix_waiting = self.fix_preview, None, None
+        if step is None:
+            self.checks_page.end_preview()
+            return
+        undo = self.session.undo
+        if not keep and undo.can_undo() and undo.steps[undo.index - 1] is step and not undo.can_redo():
+            undo.take_back()
+            self.checks_page.end_preview()
+            self.tell(_("Fix taken back: the project is as it was."))
+        else:
+            self.checks_page.end_preview()
+            self.tell(_("Fix kept: Ctrl+Z undoes it like any change."))
+
+    def _undo_moved(self) -> None:
+        """A fix in preview stays one while it is the last step done: anything done, undone or redone after it
+        ends the preview, the fix kept (or undone by Ctrl+Z, like any step)."""
+        step = self.fix_preview
+        if step is None:
+            return
+        undo = self.session.undo
+        if undo.can_undo() and undo.steps[undo.index - 1] is step and not undo.can_redo():
+            return
+        self.fix_preview = None
+        self.checks_page.end_preview()
+        self.tell(_("Fix kept: Ctrl+Z undoes it like any change.") if step in undo.steps[:undo.index] else
+                  _("Fix undone."))
+
+    def _apply_fix(self, fix: tuple, ask: bool = True) -> None:
+        """Apply the fix of a check: an edit (undoable like any other) or what a button would do."""
         if fix[0] == "energy":
             self._energy_edited("energy", fix[1], fix[2])
         elif fix[0] == "edit":
             self._edited(fix[1], fix[2], dict(fix[3]))
+        elif fix[0] == "action" and fix[1] == "relayout":
+            self._relayout_subfield(fix[3], ask=ask)
         elif fix[0] == "action":
             self._action(fix[1], fix[2], fix[3])
         elif fix[0] == "compute":

@@ -80,15 +80,25 @@ class ChecksOnTheViews(unittest.TestCase):
         win, page = self.win, self.win.checks_page
         plan = win.plan
         building, subfield = plan.items_by_kind["building"][0], plan.items_by_kind["subfield"][0]
-        # a click on an item shows its object and dims the rest; the list stays on the item clicked
-        row = self.row_of("b")
-        page.tree.setCurrentItem(row)
+        # a row moved by the keyboard leaves the views alone (R125: nothing is selected in the list)
+        before = win.selection
+        page.tree.setCurrentItem(self.row_of("b"))
+        self.assertEqual(win.selection, before)
+        self.assertEqual((building.opacity(), subfield.opacity()), (1.0, 1.0))
+        # the eye on a row (R127): from a phase without views, the Model's; the object selected, framed in the plan,
+        # the rest dimmed
+        win.show_phase("production")
+        n = next(k for k, i in enumerate(self.items) if i.text == "b")
+        plan.fitInView(plan.sceneRect().adjusted(0, 0, -1.9e6, -1.9e6))          # far from the roof
+        page.row_buttons(n)["eye"].click()
+        self.assertEqual(win.phase(), "model")
         self.assertEqual(win.selection, ("subfield", self.sid))
         self.assertEqual((building.opacity(), subfield.opacity()), (0.3, 1.0))
-        self.assertIs(page.tree.currentItem(), row)
+        shown = plan.mapToScene(plan.viewport().rect()).boundingRect()
+        self.assertTrue(shown.contains(subfield.sceneBoundingRect()))
+        self.assertLess(shown.width(), subfield.sceneBoundingRect().width() * 4)
         win._select("building", self.bid)                   # another selection: nothing dimmed
         self.assertEqual(building.opacity(), 1.0)
-        # the eye on a row: the object shown in the views, the rest dimmed
         n = next(k for k, i in enumerate(self.items) if i.text == "c")
         page.row_buttons(n)["eye"].click()
         self.assertEqual(win.selection, ("building", self.bid))
@@ -104,8 +114,8 @@ class ChecksOnTheViews(unittest.TestCase):
         win._select("subfield", self.sid)
         self.assertEqual(self.shown(), ["a", "b"])
         page.object_button.click()
-        # a double click leads to the place
-        page._open(self.row_of("d"), 1)
+        # the eye of a phase's item leads to that phase
+        page.row_buttons(next(k for k, i in enumerate(self.items) if i.text == "d"))["eye"].click()
         self.assertEqual(win.phase(), "production")
         win.show_phase("model")
         # a click on a mark of the tree: that object's checks, the list opened; the name alone selects; a group

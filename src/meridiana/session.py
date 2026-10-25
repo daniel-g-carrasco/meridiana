@@ -174,6 +174,17 @@ class Undo:
         self.index += 1
         self._tell()
 
+    def take_back(self) -> None:
+        """The last step undone and forgotten, with no redo left: a fix shown as a preview and refused (R126)."""
+        if not self.can_undo() or self.can_redo():
+            return
+        self.index -= 1
+        step = self.steps.pop()
+        if self.clean_index > self.index:
+            self.clean_index = -1
+        self.restore(step.before)
+        self._tell()
+
     def can_undo(self) -> bool:
         return self.index > 0
 

@@ -1232,13 +1232,33 @@ class EnergyPages(Journeys):
         row = next(page.tree.topLevelItem(g).child(c) for g in range(page.tree.topLevelItemCount())
                    for c in range(page.tree.topLevelItem(g).childCount())
                    if page.tree.topLevelItem(g).child(c).data(1, Qt.ItemDataRole.UserRole) == n)
-        page.tree.setCurrentItem(row)
-        self.assertTrue(page.fix_button.isEnabled())
-        self.assertEqual(page.fix_label.text(), "Lay the modules")
-        page.fix_button.click()
+        # R126: shown first, the views on it; taken back, nothing left to redo; kept, an ordinary step
+        steps = self.win.session.undo.count()
+        fix = page.row_buttons(row.data(1, Qt.ItemDataRole.UserRole))["fix"]
+        fix.click()
         self.assertTrue(self.win.project.subfields[0].filled)
+        self.assertTrue(page.previewing())
+        self.assertIn("Lay the modules", page.preview_text.text())
+        page.preview_drop.click()
+        self.assertFalse(page.previewing())
+        self.assertFalse(self.win.project.subfields[0].filled)
+        self.assertEqual(self.win.session.undo.count(), steps)
+        self.assertFalse(self.win.session.undo.can_redo())
+        self.assertIn("taken back", self.win.statusBar().currentMessage())
+        n = next(k for k, i in enumerate(page.items) if i.fix == ("action", "fill", "subfield", sid))
+        page.row_buttons(n)["fix"].click()
+        page.preview_keep.click()
+        self.assertTrue(self.win.project.subfields[0].filled)
+        self.assertEqual(self.win.session.undo.count(), steps + 1)
         self.win.undo.undo()
         self.assertFalse(self.win.project.subfields[0].filled)
+        n = next(k for k, i in enumerate(page.items) if i.fix == ("action", "fill", "subfield", sid))
+        page.row_buttons(n)["fix"].click()                  # a preview, then another change: the fix is kept
+        self.win._edited("subfield", sid, {"name": "Altro"})
+        self.assertFalse(page.previewing())
+        self.assertTrue(self.win.project.subfields[0].filled)
+        self.win.undo.undo()
+        self.win.undo.undo()
 
     def the_site_sets_the_rules_and_their_notes_are_copied(self):
         from PySide6.QtGui import QGuiApplication
