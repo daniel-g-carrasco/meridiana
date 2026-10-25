@@ -15,6 +15,7 @@ from PySide6.QtCore import QRect, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPalette
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem, QTreeWidgetItem
 
+from .. import theme_colors
 from .cards import default_tokens
 from .design import Space
 
@@ -75,7 +76,7 @@ def row_pill(painter: QPainter, option: QStyleOptionViewItem) -> None:
     colour = QColor(option.palette.color(QPalette.ColorGroup.Active, QPalette.ColorRole.Highlight))
     if not selected:
         colour = QColor(option.palette.color(QPalette.ColorGroup.Active, QPalette.ColorRole.Text))
-        colour.setAlpha(18)
+        colour.setAlphaF(theme_colors.HOVER)                # the hover of every control (R160)
     painter.save()
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter.setClipRect(option.rect)

@@ -74,10 +74,11 @@ class Preview(QFrame):
     def show_tokens(self, t: dict, dark: bool) -> None:
         self.setPalette(qpalette(theme_colors.palette(t, dark)))
         from .design import Radius, Space, padding
-        # the sample of the primary button, as the sheet draws it (ui/theme.style_sheet)
-        self.button.setStyleSheet(f"QPushButton {{ background: {t['accent']}; color: {t['accent_fg']}; "
-                                  f"border: none; border-radius: {Radius.CONTROL}px; "
-                                  f"{padding(Space.XS, Space.L, 0)} }}")
+        # the sample of a button with the focus, as the sheet draws it (ui/theme.style_sheet): the accent is the
+        # focus's, no button is full of it (R158)
+        self.button.setStyleSheet(f"QPushButton {{ background: {t['field']}; color: {t['text']}; "
+                                  f"border: 2px solid {t['accent']}; border-radius: {Radius.CONTROL}px; "
+                                  f"{padding(Space.XS, Space.L, 2)} }}")
         ink = theme_colors.STATUS["warning"] if dark else theme_colors.WARNING_INK
         self.warning.setText(f"<span style='color:{ink}'>{mark('⚠')}</span> " + _("To check: the row pitch is below the "
                                                                           "limit angle"))

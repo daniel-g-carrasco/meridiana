@@ -98,11 +98,12 @@ class ViewBars(unittest.TestCase):
         bar3d = win.view3d.viewbar
         self.assertTrue(bar3d.buttons[win.view_actions["both"]].isChecked())
         self.assertFalse(bar3d.buttons[win.view_actions["3d"]].isChecked())
-        # the bars take the colours of the theme
+        # the bars take the colours of the theme: a switch on in the pressed layer, as every tool (R158, R160)
+        from meridiana import theme_colors
         win._appearance("dark", "plum", "meridiana")
-        self.assertIn(win.theme.tokens["select_bg"], win.plan.viewbar.styleSheet())
+        self.assertIn(theme_colors.qt_hex(win.theme.tokens["press"]), win.plan.viewbar.styleSheet())
         win._appearance("light", "bronze", "meridiana")
-        self.assertIn(win.theme.tokens["select_bg"], win.view3d.viewbar.styleSheet())
+        self.assertIn(theme_colors.qt_hex(win.theme.tokens["press"]), win.view3d.viewbar.styleSheet())
 
 
 if __name__ == "__main__":

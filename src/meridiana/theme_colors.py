@@ -240,6 +240,11 @@ CARD_VEIL = 0.0                 # dark theme: the card is the panel, as in the m
 FIELD_VEIL = (0.06, 0.22)       # the mockups' --sink: the text at 6 % in the light theme, black at 22 % in the dark
 LINE_CONTRAST = 3.0             # a border that identifies a control (WCAG 2.2, 1.4.11)
 SELECT_CHROMA = 0.018           # the selection's colour at most (R104): a grey that leans to the accent's hue
+# a control under the pointer and pressed (or on): its colour at rest with the text's colour over it, at 8 % and at
+# 16 %, in both themes (R160, Daniel 25/10/2026: «caratteristiche di delta colore» the same everywhere); a control
+# at rest with no ground of its own takes `hover` and `press` as they are, see-through; one with a ground of its
+# own (the `field` of the buttons, the tabs) the same layer over it (`state`)
+HOVER, PRESS = 0.08, 0.16
 
 
 def _surfaces(t: dict, dark: bool) -> None:
@@ -272,6 +277,14 @@ def _surfaces(t: dict, dark: bool) -> None:
         L += 0.01 if dark else -0.01
         danger = hex_of(L, C, h)
     t["danger"] = danger
+    t["hover"] = t["text"] + f"{round(HOVER * 255):02x}"
+    t["press"] = t["text"] + f"{round(PRESS * 255):02x}"
+
+
+def state(t: dict, rest: str, alpha: float) -> str:
+    """The colour of a control with the ground `rest` under the pointer (HOVER) or pressed (PRESS): `rest` with the
+    text's colour over it at `alpha`, opaque."""
+    return mix(rest, t["text"], alpha)
 
 
 def derive(seed: str, dark: bool, backgrounds: str = "meridiana", base: dict | None = None) -> Derived:

@@ -136,14 +136,30 @@ Daniel, 25/10/2026 (R121): «deve includere tutti i tasti». Sei tipi, ciascuno 
 
 | Tipo | Alto | Raggio | Testo | Dove |
 |---|---|---|---|---|
-| `PUSH` pulsante | 28 | 6 | `strong` | i comandi («Calcola», «Esporta…», «OK»); velo `field`; `primary` pieno di accento, uno per pagina; `destructive` col testo rosso; spento senza velo |
+| `PUSH` pulsante | 28 | 6 | `strong` | i comandi («Calcola», «Esporta…», «OK»); velo `field`; nessuno pieno di accento (R158), nemmeno il `primary`; `destructive` col testo rosso; spento senza velo |
 | `TOOL` strumento | 28, o icona 24 e parola | 6 | `secondary` sotto l'icona, `control` accanto | barra della fase, barra della vista, barra del sole, pulsanti della barra di stato |
 | `CHIP` pillola | 24 | 12 | `control` | gettoni e conteggi delle Verifiche, «Tabella» dei grafici, pillole delle varianti, linguette dei grafici, delle schede accorpate e delle Preferenze, stati delle consegne |
 | `SMALL` piccolo | 20 | 4 | `control` | croce delle schede, puntina e «Sgancia» dell'aiuto, «Correggi» sulle righe delle Verifiche |
 | `HELP` «?» | 16 | 8 | `label` | il «?» di un gruppo o di un riquadro |
 | `NAV` voce | 34 | 6 | `body` | le voci della pagina File |
 
-Il pulsante «File» è un `PUSH` del velo; diventa pieno di accento solo quando la sua pagina è aperta.
+Il pulsante «File» è disegnato come le fasi accanto: senza fondo a riposo, lo strato dell'hover sotto il
+puntatore, quello del premuto finché la sua pagina è aperta (R158, R160).
+
+### Sotto il puntatore e premuto
+
+Daniel, 25/10/2026 (R160): «L'hover è ancora troppo incongruente ... Deve avere certi roundings, dimensioni e
+caratteristiche di delta colore». Una regola sola, in tutti e due i temi:
+
+- **colore**: il colore di riposo del controllo con sopra il colore del testo all'**8 %** sotto il puntatore e al
+  **16 %** premuto o acceso (`theme_colors.HOVER`, `PRESS`; gettoni `hover` e `press`). Dove il controllo non ha
+  un fondo suo (strumenti, pillole, voci di menu, righe, fasi, «File») lo strato si usa trasparente; dove ce l'ha
+  (pulsanti e linguette sul velo `field`, pulsanti dei riquadri sul `panel`) lo si calcola sopra
+  (`theme_colors.state`). Nel tema scuro lo strato schiarisce, nel chiaro scurisce: non più il nero sul velo scuro;
+- **forma**: quella del controllo, mai un'altra: 28 px e raggio 6 per pulsanti, strumenti, «File» e fasi; 24 px a
+  pillola per pillole e linguette dei grafici; la voce di un menu col raggio 4; la riga di un elenco tutta la sua
+  forma (la scheda di una verifica, la pillola di 4 px delle sezioni);
+- **testo**: non cambia peso; i nomi spenti (fasi, linguette, pillole delle varianti) passano al colore del testo.
 
 ### Movimento (`Motion`)
 
@@ -172,17 +188,19 @@ I principali:
 | `window`, `panel`, `view`, `card`, `field` | tavolo, scheda, vista, bianco delle tabelle, velo tonale dei controlli |
 | `line`, `line_soft`, `card_line` | linea piena (anche il bordo delle schede), linea leggera dentro le schede |
 | `text`, `text2`, `muted` | testo, secondario, spento |
-| `accent`, `accent_fg`, `accent_hover`, `accent_soft` | il colore scelto: un pulsante pieno per pagina, il fuoco, la cosa in mano |
-| `select_bg`, `select_fg` | selezione, strumento acceso, pillola scelta: un grigio che pende verso la tinta dell'accento |
+| `accent`, `accent_fg`, `accent_hover`, `accent_soft` | il colore scelto: la fase in mano e il fuoco, nessun pulsante pieno (R158) |
+| `hover`, `press` | lo strato del testo all'8 % e al 16 %: sotto il puntatore, premuto o acceso (R160) |
+| `select_bg`, `select_fg` | selezione in un elenco: un grigio che pende verso la tinta dell'accento (lo strumento acceso e la pillola scelta hanno `press`, R158) |
 | `danger`, stati `good`/`warning`/`critical` | errori e semaforo: sempre con un segno o una parola, mai solo col colore |
 
 Regole:
 
 - **L'accento con misura** (R104, Daniel 25/10/2026: «lo vorrei un po' meno presente in tutto Meridiana il colore
-  di accento»). Resta dove dice «questa è la cosa in mano» o «questa è l'azione»: il pulsante `primary` (uno per
-  pagina) e lo strumento primario della barra, il disco del numero della fase in mano, il pulsante «File» con la
-  sua pagina aperta, l'anello del fuoco (2 px), la selezione e il sottocampo sulla pianta e il modulo scelto in 3D
-  (i disegni). Tolto, neutro, da: selezione (`select_bg`, ora con croma 0,018 al massimo: era la tinta pallida
+  di accento»). Resta dove dice «questa è la cosa in mano»: il disco del numero della fase in mano, l'anello del
+  fuoco (2 px), la selezione e il sottocampo sulla pianta e il modulo scelto in 3D (i disegni). Dal 25/10/2026
+  (R158: «i pulsanti già evidenziati con il colore di accento non devono esistere, né negli strumenti né altrove
+  ... sono brutti») nessun pulsante ne è pieno: né il `primary`, né lo strumento primario della barra, né «File»
+  con la sua pagina aperta. Tolto, neutro, anche da: selezione (`select_bg`, ora con croma 0,018 al massimo: era la tinta pallida
   dell'accento), strumenti accesi, linguette e pillole scelte, voce scelta della pagina File, riquadro chiave dei
   risultati (era in `accent_soft`), «Correggi» sulle righe delle Verifiche (era pieno di accento), stato «da
   aggiornare» delle consegne (ora un contorno), passaggio sulla barra della vista e sul cubo, arco dell'attesa,
@@ -201,8 +219,8 @@ Regole:
 |---|---|---|
 | Scheda di un pannello | `ui/cards.py` (`CardDock`) | fondo `panel`, linea `card_line`, raggio 8, titolo 14 semigrassetto, croce che chiude |
 | Pagina della fase | foglio di stile (`#phase-pages`) | come una scheda |
-| Pulsante | foglio di stile, `Button.PUSH` | velo `field`, raggio 6, 28 px, stile `strong`; un solo `primary` pieno di accento per pagina; `destructive` col testo rosso |
-| Pulsante strumento | `ui/phasebar.py`, foglio di stile, `Button.TOOL` | trasparente, raggio 6; acceso in `select_bg` con la linea |
+| Pulsante | foglio di stile, `Button.PUSH` | velo `field`, raggio 6, 28 px, stile `strong`; nessuno pieno di accento (R158); `destructive` col testo rosso; sotto il puntatore lo strato `hover` sopra il velo (R160) |
+| Pulsante strumento | `ui/phasebar.py`, foglio di stile, `Button.TOOL` | trasparente, raggio 6; `hover` sotto il puntatore, acceso e premuto in `press` (R158, R160) |
 | Pillola e linguetta | foglio di stile, `Button.CHIP` | 24 px, estremi tondi, stile `control`; le linguette di ogni barra (grafici, schede accorpate, Preferenze) come le pillole delle schede accorpate: fondo `field`, quella scelta sul fondo della scheda col suo filo |
 | Campo (testo, numero, elenco, data) | foglio di stile, `ui/style.pad_fields` | velo `field` senza bordo; bordo `field_line` al passaggio, 2 px di accento col fuoco; frecce piccole e spente; numeri allineati a sinistra |
 | Gruppo | `ui/style.py` (`Group`) | cornice `line`, raggio 6, intestazione piena in `line_soft` per tutta la larghezza, «?» sulla riga del titolo |
@@ -212,12 +230,12 @@ Regole:
 | Gettone e conteggio | `ui/checks_page.py` | pillola con bordo, segno a sinistra |
 | Selettore a segmenti | `ui/variant_bar.py` | pillole su una pista `field`, la scelta rialzata in `panel` con la linea; «+» per aggiungere; tasto destro per il resto |
 | Elenco a sezioni | `ui/sections.py`, `ui/marks.py` | intestazioni maiuscole 11 px con il conteggio, non selezionabili; segni come pillole a destra |
-| Schede delle Verifiche | `ui/checks_page.ChecksTree` | le voci di una sezione in una scheda, selezione e passaggio come pillole di raggio 4 dentro la scheda, mai sulla colonna della freccia; il segno tiene il suo colore anche sulla riga scelta |
+| Schede delle Verifiche | `ui/checks_page.ChecksTree` | le voci di una sezione in una scheda, niente selezione; sotto il puntatore la voce intera col suo dettaglio prende lo strato `hover` (R153, R160); il segno tiene il suo colore anche sulla riga scelta |
 | Vista | `ui/cards.round_corners` | a 6 px dal bordo della sua scheda, quattro angoli a raggio 6 disegnati (non a maschera), 6 px fra due viste |
 | Barra della vista | `ui/viewbar.py` | soli simboli, nome e tasto nel suggerimento; raggio 6, pulsanti raggio 4 |
 | Nord, scala, fonte sulla pianta | `ui/plan_overlays.py` | stile B scelto il 24/10/2026: freccia sottile sotto la N, scala a linea con la lunghezza a destra, ciascuno in un riquadro trasparente al 55 % che lo avvolge con lo stesso margine; raggio 6, testo 12; mai uno sopra l'altro |
-| Riga delle fasi | `ui/phasebar.py` | linguette `control` (13 px), la fase in mano `strong`, con il disco del numero in `label`; la linguetta scelta e la scheda della barra sono una forma sola, unite da due angoli inversi del raggio delle schede (R84, come le linguette di GNOME); al cambio di fase la linguetta scorre fino alla nuova in 240 ms |
-| Pulsante «File» e pagina File | `ui/phasebar.py`, `ui/file_page.py` | pulsante del velo a sinistra delle fasi, pieno di accento solo con la pagina aperta (R104); la pagina è una scheda con l'elenco dei posti a sinistra (`body`) e riquadri a destra (`title` e `description`) |
+| Riga delle fasi | `ui/phasebar.py` | linguette `control` (13 px), la fase in mano `strong`, con il disco del numero in `label`; sotto il puntatore un fondo `hover` di 28 px e raggio 6 come «File» (R160); la linguetta scelta e la scheda della barra sono una forma sola, unite da due angoli inversi del raggio delle schede (R84, come le linguette di GNOME); al cambio di fase la linguetta scorre fino alla nuova in 240 ms |
+| Pulsante «File» e pagina File | `ui/phasebar.py`, `ui/file_page.py` | a sinistra delle fasi e disegnato come loro: senza fondo, `hover` sotto il puntatore, `press` con la pagina aperta (R158, R160); la pagina è una scheda con l'elenco dei posti a sinistra (`body`) e riquadri a destra (`title` e `description`) |
 | Barra dei menu | `ui/menubar.py` | nascosta: Alt la mostra sopra la riga delle fasi senza spostare niente; Vista > Barra dei menu la tiene sempre |
 | Pulsanti delle schede | `ui/panel_buttons.py` | nella barra di stato, un'icona per scheda: piena se si vede, spenta se chiusa o coperta |
 | Aiuto | `ui/help_box.py` | scheda sotto Proprietà; il testo occupa lo spazio che c'è; un «?» o F1 lo blocca sull'argomento (puntina accanto al titolo), «Sgancia» lo mette in una finestrella sua (R44, R68) |

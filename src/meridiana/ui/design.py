@@ -55,13 +55,14 @@ class Radius:
 class Type:
     """The text's sizes in logical pixels and its two weights. The styles made of them are `Text`: a size or a
     weight is never chosen on its own."""
+    TINY = 10           # the names of the bar's groups alone (R159, Daniel 25/10/2026: «più leggeri, piccoli»)
     CAPTION = 11        # captions, the ticks of a chart, the labels in capitals, a count in a pill
     SMALL = 12          # secondary text: notes, the status bar, the words under the tools, the axes' titles
     BODY = 13           # the text (Inter, R95; 13 px since R123, Daniel 25/10/2026: «da 14 a 13»)
     TITLE = 14          # the title of a card, of a tile of the File page
     HEADING = 18        # a heading inside a page or a dialog
     DISPLAY = 22        # a page's title, the figure of a result
-    SCALE = (CAPTION, SMALL, BODY, TITLE, HEADING, DISPLAY)
+    SCALE = (TINY, CAPTION, SMALL, BODY, TITLE, HEADING, DISPLAY)
     CONTROL = BODY      # the word of a button, a tab, a pill: the text's size (the tabs were 15, R121)
     REGULAR, SEMIBOLD = 400, 600
     BOLD = SEMIBOLD     # one weight for what stands out: a bold asked for is the semibold (R121)
@@ -98,8 +99,9 @@ class Text:
     CONTROL = TextStyle("control", Type.CONTROL, Type.REGULAR)               # a tab, a pill, a chip
     SECONDARY = TextStyle("secondary", Type.SMALL, Type.REGULAR, "text2")    # notes, status bar, tools, axes
     CAPTION = TextStyle("caption", Type.CAPTION, Type.REGULAR, "muted")      # ticks, formats, sources
-    LABEL = TextStyle("label", Type.CAPTION, Type.SEMIBOLD, "muted", True)   # sections, groups of the bar, counts
-    ALL = (DISPLAY, HEADING, TITLE, STRONG, BODY, DESCRIPTION, CONTROL, SECONDARY, CAPTION, LABEL)
+    LABEL = TextStyle("label", Type.CAPTION, Type.SEMIBOLD, "muted", True)   # sections, counts
+    GROUP = TextStyle("group", Type.TINY, Type.REGULAR, "muted", True)       # the names of the bar's groups (R159)
+    ALL = (DISPLAY, HEADING, TITLE, STRONG, BODY, DESCRIPTION, CONTROL, SECONDARY, CAPTION, LABEL, GROUP)
     BUTTON = STRONG             # the word of a push button, the phase in hand: what stands out
 
     @classmethod

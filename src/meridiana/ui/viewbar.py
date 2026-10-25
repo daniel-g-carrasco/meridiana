@@ -102,11 +102,9 @@ class ViewBar(QFrame):
 
     def set_colours(self, t: dict) -> None:
         """The theme's tokens (theme_colors): the panel's colour, a little see-through; under the pointer the
-        controls' veil, a switch that is on in the selection's grey (R104: no accent here)."""
-        from .theme import veil
+        controls' layer, a switch that is on the pressed one (R104: no accent here; R160: one hover everywhere)."""
         panel = theme_colors.qt_hex(t["panel"])
-        dark = theme_colors.luminance(t["panel"]) < 0.2
-        hover = veil(t, dark, 0.35 if dark else 0.14)
+        hover, press = theme_colors.qt_hex(t["hover"]), theme_colors.qt_hex(t["press"])
         self.setStyleSheet(f"""
 #viewbar {{ background: {panel}; border: 1px solid {t['line']}; border-radius: {Radius.CONTROL}px; }}
 #viewbar-line {{ background: {t['line']}; margin: 0 3px; }}
@@ -114,7 +112,7 @@ class ViewBar(QFrame):
                        color: {t['text2']}; }}
 #viewbar QToolButton[popupMode="2"] {{ padding-right: {Space.XL + 2}px; }}
 #viewbar QToolButton:hover {{ background: {hover}; color: {t['text']}; }}
-#viewbar QToolButton:checked {{ background: {t['select_bg']}; color: {t['select_fg']}; }}
+#viewbar QToolButton:pressed, #viewbar QToolButton:checked {{ background: {press}; color: {t['text']}; }}
 """)
         self.adjustSize()
 

@@ -178,7 +178,11 @@ class TheTheme(unittest.TestCase):
             fonts = [line for line in sheet.splitlines() if "font-" in line]
             self.assertEqual([line.split("{")[0].strip() for line in fonts], ["QTabWidget > QTabBar"])
             self.assertIn("font-size: 13px; font-weight: 400;", fonts[0])
-            allowed = {v[:7].lower() for v in flat(t).values()} | {"#000000", "#ffffff", theme_colors.faded_text(t)}
+            # and the grounds of the controls under the pointer and pressed: the text's layer over them (R160)
+            states = {theme_colors.state(t, t[rest], a) for rest in ("field", "panel")
+                      for a in (theme_colors.HOVER, theme_colors.PRESS)}
+            allowed = ({v[:7].lower() for v in flat(t).values()} | {"#000000", "#ffffff", theme_colors.faded_text(t)}
+                       | states)
             self.assertEqual(hexes(sheet) - allowed, set(), "a colour written by hand" if dark else "light")
             self.assertIn(t["field_line"], sheet)
             self.assertIn(t["field"], sheet)

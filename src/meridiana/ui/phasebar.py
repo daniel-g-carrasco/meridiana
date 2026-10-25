@@ -31,15 +31,17 @@ from .. import phases, theme_colors
 from ..i18n import _
 from . import icons
 from .cards import EDGE, RADIUS, default_tokens
-from .design import Button, Icon, Motion, Size, Space, Text, set_text, text_font
+from .design import Button, Icon, Motion, Radius, Size, Space, Text, set_text, text_font
 from .waiting import STALE_MARK
 
 TALL = 68                   # the bar with the words under the icons (design 5.3): what the bar must not exceed
 LOW = 44                    # the icons alone
 LOW_WINDOW = 900            # logical pixels: a lower window gets the icons alone by itself (the laptop, a column)
 ICON_TALL, ICON_LOW = Icon.TILE, Icon.BAR
-TOOL_TEXT, GROUP_TEXT = Text.SECONDARY, Text.LABEL     # the word under the icon, the title of the group
+TOOL_TEXT, GROUP_TEXT = Text.SECONDARY, Text.GROUP     # the word under the icon, the title of the group (R159)
+GROUP_GAP = Space.XS                                    # between the commands and their group's name (R159)
 TAB_HEIGHT = Size.TAB       # a tab of the row of the phases
+HOVER_INSET = Space.XXS     # the ground of a phase under the pointer, in from its tab's sides (R160)
 BADGE = 20                  # the disc of a phase's number
 TAB_PAD = (Space.L - 2, Space.XL)   # inside a tab, left of the disc and right of the name
 CARD_PAD = (Space.L - 2, Space.S, Space.L - 2, Space.S - 1)   # inside the card of the bar
@@ -48,7 +50,8 @@ CARD_PAD = (Space.L - 2, Space.S, Space.L - 2, Space.S - 1)   # inside the card 
 def _colours(t: dict | None = None) -> dict:
     t = t or default_tokens()
     return {"text": t["text"], "text2": t["text2"], "muted": t["muted"], "disc": t["line_soft"], "accent": t["accent"],
-            "accent_fg": t["accent_fg"], "card": t["panel"], "edge": t["card_line"]}
+            "accent_fg": t["accent_fg"], "card": t["panel"], "edge": t["card_line"],
+            "hover": theme_colors.qt_hex(t["hover"])}
 
 
 class PhaseTabBar(QTabBar):
@@ -131,6 +134,14 @@ class PhaseTabBar(QTabBar):
             r = self.tabRect(i)
             on = i == self.currentIndex() and not self.file_open
             number, name = self.parts(self.tabText(i))
+            if i == self.hovered and not on:
+                # under the pointer: the controls' layer on a control's shape, as «File» beside it (R160: the
+                # phases changed only their name's colour)
+                ground = QRectF(r.left() + HOVER_INSET, r.center().y() + 1 - Size.CONTROL / 2,
+                                r.width() - 2 * HOVER_INSET, Size.CONTROL)
+                p.setPen(Qt.PenStyle.NoPen)
+                p.setBrush(QColor(c["hover"]))
+                p.drawRoundedRect(ground, Radius.CONTROL, Radius.CONTROL)
             x = r.left() + TAB_PAD[0]
             if number:
                 disc = QRectF(x, r.center().y() - BADGE / 2 + 1, BADGE, BADGE)
@@ -208,6 +219,7 @@ class ToolGroup(QWidget):
             row.addWidget(b)
             self.buttons[tool.command] = b
         box.addLayout(row)
+        box.addSpacing(GROUP_GAP)
         self.title = QLabel(group.title)
         self.title.setObjectName("group-title")
         self.title.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
@@ -227,11 +239,11 @@ class ToolGroup(QWidget):
             height = b.height() if b.height() > 1 else b.minimumHeight()
         title = QFontMetrics(self.title.font()).height()
         self.title.setFixedHeight(title)
-        return height + title
+        return height + GROUP_GAP + title
 
     def set_colours(self, t: dict) -> None:
         if self.primary is not None:
-            self.primary.set_own_icon(icons.icon(self.primary_icon, colour=t["accent_fg"]))
+            self.primary.set_own_icon(icons.icon(self.primary_icon, colour=t["text"]))      # no accent (R158)
 
 
 def _plain(text: str) -> str:
@@ -320,9 +332,9 @@ class PhaseHeader(QWidget):
         head = QHBoxLayout()
         head.setContentsMargins(0, 0, 0, 0)
         head.setSpacing(0)
-        # «File» at the left of the phases (the target's File page, R40): a button of the veil, full of accent
-        # only while its page is open, the place in hand (R104: «lo vorrei un po' meno presente il colore di
-        # accento»)
+        # «File» at the left of the phases (the target's File page, R40), drawn as they are: no ground at rest,
+        # the controls' layer under the pointer, the pressed one while its page is open (R104, R158, R160: «file
+        # non c'entra proprio nulla»)
         self.file_button = QToolButton()
         self.file_button.setObjectName("file-chip")
         self.file_button.setText(_("File"))
@@ -372,7 +384,7 @@ class PhaseHeader(QWidget):
     def set_colours(self, t: dict) -> None:
         self.colours = _colours(t)
         self.dark = theme_colors.luminance(t["window"]) < 0.2
-        self.file_icons = (icons.icon("folder-open", t["text"]), icons.icon("folder-open", t["accent_fg"]))
+        self.file_icons = (icons.icon("folder-open", t["text"]), icons.icon("folder-open", t["text"]))   # R158
         self._file_icon()
         self.tab_bar.colours = self.colours
         self.tab_bar.update()

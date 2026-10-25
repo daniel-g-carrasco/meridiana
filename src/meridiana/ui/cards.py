@@ -192,7 +192,7 @@ class CloseButton(QToolButton):
         self.setCursor(Qt.CursorShape.ArrowCursor)
         self.setToolTip(_("Close the panel; View > Panels brings it back"))
         self.colour = QColor(default_tokens()["muted"])
-        self.veil = QColor(0, 0, 0, 24)
+        self.veil = QColor(theme_colors.qt_hex(default_tokens()["hover"]))
 
     def paintEvent(self, event) -> None:
         p = QPainter(self)
@@ -308,7 +308,7 @@ class CardDock(QDockWidget):
                         "muted": t["muted"], "header": t["header"], "field": t["field"]}
         self.title_bar.colours = {"text": t["text"], "header": t["header"]}
         self.title_bar.close_button.colour = QColor(t["muted"])
-        self.title_bar.close_button.veil = QColor(255, 255, 255, 30) if dark else QColor(0, 0, 0, 24)
+        self.title_bar.close_button.veil = QColor(theme_colors.qt_hex(t["hover"]))      # R160
         self.update()
         self.title_bar.update()
 

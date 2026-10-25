@@ -105,12 +105,6 @@ def qpalette(roles: dict) -> QPalette:
     return pal
 
 
-def veil(t: dict, dark: bool, alpha: float) -> str:
-    """The tonal veil of the controls (study 17, C2) at `alpha`, in Qt's order: the text over the light floors,
-    black over the dark ones."""
-    return theme_colors.qt_hex(("#000000" if dark else t["text"]) + f"{round(alpha * 255):02x}")
-
-
 ARROWS = {"up": ("M2 9L8 3L14 9", 16, 12), "down": ("M2 3L8 9L14 3", 16, 12), "open": ("M2 4L8 10L14 4", 16, 14)}
 
 
@@ -141,7 +135,8 @@ def style_sheet(t: dict, dark: bool = False) -> str:
     (theme_colors). Three floors: the window's (the bars, the tabs, the status bar), the panels' (the cards drawn
     by ui/cards.py, the pages of the phases), the view's (the dialogs' lists). Every button and field 28 px high
     (Button.PUSH) with its text 8 px from its edge: buttons and fields tonal on the `field` veil, the fields' border
-    at 3:1 under the pointer and the accent's when focused, one `primary` button full of accent per page; the chips,
+    at 3:1 under the pointer and the accent's when focused; under the pointer and pressed one layer of the text's
+    colour over what is at rest (R160, theme_colors.HOVER and PRESS), the shape the control's own; the chips,
     pills and tabs 24 px (Button.CHIP), the tabs of every bar as the segments of the variants (R109, R121); groups
     with a frame and a filled header (C3, ui/style.py); tiles and strips full of the veil without a border; the
     little windows (menus, lists, popups, tooltips) rounded by the system where it can (ui/popups.py). The texts'
@@ -151,12 +146,18 @@ def style_sheet(t: dict, dark: bool = False) -> str:
     design.set_text); but for the tab bar of a tab widget, which under a style sheet takes its tab widget's font
     whatever is set on it (QStyleSheetStyle::updateStyleSheetFont, the «natural children» named qt_...), unless a
     rule of the sheet gives it one. No scroll bar either: ui/scrollbars.ScrollStyle draws them, and a rule reaching a QScrollBar
-    would make Qt draw it with its arrows (R100). The accent (R104) only for what is in hand or the one action of
-    the page: the primary button, the focus, the File page open; the selection, the chosen tabs and pills, the key
-    tile, the state «to make again» and the rows' «Correggi» are neutral."""
+    would make Qt draw it with its arrows (R100). The accent (R104, R158) only for the phase in hand and the focus:
+    no button is full of it, the primary one, the File page open and a tool on included («i pulsanti già evidenziati
+    con il colore di accento non devono esistere ... sono brutti», Daniel 25/10/2026); a button on is a neutral grey,
+    the selection in a list the grey with a hint of the hue."""
     from .design import Button, Layout, Line, Radius, Size, Space, Text, padding
     from .popups import native_corners
-    hover, press = veil(t, dark, 0.35 if dark else 0.14), veil(t, dark, 0.5 if dark else 0.2)
+    # under the pointer and pressed: one layer of the text's colour (R160), see-through where the control has no
+    # ground of its own, over its ground where it has one
+    hover, press = theme_colors.qt_hex(t["hover"]), theme_colors.qt_hex(t["press"])
+    field_hover = theme_colors.state(t, t["field"], theme_colors.HOVER)
+    field_press = theme_colors.state(t, t["field"], theme_colors.PRESS)
+    panel_hover = theme_colors.state(t, t["panel"], theme_colors.HOVER)
     faded = theme_colors.faded_text(t)
     a = arrows(t["muted"])
     up = f"image: url({a['up']}); width: 8px; height: 6px;" if a else ""
@@ -183,10 +184,11 @@ QMenuBar, QStatusBar {{ background: transparent; }}
 QMenuBar[revealed="true"] {{ background: {t['card']}; border: 1px solid {t['line']}; border-radius: {R.CARD}px;
                              padding: {S.XXS}px; }}
 QMenuBar::item {{ padding: {S.XS}px {S.M}px; border-radius: {R.INNER}px; background: transparent; }}
-QMenuBar::item:selected, QMenuBar::item:pressed {{ background: {hover}; }}
+QMenuBar::item:selected {{ background: {hover}; }}
+QMenuBar::item:pressed {{ background: {press}; }}
 QMenu {{ background: {t['card']}; {edge} padding: {S.XS}px; }}
 QMenu::item {{ padding: {S.S}px {S.XXL}px {S.S}px {S.M}px; border-radius: {R.INNER}px; }}
-QMenu::item:selected {{ background: {t['select_bg']}; color: {t['select_fg']}; }}
+QMenu::item:selected {{ background: {hover}; color: {t['text']}; }}
 QMenu::separator {{ height: 1px; background: {t['line']}; margin: {S.XS}px {S.M}px; }}
 QComboBox QAbstractItemView {{ background: {t['card']}; color: {t['text']}; {edge} padding: {S.XS}px; outline: 0;
                               selection-background-color: {t['select_bg']}; selection-color: {t['select_fg']}; }}
@@ -212,7 +214,8 @@ QTreeView#checks-tree::item:selected, QTreeView#checks-tree::item:hover {{ backg
     color: {t['text']}; }}
 QToolButton#rowfix {{ background: {t['field']}; color: {t['text']}; border: none; border-radius: {Button.SMALL[1]}px;
                       padding: 0 {S.M}px; min-height: {Button.CHIP[0]}px; max-height: {Button.CHIP[0]}px; }}
-QToolButton#rowfix:hover {{ background: {hover}; }}
+QToolButton#rowfix:hover {{ background: {field_hover}; }}
+QToolButton#rowfix:pressed {{ background: {field_press}; }}
 QToolButton#roweye {{ border: 1px solid {t['line']}; border-radius: {Button.SMALL[1]}px; padding: 0 {S.XS}px;
                       min-height: {chip_inner}px; max-height: {chip_inner}px; }}
 QFrame#fix-preview {{ background: {t['select_bg']}; border-radius: {R.CONTROL}px; }}
@@ -239,34 +242,27 @@ QTabWidget > QTabBar {{ font-size: {Text.CONTROL.size}px; font-weight: {Text.CON
 QTabBar::tab {{ border: 1px solid transparent; border-radius: {pill:g}px; padding: 0 {S.L - 1}px;
                min-height: {chip_inner}px; max-height: {chip_inner}px;   /* 24 px whole: Qt drops a radius over half the height */
                margin: {S.XS}px {S.XXS}px {S.XS}px 0; color: {t['text2']}; background: {t['field']}; }}
-QTabBar::tab:hover:!selected {{ background: {hover}; color: {t['text']}; }}
+QTabBar::tab:hover:!selected {{ background: {field_hover}; color: {t['text']}; }}
 QTabBar::tab:selected {{ background: {t['panel']}; color: {t['text']}; border-color: {t['line']}; }}
 QTabBar#phases {{ background: transparent; }}
 QStackedWidget#phase-bars, QWidget#phase-card {{ background: transparent; }}
 QStackedWidget#phase-bars QToolBar {{ padding: 0; spacing: {S.S}px; border: none; background: transparent; }}
 QStackedWidget#phase-bars QToolButton {{ padding: 1px {S.XS}px; }}
-QStackedWidget#phase-bars QToolButton[primary="true"] {{ background: {t['accent']}; color: {t['accent_fg']}; }}
-QStackedWidget#phase-bars QToolButton[primary="true"]:hover {{ background: {t['accent_hover']}; }}
-QStackedWidget#phase-bars QToolButton[primary="true"]:disabled {{ background: {t['field']}; color: {faded}; }}
 QStackedWidget#phase-bars QLabel#group-title {{ color: {t['muted']}; }}
 QStackedWidget#phase-bars QFrame#bar-line {{ background: {t['line_soft']}; margin: {S.XS}px {S.M}px; }}
 QPushButton {{ background: {t['field']}; border: 1px solid transparent; border-radius: {Button.PUSH[1]}px; {button}
               min-height: {inner}px; color: {t['text']}; }}
-QPushButton:hover {{ background: {hover}; }}
-QPushButton:pressed {{ background: {press}; }}
+QPushButton:hover {{ background: {field_hover}; }}
+QPushButton:pressed {{ background: {field_press}; }}
 QPushButton:focus {{ border: {Line.FOCUS}px solid {t['accent']}; {button_focus} }}
 QPushButton:disabled {{ background: transparent; border-color: transparent; color: {faded}; }}
-QPushButton[primary="true"] {{ background: {t['accent']}; color: {t['accent_fg']}; border-color: {t['accent']}; }}
-QPushButton[primary="true"]:hover, QPushButton[primary="true"]:pressed {{ background: {t['accent_hover']};
-                                                                        border-color: {t['accent_hover']}; }}
-QPushButton[primary="true"]:focus {{ border: {Line.FOCUS}px solid {t['text']}; }}
 QPushButton[primary="true"]:disabled {{ background: {t['field']}; color: {faded}; border-color: transparent; }}
 QPushButton[destructive="true"] {{ color: {t['danger']}; }}
 QToolButton {{ background: transparent; border: 1px solid transparent; border-radius: {Button.TOOL[1]}px;
               padding: {S.XS - 1}px; }}
 QToolButton:hover {{ background: {hover}; }}
 QToolButton:pressed {{ background: {press}; }}
-QToolButton:checked {{ background: {t['select_bg']}; color: {t['select_fg']}; border-color: {t['line']}; }}
+QToolButton:checked {{ background: {press}; color: {t['text']}; border-color: transparent; }}
 QToolButton:focus {{ border-color: {t['accent']}; }}
 QToolButton[popupMode="2"] {{ padding-right: {S.XL}px; }}
 QToolButton::menu-indicator {{ {drop} subcontrol-origin: padding; subcontrol-position: center right; right: {S.XS}px; }}
@@ -276,8 +272,8 @@ QToolButton#filter, QToolButton#count {{ border: 1px solid {t['line']}; border-r
 QToolButton#count {{ padding-left: {S.M - 1}px; }}
 QToolButton#filter:hover, QToolButton#count:hover {{ background: {hover}; }}
 QToolButton#filter:pressed, QToolButton#count:pressed {{ background: {press}; }}
-QToolButton#filter:checked, QToolButton#count:checked {{ background: {t['select_bg']}; color: {t['select_fg']};
-    border-color: {t['select_bg']}; }}
+QToolButton#filter:checked, QToolButton#count:checked {{ background: {press}; color: {t['text']};
+    border-color: {press}; }}
 QToolButton#filter[popupMode="2"] {{ padding-right: {S.XXL}px; }}
 QToolButton#count:disabled {{ color: {t['muted']}; }}
 QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QTextEdit, QPlainTextEdit, QDateEdit, QTimeEdit {{
@@ -325,9 +321,8 @@ QSlider::handle:horizontal {{ background: {t['card']}; border: 1px solid {t['fie
 QSlider::handle:horizontal:hover {{ border-color: {t['text2']}; }}
 QFrame#tile, QFrame#strip, QFrame#ftile {{ background: {t['field']}; border: none; border-radius: {R.CARD}px; }}
 QFrame#tile QPushButton, QFrame#strip QPushButton, QFrame#ftile QPushButton {{ background: {t['panel']}; }}
-QFrame#tile QPushButton:hover, QFrame#strip QPushButton:hover, QFrame#ftile QPushButton:hover {{ background: {hover}; }}
-QFrame#tile QPushButton[primary="true"] {{ background: {t['accent']}; color: {t['accent_fg']}; }}
-QFrame#tile QPushButton[primary="true"]:hover {{ background: {t['accent_hover']}; }}
+QFrame#tile QPushButton:hover, QFrame#strip QPushButton:hover, QFrame#ftile QPushButton:hover {{
+    background: {panel_hover}; }}
 QTableView, QTableWidget {{ background: {t['card']}; border: 1px solid {t['card_line']}; border-radius: {R.CONTROL}px;
                            gridline-color: {t['line_soft']}; selection-background-color: {t['select_bg']};
                            selection-color: {t['select_fg']}; }}
@@ -343,10 +338,10 @@ QLabel#state-todo {{ background: {t['line_soft']}; color: {t['text2']}; }}
 QLabel#state-unavailable, QLabel#state-planned {{ background: {t['line_soft']}; color: {t['muted']}; }}
 QFrame#chart-card {{ background: transparent; border: 1px solid {t['line_soft']}; border-radius: {R.CARD}px; }}
 QFrame#chart-card QTabWidget::pane {{ border: none; border-top: 1px solid {t['line_soft']}; top: 0px; }}
-QToolButton#file-chip {{ background: {t['field']}; color: {t['text']}; border: 1px solid transparent;
+QToolButton#file-chip {{ background: transparent; color: {t['text']}; border: 1px solid transparent;
                         border-radius: {Button.PUSH[1]}px; padding: {S.XXS}px {S.L - 2}px {S.XXS}px {S.M}px; }}
 QToolButton#file-chip:hover {{ background: {hover}; }}
-QToolButton#file-chip:checked {{ background: {t['accent']}; color: {t['accent_fg']}; border-color: {t['accent']}; }}
+QToolButton#file-chip:checked {{ background: {press}; color: {t['text']}; border-color: transparent; }}
 QFrame#variant-bar {{ background: {t['field']}; border: none; border-radius: {pill + S.XXS:g}px; }}
 QToolButton#variant-pill, QToolButton#variant-add, QToolButton#variant-more {{ border: 1px solid transparent;
     border-radius: {pill:g}px; padding: 0 {S.L - 1}px; min-height: {chip_inner}px; max-height: {chip_inner}px;
@@ -379,7 +374,7 @@ QToolButton#help-button {{ padding: 0; border: 1px solid {t['line']}; border-rad
                            color: {t['muted']}; background: transparent; }}
 QToolButton#help-button:hover {{ color: {t['text']}; border-color: {t['text']}; }}
 QToolButton#help-pin, QToolButton#help-detach {{ border-radius: {Button.SMALL[1]}px; padding: 0; }}
-QToolButton#help-pin:checked {{ background: {t['select_bg']}; border-color: transparent; }}
+QToolButton#help-pin:checked {{ background: {press}; border-color: transparent; }}
 """
 
 

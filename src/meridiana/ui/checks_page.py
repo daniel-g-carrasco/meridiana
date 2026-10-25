@@ -140,10 +140,8 @@ class ChecksTree(QTreeWidget):
         self.keyboard = False                               # the last move came from the keyboard
         self.viewport().setMouseTracking(True)
         t = default_tokens()
-        hover = QColor(t["text"])
-        hover.setAlpha(18)
         self.colours = {"card": t["card"], "line": t["line"], "sink": t["field"], "select": t["select_bg"],
-                        "hover": hover.name(QColor.NameFormat.HexArgb), "focus": t["accent"]}
+                        "hover": theme_colors.qt_hex(t["hover"]), "focus": t["accent"]}
         # the rows laid out again once the width rests: at every step of a panel's edge dragged it measured every
         # row's wrapped detail (4 500 times in 40 steps, R120)
         self.relayout = QTimer(self)
@@ -566,10 +564,8 @@ class ChecksPage(QWidget):
         # confini delle sottoschede»)
         dark = theme_colors.luminance(t["panel"]) < 0.2
         card = theme_colors.mix(t["panel"], "#ffffff", 0.045) if dark else t["card"]
-        hover = QColor(t["text"])
-        hover.setAlpha(18)
         self.tree.colours = {"card": card, "line": t["line"], "sink": t["field"], "select": t["select_bg"],
-                             "hover": hover.name(QColor.NameFormat.HexArgb), "focus": t["accent"]}
+                             "hover": theme_colors.qt_hex(t["hover"]), "focus": t["accent"]}      # R160
         self.tree.viewport().update()
 
     def _view_texts(self) -> None:

@@ -82,9 +82,9 @@ class Scales(unittest.TestCase):
 
     def test_the_catalogue_of_the_texts_is_closed_and_each_style_has_its_place(self):
         """R121 (Daniel, 25/10/2026: «alcune differenze ci devono essere ma non devono essere troppe e devono avere
-        un senso, e devono essere salvate come stile»): ten named styles on six sizes and two weights; the text at 13
-        (R123), the tabs and the buttons too, the cards' titles at 14; capitals only for the labels; a bold asked for
-        is the semibold."""
+        un senso, e devono essere salvate come stile»): eleven named styles on seven sizes and two weights; the text
+        at 13 (R123), the tabs and the buttons too, the cards' titles at 14; capitals only for the labels and the
+        names of the bar's groups, these at 10 (R159: «più leggeri, piccoli»); a bold asked for is the semibold."""
         from PySide6.QtGui import QFont, QFontInfo
 
         from meridiana.ui import theme
@@ -92,11 +92,12 @@ class Scales(unittest.TestCase):
         theme.load_fonts()
         names = [s.name for s in Text.ALL]
         self.assertEqual(len(names), len(set(names)))
-        self.assertEqual(len(Text.ALL), 10)
+        self.assertEqual(len(Text.ALL), 11)
         self.assertEqual({s.size for s in Text.ALL}, set(Type.SCALE))
-        self.assertEqual(len(Type.SCALE), 6)
+        self.assertEqual(len(Type.SCALE), 7)
         self.assertEqual({s.weight for s in Text.ALL}, {Type.REGULAR, Type.SEMIBOLD})
-        self.assertEqual([s.name for s in Text.ALL if s.caps], ["label"])
+        self.assertEqual([s.name for s in Text.ALL if s.caps], ["label", "group"])
+        self.assertEqual((Text.GROUP.size, Text.GROUP.weight), (Type.TINY, Type.REGULAR))   # lighter than a label
         self.assertEqual(Text.BODY.size, 13)                               # R123: «da 14 a 13»
         self.assertLessEqual(Text.CONTROL.size, Text.BODY.size)            # the tabs no larger than the text (R121)
         self.assertEqual((Text.BUTTON.size, Text.BUTTON.weight), (Text.CONTROL.size, Type.SEMIBOLD))
@@ -110,10 +111,10 @@ class Scales(unittest.TestCase):
                                  style.key)
                 self.assertIn(style.tone, ("text", "text2", "muted"))
 
-    def test_the_accent_of_the_sheet_only_for_what_is_in_hand_and_the_one_action(self):
-        """R104 (Daniel, 25/10/2026: «lo vorrei un po' meno presente in tutto Meridiana il colore di accento»): in
-        the sheet the accent fills the primary button and the File page open, and draws the focus; the selection,
-        the chosen tabs and pills, the tools on and the key tile are neutral."""
+    def test_the_accent_of_the_sheet_only_for_the_focus(self):
+        """R104 (Daniel, 25/10/2026: «lo vorrei un po' meno presente in tutto Meridiana il colore di accento») and
+        R158 (the same evening: «i pulsanti già evidenziati con il colore di accento non devono esistere, né negli
+        strumenti né altrove»): in the sheet the accent only draws the focus; no button is full of it."""
         from meridiana.ui.theme import style_sheet
         for dark in (False, True):
             t = theme_colors.derive("#8b5a12", dark).tokens
@@ -125,7 +126,7 @@ class Scales(unittest.TestCase):
                 for one in selector.split(","):
                     one = one.strip()
                     with self.subTest(dark=dark, selector=one):
-                        self.assertTrue('primary="true"' in one or ":focus" in one or "file-chip:checked" in one, one)
+                        self.assertIn(":focus", one)
             self.assertNotIn(theme_colors.qt_hex(t["accent_soft"]).lower(), sheet.lower())
             self.assertGreaterEqual(theme_colors.contrast(t["text"], t["select_bg"]), 7)
             self.assertLess(theme_colors.lch(t["select_bg"])[1], 0.02)    # a grey that leans to the hue
@@ -388,8 +389,8 @@ class InTheWindow(unittest.TestCase):
         return stray
 
     def test_the_accent_shows_only_on_the_phase_in_hand_and_the_one_action(self):
-        """R104: on the window at rest the accent is the disc of the phase in hand and the primary button; the
-        drawings (plan and 3D) keep their colours. No chosen tool, tab or pill in the accent."""
+        """R104, R158: on the window at rest the accent is the disc of the phase in hand alone; the drawings (plan and
+        3D) keep their colours. No button, chosen tool, tab or pill in the accent."""
         from PySide6.QtCore import QPoint, QRect
         from PySide6.QtWidgets import QAbstractButton, QAbstractSpinBox, QApplication, QComboBox, QLineEdit
 
@@ -404,7 +405,7 @@ class InTheWindow(unittest.TestCase):
         tab = bar.tabRect(bar.currentIndex())
         allowed.append(QRect(bar.mapTo(win, tab.topLeft()), tab.size()))
         for b in win.findChildren(QAbstractButton):
-            if b.isVisible() and (b.property("primary") or b.hasFocus()):
+            if b.isVisible() and b.hasFocus():
                 allowed.append(QRect(b.mapTo(win, QPoint(0, 0)), b.size()).adjusted(-2, -2, 2, 2))
         focus = QApplication.focusWidget()
         if isinstance(focus, (QLineEdit, QAbstractSpinBox, QComboBox)):
