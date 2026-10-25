@@ -4,7 +4,8 @@ Meridiana designs photovoltaic plants: site on a map, buildings and roofs, modul
 rules, hourly energy with every loss (PVsyst is the reference for the functions, Aurora for the modelling and
 the use, PVGIS for the data), string checks, consumption, economics, a PDF report where every number says where
 it comes from. Python 3.12+, Qt 6.12 with PySide6 6.12.0 and Qt Quick 3D, pvlib 0.16.1, shapely.
-GPL-3.0-or-later. Private repository `daniel-g-carrasco/meridiana`; the owner is Daniel Grasso, an electrical
+GPL-3.0-or-later. Public repository `daniel-g-carrasco/meridiana` since 25/10/2026 (the history before it is in
+the private `meridiana-archivio`); the owner is Daniel Grasso, an electrical
 engineer in Italy, and the scope is national (regional rules are modules, never the scope).
 
 These notes are read by local sessions and by cloud sessions. A cloud session sees only this repository: not
