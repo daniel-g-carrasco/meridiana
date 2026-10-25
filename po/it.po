@@ -105,7 +105,7 @@ msgstr "non presenti nel file: {keys}"
 
 #: src/meridiana/checks.py:39
 msgid "Layout"
-msgstr "Disposizione"
+msgstr "Posa"
 
 #: src/meridiana/checks.py:39
 msgid "Shading"
@@ -6282,7 +6282,7 @@ msgstr "Rinomina"
 
 #: src/meridiana/assistant.py:103
 msgid "What do you think of this layout?"
-msgstr "Che ne pensi di questa disposizione?"
+msgstr "Che ne pensi di questa posa?"
 
 #: src/meridiana/assistant.py:104
 msgid "Are the distances from the edges right for the fire brigade?"
@@ -9119,7 +9119,7 @@ msgid "Which variant gives the most energy?"
 msgstr "Quale variante produce di più?"
 
 msgid "How do I try another layout without losing this one?"
-msgstr "Come provo un'altra disposizione senza perdere questa?"
+msgstr "Come provo un'altra posa senza perdere questa?"
 
 msgid "Is there a key for it?"
 msgstr "C'è un tasto per farlo?"

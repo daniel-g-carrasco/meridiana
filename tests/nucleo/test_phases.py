@@ -78,6 +78,18 @@ class ThePhases(unittest.TestCase):
         self.assertEqual(assistant.questions("nowhere"), list(phases.by_id("economics").questions))
         self.assertEqual(assistant.TABS, tuple(phases.ids()))
 
+    def test_the_module_layout_is_called_posa_in_italian(self):
+        from meridiana import i18n
+        before = i18n._translation
+        self.addCleanup(lambda: setattr(i18n, "_translation", before))
+        i18n.setup("it")
+        model = phases.by_id("model")
+        self.assertEqual(next(g for g in model.groups if g.id == "layout").title, "Posa")
+        self.assertEqual(checks.area_names()["layout"], "Posa")
+        self.assertEqual(model.questions[0], "Che ne pensi di questa posa?")
+        self.assertEqual(i18n._("Orientation"), "Disposizione")
+        self.assertEqual(i18n._("Restore the default layout"), "Ripristina la disposizione predefinita")
+
     def test_next_and_previous_go_round(self):
         self.assertEqual(phases.next("model"), "plant")
         self.assertEqual(phases.next("report"), "model")

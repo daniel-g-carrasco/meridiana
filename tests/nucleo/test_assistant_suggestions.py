@@ -116,6 +116,15 @@ class Suggestions(unittest.TestCase):
         got = suggest(messages, Facts(phase="model", selected="Sud"))
         self.assertEqual(got[0], "Is the layout of «Sud» right?")
 
+    def test_the_variants_question_calls_the_module_layout_posa_in_italian(self):
+        from meridiana import i18n
+        before = i18n._translation
+        self.addCleanup(lambda: setattr(i18n, "_translation", before))
+        i18n.setup("it")
+        messages = turn("Come confronto due varianti?", "Usa la fase Varianti.")
+        got = suggest(messages, Facts(phase="model", variants=2))
+        self.assertIn("Come provo un'altra posa senza perdere questa?", got)
+
     def test_never_more_than_three_and_each_one_once(self):
         messages = []
         for q in ("Ci sono problemi?", "Quanto produce?", "Conviene?", "Serve la batteria?"):
