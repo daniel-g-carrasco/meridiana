@@ -87,6 +87,29 @@ class IfcInTheWindow(unittest.TestCase):
         self.assertEqual(self.dialogs[-1][0], "warning")
         self.assertIn("testo.ifc could not be read", self.dialogs[-1][1][1])
 
+    def test_an_export_that_answers_after_the_window_is_destroyed_is_dropped(self):
+        import threading
+        from unittest import mock
+        win = self.win
+        with mock.patch.object(win.pool, "start"):
+            win._export_ifc(str(self.folder / "late.ifc"))
+        job = win.ifc_job
+        _setup.dispose(win)
+
+        def answer():
+            job.signals.step.emit(0.5, "write")
+            job.signals.done.emit(None)
+
+        errors = []
+        with mock.patch("sys.excepthook", side_effect=lambda kind, value, tb:
+                        errors.append(f"{kind.__name__}: {value}")):
+            worker = threading.Thread(target=answer)
+            worker.start()
+            worker.join(5)
+            self.assertFalse(worker.is_alive())
+            self.app.processEvents()
+        self.assertEqual(errors, [])
+
     def test_exported_read_back_added_undone_cancelled_and_a_bad_file_said(self):
         self.the_file_menu_and_the_file_page_have_the_two_commands()
         target = self.the_project_is_written_as_ifc4_in_a_job_and_said()

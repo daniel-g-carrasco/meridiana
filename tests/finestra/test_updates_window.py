@@ -58,6 +58,28 @@ class UpdatesInTheWindow(unittest.TestCase):
             self.ask(win, (Path(tempfile.mkdtemp()) / "gone.json").as_uri())
             self.assertIn("failed", win.statusBar().currentMessage())
 
+    def test_a_check_that_answers_after_the_window_is_destroyed_is_dropped(self):
+        import threading
+
+        from meridiana import updates
+        _setup.window(self, capannone())
+        win = self.win
+        with mock.patch.object(win.pool, "start"):
+            win.check_updates(manual=True)
+        job = win.update_job
+        _setup.dispose(win)
+        errors = []
+        with mock.patch("meridiana.ui.update_dialog.updates.latest_release",
+                        side_effect=updates.UpdateError("offline")), \
+                mock.patch("sys.excepthook", side_effect=lambda kind, value, tb:
+                           errors.append(f"{kind.__name__}: {value}")):
+            worker = threading.Thread(target=job.run)
+            worker.start()
+            worker.join(5)
+            self.assertFalse(worker.is_alive())
+            self.app.processEvents()
+        self.assertEqual(errors, [])
+
     def test_by_itself_once_a_day_and_only_when_allowed(self):
         _setup.window(self, capannone())
         win = self.win

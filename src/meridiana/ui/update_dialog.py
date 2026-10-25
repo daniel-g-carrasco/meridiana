@@ -21,23 +21,24 @@ from . import tell
 
 
 class CheckSignals(QObject):
-    done = Signal(object, str)          # the latest release (None when the check failed), and why it failed
+    done = Signal(object, str, bool)    # the latest release (None when the check failed), why, and whether asked by hand
 
 
 class CheckJob(QRunnable):
     """The latest release, asked of GitHub away from the window's thread."""
 
-    def __init__(self):
+    def __init__(self, manual: bool = False):
         super().__init__()
+        self.manual = manual
         self.signals = CheckSignals()
 
     def run(self):
         try:
             release = updates.latest_release()
         except updates.UpdateError as error:
-            tell(self.signals.done, None, str(error))
+            tell(self.signals.done, None, str(error), self.manual)
             return
-        tell(self.signals.done, release, "")
+        tell(self.signals.done, release, "", self.manual)
 
 
 class DownloadSignals(QObject):

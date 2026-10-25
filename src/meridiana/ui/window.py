@@ -173,9 +173,9 @@ class ExportIfcJob(QRunnable):
     here), the strings proposed or the designer's, then the file. Each step is told (the bar); `interrupt` (Cancel)
     stops it at the next one, and nothing is written."""
 
-    def __init__(self, snapshot: dict, known: dict, path: Path):
+    def __init__(self, snapshot: dict, known: dict, path: Path, state: str = ""):
         super().__init__()
-        self.snapshot, self.known, self.path = snapshot, known, path
+        self.snapshot, self.known, self.path, self.state = snapshot, known, path, state
         self.signals = IfcSignals()
         self.interrupted = False
 
@@ -4253,13 +4253,20 @@ class MainWindow(QMainWindow):
             if not path:
                 return
         target = Path(path if path.lower().endswith(".ifc") else path + ".ifc")
-        job = ExportIfcJob(self.snapshot(), self.session.known_layouts(), target)
-        state = self._state_key()                   # the project as it is written: later changes make it stale
-        job.signals.step.connect(lambda f, what: self.ifc_progress.set(f, _("IFC4: {what}").format(what=what)))
-        job.signals.done.connect(lambda out: self._ifc_exported(out, target, state))
+        # the project as it is written: later changes make it stale
+        job = ExportIfcJob(self.snapshot(), self.session.known_layouts(), target, self._state_key())
+        job.signals.step.connect(self._ifc_export_step)
+        job.signals.done.connect(self._ifc_export_done)
         self.ifc_job = job
         self.ifc_progress.begin(_("IFC4: {file}").format(file=target.name))
         self.pool.start(job)
+
+    def _ifc_export_step(self, fraction: float, what: str) -> None:
+        self.ifc_progress.set(fraction, _("IFC4: {what}").format(what=what))
+
+    def _ifc_export_done(self, out) -> None:
+        if self.ifc_job is not None:
+            self._ifc_exported(out, self.ifc_job.path, self.ifc_job.state)
 
     def _ifc_exported(self, out, target: Path, state: str = "") -> None:
         self.ifc_job = None
@@ -4516,8 +4523,8 @@ class MainWindow(QMainWindow):
     def check_updates(self, manual: bool) -> None:
         """The latest release asked of GitHub in the pool; the answer in _update_answer."""
         from .update_dialog import CheckJob
-        job = CheckJob()
-        job.signals.done.connect(lambda release, why: self._update_answer(release, why, manual))
+        job = CheckJob(manual)
+        job.signals.done.connect(self._update_answer)
         self.update_job = job                       # (the tests wait on it)
         if manual:
             self.tell(_("Checking for updates…"), 10)
