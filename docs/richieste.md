@@ -204,6 +204,7 @@ Stati: **fatto** (con il commit), **in corso** (sessione o compito), **da studia
 | R161 | 25/10 | «Le schede centrali di alcune fasi tipo Production, Consumption e Balance and economics vengono renderizzate male, come se la sfumatura del contenuto finisse sopra i bordi alto e/o basso (a seconda di dove ci si trova nel contenuto)»; «almeno sul laptop Linux con schermo più piccolo e dark mode noto troppo accentuate le sfumature / sfocature dei contenuti all'interno delle Verifiche, che possono rendere un po' difficile leggerne i contenuti» | da fare | - |
 | R162 | 25/10 | «Anche il tooltip non è stato armonizzato, e almeno su Linux c'entra proprio poco, ma sia su Windows che su Linux è da dargli una larghezza massima in cui il testo va in colonna. Sarebbe anche bello dare una bella formattazione ai contenuti come fanno programmi tipo VS Code (anche se qui è da trasporre tutto al contesto d'uso)» | da fare | - |
 | R163 | 25/10 | «Tutte le correzioni di stile le portiamo nel nostro template» | da fare | - |
+| R164 | 25/10 | «Correggi anche il menu che esce con "alt" che al momento copre i pulsanti sopra delle fasi. Invece deve "aggiungersi" e spostare con un'animazione il resto sotto» | da fare | - |
 
 ## Da decidere (Daniel)
 
