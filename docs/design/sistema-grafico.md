@@ -240,7 +240,7 @@ Regole:
 | Nord, scala, fonte sulla pianta | `ui/plan_overlays.py` | stile B scelto il 24/10/2026: freccia sottile sotto la N, scala a linea con la lunghezza a destra, ciascuno in un riquadro trasparente al 55 % che lo avvolge con lo stesso margine; raggio 6, testo 12; mai uno sopra l'altro |
 | Riga delle fasi | `ui/phasebar.py` | linguette `control` (13 px), la fase in mano `strong`, con il disco del numero in `label`; sotto il puntatore un fondo `hover` di 28 px e raggio 6 come «File» (R160); la linguetta scelta e la scheda della barra sono una forma sola, unite da due angoli inversi del raggio delle schede (R84, come le linguette di GNOME); al cambio di fase la linguetta scorre fino alla nuova in 240 ms |
 | Pulsante «File» e pagina File | `ui/phasebar.py`, `ui/file_page.py` | a sinistra delle fasi e disegnato come loro: senza fondo, `hover` sotto il puntatore, `press` con la pagina aperta (R158, R160); la pagina è una scheda con l'elenco dei posti a sinistra (`body`) e riquadri a destra (`title` e `description`) |
-| Barra dei menu | `ui/menubar.py` | nascosta: Alt la mostra sopra la riga delle fasi senza spostare niente; Vista > Barra dei menu la tiene sempre |
+| Barra dei menu | `ui/menubar.py` | nascosta: Alt la aggiunge al suo posto sopra la riga delle fasi e il resto della finestra scende per farle posto, e risale quando va via (R164, `motion.push`, 180 ms; la barra di stato resta ferma); Vista > Barra dei menu la tiene sempre |
 | Pulsanti delle schede | `ui/panel_buttons.py` | nella barra di stato, un'icona per scheda: piena se si vede, spenta se chiusa o coperta |
 | Aiuto | `ui/help_box.py` | scheda sotto Proprietà; il testo occupa lo spazio che c'è; un «?» o F1 lo blocca sull'argomento (puntina accanto al titolo), «Sgancia» lo mette in una finestrella sua (R44, R68) |
 | Elenco a righe | `ui/rows.RowList` | al posto di una tabella da leggere: nome a sinistra in semigrassetto, cosa è a destra in `text2`, una linea leggera fra due righe; alto quanto le righe, scorre con la scheda |
@@ -251,11 +251,22 @@ Regole:
 ## 5. I comportamenti
 
 - **Fine morbida** (`ui/fades.py`): quando un elenco o una pagina continua oltre la scheda, l'ultimo pezzo sfuma nel
-  colore della scheda invece di tagliarsi. La sfumatura è alta 24 px e compare solo dal lato dove c'è altro. Daniel,
+  colore della scheda invece di tagliarsi. La sfumatura è alta 16 px (al massimo un quinto dell'area), all'85 % al
+  bordo, dentro la linea e gli angoli tondi della scheda (R161: a 24 px e piena era «troppo accentuata» su uno
+  schermo piccolo e scuro, e passava sopra il bordo), e compare solo dal lato dove c'è altro. Daniel,
   24/10/2026: «carina la semplice sfumatura… mantienila come stile». Vale per ogni area che scorre dentro una scheda.
 - **Finestrelle** (`ui/popups.py`): suggerimenti, menu, elenchi a tendina e aiuto a comparsa entrano sfumando in
   110 ms; gli effetti di Qt, che a 200 % scattano, sono spenti. Su Windows 11 il sistema li arrotonda e disegna la
-  loro ombra e il bordo nel colore `line`.
+  loro ombra e il bordo nel colore `line`; altrove il foglio di stile disegna lo stesso bordo e, per i suggerimenti,
+  gli stessi angoli di 4 px su una finestrella trasparente intorno.
+- **Suggerimenti** (R162, Daniel 25/10/2026: «una larghezza massima in cui il testo va in colonna ... una bella
+  formattazione ai contenuti come fanno programmi tipo VS Code»): «Nome (tasto)» sulla prima riga e la spiegazione
+  sotto diventano il nome (semigrassetto se segue una spiegazione), il tasto attenuato accanto, la spiegazione in
+  un inchiostro più tenue 4 px sotto; a capo a 340 px; 6 px sopra e sotto e 8 ai lati (una riga: 28 px, come un
+  controllo). Vale per ogni suggerimento, da dovunque venga, perché si formatta l'etichetta di Qt quando compare.
+- **Pagina File** (R157: «quando si preme su File, ci deve essere un'animazione semplice»): si srotola dall'alto in
+  180 ms con una maschera che cresce: a ogni fotogramma si dipinge solo la striscia nuova, niente di trasparente,
+  niente da ridisporre; si chiude subito.
 - **Cambio di fase** (`ui/phasebar.Phases._changed`, come la barra multifunzione di Office): la pagina e gli
   strumenti della barra cambiano subito; scorre soltanto la linguetta scelta, fino alla nuova fase (110 ms, R97). Gli
   strumenti che entravano scorrendo sfarfallavano (Daniel, 24/10/2026): niente movimento dentro una barra piena di

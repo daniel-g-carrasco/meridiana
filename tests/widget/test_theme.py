@@ -44,13 +44,14 @@ class TheTheme(unittest.TestCase):
         self.theme.apply()
 
     def test_meridio_moves_and_the_camera_glides_in_the_catalogues_durations(self):
-        """Point 15 of the review (Daniel, 25/10/2026: «130 ms»): Meridio's slide and his bubble's closing are
-        Motion.QUICK, the 3D camera Motion.SLOW."""
+        """Point 15 of the review (Daniel, 25/10/2026: «130 ms»): his bubble's closing is Motion.QUICK, the 3D
+        camera Motion.SLOW; his slide his own pace again, 320 ms (R155: at 130 «troppo rapido, meglio com'era
+        prima»)."""
         from meridiana import camera
         from meridiana.ui import assistant
         from meridiana.ui.design import Motion
         self.assertEqual(Motion.QUICK, 130)
-        self.assertEqual((assistant.SLIDE_MS, assistant.CLOSE_MS), (Motion.QUICK, Motion.QUICK))
+        self.assertEqual((assistant.SLIDE_MS, assistant.CLOSE_MS), (320, Motion.QUICK))
         self.assertEqual(camera.ANIMATION_MS, Motion.SLOW)
 
     def test_an_energy_field_that_cannot_be_read_has_the_themes_danger_border(self):

@@ -2,8 +2,9 @@
 then «ci sta mi piace» to hidden menus that Alt shows plus the File page, ui/file_page.py). As Firefox and the
 Explorer of Windows: Alt pressed and let go alone opens the first menu, Alt with a menu's letter opens that menu;
 the arrows go from one to the next, Esc or a click elsewhere closes them and the bar goes again. While it shows it
-stands over the left end of the phases' row, so nothing under it moves. With «Menu bar» on (View, and the
-preferences) it stays in its place above the phases, as before.
+takes its place above the phases and the window under it moves down to make room, and back up when it goes (R164,
+Daniel 25/10/2026: it stood over the row of the phases, «invece deve "aggiungersi" e spostare con un'animazione il
+resto sotto»). With «Menu bar» on (View, and the preferences) it stays in its place above the phases.
 
 `AltMenus(window, bar)`: the window keeps its QMenuBar; `set_always(on)` with the setting."""
 
@@ -41,30 +42,26 @@ class AltMenus(QObject):
         """The bar always in its place (True), or hidden until Alt (False)."""
         self.always = bool(on)
         self.shown = False
-        # hidden until Alt, it shows over the row as a little window of its own (QMenuBar[revealed="true"] in the
-        # style sheet): transparent, as the bar is in its place, its words fell on the File button and the first
-        # tabs (qt-app-template). Set here, not at each Alt: polished again, its size came a turn late
-        self._reveal_look(not self.always)
         if self.always:
-            if self.bar.parentWidget() is not self.home.parentWidget():
+            if self.home.indexOf(self.bar) < 0:
                 self.home.insertWidget(0, self.bar)
             self.bar.show()
         else:
             self.home.removeWidget(self.bar)
-            self.bar.setParent(self.window)
             self.bar.hide()
 
     def reveal(self, action=None) -> None:
-        """The bar over the left end of the phases' row, and a menu open: `action`'s, else the first."""
+        """The bar in its place above the phases, the window moving down to make room, and a menu open: `action`'s,
+        else the first."""
         if self.always:
             return
-        from .cards import EDGE
-        from .design import Size
-        self.bar.adjustSize()
-        hint = self.bar.sizeHint()
-        self.bar.setGeometry(EDGE, max(0, (Size.TAB - hint.height()) // 2), hint.width(), hint.height())
-        self.bar.show()
-        self.bar.raise_()
+        from . import motion
+
+        def add() -> None:
+            self.home.insertWidget(0, self.bar)
+            self.bar.show()
+            QApplication.sendPostedEvents(None, QEvent.Type.LayoutRequest)    # its place now: the menu opens under it
+        motion.push(self.window, add, lambda: self.bar.height(), self._kept)
         self.shown = True
         first = next((a for a in self.bar.actions() if a.isVisible() and a.menu() is not None), None)
         target = action or first
@@ -72,16 +69,24 @@ class AltMenus(QObject):
             self.bar.setActiveAction(target)
 
     def conceal(self) -> None:
+        """The bar gone, the window moving back up."""
         if self.always or not self.shown:
             return
         self.shown = False
-        self.bar.hide()
+        from . import motion
+        height = self.bar.height()
 
-    def _reveal_look(self, on: bool) -> None:
-        if bool(self.bar.property("revealed")) != on:
-            self.bar.setProperty("revealed", on)
-            self.bar.style().unpolish(self.bar)
-            self.bar.style().polish(self.bar)
+        def remove() -> None:
+            self.home.removeWidget(self.bar)
+            self.bar.hide()
+            QApplication.sendPostedEvents(None, QEvent.Type.LayoutRequest)
+        motion.push(self.window, remove, lambda: -height, self._kept)
+
+    def _kept(self) -> int:
+        """The strip at the bottom of the window that stays while the rest moves: the status bar."""
+        status = getattr(self.window, "statusBar", None)
+        bar = status() if callable(status) else None
+        return bar.height() if bar is not None and bar.isVisible() else 0
 
     def _maybe_hide(self) -> None:
         # after the menu has closed: another of the bar may have opened in its place (the arrows)

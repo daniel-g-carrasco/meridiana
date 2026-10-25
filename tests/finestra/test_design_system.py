@@ -475,11 +475,22 @@ class InTheWindow(unittest.TestCase):
     def test_the_file_page_opens_over_the_panels_and_esc_brings_the_project_back(self):
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
+        from PySide6.QtCore import QAbstractAnimation
+
+        from meridiana.ui import motion
         win = self.win
         page = win.file_page
         self.assertFalse(page.isVisible())
+        reduced = motion.reduced()
+        motion.set_reduced(False)
+        self.addCleanup(motion.set_reduced, reduced)
         win.tabs.header.file_button.click()
         self.assertTrue(_setup.wait_until(self.app, page.isVisible, 3))
+        # it unrolls from the top (R157): shown down to a part of its height, then whole, no mask left
+        self.assertEqual(page.unroll.state(), QAbstractAnimation.State.Running)
+        self.assertLess(page.mask().boundingRect().height(), page.height())
+        self.assertTrue(_setup.wait_until(self.app, lambda: page.unroll.state() == QAbstractAnimation.State.Stopped, 2))
+        self.assertTrue(page.mask().isEmpty())
         self.assertTrue(win.tabs.header.file_button.isChecked())
         self.assertFalse(win.tabs.bars.isVisible())                         # the bar of the phase under it
         self.assertIsNone(win.tabs.header.tab_now())                        # no phase marked as open (R99)
@@ -569,8 +580,14 @@ class InTheWindow(unittest.TestCase):
         QTest.keyRelease(target, Qt.Key.Key_Alt, Qt.KeyboardModifier.NoModifier)
         self.assertTrue(bar.isVisible())
         self.assertIsNotNone(bar.activeAction())                            # the first menu open
+        # in its place above the phases, the rest moved down (R164: it stood over the row of the phases)
+        self.assertIs(bar.parentWidget(), win.menuWidget())
+        self.assertEqual(win.tabs.header.y(), bar.height())
+        menu = bar.activeAction().menu()
+        self.assertGreaterEqual(menu.y(), bar.mapToGlobal(bar.rect().bottomLeft()).y() - 1)     # opened under it
         bar.activeAction().menu().close()
         self.assertTrue(_setup.wait_until(self.app, lambda: not bar.isVisible(), 2))
+        self.assertEqual(win.tabs.header.y(), 0)                            # and back up
         # Alt and a menu's letter: that menu
         from meridiana.ui.menubar import mnemonic
         wanted = next(a for a in bar.actions() if a.menu() is not None and mnemonic(a.text()) not in ("", "f"))

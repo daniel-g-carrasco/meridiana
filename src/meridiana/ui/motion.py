@@ -11,13 +11,14 @@ for less motion (`set_reduced`).
 `crossfade(area, change)`: the area fades from before to after in place (another subject in the properties).
 `slide(area, change, direction)`: what comes slides in from `direction` while what goes fades (the bar of a phase,
 as Office's ribbon). `hold` and `Veil.play` are the two halves, for a caller that moves other things with it (the
-tab of the phase, ui/phasebar.py)."""
+tab of the phase, ui/phasebar.py). `push(area, change, drop)`: what was there moves down (or up) by `drop` pixels
+to where it goes, a strip at the bottom staying (the menu bar that Alt adds above the phases, R164)."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 
-from PySide6.QtCore import QEasingCurve, QObject, QPoint, QPointF, QRect, Qt, QTimer, QVariantAnimation
+from PySide6.QtCore import QEasingCurve, QObject, QPoint, QPointF, QRect, QRectF, Qt, QTimer, QVariantAnimation
 from PySide6.QtGui import QColor, QPainter, QPixmap
 from PySide6.QtWidgets import QWidget
 
@@ -56,6 +57,7 @@ class Veil(QWidget):
         self.after: QPixmap | None = None
         self.gone = False                   # replaced by a newer veil before it played
         self.shift = 0.0
+        self.drop, self.keep = 0.0, 0           # a push: pixels down (up when negative), the strip at the bottom kept
         self.t = 0.0
         self.animation = QVariantAnimation(self)
         self.animation.setStartValue(0.0)
@@ -67,9 +69,10 @@ class Veil(QWidget):
         self.show()
         self.raise_()
 
-    def play(self, ms: int = Motion.NORMAL, shift: float = 0.0) -> None:
+    def play(self, ms: int = Motion.NORMAL, shift: float = 0.0, drop: float = 0.0, keep: int = 0) -> None:
         """From the picture before to the area as it is now, in `ms`; with `shift`, what comes slides in from
-        that many pixels (negative: from the left)."""
+        that many pixels (negative: from the left); with `drop`, what was there moves down that many pixels (up:
+        negative) above a strip `keep` pixels high at the bottom that stays."""
         if self.gone:
             return
         if not self.area.isVisible() or self.area.width() < 2 or self.area.height() < 2:
@@ -85,6 +88,7 @@ class Veil(QWidget):
         self.show()
         self.raise_()
         self.shift = shift
+        self.drop, self.keep = drop, keep
         self.animation.setDuration(ms)
         self.animation.start()
 
@@ -98,6 +102,19 @@ class Veil(QWidget):
             p.drawPixmap(0, 0, self.before)
             return
         t = self.t
+        if self.drop:
+            # the picture after under it all; over it what was there, moved, but for the strip at the bottom;
+            # at the end, a few pixels from its place, it melts into the picture after (no jump at the end)
+            p.drawPixmap(0, 0, self.after)
+            ratio = self.before.devicePixelRatio()
+            h = self.height() - self.keep
+            p.setOpacity(1.0 if t < 0.9 else max(0.0, (1.0 - t) * 10.0))
+            p.setClipRect(QRect(0, 0, self.width(), h))
+            p.drawPixmap(QPointF(0, self.drop * t), self.before)
+            p.setClipping(False)
+            if self.keep:
+                p.drawPixmap(QPointF(0, h), self.before, QRectF(0, h * ratio, self.width() * ratio, self.keep * ratio))
+            return
         if self.shift:
             p.fillRect(self.rect(), self.ground if self.ground is not None else self.palette().window())
             p.setOpacity(max(0.0, 1.0 - 2.0 * t))   # what goes is gone half way
@@ -144,6 +161,17 @@ def crossfade(area: QWidget, change: Callable[[], None], ms: int = Motion.NORMAL
     veil = hold(area)
     change()
     _later(veil, ms, 0.0)
+
+
+def push(area: QWidget, change: Callable[[], None], drop: Callable[[], float], keep: Callable[[], int] = lambda: 0,
+         ms: int = Motion.NORMAL) -> None:
+    """`change()`, and what `area` showed moves by `drop()` pixels (asked once the window has done with the
+    change: down when positive) to the area as it is now, the strip `keep()` pixels high at its bottom staying; at
+    once with less motion or when `area` is not on screen."""
+    veil = hold(area)
+    change()
+    if veil is not None:
+        after_work(veil, lambda: veil.play(ms, drop=drop(), keep=keep()))
 
 
 def slide(area: QWidget, change: Callable[[], None], direction: int, ms: int = Motion.NORMAL,

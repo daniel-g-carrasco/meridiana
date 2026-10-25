@@ -166,6 +166,8 @@ def style_sheet(t: dict, dark: bool = False) -> str:
     S, R = Space, Radius
     # the little windows (R60): on Windows 11 the system rounds them and draws their border (ui/popups.py)
     edge = "border: none;" if native_corners() else f"border: 1px solid {t['line']}; border-radius: {R.CARD}px;"
+    # a tooltip as Windows 11 draws it, 4 px corners and the line around, on every system (R162)
+    tip_edge = "border: none;" if native_corners() else f"border: 1px solid {t['line']}; border-radius: {R.INNER}px;"
     # a control: 28 px high whole (the border included), its text 8 px in; the height as the content's least
     # height, which the style sheet adds the padding and the border to
     control = padding(S.XS, Line.TEXT_INSET)                  # «padding: 3px 7px;»
@@ -181,8 +183,6 @@ QTabBar {{ background: transparent; }}
 *[tone="text2"] {{ color: {t['text2']}; }}
 *[tone="muted"] {{ color: {t['muted']}; }}
 QMenuBar, QStatusBar {{ background: transparent; }}
-QMenuBar[revealed="true"] {{ background: {t['card']}; border: 1px solid {t['line']}; border-radius: {R.CARD}px;
-                             padding: {S.XXS}px; }}
 QMenuBar::item {{ padding: {S.XS}px {S.M}px; border-radius: {R.INNER}px; background: transparent; }}
 QMenuBar::item:selected {{ background: {hover}; }}
 QMenuBar::item:pressed {{ background: {press}; }}
@@ -196,7 +196,7 @@ QComboBox QAbstractItemView::item {{ padding: {S.S}px {S.M}px; border: none; bor
 QFrame#help-popup {{ background: {t['card']}; {edge} }}
 QFrame#help-note {{ background: {t['panel']}; }}
 QFrame#gizmoField {{ background: {t['card']}; border: 1px solid {t['line']}; border-radius: {R.CARD}px; }}
-QToolTip {{ background: {t['tooltip_bg']}; color: {t['tooltip_fg']}; border: none; padding: {S.XS}px {S.M}px; }}
+QToolTip {{ background: {t['tooltip_bg']}; color: {t['tooltip_fg']}; {tip_edge} padding: 0; }}
 QToolBar {{ background: {t['window']}; border: none; spacing: {S.XXS}px; padding: {S.XXS}px; }}
 QStatusBar {{ border: none; }}
 QStatusBar QLabel {{ color: {t['text2']}; }}
