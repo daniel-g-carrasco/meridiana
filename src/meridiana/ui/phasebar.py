@@ -357,7 +357,7 @@ class PhaseHeader(QWidget):
         self.slide.setStartValue(0.0)
         self.slide.setEndValue(1.0)
         self.slide.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self.slide.valueChanged.connect(lambda _v: self.update())
+        self.slide.valueChanged.connect(lambda _v: self._slide_step())
         self.slide.finished.connect(self._landed)
         self.slide_from: QRectF | None = None
         self.shown_tab: QRectF | None = None        # the tab as it was last painted
@@ -413,6 +413,19 @@ class PhaseHeader(QWidget):
     def _landed(self) -> None:
         self.slide_from = None
         self.update()
+
+    def _slide_step(self) -> None:
+        """Only the band the tab moves in painted again: the tab where it was and where it is now, its inverse corners
+        and the card's top edge under it. The whole header, the bar's buttons with it, at every step made the slide
+        stutter on a 4K screen (R97, Windows, 25/10/2026)."""
+        now, before = self.tab_now(), self.shown_tab
+        if now is None or before is None:
+            self.update()
+            return
+        band = now.united(before)
+        bottom = (self.card.geometry().top() + RADIUS + 2) if self.card.isVisible() else band.bottom() + 2
+        self.update(QRectF(band.left() - RADIUS - 2, band.top() - 2, band.width() + 2 * RADIUS + 4,
+                           bottom - band.top() + 2).toAlignedRect())
 
     def tab_target(self) -> QRectF | None:
         """Where the tab of the phase open stands, in the header's pixels; none while the File page is open."""
@@ -561,10 +574,11 @@ class Phases(QWidget):
         self.bars.setFixedHeight(max(heights, default=TALL if on else LOW))
 
     def _changed(self, index: int) -> None:
-        """The page and the bar's tools at once; the tab held where it is while the window does what the change
-        asks (its slots, the work they leave for the next turn), then sliding to the new phase (R83): started after
-        that work, the movement shows all its frames. The tools do not slide: Daniel, 24/10/2026, «fanno un flicker a
-        scatti molto fastidioso»."""
+        """The page and the bar's tools at once; the tab held where it is while the window paints the new page, then
+        sliding to the new phase, short, painting only the band it moves in (R83, R97). Measured on the Dell at 200 %
+        (25/10/2026): started with the click, its first 50 ms went into the page's paint and it jumped; started after
+        it, every step is a frame. The tools do not slide: Daniel, 24/10/2026, «fanno un flicker a scatti molto
+        fastidioso»."""
         from . import motion
         self.shown = index
         self.header.hold()
@@ -572,8 +586,9 @@ class Phases(QWidget):
         if 0 <= index < self.bars.count():
             self.bars.setCurrentIndex(index)
         self.currentChanged.emit(index)
-        # 180 ms, a page's change: at 240 it was «lenta» (R97)
-        motion.after_work(self, lambda: self.header.play(Motion.NORMAL))
+        # short (R97: at 240 and 180 ms, repainting the whole header at every step, it was «lenta» and «scattante» on
+        # Windows)
+        motion.after_work(self, lambda: self.header.play(Motion.FAST))
 
     # the face of the QTabWidget it replaces
 
