@@ -21,8 +21,11 @@ dark ones vanish. `sign` is the sign alone, for a pill already in the level's co
 
 from __future__ import annotations
 
+import tempfile
+from pathlib import Path
+
 from PySide6.QtCore import QByteArray, QRectF, QSize, Qt
-from PySide6.QtGui import QGuiApplication, QIcon, QIconEngine, QPainter, QPainterPath, QPixmap, QTransform
+from PySide6.QtGui import QGuiApplication, QIcon, QIconEngine, QImage, QPainter, QPainterPath, QPixmap, QTransform
 from PySide6.QtSvg import QSvgRenderer
 
 from .. import theme_colors
@@ -178,3 +181,44 @@ def icon(name: str) -> QIcon:
     if name not in SHAPES:
         raise KeyError(f"symbol {name!r}: one of {', '.join(NAMES)}")
     return QIcon(SymbolIcon(name))
+
+
+IN_TEXT = 14            # logical pixels of a symbol in a line of text (13 px)
+_FILES: dict = {}       # (name, dark) -> the 1x file of its pictures
+
+
+def html(name: str, size: int = IN_TEXT) -> str:
+    """The symbol in rich text, for a label (R154, Daniel 25/10/2026: «non hai applicato i simboli nuovi
+    dappertutto»: the notes, the checks of the strings, the keys' dialog had the characters ⚠ ✘ ℹ ✔). Its pictures
+    are written once at 1, 2 and 3 times the size in the temporary folder: Qt takes the «@2x» or «@3x» one on a
+    screen at 200 or 250 % by itself. The character when the folder cannot be written."""
+    dark = dark_ground()
+    path = _FILES.get((name, dark))
+    if path is None:
+        path = _write(name, dark, size)
+        _FILES[(name, dark)] = path
+    if not path:
+        return {"check": "✔", "cross": "✕", "warning": "⚠", "error": "✘", "stop": "✘", "info": "ℹ"}.get(name, "")
+    return f'<img src="{path}" width="{size}" height="{size}" style="vertical-align: middle">'
+
+
+def _write(name: str, dark: bool, size: int) -> str:
+    folder = Path(tempfile.gettempdir()) / "meridiana-symbols"
+    first = folder / f"{name}-{'dark' if dark else 'light'}-{size}.png"
+    try:
+        folder.mkdir(exist_ok=True)
+        for k in (1, 2, 3):
+            f = first if k == 1 else first.with_name(f"{first.stem}@{k}x.png")
+            if f.exists():
+                continue
+            image = QImage(size * k, size * k, QImage.Format.Format_ARGB32_Premultiplied)
+            image.fill(Qt.GlobalColor.transparent)
+            p = QPainter(image)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            renderer(name, dark).render(p, QRectF(0, 0, size * k, size * k))
+            p.end()
+            if not image.save(str(f)):
+                return ""
+    except OSError:
+        return ""
+    return first.as_posix()

@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QHBoxLayout, QHeaderVi
 
 from .. import shortcuts
 from ..i18n import _
-from .theme import mark
+from . import symbols
 
 ID = Qt.ItemDataRole.UserRole
 
@@ -120,10 +120,10 @@ class ShortcutsEditor(QWidget):
     def verdict(self, cid: str, keys: str) -> str:
         why = shortcuts.problem(keys)
         if why:
-            return mark("✘") + " " + html.escape(why)
+            return symbols.html("stop") + " " + html.escape(why)
         others = shortcuts.clashes(self.bindings, cid, keys)
         if others:
-            return mark("⚠") + " " + html.escape(_("{keys} is used by {what}: there it would stop working.").format(
+            return symbols.html("warning") + " " + html.escape(_("{keys} is used by {what}: there it would stop working.").format(
                 keys=native([keys]), what=", ".join(f"«{self.names[o]}»" for o in others)))
         return ""
 

@@ -17,6 +17,7 @@ from ..i18n import _, ngettext, number, pgettext
 from .design import Text, semibold, set_text
 from .help_box import HintLabel, help_button, register
 from .quantity_field import QuantityField
+from . import symbols
 from .theme import mark
 from .style import Group
 
@@ -683,12 +684,12 @@ class Properties(QScrollArea):
         """What the roof could not be as asked (model.Building.roof_problem), or nothing."""
         what, sides_ = self._object().roof_problem()
         if what == "gables":
-            return mark("⚠") + " " + html.escape(ngettext(
+            return symbols.html("warning") + " " + html.escape(ngettext(
                 "Side {sides} cannot be a gable end on this outline: it is an eave.",
                 "Sides {sides} cannot be gable ends on this outline: they are eaves.", len(sides_)).format(
                 sides=", ".join(str(s + 1) for s in sides_)))
         if what == "outline":
-            return mark("⚠") + " " + html.escape(_("The outline crosses itself: the roof stays flat until it is "
+            return symbols.html("warning") + " " + html.escape(_("The outline crosses itself: the roof stays flat until it is "
                                                    "put right."))
         return ""
 
@@ -881,7 +882,8 @@ class Properties(QScrollArea):
         notes = self._note()
         notes.setTextFormat(Qt.TextFormat.RichText)
         box.addWidget(self._bind(notes, lambda: "<br>".join(
-            mark("⚠") + " " + html.escape(_(n)) for n in (self.shown["result"].notes if self._laid() else []))))
+            symbols.html("warning") + " " + html.escape(_(n))
+            for n in (self.shown["result"].notes if self._laid() else []))))
         box.addStretch(1)
 
     def _state_note(self) -> str:
@@ -890,7 +892,8 @@ class Properties(QScrollArea):
             return mark("⟳") + " " + html.escape(
                 _("To lay out again: the layout is on its way, the figures below are the previous ones."))
         if state == "error":
-            return mark("✘") + " " + html.escape(_("The layout failed: {why}").format(why=self.shown.get("error", "")))
+            return symbols.html("stop") + " " + html.escape(_("The layout failed: {why}").format(
+                why=self.shown.get("error", "")))
         return ""
 
     def _laid(self) -> bool:
@@ -916,7 +919,7 @@ class Properties(QScrollArea):
         if getattr(result, "manual", False):
             # the state of the rows by hand in the Result of the layout (design 2.2, task 16c)
             rows = sum(1 for r in result.rows if r.places)
-            lines.append(mark("ℹ") + " " + html.escape(ngettext(
+            lines.append(symbols.html("info") + " " + html.escape(ngettext(
                 "Rows by hand: {n} row, kept as it is; the pitch and the rules are checked, not applied",
                 "Rows by hand: {n} rows, kept as they are; the pitch and the rules are checked, not applied",
                 rows).format(n=rows)))

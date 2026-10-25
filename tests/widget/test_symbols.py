@@ -105,6 +105,36 @@ class Symbols(unittest.TestCase):
         self.assertTrue(style.standardIcon(SP.SP_DialogSaveButton).isNull())      # no symbol of its own: none
         self.assertEqual(style.styleHint(QStyle.StyleHint.SH_DialogButtonBox_ButtonsHaveIcons), 1)
 
+    def test_in_a_line_of_text_the_symbol_is_a_picture_sharp_on_every_screen(self):
+        """R154 continued: the notes, the checks of the strings and the keys' dialog had the characters; in rich
+        text the symbol is its picture, written at 1, 2 and 3 times its size (Qt takes the one of the screen)."""
+        import re
+        from pathlib import Path
+
+        from PySide6.QtCore import QPoint, Qt
+        from PySide6.QtGui import QColor, QImage, QPainter
+        from PySide6.QtWidgets import QLabel
+
+        from meridiana.ui import symbols
+        tag = symbols.html("warning")
+        src = re.search(r'src="([^"]+)"', tag).group(1)
+        first = Path(src)
+        self.assertTrue(first.exists())
+        for k in (2, 3):
+            self.assertTrue(first.with_name(f"{first.stem}@{k}x.png").exists(), k)
+        self.assertEqual(QImage(str(first.with_name(f"{first.stem}@2x.png"))).width(), 2 * symbols.IN_TEXT)
+        label = QLabel(tag + " Da controllare")
+        self.addCleanup(label.deleteLater)
+        label.setTextFormat(Qt.TextFormat.RichText)
+        label.resize(label.sizeHint())
+        image = QImage(label.size(), QImage.Format.Format_ARGB32_Premultiplied)
+        image.fill(Qt.GlobalColor.white)
+        p = QPainter(image)
+        label.render(p, QPoint(0, 0))
+        p.end()
+        amber = [QColor.fromRgba(image.pixel(x, y)) for x in range(symbols.IN_TEXT + 2) for y in range(image.height())]
+        self.assertTrue(any(c.red() > 150 and c.blue() < 90 and c.green() > 80 for c in amber))   # the triangle drawn
+
 
 if __name__ == "__main__":
     unittest.main()

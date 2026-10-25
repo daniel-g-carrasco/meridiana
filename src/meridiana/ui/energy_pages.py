@@ -21,7 +21,8 @@ from .help_box import help_button, register
 from .pedigree import PedigreeView
 from . import waiting
 from .properties import combo, make_form, spin
-from .theme import mark, mark_problem
+from . import symbols
+from .theme import mark_problem
 from .style import Group
 
 
@@ -474,9 +475,9 @@ class EnergyPage(Page):
                   "inverter).") if getattr(plan, "suggested", False) else
                 _("{n} modules in series, strings on the inputs {per} ({used} of {total} modules on each inverter)."))
         rows = []
-        marks = {"ok": "✔", "warn": "⚠", "fail": "✘", "info": "ℹ"}
         for c in plan.checks:
-            rows.append(f"<tr><td>{mark(marks.get(c.level, '✔'))}</td><td>{c.label}</td><td>{c.detail}</td></tr>")
+            sign = symbols.html(symbols.LEVEL.get(c.level, "check"))         # the window's symbols (R154)
+            rows.append(f"<tr><td>{sign}</td><td>{c.label}</td><td>{c.detail}</td></tr>")
         span = _("Range of modules in series: {lo} to {hi}. Coldest morning {t} °C, hottest cell {c} °C.").format(
             lo=plan.n_series_min, hi=plan.n_series_max, t=number(info["t_min"], 1), c=number(info["t_cell_max"], 0))
         self.strings_label.setText(f"<p>{head.format(n=plan.n_series, per=';'.join(map(str, plan.strings_per_mppt)), used=plan.modules, total=info['modules'])}</p>"

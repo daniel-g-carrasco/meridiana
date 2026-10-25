@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (QColorDialog, QComboBox, QFormLayout, QFrame, QHB
 from .. import theme_colors
 from ..i18n import _, number
 from .cards import default_tokens
-from .theme import Theme, background_names, mark, colour_names, qpalette, theme_names
+from .theme import Theme, background_names, colour_names, qpalette, theme_names
 from .style import Group
 
 SETTLE_MS = 250
@@ -79,8 +79,8 @@ class Preview(QFrame):
         self.button.setStyleSheet(f"QPushButton {{ background: {t['field']}; color: {t['text']}; "
                                   f"border: 2px solid {t['accent']}; border-radius: {Radius.CONTROL}px; "
                                   f"{padding(Space.XS, Space.L, 2)} }}")
-        ink = theme_colors.STATUS["warning"] if dark else theme_colors.WARNING_INK
-        self.warning.setText(f"<span style='color:{ink}'>{mark('⚠')}</span> " + _("To check: the row pitch is below the "
+        from . import symbols
+        self.warning.setText(symbols.html("warning") + " " + _("To check: the row pitch is below the "
                                                                           "limit angle"))
         self.character.colour = QColor(t["assistant"])
         self.character.update()
