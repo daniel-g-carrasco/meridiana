@@ -4643,6 +4643,11 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         if self._keep_or_discard():
+            self._cancel_report()
+            self.preview_soon.stop()
+            if self.preview_run is not None:
+                run, self.preview_run = self.preview_run, None
+                run[0].close()
             self._cancel_ifc()
             self._drop_autosave()
             self._save_config()

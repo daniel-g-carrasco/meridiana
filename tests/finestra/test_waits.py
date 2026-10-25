@@ -271,6 +271,48 @@ class Bars(WindowWithAYear):
         self.assertFalse(second.with_name(second.name + ".part").exists())
         self.assertEqual(self.win.exports["report"][0], "relazione.pdf")
 
+    def test_closing_the_window_stops_the_report_and_preview_and_removes_the_partial_file(self):
+        from unittest import mock
+
+        from PySide6.QtWidgets import QFileDialog
+
+        from meridiana.ui import report_chapters
+        self.compute()
+        win = self.win
+        target = self.file.with_name("chiusura.pdf")
+        part = target.with_name(target.name + ".part")
+        preview_closed = []
+
+        def preview_steps():
+            try:
+                yield 0.5, "page"
+            finally:
+                preview_closed.append(True)
+
+        win.preview_run = (preview_steps(), [], "test")
+        next(win.preview_run[0])
+        win.preview_soon.start()
+        try:
+            with mock.patch.object(QFileDialog, "getSaveFileName", return_value=(str(target), "")), \
+                    mock.patch.object(report_chapters, "figure_png", slowed(report_chapters.figure_png, 0.3)):
+                win.commands["export_report"].trigger()
+                self.assertTrue(self.wait_until(self.app, part.exists, 120), "the partial report was not started")
+                self.assertTrue(win.close())
+            self.assertFalse(part.exists())
+            self.assertIsNone(win.report_run)
+            self.assertIsNone(win.preview_run)
+            self.assertEqual(preview_closed, [True])
+            self.assertFalse(win.preview_soon.isActive())
+            spin(self.app, 300)
+            self.assertFalse(part.exists())
+        finally:
+            for name in ("report_run", "preview_run"):
+                run = getattr(win, name)
+                if run is not None:
+                    run[0].close()
+                    setattr(win, name, None)
+            part.unlink(missing_ok=True)
+
 
 if __name__ == "__main__":
     unittest.main()
