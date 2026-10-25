@@ -95,6 +95,21 @@ class PanelAlone(unittest.TestCase):
         for _ in range(n):
             self.app.processEvents()
 
+    def test_a_panel_destroyed_before_the_refocus_gets_no_late_call(self):
+        from unittest import mock
+
+        from PySide6.QtCore import QCoreApplication, QEvent
+        props = self.props
+        props._pending_focus = 0
+        props.show_building(self.p.buildings[0])
+        errors = []
+        with mock.patch("sys.excepthook", side_effect=lambda kind, value, tb:
+                        errors.append(f"{kind.__name__}: {value}")):
+            props.deleteLater()
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            self.app.processEvents()
+        self.assertEqual(errors, [])
+
     def test_from_one_building_to_another_the_page_stays_where_it_was_scrolled(self):
         from meridiana import model
         p, props = self.p, self.props

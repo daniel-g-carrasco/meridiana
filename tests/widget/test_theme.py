@@ -91,6 +91,26 @@ class TheTheme(unittest.TestCase):
         self.appearance("light", "system", "meridiana")
         self.assertEqual(self.theme.tokens["accent"], "#805210")                  # bronze
 
+    def test_a_theme_destroyed_before_the_scheme_change_gets_no_late_call(self):
+        from unittest import mock
+
+        import shiboken6
+        from PySide6.QtCore import QCoreApplication, QEvent
+
+        from meridiana.ui.theme import Theme
+        cfg = config.Config(background="none", theme="system", accent="petrol")
+        theme = Theme(cfg, app=self.app)
+        self.addCleanup(lambda: shiboken6.isValid(theme) and theme.deleteLater())
+        cfg.accent = "bronze"                       # the deferred apply goes past the unchanged-appearance guard
+        errors = []
+        with mock.patch("sys.excepthook", side_effect=lambda kind, value, tb:
+                        errors.append(f"{kind.__name__}: {value}")):
+            theme._scheme_changed(Qt.ColorScheme.Light)
+            theme.deleteLater()
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            self.app.processEvents()
+        self.assertEqual(errors, [])
+
     def test_a_moved_colour_is_said_in_the_preview(self):
         from meridiana.ui.appearance import Appearance
         page = Appearance(config.Config(theme="light", accent="bronze"), self.theme)

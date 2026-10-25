@@ -146,7 +146,8 @@ class TileLoader(QObject):
             n = self.attempts.get(tile, 0)
             if n < len(RETRIES):
                 self.attempts[tile] = n + 1
-                QTimer.singleShot(int(RETRIES[n] * 1000), lambda t=tile: (self.queue.append(t), self.queued.add(t), self._pump()))
+                QTimer.singleShot(int(RETRIES[n] * 1000), self,
+                                  lambda t=tile: (self.queue.append(t), self.queued.add(t), self._pump()))
             else:
                 self.attempts.pop(tile, None)
                 why = reply.errorString() if error != QNetworkReply.NetworkError.NoError else f"not an image ({mime})"

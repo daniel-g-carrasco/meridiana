@@ -354,7 +354,7 @@ class Properties(QScrollArea):
             self._scroll_back = back
             bar.rangeChanged.connect(back)
         if place is not None:
-            QTimer.singleShot(0, lambda: self._refocus(page, place))
+            QTimer.singleShot(0, self, lambda: self._refocus(page, place))
         return box
 
     @staticmethod

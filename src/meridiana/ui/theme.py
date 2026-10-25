@@ -556,7 +556,7 @@ class Theme(QObject):
     def _scheme_changed(self, _scheme) -> None:
         if self.cfg.theme == "system":
             # a moment later: on Windows the signal comes while the palette is still the old one (study 13, 8)
-            QTimer.singleShot(0, self.apply)
+            QTimer.singleShot(0, self, self.apply)
 
 
 _FAMILY: list = []          # the family loaded, once per process

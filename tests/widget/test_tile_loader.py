@@ -70,6 +70,33 @@ class TileCache(unittest.TestCase):
         self.assertEqual(len(got), 2)
 
 
+class Retry(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.app = _setup.qt_or_skip()
+
+    def test_a_loader_destroyed_before_the_retry_gets_no_late_call(self):
+        from PySide6.QtCore import QCoreApplication, QEvent
+        from PySide6.QtNetwork import QNetworkReply
+
+        from meridiana.ui import tileloader
+        loader = tileloader.TileLoader(Path(tempfile.mkdtemp()))
+        tile = ("osm", 3, 1, 2)
+        reply = mock.Mock()
+        reply.readAll.return_value = b"not an image"
+        reply.header.return_value = "text/plain"
+        reply.error.return_value = QNetworkReply.NetworkError.NoError
+        loader.in_flight[reply] = tile
+        errors = []
+        with mock.patch.object(tileloader, "RETRIES", (0.01,)), \
+                mock.patch("sys.excepthook", side_effect=lambda kind, value, tb:
+                           errors.append(f"{kind.__name__}: {value}")):
+            loader._done(reply)
+            loader.deleteLater()
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+            _setup.turn_events(self.app, 50)
+        self.assertEqual(errors, [])
+
 
 class FakeServer:
     """A map server on 127.0.0.1 (no network): a PNG for /{z}/{x}/{y}.png, 404 for row 9; what it was asked, with
