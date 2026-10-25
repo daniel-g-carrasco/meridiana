@@ -31,10 +31,12 @@ class InTheWindow(unittest.TestCase):
         _setup.dispose(self.win)
         self.win = MainWindow(self.paths, self.cfg)
         self.addCleanup(_setup.dispose, self.win)
-        from _fakes import offline
+        from _fakes import nothing_local, offline
         self.win.assistant_chat.make_local = offline        # no local model here: said at once (_setup.window)
+        self.win.assistant_chat.survey = nothing_local
         self.win.resize(1200, 800)
         self.win.show()
+        self.assertTrue(wait_until(self.app, lambda: not self.win.assistant_chat.surveying))
         self.win.assistant.reduced_motion = True
         self.app.processEvents()
         return self.win
@@ -171,6 +173,9 @@ class InTheWindow(unittest.TestCase):
         self.assertTrue(a.questions_box.isVisibleTo(a.panel))
         win.docks[1].show()                                 # with Properties and the Checks, a low panel
         win.checks_dock.show()
+        self.assertTrue(wait_until(self.app, lambda: not win.assistant_chat.surveying))
+        win.assistant_chat._drop_survey()
+        self.app.processEvents()
         win.resizeDocks([win.assistant_dock], [QUESTIONS_HEIGHT // 2], Qt.Orientation.Vertical)
         self.app.processEvents()
         self.assertLess(a.panel.height(), QUESTIONS_HEIGHT)
