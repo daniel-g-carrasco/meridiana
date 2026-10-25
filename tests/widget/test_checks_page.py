@@ -487,6 +487,32 @@ class ChecksPanel(unittest.TestCase):
         self.assertTrue(all(not (g.flags() & Qt.ItemFlag.ItemIsSelectable) for g in self.heads()))
         self.assertEqual(self.heads()[0].text(0), "✘")                 # the worst mark of the area stays
 
+    def test_a_headers_icon_is_drawn_once(self):
+        """The by-object headers carry the kind's icon in the column before the name: the ground was drawn with it
+        and then the icon again under the air (found by the template's alignment, 25/10/2026)."""
+        from PySide6.QtGui import QColor, QIcon, QPixmap
+        from PySide6.QtWidgets import QTreeWidget
+
+        from meridiana.ui.sections import SectionDelegate, section
+        tree = QTreeWidget()
+        self.addCleanup(_setup.dispose, tree)
+        tree.setColumnCount(2)
+        tree.setHeaderHidden(True)
+        tree.setItemDelegate(SectionDelegate(tree, column=1, air=16))
+        green = QPixmap(16, 16)
+        green.fill(QColor("#00ff00"))
+        head = section(tree, "Capannone", 2, columns=2, column=1)
+        head.setIcon(0, QIcon(green))
+        tree.resize(300, 120)
+        tree.show()
+        self.app.processEvents()
+        image = tree.viewport().grab().toImage()
+        ratio = tree.viewport().devicePixelRatioF()
+        lit = sum(1 for x in range(image.width()) for y in range(image.height())
+                  if QColor(image.pixel(x, y)).name() == "#00ff00")
+        self.assertGreater(lit, 0)
+        self.assertLessEqual(lit, 16 * 16 * ratio * ratio)
+
 
 if __name__ == "__main__":
     unittest.main()

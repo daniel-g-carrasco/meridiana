@@ -281,7 +281,7 @@ class MainWindow(QMainWindow):
         self.checks_page.viewChanged.connect(self._checks_view_changed)
         self.checks_page.notes_text = self._report_notes
         self.setCentralWidget(self.tabs)
-        keep_gaps(self.tabs)                       # from the window's edges as the cards of the panels (A3)
+        self.gaps = keep_gaps(self.tabs)           # from the window's edges as the cards of the panels (A3)
         # the row of the phases and the card of the bar across the window, above the panels (the target of
         # 24/10/2026, docs/studio/19-grafica): the menu widget holds the menu bar and the phases' header
         self._menu_bar = QMenuBar()
@@ -621,6 +621,7 @@ class MainWindow(QMainWindow):
             QApplication.sendPostedEvents(None, QEvent.Type.LayoutRequest)
         if self.layout() is not None:
             self.layout().activate()
+        self.gaps.apply()                           # the page's gaps now, not a turn later (8 px off for a frame)
 
     def _menu_bar_always(self, on: bool) -> None:
         self.cfg.menu_bar = bool(on)

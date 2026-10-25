@@ -12,7 +12,7 @@ pill across the whole row, each column drawing its part (`row_pill`)."""
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, QSize, Qt
-from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPalette
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPalette
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem, QTreeWidgetItem
 
 SECTION_ROLE = Qt.ItemDataRole.UserRole + 7     # on a header row: the count shown beside the name
@@ -106,6 +106,10 @@ class SectionDelegate(QStyledItemDelegate):
         opt = QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
         opt.text = ""
+        # the ground only: the icon is drawn below, under the air (it came twice, the by-object headers of the
+        # Checks panel: found by the template's alignment, 25/10/2026)
+        opt.icon = QIcon()
+        opt.features &= ~QStyleOptionViewItem.ViewItemFeature.HasDecoration
         opt.state &= ~QStyle.StateFlag.State_MouseOver
         opt.state &= ~QStyle.StateFlag.State_Selected
         style = opt.widget.style() if opt.widget is not None else None
