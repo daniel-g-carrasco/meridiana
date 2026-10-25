@@ -4052,9 +4052,13 @@ msgstr "Che cosa il modello non include"
 msgid "Nothing computed yet."
 msgstr "Ancora niente di calcolato."
 
-#: src/meridiana/ui/plan.py:71
-msgid "Click an object to see its properties. Delete removes it."
-msgstr "Fai clic su un oggetto per vederne le proprietà. Canc lo elimina."
+#: src/meridiana/ui/plan.py:131
+msgid ""
+"Click the smallest object; a second click on the same row selects the row. "
+"Esc goes to the container; Delete removes the selection."
+msgstr ""
+"Fai clic sull'oggetto più piccolo; un secondo clic sulla stessa fila seleziona la fila. "
+"Esc passa al contenitore; Canc elimina la selezione."
 
 #: src/meridiana/ui/plan.py:72
 msgid "Building: click the corners of its outline. Enter or a double click closes it, Backspace takes the last corner back, Esc cancels. Ctrl draws without guides; type a number for the length of the side."
@@ -5256,10 +5260,23 @@ msgstr "Una falda appartiene a un edificio: disegnala al suo interno."
 msgid "Draw a pitch"
 msgstr "Disegna una falda"
 
-#: src/meridiana/ui/window.py:910
+#: src/meridiana/ui/window.py:2131
 #, python-brace-format
-msgid "Module {key} of {name}: Delete takes it out of the layout."
-msgstr "Modulo {key} di {name}: Canc lo toglie dalla posa."
+msgid ""
+"Row {row} of {name}: click a module to select it, or Esc to select the sub-"
+"field."
+msgstr ""
+"Fila {row} di {name}: un clic su un modulo lo seleziona; Esc seleziona il "
+"sottocampo."
+
+#: src/meridiana/ui/window.py:2152
+#, python-brace-format
+msgid ""
+"Module {key} of {name}: a second click on the same row selects it; Esc "
+"selects the sub-field; Delete takes the module out of the layout."
+msgstr ""
+"Modulo {key} di {name}: un secondo clic sulla stessa fila la seleziona; Esc "
+"seleziona il sottocampo; Canc toglie il modulo dalla posa."
 
 #: src/meridiana/ui/window.py:939
 msgid "Take a module out"

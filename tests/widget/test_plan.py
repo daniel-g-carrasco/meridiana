@@ -678,6 +678,8 @@ class PlanNavigation(unittest.TestCase):
         self.picked = []                                    # what the window would select: an object or a module
         self.plan.picked.connect(lambda kind, oid: self.picked.append((kind, oid)))
         self.plan.moduleClicked.connect(lambda sid, key: self.picked.append(("subfield", sid)))
+        self.modules = []
+        self.plan.moduleClicked.connect(lambda sid, key: self.modules.append((sid, key)))
 
     def send(self, kind, button, pos, buttons=None):
         from PySide6.QtCore import QPointF, Qt
@@ -755,6 +757,84 @@ class PlanNavigation(unittest.TestCase):
         send(QMouseEvent.Type.MouseButtonPress, L, on_it(), L)  # held still: it acts after a moment
         self.assertTrue(_setup.wait_until(self.app, lambda: self.picked == [("subfield", sid)], 1))
         send(QMouseEvent.Type.MouseButtonRelease, L, on_it(), NONE)
+
+    def test_a_touchpad_tap_takes_a_module_within_six_logical_pixels(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QMouseEvent
+
+        from meridiana.ui.plan import to_scene
+        plan, send = self.plan, self.send
+        r = self.results["s1"]
+        m = max(r.modules, key=lambda pm: pm.centre[0])
+        mpp = plan.metres_per_pixel()
+        x = max(c[0] for c in m.corners) + 3 * mpp
+
+        def tap():
+            at = plan.mapFromScene(to_scene(x, m.centre[1]))
+            send(QMouseEvent.Type.MouseButtonPress, Qt.MouseButton.LeftButton, at)
+            send(QMouseEvent.Type.MouseButtonRelease, Qt.MouseButton.LeftButton, at, Qt.MouseButton.NoButton)
+
+        tap()
+        self.assertEqual(self.modules, [("s1", m.key)])
+        self.modules.clear()
+        plan.selected_module = ("", "")
+        plan.set_selection("site", "")
+        x = max(c[0] for c in m.corners) + 7 * mpp
+        tap()
+        self.assertEqual(self.modules, [])
+
+    def test_two_taps_select_the_row_and_escape_goes_to_the_container(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QMouseEvent
+        from PySide6.QtTest import QTest
+
+        from meridiana.ui.plan import to_scene
+        plan, send = self.plan, self.send
+        m = next(pm for pm in self.results["s1"].modules if pm.rid and pm.level == 0)
+        at = plan.mapFromScene(to_scene(*m.centre))
+        for _click in range(2):
+            send(QMouseEvent.Type.MouseButtonPress, Qt.MouseButton.LeftButton, at)
+            send(QMouseEvent.Type.MouseButtonRelease, Qt.MouseButton.LeftButton, at, Qt.MouseButton.NoButton)
+        self.assertEqual(plan.selection, ("row", f"s1/{m.rid}"))
+        QTest.keyClick(plan, Qt.Key.Key_Escape)
+        self.assertEqual(plan.selection, ("subfield", "s1"))
+        QTest.keyClick(plan, Qt.Key.Key_Escape)
+        self.assertEqual(plan.selection, ("building", "b1"))
+        QTest.keyClick(plan, Qt.Key.Key_Escape)
+        self.assertEqual(plan.selection, ("site", ""))
+
+    def test_escape_leaves_a_module_for_its_subfield(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QMouseEvent
+        from PySide6.QtTest import QTest
+
+        from meridiana.ui.plan import to_scene
+        plan, send = self.plan, self.send
+        m = self.results["s1"].modules[0]
+        at = plan.mapFromScene(to_scene(*m.centre))
+        send(QMouseEvent.Type.MouseButtonPress, Qt.MouseButton.LeftButton, at)
+        send(QMouseEvent.Type.MouseButtonRelease, Qt.MouseButton.LeftButton, at, Qt.MouseButton.NoButton)
+        self.assertEqual(plan.selected_module, ("s1", m.key))
+        QTest.keyClick(plan, Qt.Key.Key_Escape)
+        self.assertEqual((plan.selection, plan.selected_module), (("subfield", "s1"), ("", "")))
+
+    def test_a_double_tap_selects_the_row_and_still_reports_the_double_click(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QMouseEvent
+
+        from meridiana.ui.plan import to_scene
+        plan, send = self.plan, self.send
+        m = next(pm for pm in self.results["s1"].modules if pm.rid and pm.level == 0)
+        at = plan.mapFromScene(to_scene(*m.centre))
+        doubled = []
+        plan.moduleDoubleClicked.connect(lambda sfid, key: doubled.append((sfid, key)))
+        L, NONE = Qt.MouseButton.LeftButton, Qt.MouseButton.NoButton
+        for kind, buttons in ((QMouseEvent.Type.MouseButtonPress, L), (QMouseEvent.Type.MouseButtonRelease, NONE),
+                              (QMouseEvent.Type.MouseButtonPress, L), (QMouseEvent.Type.MouseButtonDblClick, L),
+                              (QMouseEvent.Type.MouseButtonRelease, NONE)):
+            send(kind, L, at, buttons)
+        self.assertEqual(plan.selection, ("row", f"s1/{m.rid}"))
+        self.assertEqual(doubled, [("s1", m.key)])
 
 
 if __name__ == "__main__":

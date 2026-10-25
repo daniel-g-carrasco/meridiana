@@ -516,7 +516,7 @@ class MainWindow(QMainWindow):
         self.view3d.backend.gizmoDone.connect(self._gizmo_done)
         self.view3d.gizmoTyped.connect(self._gizmo_typed)
         self.view3d.nudged.connect(self._gizmo_nudged)
-        self.view3d.escaped.connect(lambda: self._set_tool("select"))
+        self.view3d.escaped.connect(self._escape_3d)
         self.sunbar.sunChanged.connect(self.view3d.set_sun)
         self.view3d.failed.connect(lambda why: self.hint.setText(
             _("The 3D view could not start ({why}); the plan works as usual.").format(why=why)))
@@ -1473,6 +1473,12 @@ class MainWindow(QMainWindow):
         self.cfg.theme, self.cfg.accent, self.cfg.backgrounds = theme, accent, backgrounds
         self.theme.apply()
 
+    def _escape_3d(self) -> None:
+        if self.plan.tool == "move":
+            self._set_tool("select")
+        else:
+            self.plan.selection_back()
+
     def _set_tool(self, tool: str) -> None:
         self.show_phase("model")                    # drawing happens on the model
         self.tool_actions[tool].setChecked(True)
@@ -2123,6 +2129,11 @@ class MainWindow(QMainWindow):
         self.checks_page.show_related(*(("subfield", oid.partition("/")[0]) if kind == "row" else (kind, oid)))
         self.session.select(kind, oid)              # the tree, the properties, the measure and the 3D follow
         self._tree_select()
+        if kind == "row":
+            sfid, _sep, rid = oid.partition("/")
+            sf = self.project_subfield(sfid)
+            self.hint.setText(_("Row {row} of {name}: click a module to select it, or Esc to select the sub-field.")
+                              .format(row=rid, name=sf.name if sf is not None else sfid))
 
     def _show_measure(self) -> None:
         kind, oid = self.selection
@@ -2142,18 +2153,33 @@ class MainWindow(QMainWindow):
         return mesh.to_qt(x, y, b.height if b is not None else 0.0)
 
     def _module_clicked(self, sfid: str, key: str) -> None:
-        self.hint.setText(_("Module {key} of {name}: Delete takes it out of the layout.").format(
+        self.hint.setText(_("Module {key} of {name}: a second click on the same row selects it; Esc selects the "
+                            "sub-field; Delete takes the module out of the layout.").format(
             key=key, name=self.project_subfield(sfid).name if self.project_subfield(sfid) else sfid))
         self.session.select("subfield", sfid, (sfid, key))
         if not self.shown_once:
             self._show_3d()
 
+    def _repeated_row(self, sfid: str, key: str) -> str:
+        rid = self.plan.rid_of(sfid, key)
+        if rid and self.selection == ("subfield", sfid) and self.selected_module[0] == sfid and \
+                self.plan.rid_of(*self.selected_module) == rid:
+            return rid
+        return ""
+
+    def _module_view_picked(self, sfid: str, key: str) -> None:
+        rid = self._repeated_row(sfid, key)
+        if rid:
+            self.plan.selected_module = ("", "")
+            self._select("row", f"{sfid}/{rid}")
+            return
+        self.plan.selected_module = (sfid, key)
+        self.plan.set_selection("subfield", sfid)
+        self._module_clicked(sfid, key)
+
     def _module_picked_3d(self, index: int) -> None:
         if 0 <= index < len(self.module_index):
-            sfid, key = self.module_index[index]
-            self.plan.selected_module = (sfid, key)
-            self.plan.set_selection("subfield", sfid)
-            self._module_clicked(sfid, key)
+            self._module_view_picked(*self.module_index[index])
 
     def _point_picked_3d(self, x: float, y: float) -> None:
         """A click in the 3D view on what is not a module: what lies at that point of the plan, as the plan would
@@ -2166,9 +2192,7 @@ class MainWindow(QMainWindow):
             return
         kind, oid, key = self.plan._pick(to_scene(x, y))
         if kind == "module":
-            self.plan.selected_module = (oid, key)
-            self.plan.set_selection("subfield", oid)
-            self._module_clicked(oid, key)
+            self._module_view_picked(oid, key)
             return
         self.plan.selected_module = ("", "")
         self.selected_module = ("", "")
@@ -2728,12 +2752,14 @@ class MainWindow(QMainWindow):
                                 view_colours.kind_colour(h[0] or "", hover=True))
 
     def _hover_3d(self, what: tuple) -> None:
-        """What a click in the 3D view would select, outlined lighter: a module by its index, anything else as
-        the plan would pick it at that point."""
+        """What a click in the 3D view would select, outlined lighter: a module, its row on the second click,
+        anything else as the plan would pick it at that point."""
         from .plan import to_scene
         found = ("", "", "")
         if what[0] == "module" and 0 <= what[1] < len(self.module_index):
-            found = ("module", *self.module_index[what[1]])
+            sfid, key = self.module_index[what[1]]
+            rid = self._repeated_row(sfid, key)
+            found = ("row", f"{sfid}/{rid}", "") if rid else ("module", sfid, key)
         elif what[0] == "point":
             kind, oid, key = self.plan._pick(to_scene(what[1], what[2]))
             if kind == "pitch":

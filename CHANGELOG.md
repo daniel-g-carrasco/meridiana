@@ -262,6 +262,8 @@ software centres show.
   opens with its inverter as the first of the list and gives the same year.
 
 ### Fixed
+- Selecting modules and rows on a touchpad (R147): the plan takes the nearest module within 6 logical pixels of its
+  edge, the second click selects its row in both views, and Esc goes back through the selection levels.
 - The checks said that the modules in no string produce nothing in the simulation: they are counted as if connected;
   the detail now says so, and that in the real plant they produce nothing.
 - A change that lays out nothing again (a string) no longer covers the bar's message with «N modules laid».

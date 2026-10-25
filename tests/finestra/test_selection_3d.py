@@ -90,6 +90,27 @@ class SelectionIn3D(unittest.TestCase):
         self.assertEqual(len(self.win.module_index), r.count)
         self.assertEqual(self.win.module_index[3], (self.sid, key))
 
+    def test_the_second_click_and_escape_have_the_same_levels_as_the_plan(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        view = self.win.view3d
+        r = self.win.results[self.sid]
+        m = next(pm for pm in r.modules if pm.rid and sum(x.rid == pm.rid for x in r.modules) > 1)
+        index = self.win.module_index.index((self.sid, m.key))
+        view.modulePicked.emit(index)
+        self.assertEqual(self.win.selected_module, (self.sid, m.key))
+        view.hoverPicked.emit(("module", index))
+        self.assertEqual(self.win.hovered_3d, ("row", f"{self.sid}/{m.rid}", ""))
+        view.modulePicked.emit(index)
+        self.assertEqual(self.win.selection, ("row", f"{self.sid}/{m.rid}"))
+        self.assertEqual(self.win.selected_module, ("", ""))
+        QTest.keyClick(view, Qt.Key.Key_Escape)
+        self.assertEqual(self.win.selection, ("subfield", self.sid))
+        QTest.keyClick(view, Qt.Key.Key_Escape)
+        self.assertEqual(self.win.selection, ("building", self.win.project.buildings[0].id))
+        view.modulePicked.emit(index)
+        self.assertEqual(self.win.selected_module, (self.sid, m.key))
+
 
 if __name__ == "__main__":
     unittest.main()

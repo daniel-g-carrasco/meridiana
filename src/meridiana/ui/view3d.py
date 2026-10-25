@@ -801,7 +801,7 @@ class View3D(QuickImage):
     hoverPicked = Signal(tuple)         # under the pointer: ("module", index), ("point", x, y) or ("",)
     failed = Signal(str)                # the graphics could not start: why
     # Move in the 3D view (task 16b): values typed in the field (East, North, degrees), an arrow of the keyboard (East,
-    # North in metres), Esc with no drag going on (Move left)
+    # North in metres); Esc leaves Move, or the current selection level when Move is not active
     gizmoTyped = Signal(object, object, object)
     nudged = Signal(float, float)
     escaped = Signal()
@@ -900,6 +900,9 @@ class View3D(QuickImage):
 
     def keyPressEvent(self, event) -> None:
         if self._gizmo_key(event):
+            return
+        if event.key() == Qt.Key.Key_Escape:
+            self.escaped.emit()
             return
         super().keyPressEvent(event)
 

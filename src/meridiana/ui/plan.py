@@ -77,6 +77,27 @@ def _quad_at(quads, x: float, y: float) -> int:
     return int(inside[0]) if len(inside) else -1
 
 
+def _quad_near(quads, x: float, y: float, reach: float) -> tuple[int, float]:
+    """The closest quadrilateral within `reach` scene units, and its squared distance from the point."""
+    if quads is None or not len(quads):
+        return -1, math.inf
+    quads = np.asarray(quads, dtype=float)
+    a = quads
+    b = np.roll(quads, -1, axis=1)
+    edge = b - a
+    point = np.array([x, y])
+    length2 = np.sum(edge * edge, axis=2)
+    along = np.divide(np.sum((point - a) * edge, axis=2), length2,
+                      out=np.zeros_like(length2), where=length2 > 1e-18)
+    closest = a + np.clip(along, 0.0, 1.0)[..., None] * edge
+    distances = np.min(np.sum((point - closest) ** 2, axis=2), axis=1)
+    i = int(np.argmin(distances))
+    return (i, float(distances[i])) if distances[i] <= reach * reach else (-1, math.inf)
+
+
+PICK_PX = 6.0
+
+
 def _ctrl(modifiers) -> bool:
     """Ctrl held, and not AltGr: Windows sends AltGr as Ctrl+Alt, and an Italian keyboard writes @ and # with it."""
     return bool(modifiers & Qt.KeyboardModifier.ControlModifier) and not modifiers & Qt.KeyboardModifier.AltModifier
@@ -108,7 +129,8 @@ def cosmetic(colour, width: float = 1.5, style=Qt.PenStyle.SolidLine) -> QPen:
 
 def hints() -> dict:
     return {
-        "select": _("Click an object to see its properties. Delete removes it."),
+        "select": _("Click the smallest object; a second click on the same row selects the row. Esc goes to the "
+                    "container; Delete removes the selection."),
         "building": _("Building: click the corners of its outline. Enter or a double click closes it, Backspace "
                       "takes the last corner back, Esc cancels. Ctrl draws without guides; type a number for the "
                       "length of the side."),
@@ -1058,7 +1080,7 @@ class PlanView(QGraphicsView):
                 halo.setZValue(Z_SELECTION + z)
                 self.items_by_kind["selection"].append(halo)
 
-    def _pick(self, scene_pos: QPointF):
+    def _pick(self, scene_pos: QPointF, pixels: float = 0.0):
         order = {"exclusion": 0, "modules": 1, "subfield": 2, "pitch": 3, "building": 4}
         # inside the outline, not inside the item's shape: with a dashed pen Qt's shape leaves out a band along the
         # edges (stroke and fill cancel out), and a click by the edge of a sub-field selected its building
@@ -1072,9 +1094,46 @@ class PlanView(QGraphicsView):
                 i = _quad_at(quads, scene_pos.x(), scene_pos.y())
                 if i >= 0:
                     return "module", it.data(1), keys[i]
-                continue
-            return it.data(0), it.data(1), ""
+            elif it.data(0) == "exclusion":
+                return "exclusion", it.data(1), ""
+        if pixels > 0.0:
+            reach = pixels * self.metres_per_pixel()
+            best = (-1, math.inf)
+            found = ("", "")
+            for sfid, (keys, quads) in self.module_corners.items():
+                i, distance = _quad_near(quads, scene_pos.x(), scene_pos.y(), reach)
+                if i >= 0 and distance < best[1]:
+                    best, found = (i, distance), (sfid, keys[i])
+            if found[0]:
+                return "module", *found
+        for it in hits:
+            if it.data(0) != "modules":
+                return it.data(0), it.data(1), ""
         return "", "", ""
+
+    def selection_back(self) -> bool:
+        """Escape: from a row or module to its sub-field, then to the building and the site."""
+        kind, oid = self.selection
+        project = self.drawn[0] if self.drawn is not None else None
+        if kind == "row":
+            target = ("subfield", oid.partition("/")[0])
+        elif self.selected_module[0]:
+            target = ("subfield", self.selected_module[0])
+        elif kind in ("subfield", "exclusion") and project is not None:
+            things = project.subfields if kind == "subfield" else project.exclusions
+            thing = next((x for x in things if x.id == oid), None)
+            target = ("building", thing.building) if thing is not None and thing.building else ("site", "")
+        elif kind == "building":
+            target = ("site", "")
+        else:
+            return False
+        self.selected_module = ("", "")
+        self.selection = target
+        self._restyle_selection()
+        self._hover("", "", "")
+        self.picked.emit(*target)
+        self.hint.emit(hints()["select"])
+        return True
 
     # a side picked on the plan
 
@@ -1381,7 +1440,7 @@ class PlanView(QGraphicsView):
         cursor = from_scene(scene_pos)
         if not self._movable():
             self.snap, self.move_pointer = None, None
-            kind, oid, key = self._pick(scene_pos)
+            kind, oid, key = self._pick(scene_pos, PICK_PX)
             self._hover(kind, oid, key)
             self.cursorInfo.emit(f"E {number(cursor[0])}  N {number(cursor[1])} m")
             self.viewport().update()
@@ -1414,7 +1473,7 @@ class PlanView(QGraphicsView):
         self.move_mods = mods
         scene_pos = self.mapToScene(position.toPoint())
         if not self._movable():
-            kind, oid, _key = self._pick(scene_pos)
+            kind, oid, _key = self._pick(scene_pos, PICK_PX)
             if kind == "module":
                 kind = "subfield"
             elif kind == "pitch":
@@ -1827,7 +1886,7 @@ class PlanView(QGraphicsView):
                     self.setCursor(Qt.CursorShape.SizeHorCursor)
                     self.hint.emit(_("Drag the end of the row: it takes or gives back places, one module at a time."))
                     return
-            kind, oid, key = self._pick(scene_pos)
+            kind, oid, key = self._pick(scene_pos, PICK_PX)
             rid = self.rid_of(oid, key) if kind == "module" else ""
             # a click on the row selected goes back to the module (below)
             if kind == "module" and rid and self.selection == ("subfield", oid) and \
@@ -1915,8 +1974,8 @@ class PlanView(QGraphicsView):
             self._finish()
             return
         if self.tool == "select" and self.edge_pick is None and event.button() == Qt.MouseButton.LeftButton:
-            kind, oid, key = self._pick(self.mapToScene(event.position().toPoint()))
-            if kind == "module":                    # Aurora's double click: a module on its own turns by 90°
+            kind, oid, key = self._pick(self.mapToScene(event.position().toPoint()), PICK_PX)
+            if kind == "module":                    # the window selects a row of more, turns one on its own
                 self.moduleDoubleClicked.emit(oid, key)
                 return
         ring = self.rings.get(self.selection)
@@ -2109,6 +2168,8 @@ class PlanView(QGraphicsView):
             self._end_point_pick()
             self.hint.emit("")
             return
+        if key == Qt.Key.Key_Escape and self.tool == "select" and self.selection_back():
+            return
         if key == Qt.Key.Key_Delete and self.tool == "select":
             self.deleteRequested.emit()
             return
@@ -2143,7 +2204,7 @@ class PlanView(QGraphicsView):
             # that is drawn again. Repainting the whole plan at each move cost 15 ms on a roof and 60-70 ms with
             # 4,700 modules (22/10/2026)
             self.snap = None
-            kind, oid, key = self._pick(scene_pos) if self.edge_pick is None else ("", "", "")
+            kind, oid, key = self._pick(scene_pos, PICK_PX) if self.edge_pick is None else ("", "", "")
             rid = self.rid_of(oid, key) if kind == "module" else ""
             if rid and self.selection == ("subfield", oid) and self.selected_module[0] == oid and \
                     self.rid_of(*self.selected_module) == rid:
