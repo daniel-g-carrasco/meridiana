@@ -131,6 +131,8 @@ Linux contro Windows: il portatile è più fluido del PC di Daniel (nessun blocc
 è diverso e il suo schermo ha 5,5 milioni di pixel contro gli 8,3 del Dell 4K; il confronto pulito tra i due sistemi
 andrebbe fatto sulla stessa macchina.
 
+Prova A/B dello stile delle barre di scorrimento (`ui/scrollbars.ScrollStyle`, uno stile in Python che sostituisce misure e disegno dei controlli complessi): con lo stile Fusion semplice i blocchi del bordo destro sono gli stessi (Modello 14 contro 10-12, Consumi 35-36 contro 35-36), quindi non pesa (`bordi-schermo-senza-scrollstyle.json`). Il punto debole che resta è il bordo destro nelle fasi con i grafici (Consumi, Bilancio: 35-38 blocchi), da affrontare congelando i grafici durante il trascinamento come la vista 3D.
+
 ## Storico
 
 Una riga per ogni misura nuova: data, commit, cosa era cambiato, i numeri che contano. Se un numero peggiora,
@@ -142,3 +144,4 @@ la riga lo dice.
 | 25/10/2026 | 05a1399 | 3D in immagine, cubo, sguardo, ricerche dirette, Verifiche | 0 | 14-21 | |
 | 25/10/2026 | d312585 | riga delle fasi, un filtro solo, scorrimento 180 ms | 0 | 12-14 | |
 | 25/10/2026 | b5c0aeb | avvio: pvlib e matplotlib fuori dal filo della finestra | | | 2,6-2,8 s / 2,8-3,0 s |
+| 25/10/2026 | ebddea1 (primo commit pubblico 3b1d8c8) | codice finale con grafica, stringatura e Meridio uniti, PC fermo (`tutto-schermo-finale.json`, `bordi-schermo-finale.json`) | 0 | 10-12 | finestra costruita 1,1 s, primo disegno 1,2-1,4 s dalla costruzione, anno 1,8-2,0 s |

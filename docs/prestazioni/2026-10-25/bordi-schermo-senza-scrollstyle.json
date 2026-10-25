@@ -1,0 +1,102 @@
+{
+ "when": "2026-10-25 03:28",
+ "commit": "50e29a2",
+ "on_screen": true,
+ "no_3d": false,
+ "no_vsync": false,
+ "maximized": false,
+ "platform": "windows",
+ "sequence": "edges",
+ "screen": "DELL P2415Q 1920x1080 @ 2",
+ "machine": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+ "qt": "6.12.0",
+ "opened": {
+  "window_built_ms": 1097,
+  "first_paint_ms": 1237,
+  "year_ms": 1836
+ },
+ "stall_ms": 30,
+ "environment": {},
+ "results": [
+  {
+   "gesture": "model: left edge dragged",
+   "action_ms": 776.3,
+   "until_idle_ms": 782.5,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "model: left edge back",
+   "action_ms": 765.6,
+   "until_idle_ms": 771.6,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "model: right edge dragged",
+   "action_ms": 1207.9,
+   "until_idle_ms": 1212.1,
+   "blocks": 14,
+   "worst_ms": 34.4,
+   "blocked_ms": 442.2
+  },
+  {
+   "gesture": "model: right edge back",
+   "action_ms": 1243.4,
+   "until_idle_ms": 1251.4,
+   "blocks": 14,
+   "worst_ms": 37.0,
+   "blocked_ms": 456.2
+  },
+  {
+   "gesture": "model: window resized, 15 steps",
+   "action_ms": 721.8,
+   "until_idle_ms": 729.5,
+   "blocks": 14,
+   "worst_ms": 50.7,
+   "blocked_ms": 609.9
+  },
+  {
+   "gesture": "consumption: left edge dragged",
+   "action_ms": 1102.1,
+   "until_idle_ms": 1108.6,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: left edge back",
+   "action_ms": 1118.5,
+   "until_idle_ms": 1122.7,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: right edge dragged",
+   "action_ms": 2060.5,
+   "until_idle_ms": 2067.6,
+   "blocks": 36,
+   "worst_ms": 42.7,
+   "blocked_ms": 1216.5
+  },
+  {
+   "gesture": "consumption: right edge back",
+   "action_ms": 2030.1,
+   "until_idle_ms": 2037.8,
+   "blocks": 35,
+   "worst_ms": 45.2,
+   "blocked_ms": 1170.4
+  },
+  {
+   "gesture": "consumption: window resized, 15 steps",
+   "action_ms": 812.5,
+   "until_idle_ms": 821.3,
+   "blocks": 14,
+   "worst_ms": 46.2,
+   "blocked_ms": 581.6
+  }
+ ]
+}
