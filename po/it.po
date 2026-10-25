@@ -13,10 +13,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/meridiana/__main__.py:28
-#, python-brace-format
-msgid "usage: {command} [FOLDER...]"
-msgstr "uso: {command} [CARTELLA...]"
 
 #: src/meridiana/catalog/panond.py:88
 #, python-brace-format
@@ -153,9 +149,6 @@ msgstr "{kw} kW: connessione in media tensione, secondo la CEI 0-16"
 msgid "{kw} kW: connection to the transmission network, under Terna's grid code"
 msgstr "{kw} kW: connessione alla rete di trasmissione, secondo il Codice di rete Terna"
 
-#: src/meridiana/checks.py:56
-msgid "(from the power, as CEI 0-16 indicates; the distributor decides)"
-msgstr "(dalla potenza, come indica la CEI 0-16; decide il distributore)"
 
 #: src/meridiana/checks.py:60
 #, python-brace-format
@@ -1529,22 +1522,12 @@ msgstr "{v} V a {t} °C, la finestra comincia a {lo} V"
 msgid "MPP voltage within the MPPT window at the coldest cell"
 msgstr "Tensione MPP entro la finestra MPPT con la cella più fredda"
 
-#: src/meridiana/energy/stringing.py:157
-#, python-brace-format
-msgid "{v} V, the window ends at {hi} V"
-msgstr "{v} V, la finestra finisce a {hi} V"
 
 #: src/meridiana/energy/stringing.py:158
 msgid "MPP voltage of the string at the extremes"
 msgstr "Tensione MPP della stringa agli estremi"
 
-#: src/meridiana/energy/stringing.py:160
-msgid "From the module's single-diode model: at the hottest cell of the typical year the voltage is lowest, at the coldest it is highest; both must stay within the inverter's MPPT window."
-msgstr "Dal modello a un diodo del modulo: con la cella più calda dell'anno tipo la tensione è minima, con la più fredda è massima; entrambe devono stare nella finestra MPPT dell'inverter."
 
-#: src/meridiana/energy/stringing.py:162
-msgid "hottest cell of the typical year"
-msgstr "cella più calda dell'anno tipo"
 
 #: src/meridiana/energy/stringing.py:163
 msgid "start of the MPPT window"
@@ -1689,10 +1672,6 @@ msgstr "ostacolo"
 msgid "parapet of {name}"
 msgstr "parapetto di {name}"
 
-#: src/meridiana/energy/system.py:41
-#, python-brace-format
-msgid "{name}, pitch {n}"
-msgstr "{name}, falda {n}"
 
 #: src/meridiana/energy/system.py:73
 msgid "east"
@@ -3115,15 +3094,7 @@ msgstr "W AC"
 msgid "Modules"
 msgstr "Moduli"
 
-#: src/meridiana/ui/catalog_dialog.py:149
-#, python-brace-format
-msgid "{n} shown of {total}; the first 400 that match"
-msgstr "{n} mostrati su {total}; i primi 400 che corrispondono"
 
-#: src/meridiana/ui/catalog_dialog.py:151
-#, python-brace-format
-msgid "{n} shown of {total}"
-msgstr "{n} mostrati su {total}"
 
 #: src/meridiana/ui/catalog_dialog.py:177
 msgid "no"
@@ -3199,9 +3170,6 @@ msgstr "Cosa"
 msgid "Source"
 msgstr "Fonte"
 
-#: src/meridiana/ui/checks_page.py:51 src/meridiana/ui/checks_page.py:87
-msgid "Fix"
-msgstr "Correggi"
 
 #: src/meridiana/ui/checks_page.py:58
 msgid "Copy the notes for the report"
@@ -3263,9 +3231,6 @@ msgstr "nov"
 msgid "Dec"
 msgstr "dic"
 
-#: src/meridiana/ui/energy_pages.py:157
-msgid "Weather of the site"
-msgstr "Meteo del sito"
 
 #: src/meridiana/ui/energy_pages.py:159
 msgid "Not fetched yet."
@@ -4099,9 +4064,6 @@ msgstr "Edificio: fai clic sui vertici del contorno. Invio o un doppio clic lo c
 msgid "Free pitch: draw its outline on a building, then choose its eave side and slope."
 msgstr "Falda libera: disegnane il contorno su un edificio, poi scegli il lato di gronda e la pendenza."
 
-#: src/meridiana/ui/plan.py:76
-msgid "Sub-field: draw the area where modules may go, on a roof or on the ground. Modules are laid only when you ask, from its properties."
-msgstr "Sottocampo: disegna l'area dove possono andare i moduli, su un tetto o a terra. I moduli si posano solo quando lo chiedi, dalle sue proprietà."
 
 #: src/meridiana/ui/plan.py:78
 msgid "Exclusion: draw a skylight, a smoke vent, roof plant or a walkway; modules keep away from it."
@@ -4324,9 +4286,6 @@ msgstr "ombre degli ostacoli"
 msgid "outline"
 msgstr "contorno"
 
-#: src/meridiana/ui/properties.py:56
-msgid "ridge"
-msgstr "colmo"
 
 #: src/meridiana/ui/properties.py:56
 msgid "connection and obligations"
@@ -4457,22 +4416,9 @@ msgstr "Gronda sul lato"
 msgid "Click on the plan the side the roof goes down to"
 msgstr "Clicca in pianta il lato verso cui scende la falda"
 
-#: src/meridiana/ui/properties.py:308
-msgid "Along the long side"
-msgstr "Lungo il lato lungo"
 
-#: src/meridiana/ui/properties.py:308
-#, python-brace-format
-msgid "Parallel to side {n}"
-msgstr "Parallelo al lato {n}"
 
-#: src/meridiana/ui/properties.py:313
-msgid "Ridge"
-msgstr "Colmo"
 
-#: src/meridiana/ui/properties.py:313
-msgid "Click on the plan an eave: the ridge runs parallel to it"
-msgstr "Clicca in pianta una gronda: il colmo le corre parallelo"
 
 #: src/meridiana/ui/properties.py:317
 msgid "Height of the parapet above the roof, all round: it casts shadows on the modules"
@@ -4587,9 +4533,6 @@ msgstr "Tra le tavole"
 msgid "Out of the obstacles' shadows"
 msgstr "Fuori dalle ombre degli ostacoli"
 
-#: src/meridiana/ui/properties.py:444
-msgid "No module where parapets, plant, chimneys, trees and the other buildings cast their shadow on the design day between its hours: the same rule as the row pitch (the site's properties)"
-msgstr "Nessun modulo dove parapetti, impianti, camini, alberi e gli altri edifici fanno ombra nel giorno di progetto tra le sue ore: la stessa regola del passo tra le file (proprietà del sito)"
 
 #: src/meridiana/ui/properties.py:452
 msgid "Row pitch"
@@ -4723,19 +4666,8 @@ msgstr "Cosa ha letto Meridiana da {name}, e come. Accanto ai file di PVsyst non
 msgid "Create the project"
 msgstr "Crea il progetto"
 
-#: src/meridiana/ui/report.py:70
-#, python-brace-format
-msgid "Variant: {name}"
-msgstr "Variante: {name}"
 
-#: src/meridiana/ui/report.py:73
-msgid "Photovoltaic system: production, consumption and economics"
-msgstr "Impianto fotovoltaico: produzione, consumi ed economia"
 
-#: src/meridiana/ui/report.py:75
-#, python-brace-format
-msgid "Report made by Meridiana {v} on {d}"
-msgstr "Relazione prodotta da Meridiana {v} il {d}"
 
 #: src/meridiana/ui/report.py:80
 msgid "Power at STC"
@@ -4749,19 +4681,11 @@ msgstr "Potenza AC"
 msgid "Energy a year (typical year)"
 msgstr "Energia all'anno (anno tipo)"
 
-#: src/meridiana/ui/report.py:122
-#, python-brace-format
-msgid "{n} modules in series, strings on the inputs {per}."
-msgstr "{n} moduli in serie, stringhe sugli ingressi {per}."
 
 #: src/meridiana/ui/report.py:131
 msgid "The strings on the modules"
 msgstr "Le stringhe sui moduli"
 
-#: src/meridiana/ui/report.py:132
-#, python-brace-format
-msgid "{n} strings, named inverter.input.string; each runs along a row and back along the next."
-msgstr "{n} stringhe, con il nome inverter.ingresso.stringa; ognuna corre lungo una fila e torna lungo la successiva."
 
 #: src/meridiana/ui/report.py:133
 #, python-brace-format
@@ -4904,14 +4828,7 @@ msgstr "Posa prima i moduli di un sottocampo: la produzione si calcola sui modul
 msgid "Choose an inverter from the catalogue to check the strings: its MPPT window and currents are needed."
 msgstr "Scegli un inverter dal catalogo per verificare le stringhe: servono la sua finestra MPPT e le sue correnti."
 
-#: src/meridiana/ui/window.py:248
-#, python-brace-format
-msgid "Meridiana's prudent default for a minimum temperature; the standard asks for the lowest temperature of the site (the typical year's is {t} °C)"
-msgstr "valore prudente predefinito di Meridiana per la temperatura minima; la norma chiede la temperatura minima del sito (quella dell'anno tipo è {t} °C)"
 
-#: src/meridiana/ui/window.py:264
-msgid "No number of modules in series fits this inverter's window."
-msgstr "Nessun numero di moduli in serie sta nella finestra di questo inverter."
 
 #: src/meridiana/ui/window.py:285 src/meridiana/ui/window.py:1058
 msgid "Find the site"
@@ -5034,13 +4951,7 @@ msgstr "&Ripeti"
 msgid "&Delete"
 msgstr "&Elimina"
 
-#: src/meridiana/ui/window.py:550
-msgid "Undo"
-msgstr "Annulla"
 
-#: src/meridiana/ui/window.py:550
-msgid "Redo"
-msgstr "Ripeti"
 
 #: src/meridiana/ui/window.py:560
 msgid "&Draw"
@@ -5163,17 +5074,11 @@ msgstr "&Inquadra il disegno"
 msgid "&Strings on the plan"
 msgstr "&Stringhe sulla pianta"
 
-#: src/meridiana/ui/window.py:615
-msgid "Each string as a line through its modules, coloured by the inverter's input"
-msgstr "Ogni stringa come una linea attraverso i suoi moduli, colorata per ingresso dell'inverter"
 
 #: src/meridiana/ui/window.py:617
 msgid "&Background"
 msgstr "&Sfondo"
 
-#: src/meridiana/ui/window.py:619
-msgid "National orthophoto 2012"
-msgstr "Ortofoto nazionale 2012"
 
 #: src/meridiana/ui/window.py:619
 msgid "OpenStreetMap"
@@ -5235,9 +5140,6 @@ msgstr "Produzione, autoconsumo ed economia di ogni variante, affiancate"
 msgid "Variant"
 msgstr "Variante"
 
-#: src/meridiana/ui/window.py:644
-msgid "The variant in hand: the others keep their own sub-fields, modules, inverter, losses and economics"
-msgstr "La variante in uso: le altre conservano i propri sottocampi, moduli, inverter, perdite ed economia"
 
 #: src/meridiana/ui/window.py:648
 msgid "&Help"
@@ -5428,20 +5330,8 @@ msgstr[1] "{n} moduli posati in {ms} ms"
 msgid "Site: {name}"
 msgstr "Sito: {name}"
 
-#: src/meridiana/ui/window.py:1160
-#, python-brace-format
-msgid "Buildings ({n})"
-msgstr "Edifici ({n})"
 
-#: src/meridiana/ui/window.py:1163
-#, python-brace-format
-msgid "Sub-fields ({n})"
-msgstr "Sottocampi ({n})"
 
-#: src/meridiana/ui/window.py:1168
-#, python-brace-format
-msgid "Exclusions ({n})"
-msgstr "Esclusioni ({n})"
 
 #: src/meridiana/ui/window.py:1211
 msgid "Computing…"
@@ -5561,9 +5451,6 @@ msgstr "Impossibile scrivere la relazione: {error}"
 msgid "Report written: {file}"
 msgstr "Relazione scritta: {file}"
 
-#: src/meridiana/ui/window.py:1318
-msgid "Choose the inverter"
-msgstr "Scegli l'inverter"
 
 #: src/meridiana/ui/window.py:1323
 msgid "Choose the battery"
@@ -5694,10 +5581,6 @@ msgstr "Salva il progetto"
 msgid "About Meridiana"
 msgstr "Informazioni su Meridiana"
 
-#: src/meridiana/ui/window.py:1621
-#, python-brace-format
-msgid "<b>Meridiana</b> {version}<br>Photovoltaic design: map, building model, sun path, module layout and Italian standards.<br><br>GPL-3.0-or-later. Qt for Python (LGPL), Qt Quick 3D (GPL), shapely (BSD), numpy (BSD). Background: national orthophoto (Geoportale Nazionale, MASE), © OpenStreetMap contributors."
-msgstr "<b>Meridiana</b> {version}<br>Progettazione fotovoltaica: mappa, modello dell'edificio, percorso del sole, posa dei moduli e norme italiane.<br><br>GPL-3.0 o successive. Qt for Python (LGPL), Qt Quick 3D (GPL), shapely (BSD), numpy (BSD). Sfondo: ortofoto nazionale (Geoportale Nazionale, MASE), © contributori di OpenStreetMap."
 
 #: src/meridiana/updates.py:126 src/meridiana/updates.py:148
 msgid "unexpected answer from GitHub"
@@ -6179,33 +6062,18 @@ msgstr "Spostamento"
 msgid "Orbit (3D only)"
 msgstr "Orbita (solo 3D)"
 
-#: src/meridiana/navigation.py:93
-msgid "Zoom by dragging"
-msgstr "Zoom trascinando"
 
-#: src/meridiana/navigation.py:95
-msgid "Zoom towards the cursor"
-msgstr "Zoom verso il cursore"
 
-#: src/meridiana/navigation.py:95
-msgid "wheel"
-msgstr "rotella"
 
 #: src/meridiana/navigation.py:97 src/meridiana/navigation.py:99
 msgid "Recentre on the point"
 msgstr "Ricentra sul punto"
 
-#: src/meridiana/navigation.py:97
-msgid "short middle click"
-msgstr "clic breve del centrale"
 
 #: src/meridiana/navigation.py:99
 msgid "Fit the view"
 msgstr "Adatta la vista"
 
-#: src/meridiana/navigation.py:100
-msgid "double middle click"
-msgstr "doppio clic del centrale"
 
 #: src/meridiana/ui/preferences.py:16
 msgid "Turntable: the vertical stays vertical"
@@ -6252,9 +6120,6 @@ msgstr "Tenendo premuto il tasto dell'orbita ({keys} in questo stile) e muovendo
 msgid "This style orbits with a button alone, with no key to hold: the pivot shows only while orbiting."
 msgstr "Questo stile orbita con un pulsante da solo, senza un tasto da tenere: il perno si vede solo mentre si orbita."
 
-#: src/meridiana/ui/preferences.py:50
-msgid "The same styles as FreeCAD, plus AutoCAD's hands (centre button to pan, Shift and centre to orbit, a double click of the centre button to fit). The plan pans and zooms the same way; the orbit is for the 3D view."
-msgstr "Gli stessi stili di FreeCAD, più le mani di AutoCAD (centrale per spostare, Maiusc e centrale per l'orbita, doppio clic del centrale per adattare). La pianta si sposta e si ingrandisce allo stesso modo; l'orbita è per il 3D."
 
 #: src/meridiana/ui/preferences.py:78
 msgid "Navigation"
@@ -6375,23 +6240,13 @@ msgstr "Adatta al disegno"
 msgid "Set this view as Home"
 msgstr "Imposta questa vista come Home"
 
-#: src/meridiana/ui/checks_page.py:47
-#, python-brace-format
-msgid "Show what is {level}"
-msgstr "Mostra ciò che è {level}"
 
-#: src/meridiana/ui/window.py:492
-msgid "The checks of this level, in the panel below"
-msgstr "Le verifiche di questo livello, nel pannello in basso"
 
 #: src/meridiana/model.py:244
 #, python-brace-format
 msgid "{name} (copy)"
 msgstr "{name} (copia)"
 
-#: src/meridiana/ui/inspector.py:35
-msgid "The properties of the objects are on the Model tab; this panel shows or hides with Ctrl+1."
-msgstr "Le proprietà degli oggetti sono nella scheda Modello; questo pannello si mostra e si nasconde con Ctrl+1."
 
 #: src/meridiana/ui/window.py:678
 msgid "The selection framed in both views; everything when nothing is selected"
@@ -6509,9 +6364,6 @@ msgstr "Tu"
 msgid "Show {name}, the assistant, and its item in the status bar"
 msgstr "Mostra {name}, l'assistente, e la sua voce nella barra di stato"
 
-#: src/meridiana/ui/preferences.py:87
-msgid "Off, nothing of the assistant is left in the window: not the character, not the item in the status bar, not its key (Ctrl+L). It is not connected to a model yet."
-msgstr "Spento, dell'assistente non resta nulla nella finestra: né il personaggio, né la voce nella barra di stato, né il suo tasto (Ctrl+L). Non è ancora collegato a un modello."
 
 #: src/meridiana/ui/window.py:524
 msgid "The assistant (Ctrl+L): not connected yet"
@@ -6574,17 +6426,8 @@ msgstr "Non scurito"
 msgid "Icons only"
 msgstr "Solo icone"
 
-#: src/meridiana/ui/appearance.py:22
-msgid "Icons and text"
-msgstr "Icone e testo"
 
-#: src/meridiana/ui/appearance.py:106
-msgid "A toolbar put on a side of the window always shows the icons alone"
-msgstr "Una barra messa su un fianco della finestra mostra sempre solo le icone"
 
-#: src/meridiana/ui/appearance.py:107
-msgid "Toolbar"
-msgstr "Barra degli strumenti"
 
 #: src/meridiana/navigation.py:99
 msgid "the wheel, towards the cursor"
@@ -7047,8 +6890,6 @@ msgstr "Un errore"
 msgid "Find the site: the address typed goes to OpenStreetMap's Nominatim"
 msgstr "Trova il sito: l'indirizzo scritto va a Nominatim di OpenStreetMap"
 
-msgid "Map under the plan: the area in view goes to the map server chosen in the plan's Background menu (the national orthophoto is served over plain http)"
-msgstr "Mappa sotto la pianta: l'area inquadrata va al server della mappa scelta nel menu Sfondo della pianta (l'ortofoto nazionale è servita in http semplice)"
 
 msgid "Meridiana ran into an error: {error}"
 msgstr "Meridiana ha incontrato un errore: {error}"
@@ -7165,9 +7006,6 @@ msgstr "Dimensiona"
 msgid "Strings"
 msgstr "Stringhe"
 
-#: task 17b
-msgid "By hand"
-msgstr "A mano"
 
 #: task 17b
 msgid "Does this string hold at -10 °C?"
@@ -7412,25 +7250,10 @@ msgstr "Le proprietà degli oggetti sono nella fase Modello; questo pannello si 
 msgid "Deliverables"
 msgstr "Elaborati"
 
-#: task 17b
-msgid "Plant: inverter and strings"
-msgstr "Impianto: inverter e stringhe"
 
-#: task 17b
-msgid "The list of the inverters with their inputs, the strings by strategy or by hand on the plan, the checks at 60, 20 and -10 °C: they come with task 16d. Until then the strings are proposed by the computation and shown on the Production page."
-msgstr "L'elenco degli inverter con i loro ingressi, le stringhe per strategia o a mano sulla pianta, le verifiche a 60, 20 e -10 °C: arrivano con il compito 16d. Fino ad allora le stringhe le propone il calcolo e si vedono nella pagina Producibilità."
 
-#: task 17b
-msgid "Report: what leaves the project"
-msgstr "Relazione: ciò che esce dal progetto"
 
-#: task 17b
-msgid "The technical report as a PDF with every calculation and its source; the variants side by side; a new revision of the file next to the previous one; the notes of the rules that apply, to paste into your own report."
-msgstr "La relazione tecnica in PDF con ogni calcolo e la sua fonte; le varianti a confronto; una nuova revisione del file accanto alla precedente; le note delle regole che si applicano, da incollare nella tua relazione."
 
-#: task 17b
-msgid "Production, strings, consumption and economics with every calculation"
-msgstr "Producibilità, stringhe, consumi ed economia con ogni calcolo"
 
 #: task 17b
 msgid "Every variant computed and compared, the best of each row in bold"
@@ -7444,9 +7267,6 @@ msgstr "Un file nuovo con il suffisso _R01, _R02...; il precedente resta"
 msgid "The paragraphs of the rules that apply, with their sources"
 msgstr "I paragrafi delle regole che si applicano, con le fonti"
 
-#: task 17b
-msgid "The chapters with their boxes, the preview of the pages, the header with the client and the designer, the drawings (DXF), the model (IFC4) and the hourly series (CSV) come with the task of the report. The Deliverables panel on the right says the state of each."
-msgstr "I capitoli con le caselle, l'anteprima delle pagine, l'intestazione con committente e progettista, i disegni (DXF), il modello (IFC4) e le serie orarie (CSV) arrivano con il compito della relazione. Il pannello Elaborati a destra dice lo stato di ciascuno."
 
 #: task 17b
 msgid "The modules laid in the selected sub-field with its parameters and the fire brigade rules"
@@ -7485,13 +7305,7 @@ msgstr "Producibilità, consumi, bilancio ed economia della variante in mano, co
 msgid "The typical year and the horizon of the site from PVGIS, then the computation"
 msgstr "L'anno tipo e l'orizzonte del sito da PVGIS, poi il calcolo"
 
-#: task 17b
-msgid "An inverter from the catalogue for the variant in hand"
-msgstr "Un inverter dal catalogo per la variante in mano"
 
-#: task 17b
-msgid "No inverter chosen: Meridiana sizes one at the DC/AC ratio of the Production page"
-msgstr "Nessun inverter scelto: Meridiana ne dimensiona uno al rapporto DC/AC della pagina Producibilità"
 
 #: task 17b
 msgid "A measured load curve (CSV, 15 minutes or hourly) as the consumption"
@@ -7622,9 +7436,6 @@ msgstr "L'inverter taglia ciò che i moduli danno oltre la sua potenza in altern
 msgid "Shading, strings and the balance come from the hourly year: until it is computed the checks that need it are missing."
 msgstr "Ombre, stringhe e bilancio vengono dall'anno orario: finché non è calcolato mancano le verifiche che ne hanno bisogno."
 
-#: src/meridiana/checks.py
-msgid "The strings of the plan take fewer modules than those laid; the ones left produce nothing in the simulation. Change the modules in series, the strings on each input or the inverters so that every module is in a string."
-msgstr "Le stringhe del piano prendono meno moduli di quelli posati; quelli rimasti non producono nulla nella simulazione. Cambia i moduli in serie, le stringhe su ogni ingresso o gli inverter perché ogni modulo sia in una stringa."
 
 #: src/meridiana/checks.py
 msgid "PVsyst's file does not carry it: enter it in Meridiana before trusting the results."
@@ -7703,9 +7514,6 @@ msgstr "Questo oggetto"
 msgid "Only the checks of the object selected in the views or in the tree"
 msgstr "Solo le verifiche dell'oggetto selezionato nelle viste o nell'albero"
 
-#: src/meridiana/ui/checks_page.py
-msgid "Show the object in the views, the rest dimmed"
-msgstr "Mostra l'oggetto nelle viste, il resto attenuato"
 
 #: src/meridiana/ui/checks_page.py
 msgid "Select an object in the views or in the tree first."
@@ -7733,13 +7541,7 @@ msgstr "Correggi la verifica in mano"
 msgid "«Fix» of the item in hand in the Checks panel, as VS Code's quick fix"
 msgstr "«Correggi» della voce in mano nel pannello Verifiche, come la correzione rapida di VS Code"
 
-#: src/meridiana/ui/checks_page.py
-msgid "The item in hand has no fix: its detail says what to do."
-msgstr "La voce in mano non ha una correzione: il suo dettaglio dice che cosa fare."
 
-#: src/meridiana/ui/checks_page.py
-msgid "No item in hand: choose one in the list first."
-msgstr "Nessuna voce in mano: scegline prima una nell'elenco."
 #: src/meridiana/ui/catalog_dialog.py:51 src/meridiana/ui/catalog_dialog.py:306
 msgid "Cell family"
 msgstr "Famiglia della cella"
@@ -7936,9 +7738,6 @@ msgstr "soglia di Meridiana, come quella di PVsyst: non è una norma"
 msgid "{name}: energy lost beyond the nominal power"
 msgstr "{name}: energia persa oltre la potenza nominale"
 
-#: task 16d
-msgid "{pct} % of the year (program thresholds as PVsyst's: a warning from {w} %, too much beyond {f} %)"
-msgstr "{pct} % dell'anno (soglie di programma come quelle di PVsyst: avviso da {w} %, troppo oltre {f} %)"
 
 #: task 16d
 msgid "{name}: the inputs loaded alike"
@@ -8009,9 +7808,6 @@ msgstr "{name}: rapporto DC/AC"
 msgid "{dc} kWp on {ac} kW: {r}"
 msgstr "{dc} kWp su {ac} kW: {r}"
 
-#: task 16d
-msgid "Redo the strings automatically"
-msgstr "Rifai le stringhe in automatico"
 
 #: task 16d
 msgid "{inverter}, input {k}, {n} in series"
@@ -8029,9 +7825,6 @@ msgstr "{n} stringhe su {m} ingressi di {u} inverter, chiamate inverter.ingresso
 msgid "proposed by Meridiana: {strategy}"
 msgstr "proposte da Meridiana: {strategy}"
 
-#: task 16d
-msgid "laid by hand by the designer"
-msgstr "disposte a mano dal progettista"
 
 #: task 16d
 msgid "State"
@@ -8105,41 +7898,15 @@ msgstr "da verificare"
 msgid "out of the window or without input"
 msgstr "fuori finestra o senza ingresso"
 
-#: task 16d
-msgid "Automatic st&rings"
-msgstr "St&ringhe automatiche"
 
-#: task 16d
-msgid "Stringing by &hand"
-msgstr "Stringatura a &mano"
 
-#: task 16d
-msgid "Re&do the strings automatically"
-msgstr "Ri&fai le stringhe in automatico"
 
 #: task 16d
 msgid "Strategy"
 msgstr "Strategia"
 
-#: task 16d
-msgid ""
-"Meridiana's strings with a strategy of PVsyst: back and forth, a row per string, U on two rows, a row per "
-"MPPT"
-msgstr ""
-"Le stringhe di Meridiana con una strategia di PVsyst: avanti e indietro, una fila per stringa, a U su due "
-"file, una fila per MPPT"
 
-#: task 16d
-msgid ""
-"The stringing by hand on the plan: a floating panel for each inverter, a click or a drag on the modules, the "
-"right click takes one out"
-msgstr ""
-"La stringatura a mano sulla pianta: un pannello flottante per ogni inverter, un clic o un trascinamento sui "
-"moduli, il clic destro ne toglie uno"
 
-#: task 16d
-msgid "The strings proposed again with the strategy chosen: the ones by hand go (undo brings them back)"
-msgstr "Le stringhe proposte di nuovo con la strategia scelta: quelle a mano spariscono (annulla le riporta)"
 
 #: task 16d
 msgid "The strings could not be laid: {error}"
@@ -8157,13 +7924,7 @@ msgstr "Togli un inverter"
 msgid "Send a sub-field's strings to an inverter"
 msgstr "Manda le stringhe di un sottocampo a un inverter"
 
-#: task 16d
-msgid "The strings drawn by hand are replaced by Meridiana's proposal. Undo brings them back. Go on?"
-msgstr "Le stringhe disegnate a mano sono sostituite dalla proposta di Meridiana. Annulla le riporta. Procedo?"
 
-#: task 16d
-msgid "Automatic strings: {strategy}"
-msgstr "Stringhe automatiche: {strategy}"
 
 #: task 16d
 msgid "{n} string on {m} inputs"
@@ -8177,21 +7938,12 @@ msgid_plural "{n} modules in no string"
 msgstr[0] "{n} modulo fuori stringa"
 msgstr[1] "{n} moduli fuori stringa"
 
-#: task 16d
-msgid "automatic: {strategy}"
-msgstr "automatiche: {strategy}"
 
-#: task 16d
-msgid "by hand"
-msgstr "a mano"
 
 #: task 16d
 msgid "The plan comes here when the phase is open."
 msgstr "La pianta viene qui quando la fase è aperta."
 
-#: task 16d
-msgid "Inputs and strings"
-msgstr "Ingressi e stringhe"
 
 #: task 16d
 msgid "Sub-field selected"
@@ -8233,17 +7985,8 @@ msgstr "Togli questo inverter dall'impianto"
 msgid "takes {n} strings of {lo} to {hi} modules"
 msgstr "accetta {n} stringhe da {lo} a {hi} moduli"
 
-#: task 16d
-msgid "Input {k}: {strings}"
-msgstr "Ingresso {k}: {strings}"
 
-#: task 16d
-msgid "Input {k}: free"
-msgstr "Ingresso {k}: libero"
 
-#: task 16d
-msgid "Without an input: {strings}"
-msgstr "Senza ingresso: {strings}"
 
 #: task 16d
 msgid "Input {k}"
@@ -8269,26 +8012,10 @@ msgstr "un colore per stringa"
 msgid "module in no string"
 msgstr "modulo fuori stringa"
 
-#: task 16d
-msgid "Stringing: click or drag over the modules in order; a right click takes one out; Esc closes the string"
-msgstr ""
-"Stringatura: clic o trascinamento sui moduli in ordine; il clic destro ne toglie uno; Esc chiude la stringa"
 
-#: task 16d
-msgid "no string"
-msgstr "nessuna stringa"
 
-#: task 16d
-msgid "used, every check passed"
-msgstr "usato, verifiche soddisfatte"
 
-#: task 16d
-msgid "used, to be checked"
-msgstr "usato, da verificare"
 
-#: task 16d
-msgid "used, a check fails"
-msgstr "usato, una verifica non è soddisfatta"
 
 #: task 16d
 msgid "free"
@@ -8298,51 +8025,22 @@ msgstr "libero"
 msgid "its window is not known"
 msgstr "la sua finestra non è nota"
 
-#: task 16d
-msgid "A new string on this input: then click the modules in order"
-msgstr "Una nuova stringa su questo ingresso: poi clicca i moduli in ordine"
 
-#: task 16d
-msgid "String {name}: click or drag over the modules to add them; Esc closes it"
-msgstr "Stringa {name}: clicca o trascina sui moduli per aggiungerli; Esc la chiude"
 
-#: task 16d
-msgid "A new string on input {k} of inverter {n}: click the modules in order"
-msgstr "Una nuova stringa sull'ingresso {k} dell'inverter {n}: clicca i moduli in ordine"
 
-#: task 16d
-msgid "String closed: choose another, or Esc again to end the stringing"
-msgstr "Stringa chiusa: scegline un'altra, o di nuovo Esc per finire la stringatura"
 
-#: task 16d
-msgid "That module is in no string."
-msgstr "Quel modulo non è in nessuna stringa."
 
 #: task 16d
 msgid "Take a module out of string {name}"
 msgstr "Togli un modulo dalla stringa {name}"
 
-#: task 16d
-msgid "Lengthen string {name}"
-msgstr "Allunga la stringa {name}"
 
 #: task 16d
 msgid "New string on input {k} of inverter {n}"
 msgstr "Nuova stringa sull'ingresso {k} dell'inverter {n}"
 
-#: task 16d
-msgid "Connect {n} module to string {name}"
-msgid_plural "Connect {n} modules to string {name}"
-msgstr[0] "Collega {n} modulo alla stringa {name}"
-msgstr[1] "Collega {n} moduli alla stringa {name}"
 
-#: task 16d
-msgid "Choose a string in a panel, or «+» on an input, then click the modules."
-msgstr "Scegli una stringa in un pannello, o «+» su un ingresso, poi clicca i moduli."
 
-#: task 16d
-msgid "Modules taken from string {names}"
-msgstr "Moduli tolti dalla stringa {names}"
 
 #: src/meridiana/checks.py:580
 msgid "The strings cannot be checked yet"
@@ -8899,8 +8597,6 @@ msgstr "fila di {l} m"
 msgid "The help of the field in hand, under the properties: show or hide it"
 msgstr "L'aiuto del campo in uso, sotto le proprietà: mostralo o nascondilo"
 
-msgid "A copy of the variant in hand, to change without losing it (another module, another tilt, a battery) and compare the two"
-msgstr "Una copia della variante in uso, da cambiare senza perderla (un altro modulo, un'altra inclinazione, una batteria) e confrontare le due"
 
 msgid "Fit"
 msgstr "Inquadra"
@@ -9129,14 +8825,8 @@ msgstr "Doppio clic su una copertura per prendere intera una falda; a terra, dis
 msgid "A sub-field on each pitch"
 msgstr "Un sottocampo per ogni falda"
 
-msgid "Start again"
-msgstr "Rifai"
 
-msgid "The strings made by hand go and Meridiana proposes them again with the strategy chosen (undo brings them back)"
-msgstr "Le stringhe fatte a mano se ne vanno e Meridiana le propone di nuovo con la strategia scelta (Annulla le riporta)"
 
-msgid "The strings are Meridiana's already: there is nothing to redo. It serves after the stringing by hand, to start again from the proposal"
-msgstr "Le stringhe sono già quelle di Meridiana: non c'è niente da rifare. Serve dopo la stringatura a mano, per ripartire dalla proposta"
 
 msgid "{n} modules: {k} short of the {lo} the input needs"
 msgstr "{n} moduli: ne mancano {k} ai {lo} che servono all'ingresso"
@@ -9731,8 +9421,6 @@ msgstr[1] "{n} modelli sul disco"
 msgid "price unknown"
 msgstr "prezzo non noto"
 
-msgid "{euros} €"
-msgstr "{euros} €"
 
 msgid "{n} tokens"
 msgstr "{n} token"
@@ -9740,8 +9428,6 @@ msgstr "{n} token"
 msgid "{tokens} · about {cost} (prices of {date})"
 msgstr "{tokens} · circa {cost} (prezzi del {date})"
 
-msgid "{cents} euro cents"
-msgstr "{cents} centesimi di euro"
 
 msgid "Local, no cost · {tokens}"
 msgstr "Locale, nessun costo · {tokens}"
@@ -9827,8 +9513,6 @@ msgstr "{name}, l'assistente (Ctrl+L): {where}"
 msgid "About the check «{text}»: why does it matter, and what should I do?"
 msgstr "Sulla verifica «{text}»: perché conta, e che cosa devo fare?"
 
-msgid "Use the local model"
-msgstr "Usa il modello locale"
 
 msgid "Not now"
 msgstr "Non ora"
@@ -9839,8 +9523,6 @@ msgstr "Consenti e invia"
 msgid "The model declined to answer this question."
 msgstr "Il modello non ha voluto rispondere a questa domanda."
 
-msgid "The local model is not running at {url}. Start it on this PC, for example llama-server -m model.gguf --port 9931; the address is in Preferences > Assistant."
-msgstr "Il modello locale non è avviato all'indirizzo {url}. Avvialo su questo PC, per esempio llama-server -m modello.gguf --port 9931; l'indirizzo è in Preferenze > Assistente."
 
 msgid "The server does not have the model {model}: check its name in Preferences > Assistant."
 msgstr "Il server non ha il modello {model}: controlla il nome in Preferenze > Assistente."
@@ -9905,8 +9587,6 @@ msgstr "Imposta la chiave…"
 msgid "Remove the key"
 msgstr "Togli la chiave"
 
-msgid "Start the local model on this PC with llama-server, for example llama-server -m model.gguf --port 9931. The key stays in the system's keyring; a project marked reserved never goes to the cloud."
-msgstr "Avvia il modello locale su questo PC con llama-server, per esempio llama-server -m modello.gguf --port 9931. La chiave resta nel portachiavi del sistema; un progetto segnato come riservato non va mai al cloud."
 
 msgid "Claude key"
 msgstr "Chiave di Claude"
@@ -9938,8 +9618,6 @@ msgstr "Chiave di Claude nel portachiavi del sistema: {key}"
 msgid "Ask {name}"
 msgstr "Chiedi a {name}"
 
-msgid "Ask {name} about the item in hand: why it matters and what to do"
-msgstr "Chiedi a {name} della voce in mano: perché conta e che cosa fare"
 
 msgid "Meridio answers about this project only with the local model, whatever his settings say"
 msgstr "Meridio risponde su questo progetto solo con il modello locale, qualunque cosa dicano le sue impostazioni"
@@ -9977,8 +9655,6 @@ msgstr "Logo"
 msgid "Summary"
 msgstr "Sintesi"
 
-msgid "The headline numbers and the plan of the modules"
-msgstr "I numeri principali e la pianta dei moduli"
 
 msgid "Site and climate data"
 msgstr "Sito e dati climatici"
@@ -10835,11 +10511,7 @@ msgid_plural "Optimizers: {name}, {n} modules each"
 msgstr[0] "Ottimizzatori: {name}, {n} modulo ciascuno"
 msgstr[1] "Ottimizzatori: {name}, {n} moduli ciascuno"
 
-msgid "{input}: {strings}"
-msgstr "{input}: {strings}"
 
-msgid "{input}: free"
-msgstr "{input}: nessuna stringa"
 
 msgid "Choose the power optimizers"
 msgstr "Scegli gli ottimizzatori di potenza"
