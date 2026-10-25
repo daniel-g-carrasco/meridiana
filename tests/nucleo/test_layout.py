@@ -59,6 +59,14 @@ class TiltedRows(unittest.TestCase):
         r = layout.compute(ROOF, params=layout.Params(mounting="tilted_ballasted"), **MILANO)
         self.assertIn(layout.BALLAST_WARNING, r.notes)
 
+    def test_the_area_error_speaks_italian(self):
+        from meridiana import i18n
+        before = i18n._translation
+        self.addCleanup(lambda: setattr(i18n, "_translation", before))
+        i18n.setup("it")
+        with self.assertRaisesRegex(ValueError, "l'area racchiusa è inferiore a 1 m²"):
+            layout.compute([(0, 0), (0.5, 0), (0.5, 0.5), (0, 0.5)])
+
     def test_modules_taken_out_by_hand_stay_out(self):
         key = self.r.modules[5].key
         r = layout.compute(ROOF, params=layout.Params(edge=0.5), removed={key}, **MILANO)

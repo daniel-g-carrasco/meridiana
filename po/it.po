@@ -12123,3 +12123,19 @@ msgstr "Correzione tenuta: Ctrl+Z la annulla come ogni modifica."
 
 msgid "Fix undone."
 msgstr "Correzione annullata."
+
+#: src/meridiana/layout.py:40
+msgid ""
+"Ballast alone is not a restraint on a roof slab (NTC 2018 7.2.4, recalled by CEI 82-25/3 6.2): "
+"anchors or tie-downs are needed."
+msgstr ""
+"La zavorra da sola non è un vincolo su una soletta (NTC 2018 7.2.4, richiamato da CEI 82-25/3 6.2): "
+"servono ancoraggi o tiranti."
+
+#: src/meridiana/layout.py:372
+msgid "the area encloses less than 1 m2"
+msgstr "l'area racchiusa è inferiore a 1 m²"
+
+#: src/meridiana/layout.py:409
+msgid "no room left inside the margins"
+msgstr "non resta spazio dentro i margini"

@@ -110,6 +110,24 @@ class PanelAlone(unittest.TestCase):
             self.app.processEvents()
         self.assertEqual(errors, [])
 
+    def test_the_layout_notes_speak_italian_when_the_panel_shows_them(self):
+        from PySide6.QtWidgets import QLabel
+
+        from meridiana import i18n
+        p, props = self.p, self.props
+        sf = p.subfields[0]
+        sf.params["mounting"] = "tilted_ballasted"
+        sf.filled = True
+        result = p.fill(sf)
+        result.notes.append("no room left inside the margins")
+        before = i18n._translation
+        self.addCleanup(lambda: setattr(i18n, "_translation", before))
+        i18n.setup("it")
+        props.show_subfield(p, sf, result)
+        texts = [label.text() for label in props.widget().findChildren(QLabel)]
+        self.assertTrue(any("La zavorra da sola non è un vincolo su una soletta" in text for text in texts))
+        self.assertTrue(any("non resta spazio dentro i margini" in text for text in texts))
+
     def test_from_one_building_to_another_the_page_stays_where_it_was_scrolled(self):
         from meridiana import model
         p, props = self.p, self.props

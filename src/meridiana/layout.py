@@ -30,6 +30,7 @@ from shapely.geometry import MultiPolygon, Polygon, box
 from shapely.ops import unary_union
 
 from . import geo, sun
+from .i18n import N_, _
 
 # the mountings the engine knows (the names the user reads are in the interface, not here)
 MOUNTINGS = frozenset({"coplanar", "integrated", "tilted_anchored", "tilted_ballasted", "east_west", "ground",
@@ -37,8 +38,8 @@ MOUNTINGS = frozenset({"coplanar", "integrated", "tilted_anchored", "tilted_ball
 # A facade is drawn on its elevation, not on the plan: it will have its own editor and engine.
 TILTED = {"tilted_anchored", "tilted_ballasted", "ground"}
 FLUSH = {"coplanar", "integrated", "canopy"}
-BALLAST_WARNING = ("Ballast alone is not a restraint on a roof slab (NTC 2018 7.2.4, recalled by CEI 82-25/3 6.2): "
-                   "anchors or tie-downs are needed.")
+BALLAST_WARNING = N_("Ballast alone is not a restraint on a roof slab (NTC 2018 7.2.4, recalled by CEI 82-25/3 6.2): "
+                     "anchors or tie-downs are needed.")
 EPS = 1e-6
 LINE_TOLERANCE = 0.01           # m: rows whose front edges are this close stand on one line
 DISTANCE_TOLERANCE = 0.001      # m: a distance this much short of a rule's is the rule's (rows kept to 0,1 mm)
@@ -369,7 +370,7 @@ def compute(area_ring, surface: Surface | None = None, module: Module | None = N
         raise ValueError(f"unknown mounting {p.mounting!r}")
     area = Polygon(area_ring).buffer(0)
     if area.is_empty or area.area < 1.0:
-        raise ValueError("the area encloses less than 1 m2")
+        raise ValueError(_("the area encloses less than 1 m2"))
     area = max(_polys(area), key=lambda g: g.area)
     notes: list[str] = []
     if p.mounting == "tilted_ballasted":
@@ -406,7 +407,7 @@ def compute(area_ring, surface: Surface | None = None, module: Module | None = N
     if not manual:
         if usable.is_empty:
             return Result([], [], [], alpha, tilt, 0.0, 0.0, 90.0, round(area.area, 2),
-                          notes + ["no room left inside the margins"], corners=np.zeros((0, 4, 2)), keys=[])
+                          notes + [N_("no room left inside the margins")], corners=np.zeros((0, 4, 2)), keys=[])
         rows, group_of = _auto_rows(to_work(usable), frame, size, p, pitch)
     placed = modules_of(rows, module, p, surface, removed)
     groups = []

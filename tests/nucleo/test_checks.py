@@ -61,6 +61,20 @@ class Gather(unittest.TestCase):
         self.assertTrue(any(i.level == "info" and i.target == ("subfield", "s2") for i in items))
         self.assertEqual([i.level for i in items], sorted((i.level for i in items), key=checks.LEVELS.index))
 
+    def test_the_layout_notes_speak_italian_when_the_checks_show_them(self):
+        from meridiana import i18n
+        p = self.project()
+        result = p.fill(p.subfields[0])
+        result.notes.append("no room left inside the margins")
+        before = i18n._translation
+        self.addCleanup(lambda: setattr(i18n, "_translation", before))
+        i18n.setup("it")
+        items = checks.gather(p, {"s1": result}, None)
+        ballast = next(i for i in items if "NTC" in i.source)
+        self.assertIn("La zavorra da sola non è un vincolo su una soletta", ballast.detail)
+        self.assertIn("servono ancoraggi o tiranti.", ballast.detail)
+        self.assertTrue(any(i.text == "Copertura: non resta spazio dentro i margini" for i in items))
+
     def test_fixes_lay_the_modules_and_go_back_to_the_suggested_strings(self):
         from meridiana.energy.stringing import Check, StringPlan
         p = self.project()
