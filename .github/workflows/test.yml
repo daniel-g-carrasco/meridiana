@@ -68,11 +68,13 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip                      # the wheels downloaded, keyed on the hash of requirements.txt
+      # libpulse0 and libspeechd2: Qt's sound and the system's voices (Meridio speaks; the self-test asks for them)
       - name: Qt offscreen, gettext and the validators
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q --no-install-recommends gettext desktop-file-utils appstream \
-            libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+            libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3 \
+            libpulse0 libspeechd2
       - run: python -m pip install -r requirements.txt ruff
       - run: python -m ruff check --select F,E9,B .
       - run: python tools/compile_po.py
