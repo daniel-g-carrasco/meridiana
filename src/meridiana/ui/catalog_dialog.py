@@ -25,6 +25,8 @@ from ..i18n import _, ngettext, number
 from . import tell, waiting
 from .theme import marked
 
+SEARCH_PAUSE_MS = 200
+
 # what each kind of catalogue had in its filters when its window was last left: kind -> filters()
 _REMEMBERED: dict = {}
 
@@ -317,7 +319,7 @@ class CatalogDialog(QDialog):
         box.addWidget(self.count)
         box.addWidget(self.hint)
         box.addWidget(buttons)
-        self.timer = QTimer(self, singleShot=True, interval=200)
+        self.timer = QTimer(self, singleShot=True, interval=SEARCH_PAUSE_MS)
         self.timer.timeout.connect(self._search)
         signals = [self.query.textChanged, self.origin.currentIndexChanged, self.maker.editTextChanged,
                    self.low.valueChanged, self.high.valueChanged]

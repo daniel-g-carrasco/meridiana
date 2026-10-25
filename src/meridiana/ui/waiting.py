@@ -18,6 +18,7 @@ from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPalette, QPen, QPo
 from PySide6.QtWidgets import QApplication, QWidget
 
 from .. import log, mesh, theme_colors, view_colours
+from .cards import default_tokens
 from .design import Radius
 
 THRESHOLD_MS = 300          # nothing under it (study 16, F.6: Material 200 ms, RAIL 100 ms, Nielsen 1 s)
@@ -287,7 +288,7 @@ class Skeleton3D(QWidget):
         self.view = view
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.boxes: list = []                       # (outline in metres, height in metres)
-        self.ink = QColor("#696257")
+        self.ink = QColor(default_tokens()["muted"])
         self.why = ""
         self.timer = QTimer(self, singleShot=True, interval=limit_ms)
         self.timer.timeout.connect(lambda: self.done("time"))
@@ -308,7 +309,7 @@ class Skeleton3D(QWidget):
 
     def set_colours(self, t: dict) -> None:
         """The theme's tokens: the outlines in its muted ink (the sky and the ground are the view's own)."""
-        self.ink = QColor(t.get("muted", "#696257"))
+        self.ink = QColor(t.get("muted", default_tokens()["muted"]))
         self.update()
 
     def eventFilter(self, obj, event) -> bool:

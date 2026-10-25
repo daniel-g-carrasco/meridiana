@@ -15,10 +15,13 @@ from PySide6.QtCore import QRect, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter, QPalette
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem, QTreeWidgetItem
 
+from .cards import default_tokens
+from .design import Space
+
 SECTION_ROLE = Qt.ItemDataRole.UserRole + 7     # on a header row: the count shown beside the name
 TAIL_ROLE = Qt.ItemDataRole.UserRole + 8        # on an object's row: the tail of its text, drawn muted
-AIR = 8                                         # logical pixels above a header
-_TITLE = ["#5f5a52"]                            # the theme's text2: a section's name (set_colours)
+AIR = Space.M                                   # logical pixels above a header
+_TITLE = [default_tokens()["text2"]]            # the theme's text2: a section's name (set_colours)
 
 
 def set_colours(t: dict) -> None:

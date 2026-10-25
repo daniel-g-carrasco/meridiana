@@ -15,11 +15,12 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QFrame, QGroupBox, 
                                QScrollArea, QSizePolicy, QSpinBox, QToolButton, QTreeWidget, QTreeWidgetItem,
                                QTreeWidgetItemIterator, QVBoxLayout, QWidget)
 
-from .. import shortcuts
+from .. import shortcuts, theme_colors
 from ..energy import optimizers
 from ..energy import plant as plant_model
 from ..energy import system
 from ..i18n import _, ngettext, number
+from .cards import default_tokens
 from .properties import combo, make_form, spin
 from . import icons
 from .theme import mark, symbol_font
@@ -141,7 +142,7 @@ class Legend(QWidget):
                                       3, 3)
             elif kind == "outline":
                 p.setBrush(Qt.BrushStyle.NoBrush)
-                p.setPen(QPen(QColor(self.states.get("fail", "#d03b3b")), 1.6))
+                p.setPen(QPen(QColor(self.states.get("fail", theme_colors.STATUS["critical"])), 1.6))
                 p.drawRoundedRect(QRectF(x + 1, mid - mark_size / 2 + 1, mark_size - 2, mark_size - 2), 2, 2)
             elif kind == "jump":
                 pen = QPen(self.palette().color(self.foregroundRole()), 1.6, Qt.PenStyle.DashLine)
@@ -166,8 +167,9 @@ class ClipScale(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ratio, self.loss = 0.0, None
-        self.colours = {"text": "#1e1c19", "muted": "#6f685d", "good": "#1baf7a", "warning": "#eda100",
-                        "critical": "#d03b3b"}
+        t = default_tokens()
+        self.colours = {"text": t["text"], "muted": t["muted"], "good": "#1baf7a", "warning": "#eda100",
+                        "critical": theme_colors.STATUS["critical"]}
         self.setFixedHeight(self.fontMetrics().lineSpacing() + 18)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
@@ -182,7 +184,8 @@ class ClipScale(QWidget):
 
     def set_colours(self, t: dict, states: dict) -> None:
         self.colours = {"text": t["text"], "muted": t["muted"], "good": states.get("ok", "#1baf7a"),
-                        "warning": states.get("check", "#eda100"), "critical": states.get("fail", "#d03b3b")}
+                        "warning": states.get("check", "#eda100"),
+                        "critical": states.get("fail", theme_colors.STATUS["critical"])}
         self.update()
 
     def paintEvent(self, event) -> None:
@@ -331,7 +334,8 @@ class PlantInspector(QScrollArea):
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.loading = False
-        self.states = {"ok": "#0ca30c", "check": "#fab219", "fail": "#d03b3b"}     # the window's (theme_colors)
+        self.states = {"ok": theme_colors.STATUS["good"], "check": theme_colors.STATUS["warning"],
+                       "fail": theme_colors.STATUS["critical"]}
         self.colours: list = []                     # each string's colour, as on the plan (the window's)
         page = QWidget()
         box = QVBoxLayout(page)

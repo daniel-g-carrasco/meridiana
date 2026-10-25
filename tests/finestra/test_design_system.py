@@ -41,6 +41,45 @@ class Scales(unittest.TestCase):
             radii = {float(r) for r in re.findall(r"border-radius:\s*([0-9.]+)px", sheet)}
             self.assertLessEqual(radii, allowed, "a radius off the scale")
 
+    def test_duplicate_design_values_use_their_shared_sources(self):
+        from meridiana.ui import checks_page, help_box, phasebar
+        from meridiana.ui.design import Button, Icon, Radius, Size, Space
+        self.assertEqual(checks_page.COLOURS, {"fail": "#d03b3b", "warn": "#fab219", "ok": "#0ca30c"})
+        self.assertEqual((checks_page.PAD, checks_page.SECTION_AIR, checks_page.CARD_INSET, checks_page.CARD_RADIUS),
+                         (Space.S, Space.XL, Space.M, Radius.CONTROL))
+        self.assertEqual(help_box.BUTTON, Button.HELP[0])
+        self.assertEqual((phasebar.ICON_TALL, phasebar.ICON_LOW), (Icon.TILE, Icon.BAR))
+        self.assertEqual(Size.CHART_MIN_HEIGHT, 160)
+        root = _setup.ROOT / "src" / "meridiana"
+
+        def source(name):
+            return (root / name).read_text(encoding="utf-8")
+
+        self.assertIn('COLOURS = {"fail": theme_colors.STATUS["critical"]', source("ui/checks_page.py"))
+        self.assertNotIn("#d03b3b", source("ui/plant_page.py"))
+        self.assertIn("CHART_MIN_HEIGHT = 160", source("ui/design.py"))
+        for name in ("ui/energy_pages.py", "ui/charts.py", "ui/charts_pg.py"):
+            self.assertIn("Size.CHART_MIN_HEIGHT", source(name))
+        for name in ("ui/file_page.py", "ui/assistant.py", "ui/viewcube.py", "ui/panel_buttons.py", "ui/sections.py",
+                     "ui/waiting.py", "ui/appearance.py", "ui/plant_page.py", "ui/cards.py", "ui/popups.py",
+                     "ui/fades.py", "ui/checks_page.py", "ui/phasebar.py"):
+            with self.subTest(fallbacks=name):
+                self.assertIn("default_tokens()", source(name))
+        for name, constant in (("ui/window.py", "PREVIEW_REPORT_MS"), ("ui/window.py", "WARM_UP_MS"),
+                               ("ui/window.py", "ENERGY_PAUSE_MS"), ("ui/window.py", "RELAYOUT_PAUSE_MS"),
+                               ("ui/report_page.py", "PREVIEW_RESIZE_MS"), ("ui/checks_page.py", "RESIZE_SETTLE_MS"),
+                               ("ui/charts.py", "LOADING_RETRY_MS"), ("ui/sunbar.py", "DAY_FRAME_MS"),
+                               ("ui/catalog_dialog.py", "SEARCH_PAUSE_MS"), ("ui/plan.py", "TILE_UPDATE_MS"),
+                               ("ui/assistant.py", "DOTS_MS")):
+            with self.subTest(timer=name, constant=constant):
+                self.assertIn(constant, source(name))
+        self.assertIn("BUTTON = Button.HELP[0]", source("ui/help_box.py"))
+        self.assertIn("ICON_TALL, ICON_LOW = Icon.TILE, Icon.BAR", source("ui/phasebar.py"))
+        self.assertTrue((root / "ui/report_style.py").is_file())
+        from meridiana.ui import report_style
+        self.assertEqual((report_style.MUTED, report_style.RULE, report_style.HEAD), ("#6b675f", "#d9d4ca", "#f1eee8"))
+        self.assertEqual(report_style.MARK_COLOURS, {"✔": "#2e7d4f", "⚠": "#b7791f", "✘": "#c0392b", "ℹ": "#2a7fc4"})
+
     def test_the_catalogue_of_the_texts_is_closed_and_each_style_has_its_place(self):
         """R121 (Daniel, 25/10/2026: «alcune differenze ci devono essere ma non devono essere troppe e devono avere
         un senso, e devono essere salvate come stile»): ten named styles on six sizes and two weights; the text at 13

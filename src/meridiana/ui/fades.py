@@ -14,10 +14,11 @@ from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtGui import QColor, QLinearGradient, QPainter
 from PySide6.QtWidgets import QAbstractScrollArea, QWidget
 
+from .cards import default_tokens
 from .design import Space
 
 HEIGHT = Space.XXL               # logical pixels of a band
-_COLOUR = ["#f8f7f4"]           # the panels' colour of the theme in use
+_COLOUR = [default_tokens()["panel"]]  # the panels' colour of the theme in use
 _LIVE: "weakref.WeakSet[Fades]" = weakref.WeakSet()
 
 

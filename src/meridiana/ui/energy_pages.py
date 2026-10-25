@@ -16,11 +16,11 @@ from ..energy.economics import Settings
 from ..energy.simulate import Losses, thermal_names
 from ..i18n import _, number
 from .charts import Chart
+from .design import Size, Space
 from .help_box import help_button, register
 from .pedigree import PedigreeView
 from . import waiting
 from .properties import combo, make_form, spin
-from .design import Space
 from .theme import mark, mark_problem
 from .style import Group
 
@@ -89,11 +89,11 @@ class Tile(QFrame):
         self.detail = set_text(QLabel(""), Text.SECONDARY)
         self.detail.setWordWrap(True)
         box = QVBoxLayout(self)
-        box.setContentsMargins(12, 8, 12, 8)
-        box.setSpacing(2)
+        box.setContentsMargins(Space.L, Space.M, Space.L, Space.M)
+        box.setSpacing(Space.XXS)
         box.addWidget(self.label)
         number = QHBoxLayout()
-        number.setSpacing(4)
+        number.setSpacing(Space.XS)
         number.addWidget(self.value)
         number.addWidget(self.unit, 0, Qt.AlignmentFlag.AlignBottom)
         number.addStretch(1)
@@ -180,7 +180,7 @@ def scrolled(widget: QWidget) -> QScrollArea:
     area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
     area.setWidget(widget)
     area.setMinimumWidth(280)
-    area.setMinimumHeight(160)
+    area.setMinimumHeight(Size.CHART_MIN_HEIGHT)
     return area
 
 

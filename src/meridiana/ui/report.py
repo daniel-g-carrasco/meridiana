@@ -34,13 +34,12 @@ from PySide6.QtGui import (QAbstractTextDocumentLayout, QColor, QFont, QFontMetr
 
 from .. import __version__, reports
 from ..i18n import _, ngettext, number
-from .report_chapters import BUILDERS, INK, MUTED, Context, _keys_text, facts, para, plant_parts  # noqa: F401
+from .report_chapters import BUILDERS, Context, _keys_text, facts, para, plant_parts  # noqa: F401
+from .report_style import HEAD, INK, MUTED, RULE
 
 IMAGES_SHARE = 0.8         # of the way, the images (what takes the time); the pages the rest
 MARGIN_CM = 2.0
 POINT_SIZE = 9.5
-RULE = "#d9d4ca"           # the lines of the tables and of the header
-HEAD = "#f1eee8"           # the ground of a table's header
 BLANK = "00"               # a page of the contents before the layout says it
 
 

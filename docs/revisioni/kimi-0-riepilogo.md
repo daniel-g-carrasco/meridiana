@@ -94,7 +94,7 @@ oltre all'asserzione che lo vieta.
 **Correzione consigliata**: prima sistemare le attese dei test e la compilazione del catalogo, per avere una base
 verde. Poi spostare le soglie di millisecondi in `esterni`, mantenendo comportamento, pixel e struttura nelle suite
 normali. Le 20 prove più lente sono tutte in `finestra` e occupano 98,042 s su 234,589: sono soprattutto lavoro
-reale, non doppioni. Non ho trovato corpi di prova identici o quasi identici, quindi non consigo rimozioni.
+reale, non doppioni. Non ho trovato corpi di prova identici o quasi identici, quindi non consiglio rimozioni.
 
 ## Ordine di lavoro consigliato
 

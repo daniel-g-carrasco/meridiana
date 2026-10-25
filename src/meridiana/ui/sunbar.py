@@ -22,6 +22,7 @@ from .design import Line, Size
 CLOCK = ZoneInfo("Europe/Rome")      # the site's clock: the program works on Italian sites
 YEAR = 2026
 STEP = 10                            # minutes per step of the slider and of the animation
+DAY_FRAME_MS = 80
 
 
 class SteadyLabel(QLabel):
@@ -103,7 +104,7 @@ class SunBar(QWidget):
         self.words = QLabel(self)               # the whole sentence, for the tooltip (and a reader of the screen)
         self.words.hide()
         self.timer = QTimer(self)
-        self.timer.setInterval(80)
+        self.timer.setInterval(DAY_FRAME_MS)
         self.timer.timeout.connect(self._tick)
 
     # the site and the design day

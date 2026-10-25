@@ -106,14 +106,8 @@ differisce dal tuo rapporto, vale questa.
     catalogo Timing, i circa 35 nomi nuovi usati una volta, STATUS["info"] (cambia i colori di Meridio e delle
     stringhe), corrispondenze solo numeriche (22 come Size.COMPACT, 12 come Space.L e simili), i colori dei segni
     sulla pianta e nella 3D (restano fissi in entrambi i temi, R16).
-15. Durate (scelta di Daniel: 130 ms): lo scivolare di Meridio passa da 320 a 130 ms, la chiusura del fumetto
-    resta 130 ms; 130 entra nel catalogo Motion con un nome e una riga in docs/design/sistema-grafico.md. La
-    camera da 250 a Motion.SLOW (240).
-16. Pagine dell'energia (scelta di Daniel: come proponevi): i margini da 10 e 14 px e gli spazi da 10 ai valori
-    della scala che hai indicato; il rosso del campo per ingresso al token danger, con lo stesso meccanismo dei
-    messaggi d'errore (la proprietà di stile di QLabel#problem) invece di un set_colours nuovo. Fotografie prima
-    e dopo delle tre pagine, offscreen (i widget 2D si disegnano), in docs/revisioni/foto/: le guarda Daniel e
-    Claude le controlla sullo schermo vero.
+15. e 16. FATTI DA CLAUDE il 25/10 sera (durate a 130 ms, pagine dell energia): saltali, non toccare
+    i loro file per questi due scopi. Il punto 14 resta tuo: finiscilo come scritto sopra.
 
 ## Parte 2: il modello (~/dev/qt-app-template-kimi)
 Leggi CLAUDE.md, README.md, docs/da-dove-viene.md (la storia degli allineamenti con Meridiana e gli adattamenti

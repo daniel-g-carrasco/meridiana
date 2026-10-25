@@ -123,7 +123,8 @@ class FilePage(QFrame):
         # opaque, drawn whole by paintEvent: Qt then paints nothing of what lies under it, the views and the panels,
         # at its opening (R132: the first frame took 75-115 ms on the 4K screen, all of it hidden under the page)
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
-        self.colours = ("#efede8", "#f8f7f4", "#d9d5cc")     # the window's, the panel's and the card's line
+        from .cards import default_tokens
+        self.set_colours(default_tokens())
         row = QHBoxLayout(self)
         row.setContentsMargins(1, 1, 1, 1)
         row.setSpacing(0)

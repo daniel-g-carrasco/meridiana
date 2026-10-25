@@ -116,6 +116,7 @@ class Size:
     NAV = 34            # an item of a list of places (the File page)
     SCROLLBAR = 10      # the scroll bar's room, always kept (R100); its thumb THUMB wide
     THUMB = 6
+    CHART_MIN_HEIGHT = 160
 
 
 class Button:

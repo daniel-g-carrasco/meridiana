@@ -18,7 +18,7 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetricsF, QImage, QLinearGradient, QPainter, QPicture, QTransform
 from PySide6.QtWidgets import QGraphicsGridLayout, QGraphicsLinearLayout, QGraphicsRectItem, QLabel
 
-from .design import Type
+from .design import Size, Type
 
 __all__ = ["Axis", "ColourScale", "Entry", "Legend", "Plot", "View", "colour", "colour_bar", "colour_map", "export",
            "hover_box", "pg"]
@@ -209,7 +209,7 @@ class Plot(pg.PlotWidget):
         self.view = View()
         super().__init__(viewBox=self.view, axisItems={"left": Axis("left"), "bottom": Axis("bottom")})
         self._left, self._menu = left, menu
-        self.setMinimumHeight(160)          # the page under it keeps its strip in a window of 960 px (24/10/2026)
+        self.setMinimumHeight(Size.CHART_MIN_HEIGHT)  # the page under it keeps its strip in a 960 px window
         pi = self.getPlotItem()
         pi.hideButtons()
         pi.setMenuEnabled(False)

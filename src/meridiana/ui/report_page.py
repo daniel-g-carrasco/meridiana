@@ -24,6 +24,7 @@ from . import icons
 from .design import Icon, Space, Text, set_text
 
 PAGE_WIDTH_MAX = 820          # logical pixels: a page of the preview no wider than this
+PREVIEW_RESIZE_MS = 80
 
 
 def _note(text: str) -> QLabel:
@@ -112,7 +113,7 @@ class Preview(QScrollArea):
         self.labels: list[QLabel] = []
         self._fit = QTimer(self)
         self._fit.setSingleShot(True)
-        self._fit.setInterval(80)
+        self._fit.setInterval(PREVIEW_RESIZE_MS)
         self._fit.timeout.connect(self._scale)
 
     def show_pages(self, images: list, total: int | None = None) -> None:

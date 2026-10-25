@@ -24,11 +24,11 @@ from PySide6.QtWidgets import (QApplication, QDialog, QDockWidget, QFrame, QGrou
 
 from .. import help as helps
 from ..i18n import _
-from .design import Text, set_text, strong
+from .design import Button, Text, set_text, strong
 
 HELP = "help"                   # the dynamic property with a widget's help id
 HOVER = "help_hover"            # the box follows the pointer over it (the result tiles)
-BUTTON = 16                     # logical pixels of the «?»
+BUTTON = Button.HELP[0]         # logical pixels of the «?»
 
 
 def help_id(widget) -> str:

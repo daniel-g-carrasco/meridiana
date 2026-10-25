@@ -43,6 +43,7 @@ DRAWING = {"building", "pitch", "subfield", "exclusion"}
 MOVABLE = ("building", "subfield", "exclusion", "row")   # what Move takes (task 16b; a row, task 16c)
 ARROWS = {Qt.Key.Key_Left: "left", Qt.Key.Key_Right: "right", Qt.Key.Key_Up: "up", Qt.Key.Key_Down: "down"}
 LEFT_WAIT_MS = 150             # how long a left press waits for the other button of a gesture (left + right)
+TILE_UPDATE_MS = 120
 
 Z_TILES, Z_BUILDING, Z_PITCH, Z_SUBFIELD, Z_EXCLUSION, Z_MODULES, Z_SELECTION = 0, 10, 12, 20, 25, 30, 40
 Z_WIRING = 35
@@ -257,7 +258,7 @@ class PlanView(QGraphicsView):
         self.loader.tileReady.connect(self._tile_ready)
         self.tile_items: dict = {}
         self.target_zoom = None
-        self.tile_timer = QTimer(self, singleShot=True, interval=120)
+        self.tile_timer = QTimer(self, singleShot=True, interval=TILE_UPDATE_MS)
         self.tile_timer.timeout.connect(self._update_tiles)
         self.mark_items: list = []              # the marks of the checks (study 12, C1)
         self.focused: tuple | None = None       # the object a check is about, the rest dimmed (C4)

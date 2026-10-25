@@ -19,20 +19,12 @@ from dataclasses import dataclass
 import numpy as np
 
 from ..i18n import _, ngettext, number
-from .charts import CHROME, SERIES
+from .charts import SERIES
 from .pedigree import formula_png, records_html
+from .report_style import CHROME, INK, MARK_COLOURS, PLAN, STRING_HUES
 from .theme import matplotlib_fonts
 
-INK = CHROME["light"]["ink"]
-MUTED = "#6b675f"
 MARKS = {"ok": "✔", "warn": "⚠", "fail": "✘", "info": "ℹ"}
-MARK_COLOURS = {"✔": "#2e7d4f", "⚠": "#b7791f", "✘": "#c0392b", "ℹ": "#2a7fc4"}
-# the plan on paper: buildings, sub-fields, exclusions and modules in the kinds' hues (view_colours.KIND), darker
-# for print; the strings in hues of their own, told apart by their labels as well
-PLAN = {"building": "#eeebf6", "building_edge": "#8b7bb0", "subfield": "#2a7fc4", "exclusion": "#f7d3e3",
-        "exclusion_edge": "#c4467f", "module": "#2f4f7f", "module_edge": "#ffffff", "label": "#24211d"}
-STRING_HUES = ("#2a7fc4", "#d9822b", "#3a9a5b", "#c4467f", "#7b5fb4", "#8a6d3b", "#1f9aa6", "#b8a31f",
-               "#5a6b7d", "#d1495b")
 
 
 class Html(str):

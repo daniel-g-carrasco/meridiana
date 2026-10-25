@@ -30,14 +30,14 @@ from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QSizePolicy, QStacke
 from .. import phases, theme_colors
 from ..i18n import _
 from . import icons
-from .cards import EDGE, RADIUS
+from .cards import EDGE, RADIUS, default_tokens
 from .design import Button, Icon, Motion, Size, Space, Text, set_text, text_font
 from .waiting import STALE_MARK
 
 TALL = 68                   # the bar with the words under the icons (design 5.3): what the bar must not exceed
 LOW = 44                    # the icons alone
 LOW_WINDOW = 900            # logical pixels: a lower window gets the icons alone by itself (the laptop, a column)
-ICON_TALL, ICON_LOW = 24, 22
+ICON_TALL, ICON_LOW = Icon.TILE, Icon.BAR
 TOOL_TEXT, GROUP_TEXT = Text.SECONDARY, Text.LABEL     # the word under the icon, the title of the group
 TAB_HEIGHT = Size.TAB       # a tab of the row of the phases
 BADGE = 20                  # the disc of a phase's number
@@ -46,7 +46,7 @@ CARD_PAD = (Space.L - 2, Space.S, Space.L - 2, Space.S - 1)   # inside the card 
 
 
 def _colours(t: dict | None = None) -> dict:
-    t = t or theme_colors.derive(theme_colors.DEFAULT_SEED, False).tokens
+    t = t or default_tokens()
     return {"text": t["text"], "text2": t["text2"], "muted": t["muted"], "disc": t["line_soft"], "accent": t["accent"],
             "accent_fg": t["accent_fg"], "card": t["panel"], "edge": t["card_line"]}
 

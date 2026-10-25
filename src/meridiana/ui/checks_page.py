@@ -22,21 +22,25 @@ from PySide6.QtWidgets import (QAbstractItemView, QFrame, QHBoxLayout, QHeaderVi
 from .. import checks, theme_colors
 from ..i18n import _
 from . import icons, symbols
+from .cards import default_tokens
+from .design import Radius, Space
 from .sections import SectionDelegate, is_section, section
 from .theme import symbol_font
 
 MARKS = {"fail": "✘", "warn": "⚠", "info": "ℹ", "ok": "✔"}
 # the status colours of the charts' palette (critical, warning, good), on the mark only: the mark and the words
 # carry the meaning, the colour helps; what is only worth knowing keeps the colour of the text
-COLOURS = {"fail": "#d03b3b", "warn": "#fab219", "ok": "#0ca30c"}
+COLOURS = {"fail": theme_colors.STATUS["critical"], "warn": theme_colors.STATUS["warning"],
+           "ok": theme_colors.STATUS["good"]}
 DETAIL_ROLE = Qt.ItemDataRole.UserRole + 9      # on the row under an item: its detail, drawn wrapped
 GROUP_ROLE = Qt.ItemDataRole.UserRole + 10      # on a header: the key of its group (checks.Group.key)
 CLOSED_ROLE = Qt.ItemDataRole.UserRole + 11     # on a header: shown closed by default
 SYMBOL_ROLE = Qt.ItemDataRole.UserRole + 12     # on a header or an item: the name of its symbol (ui/symbols.py)
-PAD = 6                                         # around the detail's text (Space.S)
+RESIZE_SETTLE_MS = 90
+PAD = Space.S                                   # around the detail's text
 DETAIL_BOTTOM = 10                              # under the detail, before the line to the next item
 ROW_HEIGHT = 34         # an item's row: «Fix…» and the eye (Size.CHIP) inside it with air (R124: «Correggi» was cut)
-SECTION_AIR = 16        # above a section's header: the sections a little further apart than the tree's (R136)
+SECTION_AIR = Space.XL  # above a section's header: the sections a little further apart than the tree's (R136)
 DETAIL_CHARS = 100      # the detail wraps at about this many characters, not at the panel's edge (R129)
 
 level_names = checks.level_names
@@ -115,8 +119,8 @@ class ChecksDelegate(SectionDelegate):
         return QSize(rect.width(), rect.height() + DETAIL_BOTTOM)
 
 
-CARD_INSET = 8          # the cards of the items from the panel's sides (F2)
-CARD_RADIUS = 6
+CARD_INSET = Space.M  # the cards of the items from the panel's sides (F2)
+CARD_RADIUS = Radius.CONTROL
 
 
 class ChecksTree(QTreeWidget):
@@ -132,13 +136,16 @@ class ChecksTree(QTreeWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("checks-tree")
-        self.colours = {"card": "#ffffff", "line": "#d9d5cc", "sink": "#ebeae7", "select": "#f5e3c8",
-                        "hover": "#1e1c190f", "focus": "#b3541e"}
+        t = default_tokens()
+        hover = QColor(t["text"])
+        hover.setAlpha(18)
+        self.colours = {"card": t["card"], "line": t["line"], "sink": t["field"], "select": t["select_bg"],
+                        "hover": hover.name(QColor.NameFormat.HexArgb), "focus": t["accent"]}
         # the rows laid out again once the width rests: at every step of a panel's edge dragged it measured every
         # row's wrapped detail (4 500 times in 40 steps, R120)
         self.relayout = QTimer(self)
         self.relayout.setSingleShot(True)
-        self.relayout.setInterval(90)
+        self.relayout.setInterval(RESIZE_SETTLE_MS)
         self.relayout.timeout.connect(self._width_settled)
 
     SOURCE_SHARE = 0.28          # the source's column at most this much of the width: the text first (24/10/2026)
@@ -312,7 +319,8 @@ class CountChip(QToolButton):
         self.setCheckable(True)
         self.setAutoRaise(True)
         self.setIcon(mark_icon(level))
-        self.ink = {"text": "#1e1c19", "muted": "#8a857c", "on": "#1e1c19"}
+        t = default_tokens()
+        self.ink = {"text": t["text"], "muted": t["muted"], "on": t["select_fg"]}
 
     def sizeHint(self) -> QSize:
         from .design import Icon, Size, Space

@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (QColorDialog, QComboBox, QFormLayout, QFrame, QHB
 
 from .. import theme_colors
 from ..i18n import _, number
+from .cards import default_tokens
 from .theme import Theme, background_names, mark, colour_names, qpalette, theme_names
 from .style import Group
 
@@ -33,7 +34,7 @@ class Character(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.colour = QColor("#334f6d")
+        self.colour = QColor(default_tokens()["assistant"])
         self.setFixedSize(28, 28)
 
     def paintEvent(self, _event) -> None:

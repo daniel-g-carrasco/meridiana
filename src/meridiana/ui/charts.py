@@ -35,7 +35,9 @@ from PySide6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel, Q
                                QTableWidget, QTableWidgetItem, QToolButton, QVBoxLayout, QWidget)
 
 from ..i18n import _, number
-from .design import Type
+from .design import Size, Type
+
+LOADING_RETRY_MS = 30
 
 SERIES = {"light": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"],
           "dark": ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"]}
@@ -120,7 +122,7 @@ def _enqueue(chart) -> None:
 
 def _draw_next() -> None:
     if _LOADING:                    # pyqtgraph still loading in its thread: the charts a moment later
-        QTimer.singleShot(30, _draw_next)
+        QTimer.singleShot(LOADING_RETRY_MS, _draw_next)
         return
     while _QUEUE:
         chart = _QUEUE.pop(0)
@@ -188,13 +190,13 @@ class Chart(QWidget):
         # place, so that a window with its energy pages hidden loads no pyqtgraph
         self.plot = None
         self.canvas: QWidget = QWidget()
-        self.canvas.setMinimumHeight(160)
+        self.canvas.setMinimumHeight(Size.CHART_MIN_HEIGHT)
         self.table = QTableWidget()
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.note = QLabel()            # the message, when there is nothing to draw
         self.note.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.note.setWordWrap(True)
-        self.note.setMinimumHeight(160)
+        self.note.setMinimumHeight(Size.CHART_MIN_HEIGHT)
         self.stack = QStackedWidget()
         self.stack.addWidget(self.canvas)
         self.stack.addWidget(self.table)

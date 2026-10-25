@@ -22,7 +22,8 @@ class PanelButtons(QWidget):
         row.setContentsMargins(0, 0, Space.S, 0)
         row.setSpacing(Space.XXS)
         self.buttons: dict = {}
-        self.colours = {"on": "", "off": "#9b9b9b"}
+        from .cards import default_tokens
+        self.set_colours(default_tokens())
         for dock, icon, action in cards:
             b = QToolButton()
             b.setObjectName("panel-toggle")

@@ -40,7 +40,7 @@ from .undo import UndoBridge
 from .assistant import Assistant
 from .assistant_chat import Chat, WindowHost
 from .cards import CardDock, keep_gaps
-from .design import Space, Text, set_text_all
+from .design import Icon, Space, Text, set_text_all
 from .sections import TAIL_ROLE, SectionDelegate, section
 from .catalog_dialog import CatalogDialog
 from .energy_pages import ConsumptionPage, EconomicsPage, EnergyPage
@@ -89,6 +89,10 @@ class LayoutJob(QRunnable):
 
 
 AUTOSAVE_MS = 120_000           # a copy of the unsaved changes every two minutes
+ENERGY_PAUSE_MS = 500
+RELAYOUT_PAUSE_MS = 150
+PREVIEW_REPORT_MS = 700
+WARM_UP_MS = 1500
 
 
 class EnergySignals(QObject):
@@ -256,7 +260,7 @@ class MainWindow(QMainWindow):
         box3d.addWidget(self.view3d, 1)
         box3d.addWidget(self.sunbar)
         self.split = QSplitter(Qt.Orientation.Horizontal)
-        self.split.setHandleWidth(6)                # the card between the two views, each rounded (24/10/2026)
+        self.split.setHandleWidth(Space.S)          # the card between the two views, each rounded (24/10/2026)
         self.split.addWidget(self.plan)
         self.split.addWidget(self.view3d_box)
         self.energy_page = EnergyPage()
@@ -323,7 +327,7 @@ class MainWindow(QMainWindow):
         self.autosave_timer = QTimer(self, interval=AUTOSAVE_MS)
         self.autosave_timer.timeout.connect(self._autosave)
         self.autosave_timer.start()
-        self.energy_timer = QTimer(self, singleShot=True, interval=500)
+        self.energy_timer = QTimer(self, singleShot=True, interval=ENERGY_PAUSE_MS)
         self.energy_timer.timeout.connect(lambda: self._compute_energy(fetch=False))
         # the plant (task 16d): the strings and their checks again at each change, in a thread (_start_plant)
         self.plant_state = None                    # energy/plant.Plant of the project in hand
@@ -412,13 +416,13 @@ class MainWindow(QMainWindow):
         self.busy = QLabel()                   # what is being computed in the background, while it is
         self.busy_wait = waiting.Delayed(self.busy, self)      # past the threshold only (study 16, F.6)
         # margins as the rest of the window (R14): from the window's sides and between what the bar says
-        self.statusBar().setContentsMargins(8, 2, 8, 2)
+        self.statusBar().setContentsMargins(Space.M, Space.XXS, Space.M, Space.XXS)
         self.statusBar().addWidget(self.hint, 1)
         self.measure_label = QLabel()          # the quick measure of the selection (study 15, 3.11)
         # what the status bar says never keeps the window from getting narrower (a column of niri): cut, not wider
         for label in (self.hint, self.coords, self.measure_label):
             label.setMinimumWidth(1)
-            label.setContentsMargins(6, 0, 6, 0)
+            label.setContentsMargins(Space.S, 0, Space.S, 0)
             label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.statusBar().addPermanentWidget(self.busy)
         # the bars with their percentage and Cancel, only for PVGIS and the PDF report (study 16, F4; design 3.10)
@@ -440,7 +444,7 @@ class MainWindow(QMainWindow):
         self.preview_key = None                # what the pages shown were made of
         self.preview_soon = QTimer(self)       # a pause after the last change before the preview is made again
         self.preview_soon.setSingleShot(True)
-        self.preview_soon.setInterval(700)
+        self.preview_soon.setInterval(PREVIEW_REPORT_MS)
         self.preview_soon.timeout.connect(self._preview_report)
         self.count_buttons = {}                # how many checks to fix and to check, a click away (study 12, C3)
         for level in ("fail", "warn"):
@@ -553,7 +557,7 @@ class MainWindow(QMainWindow):
         self.plan.set_source(cfg.background)
         self._fill_sources()
         # the layout starts after a short pause: a field's arrows clicked again and again lay the modules once
-        self.relayout_timer = QTimer(self, singleShot=True, interval=150)
+        self.relayout_timer = QTimer(self, singleShot=True, interval=RELAYOUT_PAUSE_MS)
         self.relayout_timer.timeout.connect(self._start_layout)
         self.shown_once = False
         self.update_job = None                   # the check for a newer version in hand (check_updates)
@@ -697,7 +701,7 @@ class MainWindow(QMainWindow):
         self.side_bar.setObjectName("tools")
         self.side_bar.setMovable(False)
         self.side_bar.setFloatable(False)
-        self.side_bar.setIconSize(QSize(22, 22))
+        self.side_bar.setIconSize(QSize(Icon.BAR, Icon.BAR))
         self.side_bar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.side_bar)
         self.side_bar.hide()
@@ -4573,7 +4577,7 @@ class MainWindow(QMainWindow):
             self.split.setSizes([int(width * 0.55), int(width * 0.45)])
         self.plan.fit()
         self._show_3d()
-        QTimer.singleShot(1500, self, self._warm_up)
+        QTimer.singleShot(WARM_UP_MS, self, self._warm_up)
 
     def _warm_up(self) -> None:
         """What the first change of phase would otherwise wait for (R83), done while the window rests after the start:

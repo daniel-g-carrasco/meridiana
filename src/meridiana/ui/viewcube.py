@@ -36,8 +36,8 @@ class ViewCube(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.hover = None                 # ("part", part) | ("arrow", name) | ("letter", "N") | ("home",) | ("menu",)
         self.inside = False
-        self.colours = {"face": "#f8f7f4", "edge": "#e8e5de", "line": "#6f685d", "text": "#1e1c19", "hot": "#ebe1d6",
-                        "hot_ink": "#1e1c19", "ring": "#918a7e"}
+        from .cards import default_tokens
+        self.set_colours(default_tokens())
         self.picture: QPixmap | None = None     # the cube as last drawn, and what it was drawn for (R120)
         self.drawn_for = None
         backend.cameraChanged.connect(self.update)

@@ -19,10 +19,11 @@ from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication, QWidget
 
+from .cards import default_tokens
 from .design import Motion
 
 FADE_MS = Motion.FAST
-_STATE = {"border": "#d9d5cc", "motion": True}
+_STATE = {"border": default_tokens()["line"], "motion": True}
 _KINDS = (Qt.WindowType.Popup, Qt.WindowType.ToolTip)
 
 

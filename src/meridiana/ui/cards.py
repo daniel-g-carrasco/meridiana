@@ -19,6 +19,11 @@ from .. import theme_colors
 from ..i18n import _
 from .design import Layout, Radius, Space
 
+
+def default_tokens() -> dict:
+    return theme_colors.derive(theme_colors.DEFAULT_SEED, False).tokens
+
+
 # the measures of the design system (ui/design.py), by the names this module has always used
 GAP = Layout.GAP        # between two cards, and from the bars above and below; the separators too
 EDGE = Layout.EDGE      # from the window's sides (Daniel, 24/10/2026: «margini con l'esterno un po' più accentuati»)
@@ -97,7 +102,7 @@ class Corner(QWidget):
         p.fillPath(rest.subtracted(arc), QColor(_CORNER_COLOUR[0]))
 
 
-_CORNER_COLOUR = ["#f8f7f4"]                    # the cards' colour of the theme in use
+_CORNER_COLOUR = [default_tokens()["panel"]]    # the cards' colour of the theme in use
 _ROUNDED: list = []                             # the views rounded, to repaint their corners with the theme
 
 
@@ -175,10 +180,6 @@ def keep_gaps(widget: QWidget) -> GapKeeper:
     return GapKeeper(widget)
 
 
-def default_tokens() -> dict:
-    return theme_colors.derive(theme_colors.DEFAULT_SEED, False).tokens
-
-
 class CloseButton(QToolButton):
     """The cross that closes the panel, drawn by the painter (no icon file, no symbol font)."""
 
@@ -190,7 +191,7 @@ class CloseButton(QToolButton):
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setCursor(Qt.CursorShape.ArrowCursor)
         self.setToolTip(_("Close the panel; View > Panels brings it back"))
-        self.colour = QColor("#6f685d")
+        self.colour = QColor(default_tokens()["muted"])
         self.veil = QColor(0, 0, 0, 24)
 
     def paintEvent(self, event) -> None:
@@ -216,7 +217,8 @@ class CardTitle(QWidget):
         super().__init__(dock)
         self.dock = dock
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.colours = {"text": "#1e1c19", "header": "#f2f1ed"}
+        t = default_tokens()
+        self.colours = {"text": t["text"], "header": t["header"]}
         self.measured = ("", 0)            # the font's key and its line's height: asked thousands of times (R120)
         # the dock's child, not the bar's: QDockWidget lays the title bar at x 0 as wide as the content, and the
         # cross of a card against the window's left side fell out of it (2 px of 18 showed; qt-app-template)

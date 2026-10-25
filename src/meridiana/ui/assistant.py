@@ -39,6 +39,7 @@ from .. import assistant
 from ..assistant import text as words
 from ..i18n import _
 from . import icons
+from .cards import default_tokens
 from .design import Icon, Motion, Space, Text, Type, set_text, text_font
 
 MIN_OPEN_HEIGHT = 220
@@ -51,6 +52,7 @@ SLIDE_IN = 10                   # pixels the bubble comes from, towards the char
 FRAME_MS = 50                   # twenty frames a second
 ANSWER_WAIT_MS = 600            # without a conversation behind him (a widget alone): the turn lasts this long
 RENDER_MS = 50                  # the answer as it comes is drawn again at most twenty times a second
+DOTS_MS = 300
 RADIUS = 10                     # the bubble's corners
 
 
@@ -164,7 +166,7 @@ class Dots(QWidget):
         self.owner = owner
         self.phase = 0
         self.setFixedHeight(14)
-        self.timer = QTimer(self, interval=300)
+        self.timer = QTimer(self, interval=DOTS_MS)
         self.timer.timeout.connect(self._step)
 
     def showEvent(self, event) -> None:
@@ -342,8 +344,9 @@ class Assistant(QFrame):
         super().__init__(area)
         self.area = area
         self.setObjectName("assistant")
-        self.colours = {"text": "#1e1c19", "assistant": "#4f6f95", "panel": "#f8f7f4", "line": "#d8d3c9",
-                        "muted": "#6f685d"}
+        t = default_tokens()
+        self.colours = {"text": t["text"], "assistant": t["assistant"], "panel": t["panel"], "line": t["line"],
+                        "muted": t["muted"]}
         self.tab = "model"
         self.followed: list[QWidget] = []                   # widgets its place depends on (follow)
         self.places: dict[str, assistant.Anchor] = {}      # the places the designer dragged it to, per tab
