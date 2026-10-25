@@ -7,6 +7,7 @@ the preferences, the screenshots) is in finestra/test_theme.py. PySide6 and a di
 
 import re
 import unittest
+from pathlib import Path
 
 import _setup
 from _fixtures import capannone, flat
@@ -41,6 +42,46 @@ class TheTheme(unittest.TestCase):
         """What the window does with a choice of the preferences (MainWindow._appearance)."""
         self.cfg.theme, self.cfg.accent, self.cfg.backgrounds = theme, accent, backgrounds
         self.theme.apply()
+
+    def test_meridio_moves_and_the_camera_glides_in_the_catalogues_durations(self):
+        """Point 15 of the review (Daniel, 25/10/2026: «130 ms»): Meridio's slide and his bubble's closing are
+        Motion.QUICK, the 3D camera Motion.SLOW."""
+        from meridiana import camera
+        from meridiana.ui import assistant
+        from meridiana.ui.design import Motion
+        self.assertEqual(Motion.QUICK, 130)
+        self.assertEqual((assistant.SLIDE_MS, assistant.CLOSE_MS), (Motion.QUICK, Motion.QUICK))
+        self.assertEqual(camera.ANIMATION_MS, Motion.SLOW)
+
+    def test_an_energy_field_that_cannot_be_read_has_the_themes_danger_border(self):
+        """Point 16: the strings on each input, «2; x», bordered in the theme's danger (it was a #d03b3b written by
+        hand, the same in both themes); read again, the border goes. The results' margins on the scale."""
+        from PySide6.QtGui import QColor
+
+        from meridiana.ui.design import Space
+        from meridiana.ui.energy_pages import EnergyPage
+        page = EnergyPage()
+        self.addCleanup(page.deleteLater)
+        page.resize(900, 700)
+        page.show()
+        self.app.processEvents()
+        m = page.results_box.contentsMargins()
+        self.assertEqual((m.left(), m.top(), m.right(), m.bottom(), page.results_box.spacing()),
+                         (Space.XL, Space.XL, Space.XL, Space.XL, Space.L))
+        field = page.per_mppt
+        field.setText("2; x")
+        page._layout_changed()
+        self.app.processEvents()
+        self.assertTrue(field.property("problem"))
+        image = field.grab().toImage()
+        ratio = field.devicePixelRatioF()
+        edge = QColor(image.pixel(int(image.width() / 2), int(ratio * 0.5)))
+        self.assertEqual(edge.name(), self.theme.tokens["danger"])
+        field.setText("2; 1")
+        page._layout_changed()
+        self.assertFalse(field.property("problem"))
+        self.assertNotIn("#d03b3b", Path(__import__("meridiana.ui.energy_pages", fromlist=["x"]).__file__).read_text(
+            encoding="utf-8"))
 
     def test_every_role_of_the_palette_is_set_in_every_group(self):
         from PySide6.QtGui import QPalette

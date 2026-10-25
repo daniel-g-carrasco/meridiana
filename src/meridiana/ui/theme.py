@@ -56,6 +56,15 @@ def in_font(ch: str) -> bool:
     return _RAW[0] is None or _RAW[0].supportsCharacter(ord(ch))
 
 
+def mark_problem(widget, on: bool) -> None:
+    """A field whose text cannot be read, its border in the theme's danger (QSS [problem="true"]); off, as usual."""
+    if bool(widget.property("problem")) == on:
+        return
+    widget.setProperty("problem", on)
+    widget.style().unpolish(widget)
+    widget.style().polish(widget)
+
+
 def marked(text: str) -> str:
     """Rich text (escaped already) with each character the text's font lacks in mark(): «γ Pmax», «412 Ω». Where
     the symbols need no font of their own (Linux), as it is."""
@@ -280,6 +289,7 @@ QLineEdit:hover, QSpinBox:hover, QDoubleSpinBox:hover, QComboBox:hover, QTextEdi
 QDateEdit:hover, QTimeEdit:hover {{ border: 1px solid {t['field_line']}; }}
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus, QTextEdit:focus, QPlainTextEdit:focus,
 QDateEdit:focus, QTimeEdit:focus {{ border: {Line.FOCUS}px solid {t['accent']}; {control_focus} }}
+QLineEdit[problem="true"], QLineEdit[problem="true"]:hover {{ border: 1px solid {t['danger']}; }}
 QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QComboBox:disabled, QTextEdit:disabled,
 QPlainTextEdit:disabled, QDateEdit:disabled, QTimeEdit:disabled {{ border-color: transparent; color: {faded}; }}
 QAbstractSpinBox::up-button, QAbstractSpinBox::down-button {{

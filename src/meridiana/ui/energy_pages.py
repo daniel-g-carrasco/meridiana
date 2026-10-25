@@ -20,7 +20,8 @@ from .help_box import help_button, register
 from .pedigree import PedigreeView
 from . import waiting
 from .properties import combo, make_form, spin
-from .theme import mark
+from .design import Space
+from .theme import mark, mark_problem
 from .style import Group
 
 
@@ -214,11 +215,12 @@ class Page(QWidget):
         # the page in the middle holds the results, the tiles and the charts (`centre`)
         self.form = QWidget()
         self.form_box = QVBoxLayout(self.form)
-        self.form_box.setContentsMargins(12, 2, 12, 10)
+        self.form_box.setContentsMargins(Space.L, Space.XXS, Space.L, Space.L)     # the 10 below on the scale
         self.results = QWidget()
         self.results_box = FittedBox(self.results)
-        self.results_box.setContentsMargins(16, 14, 16, 14)
-        self.results_box.setSpacing(10)
+        # on the scale (Daniel, 25/10/2026): 16 all round, 12 between the parts (they were 14 and 10)
+        self.results_box.setContentsMargins(Space.XL, Space.XL, Space.XL, Space.XL)
+        self.results_box.setSpacing(Space.L)
         self.side = scrolled(self.form)
         self.side.setMinimumWidth(0)
         self.centre = scrolled(self.results)
@@ -454,11 +456,11 @@ class EnergyPage(Page):
         try:
             per = [int(x) for x in self.per_mppt.text().replace(",", ";").split(";") if x.strip()]
             self.per_mppt.setToolTip("")
-            self.per_mppt.setStyleSheet("")
+            mark_problem(self.per_mppt, False)
         except ValueError:
             per = []
             self.per_mppt.setToolTip(_("Whole numbers separated by ; are expected, one per input: 2; 2; 1"))
-            self.per_mppt.setStyleSheet("border: 1px solid #d03b3b")   # said, not dropped in silence
+            mark_problem(self.per_mppt, True)          # said, not dropped in silence, in the theme's danger
         self.send("energy", "strings", {"n_series": n, "per_mppt": per} if n and per else None)
 
     def show_strings(self, info: dict, sim) -> None:
