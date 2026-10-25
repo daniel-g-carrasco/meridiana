@@ -192,6 +192,18 @@ Stati: **fatto** (con il commit), **in corso** (sessione o compito), **da studia
 | R149 | 25/10 | «Ci deve essere anche una mappa di default fatta bene, e anche una modalità mappa mondiale con stati» (con R131) | da studiare: studio su inizio del progetto, mappe, clienti e commesse (quando lo dice Daniel) | - |
 | R150 | 25/10 | «Ci vuole un buon modo per gestire commesse e clienti» | da studiare: studio su inizio del progetto, mappe, clienti e commesse (quando lo dice Daniel) | - |
 | R151 | 25/10 | «Ci starebbe che Meridio potesse aprire progetti, ricordarsi clienti / progetti da fare, scovare progetti più recenti già fatti su determinati lavori, ecc. (chiaramente nel rispetto delle clausole di riservatezza)» | da studiare: studio su inizio del progetto, mappe, clienti e commesse (quando lo dice Daniel) | - |
+| R152 | 25/10 | «I vari simboli nuovi non sembrano renderizzati benissimo» (Linux, scala 2, scuro) | da fare | - |
+| R153 | 25/10 | Verifiche: «avevo chiesto di non poter evidenziare la linea di verifiche o di migliorarne l'evidenziatura di modo che cambia solo leggermente colore di tutto il suo contenitore. Infatti ora c'è un bug, quando la si seleziona, si evidenzia, quando clicco nel testo della sua espansione è come se un pezzetto a sinistra dell'evidenziatura si cancellasse. Vedo poca armonia» | da fare | - |
+| R154 | 25/10 | «Non hai applicato i simboli nuovi dappertutto» (i pulsanti OK e Annulla delle finestre su Linux con le icone del sistema) | da fare | - |
+| R155 | 25/10 | Meridio: «il movimento di Meridio è troppo rapido, meglio com'era prima, ma il fumetto se aperto deve seguire Meridio, non scomparire e ricomparire nella nuova posizione»; «io eviterei che Meridio si debba spostare a ogni cambio di fase. Non mi piace molto come roba» | da fare | - |
+| R156 | 25/10 | Meridio: «quando parla Meridio il suo testo deve apparire gradualmente come se stesse parlando (so che esiste come effetto)» | da fare | - |
+| R157 | 25/10 | «Quando si preme su File, ci deve essere un'animazione semplice» | da fare | - |
+| R158 | 25/10 | «I pulsanti già evidenziati con il colore di accento non devono esistere, né negli strumenti né altrove (tipo il tasto "play"): sono brutti» | da fare | - |
+| R159 | 25/10 | «I testi dei nomi dei gruppi devono essere un po' più leggeri, piccoli, e distanziati dai comandi sopra (armonia)» | da fare | - |
+| R160 | 25/10 | «L'hover è ancora troppo incongruente e non è stato armonizzato. Deve avere certi roundings, dimensioni e caratteristiche di delta colore / colore. Nelle varie fasi in alto per dire è diverso dal resto, e anche File non c'entra proprio nulla. Ma è da controllare dappertutto» | da fare | - |
+| R161 | 25/10 | «Le schede centrali di alcune fasi tipo Production, Consumption e Balance and economics vengono renderizzate male, come se la sfumatura del contenuto finisse sopra i bordi alto e/o basso (a seconda di dove ci si trova nel contenuto)»; «almeno sul laptop Linux con schermo più piccolo e dark mode noto troppo accentuate le sfumature / sfocature dei contenuti all'interno delle Verifiche, che possono rendere un po' difficile leggerne i contenuti» | da fare | - |
+| R162 | 25/10 | «Anche il tooltip non è stato armonizzato, e almeno su Linux c'entra proprio poco, ma sia su Windows che su Linux è da dargli una larghezza massima in cui il testo va in colonna. Sarebbe anche bello dare una bella formattazione ai contenuti come fanno programmi tipo VS Code (anche se qui è da trasporre tutto al contesto d'uso)» | da fare | - |
+| R163 | 25/10 | «Tutte le correzioni di stile le portiamo nel nostro template» | da fare | - |
 
 ## Da decidere (Daniel)
 
