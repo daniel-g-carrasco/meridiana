@@ -1,0 +1,39 @@
+{
+  "theme": "dark",
+  "language": "it",
+  "check_updates": false,
+  "last_update_check": "2026-10-21",
+  "last_folder": "C:\\Users\\utente\\Progetti",
+  "last_project": "C:\\Users\\utente\\Progetti\\Rho.meridiana",
+  "background": "osm",
+  "shortcuts": {
+    "fit": [
+      "Z"
+    ],
+    "tool_measure": [
+      "D",
+      "Shift+M"
+    ]
+  },
+  "accent": "plum",
+  "backgrounds": "tinted",
+  "navigation": "blender",
+  "orbit": "arcball",
+  "pivot": "selection",
+  "assistant": false,
+  "veil": 0.2,
+  "toolbar": "icons",
+  "assistant_docked": true,
+  "network_geocoding": false,
+  "network_pvgis": true,
+  "network_tiles": false,
+  "toolbar_place": "left",
+  "assistant_animated": false,
+  "assistant_style": "pixel",
+  "assistant_width": 360,
+  "assistant_height": 420,
+  "checks_view": "area",
+  "help_open": false,
+  "pivot_hint": false,
+  "version": 14
+}

@@ -1,0 +1,35 @@
+﻿PVObject_=pvVCalcul
+  Comment=Piano ovest
+  Version=8.0.18
+  SystemKind=No 3D scene defined, no shadings
+  Orientations, list of=1 TOrientGroup
+    PVObject_=pvOrient
+      Comment=Ovest
+    NoOrient=1
+    FieldType=FixedPlane
+    FieldTilt=30.0
+    FieldAzim=90.0
+    End of TOrientGroup
+  End of Orientations
+  PVObject_PVMainArray=pvMainArray
+  UFactor=20.0
+    SubArrays=Start
+      PVObject_=pvSubArray
+        Comment=Campo
+        PVModule=Introvabile_XZ-123.PAN
+        GInverter=CPS SCH275KTL-DO-US-800-250kW_275kVA_1.OND
+        NModSerie=10
+        NStringCh=2
+        NoOrientation=1
+        PVObject_IAM=pvIAM
+          IAMMode=Default
+          B0_IAM=0.050
+        End of PVObject pvIAM
+      End of PVObject pvSubArray
+    EndTags
+  End of PVObject pvMainArray
+  PVObject_System=pvSystem
+    SystemType=Grid
+    UnavTotDuration=3.65
+  End of PVObject pvSystem
+End of PVObject pvVCalcul

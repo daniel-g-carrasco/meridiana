@@ -1,0 +1,80 @@
+Confronto Meridiana / PVGIS 5.3 PVcalc a Rho (45.5226, 9.0300), falda 15 gradi verso Sud, 74,1 kWp
+anno tipo in cache: PVGIS 5.3, typical year from PVGIS-SARAH3 + ERA5, 2005-2023, scaricato il 2026-10-21, quota 151.0 m, offset del sole 0.1767 h; GHI 1449.8 kWh/m2, DHI 550.7, DNI 1634.4, T media 13.07 °C, vento medio 1.55 m/s
+orizzonte in cache: PVGIS 5.3, horizon from the terrain model, fetched 2026-10-21; altezza da 0.4 a 1.9 gradi (48 punti); cielo visto dal piano (fattore diffuso) 0.9971
+modulo: typical values of an n-type TOPCon module, scaled to 394 W: choose the real module for the final design; 394.15 W, gamma -0.3 %/K, efficienza 19.73 %
+inverter: inverter not chosen: AC power from a DC/AC ratio of 1.1, weighted efficiency 97%: 67.4 kW, eta 97.0 %
+perdite di Meridiana nel formato di PVGIS (system.pvgis_loss): 8.0 %  (soiling 2.0, LID 1.0, mismatch 1.0, cavi DC 1.5/2, inverter 3, cavi AC 1.0/2, combinati in prodotto)
+
+1. Meridiana sull'anno tipo PVGIS
+   predefinita, con orizzonte       E_AC    104775 kWh,  1414.0 kWh/kWp, PR 85.81 %, POA  1647.8 kWh/m2, orizzonte -0.06 %, IAM -3.16 %, livello -0.20 %, temperatura -2.91 %, inverter -3.33 %, taglio +0.00 %
+   predefinita, senza orizzonte     E_AC    104839 kWh,  1414.8 kWh/kWp, PR 85.86 %, POA  1647.8 kWh/m2, orizzonte +0.00 %, IAM -3.16 %, livello -0.20 %, temperatura -2.91 %, inverter -3.33 %, taglio +0.00 %
+   perdite a zero, con orizzonte    E_AC    110676 kWh,  1493.6 kWh/kWp, PR 90.64 %, POA  1647.8 kWh/m2, orizzonte -0.06 %, IAM -3.16 %, livello -0.20 %, temperatura -2.90 %, inverter -3.31 %, taglio -0.04 %
+
+2. PVGIS 5.3 PVcalc (risposte grezze nella cartella di lavoro)
+   PVGIS PVcalc {'lat': 45.5226, 'lon': 9.03, 'peakpower': 74.1, 'loss': 8.0, 'angle': 15.0, 'aspect': 0.0, 'mountingplace': 'free', 'pvtechchoice': 'crystSi2025', 'usehorizon': 1}: 200 in 0.6 s
+   base dati PVGIS-SARAH3 2005-2023, orizzonte DEM-calculated
+   perdite 14 %, con orizzonte        E_y     94483 kWh ( 1275.1 kWh/kWp, SD 3830), H(i)_y  1649.1 kWh/m2, l_aoi -3.14 %, l_spec +1.06 %, l_tg -8.15 %, l_total -22.68 %
+   perdite 8.0 %, con orizzonte       E_y    101075 kWh ( 1364.0 kWh/kWp, SD 4097), H(i)_y  1649.1 kWh/m2, l_aoi -3.14 %, l_spec +1.06 %, l_tg -8.15 %, l_total -17.28 %
+   perdite 8.0 %, senza orizzonte     E_y    101075 kWh ( 1364.0 kWh/kWp, SD 4097), H(i)_y  1649.1 kWh/m2, l_aoi -3.14 %, l_spec +1.06 %, l_tg -8.15 %, l_total -17.28 %
+   perdite 0 %, con orizzonte         E_y    109864 kWh ( 1482.7 kWh/kWp, SD 4453), H(i)_y  1649.1 kWh/m2, l_aoi -3.14 %, l_spec +1.06 %, l_tg -8.15 %, l_total -10.09 %
+   perdite 0 %, senza orizzonte       E_y    109864 kWh ( 1482.7 kWh/kWp, SD 4453), H(i)_y  1649.1 kWh/m2, l_aoi -3.14 %, l_spec +1.06 %, l_tg -8.15 %, l_total -10.09 %
+   perdite 8.0 %, crystSi2025         E_y    104800 kWh ( 1414.3 kWh/kWp, SD 4198), H(i)_y  1649.1 kWh/m2, l_aoi -3.14 %, l_spec +1.05 %, l_tg -4.76 %, l_total -14.24 %
+
+3. L'anno tipo contro la media pluriennale di PVGIS (MRcalc, irradiazione orizzontale e temperatura)
+   anni 2005-2023 (19); GHI media 1469.7 kWh/m2 contro anno tipo 1449.8 (-1.35 %); T media 13.19 contro 13.04 °C
+   mese   GHI media  GHI tipo   scarto    T media  T tipo
+   gen        47.6      46.4    -2.64 %     2.66    4.49
+   feb        66.5      64.3    -3.31 %     4.48    6.32
+   mar       116.8     121.8    +4.30 %     8.57    8.00
+   apr       150.1     125.4   -16.46 %    12.98   12.86
+   mag       183.3     186.9    +1.95 %    17.22   15.46
+   giu       204.5     196.1    -4.12 %    21.95   20.11
+   lug       218.5     222.2    +1.72 %    24.15   23.95
+   ago       183.3     169.0    -7.79 %    22.98   21.45
+   set       131.6     141.3    +7.39 %    18.73   20.36
+   ott        82.1      76.7    -6.59 %    13.62   12.61
+   nov        46.7      56.8   +21.65 %     7.91    7.61
+   dic        38.8      42.9   +10.72 %     3.08    3.26
+
+4. Produzione annua e mensile
+   Meridiana predefinita 104775 kWh (1414.0 kWh/kWp)
+   PVGIS perdite 14 %:   94483 kWh (1275.1 kWh/kWp): Meridiana +10.89 %
+   PVGIS perdite 8.0 %:  101075 kWh (1364.0 kWh/kWp): Meridiana +3.66 %  (parita di perdite di sistema)
+   PVGIS crystSi2025, 8.0 %: 104800 kWh (1414.3 kWh/kWp, l_tg -4.76 %): Meridiana -0.02 %  (moduli recenti)
+   senza orizzonte: Meridiana 104839 kWh contro PVGIS 101075 kWh: +3.72 %
+   mese   PVGIS E_m(L)  Meridiana E_AC   scarto     PVGIS H(i)_m  Meridiana POA   scarto
+   gen          4539          4373     -3.66 %         68.5          66.7     -2.52 %
+   feb          5651          5414     -4.20 %         86.6          83.0     -4.22 %
+   mar          8852          9392     +6.11 %        138.2         144.4     +4.53 %
+   apr         10195          8778    -13.90 %        163.9         137.2    -16.28 %
+   mag         11527         12389     +7.47 %        190.0         195.1     +2.67 %
+   giu         12320         12641     +2.60 %        208.2         201.3     -3.34 %
+   lug         13152         14310     +8.81 %        224.9         230.6     +2.52 %
+   ago         11585         11364     -1.91 %        196.6         181.7     -7.62 %
+   set          9114         10409    +14.21 %        150.2         165.5    +10.15 %
+   ott          6372          6092     -4.38 %        101.2          94.9     -6.24 %
+   nov          4049          5277    +30.32 %         63.4          81.1    +27.95 %
+   dic          3719          4336    +16.59 %         57.3          66.3    +15.80 %
+
+5. Irradiazione sul piano e orizzonte
+   POA prima dell'orizzonte: Meridiana 1647.8 kWh/m2 (Perez), PVGIS H(i)_y senza orizzonte 1649.1 (Muneer): -0.08 %
+   orizzonte: Meridiana -0.06 % sull'irradiazione (diretto + circumsolare tolti sotto la linea, cielo 0.29 % nascosto), PVGIS +0.00 % su H(i)
+   POA dopo l'orizzonte: Meridiana 1646.8 contro PVGIS 1649.1: -0.14 %
+
+6. Il modello del modulo: i passi di Meridiana contro le voci di PVGIS
+   riflessione: Meridiana IAM -3.16 % (ASHRAE b0 0,05 + Marion sul diffuso), PVGIS l_aoi -3.14 % (Martin e Ruiz)
+   spettro: Meridiana nessuna correzione, PVGIS l_spec +1.06 %
+   livello e temperatura: Meridiana -0.20 % e -2.91 % (insieme -3.10 %; De Soto a 25 °C + gamma -0.3 %/K, PVsyst Uc 29), PVGIS l_tg -8.15 % (Huld, Faiman U0 26,9 U1 6,2)
+   a monte delle perdite di sistema: Meridiana E_DC (perdite a zero, dopo IAM, soiling 0) 114514 kWh contro PVGIS a perdite 0 109864 kWh: +4.23 %
+
+7. Modello alla PVGIS (Martin-Ruiz, Faiman, Huld; pvlib) sulla POA di Meridiana, per separare le cause
+   POA Perez di questo calcolo 1647.8 kWh/m2 (= Meridiana 1647.8); con il solo diretto tolto sotto l'orizzonte 1647.8
+   IAM Martin-Ruiz a_r 0,16: -3.01 % (PVGIS l_aoi -3.14 %)
+   Huld + Faiman: E_DC 109357 kWh, -7.65 % rispetto a P_STC x G_eff (PVGIS l_tg -8.15 %); T modulo media nelle ore di sole 29.1 °C
+   con lo spettro di PVGIS (+1.06 %) e perdite 0: 110516 kWh contro PVGIS a perdite 0 109864 kWh: +0.59 % (resta: Muneer contro Perez, anno tipo contro media)
+   con le perdite di Meridiana (8.0 %): 101675 kWh contro Meridiana 104775: il modello del modulo di Meridiana da' +3.05 % rispetto a quello di PVGIS sulla stessa POA
+
+8. Lo stesso confronto con il modulo del progetto di Rho (LONGi LR7-54HVH-495M, 188 moduli, 93,06 kWp)
+   Meridiana 133889 kWh, 1438.7 kWh/kWp, PR 87.31 %; livello +0.89 %, temperatura -2.27 % (gamma -0.26 %/K), LID -1.00 %
+   PVGIS a perdite 8.0 % (per kWp come sopra): 1364.0 kWh/kWp: Meridiana +5.48 %
+   resa a 25 °C del modello De Soto del LONGi: 200 W/m2 100.7 %, 400 101.6 %, 600 101.5 %, 800 100.9 % di quella STC; generico: 200 98.3 %, 400 100.0 %, 600 100.4 %, 800 100.4 %

@@ -1,0 +1,143 @@
+# avvio.py, 23/10/2026, offscreen, sfondo nessuno, progetto Rho
+##### 8. avvio, real 3D, load 1% 16:16:12
+run 1: qt_import_ms 86, meridiana_imports_ms 993, window_build_ms 282, show_and_paint_ms 40, open_sync_ms 33, open_to_idle_ms 198, total_to_idle_ms 1610
+run 2: qt_import_ms 77, meridiana_imports_ms 891, window_build_ms 261, show_and_paint_ms 48, open_sync_ms 31, open_to_idle_ms 186, total_to_idle_ms 1472
+run 3: qt_import_ms 92, meridiana_imports_ms 907, window_build_ms 266, show_and_paint_ms 44, open_sync_ms 28, open_to_idle_ms 191, total_to_idle_ms 1508
+run 4: qt_import_ms 77, meridiana_imports_ms 899, window_build_ms 281, show_and_paint_ms 41, open_sync_ms 29, open_to_idle_ms 216, total_to_idle_ms 1525
+run 5: qt_import_ms 72, meridiana_imports_ms 981, window_build_ms 271, show_and_paint_ms 42, open_sync_ms 27, open_to_idle_ms 197, total_to_idle_ms 1572
+
+CPU busy during the runs: 9%; 5 runs; project Prova capannone Rho.meridiana (188 modules); 3D real; offscreen
+  qt_import_ms           median      77 ms  (min 72, max 92)
+  meridiana_imports_ms   median     907 ms  (min 891, max 993)
+  window_build_ms        median     271 ms  (min 261, max 282)
+  show_and_paint_ms      median      42 ms  (min 40, max 48)
+  open_sync_ms           median      29 ms  (min 27, max 33)
+  open_to_idle_ms        median     197 ms  (min 186, max 216)
+  total_to_idle_ms       median    1525 ms  (min 1472, max 1610)
+##### 9. avvio, stub 3D, load 14% 16:16:23
+run 1: no result
+
+Traceback (most recent call last):
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 133, in <module>
+    main()
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 105, in main
+    child(Path(args.project), args.no3d)
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 65, in child
+    win = window.MainWindow(paths, cfg)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\window.py", line 559, in __init__
+    self.view3d.backend.menuRequested.connect(self._view3d_menu)
+    ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Stub' object has no attribute 'backend'
+
+run 2: no result
+
+Traceback (most recent call last):
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 133, in <module>
+    main()
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 105, in main
+    child(Path(args.project), args.no3d)
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 65, in child
+    win = window.MainWindow(paths, cfg)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\window.py", line 559, in __init__
+    self.view3d.backend.menuRequested.connect(self._view3d_menu)
+    ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Stub' object has no attribute 'backend'
+
+run 3: no result
+
+Traceback (most recent call last):
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 133, in <module>
+    main()
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 105, in main
+    child(Path(args.project), args.no3d)
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 65, in child
+    win = window.MainWindow(paths, cfg)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\window.py", line 559, in __init__
+    self.view3d.backend.menuRequested.connect(self._view3d_menu)
+    ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Stub' object has no attribute 'backend'
+
+run 4: no result
+
+Traceback (most recent call last):
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 133, in <module>
+    main()
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 105, in main
+    child(Path(args.project), args.no3d)
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 65, in child
+    win = window.MainWindow(paths, cfg)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\window.py", line 559, in __init__
+    self.view3d.backend.menuRequested.connect(self._view3d_menu)
+    ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Stub' object has no attribute 'backend'
+
+run 5: no result
+
+Traceback (most recent call last):
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 133, in <module>
+    main()
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 105, in main
+    child(Path(args.project), args.no3d)
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 65, in child
+    win = window.MainWindow(paths, cfg)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\window.py", line 559, in __init__
+    self.view3d.backend.menuRequested.connect(self._view3d_menu)
+    ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Stub' object has no attribute 'backend'
+
+
+CPU busy during the runs: 10%; 0 runs; project Prova capannone Rho.meridiana (? modules); 3D stub; offscreen
+Traceback (most recent call last):
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 133, in <module>
+    main()
+  File "C:\Users\utente\dev\meridiana-lavoro\docs\studio\18-prove\avvio.py", line 125, in main
+    for k in rows[0]:
+             ~~~~^^^
+IndexError: list index out of range
+##### 10. import time of the window module (-X importtime, top 25 cumulative), load 4%
+import time:     24645 |    1174563 | meridiana.ui.window
+import time:      2963 |     414107 |   meridiana.energy.consumption
+import time:      2767 |     401115 |     pandas
+import time:      3746 |     348220 |   meridiana.ui.charts
+import time:      1723 |     177444 |       pandas.core.api
+import time:      7106 |     144366 |     matplotlib
+import time:      4053 |     106008 |       matplotlib.rcsetup
+import time:      1225 |     105896 |     matplotlib.backends.backend_qtagg
+import time:       874 |      98651 |         pandas.core.groupby
+import time:      6273 |      97778 |           pandas.core.groupby.generic
+import time:      4331 |      94213 |     matplotlib.figure
+import time:      1729 |      91169 |       matplotlib.backends.backend_agg
+import time:      2085 |      90223 |       pandas.core.config_init
+import time:      1053 |      88149 |       matplotlib.projections
+import time:      2081 |      88111 |         matplotlib.backend_bases
+import time:      1484 |      87749 |         pandas.errors
+import time:        58 |      86266 |           pandas._libs.tslibs
+import time:       571 |      86208 |             pandas._libs
+import time:      1697 |      84099 |               pandas._libs.interval
+import time:     10651 |      81124 |             pandas.core.frame
+import time:      4009 |      80098 |                 pandas._libs.hashtable
+import time:     12995 |      79330 |   PySide6.QtCore
+import time:      1278 |      76089 |                   pandas._libs.missing
+import time:        35 |      74336 |                     pandas._libs.tslibs.nattype
+import time:      1350 |      74302 |                       pandas._libs.tslibs
+
+##### B. avvio, stub 3D, load 23% 16:21:53
+run 1: qt_import_ms 97, meridiana_imports_ms 1082, window_build_ms 285, show_and_paint_ms 45, open_sync_ms 31, open_to_idle_ms 185, total_to_idle_ms 1704
+run 2: qt_import_ms 99, meridiana_imports_ms 1091, window_build_ms 284, show_and_paint_ms 46, open_sync_ms 30, open_to_idle_ms 208, total_to_idle_ms 1739
+run 3: qt_import_ms 88, meridiana_imports_ms 1064, window_build_ms 318, show_and_paint_ms 46, open_sync_ms 28, open_to_idle_ms 187, total_to_idle_ms 1713
+run 4: qt_import_ms 87, meridiana_imports_ms 1094, window_build_ms 297, show_and_paint_ms 50, open_sync_ms 31, open_to_idle_ms 202, total_to_idle_ms 1741
+run 5: qt_import_ms 123, meridiana_imports_ms 1076, window_build_ms 304, show_and_paint_ms 50, open_sync_ms 28, open_to_idle_ms 195, total_to_idle_ms 1758
+
+CPU busy during the runs: 13%; 5 runs; project Prova capannone Rho.meridiana (188 modules); 3D stub; offscreen
+  qt_import_ms           median      97 ms  (min 87, max 123)
+  meridiana_imports_ms   median    1082 ms  (min 1064, max 1094)
+  window_build_ms        median     297 ms  (min 284, max 318)
+  show_and_paint_ms      median      46 ms  (min 45, max 50)
+  open_sync_ms           median      30 ms  (min 28, max 31)
+  open_to_idle_ms        median     195 ms  (min 185, max 208)
+  total_to_idle_ms       median    1739 ms  (min 1704, max 1758)

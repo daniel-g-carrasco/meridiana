@@ -1,0 +1,7 @@
+proiezione QML contro camera.project: scarto massimo 0.000 px
+mapTo3DScene(400, 300, profondità 20) = (0.89, 0.67, 1.19)
+View3D.pick sulle frecce: {'x': '', 'y': '', 'z': ''}  (vuoto in un angolo: ''); un pick costa 0.00-0.03 ms  [senza GPU il pick non vede nulla: da provare sul PC]
+scelta in Python sullo schermo (6 px accanto alla freccia): {'x': 'x', 'y': 'y', 'z': 'z'}  (in un angolo: ''); costa 0.173 ms
+freccia x sullo schermo a distanza 1 e 3: 115.0 e 115.0 px (chiesti 120, meno lo scorcio della prospettiva)
+trascinamento vincolato a un asse: errore massimo 5.74e-06 m su spostamenti di 0,5, 2,5 e -3 m
+rotazione sull'anello orizzontale: errore massimo 9.66e-05° su 30°, 120° e -45°

@@ -1,0 +1,37 @@
+bordo-destro: 846 ms
+         468301 function calls in 0.846 seconds
+
+   Ordered by: cumulative time
+   List reduced from 200 to 28 due to restriction <28>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.846    0.846 perf_profile.py:91(drag_right)
+       40    0.001    0.000    0.842    0.021 perf_profile.py:43(pump)
+       40    0.296    0.007    0.840    0.021 {method 'exec' of 'PySide6.QtCore.QEventLoop' objects}
+      507    0.004    0.000    0.216    0.000 src\meridiana\ui\cards.py:58(gaps)
+      507    0.007    0.000    0.210    0.000 src\meridiana\ui\cards.py:32(arena)
+      507    0.198    0.000    0.198    0.000 {method 'findChildren' of 'PySide6.QtCore.QObject' objects}
+      351    0.003    0.000    0.182    0.001 src\meridiana\ui\cards.py:320(_fit_now)
+      234    0.001    0.000    0.128    0.001 src\meridiana\ui\cards.py:308(_fit)
+     3337    0.015    0.000    0.088    0.000 src\meridiana\ui\cards.py:237(line_height)
+     2869    0.008    0.000    0.085    0.000 src\meridiana\ui\cards.py:241(sizeHint)
+     4524    0.003    0.000    0.076    0.000 src\meridiana\ui\checks_page.py:101(sizeHint)
+     4524    0.007    0.000    0.072    0.000 src\meridiana\ui\sections.py:154(sizeHint)
+      117    0.000    0.000    0.066    0.001 src\meridiana\ui\cards.py:338(moveEvent)
+      156    0.001    0.000    0.064    0.000 src\meridiana\ui\cards.py:163(apply)
+     3337    0.012    0.000    0.063    0.000 src\meridiana\ui\cards.py:228(title_font)
+      117    0.000    0.000    0.062    0.001 src\meridiana\ui\cards.py:334(resizeEvent)
+      117    0.000    0.000    0.055    0.000 src\meridiana\ui\cards.py:316(_fit_later)
+     4039    0.026    0.000    0.050    0.000 src\meridiana\ui\design.py:106(font)
+     1365    0.001    0.000    0.042    0.000 src\meridiana\ui\cards.py:245(minimumSizeHint)
+     4524    0.040    0.000    0.040    0.000 {function ChecksDelegate.sizeHint at 0x000001A574E84540}
+       39    0.000    0.000    0.040    0.001 src\meridiana\ui\checks_page.py:128(resizeEvent)
+      156    0.000    0.000    0.033    0.000 src\meridiana\ui\cards.py:155(eventFilter)
+    37116    0.014    0.000    0.030    0.000 {method 'type' of 'PySide6.QtCore.QEvent' objects}
+      468    0.002    0.000    0.028    0.000 src\meridiana\ui\cards.py:252(place)
+      596    0.001    0.000    0.026    0.000 src\meridiana\ui\fades.py:56(eventFilter)
+     1933    0.018    0.000    0.025    0.000 {method 'raise_' of 'PySide6.QtWidgets.QWidget' objects}
+      479    0.004    0.000    0.025    0.000 src\meridiana\ui\fades.py:61(follow)
+       39    0.007    0.000    0.023    0.001 {function ChecksTree.resizeEvent at 0x000001A574E84720}
+
+

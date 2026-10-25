@@ -1,0 +1,253 @@
+# probe.py del 22/10 lanciato offscreen il 23/10/2026 (copia in scratchpad con tre ritocchi: timed() tollerante per checks._count_out_of_shadows rinominata, find_spin che riconosce i QuantityField, stub del 3D con backend/cube/marks). Tempi in ms; i results.json completi stanno in probe-offscreen/.
+
+=================== small-no3d
+env: {'qt': '6.12.0', 'pyside': '6.12.0', 'big': False, 'no3d': True, 'background': 'pcn', 'construct_ms': 261.6, 'modules': {'s1': 188}, 'checks_items': 16}
+  open                             sync     22.1 idle    237.0 frozen    160.3 freezes [93.2, 34.1, 33.0]
+      Plan._update_tiles                         n=   1      91.4 ms max 91.4
+      TileLoader.request                         n=  15      91.1 ms max 12.3
+      LayoutJob.run[worker]                      n=   1      20.5 ms max 20.5
+      Project.fill[worker]                       n=   1      20.2 ms max 20.2
+      Window._layout_done                        n=   1      19.8 ms max 19.8
+      Plan.paintEvent                            n=   3      16.4 ms max 6.5
+      Window._show_3d                            n=   2       8.6 ms max 5.7
+      Window._show_tree                          n=   2       5.4 ms max 4.2
+  select_subfield                  sync     18.8 idle     24.6 frozen      0.0 freezes []
+      Window._show_properties                    n=   1      13.7 ms max 13.7
+      Properties.show_subfield                   n=   1      13.5 ms max 13.5
+      matplotlib.draw                            n=  16       8.5 ms max 0.8
+      Plan.paintEvent                            n=   1       5.0 ms max 6.5
+      Window._show_3d                            n=   1       4.6 ms max 5.7
+      mesh.module_table[main]                    n=   1       1.6 ms max 2.0
+      mesh.building_triangles[main]              n=   2       0.9 ms max 0.7
+      Plan.drawForeground                        n=   1       0.7 ms max 0.7
+  edit_tilt_model_tab              sync     10.2 idle    142.3 frozen      0.0 freezes []
+      Window._layout_done                        n=   1      13.2 ms max 19.8
+      Plan.paintEvent                            n=   2      12.4 ms max 6.5
+      Window.edit                                n=   1       9.8 ms max 9.8
+      LayoutJob.run[worker]                      n=   1       9.2 ms max 20.5
+      Project.fill[worker]                       n=   1       9.0 ms max 20.2
+      Window._show_all                           n=   1       8.9 ms max 11.4
+      Window._show_energy_forms                  n=   2       5.2 ms max 3.1
+      Window._show_tree                          n=   2       4.8 ms max 4.2
+  first_switch_to_production       sync     28.5 idle   3022.4 frozen    267.6 freezes [69.7, 61.0, 37.8, 36.5]
+      EnergyJob.run[worker]                      n=   1    2952.4 ms max 2952.4
+      matplotlib.draw                            n=   4     118.2 ms max 41.4
+      Window._energy_done                        n=   1      58.6 ms max 58.6
+      EnergyPage.show_results                    n=   1      26.7 ms max 26.7
+      ConsumptionPage.show_results               n=   1      23.5 ms max 23.5
+      Project.fill[worker]                       n=   1      17.8 ms max 20.2
+      Window._show_checks                        n=   1       5.3 ms max 5.3
+      ChecksPage.show_items                      n=   1       3.0 ms max 3.0
+  edit_tilt_with_energy            sync    328.3 idle   2780.7 frozen    155.5 freezes [44.2, 41.5, 35.4, 34.4]
+      EnergyJob.run[worker]                      n=   1    2127.3 ms max 2952.4
+      Window._energy_done                        n=   1      41.3 ms max 58.6
+      Plan._update_tiles                         n=   2      34.3 ms max 91.4
+      TileLoader.request                         n=   5      33.9 ms max 12.3
+      Project.fill[worker]                       n=   2      29.5 ms max 20.2
+      Plan.paintEvent                            n=  10      25.0 ms max 7.8
+      ConsumptionPage.show_results               n=   1      24.2 ms max 24.2
+      Window._layout_done                        n=   1      23.4 ms max 23.4
+  edit_soiling_production_tab      sync    382.4 idle   1995.4 frozen    233.7 freezes [131.2, 53.0, 49.5]
+      EnergyJob.run[worker]                      n=   1    1224.1 ms max 2952.4
+      Window._energy_done                        n=   1     131.0 ms max 131.0
+      EnergyPage.show_results                    n=   1      85.5 ms max 85.5
+      matplotlib.draw                            n=   2      77.1 ms max 43.3
+      ConsumptionPage.show_results               n=   1      32.5 ms max 32.5
+      Project.fill[worker]                       n=   1      17.2 ms max 20.2
+      Window._layout_done                        n=   1      16.3 ms max 23.4
+      Window._show_checks                        n=   2      11.4 ms max 7.2
+  tab_switches (to, paint_ms, freezes): [(0, 14.5, []), (1, 20.5, []), (2, 76.1, [76.2, 35.7]), (3, 126.9, [127.0, 68.9]), (4, 5.2, []), (0, 17.0, []), (3, 15.5, []), (1, 14.5, []), (0, 17.9, []), (2, 15.1, []), (0, 18.2, [])]
+  hover_plan_only: median 0.77 p95 3.01 max 3.66 viewport [1234, 528] paint {'n': 20, 'ms': 29.0, 'max_ms': 7.8}
+  hover_plan_and_3d: median 0.9 p95 4.37 max 4.95 viewport [676, 528] paint {'n': 27, 'ms': 47.1, 'max_ms': 7.8}
+  wheel_properties: {'field': 'QSpinBox', 'value_before': 1, 'value_after': 1, 'undo_steps_added': 0, 'scroll_before': 0, 'scroll_after': 0, 'accepted': False}
+  typing: {'model_gap_now': None, 'typed': '0,07', 'field_now_shows': '0,07', 'same_widget': True, 'field_destroyed_under_the_keys_at_ms': [], 'page_rebuilt_at_ms_after_enter': [], 'ms_from_enter_to_idle': 3675.1}
+  view_modes: [('plan', 13.4), ('3d', 7.2), ('both', 16.8), ('plan', 9.4), ('both', 7.6)]
+
+=================== big-no3d
+env: {'qt': '6.12.0', 'pyside': '6.12.0', 'big': True, 'no3d': True, 'background': 'pcn', 'construct_ms': 303.8, 'modules': {'s1': 1394, 's2': 3288}, 'checks_items': 14}
+  open                             sync     33.7 idle    504.8 frozen    512.7 freezes [147.5, 100.6, 69.8, 46.2]
+      LayoutJob.run[worker]                      n=   1     365.3 ms max 365.3
+      Project.fill[worker]                       n=   2     364.8 ms max 257.3
+      Window._layout_done                        n=   1     106.1 ms max 106.1
+      Window._show_3d                            n=   2      49.5 ms max 46.2
+      mesh.module_table[main]                    n=   2      40.9 ms max 27.9
+      Plan.show_project                          n=   2      38.0 ms max 37.4
+      Plan.paintEvent                            n=   2      31.1 ms max 27.3
+      Plan._update_tiles                         n=   1      11.2 ms max 11.2
+  select_subfield                  sync     60.6 idle     25.9 frozen     86.5 freezes [60.8, 25.7]
+      Window._show_3d                            n=   1      44.7 ms max 46.2
+      mesh.module_table[main]                    n=   2      39.6 ms max 28.2
+      Window._show_properties                    n=   1      15.4 ms max 15.4
+      Properties.show_subfield                   n=   1      15.2 ms max 15.2
+      matplotlib.draw                            n=  16       9.9 ms max 1.0
+      Plan.paintEvent                            n=   1       2.5 ms max 27.3
+      Plan.drawForeground                        n=   1       0.7 ms max 0.7
+      mesh.building_triangles[main]              n=   1       0.4 ms max 0.5
+  edit_tilt_model_tab              sync     53.0 idle    224.0 frozen    345.8 freezes [164.0, 89.1, 53.2, 39.5]
+      LayoutJob.run[worker]                      n=   1     117.7 ms max 365.3
+      Project.fill[worker]                       n=   1     117.2 ms max 257.3
+      Window._layout_done                        n=   1     116.6 ms max 116.6
+      Plan.show_project                          n=   2      75.3 ms max 40.6
+      Plan.paintEvent                            n=   2      57.7 ms max 31.9
+      Window.edit                                n=   1      52.7 ms max 52.7
+      Window._show_all                           n=   1      52.0 ms max 52.0
+      Window._show_3d                            n=   1      49.0 ms max 49.0
+  first_switch_to_production       sync     35.1 idle   6574.1 frozen    431.1 freezes [68.9, 64.8, 48.8, 47.4]
+      EnergyJob.run[worker]                      n=   1    6505.0 ms max 6505.0
+      matplotlib.draw                            n=   4     124.7 ms max 49.5
+      Window._energy_done                        n=   1      68.8 ms max 68.8
+      EnergyPage.show_results                    n=   1      30.0 ms max 30.0
+      ConsumptionPage.show_results               n=   1      27.2 ms max 27.2
+      Window._show_checks                        n=   1       8.9 ms max 11.9
+      ChecksPage.show_items                      n=   1       2.0 ms max 2.4
+      Window._compute_energy                     n=   1       1.0 ms max 1.0
+  edit_tilt_with_energy            sync    416.0 idle   4394.8 frozen    574.4 freezes [111.2, 97.1, 82.3, 62.4]
+      EnergyJob.run[worker]                      n=   1    3616.3 ms max 6505.0
+      Plan.show_project                          n=   2     117.5 ms max 81.0
+      Window._layout_done                        n=   1     109.6 ms max 116.6
+      Window.edit                                n=   1      96.7 ms max 96.7
+      Window._show_all                           n=   1      96.0 ms max 96.0
+      LayoutJob.run[worker]                      n=   1      80.4 ms max 365.3
+      Project.fill[worker]                       n=   1      80.0 ms max 257.3
+      Plan.paintEvent                            n=   8      59.2 ms max 31.9
+  edit_soiling_production_tab      sync    422.8 idle   2155.5 frozen    506.0 freezes [161.9, 74.6, 59.7, 59.4]
+      EnergyJob.run[worker]                      n=   1    1348.7 ms max 6505.0
+      Window._layout_done                        n=   1     160.9 ms max 160.9
+      Plan.show_project                          n=   2     119.0 ms max 82.9
+      Window._energy_done                        n=   1      74.2 ms max 74.2
+      matplotlib.draw                            n=   2      72.5 ms max 49.5
+      Window._show_3d                            n=   1      53.4 ms max 53.4
+      Window.edit                                n=   1      50.4 ms max 96.7
+      Window._show_all                           n=   1      50.0 ms max 96.0
+  tab_switches (to, paint_ms, freezes): [(0, 38.9, [39.2]), (1, 17.4, []), (2, 107.6, [107.8, 40.9]), (3, 151.3, [151.4, 86.8]), (4, 6.3, []), (0, 16.3, []), (3, 17.4, []), (1, 16.6, []), (0, 14.7, []), (2, 17.9, []), (0, 15.3, [])]
+  hover_plan_only: median 0.91 p95 2.98 max 5.01 viewport [1234, 556] paint {'n': 22, 'ms': 17.7, 'max_ms': 31.9}
+  hover_plan_and_3d: median 1.35 p95 4.26 max 4.63 viewport [676, 556] paint {'n': 36, 'ms': 29.8, 'max_ms': 31.9}
+  wheel_properties: {'field': 'QSpinBox', 'value_before': 1, 'value_after': 1, 'undo_steps_added': 0, 'scroll_before': 0, 'scroll_after': 0, 'accepted': False}
+  typing: {'model_gap_now': None, 'typed': '0,07', 'field_now_shows': '0,07', 'same_widget': True, 'field_destroyed_under_the_keys_at_ms': [], 'page_rebuilt_at_ms_after_enter': [], 'ms_from_enter_to_idle': 5086.0}
+  view_modes: [('plan', 10.6), ('3d', 8.2), ('both', 12.0), ('plan', 7.5), ('both', 7.7)]
+
+=================== small-3d
+env: {'qt': '6.12.0', 'pyside': '6.12.0', 'big': False, 'no3d': False, 'background': 'pcn', 'construct_ms': 354.7, 'rhi': 'GraphicsApi.Software', 'modules': {'s1': 188}, 'checks_items': 15}
+  open                             sync     30.7 idle    231.8 frozen    170.8 freezes [75.9, 35.7, 30.8, 28.4]
+      Plan._update_tiles                         n=   1      75.1 ms max 75.1
+      TileLoader.request                         n=  15      74.8 ms max 9.0
+      Window._layout_done                        n=   1      18.9 ms max 18.9
+      LayoutJob.run[worker]                      n=   1      14.7 ms max 14.7
+      Project.fill[worker]                       n=   1      14.4 ms max 14.4
+      Plan.paintEvent                            n=   3      14.2 ms max 6.0
+      Window._show_3d                            n=   2      11.3 ms max 6.2
+      Window._show_tree                          n=   2       4.2 ms max 2.9
+  select_subfield                  sync     26.4 idle     37.5 frozen     63.7 freezes [37.1, 26.6]
+      Window._show_properties                    n=   1      19.2 ms max 19.2
+      Properties.show_subfield                   n=   1      18.9 ms max 18.9
+      matplotlib.draw                            n=  16      13.7 ms max 1.3
+      Plan.paintEvent                            n=   1       8.5 ms max 8.5
+      Window._show_3d                            n=   1       6.6 ms max 6.6
+      mesh.module_table[main]                    n=   1       1.9 ms max 2.0
+      mesh.building_triangles[main]              n=   2       1.1 ms max 1.0
+      Plan.drawForeground                        n=   1       0.9 ms max 0.9
+  edit_tilt_model_tab              sync     14.2 idle    179.0 frozen     30.1 freezes [30.1]
+      Window._layout_done                        n=   1      15.8 ms max 18.9
+      Window.edit                                n=   1      13.8 ms max 13.8
+      Window._show_all                           n=   1      12.6 ms max 12.6
+      Plan.paintEvent                            n=   2      12.4 ms max 8.5
+      LayoutJob.run[worker]                      n=   1       8.6 ms max 14.7
+      Project.fill[worker]                       n=   1       8.4 ms max 14.4
+      Window._show_tree                          n=   2       6.9 ms max 3.8
+      Window._show_energy_forms                  n=   2       6.4 ms max 3.6
+  first_switch_to_production       sync     34.4 idle   3587.6 frozen    299.8 freezes [82.4, 76.7, 40.7, 38.0]
+      EnergyJob.run[worker]                      n=   1    3505.0 ms max 3505.0
+      matplotlib.draw                            n=   4     124.8 ms max 51.4
+      Window._energy_done                        n=   1      69.5 ms max 69.5
+      EnergyPage.show_results                    n=   1      30.7 ms max 30.7
+      ConsumptionPage.show_results               n=   1      29.4 ms max 29.4
+      Project.fill[worker]                       n=   1      23.0 ms max 23.0
+      Window._show_checks                        n=   1       5.3 ms max 5.3
+      ChecksPage.show_items                      n=   1       3.2 ms max 3.2
+  edit_tilt_with_energy            sync    343.6 idle   3283.4 frozen    166.4 freezes [52.7, 48.9, 34.0, 30.8]
+      EnergyJob.run[worker]                      n=   1    2575.7 ms max 3505.0
+      Window._energy_done                        n=   1      51.6 ms max 69.5
+      Project.fill[worker]                       n=   2      31.5 ms max 23.0
+      ConsumptionPage.show_results               n=   1      29.4 ms max 29.4
+      Plan._update_tiles                         n=   2      29.3 ms max 75.1
+      TileLoader.request                         n=   5      28.9 ms max 9.0
+      Plan.paintEvent                            n=  10      25.3 ms max 8.5
+      Window._layout_done                        n=   1      20.6 ms max 20.6
+  edit_soiling_production_tab      sync    395.4 idle   2565.5 frozen    287.7 freezes [151.4, 58.0, 45.3, 33.0]
+      EnergyJob.run[worker]                      n=   1    1754.7 ms max 3505.0
+      Window._energy_done                        n=   1     151.2 ms max 151.2
+      EnergyPage.show_results                    n=   1     109.4 ms max 109.4
+      matplotlib.draw                            n=   2      78.1 ms max 51.4
+      ConsumptionPage.show_results               n=   1      28.7 ms max 29.4
+      Window._layout_done                        n=   1      26.4 ms max 26.4
+      Project.fill[worker]                       n=   1      21.7 ms max 23.0
+      Window._show_checks                        n=   2      14.0 ms max 8.1
+  tab_switches (to, paint_ms, freezes): [(0, 23.4, []), (1, 17.3, []), (2, 107.8, [107.9, 46.8]), (3, 165.7, [165.8, 83.9]), (4, 7.1, []), (0, 21.9, []), (3, 18.6, []), (1, 17.6, []), (0, 22.3, []), (2, 20.9, []), (0, 31.8, [34.9, 32.2])]
+  hover_plan_only: median 0.96 p95 4.3 max 4.99 viewport [1234, 528] paint {'n': 20, 'ms': 40.8, 'max_ms': 12.0}
+  hover_plan_and_3d: median 0.99 p95 4.0 max 5.01 viewport [676, 528] paint {'n': 27, 'ms': 46.8, 'max_ms': 12.0}
+  wheel_properties: {'field': 'QSpinBox', 'value_before': 1, 'value_after': 1, 'undo_steps_added': 0, 'scroll_before': 0, 'scroll_after': 0, 'accepted': False}
+  typing: {'model_gap_now': None, 'typed': '0,07', 'field_now_shows': '0,07', 'same_widget': True, 'field_destroyed_under_the_keys_at_ms': [], 'page_rebuilt_at_ms_after_enter': [], 'ms_from_enter_to_idle': 3753.6}
+  view_modes: [('plan', 6.7), ('3d', 6.2), ('both', 9.6), ('plan', 6.1), ('both', 6.7)]
+
+=================== big-3d
+env: {'qt': '6.12.0', 'pyside': '6.12.0', 'big': True, 'no3d': False, 'background': 'pcn', 'construct_ms': 357.6, 'rhi': 'GraphicsApi.Software', 'modules': {'s1': 1394, 's2': 3288}, 'checks_items': 14}
+  open                             sync     38.7 idle    489.6 frozen    546.5 freezes [228.1, 212.0, 38.9, 35.3]
+      LayoutJob.run[worker]                      n=   1     342.7 ms max 342.7
+      Project.fill[worker]                       n=   2     342.3 ms max 234.3
+      Window._layout_done                        n=   1     160.3 ms max 160.3
+      Window._show_3d                            n=   2      86.9 ms max 82.4
+      mesh.module_table[main]                    n=   2      74.9 ms max 60.0
+      Plan.show_project                          n=   2      45.5 ms max 44.8
+      Plan.paintEvent                            n=   2      33.5 ms max 30.8
+      Window._show_energy_forms                  n=   2      16.3 ms max 15.6
+  select_subfield                  sync     79.8 idle     34.7 frozen    114.3 freezes [80.0, 34.3]
+      Window._show_3d                            n=   1      61.0 ms max 82.4
+      mesh.module_table[main]                    n=   2      52.6 ms max 60.0
+      Window._show_properties                    n=   1      18.2 ms max 18.2
+      Properties.show_subfield                   n=   1      18.1 ms max 18.1
+      matplotlib.draw                            n=  16      10.8 ms max 1.1
+      Plan.paintEvent                            n=   1       3.7 ms max 30.8
+      Plan.drawForeground                        n=   1       1.1 ms max 1.1
+      mesh.building_triangles[main]              n=   1       0.5 ms max 0.5
+  edit_tilt_model_tab              sync     63.5 idle    224.1 frozen    373.7 freezes [126.5, 83.2, 63.6, 55.2]
+      LayoutJob.run[worker]                      n=   1     133.1 ms max 342.7
+      Project.fill[worker]                       n=   1     132.7 ms max 234.3
+      Window._layout_done                        n=   1     125.6 ms max 160.3
+      Plan.show_project                          n=   2      88.2 ms max 44.9
+      Plan.paintEvent                            n=   2      64.1 ms max 34.3
+      Window.edit                                n=   1      63.1 ms max 63.1
+      Window._show_all                           n=   1      62.4 ms max 62.4
+      Window._show_3d                            n=   1      52.0 ms max 82.4
+  first_switch_to_production       sync     44.9 idle   7798.3 frozen    633.9 freezes [95.1, 76.7, 66.7, 55.2]
+      EnergyJob.run[worker]                      n=   1    7721.4 ms max 7721.4
+      matplotlib.draw                            n=   4     185.2 ms max 63.4
+      Window._energy_done                        n=   1      74.8 ms max 74.8
+      EnergyPage.show_results                    n=   1      30.8 ms max 30.8
+      ConsumptionPage.show_results               n=   1      29.7 ms max 29.7
+      Window._show_checks                        n=   1      11.1 ms max 13.6
+      ChecksPage.show_items                      n=   1       2.1 ms max 2.8
+      Window._compute_energy                     n=   1       1.4 ms max 1.4
+  edit_tilt_with_energy            sync    441.1 idle   4865.3 frozen    600.2 freezes [159.0, 114.9, 55.7, 46.8]
+      EnergyJob.run[worker]                      n=   1    4132.5 ms max 7721.4
+      Plan.show_project                          n=   2     134.5 ms max 96.1
+      Window.edit                                n=   1     115.3 ms max 115.3
+      Window._show_all                           n=   1     114.7 ms max 114.7
+      Window._layout_done                        n=   1     113.0 ms max 160.3
+      LayoutJob.run[worker]                      n=   1      84.4 ms max 342.7
+      Project.fill[worker]                       n=   1      84.1 ms max 234.3
+      Plan.paintEvent                            n=   8      60.9 ms max 34.3
+  edit_soiling_production_tab      sync    471.3 idle   2276.5 frozen    462.4 freezes [150.0, 88.7, 63.2, 56.4]
+      EnergyJob.run[worker]                      n=   1    1492.3 ms max 7721.4
+      Window._layout_done                        n=   1     138.5 ms max 160.3
+      Plan.show_project                          n=   2     109.9 ms max 96.1
+      matplotlib.draw                            n=   2     100.2 ms max 68.1
+      Window._energy_done                        n=   1      62.6 ms max 74.8
+      Window.edit                                n=   1      47.5 ms max 115.3
+      Window._show_all                           n=   1      47.1 ms max 114.7
+      Window._show_3d                            n=   1      40.7 ms max 82.4
+  tab_switches (to, paint_ms, freezes): [(0, 36.5, [36.8]), (1, 14.4, []), (2, 111.6, [111.8, 50.9]), (3, 160.8, [160.9, 80.9]), (4, 5.5, []), (0, 18.5, []), (3, 16.4, []), (1, 16.0, []), (0, 27.1, [27.2]), (2, 22.7, []), (0, 23.7, [])]
+  hover_plan_only: median 1.01 p95 3.77 max 5.67 viewport [1234, 556] paint {'n': 22, 'ms': 19.1, 'max_ms': 34.3}
+  hover_plan_and_3d: median 1.22 p95 3.44 max 4.28 viewport [676, 556] paint {'n': 36, 'ms': 27.5, 'max_ms': 34.3}
+  wheel_properties: {'field': 'QSpinBox', 'value_before': 1, 'value_after': 1, 'undo_steps_added': 0, 'scroll_before': 0, 'scroll_after': 0, 'accepted': False}
+  typing: {'model_gap_now': None, 'typed': '0,07', 'field_now_shows': '0,07', 'same_widget': True, 'field_destroyed_under_the_keys_at_ms': [], 'page_rebuilt_at_ms_after_enter': [], 'ms_from_enter_to_idle': 4911.9}
+  view_modes: [('plan', 6.2), ('3d', 6.6), ('both', 15.7), ('plan', 7.7), ('both', 7.7)]

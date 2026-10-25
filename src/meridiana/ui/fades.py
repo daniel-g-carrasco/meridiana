@@ -1,0 +1,87 @@
+"""A soft edge where a list or a page goes on beyond its card (Daniel, 24/10/2026: «la fine dei contenuti
+all'interno di una scheda quando questi non ci stanno non deve essere una troncatura netta, ci deve essere una sorta
+di bordo con ombreggiamento che faccia intuire che non sono terminati»): a band of the card's colour fading out
+over the first and the last pixels of the viewport, shown only on the side where there is more to scroll to.
+
+The bands are children of the scroll area over its viewport, transparent to the pointer; they follow the scroll bar
+and the area's size. `attach` once per area; `set_colour` with the theme."""
+
+from __future__ import annotations
+
+import weakref
+
+from PySide6.QtCore import QEvent, QObject, Qt
+from PySide6.QtGui import QColor, QLinearGradient, QPainter
+from PySide6.QtWidgets import QAbstractScrollArea, QWidget
+
+from .design import Space
+
+HEIGHT = Space.XXL               # logical pixels of a band
+_COLOUR = ["#f8f7f4"]           # the panels' colour of the theme in use
+_LIVE: "weakref.WeakSet[Fades]" = weakref.WeakSet()
+
+
+class Edge(QWidget):
+    def __init__(self, area: QAbstractScrollArea, top: bool):
+        super().__init__(area)
+        self.top = top
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
+        self.hide()
+
+    def paintEvent(self, event) -> None:
+        p = QPainter(self)
+        solid = QColor(_COLOUR[0])
+        clear = QColor(solid)
+        clear.setAlpha(0)
+        g = QLinearGradient(0, 0, 0, self.height())
+        g.setColorAt(0.0, solid if self.top else clear)
+        g.setColorAt(1.0, clear if self.top else solid)
+        p.fillRect(self.rect(), g)
+
+
+class Fades(QObject):
+    def __init__(self, area: QAbstractScrollArea):
+        super().__init__(area)
+        self.area = area
+        self.edges = (Edge(area, True), Edge(area, False))
+        bar = area.verticalScrollBar()
+        bar.valueChanged.connect(self.follow)
+        bar.rangeChanged.connect(self.follow)
+        area.installEventFilter(self)
+        area.viewport().installEventFilter(self)
+        _LIVE.add(self)
+        self.follow()
+
+    def eventFilter(self, obj, event) -> bool:
+        if event.type() in (QEvent.Type.Resize, QEvent.Type.Show, QEvent.Type.Move):
+            self.follow()
+        return False
+
+    def follow(self, *_args) -> None:
+        port = self.area.viewport().geometry()
+        bar = self.area.verticalScrollBar()
+        top, bottom = self.edges
+        h = min(HEIGHT, max(0, port.height() // 3))
+        top.setGeometry(port.x(), port.y(), port.width(), h)
+        bottom.setGeometry(port.x(), port.y() + port.height() - h, port.width(), h)
+        top.setVisible(bar.value() > bar.minimum())
+        bottom.setVisible(bar.value() < bar.maximum())
+        top.raise_()
+        bottom.raise_()
+
+
+def attach(area: QAbstractScrollArea) -> Fades | None:
+    """The soft edges of `area`, made once."""
+    if area is None:
+        return None
+    found = area.findChild(Fades)
+    return found if found is not None else Fades(area)
+
+
+def set_colour(colour: str) -> None:
+    """The panels' colour of the theme: the bands fade into it."""
+    _COLOUR[0] = colour
+    for f in list(_LIVE):
+        for e in f.edges:
+            e.update()

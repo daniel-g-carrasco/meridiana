@@ -1,0 +1,74 @@
+Confronto Meridiana / pvlib sull'anno sintetico di tests/_energy.py (cielo sereno Solis x 0,72)
+sito 45.5226, 9.03, 150.0 m; offset del sole 0.1767 h
+modulo LONGi LR7-54HVH-495M: 495.0 W, gamma -0.26 %/K, celle in serie 54, efficienza 24.25 %, perdita primo anno 1.0 %
+SDM De Soto adattato: I_L_ref 15.437, I_o_ref 3.8999e-13, R_s 0.19356, R_sh_ref 410.16, a_ref 1.2983, alpha_sc 0.007715
+inverter Huawei SUN2000-50KTL-M3 x 2: 100.0 kW, eta 98.0 %; campo 188 moduli, 93.06 kWp, DC/AC 0.93
+GHI dell'anno 1368.3 kWh/m2, DHI 361.7, DNI 2146.0
+
+simulate(): 0.08 s (perdite a zero), 0.07 s (perdite predefinite)
+Meridiana, perdite a zero: 153342.6 kWh, 1647.8 kWh/kWp, PR 94.53 %
+Meridiana, perdite predefinite: 145463.9 kWh, 1563.1 kWh/kWp, PR 89.67 %
+
+ModelChain: 0.13 s; DC 158762.0 kWh, AC 155198.9 kWh
+
+A. Meridiana (perdite a zero) contro la replica con le funzioni base di pvlib (stessi modelli dichiarati)
+   somme annue in kWh/m2 o kWh; RMSE e scarto massimo orari
+  POA globale (G_inc)                Meridiana      1743.12  replica      1743.12  scarto  +0.0000 %   RMSE    0.0000 W/m2   max |scarto|    +0.0000 W/m2 il 01/01 01:00
+  POA diretta                        Meridiana      1325.03  replica      1325.03  scarto  +0.0000 %   RMSE    0.0000 W/m2   max |scarto|    +0.0000 W/m2 il 01/01 01:00
+  POA diffusa dal cielo              Meridiana       413.42  replica       413.42  scarto  +0.0000 %   RMSE    0.0000 W/m2   max |scarto|    +0.0000 W/m2 il 01/01 01:00
+  POA riflessa dal suolo             Meridiana         4.66  replica         4.66  scarto  +0.0000 %   RMSE    0.0000 W/m2   max |scarto|    +0.0000 W/m2 il 01/01 01:00
+  IAM diretto (media oraria)         Meridiana        0.438  replica        0.438  scarto  +0.0000      RMSE    0.0000    max |scarto|    +0.0000  il 01/01 01:00
+  POA efficace (dopo IAM)            Meridiana      1685.36  replica      1685.36  scarto  +0.0000 %   RMSE    0.0000 W/m2   max |scarto|    +0.0000 W/m2 il 01/01 01:00
+  T cella (media)                    Meridiana       17.678  replica       17.678  scarto  +0.0000      RMSE    0.0000 °C   max |scarto|    -0.0000 °C il 11/05 12:00
+  P modulo a 25 °C x N               Meridiana    158766.65  replica    158766.65  scarto  +0.0000 %   RMSE    0.0000 W   max |scarto|    +0.0000 W il 16/02 12:00
+  P DC (25 °C + gamma)               Meridiana    156886.26  replica    156886.26  scarto  +0.0000 %   RMSE    0.0000 W   max |scarto|    +0.0000 W il 16/02 12:00
+  P AC (PVWatts, tagli, cavi 0)      Meridiana    153342.55  replica    153342.55  scarto  +0.0000 %   RMSE    0.0000 W   max |scarto|    +0.0000 W il 16/02 12:00
+   IAM diffuso di Marion: cielo 0.95800, suolo 0.62791 (ASHRAE b0 0.05, 15.0 gradi)
+
+B. Meridiana (perdite a zero) contro pvlib.modelchain.ModelChain (perez, ashrae, pvsyst, desoto, pvwatts)
+  POA globale (G_inc)                Meridiana      1743.12  ModelChain      1743.12  scarto  +0.0000 %   RMSE    0.0000 W/m2   max |scarto|    +0.0000 W/m2 il 09/02 12:00
+  POA efficace                       Meridiana      1685.36  ModelChain      1703.32  scarto  +1.0657 %   RMSE    3.0030 W/m2   max |scarto|    +5.7444 W/m2 il 17/06 07:00
+  T cella (media)                    Meridiana       17.678  ModelChain       17.680  scarto  +0.0024      RMSE    0.0000 °C   max |scarto|    -0.0000 °C il 08/05 14:00
+  P DC                               Meridiana    156886.26  ModelChain    158761.95  scarto  +1.1956 %   RMSE  310.4156 W   max |scarto|  +554.3735 W il 27/05 07:00
+  P AC                               Meridiana    153342.55  ModelChain    155198.90  scarto  +1.2106 %   RMSE  307.5159 W   max |scarto|  +554.1744 W il 26/05 07:00
+
+C. Le cause, una alla volta (replica con un solo cambiamento)
+  POA eff.: circumsolare con IAM diffuso Meridiana      1685.36  Marion su circ.      1684.22  scarto  -0.0675 %   RMSE    1.4991 W/m2   max |scarto|    -4.1080 W/m2 il 17/06 13:00
+  POA eff.: IAM solo sul diretto     Meridiana      1685.36  senza Marion      1703.32  scarto  +1.0657 %   RMSE    3.0030 W/m2   max |scarto|    +5.7444 W/m2 il 17/06 07:00
+  P DC: De Soto alla T cella         Meridiana    156886.26  SDM(T)    157064.93  scarto  +0.1139 %   RMSE   70.8791 W   max |scarto|  +293.8975 W il 11/07 14:00
+  P DC: gamma su POA eff. ModelChain Meridiana    156886.26  gamma, no Marion    158583.15  scarto  +1.0816 %   RMSE  285.1448 W   max |scarto|  +550.9543 W il 03/06 07:00
+   gamma del modello De Soto adattato: -0.238 %/K fra 25 e 45 °C (scheda -0.26 %/K); P(1000, 25) = 495.22 W contro P_STC 495.0 W
+   T cella media nelle ore con POA > 50 W/m2: 25.7 °C, massima 44.0 °C; differenza DC media SDM(T) contro gamma: +0.11 %
+
+D. Catena con le perdite predefinite (Losses()): ogni passo contro la formula della pedigree
+   soiling 2.0 %, qualita 0.0 %, LID 1.0 % (dalla scheda), mismatch 1.0 %, cavi DC 1.5 % a STC, cavi AC 1.0 % a P_AC,nom, indisponibilita 0.0 %
+   ghi                Global horizontal irradiation                                1368.26 kWh/m2  
+   poa                Global incident on the plane                                 1743.12 kWh/m2   +27.396 %
+   far                Far shading, horizon                                         1743.12 kWh/m2    +0.000 %
+   near               Near shading: rows and obstacles                             1743.12 kWh/m2    +0.000 %
+   iam                Reflection on the glass (IAM)                                1685.36 kWh/m2    -3.314 %
+   soiling            Soiling                                                      1651.65 kWh/m2    -2.000 %
+   nominal            Array nominal energy at STC efficiency                     153702.65 kWh     
+   irradiance_level   Loss for the irradiance level                              155609.62 kWh       +1.241 %
+   temperature        Loss for the temperature                                   153765.67 kWh       -1.185 %
+   quality            Module quality                                             153765.67 kWh       +0.000 %
+   lid                Light-induced degradation (LID)                            152228.02 kWh       -1.000 %
+   mismatch           Mismatch                                                   150705.74 kWh       -1.000 %
+   dc_wiring          DC wiring                                                  149574.87 kWh       -0.750 %
+   inverter           Inverter efficiency                                        146127.71 kWh       -2.305 %
+   clipping           Inverter clipping over its nominal power                   146127.71 kWh       +0.000 %
+   ac_wiring          AC wiring                                                  145463.91 kWh       -0.454 %
+   unavailability     Unavailability                                             145463.91 kWh       +0.000 %
+  POA eff. con soiling 2 %           Meridiana      1651.65  formula      1651.65  scarto  +0.0000 %   RMSE    0.0000 W/m2   max |scarto|    +0.0000 W/m2 il 01/01 01:00
+  P a 25 °C x N (su POA eff.)        Meridiana    155609.62  formula    155609.62  scarto  +0.0000 %   RMSE    0.0000 W   max |scarto|    -0.0000 W il 10/05 14:00
+  P DC = P_mm (1 - r P_mm/P_STC)     Meridiana    149574.87  formula    149574.87  scarto  +0.0000 %   RMSE    0.0000 W   max |scarto|    +0.0000 W il 01/01 01:00
+  P AC = PVWatts, taglio, cavi AC    Meridiana    145463.91  formula    145463.91  scarto  +0.0000 %   RMSE    0.0000 W   max |scarto|    +0.0000 W il 01/01 01:00
+  _pvwatts_inverter vs pvlib.pvwatts Meridiana    146127.71  pvlib    146127.71  scarto  +0.0000 %   RMSE    0.0000 W   max |scarto|    +0.0000 W il 01/01 01:00
+   verifica dei passi: LID -1.000 % (atteso -1.000), mismatch -1.000 % (atteso -1.000), soiling -2.000 % (atteso -2.000), cavi DC -0.750 % (atteso -0.750 dalla media pesata di P/P_STC)
+   PR = E_AC / (P0 H_poa): 0.8967 contro s.pr 0.8967; resa 1563.1 kWh/kWp
+
+E. Controlli a margine
+   il sole e' calcolato sul 1990 (indice della TMY) e l'anno locale e' il 2026: elevazione diversa al massimo di 0.113 gradi, in media 0.059, nelle ore di sole
+   con un solo inverter da 50 kW (DC/AC 1.86): taglio -6.49 %, inverter -2.15 %, energia 135742 kWh, note: ['The inverter clips 6.5% of the energy: check the DC/AC ratio.']
+   ore senza sole: 4300; P DC e P AC in quelle ore: 0.000 W, 0.000 W
+   ore con POA > 0 e P DC = 0 (soglia 1 W/m2 di power_at_25): 9, irradiazione persa 0.0014 kWh/m2

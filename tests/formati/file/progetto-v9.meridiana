@@ -1,0 +1,240 @@
+{
+ "name": "Capannone Rho",
+ "site": {
+  "lat": 45.5226,
+  "lon": 9.03,
+  "address": "Rho (MI)"
+ },
+ "sun_window": {
+  "month": 12,
+  "day": 21,
+  "start": 10.0,
+  "end": 14.0,
+  "step_minutes": 10
+ },
+ "buildings": [
+  {
+   "id": "b1",
+   "name": "Capannone",
+   "footprint": [
+    [
+     0,
+     0
+    ],
+    [
+     40,
+     0
+    ],
+    [
+     40,
+     20
+    ],
+    [
+     0,
+     20
+    ]
+   ],
+   "height": 9.5,
+   "roof": {
+    "type": "gable",
+    "eave_side": 0,
+    "ridge_along": null,
+    "tilt": 4.0,
+    "free_pitches": [],
+    "edges": [
+     "eave",
+     "gable",
+     "eave",
+     "gable"
+    ],
+    "ridge_height": 10.2,
+    "covering": "metal"
+   },
+   "fire": {
+    "subject": true,
+    "category": "B",
+    "roof_fire_resistant": false
+   },
+   "parapet": 0.8
+  }
+ ],
+ "exclusions": [
+  {
+   "id": "e1",
+   "ring": [
+    [
+     18,
+     8
+    ],
+    [
+     20,
+     8
+    ],
+    [
+     20,
+     10
+    ],
+    [
+     18,
+     10
+    ]
+   ],
+   "kind": "vent",
+   "clearance": 0.0,
+   "building": "b1",
+   "height": null
+  },
+  {
+   "id": "e2",
+   "ring": [
+    [
+     30,
+     12
+    ],
+    [
+     31,
+     12
+    ],
+    [
+     31,
+     13
+    ],
+    [
+     30,
+     13
+    ]
+   ],
+   "kind": "plant",
+   "clearance": 0.0,
+   "building": "b1",
+   "height": 2.2
+  }
+ ],
+ "consumption": {},
+ "rules": {},
+ "variants": [
+  {
+   "id": "v1",
+   "name": "Base",
+   "note": "",
+   "design": {
+    "subfields": [
+     {
+      "id": "s1",
+      "name": "Sud",
+      "ring": [
+       [
+        1,
+        1
+       ],
+       [
+        39,
+        1
+       ],
+       [
+        39,
+        19
+       ],
+       [
+        1,
+        19
+       ]
+      ],
+      "building": "b1",
+      "pitch": 0,
+      "module": "generic-450",
+      "params": {
+       "tilt": 15.0,
+       "stack": 2,
+       "inverter": 1,
+       "mppt": 2
+      },
+      "filled": false,
+      "removed": []
+     }
+    ],
+    "modules": {
+     "generic-450": {
+      "manufacturer": "Generico",
+      "model": "450 W, 2278 x 1134 mm",
+      "length": 2.278,
+      "width": 1.134,
+      "power_kw": 0.45
+     },
+     "generic-550": {
+      "manufacturer": "Generico",
+      "model": "550 W, 2278 x 1134 mm",
+      "length": 2.278,
+      "width": 1.134,
+      "power_kw": 0.55
+     }
+    },
+    "energy": {
+     "inverters": [
+      {
+       "record": {
+        "manufacturer": "Generico",
+        "model": "10K",
+        "ac_power_nominal_w": 10000,
+        "efficiency_euro_pct": 97.5,
+        "dc_voltage_max_v": 1100,
+        "mppt_voltage_min_v": 180,
+        "mppt_voltage_max_v": 1000,
+        "mppt_count": 2,
+        "dc_current_max_per_mppt_a": [
+         16,
+         16
+        ],
+        "dc_isc_max_per_mppt_a": [
+         20,
+         20
+        ]
+       },
+       "count": 2,
+       "name": "Inverter tetto"
+      }
+     ],
+     "dc_ac_ratio": 1.2,
+     "strings": {
+      "auto": false,
+      "strategy": "rows",
+      "n_series": 3,
+      "per_mppt": [],
+      "runs": [
+       {
+        "inverter": 1,
+        "mppt": 2,
+        "modules": [
+         "s1/0:0",
+         "s1/0:1",
+         "s1/0:2"
+        ]
+       }
+      ]
+     }
+    },
+    "economics": {}
+   }
+  }
+ ],
+ "variant": "v1",
+ "underlays": [
+  {
+   "id": "u1",
+   "name": "tavola.png",
+   "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP4/58PAAQA/wD/LyoKAAAAAElFTkSuQmCC",
+   "width": 1,
+   "height": 1,
+   "x": 0.0,
+   "y": 0.0,
+   "scale": 0.05,
+   "rotation": 0.0,
+   "opacity": 0.6,
+   "visible": true
+  }
+ ],
+ "created": "2026-10-24T09:00:00+00:00",
+ "modified": "2026-10-24T09:00:00+00:00",
+ "format": "meridiana-project",
+ "version": 9
+}

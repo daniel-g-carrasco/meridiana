@@ -1,0 +1,224 @@
+{
+ "when": "2026-10-25 02:50",
+ "commit": "92c760e",
+ "on_screen": true,
+ "no_3d": false,
+ "no_vsync": false,
+ "sequence": "base",
+ "screen": "DELL P2415Q 1920x1080 @ 2",
+ "machine": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+ "qt": "6.12.0",
+ "opened_ms": 7788,
+ "stall_ms": 30,
+ "environment": {},
+ "results": [
+  {
+   "gesture": "phase model",
+   "action_ms": 0.0,
+   "until_idle_ms": 3.0,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "phase plant",
+   "action_ms": 24.3,
+   "until_idle_ms": 204.5,
+   "blocks": 3,
+   "worst_ms": 67.8,
+   "blocked_ms": 169.4
+  },
+  {
+   "gesture": "phase production",
+   "action_ms": 14.5,
+   "until_idle_ms": 22.2,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "phase consumption",
+   "action_ms": 12.3,
+   "until_idle_ms": 79.1,
+   "blocks": 1,
+   "worst_ms": 53.4,
+   "blocked_ms": 53.4
+  },
+  {
+   "gesture": "phase economics",
+   "action_ms": 13.6,
+   "until_idle_ms": 82.4,
+   "blocks": 1,
+   "worst_ms": 47.1,
+   "blocked_ms": 47.1
+  },
+  {
+   "gesture": "phase report",
+   "action_ms": 17.8,
+   "until_idle_ms": 19.1,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "phase plant",
+   "action_ms": 10.9,
+   "until_idle_ms": 65.5,
+   "blocks": 1,
+   "worst_ms": 33.6,
+   "blocked_ms": 33.6
+  },
+  {
+   "gesture": "phase model",
+   "action_ms": 16.0,
+   "until_idle_ms": 18.5,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "File: open",
+   "action_ms": 4.3,
+   "until_idle_ms": 86.7,
+   "blocks": 2,
+   "worst_ms": 40.6,
+   "blocked_ms": 79.6
+  },
+  {
+   "gesture": "File: close (Esc)",
+   "action_ms": 9.8,
+   "until_idle_ms": 47.0,
+   "blocks": 1,
+   "worst_ms": 30.0,
+   "blocked_ms": 30.0
+  },
+  {
+   "gesture": "File: open",
+   "action_ms": 4.7,
+   "until_idle_ms": 75.6,
+   "blocks": 1,
+   "worst_ms": 34.3,
+   "blocked_ms": 34.3
+  },
+  {
+   "gesture": "File: close (Esc)",
+   "action_ms": 7.0,
+   "until_idle_ms": 17.0,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "left panel: edge dragged",
+   "action_ms": 759.1,
+   "until_idle_ms": 769.0,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "left panel: edge back",
+   "action_ms": 755.8,
+   "until_idle_ms": 759.7,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "right panel: edge dragged",
+   "action_ms": 1230.1,
+   "until_idle_ms": 1235.8,
+   "blocks": 12,
+   "worst_ms": 33.9,
+   "blocked_ms": 377.5
+  },
+  {
+   "gesture": "right panel: edge back",
+   "action_ms": 1215.6,
+   "until_idle_ms": 1222.2,
+   "blocks": 14,
+   "worst_ms": 38.2,
+   "blocked_ms": 446.9
+  },
+  {
+   "gesture": "checks: wheel down 10",
+   "action_ms": 166.9,
+   "until_idle_ms": 174.2,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "checks: wheel up 10",
+   "action_ms": 164.9,
+   "until_idle_ms": 170.7,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "project tree: wheel 10",
+   "action_ms": 163.3,
+   "until_idle_ms": 168.7,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "3D: wheel 10",
+   "action_ms": 172.7,
+   "until_idle_ms": 180.9,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "3D: orbit, 40 steps",
+   "action_ms": 751.9,
+   "until_idle_ms": 759.1,
+   "blocks": 1,
+   "worst_ms": 34.9,
+   "blocked_ms": 34.9
+  },
+  {
+   "gesture": "3D: pan, 40 steps",
+   "action_ms": 682.9,
+   "until_idle_ms": 691.3,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "plan: wheel 10",
+   "action_ms": 170.0,
+   "until_idle_ms": 179.2,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "plan: pan, 40 steps",
+   "action_ms": 658.1,
+   "until_idle_ms": 664.8,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "a field: 12 keys",
+   "action_ms": 335.4,
+   "until_idle_ms": 341.4,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "window: resized, 15 steps",
+   "action_ms": 675.0,
+   "until_idle_ms": 684.2,
+   "blocks": 14,
+   "worst_ms": 49.7,
+   "blocked_ms": 582.0
+  }
+ ]
+}

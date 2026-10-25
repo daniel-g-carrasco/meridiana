@@ -1,0 +1,53 @@
+# Meridiana's metadata and the lint's rules. The dependencies are the ones of requirements.txt (that file
+# explains the pins and why Qt comes as three wheels): keep the two lists the same. The version is read from
+# src/meridiana/__init__.py, the one place it is written.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meridiana"
+dynamic = ["version"]
+description = "Photovoltaic design: map, building model, sun path, module layout and Italian standards"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE", "ATTRIBUTIONS.md"]
+authors = [{ name = "Daniel Grasso", email = "code@danielgrasso.com" }]
+dependencies = [
+    "PySide6_Essentials==6.12.0",
+    "PySide6_Addons==6.12.0",
+    "PySide6_Pdf==6.12.0.140",
+    "shapely>=2.0",
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "requests>=2.31",
+    "pvlib==0.16.1",
+    "scipy>=1.15",
+    "matplotlib>=3.9",
+    "pyqtgraph>=0.14",
+]
+
+[project.optional-dependencies]
+# imported only when used (requirements.txt says why): the IFC models (studies 15 and 20)
+ifc = ["ifcopenshell>=0.9.0.post1"]
+
+[project.urls]
+Homepage = "https://github.com/daniel-g-carrasco/meridiana"
+Issues = "https://github.com/daniel-g-carrasco/meridiana/issues"
+
+[project.scripts]
+meridiana = "meridiana.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "meridiana.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+# the same as the command in CLAUDE.md: pyflakes, syntax errors, bugbear
+select = ["F", "E9", "B"]

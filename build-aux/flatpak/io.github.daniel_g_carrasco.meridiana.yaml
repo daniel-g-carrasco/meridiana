@@ -1,0 +1,92 @@
+# The Flatpak of Meridiana, for local builds and the CI (task 18f; study 18, H 4).
+#
+#   flatpak install --user flathub org.kde.Sdk//6.11 io.qt.PySide.BaseApp//6.11
+#   flatpak-builder --user --force-clean build-dir build-aux/flatpak/io.github.daniel_g_carrasco.meridiana.yaml
+#   flatpak-builder --run build-dir build-aux/flatpak/io.github.daniel_g_carrasco.meridiana.yaml meridiana --self-test
+#   flatpak-builder --user --install --force-clean build-dir build-aux/flatpak/io.github.daniel_g_carrasco.meridiana.yaml
+#
+# Qt and PySide come from the KDE runtime and the PySide BaseApp (6.11: no 6.12 on Flathub yet, 23/10/2026; the
+# program pins PySide 6.12.0 for the instancing of the 3D view, tried here on 6.11.2 by the self-test). The other
+# Python packages are pinned wheels (python3-requirements.json, written by flatpak-pip-generator from
+# requirements-flatpak.txt): no network at build time.
+app-id: io.github.daniel_g_carrasco.meridiana
+runtime: org.kde.Platform
+runtime-version: '6.11'
+sdk: org.kde.Sdk
+base: io.qt.PySide.BaseApp
+base-version: '6.11'
+command: meridiana
+
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri                      # Qt Quick 3D on the GPU
+  # PVGIS (weather, horizon, estimate), Nominatim (an address), the map tiles, GitHub: each with its switch in
+  # Preferences > Privacy
+  - --share=network
+  # the project's backup (.bak) and revisions (_R01...) are new files next to the one opened (atomic.py,
+  # recovery.py): the file chooser's portal grants the file chosen, not its folder
+  - --filesystem=home
+  # Meridio's voice: the sound (QtMultimedia), the system's voices (speech-dispatcher), the Claude key (Secret
+  # Service, the keyring)
+  - --socket=pulseaudio
+  - --filesystem=xdg-run/speech-dispatcher:ro
+  - --talk-name=org.freedesktop.secrets
+
+cleanup-commands:
+  # what the BaseApp brings for building PySide and the program does not run. Not its cleanup-BaseApp.sh: that one
+  # takes QtPdf away with QtWebEngine (Meridiana opens PDFs as underlays with QtPdf) and uninstalls «packaging»,
+  # which matplotlib needs
+  - rm -rf /app/lib/libclang* /app/lib/libLLVM* /app/lib/python3*/site-packages/shiboken6_generator*
+  - rm -rf /app/bin/pyside6-*
+  - cd /app/lib/python3*/site-packages/PySide6 && rm -rf scripts doc designer assistant lrelease lupdate qmlformat qmllint qmlls qsb balsam balsamui
+  - rm -rf /app/bin/QtWebEngineProcess /app/lib/libexec/QtWebEngineProcess /app/lib/libexec/webenginedriver
+  - rm -rf /app/lib/*-linux-gnu/libQt6WebEngine* /app/lib/libQt6WebEngine* /app/lib/qml/QtWebEngine
+  - rm -rf /app/resources/qtwebengine*.pak /app/resources/v8_context_snapshot.bin /app/qtwebengine_dictionaries
+  - rm -rf /app/translations/qtwebengine_locales /app/lib/python3*/site-packages/PySide6/QtWebEngine*
+  # PyOpenGL (32 MB), for pyqtgraph's 3D, which the charts do not use
+  - rm -rf /app/lib/python3*/site-packages/OpenGL /app/lib/python3*/site-packages/pyopengl-*
+
+modules:
+  - python3-requirements.json
+
+  - name: meridiana
+    buildsystem: simple
+    build-commands:
+      # the package and what it reads next to itself (the 3D scene, the product catalogue, the voice's worker)
+      - install -d /app/share/meridiana
+      - cp -r src/meridiana /app/share/meridiana/meridiana
+      - find /app/share/meridiana -name __pycache__ -prune -exec rm -rf {} +
+      # what paths.shipped finds in /app/share/meridiana: fonts, icons, the manual
+      - cp -r data/fonts data/icons /app/share/meridiana/
+      - cp -r docs/manuale /app/share/meridiana/manuale
+      - install -Dm755 bin/meridiana /app/bin/meridiana
+      - python3 tools/compile_po.py --dest /app/share/locale
+      - install -Dm644 data/io.github.daniel_g_carrasco.meridiana.desktop -t /app/share/applications
+      - install -Dm644 data/io.github.daniel_g_carrasco.meridiana.metainfo.xml -t /app/share/metainfo
+      - install -Dm644 data/io.github.daniel_g_carrasco.meridiana.mime.xml /app/share/mime/packages/io.github.daniel_g_carrasco.meridiana.xml
+      - install -Dm644 data/icons/hicolor/scalable/apps/io.github.daniel_g_carrasco.meridiana.svg -t /app/share/icons/hicolor/scalable/apps
+      - install -Dm644 data/icons/hicolor/symbolic/apps/io.github.daniel_g_carrasco.meridiana-symbolic.svg -t /app/share/icons/hicolor/symbolic/apps
+      - install -Dm644 data/icons/hicolor/64x64/apps/io.github.daniel_g_carrasco.meridiana.png -t /app/share/icons/hicolor/64x64/apps
+      - install -Dm644 data/icons/hicolor/128x128/apps/io.github.daniel_g_carrasco.meridiana.png -t /app/share/icons/hicolor/128x128/apps
+      - install -Dm644 data/icons/hicolor/256x256/apps/io.github.daniel_g_carrasco.meridiana.png -t /app/share/icons/hicolor/256x256/apps
+      # fail the build early on an invalid desktop entry or metainfo
+      - desktop-file-validate /app/share/applications/io.github.daniel_g_carrasco.meridiana.desktop
+      - appstreamcli validate --no-net /app/share/metainfo/io.github.daniel_g_carrasco.meridiana.metainfo.xml
+      - /app/bin/meridiana --version
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .git
+          - .venv
+          - .venv-build
+          - build-dir
+          - .flatpak-builder
+          - locale
+          - .ruff_cache
+          - dist
+          - build
+          - tests
+          - docs/studio

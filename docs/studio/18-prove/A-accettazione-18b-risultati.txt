@@ -1,0 +1,22 @@
+python 3.12.6, PySide6 6.12.0, Windows 11, QT_QPA_PLATFORM=offscreen
+project of 20 buildings, 40 sub-fields, 60 exclusions: opened, laid out (2280 modules) and drawn in 469 ms
+
+== a building renamed (the measure: under 100 ms, no layout, no year)
+   edit() of a name on the window's thread: median 35.8 ms (37, 35, 61, 35, 36)
+   layout asked for: False
+   year asked for: False
+   undo of a rename: median 41.5 ms; layout asked for: False; year asked for: False
+
+== a height changed (the measure: only the sub-fields of that building laid out again)
+   edit() on the window's thread 92 ms (plan, tree, properties, 3D at once); settled after 371 ms
+   sub-fields laid out again: ['s7', 's8'] (the building's: ['s7', 's8'])
+
+== the pieces, measured one by one
+   layout_key for every sub-field                        1.3 ms
+   session.energy_key()                                  0.1 ms
+   _show_tree                                            8.7 ms
+   _show_properties                                      0.1 ms
+   _show_energy_forms (arrays_of, obstacles once)       66.1 ms
+   _show_3d                                             38.0 ms
+   _show_checks                                         22.8 ms
+   plan.show_project                                    16.9 ms

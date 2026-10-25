@@ -1,0 +1,96 @@
+{
+ "when": "2026-10-25 02:27",
+ "commit": "09d2343",
+ "on_screen": true,
+ "no_3d": false,
+ "no_vsync": false,
+ "sequence": "edges",
+ "screen": "DELL P2415Q 1920x1080 @ 2",
+ "machine": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+ "qt": "6.12.0",
+ "opened_ms": 8320,
+ "stall_ms": 30,
+ "environment": {},
+ "results": [
+  {
+   "gesture": "model: left edge dragged",
+   "action_ms": 2099.2,
+   "until_idle_ms": 2099.4,
+   "blocks": 37,
+   "worst_ms": 83.6,
+   "blocked_ms": 1712.8
+  },
+  {
+   "gesture": "model: left edge back",
+   "action_ms": 1953.1,
+   "until_idle_ms": 1958.4,
+   "blocks": 36,
+   "worst_ms": 69.3,
+   "blocked_ms": 1546.8
+  },
+  {
+   "gesture": "model: right edge dragged",
+   "action_ms": 3308.9,
+   "until_idle_ms": 3316.2,
+   "blocks": 50,
+   "worst_ms": 79.7,
+   "blocked_ms": 2755.9
+  },
+  {
+   "gesture": "model: right edge back",
+   "action_ms": 3573.5,
+   "until_idle_ms": 3610.1,
+   "blocks": 49,
+   "worst_ms": 114.4,
+   "blocked_ms": 2965.8
+  },
+  {
+   "gesture": "model: window resized, 15 steps",
+   "action_ms": 1573.7,
+   "until_idle_ms": 1581.8,
+   "blocks": 19,
+   "worst_ms": 138.9,
+   "blocked_ms": 1409.2
+  },
+  {
+   "gesture": "consumption: left edge dragged",
+   "action_ms": 1681.2,
+   "until_idle_ms": 1689.0,
+   "blocks": 5,
+   "worst_ms": 36.9,
+   "blocked_ms": 162.1
+  },
+  {
+   "gesture": "consumption: left edge back",
+   "action_ms": 1621.0,
+   "until_idle_ms": 1628.2,
+   "blocks": 2,
+   "worst_ms": 31.0,
+   "blocked_ms": 61.1
+  },
+  {
+   "gesture": "consumption: right edge dragged",
+   "action_ms": 2363.5,
+   "until_idle_ms": 2369.2,
+   "blocks": 30,
+   "worst_ms": 50.4,
+   "blocked_ms": 1068.8
+  },
+  {
+   "gesture": "consumption: right edge back",
+   "action_ms": 2187.4,
+   "until_idle_ms": 2191.9,
+   "blocks": 21,
+   "worst_ms": 44.8,
+   "blocked_ms": 685.1
+  },
+  {
+   "gesture": "consumption: window resized, 15 steps",
+   "action_ms": 1028.1,
+   "until_idle_ms": 1037.5,
+   "blocks": 14,
+   "worst_ms": 57.4,
+   "blocked_ms": 640.2
+  }
+ ]
+}

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Meridiana
+Comment=Photovoltaic design: map, building model, sun path, module layout and Italian standards
+Comment[it]=Progettazione fotovoltaica: mappa, modello dell'edificio, percorso del sole, posa dei moduli e norme italiane
+Exec=meridiana %f
+Icon=io.github.daniel_g_carrasco.meridiana
+Terminal=false
+Categories=Science;Engineering;Qt;
+Keywords=photovoltaic;solar;PV;design;roof;modules;strings;energy;
+Keywords[it]=fotovoltaico;solare;impianto;progettazione;tetto;moduli;stringhe;energia;
+MimeType=application/x-meridiana;
+StartupNotify=true

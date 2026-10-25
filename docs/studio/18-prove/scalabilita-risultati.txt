@@ -1,0 +1,62 @@
+# scalabilita.py, 23/10/2026, offscreen (il working set letto 0 per un errore di ctypes nello script, corretto dopo: i picchi sono di tracemalloc)
+
+load % 16:16:36
+
+=== project of about 1000 modules (repeats 5)
+  modules laid: 880 {'s1': 270, 's2': 610}
+  Project.fill (both sub-fields): median 0.030 s (min 0.028, max 0.222); tracemalloc peak 0.7 MB, working set +0.0 MB
+  nearshade.shading, 2 arrays x 7 solids, 777 cells: median 1.461 s (min 1.435, max 2.289); tracemalloc peak 14.6 MB, per-module tables 10.6 MB
+  mesh.building_triangles + prisms + module_table (880 rows): median 0.010 s (min 0.009, max 0.050)
+  PlanView.show_project: median 0.007 s (min 0.006, max 0.021); 15 graphics items; working set +0.0 MB
+  PlanView._pick over the ground field: median 0.3 ms (hit 'subfield'); _update_cursor (one mouse move, Select): median 0.3 ms
+  EnergyJob._compute cold: median 2.58 s (min 2.52, max 9.99); warm: median 2.44 s (min 1.47, max 7.54); tracemalloc peak 21 MB; working set +0 MB; 556,957 kWh
+  file: 3.4 kB; save median 4.5 ms, load median 0.3 ms (the modules are not in the file: opening lays them out again)
+  window: open_path returns after median 57 ms, idle after median 0.49 s (3 runs, 3D real)
+
+=== project of about 5000 modules (repeats 5)
+  modules laid: 4964 {'s1': 1652, 's2': 3312}
+  Project.fill (both sub-fields): median 0.763 s (min 0.399, max 3.072); tracemalloc peak 4.1 MB, working set +0.0 MB
+  nearshade.shading, 2 arrays x 7 solids, 777 cells: median 10.180 s (min 7.764, max 11.916); tracemalloc peak 79.6 MB, per-module tables 60.0 MB
+  mesh.building_triangles + prisms + module_table (4964 rows): median 0.150 s (min 0.057, max 0.636)
+  PlanView.show_project: median 0.127 s (min 0.086, max 0.259); 15 graphics items; working set +0.0 MB
+  PlanView._pick over the ground field: median 5.2 ms (hit 'subfield'); _update_cursor (one mouse move, Select): median 4.5 ms
+  EnergyJob._compute cold: median 5.21 s (min 4.63, max 20.34); warm: median 1.18 s (min 1.13, max 8.12); tracemalloc peak 85 MB; working set +0 MB; 3,166,548 kWh
+  file: 3.3 kB; save median 4.5 ms, load median 0.2 ms (the modules are not in the file: opening lays them out again)
+  window: open_path returns after median 27 ms, idle after median 0.61 s (3 runs, 3D real)
+
+CPU busy during the whole run: 15% over 167 s
+written C:/Users/utente/AppData/Local/Temp/claude/c--Users-Grasso-Elettrico/ac24d128-fcc4-4bd8-9c13-8ce732bbae55/scratchpad/C/scala-1k5k.json
+exit 0
+SCALA1 DONE
+
+load 24% 16:19:28
+
+=== project of about 20000 modules (repeats 3)
+  modules laid: 20493 {'s1': 7149, 's2': 13344}
+  Project.fill (both sub-fields): median 0.885 s (min 0.810, max 5.488); tracemalloc peak 16.7 MB, working set +0.0 MB
+  nearshade.shading, 2 arrays x 7 solids, 777 cells: median 10.279 s (min 9.619, max 16.238); tracemalloc peak 325.5 MB, per-module tables 247.7 MB
+  mesh.building_triangles + prisms + module_table (20493 rows): median 0.192 s (min 0.175, max 0.859)
+  PlanView.show_project: median 0.253 s (min 0.191, max 0.435); 15 graphics items; working set +0.0 MB
+  PlanView._pick over the ground field: median 5.5 ms (hit 'subfield'); _update_cursor (one mouse move, Select): median 5.5 ms
+  EnergyJob._compute cold: median 11.34 s (min 11.28, max 24.98); warm: median 1.33 s (min 1.28, max 8.16); tracemalloc peak 331 MB; working set +0 MB; 13,112,376 kWh
+  file: 3.4 kB; save median 5.2 ms, load median 0.3 ms (the modules are not in the file: opening lays them out again)
+  window: open_path returns after median 29 ms, idle after median 2.05 s (3 runs, 3D real)
+
+CPU busy during the whole run: 13% over 113 s
+written C:/Users/utente/AppData/Local/Temp/claude/c--Users-Grasso-Elettrico/ac24d128-fcc4-4bd8-9c13-8ce732bbae55/scratchpad/C/scala-20k.json
+exit 0
+SCALA2 DONE
+
+# shading_check.py (verifica a parte, senza tracemalloc, carico 15%): l'ombra per vettore e il calcolo a freddo e a caldo, progetto da 4.964 moduli
+load 15% 16:22:34
+project 5000: 4964 modules; working set 0 MB
+  array s1.0: 1652 modules, 15 planes, 7 solids, 1496 lit cells of 777 needed: shading 2.34 s (samples [2.27, 2.4, 2.34]); tables 10 MB x 2; working set 0 MB
+  array s2.0: 3312 modules, 12 planes, 8 solids, 1438 lit cells of 777 needed: shading 1.89 s (samples [1.85, 1.89, 1.94]); tables 20 MB x 2; working set 0 MB
+  EnergyJob._compute cold: 8.85 s; working set 0 MB
+  EnergyJob._compute warm: 1.56 s; working set 0 MB
+  EnergyJob._compute cold: 7.41 s; working set 0 MB
+  EnergyJob._compute warm: 1.41 s; working set 0 MB
+  EnergyJob._compute cold: 5.90 s; working set 0 MB
+  EnergyJob._compute warm: 1.15 s; working set 0 MB
+exit 0
+SHADING CHECK DONE

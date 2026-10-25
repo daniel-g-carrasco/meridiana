@@ -1,0 +1,7 @@
+1. arco sopra la pianta, 1 s: 63 fotogrammi dell'arco (mediana 0.12 ms, massimo 0.86 ms ciascuno); la pianta sotto si è ridisegnata 63 volte (mediana 0.09 ms, massimo 0.13 ms)
+2. QProgressBar occupata nella barra di stato, 1 s: 60 ridisegni (mediana 0.38 ms, massimo 4.78 ms)
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+3. segnaposto a scheletro: costruito e mostrato in 57 ms (compresi 50 ms di attesa); pagina vera con 18 campi: 56 ms; fotografia della pagina (grab, 360x682): 3.0 ms
+4. QQuickWidget con una scena 3D: setSource 19 ms, mostrato dopo 120 ms (offscreen, senza GPU: sul PC lo studio 12 misura circa 1 s)
+   8 fotogrammi a 60 Hz: tempo in cui un segnaposto della 3D sarebbe visibile

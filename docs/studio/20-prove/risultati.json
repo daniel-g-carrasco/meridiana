@@ -1,0 +1,6520 @@
+{
+ "macchina": {
+  "python": "3.12.6",
+  "system": "Windows-11-10.0.26100-SP0",
+  "cpus": 20,
+  "ram_gb": 31.6,
+  "ifcopenshell": "0.9.0.post1",
+  "date": "2026-10-25 01:49"
+ },
+ "righe": [
+  {
+   "way": "open-normal",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 153,
+   "seconds": 0.165,
+   "peak_mb": 46.2,
+   "status": "ok",
+   "seconds_median": 0.165,
+   "seconds_all": [
+    0.165,
+    0.165,
+    0.134
+   ],
+   "peak_mb_max": 46.3,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-misto"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.406,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 153,
+   "seconds": 0.125,
+   "peak_mb": 45.7,
+   "status": "ok",
+   "seconds_median": 0.125,
+   "seconds_all": [
+    0.137,
+    0.125,
+    0.119
+   ],
+   "peak_mb_max": 45.7,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-misto"
+  },
+  {
+   "way": "a",
+   "wall": 0.607,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 4,
+   "pitches": 8,
+   "sloped": 7,
+   "pitch_area": 1106.0,
+   "tilts": [
+    10,
+    25,
+    30
+   ],
+   "obstacles": 8,
+   "kinds": [
+    "chimney",
+    "parapet",
+    "plant",
+    "tree",
+    "vent"
+   ],
+   "heights": [
+    4.5,
+    7.2,
+    8.2,
+    9.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:32632",
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC4",
+   "application": "",
+   "counts": {
+    "roof_elements": 8,
+    "tessellated": 142,
+    "triangles": 1704,
+    "small_faces": 1,
+    "small_area": 0.174,
+    "modules": 110,
+    "off_roof": 0,
+    "obstacle_candidates": 8,
+    "direct": 0,
+    "shapes": 142,
+    "errors": 0,
+    "products": 142
+   },
+   "times": {
+    "open": 0.124,
+    "structure": 0.0039,
+    "tessellate_all": 0.143,
+    "roofs": 0.0,
+    "planes": 0.1133,
+    "obstacles": 0.0103,
+    "total": 0.3968
+   },
+   "errors": [],
+   "seconds": 0.397,
+   "peak_mb": 64.4,
+   "status": "ok",
+   "seconds_median": 0.397,
+   "seconds_all": [
+    0.411,
+    0.397,
+    0.383
+   ],
+   "peak_mb_max": 64.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-misto"
+  },
+  {
+   "way": "b8",
+   "wall": 0.507,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 4,
+   "pitches": 8,
+   "sloped": 7,
+   "pitch_area": 1106.0,
+   "tilts": [
+    10,
+    25,
+    30
+   ],
+   "obstacles": 8,
+   "kinds": [
+    "chimney",
+    "parapet",
+    "plant",
+    "tree",
+    "vent"
+   ],
+   "heights": [
+    4.5,
+    7.2,
+    8.2,
+    9.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:32632",
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC4",
+   "application": "",
+   "counts": {
+    "roof_elements": 8,
+    "small_faces": 1,
+    "small_area": 0.174,
+    "modules": 110,
+    "off_roof": 0,
+    "obstacle_candidates": 8,
+    "direct": 0,
+    "shapes": 16,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1149,
+    "structure": 0.0036,
+    "roofs": 0.0347,
+    "planes": 0.1075,
+    "obstacles": 0.0372,
+    "total": 0.2981
+   },
+   "errors": [],
+   "seconds": 0.298,
+   "peak_mb": 63.6,
+   "status": "ok",
+   "seconds_median": 0.298,
+   "seconds_all": [
+    0.295,
+    0.298,
+    0.337
+   ],
+   "peak_mb_max": 63.7,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-misto"
+  },
+  {
+   "way": "b1",
+   "wall": 0.607,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 4,
+   "pitches": 8,
+   "sloped": 7,
+   "pitch_area": 1106.0,
+   "tilts": [
+    10,
+    25,
+    30
+   ],
+   "obstacles": 8,
+   "kinds": [
+    "chimney",
+    "parapet",
+    "plant",
+    "tree",
+    "vent"
+   ],
+   "heights": [
+    4.5,
+    7.2,
+    8.2,
+    9.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:32632",
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC4",
+   "application": "",
+   "counts": {
+    "roof_elements": 8,
+    "small_faces": 1,
+    "small_area": 0.174,
+    "modules": 110,
+    "off_roof": 0,
+    "obstacle_candidates": 8,
+    "direct": 0,
+    "shapes": 16,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1606,
+    "structure": 0.0062,
+    "roofs": 0.0318,
+    "planes": 0.0953,
+    "obstacles": 0.0214,
+    "total": 0.3159
+   },
+   "errors": [],
+   "seconds": 0.316,
+   "peak_mb": 60.8,
+   "status": "ok",
+   "seconds_median": 0.316,
+   "seconds_all": [
+    0.326,
+    0.316,
+    0.286
+   ],
+   "peak_mb_max": 61.0,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-misto"
+  },
+  {
+   "way": "c",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 4,
+   "pitches": 8,
+   "sloped": 7,
+   "pitch_area": 1106.0,
+   "tilts": [
+    10,
+    25,
+    30
+   ],
+   "obstacles": 8,
+   "kinds": [
+    "chimney",
+    "parapet",
+    "plant",
+    "tree",
+    "vent"
+   ],
+   "heights": [
+    4.5,
+    7.2,
+    8.2,
+    9.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:32632",
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC4",
+   "application": "",
+   "counts": {
+    "roof_elements": 8,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 110,
+    "off_roof": 0,
+    "obstacle_candidates": 8,
+    "direct": 16,
+    "shapes": 16,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1379,
+    "structure": 0.0051,
+    "roofs": 0.0045,
+    "planes": 0.0889,
+    "obstacles": 0.0142,
+    "total": 0.2511
+   },
+   "errors": [],
+   "seconds": 0.251,
+   "peak_mb": 53.9,
+   "status": "ok",
+   "seconds_median": 0.257,
+   "seconds_all": [
+    0.257,
+    0.251,
+    0.278
+   ],
+   "peak_mb_max": 53.9,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-misto"
+  },
+  {
+   "way": "d",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 2473.3,
+   "tilts": [],
+   "obstacles": 7,
+   "kinds": [
+    "parapet",
+    "plant",
+    "tree",
+    "vent"
+   ],
+   "heights": [
+    9.5
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": true,
+   "map": "EPSG:32632",
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC4",
+   "application": "",
+   "counts": {
+    "roof_elements": 8,
+    "modules": 110,
+    "off_roof": 0,
+    "obstacle_candidates": 7,
+    "direct": 0,
+    "shapes": 15,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1383,
+    "structure": 0.0048,
+    "roofs": 0.0045,
+    "planes": 0.088,
+    "obstacles": 0.0149,
+    "total": 0.2509
+   },
+   "errors": [],
+   "seconds": 0.251,
+   "peak_mb": 53.2,
+   "status": "ok",
+   "seconds_median": 0.229,
+   "seconds_all": [
+    0.229,
+    0.251,
+    0.219
+   ],
+   "peak_mb_max": 53.2,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-misto"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.607,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 3127,
+   "seconds": 0.315,
+   "peak_mb": 74.3,
+   "status": "ok",
+   "seconds_median": 0.315,
+   "seconds_all": [
+    0.355,
+    0.315,
+    0.293
+   ],
+   "peak_mb_max": 74.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-25"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.507,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 3127,
+   "seconds": 0.234,
+   "peak_mb": 62.4,
+   "status": "ok",
+   "seconds_median": 0.193,
+   "seconds_all": [
+    0.192,
+    0.234,
+    0.193
+   ],
+   "peak_mb_max": 62.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-25"
+  },
+  {
+   "way": "a",
+   "wall": 3.728,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 25,
+   "pitches": 25,
+   "sloped": 0,
+   "pitch_area": 20000.0,
+   "tilts": [],
+   "obstacles": 50,
+   "kinds": [
+    "skylight"
+   ],
+   "heights": [
+    8.0
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:32632",
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC4",
+   "application": "",
+   "counts": {
+    "roof_elements": 25,
+    "tessellated": 3075,
+    "triangles": 36900,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 2900,
+    "off_roof": 0,
+    "obstacle_candidates": 50,
+    "direct": 0,
+    "shapes": 3075,
+    "errors": 0,
+    "products": 3075
+   },
+   "times": {
+    "open": 0.2963,
+    "structure": 0.0138,
+    "tessellate_all": 2.8603,
+    "roofs": 0.0,
+    "planes": 0.105,
+    "obstacles": 0.1185,
+    "total": 3.4313
+   },
+   "errors": [],
+   "seconds": 3.438,
+   "peak_mb": 100.7,
+   "status": "ok",
+   "seconds_median": 3.438,
+   "seconds_all": [
+    3.088,
+    3.438,
+    3.711
+   ],
+   "peak_mb_max": 101.5,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-25"
+  },
+  {
+   "way": "b8",
+   "wall": 1.009,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 25,
+   "pitches": 25,
+   "sloped": 0,
+   "pitch_area": 20000.0,
+   "tilts": [],
+   "obstacles": 50,
+   "kinds": [
+    "skylight"
+   ],
+   "heights": [
+    8.0
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:32632",
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC4",
+   "application": "",
+   "counts": {
+    "roof_elements": 25,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 2900,
+    "off_roof": 0,
+    "obstacle_candidates": 50,
+    "direct": 0,
+    "shapes": 75,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.3264,
+    "structure": 0.016,
+    "roofs": 0.0922,
+    "planes": 0.1081,
+    "obstacles": 0.2156,
+    "total": 0.7595
+   },
+   "errors": [],
+   "seconds": 0.765,
+   "peak_mb": 88.3,
+   "status": "ok",
+   "seconds_median": 0.765,
+   "seconds_all": [
+    0.771,
+    0.765,
+    0.654
+   ],
+   "peak_mb_max": 88.5,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-25"
+  },
+  {
+   "way": "b1",
+   "wall": 0.908,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 25,
+   "pitches": 25,
+   "sloped": 0,
+   "pitch_area": 20000.0,
+   "tilts": [],
+   "obstacles": 50,
+   "kinds": [
+    "skylight"
+   ],
+   "heights": [
+    8.0
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:32632",
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC4",
+   "application": "",
+   "counts": {
+    "roof_elements": 25,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 2900,
+    "off_roof": 0,
+    "obstacle_candidates": 50,
+    "direct": 0,
+    "shapes": 75,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1867,
+    "structure": 0.0131,
+    "roofs": 0.0815,
+    "planes": 0.1388,
+    "obstacles": 0.2234,
+    "total": 0.6447
+   },
+   "errors": [],
+   "seconds": 0.649,
+   "peak_mb": 79.4,
+   "status": "ok",
+   "seconds_median": 0.608,
+   "seconds_all": [
+    0.608,
+    0.649,
+    0.547
+   ],
+   "peak_mb_max": 79.5,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-25"
+  },
+  {
+   "way": "c",
+   "wall": 0.606,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 25,
+   "pitches": 25,
+   "sloped": 0,
+   "pitch_area": 20000.0,
+   "tilts": [],
+   "obstacles": 50,
+   "kinds": [
+    "skylight"
+   ],
+   "heights": [
+    8.0
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:32632",
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC4",
+   "application": "",
+   "counts": {
+    "roof_elements": 25,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 2900,
+    "off_roof": 0,
+    "obstacle_candidates": 50,
+    "direct": 75,
+    "shapes": 75,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1492,
+    "structure": 0.0114,
+    "roofs": 0.0098,
+    "planes": 0.1006,
+    "obstacles": 0.1341,
+    "total": 0.4058
+   },
+   "errors": [],
+   "seconds": 0.411,
+   "peak_mb": 71.8,
+   "status": "ok",
+   "seconds_median": 0.411,
+   "seconds_all": [
+    0.415,
+    0.411,
+    0.385
+   ],
+   "peak_mb_max": 71.8,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-25"
+  },
+  {
+   "way": "d",
+   "wall": 0.606,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 33599.9,
+   "tilts": [],
+   "obstacles": 50,
+   "kinds": [
+    "skylight"
+   ],
+   "heights": [
+    8.0
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": true,
+   "map": "EPSG:32632",
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC4",
+   "application": "",
+   "counts": {
+    "roof_elements": 25,
+    "modules": 2900,
+    "off_roof": 0,
+    "obstacle_candidates": 50,
+    "direct": 0,
+    "shapes": 75,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.14,
+    "structure": 0.0111,
+    "roofs": 0.0095,
+    "planes": 0.0562,
+    "obstacles": 0.1164,
+    "total": 0.334
+   },
+   "errors": [],
+   "seconds": 0.338,
+   "peak_mb": 72.2,
+   "status": "ok",
+   "seconds_median": 0.338,
+   "seconds_all": [
+    0.38,
+    0.338,
+    0.321
+   ],
+   "peak_mb_max": 72.3,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "meridiana-25"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.305,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 20,
+   "seconds": 0.107,
+   "peak_mb": 45.4,
+   "status": "ok",
+   "seconds_median": 0.119,
+   "seconds_all": [
+    0.128,
+    0.107,
+    0.119
+   ],
+   "peak_mb_max": 45.5,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-architecture"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.304,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 20,
+   "seconds": 0.11,
+   "peak_mb": 44.9,
+   "status": "ok",
+   "seconds_median": 0.107,
+   "seconds_all": [
+    0.096,
+    0.11,
+    0.107
+   ],
+   "peak_mb_max": 45.1,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-architecture"
+  },
+  {
+   "way": "a",
+   "wall": 0.707,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 2,
+   "sloped": 2,
+   "pitch_area": 37.9,
+   "tilts": [
+    45
+   ],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    4.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": false,
+   "map": "EPSG:32760",
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "IFC manager for sketchup 5.6.0",
+   "counts": {
+    "roof_elements": 2,
+    "tessellated": 12,
+    "triangles": 1127,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 12,
+    "errors": 0,
+    "products": 12
+   },
+   "times": {
+    "open": 0.1043,
+    "structure": 0.0031,
+    "tessellate_all": 0.2262,
+    "roofs": 0.0,
+    "planes": 0.1378,
+    "obstacles": 0.0013,
+    "total": 0.4729
+   },
+   "errors": [],
+   "seconds": 0.473,
+   "peak_mb": 66.6,
+   "status": "ok",
+   "seconds_median": 0.473,
+   "seconds_all": [
+    0.46,
+    0.473,
+    0.479
+   ],
+   "peak_mb_max": 66.6,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-architecture"
+  },
+  {
+   "way": "b8",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 2,
+   "sloped": 2,
+   "pitch_area": 37.9,
+   "tilts": [
+    45
+   ],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    4.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": false,
+   "map": "EPSG:32760",
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "IFC manager for sketchup 5.6.0",
+   "counts": {
+    "roof_elements": 2,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 2,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1287,
+    "structure": 0.0036,
+    "roofs": 0.036,
+    "planes": 0.0868,
+    "obstacles": 0.0009,
+    "total": 0.2561
+   },
+   "errors": [],
+   "seconds": 0.256,
+   "peak_mb": 60.4,
+   "status": "ok",
+   "seconds_median": 0.23,
+   "seconds_all": [
+    0.213,
+    0.256,
+    0.23
+   ],
+   "peak_mb_max": 60.5,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-architecture"
+  },
+  {
+   "way": "b1",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 2,
+   "sloped": 2,
+   "pitch_area": 37.9,
+   "tilts": [
+    45
+   ],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    4.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": false,
+   "map": "EPSG:32760",
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "IFC manager for sketchup 5.6.0",
+   "counts": {
+    "roof_elements": 2,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 2,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1226,
+    "structure": 0.0025,
+    "roofs": 0.0239,
+    "planes": 0.0773,
+    "obstacles": 0.0012,
+    "total": 0.2276
+   },
+   "errors": [],
+   "seconds": 0.228,
+   "peak_mb": 59.8,
+   "status": "ok",
+   "seconds_median": 0.216,
+   "seconds_all": [
+    0.216,
+    0.228,
+    0.214
+   ],
+   "peak_mb_max": 60.1,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-architecture"
+  },
+  {
+   "way": "c",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 4.5,
+   "buildings": 1,
+   "pitches": 2,
+   "sloped": 2,
+   "pitch_area": 37.9,
+   "tilts": [
+    45
+   ],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    4.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": false,
+   "map": "EPSG:32760",
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "IFC manager for sketchup 5.6.0",
+   "counts": {
+    "roof_elements": 2,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 2,
+    "shapes": 2,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.106,
+    "structure": 0.0025,
+    "roofs": 0.0025,
+    "planes": 0.0771,
+    "obstacles": 0.001,
+    "total": 0.1891
+   },
+   "errors": [],
+   "seconds": 0.189,
+   "peak_mb": 53.2,
+   "status": "ok",
+   "seconds_median": 0.242,
+   "seconds_all": [
+    0.242,
+    0.189,
+    0.331
+   ],
+   "peak_mb_max": 53.3,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-architecture"
+  },
+  {
+   "way": "d",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 40.9,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    5.7
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": false,
+   "map": "EPSG:32760",
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "IFC manager for sketchup 5.6.0",
+   "counts": {
+    "roof_elements": 2,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 2,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1424,
+    "structure": 0.0034,
+    "roofs": 0.0035,
+    "planes": 0.0982,
+    "obstacles": 0.0012,
+    "total": 0.2489
+   },
+   "errors": [],
+   "seconds": 0.249,
+   "peak_mb": 53.0,
+   "status": "ok",
+   "seconds_median": 0.218,
+   "seconds_all": [
+    0.218,
+    0.249,
+    0.197
+   ],
+   "peak_mb_max": 53.1,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-architecture"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.304,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 10,
+   "seconds": 0.11,
+   "peak_mb": 45.5,
+   "status": "ok",
+   "seconds_median": 0.107,
+   "seconds_all": [
+    0.107,
+    0.11,
+    0.105
+   ],
+   "peak_mb_max": 45.5,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-hvac"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.305,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 10,
+   "seconds": 0.104,
+   "peak_mb": 45.0,
+   "status": "ok",
+   "seconds_median": 0.104,
+   "seconds_all": [
+    0.148,
+    0.104,
+    0.095
+   ],
+   "peak_mb_max": 45.0,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-hvac"
+  },
+  {
+   "way": "a",
+   "wall": 0.709,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": "EPSG:32760",
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "IFC manager for sketchup 5.6.0",
+   "counts": {
+    "roof_elements": 0,
+    "tessellated": 5,
+    "triangles": 1061,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 5,
+    "errors": 0,
+    "products": 5
+   },
+   "times": {
+    "open": 0.1214,
+    "structure": 0.0042,
+    "tessellate_all": 0.2417,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0667,
+    "total": 0.4341
+   },
+   "errors": [],
+   "seconds": 0.434,
+   "peak_mb": 65.2,
+   "status": "ok",
+   "seconds_median": 0.434,
+   "seconds_all": [
+    0.434,
+    0.434,
+    0.411
+   ],
+   "peak_mb_max": 65.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-hvac"
+  },
+  {
+   "way": "b8",
+   "wall": 0.406,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": "EPSG:32760",
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "IFC manager for sketchup 5.6.0",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1048,
+    "structure": 0.003,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0724,
+    "total": 0.1802
+   },
+   "errors": [],
+   "seconds": 0.18,
+   "peak_mb": 51.8,
+   "status": "ok",
+   "seconds_median": 0.204,
+   "seconds_all": [
+    0.257,
+    0.18,
+    0.204
+   ],
+   "peak_mb_max": 51.8,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-hvac"
+  },
+  {
+   "way": "b1",
+   "wall": 0.407,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": "EPSG:32760",
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "IFC manager for sketchup 5.6.0",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1232,
+    "structure": 0.0037,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0563,
+    "total": 0.1833
+   },
+   "errors": [],
+   "seconds": 0.183,
+   "peak_mb": 51.6,
+   "status": "ok",
+   "seconds_median": 0.183,
+   "seconds_all": [
+    0.204,
+    0.183,
+    0.166
+   ],
+   "peak_mb_max": 51.7,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-hvac"
+  },
+  {
+   "way": "c",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": "EPSG:32760",
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "IFC manager for sketchup 5.6.0",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1678,
+    "structure": 0.0034,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.067,
+    "total": 0.2383
+   },
+   "errors": [],
+   "seconds": 0.238,
+   "peak_mb": 51.6,
+   "status": "ok",
+   "seconds_median": 0.237,
+   "seconds_all": [
+    0.236,
+    0.238,
+    0.237
+   ],
+   "peak_mb_max": 51.9,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-hvac"
+  },
+  {
+   "way": "d",
+   "wall": 0.405,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": "EPSG:32760",
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "IFC manager for sketchup 5.6.0",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1086,
+    "structure": 0.0027,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0727,
+    "total": 0.1841
+   },
+   "errors": [],
+   "seconds": 0.184,
+   "peak_mb": 51.5,
+   "status": "ok",
+   "seconds_median": 0.202,
+   "seconds_all": [
+    0.236,
+    0.184,
+    0.202
+   ],
+   "peak_mb_max": 51.7,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "bs-hvac"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.507,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 606,
+   "seconds": 0.214,
+   "peak_mb": 59.1,
+   "status": "ok",
+   "seconds_median": 0.214,
+   "seconds_all": [
+    0.233,
+    0.214,
+    0.206
+   ],
+   "peak_mb_max": 59.1,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "location"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 606,
+   "seconds": 0.166,
+   "peak_mb": 53.6,
+   "status": "ok",
+   "seconds_median": 0.166,
+   "seconds_all": [
+    0.205,
+    0.166,
+    0.163
+   ],
+   "peak_mb_max": 53.8,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "location"
+  },
+  {
+   "way": "a",
+   "wall": 20.644,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 2,
+   "sloped": 0,
+   "pitch_area": 469.0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    6.4
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:28992",
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "Autodesk Revit 2020 (ENU) 2020",
+   "counts": {
+    "roof_elements": 2,
+    "tessellated": 464,
+    "triangles": 165364,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 43,
+    "obstacle_candidates": 151,
+    "direct": 0,
+    "shapes": 464,
+    "errors": 1,
+    "products": 467
+   },
+   "times": {
+    "open": 0.2539,
+    "structure": 0.0058,
+    "tessellate_all": 19.8771,
+    "roofs": 0.0,
+    "planes": 0.1531,
+    "obstacles": 0.0684,
+    "total": 20.3658
+   },
+   "errors": [
+    "3 elements without a shape from the iterator"
+   ],
+   "seconds": 20.377,
+   "peak_mb": 1299.7,
+   "status": "ok",
+   "seconds_median": 20.377,
+   "seconds_all": [
+    20.651,
+    20.377,
+    20.243
+   ],
+   "peak_mb_max": 1299.7,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "location"
+  },
+  {
+   "way": "b8",
+   "wall": 1.111,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 2,
+   "sloped": 0,
+   "pitch_area": 475.9,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    6.4
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:28992",
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "Autodesk Revit 2020 (ENU) 2020",
+   "counts": {
+    "roof_elements": 2,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 43,
+    "obstacle_candidates": 151,
+    "direct": 0,
+    "shapes": 153,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.2763,
+    "structure": 0.0051,
+    "roofs": 0.0386,
+    "planes": 0.0995,
+    "obstacles": 0.3751,
+    "total": 0.7951
+   },
+   "errors": [],
+   "seconds": 0.798,
+   "peak_mb": 79.9,
+   "status": "ok",
+   "seconds_median": 0.77,
+   "seconds_all": [
+    0.696,
+    0.798,
+    0.77
+   ],
+   "peak_mb_max": 80.2,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "location"
+  },
+  {
+   "way": "b1",
+   "wall": 1.413,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 2,
+   "sloped": 0,
+   "pitch_area": 475.9,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    6.4
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:28992",
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "Autodesk Revit 2020 (ENU) 2020",
+   "counts": {
+    "roof_elements": 2,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 43,
+    "obstacle_candidates": 151,
+    "direct": 0,
+    "shapes": 153,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1922,
+    "structure": 0.0053,
+    "roofs": 0.0252,
+    "planes": 0.0943,
+    "obstacles": 0.7519,
+    "total": 1.0697
+   },
+   "errors": [],
+   "seconds": 1.073,
+   "peak_mb": 72.2,
+   "status": "ok",
+   "seconds_median": 1.025,
+   "seconds_all": [
+    1.025,
+    1.073,
+    0.857
+   ],
+   "peak_mb_max": 72.2,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "location"
+  },
+  {
+   "way": "c",
+   "wall": 0.707,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 2,
+   "sloped": 0,
+   "pitch_area": 475.9,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    6.4
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": "EPSG:28992",
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "Autodesk Revit 2020 (ENU) 2020",
+   "counts": {
+    "roof_elements": 2,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 43,
+    "obstacle_candidates": 151,
+    "direct": 153,
+    "shapes": 153,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1583,
+    "structure": 0.0047,
+    "roofs": 0.0014,
+    "planes": 0.0787,
+    "obstacles": 0.2091,
+    "total": 0.4529
+   },
+   "errors": [],
+   "seconds": 0.456,
+   "peak_mb": 66.7,
+   "status": "ok",
+   "seconds_median": 0.421,
+   "seconds_all": [
+    0.372,
+    0.456,
+    0.421
+   ],
+   "peak_mb_max": 66.7,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "location"
+  },
+  {
+   "way": "d",
+   "wall": 0.607,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 700.4,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    6.4
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": true,
+   "map": "EPSG:28992",
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC4",
+   "application": "Autodesk Revit 2020 (ENU) 2020",
+   "counts": {
+    "roof_elements": 2,
+    "modules": 0,
+    "off_roof": 16,
+    "obstacle_candidates": 60,
+    "direct": 0,
+    "shapes": 62,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1601,
+    "structure": 0.0061,
+    "roofs": 0.001,
+    "planes": 0.0619,
+    "obstacles": 0.0995,
+    "total": 0.3291
+   },
+   "errors": [],
+   "seconds": 0.331,
+   "peak_mb": 66.0,
+   "status": "ok",
+   "seconds_median": 0.395,
+   "seconds_all": [
+    0.395,
+    0.331,
+    0.409
+   ],
+   "peak_mb_max": 66.0,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "location"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.404,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 295,
+   "seconds": 0.214,
+   "peak_mb": 59.3,
+   "status": "ok",
+   "seconds_median": 0.195,
+   "seconds_all": [
+    0.195,
+    0.214,
+    0.184
+   ],
+   "peak_mb_max": 59.7,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "duplex"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.405,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 295,
+   "seconds": 0.13,
+   "peak_mb": 54.2,
+   "status": "ok",
+   "seconds_median": 0.13,
+   "seconds_all": [
+    0.127,
+    0.13,
+    0.146
+   ],
+   "peak_mb_max": 54.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "duplex"
+  },
+  {
+   "way": "a",
+   "wall": 2.824,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 132.9,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    6.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 1,
+    "tessellated": 215,
+    "triangles": 26348,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 4,
+    "obstacle_candidates": 12,
+    "direct": 0,
+    "shapes": 215,
+    "errors": 0,
+    "products": 215
+   },
+   "times": {
+    "open": 0.2364,
+    "structure": 0.0797,
+    "tessellate_all": 2.2209,
+    "roofs": 0.0,
+    "planes": 0.0071,
+    "obstacles": 0.0293,
+    "total": 2.5764
+   },
+   "errors": [],
+   "seconds": 2.581,
+   "peak_mb": 126.8,
+   "status": "ok",
+   "seconds_median": 2.581,
+   "seconds_all": [
+    2.388,
+    2.581,
+    2.913
+   ],
+   "peak_mb_max": 126.8,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "duplex"
+  },
+  {
+   "way": "b8",
+   "wall": 0.909,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 135.2,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    6.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 1,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 4,
+    "obstacle_candidates": 12,
+    "direct": 0,
+    "shapes": 13,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.3292,
+    "structure": 0.1051,
+    "roofs": 0.0295,
+    "planes": 0.0031,
+    "obstacles": 0.0629,
+    "total": 0.5302
+   },
+   "errors": [],
+   "seconds": 0.533,
+   "peak_mb": 74.1,
+   "status": "ok",
+   "seconds_median": 0.51,
+   "seconds_all": [
+    0.49,
+    0.533,
+    0.51
+   ],
+   "peak_mb_max": 74.1,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "duplex"
+  },
+  {
+   "way": "b1",
+   "wall": 0.507,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 135.2,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    6.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 1,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 4,
+    "obstacle_candidates": 12,
+    "direct": 0,
+    "shapes": 13,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1394,
+    "structure": 0.0796,
+    "roofs": 0.0144,
+    "planes": 0.0024,
+    "obstacles": 0.0446,
+    "total": 0.2808
+   },
+   "errors": [],
+   "seconds": 0.283,
+   "peak_mb": 68.8,
+   "status": "ok",
+   "seconds_median": 0.283,
+   "seconds_all": [
+    0.298,
+    0.283,
+    0.263
+   ],
+   "peak_mb_max": 69.1,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "duplex"
+  },
+  {
+   "way": "c",
+   "wall": 0.507,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 135.2,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    6.5
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 1,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "modules": 0,
+    "off_roof": 4,
+    "obstacle_candidates": 12,
+    "direct": 13,
+    "shapes": 13,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1562,
+    "structure": 0.0791,
+    "roofs": 0.0006,
+    "planes": 0.0014,
+    "obstacles": 0.0295,
+    "total": 0.2672
+   },
+   "errors": [],
+   "seconds": 0.269,
+   "peak_mb": 61.5,
+   "status": "ok",
+   "seconds_median": 0.282,
+   "seconds_all": [
+    0.282,
+    0.269,
+    0.353
+   ],
+   "peak_mb_max": 61.7,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "duplex"
+  },
+  {
+   "way": "d",
+   "wall": 0.607,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 135.1,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    6.5
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 1,
+    "modules": 0,
+    "off_roof": 4,
+    "obstacle_candidates": 12,
+    "direct": 0,
+    "shapes": 13,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.176,
+    "structure": 0.1025,
+    "roofs": 0.0008,
+    "planes": 0.0009,
+    "obstacles": 0.0362,
+    "total": 0.3169
+   },
+   "errors": [],
+   "seconds": 0.319,
+   "peak_mb": 61.5,
+   "status": "ok",
+   "seconds_median": 0.308,
+   "seconds_all": [
+    0.28,
+    0.319,
+    0.308
+   ],
+   "peak_mb_max": 61.5,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "duplex"
+  },
+  {
+   "way": "open-normal",
+   "wall": 1.111,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "products": 3298,
+   "seconds": 0.798,
+   "peak_mb": 128.3,
+   "status": "ok",
+   "seconds_median": 0.677,
+   "seconds_all": [
+    0.638,
+    0.798,
+    0.677
+   ],
+   "peak_mb_max": 128.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-arch"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 3298,
+   "seconds": 0.258,
+   "peak_mb": 90.7,
+   "status": "ok",
+   "seconds_median": 0.258,
+   "seconds_all": [
+    0.429,
+    0.258,
+    0.243
+   ],
+   "peak_mb_max": 90.8,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-arch"
+  },
+  {
+   "way": "a",
+   "wall": 18.842,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 2624.1,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    13.5
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 0,
+    "tessellated": 2586,
+    "triangles": 172065,
+    "wall_elements": 1080,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 27,
+    "direct": 0,
+    "shapes": 2586,
+    "errors": 0,
+    "products": 2586
+   },
+   "times": {
+    "open": 0.6472,
+    "structure": 0.0991,
+    "tessellate_all": 16.8609,
+    "roofs": 0.0,
+    "planes": 0.6638,
+    "obstacles": 0.1468,
+    "total": 18.4564
+   },
+   "errors": [],
+   "seconds": 18.498,
+   "peak_mb": 349.5,
+   "status": "ok",
+   "seconds_median": 18.498,
+   "seconds_all": [
+    17.309,
+    18.498,
+    23.333
+   ],
+   "peak_mb_max": 351.3,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-arch"
+  },
+  {
+   "way": "b8",
+   "wall": 4.57,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 2624.1,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    13.5
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 1080,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 27,
+    "direct": 0,
+    "shapes": 1107,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 1.2047,
+    "structure": 0.1307,
+    "roofs": 0.0,
+    "planes": 2.438,
+    "obstacles": 0.3152,
+    "total": 4.0905
+   },
+   "errors": [],
+   "seconds": 4.12,
+   "peak_mb": 158.6,
+   "status": "ok",
+   "seconds_median": 3.52,
+   "seconds_all": [
+    3.369,
+    4.12,
+    3.52
+   ],
+   "peak_mb_max": 158.6,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-arch"
+  },
+  {
+   "way": "b1",
+   "wall": 5.556,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 2624.1,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    13.5
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 1080,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 27,
+    "direct": 0,
+    "shapes": 1107,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.3942,
+    "structure": 0.1088,
+    "roofs": 0.0,
+    "planes": 3.8861,
+    "obstacles": 0.7642,
+    "total": 5.156
+   },
+   "errors": [],
+   "seconds": 5.182,
+   "peak_mb": 134.5,
+   "status": "ok",
+   "seconds_median": 5.182,
+   "seconds_all": [
+    5.221,
+    5.182,
+    3.868
+   ],
+   "peak_mb_max": 134.6,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-arch"
+  },
+  {
+   "way": "c",
+   "wall": 2.428,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 2624.1,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    13.5
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 1080,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 27,
+    "direct": 1058,
+    "shapes": 1107,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.329,
+    "structure": 0.0919,
+    "roofs": 0.0,
+    "planes": 1.407,
+    "obstacles": 0.2546,
+    "total": 2.0847
+   },
+   "errors": [],
+   "seconds": 2.106,
+   "peak_mb": 130.2,
+   "status": "ok",
+   "seconds_median": 2.106,
+   "seconds_all": [
+    2.285,
+    2.106,
+    1.995
+   ],
+   "peak_mb_max": 130.2,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-arch"
+  },
+  {
+   "way": "d",
+   "wall": 1.416,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 2996.3,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    13.5
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 1080,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 27,
+    "direct": 0,
+    "shapes": 1107,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.3111,
+    "structure": 0.0917,
+    "roofs": 0.0,
+    "planes": 0.5688,
+    "obstacles": 0.1766,
+    "total": 1.15
+   },
+   "errors": [],
+   "seconds": 1.17,
+   "peak_mb": 106.6,
+   "status": "ok",
+   "seconds_median": 1.17,
+   "seconds_all": [
+    1.156,
+    1.17,
+    1.228
+   ],
+   "peak_mb_max": 106.8,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-arch"
+  },
+  {
+   "way": "open-normal",
+   "wall": 1.114,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 2862,
+   "seconds": 0.831,
+   "peak_mb": 121.0,
+   "status": "ok",
+   "seconds_median": 0.75,
+   "seconds_all": [
+    0.75,
+    0.831,
+    0.731
+   ],
+   "peak_mb_max": 121.0,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "esplanades"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.711,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 2862,
+   "seconds": 0.346,
+   "peak_mb": 83.3,
+   "status": "ok",
+   "seconds_median": 0.357,
+   "seconds_all": [
+    0.363,
+    0.346,
+    0.357
+   ],
+   "peak_mb_max": 83.3,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "esplanades"
+  },
+  {
+   "way": "a",
+   "wall": 29.237,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 16,
+   "sloped": 0,
+   "pitch_area": 1035.9,
+   "tilts": [],
+   "obstacles": 29,
+   "kinds": [
+    "parapet"
+   ],
+   "heights": [
+    17.9
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ARCHICAD-64 22.0.0",
+   "counts": {
+    "roof_elements": 88,
+    "tessellated": 1958,
+    "triangles": 152712,
+    "small_faces": 18,
+    "small_area": 7.068,
+    "modules": 175,
+    "off_roof": 0,
+    "obstacle_candidates": 208,
+    "direct": 0,
+    "shapes": 1958,
+    "errors": 1,
+    "products": 1959
+   },
+   "times": {
+    "open": 0.7053,
+    "structure": 0.0959,
+    "tessellate_all": 26.7361,
+    "roofs": 0.0001,
+    "planes": 0.5008,
+    "obstacles": 0.7538,
+    "total": 28.822
+   },
+   "errors": [
+    "1 elements without a shape from the iterator"
+   ],
+   "seconds": 28.868,
+   "peak_mb": 234.6,
+   "status": "ok",
+   "seconds_median": 28.335,
+   "seconds_all": [
+    28.335,
+    28.868,
+    27.103
+   ],
+   "peak_mb_max": 234.8,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "esplanades"
+  },
+  {
+   "way": "b8",
+   "wall": 3.238,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "buildings": 1,
+   "pitches": 16,
+   "sloped": 0,
+   "pitch_area": 1038.7,
+   "tilts": [],
+   "obstacles": 29,
+   "kinds": [
+    "parapet"
+   ],
+   "heights": [
+    17.9
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ARCHICAD-64 22.0.0",
+   "counts": {
+    "roof_elements": 88,
+    "small_faces": 18,
+    "small_area": 7.068,
+    "modules": 175,
+    "off_roof": 0,
+    "obstacle_candidates": 208,
+    "direct": 0,
+    "shapes": 296,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 1.0961,
+    "structure": 0.155,
+    "roofs": 0.1428,
+    "planes": 0.1523,
+    "obstacles": 1.271,
+    "total": 2.8213
+   },
+   "errors": [],
+   "seconds": 2.846,
+   "peak_mb": 135.9,
+   "status": "ok",
+   "seconds_median": 2.304,
+   "seconds_all": [
+    2.304,
+    2.846,
+    2.212
+   ],
+   "peak_mb_max": 136.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "esplanades"
+  },
+  {
+   "way": "b1",
+   "wall": 5.265,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 16,
+   "sloped": 0,
+   "pitch_area": 1038.7,
+   "tilts": [],
+   "obstacles": 29,
+   "kinds": [
+    "parapet"
+   ],
+   "heights": [
+    17.9
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ARCHICAD-64 22.0.0",
+   "counts": {
+    "roof_elements": 88,
+    "small_faces": 18,
+    "small_area": 7.068,
+    "modules": 175,
+    "off_roof": 0,
+    "obstacle_candidates": 208,
+    "direct": 0,
+    "shapes": 296,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.3744,
+    "structure": 0.1193,
+    "roofs": 0.3098,
+    "planes": 0.1515,
+    "obstacles": 3.9173,
+    "total": 4.8771
+   },
+   "errors": [],
+   "seconds": 4.902,
+   "peak_mb": 107.7,
+   "status": "ok",
+   "seconds_median": 4.902,
+   "seconds_all": [
+    4.755,
+    4.902,
+    5.36
+   ],
+   "peak_mb_max": 107.8,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "esplanades"
+  },
+  {
+   "way": "c",
+   "wall": 1.93,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "buildings": 1,
+   "pitches": 16,
+   "sloped": 0,
+   "pitch_area": 1038.7,
+   "tilts": [],
+   "obstacles": 29,
+   "kinds": [
+    "parapet"
+   ],
+   "heights": [
+    17.9
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ARCHICAD-64 22.0.0",
+   "counts": {
+    "roof_elements": 88,
+    "small_faces": 18,
+    "small_area": 7.068,
+    "modules": 175,
+    "off_roof": 0,
+    "obstacle_candidates": 208,
+    "direct": 295,
+    "shapes": 296,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.3596,
+    "structure": 0.1754,
+    "roofs": 0.0453,
+    "planes": 0.1065,
+    "obstacles": 0.8585,
+    "total": 1.5508
+   },
+   "errors": [],
+   "seconds": 1.574,
+   "peak_mb": 105.8,
+   "status": "ok",
+   "seconds_median": 1.371,
+   "seconds_all": [
+    1.371,
+    1.574,
+    1.363
+   ],
+   "peak_mb_max": 105.9,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "esplanades"
+  },
+  {
+   "way": "d",
+   "wall": 1.516,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 1200.8,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    17.9
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ARCHICAD-64 22.0.0",
+   "counts": {
+    "roof_elements": 88,
+    "modules": 175,
+    "off_roof": 0,
+    "obstacle_candidates": 208,
+    "direct": 0,
+    "shapes": 296,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.3465,
+    "structure": 0.1098,
+    "roofs": 0.0497,
+    "planes": 0.0027,
+    "obstacles": 0.6776,
+    "total": 1.1918
+   },
+   "errors": [],
+   "seconds": 1.21,
+   "peak_mb": 94.5,
+   "status": "ok",
+   "seconds_median": 1.21,
+   "seconds_all": [
+    1.36,
+    1.21,
+    1.031
+   ],
+   "peak_mb_max": 94.5,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "esplanades"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.608,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 5180,
+   "seconds": 0.329,
+   "peak_mb": 68.0,
+   "status": "ok",
+   "seconds_median": 0.329,
+   "seconds_all": [
+    0.305,
+    0.329,
+    0.383
+   ],
+   "peak_mb_max": 68.0,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "great-court"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.609,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 5180,
+   "seconds": 0.247,
+   "peak_mb": 59.4,
+   "status": "ok",
+   "seconds_median": 0.247,
+   "seconds_all": [
+    0.23,
+    0.247,
+    0.273
+   ],
+   "peak_mb_max": 59.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "great-court"
+  },
+  {
+   "way": "a",
+   "wall": 8.783,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "ssiRhinoIFC - Geometry Gym Plug-in for Rhino3d 0.3.7.0",
+   "counts": {
+    "roof_elements": 0,
+    "tessellated": 5178,
+    "triangles": 165696,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 5178,
+    "errors": 0,
+    "products": 5178
+   },
+   "times": {
+    "open": 0.3146,
+    "structure": 0.1012,
+    "tessellate_all": 7.9951,
+    "roofs": 0.0,
+    "planes": 0.0001,
+    "obstacles": 0.0002,
+    "total": 8.4769
+   },
+   "errors": [],
+   "seconds": 8.499,
+   "peak_mb": 123.7,
+   "status": "ok",
+   "seconds_median": 8.794,
+   "seconds_all": [
+    10.551,
+    8.499,
+    8.794
+   ],
+   "peak_mb_max": 124.2,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "great-court"
+  },
+  {
+   "way": "b8",
+   "wall": 0.607,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "ssiRhinoIFC - Geometry Gym Plug-in for Rhino3d 0.3.7.0",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.2456,
+    "structure": 0.0876,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0001,
+    "total": 0.3333
+   },
+   "errors": [],
+   "seconds": 0.338,
+   "peak_mb": 71.4,
+   "status": "ok",
+   "seconds_median": 0.349,
+   "seconds_all": [
+    0.349,
+    0.338,
+    0.381
+   ],
+   "peak_mb_max": 71.5,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "great-court"
+  },
+  {
+   "way": "b1",
+   "wall": 0.507,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "ssiRhinoIFC - Geometry Gym Plug-in for Rhino3d 0.3.7.0",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1423,
+    "structure": 0.1068,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0001,
+    "total": 0.2493
+   },
+   "errors": [],
+   "seconds": 0.254,
+   "peak_mb": 66.6,
+   "status": "ok",
+   "seconds_median": 0.254,
+   "seconds_all": [
+    0.275,
+    0.254,
+    0.238
+   ],
+   "peak_mb_max": 66.6,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "great-court"
+  },
+  {
+   "way": "c",
+   "wall": 0.713,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "ssiRhinoIFC - Geometry Gym Plug-in for Rhino3d 0.3.7.0",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1848,
+    "structure": 0.1288,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0001,
+    "total": 0.3138
+   },
+   "errors": [],
+   "seconds": 0.319,
+   "peak_mb": 66.6,
+   "status": "ok",
+   "seconds_median": 0.319,
+   "seconds_all": [
+    0.328,
+    0.319,
+    0.289
+   ],
+   "peak_mb_max": 66.6,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "great-court"
+  },
+  {
+   "way": "d",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "ssiRhinoIFC - Geometry Gym Plug-in for Rhino3d 0.3.7.0",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1624,
+    "structure": 0.0881,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0001,
+    "total": 0.2506
+   },
+   "errors": [],
+   "seconds": 0.255,
+   "peak_mb": 66.6,
+   "status": "ok",
+   "seconds_median": 0.25,
+   "seconds_all": [
+    0.25,
+    0.255,
+    0.231
+   ],
+   "peak_mb_max": 66.6,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "great-court"
+  },
+  {
+   "way": "open-normal",
+   "wall": 2.72,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 3822,
+   "seconds": 2.317,
+   "peak_mb": 336.0,
+   "status": "ok",
+   "seconds_median": 2.471,
+   "seconds_all": [
+    2.528,
+    2.317,
+    2.471
+   ],
+   "peak_mb_max": 336.3,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "schependomlaan"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 1.211,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "products": 3822,
+   "seconds": 0.892,
+   "peak_mb": 174.3,
+   "status": "ok",
+   "seconds_median": 0.892,
+   "seconds_all": [
+    0.892,
+    0.892,
+    0.794
+   ],
+   "peak_mb_max": 174.3,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "schependomlaan"
+  },
+  {
+   "way": "a",
+   "wall": 19.641,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 3,
+   "pitches": 22,
+   "sloped": 14,
+   "pitch_area": 121.1,
+   "tilts": [
+    65
+   ],
+   "obstacles": 21,
+   "kinds": [
+    "other",
+    "parapet",
+    "skylight"
+   ],
+   "heights": [
+    5.7,
+    11.6,
+    11.8
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ArchiCAD-64 18.0.0",
+   "counts": {
+    "roof_elements": 62,
+    "tessellated": 3504,
+    "triangles": 260373,
+    "small_faces": 24,
+    "small_area": 13.894,
+    "modules": 0,
+    "off_roof": 303,
+    "obstacle_candidates": 585,
+    "direct": 0,
+    "shapes": 3504,
+    "errors": 1,
+    "products": 3573
+   },
+   "times": {
+    "open": 2.1329,
+    "structure": 0.0969,
+    "tessellate_all": 15.8309,
+    "roofs": 0.0001,
+    "planes": 0.3341,
+    "obstacles": 0.7673,
+    "total": 19.2089
+   },
+   "errors": [
+    "69 elements without a shape from the iterator"
+   ],
+   "seconds": 19.308,
+   "peak_mb": 600.9,
+   "status": "ok",
+   "seconds_median": 22.574,
+   "seconds_all": [
+    23.598,
+    19.308,
+    22.574
+   ],
+   "peak_mb_max": 601.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "schependomlaan"
+  },
+  {
+   "way": "b8",
+   "wall": 4.937,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 3,
+   "pitches": 22,
+   "sloped": 14,
+   "pitch_area": 121.1,
+   "tilts": [
+    65
+   ],
+   "obstacles": 21,
+   "kinds": [
+    "other",
+    "parapet",
+    "skylight"
+   ],
+   "heights": [
+    5.7,
+    11.6,
+    11.8
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ArchiCAD-64 18.0.0",
+   "counts": {
+    "roof_elements": 62,
+    "small_faces": 24,
+    "small_area": 13.894,
+    "modules": 0,
+    "off_roof": 305,
+    "obstacle_candidates": 585,
+    "direct": 0,
+    "shapes": 647,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 2.1164,
+    "structure": 0.0947,
+    "roofs": 0.2384,
+    "planes": 0.2652,
+    "obstacles": 1.868,
+    "total": 4.5899
+   },
+   "errors": [],
+   "seconds": 4.666,
+   "peak_mb": 336.1,
+   "status": "ok",
+   "seconds_median": 4.666,
+   "seconds_all": [
+    4.621,
+    4.666,
+    4.696
+   ],
+   "peak_mb_max": 336.2,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "schependomlaan"
+  },
+  {
+   "way": "b1",
+   "wall": 6.948,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 3,
+   "pitches": 22,
+   "sloped": 14,
+   "pitch_area": 121.1,
+   "tilts": [
+    65
+   ],
+   "obstacles": 21,
+   "kinds": [
+    "other",
+    "parapet",
+    "skylight"
+   ],
+   "heights": [
+    5.7,
+    11.6,
+    11.8
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ArchiCAD-64 18.0.0",
+   "counts": {
+    "roof_elements": 62,
+    "small_faces": 24,
+    "small_area": 13.894,
+    "modules": 0,
+    "off_roof": 305,
+    "obstacle_candidates": 585,
+    "direct": 0,
+    "shapes": 647,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.8642,
+    "structure": 0.0831,
+    "roofs": 0.613,
+    "planes": 0.3941,
+    "obstacles": 4.5273,
+    "total": 6.5056
+   },
+   "errors": [],
+   "seconds": 6.585,
+   "peak_mb": 207.3,
+   "status": "ok",
+   "seconds_median": 6.585,
+   "seconds_all": [
+    6.334,
+    6.585,
+    7.155
+   ],
+   "peak_mb_max": 207.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "schependomlaan"
+  },
+  {
+   "way": "c",
+   "wall": 3.63,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 3,
+   "pitches": 22,
+   "sloped": 14,
+   "pitch_area": 126.7,
+   "tilts": [
+    65
+   ],
+   "obstacles": 21,
+   "kinds": [
+    "other",
+    "parapet",
+    "skylight"
+   ],
+   "heights": [
+    5.7,
+    11.6,
+    11.8
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ArchiCAD-64 18.0.0",
+   "counts": {
+    "roof_elements": 62,
+    "small_faces": 16,
+    "small_area": 11.13,
+    "modules": 0,
+    "off_roof": 305,
+    "obstacle_candidates": 585,
+    "direct": 645,
+    "shapes": 647,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 1.0711,
+    "structure": 0.1331,
+    "roofs": 0.106,
+    "planes": 0.2416,
+    "obstacles": 1.6024,
+    "total": 3.1917
+   },
+   "errors": [],
+   "seconds": 3.268,
+   "peak_mb": 192.1,
+   "status": "ok",
+   "seconds_median": 3.268,
+   "seconds_all": [
+    3.255,
+    3.268,
+    3.372
+   ],
+   "peak_mb_max": 192.1,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "schependomlaan"
+  },
+  {
+   "way": "d",
+   "wall": 2.02,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 480.2,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    13.1
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ArchiCAD-64 18.0.0",
+   "counts": {
+    "roof_elements": 62,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 2,
+    "direct": 0,
+    "shapes": 64,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 1.0264,
+    "structure": 0.1216,
+    "roofs": 0.09,
+    "planes": 0.0061,
+    "obstacles": 0.3303,
+    "total": 1.6103
+   },
+   "errors": [],
+   "seconds": 1.689,
+   "peak_mb": 176.6,
+   "status": "ok",
+   "seconds_median": 1.689,
+   "seconds_all": [
+    1.818,
+    1.689,
+    1.589
+   ],
+   "peak_mb_max": 176.9,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "schependomlaan"
+  },
+  {
+   "way": "open-normal",
+   "wall": 4.149,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 19650,
+   "seconds": 3.56,
+   "peak_mb": 417.4,
+   "status": "ok",
+   "seconds_median": 3.892,
+   "seconds_all": [
+    3.892,
+    3.56,
+    3.929
+   ],
+   "peak_mb_max": 417.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-plumbing"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 1.726,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 19650,
+   "seconds": 1.288,
+   "peak_mb": 245.0,
+   "status": "ok",
+   "seconds_median": 1.229,
+   "seconds_all": [
+    1.229,
+    1.288,
+    1.194
+   ],
+   "peak_mb_max": 245.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-plumbing"
+  },
+  {
+   "way": "a",
+   "wall": 300.072,
+   "exit": 1,
+   "rss_seen_mb": 4.3,
+   "status": "stopped after 300 s",
+   "runs": 3,
+   "statuses": [
+    "stopped after 300 s",
+    "stopped after 300 s",
+    "stopped after 300 s"
+   ],
+   "sample": "clinic-plumbing"
+  },
+  {
+   "way": "b8",
+   "wall": 4.664,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": true,
+   "map": null,
+   "north": -90.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2013 2013",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 3.3568,
+    "structure": 0.1883,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.5228,
+    "total": 4.068
+   },
+   "errors": [],
+   "seconds": 4.256,
+   "peak_mb": 417.1,
+   "status": "ok",
+   "seconds_median": 4.393,
+   "seconds_all": [
+    4.393,
+    4.256,
+    4.432
+   ],
+   "peak_mb_max": 417.1,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-plumbing"
+  },
+  {
+   "way": "b1",
+   "wall": 2.227,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": true,
+   "map": null,
+   "north": -90.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2013 2013",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 1.2584,
+    "structure": 0.113,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.3108,
+    "total": 1.6823
+   },
+   "errors": [],
+   "seconds": 1.811,
+   "peak_mb": 245.3,
+   "status": "ok",
+   "seconds_median": 1.811,
+   "seconds_all": [
+    1.871,
+    1.811,
+    1.78
+   ],
+   "peak_mb_max": 245.4,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-plumbing"
+  },
+  {
+   "way": "c",
+   "wall": 2.229,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": true,
+   "map": null,
+   "north": -90.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2013 2013",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 1.3763,
+    "structure": 0.1076,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.3162,
+    "total": 1.8002
+   },
+   "errors": [],
+   "seconds": 1.919,
+   "peak_mb": 245.1,
+   "status": "ok",
+   "seconds_median": 1.893,
+   "seconds_all": [
+    1.716,
+    1.919,
+    1.893
+   ],
+   "peak_mb_max": 245.1,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-plumbing"
+  },
+  {
+   "way": "d",
+   "wall": 2.025,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": true,
+   "map": null,
+   "north": -90.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2013 2013",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 1.1336,
+    "structure": 0.1409,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.2497,
+    "total": 1.5243
+   },
+   "errors": [],
+   "seconds": 1.636,
+   "peak_mb": 245.2,
+   "status": "ok",
+   "seconds_median": 1.778,
+   "seconds_all": [
+    1.778,
+    1.636,
+    1.796
+   ],
+   "peak_mb_max": 245.3,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "clinic-plumbing"
+  },
+  {
+   "way": "open-normal",
+   "wall": 25.521,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 78600,
+   "seconds": 23.799,
+   "peak_mb": 1556.0,
+   "status": "ok",
+   "seconds_median": 23.799,
+   "seconds_all": [
+    23.799
+   ],
+   "peak_mb_max": 1556.0,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "clinic-plumbing-x4"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 9.851,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 78600,
+   "seconds": 8.567,
+   "peak_mb": 836.7,
+   "status": "ok",
+   "seconds_median": 8.567,
+   "seconds_all": [
+    8.567
+   ],
+   "peak_mb_max": 836.7,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "clinic-plumbing-x4"
+  },
+  {
+   "way": "a",
+   "wall": 300.078,
+   "exit": 1,
+   "rss_seen_mb": 4.3,
+   "status": "stopped after 300 s",
+   "runs": 1,
+   "statuses": [
+    "stopped after 300 s"
+   ],
+   "sample": "clinic-plumbing-x4"
+  },
+  {
+   "way": "b8",
+   "wall": 15.114,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": true,
+   "map": null,
+   "north": -90.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2013 2013",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 13.3867,
+    "structure": 0.1202,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.7642,
+    "total": 14.2712
+   },
+   "errors": [],
+   "seconds": 14.743,
+   "peak_mb": 1556.0,
+   "status": "ok",
+   "seconds_median": 14.743,
+   "seconds_all": [
+    14.743
+   ],
+   "peak_mb_max": 1556.0,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "clinic-plumbing-x4"
+  },
+  {
+   "way": "b1",
+   "wall": 7.973,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": true,
+   "map": null,
+   "north": -90.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2013 2013",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 5.108,
+    "structure": 0.145,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 1.6457,
+    "total": 6.8988
+   },
+   "errors": [],
+   "seconds": 7.629,
+   "peak_mb": 836.5,
+   "status": "ok",
+   "seconds_median": 7.629,
+   "seconds_all": [
+    7.629
+   ],
+   "peak_mb_max": 836.5,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "clinic-plumbing-x4"
+  },
+  {
+   "way": "c",
+   "wall": 11.732,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": true,
+   "map": null,
+   "north": -90.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2013 2013",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 7.6988,
+    "structure": 0.1878,
+    "roofs": 0.0,
+    "planes": 0.0001,
+    "obstacles": 2.7308,
+    "total": 10.6176
+   },
+   "errors": [],
+   "seconds": 11.337,
+   "peak_mb": 836.8,
+   "status": "ok",
+   "seconds_median": 11.337,
+   "seconds_all": [
+    11.337
+   ],
+   "peak_mb_max": 836.8,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "clinic-plumbing-x4"
+  },
+  {
+   "way": "d",
+   "wall": 10.4,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": true,
+   "map": null,
+   "north": -90.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2013 2013",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 6.9939,
+    "structure": 0.2331,
+    "roofs": 0.0,
+    "planes": 0.0002,
+    "obstacles": 2.2421,
+    "total": 9.4693
+   },
+   "errors": [],
+   "seconds": 10.098,
+   "peak_mb": 836.8,
+   "status": "ok",
+   "seconds_median": 10.098,
+   "seconds_all": [
+    10.098
+   ],
+   "peak_mb_max": 836.8,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "clinic-plumbing-x4"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.516,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 6,
+   "seconds": 0.209,
+   "peak_mb": 56.4,
+   "status": "ok",
+   "seconds_median": 0.209,
+   "seconds_all": [
+    0.209
+   ],
+   "peak_mb_max": 56.4,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-infinite-loop"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.413,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 6,
+   "seconds": 0.139,
+   "peak_mb": 53.5,
+   "status": "ok",
+   "seconds_median": 0.139,
+   "seconds_all": [
+    0.139
+   ],
+   "peak_mb_max": 53.5,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-infinite-loop"
+  },
+  {
+   "way": "a",
+   "wall": 44.759,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 2.3,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    2.7
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": true,
+   "map": null,
+   "north": -166.69,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Not Defined Not Defined",
+   "counts": {
+    "roof_elements": 0,
+    "tessellated": 1,
+    "triangles": 9479,
+    "wall_elements": 1,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 1,
+    "errors": 0,
+    "products": 1
+   },
+   "times": {
+    "open": 0.1861,
+    "structure": 0.1144,
+    "tessellate_all": 44.0914,
+    "roofs": 0.0,
+    "planes": 0.0549,
+    "obstacles": 0.0007,
+    "total": 44.4477
+   },
+   "errors": [],
+   "seconds": 44.452,
+   "peak_mb": 236.7,
+   "status": "ok",
+   "seconds_median": 44.452,
+   "seconds_all": [
+    44.452
+   ],
+   "peak_mb_max": 236.7,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-infinite-loop"
+  },
+  {
+   "way": "b8",
+   "wall": 4.556,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 2.3,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    2.7
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": true,
+   "map": null,
+   "north": -166.69,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Not Defined Not Defined",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 1,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 1,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1907,
+    "structure": 0.0892,
+    "roofs": 0.0,
+    "planes": 3.9968,
+    "obstacles": 0.0004,
+    "total": 4.2772
+   },
+   "errors": [],
+   "seconds": 4.281,
+   "peak_mb": 214.5,
+   "status": "ok",
+   "seconds_median": 4.281,
+   "seconds_all": [
+    4.281
+   ],
+   "peak_mb_max": 214.5,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-infinite-loop"
+  },
+  {
+   "way": "b1",
+   "wall": 4.879,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 2.3,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    2.7
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": true,
+   "map": null,
+   "north": -166.69,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Not Defined Not Defined",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 1,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 1,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.0963,
+    "structure": 0.0725,
+    "roofs": 0.0,
+    "planes": 4.28,
+    "obstacles": 0.0006,
+    "total": 4.4495
+   },
+   "errors": [],
+   "seconds": 4.455,
+   "peak_mb": 216.4,
+   "status": "ok",
+   "seconds_median": 4.455,
+   "seconds_all": [
+    4.455
+   ],
+   "peak_mb_max": 216.4,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-infinite-loop"
+  },
+  {
+   "way": "c",
+   "wall": 1.13,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 2.3,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    2.7
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": true,
+   "map": null,
+   "north": -166.69,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Not Defined Not Defined",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 1,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 1,
+    "shapes": 1,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1336,
+    "structure": 0.0885,
+    "roofs": 0.0,
+    "planes": 0.5213,
+    "obstacles": 0.0005,
+    "total": 0.744
+   },
+   "errors": [],
+   "seconds": 0.748,
+   "peak_mb": 80.1,
+   "status": "ok",
+   "seconds_median": 0.748,
+   "seconds_all": [
+    0.748
+   ],
+   "peak_mb_max": 80.1,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-infinite-loop"
+  },
+  {
+   "way": "d",
+   "wall": 0.923,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 2.3,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    2.7
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": true,
+   "map": null,
+   "north": -166.69,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Not Defined Not Defined",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 1,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 1,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.118,
+    "structure": 0.0886,
+    "roofs": 0.0,
+    "planes": 0.4076,
+    "obstacles": 0.0002,
+    "total": 0.6144
+   },
+   "errors": [],
+   "seconds": 0.617,
+   "peak_mb": 78.6,
+   "status": "ok",
+   "seconds_median": 0.617,
+   "seconds_all": [
+    0.617
+   ],
+   "peak_mb_max": 78.6,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-infinite-loop"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.415,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "products": 5,
+   "seconds": 0.112,
+   "peak_mb": 46.0,
+   "status": "ok",
+   "seconds_median": 0.112,
+   "seconds_all": [
+    0.112
+   ],
+   "peak_mb_max": 46.0,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-timeout"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.315,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 5,
+   "seconds": 0.095,
+   "peak_mb": 45.8,
+   "status": "ok",
+   "seconds_median": 0.095,
+   "seconds_all": [
+    0.095
+   ],
+   "peak_mb_max": 45.8,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-timeout"
+  },
+  {
+   "way": "a",
+   "wall": 300.037,
+   "exit": 1,
+   "rss_seen_mb": 4.3,
+   "status": "stopped after 300 s",
+   "runs": 1,
+   "statuses": [
+    "stopped after 300 s"
+   ],
+   "sample": "ios-timeout"
+  },
+  {
+   "way": "b8",
+   "wall": 0.918,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 4.2,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    60.0
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2014 (ENU) 2014",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 3,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 3,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.107,
+    "structure": 0.0727,
+    "roofs": 0.0,
+    "planes": 0.4846,
+    "obstacles": 0.0004,
+    "total": 0.6647
+   },
+   "errors": [],
+   "seconds": 0.665,
+   "peak_mb": 77.9,
+   "status": "ok",
+   "seconds_median": 0.665,
+   "seconds_all": [
+    0.665
+   ],
+   "peak_mb_max": 77.9,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-timeout"
+  },
+  {
+   "way": "b1",
+   "wall": 1.017,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 4.2,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    60.0
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2014 (ENU) 2014",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 3,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 3,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1167,
+    "structure": 0.0861,
+    "roofs": 0.0,
+    "planes": 0.4766,
+    "obstacles": 0.0004,
+    "total": 0.6797
+   },
+   "errors": [],
+   "seconds": 0.68,
+   "peak_mb": 77.2,
+   "status": "ok",
+   "seconds_median": 0.68,
+   "seconds_all": [
+    0.68
+   ],
+   "peak_mb_max": 77.2,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-timeout"
+  },
+  {
+   "way": "c",
+   "wall": 0.513,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 4.2,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    60.0
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2014 (ENU) 2014",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 3,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 3,
+    "shapes": 3,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1088,
+    "structure": 0.0772,
+    "roofs": 0.0,
+    "planes": 0.0663,
+    "obstacles": 0.0004,
+    "total": 0.2528
+   },
+   "errors": [],
+   "seconds": 0.253,
+   "peak_mb": 55.7,
+   "status": "ok",
+   "seconds_median": 0.253,
+   "seconds_all": [
+    0.253
+   ],
+   "peak_mb_max": 55.7,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-timeout"
+  },
+  {
+   "way": "d",
+   "wall": 0.513,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 24.0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    60.0
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2014 (ENU) 2014",
+   "counts": {
+    "roof_elements": 0,
+    "wall_elements": 3,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 3,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1141,
+    "structure": 0.0782,
+    "roofs": 0.0,
+    "planes": 0.0667,
+    "obstacles": 0.0003,
+    "total": 0.2593
+   },
+   "errors": [],
+   "seconds": 0.26,
+   "peak_mb": 55.5,
+   "status": "ok",
+   "seconds_median": 0.26,
+   "seconds_all": [
+    0.26
+   ],
+   "peak_mb_max": 55.5,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-timeout"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.414,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 9,
+   "seconds": 0.132,
+   "peak_mb": 46.0,
+   "status": "ok",
+   "seconds_median": 0.132,
+   "seconds_all": [
+    0.132
+   ],
+   "peak_mb_max": 46.0,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-segfault"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.413,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "products": 9,
+   "seconds": 0.116,
+   "peak_mb": 45.5,
+   "status": "ok",
+   "seconds_median": 0.116,
+   "seconds_all": [
+    0.116
+   ],
+   "peak_mb_max": 45.5,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-segfault"
+  },
+  {
+   "way": "a",
+   "wall": 5.35,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 119.8,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    11.7
+   ],
+   "sources": [
+    "slabs"
+   ],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2016 (ENU) 2016",
+   "counts": {
+    "roof_elements": 0,
+    "tessellated": 1,
+    "triangles": 2996,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "slab_elements": 1,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 1,
+    "errors": 0,
+    "products": 1
+   },
+   "times": {
+    "open": 0.1425,
+    "structure": 0.0982,
+    "tessellate_all": 4.6997,
+    "roofs": 0.0,
+    "planes": 0.1324,
+    "obstacles": 0.0003,
+    "total": 5.0733
+   },
+   "errors": [],
+   "seconds": 5.074,
+   "peak_mb": 127.6,
+   "status": "ok",
+   "seconds_median": 5.074,
+   "seconds_all": [
+    5.074
+   ],
+   "peak_mb_max": 127.6,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-segfault"
+  },
+  {
+   "way": "b8",
+   "wall": 0.514,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 119.8,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    11.7
+   ],
+   "sources": [
+    "slabs"
+   ],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2016 (ENU) 2016",
+   "counts": {
+    "roof_elements": 0,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "slab_elements": 1,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 1,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1168,
+    "structure": 0.0844,
+    "roofs": 0.0,
+    "planes": 0.0316,
+    "obstacles": 0.0003,
+    "total": 0.2332
+   },
+   "errors": [],
+   "seconds": 0.233,
+   "peak_mb": 60.6,
+   "status": "ok",
+   "seconds_median": 0.233,
+   "seconds_all": [
+    0.233
+   ],
+   "peak_mb_max": 60.6,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-segfault"
+  },
+  {
+   "way": "b1",
+   "wall": 0.513,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 119.8,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    11.7
+   ],
+   "sources": [
+    "slabs"
+   ],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2016 (ENU) 2016",
+   "counts": {
+    "roof_elements": 0,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "slab_elements": 1,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 1,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1046,
+    "structure": 0.0783,
+    "roofs": 0.0,
+    "planes": 0.0175,
+    "obstacles": 0.0002,
+    "total": 0.2007
+   },
+   "errors": [],
+   "seconds": 0.201,
+   "peak_mb": 60.2,
+   "status": "ok",
+   "seconds_median": 0.201,
+   "seconds_all": [
+    0.201
+   ],
+   "peak_mb_max": 60.2,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-segfault"
+  },
+  {
+   "way": "c",
+   "wall": 0.514,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 119.8,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    11.7
+   ],
+   "sources": [
+    "slabs"
+   ],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2016 (ENU) 2016",
+   "counts": {
+    "roof_elements": 0,
+    "small_faces": 0,
+    "small_area": 0.0,
+    "slab_elements": 1,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 1,
+    "shapes": 1,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1019,
+    "structure": 0.0933,
+    "roofs": 0.0,
+    "planes": 0.0035,
+    "obstacles": 0.0003,
+    "total": 0.1989
+   },
+   "errors": [],
+   "seconds": 0.199,
+   "peak_mb": 53.2,
+   "status": "ok",
+   "seconds_median": 0.199,
+   "seconds_all": [
+    0.199
+   ],
+   "peak_mb_max": 53.2,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-segfault"
+  },
+  {
+   "way": "d",
+   "wall": 0.515,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 123.8,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    11.7
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2016 (ENU) 2016",
+   "counts": {
+    "roof_elements": 0,
+    "slab_elements": 1,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 1,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1049,
+    "structure": 0.0756,
+    "roofs": 0.0,
+    "planes": 0.0021,
+    "obstacles": 0.0002,
+    "total": 0.1829
+   },
+   "errors": [],
+   "seconds": 0.183,
+   "peak_mb": 53.4,
+   "status": "ok",
+   "seconds_median": 0.183,
+   "seconds_all": [
+    0.183
+   ],
+   "peak_mb_max": 53.4,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-segfault"
+  },
+  {
+   "way": "open-normal",
+   "wall": 2.733,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "products": 1,
+   "seconds": 2.303,
+   "peak_mb": 247.9,
+   "status": "ok",
+   "seconds_median": 2.303,
+   "seconds_all": [
+    2.303
+   ],
+   "peak_mb_max": 247.9,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-proxy-36mb"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 1.02,
+   "exit": 0,
+   "rss_seen_mb": 4.3,
+   "products": 1,
+   "seconds": 0.638,
+   "peak_mb": 161.3,
+   "status": "ok",
+   "seconds_median": 0.638,
+   "seconds_all": [
+    0.638
+   ],
+   "peak_mb_max": 161.3,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-proxy-36mb"
+  },
+  {
+   "way": "a",
+   "wall": 185.809,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2017 (ENU) 2017",
+   "counts": {
+    "roof_elements": 0,
+    "tessellated": 1,
+    "triangles": 248577,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 1,
+    "errors": 0,
+    "products": 1
+   },
+   "times": {
+    "open": 2.0755,
+    "structure": 0.1186,
+    "tessellate_all": 183.1338,
+    "roofs": 0.0,
+    "planes": 0.0001,
+    "obstacles": 0.0004,
+    "total": 185.3286
+   },
+   "errors": [],
+   "seconds": 185.419,
+   "peak_mb": 1613.2,
+   "status": "ok",
+   "seconds_median": 185.419,
+   "seconds_all": [
+    185.419
+   ],
+   "peak_mb_max": 1613.2,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-proxy-36mb"
+  },
+  {
+   "way": "b8",
+   "wall": 2.529,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2017 (ENU) 2017",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 2.0137,
+    "structure": 0.1037,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0002,
+    "total": 2.1176
+   },
+   "errors": [],
+   "seconds": 2.189,
+   "peak_mb": 248.1,
+   "status": "ok",
+   "seconds_median": 2.189,
+   "seconds_all": [
+    2.189
+   ],
+   "peak_mb_max": 248.1,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-proxy-36mb"
+  },
+  {
+   "way": "b1",
+   "wall": 1.122,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2017 (ENU) 2017",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.6606,
+    "structure": 0.0733,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0002,
+    "total": 0.7341
+   },
+   "errors": [],
+   "seconds": 0.792,
+   "peak_mb": 161.3,
+   "status": "ok",
+   "seconds_median": 0.792,
+   "seconds_all": [
+    0.792
+   ],
+   "peak_mb_max": 161.3,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-proxy-36mb"
+  },
+  {
+   "way": "c",
+   "wall": 1.117,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2017 (ENU) 2017",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.6242,
+    "structure": 0.0966,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0003,
+    "total": 0.7212
+   },
+   "errors": [],
+   "seconds": 0.788,
+   "peak_mb": 161.3,
+   "status": "ok",
+   "seconds_median": 0.788,
+   "seconds_all": [
+    0.788
+   ],
+   "peak_mb_max": 161.3,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-proxy-36mb"
+  },
+  {
+   "way": "d",
+   "wall": 1.117,
+   "exit": 0,
+   "rss_seen_mb": 4.2,
+   "buildings": 0,
+   "pitches": 0,
+   "sloped": 0,
+   "pitch_area": 0,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [],
+   "sources": [],
+   "site": false,
+   "map": null,
+   "north": -0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit 2017 (ENU) 2017",
+   "counts": {
+    "roof_elements": 0,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 0,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.6953,
+    "structure": 0.1062,
+    "roofs": 0.0,
+    "planes": 0.0,
+    "obstacles": 0.0002,
+    "total": 0.8017
+   },
+   "errors": [],
+   "seconds": 0.868,
+   "peak_mb": 161.0,
+   "status": "ok",
+   "seconds_median": 0.868,
+   "seconds_all": [
+    0.868
+   ],
+   "peak_mb_max": 161.0,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "ios-proxy-36mb"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.417,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to parse IFC SPF header"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "non-ifc"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.514,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to parse IFC SPF header"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "non-ifc"
+  },
+  {
+   "way": "a",
+   "wall": 0.415,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to parse IFC SPF header"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "non-ifc"
+  },
+  {
+   "way": "b8",
+   "wall": 0.414,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to parse IFC SPF header"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "non-ifc"
+  },
+  {
+   "way": "b1",
+   "wall": 0.414,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to parse IFC SPF header"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "non-ifc"
+  },
+  {
+   "way": "c",
+   "wall": 0.413,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to parse IFC SPF header"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "non-ifc"
+  },
+  {
+   "way": "d",
+   "wall": 0.413,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to parse IFC SPF header"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "non-ifc"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.413,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to open file for reading"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "vuoto"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.416,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to open file for reading"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "vuoto"
+  },
+  {
+   "way": "a",
+   "wall": 0.412,
+   "exit": 1,
+   "rss_seen_mb": 4.3,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to open file for reading"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "vuoto"
+  },
+  {
+   "way": "b8",
+   "wall": 0.414,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to open file for reading"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "vuoto"
+  },
+  {
+   "way": "b1",
+   "wall": 0.412,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to open file for reading"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "vuoto"
+  },
+  {
+   "way": "c",
+   "wall": 0.413,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to open file for reading"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "vuoto"
+  },
+  {
+   "way": "d",
+   "wall": 0.514,
+   "exit": 1,
+   "rss_seen_mb": 4.2,
+   "status": "error",
+   "stderr": [
+    "  File \"%USERPROFILE%\\dev\\meridiana-wt-ifc\\src\\meridiana\\ifc_read.py\", line 105, in open_model",
+    "    raise IfcError(f\"not a readable IFC file: {error}\") from None",
+    "meridiana.ifc_read.IfcError: not a readable IFC file: Unable to open file for reading"
+   ],
+   "runs": 1,
+   "statuses": [
+    "error"
+   ],
+   "sample": "vuoto"
+  },
+  {
+   "way": "open-normal",
+   "wall": 0.489,
+   "exit": 0,
+   "rss_seen_mb": 55.4,
+   "products": 151,
+   "seconds": 0.176,
+   "peak_mb": 52.2,
+   "status": "ok",
+   "seconds_median": 0.176,
+   "seconds_all": [
+    0.176
+   ],
+   "peak_mb_max": 52.2,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "troncato"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 0.476,
+   "exit": 0,
+   "rss_seen_mb": 43.3,
+   "products": 151,
+   "seconds": 0.13,
+   "peak_mb": 49.9,
+   "status": "ok",
+   "seconds_median": 0.13,
+   "seconds_all": [
+    0.13
+   ],
+   "peak_mb_max": 49.9,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "troncato"
+  },
+  {
+   "way": "a",
+   "wall": 0.823,
+   "exit": 0,
+   "rss_seen_mb": 76.6,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 9.3,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    2.9
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": false,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 0,
+    "tessellated": 6,
+    "triangles": 1322,
+    "slab_elements": 4,
+    "wall_elements": 30,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 6,
+    "errors": 1,
+    "products": 102
+   },
+   "times": {
+    "open": 0.1666,
+    "structure": 0.0942,
+    "tessellate_all": 0.2813,
+    "roofs": 0.0,
+    "planes": 0.0038,
+    "obstacles": 0.0149,
+    "total": 0.563
+   },
+   "errors": [
+    "96 elements without a shape from the iterator"
+   ],
+   "seconds": 0.565,
+   "peak_mb": 73.5,
+   "status": "ok",
+   "seconds_median": 0.565,
+   "seconds_all": [
+    0.565
+   ],
+   "peak_mb_max": 73.5,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "troncato"
+  },
+  {
+   "way": "b8",
+   "wall": 0.59,
+   "exit": 0,
+   "rss_seen_mb": 73.1,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 9.3,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    2.9
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": false,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 0,
+    "slab_elements": 4,
+    "wall_elements": 30,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 4,
+    "errors": 2,
+    "products": null
+   },
+   "times": {
+    "open": 0.1505,
+    "structure": 0.0911,
+    "roofs": 0.0,
+    "planes": 0.0639,
+    "obstacles": 0.0116,
+    "total": 0.3172
+   },
+   "errors": [
+    "the iterator found nothing to make",
+    "26 elements without a shape from the iterator"
+   ],
+   "seconds": 0.318,
+   "peak_mb": 69.9,
+   "status": "ok",
+   "seconds_median": 0.318,
+   "seconds_all": [
+    0.318
+   ],
+   "peak_mb_max": 69.9,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "troncato"
+  },
+  {
+   "way": "b1",
+   "wall": 0.586,
+   "exit": 0,
+   "rss_seen_mb": 68.8,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 9.3,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    2.9
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": false,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 0,
+    "slab_elements": 4,
+    "wall_elements": 30,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 0,
+    "shapes": 4,
+    "errors": 2,
+    "products": null
+   },
+   "times": {
+    "open": 0.1165,
+    "structure": 0.0841,
+    "roofs": 0.0,
+    "planes": 0.0748,
+    "obstacles": 0.0126,
+    "total": 0.2882
+   },
+   "errors": [
+    "the iterator found nothing to make",
+    "26 elements without a shape from the iterator"
+   ],
+   "seconds": 0.29,
+   "peak_mb": 67.1,
+   "status": "ok",
+   "seconds_median": 0.29,
+   "seconds_all": [
+    0.29
+   ],
+   "peak_mb_max": 67.1,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "troncato"
+  },
+  {
+   "way": "c",
+   "wall": 0.63,
+   "exit": 0,
+   "rss_seen_mb": 67.7,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 9.3,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    2.9
+   ],
+   "sources": [
+    "walls"
+   ],
+   "site": false,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 0,
+    "slab_elements": 4,
+    "wall_elements": 30,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 0,
+    "direct": 1,
+    "shapes": 4,
+    "errors": 32,
+    "products": null
+   },
+   "times": {
+    "open": 0.1108,
+    "structure": 0.087,
+    "roofs": 0.0,
+    "planes": 0.0913,
+    "obstacles": 0.0139,
+    "total": 0.3032
+   },
+   "errors": [
+    "IfcSlab #5165: 'NoneType' object has no attribute 'DirectionRatios'",
+    "IfcSlab #5267: 'NoneType' object has no attribute 'DirectionRatios'",
+    "IfcSlab #6132: 'NoneType' object has no attribute 'DirectionRatios'"
+   ],
+   "seconds": 0.305,
+   "peak_mb": 67.3,
+   "status": "ok",
+   "seconds_median": 0.305,
+   "seconds_all": [
+    0.305
+   ],
+   "peak_mb_max": 67.3,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "troncato"
+  },
+  {
+   "way": "d",
+   "wall": 0.506,
+   "exit": 0,
+   "rss_seen_mb": 60.9,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 211.1,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    2.9
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": false,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 1.0,
+   "schema": "IFC2X3",
+   "application": "Autodesk Revit Architecture 2011 2011",
+   "counts": {
+    "roof_elements": 0,
+    "slab_elements": 4,
+    "wall_elements": 30,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 2,
+    "direct": 0,
+    "shapes": 4,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.1353,
+    "structure": 0.0754,
+    "roofs": 0.0,
+    "planes": 0.0094,
+    "obstacles": 0.0136,
+    "total": 0.2338
+   },
+   "errors": [],
+   "seconds": 0.235,
+   "peak_mb": 56.9,
+   "status": "ok",
+   "seconds_median": 0.235,
+   "seconds_all": [
+    0.235
+   ],
+   "peak_mb_max": 56.9,
+   "runs": 1,
+   "statuses": [
+    "ok"
+   ],
+   "sample": "troncato"
+  },
+  {
+   "way": "open-normal",
+   "wall": 2.955,
+   "exit": 0,
+   "rss_seen_mb": 314.0,
+   "products": 3708,
+   "seconds": 2.481,
+   "peak_mb": 318.9,
+   "status": "ok",
+   "seconds_median": 2.45,
+   "seconds_all": [
+    2.45,
+    2.481,
+    2.425
+   ],
+   "peak_mb_max": 319.3,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "root-compleet"
+  },
+  {
+   "way": "open-lazy",
+   "wall": 1.495,
+   "exit": 0,
+   "rss_seen_mb": 173.0,
+   "products": 3708,
+   "seconds": 1.113,
+   "peak_mb": 168.8,
+   "status": "ok",
+   "seconds_median": 1.002,
+   "seconds_all": [
+    1.002,
+    1.113,
+    0.906
+   ],
+   "peak_mb_max": 168.8,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "root-compleet"
+  },
+  {
+   "way": "a",
+   "wall": 31.842,
+   "exit": 0,
+   "rss_seen_mb": 579.3,
+   "buildings": 3,
+   "pitches": 22,
+   "sloped": 14,
+   "pitch_area": 121.1,
+   "tilts": [
+    65
+   ],
+   "obstacles": 21,
+   "kinds": [
+    "other",
+    "parapet",
+    "skylight"
+   ],
+   "heights": [
+    5.7,
+    11.6,
+    11.8
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ArchiCAD-64 18.0.0",
+   "counts": {
+    "roof_elements": 62,
+    "tessellated": 3504,
+    "triangles": 260377,
+    "small_faces": 24,
+    "small_area": 13.894,
+    "modules": 0,
+    "off_roof": 303,
+    "obstacle_candidates": 585,
+    "direct": 0,
+    "shapes": 3504,
+    "errors": 1,
+    "products": 3573
+   },
+   "times": {
+    "open": 2.4951,
+    "structure": 0.1042,
+    "tessellate_all": 26.3194,
+    "roofs": 0.0001,
+    "planes": 0.81,
+    "obstacles": 1.5663,
+    "total": 31.3533
+   },
+   "errors": [
+    "69 elements without a shape from the iterator"
+   ],
+   "seconds": 31.483,
+   "peak_mb": 575.2,
+   "status": "ok",
+   "seconds_median": 31.483,
+   "seconds_all": [
+    33.414,
+    31.483,
+    28.431
+   ],
+   "peak_mb_max": 575.2,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "root-compleet"
+  },
+  {
+   "way": "b8",
+   "wall": 5.217,
+   "exit": 0,
+   "rss_seen_mb": 323.3,
+   "buildings": 3,
+   "pitches": 22,
+   "sloped": 14,
+   "pitch_area": 121.1,
+   "tilts": [
+    65
+   ],
+   "obstacles": 21,
+   "kinds": [
+    "other",
+    "parapet",
+    "skylight"
+   ],
+   "heights": [
+    5.7,
+    11.6,
+    11.8
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ArchiCAD-64 18.0.0",
+   "counts": {
+    "roof_elements": 62,
+    "small_faces": 24,
+    "small_area": 13.894,
+    "modules": 0,
+    "off_roof": 305,
+    "obstacle_candidates": 585,
+    "direct": 0,
+    "shapes": 647,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 2.3275,
+    "structure": 0.0844,
+    "roofs": 0.309,
+    "planes": 0.3043,
+    "obstacles": 1.758,
+    "total": 4.7911
+   },
+   "errors": [],
+   "seconds": 4.859,
+   "peak_mb": 319.0,
+   "status": "ok",
+   "seconds_median": 4.859,
+   "seconds_all": [
+    6.749,
+    4.859,
+    4.286
+   ],
+   "peak_mb_max": 319.2,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "root-compleet"
+  },
+  {
+   "way": "b1",
+   "wall": 5.955,
+   "exit": 0,
+   "rss_seen_mb": 208.5,
+   "buildings": 3,
+   "pitches": 22,
+   "sloped": 14,
+   "pitch_area": 121.1,
+   "tilts": [
+    65
+   ],
+   "obstacles": 21,
+   "kinds": [
+    "other",
+    "parapet",
+    "skylight"
+   ],
+   "heights": [
+    5.7,
+    11.6,
+    11.8
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ArchiCAD-64 18.0.0",
+   "counts": {
+    "roof_elements": 62,
+    "small_faces": 24,
+    "small_area": 13.894,
+    "modules": 0,
+    "off_roof": 305,
+    "obstacle_candidates": 585,
+    "direct": 0,
+    "shapes": 647,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.7856,
+    "structure": 0.1138,
+    "roofs": 0.5293,
+    "planes": 0.3091,
+    "obstacles": 3.9053,
+    "total": 5.6714
+   },
+   "errors": [],
+   "seconds": 5.737,
+   "peak_mb": 204.3,
+   "status": "ok",
+   "seconds_median": 5.706,
+   "seconds_all": [
+    5.071,
+    5.737,
+    5.706
+   ],
+   "peak_mb_max": 204.7,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "root-compleet"
+  },
+  {
+   "way": "c",
+   "wall": 3.041,
+   "exit": 0,
+   "rss_seen_mb": 193.2,
+   "buildings": 3,
+   "pitches": 22,
+   "sloped": 14,
+   "pitch_area": 126.7,
+   "tilts": [
+    65
+   ],
+   "obstacles": 21,
+   "kinds": [
+    "other",
+    "parapet",
+    "skylight"
+   ],
+   "heights": [
+    5.7,
+    11.6,
+    11.8
+   ],
+   "sources": [
+    "roof"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ArchiCAD-64 18.0.0",
+   "counts": {
+    "roof_elements": 62,
+    "small_faces": 16,
+    "small_area": 11.13,
+    "modules": 0,
+    "off_roof": 305,
+    "obstacle_candidates": 585,
+    "direct": 645,
+    "shapes": 647,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 0.9246,
+    "structure": 0.1109,
+    "roofs": 0.0852,
+    "planes": 0.1815,
+    "obstacles": 1.3381,
+    "total": 2.6746
+   },
+   "errors": [],
+   "seconds": 2.74,
+   "peak_mb": 189.1,
+   "status": "ok",
+   "seconds_median": 2.74,
+   "seconds_all": [
+    2.954,
+    2.74,
+    2.547
+   ],
+   "peak_mb_max": 189.3,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "root-compleet"
+  },
+  {
+   "way": "d",
+   "wall": 2.079,
+   "exit": 0,
+   "rss_seen_mb": 175.1,
+   "buildings": 1,
+   "pitches": 1,
+   "sloped": 0,
+   "pitch_area": 480.2,
+   "tilts": [],
+   "obstacles": 0,
+   "kinds": [],
+   "heights": [
+    13.1
+   ],
+   "sources": [
+    "boxes"
+   ],
+   "site": true,
+   "map": null,
+   "north": 0.0,
+   "unit_m": 0.001,
+   "schema": "IFC2X3",
+   "application": "ArchiCAD-64 18.0.0",
+   "counts": {
+    "roof_elements": 62,
+    "modules": 0,
+    "off_roof": 0,
+    "obstacle_candidates": 2,
+    "direct": 0,
+    "shapes": 64,
+    "errors": 0,
+    "products": null
+   },
+   "times": {
+    "open": 1.161,
+    "structure": 0.1252,
+    "roofs": 0.0775,
+    "planes": 0.0048,
+    "obstacles": 0.2565,
+    "total": 1.6495
+   },
+   "errors": [],
+   "seconds": 1.714,
+   "peak_mb": 171.5,
+   "status": "ok",
+   "seconds_median": 1.501,
+   "seconds_all": [
+    1.395,
+    1.714,
+    1.501
+   ],
+   "peak_mb_max": 171.5,
+   "runs": 3,
+   "statuses": [
+    "ok",
+    "ok",
+    "ok"
+   ],
+   "sample": "root-compleet"
+  }
+ ]
+}

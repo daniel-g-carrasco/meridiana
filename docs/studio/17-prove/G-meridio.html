@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8"><title>G. Meridio e la sua chat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>:root {
+  --window: #f2f1ed;
+  --panel: #f8f7f4;
+  --view: #ffffff;
+  --header: #f2f1ed;
+  --card: #ffffff;
+  --line: #d9d5cc;
+  --line-soft: #e8e5de;
+  --text: #1e1c19;
+  --text2: #514c44;
+  --muted: #6f685d;
+  --tooltip-bg: #1e1c19;
+  --tooltip-fg: #f8f7f4;
+  --accent: #805210;
+  --accent-fg: #ffffff;
+  --accent-soft: #80521020;
+  --select-bg: #ffe1bf;
+  --select-fg: #1e1c19;
+  --assistant: #334f6d;
+  --plan-bg: #fbfaf8;
+  --plan-bld: #3a352d;
+  --plan-bld-fill: #3a352d0d;
+  --plan-module: #1f3352;
+  --plan-sub: #805210;
+  --plan-sub-fill: #80521014;
+  --plan-sel: #805210;
+  --plan-guide: #2e6fb0;
+  --plan-pitch: #808080;
+  --sky-top: #dde7f0;
+  --sky-bottom: #f6f2ea;
+  --ground: #d6d0bf;
+  --wall: #f0ebe1;
+  --roof: #b5643f;
+  --d3-module: #1f3352;
+  --chart-surface: #ffffff;
+  --chart-grid: #e8e8e8;
+  --chart-axis: #c7c7c7;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --good: #0ca30c;
+  --warning-ink: #b07a00;
+  --shadow: rgba(20, 24, 30, 0.14);
+  --raise: rgba(255, 255, 255, 0.9);
+  --sink: rgba(30, 28, 25, 0.06);
+}
+html.dark {
+  --window: #14181e;
+  --panel: #1a1f26;
+  --view: #101318;
+  --header: #14181e;
+  --card: #1a1f26;
+  --line: #2b323c;
+  --line-soft: #20262e;
+  --text: #ece8e1;
+  --text2: #c0b9ad;
+  --muted: #918a7e;
+  --tooltip-bg: #ece8e1;
+  --tooltip-fg: #14181e;
+  --accent: #f1dac1;
+  --accent-fg: #14181e;
+  --accent-soft: #f1dac124;
+  --select-bg: #483319;
+  --select-fg: #ece8e1;
+  --assistant: #a1c1e4;
+  --plan-bg: #101318;
+  --plan-bld: #d8d2c6;
+  --plan-bld-fill: #d8d2c60d;
+  --plan-module: #1d3152;
+  --plan-sub: #f1dac1;
+  --plan-sub-fill: #f1dac112;
+  --plan-sel: #f1dac1;
+  --plan-guide: #8ab4f8;
+  --plan-pitch: #929292;
+  --sky-top: #0f141c;
+  --sky-bottom: #1f2a3a;
+  --ground: #23272a;
+  --wall: #d6d0c4;
+  --roof: #9a5a3e;
+  --d3-module: #1d3152;
+  --chart-surface: #101318;
+  --chart-grid: #222222;
+  --chart-axis: #383838;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --good: #0ca30c;
+  --warning-ink: #fab219;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --raise: rgba(255, 255, 255, 0.045);
+  --sink: rgba(0, 0, 0, 0.22);
+}
+
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-Regular.ttf"); font-weight: 400; }
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-SemiBold.ttf"); font-weight: 600; }
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-Bold.ttf"); font-weight: 700; }
+* { box-sizing: border-box; }
+html { --zoom: 0.62; }
+body { margin: 0; font-family: "Titillium Web", "Segoe UI", sans-serif; font-size: 15px; color: var(--text);
+       background: var(--window); }
+.page { padding: 20px 28px 60px; max-width: 2400px; }
+.page h1 { font-size: 26px; margin: 0 0 4px; font-weight: 600; }
+.page h2 { font-size: 20px; margin: 28px 0 6px; font-weight: 600; }
+.page p { max-width: 920px; line-height: 1.4; color: var(--text2); margin: 4px 0; }
+.controls { display: flex; gap: 14px; align-items: center; margin: 10px 0 18px; flex-wrap: wrap; }
+.controls label { display: flex; gap: 6px; align-items: center; color: var(--text2); }
+.controls button, .controls select { font: inherit; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--line);
+       background: var(--panel); color: var(--text); cursor: pointer; }
+.controls button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.row { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; padding-bottom: 12px; }
+.dir { flex: 0 0 auto; }
+.dir h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+.dir .note { max-width: calc(1180px * var(--zoom)); font-size: 14px; color: var(--text2); line-height: 1.35; margin: 6px 0 0; }
+.dir .note b { color: var(--text); }
+.frame { width: calc(1180px * var(--zoom)); height: calc(720px * var(--zoom)); overflow: hidden; border-radius: 6px;
+          box-shadow: 0 2px 10px var(--shadow); border: 1px solid var(--line); }
+.mock { width: 1180px; height: 720px; transform: scale(var(--zoom)); transform-origin: 0 0; display: grid;
+         grid-template-rows: 28px 34px auto 1fr 24px; grid-template-columns: 1fr; background: var(--window);
+         color: var(--text); font-size: 13px; position: relative; }
+.mock .menubar { display: flex; align-items: center; gap: 2px; padding: 0 8px; background: var(--window); }
+.mock .menubar span { padding: 4px 8px; border-radius: 4px; }
+.mock .menubar span.on { background: var(--select-bg); color: var(--select-fg); }
+.mock .menubar .sp { flex: 1; }
+.mock .menubar .chip { border: 1px solid var(--line); background: var(--panel); font-size: 12px; padding: 2px 8px; }
+.mock .tabs { display: flex; align-items: flex-end; gap: 2px; padding: 0 10px; background: var(--window);
+               border-bottom: 1px solid var(--line); }
+.mock .tabs span { padding: 7px 12px 6px; color: var(--text2); border-bottom: 2px solid transparent; }
+.mock .tabs span.on { color: var(--text); border-bottom-color: var(--accent); }
+.mock .tabs span.on::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+                               background: var(--accent); margin-right: 7px; vertical-align: 1px; }
+.mock .toolbar { display: flex; align-items: center; gap: 4px; padding: 3px 8px; background: var(--window); min-height: 34px; }
+.mock .toolbar .tb { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 5px;
+                      color: var(--text2); border: 1px solid transparent; }
+.mock .toolbar .tb svg { width: 18px; height: 18px; }
+.mock .toolbar .tb.on { background: var(--select-bg); color: var(--select-fg); border-color: var(--line); }
+.mock .toolbar .sep { width: 1px; height: 20px; background: var(--line); margin: 0 6px; }
+.mock .body { display: grid; grid-template-columns: 220px 1fr 300px; min-height: 0; }
+.mock .side { display: flex; flex-direction: column; min-height: 0; background: var(--panel); }
+.mock .ptitle { padding: 5px 10px; font-weight: 600; font-size: 12px; color: var(--text2); background: var(--header);
+                 border-bottom: 1px solid var(--line-soft); display: flex; align-items: center; gap: 6px; }
+.mock .ptitle .x { margin-left: auto; color: var(--muted); font-weight: 400; }
+.mock .centre { display: grid; grid-template-rows: 1fr auto; min-height: 0; background: var(--window); }
+.mock .views { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); min-height: 0; }
+.mock .view { position: relative; overflow: hidden; background: var(--plan-bg); }
+.mock .view svg { width: 100%; height: 100%; display: block; }
+.mock .view.d3 { background: linear-gradient(var(--sky-top), var(--sky-bottom)); }
+.mock .viewbar { position: absolute; top: 8px; left: 8px; display: flex; gap: 2px; background: var(--panel);
+                  border: 1px solid var(--line); border-radius: 6px; padding: 2px; font-size: 12px;
+                  box-shadow: 0 1px 4px var(--shadow); }
+.mock .viewbar span { padding: 2px 8px; border-radius: 4px; color: var(--text2); }
+.mock .viewbar span.on { background: var(--select-bg); color: var(--select-fg); }
+.mock .checks { grid-column: 1 / -1; background: var(--panel); border-top: 1px solid var(--line); min-height: 0;
+                 display: flex; flex-direction: column; }
+.mock .status { display: flex; align-items: center; gap: 14px; padding: 0 10px; border-top: 1px solid var(--line);
+                 font-size: 12px; color: var(--text2); background: var(--window); }
+.mock .status .sp { flex: 1; }
+.mock .status .cnt { display: inline-flex; gap: 4px; align-items: center; }
+.mock .tree { padding: 6px 4px; overflow: hidden; line-height: 1.6; font-size: 13px; }
+.mock .tree div { display: flex; align-items: center; gap: 6px; padding: 0 6px; border-radius: 4px; white-space: nowrap; }
+.mock .tree div.sel { background: var(--select-bg); color: var(--select-fg); }
+.mock .tree svg { width: 15px; height: 15px; flex: none; color: var(--text2); }
+.mock .tree .mark { margin-left: auto; font-size: 11px; padding: 0 5px; border-radius: 8px; color: #fff; }
+.mock .tree .mark.warn { background: var(--warning-ink); }
+.mock .tree .mark.info { background: var(--muted); }
+.mock .tree .mark.fail { background: var(--critical); }
+.mock .tree .lvl1 { padding-left: 20px; }
+.mock .tree .lvl2 { padding-left: 36px; }
+.mock .tree .lvl3 { padding-left: 52px; }
+.mock .props { padding: 6px 8px; overflow: hidden; font-size: 13px; }
+.mock .props h4 { margin: 6px 0 4px; font-size: 13px; font-weight: 600; }
+.mock .group { margin: 8px 0; }
+.mock .group .gt { font-weight: 600; font-size: 12px; color: var(--text2); padding: 2px 0; }
+.mock .form { display: grid; grid-template-columns: 1fr 128px; gap: 4px 8px; align-items: center; }
+.mock .form label { color: var(--text2); }
+.mock .field { display: flex; align-items: center; justify-content: space-between; height: 24px; padding: 0 6px;
+                border-radius: 4px; background: var(--view); border: 1px solid var(--line); color: var(--text); }
+.mock .field .arr { color: var(--muted); font-size: 10px; letter-spacing: -2px; }
+.mock .field.combo::after { content: "⌄"; color: var(--muted); }
+.mock .btn { display: inline-flex; align-items: center; justify-content: center; height: 26px; padding: 0 12px;
+              border-radius: 5px; border: 1px solid var(--line); background: var(--view); color: var(--text); }
+.mock .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.mock .check { display: flex; gap: 6px; align-items: center; }
+.mock .check i { width: 14px; height: 14px; border: 1px solid var(--line); border-radius: 3px; background: var(--view); }
+.mock .check i.on { background: var(--accent); border-color: var(--accent); }
+.mock .clist { overflow: hidden; font-size: 12.5px; padding: 2px 6px; }
+.mock .clist div { display: flex; gap: 8px; align-items: baseline; padding: 2px 4px; }
+.mock .clist .m { width: 16px; text-align: center; font-weight: 700; }
+.mock .clist .m.fail { color: var(--critical); } .mock .clist .m.warn { color: var(--warning-ink); }
+.mock .clist .m.ok { color: var(--good); } .mock .clist .m.info { color: var(--muted); }
+.mock .clist .src { margin-left: auto; color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+.mock .chead { display: flex; gap: 6px; align-items: center; padding: 4px 8px; font-size: 12px; }
+.mock .chead .f { padding: 1px 7px; border: 1px solid var(--line); border-radius: 4px; background: var(--view); }
+.mock .chead .f.on { background: var(--select-bg); }
+.mock .sunbar { display: flex; align-items: center; gap: 10px; padding: 3px 10px; font-size: 12px; color: var(--text2);
+                 background: var(--panel); border-top: 1px solid var(--line); }
+.mock .sunbar .track { flex: 1; height: 4px; background: var(--line); border-radius: 2px; position: relative; }
+.mock .sunbar .track i { position: absolute; left: 46%; top: -4px; width: 12px; height: 12px; border-radius: 50%;
+                          background: var(--accent); }
+.mock .meridio { position: absolute; right: 318px; bottom: 60px; width: 46px; height: 46px; border-radius: 50%;
+                  background: var(--panel); border: 1px solid var(--line); display: grid; place-items: center;
+                  box-shadow: 0 1px 4px var(--shadow); }
+.mock .meridio svg { width: 34px; height: 34px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+.grow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; max-width: 1700px; }
+.gbox { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+.gbox h3 { margin: 0 0 6px; font-size: 16px; }
+.gbox .note { font-size: 13.5px; color: var(--text2); line-height: 1.35; margin: 8px 0 0; }
+.gbox .note b { color: var(--text); }
+.stage { position: relative; height: 420px; border-radius: 6px; overflow: hidden; background: linear-gradient(var(--sky-top), var(--sky-bottom)); border: 1px solid var(--line-soft); }
+.stage > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stage .meridio { position: absolute; right: 16px; bottom: 16px; width: 46px; height: 46px; border-radius: 50%; background: var(--panel); border: 1px solid var(--line);
+                  display: grid; place-items: center; box-shadow: 0 1px 4px var(--shadow); cursor: pointer; }
+.stage .meridio svg { width: 34px; height: 34px; overflow: visible; }
+.stage .meridio .dot { position: absolute; right: 2px; top: 2px; width: 9px; height: 9px; border-radius: 50%; background: var(--assistant); border: 1.5px solid var(--panel); }
+/* G1 respiro e sguardo */
+.g1 .meridio svg { animation: breathe 4s ease-in-out infinite; transform-origin: 50% 50%; }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+.g1 .meridio .eye { transition: transform 0.25s ease-out; }
+/* G2 i raggi girano piano, il disco respira */
+.g2 .meridio .rays { animation: rays 60s linear infinite; transform-origin: 12px 10.2px; }
+@keyframes rays { to { transform: rotate(360deg); } }
+.g2 .meridio .disc { animation: glow 3s ease-in-out infinite; }
+@keyframes glow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.12); } }
+/* G3 fermo, cambia solo di stato */
+.g3 .meridio.think .eye { transform: translateY(-0.8px); }
+.g3 .meridio .dots { display: none; } .g3 .meridio.think .dots { display: block; }
+/* la chat */
+.chat { position: absolute; right: 16px; bottom: 16px; width: 320px; height: 300px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+        box-shadow: 0 6px 24px var(--shadow); display: flex; flex-direction: column; overflow: hidden; transform-origin: 100% 100%; resize: both; min-width: 240px; min-height: 180px; }
+.chat .head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--line-soft); font-weight: 600; }
+.chat .head svg { width: 22px; height: 22px; }
+.chat .head .ctx { font-weight: 400; font-size: 11.5px; color: var(--muted); margin-left: auto; }
+.chat .head .x { color: var(--muted); font-weight: 400; margin-left: 8px; cursor: pointer; }
+.chat .msgs { flex: 1; padding: 8px 10px; overflow: auto; font-size: 12.5px; display: flex; flex-direction: column; gap: 6px; }
+.chat .me { align-self: flex-end; background: var(--select-bg); color: var(--select-fg); padding: 5px 9px; border-radius: 10px 10px 2px 10px; max-width: 85%; }
+.chat .him { align-self: flex-start; background: var(--sink); padding: 5px 9px; border-radius: 10px 10px 10px 2px; max-width: 90%; line-height: 1.35; }
+.chat .him .cur { display: inline-block; width: 7px; height: 13px; background: var(--text); vertical-align: -2px; animation: blink 1s steps(2) infinite; margin-left: 1px; }
+@keyframes blink { to { opacity: 0; } }
+.chat .typing { display: inline-flex; gap: 4px; padding: 7px 10px; background: var(--sink); border-radius: 10px; align-self: flex-start; }
+.chat .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--text2); animation: bounce 1.2s infinite; }
+.chat .typing i:nth-child(2) { animation-delay: 0.2s; } .chat .typing i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+.chat .sugg { padding: 4px 10px 6px; font-size: 12px; }
+.chat .sugg .tt { color: var(--muted); font-size: 11px; margin-bottom: 3px; }
+.chat .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chat .chips span { border: 1px solid var(--line); background: var(--view); border-radius: 12px; padding: 2px 9px; cursor: pointer; }
+.chat .list div { display: flex; gap: 6px; align-items: center; padding: 3px 4px; border-radius: 4px; cursor: pointer; }
+.chat .list div:hover { background: var(--sink); }
+.chat .list div span.n { color: var(--muted); width: 14px; }
+.chat .list div svg { margin-left: auto; width: 13px; height: 13px; color: var(--muted); }
+.chat .in { display: flex; gap: 6px; padding: 6px 10px 8px; border-top: 1px solid var(--line-soft); align-items: center; }
+.chat .in .field { flex: 1; height: 28px; border-radius: 14px; background: var(--view); border: 1px solid var(--line); padding: 0 10px; display: flex; align-items: center; color: var(--muted); }
+.chat .in .send { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); display: grid; place-items: center; }
+.chat .grip { position: absolute; left: 2px; top: 2px; color: var(--muted); font-size: 10px; cursor: nwse-resize; }
+.chat.closed { display: none; }
+.chat.opening { animation: pop 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes pop { from { transform: scale(0.15); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.chat.slide { animation: slide 0.26s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes slide { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.chat.closing { animation: pop 0.18s ease-in reverse; }
+.chat .head .think svg { animation: spin 1.4s linear infinite; transform-origin: 50% 50%; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.stage .meridio.hidden { display: none; }
+.stage .say { position: absolute; right: 72px; bottom: 24px; background: var(--card); border: 1px solid var(--line); padding: 4px 9px; border-radius: 8px; font-size: 12px; box-shadow: 0 2px 8px var(--shadow); }
+</style>
+<script>
+const root = document.documentElement;
+function setTheme(dark) {
+  root.classList.toggle('dark', dark);
+  document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('on', (b.dataset.theme === 'dark') === dark));
+  try { localStorage.setItem('m17-dark', dark ? '1' : '0'); } catch (e) {}
+}
+function setZoom(z) { root.style.setProperty('--zoom', z); const o = document.getElementById('zoomv'); if (o) o.textContent = Math.round(z * 100) + '%'; }
+try { setTheme(localStorage.getItem('m17-dark') === '1'); } catch (e) { setTheme(false); }
+</script>
+</head>
+<body><div class="page"><h1>G. Meridio e la sua chat</h1><p>R15. Daniel: «sarà da migliorarne l'estetica, renderlo magari dinamico, e migliorare anche l'estetica della chat con qualche animazione in apertura / chiusura, mentre sta parlando l'assistenza, possibilità di ridimensionare la chat, vista delle risposte consigliate più chiara con elenco». Tre scene: <b>clicca Meridio</b> per aprire la chat (ogni scena con la sua animazione), <b>trascina l'angolo in basso a destra</b> della chat per ridimensionarla, muovi il mouse nella prima scena per lo sguardo. Con «meno movimento» del sistema tutto resta fermo (<code>prefers-reduced-motion</code> qui, la preferenza letta dal portale in Meridiana).</p>
+<div class="controls">
+  <label>Tema:
+    <button data-theme="light" class="on" onclick="setTheme(false)">Chiaro</button>
+    <button data-theme="dark" onclick="setTheme(true)">Scuro</button></label>
+  <label>Scala: <input type="range" min="0.35" max="1" step="0.01" value="0.62" oninput="setZoom(this.value)"> <span id="zoomv">62%</span></label>
+</div><div class="grow"><div class="gbox"><h3>G1. Respiro e sguardo · apertura dall'angolo · puntini · domande come elenco</h3><div class="stage g1" data-open="pop"><svg viewBox="0 0 560 420" preserveAspectRatio="xMidYMid meet">
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky-top)"/><stop offset="1" stop-color="var(--sky-bottom)"/></linearGradient></defs>
+<rect width="560" height="420" fill="url(#sky)"/>
+<path d="M0 290L560 290L560 420L0 420z" fill="var(--ground)"/>
+<path d="M110 300l300-110 0-90-300 110z" fill="var(--wall)"/>
+<path d="M410 190l80 40 0-90-80-40z" fill="var(--wall)" opacity="0.8"/>
+<path d="M110 300l300-110 80 40-300 110z" fill="var(--wall)" opacity="0.55"/>
+<path d="M110 100l300-110 80 40-300 110z" fill="var(--roof)"/>
+<path d="M110 100l300-110-30 -25-300 110z" fill="var(--roof)" opacity="0.7"/>
+<path d="M150 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M178 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M206 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M234 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M262 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M290 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M318 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M346 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M374 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M168 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M196 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M224 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M252 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M280 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M308 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M336 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M364 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M392 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M186 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M214 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M242 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M270 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M298 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M326 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M354 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M382 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M410 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/>
+<path d="M110 300l300-110" stroke="var(--plan-bld)" stroke-width="1" opacity="0.4"/>
+<circle cx="470" cy="60" r="12" fill="#f6e3a4" opacity="0.9"/>
+</svg><div class="meridio hidden"><svg class="" viewBox="0 0 24 24" width="34" height="34"><path class="rays" d="M5.1 10.2H3.4M6.02 6.75L4.55 5.9M8.55 4.22L7.7 2.75M12 3.3V1.6M15.45 4.22L16.3 2.75M17.98 6.75L19.45 5.9M18.9 10.2H20.6M3 19.4H21M12 16.9V21.8" fill="none" stroke="var(--text)" stroke-width="1.3" stroke-linecap="round"/><circle class="disc" cx="12" cy="10.2" r="5.3" fill="var(--assistant)" stroke="#24211d" stroke-width="1.3"/><path class="smile" d="M10.2 12.1Q12 13.5 13.8 12.1" fill="none" stroke="#24211d" stroke-width="1.2" stroke-linecap="round"/><circle class="eye l" cx="10.1" cy="9.5" r="0.9" fill="#24211d"/><circle class="eye r" cx="13.9" cy="9.5" r="0.9" fill="#24211d"/></svg><span class="dot"></span></div><div class="chat "><span class="grip"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15l-6 6M21 9L9 21M21 21l-1 0"/></svg></span><div class="head"><span class="think"><svg class="" viewBox="0 0 24 24" width="22" height="22"><path class="rays" d="M5.1 10.2H3.4M6.02 6.75L4.55 5.9M8.55 4.22L7.7 2.75M12 3.3V1.6M15.45 4.22L16.3 2.75M17.98 6.75L19.45 5.9M18.9 10.2H20.6M3 19.4H21M12 16.9V21.8" fill="none" stroke="var(--text)" stroke-width="1.3" stroke-linecap="round"/><circle class="disc" cx="12" cy="10.2" r="5.3" fill="var(--assistant)" stroke="#24211d" stroke-width="1.3"/><path class="smile" d="M10.2 12.1Q12 13.5 13.8 12.1" fill="none" stroke="#24211d" stroke-width="1.2" stroke-linecap="round"/><circle class="eye l" cx="10.1" cy="8.7" r="0.9" fill="#24211d"/><circle class="eye r" cx="13.9" cy="8.7" r="0.9" fill="#24211d"/><circle cx="19.2" cy="3.6" r="0.75" fill="var(--text)"/><circle cx="21.2" cy="3.6" r="0.75" fill="var(--text)"/><circle cx="23.2" cy="3.6" r="0.75" fill="var(--text)"/></svg></span>Meridio<span class="ctx">Scheda: Modello · Selezione: Copertura Sud</span><span class="x">✕</span></div><div class="msgs"><div class="me">Che ne pensi di questa disposizione?</div><div class="typing"><i></i><i></i><i></i></div></div><div class="sugg"><div class="tt">Domande pronte</div><div class="list"><div><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M9 6l6 6-6 6"/></svg><span>Le distanze dai bordi vanno bene per i Vigili del Fuoco?</span></div><div><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M9 6l6 6-6 6"/></svg><span>Dove recupero potenza senza ombre?</span></div><div><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M9 6l6 6-6 6"/></svg><span>Quante stringhe servono con questo inverter?</span></div></div></div><div class="in"><div class="field">Chiedi a Meridio… (Ctrl+L)</div><span class="send"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 11l18-8-8 18-2-8z"/></svg></span></div></div></div><p class="note">Il personaggio <b>respira</b> (scala 1 → 1,04 in 4 s) e gli <b>occhi seguono il mouse</b> di un pixel; «pensa» alza gli occhi e mostra i tre puntini. La chat si <b>apre dall'angolo</b> del personaggio in 220 ms (scala e dissolvenza) e si chiude al contrario; mentre risponde, <b>tre puntini</b> nel fumetto e il personaggio in testa che gira piano. Le domande pronte come <b>elenco</b> con la freccia. Il bordo in basso a destra ridimensiona.</p></div><div class="gbox"><h3>G2. I raggi girano · scivola dal basso · testo che scorre · domande come pastiglie</h3><div class="stage g2" data-open="slide"><svg viewBox="0 0 560 420" preserveAspectRatio="xMidYMid meet">
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky-top)"/><stop offset="1" stop-color="var(--sky-bottom)"/></linearGradient></defs>
+<rect width="560" height="420" fill="url(#sky)"/>
+<path d="M0 290L560 290L560 420L0 420z" fill="var(--ground)"/>
+<path d="M110 300l300-110 0-90-300 110z" fill="var(--wall)"/>
+<path d="M410 190l80 40 0-90-80-40z" fill="var(--wall)" opacity="0.8"/>
+<path d="M110 300l300-110 80 40-300 110z" fill="var(--wall)" opacity="0.55"/>
+<path d="M110 100l300-110 80 40-300 110z" fill="var(--roof)"/>
+<path d="M110 100l300-110-30 -25-300 110z" fill="var(--roof)" opacity="0.7"/>
+<path d="M150 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M178 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M206 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M234 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M262 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M290 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M318 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M346 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M374 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M168 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M196 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M224 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M252 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M280 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M308 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M336 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M364 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M392 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M186 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M214 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M242 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M270 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M298 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M326 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M354 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M382 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M410 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/>
+<path d="M110 300l300-110" stroke="var(--plan-bld)" stroke-width="1" opacity="0.4"/>
+<circle cx="470" cy="60" r="12" fill="#f6e3a4" opacity="0.9"/>
+</svg><div class="meridio "><svg class="" viewBox="0 0 24 24" width="34" height="34"><path class="rays" d="M5.1 10.2H3.4M6.02 6.75L4.55 5.9M8.55 4.22L7.7 2.75M12 3.3V1.6M15.45 4.22L16.3 2.75M17.98 6.75L19.45 5.9M18.9 10.2H20.6M3 19.4H21M12 16.9V21.8" fill="none" stroke="var(--text)" stroke-width="1.3" stroke-linecap="round"/><circle class="disc" cx="12" cy="10.2" r="5.3" fill="var(--assistant)" stroke="#24211d" stroke-width="1.3"/><path class="smile" d="M10.2 12.1Q12 13.5 13.8 12.1" fill="none" stroke="#24211d" stroke-width="1.2" stroke-linecap="round"/><circle class="eye l" cx="10.1" cy="9.5" r="0.9" fill="#24211d"/><circle class="eye r" cx="13.9" cy="9.5" r="0.9" fill="#24211d"/></svg><span class="dot"></span></div><div class="chat closed"><span class="grip"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15l-6 6M21 9L9 21M21 21l-1 0"/></svg></span><div class="head"><svg class="" viewBox="0 0 24 24" width="22" height="22"><path class="rays" d="M5.1 10.2H3.4M6.02 6.75L4.55 5.9M8.55 4.22L7.7 2.75M12 3.3V1.6M15.45 4.22L16.3 2.75M17.98 6.75L19.45 5.9M18.9 10.2H20.6M3 19.4H21M12 16.9V21.8" fill="none" stroke="var(--text)" stroke-width="1.3" stroke-linecap="round"/><circle class="disc" cx="12" cy="10.2" r="5.3" fill="var(--assistant)" stroke="#24211d" stroke-width="1.3"/><path class="smile" d="M10.2 12.1Q12 13.5 13.8 12.1" fill="none" stroke="#24211d" stroke-width="1.2" stroke-linecap="round"/><circle class="eye l" cx="10.1" cy="9.5" r="0.9" fill="#24211d"/><circle class="eye r" cx="13.9" cy="9.5" r="0.9" fill="#24211d"/></svg>Meridio<span class="ctx">Scheda: Modello · Selezione: Copertura Sud</span><span class="x">✕</span></div><div class="msgs"><div class="me">Che ne pensi di questa disposizione?</div><div class="him">Buona: 156 moduli complanari a sud, 19° di falda. Tre moduli finiscono nell'ombra del camino tra le 10 e le 14 del 21 dicembre: toglierli costa 1,4 kWp e guadagna il 2 % di resa<span class="cur"></span></div></div><div class="sugg"><div class="tt">Domande pronte</div><div class="chips"><span>Le distanze dai bordi vanno bene per i VVF?</span><span>Dove recupero potenza senza ombre?</span><span>Quante stringhe servono?</span></div></div><div class="in"><div class="field">Chiedi a Meridio… (Ctrl+L)</div><span class="send"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 11l18-8-8 18-2-8z"/></svg></span></div></div></div><p class="note">I <b>raggi girano</b> in un minuto e il disco pulsa appena: si vede che è vivo senza muoversi. La chat <b>scivola dal basso</b> in 260 ms; mentre risponde il testo <b>arriva parola per parola</b> con il cursore (come le chat dei modelli). Le domande pronte come <b>pastiglie</b> (chips): compatte, ma con frasi lunghe vanno a capo.</p></div><div class="gbox"><h3>G3. Fermo, cambia solo di stato · nessuna animazione · numerate</h3><div class="stage g3" data-open="none"><svg viewBox="0 0 560 420" preserveAspectRatio="xMidYMid meet">
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky-top)"/><stop offset="1" stop-color="var(--sky-bottom)"/></linearGradient></defs>
+<rect width="560" height="420" fill="url(#sky)"/>
+<path d="M0 290L560 290L560 420L0 420z" fill="var(--ground)"/>
+<path d="M110 300l300-110 0-90-300 110z" fill="var(--wall)"/>
+<path d="M410 190l80 40 0-90-80-40z" fill="var(--wall)" opacity="0.8"/>
+<path d="M110 300l300-110 80 40-300 110z" fill="var(--wall)" opacity="0.55"/>
+<path d="M110 100l300-110 80 40-300 110z" fill="var(--roof)"/>
+<path d="M110 100l300-110-30 -25-300 110z" fill="var(--roof)" opacity="0.7"/>
+<path d="M150 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M178 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M206 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M234 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M262 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M290 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M318 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M346 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M374 212l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M168 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M196 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M224 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M252 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M280 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M308 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M336 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M364 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M392 190l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M186 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M214 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M242 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M270 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M298 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M326 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M354 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M382 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/><path d="M410 168l22 -8 10 6 -22 8z" fill="var(--d3-module)" stroke="#ffffff22" stroke-width="0.6"/>
+<path d="M110 300l300-110" stroke="var(--plan-bld)" stroke-width="1" opacity="0.4"/>
+<circle cx="470" cy="60" r="12" fill="#f6e3a4" opacity="0.9"/>
+</svg><div class="meridio "><svg class="" viewBox="0 0 24 24" width="34" height="34"><path class="rays" d="M5.1 10.2H3.4M6.02 6.75L4.55 5.9M8.55 4.22L7.7 2.75M12 3.3V1.6M15.45 4.22L16.3 2.75M17.98 6.75L19.45 5.9M18.9 10.2H20.6M3 19.4H21M12 16.9V21.8" fill="none" stroke="var(--text)" stroke-width="1.3" stroke-linecap="round"/><circle class="disc" cx="12" cy="10.2" r="5.3" fill="var(--assistant)" stroke="#24211d" stroke-width="1.3"/><path class="smile" d="M10.2 12.1Q12 13.5 13.8 12.1" fill="none" stroke="#24211d" stroke-width="1.2" stroke-linecap="round"/><circle class="eye l" cx="10.1" cy="9.5" r="0.9" fill="#24211d"/><circle class="eye r" cx="13.9" cy="9.5" r="0.9" fill="#24211d"/></svg><span class="dot"></span></div><div class="chat closed"><span class="grip"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15l-6 6M21 9L9 21M21 21l-1 0"/></svg></span><div class="head"><svg class="" viewBox="0 0 24 24" width="22" height="22"><path class="rays" d="M5.1 10.2H3.4M6.02 6.75L4.55 5.9M8.55 4.22L7.7 2.75M12 3.3V1.6M15.45 4.22L16.3 2.75M17.98 6.75L19.45 5.9M18.9 10.2H20.6M3 19.4H21M12 16.9V21.8" fill="none" stroke="var(--text)" stroke-width="1.3" stroke-linecap="round"/><circle class="disc" cx="12" cy="10.2" r="5.3" fill="var(--assistant)" stroke="#24211d" stroke-width="1.3"/><path class="smile" d="M10.2 12.1Q12 13.5 13.8 12.1" fill="none" stroke="#24211d" stroke-width="1.2" stroke-linecap="round"/><circle class="eye l" cx="10.1" cy="9.5" r="0.9" fill="#24211d"/><circle class="eye r" cx="13.9" cy="9.5" r="0.9" fill="#24211d"/></svg>Meridio<span class="ctx">Scheda: Modello · Selezione: Copertura Sud</span><span class="x">✕</span></div><div class="msgs"><div class="me">Che ne pensi di questa disposizione?</div><div class="him">Buona: 156 moduli complanari a sud, 19° di falda. Tre moduli finiscono nell'ombra del camino tra le 10 e le 14 del 21 dicembre: toglierli costa 1,4 kWp e guadagna il 2 % di resa.</div></div><div class="sugg"><div class="tt">Domande pronte · premi 1, 2, 3</div><div class="list"><div><span class="n">1</span><span>Le distanze dai bordi vanno bene per i VVF?</span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 11l18-8-8 18-2-8z"/></svg></div><div><span class="n">2</span><span>Dove recupero potenza senza ombre?</span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 11l18-8-8 18-2-8z"/></svg></div><div><span class="n">3</span><span>Quante stringhe servono?</span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 11l18-8-8 18-2-8z"/></svg></div></div></div><div class="in"><div class="field">Chiedi a Meridio… (Ctrl+L)</div><span class="send"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 11l18-8-8 18-2-8z"/></svg></span></div></div></div><p class="note">Il personaggio <b>non si muove</b>: cambia espressione per stato (ogni 2,5 s qui «pensa»), il puntino nel suo colore dice che ha un parere. La chat appare e sparisce <b>senza animazione</b>; le domande pronte <b>numerate</b> si scelgono con 1, 2, 3. È quello che resta quando il sistema chiede meno movimento: la base su cui G1 e G2 aggiungono.</p></div></div>
+<p style="margin-top:30px;font-size:13px">Studio 17, Meridiana. Colori da <code>theme_colors.py</code> (bronzo, fondi Meridiana); carattere Titillium Web dai file del repository; nessuna libreria, nessuna rete. <a href="index.html" style="color:var(--accent)">Indice dei bozzetti</a>.</p>
+</div>
+<script>
+document.querySelectorAll('.stage').forEach(st => {
+  const chat = st.querySelector('.chat'), face = st.querySelector('.meridio'), mode = st.dataset.open || 'pop';
+  if (face && chat) {
+    face.addEventListener('click', () => { face.classList.add('hidden'); chat.classList.remove('closed', 'closing'); chat.classList.add(mode === 'slide' ? 'slide' : 'opening'); });
+    chat.querySelector('.x').addEventListener('click', () => { if (mode === 'none') { chat.classList.add('closed'); face.classList.remove('hidden'); return; }
+      chat.classList.remove('opening', 'slide'); chat.classList.add('closing'); setTimeout(() => { chat.classList.add('closed'); chat.classList.remove('closing'); face.classList.remove('hidden'); }, 180); });
+  }
+  if (st.classList.contains('g1')) st.addEventListener('mousemove', e => { const r = face.getBoundingClientRect(); const dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
+    const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 300) * 0.9; st.querySelectorAll('.eye').forEach(el => el.style.transform = `translate(${k*dx/d}px, ${k*dy/d}px)`); });
+  if (st.classList.contains('g3')) { let t = false; setInterval(() => { t = !t; face.classList.toggle('think', t); }, 2500); }
+});
+</script>
+</body></html>

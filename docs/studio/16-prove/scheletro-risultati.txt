@@ -1,0 +1,12 @@
+backend: polyskel
+piante casuali: 300, esatte 196, approssimate 23, sbagliate o fallite 81 (11.3 ms l'una)
+  sbagliata: 7 facce per 8 lati, nodi fuori di 6.765 m pianta [(0.0, 0.0), (0.0, 22.885), (27.158, 22.885), (27.158, 0.0), (17.827, 0.0), (17.827, -5.416), (6.765, -5.416), (6.765, 0.0)]
+  sbagliata: 13 facce per 8 lati, nodi fuori di 0.000 m pianta [(0.0, 28.05), (23.729, 28.05), (23.729, 0.0), (21.251, 0.0), (21.251, -3.478), (12.356, -3.478), (12.356, 0.0), (0.0, 0.0)]
+  sbagliata: 11 facce per 12 lati, nodi fuori di 3.937 m pianta [(9.057, 7.032), (9.057, 0.0), (5.12, 0.0), (5.12, -2.484), (3.09, -2.484), (3.09, 0.0), (3.082, 0.0), (3.082, -2.141), (0.827, -2.141), (0.827, 0.0), (0.0, 0.0), (0.0, 7.032)]
+backend: bpypolyskel
+piante casuali: 300, esatte 44, approssimate 243, sbagliate o fallite 13 (6.6 ms l'una)
+  sbagliata: 9 facce per 12 lati, nodi fuori di 9.558 m pianta [(18.108, 0.0), (0.0, 0.0), (0.0, 27.666), (6.147, 27.666), (6.147, 40.181), (8.958, 40.181), (8.958, 27.666), (9.277, 27.666), (9.277, 33.298), (13.116, 33.298), (13.116, 27.666), (18.108, 27.666)]
+  sbagliata: 6 facce per 8 lati, nodi fuori di 1.590 m pianta [(0.0, 10.458), (21.709, 10.458), (21.709, 0.0), (12.056, 0.0), (12.056, -3.49), (3.188, -3.49), (3.188, 0.0), (0.0, 0.0)]
+  sbagliata: 8 facce per 10 lati, nodi fuori di 10.967 m pianta [(0.0, 21.554), (10.587, 21.554), (10.587, 0.0), (10.533, 0.0), (10.533, -7.922), (7.478, -7.922), (7.478, -3.027), (4.087, -3.027), (4.087, 0.0), (0.0, 0.0)]
+backend: cgal
+piante casuali: 300, esatte 300, approssimate 0, sbagliate o fallite 0 (30.0 ms l'una)

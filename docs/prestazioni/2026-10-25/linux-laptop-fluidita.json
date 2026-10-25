@@ -1,0 +1,520 @@
+{
+ "when": "2026-10-25 02:16",
+ "commit": "",
+ "on_screen": true,
+ "no_3d": false,
+ "no_vsync": false,
+ "maximized": true,
+ "platform": "wayland",
+ "sequence": "all",
+ "screen": "eDP-1 1440x960 @ 2",
+ "machine": "x86_64",
+ "qt": "6.12.0",
+ "opened": {
+  "window_built_ms": 606,
+  "first_paint_ms": 693,
+  "year_ms": 1238
+ },
+ "stall_ms": 30,
+ "environment": {
+  "QT_QPA_PLATFORM": "wayland"
+ },
+ "results": [
+  {
+   "gesture": "phase model",
+   "action_ms": 0.0,
+   "until_idle_ms": 2.5,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "phase plant",
+   "action_ms": 21.8,
+   "until_idle_ms": 115.2,
+   "blocks": 1,
+   "worst_ms": 109.3,
+   "blocked_ms": 109.3
+  },
+  {
+   "gesture": "phase production",
+   "action_ms": 13.0,
+   "until_idle_ms": 31.2,
+   "blocks": 1,
+   "worst_ms": 30.3,
+   "blocked_ms": 30.3
+  },
+  {
+   "gesture": "phase consumption",
+   "action_ms": 11.6,
+   "until_idle_ms": 48.9,
+   "blocks": 1,
+   "worst_ms": 45.4,
+   "blocked_ms": 45.4
+  },
+  {
+   "gesture": "phase economics",
+   "action_ms": 13.4,
+   "until_idle_ms": 37.7,
+   "blocks": 1,
+   "worst_ms": 35.4,
+   "blocked_ms": 35.4
+  },
+  {
+   "gesture": "phase report",
+   "action_ms": 32.4,
+   "until_idle_ms": 50.7,
+   "blocks": 1,
+   "worst_ms": 50.3,
+   "blocked_ms": 50.3
+  },
+  {
+   "gesture": "phase plant",
+   "action_ms": 9.9,
+   "until_idle_ms": 29.8,
+   "blocks": 1,
+   "worst_ms": 30.5,
+   "blocked_ms": 30.5
+  },
+  {
+   "gesture": "phase model",
+   "action_ms": 13.2,
+   "until_idle_ms": 16.3,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "File: open",
+   "action_ms": 3.6,
+   "until_idle_ms": 68.9,
+   "blocks": 1,
+   "worst_ms": 31.0,
+   "blocked_ms": 31.0
+  },
+  {
+   "gesture": "File: close (Esc)",
+   "action_ms": 9.4,
+   "until_idle_ms": 16.9,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "File: open",
+   "action_ms": 5.2,
+   "until_idle_ms": 14.3,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "File: close (Esc)",
+   "action_ms": 7.7,
+   "until_idle_ms": 34.0,
+   "blocks": 1,
+   "worst_ms": 30.4,
+   "blocked_ms": 30.4
+  },
+  {
+   "gesture": "left panel: edge dragged",
+   "action_ms": 689.0,
+   "until_idle_ms": 690.8,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "left panel: edge back",
+   "action_ms": 684.8,
+   "until_idle_ms": 687.9,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "right panel: edge dragged",
+   "action_ms": 1037.6,
+   "until_idle_ms": 1041.2,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "right panel: edge back",
+   "action_ms": 1025.2,
+   "until_idle_ms": 1030.8,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "checks: wheel down 10",
+   "action_ms": 174.0,
+   "until_idle_ms": 177.3,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "checks: wheel up 10",
+   "action_ms": 174.7,
+   "until_idle_ms": 177.6,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "project tree: wheel 10",
+   "action_ms": 171.7,
+   "until_idle_ms": 176.9,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "3D: wheel 10",
+   "action_ms": 183.3,
+   "until_idle_ms": 189.8,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "3D: orbit, 40 steps",
+   "action_ms": 733.9,
+   "until_idle_ms": 737.1,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "3D: pan, 40 steps",
+   "action_ms": 733.0,
+   "until_idle_ms": 736.8,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "plan: wheel 10",
+   "action_ms": 173.9,
+   "until_idle_ms": 182.0,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "plan: pan, 40 steps",
+   "action_ms": 689.7,
+   "until_idle_ms": 693.0,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "a field: 12 keys",
+   "action_ms": 333.3,
+   "until_idle_ms": 342.7,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "window: resized, 15 steps",
+   "action_ms": 0.0,
+   "until_idle_ms": 6.6,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "production: phase opened",
+   "action_ms": 6.8,
+   "until_idle_ms": 11.3,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "production: chart tab 1",
+   "action_ms": 0.6,
+   "until_idle_ms": 3.9,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "production: chart tab 2",
+   "action_ms": 0.7,
+   "until_idle_ms": 3.1,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "production: chart tab 3",
+   "action_ms": 1.1,
+   "until_idle_ms": 4.9,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "production: chart tab 0",
+   "action_ms": 0.4,
+   "until_idle_ms": 6.9,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "production: pointer over a chart, 60 steps",
+   "action_ms": 1042.4,
+   "until_idle_ms": 1046.7,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "production: wheel on a chart 10",
+   "action_ms": 169.2,
+   "until_idle_ms": 172.3,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "production: right edge dragged",
+   "action_ms": 937.4,
+   "until_idle_ms": 943.7,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "production: right edge back",
+   "action_ms": 928.5,
+   "until_idle_ms": 930.0,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "production: window resized, 15 steps",
+   "action_ms": 0.0,
+   "until_idle_ms": 10.0,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: phase opened",
+   "action_ms": 7.7,
+   "until_idle_ms": 9.8,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: chart tab 1",
+   "action_ms": 0.7,
+   "until_idle_ms": 1.1,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: chart tab 2",
+   "action_ms": 1.1,
+   "until_idle_ms": 7.8,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: chart tab 3",
+   "action_ms": 1.2,
+   "until_idle_ms": 2.2,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: chart tab 4",
+   "action_ms": 0.9,
+   "until_idle_ms": 12.2,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: chart tab 5",
+   "action_ms": 51.5,
+   "until_idle_ms": 66.2,
+   "blocks": 1,
+   "worst_ms": 55.1,
+   "blocked_ms": 55.1
+  },
+  {
+   "gesture": "consumption: chart tab 0",
+   "action_ms": 0.8,
+   "until_idle_ms": 5.6,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: pointer over a chart, 60 steps",
+   "action_ms": 1031.8,
+   "until_idle_ms": 1035.0,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: wheel on a chart 10",
+   "action_ms": 172.0,
+   "until_idle_ms": 176.8,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: right edge dragged",
+   "action_ms": 1216.9,
+   "until_idle_ms": 1225.0,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: right edge back",
+   "action_ms": 1215.9,
+   "until_idle_ms": 1224.3,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: window resized, 15 steps",
+   "action_ms": 0.0,
+   "until_idle_ms": 3.9,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: phase opened",
+   "action_ms": 7.4,
+   "until_idle_ms": 10.7,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: chart tab 1",
+   "action_ms": 0.7,
+   "until_idle_ms": 3.0,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: chart tab 2",
+   "action_ms": 1.2,
+   "until_idle_ms": 5.2,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: chart tab 3",
+   "action_ms": 0.9,
+   "until_idle_ms": 4.3,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: chart tab 4",
+   "action_ms": 0.8,
+   "until_idle_ms": 4.0,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: chart tab 5",
+   "action_ms": 1.5,
+   "until_idle_ms": 4.1,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: chart tab 6",
+   "action_ms": 1.3,
+   "until_idle_ms": 4.1,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: chart tab 7",
+   "action_ms": 0.9,
+   "until_idle_ms": 3.3,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: chart tab 0",
+   "action_ms": 0.8,
+   "until_idle_ms": 3.6,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: pointer over a chart, 60 steps",
+   "action_ms": 1044.2,
+   "until_idle_ms": 1048.6,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: wheel on a chart 10",
+   "action_ms": 172.3,
+   "until_idle_ms": 176.8,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: right edge dragged",
+   "action_ms": 1088.3,
+   "until_idle_ms": 1091.1,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: right edge back",
+   "action_ms": 1061.5,
+   "until_idle_ms": 1062.4,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "economics: window resized, 15 steps",
+   "action_ms": 0.0,
+   "until_idle_ms": 5.8,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  }
+ ]
+}

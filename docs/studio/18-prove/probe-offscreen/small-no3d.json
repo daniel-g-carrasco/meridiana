@@ -1,0 +1,1248 @@
+{
+ "env": {
+  "qt": "6.12.0",
+  "pyside": "6.12.0",
+  "big": false,
+  "no3d": true,
+  "background": "pcn",
+  "screens": [
+   [
+    "",
+    800,
+    800,
+    1.0
+   ]
+  ],
+  "construct_ms": 261.6,
+  "modules": {
+   "s1": 188
+  },
+  "checks_items": 16
+ },
+ "scenarios": {
+  "open": {
+   "sync_ms": 22.1,
+   "to_idle_ms": 237.0,
+   "freezes_ms": [
+    93.2,
+    34.1,
+    33.0
+   ],
+   "frozen_total_ms": 160.3,
+   "calls": {
+    "Plan._update_tiles": {
+     "n": 1,
+     "ms": 91.4,
+     "max_ms": 91.4
+    },
+    "TileLoader.request": {
+     "n": 15,
+     "ms": 91.1,
+     "max_ms": 12.3
+    },
+    "LayoutJob.run[worker]": {
+     "n": 1,
+     "ms": 20.5,
+     "max_ms": 20.5
+    },
+    "Project.fill[worker]": {
+     "n": 1,
+     "ms": 20.2,
+     "max_ms": 20.2
+    },
+    "Window._layout_done": {
+     "n": 1,
+     "ms": 19.8,
+     "max_ms": 19.8
+    },
+    "Plan.paintEvent": {
+     "n": 3,
+     "ms": 16.4,
+     "max_ms": 6.5
+    },
+    "Window._show_3d": {
+     "n": 2,
+     "ms": 8.6,
+     "max_ms": 5.7
+    },
+    "Window._show_tree": {
+     "n": 2,
+     "ms": 5.4,
+     "max_ms": 4.2
+    },
+    "Window._show_checks": {
+     "n": 1,
+     "ms": 4.0,
+     "max_ms": 4.0
+    },
+    "Window._show_energy_forms": {
+     "n": 2,
+     "ms": 3.7,
+     "max_ms": 3.1
+    },
+    "Plan.show_project": {
+     "n": 2,
+     "ms": 3.6,
+     "max_ms": 2.6
+    },
+    "Window._show_all": {
+     "n": 1,
+     "ms": 3.5,
+     "max_ms": 11.4
+    },
+    "EnergyPage.show_project": {
+     "n": 2,
+     "ms": 2.2,
+     "max_ms": 2.0
+    },
+    "mesh.building_triangles[main]": {
+     "n": 4,
+     "ms": 2.1,
+     "max_ms": 0.7
+    },
+    "mesh.module_table[main]": {
+     "n": 1,
+     "ms": 2.0,
+     "max_ms": 2.0
+    },
+    "ChecksPage.show_items": {
+     "n": 1,
+     "ms": 2.0,
+     "max_ms": 2.0
+    },
+    "Plan._tile_ready": {
+     "n": 15,
+     "ms": 0.9,
+     "max_ms": 0.2
+    },
+    "Properties.show_site": {
+     "n": 3,
+     "ms": 0.8,
+     "max_ms": 7.7
+    },
+    "Window._show_properties": {
+     "n": 3,
+     "ms": 0.8,
+     "max_ms": 7.7
+    },
+    "checks.gather[main]": {
+     "n": 1,
+     "ms": 0.7,
+     "max_ms": 0.7
+    },
+    "ConsumptionPage.show_project": {
+     "n": 2,
+     "ms": 0.6,
+     "max_ms": 0.3
+    },
+    "Project.to_json[main]": {
+     "n": 4,
+     "ms": 0.4,
+     "max_ms": 0.1
+    },
+    "Window._title": {
+     "n": 2,
+     "ms": 0.4,
+     "max_ms": 0.2
+    },
+    "Window._start_layout": {
+     "n": 1,
+     "ms": 0.4,
+     "max_ms": 0.4
+    },
+    "SunBar._update": {
+     "n": 2,
+     "ms": 0.2,
+     "max_ms": 0.1
+    },
+    "Plan.drawForeground": {
+     "n": 3,
+     "ms": 0.2,
+     "max_ms": 0.1
+    },
+    "Window.snapshot": {
+     "n": 1,
+     "ms": 0.2,
+     "max_ms": 0.2
+    },
+    "Plan._restyle_selection": {
+     "n": 3,
+     "ms": 0.1,
+     "max_ms": 0.0
+    },
+    "Window._show_variants": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "EconomicsPage.show_project": {
+     "n": 2,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "sun.position[main]": {
+     "n": 4,
+     "ms": 0.1,
+     "max_ms": 0.0
+    },
+    "sun.position[worker]": {
+     "n": 25,
+     "ms": 0.1,
+     "max_ms": 0.0
+    },
+    "rules.facts[main]": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "Plan._draw_wiring": {
+     "n": 2,
+     "ms": 0.0,
+     "max_ms": 0.0
+    }
+   }
+  },
+  "select_subfield": {
+   "sync_ms": 18.8,
+   "to_idle_ms": 24.6,
+   "freezes_ms": [],
+   "frozen_total_ms": 0,
+   "calls": {
+    "Window._show_properties": {
+     "n": 1,
+     "ms": 13.7,
+     "max_ms": 13.7
+    },
+    "Properties.show_subfield": {
+     "n": 1,
+     "ms": 13.5,
+     "max_ms": 13.5
+    },
+    "matplotlib.draw": {
+     "n": 16,
+     "ms": 8.5,
+     "max_ms": 0.8
+    },
+    "Plan.paintEvent": {
+     "n": 1,
+     "ms": 5.0,
+     "max_ms": 6.5
+    },
+    "Window._show_3d": {
+     "n": 1,
+     "ms": 4.6,
+     "max_ms": 5.7
+    },
+    "mesh.module_table[main]": {
+     "n": 1,
+     "ms": 1.6,
+     "max_ms": 2.0
+    },
+    "mesh.building_triangles[main]": {
+     "n": 2,
+     "ms": 0.9,
+     "max_ms": 0.7
+    },
+    "Plan.drawForeground": {
+     "n": 1,
+     "ms": 0.7,
+     "max_ms": 0.7
+    },
+    "Plan._restyle_selection": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "sun.position[main]": {
+     "n": 1,
+     "ms": 0.0,
+     "max_ms": 0.0
+    }
+   }
+  },
+  "edit_tilt_model_tab": {
+   "sync_ms": 10.2,
+   "to_idle_ms": 142.3,
+   "freezes_ms": [],
+   "frozen_total_ms": 0,
+   "calls": {
+    "Window._layout_done": {
+     "n": 1,
+     "ms": 13.2,
+     "max_ms": 19.8
+    },
+    "Plan.paintEvent": {
+     "n": 2,
+     "ms": 12.4,
+     "max_ms": 6.5
+    },
+    "Window.edit": {
+     "n": 1,
+     "ms": 9.8,
+     "max_ms": 9.8
+    },
+    "LayoutJob.run[worker]": {
+     "n": 1,
+     "ms": 9.2,
+     "max_ms": 20.5
+    },
+    "Project.fill[worker]": {
+     "n": 1,
+     "ms": 9.0,
+     "max_ms": 20.2
+    },
+    "Window._show_all": {
+     "n": 1,
+     "ms": 8.9,
+     "max_ms": 11.4
+    },
+    "Window._show_energy_forms": {
+     "n": 2,
+     "ms": 5.2,
+     "max_ms": 3.1
+    },
+    "Window._show_tree": {
+     "n": 2,
+     "ms": 4.8,
+     "max_ms": 4.2
+    },
+    "Plan.show_project": {
+     "n": 2,
+     "ms": 3.9,
+     "max_ms": 2.6
+    },
+    "Window._show_3d": {
+     "n": 1,
+     "ms": 3.8,
+     "max_ms": 5.7
+    },
+    "EnergyPage.show_project": {
+     "n": 2,
+     "ms": 3.5,
+     "max_ms": 2.0
+    },
+    "Window._show_checks": {
+     "n": 1,
+     "ms": 2.3,
+     "max_ms": 4.0
+    },
+    "Window._show_properties": {
+     "n": 2,
+     "ms": 1.6,
+     "max_ms": 13.7
+    },
+    "ChecksPage.show_items": {
+     "n": 1,
+     "ms": 1.4,
+     "max_ms": 2.0
+    },
+    "Properties.show_subfield": {
+     "n": 2,
+     "ms": 1.3,
+     "max_ms": 13.5
+    },
+    "mesh.module_table[main]": {
+     "n": 1,
+     "ms": 1.1,
+     "max_ms": 2.0
+    },
+    "mesh.building_triangles[main]": {
+     "n": 2,
+     "ms": 0.8,
+     "max_ms": 0.7
+    },
+    "Window.snapshot": {
+     "n": 3,
+     "ms": 0.8,
+     "max_ms": 0.3
+    },
+    "Plan.drawForeground": {
+     "n": 2,
+     "ms": 0.6,
+     "max_ms": 0.7
+    },
+    "Project.to_json[main]": {
+     "n": 5,
+     "ms": 0.5,
+     "max_ms": 0.1
+    },
+    "ConsumptionPage.show_project": {
+     "n": 2,
+     "ms": 0.5,
+     "max_ms": 0.3
+    },
+    "Window._title": {
+     "n": 2,
+     "ms": 0.4,
+     "max_ms": 0.2
+    },
+    "Window._start_layout": {
+     "n": 1,
+     "ms": 0.4,
+     "max_ms": 0.4
+    },
+    "Plan._restyle_selection": {
+     "n": 2,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "Window._show_variants": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "EconomicsPage.show_project": {
+     "n": 2,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "Plan._update_tiles": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 91.4
+    },
+    "sun.position[worker]": {
+     "n": 25,
+     "ms": 0.1,
+     "max_ms": 0.0
+    },
+    "checks.gather[main]": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 0.7
+    },
+    "Plan._draw_wiring": {
+     "n": 2,
+     "ms": 0.0,
+     "max_ms": 0.0
+    },
+    "sun.position[main]": {
+     "n": 1,
+     "ms": 0.0,
+     "max_ms": 0.0
+    },
+    "rules.facts[main]": {
+     "n": 1,
+     "ms": 0.0,
+     "max_ms": 0.1
+    }
+   }
+  },
+  "first_switch_to_production": {
+   "sync_ms": 28.5,
+   "to_idle_ms": 3022.4,
+   "freezes_ms": [
+    69.7,
+    61.0,
+    37.8,
+    36.5,
+    31.7,
+    30.9
+   ],
+   "frozen_total_ms": 267.6,
+   "calls": {
+    "EnergyJob.run[worker]": {
+     "n": 1,
+     "ms": 2952.4,
+     "max_ms": 2952.4
+    },
+    "matplotlib.draw": {
+     "n": 4,
+     "ms": 118.2,
+     "max_ms": 41.4
+    },
+    "Window._energy_done": {
+     "n": 1,
+     "ms": 58.6,
+     "max_ms": 58.6
+    },
+    "EnergyPage.show_results": {
+     "n": 1,
+     "ms": 26.7,
+     "max_ms": 26.7
+    },
+    "ConsumptionPage.show_results": {
+     "n": 1,
+     "ms": 23.5,
+     "max_ms": 23.5
+    },
+    "Project.fill[worker]": {
+     "n": 1,
+     "ms": 17.8,
+     "max_ms": 20.2
+    },
+    "Window._show_checks": {
+     "n": 1,
+     "ms": 5.3,
+     "max_ms": 5.3
+    },
+    "ChecksPage.show_items": {
+     "n": 1,
+     "ms": 3.0,
+     "max_ms": 3.0
+    },
+    "Plan._draw_wiring": {
+     "n": 1,
+     "ms": 0.8,
+     "max_ms": 0.8
+    },
+    "Window._compute_energy": {
+     "n": 1,
+     "ms": 0.8,
+     "max_ms": 0.8
+    },
+    "checks.gather[main]": {
+     "n": 1,
+     "ms": 0.4,
+     "max_ms": 0.7
+    },
+    "ConsumptionPage.show_project": {
+     "n": 1,
+     "ms": 0.3,
+     "max_ms": 0.3
+    },
+    "sun.position[worker]": {
+     "n": 50,
+     "ms": 0.3,
+     "max_ms": 0.0
+    },
+    "EconomicsPage.show_results": {
+     "n": 1,
+     "ms": 0.3,
+     "max_ms": 0.3
+    },
+    "EconomicsPage.show_sizing": {
+     "n": 1,
+     "ms": 0.3,
+     "max_ms": 0.3
+    },
+    "Window.snapshot": {
+     "n": 1,
+     "ms": 0.2,
+     "max_ms": 0.3
+    },
+    "Project.to_json[main]": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "rules.facts[main]": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "EnergyPage.show_strings": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "Pedigree.show_records": {
+     "n": 4,
+     "ms": 0.0,
+     "max_ms": 0.0
+    }
+   }
+  },
+  "edit_tilt_with_energy": {
+   "sync_ms": 328.3,
+   "to_idle_ms": 2780.7,
+   "freezes_ms": [
+    44.2,
+    41.5,
+    35.4,
+    34.4
+   ],
+   "frozen_total_ms": 155.5,
+   "calls": {
+    "EnergyJob.run[worker]": {
+     "n": 1,
+     "ms": 2127.3,
+     "max_ms": 2952.4
+    },
+    "Window._energy_done": {
+     "n": 1,
+     "ms": 41.3,
+     "max_ms": 58.6
+    },
+    "Plan._update_tiles": {
+     "n": 2,
+     "ms": 34.3,
+     "max_ms": 91.4
+    },
+    "TileLoader.request": {
+     "n": 5,
+     "ms": 33.9,
+     "max_ms": 12.3
+    },
+    "Project.fill[worker]": {
+     "n": 2,
+     "ms": 29.5,
+     "max_ms": 20.2
+    },
+    "Plan.paintEvent": {
+     "n": 10,
+     "ms": 25.0,
+     "max_ms": 7.8
+    },
+    "ConsumptionPage.show_results": {
+     "n": 1,
+     "ms": 24.2,
+     "max_ms": 24.2
+    },
+    "Window._layout_done": {
+     "n": 1,
+     "ms": 23.4,
+     "max_ms": 23.4
+    },
+    "LayoutJob.run[worker]": {
+     "n": 1,
+     "ms": 12.4,
+     "max_ms": 20.5
+    },
+    "Window._show_checks": {
+     "n": 2,
+     "ms": 11.0,
+     "max_ms": 6.3
+    },
+    "EnergyPage.show_results": {
+     "n": 1,
+     "ms": 10.2,
+     "max_ms": 26.7
+    },
+    "Window.edit": {
+     "n": 1,
+     "ms": 9.3,
+     "max_ms": 9.8
+    },
+    "Window._show_all": {
+     "n": 1,
+     "ms": 8.7,
+     "max_ms": 11.4
+    },
+    "Window._show_tree": {
+     "n": 2,
+     "ms": 6.4,
+     "max_ms": 4.2
+    },
+    "ChecksPage.show_items": {
+     "n": 2,
+     "ms": 6.3,
+     "max_ms": 3.4
+    },
+    "Plan.show_project": {
+     "n": 2,
+     "ms": 6.0,
+     "max_ms": 3.6
+    },
+    "Window._show_3d": {
+     "n": 1,
+     "ms": 5.7,
+     "max_ms": 5.7
+    },
+    "Window._show_energy_forms": {
+     "n": 2,
+     "ms": 5.6,
+     "max_ms": 3.1
+    },
+    "Plan.drawForeground": {
+     "n": 10,
+     "ms": 3.7,
+     "max_ms": 0.7
+    },
+    "EnergyPage.show_project": {
+     "n": 2,
+     "ms": 3.6,
+     "max_ms": 2.0
+    },
+    "Plan._draw_wiring": {
+     "n": 3,
+     "ms": 2.3,
+     "max_ms": 1.0
+    },
+    "Window._show_properties": {
+     "n": 2,
+     "ms": 1.6,
+     "max_ms": 13.7
+    },
+    "mesh.module_table[main]": {
+     "n": 1,
+     "ms": 1.6,
+     "max_ms": 2.0
+    },
+    "checks.gather[main]": {
+     "n": 2,
+     "ms": 1.4,
+     "max_ms": 1.2
+    },
+    "mesh.building_triangles[main]": {
+     "n": 2,
+     "ms": 1.2,
+     "max_ms": 0.8
+    },
+    "rules.facts[main]": {
+     "n": 2,
+     "ms": 1.2,
+     "max_ms": 1.1
+    },
+    "Properties.show_subfield": {
+     "n": 2,
+     "ms": 1.2,
+     "max_ms": 13.5
+    },
+    "ConsumptionPage.show_project": {
+     "n": 3,
+     "ms": 1.1,
+     "max_ms": 0.6
+    },
+    "Window.snapshot": {
+     "n": 4,
+     "ms": 1.0,
+     "max_ms": 0.3
+    },
+    "Window._compute_energy": {
+     "n": 1,
+     "ms": 0.7,
+     "max_ms": 0.8
+    },
+    "Project.to_json[main]": {
+     "n": 5,
+     "ms": 0.5,
+     "max_ms": 0.1
+    },
+    "Window._start_layout": {
+     "n": 1,
+     "ms": 0.5,
+     "max_ms": 0.5
+    },
+    "sun.position[worker]": {
+     "n": 75,
+     "ms": 0.4,
+     "max_ms": 0.0
+    },
+    "Plan._tile_ready": {
+     "n": 5,
+     "ms": 0.3,
+     "max_ms": 0.2
+    },
+    "EconomicsPage.show_results": {
+     "n": 1,
+     "ms": 0.3,
+     "max_ms": 0.3
+    },
+    "EconomicsPage.show_sizing": {
+     "n": 1,
+     "ms": 0.3,
+     "max_ms": 0.3
+    },
+    "Window._title": {
+     "n": 1,
+     "ms": 0.2,
+     "max_ms": 0.2
+    },
+    "EconomicsPage.show_project": {
+     "n": 2,
+     "ms": 0.2,
+     "max_ms": 0.1
+    },
+    "Plan._restyle_selection": {
+     "n": 2,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "Window._show_variants": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "sun.position[main]": {
+     "n": 1,
+     "ms": 0.0,
+     "max_ms": 0.0
+    },
+    "Pedigree.show_records": {
+     "n": 4,
+     "ms": 0.0,
+     "max_ms": 0.0
+    },
+    "EnergyPage.show_strings": {
+     "n": 1,
+     "ms": 0.0,
+     "max_ms": 0.1
+    }
+   }
+  },
+  "edit_soiling_production_tab": {
+   "sync_ms": 382.4,
+   "to_idle_ms": 1995.4,
+   "freezes_ms": [
+    131.2,
+    53.0,
+    49.5
+   ],
+   "frozen_total_ms": 233.7,
+   "calls": {
+    "EnergyJob.run[worker]": {
+     "n": 1,
+     "ms": 1224.1,
+     "max_ms": 2952.4
+    },
+    "Window._energy_done": {
+     "n": 1,
+     "ms": 131.0,
+     "max_ms": 131.0
+    },
+    "EnergyPage.show_results": {
+     "n": 1,
+     "ms": 85.5,
+     "max_ms": 85.5
+    },
+    "matplotlib.draw": {
+     "n": 2,
+     "ms": 77.1,
+     "max_ms": 43.3
+    },
+    "ConsumptionPage.show_results": {
+     "n": 1,
+     "ms": 32.5,
+     "max_ms": 32.5
+    },
+    "Project.fill[worker]": {
+     "n": 1,
+     "ms": 17.2,
+     "max_ms": 20.2
+    },
+    "Window._layout_done": {
+     "n": 1,
+     "ms": 16.3,
+     "max_ms": 23.4
+    },
+    "Window._show_checks": {
+     "n": 2,
+     "ms": 11.4,
+     "max_ms": 7.2
+    },
+    "Window.edit": {
+     "n": 1,
+     "ms": 10.8,
+     "max_ms": 10.8
+    },
+    "Window._show_all": {
+     "n": 1,
+     "ms": 10.1,
+     "max_ms": 11.4
+    },
+    "ChecksPage.show_items": {
+     "n": 2,
+     "ms": 7.4,
+     "max_ms": 4.7
+    },
+    "Plan.show_project": {
+     "n": 2,
+     "ms": 5.9,
+     "max_ms": 3.6
+    },
+    "Window._show_energy_forms": {
+     "n": 2,
+     "ms": 5.7,
+     "max_ms": 3.1
+    },
+    "Window._show_tree": {
+     "n": 2,
+     "ms": 5.4,
+     "max_ms": 4.2
+    },
+    "EnergyPage.show_project": {
+     "n": 2,
+     "ms": 3.8,
+     "max_ms": 2.0
+    },
+    "Window._show_3d": {
+     "n": 1,
+     "ms": 3.7,
+     "max_ms": 5.7
+    },
+    "Plan._draw_wiring": {
+     "n": 3,
+     "ms": 2.3,
+     "max_ms": 1.0
+    },
+    "Window.snapshot": {
+     "n": 4,
+     "ms": 1.2,
+     "max_ms": 0.4
+    },
+    "ConsumptionPage.show_project": {
+     "n": 3,
+     "ms": 1.1,
+     "max_ms": 0.6
+    },
+    "mesh.module_table[main]": {
+     "n": 1,
+     "ms": 1.1,
+     "max_ms": 2.0
+    },
+    "Window._show_properties": {
+     "n": 2,
+     "ms": 0.9,
+     "max_ms": 13.7
+    },
+    "mesh.building_triangles[main]": {
+     "n": 2,
+     "ms": 0.8,
+     "max_ms": 0.8
+    },
+    "Project.to_json[main]": {
+     "n": 5,
+     "ms": 0.7,
+     "max_ms": 0.2
+    },
+    "Window._compute_energy": {
+     "n": 1,
+     "ms": 0.7,
+     "max_ms": 0.8
+    },
+    "Window._start_layout": {
+     "n": 1,
+     "ms": 0.6,
+     "max_ms": 0.6
+    },
+    "Properties.show_subfield": {
+     "n": 2,
+     "ms": 0.6,
+     "max_ms": 13.5
+    },
+    "EconomicsPage.show_results": {
+     "n": 1,
+     "ms": 0.6,
+     "max_ms": 0.6
+    },
+    "EconomicsPage.show_sizing": {
+     "n": 1,
+     "ms": 0.5,
+     "max_ms": 0.5
+    },
+    "checks.gather[main]": {
+     "n": 2,
+     "ms": 0.4,
+     "max_ms": 1.2
+    },
+    "Window._title": {
+     "n": 1,
+     "ms": 0.2,
+     "max_ms": 0.2
+    },
+    "Plan._update_tiles": {
+     "n": 1,
+     "ms": 0.2,
+     "max_ms": 91.4
+    },
+    "sun.position[worker]": {
+     "n": 50,
+     "ms": 0.2,
+     "max_ms": 0.0
+    },
+    "LayoutJob.run[worker]": {
+     "n": 1,
+     "ms": 0.2,
+     "max_ms": 20.5
+    },
+    "Plan._restyle_selection": {
+     "n": 2,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "Window._show_variants": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "EconomicsPage.show_project": {
+     "n": 2,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "rules.facts[main]": {
+     "n": 2,
+     "ms": 0.1,
+     "max_ms": 1.1
+    },
+    "Pedigree.show_records": {
+     "n": 4,
+     "ms": 0.1,
+     "max_ms": 0.0
+    },
+    "EnergyPage.show_strings": {
+     "n": 1,
+     "ms": 0.1,
+     "max_ms": 0.1
+    },
+    "sun.position[main]": {
+     "n": 1,
+     "ms": 0.0,
+     "max_ms": 0.0
+    }
+   }
+  },
+  "tab_switches": [
+   {
+    "to": 0,
+    "paint_ms": 14.5,
+    "freezes_ms": [],
+    "calls": {
+     "Plan.paintEvent": {
+      "n": 7,
+      "ms": 10.7,
+      "max_ms": 7.8
+     }
+    }
+   },
+   {
+    "to": 1,
+    "paint_ms": 20.5,
+    "freezes_ms": [],
+    "calls": {}
+   },
+   {
+    "to": 2,
+    "paint_ms": 76.1,
+    "freezes_ms": [
+     76.2,
+     35.7
+    ],
+    "calls": {
+     "matplotlib.draw": {
+      "n": 2,
+      "ms": 73.6,
+      "max_ms": 43.3
+     }
+    }
+   },
+   {
+    "to": 3,
+    "paint_ms": 126.9,
+    "freezes_ms": [
+     127.0,
+     68.9
+    ],
+    "calls": {
+     "matplotlib.draw": {
+      "n": 4,
+      "ms": 141.0,
+      "max_ms": 43.3
+     }
+    }
+   },
+   {
+    "to": 4,
+    "paint_ms": 5.2,
+    "freezes_ms": [],
+    "calls": {}
+   },
+   {
+    "to": 0,
+    "paint_ms": 17.0,
+    "freezes_ms": [],
+    "calls": {
+     "Plan.paintEvent": {
+      "n": 2,
+      "ms": 9.7,
+      "max_ms": 7.8
+     }
+    }
+   },
+   {
+    "to": 3,
+    "paint_ms": 15.5,
+    "freezes_ms": [],
+    "calls": {}
+   },
+   {
+    "to": 1,
+    "paint_ms": 14.5,
+    "freezes_ms": [],
+    "calls": {}
+   },
+   {
+    "to": 0,
+    "paint_ms": 17.9,
+    "freezes_ms": [],
+    "calls": {
+     "Plan.paintEvent": {
+      "n": 7,
+      "ms": 14.1,
+      "max_ms": 7.8
+     }
+    }
+   },
+   {
+    "to": 2,
+    "paint_ms": 15.1,
+    "freezes_ms": [],
+    "calls": {}
+   },
+   {
+    "to": 0,
+    "paint_ms": 18.2,
+    "freezes_ms": [],
+    "calls": {
+     "Plan.paintEvent": {
+      "n": 2,
+      "ms": 11.6,
+      "max_ms": 7.8
+     }
+    }
+   }
+  ],
+  "hover_plan_only": {
+   "viewport": [
+    1234,
+    528
+   ],
+   "median_ms": 0.77,
+   "p95_ms": 3.01,
+   "max_ms": 3.66,
+   "freezes_ms": [],
+   "calls": {
+    "Plan.paintEvent": {
+     "n": 20,
+     "ms": 29.0,
+     "max_ms": 7.8
+    },
+    "Plan._update_cursor": {
+     "n": 90,
+     "ms": 9.3,
+     "max_ms": 0.4
+    },
+    "Plan.drawForeground": {
+     "n": 20,
+     "ms": 4.7,
+     "max_ms": 0.7
+    }
+   }
+  },
+  "hover_plan_and_3d": {
+   "viewport": [
+    676,
+    528
+   ],
+   "median_ms": 0.9,
+   "p95_ms": 4.37,
+   "max_ms": 4.95,
+   "freezes_ms": [],
+   "calls": {
+    "Plan.paintEvent": {
+     "n": 27,
+     "ms": 47.1,
+     "max_ms": 7.8
+    },
+    "Plan._update_cursor": {
+     "n": 90,
+     "ms": 14.8,
+     "max_ms": 0.6
+    },
+    "Plan.drawForeground": {
+     "n": 27,
+     "ms": 8.3,
+     "max_ms": 0.7
+    }
+   }
+  },
+  "wheel_properties": {
+   "scroll_range": [
+    0,
+    366
+   ],
+   "over_field": {
+    "field": "QSpinBox",
+    "value_before": 1,
+    "value_after": 1,
+    "undo_steps_added": 0,
+    "scroll_before": 0,
+    "scroll_after": 0,
+    "accepted": false
+   },
+   "over_label": {
+    "scroll_before": 0,
+    "scroll_after": 0
+   }
+  },
+  "wheel_energy": {
+   "form_scroll_range": [
+    0,
+    1423
+   ],
+   "soiling_before": 2.5,
+   "soiling_after": 2.5,
+   "scroll_before": 1100,
+   "scroll_after": 1100,
+   "undo_steps_added": 0,
+   "chart": {
+    "results_scroll_range": [
+     0,
+     669
+    ],
+    "scroll_before": 0,
+    "scroll_after": 0
+   }
+  },
+  "typing_while_layout": {
+   "undo_last": [
+    "Change tilt",
+    "Change tilt",
+    "Change soiling",
+    "Change tilt"
+   ],
+   "model_gap_now": null,
+   "typed": "0,07",
+   "field_now_shows": "0,07",
+   "same_widget": true,
+   "field_destroyed_under_the_keys_at_ms": [],
+   "page_rebuilt_at_ms_after_enter": [],
+   "focus_on": "QuantityField",
+   "ms_from_enter_to_idle": 3675.1
+  },
+  "closed_properties": {
+   "menu_entries_that_reopen_it": [
+    "&View > Pa&nels > Properties"
+   ],
+   "only_in_the_right_click_menu_of_the_bars": [
+    "Project",
+    "Checks (3)",
+    "Meridio",
+    "Properties",
+    "",
+    "Tools"
+   ],
+   "shortcut_of_its_toggle": "Ctrl+1"
+  },
+  "view_modes": [
+   {
+    "mode": "plan",
+    "paint_ms": 13.4,
+    "freezes_ms": []
+   },
+   {
+    "mode": "3d",
+    "paint_ms": 7.2,
+    "freezes_ms": []
+   },
+   {
+    "mode": "both",
+    "paint_ms": 16.8,
+    "freezes_ms": [
+     52.4
+    ]
+   },
+   {
+    "mode": "plan",
+    "paint_ms": 9.4,
+    "freezes_ms": []
+   },
+   {
+    "mode": "both",
+    "paint_ms": 7.6,
+    "freezes_ms": []
+   }
+  ]
+ }
+}

@@ -1,0 +1,18 @@
+# What the Flatpak installs with pip: requirements.txt without what io.qt.PySide.BaseApp//6.11 brings (PySide6 6.11.2,
+# numpy 2.3) and without kokoro-onnx (the natural voice's model is not shipped, and onnxruntime alone weighs 50 MB:
+# inside the Flatpak Meridio speaks with the system's voice). python3-requirements.json, the module the manifest
+# builds, is written from this file with pinned wheels (url and sha256, x86_64 and aarch64; no network at build time):
+#
+#   python3 flatpak-pip-generator.py --runtime org.kde.Sdk//6.11 -r requirements-flatpak.txt \
+#       --ignore-pkg numpy --prefer-wheels=<every package with compiled code> -o python3-requirements
+#
+# (flatpak-builder-tools, pip/; the command with the full list is in docs/progetto.md section 4)
+shapely>=2.0
+pandas>=2.2
+requests>=2.31
+pvlib==0.16.1
+scipy>=1.15
+matplotlib>=3.9
+pyqtgraph>=0.14
+anthropic>=2.3
+keyring>=25.7

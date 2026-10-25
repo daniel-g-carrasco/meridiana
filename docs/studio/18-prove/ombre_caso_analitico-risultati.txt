@@ -1,0 +1,96 @@
+Ombre vicine (nearshade.py) contro la geometria a mano
+griglia del sole: azimut ogni 5.0 gradi, elevazione da 2.0 ogni 4.0
+
+A. Muro alto 1 m a sud di moduli piani profondi 2 m, 1,5 m dietro la faccia nord del muro; sole a sud
+   cielo visto oltre il muro (fattore diffuso): 0.9622
+   elevazione  ombra h/tan  frazione a mano  tabella/at()   errore   nodo della griglia?
+        2.00      28.636          1.0000        1.0000   +0.0000   si
+        4.00      14.301          1.0000        1.0000   +0.0000   no
+        6.00       9.514          1.0000        1.0000   +0.0000   si
+        8.00       7.115          1.0000        1.0000   +0.0000   no
+       10.00       5.671          1.0000        1.0000   +0.0000   si
+       12.00       4.705          1.0000        1.0000   +0.0000   no
+       14.00       4.011          1.0000        1.0000   +0.0000   si
+       16.00       3.487          0.9937        0.8944   -0.0993   no
+       18.00       3.078          0.7888        0.7888   -0.0000   si
+       20.00       2.747          0.6237        0.6382   +0.0145   no
+       22.00       2.475          0.4875        0.4875   -0.0000   si
+       24.00       2.246          0.3730        0.3813   +0.0083   no
+       26.00       2.050          0.2752        0.2752   -0.0000   si
+       28.00       1.881          0.1904        0.1956   +0.0052   no
+       30.00       1.732          0.1160        0.1160   -0.0000   si
+       32.00       1.600          0.0502        0.0580   +0.0078   no
+       34.00       1.483          0.0000        0.0000   +0.0000   si
+       36.00       1.376          0.0000        0.0000   +0.0000   no
+       38.00       1.280          0.0000        0.0000   +0.0000   si
+       42.00       1.111          0.0000        0.0000   +0.0000   si
+       46.00       0.966          0.0000        0.0000   +0.0000   si
+       50.00       0.839          0.0000        0.0000   +0.0000   si
+   errore massimo fuori dai nodi (interpolazione bilineare di una curva in 1/tan): 0.0993 di frazione
+   mezzogiorno del solstizio d'inverno a Rho: SPA 21.08 gradi apparenti alle 12:22 locali, azimut 180.02; sun.noon_elevation (geometrica) 21.04
+   frazione in ombra a mano 0.5471, dalla tabella 0.5568, errore +0.0097 (+1.77 %)
+   azimut 182.5 (fra due nodi), elevazione 22: proiezione esatta 0.4864, tabella 0.4852, errore -0.0012; formula del solo spigolo alto 0.4864
+   azimut 187.5 (fra due nodi), elevazione 22: proiezione esatta 0.4770, tabella 0.4758, errore -0.0012; formula del solo spigolo alto 0.4770
+   azimut 185.0 (nodo), elevazione 22: proiezione esatta 0.4828, tabella 0.4828, errore -0.0000; formula del solo spigolo alto 0.4828
+   azimut 230.0 (nodo), elevazione 22: proiezione esatta 0.0416, tabella 0.0416, errore -0.0000; formula del solo spigolo alto 0.0414
+
+A2. Lo stesso muro (1,5 m) davanti a un modulo di 2 m inclinato 30 gradi verso sud, bordo basso a 3,5 m dal muro
+   elevazione  s_lim (m)  frazione a mano  tabella   errore   nodo?
+         6.0     1.9156          0.9578    0.9578   -0.0000   si
+        10.0     1.3526          0.6763    0.6763   -0.0000   si
+        14.0     0.8763          0.4381    0.4381   +0.0000   si
+        16.0     0.6633          0.3317    0.3351   +0.0035   no
+        18.0     0.4643          0.2321    0.2321   +0.0000   si
+        20.0     0.2774          0.1387    0.1413   +0.0027   no
+        22.0     0.1011          0.0505    0.0505   +0.0000   si
+        24.0    -0.0658          0.0000    0.0253   +0.0253   no
+        26.0    -0.2245          0.0000    0.0000   +0.0000   si
+
+B. Effetto elettrico (Martinez-Moreno 2010, eq. 6): un modulo in ombra piena su una stringa
+   blocchi per modulo (3, 1) = 3: quote in ombra per modulo [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], blocchi toccati [3, 0, 0, 0, 0, 0, 0, 0, 0, 0], tabella 0.1000
+      una stringa di 10: extra 0.08710 (a mano (1 - 0.1) x 3/(30 + 1) = 0.08710); due stringhe di 5: 0.07500 (a mano 5/10 x (1 - 0.2) x 3/(15 + 1) = 0.07500)
+      pvlib.shading.direct_martinez(1, 1, 0.1, 3, 30) = 0.18710 di perdita sul diretto, di cui lineare 0.1: extra 0.08710
+      simulate.py: p_el = p_mm (1 - extra/(1 - f_obst)) con p_mm gia' ridotto di (1 - f_obst): resta 0.81290 del diretto; Martinez (1 - F_GS)(1 - N_SB/(N_TB + 1)) = 0.81290
+   blocchi per modulo (3, 2) = 6: quote in ombra per modulo [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], blocchi toccati [6, 0, 0, 0, 0, 0, 0, 0, 0, 0], tabella 0.1000
+      una stringa di 10: extra 0.08852 (a mano (1 - 0.1) x 6/(60 + 1) = 0.08852); due stringhe di 5: 0.07742 (a mano 5/10 x (1 - 0.2) x 6/(30 + 1) = 0.07742)
+      pvlib.shading.direct_martinez(1, 1, 0.1, 6, 60) = 0.18852 di perdita sul diretto, di cui lineare 0.1: extra 0.08852
+      simulate.py: p_el = p_mm (1 - extra/(1 - f_obst)) con p_mm gia' ridotto di (1 - f_obst): resta 0.81148 del diretto; Martinez (1 - F_GS)(1 - N_SB/(N_TB + 1)) = 0.81148
+
+B2. Ombra sul quarto inferiore di tutti e dieci i moduli (muro a tutta larghezza, altezza 2 tan 30 = 1,1547 m)
+   blocchi (3, 1): quota in ombra 0.2500 per modulo, blocchi toccati 3 di 3 per modulo; extra 0.7258 (a mano (1 - 0.25) x 30/(30 + 1) = 0.7258); del diretto resta 0.0242; rows_electrical (file, senza +1): extra 0.7500, resta 0.0000
+   blocchi (3, 2): quota in ombra 0.2500 per modulo, blocchi toccati 3 di 6 per modulo; extra 0.3689 (a mano (1 - 0.25) x 30/(60 + 1) = 0.3689); del diretto resta 0.3811; rows_electrical (file, senza +1): extra 0.3750, resta 0.3750
+   lettura: con i tre diodi lungo il lato lungo un'ombra dal basso tocca tutti i blocchi e il modello toglie quasi tutto il diretto; con le mezze celle resta la meta' superiore
+
+C. Casi al limite
+   C1 muro di 3 m a nord dei moduli piani, sole a nord a 46.0 gradi: ombra 2.897 m verso sud, frazione a mano 0.4485, tabella 0.4485; con il sole a sud (180, 30): 0.0000
+   C2 scatola alta 1 m dietro un modulo inclinato 30 gradi, sotto il piano prolungato: tabella max 0.0000, cielo 1.0000
+   C3 modulo a 60 gradi verso sud, muro di 5 m a nord, sole a nord a 20 gradi: sole dietro il piano (s.n = -0.643), tabella 0.0000 (la faccia non riceve diretto: coerente)
+   C4 sole sotto la prima riga della griglia: at(1 grado) = 1.0000 = at(2 gradi) 1.0000; at(0) = 0.0000; at(-3) = 0.0000
+   C5 falda a 15 gradi, ostacolo di 2 m un metro dietro, sole a (300, 8): cos(aoi) = +0.0063, frazione in ombra 0.3297, diretto in gioco 0.63 % della DNI
+   C5 falda a 15 gradi, ostacolo di 2 m un metro dietro, sole a (300, 2): cos(aoi) = -0.0956, frazione in ombra 0.0000, diretto in gioco 0.00 % della DNI
+   C5 falda a 15 gradi, ostacolo di 2 m un metro dietro, sole a (330, 6): cos(aoi) = -0.1219, frazione in ombra 0.0000, diretto in gioco 0.00 % della DNI
+
+D. Il costo della griglia su un anno vero: il muro di A sui moduli piani, anno tipo PVGIS di Rho
+   diretto sul piano 899.5 kWh/m2; perso per il muro: esatto 5.568 %, tabella completa 5.634 %, tabella delle sole celle necessarie (come simulate) 5.634 %
+   errore della tabella sulla perdita: +1.18 % della perdita; errore orario massimo 0.1027 di frazione, medio 0.0037
+   celle calcolate con needed_cells: 767 di 1584; cielo: tabella completa 0.9622, ridotta 0.9625
+   le ore peggiori (ora UTC dell'anno tipo, elevazione, azimut, DNI, esatto, tabella):
+      27/11 14:00  el  11.99  az  222.17  DNI      0  esatto 0.8699  tabella 0.7671  diretto sul piano 0.0 W/m2
+      27/11 08:00  el  11.83  az  137.45  DNI     54  esatto 0.8705  tabella 0.7697  diretto sul piano 11.1 W/m2
+      28/11 14:00  el  11.87  az  222.01  DNI    505  esatto 0.8748  tabella 0.7758  diretto sul piano 103.8 W/m2
+      26/11 08:00  el  12.03  az  137.42  DNI    568  esatto 0.8533  tabella 0.7583  diretto sul piano 118.3 W/m2
+      05/01 14:00  el  12.71  az  217.76  DNI      0  esatto 0.9064  tabella 0.8117  diretto sul piano 0.0 W/m2
+      26/11 14:00  el  12.11  az  222.34  DNI    699  esatto 0.8510  tabella 0.7580  diretto sul piano 146.7 W/m2
+   ore con il sole fra 0 e 6 gradi: 516, diretto sul piano in quelle ore 2.38 kWh/m2 (0.26 % dell'anno)
+
+E. File inclinate: pvlib.shading.shaded_fraction1d come simulate.py la chiama, contro la geometria piana
+   file a 25.0 gradi verso sud, larghezza 2.278 m, passo 2.6 m (GCR 0.88); sole a sud
+   elevazione  s_lim (m)  frazione a mano  shaded_fraction1d   errore
+        10.0     1.4909          0.6545             0.6545   -0.0000
+        15.0     1.2311          0.5404             0.5404   -0.0000
+        20.0     1.0204          0.4479             0.4479   -0.0000
+        25.0     0.8436          0.3703             0.3703   -0.0000
+        30.0     0.6910          0.3033             0.3033   -0.0000
+        35.0     0.5560          0.2441             0.2441   -0.0000
+        40.0     0.4340          0.1905             0.1905   -0.0000
+   sole a (135, 20): angolo di profilo 27.24 gradi, a mano 0.3392, pvlib 0.3392, errore -0.0000

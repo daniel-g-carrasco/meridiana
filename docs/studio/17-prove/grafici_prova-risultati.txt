@@ -1,0 +1,6 @@
+8760 valori orari, finestra 600 x 300 px, offscreen, Python 3.13.16
+1. matplotlib QtAgg                primo_disegno 243 ms  ridisegno 153 ms  passaggio_ridisegno 179 ms  passaggio_blit 7.3 ms  mensile 105 ms  pdf 710 ms (38 KB, vettoriale)  memoria +51 MB
+2. pyqtgraph 0.14 (MIT)            primo_disegno 32/24 ms  ridisegno 1/2 ms  passaggio_mirino 3/4 ms  zoom 9/9 ms (senza/con antialiasing)  memoria +13 MB  pdf SVG o QPdfWriter, nessun esportatore PDF
+3. Qt Charts (deprecato 6.10)      primo_disegno 37 ms  ridisegno 6 ms  zoom 14 ms  passaggio segnale hovered per punto (non misurabile senza mouse)  memoria +5 MB  pdf QChartView.render su QPdfWriter, vettoriale
+4. Qt Graphs 2D (QML, GPL-3)       caricamento_e_primo_fotogramma 173 ms  stato offscreen senza GPU la scena non si disegna (come la vista 3D): il tempo è il caricamento  memoria +29 MB  passaggio segnale hover(serie, posizione, valore)  pdf grabToImage, raster
+5. vista web (QtWebEngine)         avvio_e_pagina 115 ms  caricata True  memoria +68 MB nel processo principale (più il processo del browser)  ruota 111 MiB Linux, 126 MiB Windows  pdf printToPdf asincrono o SVG dalla libreria

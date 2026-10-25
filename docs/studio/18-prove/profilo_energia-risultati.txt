@@ -1,0 +1,131 @@
+# profilo_energia.py, 5 ripetizioni di seguito, 23/10/2026 15:57, carico CPU 34% all'inizio (altri agenti), sotto cProfile
+=== run 1 15:56:57
+moduli: 188
+calcolo: 2.57 s
+  Python di Meridiana                        1.31 s    51 %
+  Python di numpy/pandas                     0.53 s    21 %
+  C (numpy, pandas, shapely, interprete)     0.50 s    19 %
+  Python di pvlib                            0.16 s     6 %
+  altro Python                               0.07 s     3 %
+file di Meridiana per tempo proprio:
+  economics.py                   1.07 s
+  nearshade.py                   0.18 s
+  bands.py                       0.03 s
+  meteo.py                       0.01 s
+  simulate.py                    0.00 s
+  window.py                      0.00 s
+  consumption.py                 0.00 s
+  layout.py                      0.00 s
+funzioni di Meridiana per tempo proprio:
+  economics.py     dispatch                              0.86 s       156 chiamate
+  economics.py     <genexpr>                             0.18 s      1700 chiamate
+  nearshade.py     _read                                 0.17 s        16 chiamate
+  bands.py         band_of                               0.03 s        20 chiamate
+  economics.py     evaluate                              0.02 s        17 chiamate
+  meteo.py         diffuse_factor                        0.01 s         2 chiamate
+  nearshade.py     electrical                            0.01 s         1 chiamate
+  window.py        _compute                              0.00 s         1 chiamate
+=== run 2 15:57:06
+moduli: 188
+calcolo: 2.33 s
+  Python di Meridiana                        1.13 s    49 %
+  Python di numpy/pandas                     0.52 s    22 %
+  C (numpy, pandas, shapely, interprete)     0.45 s    19 %
+  Python di pvlib                            0.14 s     6 %
+  altro Python                               0.09 s     4 %
+file di Meridiana per tempo proprio:
+  economics.py                   0.93 s
+  nearshade.py                   0.14 s
+  bands.py                       0.03 s
+  meteo.py                       0.01 s
+  window.py                      0.00 s
+  simulate.py                    0.00 s
+  sun.py                         0.00 s
+  consumption.py                 0.00 s
+funzioni di Meridiana per tempo proprio:
+  economics.py     dispatch                              0.73 s       156 chiamate
+  economics.py     <genexpr>                             0.18 s      1700 chiamate
+  nearshade.py     _read                                 0.13 s        16 chiamate
+  bands.py         band_of                               0.03 s        20 chiamate
+  economics.py     evaluate                              0.02 s        17 chiamate
+  meteo.py         diffuse_factor                        0.01 s         2 chiamate
+  nearshade.py     electrical                            0.00 s         1 chiamate
+  window.py        _compute                              0.00 s         1 chiamate
+=== run 3 15:57:15
+moduli: 188
+calcolo: 1.76 s
+  Python di Meridiana                        0.88 s    50 %
+  Python di numpy/pandas                     0.36 s    21 %
+  C (numpy, pandas, shapely, interprete)     0.34 s    20 %
+  Python di pvlib                            0.12 s     7 %
+  altro Python                               0.05 s     3 %
+file di Meridiana per tempo proprio:
+  economics.py                   0.73 s
+  nearshade.py                   0.11 s
+  bands.py                       0.02 s
+  meteo.py                       0.01 s
+  simulate.py                    0.00 s
+  window.py                      0.00 s
+  consumption.py                 0.00 s
+  layout.py                      0.00 s
+funzioni di Meridiana per tempo proprio:
+  economics.py     dispatch                              0.59 s       156 chiamate
+  economics.py     <genexpr>                             0.12 s      1700 chiamate
+  nearshade.py     _read                                 0.10 s        16 chiamate
+  bands.py         band_of                               0.02 s        20 chiamate
+  economics.py     evaluate                              0.01 s        17 chiamate
+  meteo.py         diffuse_factor                        0.01 s         2 chiamate
+  nearshade.py     electrical                            0.00 s         1 chiamate
+  window.py        _compute                              0.00 s         1 chiamate
+=== run 4 15:57:23
+moduli: 188
+calcolo: 1.81 s
+  Python di Meridiana                        0.91 s    50 %
+  Python di numpy/pandas                     0.38 s    21 %
+  C (numpy, pandas, shapely, interprete)     0.36 s    20 %
+  Python di pvlib                            0.11 s     6 %
+  altro Python                               0.05 s     3 %
+file di Meridiana per tempo proprio:
+  economics.py                   0.76 s
+  nearshade.py                   0.10 s
+  bands.py                       0.02 s
+  meteo.py                       0.01 s
+  simulate.py                    0.00 s
+  window.py                      0.00 s
+  consumption.py                 0.00 s
+  layout.py                      0.00 s
+funzioni di Meridiana per tempo proprio:
+  economics.py     dispatch                              0.62 s       156 chiamate
+  economics.py     <genexpr>                             0.13 s      1700 chiamate
+  nearshade.py     _read                                 0.10 s        16 chiamate
+  bands.py         band_of                               0.02 s        20 chiamate
+  economics.py     evaluate                              0.02 s        17 chiamate
+  meteo.py         diffuse_factor                        0.00 s         2 chiamate
+  nearshade.py     electrical                            0.00 s         1 chiamate
+  window.py        _compute                              0.00 s         1 chiamate
+=== run 5 15:57:30
+moduli: 188
+calcolo: 1.91 s
+  Python di Meridiana                        0.95 s    50 %
+  Python di numpy/pandas                     0.41 s    21 %
+  C (numpy, pandas, shapely, interprete)     0.38 s    20 %
+  Python di pvlib                            0.12 s     6 %
+  altro Python                               0.06 s     3 %
+file di Meridiana per tempo proprio:
+  economics.py                   0.79 s
+  nearshade.py                   0.12 s
+  bands.py                       0.02 s
+  meteo.py                       0.01 s
+  simulate.py                    0.00 s
+  window.py                      0.00 s
+  consumption.py                 0.00 s
+  layout.py                      0.00 s
+funzioni di Meridiana per tempo proprio:
+  economics.py     dispatch                              0.64 s       156 chiamate
+  economics.py     <genexpr>                             0.13 s      1700 chiamate
+  nearshade.py     _read                                 0.11 s        16 chiamate
+  bands.py         band_of                               0.02 s        20 chiamate
+  economics.py     evaluate                              0.02 s        17 chiamate
+  meteo.py         diffuse_factor                        0.01 s         2 chiamate
+  nearshade.py     electrical                            0.00 s         1 chiamate
+  simulate.py      simulate                              0.00 s         2 chiamate

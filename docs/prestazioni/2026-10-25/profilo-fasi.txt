@@ -1,0 +1,37 @@
+fasi: 3216 ms
+         464420 function calls (462492 primitive calls) in 3.214 seconds
+
+   Ordered by: cumulative time
+   List reduced from 438 to 28 due to restriction <28>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    3.216    3.216 perf_profile.py:77(phases)
+       12    0.000    0.000    2.959    0.247 perf_profile.py:43(pump)
+       12    2.883    0.240    2.958    0.247 {method 'exec' of 'PySide6.QtCore.QEventLoop' objects}
+       12    0.000    0.000    0.257    0.021 src\meridiana\ui\window.py:1024(show_phase)
+       12    0.000    0.000    0.257    0.021 src\meridiana\ui\phasebar.py:559(setCurrentIndex)
+       12    0.000    0.000    0.257    0.021 {method 'setCurrentIndex' of 'PySide6.QtWidgets.QTabBar' objects}
+       12    0.000    0.000    0.255    0.021 src\meridiana\ui\phasebar.py:537(_changed)
+       12    0.000    0.000    0.156    0.013 {method 'emit' of 'PySide6.QtCore.SignalInstance' objects}
+       12    0.000    0.000    0.140    0.012 src\meridiana\ui\window.py:2742(_tab_changed)
+     3836    0.009    0.000    0.104    0.000 src\meridiana\ui\cards.py:241(sizeHint)
+       24    0.040    0.002    0.098    0.004 {method 'setCurrentIndex' of 'PySide6.QtWidgets.QStackedWidget' objects}
+       12    0.000    0.000    0.088    0.007 src\meridiana\ui\window.py:2788(_show_inspector)
+     3836    0.013    0.000    0.086    0.000 src\meridiana\ui\cards.py:237(line_height)
+     3836    0.012    0.000    0.064    0.000 src\meridiana\ui\cards.py:228(title_font)
+       12    0.000    0.000    0.054    0.005 src\meridiana\ui\inspector.py:153(set_kind)
+       12    0.019    0.002    0.054    0.005 {method 'setCurrentWidget' of 'PySide6.QtWidgets.QStackedWidget' objects}
+     1904    0.001    0.000    0.054    0.000 src\meridiana\ui\cards.py:245(minimumSizeHint)
+     3880    0.021    0.000    0.043    0.000 src\meridiana\ui\design.py:106(font)
+    51208    0.019    0.000    0.041    0.000 {method 'type' of 'PySide6.QtCore.QEvent' objects}
+    55522    0.014    0.000    0.024    0.000 C:\Python312\Lib\enum.py:726(__call__)
+    12450    0.009    0.000    0.021    0.000 src\meridiana\ui\menubar.py:88(eventFilter)
+       12    0.000    0.000    0.020    0.002 src\meridiana\ui\window.py:1128(_fill_side_bar)
+    15555    0.005    0.000    0.020    0.000 shibokensupport/signature/loader.py:60(feature_import)
+    12450    0.007    0.000    0.017    0.000 perf_profile.py:27(eventFilter)
+        2    0.000    0.000    0.016    0.008 src\meridiana\ui\window.py:2762(_lend_plan)
+       12    0.000    0.000    0.016    0.001 src\meridiana\ui\help_box.py:540(_phase)
+       12    0.000    0.000    0.016    0.001 src\meridiana\ui\help_box.py:449(follow_context)
+       12    0.000    0.000    0.016    0.001 src\meridiana\ui\help_box.py:390(show_help)
+
+

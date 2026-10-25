@@ -1,0 +1,128 @@
+# Proofs of theme A (A-architettura-prove.py), run on 23/10/2026 on Daniel's PC, offscreen:
+#   QT_QPA_PLATFORM=offscreen python docs/studio/18-prove/A-architettura-prove.py C:/Users/utente/dev/meridiana-lavoro
+# Times are medians of 5 runs, milliseconds, Python 3.12.6, PySide6 6.12.0; no network (background none).
+
+
+== environment
+python 3.12.6, PySide6 6.12.0, numpy 2.5.4, pandas 3.0.6, Windows 11, QT_QPA_PLATFORM=offscreen
+
+== A3 undo: cost of the snapshots without the window
+-- small: 1 building, 1 sub-field, 2 exclusions: project JSON 2 kB
+   snapshot() [deepcopy(to_json)]           0.10 ms  (edit() does it twice)
+   before != after                          0.00 ms
+   restore [from_json(deepcopy)]            0.10 ms
+   state key [json.dumps sorted, whole]     0.07 ms  (_state_key trims the image)
+   layout_key for every sub-field           0.05 ms  (1 sub-fields; _show_tree and _show_properties pay it at each redraw)
+   memory of one undo step (before + after, Python objects): 12 kB; an unlimited QUndoStack keeps every step
+-- large: 20 buildings, 40 sub-fields, 60 exclusions: project JSON 25 kB
+   snapshot() [deepcopy(to_json)]           1.48 ms  (edit() does it twice)
+   before != after                          0.02 ms
+   restore [from_json(deepcopy)]            1.29 ms
+   state key [json.dumps sorted, whole]     0.90 ms  (_state_key trims the image)
+   layout_key for every sub-field          24.47 ms  (40 sub-fields; _show_tree and _show_properties pay it at each redraw)
+   memory of one undo step (before + after, Python objects): 213 kB; an unlimited QUndoStack keeps every step
+-- large + image 4 MB (base64 5.4 MB): project JSON 5486 kB
+   snapshot() [deepcopy(to_json)]           2.01 ms  (edit() does it twice)
+   before != after                          0.02 ms
+   restore [from_json(deepcopy)]            1.25 ms
+   state key [json.dumps sorted, whole]    15.05 ms  (_state_key trims the image)
+   layout_key for every sub-field          24.37 ms  (40 sub-fields; _show_tree and _show_properties pay it at each redraw)
+   memory of one undo step (before + after, Python objects): 211 kB; an unlimited QUndoStack keeps every step
+
+== A4 file format: what from_json does with damaged or old input
+   no 'version' key: KeyError: 0 -> NOT caught by open_path (OSError, ValueError only)
+   version 0 (older than any migration): KeyError: 0 -> NOT caught by open_path (OSError, ValueError only)
+   a building without name and footprint: TypeError: Building.__init__() missing 2 required positional arguments: 'name' and 'footprint' -> NOT caught by open_path (OSError, ValueError only)
+   a sub-field whose ring is a number: accepted; later TypeError: 'int' object is not iterable
+   buildings is a dict, not a list: AttributeError: 'str' object has no attribute 'items' -> NOT caught by open_path (OSError, ValueError only)
+   site latitude is text: accepted; later ValueError: could not convert string to float: 'north'
+   variants without the one in hand: accepted
+   a newer format (7): ValueError: made by a newer Meridiana (format 7); update the program to open it -> caught by open_path
+
+== A4 settings: a float field is not type-checked
+   veil='forty percent' accepted by Config.from_json: veil='forty percent'
+   view_colours.veil(cfg.veil) -> TypeError: '>' not supported between instances of 'str' and 'float' (the window sets it at start)
+   accent=12 (a str field): refused, accent: 12 is not text (bool, int and str fields are checked; float is not)
+
+== A5 layout: the keys of the modules taken out by hand
+   base layout 125 modules; key '0:7' at (9.23, 1.6) taken out -> 124 modules
+   after gap 0.02 -> 0.10 the same key '0:7' is the module at (10.06, 1.6): moved by 0.83 m along the row; 115 -> 114 modules (the hole moved with the key)
+
+== A5 roofs: a gable on an L-shaped footprint (roofs.py on the minimum rectangle)
+   footprint 240 m2; two pitches cover 360 m2, of which 120 m2 outside the footprint; exact=False
+   at the inner corner (8, 8) the pitches stand at [9.64, 8.91] m with the eave at 6 m: no valley, the roof hangs over the void
+   hip: 4 pitches cover 360 m2, 120 m2 outside
+
+== A2/A3 the window offscreen, small: 1 building, 1 sub-field, 2 exclusions
+   window built in 262 ms; project opened, laid out (121 modules) and drawn in 215 ms
+   edit() of a name (snapshot, compare, snapshot, _show_all with plan, tree, properties, forms): median 6 ms in the window's thread
+   the layout job after each rename laid out [1, 1, 1, 1, 1] sub-fields again (of 1): the building's name is in every sub-field's layout key
+   energy computations started by the 5 renames: 5 (an edit of a name recomputes the year)
+   a building renamed changes the layout key of a sub-field on another building: True
+   its fire category too: True (the key is asdict() of every building and exclusion)
+   snapshot()                                          0.1 ms
+   _state_key() (dirty check, in _title)               0.1 ms
+   plan.show_project (all items again)                 0.9 ms
+   _show_tree (with layout_key per sub-field)          1.8 ms
+   _show_properties                                    0.0 ms
+   _show_energy_forms (arrays_of, obstacles)           2.0 ms
+   _show_3d (mesh + instance table)                    2.1 ms
+   _show_checks (gather + marks + tree)                1.9 ms
+   undo.undo() [restore + _show_all]                   9.2 ms
+   undo.redo()                                         9.4 ms
+   edit() with a change that raises: buildings 1 -> 2, undo steps 5 -> 5, dirty = True: the ghost building is in the project without an undo step (and the plan is not drawn again)
+   30 edits of a height within 2 s: undo steps 5 -> 6 (merged by key); the stack has no limit (setUndoLimit never called)
+   after an edit of a height the plan shows 12.0 m at once; the 3D scene and the checks are made again only when the layout job returns (_layout_done), 150 ms later at the earliest; mesh object BuildingsGeometry
+   layout job + redraw after that edit: 190 ms until settled
+
+== A2/A3 the window offscreen, large: 20 buildings, 40 sub-fields, 60 exclusions
+   window built in 219 ms; project opened, laid out (2280 modules) and drawn in 1044 ms
+   edit() of a name (snapshot, compare, snapshot, _show_all with plan, tree, properties, forms): median 328 ms in the window's thread
+   the layout job after each rename laid out [40, 40, 40, 40, 40] sub-fields again (of 40): the building's name is in every sub-field's layout key
+   energy computations started by the 5 renames: 5 (an edit of a name recomputes the year)
+   a building renamed changes the layout key of a sub-field on another building: True
+   its fire category too: True (the key is asdict() of every building and exclusion)
+   profile of _show_tree:
+      386549 function calls (281829 primitive calls) in 0.234 seconds
+      1    0.000    0.000    0.234    0.234 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\window.py:1693(_show_tree)
+      1    0.000    0.000    0.143    0.143 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\window.py:1873(_mark_tree)
+      124    0.000    0.000    0.143    0.001 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\window.py:1881(mark)
+      40    0.000    0.000    0.085    0.002 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\model.py:371(layout_state)
+      40    0.001    0.000    0.085    0.002 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\model.py:361(layout_key)
+      31793    0.014    0.000    0.084    0.000 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\marks.py:124(sizeHint)
+   profile of _show_energy_forms:
+      503276 function calls in 0.276 seconds
+      1    0.000    0.000    0.276    0.276 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\window.py:1769(_show_energy_forms)
+      1    0.003    0.003    0.224    0.224 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\energy\system.py:50(arrays_of)
+      40    0.002    0.000    0.217    0.005 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\energy\system.py:21(obstacles_of)
+      40    0.007    0.000    0.187    0.005 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\model.py:329(obstacle_prisms)
+      2400    0.021    0.000    0.172    0.000 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\model.py:68(roof_z)
+      9600    0.015    0.000    0.068    0.000 C:\Users\utente\dev\meridiana\.venv\Lib\site-packages\shapely\geometry\point.py:59(__new__)
+      14400    0.008    0.000    0.053    0.000 C:\Users\utente\dev\meridiana\.venv\Lib\site-packages\shapely\decorators.py:182(wrapper)
+      1    0.001    0.001    0.052    0.052 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\energy_pages.py:277(show_project)
+      2400    0.003    0.000    0.047    0.000 C:\Users\utente\dev\meridiana\.venv\Lib\site-packages\shapely\geometry\polygon.py:238(__new__)
+   profile of _show_checks:
+      482537 function calls in 0.228 seconds
+      1    0.000    0.000    0.229    0.229 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\ui\window.py:1834(_show_checks)
+      1    0.003    0.003    0.225    0.225 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\energy\system.py:50(arrays_of)
+      40    0.003    0.000    0.218    0.005 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\energy\system.py:21(obstacles_of)
+      40    0.008    0.000    0.187    0.005 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\model.py:329(obstacle_prisms)
+      2400    0.021    0.000    0.173    0.000 C:\Users\utente\dev\meridiana-lavoro\src\meridiana\model.py:68(roof_z)
+      9600    0.016    0.000    0.069    0.000 C:\Users\utente\dev\meridiana\.venv\Lib\site-packages\shapely\geometry\point.py:59(__new__)
+      14440    0.008    0.000    0.054    0.000 C:\Users\utente\dev\meridiana\.venv\Lib\site-packages\shapely\decorators.py:182(wrapper)
+      2420    0.003    0.000    0.047    0.000 C:\Users\utente\dev\meridiana\.venv\Lib\site-packages\shapely\geometry\polygon.py:238(__new__)
+      2420    0.007    0.000    0.028    0.000 C:\Users\utente\dev\meridiana\.venv\Lib\site-packages\shapely\geometry\polygon.py:66(__new__)
+   snapshot()                                          1.6 ms
+   _state_key() (dirty check, in _title)               0.9 ms
+   plan.show_project (all items again)                19.7 ms
+   _show_tree (with layout_key per sub-field)        159.6 ms
+   _show_properties                                    0.1 ms
+   _show_energy_forms (arrays_of, obstacles)         147.7 ms
+   _show_3d (mesh + instance table)                   40.1 ms
+   _show_checks (gather + marks + tree)              100.2 ms
+   undo.undo() [restore + _show_all]                 840.3 ms
+   undo.redo()                                       817.4 ms
+   edit() with a change that raises: buildings 20 -> 21, undo steps 5 -> 5, dirty = True: the ghost building is in the project without an undo step (and the plan is not drawn again)
+   30 edits of a height within 2 s: undo steps 5 -> 6 (merged by key); the stack has no limit (setUndoLimit never called)
+   after an edit of a height the plan shows 12.0 m at once; the 3D scene and the checks are made again only when the layout job returns (_layout_done), 150 ms later at the earliest; mesh object BuildingsGeometry
+   layout job + redraw after that edit: 1246 ms until settled

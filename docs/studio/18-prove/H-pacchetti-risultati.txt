@@ -1,0 +1,186 @@
+Tema H della revisione completa: le misure dietro H-pacchetti.md. Tutto letto o misurato il 23/10/2026 sul PC di
+Daniel (Windows 11 Pro 26100), nel venv C:\Users\utente\dev\meridiana\.venv (Python 3.12.6), con gh in sola
+lettura e con le pagine web citate (data di lettura 23/10/2026). Nessun build eseguito, nessuna installazione.
+
+== 1. I pacchetti installati nel venv (pip list; dimensione su disco di site-packages, PowerShell) ==
+
+PySide6 6.12.0 (meta) -> PySide6_Essentials 6.12.0, PySide6_Addons 6.12.0, PySide6_Pdf 6.12.0.140,
+PySide6_WebEngine 6.12.0.140 (pip show: "Requires: PySide6_Addons, PySide6_Essentials, PySide6_Pdf, PySide6_WebEngine")
+shiboken6 6.12.0; numpy 2.5.4; scipy 1.18.1; pandas 3.0.6; matplotlib 3.11.2; pillow 13.0.0; fonttools 4.67.0;
+pvlib 0.16.1 (Requires: h5py, numpy, pandas, pytz, requests, scipy, tzdata); h5py 3.16.0; requests 2.34.2;
+shapely 2.2.0; pyinstaller 6.22.3; pyinstaller-hooks-contrib 2026.9; ruff 0.17.1
+
+cartella                MB su disco
+PySide6                 647,1   (di cui Qt6WebEngineCore.dll 194,1; resources 101,4; translations 59,3;
+                                 qml 20,2; plugins 18,5; metatypes 14,4; opengl32sw.dll 19,7)
+scipy + scipy.libs      128,5
+pandas                   59,9
+numpy + numpy.libs       51,3
+pvlib                    30,8   (di cui data 29: CSV della lista CEC e file .h5, non usati da Meridiana)
+matplotlib + mpl_toolkits 32,0  (mpl-data 10)
+fontTools                16,1
+PIL                      15,4
+shapely + shapely.libs    6,3
+shiboken6                 3,0
+h5py (non misurato qui; wheel 3,2 MB)
+
+== 2. Il wheel Windows di PySide6 6.12.0: che cosa serve a Meridiana ==
+
+Moduli importati da src/meridiana (grep "PySide6."): QtCore, QtWidgets, QtGui, QtNetwork, QtSvg, QtPdf,
+QtQuickWidgets, QtQuick3D, QtQml, QtDBus (solo su Linux, ui/theme.py:137).
+In quale wheel stanno (RECORD dei dist-info): Essentials: QtDBus, QtNetwork, QtOpenGL, QtPrintSupport, QtQml,
+QtQuick, QtQuickWidgets, QtSvg; Addons: QtQuick3D; Pdf: QtPdf; WebEngine: QtWebEngineCore (mai importato).
+
+DLL Qt necessarie (dipendenze dei moduli usati e del QML Scene.qml: QtQuick, QtQuick3D, QtQuick3D.Helpers), MB:
+Qt6Core 10,0; Qt6Gui 9,2; Qt6Widgets 6,2; Qt6Network 1,7; Qt6Qml 5,1; Qt6QmlModels 1,0; Qt6QmlMeta 0,2;
+Qt6QmlWorkerScript 0,1; Qt6Quick 6,4; Qt6QuickWidgets 0,1; Qt6Quick3D 1,4; Qt6Quick3DRuntimeRender 4,3;
+Qt6Quick3DUtils 0,5; Qt6Quick3DAssetImport 0,1; Qt6Quick3DAssetUtils 0,3; Qt6Quick3DEffects 0,4;
+Qt6Quick3DHelpers 0,7; Qt6Quick3DHelpersImpl 0,5; Qt6Quick3DParticles 2,0; Qt6ShaderTools 4,3; Qt6OpenGL 1,9;
+Qt6Pdf 4,4; Qt6Svg 0,6; Qt6PrintSupport 0,4; Qt6QuickTemplates2 2,0; Qt6QuickControls2 0,1;
+Qt6QuickControls2Basic 2,4; Qt6QuickControls2Fusion 2,0; Qt6QuickShapes 0,3; Qt6QuickLayouts 0,3;
+Qt6QuickEffects 0,4; Qt6DBus 0,7; Qt6QuickDialogs2 0,1; Qt6QuickDialogs2QuickImpl 3,2: totale 73,5 MB
+(alcune di queste, Controls2/Dialogs2/Particles, entrano solo se i plugin QML che le usano restano nel bundle).
+Estensioni .pyd dei moduli usati: QtCore 3,4; QtGui 3,8; QtWidgets 4,7; QtNetwork 1,0; QtQml 0,5; QtQuick 0,7;
+QtQuickWidgets 0,1; QtQuick3D 0,2; QtPdf 0,2; QtSvg 0,1; QtPrintSupport 0,3; QtOpenGL 8,3: 23,2 MB.
+Altri binari che l'hook di PyInstaller raccoglie su Windows (collect_extra_binaries): opengl32sw.dll 19,7 MB
+(ANGLE e ICU assenti nel wheel). python312.dll 6,6 MB.
+Plugin (cartelle, MB): platforms 2,15; imageformats 2,35; iconengines 0,07; styles 0,23; tls 0,64; generic 0,10;
+platforminputcontexts 0,03; networkinformation 0,08; qmltooling 1,26; assetimporters 2,00; sqldrivers 2,47;
+multimedia 1,02; sceneparsers 2,33; renderers 1,50; geoservices 0,30; position 0,22; designer 0,56; ...
+Moduli QML (MB): QtQuick 10,44; QtQuick3D 2,50; QtQml 0,29; Qt 1,95; Qt5Compat 1,65; Qt3D 0,83; QtGraphs 0,41;
+QtCharts 0,31; QtWebEngine 0,22; QtDataVisualization 0,24; QtLocation 0,15; QtMultimedia 0,13; ...: 20,2 in tutto.
+Traduzioni: qtbase_it.qm 157 KB (presente nel wheel: test_i18n.py lo controlla); qt_*.qm + qtbase_*.qm di tutte
+le lingue 99 file, 6,7 MB (quello che l'hook di QtCore raccoglie); qtdeclarative_*.qm 28 file, 1,8 MB.
+Non necessario e presente nel venv: WebEngine, Pdf (serve solo Qt6Pdf), 3D, Charts, Graphs, Multimedia, Location,
+Designer, Help, Sql, Bluetooth, Nfc, Sensors, SerialPort, RemoteObjects, Scxml, TextToSpeech, StateMachine,
+HttpServer, Test, Xml, SpatialAudio, Quick3DPhysics, Quick3DXr e i loro .pyd: 257,1 MB di file (al netto delle
+resources di WebEngine, 101,4 MB).
+
+== 3. PyInstaller 6.22.3: che cosa fanno gli hook di PySide6 (letti in site-packages/PyInstaller) ==
+
+- hooks/rthooks/pyi_rth_pyside6.py:26-31,48,65: nel pacchetto congelato su Windows Qt sta in _MEIPASS/PySide6
+  (su Linux e macOS in PySide6/Qt); QT_PLUGIN_PATH e QML2_IMPORT_PATH puntano li'; create_embedded_qt_conf
+  registra un qt.conf con "Prefix = <_MEIPASS>/PySide6" (fake-modules/_pyi_rth_utils/qt.py:82-85), quindi
+  QLibraryInfo.path(TranslationsPath) vale <_MEIPASS>/PySide6/translations.
+- utils/hooks/qt/__init__.py:141-146: qt_rel_dir = "PySide6" su Windows, "PySide6/Qt" altrove.
+- utils/hooks/qt/_modules_info.py:175: QtCore porta translations=["qt", "qtbase"]; :230 QtQml porta
+  translations=["qtdeclarative"] e plugins=["qmltooling"]; :239 QtQuick plugins=["scenegraph"]; :324 QtQuick3D senza
+  plugin propri; :397 QtPdf.
+- utils/hooks/qt/__init__.py:461-478: per ogni base dichiarata raccoglie <base>_*.qm di tutte le lingue in
+  <qt_rel_dir>/translations (avviso se mancano).
+- utils/hooks/qt/__init__.py:916-967 (collect_qtqml_files, chiamata da hook-PySide6.QtQml.py): raccoglie OGNI
+  cartella della directory qml che ha un qmldir, con il plugin e i suoi file; :550-575
+  (_validate_plugin_dependencies): un plugin e' scartato solo se una sua dipendenza Qt manca o si risolve fuori dalla
+  cartella Qt. Con WebEngine installato nel venv, qml/QtWebEngine passa la validazione e porta con se'
+  Qt6WebEngineCore.dll (194 MB) attraverso l'analisi delle dipendenze dei binari.
+- utils/hooks/qt/__init__.py:628-648 (collect_extra_binaries): su Windows opengl32sw.dll, ANGLE e ICU se esistono.
+- hooks-config (pyinstaller.org/en/stable/hooks-config.html, 23/10/2026): nessuna opzione per escludere plugin,
+  QML o traduzioni di Qt; le opzioni documentate sono per gi, gstreamer e matplotlib (backends).
+- Hook presenti per le altre dipendenze: numpy, scipy (+ sottomoduli), pandas, matplotlib (backends 'auto'),
+  shapely e h5py (hooks-contrib); nessun hook per pvlib (i suoi dati in pvlib/data non vengono raccolti: Meridiana
+  usa solo get_pvgis_tmy e get_pvgis_horizon, energy/meteo.py:138,205). pvlib importa h5py a livello di modulo
+  (pvlib/clearsky.py:12, pvlib/location.py:13): h5py e le DLL HDF5 entrano nel bundle anche se non usati.
+- charts.py:21-22 usa matplotlib.use("QtAgg") e backend_qtagg; report.py:31 backend_agg; pedigree.py:33 mathtext.
+
+== 4. Dimensioni dei wheel su PyPI (pypi.org/pypi/<pacchetto>/<versione>/json, letti il 23/10/2026), byte ==
+
+pyside6_essentials-6.12.0 win_amd64 82.153.795; manylinux_2_34_x86_64 84.346.433 (requires: shiboken6==6.12.0)
+pyside6_addons-6.12.0 win_amd64 40.522.402; manylinux_2_34_x86_64 59.192.702
+pyside6_pdf-6.12.0.140 win_amd64 2.983.516; manylinux 2.843.877
+pyside6_webengine-6.12.0.140 win_amd64 131.697.708; manylinux 116.741.921 (requires: PySide6_Addons==6.12.0)
+pyside6-6.12.0 (meta) 578.958; requires: Essentials, Addons, WebEngine 6.12.0.140, Pdf 6.12.0.140; python <3.16,>=3.10
+shiboken6-6.12.0 win_amd64 1.265.476; manylinux 279.268
+numpy-2.5.4 cp312 win_amd64 12.573.091; manylinux 16.727.283
+scipy-1.18.1 cp312 win_amd64 36.658.278; manylinux 35.344.199
+pandas-3.0.6 cp312 win_amd64 9.661.439; manylinux 10.788.193
+matplotlib-3.11.2 cp312 win_amd64 9.349.409; manylinux 9.860.353
+pillow-13.0.0 cp312 win_amd64 7.272.166; manylinux 7.144.542
+pvlib-0.16.1 py3-none-any 19.368.848 (di cui i dati; il codice e' circa 2 MB)
+shapely-2.2.0 cp312 win_amd64 1.791.280; manylinux 2.300.970
+h5py-3.16.0 cp312 win_amd64 3.182.868; manylinux 5.405.250
+
+== 5. Il CI di GitHub (gh run list, gh api .../runs/<id>/jobs; H-ci-minuti.sh e H-ci-minuti.py) ==
+
+Workflow attivi: uno solo, .github/workflows/test.yml (job core-linux e core-windows; push su main, pull_request,
+workflow_call). Repository privato.
+Run elencati dal 21/10 al 23/10/2026 alle 16: 127 (31 il 21/10, 45 il 22/10, 51 il 23/10); 113 eseguiti,
+14 rifiutati il 23/10 dalle 12:14 in poi con l'annotazione: "The job was not started because recent account
+payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in
+your settings". L'endpoint timing risponde billable 0 per tutti i run (non usabile).
+Durata dei job (secondi veri, poi arrotondati al minuto per job come fattura GitHub):
+  core-linux   113 job, 285,6 min di esecuzione, 337 fatturati, 2,53 min per job
+  core-windows 113 job, 576,7 min di esecuzione, 636 fatturati, 5,10 min per job
+  per giorno: 21/10 linux 73 + windows 123; 22/10 linux 148 + windows 288; 23/10 linux 116 + windows 225
+  totale 973 minuti fatturati in tre giorni; con Windows contato doppio 1.609 minuti; a 0,006/0,010 USD al
+  minuto 8,38 USD; a 0,008/0,016 USD 12,87 USD. Un run medio: 3 + 6 = 9 minuti fatturati (15 con Windows doppio).
+Quattro run campione (gh run view --json jobs): core-linux 2m01s, 2m24s, 2m49s, 2m19s; core-windows 6m06s, 4m46s,
+3m39s, 5m27s (il job Windows installa i wheel senza cache: anche i 132 MB di WebEngine, ogni volta).
+Azioni (gh api releases/latest + git/ref/tags, 23/10/2026): actions/setup-python v7.1.0
+6d4fd22b20465ccc0f7354476588e8df7c9ca0e0; actions/cache v6.1.0 55cc8345863c7cc4c66a329aec7e433d2d1c52a9;
+actions/checkout v7.0.1 3d3c42e5aac5ba805825da76410c181273ba90b1; actions/upload-artifact v7.0.2
+cf430e030ddbb5b0abf93d22962f4752f3646cd9; actions/download-artifact v8.0.2 9000827ccba6bdab643e8b6fd33ac0654aef8333.
+Immagine windows-2025 (runner-images, Windows2025-Readme.md, versione 20261021.299.1): InnoSetup 6.7.1,
+Python 3.12.10 predefinito (in cache 3.11.9, 3.12.10, 3.13.16, 3.14.8, 3.15.0), 7zip 26.04.
+ubuntu-latest: diventa Ubuntu 26.04 tra il 19/10 e il 19/11/2026 (actions/runner-images, issue 14748).
+Fatturazione (docs.github.com, about-billing-for-github-actions e billing/reference/actions-runner-pricing,
+23/10/2026): GitHub Free 2.000 minuti al mese; Linux 2 core 0,006 USD/min, Windows 2 core 0,010 USD/min; "GitHub
+rounds the minutes and partial minutes each job uses up to the nearest whole minute"; "If your account does not
+have a valid payment method on file, usage is blocked once you use up your quota"; "GitHub Actions usage is free
+for self-hosted runners and for public repositories". Le pagine lette oggi (anche quella in giapponese) non
+riportano piu' i moltiplicatori 2x e 10x; i prezzi di Windows restano 1,67 volte quelli di Linux.
+
+== 6. Flatpak (letture del 23/10/2026) ==
+
+flathub/io.qt.PySide.BaseApp (gh api branches): branch/6.7, 6.8, 6.9, 6.10, 6.11; nessun 6.12. branch/6.11:
+runtime org.kde.Platform 6.11, base io.qt.qtwebengine.BaseApp 6.11, pyside-setup tag v6.11.2 (commit
+24627cd36e1593adf22eb1f2950e4248e7bcc1ec), ultimo commit 15/09/2026 "Update to 6.11.2"; cleanup.sh con
+BASEAPP_REMOVE_WEBENGINE e BASEAPP_DISABLE_NUMPY; installa anche libLLVM/libclang 21 in /app/lib.
+flathub/com.riverbankcomputing.PyQt.BaseApp: rami fino a 6.11.
+Flathub, runtime KDE pubblicati (flatpak remote-ls dal WSL del PC, sola lettura): org.kde.Platform e Sdk
+5.15-25.08, 6.10, 6.11. KDE invent, packaging/flatpak-kde-runtime, rami: qt6.9 (03/09/2026), qt6.10 (05/09),
+qt6.11 (16/09), qt6.12 (ultimo commit 06/10/2026, non ancora su Flathub).
+docs.flathub.org/docs/for-app-authors/requirements: "Static permissions must be kept to an absolute minimum";
+dove esiste un portale adatto "using the portal becomes mandatory instead of static permissions"; "There is no
+network access during the build process"; il runtime "must be the latest version at that time of submission".
+flatpak-builder-tools/pip (readme.md): genera il modulo JSON con pip install --no-index da wheel con url e sha256;
+per i wheel di piattaforma serve --runtime e --prefer-wheels=pacchetto,...; per default x86_64 e aarch64.
+docs.flatpak.org/en/latest/available-runtimes.html: il runtime KDE "adds Qt and KDE Frameworks" al Freedesktop;
+"Qt6 branches are created on new Qt6 releases"; Freedesktop: "A new major version is published on August of
+every year", due anni di supporto.
+
+== 7. Qt e Windows ==
+
+doc.qt.io/qt-6/highdpi.html: "Qt 6 is Per-Monitor DPI Aware V2 by default"; su Windows un monitor al 175% da' un
+device pixel ratio di 1,75 (nessun arrotondamento a interi, PassThrough predefinito).
+doc.qt.io/qt-6/qtextbrowser.html: setSource(url, type): "if the url ends with an extension of .md, .mkd or
+.markdown, the document will be loaded via QTextDocument::setMarkdown(); otherwise ... setHtml()";
+backward()/forward(), anchorClicked, searchPaths.
+doc.qt.io/qt-6/qtextdocument.html: setMarkdown(markdown, features = MarkdownDialectGitHub): tabelle, elenchi di
+caselle, barrato, collegamenti automatici; MarkdownNoHTML scarta l'HTML.
+
+== 8. Il codice di Meridiana (grep e letture, file:riga) ==
+
+- updates.py e minisign.py: nessun chiamante in src (grep "updates|minisign" fuori dai due file: solo
+  config.py:87 check_updates, 88 last_update_check, mai letti altrove); nessuna voce in ui/preferences.py.
+- tests/test_updates.py:143-150: KeyTest salta se manca .github/workflows/windows.yml.
+- build-aux/windows/meridiana.spec:44: hiddenimports meridiana.win32, meridiana.wintoast: i file non esistono in
+  src/meridiana (elenco dei 78 file); :45 hooksconfig gi; :11 prefix MSYS2; :23 gdbus; :31 ca-bundle.
+- tools/make_ico.py:14 e tools/make_icons.py:16: import gi (GdkPixbuf), non installato nel venv Qt.
+- data/io.github.daniel_g_carrasco.meridiana.desktop:9-11: Categories=Utility;GTK; Keywords=files;folder;count.
+- data/...metainfo.xml:20-24: descrizione dell'app campione ("counts the files of a folder"); :53-57 release 0.1.0
+  con lo stesso testo; :37-38 colori GTK.
+- site/index.html:6-7,51-52,69-71: app campione; :74 "MIT licence".
+- tools/flatpak_repo_files.py:19: DESCRIPTION dell'app campione; :74 link a README#flatpak (ancora inesistente).
+- src/meridiana/__init__.py:1-9: docstring GTK; src/meridiana/__main__.py:28: "usage: {command} [FOLDER...]".
+- README.md:33: "Needs Python 3.11 or newer" (CLAUDE.md: 3.12+); nessuna sezione di installazione.
+- docs/progetto.md:3: "Stato al 22/10/2026 sera"; :105 "Manca ancora il salvataggio automatico" contro
+  docs/funzionalita.md:58 (salvataggio automatico fatto).
+- src/meridiana/ui/qt_translations.py:28: nel pacchetto congelato cerca PySide6/Qt/translations e
+  share/qt/translations (su Windows la cartella e' PySide6/translations; il primo elemento, QLibraryInfo, basta).
+- src/meridiana/atomic.py:27-28: il .bak accanto al file di progetto; recovery.py:56-66 la revisione _Rnn accanto;
+  recovery.py:21-34 il salvataggio automatico nella cartella state; meteo.py:94-95 e tileloader la cache in cache.
+- requirements.txt: PySide6==6.12.0 (meta, porta WebEngine e Pdf), shapely, numpy, pvlib==0.16.1, scipy,
+  matplotlib; "requests" importato direttamente (meteo.py:137,155,204; pvgis.py:44) ma non elencato;
+  tools/cloud-setup.sh installa polib, che nessun file usa (grep in src, tests, tools: nessun risultato).
+- tools/compile_po.py:41: solo msgfmt esterno, nessun ripiego (il runner Windows non ha gettext).
+- src/meridiana/ui/view3d.py:78-79: getInstanceBuffer "PySide6 6.12: no argument, (data, count) back".

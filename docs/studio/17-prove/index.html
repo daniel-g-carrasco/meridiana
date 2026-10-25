@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8"><title>Studio 17: i bozzetti</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>:root {
+  --window: #f2f1ed;
+  --panel: #f8f7f4;
+  --view: #ffffff;
+  --header: #f2f1ed;
+  --card: #ffffff;
+  --line: #d9d5cc;
+  --line-soft: #e8e5de;
+  --text: #1e1c19;
+  --text2: #514c44;
+  --muted: #6f685d;
+  --tooltip-bg: #1e1c19;
+  --tooltip-fg: #f8f7f4;
+  --accent: #805210;
+  --accent-fg: #ffffff;
+  --accent-soft: #80521020;
+  --select-bg: #ffe1bf;
+  --select-fg: #1e1c19;
+  --assistant: #334f6d;
+  --plan-bg: #fbfaf8;
+  --plan-bld: #3a352d;
+  --plan-bld-fill: #3a352d0d;
+  --plan-module: #1f3352;
+  --plan-sub: #805210;
+  --plan-sub-fill: #80521014;
+  --plan-sel: #805210;
+  --plan-guide: #2e6fb0;
+  --plan-pitch: #808080;
+  --sky-top: #dde7f0;
+  --sky-bottom: #f6f2ea;
+  --ground: #d6d0bf;
+  --wall: #f0ebe1;
+  --roof: #b5643f;
+  --d3-module: #1f3352;
+  --chart-surface: #ffffff;
+  --chart-grid: #e8e8e8;
+  --chart-axis: #c7c7c7;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --good: #0ca30c;
+  --warning-ink: #b07a00;
+  --shadow: rgba(20, 24, 30, 0.14);
+  --raise: rgba(255, 255, 255, 0.9);
+  --sink: rgba(30, 28, 25, 0.06);
+}
+html.dark {
+  --window: #14181e;
+  --panel: #1a1f26;
+  --view: #101318;
+  --header: #14181e;
+  --card: #1a1f26;
+  --line: #2b323c;
+  --line-soft: #20262e;
+  --text: #ece8e1;
+  --text2: #c0b9ad;
+  --muted: #918a7e;
+  --tooltip-bg: #ece8e1;
+  --tooltip-fg: #14181e;
+  --accent: #f1dac1;
+  --accent-fg: #14181e;
+  --accent-soft: #f1dac124;
+  --select-bg: #483319;
+  --select-fg: #ece8e1;
+  --assistant: #a1c1e4;
+  --plan-bg: #101318;
+  --plan-bld: #d8d2c6;
+  --plan-bld-fill: #d8d2c60d;
+  --plan-module: #1d3152;
+  --plan-sub: #f1dac1;
+  --plan-sub-fill: #f1dac112;
+  --plan-sel: #f1dac1;
+  --plan-guide: #8ab4f8;
+  --plan-pitch: #929292;
+  --sky-top: #0f141c;
+  --sky-bottom: #1f2a3a;
+  --ground: #23272a;
+  --wall: #d6d0c4;
+  --roof: #9a5a3e;
+  --d3-module: #1d3152;
+  --chart-surface: #101318;
+  --chart-grid: #222222;
+  --chart-axis: #383838;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --good: #0ca30c;
+  --warning-ink: #fab219;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --raise: rgba(255, 255, 255, 0.045);
+  --sink: rgba(0, 0, 0, 0.22);
+}
+
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-Regular.ttf"); font-weight: 400; }
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-SemiBold.ttf"); font-weight: 600; }
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-Bold.ttf"); font-weight: 700; }
+* { box-sizing: border-box; }
+html { --zoom: 0.62; }
+body { margin: 0; font-family: "Titillium Web", "Segoe UI", sans-serif; font-size: 15px; color: var(--text);
+       background: var(--window); }
+.page { padding: 20px 28px 60px; max-width: 2400px; }
+.page h1 { font-size: 26px; margin: 0 0 4px; font-weight: 600; }
+.page h2 { font-size: 20px; margin: 28px 0 6px; font-weight: 600; }
+.page p { max-width: 920px; line-height: 1.4; color: var(--text2); margin: 4px 0; }
+.controls { display: flex; gap: 14px; align-items: center; margin: 10px 0 18px; flex-wrap: wrap; }
+.controls label { display: flex; gap: 6px; align-items: center; color: var(--text2); }
+.controls button, .controls select { font: inherit; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--line);
+       background: var(--panel); color: var(--text); cursor: pointer; }
+.controls button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.row { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; padding-bottom: 12px; }
+.dir { flex: 0 0 auto; }
+.dir h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+.dir .note { max-width: calc(1180px * var(--zoom)); font-size: 14px; color: var(--text2); line-height: 1.35; margin: 6px 0 0; }
+.dir .note b { color: var(--text); }
+.frame { width: calc(1180px * var(--zoom)); height: calc(720px * var(--zoom)); overflow: hidden; border-radius: 6px;
+          box-shadow: 0 2px 10px var(--shadow); border: 1px solid var(--line); }
+.mock { width: 1180px; height: 720px; transform: scale(var(--zoom)); transform-origin: 0 0; display: grid;
+         grid-template-rows: 28px 34px auto 1fr 24px; grid-template-columns: 1fr; background: var(--window);
+         color: var(--text); font-size: 13px; position: relative; }
+.mock .menubar { display: flex; align-items: center; gap: 2px; padding: 0 8px; background: var(--window); }
+.mock .menubar span { padding: 4px 8px; border-radius: 4px; }
+.mock .menubar span.on { background: var(--select-bg); color: var(--select-fg); }
+.mock .menubar .sp { flex: 1; }
+.mock .menubar .chip { border: 1px solid var(--line); background: var(--panel); font-size: 12px; padding: 2px 8px; }
+.mock .tabs { display: flex; align-items: flex-end; gap: 2px; padding: 0 10px; background: var(--window);
+               border-bottom: 1px solid var(--line); }
+.mock .tabs span { padding: 7px 12px 6px; color: var(--text2); border-bottom: 2px solid transparent; }
+.mock .tabs span.on { color: var(--text); border-bottom-color: var(--accent); }
+.mock .tabs span.on::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+                               background: var(--accent); margin-right: 7px; vertical-align: 1px; }
+.mock .toolbar { display: flex; align-items: center; gap: 4px; padding: 3px 8px; background: var(--window); min-height: 34px; }
+.mock .toolbar .tb { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 5px;
+                      color: var(--text2); border: 1px solid transparent; }
+.mock .toolbar .tb svg { width: 18px; height: 18px; }
+.mock .toolbar .tb.on { background: var(--select-bg); color: var(--select-fg); border-color: var(--line); }
+.mock .toolbar .sep { width: 1px; height: 20px; background: var(--line); margin: 0 6px; }
+.mock .body { display: grid; grid-template-columns: 220px 1fr 300px; min-height: 0; }
+.mock .side { display: flex; flex-direction: column; min-height: 0; background: var(--panel); }
+.mock .ptitle { padding: 5px 10px; font-weight: 600; font-size: 12px; color: var(--text2); background: var(--header);
+                 border-bottom: 1px solid var(--line-soft); display: flex; align-items: center; gap: 6px; }
+.mock .ptitle .x { margin-left: auto; color: var(--muted); font-weight: 400; }
+.mock .centre { display: grid; grid-template-rows: 1fr auto; min-height: 0; background: var(--window); }
+.mock .views { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); min-height: 0; }
+.mock .view { position: relative; overflow: hidden; background: var(--plan-bg); }
+.mock .view svg { width: 100%; height: 100%; display: block; }
+.mock .view.d3 { background: linear-gradient(var(--sky-top), var(--sky-bottom)); }
+.mock .viewbar { position: absolute; top: 8px; left: 8px; display: flex; gap: 2px; background: var(--panel);
+                  border: 1px solid var(--line); border-radius: 6px; padding: 2px; font-size: 12px;
+                  box-shadow: 0 1px 4px var(--shadow); }
+.mock .viewbar span { padding: 2px 8px; border-radius: 4px; color: var(--text2); }
+.mock .viewbar span.on { background: var(--select-bg); color: var(--select-fg); }
+.mock .checks { grid-column: 1 / -1; background: var(--panel); border-top: 1px solid var(--line); min-height: 0;
+                 display: flex; flex-direction: column; }
+.mock .status { display: flex; align-items: center; gap: 14px; padding: 0 10px; border-top: 1px solid var(--line);
+                 font-size: 12px; color: var(--text2); background: var(--window); }
+.mock .status .sp { flex: 1; }
+.mock .status .cnt { display: inline-flex; gap: 4px; align-items: center; }
+.mock .tree { padding: 6px 4px; overflow: hidden; line-height: 1.6; font-size: 13px; }
+.mock .tree div { display: flex; align-items: center; gap: 6px; padding: 0 6px; border-radius: 4px; white-space: nowrap; }
+.mock .tree div.sel { background: var(--select-bg); color: var(--select-fg); }
+.mock .tree svg { width: 15px; height: 15px; flex: none; color: var(--text2); }
+.mock .tree .mark { margin-left: auto; font-size: 11px; padding: 0 5px; border-radius: 8px; color: #fff; }
+.mock .tree .mark.warn { background: var(--warning-ink); }
+.mock .tree .mark.info { background: var(--muted); }
+.mock .tree .mark.fail { background: var(--critical); }
+.mock .tree .lvl1 { padding-left: 20px; }
+.mock .tree .lvl2 { padding-left: 36px; }
+.mock .tree .lvl3 { padding-left: 52px; }
+.mock .props { padding: 6px 8px; overflow: hidden; font-size: 13px; }
+.mock .props h4 { margin: 6px 0 4px; font-size: 13px; font-weight: 600; }
+.mock .group { margin: 8px 0; }
+.mock .group .gt { font-weight: 600; font-size: 12px; color: var(--text2); padding: 2px 0; }
+.mock .form { display: grid; grid-template-columns: 1fr 128px; gap: 4px 8px; align-items: center; }
+.mock .form label { color: var(--text2); }
+.mock .field { display: flex; align-items: center; justify-content: space-between; height: 24px; padding: 0 6px;
+                border-radius: 4px; background: var(--view); border: 1px solid var(--line); color: var(--text); }
+.mock .field .arr { color: var(--muted); font-size: 10px; letter-spacing: -2px; }
+.mock .field.combo::after { content: "⌄"; color: var(--muted); }
+.mock .btn { display: inline-flex; align-items: center; justify-content: center; height: 26px; padding: 0 12px;
+              border-radius: 5px; border: 1px solid var(--line); background: var(--view); color: var(--text); }
+.mock .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.mock .check { display: flex; gap: 6px; align-items: center; }
+.mock .check i { width: 14px; height: 14px; border: 1px solid var(--line); border-radius: 3px; background: var(--view); }
+.mock .check i.on { background: var(--accent); border-color: var(--accent); }
+.mock .clist { overflow: hidden; font-size: 12.5px; padding: 2px 6px; }
+.mock .clist div { display: flex; gap: 8px; align-items: baseline; padding: 2px 4px; }
+.mock .clist .m { width: 16px; text-align: center; font-weight: 700; }
+.mock .clist .m.fail { color: var(--critical); } .mock .clist .m.warn { color: var(--warning-ink); }
+.mock .clist .m.ok { color: var(--good); } .mock .clist .m.info { color: var(--muted); }
+.mock .clist .src { margin-left: auto; color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+.mock .chead { display: flex; gap: 6px; align-items: center; padding: 4px 8px; font-size: 12px; }
+.mock .chead .f { padding: 1px 7px; border: 1px solid var(--line); border-radius: 4px; background: var(--view); }
+.mock .chead .f.on { background: var(--select-bg); }
+.mock .sunbar { display: flex; align-items: center; gap: 10px; padding: 3px 10px; font-size: 12px; color: var(--text2);
+                 background: var(--panel); border-top: 1px solid var(--line); }
+.mock .sunbar .track { flex: 1; height: 4px; background: var(--line); border-radius: 2px; position: relative; }
+.mock .sunbar .track i { position: absolute; left: 46%; top: -4px; width: 12px; height: 12px; border-radius: 50%;
+                          background: var(--accent); }
+.mock .meridio { position: absolute; right: 318px; bottom: 60px; width: 46px; height: 46px; border-radius: 50%;
+                  background: var(--panel); border: 1px solid var(--line); display: grid; place-items: center;
+                  box-shadow: 0 1px 4px var(--shadow); }
+.mock .meridio svg { width: 34px; height: 34px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+<script>
+const root = document.documentElement;
+function setTheme(dark) {
+  root.classList.toggle('dark', dark);
+  document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('on', (b.dataset.theme === 'dark') === dark));
+  try { localStorage.setItem('m17-dark', dark ? '1' : '0'); } catch (e) {}
+}
+function setZoom(z) { root.style.setProperty('--zoom', z); const o = document.getElementById('zoomv'); if (o) o.textContent = Math.round(z * 100) + '%'; }
+try { setTheme(localStorage.getItem('m17-dark') === '1'); } catch (e) { setTheme(false); }
+</script>
+</head>
+<body><div class="page"><h1>Studio 17: i bozzetti</h1><p>Una pagina per tema, con le direzioni una accanto all'altra; in cima a ogni pagina il tema chiaro o scuro e la scala. Lo studio è <code>docs/studio/17-interfaccia.md</code>.</p>
+<div class="controls">
+  <label>Tema:
+    <button data-theme="light" class="on" onclick="setTheme(false)">Chiaro</button>
+    <button data-theme="dark" onclick="setTheme(true)">Scuro</button></label>
+  <label>Scala: <input type="range" min="0.35" max="1" step="0.01" value="0.62" oninput="setZoom(this.value)"> <span id="zoomv">62%</span></label>
+</div><ul style="line-height:1.8;font-size:16px"><li><a href="A-parti.html" style="color:var(--accent);font-weight:600">A. Distinguere le parti dell'interfaccia</a> · livelli di superficie, intestazioni, separatori, albero del progetto</li><li><a href="B-strumenti.html" style="color:var(--accent);font-weight:600">B. Dove stanno gli strumenti</a> · sotto le schede, barra laterale, dentro la vista, fasi</li><li><a href="C-controlli.html" style="color:var(--accent);font-weight:600">C. Pulsanti, campi e gruppi</a> · Fusion ritoccato, alla GNOME, contorni forti; i riquadri dei risultati</li><li><a href="D-grafici.html" style="color:var(--accent);font-weight:600">D. Grafici interattivi</a> · valori al passaggio, zoom, serie, su un anno di valori orari</li><li><a href="E-aiuti.html" style="color:var(--accent);font-weight:600">E. Aiuti accanto alle cose</a> · il «?», i suggerimenti estesi, le frasi sotto i campi, il pannello d'aiuto</li><li><a href="F-verifiche.html" style="color:var(--accent);font-weight:600">F. Il pannello Verifiche</a> · per oggetto, per livello, per area; frasi brevi, Correggi, legame con le viste</li><li><a href="G-meridio.html" style="color:var(--accent);font-weight:600">G. Meridio e la sua chat</a> · personaggio animato, apertura e chiusura, risposta in corso, ridimensionamento, domande pronte</li></ul>
+<p style="margin-top:30px;font-size:13px">Studio 17, Meridiana. Colori da <code>theme_colors.py</code> (bronzo, fondi Meridiana); carattere Titillium Web dai file del repository; nessuna libreria, nessuna rete. <a href="index.html" style="color:var(--accent)">Indice dei bozzetti</a>.</p>
+</div></body></html>

@@ -1,0 +1,309 @@
+# Import graph of src/meridiana, from the AST (A-architettura-grafo.py), run on 23/10/2026 on the branch revisione-completa:
+#   python docs/studio/18-prove/A-architettura-grafo.py src/meridiana
+
+files 83; lines total 20190, non-blank 17576, code (no comment lines) 17252
+
+meridiana: 24 lines (19 code)
+  imports: -
+  imported by: __main__, app, config, i18n, log, model, paths, ui.report, ui.tileloader, ui.window, updates
+__main__: 35 lines (26 code)
+  imports: i18n, meridiana
+  imports lazily: app
+  imported by: -
+app: 73 lines (52 code)
+  imports: -
+  imports lazily: config, i18n, meridiana, paths, ui.qt_translations, ui.window
+  imported by: __main__
+  Qt: 29:PySide6.QtCore, 30:PySide6.QtWidgets, 32:PySide6.QtCore
+assistant: 113 lines (85 code)
+  imports: theme_colors
+  imports lazily: i18n
+  imported by: ui.assistant, ui.preferences, ui.window
+atomic: 46 lines (39 code)
+  imports: -
+  imported by: energy.meteo, energy.pvgis, model, recovery, ui.window
+camera: 250 lines (198 code)
+  imports: -
+  imported by: navicube, ui.view3d
+catalog: 161 lines (134 code)
+  imports: -
+  imported by: pvsyst.mapping, ui.catalog_dialog, ui.window
+catalog.panond: 172 lines (154 code)
+  imports: i18n
+  imported by: pvsyst.mapping, ui.window
+checks: 301 lines (255 code)
+  imports: i18n, rules
+  imports lazily: energy.consumption, energy.economics
+  imported by: ui.checks_page, ui.report, ui.window
+compare: 73 lines (58 code)
+  imports: i18n
+  imported by: ui.inspector, ui.variants, ui.window
+config: 275 lines (225 code)
+  imports: meridiana
+  imported by: app, ui.preferences, ui.window
+energy: 4 lines (4 code)
+  imports: -
+  imported by: -
+energy.bands: 56 lines (46 code)
+  imports: -
+  imported by: energy.consumption, energy.economics, ui.energy_pages
+energy.components: 245 lines (217 code)
+  imports: energy.pedigree, i18n
+  imported by: energy.simulate, energy.stringing, energy.system
+energy.consumption: 430 lines (369 code)
+  imports: energy.bands, energy.pedigree, energy.simulate, i18n
+  imported by: checks, ui.energy_pages, ui.window
+energy.economics: 414 lines (365 code)
+  imports: energy.bands, energy.pedigree, i18n
+  imported by: checks, ui.energy_pages, ui.window
+energy.meteo: 231 lines (198 code)
+  imports: atomic, energy.pedigree, i18n
+  imported by: energy.pvgis, energy.simulate, ui.window
+energy.nearshade: 418 lines (360 code)
+  imports: -
+  imports lazily: geo, mesh
+  imported by: energy.simulate, energy.system, model
+energy.pedigree: 82 lines (62 code)
+  imports: i18n
+  imported by: energy.components, energy.consumption, energy.economics, energy.meteo, energy.pvgis, energy.simulate, energy.stringing, ui.pedigree, ui.window
+energy.pvgis: 65 lines (56 code)
+  imports: atomic, energy.meteo, energy.pedigree, i18n
+  imported by: ui.window
+energy.simulate: 633 lines (560 code)
+  imports: energy.components, energy.meteo, energy.nearshade, energy.pedigree, i18n
+  imported by: energy.consumption, energy.system, ui.energy_pages, ui.window
+energy.stringing: 302 lines (263 code)
+  imports: energy.components, energy.pedigree, i18n
+  imports lazily: geo
+  imported by: ui.window
+energy.system: 104 lines (89 code)
+  imports: energy.components, energy.nearshade, energy.simulate, i18n
+  imported by: model, ui.window
+geo: 160 lines (124 code)
+  imports: -
+  imported by: energy.nearshade, energy.stringing, layout, mesh, roofs, tiles, ui.plan, ui.window
+i18n: 100 lines (76 code)
+  imports: meridiana
+  imported by: __main__, app, assistant, catalog.panond, checks, compare, energy.components, energy.consumption, energy.economics, energy.meteo, energy.pedigree, energy.pvgis, energy.simulate, energy.stringing, energy.system, model, navicube, navigation, pvsyst.mapping, quantity, rules, shortcuts, sides, theme_colors, ui.appearance, ui.assistant, ui.catalog_dialog, ui.charts, ui.checks_page, ui.energy_pages, ui.inspector, ui.pedigree, ui.plan, ui.plan_overlays, ui.preferences, ui.properties, ui.pvsyst_import, ui.quantity_field, ui.report, ui.shortcuts_dialog, ui.sunbar, ui.theme, ui.underlays, ui.variants, ui.viewcube, ui.window, updates, viewaids
+layout: 364 lines (310 code)
+  imports: geo, sun
+  imported by: model, ui.properties
+log: 18 lines (13 code)
+  imports: meridiana
+  imported by: ui.icons, ui.qt_translations, ui.theme, ui.tileloader, ui.variants, ui.window
+mesh: 303 lines (247 code)
+  imports: geo
+  imported by: energy.nearshade, ui.view3d, ui.window, viewaids
+minisign: 136 lines (105 code)
+  imports: -
+  imported by: updates
+model: 466 lines (378 code)
+  imports: atomic, layout, meridiana, roofs, sun, underlay
+  imports lazily: energy.nearshade, energy.system, i18n
+  imported by: pvsyst.mapping, ui.properties, ui.window, viewaids
+navicube: 129 lines (101 code)
+  imports: camera
+  imports lazily: i18n
+  imported by: ui.viewcube
+navigation: 271 lines (233 code)
+  imports: -
+  imports lazily: i18n
+  imported by: ui.plan, ui.preferences, ui.view3d
+paths: 83 lines (65 code)
+  imports: meridiana
+  imported by: app, ui.icons, ui.theme, ui.window
+pvsyst: 7 lines (6 code)
+  imports: -
+  imported by: -
+pvsyst.mapping: 321 lines (283 code)
+  imports: catalog, i18n, model, pvsyst.project
+  imports lazily: catalog.panond
+  imported by: ui.window
+pvsyst.project: 369 lines (320 code)
+  imports: pvsyst.pvobject, pvsyst.records
+  imported by: pvsyst.mapping, ui.window
+pvsyst.pvobject: 237 lines (202 code)
+  imports: -
+  imported by: pvsyst.project, pvsyst.records, ui.window
+pvsyst.records: 66 lines (52 code)
+  imports: pvsyst.pvobject
+  imported by: pvsyst.project
+quantity: 212 lines (180 code)
+  imports: i18n
+  imported by: ui.quantity_field, ui.window
+recovery: 66 lines (51 code)
+  imports: atomic
+  imported by: ui.window
+roofs: 151 lines (118 code)
+  imports: geo
+  imported by: model
+rules: 443 lines (398 code)
+  imports: i18n
+  imported by: checks, ui.properties, ui.report, ui.window
+shortcuts: 214 lines (173 code)
+  imports: i18n
+  imported by: ui.shortcuts_dialog, ui.window
+sides: 59 lines (47 code)
+  imports: i18n
+  imported by: ui.plan, ui.properties, ui.window
+snapping: 255 lines (201 code)
+  imports: -
+  imported by: ui.plan
+squaring: 133 lines (104 code)
+  imports: -
+  imported by: ui.window
+sun: 160 lines (131 code)
+  imports: -
+  imported by: layout, model, ui.sunbar
+theme_colors: 377 lines (299 code)
+  imports: -
+  imports lazily: i18n
+  imported by: assistant, ui.appearance, ui.marks, ui.plan, ui.plan_overlays, ui.theme, ui.viewbar, ui.viewcube, view_colours
+tiles: 92 lines (75 code)
+  imports: geo
+  imported by: ui.plan, ui.tileloader, ui.window
+ui: 13 lines (11 code)
+  imports: -
+  imported by: ui.variants, ui.window
+ui.appearance: 174 lines (150 code)
+  imports: i18n, theme_colors, ui.theme
+  imported by: ui.preferences
+  Qt: 9:PySide6.QtCore, 10:PySide6.QtGui, 11:PySide6.QtWidgets
+ui.assistant: 387 lines (338 code)
+  imports: assistant, i18n, ui.icons
+  imported by: ui.window
+  Qt: 14:PySide6.QtCore, 15:PySide6.QtGui, 16:PySide6.QtSvg, 17:PySide6.QtWidgets
+ui.catalog_dialog: 297 lines (260 code)
+  imports: catalog, i18n, ui.theme
+  imported by: ui.window
+  Qt: 14:PySide6.QtCore, 15:PySide6.QtWidgets
+ui.charts: 384 lines (336 code)
+  imports: i18n
+  imported by: ui.energy_pages, ui.pedigree, ui.report, ui.window
+  Qt: 25:shiboken6, 26:PySide6.QtCore, 27:PySide6.QtGui, 28:PySide6.QtWidgets
+ui.checks_page: 305 lines (271 code)
+  imports: checks, i18n, ui.marks, ui.theme
+  imported by: ui.window
+  Qt: 10:PySide6.QtCore, 11:PySide6.QtGui, 12:PySide6.QtWidgets
+ui.energy_pages: 836 lines (766 code)
+  imports: energy.consumption, energy.economics, energy.simulate, i18n, ui.charts, ui.pedigree, ui.properties, ui.theme
+  imports lazily: energy.bands
+  imported by: ui.window
+  Qt: 9:PySide6.QtCore, 10:PySide6.QtWidgets
+ui.icons: 79 lines (63 code)
+  imports: log, paths
+  imported by: ui.assistant, ui.window
+  Qt: 7:PySide6.QtCore, 8:PySide6.QtGui, 9:PySide6.QtSvg, 10:PySide6.QtWidgets
+ui.inspector: 73 lines (62 code)
+  imports: compare, i18n
+  imported by: ui.window
+  Qt: 7:PySide6.QtCore, 8:PySide6.QtWidgets
+ui.marks: 184 lines (149 code)
+  imports: theme_colors, ui.theme
+  imported by: ui.checks_page, ui.plan, ui.view3d, ui.window
+  Qt: 10:PySide6.QtCore, 11:PySide6.QtGui, 12:PySide6.QtWidgets
+ui.pedigree: 122 lines (104 code)
+  imports: energy.pedigree, i18n, ui.charts, ui.theme
+  imported by: ui.energy_pages, ui.report
+  Qt: 11:PySide6.QtCore, 12:PySide6.QtGui, 13:PySide6.QtWidgets
+ui.plan: 1229 lines (1088 code)
+  imports: geo, i18n, navigation, sides, snapping, theme_colors, tiles, ui.plan_overlays, ui.theme, ui.tileloader, view_colours, viewaids
+  imports lazily: ui.marks, ui.properties, ui.underlays
+  imported by: ui.window
+  Qt: 21:PySide6.QtCore, 22:PySide6.QtGui, 24:PySide6.QtWidgets, 356:PySide6.QtWidgets, 1179:PySide6.QtGui
+ui.plan_overlays: 139 lines (112 code)
+  imports: i18n, theme_colors, viewaids
+  imported by: ui.plan
+  Qt: 9:PySide6.QtCore, 10:PySide6.QtGui, 11:PySide6.QtWidgets
+ui.preferences: 124 lines (107 code)
+  imports: assistant, config, i18n, navigation, ui.appearance, ui.shortcuts_dialog
+  imported by: ui.window
+  Qt: 8:PySide6.QtCore, 9:PySide6.QtWidgets
+ui.properties: 763 lines (673 code)
+  imports: i18n, layout, model, rules, sides, ui.quantity_field, ui.theme
+  imported by: ui.energy_pages, ui.plan, ui.window
+  Qt: 10:PySide6.QtCore, 11:PySide6.QtWidgets
+ui.pvsyst_import: 78 lines (66 code)
+  imports: i18n
+  imported by: ui.window
+  Qt: 8:PySide6.QtCore, 9:PySide6.QtWidgets
+ui.qt_translations: 47 lines (38 code)
+  imports: log
+  imported by: app
+  Qt: 11:PySide6.QtCore, 22:PySide6
+ui.quantity_field: 61 lines (49 code)
+  imports: i18n, quantity
+  imported by: ui.properties
+  Qt: 8:PySide6.QtCore, 9:PySide6.QtGui, 10:PySide6.QtWidgets
+ui.report: 260 lines (238 code)
+  imports: i18n, meridiana, ui.charts, ui.pedigree, ui.theme
+  imports lazily: checks, rules
+  imported by: ui.window
+  Qt: 16:PySide6.QtCore, 17:PySide6.QtGui
+ui.shortcuts_dialog: 174 lines (151 code)
+  imports: i18n, shortcuts, ui.theme
+  imported by: ui.preferences, ui.window
+  Qt: 10:PySide6.QtCore, 11:PySide6.QtGui, 12:PySide6.QtWidgets
+ui.sunbar: 149 lines (127 code)
+  imports: i18n, sun
+  imported by: ui.window
+  Qt: 11:PySide6.QtCore, 12:PySide6.QtWidgets
+ui.theme: 310 lines (245 code)
+  imports: i18n, log, paths, theme_colors
+  imported by: ui.appearance, ui.catalog_dialog, ui.checks_page, ui.energy_pages, ui.marks, ui.pedigree, ui.plan, ui.properties, ui.report, ui.shortcuts_dialog, ui.variants, ui.window
+  Qt: 17:PySide6.QtCore, 18:PySide6.QtGui, 19:PySide6.QtWidgets, 44:PySide6.QtGui, 136:PySide6.QtCore, 137:PySide6.QtDBus
+ui.tileloader: 114 lines (99 code)
+  imports: log, meridiana, tiles
+  imported by: ui.plan, ui.window
+  Qt: 15:PySide6.QtCore, 16:PySide6.QtGui, 17:PySide6.QtNetwork
+ui.underlays: 104 lines (85 code)
+  imports: i18n, underlay
+  imported by: ui.plan, ui.window
+  Qt: 10:PySide6.QtCore, 11:PySide6.QtGui, 45:PySide6.QtPdf, 22:PySide6.QtPdf
+ui.variants: 141 lines (121 code)
+  imports: compare, i18n, log, ui, ui.theme
+  imported by: ui.window
+  Qt: 9:PySide6.QtCore, 10:PySide6.QtGui, 11:PySide6.QtWidgets
+ui.view3d: 494 lines (407 code)
+  imports: camera, mesh, navigation, view_colours
+  imports lazily: ui.marks, ui.viewcube
+  imported by: ui.window
+  Qt: 19:PySide6.QtCore, 20:PySide6.QtGui, 21:PySide6.QtQml, 22:PySide6.QtQuick3D, 23:PySide6.QtQuickWidgets
+ui.viewbar: 70 lines (57 code)
+  imports: theme_colors
+  imported by: ui.window
+  Qt: 9:PySide6.QtCore, 10:PySide6.QtWidgets
+ui.viewcube: 226 lines (191 code)
+  imports: i18n, navicube, theme_colors
+  imported by: ui.view3d
+  Qt: 12:PySide6.QtCore, 13:PySide6.QtGui, 14:PySide6.QtWidgets
+ui.wheel: 57 lines (47 code)
+  imports: -
+  imported by: ui.window
+  Qt: 11:PySide6.QtCore, 12:PySide6.QtWidgets
+ui.window: 2474 lines (2217 code)
+  imports: assistant, atomic, catalog, checks, compare, config, energy.consumption, energy.economics, energy.meteo, energy.pvgis, energy.simulate, energy.stringing, energy.system, geo, i18n, log, mesh, model, paths, recovery, rules, shortcuts, sides, squaring, tiles, ui, ui.assistant, ui.catalog_dialog, ui.charts, ui.checks_page, ui.energy_pages, ui.icons, ui.inspector, ui.marks, ui.plan, ui.properties, ui.sunbar, ui.theme, ui.underlays, ui.view3d, ui.viewbar, ui.wheel, underlay, view_colours, viewaids
+  imports lazily: catalog.panond, energy.pedigree, meridiana, pvsyst.mapping, pvsyst.project, pvsyst.pvobject, quantity, ui.preferences, ui.pvsyst_import, ui.report, ui.shortcuts_dialog, ui.tileloader, ui.variants
+  imported by: app
+  Qt: 19:PySide6.QtCore, 20:PySide6.QtGui, 21:PySide6.QtWidgets, 333:PySide6.QtNetwork, 348:PySide6.QtCore, 349:PySide6.QtNetwork, 366:PySide6.QtNetwork, 1156:PySide6.QtCore, 1925:PySide6.QtWidgets, 1954:PySide6.QtCore, 2133:PySide6.QtGui
+underlay: 93 lines (72 code)
+  imports: -
+  imported by: model, ui.underlays, ui.window
+updates: 279 lines (222 code)
+  imports: i18n, meridiana, minisign
+  imported by: -
+view_colours: 67 lines (46 code)
+  imports: theme_colors
+  imported by: ui.plan, ui.view3d, ui.window
+viewaids: 184 lines (158 code)
+  imports: i18n
+  imports lazily: mesh, model
+  imported by: ui.plan, ui.plan_overlays, ui.window
+
+Qt outside ui/:
+  meridiana.app: [(29, 'PySide6.QtCore'), (30, 'PySide6.QtWidgets'), (32, 'PySide6.QtCore')]
+
+core modules importing ui:
+  meridiana.app: ['meridiana.ui.window', 'meridiana.ui.qt_translations']
+
+import cycles (top level):

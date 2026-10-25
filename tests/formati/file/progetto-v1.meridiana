@@ -1,0 +1,158 @@
+{
+ "name": "Capannone Rho",
+ "site": {
+  "lat": 45.5226,
+  "lon": 9.03,
+  "address": "Rho (MI)"
+ },
+ "sun_window": {
+  "month": 12,
+  "day": 21,
+  "start": 10.0,
+  "end": 14.0,
+  "step_minutes": 10
+ },
+ "buildings": [
+  {
+   "id": "b1",
+   "name": "Capannone",
+   "footprint": [
+    [
+     0,
+     0
+    ],
+    [
+     40,
+     0
+    ],
+    [
+     40,
+     20
+    ],
+    [
+     0,
+     20
+    ]
+   ],
+   "height": 9.5,
+   "roof": {
+    "type": "flat",
+    "eave_side": 0,
+    "tilt": 0.0,
+    "free_pitches": []
+   },
+   "fire": {
+    "subject": true,
+    "category": "B",
+    "roof_fire_resistant": false
+   }
+  }
+ ],
+ "subfields": [
+  {
+   "id": "s1",
+   "name": "Sud",
+   "ring": [
+    [
+     1,
+     1
+    ],
+    [
+     39,
+     1
+    ],
+    [
+     39,
+     19
+    ],
+    [
+     1,
+     19
+    ]
+   ],
+   "building": "b1",
+   "pitch": null,
+   "module": "generic-450",
+   "params": {
+    "tilt": 15.0,
+    "stack": 2
+   },
+   "filled": false,
+   "removed": []
+  }
+ ],
+ "exclusions": [
+  {
+   "id": "e1",
+   "ring": [
+    [
+     18,
+     8
+    ],
+    [
+     20,
+     8
+    ],
+    [
+     20,
+     10
+    ],
+    [
+     18,
+     10
+    ]
+   ],
+   "kind": "vent",
+   "clearance": 0.0,
+   "building": "b1"
+  },
+  {
+   "id": "e2",
+   "ring": [
+    [
+     30,
+     12
+    ],
+    [
+     31,
+     12
+    ],
+    [
+     31,
+     13
+    ],
+    [
+     30,
+     13
+    ]
+   ],
+   "kind": "plant",
+   "clearance": 0.0,
+   "building": "b1"
+  }
+ ],
+ "modules": {
+  "generic-450": {
+   "manufacturer": "Generico",
+   "model": "450 W, 2278 x 1134 mm",
+   "length": 2.278,
+   "width": 1.134,
+   "power_kw": 0.45
+  },
+  "generic-550": {
+   "manufacturer": "Generico",
+   "model": "550 W, 2278 x 1134 mm",
+   "length": 2.278,
+   "width": 1.134,
+   "power_kw": 0.55
+  }
+ },
+ "energy": {},
+ "consumption": {},
+ "economics": {},
+ "created": "2026-10-23T18:00:00+00:00",
+ "modified": "2026-10-23T18:00:00+00:00",
+ "format": "meridiana-project",
+ "version": 1,
+ "app_version": "0.2.0"
+}

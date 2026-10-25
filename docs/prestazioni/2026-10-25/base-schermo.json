@@ -1,0 +1,136 @@
+{
+ "when": "2026-10-25 02:00",
+ "commit": "242e097 (grafica, dopo le unioni di ottimizzatori, relazione2, ifc e pacchetti)",
+ "screen": "DELL P2415Q 3840x2160 @ 2",
+ "machine": "i7-12700H, Iris Xe + RTX A2000 Laptop, 32 GB, Windows 11 26100",
+ "qt": "6.12.0",
+ "stall_ms": 30,
+ "tool": "lo script di prova da cui è nato tools/fluidity.py (stessi gesti, nomi dei gesti in italiano)",
+ "on_screen": true,
+ "no_3d": false,
+ "sequence": "base",
+ "opened_ms": 8528,
+ "note": "interrotta dopo il bordo destro: il processo di prova è caduto (da indagare)",
+ "results": [
+  {
+   "gesture": "fase model",
+   "action_ms": 0.0,
+   "until_idle_ms": 6.4,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0.0
+  },
+  {
+   "gesture": "fase plant",
+   "action_ms": 26.1,
+   "until_idle_ms": 282.0,
+   "blocks": 3,
+   "worst_ms": 103.0,
+   "blocked_ms": 226.8
+  },
+  {
+   "gesture": "fase production",
+   "action_ms": 23.3,
+   "until_idle_ms": 96.5,
+   "blocks": 1,
+   "worst_ms": 39.9,
+   "blocked_ms": 39.9
+  },
+  {
+   "gesture": "fase consumption",
+   "action_ms": 21.6,
+   "until_idle_ms": 133.1,
+   "blocks": 1,
+   "worst_ms": 87.0,
+   "blocked_ms": 87.0
+  },
+  {
+   "gesture": "fase economics",
+   "action_ms": 20.1,
+   "until_idle_ms": 107.2,
+   "blocks": 1,
+   "worst_ms": 53.6,
+   "blocked_ms": 53.6
+  },
+  {
+   "gesture": "fase report",
+   "action_ms": 25.5,
+   "until_idle_ms": 77.9,
+   "blocks": 1,
+   "worst_ms": 38.9,
+   "blocked_ms": 38.9
+  },
+  {
+   "gesture": "fase plant",
+   "action_ms": 18.7,
+   "until_idle_ms": 81.7,
+   "blocks": 1,
+   "worst_ms": 41.3,
+   "blocked_ms": 41.3
+  },
+  {
+   "gesture": "fase model",
+   "action_ms": 53.4,
+   "until_idle_ms": 113.8,
+   "blocks": 2,
+   "worst_ms": 55.2,
+   "blocked_ms": 97.5
+  },
+  {
+   "gesture": "File: apri",
+   "action_ms": 5.5,
+   "until_idle_ms": 135.1,
+   "blocks": 2,
+   "worst_ms": 58.8,
+   "blocked_ms": 113.5
+  },
+  {
+   "gesture": "File: chiudi (Esc)",
+   "action_ms": 22.1,
+   "until_idle_ms": 85.6,
+   "blocks": 1,
+   "worst_ms": 51.6,
+   "blocked_ms": 51.6
+  },
+  {
+   "gesture": "File: apri",
+   "action_ms": 7.8,
+   "until_idle_ms": 160.8,
+   "blocks": 2,
+   "worst_ms": 55.7,
+   "blocked_ms": 97.0
+  },
+  {
+   "gesture": "File: chiudi (Esc)",
+   "action_ms": 18.8,
+   "until_idle_ms": 80.5,
+   "blocks": 1,
+   "worst_ms": 53.6,
+   "blocked_ms": 53.6
+  },
+  {
+   "gesture": "pannello sinistro: trascina il bordo",
+   "action_ms": 1722.4,
+   "until_idle_ms": 1725.8,
+   "blocks": 32,
+   "worst_ms": 40.5,
+   "blocked_ms": 1125.0
+  },
+  {
+   "gesture": "pannello sinistro: riporta il bordo",
+   "action_ms": 1632.6,
+   "until_idle_ms": 1636.2,
+   "blocks": 29,
+   "worst_ms": 39.8,
+   "blocked_ms": 1000.8
+  },
+  {
+   "gesture": "pannello destro: trascina il bordo",
+   "action_ms": 2588.3,
+   "until_idle_ms": 2596.0,
+   "blocks": 44,
+   "worst_ms": 59.8,
+   "blocked_ms": 1825.0
+  }
+ ]
+}

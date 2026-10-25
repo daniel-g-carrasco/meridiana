@@ -1,0 +1,223 @@
+{
+ "when": "2026-10-25 02:00",
+ "commit": "242e097 (grafica, dopo le unioni di ottimizzatori, relazione2, ifc e pacchetti)",
+ "screen": "DELL P2415Q 3840x2160 @ 2",
+ "machine": "i7-12700H, Iris Xe + RTX A2000 Laptop, 32 GB, Windows 11 26100",
+ "qt": "6.12.0",
+ "stall_ms": 30,
+ "tool": "lo script di prova da cui è nato tools/fluidity.py (stessi gesti, nomi dei gesti in italiano)",
+ "on_screen": true,
+ "no_3d": true,
+ "sequence": "base",
+ "opened_ms": 7474,
+ "results": [
+  {
+   "gesture": "fase model",
+   "action_ms": 0.0,
+   "until_idle_ms": 7.9,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "fase plant",
+   "action_ms": 32.9,
+   "until_idle_ms": 238.5,
+   "worst_ms": 92.7,
+   "blocks": 4,
+   "blocked_ms": 224.6
+  },
+  {
+   "gesture": "fase production",
+   "action_ms": 21.3,
+   "until_idle_ms": 80.4,
+   "worst_ms": 37.8,
+   "blocks": 1,
+   "blocked_ms": 37.8
+  },
+  {
+   "gesture": "fase consumption",
+   "action_ms": 16.9,
+   "until_idle_ms": 90.9,
+   "worst_ms": 63.9,
+   "blocks": 1,
+   "blocked_ms": 63.9
+  },
+  {
+   "gesture": "fase economics",
+   "action_ms": 19.9,
+   "until_idle_ms": 104.8,
+   "worst_ms": 50.9,
+   "blocks": 1,
+   "blocked_ms": 50.9
+  },
+  {
+   "gesture": "fase report",
+   "action_ms": 23.4,
+   "until_idle_ms": 65.1,
+   "worst_ms": 33.2,
+   "blocks": 1,
+   "blocked_ms": 33.2
+  },
+  {
+   "gesture": "fase plant",
+   "action_ms": 17.6,
+   "until_idle_ms": 79.3,
+   "worst_ms": 41.0,
+   "blocks": 1,
+   "blocked_ms": 41.0
+  },
+  {
+   "gesture": "fase model",
+   "action_ms": 21.4,
+   "until_idle_ms": 26.2,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "File: apri",
+   "action_ms": 5.8,
+   "until_idle_ms": 97.4,
+   "worst_ms": 40.6,
+   "blocks": 2,
+   "blocked_ms": 74.1
+  },
+  {
+   "gesture": "File: chiudi (Esc)",
+   "action_ms": 16.6,
+   "until_idle_ms": 60.0,
+   "worst_ms": 33.6,
+   "blocks": 1,
+   "blocked_ms": 33.6
+  },
+  {
+   "gesture": "File: apri",
+   "action_ms": 7.6,
+   "until_idle_ms": 100.1,
+   "worst_ms": 40.5,
+   "blocks": 2,
+   "blocked_ms": 70.7
+  },
+  {
+   "gesture": "File: chiudi (Esc)",
+   "action_ms": 13.9,
+   "until_idle_ms": 51.9,
+   "worst_ms": 33.7,
+   "blocks": 1,
+   "blocked_ms": 33.7
+  },
+  {
+   "gesture": "pannello sinistro: trascina il bordo",
+   "action_ms": 919.7,
+   "until_idle_ms": 930.6,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "pannello sinistro: riporta il bordo",
+   "action_ms": 952.6,
+   "until_idle_ms": 961.4,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "pannello destro: trascina il bordo",
+   "action_ms": 1870.8,
+   "until_idle_ms": 1879.8,
+   "worst_ms": 45.5,
+   "blocks": 16,
+   "blocked_ms": 570.4
+  },
+  {
+   "gesture": "pannello destro: riporta il bordo",
+   "action_ms": 1835.3,
+   "until_idle_ms": 1844.6,
+   "worst_ms": 41.2,
+   "blocks": 17,
+   "blocked_ms": 608.6
+  },
+  {
+   "gesture": "verifiche: rotella giù 10",
+   "action_ms": 164.7,
+   "until_idle_ms": 171.9,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "verifiche: rotella su 10",
+   "action_ms": 164.1,
+   "until_idle_ms": 174.0,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "albero: rotella 10",
+   "action_ms": 163.3,
+   "until_idle_ms": 170.9,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "3D: rotella 10",
+   "action_ms": 165.3,
+   "until_idle_ms": 174.8,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "3D: trascina (orbita) 40 passi",
+   "action_ms": 668.5,
+   "until_idle_ms": 670.2,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "3D: trascina (sposta) 40 passi",
+   "action_ms": 659.9,
+   "until_idle_ms": 668.0,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "pianta: rotella 10",
+   "action_ms": 166.7,
+   "until_idle_ms": 175.0,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "pianta: trascina (sposta) 40 passi",
+   "action_ms": 662.0,
+   "until_idle_ms": 670.4,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "scrivere 12 lettere in un campo",
+   "action_ms": 999.5,
+   "until_idle_ms": 1007.3,
+   "worst_ms": 0,
+   "blocks": 0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "finestra: ridimensiona",
+   "action_ms": 828.5,
+   "until_idle_ms": 836.7,
+   "worst_ms": 53.8,
+   "blocks": 14,
+   "blocked_ms": 624.2
+  }
+ ]
+}

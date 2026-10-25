@@ -1,0 +1,108 @@
+meridiana: mesh of b1: ValueError: could not convert string to float: 'a'
+                                                         ^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            ^^^^^^^^^^^^^^^^^^^^
+ValueError: could not convert string to float: 'a'
+meridiana: layout of s1: KeyError: 'length'
+                     ^^^^^^^^^^^^^^^^^^^^^
+                                                                            ^^^^^^^^^^^^^^^^^^
+                                ~^^^^^^^^^^
+KeyError: 'length'
+meridiana: layout of s1: KeyError: 'length'
+                     ^^^^^^^^^^^^^^^^^^^^^
+                                                                            ^^^^^^^^^^^^^^^^^^
+                                ~^^^^^^^^^^
+KeyError: 'length'
+meridiana: layout of s1: KeyError: 'length'
+                     ^^^^^^^^^^^^^^^^^^^^^
+                                                                            ^^^^^^^^^^^^^^^^^^
+                                ~^^^^^^^^^^
+KeyError: 'length'
+PNG 20000x20000: 1.22 MB on disk; 6000x6000: 0.12 MB; made in 4.5 s
+
+ROUND 1: model.Project.load (what the window's `except (OSError, ValueError)` would catch is marked HANDLED)
+  garbage                JSONDecodeError: 'Expecting value: line 1 column 1 (char 0)'  -> HANDLED
+  wrong_format           ValueError: 'not a Meridiana project'  -> HANDLED
+  version_string         TypeError: "'>' not supported between instances of 'str' and 'int'"  -> NOT HANDLED (crash of the slot)
+  version_zero           KeyError: '0'  -> NOT HANDLED (crash of the slot)
+  version_future         ValueError: 'made by a newer Meridiana (format 99); update the program to open it'  -> HANDLED
+  building_is_string     AttributeError: "'str' object has no attribute 'items'"  -> NOT HANDLED (crash of the slot)
+  building_without_id    TypeError: "Building.__init__() missing 1 required positional argument: 'id'"  -> NOT HANDLED (crash of the slot)
+  footprint_is_text      loaded in     0.8 ms (notice=None)
+  site_nan               loaded in     1.1 ms (notice=None); site.lat=nan
+  site_absurd            loaded in     1.1 ms (notice=None)
+  height_absurd          loaded in     1.0 ms (notice=None)
+  sun_window_garbage     loaded in     1.0 ms (notice=None)
+  unknown_keys           loaded in     0.9 ms (notice=None); 'foo' kept on save: False; site 'bar' kept: False
+  module_without_size    loaded in     0.8 ms (notice=None)
+  variants_empty_list    loaded in     0.9 ms (notice=None)
+  variants_not_dicts     AttributeError: "'str' object has no attribute 'get'"  -> NOT HANDLED (crash of the slot)
+  name_with_path         loaded in     1.1 ms (notice=None); default save name would be 'C:\\Users\\utente\\..\\..\\evil.meridiana'
+  underlay_huge          loaded in    14.0 ms (notice=None)
+  underlay_6000          loaded in    11.4 ms (notice=None)
+  underlay_not_image     loaded in     1.5 ms (notice=None)
+
+ROUND 2: what the core does after a file that loads with absurd numbers
+  tiles.zoom_for(lat=nan) -> ValueError: cannot convert float NaN to integer
+  geo.Origin(nan).to_lonlat(10, 10) = (nan, nan)
+  sun.position(lat=nan) = elevation 90.0
+  tiles.zoom_for(lat=1e+308) -> ValueError: math domain error
+  geo.Origin(1e+308).to_lonlat(10, 10) = (-171.00037434049295, 76.15982705569002)
+  sun.position(lat=1e+308) = elevation -37.20417137560061
+
+ROUND 3: the window (offscreen, background none, dialogs recorded)
+  window built in 0.3 s; 3D view status: Status.Ready
+  --- version_string
+      UNHANDLED in open_path: TypeError: "'>' not supported between instances of 'str' and 'int'"; dialogs []
+TypeError: '>' not supported between instances of 'str' and 'int'
+      0.00 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+  --- version_zero
+      UNHANDLED in open_path: KeyError: '0'; dialogs []
+KeyError: 0
+      0.00 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+  --- building_is_string
+      UNHANDLED in open_path: AttributeError: "'str' object has no attribute 'items'"; dialogs []
+AttributeError: 'str' object has no attribute 'items'
+      0.00 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+  --- building_without_id
+      UNHANDLED in open_path: TypeError: "Building.__init__() missing 1 required positional argument: 'id'"; dialogs []
+TypeError: Building.__init__() missing 1 required positional argument: 'id'
+      0.00 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+  --- footprint_is_text
+      UNHANDLED in open_path: ValueError: "could not convert string to float: 'a'"; dialogs []
+ValueError: could not convert string to float: 'a'
+      0.01 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+  --- site_nan
+      ok through edit (undo snapshot): dialogs []; results: {'s1': 224}
+      0.67 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+  --- site_absurd
+      UNHANDLED in open_path: OverflowError: 'cannot convert float infinity to integer'; dialogs []
+OverflowError: cannot convert float infinity to integer
+      0.01 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+  --- sun_window_garbage
+      UNHANDLED in open_path: KeyError: "'day'"; dialogs []
+KeyError: 'day'
+      0.01 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+  --- module_without_size
+      ok through edit (undo snapshot): dialogs []; results: {'s1': "KeyError: 'length'"}
+      0.64 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+  --- variants_not_dicts
+      UNHANDLED in open_path: AttributeError: "'str' object has no attribute 'get'"; dialogs []
+AttributeError: 'str' object has no attribute 'get'
+      0.00 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+  --- underlay_not_image
+      ok through edit (undo snapshot): dialogs []; results: {'s1': 128}
+      0.64 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+      underlays.pixmap: null=True size=0x0 in 0.00 s; base64 in the file: 0.0 MB; project.to_json() takes 0.00 s
+      window.snapshot() (every edit makes two): 0.000 s, 0.0 MB of JSON
+  --- underlay_6000
+      ok through edit (undo snapshot): dialogs []; results: {'s1': 128}
+      0.78 s; Python heap peak 0 MB (Qt's pixmaps are not counted)
+      underlays.pixmap: null=False size=6000x6000 in 0.00 s; base64 in the file: 0.2 MB; project.to_json() takes 0.00 s
+      window.snapshot() (every edit makes two): 0.000 s, 0.2 MB of JSON
+  --- underlay_huge
+      ok through edit (undo snapshot): dialogs []; results: {'s1': 128}
+      0.66 s; Python heap peak 4 MB (Qt's pixmaps are not counted)
+      underlays.pixmap: null=True size=0x0 in 0.00 s; base64 in the file: 1.6 MB; project.to_json() takes 0.00 s
+      window.snapshot() (every edit makes two): 0.000 s, 1.6 MB of JSON
+done

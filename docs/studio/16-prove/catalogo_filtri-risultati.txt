@@ -1,0 +1,19 @@
+
+== schede lette per Meridiana: 73 schede; campo: compilato/presente
+  alpha_isc 73/73; beta_voc 73/73; bifacial 47/73; bifaciality 36/73; cells 67/73; datasheet_revision 69/73; datasheet_url 73/73; efficiency_pct 73/73; fire_rating 49/73; first_year_loss 64/73; gamma_pmax 73/73; id 73/73; imp 73/73; isc 73/73; length 73/73; manufacturer 73/73; markets 73/73; max_series_fuse_a 70/73; max_system_voltage_v 73/73; model 73/73; noct 26/73; notes 73/73; pmax 73/73; power_classes_w 73/73; retrieved 73/73; series 66/73; source 73/73; technology 73/73; thickness_mm 73/73; vmp 73/73; voc 73/73; warranty_power_years 73/73; warranty_product_years 73/73; weight_kg 73/73; width 73/73; yearly_loss 60/73
+
+== lista CEC (come la distribuisce SAM): 16886 schede; campo: compilato/presente
+  alpha_isc 16884/16886; beta_voc 16886/16886; bifacial 3732/16886; bipv 4/16886; cells_in_series 16886/16886; gamma_pmax 16886/16886; id 16886/16886; imp 16886/16886; isc 16886/16886; length 1745/16886; manufacturer 16886/16886; model 16886/16886; noct 16886/16886; pmax 16886/16886; sdm 16886/16886; source 16886/16886; technology 16886/16886; vmp 16886/16886; voc 16886/16886; width 1745/16886
+
+schede lette: tecnologia dichiarata: n-type TOPCon 40; n-type (architecture not stated) 10; HJT 9; back contact (ABC) 4; back contact (HPBC 2.0) 3; back contact (shingled n-type BC) 2; back contact (BC) 2; back contact (GPC) 1; n-type TOPCon (shingled, one-third cut cells) 1; back contact (MWT, mono PERC) 1
+schede lette: bifacciale sì 47, no o non detto 26; bifaccialità data in 36 schede
+schede lette: famiglia della cella ricavata dal testo: TOPCon 48; back contact 13; HJT 9; non detto 3
+schede lette: con dimensioni 73, con efficienza dichiarata 73 (ricavabile da potenza e dimensioni per 73)
+
+CEC: tecnologia dichiarata: Mono-c-Si 15302; Multi-c-Si 1409; CdTe 126; Thin Film 27; Mono-C-si 9; CIGS 7; a-Si/nc 6
+CEC: bifacciale sì 3732, no o non detto 13154; bifaccialità data in 0 schede
+CEC: famiglia della cella ricavata dal testo: monocristallino 15310; policristallino 1409; film sottile 166; HJT 1
+CEC: con dimensioni 1745, con efficienza dichiarata 0 (ricavabile da potenza e dimensioni per 1745)
+
+filtro a faccette su 16959 record: 31 trovati in 111.9 ms classificando al volo; classificare tutti i record una volta costa 111 ms (si fa al caricamento, poi è un campo) e il filtro scende a 2.6 ms (31 trovati)
+famiglie su tutto il catalogo: monocristallino 15310; policristallino 1409; film sottile 166; TOPCon 48; back contact 13; HJT 10; non detto 3

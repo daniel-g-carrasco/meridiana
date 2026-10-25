@@ -1,0 +1,4542 @@
+{
+ "source": "pvlib 0.16.1 solarposition.get_solarposition(method='nrel_numpy'), default pressure and temperature; azimuth from North clockwise",
+ "generated": "2026-10-21",
+ "rows": [
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T00:17:00+00:00",
+   "elevation": -43.64185,
+   "apparent_elevation": -43.64185,
+   "azimuth": 16.05443
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T02:17:00+00:00",
+   "elevation": -31.83353,
+   "apparent_elevation": -31.83353,
+   "azimuth": 51.32459
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T04:17:00+00:00",
+   "elevation": -12.94789,
+   "apparent_elevation": -12.94789,
+   "azimuth": 76.74913
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T06:17:00+00:00",
+   "elevation": 7.97891,
+   "apparent_elevation": 8.08874,
+   "azimuth": 98.39563
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T08:17:00+00:00",
+   "elevation": 27.646,
+   "apparent_elevation": 27.6779,
+   "azimuth": 122.37191
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T10:17:00+00:00",
+   "elevation": 41.64115,
+   "apparent_elevation": 41.66005,
+   "azimuth": 154.98058
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T12:17:00+00:00",
+   "elevation": 43.35722,
+   "apparent_elevation": 43.37502,
+   "azimuth": 196.02949
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T14:17:00+00:00",
+   "elevation": 31.63068,
+   "apparent_elevation": 31.65787,
+   "azimuth": 231.22352
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T16:17:00+00:00",
+   "elevation": 12.81026,
+   "apparent_elevation": 12.88143,
+   "azimuth": 256.67347
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T18:17:00+00:00",
+   "elevation": -8.06801,
+   "apparent_elevation": -8.06801,
+   "azimuth": 278.36527
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T20:17:00+00:00",
+   "elevation": -27.68474,
+   "apparent_elevation": -27.68474,
+   "azimuth": 302.39496
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-03-20T22:17:00+00:00",
+   "elevation": -41.60771,
+   "apparent_elevation": -41.60771,
+   "azimuth": 335.04757
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T00:17:00+00:00",
+   "elevation": -20.08909,
+   "apparent_elevation": -20.08909,
+   "azimuth": 12.7069
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T02:17:00+00:00",
+   "elevation": -10.78214,
+   "apparent_elevation": -10.78214,
+   "azimuth": 39.57307
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T04:17:00+00:00",
+   "elevation": 5.47319,
+   "apparent_elevation": 5.62307,
+   "azimuth": 61.81645
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T06:17:00+00:00",
+   "elevation": 25.35525,
+   "apparent_elevation": 25.39045,
+   "azimuth": 81.60922
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T08:17:00+00:00",
+   "elevation": 46.24587,
+   "apparent_elevation": 46.26197,
+   "azimuth": 103.9752
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T10:17:00+00:00",
+   "elevation": 64.00764,
+   "apparent_elevation": 64.01585,
+   "azimuth": 142.23128
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T12:17:00+00:00",
+   "elevation": 65.58143,
+   "apparent_elevation": 65.58907,
+   "azimuth": 209.91447
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T14:17:00+00:00",
+   "elevation": 48.96176,
+   "apparent_elevation": 48.9764,
+   "azimuth": 252.31088
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T16:17:00+00:00",
+   "elevation": 28.1567,
+   "apparent_elevation": 28.18794,
+   "azimuth": 275.69512
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T18:17:00+00:00",
+   "elevation": 7.99211,
+   "apparent_elevation": 8.10178,
+   "azimuth": 295.46376
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T20:17:00+00:00",
+   "elevation": -8.92335,
+   "apparent_elevation": -8.92335,
+   "azimuth": 317.18778
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-06-21T22:17:00+00:00",
+   "elevation": -19.37664,
+   "apparent_elevation": -19.37664,
+   "azimuth": 343.44323
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T00:17:00+00:00",
+   "elevation": -42.57437,
+   "apparent_elevation": -42.57437,
+   "azimuth": 21.00255
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T02:17:00+00:00",
+   "elevation": -29.58442,
+   "apparent_elevation": -29.58442,
+   "azimuth": 54.83551
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T04:17:00+00:00",
+   "elevation": -10.29058,
+   "apparent_elevation": -10.29058,
+   "azimuth": 79.46927
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T06:17:00+00:00",
+   "elevation": 10.60778,
+   "apparent_elevation": 10.69282,
+   "azimuth": 101.12394
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T08:17:00+00:00",
+   "elevation": 29.80987,
+   "apparent_elevation": 29.83908,
+   "azimuth": 125.88457
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T10:17:00+00:00",
+   "elevation": 42.56622,
+   "apparent_elevation": 42.58452,
+   "azimuth": 159.90221
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T12:17:00+00:00",
+   "elevation": 42.36527,
+   "apparent_elevation": 42.3837,
+   "azimuth": 200.99187
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T14:17:00+00:00",
+   "elevation": 29.33717,
+   "apparent_elevation": 29.36694,
+   "azimuth": 234.70208
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T16:17:00+00:00",
+   "elevation": 10.01597,
+   "apparent_elevation": 10.10562,
+   "azimuth": 259.27014
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T18:17:00+00:00",
+   "elevation": -10.92963,
+   "apparent_elevation": -10.92963,
+   "azimuth": 280.87927
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T20:17:00+00:00",
+   "elevation": -30.21756,
+   "apparent_elevation": -30.21756,
+   "azimuth": 305.62373
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-09-23T22:17:00+00:00",
+   "elevation": -43.08999,
+   "apparent_elevation": -43.08999,
+   "azimuth": 339.78728
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T00:17:00+00:00",
+   "elevation": -65.22023,
+   "apparent_elevation": -65.22023,
+   "azimuth": 31.93692
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T02:17:00+00:00",
+   "elevation": -48.29761,
+   "apparent_elevation": -48.29761,
+   "azimuth": 73.25038
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T04:17:00+00:00",
+   "elevation": -27.4708,
+   "apparent_elevation": -27.4708,
+   "azimuth": 96.35911
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T06:17:00+00:00",
+   "elevation": -7.37587,
+   "apparent_elevation": -7.37587,
+   "azimuth": 116.12235
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T08:17:00+00:00",
+   "elevation": 9.38102,
+   "apparent_elevation": 9.47618,
+   "azimuth": 137.96468
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T10:17:00+00:00",
+   "elevation": 19.56082,
+   "apparent_elevation": 19.6074,
+   "azimuth": 164.36612
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T12:17:00+00:00",
+   "elevation": 19.93997,
+   "apparent_elevation": 19.98563,
+   "azimuth": 193.58214
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T14:17:00+00:00",
+   "elevation": 10.37067,
+   "apparent_elevation": 10.45751,
+   "azimuth": 220.30878
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T16:17:00+00:00",
+   "elevation": -6.0347,
+   "apparent_elevation": -6.0347,
+   "azimuth": 242.42765
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T18:17:00+00:00",
+   "elevation": -25.97922,
+   "apparent_elevation": -25.97922,
+   "azimuth": 262.20371
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T20:17:00+00:00",
+   "elevation": -46.85151,
+   "apparent_elevation": -46.85151,
+   "azimuth": 284.77106
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2026-12-21T22:17:00+00:00",
+   "elevation": -64.3808,
+   "apparent_elevation": -64.3808,
+   "azimuth": 323.88158
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T00:17:00+00:00",
+   "elevation": -56.62808,
+   "apparent_elevation": -56.62808,
+   "azimuth": 17.71673
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T02:17:00+00:00",
+   "elevation": -43.31478,
+   "apparent_elevation": -43.31478,
+   "azimuth": 59.14891
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T04:17:00+00:00",
+   "elevation": -23.356,
+   "apparent_elevation": -23.356,
+   "azimuth": 85.03193
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T06:17:00+00:00",
+   "elevation": -2.51598,
+   "apparent_elevation": -2.51598,
+   "azimuth": 106.16401
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T08:17:00+00:00",
+   "elevation": 16.09659,
+   "apparent_elevation": 16.15346,
+   "azimuth": 128.93801
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T10:17:00+00:00",
+   "elevation": 28.75302,
+   "apparent_elevation": 28.7835,
+   "azimuth": 157.55065
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T12:17:00+00:00",
+   "elevation": 30.85594,
+   "apparent_elevation": 30.88397,
+   "azimuth": 191.25749
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T14:17:00+00:00",
+   "elevation": 21.36532,
+   "apparent_elevation": 21.40775,
+   "azimuth": 222.16671
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T16:17:00+00:00",
+   "elevation": 4.31282,
+   "apparent_elevation": 4.49178,
+   "azimuth": 246.61833
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T18:17:00+00:00",
+   "elevation": -16.07559,
+   "apparent_elevation": -16.07559,
+   "azimuth": 267.78268
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T20:17:00+00:00",
+   "elevation": -36.69581,
+   "apparent_elevation": -36.69581,
+   "azimuth": 291.15856
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2027-02-14T22:17:00+00:00",
+   "elevation": -53.20199,
+   "apparent_elevation": -53.20199,
+   "azimuth": 326.00431
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T00:17:00+00:00",
+   "elevation": -26.60352,
+   "apparent_elevation": -26.60352,
+   "azimuth": 12.76083
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T02:17:00+00:00",
+   "elevation": -16.91501,
+   "apparent_elevation": -16.91501,
+   "azimuth": 41.90224
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T04:17:00+00:00",
+   "elevation": -0.01632,
+   "apparent_elevation": 0.46723,
+   "azimuth": 65.409
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T06:17:00+00:00",
+   "elevation": 20.25825,
+   "apparent_elevation": 20.30316,
+   "azimuth": 86.12445
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T08:17:00+00:00",
+   "elevation": 40.97445,
+   "apparent_elevation": 40.99379,
+   "azimuth": 109.46981
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T10:17:00+00:00",
+   "elevation": 57.68213,
+   "apparent_elevation": 57.69278,
+   "azimuth": 146.27606
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T12:17:00+00:00",
+   "elevation": 59.71271,
+   "apparent_elevation": 59.72254,
+   "azimuth": 203.09851
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T14:17:00+00:00",
+   "elevation": 44.90311,
+   "apparent_elevation": 44.91998,
+   "azimuth": 244.55879
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T16:17:00+00:00",
+   "elevation": 24.48359,
+   "apparent_elevation": 24.52019,
+   "azimuth": 269.45964
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T18:17:00+00:00",
+   "elevation": 3.84736,
+   "apparent_elevation": 4.04103,
+   "azimuth": 290.16067
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T20:17:00+00:00",
+   "elevation": -14.06868,
+   "apparent_elevation": -14.06868,
+   "azimuth": 312.76121
+  },
+  {
+   "place": "Milano",
+   "lat": 45.4642,
+   "lon": 9.19,
+   "utc": "2030-08-05T22:17:00+00:00",
+   "elevation": -25.66137,
+   "apparent_elevation": -25.66137,
+   "azimuth": 340.77502
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T00:17:00+00:00",
+   "elevation": -45.56929,
+   "apparent_elevation": -45.56929,
+   "azimuth": 28.05991
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T02:17:00+00:00",
+   "elevation": -29.62523,
+   "apparent_elevation": -29.62523,
+   "azimuth": 60.6033
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T04:17:00+00:00",
+   "elevation": -8.20313,
+   "apparent_elevation": -8.20313,
+   "azimuth": 83.00656
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T06:17:00+00:00",
+   "elevation": 14.28092,
+   "apparent_elevation": 14.34496,
+   "azimuth": 103.03589
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T08:17:00+00:00",
+   "elevation": 34.71415,
+   "apparent_elevation": 34.73836,
+   "azimuth": 127.42933
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T10:17:00+00:00",
+   "elevation": 47.67168,
+   "apparent_elevation": 47.687,
+   "azimuth": 163.92986
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T12:17:00+00:00",
+   "elevation": 45.29167,
+   "apparent_elevation": 45.30832,
+   "azimuth": 207.96805
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T14:17:00+00:00",
+   "elevation": 29.43582,
+   "apparent_elevation": 29.46547,
+   "azimuth": 240.47435
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T16:17:00+00:00",
+   "elevation": 8.07287,
+   "apparent_elevation": 8.18159,
+   "azimuth": 262.91988
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T18:17:00+00:00",
+   "elevation": -14.36805,
+   "apparent_elevation": -14.36805,
+   "azimuth": 282.99992
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T20:17:00+00:00",
+   "elevation": -34.75273,
+   "apparent_elevation": -34.75273,
+   "azimuth": 307.45386
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-03-20T22:17:00+00:00",
+   "elevation": -47.63348,
+   "apparent_elevation": -47.63348,
+   "azimuth": 343.99888
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T00:17:00+00:00",
+   "elevation": -22.6492,
+   "apparent_elevation": -22.6492,
+   "azimuth": 20.56764
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T02:17:00+00:00",
+   "elevation": -10.15858,
+   "apparent_elevation": -10.15858,
+   "azimuth": 46.15272
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T04:17:00+00:00",
+   "elevation": 8.60627,
+   "apparent_elevation": 8.70904,
+   "azimuth": 66.30679
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T06:17:00+00:00",
+   "elevation": 30.37374,
+   "apparent_elevation": 30.4023,
+   "azimuth": 84.24026
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T08:17:00+00:00",
+   "elevation": 52.7735,
+   "apparent_elevation": 52.78629,
+   "azimuth": 106.03235
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T10:17:00+00:00",
+   "elevation": 70.66975,
+   "apparent_elevation": 70.67565,
+   "azimuth": 153.3007
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T12:17:00+00:00",
+   "elevation": 65.26922,
+   "apparent_elevation": 65.27697,
+   "azimuth": 230.71889
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T14:17:00+00:00",
+   "elevation": 44.40216,
+   "apparent_elevation": 44.41932,
+   "azimuth": 263.34471
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T16:17:00+00:00",
+   "elevation": 21.94573,
+   "apparent_elevation": 21.98697,
+   "azimuth": 282.56063
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T18:17:00+00:00",
+   "elevation": 1.0152,
+   "apparent_elevation": 1.37473,
+   "azimuth": 300.83297
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T20:17:00+00:00",
+   "elevation": -15.84165,
+   "apparent_elevation": -15.84165,
+   "azimuth": 322.79125
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-06-21T22:17:00+00:00",
+   "elevation": -24.86627,
+   "apparent_elevation": -24.86627,
+   "azimuth": 350.53816
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T00:17:00+00:00",
+   "elevation": -43.91648,
+   "apparent_elevation": -43.91648,
+   "azimuth": 32.82579
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T02:17:00+00:00",
+   "elevation": -26.99424,
+   "apparent_elevation": -26.99424,
+   "azimuth": 63.66123
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T04:17:00+00:00",
+   "elevation": -5.31479,
+   "apparent_elevation": -5.31479,
+   "azimuth": 85.43545
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T06:17:00+00:00",
+   "elevation": 17.05369,
+   "apparent_elevation": 17.10734,
+   "azimuth": 105.67819
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T08:17:00+00:00",
+   "elevation": 36.88657,
+   "apparent_elevation": 36.90893,
+   "azimuth": 131.22005
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T10:17:00+00:00",
+   "elevation": 48.23377,
+   "apparent_elevation": 48.2488,
+   "azimuth": 169.49163
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T12:17:00+00:00",
+   "elevation": 43.7116,
+   "apparent_elevation": 43.72919,
+   "azimuth": 212.76788
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T14:17:00+00:00",
+   "elevation": 26.76406,
+   "apparent_elevation": 26.79717,
+   "azimuth": 243.49664
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T16:17:00+00:00",
+   "elevation": 5.05857,
+   "apparent_elevation": 5.21779,
+   "azimuth": 265.21537
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T18:17:00+00:00",
+   "elevation": -17.36227,
+   "apparent_elevation": -17.36227,
+   "azimuth": 285.40938
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T20:17:00+00:00",
+   "elevation": -37.29427,
+   "apparent_elevation": -37.29427,
+   "azimuth": 310.93769
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-09-23T22:17:00+00:00",
+   "elevation": -48.7632,
+   "apparent_elevation": -48.7632,
+   "azimuth": 349.44816
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T00:17:00+00:00",
+   "elevation": -64.6792,
+   "apparent_elevation": -64.6792,
+   "azimuth": 52.37385
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T02:17:00+00:00",
+   "elevation": -43.66018,
+   "apparent_elevation": -43.66018,
+   "azimuth": 84.07434
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T04:17:00+00:00",
+   "elevation": -21.22359,
+   "apparent_elevation": -21.22359,
+   "azimuth": 103.14297
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T06:17:00+00:00",
+   "elevation": -0.38602,
+   "apparent_elevation": 0.15456,
+   "azimuth": 121.47309
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T08:17:00+00:00",
+   "elevation": 16.27816,
+   "apparent_elevation": 16.3344,
+   "azimuth": 143.60236
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T10:17:00+00:00",
+   "elevation": 24.976,
+   "apparent_elevation": 25.01179,
+   "azimuth": 171.51184
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T12:17:00+00:00",
+   "elevation": 22.39959,
+   "apparent_elevation": 22.43993,
+   "azimuth": 201.43177
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T14:17:00+00:00",
+   "elevation": 9.66014,
+   "apparent_elevation": 9.75279,
+   "azimuth": 226.8297
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T16:17:00+00:00",
+   "elevation": -9.2319,
+   "apparent_elevation": -9.2319,
+   "azimuth": 246.85589
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T18:17:00+00:00",
+   "elevation": -31.04714,
+   "apparent_elevation": -31.04714,
+   "azimuth": 264.78969
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T20:17:00+00:00",
+   "elevation": -53.417,
+   "apparent_elevation": -53.417,
+   "azimuth": 286.86835
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2026-12-21T22:17:00+00:00",
+   "elevation": -70.95723,
+   "apparent_elevation": -70.95723,
+   "azimuth": 335.60219
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T00:17:00+00:00",
+   "elevation": -58.11276,
+   "apparent_elevation": -58.11276,
+   "azimuth": 33.83198
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T02:17:00+00:00",
+   "elevation": -40.1177,
+   "apparent_elevation": -40.1177,
+   "azimuth": 70.06522
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T04:17:00+00:00",
+   "elevation": -17.87621,
+   "apparent_elevation": -17.87621,
+   "azimuth": 91.99571
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T06:17:00+00:00",
+   "elevation": 4.17528,
+   "apparent_elevation": 4.35837,
+   "azimuth": 111.40591
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T08:17:00+00:00",
+   "elevation": 23.15792,
+   "apparent_elevation": 23.19683,
+   "azimuth": 134.38297
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T10:17:00+00:00",
+   "elevation": 34.65251,
+   "apparent_elevation": 34.67677,
+   "azimuth": 165.24765
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T12:17:00+00:00",
+   "elevation": 33.49456,
+   "apparent_elevation": 33.51989,
+   "azimuth": 200.67201
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T14:17:00+00:00",
+   "elevation": 20.33902,
+   "apparent_elevation": 20.38374,
+   "azimuth": 230.11343
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T16:17:00+00:00",
+   "elevation": 0.60412,
+   "apparent_elevation": 1.00705,
+   "azimuth": 252.15325
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T18:17:00+00:00",
+   "elevation": -21.64473,
+   "apparent_elevation": -21.64473,
+   "azimuth": 271.56328
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T20:17:00+00:00",
+   "elevation": -43.53974,
+   "apparent_elevation": -43.53974,
+   "azimuth": 294.91086
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2027-02-14T22:17:00+00:00",
+   "elevation": -59.72624,
+   "apparent_elevation": -59.72624,
+   "azimuth": 335.44221
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T00:17:00+00:00",
+   "elevation": -29.10487,
+   "apparent_elevation": -29.10487,
+   "azimuth": 21.54025
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T02:17:00+00:00",
+   "elevation": -15.95799,
+   "apparent_elevation": -15.95799,
+   "azimuth": 49.24882
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T04:17:00+00:00",
+   "elevation": 3.54034,
+   "apparent_elevation": 3.74496,
+   "azimuth": 70.49567
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T06:17:00+00:00",
+   "elevation": 25.68189,
+   "apparent_elevation": 25.71658,
+   "azimuth": 89.46824
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T08:17:00+00:00",
+   "elevation": 47.75489,
+   "apparent_elevation": 47.77016,
+   "azimuth": 112.75305
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T10:17:00+00:00",
+   "elevation": 64.17253,
+   "apparent_elevation": 64.18067,
+   "azimuth": 156.66778
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T12:17:00+00:00",
+   "elevation": 60.45059,
+   "apparent_elevation": 60.46013,
+   "azimuth": 220.64585
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T14:17:00+00:00",
+   "elevation": 41.12583,
+   "apparent_elevation": 41.14508,
+   "azimuth": 255.4324
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T16:17:00+00:00",
+   "elevation": 18.67728,
+   "apparent_elevation": 18.72615,
+   "azimuth": 276.33954
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T18:17:00+00:00",
+   "elevation": -2.98889,
+   "apparent_elevation": -2.98889,
+   "azimuth": 295.44994
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T20:17:00+00:00",
+   "elevation": -21.0815,
+   "apparent_elevation": -21.0815,
+   "azimuth": 318.33871
+  },
+  {
+   "place": "Bari",
+   "lat": 41.1171,
+   "lon": 16.8719,
+   "utc": "2030-08-05T22:17:00+00:00",
+   "elevation": -31.33563,
+   "apparent_elevation": -31.33563,
+   "azimuth": 348.35225
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T00:17:00+00:00",
+   "elevation": -49.45824,
+   "apparent_elevation": -49.45824,
+   "azimuth": 24.62752
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T02:17:00+00:00",
+   "elevation": -33.47047,
+   "apparent_elevation": -33.47047,
+   "azimuth": 59.12344
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T04:17:00+00:00",
+   "elevation": -11.29421,
+   "apparent_elevation": -11.29421,
+   "azimuth": 81.21388
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T06:17:00+00:00",
+   "elevation": 12.22872,
+   "apparent_elevation": 12.30313,
+   "azimuth": 99.97622
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T08:17:00+00:00",
+   "elevation": 34.21477,
+   "apparent_elevation": 34.23943,
+   "azimuth": 122.43703
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T10:17:00+00:00",
+   "elevation": 49.61744,
+   "apparent_elevation": 49.63174,
+   "azimuth": 157.66517
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T12:17:00+00:00",
+   "elevation": 49.17915,
+   "apparent_elevation": 49.19368,
+   "azimuth": 204.54054
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T14:17:00+00:00",
+   "elevation": 33.28412,
+   "apparent_elevation": 33.30966,
+   "azimuth": 238.98353
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T16:17:00+00:00",
+   "elevation": 11.16807,
+   "apparent_elevation": 11.24913,
+   "azimuth": 261.1206
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T18:17:00+00:00",
+   "elevation": -12.31356,
+   "apparent_elevation": -12.31356,
+   "azimuth": 279.93537
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T20:17:00+00:00",
+   "elevation": -34.25495,
+   "apparent_elevation": -34.25495,
+   "azimuth": 302.45779
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-03-20T22:17:00+00:00",
+   "elevation": -49.58363,
+   "apparent_elevation": -49.58363,
+   "azimuth": 337.74258
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T00:17:00+00:00",
+   "elevation": -26.36914,
+   "apparent_elevation": -26.36914,
+   "azimuth": 17.61004
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T02:17:00+00:00",
+   "elevation": -14.19209,
+   "apparent_elevation": -14.19209,
+   "azimuth": 43.95916
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T04:17:00+00:00",
+   "elevation": 4.88968,
+   "apparent_elevation": 5.05301,
+   "azimuth": 63.87985
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T06:17:00+00:00",
+   "elevation": 27.29554,
+   "apparent_elevation": 27.32791,
+   "azimuth": 80.55957
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T08:17:00+00:00",
+   "elevation": 50.79125,
+   "apparent_elevation": 50.80497,
+   "azimuth": 99.31856
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T10:17:00+00:00",
+   "elevation": 71.67982,
+   "apparent_elevation": 71.68538,
+   "azimuth": 139.56094
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T12:17:00+00:00",
+   "elevation": 69.26695,
+   "apparent_elevation": 69.27332,
+   "azimuth": 229.8654
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T14:17:00+00:00",
+   "elevation": 47.42513,
+   "apparent_elevation": 47.44058,
+   "azimuth": 263.87423
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T16:17:00+00:00",
+   "elevation": 23.9568,
+   "apparent_elevation": 23.99429,
+   "azimuth": 281.80546
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T18:17:00+00:00",
+   "elevation": 1.87373,
+   "apparent_elevation": 2.16317,
+   "azimuth": 298.69314
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T20:17:00+00:00",
+   "elevation": -16.47821,
+   "apparent_elevation": -16.47821,
+   "azimuth": 319.39555
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-06-21T22:17:00+00:00",
+   "elevation": -27.27506,
+   "apparent_elevation": -27.27506,
+   "azimuth": 346.71139
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T00:17:00+00:00",
+   "elevation": -47.8853,
+   "apparent_elevation": -47.8853,
+   "azimuth": 29.81121
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T02:17:00+00:00",
+   "elevation": -30.76763,
+   "apparent_elevation": -30.76763,
+   "azimuth": 62.21707
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T04:17:00+00:00",
+   "elevation": -8.2958,
+   "apparent_elevation": -8.2958,
+   "azimuth": 83.52123
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T06:17:00+00:00",
+   "elevation": 15.15752,
+   "apparent_elevation": 15.21791,
+   "azimuth": 102.40814
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T08:17:00+00:00",
+   "elevation": 36.64423,
+   "apparent_elevation": 36.66679,
+   "azimuth": 125.96622
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T10:17:00+00:00",
+   "elevation": 50.51768,
+   "apparent_elevation": 50.53154,
+   "azimuth": 163.36431
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T12:17:00+00:00",
+   "elevation": 47.67991,
+   "apparent_elevation": 47.69522,
+   "azimuth": 209.75468
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T14:17:00+00:00",
+   "elevation": 30.5419,
+   "apparent_elevation": 30.57027,
+   "azimuth": 242.03898
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T16:17:00+00:00",
+   "elevation": 8.05037,
+   "apparent_elevation": 8.15935,
+   "azimuth": 263.28792
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T18:17:00+00:00",
+   "elevation": -15.44889,
+   "apparent_elevation": -15.44889,
+   "azimuth": 282.12209
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T20:17:00+00:00",
+   "elevation": -37.03058,
+   "apparent_elevation": -37.03058,
+   "azimuth": 305.64151
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-09-23T22:17:00+00:00",
+   "elevation": -51.04225,
+   "apparent_elevation": -51.04225,
+   "azimuth": 343.24424
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T00:17:00+00:00",
+   "elevation": -68.6568,
+   "apparent_elevation": -68.6568,
+   "azimuth": 51.7676
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T02:17:00+00:00",
+   "elevation": -46.6494,
+   "apparent_elevation": -46.6494,
+   "azimuth": 84.56868
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T04:17:00+00:00",
+   "elevation": -23.20026,
+   "apparent_elevation": -23.20026,
+   "azimuth": 102.34238
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T06:17:00+00:00",
+   "elevation": -1.20194,
+   "apparent_elevation": -1.20194,
+   "azimuth": 119.2882
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T08:17:00+00:00",
+   "elevation": 16.97003,
+   "apparent_elevation": 17.02395,
+   "azimuth": 140.17393
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T10:17:00+00:00",
+   "elevation": 27.43993,
+   "apparent_elevation": 27.47211,
+   "azimuth": 167.69561
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T12:17:00+00:00",
+   "elevation": 26.1434,
+   "apparent_elevation": 26.17741,
+   "azimuth": 198.50778
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T14:17:00+00:00",
+   "elevation": 13.6909,
+   "apparent_elevation": 13.75763,
+   "azimuth": 224.64413
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T16:17:00+00:00",
+   "elevation": -5.53036,
+   "apparent_elevation": -5.53036,
+   "azimuth": 244.40681
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T18:17:00+00:00",
+   "elevation": -27.99296,
+   "apparent_elevation": -27.99296,
+   "azimuth": 261.05239
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T20:17:00+00:00",
+   "elevation": -51.482,
+   "apparent_elevation": -51.482,
+   "azimuth": 280.01219
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2026-12-21T22:17:00+00:00",
+   "elevation": -72.12052,
+   "apparent_elevation": -72.12052,
+   "azimuth": 321.7463
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T00:17:00+00:00",
+   "elevation": -62.09162,
+   "apparent_elevation": -62.09162,
+   "azimuth": 30.38133
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T02:17:00+00:00",
+   "elevation": -43.69259,
+   "apparent_elevation": -43.69259,
+   "azimuth": 69.51461
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T04:17:00+00:00",
+   "elevation": -20.5066,
+   "apparent_elevation": -20.5066,
+   "azimuth": 90.8236
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T06:17:00+00:00",
+   "elevation": 2.67104,
+   "apparent_elevation": 2.91354,
+   "azimuth": 108.94184
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T08:17:00+00:00",
+   "elevation": 23.1839,
+   "apparent_elevation": 23.22276,
+   "azimuth": 130.4137
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T10:17:00+00:00",
+   "elevation": 36.72504,
+   "apparent_elevation": 36.74754,
+   "azimuth": 160.51596
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T12:17:00+00:00",
+   "elevation": 37.21207,
+   "apparent_elevation": 37.23418,
+   "azimuth": 197.31043
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T14:17:00+00:00",
+   "elevation": 24.34761,
+   "apparent_elevation": 24.38444,
+   "azimuth": 228.07818
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T16:17:00+00:00",
+   "elevation": 4.1357,
+   "apparent_elevation": 4.32001,
+   "azimuth": 249.99495
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T18:17:00+00:00",
+   "elevation": -18.93395,
+   "apparent_elevation": -18.93395,
+   "azimuth": 268.2161
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T20:17:00+00:00",
+   "elevation": -42.15713,
+   "apparent_elevation": -42.15713,
+   "azimuth": 289.14879
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2027-02-14T22:17:00+00:00",
+   "elevation": -61.03921,
+   "apparent_elevation": -61.03921,
+   "azimuth": 326.47532
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T00:17:00+00:00",
+   "elevation": -32.84845,
+   "apparent_elevation": -32.84845,
+   "azimuth": 18.38949
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T02:17:00+00:00",
+   "elevation": -19.97374,
+   "apparent_elevation": -19.97374,
+   "azimuth": 47.15004
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T04:17:00+00:00",
+   "elevation": -0.04869,
+   "apparent_elevation": 0.4396,
+   "azimuth": 68.1995
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T06:17:00+00:00",
+   "elevation": 22.85836,
+   "apparent_elevation": 22.89782,
+   "azimuth": 85.92527
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T08:17:00+00:00",
+   "elevation": 46.21418,
+   "apparent_elevation": 46.2303,
+   "azimuth": 106.50827
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T10:17:00+00:00",
+   "elevation": 65.52192,
+   "apparent_elevation": 65.52958,
+   "azimuth": 146.30687
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T12:17:00+00:00",
+   "elevation": 64.4855,
+   "apparent_elevation": 64.49353,
+   "azimuth": 218.04304
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T14:17:00+00:00",
+   "elevation": 44.50245,
+   "apparent_elevation": 44.51956,
+   "azimuth": 255.24903
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T16:17:00+00:00",
+   "elevation": 21.06484,
+   "apparent_elevation": 21.10792,
+   "azimuth": 275.27835
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T18:17:00+00:00",
+   "elevation": -1.75505,
+   "apparent_elevation": -1.75505,
+   "azimuth": 293.05114
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T20:17:00+00:00",
+   "elevation": -21.39196,
+   "apparent_elevation": -21.39196,
+   "azimuth": 314.53359
+  },
+  {
+   "place": "Palermo",
+   "lat": 38.1157,
+   "lon": 13.3615,
+   "utc": "2030-08-05T22:17:00+00:00",
+   "elevation": -33.60336,
+   "apparent_elevation": -33.60336,
+   "azimuth": 343.98451
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T00:17:00+00:00",
+   "elevation": -42.20615,
+   "apparent_elevation": -42.20615,
+   "azimuth": 18.65981
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T02:17:00+00:00",
+   "elevation": -30.01136,
+   "apparent_elevation": -30.01136,
+   "azimuth": 52.94562
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T04:17:00+00:00",
+   "elevation": -11.25494,
+   "apparent_elevation": -11.25494,
+   "azimuth": 78.1597
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T06:17:00+00:00",
+   "elevation": 9.29705,
+   "apparent_elevation": 9.39298,
+   "azimuth": 100.14442
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T08:17:00+00:00",
+   "elevation": 28.32684,
+   "apparent_elevation": 28.35785,
+   "azimuth": 124.82898
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T10:17:00+00:00",
+   "elevation": 41.29113,
+   "apparent_elevation": 41.31026,
+   "azimuth": 158.12084
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T12:17:00+00:00",
+   "elevation": 41.92202,
+   "apparent_elevation": 41.94074,
+   "azimuth": 198.6253
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T14:17:00+00:00",
+   "elevation": 29.80862,
+   "apparent_elevation": 29.83783,
+   "azimuth": 232.84593
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T16:17:00+00:00",
+   "elevation": 11.11639,
+   "apparent_elevation": 11.1978,
+   "azimuth": 258.08617
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T18:17:00+00:00",
+   "elevation": -9.38678,
+   "apparent_elevation": -9.38678,
+   "azimuth": 280.11586
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T20:17:00+00:00",
+   "elevation": -28.36485,
+   "apparent_elevation": -28.36485,
+   "azimuth": 304.85347
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-03-20T22:17:00+00:00",
+   "elevation": -41.25566,
+   "apparent_elevation": -41.25566,
+   "azimuth": 338.18536
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T00:17:00+00:00",
+   "elevation": -18.72826,
+   "apparent_elevation": -18.72826,
+   "azimuth": 14.69241
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T02:17:00+00:00",
+   "elevation": -9.01986,
+   "apparent_elevation": -9.01986,
+   "azimuth": 41.21297
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T04:17:00+00:00",
+   "elevation": 7.28452,
+   "apparent_elevation": 7.40328,
+   "azimuth": 63.3986
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T06:17:00+00:00",
+   "elevation": 26.98036,
+   "apparent_elevation": 27.01317,
+   "azimuth": 83.57468
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T08:17:00+00:00",
+   "elevation": 47.41934,
+   "apparent_elevation": 47.4348,
+   "azimuth": 107.02311
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T10:17:00+00:00",
+   "elevation": 64.02725,
+   "apparent_elevation": 64.03544,
+   "azimuth": 147.53453
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T12:17:00+00:00",
+   "elevation": 63.91387,
+   "apparent_elevation": 63.92211,
+   "azimuth": 213.04671
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T14:17:00+00:00",
+   "elevation": 47.21879,
+   "apparent_elevation": 47.23436,
+   "azimuth": 253.26328
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T16:17:00+00:00",
+   "elevation": 26.77205,
+   "apparent_elevation": 26.80515,
+   "azimuth": 276.63362
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T18:17:00+00:00",
+   "elevation": 7.09705,
+   "apparent_elevation": 7.21846,
+   "azimuth": 296.80986
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T20:17:00+00:00",
+   "elevation": -9.15807,
+   "apparent_elevation": -9.15807,
+   "azimuth": 319.03264
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-06-21T22:17:00+00:00",
+   "elevation": -18.78165,
+   "apparent_elevation": -18.78165,
+   "azimuth": 345.59696
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T00:17:00+00:00",
+   "elevation": -41.04814,
+   "apparent_elevation": -41.04814,
+   "azimuth": 23.45511
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T02:17:00+00:00",
+   "elevation": -27.75912,
+   "apparent_elevation": -27.75912,
+   "azimuth": 56.39039
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T04:17:00+00:00",
+   "elevation": -8.63204,
+   "apparent_elevation": -8.63204,
+   "azimuth": 80.89914
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T06:17:00+00:00",
+   "elevation": 11.8635,
+   "apparent_elevation": 11.94008,
+   "azimuth": 102.94409
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T08:17:00+00:00",
+   "elevation": 30.38408,
+   "apparent_elevation": 30.41263,
+   "azimuth": 128.44593
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T10:17:00+00:00",
+   "elevation": 42.06354,
+   "apparent_elevation": 42.08216,
+   "azimuth": 163.05696
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T12:17:00+00:00",
+   "elevation": 40.8392,
+   "apparent_elevation": 40.85864,
+   "azimuth": 203.43832
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T14:17:00+00:00",
+   "elevation": 27.51178,
+   "apparent_elevation": 27.54386,
+   "azimuth": 236.25927
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T16:17:00+00:00",
+   "elevation": 8.3548,
+   "apparent_elevation": 8.46029,
+   "azimuth": 260.70463
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T18:17:00+00:00",
+   "elevation": -12.19091,
+   "apparent_elevation": -12.19091,
+   "azimuth": 282.70603
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T20:17:00+00:00",
+   "elevation": -30.7994,
+   "apparent_elevation": -30.7994,
+   "azimuth": 308.20012
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-09-23T22:17:00+00:00",
+   "elevation": -42.5904,
+   "apparent_elevation": -42.5904,
+   "azimuth": 342.97231
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T00:17:00+00:00",
+   "elevation": -63.52851,
+   "apparent_elevation": -63.52851,
+   "azimuth": 34.92359
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T02:17:00+00:00",
+   "elevation": -46.5638,
+   "apparent_elevation": -46.5638,
+   "azimuth": 74.18591
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T04:17:00+00:00",
+   "elevation": -26.10019,
+   "apparent_elevation": -26.10019,
+   "azimuth": 97.3074
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T06:17:00+00:00",
+   "elevation": -6.4994,
+   "apparent_elevation": -6.4994,
+   "azimuth": 117.48446
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T08:17:00+00:00",
+   "elevation": 9.59095,
+   "apparent_elevation": 9.68421,
+   "azimuth": 139.82465
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T10:17:00+00:00",
+   "elevation": 18.93806,
+   "apparent_elevation": 18.98624,
+   "azimuth": 166.52233
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T12:17:00+00:00",
+   "elevation": 18.56079,
+   "apparent_elevation": 18.60999,
+   "azimuth": 195.55673
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T14:17:00+00:00",
+   "elevation": 8.60243,
+   "apparent_elevation": 8.70525,
+   "azimuth": 221.94141
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T16:17:00+00:00",
+   "elevation": -7.84348,
+   "apparent_elevation": -7.84348,
+   "azimuth": 244.01438
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T18:17:00+00:00",
+   "elevation": -27.59541,
+   "apparent_elevation": -27.59541,
+   "azimuth": 264.18894
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T20:17:00+00:00",
+   "elevation": -48.00477,
+   "apparent_elevation": -48.00477,
+   "azimuth": 287.86834
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2026-12-21T22:17:00+00:00",
+   "elevation": -64.34688,
+   "apparent_elevation": -64.34688,
+   "azimuth": 329.24228
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T00:17:00+00:00",
+   "elevation": -55.15509,
+   "apparent_elevation": -55.15509,
+   "azimuth": 20.86576
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T02:17:00+00:00",
+   "elevation": -41.49478,
+   "apparent_elevation": -41.49478,
+   "azimuth": 60.57889
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T04:17:00+00:00",
+   "elevation": -21.77714,
+   "apparent_elevation": -21.77714,
+   "azimuth": 86.20814
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T06:17:00+00:00",
+   "elevation": -1.37763,
+   "apparent_elevation": -1.37763,
+   "azimuth": 107.67246
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T08:17:00+00:00",
+   "elevation": 16.58517,
+   "apparent_elevation": 16.64035,
+   "azimuth": 131.01068
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T10:17:00+00:00",
+   "elevation": 28.33259,
+   "apparent_elevation": 28.3636,
+   "azimuth": 160.07388
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T12:17:00+00:00",
+   "elevation": 29.52301,
+   "apparent_elevation": 29.55256,
+   "azimuth": 193.54008
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T14:17:00+00:00",
+   "elevation": 19.58305,
+   "apparent_elevation": 19.62958,
+   "azimuth": 223.87089
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T16:17:00+00:00",
+   "elevation": 2.52661,
+   "apparent_elevation": 2.7766,
+   "azimuth": 248.15273
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T18:17:00+00:00",
+   "elevation": -17.60275,
+   "apparent_elevation": -17.60275,
+   "azimuth": 269.64217
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T20:17:00+00:00",
+   "elevation": -37.68952,
+   "apparent_elevation": -37.68952,
+   "azimuth": 293.87743
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2027-02-14T22:17:00+00:00",
+   "elevation": -53.12228,
+   "apparent_elevation": -53.12228,
+   "azimuth": 329.99577
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T00:17:00+00:00",
+   "elevation": -25.23983,
+   "apparent_elevation": -25.23983,
+   "azimuth": 14.90748
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T02:17:00+00:00",
+   "elevation": -15.13474,
+   "apparent_elevation": -15.13474,
+   "azimuth": 43.57491
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T04:17:00+00:00",
+   "elevation": 1.77734,
+   "apparent_elevation": 2.07349,
+   "azimuth": 66.9711
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T06:17:00+00:00",
+   "elevation": 21.81321,
+   "apparent_elevation": 21.85471,
+   "azimuth": 88.04913
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T08:17:00+00:00",
+   "elevation": 42.01072,
+   "apparent_elevation": 42.02938,
+   "azimuth": 112.35613
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T10:17:00+00:00",
+   "elevation": 57.58672,
+   "apparent_elevation": 57.5974,
+   "azimuth": 150.70981
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T12:17:00+00:00",
+   "elevation": 58.14529,
+   "apparent_elevation": 58.15575,
+   "azimuth": 206.20883
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T14:17:00+00:00",
+   "elevation": 43.10374,
+   "apparent_elevation": 43.1217,
+   "azimuth": 245.81887
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T16:17:00+00:00",
+   "elevation": 22.97943,
+   "apparent_elevation": 23.01866,
+   "azimuth": 270.56177
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T18:17:00+00:00",
+   "elevation": 2.81072,
+   "apparent_elevation": 3.04633,
+   "azimuth": 291.63009
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T20:17:00+00:00",
+   "elevation": -14.43984,
+   "apparent_elevation": -14.43984,
+   "azimuth": 314.7721
+  },
+  {
+   "place": "Bolzano",
+   "lat": 46.4983,
+   "lon": 11.3548,
+   "utc": "2030-08-05T22:17:00+00:00",
+   "elevation": -25.14378,
+   "apparent_elevation": -25.14378,
+   "azimuth": 343.16317
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T00:17:00+00:00",
+   "elevation": 48.22685,
+   "apparent_elevation": 48.24187,
+   "azimuth": 41.93515
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T02:17:00+00:00",
+   "elevation": 56.16916,
+   "apparent_elevation": 56.18044,
+   "azimuth": 353.5774
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T04:17:00+00:00",
+   "elevation": 43.90215,
+   "apparent_elevation": 43.91962,
+   "azimuth": 309.8624
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T06:17:00+00:00",
+   "elevation": 21.76079,
+   "apparent_elevation": 21.80241,
+   "azimuth": 285.35457
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T08:17:00+00:00",
+   "elevation": -2.92216,
+   "apparent_elevation": -2.92216,
+   "azimuth": 267.90953
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T10:17:00+00:00",
+   "elevation": -27.30616,
+   "apparent_elevation": -27.30616,
+   "azimuth": 249.62116
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T12:17:00+00:00",
+   "elevation": -48.01783,
+   "apparent_elevation": -48.01783,
+   "azimuth": 221.65779
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T14:17:00+00:00",
+   "elevation": -55.95603,
+   "apparent_elevation": -55.95603,
+   "azimuth": 173.54744
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T16:17:00+00:00",
+   "elevation": -43.76859,
+   "apparent_elevation": -43.76859,
+   "azimuth": 129.95331
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T18:17:00+00:00",
+   "elevation": -21.68702,
+   "apparent_elevation": -21.68702,
+   "azimuth": 105.40113
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T20:17:00+00:00",
+   "elevation": 2.95655,
+   "apparent_elevation": 3.18533,
+   "azimuth": 87.90197
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-03-20T22:17:00+00:00",
+   "elevation": 27.29891,
+   "apparent_elevation": 27.33128,
+   "azimuth": 69.55112
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T00:17:00+00:00",
+   "elevation": 27.96396,
+   "apparent_elevation": 27.99544,
+   "azimuth": 26.00793
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T02:17:00+00:00",
+   "elevation": 32.49215,
+   "apparent_elevation": 32.51846,
+   "azimuth": 354.53028
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T04:17:00+00:00",
+   "elevation": 23.71353,
+   "apparent_elevation": 23.75144,
+   "azimuth": 324.89234
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T06:17:00+00:00",
+   "elevation": 5.74085,
+   "apparent_elevation": 5.88523,
+   "azimuth": 303.29586
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T08:17:00+00:00",
+   "elevation": -16.75494,
+   "apparent_elevation": -16.75494,
+   "azimuth": 287.35178
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T10:17:00+00:00",
+   "elevation": -41.20399,
+   "apparent_elevation": -41.20399,
+   "azimuth": 272.81275
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T12:17:00+00:00",
+   "elevation": -65.80135,
+   "apparent_elevation": -65.80135,
+   "azimuth": 251.04365
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T14:17:00+00:00",
+   "elevation": -78.68882,
+   "apparent_elevation": -78.68882,
+   "azimuth": 155.94186
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T16:17:00+00:00",
+   "elevation": -57.75232,
+   "apparent_elevation": -57.75232,
+   "azimuth": 99.55884
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T18:17:00+00:00",
+   "elevation": -32.93984,
+   "apparent_elevation": -32.93984,
+   "azimuth": 82.18702
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T20:17:00+00:00",
+   "elevation": -8.94503,
+   "apparent_elevation": -8.94503,
+   "azimuth": 67.70948
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-06-21T22:17:00+00:00",
+   "elevation": 12.41919,
+   "apparent_elevation": 12.4925,
+   "azimuth": 50.33228
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T00:17:00+00:00",
+   "elevation": 50.00867,
+   "apparent_elevation": 50.02278,
+   "azimuth": 36.86327
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T02:17:00+00:00",
+   "elevation": 55.47326,
+   "apparent_elevation": 55.48483,
+   "azimuth": 346.98971
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T04:17:00+00:00",
+   "elevation": 41.36076,
+   "apparent_elevation": 41.37984,
+   "azimuth": 306.0891
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T06:17:00+00:00",
+   "elevation": 18.70868,
+   "apparent_elevation": 18.75747,
+   "azimuth": 283.00856
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T08:17:00+00:00",
+   "elevation": -6.02773,
+   "apparent_elevation": -6.02773,
+   "azimuth": 265.7762
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T10:17:00+00:00",
+   "elevation": -30.15061,
+   "apparent_elevation": -30.15061,
+   "azimuth": 246.80582
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T12:17:00+00:00",
+   "elevation": -49.85931,
+   "apparent_elevation": -49.85931,
+   "azimuth": 216.64882
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T14:17:00+00:00",
+   "elevation": -55.20672,
+   "apparent_elevation": -55.20672,
+   "azimuth": 167.00102
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T16:17:00+00:00",
+   "elevation": -41.08949,
+   "apparent_elevation": -41.08949,
+   "azimuth": 126.34017
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T18:17:00+00:00",
+   "elevation": -18.44502,
+   "apparent_elevation": -18.44502,
+   "azimuth": 103.31858
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T20:17:00+00:00",
+   "elevation": 6.31723,
+   "apparent_elevation": 6.45094,
+   "azimuth": 86.13492
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-09-23T22:17:00+00:00",
+   "elevation": 30.51857,
+   "apparent_elevation": 30.54697,
+   "azimuth": 67.23818
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T00:17:00+00:00",
+   "elevation": 66.57955,
+   "apparent_elevation": 66.58684,
+   "azimuth": 69.85054
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T02:17:00+00:00",
+   "elevation": 78.32166,
+   "apparent_elevation": 78.32512,
+   "azimuth": 331.75148
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T04:17:00+00:00",
+   "elevation": 56.93917,
+   "apparent_elevation": 56.95012,
+   "azimuth": 278.80738
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T06:17:00+00:00",
+   "elevation": 32.12781,
+   "apparent_elevation": 32.15449,
+   "azimuth": 261.71401
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T08:17:00+00:00",
+   "elevation": 8.19117,
+   "apparent_elevation": 8.29851,
+   "azimuth": 247.21284
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T10:17:00+00:00",
+   "elevation": -13.04129,
+   "apparent_elevation": -13.04129,
+   "azimuth": 229.67451
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T12:17:00+00:00",
+   "elevation": -28.29501,
+   "apparent_elevation": -28.29501,
+   "azimuth": 205.1366
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T14:17:00+00:00",
+   "elevation": -32.41888,
+   "apparent_elevation": -32.41888,
+   "azimuth": 173.55129
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T16:17:00+00:00",
+   "elevation": -23.28532,
+   "apparent_elevation": -23.28532,
+   "azimuth": 144.12715
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T18:17:00+00:00",
+   "elevation": -5.12456,
+   "apparent_elevation": -5.12456,
+   "azimuth": 122.75949
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T20:17:00+00:00",
+   "elevation": 17.45381,
+   "apparent_elevation": 17.50621,
+   "azimuth": 106.92378
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2026-12-21T22:17:00+00:00",
+   "elevation": 41.93108,
+   "apparent_elevation": 41.94979,
+   "azimuth": 92.35028
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T00:17:00+00:00",
+   "elevation": 57.16485,
+   "apparent_elevation": 57.17571,
+   "azimuth": 57.70961
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T02:17:00+00:00",
+   "elevation": 69.19414,
+   "apparent_elevation": 69.20053,
+   "azimuth": 354.73148
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T04:17:00+00:00",
+   "elevation": 54.36816,
+   "apparent_elevation": 54.38022,
+   "azimuth": 297.8761
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T06:17:00+00:00",
+   "elevation": 30.44957,
+   "apparent_elevation": 30.47804,
+   "azimuth": 274.49694
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T08:17:00+00:00",
+   "elevation": 5.6642,
+   "apparent_elevation": 5.81012,
+   "azimuth": 258.06918
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T10:17:00+00:00",
+   "elevation": -17.58954,
+   "apparent_elevation": -17.58954,
+   "azimuth": 240.16738
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T12:17:00+00:00",
+   "elevation": -36.05356,
+   "apparent_elevation": -36.05356,
+   "azimuth": 214.55798
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T14:17:00+00:00",
+   "elevation": -43.12993,
+   "apparent_elevation": -43.12993,
+   "azimuth": 177.43125
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T16:17:00+00:00",
+   "elevation": -34.19979,
+   "apparent_elevation": -34.19979,
+   "azimuth": 141.45675
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T18:17:00+00:00",
+   "elevation": -14.85742,
+   "apparent_elevation": -14.85742,
+   "azimuth": 117.1561
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T20:17:00+00:00",
+   "elevation": 8.7084,
+   "apparent_elevation": 8.8101,
+   "azimuth": 99.71824
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2027-02-14T22:17:00+00:00",
+   "elevation": 33.50726,
+   "apparent_elevation": 33.53258,
+   "azimuth": 82.93041
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T00:17:00+00:00",
+   "elevation": 33.38621,
+   "apparent_elevation": 33.41165,
+   "azimuth": 30.21039
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T02:17:00+00:00",
+   "elevation": 39.00925,
+   "apparent_elevation": 39.02998,
+   "azimuth": 355.14802
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T04:17:00+00:00",
+   "elevation": 29.75469,
+   "apparent_elevation": 29.78396,
+   "azimuth": 322.03359
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T06:17:00+00:00",
+   "elevation": 10.74886,
+   "apparent_elevation": 10.83286,
+   "azimuth": 298.98326
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T08:17:00+00:00",
+   "elevation": -12.52423,
+   "apparent_elevation": -12.52423,
+   "azimuth": 282.11412
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T10:17:00+00:00",
+   "elevation": -37.27481,
+   "apparent_elevation": -37.27481,
+   "azimuth": 265.9254
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T12:17:00+00:00",
+   "elevation": -61.11582,
+   "apparent_elevation": -61.11582,
+   "azimuth": 240.45467
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T14:17:00+00:00",
+   "elevation": -72.61151,
+   "apparent_elevation": -72.61151,
+   "azimuth": 167.24496
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T16:17:00+00:00",
+   "elevation": -55.14018,
+   "apparent_elevation": -55.14018,
+   "azimuth": 110.71339
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T18:17:00+00:00",
+   "elevation": -30.66972,
+   "apparent_elevation": -30.66972,
+   "azimuth": 89.61604
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T20:17:00+00:00",
+   "elevation": -6.08529,
+   "apparent_elevation": -6.08529,
+   "azimuth": 73.8538
+  },
+  {
+   "place": "Sydney",
+   "lat": -33.8688,
+   "lon": 151.2093,
+   "utc": "2030-08-05T22:17:00+00:00",
+   "elevation": 16.46728,
+   "apparent_elevation": 16.52286,
+   "azimuth": 55.91185
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T00:17:00+00:00",
+   "elevation": -19.14299,
+   "apparent_elevation": -19.14299,
+   "azimuth": 22.62406
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T02:17:00+00:00",
+   "elevation": -12.75388,
+   "apparent_elevation": -12.75388,
+   "azimuth": 53.16298
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T04:17:00+00:00",
+   "elevation": -3.17206,
+   "apparent_elevation": -3.17206,
+   "azimuth": 81.91621
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T06:17:00+00:00",
+   "elevation": 7.13235,
+   "apparent_elevation": 7.25326,
+   "azimuth": 110.15305
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T08:17:00+00:00",
+   "elevation": 15.64966,
+   "apparent_elevation": 15.70815,
+   "azimuth": 139.54678
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T10:17:00+00:00",
+   "elevation": 20.03285,
+   "apparent_elevation": 20.07829,
+   "azimuth": 170.77846
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T12:17:00+00:00",
+   "elevation": 18.8567,
+   "apparent_elevation": 18.90509,
+   "azimuth": 202.62305
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T14:17:00+00:00",
+   "elevation": 12.53395,
+   "apparent_elevation": 12.60663,
+   "azimuth": 233.13831
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T16:17:00+00:00",
+   "elevation": 3.01608,
+   "apparent_elevation": 3.24217,
+   "azimuth": 261.89995
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T18:17:00+00:00",
+   "elevation": -7.2263,
+   "apparent_elevation": -7.2263,
+   "azimuth": 290.16128
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T20:17:00+00:00",
+   "elevation": -15.67791,
+   "apparent_elevation": -15.67791,
+   "azimuth": 319.58037
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-03-20T22:17:00+00:00",
+   "elevation": -19.98931,
+   "apparent_elevation": -19.98931,
+   "azimuth": 350.82058
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T00:17:00+00:00",
+   "elevation": 4.51327,
+   "apparent_elevation": 4.6865,
+   "azimuth": 20.87432
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T02:17:00+00:00",
+   "elevation": 10.36123,
+   "apparent_elevation": 10.44814,
+   "azimuth": 47.95899
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T04:17:00+00:00",
+   "elevation": 19.43428,
+   "apparent_elevation": 19.48118,
+   "azimuth": 74.84017
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T06:17:00+00:00",
+   "elevation": 29.7593,
+   "apparent_elevation": 29.78857,
+   "azimuth": 102.94884
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T08:17:00+00:00",
+   "elevation": 38.82308,
+   "apparent_elevation": 38.84395,
+   "azimuth": 134.54581
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T10:17:00+00:00",
+   "elevation": 43.58515,
+   "apparent_elevation": 43.60281,
+   "azimuth": 170.80783
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T12:17:00+00:00",
+   "elevation": 41.8477,
+   "apparent_elevation": 41.86647,
+   "azimuth": 208.44519
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T14:17:00+00:00",
+   "elevation": 34.47515,
+   "apparent_elevation": 34.49958,
+   "azimuth": 242.36123
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T16:17:00+00:00",
+   "elevation": 24.40621,
+   "apparent_elevation": 24.44294,
+   "azimuth": 271.86491
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T18:17:00+00:00",
+   "elevation": 14.4514,
+   "apparent_elevation": 14.5147,
+   "azimuth": 299.0902
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T20:17:00+00:00",
+   "elevation": 6.83149,
+   "apparent_elevation": 6.95684,
+   "azimuth": 325.97473
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-06-21T22:17:00+00:00",
+   "elevation": 3.23089,
+   "apparent_elevation": 3.44772,
+   "azimuth": 353.31976
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T00:17:00+00:00",
+   "elevation": -18.36662,
+   "apparent_elevation": -18.36662,
+   "azimuth": 26.51619
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T02:17:00+00:00",
+   "elevation": -11.52018,
+   "apparent_elevation": -11.52018,
+   "azimuth": 56.80044
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T04:17:00+00:00",
+   "elevation": -1.77402,
+   "apparent_elevation": -1.77402,
+   "azimuth": 85.41305
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T06:17:00+00:00",
+   "elevation": 8.383,
+   "apparent_elevation": 8.48818,
+   "azimuth": 113.73485
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T08:17:00+00:00",
+   "elevation": 16.43952,
+   "apparent_elevation": 16.4952,
+   "azimuth": 143.37619
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T10:17:00+00:00",
+   "elevation": 20.10585,
+   "apparent_elevation": 20.15111,
+   "azimuth": 174.78748
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T12:17:00+00:00",
+   "elevation": 18.15671,
+   "apparent_elevation": 18.20703,
+   "azimuth": 206.52913
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T14:17:00+00:00",
+   "elevation": 11.24836,
+   "apparent_elevation": 11.32887,
+   "azimuth": 236.76452
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T16:17:00+00:00",
+   "elevation": 1.44381,
+   "apparent_elevation": 1.7653,
+   "azimuth": 265.33969
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T18:17:00+00:00",
+   "elevation": -8.77667,
+   "apparent_elevation": -8.77667,
+   "azimuth": 293.64964
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T20:17:00+00:00",
+   "elevation": -16.90358,
+   "apparent_elevation": -16.90358,
+   "azimuth": 323.32131
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-09-23T22:17:00+00:00",
+   "elevation": -20.63669,
+   "apparent_elevation": -20.63669,
+   "azimuth": 354.81665
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T00:17:00+00:00",
+   "elevation": -41.67937,
+   "apparent_elevation": -41.67937,
+   "azimuth": 29.65256
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T02:17:00+00:00",
+   "elevation": -34.16918,
+   "apparent_elevation": -34.16918,
+   "azimuth": 63.39918
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T04:17:00+00:00",
+   "elevation": -24.0656,
+   "apparent_elevation": -24.0656,
+   "azimuth": 92.7839
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T06:17:00+00:00",
+   "elevation": -14.15772,
+   "apparent_elevation": -14.15772,
+   "azimuth": 119.9675
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T08:17:00+00:00",
+   "elevation": -6.64784,
+   "apparent_elevation": -6.64784,
+   "azimuth": 146.85643
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T10:17:00+00:00",
+   "elevation": -3.19901,
+   "apparent_elevation": -3.19901,
+   "azimuth": 174.21077
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T12:17:00+00:00",
+   "elevation": -4.63243,
+   "apparent_elevation": -4.63243,
+   "azimuth": 201.7041
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T14:17:00+00:00",
+   "elevation": -10.6005,
+   "apparent_elevation": -10.6005,
+   "azimuth": 228.76838
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T16:17:00+00:00",
+   "elevation": -19.74054,
+   "apparent_elevation": -19.74054,
+   "azimuth": 255.65454
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T18:17:00+00:00",
+   "elevation": -30.06507,
+   "apparent_elevation": -30.06507,
+   "azimuth": 283.82749
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T20:17:00+00:00",
+   "elevation": -39.04431,
+   "apparent_elevation": -39.04431,
+   "azimuth": 315.55401
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2026-12-21T22:17:00+00:00",
+   "elevation": -43.63418,
+   "apparent_elevation": -43.63418,
+   "azimuth": 351.92274
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T00:17:00+00:00",
+   "elevation": -32.17136,
+   "apparent_elevation": -32.17136,
+   "azimuth": 22.77398
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T02:17:00+00:00",
+   "elevation": -25.61567,
+   "apparent_elevation": -25.61567,
+   "azimuth": 55.40881
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T04:17:00+00:00",
+   "elevation": -15.86933,
+   "apparent_elevation": -15.86933,
+   "azimuth": 84.93433
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T06:17:00+00:00",
+   "elevation": -5.6375,
+   "apparent_elevation": -5.6375,
+   "azimuth": 112.82599
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T08:17:00+00:00",
+   "elevation": 2.66332,
+   "apparent_elevation": 2.90621,
+   "azimuth": 140.86227
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T10:17:00+00:00",
+   "elevation": 7.00712,
+   "apparent_elevation": 7.12984,
+   "azimuth": 169.86002
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T12:17:00+00:00",
+   "elevation": 6.21192,
+   "apparent_elevation": 6.34746,
+   "azimuth": 199.26268
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T14:17:00+00:00",
+   "elevation": 0.5101,
+   "apparent_elevation": 0.92403,
+   "azimuth": 227.98019
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T16:17:00+00:00",
+   "elevation": -8.58066,
+   "apparent_elevation": -8.58066,
+   "azimuth": 255.8504
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T18:17:00+00:00",
+   "elevation": -18.88238,
+   "apparent_elevation": -18.88238,
+   "azimuth": 284.0639
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T20:17:00+00:00",
+   "elevation": -27.87277,
+   "apparent_elevation": -27.87277,
+   "azimuth": 314.46695
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2027-02-14T22:17:00+00:00",
+   "elevation": -32.8311,
+   "apparent_elevation": -32.8311,
+   "azimuth": 347.99508
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T00:17:00+00:00",
+   "elevation": -1.99925,
+   "apparent_elevation": -1.99925,
+   "azimuth": 20.70485
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T02:17:00+00:00",
+   "elevation": 3.87548,
+   "apparent_elevation": 4.0682,
+   "azimuth": 48.77612
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T04:17:00+00:00",
+   "elevation": 13.02376,
+   "apparent_elevation": 13.0938,
+   "azimuth": 76.27977
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T06:17:00+00:00",
+   "elevation": 23.33146,
+   "apparent_elevation": 23.37005,
+   "azimuth": 104.51834
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T08:17:00+00:00",
+   "elevation": 32.26466,
+   "apparent_elevation": 32.2912,
+   "azimuth": 135.46241
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T10:17:00+00:00",
+   "elevation": 36.98933,
+   "apparent_elevation": 37.01161,
+   "azimuth": 170.03527
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T12:17:00+00:00",
+   "elevation": 35.53932,
+   "apparent_elevation": 35.5628,
+   "azimuth": 205.77227
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T14:17:00+00:00",
+   "elevation": 28.55286,
+   "apparent_elevation": 28.58359,
+   "azimuth": 238.7717
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T16:17:00+00:00",
+   "elevation": 18.62426,
+   "apparent_elevation": 18.67328,
+   "azimuth": 268.2535
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T18:17:00+00:00",
+   "elevation": 8.50166,
+   "apparent_elevation": 8.60555,
+   "azimuth": 295.9285
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T20:17:00+00:00",
+   "elevation": 0.53137,
+   "apparent_elevation": 0.94278,
+   "azimuth": 323.60525
+  },
+  {
+   "place": "Tromso",
+   "lat": 69.6492,
+   "lon": 18.9553,
+   "utc": "2030-08-05T22:17:00+00:00",
+   "elevation": -3.39863,
+   "apparent_elevation": -3.39863,
+   "azimuth": 352.04842
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T00:17:00+00:00",
+   "elevation": -13.88866,
+   "apparent_elevation": -13.88866,
+   "azimuth": 269.70964
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T02:17:00+00:00",
+   "elevation": -43.8936,
+   "apparent_elevation": -43.8936,
+   "azimuth": 269.54093
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T04:17:00+00:00",
+   "elevation": -73.8963,
+   "apparent_elevation": -73.8963,
+   "azimuth": 268.75185
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T06:17:00+00:00",
+   "elevation": -76.09133,
+   "apparent_elevation": -76.09133,
+   "azimuth": 91.31064
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T08:17:00+00:00",
+   "elevation": -46.0891,
+   "apparent_elevation": -46.0891,
+   "azimuth": 90.3415
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T10:17:00+00:00",
+   "elevation": -16.08418,
+   "apparent_elevation": -16.08418,
+   "azimuth": 90.12881
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T12:17:00+00:00",
+   "elevation": 13.92165,
+   "apparent_elevation": 13.98731,
+   "azimuth": 89.9972
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T14:17:00+00:00",
+   "elevation": 43.9281,
+   "apparent_elevation": 43.94555,
+   "azimuth": 89.83678
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T16:17:00+00:00",
+   "elevation": 73.93427,
+   "apparent_elevation": 73.93911,
+   "azimuth": 89.28166
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T18:17:00+00:00",
+   "elevation": 76.05499,
+   "apparent_elevation": 76.05916,
+   "azimuth": 270.96883
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T20:17:00+00:00",
+   "elevation": 46.04898,
+   "apparent_elevation": 46.06519,
+   "azimuth": 270.31862
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-03-20T22:17:00+00:00",
+   "elevation": 16.04243,
+   "apparent_elevation": 16.0995,
+   "azimuth": 270.18097
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T00:17:00+00:00",
+   "elevation": -14.13675,
+   "apparent_elevation": -14.13675,
+   "azimuth": 294.16559
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T02:17:00+00:00",
+   "elevation": -40.84322,
+   "apparent_elevation": -40.84322,
+   "azimuth": 301.53642
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T04:17:00+00:00",
+   "elevation": -62.73579,
+   "apparent_elevation": -62.73579,
+   "azimuth": 329.55691
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T06:17:00+00:00",
+   "elevation": -62.38216,
+   "apparent_elevation": -62.38216,
+   "azimuth": 31.57367
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T08:17:00+00:00",
+   "elevation": -40.25725,
+   "apparent_elevation": -40.25725,
+   "azimuth": 58.76695
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T10:17:00+00:00",
+   "elevation": -13.51037,
+   "apparent_elevation": -13.51037,
+   "azimuth": 65.90091
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T12:17:00+00:00",
+   "elevation": 13.95896,
+   "apparent_elevation": 14.02445,
+   "azimuth": 65.75444
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T14:17:00+00:00",
+   "elevation": 40.62663,
+   "apparent_elevation": 40.64621,
+   "azimuth": 58.21102
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T16:17:00+00:00",
+   "elevation": 62.40798,
+   "apparent_elevation": 62.41678,
+   "azimuth": 30.13762
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T18:17:00+00:00",
+   "elevation": 62.08603,
+   "apparent_elevation": 62.09495,
+   "azimuth": 328.82726
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T20:17:00+00:00",
+   "elevation": 40.08905,
+   "apparent_elevation": 40.10901,
+   "azimuth": 301.50451
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-06-21T22:17:00+00:00",
+   "elevation": 13.3829,
+   "apparent_elevation": 13.45113,
+   "azimuth": 294.17943
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T00:17:00+00:00",
+   "elevation": -17.64841,
+   "apparent_elevation": -17.64841,
+   "azimuth": 269.93918
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T02:17:00+00:00",
+   "elevation": -47.65468,
+   "apparent_elevation": -47.65468,
+   "azimuth": 269.74889
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T04:17:00+00:00",
+   "elevation": -77.65891,
+   "apparent_elevation": -77.65891,
+   "azimuth": 268.85578
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T06:17:00+00:00",
+   "elevation": -72.33031,
+   "apparent_elevation": -72.33031,
+   "azimuth": 90.89818
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T08:17:00+00:00",
+   "elevation": -42.32528,
+   "apparent_elevation": -42.32528,
+   "azimuth": 90.34428
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T10:17:00+00:00",
+   "elevation": -12.31885,
+   "apparent_elevation": -12.31885,
+   "azimuth": 90.20865
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T12:17:00+00:00",
+   "elevation": 17.68835,
+   "apparent_elevation": 17.74004,
+   "azimuth": 90.1499
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T14:17:00+00:00",
+   "elevation": 47.69615,
+   "apparent_elevation": 47.71146,
+   "azimuth": 90.14339
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T16:17:00+00:00",
+   "elevation": 77.70416,
+   "apparent_elevation": 77.70781,
+   "azimuth": 90.40397
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T18:17:00+00:00",
+   "elevation": 72.28687,
+   "apparent_elevation": 72.29224,
+   "azimuth": 269.59612
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T20:17:00+00:00",
+   "elevation": 42.279,
+   "apparent_elevation": 42.29748,
+   "azimuth": 269.72174
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-09-23T22:17:00+00:00",
+   "elevation": 12.27167,
+   "apparent_elevation": 12.34583,
+   "azimuth": 269.67102
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T00:17:00+00:00",
+   "elevation": -14.87483,
+   "apparent_elevation": -14.87483,
+   "azimuth": 245.64894
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T02:17:00+00:00",
+   "elevation": -41.47371,
+   "apparent_elevation": -41.47371,
+   "azimuth": 237.75238
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T04:17:00+00:00",
+   "elevation": -62.89542,
+   "apparent_elevation": -62.89542,
+   "azimuth": 208.47133
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T06:17:00+00:00",
+   "elevation": -61.5697,
+   "apparent_elevation": -61.5697,
+   "azimuth": 147.26674
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T08:17:00+00:00",
+   "elevation": -39.25887,
+   "apparent_elevation": -39.25887,
+   "azimuth": 121.07999
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T10:17:00+00:00",
+   "elevation": -12.50206,
+   "apparent_elevation": -12.50206,
+   "azimuth": 114.0851
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T12:17:00+00:00",
+   "elevation": 14.9621,
+   "apparent_elevation": 15.02327,
+   "azimuth": 114.25896
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T14:17:00+00:00",
+   "elevation": 41.60881,
+   "apparent_elevation": 41.62773,
+   "azimuth": 121.94974
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T16:17:00+00:00",
+   "elevation": 63.179,
+   "apparent_elevation": 63.18751,
+   "azimuth": 151.0828
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T18:17:00+00:00",
+   "elevation": 61.90338,
+   "apparent_elevation": 61.91236,
+   "azimuth": 212.99961
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T20:17:00+00:00",
+   "elevation": 39.4937,
+   "apparent_elevation": 39.51408,
+   "azimuth": 239.14691
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2026-12-21T22:17:00+00:00",
+   "elevation": 12.70098,
+   "apparent_elevation": 12.77273,
+   "azimuth": 245.98228
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T00:17:00+00:00",
+   "elevation": -11.8753,
+   "apparent_elevation": -11.8753,
+   "azimuth": 256.50238
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T02:17:00+00:00",
+   "elevation": -40.84207,
+   "apparent_elevation": -40.84207,
+   "azimuth": 252.35298
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T04:17:00+00:00",
+   "elevation": -67.94536,
+   "apparent_elevation": -67.94536,
+   "azimuth": 232.28184
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T06:17:00+00:00",
+   "elevation": -72.02359,
+   "apparent_elevation": -72.02359,
+   "azimuth": 137.98877
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T08:17:00+00:00",
+   "elevation": -46.09292,
+   "apparent_elevation": -46.09292,
+   "azimuth": 109.20353
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T10:17:00+00:00",
+   "elevation": -17.24339,
+   "apparent_elevation": -17.24339,
+   "azimuth": 103.70608
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T12:17:00+00:00",
+   "elevation": 11.96639,
+   "apparent_elevation": 12.04234,
+   "azimuth": 103.25036
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T14:17:00+00:00",
+   "elevation": 40.98453,
+   "apparent_elevation": 41.00387,
+   "azimuth": 107.12906
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T16:17:00+00:00",
+   "elevation": 68.26324,
+   "apparent_elevation": 68.26995,
+   "azimuth": 126.63549
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T18:17:00+00:00",
+   "elevation": 72.40751,
+   "apparent_elevation": 72.41283,
+   "azimuth": 223.17101
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T20:17:00+00:00",
+   "elevation": 46.24303,
+   "apparent_elevation": 46.25913,
+   "azimuth": 251.39288
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2027-02-14T22:17:00+00:00",
+   "elevation": 17.33095,
+   "apparent_elevation": 17.38373,
+   "azimuth": 256.58164
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T00:17:00+00:00",
+   "elevation": -13.68209,
+   "apparent_elevation": -13.68209,
+   "azimuth": 287.47026
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T02:17:00+00:00",
+   "elevation": -41.94876,
+   "apparent_elevation": -41.94876,
+   "azimuth": 292.9452
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T04:17:00+00:00",
+   "elevation": -67.16009,
+   "apparent_elevation": -67.16009,
+   "azimuth": 318.06921
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T06:17:00+00:00",
+   "elevation": -68.13164,
+   "apparent_elevation": -68.13164,
+   "azimuth": 39.26665
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T08:17:00+00:00",
+   "elevation": -43.31627,
+   "apparent_elevation": -43.31627,
+   "azimuth": 66.6166
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T10:17:00+00:00",
+   "elevation": -15.08991,
+   "apparent_elevation": -15.08991,
+   "azimuth": 72.53762
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T12:17:00+00:00",
+   "elevation": 13.59124,
+   "apparent_elevation": 13.65845,
+   "azimuth": 72.58422
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T14:17:00+00:00",
+   "elevation": 41.85277,
+   "apparent_elevation": 41.87153,
+   "azimuth": 66.92722
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T16:17:00+00:00",
+   "elevation": 66.99481,
+   "apparent_elevation": 67.00195,
+   "azimuth": 41.58161
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T18:17:00+00:00",
+   "elevation": 67.94351,
+   "apparent_elevation": 67.95033,
+   "azimuth": 321.03375
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T20:17:00+00:00",
+   "elevation": 43.1957,
+   "apparent_elevation": 43.2136,
+   "azimuth": 293.51109
+  },
+  {
+   "place": "Quito",
+   "lat": -0.1807,
+   "lon": -78.4678,
+   "utc": "2030-08-05T22:17:00+00:00",
+   "elevation": 14.97537,
+   "apparent_elevation": 15.03648,
+   "azimuth": 287.41309
+  }
+ ]
+}

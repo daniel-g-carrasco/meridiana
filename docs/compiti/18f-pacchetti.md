@@ -1,0 +1,51 @@
+# Compito per una sessione cloud: pacchetti, rilascio, CI (revisione 18)
+
+Bozza del 23/10/2026 dalla revisione completa (`docs/studio/18-revisione-completa.md`, sezione 2.H; il rapporto `docs/studio/18-prove/H-pacchetti.md` sezioni 3-9 e il flusso proposto `H-ci-proposta.yml`). Regole di `docs/compiti/fase-2.md`: ramo `pacchetti` da `lavoro`, un commit per passo. Le build vere e le prove sui due schermi e sul portatile sono della sessione locale; qui si scrivono le ricette e si prova quello che offscreen e Linux permettono. Niente release: le decide Daniel; il segreto minisign entra nel repository solo dopo il suo sì (domanda 10 dello studio 18).
+
+## Passo 1: il CI leggero (subito, mezza giornata)
+1. `H-ci-proposta.yml` al posto di `.github/workflows/test.yml`: Linux offscreen a ogni push con cache di pip, `paths-ignore` sui documenti, `concurrency`; niente `pull_request` doppio; Windows solo su tag o a mano (`workflow_dispatch`); il job `release` scritto ma spento finché manca il segreto. Costo stimato 530 minuti al mese contro oltre 2.000 (H §6).
+
+## Passo 2: Windows
+2. `build-aux/windows/meridiana.spec` per PySide6 6.12 nel venv (Essentials, Addons, Pdf; niente WebEngine): Qt Quick 3D e i file QML, `qtbase_*.qm`, matplotlib, pvlib con i dati, shapely, scipy; `meridiana.manifest` senza `dpiAware=true` (lascia a Qt il per-monitor V2); `tools/make_ico.py` e `make_icons.py` con Pillow al posto di gi; `tools/compile_po.py` con il ripiego quando `msgfmt` manca; l'associazione del tipo di file `.meridiana` in Inno Setup. Dimensione attesa 400-500 MB su disco, installer 120-160 MB (H §3).
+
+## Passo 3: l'aggiornatore
+3. `updates.py` e `minisign.py` collegati nella finestra Qt (controllo una volta al giorno all'avvio, Preferenze con l'interruttore, la finestra «È disponibile la versione…» con il link firmato); `CODE_SIGNING.md` che dice il vero; `test_updates.KeyTest` che gira.
+
+## Passo 4: Flatpak
+4. Il manifest con il runtime KDE 6.11 e `io.qt.PySide.BaseApp//6.11` (PySide 6.11.2) oppure il wheel manylinux 6.12 se la suite non passa su 6.11.2 (prova della sessione locale sul portatile); le dipendenze con `flatpak-pip-generator --prefer-wheels`; `--share=network` e `--filesystem=home`; `MimeType` nel `.desktop`; la pulizia dei file GTK.
+
+## Passo 5: identità e documenti
+5. `.desktop`, metainfo con le schermate, `site/`, `CHANGELOG` 0.2.0, `README` (Python 3.12, l'ancora Flatpak), `docs/progetto.md` con la sezione «Rilascio e pacchetti», `docs/funzionalita.md` con le date; i testi del contatore di cartelle tolti ovunque (il 18a ne toglie una parte).
+
+## Passo 6: il manuale (dopo 17a e 17b)
+6. `docs/manuale/` in Markdown, un capitolo per fase, spedito con il programma e aperto dentro Meridiana in un `QTextBrowser` (F1 sul capitolo della fase, «Manuale» dal riquadro d'aiuto di 17d); i capitoli dei comandi e delle norme generati da `shortcuts.py` e `rules.py`; un test che controlla le àncore usate da `help.py`.
+
+## Che cosa è stato fatto (25/10/2026 notte, ramo `pacchetti` da `grafica` c99a6f5)
+Fatti nuovi rispetto alla bozza: il repository diventa pubblico (minuti di GitHub Actions gratuiti), il manuale c'è già in `docs/manuale`, Meridio ha anthropic, keyring e la voce Kokoro (il modello da 330 MB non si spedisce), impostazioni alla versione 18 (nessuna versione nuova: `check_updates` e `last_update_check` c'erano già). Il dettaglio di ogni pacchetto, le misure e la procedura sono in `docs/progetto.md`, sezione 4.
+
+1. **CI** (f1d6145). Il file del 23/10 non era YAML valido («WebEngine: 132 MB» nel nome di un passo): GitHub lo rifiutava e ogni run dal 23 al 25/10 è fallito in 0 s senza job [V `gh run list`]. Ora: Linux a ogni push (non per studi e compiti, sì per il manuale), richieste di unione solo dai fork, Windows su tag o a mano, `release` che firma e pubblica solo quando esiste il segreto `MINISIGN_SECRET_KEY` nell'ambiente `release`; `test_release.WorkflowTest` tiene i due punti fuori dai nomi.
+2. **Windows** (ade87da). Spec PyInstaller per PySide6 6.12, manifest senza `dpiAware`, Inno Setup con l'associazione `.meridiana` e il riavvio dopo l'aggiornamento (mutex del programma, `app.windows_identity`), `make_ico.py` e `make_icons.py` con Qt, `compile_po.py` senza `msgfmt` (stesso catalogo di GNU, provato), `meridiana --self-test`. **Costruito sul PC** nel venv `.venv-build` del worktree: 377 MB, 4.116 file, 4 min 41 s a PC tranquillo (5-9 min con il PC carico dalle altre sessioni); il self-test del bundle passa tutti i controlli in 11 s a PC tranquillo (20-32 s carico); zip portabile 163 MB, installer stimato intorno ai 115 MB (un archivio LZMA2 solido della cartella: 113 MB). Il programma congelato non usa più se stesso come Python di Kokoro (avrebbe aperto una seconda finestra).
+3. **Aggiornatore** (fd72f2e). Una volta al giorno all'avvio nel programma per Windows, interruttore in Preferenze > Riservatezza, Aiuto > Cerca aggiornamenti ovunque; la finestra «È disponibile la versione…» con le note e il collegamento alla versione firmata; scaricamento nel pool, SHA-256 e firma minisign, domanda sul progetto, Setup silenzioso. `CODE_SIGNING.md` dice il vero, `test_updates.KeyTest` gira sul workflow.
+4. **Flatpak** (67cf494). KDE 6.11 con `io.qt.PySide.BaseApp//6.11`, dipendenze in `python3-requirements.json` (flatpak-pip-generator), pulizia propria (quella del BaseApp toglie QtPdf e `packaging`), permessi. **Costruito nel WSL del PC** (fw13 non raggiungibile da qui): validato, 608 MB più 297 MB dell'estensione `.Locale`; il self-test passa nel sandbox.
+5. **Identità e documenti** (2f93cf3). README pubblico (installazione, firma, cosa esce dal PC, Python 3.12, nessun percorso personale), CHANGELOG e metainfo (0.1.0 detta per quello che era, il bronzo di Meridiana), sito e pagina Flatpak senza i testi dell'app campione, `progetto.md` sezione 4, riga in `funzionalita.md`.
+6. **Manuale** (cba89c8). Le àncore di `help.py` e i collegamenti tra capitoli tornano (`test_help`); colmate tre lacune: la fase Impianto com'è dopo il 16d, chi firma la relazione, «Installare e aggiornare».
+7. **Il self-test e la 3D** (commit finale). Offscreen Qt Quick usa il renderer software anche su Windows: la vista 3D non viene disegnata e l'instancing non gira, nel self-test come nella suite [V: un cubo rosso offscreen lascia la vista bianca]. Il self-test lo dice (INFO) e nel CI gira sul desktop del runner (`MERIDIANA_SELF_TEST_PLATFORM=windows`), dove Direct3D 11 disegna.
+
+**Un incidente da sapere.** Il 25/10 tra le 00:35 e le 00:40, prima che esistesse l'opzione `--self-test`, un comando di questa sessione ha avviato il programma vero dal worktree, senza offscreen e con le cartelle vere di Daniel: la finestra si è aperta sullo schermo e Daniel l'ha chiusa. Ha scritto: tre righe nel log `%LOCALAPPDATA%\Meridiana\state\meridiana.log` (00:39:45-53, l'errore «'DesignWindow' object is not callable» di `ui/menubar.py`, vedi sotto); `%APPDATA%\Meridiana\config.json` salvato due volte alla chiusura (00:40:01 e 00:40:04), quindi anche `config.json.bak` è stato sostituito; `%LOCALAPPDATA%\Meridiana\state\window.json` (la geometria di quella finestra al posto di quella di Daniel); la cartella `recovery` toccata alle 00:39:15 (oggi vuota); le cache di Qt in `%LOCALAPPDATA%\Meridiana\cache\qmlcache` (00:35:51) e `q3dshadercache`. Non ha aperto progetti (l'argomento dato non esisteva). Il Meridiana di Daniel era aperto in quel momento (PID 14036) e alla sua chiusura riscrive `config.json` e `window.json` con i suoi valori; alle 00:51 `config.json` risultava già riscritto. Da allora ogni esecuzione di questa sessione ha usato offscreen e cartelle temporanee, e il self-test si isola da sé (`selftest.isolate`, provato da `tests/finestra/test_self_test.py` con una home finta).
+
+**Un difetto trovato, non corretto qui** (lo corregge la sessione principale): `ui/sunbar.py:30` e `:81` assegnano `self.window = sun.DesignWindow(...)` sulla `SunBar`, che è un QWidget: l'attributo copre `QWidget.window()`, e il filtro degli eventi di `ui/menubar.py:98` (`obj.window()`) solleva «'DesignWindow' object is not callable» per ogni evento sulla barra del sole.
+
+## Che cosa resta
+- L'installer non è stato compilato: Inno Setup non è installato sul PC. Lo compila il job Windows del CI (a mano: Actions > CI > Run workflow, casella «windows»), che prova anche l'installazione silenziosa, l'associazione e l'aggiornamento sopra il programma aperto.
+- La prima release: il segreto, il tag `v0.2.0`, la versione nel codice, nel CHANGELOG e nel metainfo (procedura in `progetto.md` sezione 4). Decisione di Daniel.
+- L'icona del programma è ancora quella del template (una cartella con la spunta): exe, installer, Flatpak e finestra la portano. Serve un disegno (domanda in `richieste.md`).
+- Il repository Flatpak (ostree su Pages, firmato GPG) e il bundle `.flatpak` nella release: i workflow in `build-aux/ci-gtk-da-adattare` sono ancora da portare al runtime KDE.
+- Il Flatpak senza Kokoro: dentro il sandbox parla la voce del sistema (speech-dispatcher), non provata.
+- `funzionalita.md` porta ancora la data del 22/10 in testa: aggiornata solo la riga dei pacchetti.
+- Un self-test che disegni davvero la 3D senza schermo richiederebbe Qt Quick con un `QQuickRenderControl` su un QRhi proprio: non fatto.
+
+## Da provare sul PC di Daniel
+- `dist\Meridiana\Meridiana.exe` del worktree, con la finestra vera (prima, se vuole, `Meridiana.exe --self-test rapporto.txt` con `MERIDIANA_SELF_TEST_PLATFORM=windows`: apre la finestra per qualche secondo): la 3D, la nitidezza sul secondo schermo a 250 % (il manifest lascia il DPI a Qt), le traduzioni di Qt, la voce di sistema.
+- L'installer prodotto dal CI: installazione per utente, doppio clic su un `.meridiana`, disinstallazione che lascia impostazioni e dati.
+- Sul portatile: il Flatpak con la GPU (la 3D e l'instancing su PySide 6.11.2, la voce, il portachiavi), e la suite con PySide 6.11.2 se si vuole allargare il vincolo `PySide6==6.12.0`.
+- Pulizie da decidere: nel worktree `.venv-build` (908 MB), `build` (84 MB) e `dist` (377 MB), ignorati da git; nel WSL `~/meridiana-pacchetti` (2,3 GB: copia, cache del builder, build) e `org.kde.Sdk//6.11` installato per l'utente (3,1 GB).

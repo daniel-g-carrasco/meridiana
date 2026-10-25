@@ -1,0 +1,41 @@
+# What Meridiana needs to run: the window (Qt 6.12 LTS with Qt Quick 3D), the geometry, the arrays, the
+# energy models and the charts. The tests need nothing more; the lint is ruff. PySide6 and pvlib are pinned:
+# their Python APIs have changed between versions (QQuick3DInstancing.getInstanceBuffer, tried on 6.12.0;
+# pvlib.iotools.get_pvgis_tmy returns (data, metadata) since 0.13, tried on 0.16.1). scipy 1.15 brings the
+# vectorised root finder pvlib's "chandrupatla" maximum power point uses. pyqtgraph draws the window's charts
+# (study 17, D2, accepted by Daniel on 23/10/2026: 1-4 ms at the pointer on 8.760 points, matplotlib 150-190);
+# matplotlib stays for the formulas and the PDF report.
+#
+# Qt comes as the three wheels it is made of, not as the PySide6 meta-package: that one also pulls
+# PySide6_WebEngine (132 MB to download, 300 MB more in a bundle), which Meridiana never imports.
+# Essentials has QtCore, QtGui, QtWidgets, QtNetwork, QtSvg, QtQml, QtQuickWidgets, QtTest and QtDBus;
+# Addons has QtQuick3D; Pdf has QtPdf (its number carries a build suffix: 6.12.0.140 goes with Qt 6.12.0).
+# [V: pip show -f of the three wheels, 23/10/2026]
+PySide6_Essentials==6.12.0
+PySide6_Addons==6.12.0
+PySide6_Pdf==6.12.0.140
+shapely>=2.0
+numpy>=1.26
+pandas>=2.2
+requests>=2.31
+pvlib==0.16.1
+scipy>=1.15
+matplotlib>=3.9
+pyqtgraph>=0.14
+# The report's attachments (the datasheets in PDF after the last chapter): pypdf (BSD-3-Clause, pure Python) puts
+# their pages into the report. A datasheet encrypted with AES against changes is drawn by QtPdf instead: pypdf
+# reads those only with the cryptography package, which Meridiana does not require.
+pypdf>=6.0
+# Meridio's cloud model and its key (task 14): Claude's official SDK (Apache-2.0) and the system's keyring (MIT).
+# Both are imported only when used: without them the program starts and Meridio answers with the local model only.
+anthropic>=2.3
+keyring>=25.7
+# Meridio's natural voice (Kokoro, ui/voice.py): run in a process of its own, only when its model (two files, about
+# 330 MB, not carried by the program) is on the PC; without them the system's voice speaks. No wheel of onnxruntime
+# for Python 3.15 yet (24/10/2026): there Preferences > Assistant names another Python that has kokoro-onnx.
+kokoro-onnx>=0.6; python_version < "3.15"
+# The IFC models (studies 15 and 20): IfcOpenShell (LGPL-3.0-or-later), imported only when a model is exported or read;
+# without it the program runs and says what to install. Wheels for Python 3.10-3.15 on Windows, macOS and Linux; it
+# brings lark (MIT) and isodate (BSD). 0.9.0.post1 is the version tried (study 20): the iterator's threads crash on a
+# file opened lazily, and the reader keeps to one thread there.
+ifcopenshell>=0.9.0.post1

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata: shown by the software centres (GNOME Software, KDE Discover). Every release goes here
+     too, in the same words as CHANGELOG.md, shorter (tests/test_release.py
+     checks that the newest one is the version in the code). -->
+<component type="desktop-application">
+  <id>io.github.daniel_g_carrasco.meridiana</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Meridiana</name>
+  <summary>Photovoltaic design: map, building model, sun path, module layout and Italian standards</summary>
+  <summary xml:lang="it">Progettazione fotovoltaica: mappa, modello dell'edificio, percorso del sole, posa dei moduli e norme italiane</summary>
+
+  <developer id="io.github.daniel_g_carrasco">
+    <name>Daniel Grasso</name>
+  </developer>
+
+  <description>
+    <p>
+      Meridiana designs photovoltaic plants: the site on a map or an orthophoto, buildings and roofs, the module layout with the fire brigade rules, the hourly energy with every loss, the string checks, consumption and economics, and a PDF report where every number says where it comes from.
+    </p>
+    <p>
+      PVsyst is the reference for the functions, Aurora for the modelling, PVGIS for the weather data. The standards are the Italian ones, for the whole country.
+    </p>
+    <p xml:lang="it">
+      Meridiana progetta impianti fotovoltaici: il sito su mappa o ortofoto, edifici e falde, la posa dei moduli con le regole dei Vigili del Fuoco, l'energia oraria con ogni perdita, le verifiche delle stringhe, consumi ed economia, e una relazione in PDF in cui ogni numero dice da dove viene.
+    </p>
+    <p xml:lang="it">
+      PVsyst è il riferimento per le funzioni, Aurora per la modellazione, PVGIS per i dati meteo. Le norme sono quelle italiane, per tutto il Paese.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.daniel_g_carrasco.meridiana.desktop</launchable>
+  <provides>
+    <binary>meridiana</binary>
+    <mediatype>application/x-meridiana</mediatype>
+  </provides>
+
+  <url type="homepage">https://github.com/daniel-g-carrasco/meridiana</url>
+  <url type="bugtracker">https://github.com/daniel-g-carrasco/meridiana/issues</url>
+  <url type="vcs-browser">https://github.com/daniel-g-carrasco/meridiana</url>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#ead6b3</color>
+    <color type="primary" scheme_preference="dark">#6b450e</color>
+  </branding>
+
+  <content_rating type="oars-1.1"/>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+
+  <releases>
+    <release version="0.1.0" date="2026-10-21" type="development">
+      <description>
+        <p>The skeleton of the author's app template, before Meridiana. Never published: the first release of Meridiana itself will be 0.2.0.</p>
+      </description>
+    </release>
+  </releases>
+</component>

@@ -1,0 +1,96 @@
+{
+ "when": "2026-10-25 02:38",
+ "commit": "09d2343",
+ "on_screen": true,
+ "no_3d": false,
+ "no_vsync": false,
+ "sequence": "edges",
+ "screen": "DELL P2415Q 1920x1080 @ 2",
+ "machine": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+ "qt": "6.12.0",
+ "opened_ms": 7618,
+ "stall_ms": 30,
+ "environment": {},
+ "results": [
+  {
+   "gesture": "model: left edge dragged",
+   "action_ms": 877.6,
+   "until_idle_ms": 884.3,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "model: left edge back",
+   "action_ms": 791.6,
+   "until_idle_ms": 796.5,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "model: right edge dragged",
+   "action_ms": 1265.3,
+   "until_idle_ms": 1268.9,
+   "blocks": 21,
+   "worst_ms": 35.5,
+   "blocked_ms": 652.7
+  },
+  {
+   "gesture": "model: right edge back",
+   "action_ms": 1265.6,
+   "until_idle_ms": 1271.9,
+   "blocks": 14,
+   "worst_ms": 35.5,
+   "blocked_ms": 449.6
+  },
+  {
+   "gesture": "model: window resized, 15 steps",
+   "action_ms": 733.9,
+   "until_idle_ms": 744.2,
+   "blocks": 14,
+   "worst_ms": 51.4,
+   "blocked_ms": 618.2
+  },
+  {
+   "gesture": "consumption: left edge dragged",
+   "action_ms": 1446.5,
+   "until_idle_ms": 1456.5,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: left edge back",
+   "action_ms": 1436.8,
+   "until_idle_ms": 1444.2,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: right edge dragged",
+   "action_ms": 2060.5,
+   "until_idle_ms": 2064.0,
+   "blocks": 17,
+   "worst_ms": 51.6,
+   "blocked_ms": 661.2
+  },
+  {
+   "gesture": "consumption: right edge back",
+   "action_ms": 2236.1,
+   "until_idle_ms": 2238.4,
+   "blocks": 34,
+   "worst_ms": 53.8,
+   "blocked_ms": 1280.0
+  },
+  {
+   "gesture": "consumption: window resized, 15 steps",
+   "action_ms": 893.4,
+   "until_idle_ms": 902.8,
+   "blocks": 14,
+   "worst_ms": 50.3,
+   "blocked_ms": 599.1
+  }
+ ]
+}

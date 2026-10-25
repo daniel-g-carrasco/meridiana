@@ -1,0 +1,15 @@
+{
+  "theme": "dark",
+  "language": "it",
+  "check_updates": false,
+  "last_update_check": "2026-10-21",
+  "last_folder": "C:\\Users\\utente\\Progetti",
+  "last_project": "C:\\Users\\utente\\Progetti\\Rho.meridiana",
+  "background": "osm",
+  "shortcuts": {
+    "fit": [
+      "Z"
+    ]
+  },
+  "version": 2
+}

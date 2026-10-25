@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The type of a Meridiana project file (shared-mime-info): the .desktop file lists it in MimeType, so that a
+     double click in the file manager opens the project. It goes in share/mime/packages/ on Linux. -->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-meridiana">
+    <comment>Meridiana project</comment>
+    <comment xml:lang="it">Progetto Meridiana</comment>
+    <sub-class-of type="application/json"/>
+    <glob pattern="*.meridiana"/>
+    <icon name="io.github.daniel_g_carrasco.meridiana"/>
+  </mime-type>
+</mime-info>

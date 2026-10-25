@@ -1,0 +1,153 @@
+# dispatch_varianti.py, 23/10/2026
+
+## check, venv dell'app (Python 3.12.6)
+variants present: reference, batched, scan_batched, scan
+60 random cases and the 8,760-hour year (6 batteries x 25 years): every variant equals the reference (numpy.allclose, rtol 1e-9, atol 1e-9).
+  largest |difference| scan          3.22e-13 kWh
+  largest |difference| batched       6.39e-14 kWh
+  largest |difference| scan_batched  4.55e-13 kWh
+the first-year balance equals year 1 of the loop exactly: 150 distinct results among the 156 calls.
+
+## check, venv numba
+variants present: reference, batched, scan_batched, scan, numba
+60 random cases and the 8,760-hour year (6 batteries x 25 years): every variant equals the reference (numpy.allclose, rtol 1e-9, atol 1e-9).
+  largest |difference| scan          3.22e-13 kWh
+  largest |difference| numba         0.00e+00 kWh
+  largest |difference| batched       6.39e-14 kWh
+  largest |difference| scan_batched  4.55e-13 kWh
+the first-year balance equals year 1 of the loop exactly: 150 distinct results among the 156 calls.
+
+##### 2. dispatch bench, app venv, synthetic year, load 3% 16:15:09
+CPython 3.12.6 on Windows AMD64, numpy 2.5.4
+data: synthetic year (seed 7); production 89,495 kWh, consumption 149,136 kWh; batteries ['13.2 kWh', '26.4 kWh', '39.6 kWh', '52.8 kWh', '79.2 kWh', '105.6 kWh']
+
+CPU busy during the timing: 11% of all logical processors over 9 s; repeats 7 (median; one call is the mean of some consecutive calls)
+variant                                       one call (ms)  156 calls (ms)  x faster  note
+(a) reference, pure Python                            3.356           538.5       1.0  
+(b) batched state, numpy loop over hours                  -            70.2       7.7  one call for all 150 results
+(c) numpy prefix scan, no Python loop                 0.866           203.6       2.6  
+(c') numpy prefix scan, batched 2-D                       -           384.4       1.4  one call for all 150 results
+
+spread of the samples:
+  (a) reference, pure Python                   156 calls: median 538.53 ms (min 514.63, max 558.84, n=7); one call: median 3.356 ms (min 3.139, max 3.561, n=7)
+  (b) batched state, numpy loop over hours     156 calls: median 70.18 ms (min 64.53, max 75.69, n=7)
+  (c) numpy prefix scan, no Python loop        156 calls: median 203.56 ms (min 186.54, max 280.99, n=7); one call: median 0.866 ms (min 0.848, max 0.934, n=7)
+  (c') numpy prefix scan, batched 2-D          156 calls: median 384.40 ms (min 373.09, max 397.19, n=7)
+##### 3. dispatch bench, app venv, the Rho project's year, load 2% 16:15:19
+CPython 3.12.6 on Windows AMD64, numpy 2.5.4
+data: file C:/Users/utente/AppData/Local/Temp/claude/c--Users-Grasso-Elettrico/ac24d128-fcc4-4bd8-9c13-8ce732bbae55/scratchpad/C/rho_prod_cons.npz; production 107,980 kWh, consumption 108,000 kWh; batteries ['34.6 kWh', '69.2 kWh', '103.8 kWh', '138.5 kWh', '207.7 kWh', '276.9 kWh']
+
+CPU busy during the timing: 10% of all logical processors over 8 s; repeats 7 (median; one call is the mean of some consecutive calls)
+variant                                       one call (ms)  156 calls (ms)  x faster  note
+(a) reference, pure Python                            3.195           550.4       1.0  
+(b) batched state, numpy loop over hours                  -            73.5       7.5  one call for all 150 results
+(c) numpy prefix scan, no Python loop                 1.375           184.4       3.0  
+(c') numpy prefix scan, batched 2-D                       -           331.5       1.7  one call for all 150 results
+
+spread of the samples:
+  (a) reference, pure Python                   156 calls: median 550.45 ms (min 534.98, max 568.51, n=7); one call: median 3.195 ms (min 3.094, max 3.759, n=7)
+  (b) batched state, numpy loop over hours     156 calls: median 73.50 ms (min 65.03, max 84.79, n=7)
+  (c) numpy prefix scan, no Python loop        156 calls: median 184.41 ms (min 171.53, max 211.15, n=7); one call: median 1.375 ms (min 1.199, max 1.566, n=7)
+  (c') numpy prefix scan, batched 2-D          156 calls: median 331.54 ms (min 316.08, max 416.91, n=7)
+##### 4. dispatch bench, numba venv, no cache (compile), load 2% 16:15:29
+CPython 3.12.6 on Windows AMD64, numpy 2.5.4, numba 0.68.0
+data: synthetic year (seed 7); production 89,495 kWh, consumption 149,136 kWh; batteries ['13.2 kWh', '26.4 kWh', '39.6 kWh', '52.8 kWh', '79.2 kWh', '105.6 kWh']
+
+CPU busy during the timing: 8% of all logical processors over 8 s; repeats 7 (median; one call is the mean of some consecutive calls)
+variant                                       one call (ms)  156 calls (ms)  x faster  note
+(a) reference, pure Python                            3.312           534.6       1.0  
+(b) batched state, numpy loop over hours                  -            66.4       8.1  one call for all 150 results
+(c) numpy prefix scan, no Python loop                 1.012           146.0       3.7  
+(c') numpy prefix scan, batched 2-D                       -           329.9       1.6  one call for all 150 results
+(d) numba @njit, warm                                 0.055             9.3      57.8  first call 409 ms (compiled)
+
+spread of the samples:
+  (a) reference, pure Python                   156 calls: median 534.60 ms (min 519.37, max 634.24, n=7); one call: median 3.312 ms (min 3.144, max 4.261, n=7)
+  (b) batched state, numpy loop over hours     156 calls: median 66.35 ms (min 63.58, max 67.95, n=7)
+  (c) numpy prefix scan, no Python loop        156 calls: median 145.96 ms (min 139.33, max 162.66, n=7); one call: median 1.012 ms (min 0.905, max 1.041, n=7)
+  (c') numpy prefix scan, batched 2-D          156 calls: median 329.87 ms (min 315.11, max 342.19, n=7)
+  (d) numba @njit, warm                        156 calls: median 9.25 ms (min 8.64, max 11.34, n=7); one call: median 0.055 ms (min 0.053, max 0.063, n=7)
+##### 5. dispatch bench, numba venv, cache=True first run (compile and store), load 1% 16:15:40
+CPython 3.12.6 on Windows AMD64, numpy 2.5.4, numba 0.68.0
+data: synthetic year (seed 7); production 89,495 kWh, consumption 149,136 kWh; batteries ['13.2 kWh', '26.4 kWh', '39.6 kWh', '52.8 kWh', '79.2 kWh', '105.6 kWh']
+
+CPU busy during the timing: 9% of all logical processors over 9 s; repeats 7 (median; one call is the mean of some consecutive calls)
+variant                                       one call (ms)  156 calls (ms)  x faster  note
+(a) reference, pure Python                            3.645           526.1       1.0  
+(b) batched state, numpy loop over hours                  -            67.0       7.9  one call for all 150 results
+(c) numpy prefix scan, no Python loop                 0.920           148.4       3.5  
+(c') numpy prefix scan, batched 2-D                       -           358.0       1.5  one call for all 150 results
+(d) numba @njit, warm                                 0.056             9.3      56.7  first call 499 ms (cache on)
+
+spread of the samples:
+  (a) reference, pure Python                   156 calls: median 526.10 ms (min 520.73, max 553.97, n=7); one call: median 3.645 ms (min 3.246, max 3.932, n=7)
+  (b) batched state, numpy loop over hours     156 calls: median 66.99 ms (min 66.10, max 71.37, n=7)
+  (c) numpy prefix scan, no Python loop        156 calls: median 148.40 ms (min 141.45, max 169.48, n=7); one call: median 0.920 ms (min 0.896, max 1.203, n=7)
+  (c') numpy prefix scan, batched 2-D          156 calls: median 358.04 ms (min 328.92, max 380.41, n=7)
+  (d) numba @njit, warm                        156 calls: median 9.29 ms (min 9.09, max 12.41, n=7); one call: median 0.056 ms (min 0.053, max 0.073, n=7)
+##### 6. dispatch bench, numba venv, cache=True second run (loaded from the cache), load 7% 16:15:50
+CPython 3.12.6 on Windows AMD64, numpy 2.5.4, numba 0.68.0
+data: synthetic year (seed 7); production 89,495 kWh, consumption 149,136 kWh; batteries ['13.2 kWh', '26.4 kWh', '39.6 kWh', '52.8 kWh', '79.2 kWh', '105.6 kWh']
+
+CPU busy during the timing: 8% of all logical processors over 8 s; repeats 7 (median; one call is the mean of some consecutive calls)
+variant                                       one call (ms)  156 calls (ms)  x faster  note
+(a) reference, pure Python                            3.290           525.0       1.0  
+(b) batched state, numpy loop over hours                  -            65.7       8.0  one call for all 150 results
+(c) numpy prefix scan, no Python loop                 1.080           144.6       3.6  
+(c') numpy prefix scan, batched 2-D                       -           336.2       1.6  one call for all 150 results
+(d) numba @njit, warm                                 0.068             9.4      55.6  first call 431 ms (cache on)
+
+spread of the samples:
+  (a) reference, pure Python                   156 calls: median 524.98 ms (min 504.85, max 563.46, n=7); one call: median 3.290 ms (min 3.220, max 3.592, n=7)
+  (b) batched state, numpy loop over hours     156 calls: median 65.71 ms (min 64.72, max 68.15, n=7)
+  (c) numpy prefix scan, no Python loop        156 calls: median 144.64 ms (min 142.69, max 164.02, n=7); one call: median 1.080 ms (min 0.964, max 1.219, n=7)
+  (c') numpy prefix scan, batched 2-D          156 calls: median 336.23 ms (min 327.66, max 416.22, n=7)
+  (d) numba @njit, warm                        156 calls: median 9.44 ms (min 9.09, max 10.73, n=7); one call: median 0.068 ms (min 0.054, max 0.085, n=7)
+##### numba import time (fresh process, 3 runs)
+import numba: 307 ms
+import numba: 305 ms
+import numba: 294 ms
+##### 7. dispatch bench, WSL Python 3.13 (reference and numpy variants; Rust not built: no C linker), load 1% 16:16:01
+0.00 0.00 0.00 1/296 164
+CPython 3.13.16 on Linux x86_64, numpy 2.5.4
+data: synthetic year (seed 7); production 89,495 kWh, consumption 149,136 kWh; batteries ['13.2 kWh', '26.4 kWh', '39.6 kWh', '52.8 kWh', '79.2 kWh', '105.6 kWh']
+
+CPU busy during the timing: 5% of all logical processors over 5 s; repeats 7 (median; one call is the mean of some consecutive calls)
+variant                                       one call (ms)  156 calls (ms)  x faster  note
+(a) reference, pure Python                            3.689           491.3       1.0  
+(b) batched state, numpy loop over hours                  -            40.3      12.2  one call for all 150 results
+(c) numpy prefix scan, no Python loop                 0.501            77.8       6.3  
+(c') numpy prefix scan, batched 2-D                       -           139.7       3.5  one call for all 150 results
+
+spread of the samples:
+  (a) reference, pure Python                   156 calls: median 491.25 ms (min 483.77, max 511.46, n=7); one call: median 3.689 ms (min 3.591, max 4.069, n=7)
+  (b) batched state, numpy loop over hours     156 calls: median 40.33 ms (min 39.19, max 63.49, n=7)
+  (c) numpy prefix scan, no Python loop        156 calls: median 77.82 ms (min 74.94, max 91.22, n=7); one call: median 0.501 ms (min 0.470, max 0.529, n=7)
+  (c') numpy prefix scan, batched 2-D          156 calls: median 139.74 ms (min 138.23, max 155.23, n=7)
+
+##### C. numba cache: three runs in a row with cache=True, the source untouched, load 13% 16:22:05
+--- run 1
+(d) numba @njit, warm                                 0.059            10.2      59.8  first call 449 ms (cache on)
+  (d) numba @njit, warm                        156 calls: median 10.18 ms (min 9.30, max 10.62, n=5); one call: median 0.059 ms (min 0.057, max 0.075, n=5)
+--- run 2
+(d) numba @njit, warm                                 0.136            21.9      27.7  first call 309 ms (cache on)
+  (d) numba @njit, warm                        156 calls: median 21.85 ms (min 19.82, max 24.35, n=5); one call: median 0.136 ms (min 0.118, max 0.147, n=5)
+--- run 3
+(d) numba @njit, warm                                 0.066            11.2      56.1  first call 149 ms (cache on)
+  (d) numba @njit, warm                        156 calls: median 11.16 ms (min 10.18, max 12.04, n=5); one call: median 0.066 ms (min 0.060, max 0.074, n=5)
+drwxr-xr-x 1 grasso 1049089     0 Oct 23 16:22 .
+drwxr-xr-x 1 grasso 1049089     0 Oct 23 16:22 ..
+-rw-r--r-- 1 grasso 1049089 50565 Oct 23 16:22 dispatch_varianti._kernel-193.py312.1.nbc
+-rw-r--r-- 1 grasso 1049089  1543 Oct 23 16:22 dispatch_varianti._kernel-193.py312.nbi
+##### D. the first call alone, cache on, fresh process (import numba + load from cache + first call)
+import of the script with numba: 441 ms; first call: 142 ms; second: 0.06 ms
+import of the script with numba: 497 ms; first call: 186 ms; second: 0.08 ms
+import of the script with numba: 460 ms; first call: 142 ms; second: 0.07 ms
+
+## Rust (dispatch_rs/), nella WSL openSUSE Tumbleweed, cargo 1.99.1, maturin 1.15.0, ~/perf-venv (Python 3.13.16)
+cargo fetch: scaricati pyo3 0.27.2, pyo3-ffi, pyo3-build-config, pyo3-macros-backend, numpy 0.27.1, ndarray 0.17.2, libc 0.2.191, syn 2.0.119 e altri (15 crate, 3,5 MB in ~/.cargo/registry/cache)
+maturin develop --release: 'error: linker `cc` not found' per ogni script di build (libc, proc-macro2, pyo3-build-config...)
+which cc gcc clang ld ld.lld mold: nessuno; /usr/lib64/crt1.o assente; rpm -q gcc glibc-devel clang lld: non installati; binutils 2.47 installato
+rustup: solo il target x86_64-unknown-linux-gnu; componenti rust-lld, gcc-ld (ld.lld, ld64.lld, lld-link, wasm-ld)
+Su Windows: rustc, cargo, cl, gcc non trovati (where)
+Esito: la variante (e) non e' misurabile sul PC senza installare gcc e glibc-devel nella WSL (fuori dal mandato della sessione)

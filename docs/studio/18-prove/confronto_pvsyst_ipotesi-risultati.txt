@@ -1,0 +1,49 @@
+Ipotesi sui passi di temperatura e cavi DC, stesso meteo di PVsyst (pvlib 0.16.1)
+
+====================================================================================================
+CASO kuwait: passo di temperatura di PVsyst -10.90 %, cavi DC -1.10 % (1.5 % a STC); efficienza STC del modulo 21.54 %
+1. bilancio termico con una frazione dell'efficienza STC (PVsyst itera l'efficienza al punto di lavoro)
+  frazione  eta usata %  temperatura %  scarto pt  E_Grid MWh
+      1.00        21.54         -10.33      +0.57       163.2
+      0.95        20.46         -10.44      +0.46       163.0
+      0.92        19.82         -10.50      +0.40       162.9
+      0.88        18.95         -10.59      +0.31       162.7
+      0.85        18.31         -10.65      +0.25       162.6
+2. perdita nei cavi DC sulle stesse ore: con il rapporto di potenza (Meridiana) e con R I^2 (PVsyst)
+   Meridiana r P^2/Pstc: -0.85 %; R I^2 con la corrente dell'ora: -1.17 %; PVsyst stampa -1.10 %
+
+====================================================================================================
+CASO almarj: passo di temperatura di PVsyst -9.20 %, cavi DC -1.09 % (1.5 % a STC); efficienza STC del modulo 20.94 %
+1. bilancio termico con una frazione dell'efficienza STC (PVsyst itera l'efficienza al punto di lavoro)
+  frazione  eta usata %  temperatura %  scarto pt  E_Grid MWh
+      1.00        20.94          -8.85      +0.35       108.7
+      0.95        19.89          -8.96      +0.24       108.6
+      0.92        19.26          -9.02      +0.18       108.5
+      0.88        18.43          -9.11      +0.09       108.4
+      0.85        17.80          -9.18      +0.02       108.3
+2. perdita nei cavi DC sulle stesse ore: con il rapporto di potenza (Meridiana) e con R I^2 (PVsyst)
+   Meridiana r P^2/Pstc: -0.86 %; R I^2 con la corrente dell'ora: -1.11 %; PVsyst stampa -1.09 %
+
+====================================================================================================
+CASO kanpur: passo di temperatura di PVsyst -10.26 %, cavi DC -0.99 % (1.5 % a STC); efficienza STC del modulo 19.31 %
+1. bilancio termico con una frazione dell'efficienza STC (PVsyst itera l'efficienza al punto di lavoro)
+  frazione  eta usata %  temperatura %  scarto pt  E_Grid MWh
+      1.00        19.31          -9.79      +0.47         7.2
+      0.95        18.34          -9.89      +0.37         7.2
+      0.92        17.77          -9.94      +0.32         7.1
+      0.88        16.99         -10.02      +0.24         7.1
+      0.85        16.41         -10.08      +0.18         7.1
+2. perdita nei cavi DC sulle stesse ore: con il rapporto di potenza (Meridiana) e con R I^2 (PVsyst)
+   Meridiana r P^2/Pstc: -0.75 %; R I^2 con la corrente dell'ora: -1.00 %; PVsyst stampa -0.99 %
+
+====================================================================================================
+CASO peaki: passo di temperatura di PVsyst -6.76 %, cavi DC -1.11 % (1.5 % a STC); efficienza STC del modulo 20.89 %
+1. bilancio termico con una frazione dell'efficienza STC (PVsyst itera l'efficienza al punto di lavoro)
+  frazione  eta usata %  temperatura %  scarto pt  E_Grid MWh
+      1.00        20.89          -6.60      +0.16       627.6
+      0.95        19.84          -6.72      +0.04       626.8
+      0.92        19.22          -6.79      -0.03       626.4
+      0.88        18.38          -6.88      -0.12       625.7
+      0.85        17.76          -6.95      -0.19       625.3
+2. perdita nei cavi DC sulle stesse ore: con il rapporto di potenza (Meridiana) e con R I^2 (PVsyst)
+   Meridiana r P^2/Pstc: -0.91 %; R I^2 con la corrente dell'ora: -1.13 %; PVsyst stampa -1.11 %

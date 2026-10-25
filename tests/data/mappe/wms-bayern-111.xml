@@ -1,0 +1,255 @@
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd"
+ [
+ <!ELEMENT VendorSpecificCapabilities EMPTY>
+ ]>  <!-- end of DOCTYPE declaration -->
+
+<WMT_MS_Capabilities version="1.1.1">
+<Service>
+  <Name>OGC:WMS</Name>
+  <Title>WMS BY DOP20</Title>
+  <Abstract>Digitale Orthophotos (DOP) sind entzerrte, maßstabsgetreue Luftbilder auf Grundlage der Bayernbefliegung, wobei ab 2017 jährlich die Hälfte der bayerischen Landesfläche beflogen wird. Die Bodenpixelgröße des DOP20 beträgt 20 cm. Das DOP20 steht über den WMS in Echtfarben (RGB), in Graustufen und in Colorinfrarot (CIR) zur Verfügung. Der WMS ist auf eine maximale Ausdehnung von 6.000 x 6.000 Pixel begrenzt. Weitere Informationen unter: https://www.ldbv.bayern.de/produkte/luftbilder/orthophotos.html</Abstract>
+  <KeywordList>
+      <Keyword>AdV</Keyword>
+      <Keyword>WMS_BY_DOP20</Keyword>
+      <Keyword>Geobasisdaten</Keyword>
+      <Keyword>Bayerische Vermessungsverwaltung</Keyword>
+      <Keyword>BVV</Keyword>
+      <Keyword>BY</Keyword>
+      <Keyword>Freistaat Bayern</Keyword>
+      <Keyword>WMS</Keyword>
+      <Keyword>Digitales Orthophoto</Keyword>
+      <Keyword>DOP20</Keyword>
+      <Keyword>Luftbilder</Keyword>
+      <Keyword>Befliegung</Keyword>
+      <Keyword>Luftbildaufnahmen</Keyword>
+      <Keyword>kostenfrei</Keyword>
+      <Keyword>opendata</Keyword>
+  </KeywordList>
+  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoservices.bayern.de"/>
+  <ContactInformation>
+    <ContactPersonPrimary>
+      <ContactPerson>Kundenservice</ContactPerson>
+      <ContactOrganization>Landesamt für Digitalisierung, Breitband und Vermessung</ContactOrganization>
+    </ContactPersonPrimary>
+    <ContactAddress>
+        <AddressType>postalisch</AddressType>
+        <Address>Alexandrastraße 4</Address>
+        <City>München</City>
+        <StateOrProvince>DE-BY</StateOrProvince>
+        <PostCode>80538</PostCode>
+        <Country>DE</Country>
+    </ContactAddress>
+      <ContactVoiceTelephone>+49-89-2129-1111</ContactVoiceTelephone>
+  <ContactElectronicMailAddress>service@geodaten.bayern.de</ContactElectronicMailAddress>
+  </ContactInformation>
+  <Fees>kostenfrei</Fees>
+  <AccessConstraints>CC BY 4.0 vgl. https://creativecommons.org/licenses/by/4.0/deed.de</AccessConstraints>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <Format>application/vnd.ogc.wms_xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoservices.bayern.de/od/wms/dop/v1/dop20?language=ger&amp;"/></Get>
+          
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <GetMap>
+      <Format>image/jpeg</Format>
+      <Format>image/png</Format>
+      <Format>image/tiff</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoservices.bayern.de/od/wms/dop/v1/dop20?language=ger&amp;"/></Get>
+          
+        </HTTP>
+      </DCPType>
+    </GetMap>
+    <GetFeatureInfo>
+      <Format>text/html</Format>
+      <Format>application/vnd.ogc.gml</Format>
+      <Format>text/plain</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoservices.bayern.de/od/wms/dop/v1/dop20?language=ger&amp;"/></Get>
+          
+        </HTTP>
+      </DCPType>
+    </GetFeatureInfo>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+    <Format>application/vnd.ogc.se_inimage</Format>
+    <Format>application/vnd.ogc.se_blank</Format>
+  </Exception>
+  <VendorSpecificCapabilities />
+  <Layer queryable="1">
+    <Name>DOP20</Name>
+    <Title>Digitales Orthophoto 20cm (BVV)</Title>
+    <Abstract>Digitale Orthophotos (DOP) sind entzerrte, maßstabsgetreue Luftbilder.</Abstract>
+    <KeywordList>
+        <Keyword>DOP20</Keyword>
+    </KeywordList>
+    <SRS>EPSG:25832</SRS>
+    <SRS>EPSG:25833</SRS>
+    <SRS>EPSG:31468</SRS>
+    <SRS>EPSG:4258</SRS>
+    <SRS>EPSG:4326</SRS>
+    <SRS>EPSG:3857</SRS>
+    <SRS>EPSG:5678</SRS>
+    <LatLonBoundingBox minx="8.891584" miny="46.980003" maxx="14.193229" maxy="50.715246" />
+    <BoundingBox SRS="EPSG:25832"
+                minx="492346" miny="5.21428e+06" maxx="867438" maxy="5.61816e+06" />
+    <Attribution>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geoservices.bayern.de"/>
+    </Attribution>
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>by_dop20c</Name>
+        <Title>DOP 20 (Farbe)</Title>
+        <Abstract>Das Orthophoto in 20 cm Bodenauflösung liegt flächendeckend in Farbe vor.</Abstract>
+        <KeywordList>
+            <Keyword>Farborthophotos</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:25833</SRS>
+        <SRS>EPSG:31468</SRS>
+        <SRS>EPSG:4258</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:3857</SRS>
+        <SRS>EPSG:5678</SRS>
+        <LatLonBoundingBox minx="8.957621" miny="47.162543" maxx="14.032767" maxy="50.587905" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="497000" miny="5.234e+06" maxx="857000" maxy="5.604e+06" />
+        <AuthorityURL name="BVV">
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geodaten.bayern.de"/>
+        </AuthorityURL>
+        <Identifier authority="BVV">https://registry.gdi-de.org/id/de.by/dcd052fb-9dba-3974-b839-a13149b62a12</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://geoportal.bayern.de/csw/bvv?Service=CSW&amp;Version=2.0.2&amp;Request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full&amp;id=51d0c109-8bcb-4f05-b0d1-21d69ff856e4"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="150" height="50">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geodaten.bayern.de/wms/legend/legende_dop_nL.png"/>
+          </LegendURL>
+        </Style>
+        <ScaleHint min="0.000498902848429637" max="1746.15996950373" />
+    </Layer>
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>by_dop20g</Name>
+        <Title>DOP 20 (Graustufen)</Title>
+        <Abstract>Das Orthophoto in 20 cm Bodenauflösung liegt flächendeckend in Graustufen vor.</Abstract>
+        <KeywordList>
+            <Keyword>Graustufenorthophotos</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:25833</SRS>
+        <SRS>EPSG:31468</SRS>
+        <SRS>EPSG:4258</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:3857</SRS>
+        <SRS>EPSG:5678</SRS>
+        <LatLonBoundingBox minx="8.957621" miny="47.162543" maxx="14.032767" maxy="50.587905" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="497000" miny="5.234e+06" maxx="857000" maxy="5.604e+06" />
+        <AuthorityURL name="BVV">
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geodaten.bayern.de"/>
+        </AuthorityURL>
+        <Identifier authority="BVV">https://registry.gdi-de.org/id/de.by/dcd052fb-9dba-3974-b839-a13149b62a12</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://geoportal.bayern.de/csw/bvv?Service=CSW&amp;Version=2.0.2&amp;Request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full&amp;id=51d0c109-8bcb-4f05-b0d1-21d69ff856e4"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="150" height="50">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geodaten.bayern.de/wms/legend/legende_dop_nL.png"/>
+          </LegendURL>
+        </Style>
+        <ScaleHint min="0.000498902848429637" max="1746.15996950373" />
+    </Layer>
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>by_dop20cir</Name>
+        <Title>DOP 20 (Colorinfrarot)</Title>
+        <Abstract>Das Orthophoto in 20 cm Bodenauflösung liegt flächendeckend in Colorinfrafot vor.</Abstract>
+        <KeywordList>
+            <Keyword>Colorinfrarotorthophotos</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:25833</SRS>
+        <SRS>EPSG:31468</SRS>
+        <SRS>EPSG:4258</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:3857</SRS>
+        <SRS>EPSG:5678</SRS>
+        <LatLonBoundingBox minx="8.957621" miny="47.162543" maxx="14.032767" maxy="50.587905" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="497000" miny="5.234e+06" maxx="857000" maxy="5.604e+06" />
+        <AuthorityURL name="BVV">
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geodaten.bayern.de"/>
+        </AuthorityURL>
+        <Identifier authority="BVV">https://registry.gdi-de.org/id/de.by/20ad555c-3d91-3bb4-af00-679b4f5d7415</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://geoportal.bayern.de/csw/bvv?Service=CSW&amp;Version=2.0.2&amp;Request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full&amp;id=0baf43db-cd93-4bc0-a6b7-ce681fefe818"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="150" height="50">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geodaten.bayern.de/wms/legend/legende_dop_nL.png"/>
+          </LegendURL>
+        </Style>
+        <ScaleHint min="0.000498902848429637" max="1746.15996950373" />
+    </Layer>
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>by_dop20_info</Name>
+        <Title>Metadaten DOP</Title>
+        <Abstract>Angabe des Aufnahmetages des zugrunde liegenden Luftbildes (Befliegungsdatum).</Abstract>
+        <KeywordList>
+            <Keyword>Aufnahmetag</Keyword>
+            <Keyword>Aufnahmedatum</Keyword>
+            <Keyword>Befliegungsdatum</Keyword>
+        </KeywordList>
+        <SRS>EPSG:25832</SRS>
+        <SRS>EPSG:25833</SRS>
+        <SRS>EPSG:31468</SRS>
+        <SRS>EPSG:4258</SRS>
+        <SRS>EPSG:4326</SRS>
+        <SRS>EPSG:3857</SRS>
+        <SRS>EPSG:5678</SRS>
+        <LatLonBoundingBox minx="8.971747" miny="47.163084" maxx="14.018727" maxy="50.587903" />
+        <BoundingBox SRS="EPSG:25832"
+                    minx="498000" miny="5.234e+06" maxx="856000" maxy="5.604e+06" />
+        <AuthorityURL name="BVV">
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://geodaten.bayern.de"/>
+        </AuthorityURL>
+        <Identifier authority="BVV">https://registry.gdi-de.org/id/de.by/dcd052fb-9dba-3974-b839-a13149b62a12</Identifier>
+        <MetadataURL type="TC211">
+          <Format>text/xml</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://geoportal.bayern.de/csw/bvv?Service=CSW&amp;Version=2.0.2&amp;Request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full&amp;id=51d0c109-8bcb-4f05-b0d1-21d69ff856e4"/>
+        </MetadataURL>
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="150" height="50">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://geodaten.bayern.de/wms/legend/legende_dop_info.png"/>
+          </LegendURL>
+        </Style>
+        <ScaleHint min="0.000498902848429637" max="1746.15996950373" />
+    </Layer>
+  </Layer>
+</Capability>
+</WMT_MS_Capabilities>

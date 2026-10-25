@@ -1,0 +1,836 @@
+Confronto Meridiana / PVsyst su casi pubblici, 2026-10-23, pvlib 0.16.1, python 3.12.6
+Campioni: C:\Users\utente\dev\meridiana-prove; cache PVGIS: C:\Users\utente\AppData\Local\Temp\claude\c--Users-Grasso-Elettrico\ac24d128-fcc4-4bd8-9c13-8ce732bbae55\scratchpad\B3\cache
+
+======================================================================================================================
+CASO peaki: PEAKI (Neochoropoulo, Grecia), 396,9 kWp fisso 25/0, senza ombre
+PVsyst 7.4.8; fonte: https://minsports.gov.gr/wp-content/uploads/2026/06/6._%CE%A0%CE%B1%CF%81%CE%AC%CF%81%CF%84%CE%B7%CE%BC%CE%B1-I_%CE%A4%CE%B5%CF%87%CE%BD%CE%BF%CE%BF%CE%B9%CE%BA%CE%BF%CE%BD%CE%BF%CE%BC%CE%B9%CE%BA%CE%AE-%CE%9C%CE%B5%CE%BB%CE%AD%CF%84%CE%B7-%CE%A6%CE%92.pdf (casi.json)
+Meteo del rapporto: PVGIS api TMY (versione non stampata; 5.2 o 5.3); GlobHor 1594.6 kWh/m2, T media 12.67 C
+Modulo: LONGi Green Energy Technology Co Ltd LR5-72HPH-540M (al posto di Luxor LX-540M/182-144+); gamma -0.362 %/K dal rapporto; efficienza 20.89 %; modello a un diodo: parametri della lista CEC
+Inverter: 4 x Huawei SUN2000-100KTL-M1 (catalogo: M2, eta Euro 98,4 %); P_AC 400 kW; DC/AC 0.992
+Perdite date a Meridiana: {'soiling': 0.0, 'quality': -0.75, 'lid': 0.0, 'mismatch': 2.0, 'dc_wiring': 1.5, 'ac_wiring': 0.0, 'unavailability': 0.0}; IAM: profilo a punti del rapporto; orizzonte: libero
+Nota: Il rapporto stampa la qualita' del modulo -0,8 % sulla pagina dei parametri e +0,75 % nel diagramma: il valore in uso e' -0,75 % (lo dicono i file .VC0 dei campioni, chiave PQualityModP).
+Nota: 49 stringhe su 40 ingressi MPPT al 10 %: la perdita di clipping di PVsyst (-1,94 %) nasce dagli ingressi con due stringhe; Meridiana somma la potenza DC e non la vede.
+Potenza STC: PVsyst 396.90 kWp, Meridiana 396.90 kWp
+PVGIS 5.3 TMY: PVGIS 5.3, typical year from PVGIS-SARAH3 + ERA5, 2005-2023; GlobHor 1581.9 kWh/m2 (-0.8 % sul rapporto), T media 13.38 C (+0.71 C)
+PVGIS 5.2 TMY: PVGIS 5.2, typical year from PVGIS-SARAH2 + ERA5, 2005-2020; GlobHor 1594.6 kWh/m2 (+0.0 % sul rapporto), T media 12.72 C
+Efficienza pesata dell'inverter: catalogo/proxy 98.40 %, tarata sul passo di PVsyst 98.44 %
+
+Nodi della catena (PVsyst dal rapporto; Meridiana per variante; scarto % rispetto a PVsyst)
+nodo                   PVsyst            5.3 catalogo          5.3 inv.tarato            5.2 catalogo          5.2 inv.tarato
+GlobHor kWh/m2         1594.6        1581.9 ( -0.80 %)        1581.9 ( -0.80 %)        1594.6 ( +0.00 %)        1594.6 ( +0.00 %)
+GlobInc kWh/m2         1818.5        1810.6 ( -0.44 %)        1810.6 ( -0.44 %)        1817.6 ( -0.05 %)        1817.6 ( -0.05 %)
+GlobEff kWh/m2         1780.4        1772.3 ( -0.45 %)        1772.3 ( -0.45 %)        1779.4 ( -0.06 %)        1779.4 ( -0.06 %)
+EArrNom MWh             707.0         703.4 ( -0.50 %)         703.4 ( -0.50 %)         706.2 ( -0.11 %)         706.2 ( -0.11 %)
+EArrMPP MWh             640.0         635.8 ( -0.66 %)         635.8 ( -0.66 %)         639.8 ( -0.03 %)         639.8 ( -0.03 %)
+EOutInv MWh             615.0         623.5 ( +1.38 %)         623.9 ( +1.44 %)         627.6 ( +2.05 %)         627.8 ( +2.09 %)
+E_Grid MWh              615.5         623.5 ( +1.29 %)         623.9 ( +1.36 %)         627.6 ( +1.97 %)         627.8 ( +2.01 %)
+resa kWh/kWp             1551          1571 ( +1.28 %)          1572 ( +1.35 %)          1581 ( +1.95 %)          1582 ( +1.99 %)
+PR %                    85.28         86.76 ( +1.48 pt)         86.82 ( +1.54 pt)         87.00 ( +1.72 pt)         87.03 ( +1.75 pt)
+
+Rapporti fra nodi (meno sensibili al meteo)
+rapporto               PVsyst            5.3 catalogo          5.3 inv.tarato            5.2 catalogo          5.2 inv.tarato
+GlobInc/GlobHor        1.1404        1.1446 ( +0.42 pt)        1.1446 ( +0.42 pt)        1.1398 ( -0.06 pt)        1.1398 ( -0.06 pt)
+GlobEff/GlobInc        0.9790        0.9789 ( -0.02 pt)        0.9789 ( -0.02 pt)        0.9790 ( -0.01 pt)        0.9790 ( -0.01 pt)
+EArrMPP/EArrNom        0.9052        0.9038 ( -0.14 pt)        0.9038 ( -0.14 pt)        0.9059 ( +0.07 pt)        0.9059 ( +0.07 pt)
+EOutInv/EArrMPP        0.9609        0.9806 ( +1.97 pt)        0.9813 ( +2.04 pt)        0.9809 ( +2.00 pt)        0.9813 ( +2.04 pt)
+E_Grid/EOutInv         1.0008        1.0000 ( -0.08 pt)        1.0000 ( -0.08 pt)        1.0000 ( -0.08 pt)        1.0000 ( -0.08 pt)
+E_Grid/EArrNom         0.8706        0.8863 ( +1.57 pt)        0.8869 ( +1.63 pt)        0.8887 ( +1.81 pt)        0.8890 ( +1.84 pt)
+
+Passi del diagramma delle perdite (% sul valore precedente; scarto in punti)
+passo                                  PVsyst          5.3 catalogo        5.3 inv.tarato          5.2 catalogo        5.2 inv.tarato
+trasposizione sul piano                +14.00      +14.46   (+0.46)      +14.46   (+0.46)      +13.98   (-0.02)      +13.98   (-0.02)
+orizzonte (ombre lontane)                   -       -0.00    (n.c.)       -0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+ombre vicine, irraggiamento                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+riflessione sul vetro (IAM)             -2.10       -2.11   (-0.01)       -2.11   (-0.01)       -2.10   (-0.00)       -2.10   (-0.00)
+sporcamento                                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+livello di irraggiamento                -0.65       -0.88   (-0.23)       -0.88   (-0.23)       -0.86   (-0.21)       -0.86   (-0.21)
+temperatura                             -6.76       -6.81   (-0.05)       -6.81   (-0.05)       -6.60   (+0.16)       -6.60   (+0.16)
+qualita' del modulo                     +0.75       +0.75   (-0.00)       +0.75   (-0.00)       +0.75   (-0.00)       +0.75   (-0.00)
+LID                                         -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+mismatch                                -2.00       -2.00   (+0.00)       -2.00   (+0.00)       -2.00   (-0.00)       -2.00   (-0.00)
+effetto elettrico delle ombre               -                     -                     -                     -                     -
+cavi DC                                 -1.11       -0.90   (+0.21)       -0.90   (+0.21)       -0.91   (+0.20)       -0.91   (+0.20)
+inverter, efficienza                    -1.87       -1.94   (-0.07)       -1.87   (-0.00)       -1.91   (-0.04)       -1.87   (-0.00)
+inverter, oltre la potenza nominale     -1.94       +0.00   (+1.94)       +0.00   (+1.94)       +0.00   (+1.94)       +0.00   (+1.94)
+cavi AC                                     -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+indisponibilita'                            -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+Passi di PVsyst senza equivalente in Meridiana: inverter, corrente massima +0.00 %; inverter, sovratensione +0.00 %; inverter, soglia di potenza +0.00 %; inverter, soglia di tensione +0.00 %; consumo notturno -0.01 % (fattore complessivo 0.9999)
+   5.3 catalogo: E_Grid di Meridiana x fattore = 623.4 MWh, scarto +1.28 % (senza fattore +1.29 %)
+   5.3 inv.tarato: E_Grid di Meridiana x fattore = 623.8 MWh, scarto +1.35 % (senza fattore +1.36 %)
+   5.2 catalogo: E_Grid di Meridiana x fattore = 627.5 MWh, scarto +1.96 % (senza fattore +1.97 %)
+   5.2 inv.tarato: E_Grid di Meridiana x fattore = 627.8 MWh, scarto +2.00 % (senza fattore +2.01 %)
+Temperatura massima di cella (a0): 71.8 C
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [5.2 inv.tarato]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me   T pv   T me  Inc pv  Inc me     d%  Eff pv  Eff me     d%  Egrid pv  Egrid me     d%
+gen      64.7    64.7   +0.0    25.1    25.1    3.4    3.4   101.1   101.3   +0.2    98.9    99.2   +0.3     36.87     37.12   +0.7
+feb      79.7    79.7   -0.1    37.1    37.1    4.1    4.1   108.7   108.7   +0.0   106.3   106.4   +0.1     39.20     39.59   +1.0
+mar     102.3   102.3   -0.0    51.6    51.6    6.5    6.6   118.9   119.0   +0.1   116.1   116.1   +0.0     41.68     42.37   +1.7
+apr     149.1   149.1   -0.0    73.9    73.9   10.8   10.9   160.2   159.7   -0.3   156.5   156.0   -0.3     55.06     56.05   +1.8
+mag     167.7   167.7   -0.0    78.4    78.4   14.1   14.1   168.3   168.2   -0.0   164.7   164.6   -0.1     56.90     58.10   +2.1
+giu     219.3   219.3   +0.0    67.2    67.2   21.3   21.3   213.8   213.7   -0.0   209.4   209.2   -0.1     69.28     71.34   +3.0
+lug     227.8   227.8   -0.0    65.4    65.4   23.8   23.8   227.2   227.3   +0.1   222.6   222.6   -0.0     72.87     75.21   +3.2
+ago     207.6   207.6   +0.0    57.3    57.3   24.1   24.1   222.3   222.0   -0.1   217.7   217.4   -0.1     70.84     73.17   +3.3
+set     149.2   149.2   -0.0    54.6    54.6   18.3   18.3   174.7   174.4   -0.2   171.4   171.0   -0.2     58.15     59.50   +2.3
+ott     108.9   108.9   +0.0    39.4    39.4   12.9   12.9   145.6   145.4   -0.1   142.9   142.6   -0.2     49.93     50.78   +1.7
+nov      70.3    70.3   -0.0    31.4    31.4    9.0    9.0   103.2   103.1   -0.1   101.0   101.0   +0.0     37.06     37.13   +0.2
+dic      48.1    48.1   -0.1    23.1    23.1    3.6    3.6    74.4    74.6   +0.2    72.9    73.1   +0.3     27.63     27.50   -0.5
+anno   1594.7  1594.6   -0.0   604.5   604.5   12.7   12.7  1818.4  1817.6   -0.0  1780.4  1779.4   -0.1    615.47    627.85   +2.0
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [5.3 catalogo]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me     d%   T pv   T me    dT
+gen      64.7    70.6   +9.2    25.1    24.5   -2.1    3.4    4.7  +1.3
+feb      79.7    88.7  +11.3    37.1    32.0  -13.9    4.1    3.6  -0.5
+mar     102.3   102.1   -0.2    51.6    51.6   -0.1    6.5    6.6  +0.0
+apr     149.1   132.1  -11.4    73.9    65.8  -10.9   10.8   11.0  +0.2
+mag     167.7   167.5   -0.1    78.4    79.0   +0.7   14.1   14.1  +0.0
+giu     219.3   195.2  -11.0    67.2    74.0  +10.2   21.3   19.5  -1.8
+lug     227.8   239.4   +5.1    65.4    63.6   -2.7   23.8   25.7  +1.9
+ago     207.6   207.0   -0.3    57.3    57.2   -0.2   24.1   23.5  -0.6
+set     149.2   157.7   +5.7    54.6    49.4   -9.6   18.3   21.0  +2.8
+ott     108.9   108.9   +0.0    39.4    39.3   -0.4   12.9   12.9  -0.0
+nov      70.3    57.1  -18.8    31.4    32.4   +3.3    9.0   11.3  +2.2
+dic      48.1    55.6  +15.5    23.1    28.5  +23.4    3.6    5.9  +2.3
+anno   1594.7  1581.9   -0.8   604.5   597.3   -1.2   12.7   13.3  +0.7
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [5.2 catalogo]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me     d%   T pv   T me    dT
+gen      64.7    64.7   +0.0    25.1    25.1   +0.0    3.4    3.4  +0.0
+feb      79.7    79.7   -0.1    37.1    37.1   +0.0    4.1    4.1  -0.0
+mar     102.3   102.3   -0.0    51.6    51.6   -0.0    6.5    6.6  +0.0
+apr     149.1   149.1   -0.0    73.9    73.9   -0.0   10.8   10.9  +0.0
+mag     167.7   167.7   -0.0    78.4    78.4   -0.0   14.1   14.1  -0.0
+giu     219.3   219.3   +0.0    67.2    67.2   +0.0   21.3   21.3  -0.0
+lug     227.8   227.8   -0.0    65.4    65.4   -0.0   23.8   23.8  -0.0
+ago     207.6   207.6   +0.0    57.3    57.3   +0.0   24.1   24.1  -0.0
+set     149.2   149.2   -0.0    54.6    54.6   +0.0   18.3   18.3  -0.0
+ott     108.9   108.9   +0.0    39.4    39.4   +0.0   12.9   12.9  +0.0
+nov      70.3    70.3   -0.0    31.4    31.4   -0.0    9.0    9.0  +0.0
+dic      48.1    48.1   -0.1    23.1    23.1   -0.0    3.6    3.6  -0.0
+anno   1594.7  1594.6   -0.0   604.5   604.5   +0.0   12.7   12.7  +0.0
+
+Sensibilita' (stesso meteo della variante principale, inverter tarato):
+variante                                  E_Grid MWh  scarto %    PR %  irr.liv.  temper.     IAM  orizz.
+5.2 inv.tarato                                 627.8     +2.01   87.03     -0.86    -6.60   -2.10   +0.00
+gamma CEC -0.375                               626.3     +1.75   86.81     -0.86    -6.84   -2.10   +0.00
+SDM De Soto dal datasheet                      629.5     +2.27   87.26     -0.62    -6.59   -2.10   +0.00
+IAM ASHRAE 0,05 (default)                      624.3     +1.43   86.55     -0.87    -6.60   -2.64   +0.00
+perdite predefinite di Meridiana               607.2     -1.36   84.16     -0.89    -6.60   -2.10   +0.00
+
+======================================================================================================================
+CASO kanpur: IIT Kanpur (India), 5,04 kWp fisso 24/0, senza ombre, meteo .MET del progetto
+PVsyst 7.4.0; fonte: campione github-sabya169-PVsyst: .VC0 (risultati mensili) e New.VC0-Report.pdf p. 3-5
+Meteo del rapporto: Meteonorm 8.1 (1996-2015), Sat=100 % - Synthetic; GlobHor 1591.2 kWh/m2, T media 25.17 C
+Modulo: Generic PM318B01_315 (valori tipici di un modulo back-contact da 96 celle); gamma -0.375 %/K dal rapporto; efficienza 19.31 %; modello a un diodo adattato al datasheet (De Soto)
+Inverter: 1 x Huawei SUN2000-4.95KTL-JPL1 (catalogo: SUN2000-5KTL-L1, eta Euro 97,8 %); P_AC 5 kW; DC/AC 1.018
+Perdite date a Meridiana: {'soiling': 0.0, 'quality': -0.75, 'lid': 0.0, 'mismatch': 2.0, 'dc_wiring': 1.5, 'ac_wiring': 0.0, 'unavailability': 0.0, 'iam_b0': 0.05}; IAM: ASHRAE b0 0,05; orizzonte: libero
+Nota: Il modulo e' 'custom': i suoi parametri non sono pubblici; Vmp, Imp, Voc, Isc sono valori tipici della classe, il coefficiente di temperatura viene dal rapporto.
+Potenza STC: PVsyst 5.04 kWp, Meridiana 5.04 kWp
+PVGIS 5.3 TMY: PVGIS 5.3, typical year from PVGIS-ERA5 + ERA5, 2005-2023; GlobHor 1883.8 kWh/m2 (+18.4 % sul rapporto), T media 25.24 C (+0.07 C)
+PVGIS 5.2 TMY: PVGIS 5.2, typical year from PVGIS-ERA5 + ERA5, 2005-2020; GlobHor 1906.6 kWh/m2 (+19.8 % sul rapporto), T media 25.07 C
+MET del progetto: GlobHor 1591.2 kWh/m2, T media 25.19 C
+Efficienza pesata dell'inverter: catalogo/proxy 97.80 %, tarata sul passo di PVsyst 97.23 %
+
+Nodi della catena (PVsyst dal rapporto; Meridiana per variante; scarto % rispetto a PVsyst)
+nodo                   PVsyst            MET catalogo          MET inv.tarato      PVGIS 5.3 catalogo
+GlobHor kWh/m2         1591.2        1591.2 ( +0.00 %)        1591.2 ( +0.00 %)        1883.8 (+18.39 %)
+GlobInc kWh/m2         1693.1        1693.6 ( +0.03 %)        1693.6 ( +0.03 %)        2184.0 (+29.00 %)
+GlobEff kWh/m2         1649.2        1648.0 ( -0.07 %)        1648.0 ( -0.07 %)        2131.6 (+29.25 %)
+EArrNom MWh               8.3           8.3 ( -0.25 %)           8.3 ( -0.25 %)          10.7 (+29.02 %)
+EArrMPP MWh               7.2           7.3 ( +1.46 %)           7.3 ( +1.46 %)           9.4 (+29.53 %)
+EOutInv MWh               7.0           7.2 ( +2.52 %)           7.1 ( +1.92 %)           9.2 (+31.20 %)
+E_Grid MWh                7.0           7.2 ( +2.52 %)           7.1 ( +1.92 %)           9.2 (+31.21 %)
+resa kWh/kWp             1386          1421 ( +2.52 %)          1413 ( +1.93 %)          1819 (+31.21 %)
+PR %                    81.87         83.90 ( +2.03 pt)         83.41 ( +1.54 pt)         83.27 ( +1.40 pt)
+
+Rapporti fra nodi (meno sensibili al meteo)
+rapporto               PVsyst            MET catalogo          MET inv.tarato      PVGIS 5.3 catalogo
+GlobInc/GlobHor        1.0640        1.0644 ( +0.03 pt)        1.0644 ( +0.03 pt)        1.1593 ( +9.53 pt)
+GlobEff/GlobInc        0.9741        0.9731 ( -0.10 pt)        0.9731 ( -0.10 pt)        0.9760 ( +0.19 pt)
+EArrMPP/EArrNom        0.8698        0.8847 ( +1.49 pt)        0.8847 ( +1.49 pt)        0.8733 ( +0.35 pt)
+EOutInv/EArrMPP        0.9645        0.9746 ( +1.01 pt)        0.9689 ( +0.44 pt)        0.9770 ( +1.25 pt)
+E_Grid/EOutInv         1.0000        1.0000 ( +0.00 pt)        1.0000 ( +0.00 pt)        1.0000 ( +0.00 pt)
+E_Grid/EArrNom         0.8389        0.8622 ( +2.33 pt)        0.8572 ( +1.83 pt)        0.8532 ( +1.42 pt)
+
+Passi del diagramma delle perdite (% sul valore precedente; scarto in punti)
+passo                                  PVsyst          MET catalogo        MET inv.tarato    PVGIS 5.3 catalogo
+trasposizione sul piano                 +6.40       +6.44   (+0.04)       +6.44   (+0.04)      +15.93   (+9.53)
+orizzonte (ombre lontane)                   -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+ombre vicine, irraggiamento                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+riflessione sul vetro (IAM)             -2.59       -2.69   (-0.10)       -2.69   (-0.10)       -2.40   (+0.19)
+sporcamento                                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+livello di irraggiamento                -0.85       +0.08   (+0.93)       +0.08   (+0.93)       +0.17   (+1.02)
+temperatura                            -10.26       -9.79   (+0.47)       -9.79   (+0.47)      -10.89   (-0.63)
+qualita' del modulo                     +0.75       +0.75   (+0.00)       +0.75   (+0.00)       +0.75   (+0.00)
+LID                                         -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+mismatch                                -2.00       -2.00   (-0.00)       -2.00   (-0.00)       -2.00   (-0.00)
+effetto elettrico delle ombre               -                     -                     -                     -
+cavi DC                                 -0.99       -0.75   (+0.24)       -0.75   (+0.24)       -0.91   (+0.08)
+inverter, efficienza                    -3.11       -2.54   (+0.57)       -3.11   (+0.00)       -2.30   (+0.81)
+inverter, oltre la potenza nominale     +0.00       +0.00   (+0.00)       +0.00   (+0.00)       +0.00   (+0.00)
+cavi AC                                     -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+indisponibilita'                            -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+Passi di PVsyst senza equivalente in Meridiana: consumo notturno -0.45 % (fattore complessivo 0.9955)
+   MET catalogo: E_Grid di Meridiana x fattore = 7.1 MWh, scarto +2.06 % (senza fattore +2.52 %)
+   MET inv.tarato: E_Grid di Meridiana x fattore = 7.1 MWh, scarto +1.46 % (senza fattore +1.92 %)
+   PVGIS 5.3 catalogo: E_Grid di Meridiana x fattore = 9.1 MWh, scarto +30.62 % (senza fattore +31.21 %)
+Temperatura massima di cella (a0): 75.8 C
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [MET inv.tarato]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me   T pv   T me  Inc pv  Inc me     d%  Eff pv  Eff me     d%  Egrid pv  Egrid me     d%
+gen      92.2    92.2   +0.0    51.7    51.7   14.1   14.1   114.4   114.5   +0.1   111.6   111.7   +0.0      0.50      0.51   +1.8
+feb     113.8   113.8   +0.0    58.2    58.2   18.4   18.4   136.1   136.1   +0.1   133.0   132.9   -0.0      0.58      0.59   +1.7
+mar     163.6   163.6   -0.0    75.0    75.0   24.2   24.2   182.0   182.1   +0.1   177.8   177.8   -0.0      0.75      0.76   +1.9
+apr     173.4   173.4   +0.0    90.8    90.8   29.8   29.8   176.1   176.2   +0.1   171.8   171.7   -0.1      0.71      0.72   +2.1
+mag     184.7   184.7   +0.0   102.2   102.2   32.7   32.7   176.0   176.1   +0.1   171.2   171.1   -0.0      0.70      0.71   +2.1
+giu     159.7   159.7   -0.0    98.0    98.0   32.2   32.2   148.4   148.5   +0.0   144.0   143.9   -0.1      0.59      0.61   +2.0
+lug     131.6   131.6   -0.0    90.9    90.9   30.0   30.0   123.4   123.4   +0.0   119.6   119.5   -0.1      0.50      0.51   +1.9
+ago     136.1   136.1   +0.0    93.0    93.0   29.4   29.4   132.3   132.3   -0.0   128.4   128.3   -0.1      0.54      0.55   +1.9
+set     128.9   128.9   +0.0    75.7    75.7   28.5   28.5   135.0   134.9   -0.0   131.4   131.2   -0.2      0.55      0.56   +1.9
+ott     121.8   121.8   +0.0    72.2    72.2   26.2   26.2   138.0   138.0   +0.0   134.8   134.7   -0.1      0.57      0.58   +1.9
+nov      95.7    95.7   +0.0    58.5    58.5   20.5   20.5   116.3   116.3   -0.0   113.4   113.3   -0.1      0.49      0.50   +1.9
+dic      89.6    89.6   +0.0    51.3    51.3   15.7   15.7   115.1   115.1   -0.0   112.1   112.0   -0.1      0.50      0.51   +1.8
+anno   1591.2  1591.2   +0.0   917.3   917.3   25.2   25.2  1693.1  1693.6   +0.0  1649.2  1648.0   -0.1      6.99      7.12   +1.9
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [PVGIS 5.3 catalogo]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me     d%   T pv   T me    dT
+gen      92.2   132.0  +43.1    51.7    30.1  -41.8   14.1   15.3  +1.2
+feb     113.8   146.0  +28.4    58.2    29.5  -49.3   18.4   17.3  -1.1
+mar     163.6   184.5  +12.8    75.0    43.7  -41.7   24.2   25.2  +0.9
+apr     173.4   211.2  +21.8    90.8    45.0  -50.4   29.8   29.7  -0.1
+mag     184.7   225.3  +22.0   102.2    50.7  -50.4   32.7   33.0  +0.2
+giu     159.7   176.7  +10.6    98.0    57.2  -41.6   32.2   32.8  +0.6
+lug     131.6   111.7  -15.1    90.9    61.8  -32.0   30.0   28.1  -1.9
+ago     136.1   126.2   -7.2    93.0    60.6  -34.8   29.4   28.6  -0.9
+set     128.9   148.6  +15.3    75.7    47.7  -36.9   28.5   28.0  -0.4
+ott     121.8   157.3  +29.1    72.2    39.5  -45.3   26.2   25.8  -0.5
+nov      95.7   137.3  +43.4    58.5    28.6  -51.0   20.5   21.5  +0.9
+dic      89.6   127.0  +41.8    51.3    26.9  -47.7   15.7   17.2  +1.5
+anno   1591.2  1883.8  +18.4   917.3   521.4  -43.2   25.2   25.2  +0.0
+
+Sensibilita' (stesso meteo della variante principale, inverter tarato):
+variante                                  E_Grid MWh  scarto %    PR %  irr.liv.  temper.     IAM  orizz.
+MET inv.tarato                                   7.1     +1.92   83.41     +0.08    -9.79   -2.69   +0.00
+perdite predefinite di Meridiana                 6.9     -1.34   80.75     +0.07    -9.79   -2.69   +0.00
+
+======================================================================================================================
+CASO almarj: Al Marj (Egitto), 61,6 kWp fisso 28/-3, senza ombre, meteo .MET del progetto
+PVsyst 7.4.6; fonte: campione github-youefkh05-PV_plant_model: .VC0 e Results_Report.pdf p. 3-5
+Meteo del rapporto: Meteonorm 8.1 (1991-2010) - Synthetic; GlobHor 1889.5 kWh/m2, T media 22.79 C
+Modulo: Jinko Solar Co Ltd JKM540M-72HL4-TV; gamma -0.348 %/K dal rapporto; efficienza 20.94 %; modello a un diodo: parametri della lista CEC
+Inverter: 1,5 x Huawei SUN2000-40KTL-M3 (6 MPPT al 25 %); catalogo: SUN2000-50KTL-M3, eta Euro 98,0 %; P_AC 60 kW; DC/AC 1.026
+Perdite date a Meridiana: {'soiling': 0.0, 'quality': -0.75, 'lid': 0.0, 'mismatch': 2.0, 'dc_wiring': 1.5, 'ac_wiring': 0.0, 'unavailability': 0.0}; IAM: profilo a punti del rapporto; orizzonte: libero
+Potenza STC: PVsyst 61.56 kWp, Meridiana 61.56 kWp
+PVGIS 5.3 TMY: PVGIS 5.3, typical year from PVGIS-SARAH3 + ERA5, 2005-2023; GlobHor 2173.4 kWh/m2 (+15.0 % sul rapporto), T media 22.10 C (-0.70 C)
+PVGIS 5.2 TMY: PVGIS 5.2, typical year from PVGIS-SARAH2 + ERA5, 2005-2020; GlobHor 2176.2 kWh/m2 (+15.2 % sul rapporto), T media 21.94 C
+MET del progetto: GlobHor 1889.5 kWh/m2, T media 22.83 C
+Efficienza pesata dell'inverter: catalogo/proxy 98.00 %, tarata sul passo di PVsyst 98.51 %
+
+Nodi della catena (PVsyst dal rapporto; Meridiana per variante; scarto % rispetto a PVsyst)
+nodo                   PVsyst            MET catalogo          MET inv.tarato      PVGIS 5.3 catalogo
+GlobHor kWh/m2         1889.5        1889.5 ( +0.00 %)        1889.5 ( +0.00 %)        2173.4 (+15.02 %)
+GlobInc kWh/m2         2055.6        2055.6 ( -0.00 %)        2055.6 ( -0.00 %)        2401.5 (+16.83 %)
+GlobEff kWh/m2         2015.3        2014.3 ( -0.05 %)        2014.3 ( -0.05 %)        2356.0 (+16.91 %)
+EArrNom MWh             124.1         124.0 ( -0.07 %)         124.0 ( -0.07 %)         145.0 (+16.88 %)
+EArrMPP MWh             109.5         111.1 ( +1.41 %)         111.1 ( +1.41 %)         128.0 (+16.84 %)
+EOutInv MWh             107.7         108.7 ( +0.92 %)         109.3 ( +1.44 %)         125.4 (+16.37 %)
+E_Grid MWh              107.7         108.7 ( +0.92 %)         109.3 ( +1.44 %)         125.4 (+16.37 %)
+resa kWh/kWp             1750          1766 ( +0.91 %)          1775 ( +1.44 %)          2036 (+16.37 %)
+PR %                    85.13         85.91 ( +0.78 pt)         86.36 ( +1.23 pt)         84.80 ( -0.33 pt)
+
+Rapporti fra nodi (meno sensibili al meteo)
+rapporto               PVsyst            MET catalogo          MET inv.tarato      PVGIS 5.3 catalogo
+GlobInc/GlobHor        1.0879        1.0879 ( -0.00 pt)        1.0879 ( -0.00 pt)        1.1050 ( +1.71 pt)
+GlobEff/GlobInc        0.9804        0.9799 ( -0.04 pt)        0.9799 ( -0.04 pt)        0.9810 ( +0.07 pt)
+EArrMPP/EArrNom        0.8828        0.8959 ( +1.31 pt)        0.8959 ( +1.31 pt)        0.8825 ( -0.03 pt)
+EOutInv/EArrMPP        0.9834        0.9786 ( -0.48 pt)        0.9837 ( +0.03 pt)        0.9795 ( -0.39 pt)
+E_Grid/EOutInv         1.0000        1.0000 ( +0.00 pt)        1.0000 ( +0.00 pt)        1.0000 ( +0.00 pt)
+E_Grid/EArrNom         0.8682        0.8767 ( +0.86 pt)        0.8813 ( +1.31 pt)        0.8644 ( -0.38 pt)
+
+Passi del diagramma delle perdite (% sul valore precedente; scarto in punti)
+passo                                  PVsyst          MET catalogo        MET inv.tarato    PVGIS 5.3 catalogo
+trasposizione sul piano                 +8.80       +8.79   (-0.01)       +8.79   (-0.01)      +10.50   (+1.70)
+orizzonte (ombre lontane)                   -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+ombre vicine, irraggiamento                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+riflessione sul vetro (IAM)             -1.96       -2.01   (-0.05)       -2.01   (-0.05)       -1.90   (+0.06)
+sporcamento                                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+livello di irraggiamento                -0.44       +0.42   (+0.86)       +0.42   (+0.86)       +0.28   (+0.72)
+temperatura                             -9.20       -8.85   (+0.35)       -8.85   (+0.35)       -9.97   (-0.77)
+qualita' del modulo                     +0.75       +0.75   (+0.00)       +0.75   (+0.00)       +0.75   (+0.00)
+LID                                         -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+mismatch                                -2.00       -2.00   (-0.00)       -2.00   (-0.00)       -2.00   (-0.00)
+effetto elettrico delle ombre               -                     -                     -                     -
+cavi DC                                 -1.09       -0.86   (+0.23)       -0.86   (+0.23)       -0.99   (+0.10)
+inverter, efficienza                    -1.63       -2.14   (-0.51)       -1.63   (-0.00)       -2.05   (-0.42)
+inverter, oltre la potenza nominale     +0.00       +0.00   (+0.00)       +0.00   (+0.00)       +0.00   (+0.00)
+cavi AC                                     -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+indisponibilita'                            -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+Passi di PVsyst senza equivalente in Meridiana: consumo notturno -0.03 % (fattore complessivo 0.9997)
+   MET catalogo: E_Grid di Meridiana x fattore = 108.7 MWh, scarto +0.89 % (senza fattore +0.92 %)
+   MET inv.tarato: E_Grid di Meridiana x fattore = 109.3 MWh, scarto +1.41 % (senza fattore +1.44 %)
+   PVGIS 5.3 catalogo: E_Grid di Meridiana x fattore = 125.3 MWh, scarto +16.34 % (senza fattore +16.37 %)
+Temperatura massima di cella (a0): 75.6 C
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [MET inv.tarato]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me   T pv   T me  Inc pv  Inc me     d%  Eff pv  Eff me     d%  Egrid pv  Egrid me     d%
+gen      93.8    93.8   +0.0    46.8    46.8   14.2   14.2   129.9   129.8   -0.0   127.5   127.5   -0.0      7.19      7.27   +1.1
+feb     106.7   106.7   +0.0    54.7    54.7   15.8   15.8   133.1   133.2   +0.1   130.9   131.0   +0.0      7.28      7.37   +1.1
+mar     157.6   157.6   +0.0    75.9    75.9   18.8   18.8   179.3   179.4   +0.0   176.3   176.3   -0.0      9.60      9.71   +1.2
+apr     184.4   184.4   -0.0    86.8    86.8   21.8   21.8   190.4   190.5   +0.0   186.6   186.5   -0.0     10.03     10.16   +1.3
+mag     211.6   211.6   +0.0    93.9    93.9   26.1   26.1   202.0   202.1   +0.0   197.6   197.6   -0.0     10.40     10.56   +1.5
+giu     219.8   219.8   +0.0    86.4    86.4   28.5   28.5   201.0   201.0   -0.0   196.1   196.0   -0.1     10.22     10.39   +1.6
+lug     219.9   219.9   -0.0    82.7    82.7   30.0   30.0   204.8   204.7   -0.0   199.9   199.7   -0.1     10.33     10.51   +1.7
+ago     201.5   201.5   +0.0    84.6    84.6   30.0   30.0   201.6   201.6   +0.0   197.2   197.1   -0.1     10.21     10.39   +1.7
+set     170.6   170.6   +0.0    71.7    71.7   27.8   27.8   188.6   188.5   -0.1   184.9   184.6   -0.1      9.67      9.83   +1.6
+ott     136.7   136.7   -0.0    61.9    61.9   24.7   24.7   167.0   166.9   -0.0   164.1   164.0   -0.1      8.74      8.87   +1.5
+nov      99.7    99.7   -0.0    44.7    44.7   19.8   19.8   135.0   135.0   +0.0   132.9   132.9   -0.0      7.27      7.37   +1.3
+dic      87.4    87.4   +0.0    43.1    43.1   16.0   16.0   123.1   123.1   -0.0   121.2   121.1   -0.0      6.79      6.86   +1.2
+anno   1889.5  1889.5   +0.0   833.2   833.2   22.8   22.8  2055.6  2055.6   -0.0  2015.3  2014.3   -0.0    107.73    109.28   +1.4
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [PVGIS 5.3 catalogo]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me     d%   T pv   T me    dT
+gen      93.8   109.4  +16.6    46.8    38.6  -17.6   14.2   13.4  -0.8
+feb     106.7   119.9  +12.4    54.7    44.4  -18.8   15.8   14.6  -1.2
+mar     157.6   176.9  +12.2    75.9    59.2  -22.1   18.8   16.7  -2.1
+apr     184.4   209.3  +13.5    86.8    67.9  -21.7   21.8   20.5  -1.3
+mag     211.6   252.8  +19.5    93.9    58.3  -38.0   26.1   27.1  +1.0
+giu     219.8   239.3   +8.9    86.4    60.3  -30.2   28.5   28.7  +0.3
+lug     219.9   249.2  +13.4    82.7    58.3  -29.5   30.0   29.5  -0.5
+ago     201.5   234.4  +16.3    84.6    56.4  -33.3   30.0   28.0  -2.1
+set     170.6   195.1  +14.3    71.7    53.1  -25.9   27.8   26.6  -1.2
+ott     136.7   164.3  +20.2    61.9    45.0  -27.3   24.7   23.8  -0.9
+nov      99.7   116.2  +16.6    44.7    41.8   -6.6   19.8   20.2  +0.4
+dic      87.4   106.5  +21.9    43.1    37.4  -13.3   16.0   15.6  -0.5
+anno   1889.5  2173.4  +15.0   833.2   620.7  -25.5   22.8   22.1  -0.7
+
+Sensibilita' (stesso meteo della variante principale, inverter tarato):
+variante                                  E_Grid MWh  scarto %    PR %  irr.liv.  temper.     IAM  orizz.
+MET inv.tarato                                 109.3     +1.44   86.36     +0.42    -8.85   -2.01   +0.00
+gamma CEC -0.322                               110.1     +2.17   86.98     +0.42    -8.19   -2.01   +0.00
+SDM De Soto dal datasheet (LINEARE)            108.8     +1.04   86.01     +0.00    -8.84   -2.01   +0.00
+IAM ASHRAE 0,05 (default)                      108.7     +0.89   85.88     +0.42    -8.85   -2.55   +0.00
+perdite predefinite di Meridiana               105.7     -1.85   83.56     +0.43    -8.85   -2.01   +0.00
+
+======================================================================================================================
+CASO kuwait: Jalib ash Shuyukh (Kuwait), 92,4 kWp fisso 29/0, senza ombre, meteo .MET del progetto
+PVsyst 8.0.21; fonte: campione github-IKH116-export-zip: .VC0 e PVsyst_Variant1_Simulation_Report.pdf p. 3-5
+Meteo del rapporto: Meteonorm 8.2 (1998-2000), Sat=100 % - Synthetic; GlobHor 1941.4 kWh/m2, T media 27.05 C
+Modulo: LONGi Green Energy Technology Co Ltd LR5-72HPH-550M; gamma -0.333 %/K dal rapporto; efficienza 21.54 %; modello a un diodo: parametri della lista CEC
+Inverter: 2 x SMA Sunny Tripower STP50-40 Core1; non in catalogo, eta Euro 97,8 % dal datasheet (a memoria); P_AC 100 kW; DC/AC 0.924
+Perdite date a Meridiana: {'soiling': 0.0, 'quality': -0.25, 'lid': 0.0, 'mismatch': 2.0, 'dc_wiring': 1.5, 'ac_wiring': 0.0, 'unavailability': 0.0}; IAM: profilo a punti del rapporto; orizzonte: libero
+Nota: PVsyst 8 stampa le percentuali con un decimale: il confronto per passo vale a 0,05 punti.
+Potenza STC: PVsyst 92.40 kWp, Meridiana 92.40 kWp
+PVGIS 5.3 TMY: PVGIS 5.3, typical year from PVGIS-SARAH3 + ERA5, 2005-2023; GlobHor 2110.9 kWh/m2 (+8.7 % sul rapporto), T media 26.97 C (-0.07 C)
+PVGIS 5.2 TMY: PVGIS 5.2, typical year from PVGIS-SARAH2 + ERA5, 2005-2020; GlobHor 2067.4 kWh/m2 (+6.5 % sul rapporto), T media 26.61 C
+MET del progetto: GlobHor 1941.4 kWh/m2, T media 27.11 C
+Efficienza pesata dell'inverter: catalogo/proxy 97.80 %, tarata sul passo di PVsyst 97.39 %
+
+Nodi della catena (PVsyst dal rapporto; Meridiana per variante; scarto % rispetto a PVsyst)
+nodo                   PVsyst            MET catalogo          MET inv.tarato      PVGIS 5.3 catalogo
+GlobHor kWh/m2         1941.4        1941.4 ( +0.00 %)        1941.4 ( +0.00 %)        2110.9 ( +8.73 %)
+GlobInc kWh/m2         2125.1        2125.0 ( -0.00 %)        2125.0 ( -0.00 %)        2323.1 ( +9.32 %)
+GlobEff kWh/m2         2093.8        2090.1 ( -0.18 %)        2090.1 ( -0.18 %)        2287.2 ( +9.24 %)
+EArrNom MWh             193.9         193.1 ( -0.38 %)         193.1 ( -0.38 %)         211.3 ( +9.01 %)
+EArrMPP MWh             168.3         167.2 ( -0.68 %)         167.2 ( -0.68 %)         181.1 ( +7.56 %)
+EOutInv MWh             163.7         163.2 ( -0.29 %)         162.5 ( -0.71 %)         176.8 ( +8.05 %)
+E_Grid MWh              163.7         163.2 ( -0.29 %)         162.5 ( -0.71 %)         176.8 ( +8.05 %)
+resa kWh/kWp             1771          1766 ( -0.27 %)          1759 ( -0.69 %)          1914 ( +8.07 %)
+PR %                    83.35         83.11 ( -0.24 pt)         82.76 ( -0.59 pt)         82.38 ( -0.97 pt)
+
+Rapporti fra nodi (meno sensibili al meteo)
+rapporto               PVsyst            MET catalogo          MET inv.tarato      PVGIS 5.3 catalogo
+GlobInc/GlobHor        1.0946        1.0946 ( -0.00 pt)        1.0946 ( -0.00 pt)        1.1005 ( +0.59 pt)
+GlobEff/GlobInc        0.9853        0.9835 ( -0.17 pt)        0.9835 ( -0.17 pt)        0.9845 ( -0.07 pt)
+EArrMPP/EArrNom        0.8684        0.8657 ( -0.27 pt)        0.8657 ( -0.27 pt)        0.8568 ( -1.16 pt)
+EOutInv/EArrMPP        0.9723        0.9761 ( +0.38 pt)        0.9720 ( -0.03 pt)        0.9767 ( +0.44 pt)
+E_Grid/EOutInv         1.0000        1.0000 ( +0.00 pt)        1.0000 ( +0.00 pt)        1.0000 ( +0.00 pt)
+E_Grid/EArrNom         0.8443        0.8450 ( +0.08 pt)        0.8415 ( -0.28 pt)        0.8368 ( -0.75 pt)
+
+Passi del diagramma delle perdite (% sul valore precedente; scarto in punti)
+passo                                  PVsyst          MET catalogo        MET inv.tarato    PVGIS 5.3 catalogo
+trasposizione sul piano                 +9.50       +9.46   (-0.04)       +9.46   (-0.04)      +10.05   (+0.55)
+orizzonte (ombre lontane)                   -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+ombre vicine, irraggiamento                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+riflessione sul vetro (IAM)             -1.50       -1.65   (-0.15)       -1.65   (-0.15)       -1.55   (-0.05)
+sporcamento                                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+livello di irraggiamento                +0.40       -0.89   (-1.29)       -0.89   (-1.29)       -0.72   (-1.12)
+temperatura                            -10.90      -10.33   (+0.57)      -10.33   (+0.57)      -11.30   (-0.40)
+qualita' del modulo                     +0.20       +0.25   (+0.05)       +0.25   (+0.05)       +0.25   (+0.05)
+LID                                         -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+mismatch                                -2.00       -2.00   (+0.00)       -2.00   (+0.00)       -2.00   (-0.00)
+effetto elettrico delle ombre               -                     -                     -                     -
+cavi DC                                 -1.10       -0.85   (+0.25)       -0.85   (+0.25)       -0.97   (+0.13)
+inverter, efficienza                    -2.80       -2.39   (+0.41)       -2.80   (+0.00)       -2.33   (+0.47)
+inverter, oltre la potenza nominale     +0.00       +0.00   (+0.00)       +0.00   (+0.00)       +0.00   (+0.00)
+cavi AC                                     -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+indisponibilita'                            -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+Temperatura massima di cella (a0): 80.9 C
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [MET inv.tarato]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me   T pv   T me  Inc pv  Inc me     d%  Eff pv  Eff me     d%  Egrid pv  Egrid me     d%
+gen     110.0   110.0   +0.0    43.8    43.8   12.7   12.7   158.2   158.1   -0.0   156.3   156.0   -0.2     13.13     12.92   -1.5
+feb     120.8   120.8   +0.0    57.7    57.7   15.3   15.3   152.4   152.6   +0.1   150.6   150.5   -0.1     12.43     12.28   -1.2
+mar     151.8   151.8   +0.0    79.9    79.9   21.0   21.0   170.2   170.3   +0.0   167.9   167.7   -0.1     13.52     13.38   -1.1
+apr     181.8   181.8   +0.0    92.6    92.6   26.5   26.5   186.4   186.5   +0.1   183.5   183.3   -0.1     14.43     14.33   -0.7
+mag     207.2   207.2   +0.0   104.5   104.5   33.7   33.7   196.2   196.3   +0.0   192.8   192.5   -0.2     14.73     14.66   -0.5
+giu     219.8   219.8   +0.0   109.5   109.5   37.7   37.7   200.8   200.7   -0.0   197.1   196.7   -0.2     14.71     14.69   -0.1
+lug     222.9   222.9   +0.0   101.8   101.8   39.8   39.8   206.8   206.7   -0.0   203.0   202.5   -0.2     15.01     15.00   -0.0
+ago     205.8   205.8   +0.0    96.3    96.3   39.2   39.2   204.4   204.4   -0.0   201.1   200.7   -0.2     14.87     14.89   +0.1
+set     172.9   172.9   +0.0    73.2    73.2   34.9   34.9   190.4   190.3   -0.1   187.6   187.2   -0.2     14.14     14.12   -0.1
+ott     140.5   140.5   +0.0    68.3    68.3   29.3   29.3   170.0   169.9   -0.1   167.7   167.3   -0.2     13.08     12.97   -0.8
+nov     109.1   109.1   +0.0    50.3    50.3   19.9   19.9   147.4   147.4   +0.0   145.7   145.5   -0.2     11.89     11.73   -1.4
+dic      98.7    98.7   +0.0    44.1    44.1   14.5   14.5   142.0   141.9   -0.0   140.4   140.2   -0.2     11.74     11.55   -1.7
+anno   1941.4  1941.4   +0.0   922.1   922.1   27.0   27.0  2125.1  2125.0   -0.0  2093.8  2090.1   -0.2    163.67    162.51   -0.7
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [PVGIS 5.3 catalogo]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me     d%   T pv   T me    dT
+gen     110.0   120.7   +9.7    43.8    43.4   -1.1   12.7   14.9  +2.2
+feb     120.8   113.5   -6.1    57.7    54.2   -6.0   15.3   16.8  +1.4
+mar     151.8   168.0  +10.6    79.9    66.1  -17.3   21.0   20.6  -0.4
+apr     181.8   193.9   +6.7    92.6    70.6  -23.8   26.5   24.0  -2.5
+mag     207.2   220.4   +6.4   104.5    87.9  -15.9   33.7   31.6  -2.1
+giu     219.8   240.5   +9.4   109.5    75.0  -31.5   37.7   37.3  -0.4
+lug     222.9   244.0   +9.4   101.8    84.2  -17.4   39.8   37.8  -2.1
+ago     205.8   228.6  +11.0    96.3    75.4  -21.7   39.2   38.6  -0.6
+set     172.9   197.8  +14.4    73.2    61.7  -15.7   34.9   36.1  +1.2
+ott     140.5   153.6   +9.3    68.3    58.9  -13.8   29.3   30.0  +0.7
+nov     109.1   121.7  +11.6    50.3    44.9  -10.7   19.9   19.6  -0.3
+dic      98.7   108.3   +9.7    44.1    40.8   -7.5   14.5   15.8  +1.3
+anno   1941.4  2110.9   +8.7   922.1   763.0  -17.3   27.0   26.9  -0.1
+
+Sensibilita' (stesso meteo della variante principale, inverter tarato):
+variante                                  E_Grid MWh  scarto %    PR %  irr.liv.  temper.     IAM  orizz.
+MET inv.tarato                                 162.5     -0.71   82.76     -0.89   -10.33   -1.65   +0.00
+gamma CEC -0.375                               160.2     -2.15   81.56     -0.89   -11.63   -1.65   +0.00
+SDM De Soto dal datasheet                      163.3     -0.21   83.18     -0.40   -10.32   -1.65   +0.00
+IAM ASHRAE 0,05 (default)                      161.2     -1.50   82.10     -0.90   -10.34   -2.41   +0.00
+perdite predefinite di Meridiana               158.0     -3.44   80.49     -0.92   -10.33   -1.65   +0.00
+
+======================================================================================================================
+CASO montescaglioso: Montescaglioso (MT), 5643 kWp, 20 file 20/0 passo 7,5 m, orizzonte, Meteonorm 8.0
+PVsyst 7.2.11; fonte: https://va.mite.gov.it/File/Documento/744498 (casi.json, pagine 2-10)
+Meteo del rapporto: Meteonorm 8.0, Sat=100% - Synthetic; GlobHor 1501.1 kWh/m2, T media 17.56 C
+Modulo: Risen Energy Co Ltd RSM132-8-660BMDG; gamma -0.338 %/K dal rapporto; efficienza 21.25 %; modello a un diodo: parametri della lista CEC
+Inverter: 28 x Huawei SUN2000-215KTL-H3 (200 kW); non in catalogo, eta della famiglia 98,4 %; P_AC 5600 kW; DC/AC 1.008
+Perdite date a Meridiana: {'soiling': 2.0, 'quality': -0.5, 'lid': 1.6, 'mismatch': 1.1, 'dc_wiring': 1.0, 'ac_wiring': 1.0, 'unavailability': 0.0}; IAM: profilo a punti del rapporto; orizzonte: profilo stampato
+Nota: Il rapporto stampa l'energia annua arrotondata a 8 GWh: si usano la tabella mensile e il diagramma (8065 MWh).
+Nota: Ombre vicine 'lineari' in PVsyst: nessun effetto elettrico; Meridiana lo calcola sempre per le file e lo mostra come passo a parte.
+Potenza STC: PVsyst 5643.00 kWp, Meridiana 5643.00 kWp
+PVGIS 5.3 TMY: PVGIS 5.3, typical year from PVGIS-SARAH3 + ERA5, 2005-2023; GlobHor 1627.5 kWh/m2 (+8.4 % sul rapporto), T media 16.44 C (-1.12 C)
+PVGIS 5.2 TMY: PVGIS 5.2, typical year from PVGIS-SARAH2 + ERA5, 2005-2020; GlobHor 1620.4 kWh/m2 (+7.9 % sul rapporto), T media 16.22 C
+PVGIS scalato: GlobHor 1501.1 kWh/m2, T media 17.60 C
+Efficienza pesata dell'inverter: catalogo/proxy 98.40 %, tarata sul passo di PVsyst 98.97 %
+
+Nodi della catena (PVsyst dal rapporto; Meridiana per variante; scarto % rispetto a PVsyst)
+nodo                   PVsyst        scalato catalogo      scalato inv.tarato      PVGIS 5.3 catalogo
+GlobHor kWh/m2         1501.1        1501.1 ( +0.00 %)        1501.1 ( +0.00 %)        1627.5 ( +8.42 %)
+GlobInc kWh/m2         1671.6        1651.2 ( -1.22 %)        1651.2 ( -1.22 %)        1848.2 (+10.56 %)
+GlobEff kWh/m2         1589.9        1573.0 ( -1.06 %)        1573.0 ( -1.06 %)        1762.6 (+10.86 %)
+EArrNom MWh            8979.0        8876.3 ( -1.14 %)        8876.3 ( -1.14 %)        9946.4 (+10.77 %)
+EArrMPP MWh            8373.0        8113.9 ( -3.09 %)        8113.9 ( -3.09 %)        9035.3 ( +7.91 %)
+EOutInv MWh            8254.0        7952.3 ( -3.65 %)        7998.7 ( -3.09 %)        8862.3 ( +7.37 %)
+E_Grid MWh             8065.0        7911.2 ( -1.91 %)        7957.0 ( -1.34 %)        8810.9 ( +9.25 %)
+resa kWh/kWp             1429          1402 ( -1.89 %)          1410 ( -1.32 %)          1561 ( +9.26 %)
+PR %                    85.50         84.91 ( -0.59 pt)         85.40 ( -0.10 pt)         84.48 ( -1.02 pt)
+
+Rapporti fra nodi (meno sensibili al meteo)
+rapporto               PVsyst        scalato catalogo      scalato inv.tarato      PVGIS 5.3 catalogo
+GlobInc/GlobHor        1.1136        1.1000 ( -1.36 pt)        1.1000 ( -1.36 pt)        1.1356 ( +2.20 pt)
+GlobEff/GlobInc        0.9511        0.9526 ( +0.15 pt)        0.9526 ( +0.15 pt)        0.9537 ( +0.26 pt)
+EArrMPP/EArrNom        0.9325        0.9141 ( -1.84 pt)        0.9141 ( -1.84 pt)        0.9084 ( -2.41 pt)
+EOutInv/EArrMPP        0.9858        0.9801 ( -0.57 pt)        0.9858 ( +0.00 pt)        0.9809 ( -0.49 pt)
+E_Grid/EOutInv         0.9771        0.9948 ( +1.77 pt)        0.9948 ( +1.77 pt)        0.9942 ( +1.71 pt)
+E_Grid/EArrNom         0.8982        0.8913 ( -0.69 pt)        0.8964 ( -0.18 pt)        0.8858 ( -1.24 pt)
+
+Passi del diagramma delle perdite (% sul valore precedente; scarto in punti)
+passo                                  PVsyst      scalato catalogo    scalato inv.tarato    PVGIS 5.3 catalogo
+trasposizione sul piano                +11.40      +10.00   (-1.40)      +10.00   (-1.40)      +13.56   (+2.16)
+orizzonte (ombre lontane)               -0.55       -0.45   (+0.10)       -0.45   (+0.10)       -0.39   (+0.16)
+ombre vicine, irraggiamento             -2.20       -2.13   (+0.07)       -2.13   (+0.07)       -2.09   (+0.11)
+riflessione sul vetro (IAM)             -0.22       -0.23   (-0.01)       -0.23   (-0.01)       -0.22   (+0.00)
+sporcamento                             -2.00       -2.00   (-0.00)       -2.00   (-0.00)       -2.00   (-0.00)
+livello di irraggiamento                -0.09       -0.55   (-0.46)       -0.55   (-0.46)       -0.43   (-0.34)
+temperatura                             -4.03       -4.10   (-0.07)       -4.10   (-0.07)       -4.31   (-0.28)
+qualita' del modulo                     +0.50       +0.50   (-0.00)       +0.50   (-0.00)       +0.50   (-0.00)
+LID                                     -1.55       -1.60   (-0.05)       -1.60   (-0.05)       -1.60   (-0.05)
+mismatch                                -1.10       -1.10   (-0.00)       -1.10   (-0.00)       -1.10   (-0.00)
+effetto elettrico delle ombre               -       -1.49    (n.c.)       -1.49    (n.c.)       -1.94    (n.c.)
+cavi DC                                 -0.60       -0.52   (+0.08)       -0.52   (+0.08)       -0.59   (+0.01)
+inverter, efficienza                    -1.42       -1.99   (-0.57)       -1.42   (-0.00)       -1.91   (-0.49)
+inverter, oltre la potenza nominale     +0.00       +0.00   (+0.00)       +0.00   (+0.00)       +0.00   (+0.00)
+cavi AC                                 -0.53       -0.52   (+0.01)       -0.52   (+0.01)       -0.58   (-0.05)
+indisponibilita'                            -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+Passi di PVsyst senza equivalente in Meridiana: inverter, corrente massima +0.00 %; inverter, sovratensione +0.00 %; inverter, soglia di potenza +0.00 %; inverter, soglia di tensione +0.00 %; consumo notturno -0.01 %; ausiliari -0.40 %; trasformatore MT -1.13 %; linea MT -0.24 % (fattore complessivo 0.9823)
+   scalato catalogo: E_Grid di Meridiana x fattore = 7771.0 MWh, scarto -3.65 % (senza fattore -1.91 %)
+   scalato inv.tarato: E_Grid di Meridiana x fattore = 7816.1 MWh, scarto -3.09 % (senza fattore -1.34 %)
+   PVGIS 5.3 catalogo: E_Grid di Meridiana x fattore = 8654.8 MWh, scarto +7.31 % (senza fattore +9.25 %)
+   scalato catalogo: senza l'effetto elettrico delle file, che PVsyst (ombre lineari) non ha: E_Grid 8031.1 MWh, scarto -0.42 %
+   scalato inv.tarato: senza l'effetto elettrico delle file, che PVsyst (ombre lineari) non ha: E_Grid 8077.7 MWh, scarto +0.16 %
+   PVGIS 5.3 catalogo: senza l'effetto elettrico delle file, che PVsyst (ombre lineari) non ha: E_Grid 8985.6 MWh, scarto +11.42 %
+Dettagli delle file (a0): {'rows': 20, 'row pitch': 7.5, 'height of a row along its slope': 4.79, 'ground cover ratio': 0.6386666666666667, 'share of the sky hidden by the row in front': 4.277214414192092, 'share of the light reflected by the ground lost over the year': 76.25027919669564, 'loss': 2.1288060841452907}; ombra lineare delle file 2.13 %, effetto elettrico 1.49 %
+Orizzonte (a0): cielo diffuso ancora visto 98.61 % (PVsyst stampa il 'Diffuse Factor' dell'orizzonte: vedi casi.json)
+Temperatura massima di cella (a0): 59.3 C
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [scalato inv.tarato]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me   T pv   T me  Inc pv  Inc me     d%  Eff pv  Eff me     d%  Egrid pv  Egrid me     d%
+gen      54.3    54.3   +0.0    28.1    28.0    9.1    9.1    75.6    73.7   -2.5    68.7    67.7   -1.5    366.00    324.21  -11.4
+feb      71.2    71.2   +0.0    35.0    35.0    9.7    9.7    91.7    91.2   -0.5    86.7    86.6   -0.1    458.00    455.04   -0.6
+mar     121.9   121.9   +0.0    56.7    56.7   12.2   12.2   144.0   142.3   -1.2   138.0   136.5   -1.1    721.00    719.90   -0.2
+apr     146.8   146.8   +0.0    72.2    72.1   15.0   15.0   158.9   157.7   -0.8   152.2   150.9   -0.9    786.00    781.93   -0.5
+mag     188.1   188.1   +0.0    80.5    80.5   19.5   19.5   191.0   189.5   -0.8   183.2   181.8   -0.8    925.00    929.29   +0.5
+giu     194.2   194.2   +0.0    90.7    90.6   24.3   24.3   192.5   188.4   -2.1   184.5   180.5   -2.2    916.00    908.89   -0.8
+lug     203.0   203.0   +0.0    78.5    78.5   27.8   27.8   203.5   203.4   -0.0   195.7   195.5   -0.1    954.00    971.72   +1.9
+ago     183.9   183.9   +0.0    73.6    73.6   27.5   27.5   196.4   194.9   -0.8   189.2   187.6   -0.9    925.00    937.02   +1.3
+set     134.6   134.6   +0.0    58.6    58.6   22.5   22.5   154.1   153.9   -0.2   147.7   147.8   +0.1    741.00    755.34   +1.9
+ott      98.1    98.1   +0.0    48.9    48.9   18.6   18.6   122.4   121.1   -1.1   116.5   115.8   -0.6    599.00    594.70   -0.7
+nov      58.1    58.1   +0.0    35.5    35.4   14.1   14.1    76.1    72.4   -4.9    69.7    66.7   -4.3    366.00    327.10  -10.6
+dic      46.9    46.9   +0.0    27.5    27.4   10.4   10.4    65.5    62.7   -4.2    57.8    55.6   -3.8    307.00    251.90  -17.9
+anno   1501.1  1501.1   +0.0   685.6   685.3   17.6   17.6  1671.7  1651.2   -1.2  1589.9  1573.0   -1.1   8064.00   7957.05   -1.3
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [PVGIS 5.3 catalogo]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me     d%   T pv   T me    dT
+gen      54.3    63.8  +17.6    28.1    27.5   -2.0    9.1    9.4  +0.3
+feb      71.2    85.9  +20.7    35.0    35.5   +1.4    9.7    7.7  -2.0
+mar     121.9   130.4   +7.0    56.7    51.5   -9.2   12.2    9.7  -2.5
+apr     146.8   144.8   -1.4    72.2    65.6   -9.1   15.0   14.0  -1.0
+mag     188.1   201.3   +7.0    80.5    73.8   -8.3   19.5   18.2  -1.3
+giu     194.2   210.4   +8.3    90.7    69.4  -23.5   24.3   22.9  -1.4
+lug     203.0   213.7   +5.3    78.5    74.6   -5.0   27.8   24.9  -2.9
+ago     183.9   206.6  +12.3    73.6    63.5  -13.7   27.5   28.0  +0.5
+set     134.6   154.4  +14.7    58.6    52.6  -10.3   22.5   24.0  +1.5
+ott      98.1    93.9   -4.2    48.9    44.5   -9.1   18.6   17.4  -1.2
+nov      58.1    68.0  +17.1    35.5    31.8  -10.5   14.1   12.4  -1.7
+dic      46.9    54.0  +15.2    27.5    24.6  -10.4   10.4    8.1  -2.3
+anno   1501.1  1627.5   +8.4   685.6   614.8  -10.3   17.6   16.4  -1.2
+
+Sensibilita' (stesso meteo della variante principale, inverter tarato):
+variante                                  E_Grid MWh  scarto %    PR %  irr.liv.  temper.     IAM  orizz.
+scalato inv.tarato                            7957.0     -1.34   85.40     -0.55    -4.10   -0.23   -0.45
+gamma CEC -0.361                              7933.3     -1.63   85.14     -0.55    -4.38   -0.23   -0.45
+SDM De Soto dal datasheet                     8024.0     -0.51   86.12     +0.29    -4.09   -0.23   -0.45
+IAM ASHRAE 0,05 (default)                     7749.1     -3.92   83.17     -0.58    -4.15   -2.75   -0.45
+senza orizzonte                               7988.6     -0.95   85.74     -0.55    -4.10   -0.24   +0.00
+perdite predefinite di Meridiana              7952.8     -1.39   85.35     -0.55    -4.10   -0.23   -0.45
+
+======================================================================================================================
+CASO neom: NEOM (Arabia Saudita), 4999 kWp fisso 30/0, senza ombre, clima caldo, Meteonorm 8.1
+PVsyst 7.4.0; fonte: https://assets-eu.researchsquare.com/files/rs-7001662/v1/acdb8c0b2d116b3d640a5031.pdf (casi.json)
+Meteo del rapporto: Meteonorm 8.1 (1998-2002), Sat=100% - Synthetic; GlobHor 2260.6 kWh/m2, T media 26.24 C
+Modulo: LONGi Green Energy Technology Co Ltd LR5-66HBD-490M (al posto di Generic LR5-66HPH-490M G2); gamma -0.335 %/K dal rapporto; efficienza 20.64 %; modello a un diodo: parametri della lista CEC
+Inverter: 5 x Generic PVS800-57-0875kW-B (ABB centrale); non in catalogo, eta Euro 98,0 % ipotizzato; P_AC 4375 kW; DC/AC 1.143
+Perdite date a Meridiana: {'soiling': 0.0, 'quality': -0.75, 'lid': 0.0, 'mismatch': 2.2, 'dc_wiring': 1.5, 'ac_wiring': 0.0, 'unavailability': 0.0}; IAM: profilo a punti del rapporto; orizzonte: libero
+Potenza STC: PVsyst 4999.47 kWp, Meridiana 4999.47 kWp
+PVGIS 5.3 TMY: PVGIS 5.3, typical year from PVGIS-SARAH3 + ERA5, 2005-2023; GlobHor 2332.6 kWh/m2 (+3.2 % sul rapporto), T media 26.12 C (-0.12 C)
+PVGIS 5.2 TMY: PVGIS 5.2, typical year from PVGIS-SARAH2 + ERA5, 2005-2020; GlobHor 2344.0 kWh/m2 (+3.7 % sul rapporto), T media 25.97 C
+PVGIS scalato: GlobHor 2260.7 kWh/m2, T media 26.28 C
+Efficienza pesata dell'inverter: catalogo/proxy 98.00 %, tarata sul passo di PVsyst 98.19 %
+
+Nodi della catena (PVsyst dal rapporto; Meridiana per variante; scarto % rispetto a PVsyst)
+nodo                   PVsyst        scalato catalogo      scalato inv.tarato      PVGIS 5.3 catalogo
+GlobHor kWh/m2         2260.6        2260.7 ( +0.00 %)        2260.7 ( +0.00 %)        2332.6 ( +3.19 %)
+GlobInc kWh/m2         2522.5        2524.9 ( +0.10 %)        2524.9 ( +0.10 %)        2588.8 ( +2.63 %)
+GlobEff kWh/m2         2484.2        2483.1 ( -0.05 %)        2483.1 ( -0.05 %)        2545.1 ( +2.45 %)
+EArrNom MWh           12442.9       12414.1 ( -0.23 %)       12414.1 ( -0.23 %)       12724.1 ( +2.26 %)
+EArrMPP MWh           10804.9       10718.6 ( -0.80 %)       10718.6 ( -0.80 %)       10967.9 ( +1.51 %)
+EOutInv MWh           10602.2       10483.5 ( -1.12 %)       10502.7 ( -0.94 %)       10727.2 ( +1.18 %)
+E_Grid MWh            10602.2       10483.5 ( -1.12 %)       10502.7 ( -0.94 %)       10727.2 ( +1.18 %)
+resa kWh/kWp             2121          2097 ( -1.14 %)          2101 ( -0.95 %)          2146 ( +1.16 %)
+PR %                    84.07         83.05 ( -1.02 pt)         83.20 ( -0.87 pt)         82.88 ( -1.19 pt)
+
+Rapporti fra nodi (meno sensibili al meteo)
+rapporto               PVsyst        scalato catalogo      scalato inv.tarato      PVGIS 5.3 catalogo
+GlobInc/GlobHor        1.1159        1.1169 ( +0.10 pt)        1.1169 ( +0.10 pt)        1.1098 ( -0.60 pt)
+GlobEff/GlobInc        0.9848        0.9834 ( -0.14 pt)        0.9834 ( -0.14 pt)        0.9831 ( -0.17 pt)
+EArrMPP/EArrNom        0.8684        0.8634 ( -0.49 pt)        0.8634 ( -0.49 pt)        0.8620 ( -0.64 pt)
+EOutInv/EArrMPP        0.9812        0.9781 ( -0.32 pt)        0.9799 ( -0.14 pt)        0.9781 ( -0.32 pt)
+E_Grid/EOutInv         1.0000        1.0000 ( +0.00 pt)        1.0000 ( +0.00 pt)        1.0000 ( +0.00 pt)
+E_Grid/EArrNom         0.8521        0.8445 ( -0.76 pt)        0.8460 ( -0.60 pt)        0.8431 ( -0.90 pt)
+
+Passi del diagramma delle perdite (% sul valore precedente; scarto in punti)
+passo                                  PVsyst      scalato catalogo    scalato inv.tarato    PVGIS 5.3 catalogo
+trasposizione sul piano                +11.60      +11.69   (+0.09)      +11.69   (+0.09)      +10.98   (-0.62)
+orizzonte (ombre lontane)                   -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+ombre vicine, irraggiamento                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+riflessione sul vetro (IAM)             -1.52       -1.66   (-0.14)       -1.66   (-0.14)       -1.69   (-0.17)
+sporcamento                                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+livello di irraggiamento                +0.57       -0.23   (-0.80)       -0.23   (-0.80)       -0.22   (-0.79)
+temperatura                            -11.26      -11.27   (-0.01)      -11.27   (-0.01)      -11.41   (-0.15)
+qualita' del modulo                     +0.75       +0.75   (-0.00)       +0.75   (-0.00)       +0.75   (+0.00)
+LID                                         -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+mismatch                                -2.15       -2.20   (-0.05)       -2.20   (-0.05)       -2.20   (-0.05)
+effetto elettrico delle ombre               -                     -                     -                     -
+cavi DC                                 -1.31       -1.02   (+0.29)       -1.02   (+0.29)       -1.03   (+0.28)
+inverter, efficienza                    -1.86       -2.05   (-0.19)       -1.86   (-0.00)       -2.04   (-0.18)
+inverter, oltre la potenza nominale     +0.00       -0.15   (-0.15)       -0.16   (-0.16)       -0.15   (-0.15)
+cavi AC                                     -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+indisponibilita'                            -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+Passi di PVsyst senza equivalente in Meridiana: inverter, corrente massima +0.00 %; inverter, sovratensione +0.00 %; inverter, soglia di potenza +0.00 %; inverter, soglia di tensione +0.00 %; consumo notturno -0.01 % (fattore complessivo 0.9999)
+   scalato catalogo: E_Grid di Meridiana x fattore = 10482.4 MWh, scarto -1.13 % (senza fattore -1.12 %)
+   scalato inv.tarato: E_Grid di Meridiana x fattore = 10501.7 MWh, scarto -0.95 % (senza fattore -0.94 %)
+   PVGIS 5.3 catalogo: E_Grid di Meridiana x fattore = 10726.1 MWh, scarto +1.17 % (senza fattore +1.18 %)
+Temperatura massima di cella (a0): 77.3 C
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [scalato inv.tarato]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me   T pv   T me  Inc pv  Inc me     d%  Eff pv  Eff me     d%  Egrid pv  Egrid me     d%
+gen     130.7   130.7   +0.0    25.2    25.2   17.5   17.5   198.2   197.2   -0.5   196.1   195.1   -0.5    869.15    852.80   -1.9
+feb     146.3   146.3   +0.0    28.2    28.2   19.1   19.1   197.0   197.3   +0.1   194.9   194.8   -0.1    848.96    835.62   -1.6
+mar     199.4   199.4   +0.0    38.8    38.8   22.3   22.3   233.1   233.3   +0.1   230.2   229.7   -0.2    985.10    977.92   -0.7
+apr     216.5   216.5   +0.0    54.6    54.6   25.4   25.4   221.9   221.3   -0.3   218.4   217.4   -0.4    930.49    913.84   -1.8
+mag     236.5   236.5   +0.0    68.5    68.4   29.5   29.5   217.7   219.2   +0.7   213.5   214.7   +0.6    905.66    894.72   -1.2
+giu     249.7   249.7   +0.0    47.7    47.7   32.0   32.0   216.4   216.9   +0.2   211.7   211.5   -0.1    886.66    882.45   -0.5
+lug     246.4   246.4   +0.0    57.9    57.9   33.5   33.5   219.4   220.7   +0.6   214.5   215.6   +0.5    894.84    897.06   +0.2
+ago     227.7   227.7   +0.0    59.7    59.7   33.7   33.7   223.2   223.4   +0.1   219.0   218.9   -0.0    908.19    908.08   -0.0
+set     195.0   195.0   +0.0    49.1    49.1   31.1   31.1   216.3   216.6   +0.1   213.0   213.0   -0.0    890.37    888.49   -0.2
+ott     162.6   162.6   +0.0    46.4    46.4   28.1   28.1   205.0   204.9   -0.1   202.3   202.2   -0.0    860.92    853.57   -0.9
+nov     131.0   131.0   +0.0    29.1    29.1   23.4   23.4   189.4   189.7   +0.2   187.6   187.6   -0.0    812.66    805.16   -0.9
+dic     118.9   118.9   +0.0    25.0    25.0   19.4   19.4   184.9   184.6   -0.2   183.1   182.6   -0.3    809.18    793.04   -2.0
+anno   2260.7  2260.7   +0.0   530.0   530.0   26.2   26.2  2522.5  2524.9   +0.1  2484.3  2483.1   -0.0  10602.18  10502.75   -0.9
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [PVGIS 5.3 catalogo]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me     d%   T pv   T me    dT
+gen     130.7   134.8   +3.1    25.2    38.5  +52.9   17.5   16.0  -1.5
+feb     146.3   148.2   +1.3    28.2    40.2  +42.9   19.1   17.0  -2.1
+mar     199.4   208.5   +4.6    38.8    51.2  +32.2   22.3   21.0  -1.3
+apr     216.5   218.1   +0.7    54.6    64.8  +18.8   25.4   26.9  +1.4
+mag     236.5   226.4   -4.3    68.5    63.1   -7.8   29.5   29.9  +0.4
+giu     249.7   260.4   +4.3    47.7    60.6  +26.9   32.0   33.0  +1.0
+lug     246.4   258.6   +5.0    57.9    62.5   +8.0   33.5   34.8  +1.3
+ago     227.7   241.8   +6.2    59.7    61.8   +3.6   33.7   34.2  +0.5
+set     195.0   207.5   +6.4    49.1    54.9  +11.8   31.1   32.7  +1.7
+ott     162.6   172.1   +5.9    46.4    53.1  +14.3   28.1   27.2  -0.9
+nov     131.0   135.9   +3.7    29.1    38.1  +31.1   23.4   22.0  -1.3
+dic     118.9   120.3   +1.2    25.0    38.5  +53.8   19.4   18.2  -1.2
+anno   2260.7  2332.6   +3.2   530.0   627.3  +18.3   26.2   26.1  -0.2
+
+Sensibilita' (stesso meteo della variante principale, inverter tarato):
+variante                                  E_Grid MWh  scarto %    PR %  irr.liv.  temper.     IAM  orizz.
+scalato inv.tarato                           10502.7     -0.94   83.20     -0.23   -11.27   -1.66   +0.00
+gamma CEC -0.321                             10553.4     -0.46   83.60     -0.23   -10.80   -1.66   +0.00
+SDM De Soto dal datasheet                    10512.5     -0.85   83.28     -0.14   -11.27   -1.66   +0.00
+IAM ASHRAE 0,05 (default)                    10423.6     -1.68   82.57     -0.23   -11.28   -2.40   +0.00
+perdite predefinite di Meridiana             10175.3     -4.03   80.61     -0.23   -11.27   -1.66   +0.00
+
+======================================================================================================================
+CASO lafact: LaFact (Terrassa, Spagna), 590 kWp su due falde 10/+86 e 20/180, senza ombre, Meteonorm 8.1
+PVsyst 7.3.4; fonte: https://upcommons.upc.edu/bitstreams/d48523ab-71da-4969-bca0-aa3039e9934d/download (casi.json)
+Meteo del rapporto: Meteonorm 8.1 (1996-2015), Sat=58% - Sintético; GlobHor 1596.3 kWh/m2, T media 15.45 C
+Modulo: JA Solar Deep Blue 3.0 500 W (valori tipici della classe); gamma -0.327 %/K dal rapporto; efficienza 19.36 %; modello a un diodo adattato al datasheet (De Soto)
+Inverter: 6 x Fronius Tauro Eco 100-3-D (catalogo, eta Euro 98,2 %); P_AC 600 kW; DC/AC 0.983
+Perdite date a Meridiana: {'soiling': 0.0, 'quality': -0.25, 'lid': 0.0, 'mismatch': 2.2, 'dc_wiring': 1.5, 'ac_wiring': 0.0, 'unavailability': 0.0}; IAM: profilo a punti del rapporto; orizzonte: libero
+Nota: Il rapporto stampa la qualita' -0,3 % nei parametri e +0,25 % nel diagramma: in uso -0,25 %.
+Potenza STC: PVsyst 590.00 kWp, Meridiana 590.00 kWp
+PVGIS 5.3 TMY: PVGIS 5.3, typical year from PVGIS-SARAH3 + ERA5, 2005-2023; GlobHor 1699.8 kWh/m2 (+6.5 % sul rapporto), T media 15.12 C (-0.33 C)
+PVGIS 5.2 TMY: PVGIS 5.2, typical year from PVGIS-SARAH2 + ERA5, 2005-2020; GlobHor 1660.9 kWh/m2 (+4.0 % sul rapporto), T media 15.37 C
+PVGIS scalato: GlobHor 1596.2 kWh/m2, T media 15.50 C
+Efficienza pesata dell'inverter: catalogo/proxy 98.20 %, tarata sul passo di PVsyst 98.74 %
+
+Nodi della catena (PVsyst dal rapporto; Meridiana per variante; scarto % rispetto a PVsyst)
+nodo                   PVsyst        scalato catalogo      scalato inv.tarato      PVGIS 5.3 catalogo
+GlobHor kWh/m2         1596.3        1596.2 ( -0.01 %)        1596.2 ( -0.01 %)        1699.8 ( +6.49 %)
+GlobInc kWh/m2         1472.6        1423.4 ( -3.34 %)        1423.4 ( -3.34 %)        1522.0 ( +3.35 %)
+GlobEff kWh/m2         1427.2        1376.8 ( -3.53 %)        1376.8 ( -3.53 %)        1472.3 ( +3.16 %)
+EArrNom MWh             843.4         812.3 ( -3.68 %)         812.3 ( -3.68 %)         868.7 ( +3.00 %)
+EArrMPP MWh             770.2         748.9 ( -2.77 %)         748.9 ( -2.77 %)         796.7 ( +3.43 %)
+EOutInv MWh             754.6         731.5 ( -3.06 %)         735.6 ( -2.52 %)         778.7 ( +3.20 %)
+E_Grid MWh              754.6         731.5 ( -3.06 %)         735.6 ( -2.52 %)         778.7 ( +3.20 %)
+resa kWh/kWp             1279          1240 ( -3.06 %)          1247 ( -2.53 %)          1320 ( +3.19 %)
+PR %                    86.85         87.10 ( +0.25 pt)         87.59 ( +0.74 pt)         86.72 ( -0.13 pt)
+
+Rapporti fra nodi (meno sensibili al meteo)
+rapporto               PVsyst        scalato catalogo      scalato inv.tarato      PVGIS 5.3 catalogo
+GlobInc/GlobHor        0.9225        0.8917 ( -3.08 pt)        0.8917 ( -3.08 pt)        0.8954 ( -2.72 pt)
+GlobEff/GlobInc        0.9692        0.9673 ( -0.19 pt)        0.9673 ( -0.19 pt)        0.9674 ( -0.18 pt)
+EArrMPP/EArrNom        0.9133        0.9219 ( +0.86 pt)        0.9219 ( +0.86 pt)        0.9171 ( +0.38 pt)
+EOutInv/EArrMPP        0.9797        0.9768 ( -0.29 pt)        0.9822 ( +0.25 pt)        0.9774 ( -0.22 pt)
+E_Grid/EOutInv         1.0000        1.0000 ( +0.00 pt)        1.0000 ( +0.00 pt)        1.0000 ( +0.00 pt)
+E_Grid/EArrNom         0.8947        0.9005 ( +0.57 pt)        0.9055 ( +1.08 pt)        0.8964 ( +0.17 pt)
+
+Passi del diagramma delle perdite (% sul valore precedente; scarto in punti)
+passo                                  PVsyst      scalato catalogo    scalato inv.tarato    PVGIS 5.3 catalogo
+trasposizione sul piano                 -7.75      -10.83   (-3.08)      -10.83   (-3.08)      -10.46   (-2.71)
+orizzonte (ombre lontane)                   -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+ombre vicine, irraggiamento                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+riflessione sul vetro (IAM)             -3.08       -3.27   (-0.19)       -3.27   (-0.19)       -3.26   (-0.18)
+sporcamento                                 -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+livello di irraggiamento                -1.01       -0.34   (+0.67)       -0.34   (+0.67)       -0.29   (+0.72)
+temperatura                             -5.15       -5.00   (+0.15)       -5.00   (+0.15)       -5.48   (-0.33)
+qualita' del modulo                     +0.25       +0.25   (-0.00)       +0.25   (-0.00)       +0.25   (-0.00)
+LID                                         -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+mismatch                                -2.15       -2.20   (-0.05)       -2.20   (-0.05)       -2.20   (-0.05)
+effetto elettrico delle ombre               -                     -                     -                     -
+cavi DC                                 -0.83       -0.69   (+0.14)       -0.69   (+0.14)       -0.75   (+0.08)
+inverter, efficienza                    -1.78       -2.32   (-0.54)       -1.78   (-0.00)       -2.26   (-0.48)
+inverter, oltre la potenza nominale     +0.00       +0.00   (+0.00)       +0.00   (+0.00)       +0.00   (+0.00)
+cavi AC                                     -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+indisponibilita'                            -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+Passi di PVsyst senza equivalente in Meridiana: inverter, corrente massima +0.00 %; inverter, sovratensione +0.00 %; inverter, soglia di potenza +0.00 %; inverter, soglia di tensione -0.25 % (fattore complessivo 0.9975)
+   scalato catalogo: E_Grid di Meridiana x fattore = 729.7 MWh, scarto -3.30 % (senza fattore -3.06 %)
+   scalato inv.tarato: E_Grid di Meridiana x fattore = 733.7 MWh, scarto -2.77 % (senza fattore -2.52 %)
+   PVGIS 5.3 catalogo: E_Grid di Meridiana x fattore = 776.7 MWh, scarto +2.94 % (senza fattore +3.20 %)
+Temperatura massima di cella (a0): 67.6 C
+Temperatura massima di cella (a1): 60.9 C
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [scalato inv.tarato]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me   T pv   T me  Inc pv  Inc me     d%  Eff pv  Eff me     d%  Egrid pv  Egrid me     d%
+gen      63.3    63.3   +0.0    25.0    25.0    6.3    6.3    51.0    46.2   -9.4    46.9    42.0  -10.5     26.13     23.35  -10.7
+feb      81.1    81.1   +0.0    33.3    33.3    7.6    7.6    69.2    65.5   -5.3    65.1    61.2   -6.0     36.22     34.04   -6.0
+mar     131.4   131.4   +0.0    48.3    48.3   11.5   11.5   118.8   112.7   -5.1   114.4   107.9   -5.7     62.33     59.12   -5.1
+apr     158.3   158.3   +0.0    64.2    64.2   14.2   14.2   149.6   144.1   -3.7   146.2   140.5   -3.9     78.49     76.23   -2.9
+mag     195.2   195.2   +0.0    82.1    82.1   18.1   18.1   186.5   181.9   -2.5   183.1   178.5   -2.5     96.59     95.33   -1.3
+giu     209.6   209.6   +0.0    85.2    85.2   22.4   22.4   202.2   198.6   -1.8   198.9   195.5   -1.7    102.89    102.39   -0.5
+lug     213.7   213.7   +0.0    75.0    75.0   24.9   24.9   206.7   204.9   -0.9   203.1   201.7   -0.7    103.47    104.95   +1.4
+ago     187.7   187.7   +0.0    72.5    72.5   24.6   24.6   178.4   173.7   -2.6   174.8   170.1   -2.7     89.96     88.73   -1.4
+set     136.6   136.6   +0.0    59.7    59.7   20.8   20.8   124.9   121.3   -2.8   121.1   117.4   -3.0     63.92     62.93   -1.6
+ott      99.6    99.6   +0.0    42.0    42.0   17.2   17.2    87.2    84.8   -2.7    82.9    80.1   -3.4     44.52     43.36   -2.6
+nov      64.8    64.8   +0.0    29.2    29.2   10.9   10.9    54.0    50.3   -6.9    50.2    46.2   -8.0     27.63     25.34   -8.3
+dic      54.9    54.9   +0.0    22.8    22.8    6.9    6.9    44.2    39.4  -10.8    40.4    35.7  -11.5     22.43     19.78  -11.8
+anno   1596.2  1596.2   -0.0   639.4   639.3   15.4   15.4  1472.7  1423.4   -3.3  1427.1  1376.8   -3.5    754.58    735.55   -2.5
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [PVGIS 5.3 catalogo]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me     d%   T pv   T me    dT
+gen      63.3    74.4  +17.6    25.0    23.7   -5.3    6.3    6.8  +0.5
+feb      81.1    76.1   -6.1    33.3    33.0   -0.8    7.6    6.5  -1.1
+mar     131.4   128.6   -2.1    48.3    52.9   +9.5   11.5   10.4  -1.1
+apr     158.3   172.9   +9.2    64.2    62.7   -2.3   14.2   12.9  -1.3
+mag     195.2   215.7  +10.5    82.1    68.8  -16.3   18.1   18.0  -0.2
+giu     209.6   224.7   +7.2    85.2    67.3  -21.0   22.4   23.5  +1.1
+lug     213.7   229.3   +7.3    75.0    71.7   -4.4   24.9   23.8  -1.1
+ago     187.7   189.1   +0.7    72.5    67.8   -6.5   24.6   24.6  -0.1
+set     136.6   157.7  +15.5    59.7    53.5  -10.3   20.8   21.3  +0.5
+ott      99.6    99.2   -0.4    42.0    42.5   +1.2   17.2   16.7  -0.5
+nov      64.8    71.1   +9.7    29.2    28.0   -4.2   10.9    9.9  -1.0
+dic      54.9    61.0  +11.2    22.8    22.8   -0.3    6.9    6.6  -0.3
+anno   1596.2  1699.8   +6.5   639.4   594.7   -7.0   15.4   15.1  -0.4
+
+Sensibilita' (stesso meteo della variante principale, inverter tarato):
+variante                                  E_Grid MWh  scarto %    PR %  irr.liv.  temper.     IAM  orizz.
+scalato inv.tarato                             735.6     -2.52   87.59     -0.34    -5.00   -3.27   +0.00
+IAM ASHRAE 0,05 (default)                      723.7     -4.10   86.17     -0.36    -5.00   -4.81   +0.00
+perdite predefinite di Meridiana               717.3     -4.95   85.41     -0.36    -5.00   -3.27   +0.00
+
+======================================================================================================================
+CASO pelham: Pelham (Hertfordshire, UK), 52615 kWp, file 20/-2 passo 8,69 m, orizzonte, ombre per stringhe, Meteonorm 8.0
+PVsyst 7.4.5; fonte: https://assets.publishing.service.gov.uk/media/6602762fa6c0f7bb15ef9294/SE-PELHAM-PVsyst-VC4_691191698.1_.pdf (casi.json)
+Meteo del rapporto: Meteonorm 8.0 (1986-2005), Sat=100% - Synthetic; GlobHor 1076.6 kWh/m2, T media 10.19 C
+Modulo: CSI Solar Co Ltd CS6W-550MS; gamma -0.336 %/K dal rapporto; efficienza 21.45 %; modello a un diodo: parametri della lista CEC
+Inverter: 214 x Huawei SUN2000-175KTL-H0; non in catalogo, eta della famiglia 98,4 %; P_AC 37450 kW; DC/AC 1.405
+Perdite date a Meridiana: {'soiling': 0.8, 'quality': -0.5, 'lid': 1.0, 'mismatch': 0.6, 'dc_wiring': 1.5, 'ac_wiring': 1.5, 'unavailability': 0.0, 'iam_b0': 0.05}; IAM: ASHRAE b0 0,05; orizzonte: profilo stampato
+Nota: La scena 3D ha anche terreno e siepi: il modello a file di Meridiana e' un'approssimazione.
+Nota: DC/AC 1,40: PVsyst taglia -0,61 % sull'inverter.
+Potenza STC: PVsyst 52615.20 kWp, Meridiana 52615.20 kWp
+PVGIS 5.3 TMY: PVGIS 5.3, typical year from PVGIS-SARAH3 + ERA5, 2005-2023; GlobHor 1021.6 kWh/m2 (-5.1 % sul rapporto), T media 10.28 C (+0.09 C)
+PVGIS 5.2 TMY: PVGIS 5.2, typical year from PVGIS-SARAH2 + ERA5, 2005-2020; GlobHor 1033.3 kWh/m2 (-4.0 % sul rapporto), T media 10.13 C
+PVGIS scalato: GlobHor 1076.6 kWh/m2, T media 10.23 C
+Efficienza pesata dell'inverter: catalogo/proxy 98.40 %, tarata sul passo di PVsyst 98.83 %
+
+Nodi della catena (PVsyst dal rapporto; Meridiana per variante; scarto % rispetto a PVsyst)
+nodo                   PVsyst        scalato catalogo      scalato inv.tarato      PVGIS 5.3 catalogo
+GlobHor kWh/m2         1076.6        1076.6 ( +0.00 %)        1076.6 ( +0.00 %)        1021.6 ( -5.11 %)
+GlobInc kWh/m2         1240.3        1237.0 ( -0.26 %)        1237.0 ( -0.26 %)        1185.5 ( -4.41 %)
+GlobEff kWh/m2         1151.4        1154.5 ( +0.27 %)        1154.5 ( +0.27 %)        1101.6 ( -4.32 %)
+EArrNom MWh           60678.6       60742.5 ( +0.11 %)       60742.5 ( +0.11 %)       57961.1 ( -4.48 %)
+EArrMPP MWh           58228.9       57373.7 ( -1.47 %)       57373.7 ( -1.47 %)       55127.3 ( -5.33 %)
+EOutInv MWh           56843.4       53210.4 ( -6.39 %)       53396.5 ( -6.06 %)       53064.9 ( -6.65 %)
+E_Grid MWh            55578.6       52711.7 ( -5.16 %)       52894.9 ( -4.83 %)       52583.3 ( -5.39 %)
+resa kWh/kWp             1056          1002 ( -5.13 %)          1005 ( -4.80 %)           999 ( -5.36 %)
+PR %                    85.17         80.99 ( -4.18 pt)         81.27 ( -3.90 pt)         84.30 ( -0.87 pt)
+
+Rapporti fra nodi (meno sensibili al meteo)
+rapporto               PVsyst        scalato catalogo      scalato inv.tarato      PVGIS 5.3 catalogo
+GlobInc/GlobHor        1.1521        1.1490 ( -0.30 pt)        1.1490 ( -0.30 pt)        1.1605 ( +0.85 pt)
+GlobEff/GlobInc        0.9283        0.9333 ( +0.49 pt)        0.9333 ( +0.49 pt)        0.9292 ( +0.09 pt)
+EArrMPP/EArrNom        0.9596        0.9445 ( -1.51 pt)        0.9445 ( -1.51 pt)        0.9511 ( -0.85 pt)
+EOutInv/EArrMPP        0.9762        0.9274 ( -4.88 pt)        0.9307 ( -4.55 pt)        0.9626 ( -1.36 pt)
+E_Grid/EOutInv         0.9777        0.9906 ( +1.29 pt)        0.9906 ( +1.29 pt)        0.9909 ( +1.32 pt)
+E_Grid/EArrNom         0.9160        0.8678 ( -4.82 pt)        0.8708 ( -4.51 pt)        0.9072 ( -0.87 pt)
+
+Passi del diagramma delle perdite (% sul valore precedente; scarto in punti)
+passo                                  PVsyst      scalato catalogo    scalato inv.tarato    PVGIS 5.3 catalogo
+trasposizione sul piano                +15.20      +14.90   (-0.30)      +14.90   (-0.30)      +16.05   (+0.85)
+orizzonte (ombre lontane)               -0.42       -0.24   (+0.18)       -0.24   (+0.18)       -0.27   (+0.15)
+ombre vicine, irraggiamento             -2.92       -2.45   (+0.47)       -2.45   (+0.47)       -2.77   (+0.15)
+riflessione sul vetro (IAM)             -3.20       -3.33   (-0.13)       -3.33   (-0.13)       -3.40   (-0.20)
+sporcamento                             -0.80       -0.80   (-0.00)       -0.80   (-0.00)       -0.80   (-0.00)
+livello di irraggiamento                -1.15       -1.14   (+0.01)       -1.14   (+0.01)       -1.17   (-0.02)
+temperatura                             -0.67       -1.33   (-0.66)       -1.33   (-0.66)       -0.54   (+0.13)
+qualita' del modulo                     +0.50       +0.50   (-0.00)       +0.50   (-0.00)       +0.50   (-0.00)
+LID                                     -1.00       -1.00   (+0.00)       -1.00   (+0.00)       -1.00   (-0.00)
+mismatch                                -0.60       -0.60   (-0.00)       -0.60   (-0.00)       -0.60   (+0.00)
+effetto elettrico delle ombre           -0.42       -1.31   (-0.89)       -1.31   (-0.89)       -1.49   (-1.07)
+cavi DC                                 -0.76       -0.79   (-0.03)       -0.79   (-0.03)       -0.69   (+0.07)
+inverter, efficienza                    -1.77       -2.20   (-0.43)       -1.77   (-0.00)       -2.12   (-0.35)
+inverter, oltre la potenza nominale     -0.61       -5.17   (-4.56)       -5.26   (-4.65)       -1.65   (-1.04)
+cavi AC                                 -0.70       -0.94   (-0.24)       -0.94   (-0.24)       -0.91   (-0.21)
+indisponibilita'                            -       +0.00    (n.c.)       +0.00    (n.c.)       +0.00    (n.c.)
+Passi di PVsyst senza equivalente in Meridiana: inverter, corrente massima +0.00 %; inverter, sovratensione +0.00 %; inverter, soglia di potenza -0.01 %; inverter, soglia di tensione +0.00 %; consumo notturno -0.01 %; ausiliari -0.21 %; trasformatore MT -1.28 %; linea MT -0.05 % (fattore complessivo 0.9844)
+   scalato catalogo: E_Grid di Meridiana x fattore = 51891.3 MWh, scarto -6.63 % (senza fattore -5.16 %)
+   scalato inv.tarato: E_Grid di Meridiana x fattore = 52071.7 MWh, scarto -6.31 % (senza fattore -4.83 %)
+   PVGIS 5.3 catalogo: E_Grid di Meridiana x fattore = 51765.0 MWh, scarto -6.86 % (senza fattore -5.39 %)
+Dettagli delle file (a0): {'rows': 1840, 'row pitch': 8.69, 'height of a row along its slope': 4.6, 'ground cover ratio': 0.5293440736478711, 'share of the sky hidden by the row in front': 3.07743177327536, 'share of the light reflected by the ground lost over the year': 72.39598743899101, 'loss': 2.4475239115905745}; ombra lineare delle file 2.45 %, effetto elettrico 1.31 %
+Orizzonte (a0): cielo diffuso ancora visto 99.25 % (PVsyst stampa il 'Diffuse Factor' dell'orizzonte: vedi casi.json)
+Temperatura massima di cella (a0): 59.7 C
+Meridiana avverte: The inverter clips 5.3% of the energy: check the DC/AC ratio.
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [scalato inv.tarato]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me   T pv   T me  Inc pv  Inc me     d%  Eff pv  Eff me     d%  Egrid pv  Egrid me     d%
+gen      23.7    23.7   +0.0    13.1    13.1    4.3    4.3    39.7    38.4   -3.3    31.3    32.9   +5.2   1500.92   1451.57   -3.3
+feb      38.3    38.3   +0.0    22.7    22.7    4.4    4.4    52.2    53.8   +3.2    48.0    49.5   +3.1   2388.67   2447.45   +2.5
+mar      78.8    78.8   +0.0    42.6    42.5    6.2    6.2    99.3    96.7   -2.6    93.3    91.1   -2.4   4676.98   4634.88   -0.9
+apr     126.6   126.6   +0.0    62.4    62.4    8.6    8.6   143.3   141.4   -1.3   135.4   133.5   -1.4   6662.54   5674.85  -14.8
+mag     153.9   153.9   +0.0    71.4    71.4   12.0   12.0   162.0   161.4   -0.4   153.3   152.6   -0.5   7359.51   6751.92   -8.3
+giu     164.5   164.5   +0.0    82.7    82.7   15.0   15.0   168.0   168.0   -0.0   158.8   158.9   +0.1   7540.48   6688.43  -11.3
+lug     158.3   158.3   +0.0    82.6    82.6   17.6   17.6   163.5   163.2   -0.2   154.3   154.3   -0.0   7292.20   7108.45   -2.5
+ago     127.9   127.9   +0.0    72.6    72.6   17.1   17.1   137.8   137.9   +0.1   129.9   130.0   +0.1   6214.28   6130.02   -1.4
+set      97.9    97.9   +0.0    45.0    45.0   14.2   14.2   119.5   119.2   -0.3   112.8   112.8   +0.0   5448.19   5463.71   +0.3
+ott      57.2    57.2   +0.0    31.0    31.0   11.0   11.0    75.2    77.1   +2.6    69.9    72.2   +3.3   3412.75   3596.25   +5.4
+nov      29.5    29.5   +0.0    16.2    16.2    6.9    6.9    46.2    46.8   +1.3    39.2    40.7   +3.9   1888.47   1832.03   -3.0
+dic      20.0    20.0   +0.0    12.4    12.4    5.1    5.1    33.4    33.2   -0.6    25.2    25.8   +2.5   1193.59   1115.30   -6.6
+anno   1076.6  1076.6   +0.0   554.6   554.5   10.2   10.2  1240.1  1237.0   -0.2  1151.4  1154.5   +0.3  55578.55  52894.85   -4.8
+
+Tabella mensile: PVsyst (rapporto) contro Meridiana [PVGIS 5.3 catalogo]
+mese   GHI pv  GHI me     d%  DHI pv  DHI me     d%   T pv   T me    dT
+gen      23.7    26.5  +11.7    13.1    16.0  +22.6    4.3    3.3  -1.0
+feb      38.3    39.6   +3.4    22.7    24.5   +8.0    4.4    5.7  +1.3
+mar      78.8    94.0  +19.3    42.6    44.7   +5.0    6.2    7.0  +0.8
+apr     126.6    97.6  -22.9    62.4    55.5  -11.1    8.6   10.3  +1.6
+mag     153.9   142.2   -7.6    71.4    82.7  +15.8   12.0   10.3  -1.7
+giu     164.5   130.0  -21.0    82.7    83.0   +0.3   15.0   15.0  -0.0
+lug     158.3   152.5   -3.7    82.6    85.4   +3.4   17.6   17.4  -0.1
+ago     127.9   124.1   -3.0    72.6    74.5   +2.7   17.1   16.1  -1.0
+set      97.9   103.5   +5.7    45.0    50.9  +13.3   14.2   13.4  -0.8
+ott      57.2    58.9   +3.0    31.0    33.6   +8.6   11.0   13.3  +2.3
+nov      29.5    29.7   +0.7    16.2    18.5  +14.2    6.9    6.5  -0.4
+dic      20.0    23.1  +15.5    12.4    11.9   -3.8    5.1    4.8  -0.3
+anno   1076.6  1021.6   -5.1   554.6   581.3   +4.8   10.2   10.3  +0.1
+
+Sensibilita' (stesso meteo della variante principale, inverter tarato):
+variante                                  E_Grid MWh  scarto %    PR %  irr.liv.  temper.     IAM  orizz.
+scalato inv.tarato                           52894.9     -4.83   81.27     -1.14    -1.33   -3.33   -0.24
+gamma CEC -0.320                             52885.7     -4.85   81.25     -1.14    -1.27   -3.33   -0.24
+SDM De Soto dal datasheet                    53026.2     -4.59   81.47     -0.92    -1.33   -3.33   -0.24
+senza orizzonte                              53024.7     -4.59   81.47     -1.14    -1.34   -3.33   +0.00
+perdite predefinite di Meridiana             52161.9     -6.15   80.14     -1.15    -1.34   -3.33   -0.24
+
+======================================================================================================================
+RIASSUNTO (variante principale: meteo del rapporto o scalato su di esso, inverter tarato)
+caso             E_Grid PVsyst  Meridiana scarto % x fattore  PR pv  PR me   dPR GlobInc d% GlobEff/Inc d MPP/Nom d
+peaki                    615.5      627.8    +2.01     +2.00  85.28  87.03 +1.75      -0.05         -0.01     +0.07
+kanpur                     7.0        7.1    +1.92     +1.46  81.87  83.41 +1.54      +0.03         -0.10     +1.49
+almarj                   107.7      109.3    +1.44     +1.41  85.13  86.36 +1.23      -0.00         -0.04     +1.31
+kuwait                   163.7      162.5    -0.71     -0.71  83.35  82.76 -0.59      -0.00         -0.17     -0.27
+montescaglioso          8065.0     7957.0    -1.34     -3.09  85.50  85.40 -0.10      -1.22         +0.15     -1.84
+neom                   10602.2    10502.7    -0.94     -0.95  84.07  83.20 -0.87      +0.10         -0.14     -0.49
+lafact                   754.6      735.6    -2.52     -2.77  86.85  87.59 +0.74      -3.34         -0.19     +0.86
+pelham                 55578.6    52894.9    -4.83     -6.31  85.17  81.27 -3.90      -0.26         +0.49     -1.51
+
+RIASSUNTO con il meteo PVGIS 5.3 grezzo e l'efficienza di catalogo (quello che l'applicazione farebbe oggi);
+'effetto meteo' = E_Grid di Meridiana con PVGIS 5.3 contro E_Grid di Meridiana con il meteo del rapporto
+caso             E_Grid PVsyst  Meridiana scarto % eff.meteo %  PR pv  PR me GlobHor d% T media d
+peaki                    615.5      623.5    +1.29       -0.70  85.28  86.76      -0.80     +0.65
+kanpur                     7.0        9.2   +31.21      +28.74  81.87  83.27     +18.39     +0.04
+almarj                   107.7      125.4   +16.37      +14.72  85.13  84.80     +15.02     -0.74
+kuwait                   163.7      176.8    +8.05       +8.82  83.35  82.38      +8.73     -0.13
+montescaglioso          8065.0     8810.9    +9.25      +10.73  85.50  84.48      +8.42     -1.17
+neom                   10602.2    10727.2    +1.18       +2.14  84.07  82.88      +3.19     -0.17
+lafact                   754.6      778.7    +3.20       +5.87  86.85  86.72      +6.49     -0.38
+pelham                 55578.6    52583.3    -5.39       -0.59  85.17  84.30      -5.11     +0.06
