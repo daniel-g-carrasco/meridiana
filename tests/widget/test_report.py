@@ -155,6 +155,13 @@ class Report(unittest.TestCase):
             self.assertIn(_keys_text([k for _sf, k, _c in s.modules]), text)
         self.assertIn("Modules in series within the range the input takes", text)   # the checks of each input
         self.assertIn("modules in series", text)
+        # their marks the window's symbols, pictures of the report (R138: they were the characters ✔ ⚠ ✘ ℹ)
+        self.assertIn("symbol-check", _images)
+        self.assertIn("<img src='symbol-check'", text)
+        self.assertNotIn("✔", text)
+        from meridiana.ui import report_chapters
+        self.assertIsNone(report_chapters._IMAGE[0])                                # no report left behind
+        self.assertTrue(report_chapters._symbol_png("check").startswith(b"\x89PNG"))
         self.assertEqual(_keys_text(["0:0", "0:1", "0:2", "1:2", "1:1", "1:0", "3:5"]), "0:0-2, 1:2-0, 3:5")
         self.assertEqual(_keys_text(["0:0", "0:2", "0:3:1"]), "0:0, 0:2, 0:3:1")
 

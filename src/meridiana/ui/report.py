@@ -310,6 +310,16 @@ def _compose(project, data: dict, image, profile: dict | None = None, pages: dic
     "attachment:k") -> its page, for the contents (None: blanks); `attached`: the attachments that go in, each
     behind a page of its own after the last chapter. With `only` a chapter alone, under a title of its own (the
     «How it is computed» of the register of the calculations), without cover, contents and attachments."""
+    from . import report_chapters
+    report_chapters._IMAGE[0] = image             # the marks as pictures of this report (report_chapters.mark)
+    try:
+        return _compose_parts(project, data, image, profile, pages, only, attached)
+    finally:
+        report_chapters._IMAGE[0] = None
+
+
+def _compose_parts(project, data: dict, image, profile: dict | None, pages: dict | None, only: str,
+                   attached: list | None) -> tuple[str, list]:
     data = _with_notes(data)
     settings = reports.settings(project)
     template = reports.templates()[settings["template"]]

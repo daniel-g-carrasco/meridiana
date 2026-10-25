@@ -10,6 +10,7 @@ storage, the weather's text ("meteo_text"). A chapter is called only when its da
 
 from __future__ import annotations
 
+import functools
 import html
 import io
 import math
@@ -25,6 +26,9 @@ from .report_style import CHROME, INK, MARK_COLOURS, PLAN, STRING_HUES
 from .theme import matplotlib_fonts
 
 MARKS = {"ok": "✔", "warn": "⚠", "fail": "✘", "info": "ℹ"}
+SYMBOL_OF = {"✔": "check", "⚠": "warning", "✘": "stop", "ℹ": "info"}     # a mark's symbol (ui/symbols.py)
+SYMBOL_PX, SYMBOL_RATIO = 12, 6.0       # a symbol in a line of the report (9,5 pt), drawn at 6 times for the print
+_IMAGE: list = [None]                   # the report being written: its image(name, make, ratio) (report._compose)
 
 
 class Html(str):
@@ -43,9 +47,37 @@ class Context:
 
 
 def mark(symbol: str) -> str:
-    """A result's mark in its colour, in a font that has it."""
+    """A result's mark as the window's symbol (R138: it was the character in its colour): a picture of the report
+    while one is written, the window's own in a label; the character in its colour for any other."""
+    name = SYMBOL_OF.get(symbol)
+    if name is not None and _IMAGE[0] is not None:
+        url = _IMAGE[0](f"symbol-{name}", functools.partial(_symbol_png, name), SYMBOL_RATIO)
+        return f"<img src='{url}' width='{SYMBOL_PX}' height='{SYMBOL_PX}' style='vertical-align: middle'>"
+    if name is not None:
+        from . import symbols
+        return symbols.html(name)
     from .theme import mark as in_font
     return f"<span style='color: {MARK_COLOURS.get(symbol, INK)}'>{in_font(symbol)}</span>"
+
+
+@functools.lru_cache(maxsize=8)
+def _symbol_png(name: str) -> bytes:
+    """The symbol on the report's white, SYMBOL_RATIO times its size, as PNG."""
+    from PySide6.QtCore import QBuffer, QIODevice, QRectF, Qt
+    from PySide6.QtGui import QImage, QPainter
+
+    from . import symbols
+    side = round(SYMBOL_PX * SYMBOL_RATIO)
+    image = QImage(side, side, QImage.Format.Format_ARGB32_Premultiplied)
+    image.fill(Qt.GlobalColor.transparent)
+    p = QPainter(image)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    symbols.renderer(name, False).render(p, QRectF(0, 0, side, side))
+    p.end()
+    buffer = QBuffer()
+    buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+    image.save(buffer, "PNG")
+    return bytes(buffer.data())
 
 
 def esc(value) -> str:
