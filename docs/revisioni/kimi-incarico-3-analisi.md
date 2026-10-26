@@ -70,3 +70,30 @@ Con il progetto di prova, non con quelli di Daniel:
 ### Nota sul controllo di base
 
 La prima suite del nucleo ha eseguito 786 prove e si è fermata su `test_no_em_dash_anywhere_the_user_reads`: il commit di base conteneva un trattino lungo U+2014 nella docstring di `ui/symbols.py`, file non toccato da questo punto. È sostituito dal segno meno U+2212, senza cambiare i simboli disegnati. La prova è ripetuta prima del commit.
+
+## 2. R141 e R144: «non risponde» su Linux
+
+### Che cosa è verificato
+
+**«Proponi» non calcola al primo tocco.** Il comando `strings_auto` ha un `QMenu` con quattro strategie. Il `QToolButton` della barra usa `InstantPopup`: un solo clic, e quindi un tap che Qt consegna come clic, apre il menu senza proporre alcuna stringa. La proposta parte solo scegliendo una strategia. Il menu appartiene alla `MainWindow`, quindi ha un genitore Qt; il genitore transitorio Wayland e la posizione sullo schermo non sono valutabili con la piattaforma offscreen. [V: `window.py:939-957`, `phasebar.py:153-167`, nuova prova `test_propose_is_a_menu_opened_by_one_click_and_sizing_says_what_it_did`]
+
+**Il dimensionamento risponde a parole.** Con un inverter nel catalogo del progetto calcola quanti esemplari servono e scrive modello, quantità e rapporto DC/AC nella barra di stato. Senza inverter non ne sceglie uno dal catalogo: conserva il dimensionamento astratto e lo dice nella stessa barra. Il messaggio resta per sei secondi. [V: `window.py:3484-3503`, nuova prova citata]
+
+**La Producibilità riparte dopo una modifica.** Una modifica geometrica segna l'anno come da aggiornare, mantiene leggibili i vecchi valori in grigio e, al ritorno della posa, avvia il timer di 500 ms. Al ritorno del calcolo i valori e il titolo della fase tornano puliti. [V: `StaleValues.test_the_values_are_greyed_while_the_project_has_changed_and_clean_with_the_new_year_or_an_undo`, già presente e rieseguita]
+
+### Ipotesi ancora da distinguere sul portatile
+
+1. **Dopo un tap su «Proponi» non è stata scelta una strategia.** Prova: compare il menu? Se sì, scegliere «avanti e indietro» e guardare la barra di stato. Questo spiega l'assenza di stringhe senza un guasto del calcolo. [I]
+2. **Il menu si apre fuori schermo o senza genitore transitorio su Niri.** Prova: ripetere con la finestra non massimizzata e poi con Calcola > Proponi le stringhe. Se dal menu tradizionale funziona e dalla barra no, il difetto è del popup Wayland, non della stringatura. [I]
+3. **L'esito del dimensionamento passa inosservato.** Prova: osservare la barra di stato subito dopo il comando e la riga degli inverter a destra. Il messaggio c'è, ma non dice quanto dura né apre un riepilogo. [V per il messaggio, I per la percezione]
+4. **La Producibilità mostra un anno vecchio o nessun anno mentre posa e calcolo sono in corso.** Prova: attendere la fine delle indicazioni di calcolo e controllare il puntino «·» accanto a Producibilità. Se resta, premere F5. Se il progetto non ha moduli posati, il risultato vuoto è atteso. [I]
+5. **Un progetto diverso dal progetto di prova produce un errore.** Prova: leggere il campo sotto il modulo e il registro; non attribuire a Wayland un errore dei dati. [I]
+
+Nessuna correzione è fatta in questo punto: il comportamento del menu e dell'aggiornamento è confermato, il sintomo sullo schermo Wayland non è riprodotto. La scelta della marca e un esito più esplicito del dimensionamento sono il punto 7.
+
+### Da provare sullo schermo
+
+1. Un tap su «Proponi»: fotografare dove compare il menu e scegliere una strategia.
+2. Ripetere dal menu Calcola e con la finestra ridotta.
+3. Premere «Dimensiona l'inverter da solo»: controllare subito la barra di stato e il pannello di destra.
+4. Cambiare l'altezza dell'edificio: il puntino su Producibilità deve comparire, i valori restare leggibili in grigio e aggiornarsi da soli.

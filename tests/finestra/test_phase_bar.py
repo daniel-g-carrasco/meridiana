@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest import mock
 
 import _setup
-from _fixtures import capannone, clear_sky_meteo
+from _fixtures import capannone, clear_sky_meteo, inverter_record
 
 from meridiana import config, phases
 
@@ -112,6 +112,25 @@ class PhaseRow(unittest.TestCase):
         win.undo.undo()
         win.undo.undo()
         self.assertTrue(win.project.subfields[0].filled)
+
+    def test_propose_is_a_menu_opened_by_one_click_and_sizing_says_what_it_did(self):
+        """R141 on Linux: the menu itself is not the automatic proposal; the sizing command answers in the bar."""
+        win = self.win
+        win.show_phase("plant")
+        button = win.bars["plant"].buttons()["strings_auto"]
+        button.click()
+        menu = win.strategy_menu
+        self.addCleanup(menu.close)
+        self.assertTrue(menu.isVisible())
+        self.assertIs(menu.parentWidget(), win)
+        self.assertEqual(win.project.energy.get("strings", {}).get("runs"), None)
+        menu.close()
+        win.project.energy["inverters"] = [{"record": inverter_record(model="AC-10K", ac_power_nominal_w=10000), "count": 1,
+                                            "name": ""}]
+        win.commands["inverter_auto"].trigger()
+        message = win.statusBar().currentMessage()
+        self.assertIn("AC-10K", message)
+        self.assertIn("DC/AC", message)
 
     def test_the_words_under_the_icons_the_low_window_the_bar_on_the_left_the_preferences_and_the_variant(self):
         from PySide6.QtCore import QPoint, Qt
