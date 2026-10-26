@@ -76,10 +76,9 @@ class Fallback(unittest.TestCase):
         self.addCleanup(self.server.close)
         root = f"http://127.0.0.1:{self.server.port}"
         pcn = tiles.Source("pcn", "Test orthophoto", "xyz", root + "/pcn/{z}/{x}/{y}.png",
-                           "Test orthophoto", "test", "https://example.org", "2026-10-26", rank=40, custom=True)
+                           "Test orthophoto", "test", "https://example.org", "2026-10-26", rank=40)
         osm = tiles.Source("osm", "Test map", "xyz", root + "/osm/{z}/{x}/{y}.png",
-                           "Test map", "test", "https://example.org", "2026-10-26", imagery="map", rank=20,
-                           custom=True)
+                           "Test map", "test", "https://example.org", "2026-10-26", imagery="map", rank=20)
         self.view = PlanView(Path(tempfile.mkdtemp()))
         self.view.sources = {"pcn": pcn, "osm": osm}
         self.view.loader.sources = self.view.sources
@@ -101,7 +100,7 @@ class Fallback(unittest.TestCase):
             view._update_tiles()
             self.assertTrue(_setup.wait_until(self.app, lambda: view.source == "osm", 15))
             self.assertTrue(view.fallback_strip.isVisibleTo(view))
-            self.assertIn("Test orthophoto", view.fallback_strip.message.text())
+            self.assertIn("Geoportale Nazionale", view.fallback_strip.message.text())
             self.assertEqual(view.choice, "auto")
             pcn_asks = len([p for p in self.server.asked if p.startswith("/pcn/")])
             view._update_tiles()
@@ -151,6 +150,28 @@ class Fallback(unittest.TestCase):
 
         self.assertEqual(tiles.fallbacks(tiles.SOURCES, "pcn", 9.03, 45.5226, detailed=True), ["osm", "opentopomap"])
         self.assertEqual(tiles.fallbacks(tiles.SOURCES, "pcn", 9.03, 45.5226, detailed=False)[0], "eox-2016")
+
+    def test_automatic_uses_the_street_map_afar_the_photo_near_and_never_overrides_a_manual_choice(self):
+        from PySide6.QtGui import QTransform
+
+        from meridiana import tiles
+
+        view = self.view
+        view.loader.offline = True
+        self.assertEqual(tiles.automatic(view.sources, view.origin.lon, view.origin.lat, 5.0), "osm")
+        self.assertEqual(tiles.automatic(view.sources, view.origin.lon, view.origin.lat, 1.0), "pcn")
+        view.choice = "auto"
+        view.setTransform(QTransform().scale(0.2, 0.2))
+        view._choose(force=True)
+        self.assertEqual(view.source, "osm")
+        self.assertEqual(view.attribution.full, "Test map")
+        view.setTransform(QTransform().scale(2.0, 2.0))
+        view._moved()
+        self.assertEqual(view.source, "pcn")
+        self.assertEqual(view.attribution.full, "Test orthophoto")
+        view.set_source("osm")
+        view._moved()
+        self.assertEqual(view.source, "osm")
 
 
 if __name__ == "__main__":

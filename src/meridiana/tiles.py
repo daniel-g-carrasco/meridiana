@@ -608,16 +608,28 @@ def best(sources: dict, lon: float, lat: float) -> str:
     return "osm" if "osm" in sources else NONE
 
 
-def effective(choice: str, sources: dict, lon: float, lat: float) -> str:
+AUTO_PHOTO_MPP = 2.0            # a 40 m roof is about 20 screen pixels at this transition
+
+
+def automatic(sources: dict, lon: float, lat: float, metres_per_pixel: float) -> str:
+    """The street map to orient yourself from afar, the best local orthophoto near enough to draw."""
+    if metres_per_pixel > AUTO_PHOTO_MPP and "osm" in sources:
+        return "osm"
+    return best(sources, lon, lat)
+
+
+def effective(choice: str, sources: dict, lon: float, lat: float, metres_per_pixel: float = 0.0) -> str:
     """The source the plan shows for the designer's choice: none, the source chosen where it covers the site, else
-    the best for the site (a source chosen for a French project is not used on an Italian one, and comes back on the
-    next French one)."""
+    the automatic source for this zoom (a source chosen for a French project is not used on an Italian one, and comes
+    back on the next French one)."""
     if choice == NONE:
         return NONE
+    if choice == AUTO:
+        return automatic(sources, lon, lat, metres_per_pixel)
     s = sources.get(choice)
     if s is not None and s.covers(lon, lat):
         return choice
-    return best(sources, lon, lat)
+    return automatic(sources, lon, lat, metres_per_pixel)
 
 
 def fallbacks(sources: dict, failed: str, lon: float, lat: float, detailed: bool = True) -> list[str]:

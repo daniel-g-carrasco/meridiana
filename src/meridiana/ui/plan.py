@@ -409,7 +409,7 @@ class PlanView(QGraphicsView):
         return self.sources.get(self.source) if self.source != tiles.NONE else None
 
     def _choose(self, force: bool = False) -> None:
-        key = tiles.effective(self.choice, self.sources, self.origin.lon, self.origin.lat)
+        key = tiles.effective(self.choice, self.sources, self.origin.lon, self.origin.lat, self.metres_per_pixel())
         if key in self.unavailable and time.monotonic() - self.unavailable[key] < FAILOVER_COOLDOWN:
             choices = tiles.fallbacks(self.sources, key, self.origin.lon, self.origin.lat,
                                       detailed=self.metres_per_pixel() < 20.0)
@@ -529,6 +529,8 @@ class PlanView(QGraphicsView):
         thinned again to the zoom when it changed enough."""
         self.tile_timer.start()
         mpp = self.metres_per_pixel()
+        if self.choice == tiles.AUTO and not self.fallback_from:
+            self._choose()
         self.scale_bar.set_scale(mpp)
         numbered = getattr(self, "numbered_at", 0.0)
         tagged = getattr(self, "tagged_at", 0.0)
