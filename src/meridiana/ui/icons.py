@@ -23,7 +23,8 @@ NAMES = {"undo": "undo-2", "redo": "redo-2", "select": "mouse-pointer-2", "build
          # the bars of the phases (task 17b): by the command's id
          "rectangle": "rectangle-horizontal", "square": "square", "fill": "layout-grid", "empty": "eraser",
          "inverter_catalog": "zap", "inverter_auto": "wand", "compute": "play", "fetch_pvgis": "cloud-download",
-         "compare_variants": "git-compare", "import_curve": "file-input", "consumption_base": "sliders-horizontal",
+         "compare_variants": "git-compare", "new_variant": "copy-plus",
+         "import_curve": "file-input", "consumption_base": "sliders-horizontal",
          "battery_catalog": "battery-charging", "export_report": "file-text", "save_revision": "copy-plus",
          "export_csv": "rows-3",
          "copy_notes": "clipboard-copy",

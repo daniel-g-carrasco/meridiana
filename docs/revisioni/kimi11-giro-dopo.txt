@@ -1,0 +1,257 @@
+   0.962 s  piattaforma=wayland, Qt=6.12.0, schermi=[('Meta-0', 1600, 1000)]
+   1.695 s  fase model: clic e attesa=351.6 ms
+   2.045 s  tema light: 350.5 ms
+   2.092 s  foto kimi11-strumenti-dopo-model-chiaro-1280-medio.png: 1576 x 80, salvata=True, grab=46.7 ms
+   3.524 s  tema dark: 1431.4 ms
+   3.529 s  foto kimi11-strumenti-dopo-model-scuro-1280-medio.png: 1576 x 80, salvata=True, grab=5.3 ms
+   3.907 s  fase plant: clic e attesa=377.5 ms
+   5.375 s  tema light: 1468.1 ms
+   5.383 s  foto kimi11-strumenti-dopo-plant-chiaro-1280-medio.png: 1576 x 80, salvata=True, grab=8.4 ms
+   6.989 s  tema dark: 1605.2 ms
+   6.994 s  foto kimi11-strumenti-dopo-plant-scuro-1280-medio.png: 1576 x 80, salvata=True, grab=4.7 ms
+   7.359 s  fase production: clic e attesa=365.3 ms
+   8.794 s  tema light: 1434.4 ms
+   8.798 s  foto kimi11-strumenti-dopo-production-chiaro-1280-medio.png: 1576 x 80, salvata=True, grab=4.5 ms
+  10.183 s  tema dark: 1384.6 ms
+  10.187 s  foto kimi11-strumenti-dopo-production-scuro-1280-medio.png: 1576 x 80, salvata=True, grab=4.1 ms
+  10.553 s  fase consumption: clic e attesa=366.3 ms
+  12.015 s  tema light: 1461.0 ms
+  12.019 s  foto kimi11-strumenti-dopo-consumption-chiaro-1280-medio.png: 1576 x 80, salvata=True, grab=4.5 ms
+  13.484 s  tema dark: 1464.7 ms
+  13.488 s  foto kimi11-strumenti-dopo-consumption-scuro-1280-medio.png: 1576 x 80, salvata=True, grab=4.0 ms
+  13.855 s  fase economics: clic e attesa=367.5 ms
+  15.337 s  tema light: 1481.3 ms
+  15.341 s  foto kimi11-strumenti-dopo-economics-chiaro-1280-medio.png: 1576 x 80, salvata=True, grab=4.2 ms
+  16.796 s  tema dark: 1454.8 ms
+  16.800 s  foto kimi11-strumenti-dopo-economics-scuro-1280-medio.png: 1576 x 80, salvata=True, grab=4.2 ms
+  17.165 s  fase report: clic e attesa=364.8 ms
+  18.605 s  tema light: 1440.1 ms
+  18.610 s  foto kimi11-strumenti-dopo-report-chiaro-1280-medio.png: 1576 x 80, salvata=True, grab=4.9 ms
+  20.089 s  tema dark: 1478.3 ms
+  20.093 s  foto kimi11-strumenti-dopo-report-scuro-1280-medio.png: 1576 x 80, salvata=True, grab=4.1 ms
+  20.762 s  fase model: clic e attesa=365.0 ms
+  22.239 s  tema light: 1477.5 ms
+  22.245 s  foto kimi11-strumenti-dopo-model-chiaro-1600-medio.png: 1576 x 80, salvata=True, grab=5.5 ms
+  23.654 s  tema dark: 1409.8 ms
+  23.659 s  foto kimi11-strumenti-dopo-model-scuro-1600-medio.png: 1576 x 80, salvata=True, grab=4.9 ms
+  24.024 s  fase plant: clic e attesa=364.5 ms
+  25.491 s  tema light: 1466.6 ms
+  25.495 s  foto kimi11-strumenti-dopo-plant-chiaro-1600-medio.png: 1576 x 80, salvata=True, grab=4.4 ms
+  26.922 s  tema dark: 1426.7 ms
+  26.926 s  foto kimi11-strumenti-dopo-plant-scuro-1600-medio.png: 1576 x 80, salvata=True, grab=4.5 ms
+  27.289 s  fase production: clic e attesa=362.7 ms
+  28.689 s  tema light: 1400.1 ms
+  28.694 s  foto kimi11-strumenti-dopo-production-chiaro-1600-medio.png: 1576 x 80, salvata=True, grab=4.5 ms
+  30.156 s  tema dark: 1462.5 ms
+  30.160 s  foto kimi11-strumenti-dopo-production-scuro-1600-medio.png: 1576 x 80, salvata=True, grab=3.6 ms
+  30.522 s  fase consumption: clic e attesa=362.2 ms
+  31.982 s  tema light: 1459.6 ms
+  31.986 s  foto kimi11-strumenti-dopo-consumption-chiaro-1600-medio.png: 1576 x 80, salvata=True, grab=4.2 ms
+  33.454 s  tema dark: 1467.8 ms
+  33.458 s  foto kimi11-strumenti-dopo-consumption-scuro-1600-medio.png: 1576 x 80, salvata=True, grab=3.7 ms
+  33.823 s  fase economics: clic e attesa=364.9 ms
+  35.299 s  tema light: 1476.0 ms
+  35.303 s  foto kimi11-strumenti-dopo-economics-chiaro-1600-medio.png: 1576 x 80, salvata=True, grab=4.0 ms
+  36.783 s  tema dark: 1479.8 ms
+  36.787 s  foto kimi11-strumenti-dopo-economics-scuro-1600-medio.png: 1576 x 80, salvata=True, grab=4.1 ms
+  37.149 s  fase report: clic e attesa=362.0 ms
+  38.599 s  tema light: 1450.0 ms
+  38.603 s  foto kimi11-strumenti-dopo-report-chiaro-1600-medio.png: 1576 x 80, salvata=True, grab=4.0 ms
+  40.085 s  tema dark: 1481.6 ms
+  40.089 s  foto kimi11-strumenti-dopo-report-scuro-1600-medio.png: 1576 x 80, salvata=True, grab=4.0 ms
+  40.759 s  fase model: clic e attesa=365.5 ms
+  42.202 s  tema light: 1443.2 ms
+  42.211 s  foto kimi11-strumenti-dopo-model-chiaro-1920-medio.png: 1896 x 80, salvata=True, grab=8.5 ms
+  43.639 s  tema dark: 1428.4 ms
+  43.645 s  foto kimi11-strumenti-dopo-model-scuro-1920-medio.png: 1896 x 80, salvata=True, grab=5.5 ms
+  44.008 s  fase plant: clic e attesa=363.6 ms
+  45.515 s  tema light: 1506.3 ms
+  45.520 s  foto kimi11-strumenti-dopo-plant-chiaro-1920-medio.png: 1896 x 80, salvata=True, grab=5.8 ms
+  47.005 s  tema dark: 1484.1 ms
+  47.009 s  foto kimi11-strumenti-dopo-plant-scuro-1920-medio.png: 1896 x 80, salvata=True, grab=4.8 ms
+  47.373 s  fase production: clic e attesa=363.5 ms
+  48.801 s  tema light: 1428.3 ms
+  48.806 s  foto kimi11-strumenti-dopo-production-chiaro-1920-medio.png: 1896 x 80, salvata=True, grab=4.9 ms
+  50.320 s  tema dark: 1513.9 ms
+  50.324 s  foto kimi11-strumenti-dopo-production-scuro-1920-medio.png: 1896 x 80, salvata=True, grab=3.9 ms
+  50.687 s  fase consumption: clic e attesa=363.3 ms
+  52.164 s  tema light: 1476.3 ms
+  52.168 s  foto kimi11-strumenti-dopo-consumption-chiaro-1920-medio.png: 1896 x 80, salvata=True, grab=4.1 ms
+  53.589 s  tema dark: 1421.2 ms
+  53.593 s  foto kimi11-strumenti-dopo-consumption-scuro-1920-medio.png: 1896 x 80, salvata=True, grab=4.0 ms
+  53.957 s  fase economics: clic e attesa=364.0 ms
+  55.379 s  tema light: 1421.8 ms
+  55.384 s  foto kimi11-strumenti-dopo-economics-chiaro-1920-medio.png: 1896 x 80, salvata=True, grab=4.6 ms
+  56.845 s  tema dark: 1460.9 ms
+  56.849 s  foto kimi11-strumenti-dopo-economics-scuro-1920-medio.png: 1896 x 80, salvata=True, grab=4.2 ms
+  57.215 s  fase report: clic e attesa=366.6 ms
+  58.680 s  tema light: 1464.8 ms
+  58.685 s  foto kimi11-strumenti-dopo-report-chiaro-1920-medio.png: 1896 x 80, salvata=True, grab=4.9 ms
+  60.199 s  tema dark: 1514.2 ms
+  60.205 s  foto kimi11-strumenti-dopo-report-scuro-1920-medio.png: 1896 x 80, salvata=True, grab=5.3 ms
+  62.856 s  fase model: clic e attesa=367.3 ms
+  64.300 s  tema light: 1443.9 ms
+  64.324 s  foto kimi11-strumenti-dopo-model-chiaro-1280-grande.png: 1256 x 83, salvata=True, grab=23.7 ms
+  65.782 s  tema dark: 1458.2 ms
+  65.790 s  foto kimi11-strumenti-dopo-model-scuro-1280-grande.png: 1256 x 83, salvata=True, grab=8.0 ms
+  66.155 s  fase plant: clic e attesa=365.1 ms
+  67.630 s  tema light: 1475.0 ms
+  67.634 s  foto kimi11-strumenti-dopo-plant-chiaro-1280-grande.png: 1256 x 83, salvata=True, grab=4.2 ms
+  69.127 s  tema dark: 1492.5 ms
+  69.132 s  foto kimi11-strumenti-dopo-plant-scuro-1280-grande.png: 1256 x 83, salvata=True, grab=5.4 ms
+  69.497 s  fase production: clic e attesa=364.4 ms
+  70.941 s  tema light: 1443.6 ms
+  70.945 s  foto kimi11-strumenti-dopo-production-chiaro-1280-grande.png: 1256 x 83, salvata=True, grab=3.9 ms
+  72.394 s  tema dark: 1449.3 ms
+  72.397 s  foto kimi11-strumenti-dopo-production-scuro-1280-grande.png: 1256 x 83, salvata=True, grab=3.5 ms
+  72.763 s  fase consumption: clic e attesa=365.3 ms
+  74.283 s  tema light: 1520.1 ms
+  74.287 s  foto kimi11-strumenti-dopo-consumption-chiaro-1280-grande.png: 1256 x 83, salvata=True, grab=4.2 ms
+  75.747 s  tema dark: 1459.2 ms
+  75.751 s  foto kimi11-strumenti-dopo-consumption-scuro-1280-grande.png: 1256 x 83, salvata=True, grab=3.9 ms
+  76.116 s  fase economics: clic e attesa=365.7 ms
+  77.554 s  tema light: 1437.2 ms
+  77.558 s  foto kimi11-strumenti-dopo-economics-chiaro-1280-grande.png: 1256 x 83, salvata=True, grab=4.1 ms
+  79.009 s  tema dark: 1451.3 ms
+  79.013 s  foto kimi11-strumenti-dopo-economics-scuro-1280-grande.png: 1256 x 83, salvata=True, grab=3.8 ms
+  79.378 s  fase report: clic e attesa=365.3 ms
+  80.841 s  tema light: 1462.8 ms
+  80.846 s  foto kimi11-strumenti-dopo-report-chiaro-1280-grande.png: 1256 x 83, salvata=True, grab=4.9 ms
+  82.286 s  tema dark: 1440.1 ms
+  82.290 s  foto kimi11-strumenti-dopo-report-scuro-1280-grande.png: 1256 x 83, salvata=True, grab=3.9 ms
+  82.958 s  fase model: clic e attesa=364.4 ms
+  84.446 s  tema light: 1487.1 ms
+  84.453 s  foto kimi11-strumenti-dopo-model-chiaro-1600-grande.png: 1576 x 83, salvata=True, grab=7.3 ms
+  85.920 s  tema dark: 1467.3 ms
+  85.925 s  foto kimi11-strumenti-dopo-model-scuro-1600-grande.png: 1576 x 83, salvata=True, grab=5.0 ms
+  86.291 s  fase plant: clic e attesa=366.0 ms
+  87.718 s  tema light: 1426.7 ms
+  87.724 s  foto kimi11-strumenti-dopo-plant-chiaro-1600-grande.png: 1576 x 83, salvata=True, grab=5.4 ms
+  89.265 s  tema dark: 1541.4 ms
+  89.270 s  foto kimi11-strumenti-dopo-plant-scuro-1600-grande.png: 1576 x 83, salvata=True, grab=4.6 ms
+  89.632 s  fase production: clic e attesa=362.4 ms
+  91.137 s  tema light: 1504.4 ms
+  91.142 s  foto kimi11-strumenti-dopo-production-chiaro-1600-grande.png: 1576 x 83, salvata=True, grab=4.9 ms
+  92.672 s  tema dark: 1530.1 ms
+  92.676 s  foto kimi11-strumenti-dopo-production-scuro-1600-grande.png: 1576 x 83, salvata=True, grab=4.1 ms
+  93.040 s  fase consumption: clic e attesa=364.1 ms
+  94.593 s  tema light: 1553.0 ms
+  94.598 s  foto kimi11-strumenti-dopo-consumption-chiaro-1600-grande.png: 1576 x 83, salvata=True, grab=4.8 ms
+  96.188 s  tema dark: 1589.6 ms
+  96.192 s  foto kimi11-strumenti-dopo-consumption-scuro-1600-grande.png: 1576 x 83, salvata=True, grab=3.9 ms
+  96.556 s  fase economics: clic e attesa=364.6 ms
+  98.072 s  tema light: 1515.9 ms
+  98.076 s  foto kimi11-strumenti-dopo-economics-chiaro-1600-grande.png: 1576 x 83, salvata=True, grab=4.0 ms
+  99.580 s  tema dark: 1504.2 ms
+  99.584 s  foto kimi11-strumenti-dopo-economics-scuro-1600-grande.png: 1576 x 83, salvata=True, grab=3.8 ms
+  99.950 s  fase report: clic e attesa=365.6 ms
+ 101.478 s  tema light: 1528.1 ms
+ 101.483 s  foto kimi11-strumenti-dopo-report-chiaro-1600-grande.png: 1576 x 83, salvata=True, grab=4.6 ms
+ 102.958 s  tema dark: 1474.7 ms
+ 102.962 s  foto kimi11-strumenti-dopo-report-scuro-1600-grande.png: 1576 x 83, salvata=True, grab=4.3 ms
+ 103.630 s  fase model: clic e attesa=364.0 ms
+ 105.105 s  tema light: 1474.2 ms
+ 105.113 s  foto kimi11-strumenti-dopo-model-chiaro-1920-grande.png: 1896 x 83, salvata=True, grab=8.2 ms
+ 106.611 s  tema dark: 1498.5 ms
+ 106.618 s  foto kimi11-strumenti-dopo-model-scuro-1920-grande.png: 1896 x 83, salvata=True, grab=6.2 ms
+ 106.982 s  fase plant: clic e attesa=364.0 ms
+ 108.489 s  tema light: 1507.6 ms
+ 108.495 s  foto kimi11-strumenti-dopo-plant-chiaro-1920-grande.png: 1896 x 83, salvata=True, grab=5.2 ms
+ 109.935 s  tema dark: 1440.3 ms
+ 109.940 s  foto kimi11-strumenti-dopo-plant-scuro-1920-grande.png: 1896 x 83, salvata=True, grab=5.5 ms
+ 110.305 s  fase production: clic e attesa=364.0 ms
+ 111.792 s  tema light: 1487.0 ms
+ 111.797 s  foto kimi11-strumenti-dopo-production-chiaro-1920-grande.png: 1896 x 83, salvata=True, grab=5.4 ms
+ 113.255 s  tema dark: 1458.1 ms
+ 113.260 s  foto kimi11-strumenti-dopo-production-scuro-1920-grande.png: 1896 x 83, salvata=True, grab=4.4 ms
+ 113.622 s  fase consumption: clic e attesa=362.3 ms
+ 115.066 s  tema light: 1444.2 ms
+ 115.071 s  foto kimi11-strumenti-dopo-consumption-chiaro-1920-grande.png: 1896 x 83, salvata=True, grab=4.9 ms
+ 116.545 s  tema dark: 1473.5 ms
+ 116.550 s  foto kimi11-strumenti-dopo-consumption-scuro-1920-grande.png: 1896 x 83, salvata=True, grab=5.2 ms
+ 116.923 s  fase economics: clic e attesa=372.7 ms
+ 118.375 s  tema light: 1452.3 ms
+ 118.381 s  foto kimi11-strumenti-dopo-economics-chiaro-1920-grande.png: 1896 x 83, salvata=True, grab=5.4 ms
+ 119.861 s  tema dark: 1480.5 ms
+ 119.866 s  foto kimi11-strumenti-dopo-economics-scuro-1920-grande.png: 1896 x 83, salvata=True, grab=4.1 ms
+ 120.233 s  fase report: clic e attesa=366.9 ms
+ 121.701 s  tema light: 1468.1 ms
+ 121.705 s  foto kimi11-strumenti-dopo-report-chiaro-1920-grande.png: 1896 x 83, salvata=True, grab=4.7 ms
+ 123.227 s  tema dark: 1521.0 ms
+ 123.232 s  foto kimi11-strumenti-dopo-report-scuro-1920-grande.png: 1896 x 83, salvata=True, grab=5.1 ms
+ 125.288 s  giro completato
+
+Avvisi Qt:
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: QGraphicsGridLayout::removeAt: invalid index -1 (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x560311bb4ec0 but 0x0 is focused (None:0)

@@ -24,16 +24,22 @@ class ThePhases(unittest.TestCase):
 
     def test_the_groups_are_those_of_the_design_without_the_sun_and_the_background(self):
         groups = {p.id: [g.title for g in p.groups] for p in phases.phases()}
-        self.assertEqual(groups["model"], ["Draw", "Edit", "Layout"])
+        self.assertEqual(groups["model"], ["Draw", "Edit", "Precision", "Layout"])
         self.assertEqual(groups["plant"], ["Inverter", "Strings"])
         self.assertEqual(groups["production"], ["Computation", "Comparison"])
         self.assertEqual(groups["consumption"], ["Data"])
-        self.assertEqual(groups["economics"], ["Components", "Computation", "Comparison"])
-        self.assertEqual(groups["report"], ["Export", "Variants", "Notes"])
+        self.assertEqual(groups["economics"], ["Computation", "Comparison"])
+        self.assertEqual(groups["report"], ["Comparison", "Export"])
         for p in phases.phases():
+            commands = [t.command for t in p.tools()]
+            self.assertEqual(len(commands), len(set(commands)), p.id)
             for g in p.groups:
                 self.assertNotIn(g.title, ("Sun", "Background"))            # they stay in the views (C5)
-                self.assertTrue(g.tools, g.id)
+                self.assertTrue(2 <= len([t for t in g.tools if not t.planned]) <= 5, (p.id, g.id))
+        for pid in ("production", "economics", "report"):
+            self.assertIn("new_variant", [t.command for t in phases.by_id(pid).tools()])
+        self.assertNotIn("refill", [t.command for t in phases.by_id("model").tools()])
+        self.assertNotIn("strings_clear", [t.command for t in phases.by_id("plant").tools()])
 
     def test_every_command_cited_exists_unless_a_later_task_brings_it(self):
         known = {c.id for c in shortcuts.commands()}
@@ -45,13 +51,13 @@ class ThePhases(unittest.TestCase):
                         self.assertRegex(t.planned, r"^(1[67][a-g]|relazione)$")
                     else:
                         self.assertIn(t.command, known)
-        # the Row and «Lay again automatically» came with task 16c
-        model = [t.command for t in phases.by_id("model").tools()]
-        self.assertIn("tool_row", model)
-        self.assertEqual(model[model.index("tool_row") - 1], "tool_exclusion")     # last of Draw (design 2.2)
-        self.assertIn("refill", model)
-        edit = [t.command for t in phases.by_id("model").tools() if t.command.startswith("tool_")]
-        self.assertEqual(edit[-4:], ["tool_select", "tool_move", "tool_rotate", "tool_measure"])   # design 2.2
+        model = phases.by_id("model")
+        layout = [t.command for g in model.groups if g.id == "layout" for t in g.tools]
+        self.assertEqual(layout, ["tool_row", "fill", "empty"])
+        edit = [t.command for g in model.groups if g.id == "edit" for t in g.tools]
+        self.assertEqual(edit, ["tool_select", "tool_move", "tool_rotate"])
+        precision = [t.command for g in model.groups if g.id == "precision" for t in g.tools]
+        self.assertEqual(precision, ["tool_measure", "square", "rectangle"])
 
     def test_one_button_full_of_accent_at_most_per_phase_and_one_line_labels(self):
         for p in phases.phases():

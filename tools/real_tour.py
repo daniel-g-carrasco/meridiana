@@ -182,10 +182,10 @@ class Tour(QObject):
                 self.wait(300)
                 for pid in PHASES:
                     self.click_phase(pid)
-                    bar = self.win.bars[pid]
+                    card = self.win.tabs.header.card
                     for colour, italian in THEMES:
                         self.set_theme(colour)
-                        self.shot(f"kimi11-strumenti-{label}-{pid}-{italian}-{width}-{text_name}", bar)
+                        self.shot(f"kimi11-strumenti-{label}-{pid}-{italian}-{width}-{text_name}", card)
         theme.change_text_size("medium", self.app)
 
     def run(self) -> None:

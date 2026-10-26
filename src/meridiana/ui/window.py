@@ -1000,7 +1000,7 @@ class MainWindow(QMainWindow):
         # the icons of the commands the bars of the phases show (ui/icons.NAMES, by the command's id)
         for cid in ("compute", "fetch_pvgis", "inverter_catalog", "inverter_auto", "import_curve", "consumption_base",
                     "battery_catalog", "copy_notes", "export_report", "export_csv", "save_revision", "compare_variants",
-                    "strings_auto", "strings_complete", "strings_manual", "strings_clear", "import_ifc",
+                    "new_variant", "strings_auto", "strings_complete", "strings_manual", "strings_clear", "import_ifc",
                     "export_ifc"):
             self.commands[cid].setIcon(icons.icon(cid))
         # «Variant» in the right corner of the row of the phases (design 2.1): it is of every phase

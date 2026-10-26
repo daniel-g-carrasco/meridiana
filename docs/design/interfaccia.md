@@ -77,12 +77,13 @@ Il confronto con i programmi di riferimento, sui percorsi e non sull'aspetto, è
 
 | Azione | Tasto | Dove |
 |---|---|---|
-| Seleziona, Edificio, Falda, Sottocampo, Esclusione | V, B, P, S, X | gruppo Disegna e Modifica della barra della fase, menu Disegna |
-| Fila (16c) | L, fissata nel registro `shortcuts.py` (compito 16c, 24/10/2026) | gruppo Disegna |
-| Sposta (con Ruota dentro il comando, «R» o grip), Misura | M, D | gruppo Modifica |
-| Rettangolo con tre clic, Squadra | R, Q | gruppo Modifica |
+| Seleziona, Edificio, Falda, Sottocampo, Esclusione | V, B, P, S, X | gruppi Disegna e Modifica della barra della fase, menu Disegna |
+| Fila (16c) | L, fissata nel registro `shortcuts.py` (compito 16c, 24/10/2026) | gruppo Posa |
+| Sposta (con Ruota dentro il comando, «R» o grip) | M | gruppo Modifica |
+| Misura, Rettangolo con tre clic, Squadra | D, R, Q | gruppo Precisione |
 | Edificio da modello (rettangolo, L, T, U, trapezio; 16a) | menu | gruppo Disegna |
-| Posa i moduli (il pulsante pieno della fase), Svuota, Riposa in automatico (16c) | pulsante | Proprietà del sottocampo e gruppo Posa |
+| Posa i moduli, Svuota | pulsante | Proprietà del sottocampo e gruppo Posa |
+| Riposa in automatico (16c) | menu | Proprietà del sottocampo e menu Disegna |
 | Agganci, orto, lunghezze vicino al cursore | F3, F8, F12 (mai soli: anche nella barra della vista e nel menu) | barra della vista |
 | Ctrl tenuto: niente agganci; Maiusc: blocca la direzione; Ctrl al rilascio di Sposta: copia | | pianta e 3D |
 | Esc, Invio, Backspace, Canc, F2 | esce o annulla il segmento; conferma o ripete; toglie l'ultimo punto; elimina (solo con Seleziona); rinomina | |
@@ -206,16 +207,16 @@ Quello che la prova impone (studio 17, A.5 [V]): in chiaro la scheda sta a 1,07:
 
 [D] B4 con i gruppi; il testo sotto le icone resta, con l'opzione per toglierlo e rimetterlo (registro 23/10, seconda risposta); «Variante» nell'angolo destro della riga delle fasi (bozza 17b); su un fianco sempre solo icone (R19 [D]).
 
-[P] I gruppi per fase (le etichette sotto i gruppi; i nomi dei comandi nei suggerimenti con il tasto):
+[P] I gruppi per fase (le etichette sotto i gruppi; i nomi dei comandi nei suggerimenti con il tasto). Con R180 seguono regole comuni: ordine del lavoro da sinistra a destra, da due a cinque strumenti disponibili per gruppo, lo stesso nome per la stessa funzione, nessun comando ripetuto nella stessa barra. I comandi rari, come Riposa in automatico ed Elimina tutte le stringhe, restano nei menu e negli altri posti già previsti:
 
 | Fase | Gruppi |
 |---|---|
-| 1 Modello | Disegna (Edificio, Edificio da modello, Falda, Sottocampo, Esclusione, Fila); Modifica (Seleziona, Sposta, Ruota, Misura, Squadra, Rettangolo); Posa (Posa i moduli, Svuota, Riposa in automatico) |
-| 2 Impianto | Inverter (Aggiungi dal catalogo, Dimensiona da solo); Stringhe (Automatiche con le strategie, Stringatura a mano, Rifai in automatico) |
-| 3 Producibilità | Calcolo (Calcola, Scarica da PVGIS); Confronto (PVGIS a fianco, Confronta le varianti) |
-| 4 Consumi | Dati (Importa una curva, Base dei consumi) |
-| 5 Bilancio ed economia | Componenti (Batteria dal catalogo); Calcolo (Calcola); Confronto (Confronta le varianti) |
-| 6 Relazione | Esporta (Relazione, DXF, IFC4, CSV); Varianti (Confronta, Nuova revisione); Appunti (Copia le note) |
+| 1 Modello | Disegna (Edificio, Edificio da modello, Falda, Sottocampo, Esclusione); Modifica (Seleziona, Sposta, Ruota); Precisione (Misura, Squadra, Rettangolo); Posa (Fila, Posa i moduli, Svuota) |
+| 2 Impianto | Inverter (Aggiungi dal catalogo, Dimensiona da solo); Stringhe (Proponi, Completa, Disegna a mano) |
+| 3 Producibilità | Calcolo (Calcola, Scarica da PVGIS); Confronto (Nuova variante, PVGIS a fianco, Confronta le varianti) |
+| 4 Consumi | Dati (Base dei consumi, Importa una curva) |
+| 5 Bilancio ed economia | Calcolo (Batteria dal catalogo, Calcola); Confronto (Nuova variante, Confronta le varianti) |
+| 6 Relazione | Confronto (Nuova variante, Confronta le varianti); Esporta (Relazione, DXF, IFC4, CSV, Nuova revisione, Copia le note) |
 
 Non ci sono i gruppi «Sole» e «Sfondo» del bozzetto B4: il sole sta nella barra sotto la 3D e lo sfondo nella barra della pianta, perché «ciò che riguarda le viste sta nelle viste» (R27 [D]); vedi la contraddizione C5.
 
