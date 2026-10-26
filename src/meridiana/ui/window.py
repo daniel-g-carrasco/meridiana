@@ -864,6 +864,11 @@ class MainWindow(QMainWindow):
                                  ("zoom_out", 1 / 1.2, _("Both views farther away; - and Ctrl+- do the same"))):
             action = act(view, cid, lambda _c=False, f=factor: self._zoom(f), tip=tip)
             action.setIcon(icons.icon(cid))
+        for cid, slot, tip in (("view_align", self._align_view,
+                                _("Choose a side of the selected outline; the plan turns parallel to it")),
+                               ("view_north", self._north_view, _("The plan with true North up again"))):
+            action = act(view, cid, slot, tip=tip)
+            action.setIcon(icons.icon(cid))
         # W: in the Plant phase, which has lent the plan, the strings stay (study 16, D.6)
         strings = act(view, "strings", lambda on: self.plan.show_wiring(on or self.split_home is not None), True,
                       _("Each string as a line through its modules, in a colour of its own; always shown in the "
@@ -1896,6 +1901,20 @@ class MainWindow(QMainWindow):
         w, h = backend.size
         backend.touch_zoom(float(np.log(factor) / np.log(1.0 / camera.ZOOM_STEP)), w / 2, h / 2)
 
+    def _align_view(self) -> None:
+        kind, oid = self.selection
+        found = self._outline(kind, oid)
+        if found is None:
+            self.tell(_("Select a building, a roof pitch, a sub-field or an exclusion, then align the view to one "
+                        "of its sides."))
+            return
+        self.plan.pick_edge("align", kind, oid, found[1])
+
+    def _north_view(self) -> None:
+        self.plan._end_pick()
+        self.plan.reset_rotation()
+        self.hint.setText(_("North is up. The project's coordinates have not changed."))
+
     # the project as data
 
     def snapshot(self) -> dict:
@@ -2532,6 +2551,13 @@ class MainWindow(QMainWindow):
     def _edge_picked(self, purpose: str, kind: str, oid: str, side: int) -> None:
         """A side clicked on the plan: the eave of a mono-pitch roof; on a gable or hip roof, an eave that becomes
         a gable end or a gable end that becomes an eave (task 16a)."""
+        if purpose == "align":
+            found = self._outline(kind, oid)
+            if found is not None:
+                self.plan.align_to_side(found[1], side)
+                self.hint.setText(_("The view is parallel to side {n}. «North up» brings it back; the project has "
+                                    "not turned.").format(n=side + 1))
+            return
         b = self.project.building(oid)
         if kind != "building" or b is None:
             return
@@ -2547,6 +2573,11 @@ class MainWindow(QMainWindow):
     def _outline(self, kind: str, oid: str) -> tuple[str, list] | None:
         if kind == "building" and self.project.building(oid) is not None:
             return "footprint", self.project.building(oid).footprint
+        if kind == "pitch":
+            bid, _sep, index = oid.partition(":")
+            building = self.project.building(bid)
+            pitches = building.pitches() if building is not None else []
+            return ("ring", pitches[int(index)].ring) if index.isdigit() and int(index) < len(pitches) else None
         thing = (self.project_subfield(oid) if kind == "subfield" else
                  next((e for e in self.project.exclusions if e.id == oid), None) if kind == "exclusion" else None)
         return ("ring", thing.ring) if thing is not None else None

@@ -846,7 +846,6 @@ class PlanView(QGraphicsView):
     def _number_items(self, order: list[int], z: float) -> list:
         """The modules of a string numbered in its order (R57): every one when they have room on screen, else one in
         five or ten, the first and the last always."""
-        from PySide6.QtWidgets import QGraphicsSimpleTextItem
         scene = self.scene()
         small = design.font(design.Type.CAPTION, design.Type.BOLD, self.font())
         mpp = self.metres_per_pixel()
@@ -1232,7 +1231,7 @@ class PlanView(QGraphicsView):
         self.hover_item.setZValue(Z_SELECTION - 1)
 
     def metres_per_pixel(self) -> float:
-        return 1.0 / max(self.transform().m11(), 1e-9)
+        return 1.0 / max(math.hypot(self.transform().m11(), self.transform().m21()), 1e-9)
 
     def drawing(self) -> bool:
         """An outline being drawn, with at least one point."""
@@ -1784,7 +1783,7 @@ class PlanView(QGraphicsView):
 
     def zoom_at(self, factor: float, view_pos) -> None:
         """Zoom by `factor` keeping the point under `view_pos` where it is."""
-        current = self.transform().m11()
+        current = math.hypot(self.transform().m11(), self.transform().m21())
         factor = max(0.02 / current, min(factor, 400.0 / current))
         before = self.mapToScene(view_pos)
         self.scale(factor, factor)
@@ -1793,6 +1792,32 @@ class PlanView(QGraphicsView):
         self.translate(delta.x(), delta.y())
         self.user_moved = True
         self._moved()
+
+    def view_rotation(self) -> float:
+        """The view's clockwise bearing, never a rotation of the project's coordinates."""
+        return math.degrees(math.atan2(-self.transform().m21(), self.transform().m11())) % 360.0
+
+    def rotate_view(self, degrees: float) -> None:
+        centre = self.mapToScene(self.viewport().rect().center())
+        self.rotate(degrees)
+        self.centerOn(centre)
+        self.north.set_rotation(self.view_rotation())
+        self.user_moved = True
+        self._moved()
+
+    def reset_rotation(self) -> None:
+        centre = self.mapToScene(self.viewport().rect().center())
+        scale = math.hypot(self.transform().m11(), self.transform().m21())
+        self.setTransform(QTransform().scale(scale, scale))
+        self.centerOn(centre)
+        self.north.set_rotation(0.0)
+        self._moved()
+
+    def align_to_side(self, ring, side: int) -> None:
+        """Turn the view so side `side` of `ring` lies horizontally; the points in metres stay exactly as they are."""
+        a, b = ring[side], ring[(side + 1) % len(ring)]
+        bearing = math.degrees(math.atan2(b[0] - a[0], b[1] - a[1]))
+        self.rotate_view(90.0 - bearing - self.view_rotation())
 
     def mousePressEvent(self, event):
         self.setFocus()
@@ -2523,7 +2548,10 @@ class PlanView(QGraphicsView):
         self.pending_fit = None
         self.user_moved = False
         margin = max(rect.width(), rect.height()) * 0.15 + 5
+        rotation = self.view_rotation()
         self.fitInView(rect.adjusted(-margin, -margin, margin, margin), Qt.AspectRatioMode.KeepAspectRatio)
+        self.rotate_view(rotation)
+        self.user_moved = False                 # fitting again is not a move by hand, rotation included
         self._moved()
 
     def resizeEvent(self, event):
