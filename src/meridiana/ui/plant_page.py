@@ -296,8 +296,16 @@ class PlantPage(QWidget):
         self.strip.show()
 
     def show_inverter(self, text: str) -> None:
-        self.inv_label.setText(text)
-        self.inv_label.setToolTip(text)
+        self.inverter_text = text
+        shown = getattr(self, "draft_text", "") or text
+        self.inv_label.setText(shown)
+        self.inv_label.setToolTip(shown)
+
+    def show_draft(self, text: str) -> None:
+        self.draft_text = text
+        shown = text or getattr(self, "inverter_text", "")
+        self.inv_label.setText(shown)
+        self.inv_label.setToolTip(shown)
 
     def show_plant(self, plant) -> None:
         self.plant_summary = summary(plant)
@@ -728,10 +736,24 @@ class StringList(QTreeWidget):
         self.itemDoubleClicked.connect(self._double)
         self.loading = False
         self.adders: dict = {}                  # (unit, input) -> its «+»
+        self.input_heads: dict = {}             # (unit, input) -> its section, highlighted while drawing there
         self.rows: dict = {}                    # index into Plant.strings -> its row
+        self.draft_input = (0, 0)
 
     def sizeHint(self) -> QSize:
         return QSize(200, self.height())
+
+    def show_draft(self, unit: int = 0, mppt: int = 0) -> None:
+        """Highlight the input being drawn on, and only until the draft is closed or given up."""
+        from .sections import ACTIVE_ROLE
+        self.draft_input = (int(unit), int(mppt))
+        for key, head in self.input_heads.items():
+            active = key == self.draft_input and unit > 0
+            for column in range(2):
+                head.setData(column, ACTIVE_ROLE, active)
+                head.setData(column, Qt.ItemDataRole.BackgroundRole,
+                             self.palette().brush(self.palette().ColorRole.Highlight) if active else None)
+        self.viewport().update()
 
     def show_plant(self, plant, colours: list, states: dict, chosen: int = -1) -> None:
         """The inputs and the strings of `plant`, the strings in `colours` (the plan's), the traffic light in
@@ -741,7 +763,7 @@ class StringList(QTreeWidget):
         self.loading = True
         try:
             self.clear()
-            self.adders, self.rows = {}, {}
+            self.adders, self.input_heads, self.rows = {}, {}, {}
             if plant is None:
                 return
             names = plant_model.state_names()
@@ -773,6 +795,7 @@ class StringList(QTreeWidget):
                                                                                   hi=slot.series[1])
                              if slot is not None and slot.series[1] else _("its window is not known"))
                     head.setToolTip(0, f"{u.name}: {takes}")
+                    self.input_heads[(u.number, k)] = head
                     self._adder(head, u.number, k, takes)
                     for i in mine:
                         string_row(head, i)
@@ -788,6 +811,7 @@ class StringList(QTreeWidget):
                 for i in lost:
                     string_row(head, i)
             self.expandAll()
+            self.show_draft(*self.draft_input)
             if chosen in self.rows:
                 self.setCurrentItem(self.rows[chosen])
             self._fit()

@@ -3945,6 +3945,8 @@ class MainWindow(QMainWindow):
         """A string being drawn given up without a word (another command, another phase)."""
         self.draft_target = None
         self.plan.end_draft()
+        self.plant_inspector.list.show_draft()
+        self.plant_page.show_draft("")
         self._show_string_commands()
 
     def _start_draft(self, unit: int, mppt: int, first: list | None = None, run: int = -1) -> None:
@@ -3964,6 +3966,7 @@ class MainWindow(QMainWindow):
         self.chosen_string = -1
         self.plan.choose_string(-1)
         self.plant_inspector.list.choose(-1)
+        self.plant_inspector.list.show_draft(unit, mppt)
         self.statusBar().clearMessage()             # what to do next is the bar's own words (the hint), not hidden
         self.plan.start_draft(modules, run, f"{unit}.{mppt}")
         self._show_string_commands()
@@ -4015,27 +4018,39 @@ class MainWindow(QMainWindow):
             self._redraw_string(index)
 
     def _draft_changed(self, modules: list) -> None:
-        """The string being drawn changed: in the strip, its modules against what its input takes (live, from the
-        input's range), in the bar what to do next."""
+        """The target, the live count and its state, and the keys beside the modules and in the panel and strip."""
         target = self.draft_target or {}
         plant = self.plant_state
         unit, mppt = target.get("unit", 0), target.get("mppt", 0)
         n = len(modules)
         slot = plant.inputs.get((unit, mppt)) if plant is not None else None
         lo, hi = slot.series if slot is not None else (0, 0)
-        # short: the strip has the room of a few words beside the legend
         what = (_("string {name} again").format(name=plant.strings[target["run"]].label)
                 if plant is not None and 0 <= target.get("run", -1) < len(plant.strings) else
                 _("new string {n}.{k}").format(n=unit, k=mppt))
         count = ngettext("{n} module", "{n} modules", n).format(n=n)
-        if hi and not (plant.unit(unit) and plant.unit(unit).optimized):
+        inverter = plant.unit(unit) if plant is not None else None
+        optimized = bool(inverter and inverter.optimized)
+        state = ""
+        if hi and not optimized:
             if n < lo:
                 count += ", " + _("{k} short ({lo} to {hi})").format(k=lo - n, lo=lo, hi=hi)
+                state = "fail"
             elif n > hi:
                 count += ", " + _("{k} too many ({lo} to {hi})").format(k=n - hi, lo=lo, hi=hi)
+                state = "fail"
             else:
                 count += ", " + _("fine ({lo} to {hi})").format(lo=lo, hi=hi)
+                state = "ok"
+        elif hi:
+            count += " " + _("({lo} to {hi})").format(lo=lo, hi=hi)
+        model = " ".join(str(v).strip() for v in (getattr(inverter.spec, "manufacturer", ""),
+                                                 getattr(inverter.spec, "model", "")) if v).strip() if inverter else ""
+        where = _("Inverter {n} · {model} · Input {k}").format(n=unit, model=model or _("not chosen"), k=mppt)
+        keys = _("Enter or double click: finish · Backspace: undo · Esc: cancel")
         self.plant_page.show_string(f"{what}: {count}")
+        self.plant_page.show_draft(where)
+        self.plan.show_draft(f"{where}\n{what}: {count}\n{keys}", state)
         self.hint.setText(_("Click the modules in order (or drag over them); Backspace takes back the last, Enter or a "
                             "double click closes the string, Esc gives it up. A module of another string: Shift and "
                             "click moves it here."))
@@ -4046,6 +4061,8 @@ class MainWindow(QMainWindow):
         target, self.draft_target = self.draft_target, None
         self._show_string_commands()
         self.plant_page.show_string("")
+        self.plant_page.show_draft("")
+        self.plant_inspector.list.show_draft()
         if target is None:
             return
         keys = [f"{sf}/{key}" for sf, key in modules]
@@ -4085,6 +4102,8 @@ class MainWindow(QMainWindow):
         self.draft_target = None
         self._show_string_commands()
         self.plant_page.show_string("")
+        self.plant_page.show_draft("")
+        self.plant_inspector.list.show_draft()
         self._show_chosen(self.chosen_string)
         self.hint.setText(_("String given up: nothing changed."))
 

@@ -142,26 +142,28 @@ class ChipItem(QGraphicsItem):
         self.symbol_name = {"ok": "check", "check": "warning", "fail": "stop"}.get(state, "")
         self.colours = colours or {"label_bg": "#14161ac8", "label_fg": "#f2efe6"}
         fm = QFontMetrics(self._font)
+        advance = max(fm.horizontalAdvance(line) for line in self.text.split("\n"))
+        lines = self.text.count("\n") + 1
         symbol = 14 if self.symbol_name else 0
         if swatch:
             # the dot and the symbol each on the centre of the pill's round end, its own side (Daniel, 26/10/2026:
             # «il pallino del simbolo ... avesse il centro che corrisponde al centro dell'arrotondamento di destra»)
-            height = max(fm.height(), 16) + 6
+            height = max(fm.height() * lines, 16) + 6
             r = self.radius = height / 2
             gap = design.Space.XS                                # from the dot to the text, from the text to the symbol
             left = r + self.DOT / 2 + gap
             right = r + symbol / 2 + gap if symbol else r        # the symbol in the right end, or the end alone
-            width = left + fm.horizontalAdvance(text) + right
+            width = left + advance + right
             self.rect = QRectF(0, 0, width, height)
             self.dot_rect = QRectF(r - self.DOT / 2, r - self.DOT / 2, self.DOT, self.DOT)
-            self.text_rect = QRectF(left, 0, fm.horizontalAdvance(text) + 1, height)
+            self.text_rect = QRectF(left, 0, advance + 1, height)
             self.symbol_rect = QRectF(width - r - symbol / 2, r - symbol / 2, symbol, symbol)
         else:
             symbol = 16 if self.symbol_name else 0
             gap = 4 if self.symbol_name else 0
             self.radius = design.Radius.INNER
-            self.rect = QRectF(0, 0, fm.horizontalAdvance(text) + symbol + gap + 12, max(fm.height(), 16) + 4)
-            self.text_rect = QRectF(6, 2, fm.horizontalAdvance(text), self.rect.height() - 4)
+            self.rect = QRectF(0, 0, advance + symbol + gap + 12, max(fm.height() * lines, 16) + 4)
+            self.text_rect = QRectF(6, 2, advance, self.rect.height() - 4)
             self.symbol_rect = QRectF(self.rect.width() - 18, (self.rect.height() - 16) / 2, 16, 16)
         self.offset = QPointF()
 
@@ -305,6 +307,7 @@ class PlanView(QGraphicsView):
         self.draft_where = ""              # its inverter and input, for the hint («1.2»)
         self.draft_drag = False            # the left button held on a module while drawing: a drag takes modules
         self.draft_pointer: QPointF | None = None    # where the pointer is, for the line from the last module
+        self.draft_chip: ChipItem | None = None      # the live target, count and keys, beside the last module
         self.chosen_string = -1            # the string chosen, drawn wider and numbered
         self.string_tints: list = []       # the tints of the strings (theme_colors.string_tints)
         self.string_states: dict = {}      # the traffic light: state -> colour
@@ -741,6 +744,7 @@ class PlanView(QGraphicsView):
             return
         self.draft, self.draft_index, self.draft_drag, self.draft_pointer = None, -1, False, None
         self.setCursor(Qt.CursorShape.ArrowCursor)
+        self.show_draft("")
         self._draw_draft()
         self._draw_wiring()
 
@@ -1025,6 +1029,42 @@ class PlanView(QGraphicsView):
         used = set(self.string_colours)
         n = len(getattr(self.wiring, "strings", None) or [])
         return next((c for c in tints[n % len(tints):] + tints[:n % len(tints)] if c not in used), tints[n % len(tints)])
+
+    def show_draft(self, text: str, state: str = "") -> None:
+        """The live drawing instructions in one pill, beside the last module or the pointer before the first click."""
+        if self.draft_chip is not None:
+            self.scene().removeItem(self.draft_chip)
+            self.draft_chip = None
+        if not text or self.draft is None:
+            return
+        font = design.font(design.Type.CAPTION, design.Type.BOLD, self.font())
+        chip = ChipItem(text, font, QColor(self.draft_colour()), state, self.colours, swatch=True)
+        chip.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+        chip.setZValue(Z_WIRING + 4)
+        chip.setToolTip(text.replace("\n", " · "))
+        chip.setData(0, "draft_status")
+        self.scene().addItem(chip)
+        self.draft_chip = chip
+        self._place_draft_chip()
+
+    def _place_draft_chip(self) -> None:
+        """Move only the pill, never rebuild the scene; keep it inside the view, including before the first module."""
+        chip = self.draft_chip
+        if chip is None:
+            return
+        anchor = self.draft_pointer or self.mapToScene(self.viewport().rect().center())
+        if self.draft:
+            index = self.module_index.get(self.draft[-1], -1)
+            if index >= 0 and self.router is not None:
+                anchor = QPointF(*map(float, self.router.centres[index]))
+        at = QPointF(self.mapFromScene(anchor))
+        box = chip.boundingRect()
+        desired = at + QPointF(12, -box.height() - 12)
+        desired.setX(max(8.0, min(desired.x(), self.viewport().width() - box.width() - 8)))
+        desired.setY(max(8.0, min(desired.y(), self.viewport().height() - box.height() - 8)))
+        chip.setPos(anchor)
+        chip.offset = desired - at
+        chip.update()
 
     def _draw_draft(self) -> None:
         """The string being drawn, over the others: its modules filled and outlined in its colour, numbered in the
@@ -2075,6 +2115,7 @@ class PlanView(QGraphicsView):
                 if hit is not None and hit not in self.draft and self._past_centre(*hit, self.draft_pointer):
                     self._draft_take(hit, bool(event.modifiers() & Qt.KeyboardModifier.ShiftModifier))
             self._draw_band()
+            self._place_draft_chip()
             if not self.navigator.held and self.panning is None:
                 return
         if self.left_wait is not None and \

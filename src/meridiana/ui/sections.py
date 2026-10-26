@@ -21,6 +21,7 @@ from .design import Space
 
 SECTION_ROLE = Qt.ItemDataRole.UserRole + 7     # on a header row: the count shown beside the name
 TAIL_ROLE = Qt.ItemDataRole.UserRole + 8        # on an object's row: the tail of its text, drawn muted
+ACTIVE_ROLE = Qt.ItemDataRole.UserRole + 9      # a section temporarily highlighted by the action in hand
 AIR = Space.M                                   # logical pixels above a header
 _TITLE = [default_tokens()["text2"]]            # the theme's text2: a section's name (set_colours)
 
@@ -133,10 +134,11 @@ class SectionDelegate(QStyledItemDelegate):
         painter.setFont(header_font(option.font))
         name = index.data(Qt.ItemDataRole.DisplayRole) or ""
         box = rect.adjusted(4 if not self.pills else 8, 0, -2, 0)
-        painter.setPen(QColor(_TITLE[0]))
+        active = bool(index.data(ACTIVE_ROLE))
+        painter.setPen(option.palette.color(QPalette.ColorRole.HighlightedText) if active else QColor(_TITLE[0]))
         painter.drawText(box, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, name)
         x = box.left() + QFontMetrics(painter.font()).horizontalAdvance(name.upper())
-        painter.setPen(muted_colour(option))
+        painter.setPen(option.palette.color(QPalette.ColorRole.HighlightedText) if active else muted_colour(option))
         tail = f"  ·  {count}" if not self.pills else f"  {count}"
         painter.drawText(QRect(x, box.top(), max(0, box.right() - x), box.height()),
                          Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, tail)

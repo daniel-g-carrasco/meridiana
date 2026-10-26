@@ -76,6 +76,22 @@ class TheList(unittest.TestCase):
             self.assertEqual(add.styleSheet(), "")                           # no border of its own (R115)
         self.assertGreaterEqual(lst.height(), sum(lst.visualItemRect(r).height() for r in lst.rows.values()))
 
+    def test_the_input_being_drawn_is_highlighted_until_the_draft_ends(self):
+        from meridiana.ui.sections import ACTIVE_ROLE
+
+        lst = self.list
+        first, second = (lst.topLevelItem(i) for i in range(2))
+        self.assertFalse(first.data(0, ACTIVE_ROLE))
+        lst.show_draft(1, 2)
+        self.assertFalse(first.data(0, ACTIVE_ROLE))
+        self.assertTrue(second.data(0, ACTIVE_ROLE))
+        self.assertTrue(second.data(1, ACTIVE_ROLE))
+        self.assertEqual(second.background(0), lst.palette().brush(lst.palette().ColorRole.Highlight))
+        lst.show_draft()
+        self.assertFalse(second.data(0, ACTIVE_ROLE))
+        self.assertFalse(second.data(1, ACTIVE_ROLE))
+        self.assertEqual(second.background(0).style(), second.background(0).style().NoBrush)
+
     def test_plus_a_choice_a_double_click_and_the_right_button_say_so(self):
         from PySide6.QtCore import QPoint, Qt
         from PySide6.QtTest import QTest
