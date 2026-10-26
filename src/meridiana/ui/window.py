@@ -3557,25 +3557,49 @@ class MainWindow(QMainWindow):
                     "string."))
 
     def _size_inverters(self) -> None:
-        """«Size it by itself» (study 16, D.5): as many inverters as the DC/AC ratio asks, all like the first of the
-        list; without one in the list, none chosen and Meridiana sizes one at that ratio."""
+        """«Size it by itself»: the brand first, remembered in the project, then the model and how many at DC/AC."""
         good = self.session.good_results()
         p_stc = sum(a.p_stc for a in system.arrays_of(self.project, good)) if good else 0.0
         entries = system.inverter_entries(self.project.energy)
         ratio = float((self.project.energy or {}).get("dc_ac_ratio") or 1.1)
-        if not entries:
-            self.edit(_("Size the inverter by itself"), lambda p: p.energy.pop("inverters", None))
-            self.tell(_("No inverter in the list: Meridiana sizes one at the DC/AC ratio {r}; add one from the "
-                        "catalogue to check the strings.").format(r=number(ratio, 2)))
+        makers = catalog.brands("inverters")
+        if not makers:
+            self.tell(_("There is no inverter in the catalogue to size."))
             return
-        first = entries[0]
-        n = system.sized_count(p_stc, ratio, first["record"])
+        remembered = (self.project.energy or {}).get("inverter_maker", "")
+        current = entries[0]["record"].get("manufacturer", "") if entries else ""
+        wanted = remembered or current
+        index = next((i for i, name in enumerate(makers) if name.casefold() == wanted.casefold()), 0)
+        maker, ok = QInputDialog.getItem(self, _("Size the inverter by itself"), _("Manufacturer:"), makers, index,
+                                         False)
+        if not ok:
+            return
+        candidates = [r for r in catalog.load("inverters")
+                      if str(r.get("manufacturer", "")).casefold() == maker.casefold()
+                      and float(r.get("ac_power_nominal_w") or r.get("pac") or 0.0) > 0.0]
+        if not candidates:
+            self.tell(_("No inverter of {maker} in the catalogue has a nominal AC power.").format(maker=maker))
+            return
+        first = entries[0] if entries and current.casefold() == maker.casefold() else None
+        options = []
+        for candidate in candidates:
+            count = system.sized_count(p_stc, ratio, candidate)
+            pac = float(candidate.get("ac_power_nominal_w") or candidate.get("pac"))
+            actual = p_stc / (count * pac)
+            options.append((abs(actual - ratio), candidate.get("source") != "curated", candidate, count))
+        if first is not None:
+            rec = first["record"]
+            n = system.sized_count(p_stc, ratio, rec)
+        else:
+            _error, _source, rec, n = min(options)
 
-        def size(entries):
-            entries[:] = [{**entries[0], "count": n}]               # its optimizers too (task 22)
-        self._entries_edit(_("Size the inverters by themselves"), size)
-        self.tell(_("{n} x {model}: DC/AC {r}").format(n=n, model=first["record"].get("model", ""), r=number(
-            p_stc / (n * float(first["record"].get("ac_power_nominal_w") or 1.0)), 2)))
+        def size(items):
+            items[:] = [{**(first or {"record": rec, "name": ""}), "record": rec, "count": n}]
+        self._entries_edit(_("Size the inverters by themselves"), size, {"inverter_maker": maker})
+        actual = p_stc / (n * float(rec.get("ac_power_nominal_w") or rec.get("pac") or 1.0))
+        self.tell(ngettext("Inverter sized: {n} x {maker} {model}, DC/AC {r}.",
+                           "Inverters sized: {n} x {maker} {model}, DC/AC {r}.", n).format(
+                               n=n, maker=maker, model=rec.get("model", ""), r=number(actual, 2)))
 
     # the plant (task 16d)
 
@@ -3635,10 +3659,11 @@ class MainWindow(QMainWindow):
             # a proposal of before format 14: written down as the designer's strings (the plant comes again)
             self._adopt_proposal(out)
 
-    def _entries_edit(self, text: str, change) -> None:
+    def _entries_edit(self, text: str, change, extra: dict | None = None) -> None:
         """An edit of the list of the inverters: `change(entries)` on the list as format 8 writes it. The strings stay
         on the inverters they were on, renumbered when the list moves them (plant.renumber; R118), in the same step."""
         def put(p):
+            p.energy.update(extra or {})
             before = plant_model.unit_keys(p.energy)
             entries = system.inverter_entries(p.energy)
             for i, e in enumerate(entries):

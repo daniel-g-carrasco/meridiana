@@ -10,6 +10,8 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- Inverter sizing (R141): choose the manufacturer first, remembered in the project; the model and quantity together
+  follow the requested DC/AC ratio, and the result names both.
 - Harmonised plan labels (R143, R138): rounded string names and module numbers in the catalogue font and the plan's
   colours, with the window's drawn check, warning and stop symbols instead of font glyphs.
 - Phase-aware panels (R145): Project hides on Production, Consumption, Balance and Report, then returns on the

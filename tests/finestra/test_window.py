@@ -1496,10 +1496,51 @@ class PlantPhase(PlantWindow):
         self.win.strategy_actions["serpentine"].trigger()                 # «Propose»: there, as the sub-field says
         plant = self.plant(lambda p: bool(p.strings))
         self.assertEqual({(s.inverter, s.mppt) for s in plant.strings}, {(1, 2)})
-        self.win.commands["inverter_auto"].trigger()                      # as many alike as the DC/AC ratio asks
+        from PySide6.QtWidgets import QInputDialog
+        with mock.patch("meridiana.ui.window.catalog.load", return_value=(rec,)), \
+                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
+            self.win.commands["inverter_auto"].trigger()                  # as many alike as the DC/AC ratio asks
         n = self.win.project.energy["inverters"][0]["count"]
         p_stc = sum(r.count for r in self.win.session.good_results().values()) * 0.45
         self.assertEqual(n, max(1, -(-int(p_stc * 1000) // int(1.1 * 10000))))
+
+    def sizing_asks_the_brand_remembers_it_and_says_the_result(self):
+        from PySide6.QtWidgets import QInputDialog
+        rec = inverter_record(model="AC-10K", ac_power_nominal_w=10000)
+        with mock.patch("meridiana.ui.window.catalog.brands", return_value=["Acme", "Other"]), \
+                mock.patch("meridiana.ui.window.catalog.load", return_value=(rec,)), \
+                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)) as asked:
+            self.win.commands["inverter_auto"].trigger()
+            self.assertEqual(asked.call_count, 1)
+        p_stc = sum(r.count for r in self.win.session.good_results().values()) * 0.45
+        count = max(1, -(-int(p_stc * 1000) // int(1.1 * 10000)))
+        self.assertEqual(self.win.project.energy["inverters"], [{"record": rec, "count": count, "name": ""}])
+        self.assertEqual(self.win.project.energy["inverter_maker"], "Acme")
+        message = self.win.statusBar().currentMessage()
+        self.assertIn("AC-10K", message)
+        self.assertIn("DC/AC", message)
+        before = self.win.project.to_json()
+        with mock.patch("meridiana.ui.window.catalog.brands", return_value=["Acme", "Other"]), \
+                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", False)) as cancelled:
+            self.win.commands["inverter_auto"].trigger()
+        self.assertEqual(cancelled.call_args.args[4], 0)                 # the remembered brand is preselected
+        self.assertEqual(self.win.project.to_json(), before)
+
+    def sizing_chooses_the_model_and_count_together(self):
+        from PySide6.QtWidgets import QInputDialog
+        self.win._entries_edit("Clear", lambda entries: entries.clear())
+        from meridiana.energy import system
+        good = self.win.session.good_results()
+        p_stc = sum(a.p_stc for a in system.arrays_of(self.win.project, good))
+        target = p_stc / 1.1
+        near = inverter_record(model="NEAR", ac_power_nominal_w=round(target * 0.975))
+        better = inverter_record(model="BETTER", ac_power_nominal_w=round(target * 1.22))
+        with mock.patch("meridiana.ui.window.catalog.load", return_value=(near, better)), \
+                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
+            self.win.commands["inverter_auto"].trigger()
+        entry = self.win.project.energy["inverters"][0]
+        self.assertEqual(entry["record"]["model"], "BETTER")
+        self.assertEqual(entry["count"], 1)
 
     def test_the_plant_phase_lends_the_plan_production_leads_to_it_and_its_inverters_and_inputs(self):
         self.the_plant_is_the_second_phase_reached_with_ctrl_tab_and_lends_the_plan()
@@ -1507,6 +1548,10 @@ class PlantPhase(PlantWindow):
         self.an_inverter_chosen_from_the_catalogue_joins_the_list_and_production_says_so()
         self.again()
         self.a_sub_field_sent_to_an_inverters_input_and_sized_by_itself()
+        self.again()
+        self.sizing_asks_the_brand_remembers_it_and_says_the_result()
+        self.again()
+        self.sizing_chooses_the_model_and_count_together()
 
 
 class Stringing(PlantWindow):
@@ -1573,6 +1618,7 @@ class Stringing(PlantWindow):
         self.win.plan.fit(QRectF(min(xs), min(ys) - 1, max(xs) - min(xs), max(ys) - min(ys) + 2))
 
     def nothing_comes_by_itself_and_propose_complete_and_delete_all_come_when_asked(self):
+        from PySide6.QtCore import QPointF
         from PySide6.QtWidgets import QWidget
         plant = self.plant()
         self.assertEqual((plant.strings, plant.auto), ([], False))          # an inverter chosen: no string (R118)
