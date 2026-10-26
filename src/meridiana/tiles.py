@@ -620,6 +620,16 @@ def effective(choice: str, sources: dict, lon: float, lat: float) -> str:
     return best(sources, lon, lat)
 
 
+def fallbacks(sources: dict, failed: str, lon: float, lat: float, detailed: bool = True) -> list[str]:
+    """Other sources for the same place, best first. Near a roof another photo comes first, then a street map;
+    Sentinel-2 is only a distant-view fallback, never a substitute for detail that it cannot provide."""
+    found = covering(sources, lon, lat)
+    photos = [s.key for s in found if s.imagery == "photo" and s.key != failed
+              and (not detailed or s.key != "eox-2016")]
+    maps = [s.key for s in found if s.imagery == "map" and s.key != failed]
+    return photos + maps
+
+
 # the tiles of a view
 
 def zoom_for(metres_per_pixel: float, lat: float, max_zoom: int) -> int:

@@ -22,6 +22,7 @@ sums and the window applies the change: one undo step.
 from __future__ import annotations
 
 import math
+import time
 
 import numpy as np
 from PySide6.QtCore import QEvent, QLineF, QPoint, QPointF, QRectF, Qt, QTimer, Signal
@@ -44,6 +45,8 @@ MOVABLE = ("building", "subfield", "exclusion", "row")   # what Move takes (task
 ARROWS = {Qt.Key.Key_Left: "left", Qt.Key.Key_Right: "right", Qt.Key.Key_Up: "up", Qt.Key.Key_Down: "down"}
 LEFT_WAIT_MS = 150             # how long a left press waits for the other button of a gesture (left + right)
 TILE_UPDATE_MS = 120
+FAILOVER_THRESHOLD = 3           # distinct failed tiles in the current view, after the loader's own retries
+FAILOVER_COOLDOWN = 180.0        # seconds before an unavailable source is tried again by an automatic update
 
 Z_TILES, Z_BUILDING, Z_PITCH, Z_SUBFIELD, Z_EXCLUSION, Z_MODULES, Z_SELECTION = 0, 10, 12, 20, 25, 30, 40
 Z_WIRING = 35
@@ -346,7 +349,12 @@ class PlanView(QGraphicsView):
         self.source = "pcn"
         self.loader = TileLoader(cache_dir, self, self.sources)
         self.loader.tileReady.connect(self._tile_ready)
+        self.loader.tileFailed.connect(self._tile_failed)
         self.tile_items: dict = {}
+        self.wanted_tiles: set = set()
+        self.failed_tiles: set = set()
+        self.unavailable: dict[str, float] = {}
+        self.fallback_from = ""
         self.target_zoom = None
         self.tile_timer = QTimer(self, singleShot=True, interval=TILE_UPDATE_MS)
         self.tile_timer.timeout.connect(self._update_tiles)
@@ -359,6 +367,8 @@ class PlanView(QGraphicsView):
         self.north = plan_overlays.NorthArrow(self)
         self.scale_bar = plan_overlays.ScaleBar(self)
         self.attribution = plan_overlays.Attribution(self)
+        self.fallback_strip = plan_overlays.FallbackStrip(self)
+        self.fallback_strip.retry.clicked.connect(self.retry_background)
         self.viewbar = None                         # the bar of the view's commands (ui/viewbar.py), set by the window
         # the arc of the layout under the north arrow, while the modules are laid past the threshold (study 16, F3)
         self.laying = waiting.Spinner(self, 24, backdrop=True, tip=_("Laying the modules…"))
@@ -382,6 +392,9 @@ class PlanView(QGraphicsView):
         that does not cover the site, or that this version does not know (a newer one's, or one gone), gives the
         best for the site, and the choice stays for the sites it covers."""
         self.choice = choice
+        self.fallback_from = ""
+        self.fallback_strip.hide()
+        self.failed_tiles.clear()
         self._choose(force=True)
 
     def set_sources(self, custom: list) -> None:
@@ -397,13 +410,49 @@ class PlanView(QGraphicsView):
 
     def _choose(self, force: bool = False) -> None:
         key = tiles.effective(self.choice, self.sources, self.origin.lon, self.origin.lat)
+        if key in self.unavailable and time.monotonic() - self.unavailable[key] < FAILOVER_COOLDOWN:
+            choices = tiles.fallbacks(self.sources, key, self.origin.lon, self.origin.lat,
+                                      detailed=self.metres_per_pixel() < 20.0)
+            key = next((k for k in choices if k not in self.unavailable), key)
         if key == self.source and not force:
             return
         self.source = key
+        self.failed_tiles.clear()
+        self.wanted_tiles.clear()
         self._credit()
-        self._clear_tiles()
         self._moved()
         self._recolour()
+
+    def retry_background(self) -> None:
+        """Retry the failed source on demand, without changing the designer's saved choice."""
+        if self.fallback_from:
+            self.unavailable.pop(self.fallback_from, None)
+            self.source = self.fallback_from
+        self.fallback_from = ""
+        self.failed_tiles.clear()
+        self.wanted_tiles.clear()
+        self.fallback_strip.hide()
+        self._credit()
+        self._update_tiles()
+
+    def _use_fallback(self) -> None:
+        failed = self.source
+        self.unavailable[failed] = time.monotonic()
+        choices = tiles.fallbacks(self.sources, failed, self.origin.lon, self.origin.lat,
+                                  detailed=self.metres_per_pixel() < 20.0)
+        replacement = next((k for k in choices if k not in self.unavailable), tiles.NONE)
+        self.fallback_from = failed
+        self.source = replacement
+        self.failed_tiles.clear()
+        self.wanted_tiles.clear()
+        self._credit()
+        self._recolour()
+        old = self.sources.get(failed)
+        new = self.background()
+        self.fallback_strip.show_failure(tiles.display_name(old) if old else failed,
+                                         tiles.display_name(new) if new else _("No background"))
+        plan_overlays.place(self)
+        self._update_tiles()
 
     def _credit(self) -> None:
         """The attribution of the source shown, always on the plan (OpenStreetMap's policy: never behind a switch)."""
@@ -2570,6 +2619,7 @@ class PlanView(QGraphicsView):
     def _update_tiles(self) -> None:
         source = self.background()
         if source is None:
+            self.loader.keep_only(set())
             return
         r = self.mapToScene(self.viewport().rect()).boundingRect()
         corners = [self.origin.to_lonlat(*from_scene(p)) for p in (r.topLeft(), r.bottomRight())]
@@ -2577,18 +2627,31 @@ class PlanView(QGraphicsView):
         dpr = self.devicePixelRatioF()
         z = max(source.min_zoom, tiles.zoom_for(self.metres_per_pixel() / dpr, self.origin.lat, source.max_zoom))
         self.target_zoom = z
-        wanted = {(self.source, z, x, y) for x, y in tiles.tiles_for(lon_w, lat_s, lon_e, lat_n, z)}
-        self.loader.keep_only(wanted)
-        for t in wanted:
+        self.wanted_tiles = {(self.source, z, x, y) for x, y in tiles.tiles_for(lon_w, lat_s, lon_e, lat_n, z)}
+        self.failed_tiles.intersection_update(self.wanted_tiles)
+        self.loader.keep_only(self.wanted_tiles)
+        for t in self.wanted_tiles:
             if t not in self.tile_items:
                 self.loader.request(*t)
-        # tiles of other zooms stay until the screen is covered again, then go
-        stale = [t for t in self.tile_items if t[1] != z and abs(t[1] - z) > 1]
-        for t in stale:
+        self._prune_tiles()
+
+    def _prune_tiles(self) -> None:
+        """Keep every usable old tile until the current source covers the view, then remove the whole old mosaic."""
+        if not self.wanted_tiles or not self.wanted_tiles.issubset(self.tile_items):
+            return
+        for t in [t for t in self.tile_items if t not in self.wanted_tiles]:
             self.scene().removeItem(self.tile_items.pop(t))
 
+    def _tile_failed(self, key, z, x, y, _why) -> None:
+        tile = (key, z, x, y)
+        if key != self.source or tile not in self.wanted_tiles:
+            return
+        self.failed_tiles.add(tile)
+        if len(self.failed_tiles) >= FAILOVER_THRESHOLD:
+            self._use_fallback()
+
     def _tile_ready(self, key, z, x, y, image) -> None:
-        if key != self.source or (key, z, x, y) in self.tile_items:
+        if (key, z, x, y) in self.tile_items:
             return
         from PySide6.QtGui import QPixmap
         item = QGraphicsPixmapItem(QPixmap.fromImage(image))
@@ -2599,9 +2662,10 @@ class PlanView(QGraphicsView):
         if QTransform.quadToQuad(src, QPolygonF(quad), transform):
             item.setTransform(transform)
         item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
-        item.setZValue(Z_TILES + (0.5 if z == self.target_zoom else 0.0))
+        item.setZValue(Z_TILES + (0.5 if key == self.source and z == self.target_zoom else 0.0))
         self.scene().addItem(item)
         self.tile_items[(key, z, x, y)] = item
+        self._prune_tiles()
 
     def fit(self, rect: QRectF | None = None) -> None:
         """Frame the drawing. Before the view has its real size (a window not shown yet) the frame is
