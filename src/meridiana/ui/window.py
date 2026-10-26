@@ -48,7 +48,7 @@ from .inspector import Inspector
 from .marks import icon as mark_icon
 from .report_page import ReportPage, ReportSide
 from .phasebar import LOW_WINDOW, PhaseBar, Phases
-from .plan import MOVABLE, PlanView
+from .plan import MOVABLE, PlanView, from_scene
 from .plant_page import PlantInspector, PlantPage, input_name, install_reference, legend_html
 from .properties import Properties, field_label
 from .checks_page import ChecksPage
@@ -917,11 +917,14 @@ class MainWindow(QMainWindow):
         # the commands of the views inside the views, in a bar of their own (R14, R27; ui/viewbar.py)
         views = [self.view_actions[k] for k in ("plan", "3d", "both")]
         zoom = [fit, self.commands["zoom_in"], self.commands["zoom_out"]]
+        # turning the plan in its bar (R174, Daniel 26/10/2026: «non bisognerebbe andare sul menu su alt per aprirlo»)
+        turn = [self.commands["view_align"], self.commands["view_north"]]
         words = {fit: _("Fit"), self.commands["zoom_in"]: _("Zoom in"),
-                 self.commands["zoom_out"]: _("Zoom out")}
-        self.plan.viewbar = ViewBar(self.plan, [views, zoom, [self.snaps_action, self.ortho_action],
+                 self.commands["zoom_out"]: _("Zoom out"), turn[0]: _("Align to a side"), turn[1]: _("North up")}
+        self.plan.viewbar = ViewBar(self.plan, [views, zoom, turn, [self.snaps_action, self.ortho_action],
                                                 [self.background_action]], keys=(self.snaps_action, self.ortho_action),
                                     words=words)
+        self.plan.north.clicked.connect(self._north_view)
         self.view3d.viewbar = ViewBar(self.view3d, [views, zoom], words=words)
         self.view3d.viewbar.show_group(0, False)        # side by side at the start: the selector on the plan's bar
         catalogues = bar.addMenu(_("&Catalogues"))
@@ -2570,11 +2573,7 @@ class MainWindow(QMainWindow):
         """A side clicked on the plan: the eave of a mono-pitch roof; on a gable or hip roof, an eave that becomes
         a gable end or a gable end that becomes an eave (task 16a)."""
         if purpose == "align":
-            found = self._outline(kind, oid)
-            if found is not None:
-                self.plan.align_to_side(found[1], side)
-                self.hint.setText(_("The view is parallel to side {n}. «North up» brings it back; the project has "
-                                    "not turned.").format(n=side + 1))
+            self._align_to(kind, oid, side)
             return
         b = self.project.building(oid)
         if kind != "building" or b is None:
@@ -3235,6 +3234,13 @@ class MainWindow(QMainWindow):
                 menu.addSeparator()
             else:
                 menu.addAction(entry[0]).triggered.connect(lambda _c=False, f=entry[1]: f())
+        side = getattr(self, "_menu_side", None)
+        if side is not None:                        # a right click on a side of an outline in the plan (R174)
+            menu.addSeparator()
+            menu.addAction(icons.icon("view_align"), _("Align the view to this side")).triggered.connect(
+                lambda _c=False, s=side: self._align_to(*s))
+            if round(self.plan.view_rotation(), 1) % 360.0:
+                menu.addAction(icons.icon("view_north"), _("North up")).triggered.connect(self._north_view)
         self.context_menu = menu                    # kept, for the tests
         menu.popup(where)
 
@@ -3263,9 +3269,44 @@ class MainWindow(QMainWindow):
             self.context_menu = menu
             menu.popup(self.plan.viewport().mapToGlobal(pos))
             return
-        kind, oid, key = self.plan._pick(self.plan.mapToScene(pos))
+        scene = self.plan.mapToScene(pos)
+        kind, oid, key = self.plan._pick(scene)
+        # the side of the outline under the pointer, for «Align the view to this side» (R174)
+        self._menu_side = self._side_near(kind, oid, from_scene(scene))
         kind, oid, key = self._object_at_plan(kind, oid, key)
-        self._popup(kind, oid, key, self.plan.viewport().mapToGlobal(pos))
+        try:
+            self._popup(kind, oid, key, self.plan.viewport().mapToGlobal(pos))
+        finally:
+            self._menu_side = None
+
+    def _side_near(self, kind: str, oid: str, point) -> tuple | None:
+        """The side of an outline (a building, a pitch, a sub-field, an exclusion) within a few pixels of `point`:
+        (kind, oid, side), None when there is none. The outline under the pointer first, then the selection's, then
+        any: a click right on a side falls just outside the outline it bounds."""
+        from .. import sides
+        if kind == "module":
+            kind = "subfield"
+        within = 12 * self.plan.metres_per_pixel()
+        p = self.project
+        every = ([("building", b.id) for b in p.buildings]
+                 + [("pitch", f"{b.id}:{i}") for b in p.buildings for i in range(len(b.pitches()))]
+                 + [("subfield", s.id) for s in p.subfields] + [("exclusion", e.id) for e in p.exclusions])
+        for candidate in [(kind, oid), tuple(self.selection), *every]:
+            if candidate[0] not in ("building", "pitch", "subfield", "exclusion"):
+                continue
+            found = self._outline(*candidate)
+            side = sides.nearest(found[1], point, within) if found is not None else None
+            if side is not None:
+                return (*candidate, side)
+        return None
+
+    def _align_to(self, kind: str, oid: str, side: int) -> None:
+        found = self._outline(kind, oid)
+        if found is not None:
+            self.plan._end_pick()
+            self.plan.align_to_side(found[1], side)
+            self.hint.setText(_("The view is parallel to side {n}. «North up» (N, or a click on the compass) brings it "
+                                "back; the project has not turned.").format(n=side + 1))
 
     def _view3d_menu(self, x: float, y: float) -> None:
         from PySide6.QtCore import QPoint

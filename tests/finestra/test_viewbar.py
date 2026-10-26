@@ -12,7 +12,7 @@ from _fixtures import capannone
 setUpModule = _setup.keep_global_state          # what the module changes of the process, put back after it
 
 VIEW_COMMANDS = ("view_plan", "view_3d", "view_both", "fit", "zoom_in", "zoom_out")
-PLAN_COMMANDS = VIEW_COMMANDS + ("snaps", "ortho")
+PLAN_COMMANDS = VIEW_COMMANDS + ("view_align", "view_north", "snaps", "ortho")      # turning the plan: R174
 
 
 class ViewBars(unittest.TestCase):
@@ -123,6 +123,46 @@ class ViewBars(unittest.TestCase):
         win.commands["view_north"].trigger()
         self.assertAlmostEqual(win.plan.view_rotation(), 0.0)
         self.assertIsNone(win.plan.edge_pick)
+
+    def test_turning_the_plan_without_the_menus_buttons_keys_compass_and_right_click(self):
+        """R174 (Daniel, 26/10/2026: «non bisognerebbe andare sul menu su alt per aprirlo. mi piacciono i tuoi
+        consigli»): Align and North up in the plan's bar with their keys A and N; a click on the compass brings
+        North up; a right click on a side of an outline offers to align the view to that side."""
+        from PySide6.QtCore import QPoint
+        from PySide6.QtGui import QKeySequence
+
+        from meridiana.ui.plan import to_scene
+        win = self.win
+        for cid, key in (("view_align", "A"), ("view_north", "N")):
+            action = win.commands[cid]
+            self.assertIn(action, win.plan.viewbar.buttons)
+            self.assertIn(QKeySequence(key), action.shortcuts())
+            self.assertIn(key, win.plan.viewbar.buttons[action].toolTip())
+        building = win.project.buildings[0]
+        before = win.project.to_json()
+        win.plan.rotate_view(37.0)
+        win.plan.north.clicked.emit()                               # what a click on the compass sends
+        self.assertAlmostEqual(win.plan.view_rotation(), 0.0)
+        # a right click on the middle of side 1 of the building
+        a, b = building.footprint[1], building.footprint[2]
+        middle = win.plan.mapFromScene(to_scene((a[0] + b[0]) / 2, (a[1] + b[1]) / 2))
+        win._plan_menu(QPoint(middle.x(), middle.y()))
+        texts = [x.text() for x in win.context_menu.actions()]
+        self.assertIn("Align the view to this side", texts)
+        self.assertNotIn("North up", texts)                         # North is up already
+        align = next(x for x in win.context_menu.actions() if x.text() == "Align the view to this side")
+        win.context_menu.close()
+        align.trigger()
+        p, q = win.plan.mapFromScene(to_scene(*a)), win.plan.mapFromScene(to_scene(*b))
+        self.assertAlmostEqual(p.y(), q.y(), delta=1.0)             # that side lies level on the screen
+        self.assertNotAlmostEqual(win.plan.view_rotation() % 360.0, 0.0, places=1)
+        self.assertEqual(win.project.to_json(), before)             # the project never turns
+        middle = win.plan.mapFromScene(to_scene((a[0] + b[0]) / 2, (a[1] + b[1]) / 2))     # where the side is now
+        win._plan_menu(QPoint(middle.x(), middle.y()))              # turned: the menu offers North up too
+        self.assertIn("North up", [x.text() for x in win.context_menu.actions()])
+        win.context_menu.close()
+        win.commands["view_north"].trigger()
+        self.assertAlmostEqual(win.plan.view_rotation(), 0.0)
 
     def test_the_keys_and_the_switches_the_selector_of_the_views_and_the_colours_of_the_theme(self):
         from PySide6.QtCore import Qt

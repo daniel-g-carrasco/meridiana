@@ -113,6 +113,33 @@ class PlanAids(unittest.TestCase):
                         8 * plan.metres_per_pixel())       # the scene's scroll bars round to whole pixels
         self.assertEqual(plan.north.heading_text(), "0° N")
 
+    def test_the_n_of_the_compass_goes_with_the_arrow_and_a_click_brings_north_up(self):
+        """R174 (Daniel, 26/10/2026: «la N di nord non segue la freccia ... la N dovrebbe poter ruotare. e anche un
+        modo per riportarlo a nord ci vuole»): the N stands past the arrow's tip, wherever it points; a click on the
+        compass says so (its signal, which the window ties to «North up»)."""
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QSignalSpy, QTest
+        north = self.plan.north
+        centre = north.CENTRE
+        north.set_rotation(0.0)
+        up = north.letter_centre()
+        self.assertAlmostEqual(up.x(), centre.x())
+        self.assertLess(up.y(), centre.y())                         # North up: the N above the middle
+        self.assertEqual(north.cursor().shape(), Qt.CursorShape.ArrowCursor)
+        north.set_rotation(90.0)                                    # the view turned: North to the left
+        left = north.letter_centre()
+        self.assertAlmostEqual(left.y(), centre.y(), places=6)
+        self.assertLess(left.x(), centre.x())
+        self.assertIn("(N)", north.toolTip())                       # the click is said where it is
+        self.assertEqual(north.cursor().shape(), Qt.CursorShape.PointingHandCursor)
+        north.set_rotation(120.0)                                   # Daniel's screenshot: 120° SE
+        tilted = north.letter_centre()
+        self.assertLess(tilted.x(), centre.x())
+        self.assertGreater(tilted.y(), centre.y())                  # down and to the left, at the arrow's tip
+        spy = QSignalSpy(north.clicked)
+        QTest.mouseClick(north, Qt.MouseButton.LeftButton)
+        self.assertEqual(spy.count(), 1)
+
     def test_the_source_of_the_background_is_said_only_over_a_background(self):
         self.assertFalse(self.plan.attribution.isVisibleTo(self.plan))
         self.plan.set_source("osm")                         # what the window does with Background > OSM

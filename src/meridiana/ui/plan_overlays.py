@@ -6,7 +6,7 @@ are children of the view, not of the viewport, which carries its children along 
 
 from __future__ import annotations
 
-from PySide6.QtCore import QPointF, QRectF, Qt
+from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 
@@ -54,8 +54,14 @@ class Overlay(QWidget):
 
 
 class NorthArrow(Overlay):
-    """A round compass: the arrow points to true North when the view turns; the line below says the view's bearing
-    and its nearest compass point. The project itself never turns."""
+    """A round compass: the arrow points to true North when the view turns, and the N with it, at its tip, upright to
+    be read (R174, Daniel 26/10/2026: «la N di nord non segue la freccia ... la N dovrebbe poter ruotare»); the line
+    below says the view's bearing and its nearest compass point; a click brings North up again («anche un modo per
+    riportarlo a nord ci vuole»). The project itself never turns."""
+
+    clicked = Signal()
+    CENTRE = QPointF(28, 28)        # the disc's middle
+    LETTER = 18.0                   # the N's distance from it, on the arrow's line past its tip
 
     def __init__(self, parent):
         super().__init__(parent, mouse=True)
@@ -67,9 +73,27 @@ class NorthArrow(Overlay):
     def set_rotation(self, degrees: float) -> None:
         self.rotation = degrees % 360.0
         self.angle = -self.rotation
-        self.setToolTip(_("View orientation: {heading}. The arrow points to true North. Project azimuths: from South, "
-                          "positive towards West, as PVsyst and PVGIS write them.").format(heading=self.heading_text()))
+        tip = _("View orientation: {heading}. The arrow points to true North. Project azimuths: from South, positive "
+                "towards West, as PVsyst and PVGIS write them.").format(heading=self.heading_text())
+        turned = round(self.rotation, 1) % 360.0 != 0.0
+        if turned:
+            tip += "\n" + _("Click: North up again (N)")
+        self.setToolTip(tip)
+        self.setCursor(Qt.CursorShape.PointingHandCursor if turned else Qt.CursorShape.ArrowCursor)
         self.update()
+
+    def letter_centre(self) -> QPointF:
+        """Where the N is drawn: on the arrow's line, past its tip, wherever the arrow points."""
+        import math
+        a = math.radians(self.angle)
+        return QPointF(self.CENTRE.x() + self.LETTER * math.sin(a), self.CENTRE.y() - self.LETTER * math.cos(a))
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit()
+            event.accept()
+            return
+        super().mousePressEvent(event)
 
     def heading_text(self) -> str:
         from ..i18n import number
@@ -88,17 +112,18 @@ class NorthArrow(Overlay):
         p.drawEllipse(QRectF(2, 2, 52, 52))
         p.setFont(text_font(Text.LABEL))
         p.setPen(ink)
-        p.drawText(QRectF(0, 5, self.width(), 12), Qt.AlignmentFlag.AlignCenter, _("N"))
+        n = self.letter_centre()
+        p.drawText(QRectF(n.x() - 8, n.y() - 7, 16, 14), Qt.AlignmentFlag.AlignCenter, _("N"))
         p.drawText(QRectF(0, 58, self.width(), 18), Qt.AlignmentFlag.AlignCenter, self.heading_text())
-        p.translate(self.width() / 2, 29)
+        p.translate(self.CENTRE)
         p.rotate(self.angle)
-        head = QPainterPath(QPointF(0, -14))
-        head.lineTo(5.5, -4)
-        head.lineTo(-5.5, -4)
+        head = QPainterPath(QPointF(0, -10))
+        head.lineTo(5, -1)
+        head.lineTo(-5, -1)
         head.closeSubpath()
         for pen, width in ((halo, 3.6), (ink, 1.6)):
             p.setPen(QPen(pen, width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
-            p.drawLine(QPointF(0, -4), QPointF(0, 14))
+            p.drawLine(QPointF(0, -1), QPointF(0, 12))
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(ink)
         p.drawPath(head)
