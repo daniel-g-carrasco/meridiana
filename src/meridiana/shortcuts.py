@@ -88,6 +88,8 @@ def commands() -> list[Command]:
         c("fit", _("&Fit to the drawing"), ("F",), "view"),
         c("zoom_in", _("Zoom &in"), ("+", "Ctrl++"), "view"),
         c("zoom_out", _("Zoom &out"), ("-", "Ctrl+-"), "view"),
+        c("view_align", _("&Align the view to a side…"), (), "view"),
+        c("view_north", _("&North up"), (), "view"),
         c("strings", _("&Strings on the plan"), ("W",), "view"),
         c("toolbar_text", _("&Text under the icons"), (), "view"),
         # the menu bar hidden until Alt, or always there (R53; Daniel, 24/10/2026)

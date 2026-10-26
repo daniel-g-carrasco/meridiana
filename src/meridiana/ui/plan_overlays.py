@@ -54,26 +54,43 @@ class Overlay(QWidget):
 
 
 class NorthArrow(Overlay):
-    """True North, up: the plan is drawn with it up and every computation uses it. The day the plan can turn
-    along a building, the arrow turns with it (`angle`). Daniel's choice B of 24/10/2026: a thin arrow under the N,
-    as on a printed map, in a see-through box."""
+    """A round compass: the arrow points to true North when the view turns; the line below says the view's bearing
+    and its nearest compass point. The project itself never turns."""
 
     def __init__(self, parent):
-        super().__init__(parent, mouse=True)          # a tooltip, nothing else
+        super().__init__(parent, mouse=True)
         self.angle = 0.0
-        self.setFixedSize(30, 50)
-        self.setToolTip(_("North is up. Azimuths in Meridiana: from South, positive towards West, as PVsyst and "
-                          "PVGIS write them."))
+        self.rotation = 0.0
+        self.setFixedSize(56, 78)
+        self.set_rotation(0.0)
+
+    def set_rotation(self, degrees: float) -> None:
+        self.rotation = degrees % 360.0
+        self.angle = -self.rotation
+        self.setToolTip(_("View orientation: {heading}. The arrow points to true North. Project azimuths: from South, "
+                          "positive towards West, as PVsyst and PVGIS write them.").format(heading=self.heading_text()))
+        self.update()
+
+    def heading_text(self) -> str:
+        from ..i18n import number
+        points = (_("N"), _("NE"), _("E"), _("SE"), _("S"), _("SO"), _("O"), _("NO"))
+        return _("{angle}° {point}").format(angle=number(self.rotation, 0),
+                                            point=points[int((self.rotation + 22.5) // 45) % 8])
 
     def paintEvent(self, _event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        box(p, QRectF(self.rect()), self.colours)
         ink, halo = qcolour(self.colours["label_fg"]), shade(self.colours)
+        fill = qcolour(self.colours["label_bg"])
+        fill.setAlphaF(SEE_THROUGH)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(fill)
+        p.drawEllipse(QRectF(2, 2, 52, 52))
         p.setFont(text_font(Text.LABEL))
         p.setPen(ink)
-        p.drawText(QRectF(0, Space.XS, self.width(), 14), Qt.AlignmentFlag.AlignCenter, _("N"))
-        p.translate(self.width() / 2, 33)
+        p.drawText(QRectF(0, 5, self.width(), 12), Qt.AlignmentFlag.AlignCenter, _("N"))
+        p.drawText(QRectF(0, 58, self.width(), 18), Qt.AlignmentFlag.AlignCenter, self.heading_text())
+        p.translate(self.width() / 2, 29)
         p.rotate(self.angle)
         head = QPainterPath(QPointF(0, -14))
         head.lineTo(5.5, -4)
@@ -81,7 +98,7 @@ class NorthArrow(Overlay):
         head.closeSubpath()
         for pen, width in ((halo, 3.6), (ink, 1.6)):
             p.setPen(QPen(pen, width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
-            p.drawLine(QPointF(0, -4), QPointF(0, 11))
+            p.drawLine(QPointF(0, -4), QPointF(0, 14))
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(ink)
         p.drawPath(head)

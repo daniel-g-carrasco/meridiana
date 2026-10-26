@@ -105,6 +105,20 @@ class ViewBars(unittest.TestCase):
         win.commands["zoom_out"].trigger()
         self.assertAlmostEqual(win.plan.transform().m11(), plan_scale)
 
+    def test_aligning_the_view_to_a_side_and_returning_north_up(self):
+        win = self.win
+        bid = win.project.buildings[0].id
+        before = win.project.to_json()
+        win._select("building", bid)
+        win.commands["view_align"].trigger()
+        self.assertEqual(win.plan.edge_pick[0], "align")
+        win._edge_picked("align", "building", bid, 1)
+        self.assertAlmostEqual(win.plan.view_rotation(), 90.0)
+        self.assertEqual(win.project.to_json(), before)
+        win.commands["view_north"].trigger()
+        self.assertAlmostEqual(win.plan.view_rotation(), 0.0)
+        self.assertIsNone(win.plan.edge_pick)
+
     def test_the_keys_and_the_switches_the_selector_of_the_views_and_the_colours_of_the_theme(self):
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest

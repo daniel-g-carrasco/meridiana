@@ -75,6 +75,36 @@ class PlanAids(unittest.TestCase):
         self.assertAlmostEqual(bar.pixels, bar.length / self.plan.metres_per_pixel())
         self.assertLessEqual(bar.pixels, bar.LONGEST)
 
+    def test_the_plan_rotates_without_changing_the_project_and_the_compass_follows(self):
+        from PySide6.QtCore import QPointF, Qt
+        from PySide6.QtGui import QNativeGestureEvent, QPointingDevice
+        from PySide6.QtWidgets import QApplication
+        plan = self.plan
+        before = self.project.to_json()
+        centre = plan.mapToScene(plan.viewport().rect().center())
+        scale = plan.transform().m11()
+        at = QPointF(plan.viewport().rect().center())
+        event = QNativeGestureEvent(Qt.NativeGestureType.RotateNativeGesture,
+                                    QPointingDevice.primaryPointingDevice(), 2, at, at,
+                                    QPointF(plan.viewport().mapToGlobal(at.toPoint())), 30.0, QPointF())
+        QApplication.sendEvent(plan.viewport(), event)
+        self.assertTrue(event.isAccepted())
+        self.assertAlmostEqual(plan.view_rotation(), 30.0)
+        self.assertAlmostEqual(plan.north.angle, -30.0)
+        self.assertEqual(plan.north.heading_text(), "30° NE")
+        self.assertEqual(self.project.to_json(), before)
+        from meridiana.ui.plan import to_scene
+        plan.align_to_side(self.project.buildings[0].footprint, 1)
+        a, b = (plan.mapFromScene(to_scene(*self.project.buildings[0].footprint[i])) for i in (1, 2))
+        self.assertAlmostEqual(a.y(), b.y(), delta=1e-6)
+        self.assertEqual(plan.north.heading_text(), "90° E")
+        plan.reset_rotation()
+        self.assertAlmostEqual(plan.view_rotation(), 0.0)
+        self.assertAlmostEqual(plan.transform().m11(), scale)
+        self.assertLess((plan.mapToScene(plan.viewport().rect().center()) - centre).manhattanLength(),
+                        8 * plan.metres_per_pixel())       # the scene's scroll bars round to whole pixels
+        self.assertEqual(plan.north.heading_text(), "0° N")
+
     def test_the_source_of_the_background_is_said_only_over_a_background(self):
         self.assertFalse(self.plan.attribution.isVisibleTo(self.plan))
         self.plan.set_source("osm")                         # what the window does with Background > OSM

@@ -11898,3 +11898,42 @@ msgstr "Ingrandisci"
 #: src/meridiana/ui/window.py:908
 msgid "Zoom out"
 msgstr "Riduci"
+
+#: src/meridiana/shortcuts.py:91
+msgid "&Align the view to a side…"
+msgstr "Allinea la vista a un &lato…"
+
+#: src/meridiana/shortcuts.py:92
+msgid "&North up"
+msgstr "&Nord in alto"
+
+#: src/meridiana/ui/window.py:863
+msgid "Choose a side of the selected outline; the plan turns parallel to it"
+msgstr "Scegli un lato del contorno selezionato; la pianta ruota parallelamente a esso"
+
+#: src/meridiana/ui/window.py:864
+msgid "The plan with true North up again"
+msgstr "Riporta la pianta con il nord vero in alto"
+
+#: src/meridiana/ui/window.py:1904
+msgid "Select a building, a roof pitch, a sub-field or an exclusion, then align the view to one of its sides."
+msgstr "Seleziona un edificio, una falda, un sottocampo o un'esclusione, poi allinea la vista a un suo lato."
+
+#: src/meridiana/ui/window.py:1912
+msgid "North is up. The project's coordinates have not changed."
+msgstr "Il nord è in alto. Le coordinate del progetto non sono cambiate."
+
+#: src/meridiana/ui/plan_overlays.py:67
+#, python-brace-format
+msgid "View orientation: {heading}. The arrow points to true North. Project azimuths: from South, positive towards West, as PVsyst and PVGIS write them."
+msgstr "Orientamento della vista: {heading}. La freccia indica il nord vero. Azimut del progetto: da sud, positivi verso ovest, come li scrivono PVsyst e PVGIS."
+
+#: src/meridiana/ui/plan_overlays.py:76
+#, python-brace-format
+msgid "{angle}° {point}"
+msgstr "{angle}° {point}"
+
+#: src/meridiana/ui/window.py:2561
+#, python-brace-format
+msgid "The view is parallel to side {n}. «North up» brings it back; the project has not turned."
+msgstr "La vista è parallela al lato {n}. «Nord in alto» la riporta; il progetto non ha ruotato."
