@@ -871,11 +871,12 @@ class MainWindow(QMainWindow):
                                ("view_north", self._north_view, _("The plan with true North up again"))):
             action = act(view, cid, slot, tip=tip)
             action.setIcon(icons.icon(cid))
-        # W: in the Plant phase, which has lent the plan, the strings stay (study 16, D.6)
+        # W: in the Plant phase, which has lent the plan, the strings stay (study 16, D.6); off at the start, the Model
+        # draws the building (Daniel, 26/10/2026: «perché vedo la stringatura anche nella fase di modellazione?»)
         strings = act(view, "strings", lambda on: self.plan.show_wiring(on or self.split_home is not None), True,
                       _("Each string as a line through its modules, in a colour of its own; always shown in the "
                         "Plant phase"))
-        strings.setChecked(True)
+        strings.setChecked(False)
         # the plan's background (R21, R36): the best source for the site, the sources that cover it with their terms,
         # none (made again each time the menu opens: the site may have moved), the others in the preferences, the
         # veil, the images imported; one menu, in View and in the plan's bar

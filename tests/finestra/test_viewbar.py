@@ -78,18 +78,18 @@ class ViewBars(unittest.TestCase):
 
     def test_with_their_words_the_buttons_are_as_wide_as_their_words(self):
         """Daniel, 26/10/2026, on the wider screens of the studio: «le scritte e alcuni elementi ora si visualizzano
-        deformati più stretti». The buttons of the views' bars had been held 24 px wide (36 with a menu), their words
-        cut down to nothing beside the icon."""
+        deformati più stretti», then «non è solo il testo ma anche elementi come questi tasti»: the buttons of the
+        views' bars had been held 24 px wide (36 with a menu), the words cut down to nothing beside the icon and the
+        icons squeezed in grounds taller than wide. As wide as they ask, words or not."""
         win = self.win
         bar = win.plan.viewbar
         for on in (True, False):
             bar.set_words(on)
             self.app.processEvents()
-            for action, button in bar.buttons.items():
-                if button.isVisible() and (on or action.menu() is not None):
+            for _action, button in bar.buttons.items():
+                if button.isVisible():
                     self.assertGreaterEqual(button.width(), button.sizeHint().width(), (on, button.text()))
-                elif button.isVisible():                # the icon alone: a chip's width, the icon whole in it
-                    self.assertGreaterEqual(button.width(), button.iconSize().width() + 8, button.text())
+                    self.assertGreaterEqual(button.width(), button.height(), (on, button.text()))   # never taller
         bar.set_words(False)
 
     def test_zoom_buttons_and_keys_move_both_views_and_say_the_key(self):
