@@ -220,6 +220,22 @@ class Tools(unittest.TestCase):
         self.assertGreater(out["subfields"][0]["modules_laid"], 50)
         self.assertFalse(out["year_computed"])
 
+    def test_layout_parameters_have_the_names_and_values_shown_in_properties(self):
+        host = problems_host(selection=("subfield", "s1"))
+        host.project.subfields[0].params["mounting"] = "coplanar"
+        selection = json.loads(tools.run("read_selection", {}, host, tools.State()).content)
+        shown = selection["params_display"]
+        self.assertEqual(shown["pitch_mode"], {"label": "row pitch", "value": "From the sun"})
+        self.assertEqual(shown["shade_free"], {"label": "out of the shadows", "value": "no"})
+        self.assertEqual(shown["mounting"]["value"], "Coplanar on the pitch")
+        self.assertEqual(shown["portrait"], {"label": "orientation", "value": "Portrait"})
+        summary = json.loads(tools.run("project_summary", {}, host, tools.State()).content)["subfields"][0]
+        self.assertEqual(summary["mounting"], "coplanar")
+        self.assertEqual(summary["mounting_name"], "Coplanar on the pitch")
+        self.assertEqual(summary["pitch_mode_name"], "From the sun")
+        self.assertEqual(summary["shade_free_name"], "no")
+        self.assertEqual(summary["orientation_name"], "Portrait")
+
     def test_production_results_name_the_plant_and_array_bases_of_obstacle_shade(self):
         from types import SimpleNamespace
         from meridiana.energy.simulate import ChainStep

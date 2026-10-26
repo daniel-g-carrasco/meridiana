@@ -36,6 +36,7 @@ from dataclasses import dataclass, field
 
 from .. import checks as checks_module
 from .. import layout, model, settings
+from ..fields import field_label, field_value, mounting_names, pitch_mode_names
 from ..i18n import _, number
 
 RESULT_LIMIT = 6000             # characters of one tool's answer: the local model has 16k tokens for everything
@@ -315,8 +316,15 @@ def project_summary(host, state: State) -> Outcome:
         params = sf.layout_params()
         subfields.append({"id": sf.id, "name": sf.name, "on": object_name(p, "building", sf.building)
                           if sf.building else "ground", "module": module["name"], "modules_laid": laid,
-                          "power_kwp": round(kw, 2), "mounting": params.mounting, "tilt": params.tilt,
-                          "azimuth": "auto" if params.azimuth is None else params.azimuth,
+                          "power_kwp": round(kw, 2), "mounting": params.mounting,
+                          "mounting_name": mounting_names().get(params.mounting, params.mounting),
+                          "pitch_mode": params.pitch_mode,
+                          "pitch_mode_name": pitch_mode_names().get(params.pitch_mode, params.pitch_mode),
+                          "shade_free": params.shade_free, "shade_free_name": field_value("params.shade_free",
+                                                                                         params.shade_free),
+                          "portrait": params.portrait, "orientation_name": field_value("params.portrait",
+                                                                                       params.portrait),
+                          "tilt": params.tilt, "azimuth": "auto" if params.azimuth is None else params.azimuth,
                           "laid": sf.filled, "by_hand": sf.manual})
     buildings = [{"id": b.id, "name": b.name, "height_m": b.height, "roof": b.roof.type,
                   "slope": round(b.slope(), 1) if hasattr(b, "slope") else b.roof.tilt,
@@ -460,6 +468,8 @@ def read_selection(host, state: State) -> Outcome:
         out.update({"on": object_name(p, "building", sf.building) if sf.building else "ground",
                     "module": _module(p, sf), "modules_laid": _laid(host, sf), "laid": sf.filled,
                     "by_hand": sf.manual, "params": {k: _value(v) for k, v in params.items()},
+                    "params_display": {k: {"label": field_label(f"params.{k}"),
+                                           "value": field_value(f"params.{k}", v)} for k, v in params.items()},
                     "params_set_by_designer": sorted(sf.params)})
         from shapely.geometry import Polygon
         out["area_m2"] = round(Polygon(sf.ring).area, 1)
