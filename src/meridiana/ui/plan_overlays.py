@@ -73,7 +73,7 @@ class NorthArrow(Overlay):
 
     def heading_text(self) -> str:
         from ..i18n import number
-        points = (_("N"), _("NE"), _("E"), _("SE"), _("S"), _("SO"), _("O"), _("NO"))
+        points = (_("N"), _("NE"), _("E"), _("SE"), _("S"), _("SW"), _("W"), _("NW"))
         return _("{angle}° {point}").format(angle=number(self.rotation, 0),
                                             point=points[int((self.rotation + 22.5) // 45) % 8])
 

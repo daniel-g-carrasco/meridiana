@@ -347,7 +347,7 @@ class InTheWindow(unittest.TestCase):
             win.show_phase(pid)
             self.app.processEvents()
             areas = [a for a in win.findChildren(QAbstractScrollArea) if a.isVisible()]
-            self.assertGreater(len(areas), 4)
+            self.assertGreater(len(areas), 3)              # the Project panel goes without a drawing (R145)
             for a in areas:
                 with self.subTest(pid=pid, area=f"{type(a).__name__} {a.objectName()}"):
                     if a is win.plan:

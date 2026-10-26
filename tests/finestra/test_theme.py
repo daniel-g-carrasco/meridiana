@@ -132,7 +132,7 @@ class ThemeOfTheWindow(unittest.TestCase):
                 t = win.theme.tokens
                 # the floor of the window at a corner between the bars and the cards, the card's colour inside it;
                 # the grab is in device pixels on a real screen, read in the middle of each logical pixel
-                dock = win.docks[0]
+                dock = next(d for d in win.docks if d.isVisible())   # Project is hidden without a drawing (R145)
                 dpr = image.devicePixelRatio()
 
                 def at(x, y, image=image, dpr=dpr):

@@ -1764,8 +1764,14 @@ class PlanView(QGraphicsView):
         self._update_cursor(event.position().toPoint())
 
     def translate_view(self, dx: float, dy: float) -> None:
-        s = self.transform().m11()
-        self.translate(dx / s, dy / s)
+        """The view moved by (dx, dy) pixels of the screen: the move in the scene's units through the inverse of the
+        view's transform, rotation included (R146: dividing by m11 went the wrong way on a turned plan, and at 90°
+        divided by nought)."""
+        inverse, ok = self.transform().inverted()
+        if not ok:
+            return
+        d = inverse.map(QPointF(dx, dy)) - inverse.map(QPointF(0.0, 0.0))
+        self.translate(d.x(), d.y())
         self.user_moved = True
         self._moved()
 

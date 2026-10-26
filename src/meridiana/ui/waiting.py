@@ -180,6 +180,13 @@ class _Pin(QObject):
         super().__init__(widget)
         self.widget, self.host, self.margin, self.where = widget, host, margin, where
         host.installEventFilter(self)
+        # a scroll area lays its viewport out after the filters saw its resize: the viewport's own resize places
+        # it again (the Project panel that goes in the phases without a drawing widens the page, R145: the arc
+        # stayed where the old corner was)
+        inner = getattr(host, "viewport", None)
+        self.port = inner() if callable(inner) else None
+        if self.port is not None:
+            self.port.installEventFilter(self)
         self.place()
 
     def place(self) -> None:
@@ -192,7 +199,8 @@ class _Pin(QObject):
             self.widget.move(area.right() + 1 - self.widget.width() - self.margin, area.top() + self.margin)
 
     def eventFilter(self, obj, event) -> bool:
-        if obj is self.host and event.type() in (QEvent.Type.Resize, QEvent.Type.LayoutRequest, QEvent.Type.Show):
+        if (obj is self.host or obj is self.port) and event.type() in (QEvent.Type.Resize, QEvent.Type.LayoutRequest,
+                                                                       QEvent.Type.Show):
             self.place()
         return False
 

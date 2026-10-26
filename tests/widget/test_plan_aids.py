@@ -98,6 +98,14 @@ class PlanAids(unittest.TestCase):
         a, b = (plan.mapFromScene(to_scene(*self.project.buildings[0].footprint[i])) for i in (1, 2))
         self.assertAlmostEqual(a.y(), b.y(), delta=1e-6)
         self.assertEqual(plan.north.heading_text(), "90° E")
+        # panning a turned plan: the drawing follows the hand on the screen (it went the wrong way, and at 90°
+        # translate_view divided by nought; review of 26/10/2026)
+        point = to_scene(*self.project.buildings[0].footprint[0])
+        on_screen = plan.mapFromScene(point)
+        plan.translate_view(40, -25)
+        moved = plan.mapFromScene(point) - on_screen
+        self.assertLessEqual(abs(moved.x() - 40) + abs(moved.y() + 25), 2)   # the scroll bars round to pixels
+        plan.translate_view(-40, 25)
         plan.reset_rotation()
         self.assertAlmostEqual(plan.view_rotation(), 0.0)
         self.assertAlmostEqual(plan.transform().m11(), scale)

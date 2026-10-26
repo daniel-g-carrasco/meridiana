@@ -125,9 +125,14 @@ class PhaseRow(unittest.TestCase):
         self.assertIs(menu.parentWidget(), win)
         self.assertEqual(win.project.energy.get("strings", {}).get("runs"), None)
         menu.close()
-        win.project.energy["inverters"] = [{"record": inverter_record(model="AC-10K", ac_power_nominal_w=10000), "count": 1,
-                                            "name": ""}]
-        win.commands["inverter_auto"].trigger()
+        rec = inverter_record(model="AC-10K", ac_power_nominal_w=10000)
+        win.project.energy["inverters"] = [{"record": rec, "count": 1, "name": ""}]
+        # the sizing asks the brand first (R141): answered here, a dialog left open waited for ever offscreen
+        from PySide6.QtWidgets import QInputDialog
+        with mock.patch("meridiana.ui.window.catalog.brands", return_value=["Acme"]), \
+                mock.patch("meridiana.ui.window.catalog.load", return_value=(rec,)), \
+                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
+            win.commands["inverter_auto"].trigger()
         message = win.statusBar().currentMessage()
         self.assertIn("AC-10K", message)
         self.assertIn("DC/AC", message)

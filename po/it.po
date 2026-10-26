@@ -11914,39 +11914,32 @@ msgid "N"
 msgstr "N"
 
 #: src/meridiana/ui/plan_overlays.py:76
-#, fuzzy
 msgid "NE"
-msgstr "N"
+msgstr "NE"
 
 #: src/meridiana/ui/plan_overlays.py:76
-#, fuzzy
 msgid "E"
 msgstr "E"
 
 #: src/meridiana/ui/plan_overlays.py:76
-#, fuzzy
 msgid "SE"
-msgstr "S"
+msgstr "SE"
 
 #: src/meridiana/ui/plan_overlays.py:76
-#, fuzzy
 msgid "S"
 msgstr "S"
 
 #: src/meridiana/ui/plan_overlays.py:76
-#, fuzzy
-msgid "SO"
-msgstr "S"
+msgid "SW"
+msgstr "SO"
 
 #: src/meridiana/ui/plan_overlays.py:76
-#, fuzzy
-msgid "O"
-msgstr "Su"
+msgid "W"
+msgstr "O"
 
 #: src/meridiana/ui/plan_overlays.py:76
-#, fuzzy
-msgid "NO"
-msgstr "N"
+msgid "NW"
+msgstr "NO"
 
 #: src/meridiana/ui/plan_overlays.py:77
 #, python-brace-format

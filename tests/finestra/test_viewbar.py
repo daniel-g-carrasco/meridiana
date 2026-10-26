@@ -43,7 +43,12 @@ class ViewBars(unittest.TestCase):
             self.assertIs(bar.parentWidget(), view)
             self.assertTrue(bar.isVisible())
             self.assertLess(bar.x(), 20)
-        self.assertLess(plan.viewbar.y(), 20)
+        # at the top when it fits beside the compass (R146 made it a round one, 56 px), else below it: never over it
+        room = plan.viewport().width() - plan.north.width() - 3 * 8
+        if plan.viewbar.width() <= room:
+            self.assertLess(plan.viewbar.y(), 20)
+        else:
+            self.assertGreater(plan.viewbar.y(), plan.north.geometry().bottom())
         self.assertFalse(plan.viewbar.geometry().intersects(plan.north.geometry()))
         self.assertFalse(view3d.viewbar.geometry().intersects(view3d.cube.geometry()))
         # in a narrow view the bar goes below the cube, and back up when there is room (side by side the 3D bar
