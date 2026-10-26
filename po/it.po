@@ -6063,6 +6063,10 @@ msgstr "Ctrl"
 msgid "Shift"
 msgstr "Maiusc"
 
+#: src/meridiana/navigation.py
+msgid "Space"
+msgstr "Spazio"
+
 #: src/meridiana/navigation.py:85
 msgid "Alt"
 msgstr "Alt"
