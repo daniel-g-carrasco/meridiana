@@ -38,7 +38,8 @@ TALL = 68                   # the bar with the words under the icons (design 5.3
 LOW = 44                    # the icons alone
 LOW_WINDOW = 900            # logical pixels: a lower window gets the icons alone by itself (the laptop, a column)
 ICON_TALL, ICON_LOW = Icon.TILE, Icon.BAR
-TOOL_TEXT, GROUP_TEXT = Text.SECONDARY, Text.GROUP     # the word under the icon, the title of the group (R159)
+# the word under the icon is Text.SECONDARY, the title of the group Text.GROUP (R159): read when used, the size of
+# the text can change with the window open (R133)
 GROUP_GAP = Space.XS                                    # between the commands and their group's name (R159)
 TAB_HEIGHT = Size.TAB       # a tab of the row of the phases
 HOVER_INSET = Space.XXS     # the ground of a phase under the pointer, in from its tab's sides (R160)
@@ -211,7 +212,7 @@ class ToolGroup(QWidget):
         for tool in tools:
             b = ToolButton(actions[tool.command], tool.label or _plain(actions[tool.command].text()))
             b.setProperty("tool", tool.command)
-            b.setFont(text_font(TOOL_TEXT, b.font()))
+            b.setFont(text_font(Text.SECONDARY, b.font()))
             if tool.primary:
                 b.setProperty("primary", True)
                 self.primary = b
@@ -223,7 +224,7 @@ class ToolGroup(QWidget):
         self.title = QLabel(group.title)
         self.title.setObjectName("group-title")
         self.title.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
-        self.title.setFont(text_font(GROUP_TEXT, self.title.font()))
+        self.title.setFont(text_font(Text.GROUP, self.title.font()))
         box.addWidget(self.title)
 
     def set_mode(self, text: bool) -> int:

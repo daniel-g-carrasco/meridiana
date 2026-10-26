@@ -1300,13 +1300,18 @@ class MainWindow(QMainWindow):
         self._save_config()
 
     def _text_size(self, size: str) -> None:
-        """The size of the text chosen (R133): kept, and said that it comes with the next start (the fonts are made
-        with the window)."""
+        """The size of the text chosen (R133): at once, as every setting (Daniel, 26/10/2026: «il cambio di testo
+        nelle impostazioni non sembra funzionare», when it waited for the next start): the fonts of the widgets, the
+        charts and the plan's labels drawn again."""
         from .design import TEXT_SIZES
+        from .theme import change_text_size
         if size not in TEXT_SIZES or size == self.cfg.text_size:
             return
         self.cfg.text_size = size
-        self.tell(_("The new size of the text takes effect at the next start of Meridiana."))
+        if change_text_size(size):
+            self._theme_changed()
+            if getattr(self, "project", None) is not None:
+                self.plan.show_project(self.project, self.session.good_results(), force=True)
 
     def _report_profiles(self, profiles: list, default: str) -> None:
         """The authors of the reports as the preferences wrote them; a logo chosen there is copied into the data

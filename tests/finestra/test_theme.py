@@ -94,29 +94,37 @@ class ThemeOfTheWindow(unittest.TestCase):
         self.win._preferences("appearance", run=cancel)
         self.assertEqual((self.cfg.accent, self.win.theme.tokens["accent"]), ("indigo", "#5b4bb0"))
 
-    def test_the_size_of_the_text_is_kept_and_said_for_the_next_start(self):
-        """R133 (Daniel, 26/10/2026: «farei 12, 13 e 14 come piccolo, medio e grande»): the choice in Appearance is
-        saved and the window says it comes with the next start; the text of this window stays as it is."""
-        from unittest import mock
+    def test_the_size_of_the_text_changes_the_open_window_at_once_each_text_a_pixel(self):
+        """R133 (Daniel, 26/10/2026: «farei 12, 13 e 14 come piccolo, medio e grande»; then «il cambio di testo
+        nelle impostazioni non sembra funzionare», when it waited for the next start): the choice in Appearance is
+        saved and the open window follows at once, every text one pixel larger, once, whether its size was given to
+        it or taken from its parent; back to the medium, every text as it was."""
+        from PySide6.QtGui import QFontInfo
+        from PySide6.QtWidgets import QApplication, QDialog, QLabel
 
-        from PySide6.QtWidgets import QDialog
+        from meridiana.ui import design, theme
 
-        from meridiana.ui import design
+        self.addCleanup(theme.change_text_size, "medium")
+        self.win.show()
+        widgets = [w for w in QApplication.allWidgets() if w.window() is self.win and w.isVisible()]
+        before = {w: QFontInfo(w.font()).pixelSize() for w in widgets}
+        labels = [w for w in widgets if isinstance(w, QLabel) and w.text()]
+        self.assertTrue(labels)
 
-        def large(dialog):
-            sizes = dialog.appearance.text_size
-            self.assertEqual([sizes.itemData(i) for i in range(sizes.count())], ["small", "medium", "large"])
-            self.assertEqual(sizes.currentData(), "medium")
-            sizes.setCurrentIndex(sizes.findData("large"))
-            return QDialog.DialogCode.Accepted
-        with mock.patch.object(self.win, "tell") as tell:
-            self.win._preferences("appearance", run=large)
+        def choose(size):
+            def run(dialog):
+                sizes = dialog.appearance.text_size
+                self.assertEqual([sizes.itemData(i) for i in range(sizes.count())], ["small", "medium", "large"])
+                sizes.setCurrentIndex(sizes.findData(size))
+                return QDialog.DialogCode.Accepted
+            return run
+        self.win._preferences("appearance", run=choose("large"))
         self.assertEqual(config.load(self.paths.config_file).text_size, "large")
-        self.assertEqual(design.Type.BODY, 13)                       # this window: until the next start
-        tell.assert_called_once()
-        with mock.patch.object(self.win, "tell") as tell:
-            self.win._preferences("appearance", run=lambda d: QDialog.DialogCode.Accepted)
-        tell.assert_not_called()                                     # the same size again: nothing to say
+        self.assertEqual((design.Type.BODY, design.text_size()), (14, "large"))
+        grown = {w: QFontInfo(w.font()).pixelSize() - px for w, px in before.items()}
+        self.assertEqual(set(grown.values()), {1}, [(type(w).__name__, d) for w, d in grown.items() if d != 1][:5])
+        self.win._preferences("appearance", run=choose("medium"))
+        self.assertEqual({w: QFontInfo(w.font()).pixelSize() for w in before}, before)
 
     def test_the_sheet_goes_on_the_whole_window_quickly_and_it_draws_in_both_themes_with_the_screenshots_kept(self):
         """A grab() of the window with the Properties and the Production page, light and dark, without errors;

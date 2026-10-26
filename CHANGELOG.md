@@ -11,7 +11,7 @@ software centres show.
 
 ### Added
 - Size of the text (R133): Small, Medium or Large in Preferences > Appearance moves the whole type scale a
-  pixel down or up, the text at 12, 13 or 14 px; it takes effect at the next start (settings format 21).
+  pixel down or up, the text at 12, 13 or 14 px, at once in the open window (settings format 21).
 - Dialog symbols (R169): Discard has a bin on red and Cancel an arrow going back on grey, in every dialog;
   No and Close keep the cross.
 - Separate lanes for overlapping string jumps (R134): routes that share corners or segments move apart by a

@@ -589,6 +589,54 @@ def class_fonts(app=None) -> None:
             app.setFont(f, name)
 
 
+def change_text_size(choice: str, app=None) -> int:
+    """The size of the text chosen with the window open (R133, Daniel 26/10/2026: a setting takes effect at once):
+    the catalogue's scale (design.set_text_size), every font a widget was given and the application's own, a pixel
+    up or down; what draws itself reads the catalogue when it paints. The step, 0 when the size was that already.
+
+    In this order, each needed (tried on the window, tests/finestra/test_theme.py, and in the template): every
+    widget's size is noted first; then the application's font and the kinds' fonts, and the style sheet set again,
+    without which the widgets made under a style sheet keep the application's font they had (setting it again gives
+    each widget back the font it had when the sheet first polished it, and fixes a widget that takes its parent's
+    font at the parent's of then); last, from the outermost in, each widget not yet at its size plus the step is
+    given it: a widget fixed this way fixes the ones that take its font, so that every text grows once."""
+    from PySide6.QtGui import QFontInfo
+
+    from .design import Type, set_text_size
+    app = app or QApplication.instance()
+    before = Type.BODY
+    set_text_size(choice)
+    step = Type.BODY - before
+    if not step or app is None:
+        return step
+
+    def depth(w) -> int:
+        n = 0
+        while w is not None:
+            w, n = w.parentWidget(), n + 1
+        return n
+
+    def size(f: QFont) -> int:
+        return f.pixelSize() if f.pixelSize() > 0 else QFontInfo(f).pixelSize()
+    everyone = sorted(((w, size(w.font())) for w in app.allWidgets()), key=lambda g: depth(g[0]))
+    # the application's font: the text's size, or the system's when that is larger (load_fonts)
+    base = QFont(app.font())
+    px = QFontInfo(base).pixelSize()
+    base.setPixelSize(Type.BODY if px == before else max(Type.BODY, px))
+    app.setFont(base)
+    class_fonts(app)
+    sheet = app.styleSheet()
+    if sheet:
+        app.setStyleSheet(sheet + " ")             # a sheet the same as before is not set again
+        app.setStyleSheet(sheet)
+    for w, px in everyone:
+        if size(w.font()) != px + step:
+            f = QFont(w.font())
+            f.setPixelSize(max(1, px + step))
+            w.setFont(f)
+    return step
+
+
 def load_fonts() -> str:
     """Inter from its files (data/fonts), as the application's font at the system's size; the charts
     get it too. Once per process. The family as Qt names it, "" when the files are not there."""

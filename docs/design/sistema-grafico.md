@@ -71,7 +71,8 @@ Titillium Web, usato fino ad allora, a 13 px si leggeva piccolo e sottile: i suo
 
 La dimensione del testo si sceglie in Preferenze > Aspetto (R133, Daniel 26/10/2026: «farei 12, 13 e 14 come piccolo,
 medio e grande»): Piccolo, Medio (13 px, quella di queste tabelle) e Grande spostano tutta la scala di un pixel in giù o
-in su (`design.set_text_size`, all'avvio, prima di ogni finestra: vale dal prossimo avvio). Perché: su uno schermo al
+in su (`design.set_text_size` all'avvio; con la finestra aperta `theme.change_text_size`, subito: ogni testo di un
+pixel, una volta sola, anche quelli che la dimensione la prendono dal contenitore). Perché: su uno schermo al
 100 % i 13 px del testo sono 13 pixel veri e il testo sembra stretto; al 200 % (il 4K di casa) sono 26 (R171, misurato
 sulla finestra vera: stessa larghezza, al pixel, che in Chrome con gli stessi file).
 

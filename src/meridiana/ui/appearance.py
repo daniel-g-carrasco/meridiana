@@ -115,14 +115,13 @@ class Appearance(QWidget):
             self.backgrounds.addItem(text, key)
         self.backgrounds.setCurrentIndex(max(0, self.backgrounds.findData(cfg.backgrounds)))
         form.addRow(_("Backgrounds"), self.backgrounds)
-        # the size of the text (R133, Daniel 26/10/2026: «farei 12, 13 e 14 come piccolo, medio e grande»): read when
-        # the fonts are made, so it takes effect at the next start
+        # the size of the text (R133, Daniel 26/10/2026: «farei 12, 13 e 14 come piccolo, medio e grande»): the whole
+        # window with OK (theme.change_text_size)
         self.text_size = QComboBox()
         for key, text in text_size_names().items():
             self.text_size.addItem(text, key)
         self.text_size.setCurrentIndex(max(0, self.text_size.findData(cfg.text_size)))
-        self.text_size.setToolTip(_("On a screen at 100 % the large text reads better; it takes effect at the next "
-                                    "start of Meridiana"))
+        self.text_size.setToolTip(_("The text of the whole window, a pixel smaller or larger"))
         form.addRow(_("Size of the text"), self.text_size)
         self.toolbar = QComboBox()
         for key, text in toolbar_names().items():
