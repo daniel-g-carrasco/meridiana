@@ -32,9 +32,10 @@ class Symbols(unittest.TestCase):
         from PySide6.QtGui import QColor
         return QColor.fromRgba(image.pixel(int(x * image.width() / 16), int(y * image.height() / 16)))
 
-    def test_the_seven_symbols_say_what_daniel_listed(self):
+    def test_the_symbols_say_what_daniel_listed(self):
         from meridiana.ui import symbols
-        self.assertEqual(set(symbols.NAMES), {"check", "cross", "forbidden", "stop", "info", "warning", "error"})
+        self.assertEqual(set(symbols.NAMES), {"check", "cross", "forbidden", "stop", "info", "warning", "error",
+                                              "trash", "back"})
         self.assertEqual(symbols.LEVEL, {"fail": "stop", "warn": "warning", "info": "info", "ok": "check"})
         for name in symbols.NAMES:
             for dark in (False, True):
@@ -68,6 +69,32 @@ class Symbols(unittest.TestCase):
         self.assertLess(max(c.red() for c in seam) - min(c.red() for c in seam), 12)    # one gradient, no seam
         self.assertNotEqual(symbols.colour("info", dark=True), symbols.colour("info"))
 
+    def test_discard_is_a_bin_on_the_red_and_cancel_an_arrow_back_on_the_grey(self):
+        """R169 (Daniel, 26/10/2026: «il pulsante scarta vorrei che avesse un bel cestino. Mentre l'annulla un simbolo
+        di tornare indietro»): the bin's lid and body light on the red, the gap between them the red; the arrow's
+        head on the left, its shaft turning on the right, the middle of the turn the grey."""
+        from PySide6.QtCore import QRectF
+
+        from meridiana.ui import symbols
+        trash = self.picture("trash")
+        lid, body, gap = self.colour(trash, 8, 5.3), self.colour(trash, 8, 9.5), self.colour(trash, 8, 6.4)
+        self.assertGreater(lid.lightness(), 220)
+        self.assertGreater(body.lightness(), 220)
+        self.assertGreater(gap.red(), gap.green() + 60)                       # the red between lid and body
+        self.assertGreater(self.colour(trash, 4.5, 10).red(), self.colour(trash, 4.5, 10).green() + 60)  # narrows
+        back = self.picture("back")
+        self.assertGreater(self.colour(back, 4.6, 6.6).lightness(), 220)    # the head
+        self.assertGreater(self.colour(back, 11.5, 9.1).lightness(), 220)   # the turn, on the right
+        self.assertGreater(self.colour(back, 7, 11.6).lightness(), 220)     # the shaft back under the head
+        inside = self.colour(back, 9.4, 9.1)
+        self.assertLess(inside.lightness(), 160)                              # inside the turn: the grey
+        self.assertLess(abs(inside.red() - inside.blue()), 20)
+        # the sign alone (for a pill) follows the half circles, not two whole dots
+        sign = symbols.sign("back", QRectF(0, 0, 16, 16))
+        self.assertTrue(sign.contains(QRectF(11.4, 9.0, 0.2, 0.2).center()))
+        self.assertFalse(sign.contains(QRectF(9.3, 9.0, 0.2, 0.2).center()))
+        self.assertFalse(sign.contains(QRectF(6.0, 9.0, 0.2, 0.2).center()))   # the left of the turn stays open
+
     def test_a_mark_of_the_checks_is_its_symbol(self):
         from PySide6.QtCore import QPointF, Qt
         from PySide6.QtGui import QColor, QImage, QPainter
@@ -97,7 +124,8 @@ class Symbols(unittest.TestCase):
         def pixels(icon) -> QImage:
             return icon.pixmap(32, 32).toImage().convertToFormat(QImage.Format.Format_ARGB32)
 
-        for standard, name in ((SP.SP_DialogOkButton, "check"), (SP.SP_DialogCancelButton, "cross"),
+        for standard, name in ((SP.SP_DialogOkButton, "check"), (SP.SP_DialogCancelButton, "back"),
+                               (SP.SP_DialogDiscardButton, "trash"), (SP.SP_DialogNoButton, "cross"),
                                (SP.SP_MessageBoxWarning, "warning"), (SP.SP_MessageBoxCritical, "error"),
                                (SP.SP_MessageBoxInformation, "info")):
             with self.subTest(name):

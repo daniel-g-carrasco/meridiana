@@ -56,13 +56,15 @@ class ScrollStyle(QProxyStyle):
 
     # the standard icons as the window's symbols (R154, Daniel 25/10/2026: «non hai applicato i simboli nuovi
     # dappertutto»: on Linux OK and Cancel had the desktop theme's green arrow and red cross); a button with no
-    # symbol of its own has no icon, the same on every system
+    # symbol of its own has no icon, the same on every system; Discard a bin and Cancel the arrow of going back (R169,
+    # Daniel 26/10/2026: «il pulsante scarta vorrei che avesse un bel cestino. Mentre l'annulla un simbolo di tornare
+    # indietro»: the two had the same red cross)
     SYMBOLS = {
         QStyle.StandardPixmap.SP_DialogOkButton: "check", QStyle.StandardPixmap.SP_DialogApplyButton: "check",
         QStyle.StandardPixmap.SP_DialogYesButton: "check", QStyle.StandardPixmap.SP_DialogYesToAllButton: "check",
-        QStyle.StandardPixmap.SP_DialogCancelButton: "cross", QStyle.StandardPixmap.SP_DialogNoButton: "cross",
+        QStyle.StandardPixmap.SP_DialogCancelButton: "back", QStyle.StandardPixmap.SP_DialogNoButton: "cross",
         QStyle.StandardPixmap.SP_DialogNoToAllButton: "cross", QStyle.StandardPixmap.SP_DialogCloseButton: "cross",
-        QStyle.StandardPixmap.SP_DialogAbortButton: "cross", QStyle.StandardPixmap.SP_DialogDiscardButton: "cross",
+        QStyle.StandardPixmap.SP_DialogAbortButton: "cross", QStyle.StandardPixmap.SP_DialogDiscardButton: "trash",
         QStyle.StandardPixmap.SP_MessageBoxInformation: "info", QStyle.StandardPixmap.SP_MessageBoxQuestion: "info",
         QStyle.StandardPixmap.SP_MessageBoxWarning: "warning", QStyle.StandardPixmap.SP_MessageBoxCritical: "error",
     }

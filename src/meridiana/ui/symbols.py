@@ -2,25 +2,29 @@
 vorrei utilizzare anche qua in Meridiana a livello globale»): Spola's check, forbidden, warning and error, and the
 cross, the stop and the info drawn in the same geometry (a 16-unit disc, strokes 1.7 wide). Drawn as Spola draws its
 status on Windows: the ground in a gradient, a little lighter at the top, the sign solid and light on it, the same
-for all seven (the warning's «!» is the error's, on the ochre of the warnings: a light sign does not read on the
+for all of them (the warning's «!» is the error's, on the ochre of the warnings: a light sign does not read on the
 yellow), so that it reads on any ground, an orthophoto and the dark panels too, with no halo (the flat ones, the
 sign cut out, showed what lay under it: the comparison of 25/10/2026). SVG drawn by Qt's own renderer at the size and
 the density asked, never a character of a font (a missing glyph left a box in the place of the cross).
 
 What each one says (the same in the template, qtkit):
 - check: confirmed, passed;
-- cross: close, cancel;
+- cross: close, no;
 - forbidden: an operation not allowed;
 - stop: a block (the checks to fix);
 - info: details (the checks to know, notes);
 - warning: a possible problem (the checks to check);
-- error: the program ran into an error.
+- error: the program ran into an error;
+- trash: throw away (a dialog's «Discard»), on the red;
+- back: go back, nothing done (a dialog's «Cancel»), on the grey (R169, Daniel 26/10/2026: «il pulsante scarta vorrei
+  che avesse un bel cestino. Mentre l'annulla un simbolo di tornare indietro»).
 
 Colours: the status colours of the theme (theme_colors.STATUS), a lighter blue and grey on a dark ground, where the
 dark ones vanish. `sign` is the sign alone, for a pill already in the level's colour."""
 
 from __future__ import annotations
 
+import math
 import tempfile
 from pathlib import Path
 
@@ -49,6 +53,12 @@ SHAPES = {
                                      "M6.95,12.05 A1.05,1.05 0 1 1 9.05,12.05 A1.05,1.05 0 1 1 6.95,12.05 Z"),
     "error": ("critical", DISC, "M7.15,3.6 L8.85,3.6 L8.85,9.2 L7.15,9.2 Z "                              # Spola
                                 "M6.95,11.4 A1.05,1.05 0 1 1 9.05,11.4 A1.05,1.05 0 1 1 6.95,11.4 Z"),
+    # a bin: its handle, its lid and its body narrowing to a rounded bottom
+    "trash": ("critical", DISC, "M6.6,3.4 L9.4,3.4 L9.4,4.6 L11.7,4.6 L11.7,6 L4.3,6 L4.3,4.6 L6.6,4.6 Z "
+                                "M5,6.8 L11,6.8 L10.45,12 L9.65,12.7 L6.35,12.7 L5.55,12 Z"),
+    # the arrow of going back: its head to the left, its shaft turning down and back under it, 1.7 wide
+    "back": ("neutral", DISC, "M3.3,6.6 L6.7,3.7 L6.7,5.75 L9,5.75 A3.35,3.35 0 0 1 9,12.45 L5.4,12.45 "
+                              "L5.4,10.75 L9,10.75 A1.65,1.65 0 0 0 9,7.45 L6.7,7.45 L6.7,9.5 Z"),
 }
 NAMES = tuple(SHAPES)
 LEVEL = {"fail": "stop", "warn": "warning", "info": "info", "ok": "check"}      # the checks' levels (checks.LEVELS)
@@ -114,7 +124,8 @@ def sign(name: str, rect: QRectF) -> QPainterPath:
 
 
 def _parse(d: str) -> QPainterPath:
-    """The few SVG path commands the shapes use (M, L, A for full circles, Z) into a QPainterPath."""
+    """The few SVG path commands the shapes use (M, L, A for half circles or two halves of a dot, Z) into a
+    QPainterPath."""
     import re
     path = QPainterPath()
     tokens = re.findall(r"[MLAZ]|-?\d+(?:\.\d+)?", d)
@@ -132,12 +143,17 @@ def _parse(d: str) -> QPainterPath:
         elif t == "A":
             r = float(tokens[i + 1])
             x, y = float(tokens[i + 6]), float(tokens[i + 7])
-            # the shapes' arcs are the two halves of a dot: the circle through `last` and (x, y)
+            # the shapes' arcs are half circles: the circle through `last` and (x, y)
             cx, cy = (last[0] + x) / 2, (last[1] + y) / 2
-            path.addEllipse(QRectF(cx - r, cy - r, 2 * r, 2 * r))
+            box = QRectF(cx - r, cy - r, 2 * r, 2 * r)
+            if i + 8 < len(tokens) and tokens[i + 8] == "A":    # two halves of the same dot
+                path.addEllipse(box)
+                last, i = (x, y), i + 16
+                continue
+            # SVG's sweep 1 turns clockwise on the screen, which is Qt's negative way
+            start = math.degrees(math.atan2(cy - last[1], last[0] - cx))
+            path.arcTo(box, start, -180.0 if tokens[i + 5] == "1" else 180.0)
             last, i = (x, y), i + 8
-            if i < len(tokens) and tokens[i] == "A":           # the second half of the same dot
-                i += 8
         else:                                                   # Z
             path.closeSubpath()
             i += 1
@@ -198,7 +214,8 @@ def html(name: str, size: int = IN_TEXT) -> str:
         path = _write(name, dark, size)
         _FILES[(name, dark)] = path
     if not path:
-        return {"check": "✔", "cross": "✕", "warning": "⚠", "error": "✘", "stop": "✘", "info": "ℹ"}.get(name, "")
+        return {"check": "✔", "cross": "✕", "warning": "⚠", "error": "✘", "stop": "✘", "info": "ℹ",
+                "back": "↶"}.get(name, "")
     return f'<img src="{path}" width="{size}" height="{size}" style="vertical-align: middle">'
 
 
