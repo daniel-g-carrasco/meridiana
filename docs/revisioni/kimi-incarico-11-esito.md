@@ -110,3 +110,28 @@ Motivo di ogni spostamento:
 [V] Alla fine del giro non restano il compositore, `real_tour.py` o la sua sessione D-Bus.
 
 [V] Prima del commit: `nucleo` 790 prove OK (4 saltate), `calcoli` 175 OK, `formati` 59 OK, `esterni` 6 OK (6 saltate), `widget` 310 OK (1 saltata), `finestra` 132 OK. La prima corsa di `finestra` ha trovato una sola aspettativa alla vecchia barra, aggiornata in `test_window.py`; la prova isolata e poi tutto il gruppo sono passati. `ruff check src tests tools` e `git diff --check` sono puliti.
+
+## 4. Registro, traduzioni e moduli condivisi
+
+[V] Le righe R178 e R180 di `docs/richieste.md` rimandano a questo esito e sono segnate «fatto sul ramo kimi-incarico-11, da guardare con Daniel». `CHANGELOG.md` descrive i due cambiamenti. Il catalogo contiene la nuova etichetta inglese `Precision`, tradotta «Precisione»; le altre etichette riusano voci già tradotte.
+
+Per il modello grafico condiviso:
+
+| Modulo | Cambiamento e motivo |
+|---|---|
+| `ui/motion.py` | Nuovi `Entrance` ed `enter()`: dissolvenza, scorrimento e scopertura riusabili, due fotografie sotto un velo opaco, durata e movimento ridotto del sistema. È il modulo da portare nel modello per R178. |
+| `ui/file_page.py` | Aggancia la pagina File all'entrata condivisa, con lo scorrimento di 16 px scelto e la chiusura immediata. |
+| `ui/phasebar.py` | Nessun cambiamento: la struttura esistente già disegna qualunque gruppo ordinato descritto dal nucleo. |
+| `ui/design.py` | Nessun cambiamento: durate e spostamento usano i gettoni esistenti. |
+| `ui/theme.py` | Nessun cambiamento: nessun nuovo colore o stile. |
+| `ui/icons.py` | Aggiunto soltanto il nome `new_variant`, associato all'icona Lucide `copy-plus`, per riusare il simbolo dell'azione. |
+
+[V] La riorganizzazione dei contenuti è in `phases.py`, non nel componente grafico: Claude può quindi portare il comportamento di `ui/motion.py` nel modello senza dipendenze fotovoltaiche e senza dover modificare `ui/phasebar.py`, `ui/design.py` o `ui/theme.py`.
+
+[V] Il controllo finale degli artefatti ha verificato l'integrità di tutti i 173 PNG dell'incarico: 14 del giro, 15 delle proposte File e 144 delle barre. I quattro commit contengono ciascuno il proprio punto e usano l'identità di Daniel.
+
+### Verifica finale
+
+[V] Dopo registro, changelog e catalogo, ogni gruppo è stato ripetuto in un processo proprio: `nucleo` 790 prove OK (4 saltate), `calcoli` 175 OK, `formati` 59 OK, `esterni` 6 OK (6 saltate), `widget` 310 OK (1 saltata), `finestra` 132 OK. Totale: 1.472 prove superate, 11 saltate. `ruff check src tests tools`, `msgfmt --check`, `bash -n tools/real_session.sh` e `git diff --check` sono puliti; nessuna voce fuzzy. L'interprete importa `meridiana` da questo worktree e il catalogo compilato restituisce «Precisione».
+
+[V] Le sessioni nascoste sono chiuse e non restano processi di Meridiana, `real_tour.py`, `real_session.sh`, GNOME Shell, Mutter o D-Bus avviati per le prove.
