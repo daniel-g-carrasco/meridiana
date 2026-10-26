@@ -56,12 +56,16 @@ SPECS = {
         "description": "Read the checks of the project, the most serious first: each with an id, its level (fail, "
                        "warn, info, ok), area, text, source (the standard with edition, clause and page, or "
                        "Meridiana's own reading), the object it is about and whether Meridiana has a fix for it "
-                       "(offer it with propose_fix).",
+                       "(offer it with propose_fix). filtered_counts describes only the checks returned after every "
+                       "filter; project_counts describes the whole project. An empty list means that nothing matches "
+                       "the filters, not that the project has no checks.",
         "parameters": _schema({
             "min_level": {"type": "string", "enum": list(LEVELS),
                           "description": "the lowest level wanted: fail alone, warn and worse (default), ..."},
             "area": {"type": "string", "enum": sorted(checks_module.area_names()),
-                     "description": "only the checks of this area"}}),
+                     "description": "only the checks of this area"},
+            "object_id": {"type": "string", "description": "only checks about this building, sub-field or exclusion "
+                                                           "id from project_summary; a building includes its objects"}}),
     },
     "project_summary": {
         "description": "A summary of the project: the site (coordinates rounded to 0.01 degree), the buildings, "
@@ -236,7 +240,25 @@ def _target(project, target) -> dict:
 
 # reading
 
-def read_checks(host, state: State, min_level: str = "warn", area: str = "") -> Outcome:
+def _about_object(project, target, object_id: str) -> bool:
+    if not object_id:
+        return True
+    if len(target) < 2:
+        return False
+    kind, oid = target[:2]
+    if oid == object_id:
+        return True
+    if any(b.id == object_id for b in project.buildings):
+        if kind == "subfield":
+            sf = next((s for s in project.subfields if s.id == oid), None)
+            return sf is not None and sf.building == object_id
+        if kind == "exclusion":
+            exclusion = next((e for e in project.exclusions if e.id == oid), None)
+            return exclusion is not None and exclusion.building == object_id
+    return False
+
+
+def read_checks(host, state: State, min_level: str = "warn", area: str = "", object_id: str = "") -> Outcome:
     if min_level not in LEVELS:
         raise ValueError(f"min_level must be one of {', '.join(LEVELS)}")
     items = list(host.checks())
@@ -244,11 +266,13 @@ def read_checks(host, state: State, min_level: str = "warn", area: str = "") -> 
     names = checks_module.area_names()
     levels = checks_module.level_names()
     out = []
+    selected = []
     state.checks = {}
     for n, it in enumerate(items, 1):
         cid = f"c{n}"
         state.checks[cid] = it
-        if LEVELS.index(it.level) > top or (area and it.area != area):
+        if (LEVELS.index(it.level) > top or (area and it.area != area)
+                or not _about_object(host.project, it.target, object_id)):
             continue
         row = {"id": cid, "level": it.level, "level_name": levels.get(it.level, it.level),
                "area": names.get(it.area, it.area), "text": it.text,
@@ -258,8 +282,12 @@ def read_checks(host, state: State, min_level: str = "warn", area: str = "") -> 
         if it.detail:
             row["detail"] = it.detail
         out.append(row)
-    counts = checks_module.counts(items)
-    return Outcome(_json({"checks": out, "counts": counts}), _("Read the checks"))
+        selected.append(it)
+    result = {"checks": out, "filtered_counts": checks_module.counts(selected),
+              "project_counts": checks_module.counts(items)}
+    if not out:
+        result["message"] = _("No checks match this filter.")
+    return Outcome(_json(result), _("Read the checks"))
 
 
 def _module(project, sf) -> dict:

@@ -220,6 +220,30 @@ class Tools(unittest.TestCase):
         self.assertGreater(out["subfields"][0]["modules_laid"], 50)
         self.assertFalse(out["year_computed"])
 
+    def test_check_counts_follow_the_filters_and_an_object_finds_checks_in_every_area(self):
+        from meridiana import checks
+        host = problems_host()
+        host._checks = [
+            checks.Item("fail", "layout", "Copertura: posa", target=("subfield", "s1")),
+            checks.Item("warn", "shade", "Copertura: ombre", target=("subfield", "s1")),
+            checks.Item("info", "layout", "Sottocampo 2: posa", target=("subfield", "s2")),
+            checks.Item("ok", "strings", "Stringhe", target=("phase", "plant")),
+        ]
+        out = json.loads(tools.run("read_checks", {"object_id": "s1", "min_level": "info"}, host,
+                                   tools.State()).content)
+        self.assertEqual([c["text"] for c in out["checks"]], ["Copertura: posa", "Copertura: ombre"])
+        self.assertEqual(out["filtered_counts"], {"fail": 1, "warn": 1, "info": 0, "ok": 0})
+        self.assertEqual(out["project_counts"], {"fail": 1, "warn": 1, "info": 1, "ok": 1})
+        self.assertNotIn("counts", out)
+        empty = json.loads(tools.run("read_checks", {"object_id": "s1", "area": "strings"}, host,
+                                     tools.State()).content)
+        self.assertEqual(empty["checks"], [])
+        self.assertEqual(empty["filtered_counts"], {"fail": 0, "warn": 0, "info": 0, "ok": 0})
+        self.assertIn("filter", empty["message"])
+        schema = tools.SPECS["read_checks"]
+        self.assertIn("object_id", schema["parameters"]["properties"])
+        self.assertIn("filtered", schema["description"])
+
     def test_a_proposal_of_a_field_not_allowed_or_out_of_range_comes_back_with_the_fields(self):
         host = problems_host(selection=("subfield", "s1"))
         state = tools.State()
