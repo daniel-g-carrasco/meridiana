@@ -381,6 +381,8 @@ class MainWindow(QMainWindow):
         right.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable | QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, right)
         self.docks = (left, right)
+        self.project_auto_hidden = False
+        self.project_was_visible = True
         # the help, a card of its own under the properties (design 3.6, E3; Daniel, 24/10/2026; ui/help_box.py)
         from .help_box import HelpBox
         self.help_box = HelpBox()
@@ -2947,6 +2949,25 @@ class MainWindow(QMainWindow):
             self.phase_actions[pid].setChecked(True)
         self.checks_page.set_phase(pid)             # what «This phase» keeps in the Checks panel
         self.assistant.set_tab(pid)
+        self._phase_panels(pid)
+
+    def _phase_panels(self, pid: str) -> None:
+        """Project only where there is a drawing; when it returns, the two side panels get the same width."""
+        project = self.docks[0]
+        if pid not in ("model", "plant"):
+            if project.isVisible():
+                self.project_was_visible = True
+                self.project_auto_hidden = True
+                project.hide()
+            elif not self.project_auto_hidden:
+                self.project_was_visible = False
+            return
+        if self.project_auto_hidden:
+            project.setVisible(self.project_was_visible)
+            self.project_auto_hidden = False
+        if project.isVisible() and self.docks[1].isVisible():
+            width = max(project.width(), self.docks[1].width())
+            self.resizeDocks([project, self.docks[1]], [width, width], Qt.Orientation.Horizontal)
 
     def _lend_plan(self) -> None:
         """The plan into the Plant page, with the strings always shown (study 16, D.6: W is always on there); the

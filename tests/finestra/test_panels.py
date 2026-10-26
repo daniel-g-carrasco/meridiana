@@ -71,6 +71,23 @@ class Panels(unittest.TestCase):
         self.assertIs(win.inspector.currentWidget(), win.props)
         self.assertEqual(dock.windowTitle(), "Properties")
 
+    def test_project_hides_on_energy_and_report_pages_and_returns_balanced(self):
+        win = self.win
+        project = win.docks[0]
+        self.assertTrue(project.isVisible())
+        for phase in ("production", "consumption", "economics", "report"):
+            win.show_phase(phase)
+            self.assertFalse(project.isVisible(), phase)
+        win.show_phase("plant")
+        self.assertTrue(project.isVisible())
+        win.show_phase("model")
+        self.assertTrue(_setup.wait_settled(self.app, lambda: (win.docks[0].width(), win.docks[1].width())))
+        self.assertLessEqual(abs(win.docks[0].width() - win.docks[1].width()), 1)
+        project.hide()                                      # a panel closed by the designer stays closed
+        win.show_phase("production")
+        win.show_phase("model")
+        self.assertFalse(project.isVisible())
+
     def test_the_context_menus_offer_what_the_object_allows_and_duplicate_and_rename_are_edits(self):
         from meridiana.ui.plan import to_scene
         win = self.win
