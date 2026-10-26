@@ -458,6 +458,8 @@ class PlanView(QGraphicsView):
         self.source = key
         self.failed_tiles.clear()
         self.wanted_tiles.clear()
+        if key == tiles.NONE:
+            self._clear_tiles()
         self._credit()
         self._moved()
         self._recolour()

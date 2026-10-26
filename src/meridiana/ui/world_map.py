@@ -99,7 +99,7 @@ class WorldLayer:
         visible = metres_per_pixel >= 250.0
         for item in self.items:
             item.setVisible(visible)
-        rank = 4 if metres_per_pixel >= 5000.0 else 6
+        rank = 3 if metres_per_pixel >= 5000.0 else 6
         occupied = []
         for label in sorted(self.labels, key=lambda item: self.label_ranks[item]):
             show = visible and metres_per_pixel >= 1500.0 and self.label_ranks[label] <= rank

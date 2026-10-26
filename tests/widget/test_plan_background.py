@@ -126,6 +126,9 @@ class Fallback(unittest.TestCase):
         image.fill(QColor("#58738b"))
         view._tile_ready("osm", 3, 4, 3, image)
         self.assertEqual(view.tile_items[("osm", 3, 4, 3)].image.pixelColor(20, 20), QColor("#58738b"))
+        view.set_source("none")
+        self.assertEqual(view.tile_items, {})
+        self.assertNotIn(old, view.scene().items())
 
     def test_an_xml_error_document_instead_of_an_image_also_uses_the_fallback(self):
         import dataclasses

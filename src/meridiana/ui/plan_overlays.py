@@ -215,6 +215,7 @@ class FallbackStrip(QWidget):
         row.setContentsMargins(Space.M, Space.S, Space.S, Space.S)
         row.setSpacing(Space.S)
         self.message = QLabel(self)
+        self.message.setWordWrap(True)
         self.retry = QPushButton(_("Retry"), self)
         self.choose = QPushButton(_("Choose the background"), self)
         row.addWidget(self.message, 1)
@@ -237,11 +238,14 @@ def place(view) -> None:
     view.scale_bar.move(r.left() + MARGIN, r.bottom() + 1 - view.scale_bar.height() - MARGIN)
     view.attribution.move(r.right() + 1 - view.attribution.width() - MARGIN,
                           r.bottom() + 1 - view.attribution.height() - MARGIN)
+    if getattr(view, "viewbar", None) is not None:
+        view.viewbar.place(r, [view.north.geometry()])
     strip = view.fallback_strip
     strip.setMaximumWidth(max(280, r.width() - 2 * MARGIN))
     strip.adjustSize()
-    strip.move(r.left() + MARGIN, r.top() + MARGIN)
+    top = r.top() + MARGIN
+    if getattr(view, "viewbar", None) is not None:
+        top = max(top, view.viewbar.geometry().bottom() + 1 + Space.S)
+    strip.move(r.left() + MARGIN, top)
     for overlay in (view.north, view.scale_bar, view.attribution, strip):
         overlay.raise_()
-    if getattr(view, "viewbar", None) is not None:
-        view.viewbar.place(r, [view.north.geometry()])
