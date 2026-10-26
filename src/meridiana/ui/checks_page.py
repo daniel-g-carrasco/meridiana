@@ -541,6 +541,14 @@ class ChecksPage(QWidget):
         self.copy_button.clicked.connect(self._copy)
         row.addWidget(self.copy_button)
         box.addLayout(row)
+        # the list's bar against the card's right line as in the other cards; the rows above and below keep the
+        # margin, in line with the list's content (R182, Daniel 26/10/2026: «la barra di scorrimento ... è
+        # posizionata diversamente in queste due schede ... mi piace di più la versione più attaccata al bordo
+        # destro della scheda»)
+        m = box.contentsMargins()
+        box.setContentsMargins(m.left(), m.top(), 0, m.bottom())
+        for line in (head, row):
+            line.setContentsMargins(0, 0, m.right(), 0)
         self._view_texts()
         self._summary()
 

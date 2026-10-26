@@ -219,6 +219,7 @@ QToolButton#rowfix:pressed {{ background: {field_press}; }}
 QToolButton#roweye {{ border: 1px solid {t['line']}; border-radius: {Button.SMALL[1]}px; padding: 0 {S.XS}px;
                       min-height: {chip_inner}px; max-height: {chip_inner}px; }}
 QFrame#fix-preview {{ background: {t['select_bg']}; border-radius: {R.CONTROL}px; }}
+QFrame#draft-card {{ background: {t['field']}; border-radius: {R.CONTROL}px; }}      /* the string being drawn (R181) */
 QLabel#fix-preview-text {{ color: {t['select_fg']}; }}
 QTreeView#project-tree {{ outline: 0; }}
 QTreeView#project-tree::item {{ padding: {S.XS}px {S.XS}px; border: none; }}
@@ -304,7 +305,7 @@ QDateEdit::drop-down {{ border: none; width: {Size.COMPACT}px; subcontrol-origin
                        subcontrol-position: center right; }}
 QDateEdit::down-arrow {{ {drop} }}
 QCalendarWidget {{ background: {t['card']}; {edge} }}
-QCalendarWidget QWidget#qt_calendar_navigationbar {{ background: transparent; padding: {S.XS}px {S.XS}px 0 {S.XS}px; }}
+QCalendarWidget QWidget#qt_calendar_navigationbar {{ background: transparent; }}
 QCalendarWidget QToolButton {{ color: {t['text']}; background: transparent; border: none; border-radius: {R.INNER}px;
                                padding: {S.XXS}px {S.S}px; }}
 QCalendarWidget QToolButton:hover {{ background: {hover}; }}

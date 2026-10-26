@@ -307,7 +307,6 @@ class PlanView(QGraphicsView):
         self.draft_where = ""              # its inverter and input, for the hint («1.2»)
         self.draft_drag = False            # the left button held on a module while drawing: a drag takes modules
         self.draft_pointer: QPointF | None = None    # where the pointer is, for the line from the last module
-        self.draft_chip: ChipItem | None = None      # the live target, count and keys, beside the last module
         self.chosen_string = -1            # the string chosen, drawn wider and numbered
         self.string_tints: list = []       # the tints of the strings (theme_colors.string_tints)
         self.string_states: dict = {}      # the traffic light: state -> colour
@@ -744,7 +743,6 @@ class PlanView(QGraphicsView):
             return
         self.draft, self.draft_index, self.draft_drag, self.draft_pointer = None, -1, False, None
         self.setCursor(Qt.CursorShape.ArrowCursor)
-        self.show_draft("")
         self._draw_draft()
         self._draw_wiring()
 
@@ -1043,42 +1041,6 @@ class PlanView(QGraphicsView):
         used = set(self.string_colours)
         n = len(getattr(self.wiring, "strings", None) or [])
         return next((c for c in tints[n % len(tints):] + tints[:n % len(tints)] if c not in used), tints[n % len(tints)])
-
-    def show_draft(self, text: str, state: str = "") -> None:
-        """The live drawing instructions in one pill, beside the last module or the pointer before the first click."""
-        if self.draft_chip is not None:
-            self.scene().removeItem(self.draft_chip)
-            self.draft_chip = None
-        if not text or self.draft is None:
-            return
-        font = design.font(design.Type.CAPTION, design.Type.BOLD, self.font())
-        chip = ChipItem(text, font, QColor(self.draft_colour()), state, self.colours, swatch=True)
-        chip.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
-        chip.setZValue(Z_WIRING + 4)
-        chip.setToolTip(text.replace("\n", " · "))
-        chip.setData(0, "draft_status")
-        self.scene().addItem(chip)
-        self.draft_chip = chip
-        self._place_draft_chip()
-
-    def _place_draft_chip(self) -> None:
-        """Move only the pill, never rebuild the scene; keep it inside the view, including before the first module."""
-        chip = self.draft_chip
-        if chip is None:
-            return
-        anchor = self.draft_pointer or self.mapToScene(self.viewport().rect().center())
-        if self.draft:
-            index = self.module_index.get(self.draft[-1], -1)
-            if index >= 0 and self.router is not None:
-                anchor = QPointF(*map(float, self.router.centres[index]))
-        at = QPointF(self.mapFromScene(anchor))
-        box = chip.boundingRect()
-        desired = at + QPointF(12, -box.height() - 12)
-        desired.setX(max(8.0, min(desired.x(), self.viewport().width() - box.width() - 8)))
-        desired.setY(max(8.0, min(desired.y(), self.viewport().height() - box.height() - 8)))
-        chip.setPos(anchor)
-        chip.offset = desired - at
-        chip.update()
 
     def _draw_draft(self) -> None:
         """The string being drawn, over the others: its modules filled and outlined in its colour, numbered in the
@@ -2129,7 +2091,6 @@ class PlanView(QGraphicsView):
                 if hit is not None and hit not in self.draft and self._past_centre(*hit, self.draft_pointer):
                     self._draft_take(hit, bool(event.modifiers() & Qt.KeyboardModifier.ShiftModifier))
             self._draw_band()
-            self._place_draft_chip()
             if not self.navigator.held and self.panning is None:
                 return
         if self.left_wait is not None and \

@@ -37,6 +37,26 @@ class SelectionIn3D(unittest.TestCase):
         self.assertEqual(win.selection[0], "building")
         v.pointPicked.emit(math.nan, math.nan)
         self.assertEqual(win.selection, ("site", ""))
+        # a click on a wall: the point hit lies on the building's outline, here 3 cm out of it, and the plan alone
+        # found nothing there (R175, Daniel 26/10/2026: «cliccando sui lati (molte volte non prende il click)»)
+        a, b = win.project.buildings[0].footprint[0], win.project.buildings[0].footprint[1]
+        mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        length = math.hypot(dx, dy)
+        out = None
+        for sign in (1, -1):                            # the side's normal that leads out of the building
+            p = (mid[0] + sign * 0.03 * dy / length, mid[1] - sign * 0.03 * dx / length)
+            if win.plan._pick(to_scene(*p))[0] in ("", "site"):
+                out = p
+        self.assertIsNotNone(out)
+        v.pointPicked.emit(*out)                        # the ground there: still nothing
+        self.assertEqual(win.selection[0], "site")
+        v.buildingPicked.emit()                         # the wall there
+        v.pointPicked.emit(*out)
+        self.assertEqual(win.selection, ("building", win.project.buildings[0].id))
+        win._select("site", "")
+        v.pointPicked.emit(*out)                        # the flag is the one click's
+        self.assertEqual(win.selection[0], "site")
         # the plan's selection tinted in 3D, and outlined
         seen = []
         real = mesh.building_triangles

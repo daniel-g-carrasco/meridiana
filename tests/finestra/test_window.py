@@ -1665,7 +1665,7 @@ class Stringing(PlantWindow):
         self.plant(lambda p: bool(p.strings))
 
     def a_string_is_drawn_numbered_taken_back_closed_and_given_up(self):
-        from PySide6.QtCore import QPointF, QRectF, Qt
+        from PySide6.QtCore import QPointF, Qt
         from PySide6.QtWidgets import QToolButton
         lst = self.win.plant_inspector.list
         self.assertEqual(set(lst.adders), {(1, 1), (1, 2)})
@@ -1685,12 +1685,15 @@ class Stringing(PlantWindow):
         from meridiana.ui.sections import ACTIVE_ROLE
         head = lst.input_heads[(1, 2)]
         self.assertTrue(head.data(0, ACTIVE_ROLE))
-        chip = self.win.plan.draft_chip
-        self.assertIsNotNone(chip)
-        self.assertTrue(chip.swatch)
-        self.assertEqual(chip.symbol_name, "stop")
+        # the string being drawn in the strip's corner, nothing over the plan (R181, Daniel 26/10/2026: «la pillola
+        # che compare è troppo invasiva, andrebbe portata in un angolo tipo dove c'è la legenda»)
+        card = self.win.plant_page.draft_card
+        self.assertTrue(card.isVisibleTo(self.win))
+        self.assertFalse(self.win.plant_page.texts.isVisibleTo(self.win))     # the summary steps aside
+        self.assertEqual(card.symbol_name, "warning")                           # still being drawn: to check
         for text in ("Inverter 1", "Acme AC-20K", "Input 2", "0 modules", "Enter", "double click", "Backspace", "Esc"):
-            self.assertIn(text, chip.text)
+            self.assertIn(text, card.text)
+        self.assertFalse(any(it.data(0) == "draft_status" for it in self.win.plan.scene().items()))
         self.assertIn("Acme AC-20K", self.win.plant_page.inv_label.text())
         with mock.patch.object(self.win.plan, "_draw_wiring", wraps=self.win.plan._draw_wiring) as wiring, \
                 mock.patch.object(self.win.plan, "_draw_draft", wraps=self.win.plan._draw_draft) as draft:
@@ -1703,27 +1706,22 @@ class Stringing(PlantWindow):
         numbers = sorted(it.text for it in self.win.plan.items_by_kind["draft"] if hasattr(it, "text"))
         self.assertEqual(numbers, ["1", "2", "3", "4"])                    # the order on the modules
         self.assertIn("modules", self.win.plant_page.strings_label.text())
-        chip = self.win.plan.draft_chip
-        last = self.win.plan.router.centres[self.win.plan.module_index[tuple(keys[4].split("/", 1))]]
-        self.assertEqual(chip.pos(), QPointF(*last))
-        chip_box = chip.boundingRect().translated(QPointF(self.win.plan.mapFromScene(chip.pos())))
-        self.assertTrue(QRectF(self.win.plan.viewport().rect()).contains(chip_box),
-                        f"chip {chip_box}, viewport {self.win.plan.viewport().rect()}")
         slot = self.plant().inputs[(1, 2)]
         lo, hi = slot.series
-        for n, symbol, words in ((0, "stop", f"{lo} short"), (1, "stop", f"{lo - 1} short"),
+        for n, symbol, words in ((0, "warning", f"{lo} short"), (1, "warning", f"{lo - 1} short"),
                                  (lo, "check", "fine"), (hi + 1, "stop", "1 too many")):
             self.win._draft_changed([keys[0]] * n)
-            self.assertEqual(self.win.plan.draft_chip.symbol_name, symbol)
-            self.assertIn(words, self.win.plan.draft_chip.text)
-            self.assertIn(f"{n} module" + ("" if n == 1 else "s"), self.win.plan.draft_chip.text)
-            self.assertIn(f"{lo} to {hi}", self.win.plan.draft_chip.text)
+            self.assertEqual(card.symbol_name, symbol)
+            self.assertIn(words, card.text)
+            self.assertIn(f"{n} module" + ("" if n == 1 else "s"), card.text)
+            self.assertIn(f"{lo} to {hi}", card.text)
         self.win._draft_changed(self.win.plan.draft)
         self.key(Qt.Key.Key_Backspace)
         self.assertEqual(len(self.win.plan.draft), 3)
         self.key(Qt.Key.Key_Escape)                                          # given up: nothing changed
         self.assertIsNone(self.win.plan.draft)
-        self.assertIsNone(self.win.plan.draft_chip)
+        self.assertFalse(card.isVisibleTo(self.win))
+        self.assertTrue(self.win.plant_page.texts.isVisibleTo(self.win))       # the summary back
         self.assertFalse(head.data(0, ACTIVE_ROLE))
         self.assertNotIn("Inverter 1 · Acme AC-20K · Input 2", self.win.plant_page.inv_label.text())
         self.assertEqual(self.win.undo.count(), steps)
@@ -1732,7 +1730,7 @@ class Stringing(PlantWindow):
         for i in (0, 1, 3, 4, 5):
             self.click(at(i))
         self.key(Qt.Key.Key_Return)                                          # closed: one step
-        self.assertIsNone(self.win.plan.draft_chip)
+        self.assertFalse(card.isVisibleTo(self.win))
         self.assertFalse(lst.input_heads[(1, 2)].data(0, ACTIVE_ROLE))
         self.assertEqual(self.runs(), [[keys[i] for i in (0, 1, 3, 4, 5)]])
         self.assertEqual(self.win.undo.count(), steps + 1)
@@ -2114,11 +2112,11 @@ class Optimizers(PlantWindow):
         self.assertNotIn("optimizer", self.win.project.energy["inverters"][0])
         self.plant(lambda p: p.units[0].choice is not None and p.units[0].choice.suggested)
         lst.adders[(1, 1)].click()
-        chip = self.win.plan.draft_chip
-        self.assertIn("0 modules", chip.text)
-        self.assertEqual(chip.symbol_name, "")
-        self.assertNotIn("short", chip.text)
-        self.assertNotIn("fine", chip.text)
+        card = self.win.plant_page.draft_card
+        self.assertIn("0 modules", card.text)
+        self.assertEqual(card.symbol_name, "")
+        self.assertNotIn("short", card.text)
+        self.assertNotIn("fine", card.text)
         self.win.plan.cancel_draft()
 
 

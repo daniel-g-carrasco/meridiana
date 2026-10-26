@@ -13,13 +13,17 @@ import weakref
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPainterPath
-from PySide6.QtWidgets import QAbstractScrollArea, QWidget
+from PySide6.QtWidgets import QAbstractItemView, QAbstractScrollArea, QWidget
 
 from .cards import default_tokens
 from .design import Radius, Space
 
 HEIGHT = Space.XL                # logical pixels of a band (24 until R161: «troppo accentuate» on a small screen)
-SOLID = 0.85                     # the band's opacity at the edge: what is under it still shows (R161)
+# the band's opacity from the card's edge in: whole on the edge, so that nothing scrolled reaches the card's line
+# (R177, Daniel 26/10/2026: «i contenuti ... non vengono sfumati correttamente e arrivano fino al limite della scheda
+# sfondandolo», with 0.85 on the edge what was under it showed up to the line), then light at once (R161)
+STOPS = ((0.0, 1.0), (0.18, 0.75), (0.5, 0.28), (1.0, 0.0))
+SOLID = STOPS[0][1]
 _COLOUR = [default_tokens()["panel"]]  # the panels' colour of the theme in use
 _LIVE: "weakref.WeakSet[Fades]" = weakref.WeakSet()
 
@@ -37,14 +41,10 @@ class Edge(QWidget):
         (R161: «come se la sfumatura del contenuto finisse sopra i bordi»)."""
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        edge = QColor(_COLOUR[0])
-        edge.setAlphaF(SOLID)
-        half = QColor(edge)
-        half.setAlphaF(SOLID * 0.35)
-        clear = QColor(edge)
-        clear.setAlpha(0)
         g = QLinearGradient(0, 0, 0, self.height())
-        for at, colour in ((0.0, edge), (0.45, half), (1.0, clear)):
+        for at, alpha in STOPS:
+            colour = QColor(_COLOUR[0])
+            colour.setAlphaF(alpha)
             g.setColorAt(at if self.top else 1.0 - at, colour)
         r = QRectF(self.rect()).adjusted(1, 1 if self.top else 0, -1, 0 if self.top else -1)
         radius = Radius.CARD - 1
@@ -87,10 +87,19 @@ class Fades(QObject):
         bottom.raise_()
 
 
-def attach(area: QAbstractScrollArea) -> Fades | None:
-    """The soft edges of `area`, made once."""
+AIR = Space.S                    # between what scrolls in a page and the card's top and bottom lines (R177)
+
+
+def attach(area: QAbstractScrollArea, air: bool = False) -> Fades | None:
+    """The soft edges of `area`, made once. With `air`, what scrolls stops AIR pixels from the card's top and bottom
+    lines and fades out before them (R177, Daniel 26/10/2026: «arrivano fino al limite della scheda sfondandolo»): for
+    the pages and panels, not the lists, whose top margin is their header's."""
     if area is None:
         return None
+    if air and not isinstance(area, QAbstractItemView):
+        m = area.viewportMargins()
+        if (m.top(), m.bottom()) != (AIR, AIR):
+            area.setViewportMargins(m.left(), AIR, m.right(), AIR)
     found = area.findChild(Fades)
     return found if found is not None else Fades(area)
 

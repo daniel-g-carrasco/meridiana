@@ -21,10 +21,12 @@ from PySide6.QtGui import QColor, QIcon, QPainter, QPalette
 from PySide6.QtWidgets import (QAbstractScrollArea, QGraphicsView, QPlainTextEdit, QProxyStyle, QStyle,
                                QStyleFactory, QTextEdit)
 
-from .design import Size, Space
+from .design import Radius, Size
 
 THUMB = Size.THUMB
-END = Space.XS                  # the thumb's way from the bar's ends: off a card's rounded corners
+END = Radius.CARD               # the thumb's way from the bar's ends: off a card's rounded corners (XS until R182,
+                                # Daniel 26/10/2026: a page's bar runs the card's height, «non deve sforare sopra e
+                                # sotto»)
 
 
 def keeps_room(area: QAbstractScrollArea) -> bool:

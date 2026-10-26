@@ -34,7 +34,9 @@ from .cards import EDGE, RADIUS, default_tokens
 from .design import Button, Icon, Motion, Radius, Size, Space, Text, set_text, text_font
 from .waiting import STALE_MARK
 
-TALL = 68                   # the bar with the words under the icons (design 5.3): what the bar must not exceed
+TALL = 72                   # the bar with the words under the icons (design 5.3): what the bar must not exceed;
+                            # 68 until R179 (Daniel 26/10/2026: «le descrizioni dei singoli strumenti vengono
+                            # tagliati in basso»): the buttons were 4 px short of the line the word needs
 LOW = 44                    # the icons alone
 LOW_WINDOW = 900            # logical pixels: a lower window gets the icons alone by itself (the laptop, a column)
 ICON_TALL, ICON_LOW = Icon.TILE, Icon.BAR
@@ -236,7 +238,10 @@ class ToolGroup(QWidget):
         for b in self.buttons.values():
             b.setToolButtonStyle(style)
             b.setIconSize(size)
-            b.setFixedHeight(ICON_TALL + QFontMetrics(b.font()).height() + 4 if text else ICON_LOW + 6)
+            # what the button asks for, the word's whole line under the icon (R179: the 4 px added to the font's
+            # line left out the gap the style puts between icon and word, and the large text was cut)
+            b.setFixedHeight(max(ICON_TALL + QFontMetrics(b.font()).height() + 4, b.sizeHint().height()) if text
+                             else ICON_LOW + 6)
             height = b.height() if b.height() > 1 else b.minimumHeight()
         title = QFontMetrics(self.title.font()).height()
         self.title.setFixedHeight(title)

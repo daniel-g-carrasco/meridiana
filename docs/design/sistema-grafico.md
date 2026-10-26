@@ -258,10 +258,15 @@ Regole:
 ## 5. I comportamenti
 
 - **Fine morbida** (`ui/fades.py`): quando un elenco o una pagina continua oltre la scheda, l'ultimo pezzo sfuma nel
-  colore della scheda invece di tagliarsi. La sfumatura è alta 16 px (al massimo un quinto dell'area), all'85 % al
-  bordo, dentro la linea e gli angoli tondi della scheda (R161: a 24 px e piena era «troppo accentuata» su uno
+  colore della scheda invece di tagliarsi. La sfumatura è alta 16 px (al massimo un quinto dell'area), piena sul
+  bordo e subito più leggera, dentro la linea e gli angoli tondi della scheda (R161: a 24 px e piena era «troppo accentuata» su uno
   schermo piccolo e scuro, e passava sopra il bordo), e compare solo dal lato dove c'è altro. Daniel,
   24/10/2026: «carina la semplice sfumatura… mantienila come stile». Vale per ogni area che scorre dentro una scheda.
+  Nelle pagine e nei pannelli ciò che scorre si ferma 8 px prima delle linee in alto e in basso della scheda
+  (`fades.attach(area, air=True)`, `fades.AIR`), e la sfumatura sta sul bordo del contenuto: R177, Daniel
+  26/10/2026, «i contenuti ... arrivano fino al limite della scheda sfondandolo» (all'85 % sul bordo, e senza
+  aria, quello che c'era sotto arrivava fino alla linea). Gli elenchi no: il loro margine in alto è quello
+  dell'intestazione.
 - **Finestrelle** (`ui/popups.py`): suggerimenti, menu, elenchi a tendina e aiuto a comparsa entrano sfumando in
   110 ms; gli effetti di Qt, che a 200 % scattano, sono spenti. Su Windows 11 il sistema li arrotonda e disegna la
   loro ombra e il bordo nel colore `line`; altrove il foglio di stile disegna lo stesso bordo e, per i suggerimenti,
@@ -305,6 +310,10 @@ Regole:
   stile le spegne appena una sua regola tocca la barra; disegnate dallo stile, coprivano la fine delle righe (i segni
   dell'albero, «Correggi» delle Verifiche) e ne prendevano i clic; e gli alberi rifanno da sé i margini della loro
   vista, quindi non si poteva tenere loro un posto accanto.
+  Il posto: la barra sta a 6 px dal bordo destro della sua scheda, in ogni scheda (nessun margine proprio a
+  destra di ciò che scorre), e il cursore non va oltre 8 px dalle estremità (`scrollbars.END = Radius.CARD`),
+  fuori dagli angoli tondi: R182, Daniel 26/10/2026, «mi piace di più la versione più attaccata al bordo destro
+  della scheda ... anche se non deve sforare sopra e sotto».
 
 ## 6. Cosa non si fa
 

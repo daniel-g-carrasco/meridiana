@@ -511,7 +511,10 @@ class HelpBox(QFrame):
         if dock is not None:
             self.panel = getattr(host, "inspector", None)
             self.setStyleSheet("")
-            self.box.setContentsMargins(6, 0, 6, 4)
+            # the text's bar against the card's right line as in the other cards; the subject's row keeps its
+            # margin, its buttons under the card's close button (R182)
+            self.box.setContentsMargins(6, 0, 0, 4)
+            self.subject_row.layout().setContentsMargins(0, 0, 6, 0)
             self.subject.setContentsMargins(0, 0, 0, 2)
             self.view.fill = True               # the text as tall as the card lets it be (R76)
             self.view.settle()

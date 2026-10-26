@@ -8,10 +8,12 @@ from __future__ import annotations
 
 from PySide6.QtCore import QDate, QRectF, QSize, Qt
 from PySide6.QtGui import QBrush, QColor, QPalette, QPen, QTextCharFormat
-from PySide6.QtWidgets import QCalendarWidget, QToolButton
+from PySide6.QtWidgets import QCalendarWidget, QToolButton, QWidget
 
 from . import icons
 from .design import Icon, Line, Radius, Size, Space
+
+NAV_TOP = Space.S           # the month's bar from the window's top: clear of the system's rounded corners (R176)
 
 
 class DayPicker(QCalendarWidget):
@@ -27,6 +29,13 @@ class DayPicker(QCalendarWidget):
             if button is not None:
                 button.setIcon(icons.icon(icon))
                 button.setIconSize(QSize(Icon.CONTROL, Icon.CONTROL))
+        # the bar of the month inside the little window's corners (R176, Daniel 26/10/2026: «la sua barra superiore
+        # nella quale ci sono le frecce e mese e anno sfora un po' oltre i limiti, e rimane un po' tagliata in alto»):
+        # it began at the window's very corner, under the system's rounding; a style sheet's padding does not reach
+        # its layout, so the margins are set on it, its sides as the days' (the sheet's XS around them)
+        bar = self.findChild(QWidget, "qt_calendar_navigationbar")
+        if bar is not None and bar.layout() is not None:
+            bar.layout().setContentsMargins(Space.XS, NAV_TOP, Space.XS, Space.XXS)
         self.restyle()
 
     def restyle(self) -> None:
@@ -44,7 +53,9 @@ class DayPicker(QCalendarWidget):
         widest = max(m.horizontalAdvance(self.locale().dayName(d, self.locale().FormatType.ShortFormat))
                      for d in range(1, 8))
         cell = max(widest, m.horizontalAdvance("30")) + 2 * Space.M
-        self.setMinimumSize(QSize(7 * cell + 2 * Space.XS, Size.CONTROL + Space.XS + 7 * Size.CHIP + 2 * Space.XS))
+        bar = self.findChild(QWidget, "qt_calendar_navigationbar")
+        header = NAV_TOP + max(Size.CHIP, bar.sizeHint().height() if bar is not None else 0) + Space.XXS
+        self.setMinimumSize(QSize(7 * cell + 2 * Space.XS, header + Space.XS + 7 * Size.CHIP + 2 * Space.XS))
 
     def changeEvent(self, event) -> None:
         super().changeEvent(event)

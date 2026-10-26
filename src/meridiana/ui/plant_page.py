@@ -9,8 +9,10 @@ The page never computes: it shows energy/plant.Plant and reports the designer's 
 
 from __future__ import annotations
 
+import html
+
 from PySide6.QtCore import QPoint, QRectF, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QIcon, QPalette
+from PySide6.QtGui import QColor, QFontMetrics, QIcon, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QFrame, QGroupBox, QHBoxLayout, QLabel, QPushButton,
                                QScrollArea, QSizePolicy, QSpinBox, QToolButton, QTreeWidget, QTreeWidgetItem,
                                QTreeWidgetItemIterator, QVBoxLayout, QWidget)
@@ -43,118 +45,73 @@ def summary(plant) -> str:
     return " · ".join(parts)
 
 
-class Legend(QWidget):
-    """The legend of the plan in the Plant phase, drawn: a swatch of rounded corners for each string's colour, the
-    traffic light with the marks of the tree and of the plan (ui/marks.py), the red outline of a module in no
-    string, each with its word; the entries flow onto a second line when the room is short."""
+class DraftCard(QFrame):
+    """While a string is drawn, in the corner of the strip where the legend was (R181, Daniel 26/10/2026: «la pillola
+    che compare è troppo invasiva, andrebbe portata in un angolo tipo dove c'è la legenda che non serve a nulla e
+    riorganizzata per essere consona ed esteticamente gradevole per questa sezione»): the colour the string will have
+    as a dot, as the plan's labels have it (R167); the string, its inverter with its make and model and its input on
+    the first line; its modules against what the input takes, with the state's symbol, on the second; the keys, muted,
+    on the right. Hidden while no string is drawn: nothing over the plan."""
 
-    SWATCH = 10
+    DOT = 10
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.tints: list = []
-        self.states: dict = {}
-        self.setFont(font(Type.SMALL))                      # as the words of the bar it stands in (R70)
+        self.setObjectName("draft-card")
+        self.text = ""                                      # everything it says, for the tests and a reader
+        self.symbol_name = ""                               # the state's symbol: check, warning, stop or none
+        self.colour = QColor()
+        box = QHBoxLayout(self)
+        box.setContentsMargins(Space.S + self.DOT + Space.S, Space.XS, Space.S, Space.XS)
+        box.setSpacing(Space.L)
+        lines = QVBoxLayout()
+        lines.setSpacing(0)
+        self.title = QLabel()
+        self.title.setFont(font(Type.SMALL, Type.SEMIBOLD))
+        self.count = QLabel()
+        self.count.setFont(font(Type.SMALL))
+        self.count.setTextFormat(Qt.TextFormat.RichText)
+        for label in (self.title, self.count):
+            label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+            lines.addWidget(label)
+        box.addLayout(lines, 1)
+        self.keys = QLabel()
+        self.keys.setFont(font(Type.CAPTION))
+        self.keys.setStyleSheet("color: palette(placeholder-text);")
+        self.keys.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        box.addWidget(self.keys)
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        self.setFixedHeight(2 * self.fontMetrics().lineSpacing() + 8)
+        self.setFixedHeight(2 * QFontMetrics(self.title.font()).lineSpacing() + 2 * Space.XS)
+        self.hide()
 
-    def resizeEvent(self, event) -> None:
-        super().resizeEvent(event)
-        self._fit()
-
-    def symbol(self, kind: str) -> float:
-        """The width of an entry's symbol."""
-        mark_size = float(self.fontMetrics().height()) * 0.8
-        return {"tints": len(self.tints[:6]) * (self.SWATCH + 3), "jump": 2.2 * mark_size}.get(kind, mark_size)
-
-    def widths(self) -> list[float]:
-        fm = self.fontMetrics()
-        return [self.symbol(kind) + 5 + fm.horizontalAdvance(word) + 14 for kind, word in self.entries()]
-
-    def two_lines(self) -> int:
-        """The narrowest width that keeps the entries on two lines: the bar has room for two (R70)."""
-        w = self.widths()
-        total = sum(w)
-        for width in range(int(max(w, default=0)) + 1, int(total) + 2, 4):
-            x, lines = 0.0, 1
-            for ww in w:
-                if x > 0 and x + ww > width:
-                    x, lines = 0.0, lines + 1
-                x += ww
-            if lines <= 2:
-                return width
-        return int(total) + 1
-
-    def _fit(self) -> None:
-        """As tall as the lines its entries flow onto at this width."""
-        self.setMinimumWidth(self.two_lines())
-        fm = self.fontMetrics()
-        x, lines = 0.0, 1
-        for kind, word in self.entries():
-            sym = self.symbol(kind)
-            width = sym + 5 + fm.horizontalAdvance(word) + 14
-            if x > 0 and x + width > self.width():
-                x, lines = 0.0, lines + 1
-            x += width
-        height = lines * (fm.lineSpacing() + 4) + 4
-        if height != self.height():
-            self.setFixedHeight(height)
-
-    def set(self, tints: list, states: dict) -> None:
-        self.tints, self.states = list(tints), dict(states)
-        names = plant_model.state_names()
-        self.setToolTip("; ".join([_("a colour for each string")] + [names[k] for k in ("ok", "check", "fail")]
-                                  + [_("module in no string"), _("jump over modules: dashed, around the modules skipped")]))
-        self._fit()
+    def show_draft(self, title: str = "", count: str = "", state: str = "", colour: str = "", keys: str = "") -> None:
+        """The string being drawn (`state`: ok, short, many or "" for no judgement); nothing hides the card."""
+        if not title:
+            self.text, self.symbol_name = "", ""
+            self.hide()
+            return
+        from . import symbols
+        self.symbol_name = {"ok": "check", "short": "warning", "many": "stop"}.get(state, "")
+        self.colour = QColor(colour) if colour else QColor()
+        self.title.setText(title)
+        sign = symbols.html(self.symbol_name) + "&nbsp;" if self.symbol_name else ""
+        self.count.setText(sign + html.escape(count))
+        self.keys.setText(keys)
+        self.text = "\n".join((title, count, keys.replace("\n", " · ")))
+        self.setToolTip(self.text)
+        self.show()
         self.update()
 
-    def entries(self) -> list:
-        names = plant_model.state_names()
-        out = [("tints", _("a colour for each string"))]
-        out += [(k, names[k]) for k in ("ok", "check", "fail")]
-        out.append(("outline", _("module in no string")))
-        out.append(("jump", _("jump over modules")))
-        return out
-
     def paintEvent(self, event) -> None:
-        from PySide6.QtCore import QPointF, QRectF
-        from PySide6.QtGui import QColor, QPainter, QPen
-
-        from . import marks
+        super().paintEvent(event)
+        if not self.colour.isValid():
+            return
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        fm = self.fontMetrics()
-        line = fm.lineSpacing() + 4
-        x, y = 0.0, 2.0
-        mark_size = float(fm.height()) * 0.8
-        level = {"ok": "ok", "check": "warn", "fail": "fail"}
-        for kind, word in self.entries():
-            sym = self.symbol(kind)
-            width = sym + 5 + fm.horizontalAdvance(word) + 14
-            if x > 0 and x + width > self.width():
-                x, y = 0.0, y + line
-            mid = y + line / 2
-            if kind == "tints":
-                for i, c in enumerate(self.tints[:6]):
-                    p.setPen(Qt.PenStyle.NoPen)
-                    p.setBrush(QColor(c))
-                    p.drawRoundedRect(QRectF(x + i * (self.SWATCH + 3), mid - self.SWATCH / 2, self.SWATCH, self.SWATCH),
-                                      3, 3)
-            elif kind == "outline":
-                p.setBrush(Qt.BrushStyle.NoBrush)
-                p.setPen(QPen(QColor(self.states.get("fail", theme_colors.STATUS["critical"])), 1.6))
-                p.drawRoundedRect(QRectF(x + 1, mid - mark_size / 2 + 1, mark_size - 2, mark_size - 2), 2, 2)
-            elif kind == "jump":
-                pen = QPen(self.palette().color(self.foregroundRole()), 1.6, Qt.PenStyle.DashLine)
-                p.setPen(pen)
-                p.setBrush(Qt.BrushStyle.NoBrush)
-                p.drawLine(QPointF(x + 1, mid), QPointF(x + sym - 1, mid))
-            else:
-                marks.paint(p, QPointF(x + mark_size / 2, mid), level[kind], 1, mark_size)
-            p.setPen(self.palette().color(self.foregroundRole()))
-            p.drawText(QRectF(x + sym + 5, y, width, line), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
-                       word)
-            x += width
+        p.setPen(QPen(self.palette().color(QPalette.ColorRole.Text), 1))
+        p.setBrush(self.colour)
+        r = QRectF(Space.S, (self.height() - self.DOT) / 2, self.DOT, self.DOT)
+        p.drawEllipse(r)
 
 
 class ClipScale(QWidget):
@@ -257,15 +214,9 @@ class PlantPage(QWidget):
         texts.setContentsMargins(0, 0, 0, 0)
         self.texts.setMinimumWidth(44 * self.inv_label.fontMetrics().averageCharWidth())
         strip.addWidget(self.texts, 1)
-        self.legend = QLabel("")
-        self.legend.setTextFormat(Qt.TextFormat.RichText)
-        self.legend.setWordWrap(True)                       # in two lines at most, of a height that never changes
-        self.legend.setFixedHeight(2 * self.legend.fontMetrics().lineSpacing() + 4)
-        self.legend.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        self.legend.hide()                                  # the words, for a reader of the screen and the tests
-        self.key = Legend()                                 # what is seen: drawn with the program's marks
-        strip.addWidget(self.legend)
-        strip.addWidget(self.key, 1)
+        # where the legend was (R181: «la legenda che non serve a nulla»): the string being drawn, nothing otherwise
+        self.draft_card = DraftCard()
+        strip.addWidget(self.draft_card, 1)
         box.addWidget(self.strip)
         self.host = QWidget()                               # where the plan stands while the phase is open
         self.host_box = QVBoxLayout(self.host)
@@ -312,6 +263,12 @@ class PlantPage(QWidget):
         if not getattr(self, "string_text", ""):
             self.strings_label.setText(self.plant_summary)
             self.strings_label.setToolTip(self.plant_summary)
+
+    def show_draft_card(self, *args) -> None:
+        """The string being drawn in the card, which takes the strip while it shows (the summary's two lines said
+        the same, and the card was squeezed to a few letters); no arguments: the summary back (R181)."""
+        self.draft_card.show_draft(*args)
+        self.texts.setVisible(not self.draft_card.isVisibleTo(self))
 
     def show_string(self, text: str) -> None:
         """The string chosen with its voltages in place of the plant's summary; "" brings the summary back (R57)."""
@@ -961,13 +918,3 @@ def optimized_takes(unit, slot) -> str:
         text += ", " + ngettext("{n} input pair", "{n} input pairs", slot.allowed).format(n=slot.allowed)
     return text
 
-
-def legend_html(tints: list[str], states: dict) -> str:
-    """The legend of the plan in the Plant phase: a colour for each string, the traffic light with its mark and
-    word, the red outline of the modules in no string."""
-    names = plant_model.state_names()
-    dots = "".join(f"<span style='color: {c};'>{mark('●')}</span>" for c in tints[:6])
-    lights = " ".join(f"<span style='color: {states[k]};'>{mark(MARKS[k])}</span> {names[k]}"
-                      for k in ("ok", "check", "fail"))
-    return (f"{dots} {_('a colour for each string')} &nbsp; {lights} &nbsp; "
-            f"<span style='color: {states['fail']};'>{mark('▢')}</span> {_('module in no string')}")

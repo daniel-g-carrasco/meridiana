@@ -18,9 +18,12 @@ software centres show.
   screen-constant distance where there is room, or take different vertices around the skipped modules. Where touching
   modules leave no free lane, distinct dash patterns keep the jumps distinguishable. Single and separate strings keep
   their original paths.
-- Live string drawing context (R142): a pill beside the last module names the inverter and input, counts the modules
-  against the accepted range with the string state symbols, and shows the finish, undo and cancel keys. The input is
-  highlighted in the right panel until the draft ends; optimised inverters show the count without a judgement.
+- Live string drawing context (R142, R181): a card in the plant's strip, where the legend was, names the inverter and
+  input with its colour, counts the modules against the accepted range with the string state symbols, and shows the
+  finish, undo and cancel keys; nothing covers the plan. The input is highlighted in the right panel until the draft
+  ends; optimised inverters show the count without a judgement.
+- Turning the plan without the menus (R174): Align and North up in the plan's bar (A and N), «Align the view to this
+  side» on a right click near a side, and a click on the compass for North up; the compass's N turns with its arrow.
 - Inverter sizing (R141): choose the manufacturer first, remembered in the project; the model and quantity together
   follow the requested DC/AC ratio, and the result names both.
 - Harmonised plan labels (R143, R138): rounded string names and module numbers in the catalogue font and the plan's
@@ -284,6 +287,15 @@ software centres show.
   opens with its inverter as the first of the list and gives the same year.
 
 ### Fixed
+- A click on a building's wall in 3D selects the building (R175): the point hit lies on the outline, often just
+  outside it, and the plan found nothing there.
+- The calendar's month bar was cut at the top by the little window's corners (R176).
+- What scrolls in a page (Balance and the other phases) stopped on the card's line (R177): it now stops a little
+  short of it and fades out whole before it.
+- The words under the tools were cut at the bottom with the larger text (R179): the buttons take the height they ask.
+- The string legend in the plant's strip is gone (R181): the plan's colours already say what it said.
+- Scroll bars sit the same in every page, close to the card's right edge, and the thumb stays off the rounded
+  corners (R182).
 - Selecting modules and rows on a touchpad (R147): the plan takes the nearest module within 6 logical pixels of its
   edge, the second click selects its row in both views, and Esc goes back through the selection levels.
 - The checks said that the modules in no string produce nothing in the simulation: they are counted as if connected;

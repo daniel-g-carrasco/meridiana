@@ -49,7 +49,7 @@ from .marks import icon as mark_icon
 from .report_page import ReportPage, ReportSide
 from .phasebar import LOW_WINDOW, PhaseBar, Phases
 from .plan import MOVABLE, PlanView, from_scene
-from .plant_page import PlantInspector, PlantPage, input_name, install_reference, legend_html
+from .plant_page import PlantInspector, PlantPage, input_name, install_reference
 from .properties import Properties, field_label
 from .checks_page import ChecksPage
 from .sunbar import SunBar
@@ -61,6 +61,7 @@ from . import waiting
 from .waiting import STALE_MARK
 
 SUFFIX = ".meridiana"
+WALL_REACH = 0.5                # metres: a click on a building's side in 3D takes it (R175)
 # below this width (logical pixels: a column of niri, half a laptop screen) the panels share one side
 NARROW = 1000
 # the topics that never change the energy year (session.energy_key): no need to ask whether it is still good
@@ -339,6 +340,7 @@ class MainWindow(QMainWindow):
         self.split_home = None                      # the split's state while the Plant phase has the plan
         self.chosen_string = -1                     # the string chosen in the list or on the plan (Plant.strings)
         self.draft_target = None                    # {"unit", "mppt", "run"} of the string being drawn (R114)
+        self.building_hit_3d = False                # the 3D view's click hit a building (R175)
 
         self.tree = QTreeWidget()
         self.tree.setObjectName("project-tree")
@@ -512,6 +514,7 @@ class MainWindow(QMainWindow):
         system.motion.connect(self._motion)
         self.plan.set_navigation(cfg.navigation)
         self.view3d.modulePicked.connect(self._module_picked_3d)
+        self.view3d.buildingPicked.connect(self._building_hit_3d)      # before pointPicked, on a building (R175)
         self.view3d.pointPicked.connect(self._point_picked_3d)
         self.view3d.hoverPicked.connect(self._hover_3d)
         # Move in the 3D view (task 16b): the gizmo dragged, the values typed next to it, the arrows, Esc
@@ -1122,11 +1125,12 @@ class MainWindow(QMainWindow):
         from .cards import set_corner_colour
         set_corner_colour(t["panel"])               # the views' rounded corners on their card
         pages = (self.energy_page, self.consumption_page, self.economics_page)
-        for area in (self.tree, self.checks_page.tree, self.props, self.inspector.results,
-                     self.inspector.deliverables, getattr(self, "plant_inspector", None),
-                     getattr(self.help_box.view, "scroll", None),
-                     *[a for p in pages for a in (p.side, p.centre)]):
+        for area in (self.tree, self.checks_page.tree, getattr(self.help_box.view, "scroll", None)):
             fades.attach(area)
+        # the pages and the panels: what scrolls stops short of the card's lines (R177)
+        for area in (self.props, self.inspector.results, self.inspector.deliverables,
+                     getattr(self, "plant_inspector", None), *[a for p in pages for a in (p.side, p.centre)]):
+            fades.attach(area, air=True)
         self.assistant_button.setIcon(self.assistant.icon())
         # the strings (task 16d): a tint for each from the colour chosen, the traffic light in the colours of the
         # states, the same on the plan, in the list of the inspector and in the legend
@@ -1138,8 +1142,6 @@ class MainWindow(QMainWindow):
         if hasattr(self, "plant_page"):
             # on the light panels the warnings' yellow is 1.8:1: its ochre (study 13, 3.1)
             light = states if self.theme.dark else {**states, "check": theme_colors.WARNING_INK}
-            self.plant_page.legend.setText(legend_html(tints, light))
-            self.plant_page.key.set(tints, light)
             self.plant_inspector.states = light
             self.plant_inspector.clip_scale.set_colours(t, light)
             self.plant_inspector.colours = list(self.plan.string_colours)
@@ -1313,6 +1315,8 @@ class MainWindow(QMainWindow):
         self.cfg.text_size = size
         if change_text_size(size):
             self._theme_changed()
+            self.bars_text = None                   # the phase bars measured again for the new words (R179)
+            self._fit_bars()
             if getattr(self, "project", None) is not None:
                 self.plan.show_project(self.project, self.session.good_results(), force=True)
 
@@ -2246,16 +2250,43 @@ class MainWindow(QMainWindow):
         import math as _math
 
         from .plan import to_scene
+        building_hit, self.building_hit_3d = self.building_hit_3d, False
         if _math.isnan(x):
             self._select("site", "")
             return
         kind, oid, key = self.plan._pick(to_scene(x, y))
+        if building_hit and kind in ("", "site"):
+            # a wall, a parapet, an eave: the point hit on a building's side falls on its outline in the plan, as
+            # often just outside it, and the click was lost (R175, Daniel 26/10/2026: «nella vista 3d viene
+            # difficile selezionare gli edifici o altri oggetti cliccando sui lati (molte volte non prende il click)»)
+            near = self._building_near((x, y), WALL_REACH)
+            if near is not None:
+                kind, oid, key = "building", near, ""
         if kind == "module":
             self._module_view_picked(oid, key)
             return
         self.plan.selected_module = ("", "")
         self.selected_module = ("", "")
         self._picked(kind, oid)
+
+    def _building_hit_3d(self) -> None:
+        """The 3D view hit a building's surface: the point that follows is on it (_point_picked_3d)."""
+        self.building_hit_3d = True
+
+    def _building_near(self, point, reach: float) -> str:
+        """The building whose outline passes nearest `point`, within `reach` metres; None when none does."""
+        import math as _math
+        best, found = reach, None
+        for b in self.project.buildings:
+            ring = [tuple(map(float, q)) for q in b.footprint]
+            for a, c in zip(ring, ring[1:] + ring[:1], strict=True):
+                dx, dy = c[0] - a[0], c[1] - a[1]
+                n2 = dx * dx + dy * dy
+                t = 0.0 if n2 < 1e-12 else max(0.0, min(1.0, ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / n2))
+                d = _math.dist(point, (a[0] + t * dx, a[1] + t * dy))
+                if d <= best:
+                    best, found = d, b.id
+        return found
 
     def project_subfield(self, sfid):
         return next((s for s in self.project.subfields if s.id == sfid), None)
@@ -3993,6 +4024,7 @@ class MainWindow(QMainWindow):
         self.plan.end_draft()
         self.plant_inspector.list.show_draft()
         self.plant_page.show_draft("")
+        self.plant_page.show_draft_card()
         self._show_string_commands()
 
     def _start_draft(self, unit: int, mppt: int, first: list | None = None, run: int = -1) -> None:
@@ -4080,11 +4112,13 @@ class MainWindow(QMainWindow):
         state = ""
         if hi and not optimized:
             if n < lo:
-                count += ", " + _("{k} short ({lo} to {hi})").format(k=lo - n, lo=lo, hi=hi)
-                state = "fail"
+                count += ", " + ngettext("{k} short ({lo} to {hi})", "{k} short ({lo} to {hi})", lo - n).format(
+                    k=lo - n, lo=lo, hi=hi)
+                state = "short"                     # still being drawn: to check, not wrong
             elif n > hi:
-                count += ", " + _("{k} too many ({lo} to {hi})").format(k=n - hi, lo=lo, hi=hi)
-                state = "fail"
+                count += ", " + ngettext("{k} too many ({lo} to {hi})", "{k} too many ({lo} to {hi})", n - hi).format(
+                    k=n - hi, lo=lo, hi=hi)
+                state = "many"
             else:
                 count += ", " + _("fine ({lo} to {hi})").format(lo=lo, hi=hi)
                 state = "ok"
@@ -4093,10 +4127,12 @@ class MainWindow(QMainWindow):
         model = " ".join(str(v).strip() for v in (getattr(inverter.spec, "manufacturer", ""),
                                                  getattr(inverter.spec, "model", "")) if v).strip() if inverter else ""
         where = _("Inverter {n} · {model} · Input {k}").format(n=unit, model=model or _("not chosen"), k=mppt)
-        keys = _("Enter or double click: finish · Backspace: undo · Esc: cancel")
+        keys = _("Enter or double click: finish\nBackspace: the last one back · Esc: give up")
         self.plant_page.show_string(f"{what}: {count}")
         self.plant_page.show_draft(where)
-        self.plan.show_draft(f"{where}\n{what}: {count}\n{keys}", state)
+        # in the strip's corner, nothing over the plan (R181)
+        self.plant_page.show_draft_card(f"{what[:1].upper()}{what[1:]} · {where}", count, state,
+                                        self.plan.draft_colour(), keys)
         self.hint.setText(_("Click the modules in order (or drag over them); Backspace takes back the last, Enter or a "
                             "double click closes the string, Esc gives it up. A module of another string: Shift and "
                             "click moves it here."))
@@ -4108,6 +4144,7 @@ class MainWindow(QMainWindow):
         self._show_string_commands()
         self.plant_page.show_string("")
         self.plant_page.show_draft("")
+        self.plant_page.show_draft_card()
         self.plant_inspector.list.show_draft()
         if target is None:
             return
@@ -4149,6 +4186,7 @@ class MainWindow(QMainWindow):
         self._show_string_commands()
         self.plant_page.show_string("")
         self.plant_page.show_draft("")
+        self.plant_page.show_draft_card()
         self.plant_inspector.list.show_draft()
         self._show_chosen(self.chosen_string)
         self.hint.setText(_("String given up: nothing changed."))
