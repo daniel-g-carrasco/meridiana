@@ -71,6 +71,22 @@ class ViewBars(unittest.TestCase):
         self.assertGreaterEqual(min(m.left(), m.right()), 6)
         self.assertGreaterEqual(win.coords.contentsMargins().left(), 4)
 
+    def test_with_their_words_the_buttons_are_as_wide_as_their_words(self):
+        """Daniel, 26/10/2026, on the wider screens of the studio: «le scritte e alcuni elementi ora si visualizzano
+        deformati più stretti». The buttons of the views' bars had been held 24 px wide (36 with a menu), their words
+        cut down to nothing beside the icon."""
+        win = self.win
+        bar = win.plan.viewbar
+        for on in (True, False):
+            bar.set_words(on)
+            self.app.processEvents()
+            for action, button in bar.buttons.items():
+                if button.isVisible() and (on or action.menu() is not None):
+                    self.assertGreaterEqual(button.width(), button.sizeHint().width(), (on, button.text()))
+                elif button.isVisible():                # the icon alone: a chip's width, the icon whole in it
+                    self.assertGreaterEqual(button.width(), button.iconSize().width() + 8, button.text())
+        bar.set_words(False)
+
     def test_zoom_buttons_and_keys_move_both_views_and_say_the_key(self):
         from PySide6.QtGui import QKeySequence
         win = self.win

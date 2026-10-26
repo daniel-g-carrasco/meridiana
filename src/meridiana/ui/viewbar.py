@@ -59,7 +59,8 @@ class ViewBar(QFrame):
                     b.setToolTip(b.own_tip)
                 b.setAutoRaise(True)
                 b.setFocusPolicy(Qt.FocusPolicy.NoFocus)        # the keyboard stays on the drawing
-                b.setFixedWidth(Size.CHIP + (12 if action.menu() is not None else 0))
+                if isinstance(b, ToolButton):
+                    self._fit(b, False)
                 row.addWidget(b)
                 widgets.append(b)
                 self.buttons[action] = b
@@ -87,9 +88,21 @@ class ViewBar(QFrame):
             if isinstance(b, ToolButton) and b.toolButtonStyle() != style:
                 b.setToolButtonStyle(style)
                 b.setIconSize(QSize(16, 16))
+                self._fit(b, on)
                 changed = True
         if changed:
             self.adjustSize()
+
+    @staticmethod
+    def _fit(b: QToolButton, words: bool) -> None:
+        """With its icon alone a button is a chip's width (the bar keeps room for + and -); with its word, as wide
+        as it asks: held at 24 px the words were cut to nothing (Daniel, 26/10/2026: «le scritte ... deformati più
+        stretti»). The menu's button keeps its own width: at 36 px its arrow was squeezed."""
+        if words:
+            b.setMinimumWidth(0)
+            b.setMaximumWidth(16777215)                         # QWIDGETSIZE_MAX: free again
+        else:
+            b.setFixedWidth(Size.CHIP)
 
     def show_group(self, n: int, on: bool) -> None:
         """A group (and its line) shown or hidden: the selector of the views on one bar only."""
