@@ -49,6 +49,23 @@ class Coverage(unittest.TestCase):
         transverse = geo.WGS84_A / math.sqrt(1 - geo.WGS84_E2 * s * s)
         self.assertAlmostEqual(side, 2 * math.pi / 2 ** z * transverse * math.cos(math.radians(RHO.lat)), delta=0.01)
 
+    def test_low_zoom_tiles_are_subdivided_and_neighbouring_coasts_share_every_edge_point(self):
+        left = tiles.tile_mesh(RHO, 3, 4, 2)
+        right = tiles.tile_mesh(RHO, 3, 5, 2)
+        self.assertGreater(len(left), 4)
+        self.assertEqual(len(left), len(right))
+        for left_cell, right_cell in zip(left[3::4], right[0::4], strict=True):
+            self.assertEqual(left_cell[4][1:3], right_cell[4][::3])
+
+    def test_europe_fits_the_tile_budget_and_nothing_is_requested_beyond_the_site_hemisphere(self):
+        z = tiles.zoom_for(12000.0, RHO.lat, 19)
+        europe = tiles.tiles_for(-11, 35, 31, 60, z)
+        self.assertLessEqual(len(europe), 400)
+        self.assertTrue(all(tiles.tile_in_hemisphere(RHO, z, x, y) for x, y in europe))
+        antipode = geo.tile_of(RHO.lon + 180, -RHO.lat, z)
+        self.assertFalse(tiles.tile_in_hemisphere(RHO, z, *antipode))
+        self.assertEqual(tiles.tile_mesh(RHO, z, *antipode), [])
+
 
 class Urls(unittest.TestCase):
     def test_osm_is_a_plain_template(self):

@@ -672,3 +672,51 @@ def tile_quad(origin: geo.Origin, z: int, x: int, y: int) -> list[tuple[float, f
         lon, lat = geo.mercator_to_lonlat(mx, my)
         out.append(origin.to_local(lon, lat))
     return out
+
+
+HEMISPHERE_DEGREES = 80.0
+
+
+def angular_distance(origin: geo.Origin, lon: float, lat: float) -> float:
+    """Great-circle distance from the site, used to keep the far side off its local tangent plane."""
+    p0, p1 = math.radians(origin.lat), math.radians(lat)
+    dp, dl = p1 - p0, math.radians(lon - origin.lon)
+    a = math.sin(dp / 2) ** 2 + math.cos(p0) * math.cos(p1) * math.sin(dl / 2) ** 2
+    return math.degrees(2 * math.atan2(math.sqrt(a), math.sqrt(max(0.0, 1 - a))))
+
+
+def tile_in_hemisphere(origin: geo.Origin, z: int, x: int, y: int) -> bool:
+    """Whether any of a 3 by 3 sample of a tile lies within the site's visible hemisphere."""
+    w, s, e, n = geo.tile_bounds(x, y, z)
+    for row in range(3):
+        for col in range(3):
+            lon, lat = geo.mercator_to_lonlat(w + (e - w) * col / 2, n - (n - s) * row / 2)
+            if angular_distance(origin, lon, lat) <= HEMISPHERE_DEGREES:
+                return True
+    return False
+
+
+def tile_mesh(origin: geo.Origin, z: int, x: int, y: int):
+    """Texture rectangles and exact local quads. Low zooms are bent in small pieces, with identical points on
+    neighbouring edges; pieces centred beyond 80 degrees from the site are not drawn."""
+    n = 2 ** max(0, min(3, (7 - z) // 2))
+    world = 2 * math.pi * geo.MERCATOR_R
+
+    def point(u, v):
+        return geo.mercator_to_lonlat(-world / 2 + world * (x + u) / 2 ** z,
+                                      world / 2 - world * (y + v) / 2 ** z)
+
+    out = []
+    for row in range(n):
+        for col in range(n):
+            u0, u1 = col / n, (col + 1) / n
+            v0, v1 = row / n, (row + 1) / n
+            corners = [(u0, v0), (u1, v0), (u1, v1), (u0, v1)]
+            quad = []
+            for u, v in corners:
+                lon, lat = point(u, v)
+                quad.append(origin.to_local(lon, lat))
+            lon, lat = point((u0 + u1) / 2, (v0 + v1) / 2)
+            if angular_distance(origin, lon, lat) <= HEMISPHERE_DEGREES:
+                out.append((u0, v0, u1, v1, quad))
+    return out

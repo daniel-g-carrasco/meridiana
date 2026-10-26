@@ -222,6 +222,25 @@ class PlanAids(unittest.TestCase):
         self.assertGreater(share, 0.95)
         plan.set_tool("select")
 
+    def test_zoom_reaches_europe_with_a_site_mark_kilometres_and_the_same_roof_on_return(self):
+        from PySide6.QtCore import QPoint
+        from PySide6.QtGui import QTransform
+
+        plan = self.plan
+        plan.loader.offline = True
+        for _ in range(30):
+            plan.zoom_at(0.1, QPoint(plan.viewport().width() // 2, plan.viewport().height() // 2))
+        self.assertLessEqual(plan.metres_per_pixel(), 25000)
+        self.assertTrue(plan.site_mark.isVisible())
+        self.assertIn("km", plan.scale_bar.text())
+        self.assertLessEqual(len(plan.wanted_tiles), 400)
+        self.assertEqual(plan.north.angle, -plan.view_rotation())
+        plan.setTransform(QTransform().scale(10, 10))
+        plan.centerOn(0, 0)
+        plan._moved()
+        self.assertFalse(plan.site_mark.isVisible())
+        self.assertAlmostEqual(plan.metres_per_pixel(), 0.1)
+
 
 if __name__ == "__main__":
     unittest.main()

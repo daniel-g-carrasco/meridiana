@@ -28,7 +28,7 @@ import numpy as np
 from PySide6.QtCore import QEvent, QLineF, QPoint, QPointF, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetrics, QPainter, QPainterPath, QPen, QPolygonF,
                            QTransform)
-from PySide6.QtWidgets import QGraphicsItem, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView
+from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QGraphicsScene, QGraphicsView
 
 from .. import geo, move, navigation, roofs, sides, theme_colors, tiles, view_colours, viewaids
 from . import plan_overlays, waiting
@@ -47,6 +47,7 @@ LEFT_WAIT_MS = 150             # how long a left press waits for the other butto
 TILE_UPDATE_MS = 120
 FAILOVER_THRESHOLD = 3           # distinct failed tiles in the current view, after the loader's own retries
 FAILOVER_COOLDOWN = 180.0        # seconds before an unavailable source is tried again by an automatic update
+MIN_PLAN_SCALE = 0.00004          # 20 000 km across 800 px: the site's hemisphere, continents included
 
 Z_TILES, Z_BUILDING, Z_PITCH, Z_SUBFIELD, Z_EXCLUSION, Z_MODULES, Z_SELECTION = 0, 10, 12, 20, 25, 30, 40
 Z_WIRING = 35
@@ -218,6 +219,34 @@ def hints() -> dict:
     }
 
 
+class TileItem(QGraphicsItem):
+    def __init__(self, image, mesh):
+        super().__init__()
+        self.image = image
+        self.pieces = []
+        self.bounds = QRectF()
+        for u0, v0, u1, v1, quad in mesh:
+            source = QPolygonF([QPointF(u0 * image.width(), v0 * image.height()),
+                                QPointF(u1 * image.width(), v0 * image.height()),
+                                QPointF(u1 * image.width(), v1 * image.height()),
+                                QPointF(u0 * image.width(), v1 * image.height())])
+            target = QPolygonF([to_scene(*p) for p in quad])
+            transform = QTransform()
+            if QTransform.quadToQuad(source, target, transform):
+                self.pieces.append((QRectF(source.boundingRect()), transform))
+                self.bounds = self.bounds.united(target.boundingRect())
+
+    def boundingRect(self):
+        return self.bounds
+
+    def paint(self, painter, _option, _widget=None):
+        for source, transform in self.pieces:
+            painter.save()
+            painter.setTransform(transform, True)
+            painter.drawImage(QRectF(source), self.image, source)
+            painter.restore()
+
+
 class PlanView(QGraphicsView):
     polygonDrawn = Signal(str, list)       # tool, ring in local metres
     picked = Signal(str, str)              # kind ("building", "pitch", "subfield", "exclusion", ""), id
@@ -270,7 +299,7 @@ class PlanView(QGraphicsView):
         self.colours = view_colours.plan(False)
         self.drawn = None                            # (project, results) last drawn, to draw again in new colours
         self.setBackgroundBrush(qcolour(self.colours["bg"]))
-        self.scene().setSceneRect(QRectF(-1e6, -1e6, 2e6, 2e6))
+        self.scene().setSceneRect(QRectF(-20e6, -20e6, 40e6, 40e6))
         # the orthophoto always darkened, the same in both themes, for the outlines to stand out (Daniel, 23/10/2026)
         self.veil_strength = view_colours.VEIL
         self.veil = self.scene().addRect(self.scene().sceneRect(), QPen(Qt.PenStyle.NoPen),
@@ -279,6 +308,13 @@ class PlanView(QGraphicsView):
         self.veil.setVisible(False)
 
         self.origin = geo.Origin(45.4642, 9.19)
+        self.site_mark = QGraphicsEllipseItem(-7, -7, 14, 14)
+        self.site_mark.setPen(cosmetic(self.colours["halo"], 4))
+        self.site_mark.setBrush(QBrush(qcolour(self.colours["sel"])))
+        self.site_mark.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+        self.site_mark.setZValue(Z_SELECTION + 10)
+        self.scene().addItem(self.site_mark)
+        self.site_mark.hide()
         self.tool = "select"
         self.snapper = Snapper()
         self.chain: list[tuple[float, float]] = []
@@ -532,6 +568,7 @@ class PlanView(QGraphicsView):
         if self.choice == tiles.AUTO and not self.fallback_from:
             self._choose()
         self.scale_bar.set_scale(mpp)
+        self.site_mark.setVisible(mpp >= 100.0)
         numbered = getattr(self, "numbered_at", 0.0)
         tagged = getattr(self, "tagged_at", 0.0)
         if ((self.chosen_string >= 0 or self.draft) and numbered and not 0.8 < mpp / numbered < 1.25) or                 (self.wiring is not None and tagged and not 0.8 < mpp / tagged < 1.25):
@@ -1905,7 +1942,7 @@ class PlanView(QGraphicsView):
     def zoom_at(self, factor: float, view_pos) -> None:
         """Zoom by `factor` keeping the point under `view_pos` where it is."""
         current = math.hypot(self.transform().m11(), self.transform().m21())
-        factor = max(0.02 / current, min(factor, 400.0 / current))
+        factor = max(MIN_PLAN_SCALE / current, min(factor, 400.0 / current))
         before = self.mapToScene(view_pos)
         self.scale(factor, factor)
         after = self.mapToScene(view_pos)
@@ -2629,7 +2666,8 @@ class PlanView(QGraphicsView):
         dpr = self.devicePixelRatioF()
         z = max(source.min_zoom, tiles.zoom_for(self.metres_per_pixel() / dpr, self.origin.lat, source.max_zoom))
         self.target_zoom = z
-        self.wanted_tiles = {(self.source, z, x, y) for x, y in tiles.tiles_for(lon_w, lat_s, lon_e, lat_n, z)}
+        self.wanted_tiles = {(self.source, z, x, y) for x, y in tiles.tiles_for(lon_w, lat_s, lon_e, lat_n, z)
+                             if tiles.tile_in_hemisphere(self.origin, z, x, y)}
         self.failed_tiles.intersection_update(self.wanted_tiles)
         self.loader.keep_only(self.wanted_tiles)
         for t in self.wanted_tiles:
@@ -2655,15 +2693,10 @@ class PlanView(QGraphicsView):
     def _tile_ready(self, key, z, x, y, image) -> None:
         if (key, z, x, y) in self.tile_items:
             return
-        from PySide6.QtGui import QPixmap
-        item = QGraphicsPixmapItem(QPixmap.fromImage(image))
-        quad = [to_scene(*p) for p in tiles.tile_quad(self.origin, z, x, y)]
-        w, h = image.width(), image.height()
-        src = QPolygonF([QPointF(0, 0), QPointF(w, 0), QPointF(w, h), QPointF(0, h)])
-        transform = QTransform()
-        if QTransform.quadToQuad(src, QPolygonF(quad), transform):
-            item.setTransform(transform)
-        item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
+        mesh = tiles.tile_mesh(self.origin, z, x, y)
+        if not mesh:
+            return
+        item = TileItem(image, mesh)
         item.setZValue(Z_TILES + (0.5 if key == self.source and z == self.target_zoom else 0.0))
         self.scene().addItem(item)
         self.tile_items[(key, z, x, y)] = item
