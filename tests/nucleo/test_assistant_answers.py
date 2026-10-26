@@ -220,6 +220,23 @@ class Tools(unittest.TestCase):
         self.assertGreater(out["subfields"][0]["modules_laid"], 50)
         self.assertFalse(out["year_computed"])
 
+    def test_production_results_name_the_plant_and_array_bases_of_obstacle_shade(self):
+        from types import SimpleNamespace
+        from meridiana.energy.simulate import ChainStep
+        sim = SimpleNamespace(
+            p_stc_kw=65.0, p_ac_kw=50.0, energy_kwh=80000.0, specific_yield=1230.0, pr=0.8,
+            monthly={}, notes=[], arrays=[{"key": "s1.0", "name": "Copertura est", "obstacle_shading": 0.033}],
+            chain=[ChainStep("far", "Orizzonte", "irradiance", 1000.0, 0.0),
+                   ChainStep("near", "File e ostacoli", "irradiance", 989.6, -1.04)])
+        host = problems_host(energy={"sim": sim})
+        out = json.loads(tools.run("read_results", {"section": "production"}, host, tools.State()).content)
+        self.assertEqual(out["losses"][1]["change_pct"], -1.04)
+        self.assertIn("whole plant", out["losses"][1]["basis"])
+        self.assertEqual(out["obstacle_shading"][0]["array"], "Copertura est")
+        self.assertEqual(out["obstacle_shading"][0]["subfield_id"], "s1")
+        self.assertEqual(out["obstacle_shading"][0]["loss_pct"], 3.3)
+        self.assertIn("after far shading", out["obstacle_shading"][0]["basis"])
+
     def test_check_counts_follow_the_filters_and_an_object_finds_checks_in_every_area(self):
         from meridiana import checks
         host = problems_host()

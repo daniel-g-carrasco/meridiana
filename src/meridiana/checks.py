@@ -223,6 +223,16 @@ def rule_items(f: rules.Facts) -> list[Item]:
     return out
 
 
+def obstacle_shading_by_subfield(sim) -> dict[str, float]:
+    totals = {}
+    for a in sim.arrays:
+        sfid = str(a["key"]).split(".")[0]
+        weight = float(a.get("p_stc_kw") or 0.0) or 1.0
+        lost, power = totals.get(sfid, (0.0, 0.0))
+        totals[sfid] = (lost + weight * float(a.get("obstacle_shading") or 0.0), power + weight)
+    return {sfid: lost / power for sfid, (lost, power) in totals.items() if power}
+
+
 def gather(project, results: dict, energy: dict | None, inverter=None, chosen: bool = False) -> list[Item]:
     """Every item, most serious first. `results` are the layouts by sub-field, `energy` what the energy job
     gave (or None before it ran), `inverter` the InverterSpec of the project."""
@@ -275,10 +285,8 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
 
     sim = energy.get("sim")
     if sim is not None:
-        for a in sim.arrays:
-            lost = float(a.get("obstacle_shading") or 0.0)
+        for sfid, lost in obstacle_shading_by_subfield(sim).items():
             if lost > OBSTACLE_SHADE:
-                sfid = str(a["key"]).split(".")[0]
                 sf = next((s for s in project.subfields if s.id == sfid), None)
                 fix, label = (), ""
                 costly = False
@@ -313,8 +321,10 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
                     detail += " " + _("Here the correction takes away a larger share of the sub-field than the share "
                                       "of irradiance lost to the obstacles: it is a choice to compare, not the obvious "
                                       "solution.")
-                items.append(Item("warn", "shade", _("{name}: the obstacles take {pct}% of the irradiance").format(
-                    name=a["name"], pct=number(100 * lost, 1)), _("Meridiana: shading of the obstacles"),
+                name = sf.name if sf is not None else sfid
+                items.append(Item("warn", "shade", _("{name}: the obstacles take {pct}% of the sub-field's annual "
+                                                     "irradiance after far shading").format(
+                    name=name, pct=number(100 * lost, 1)), _("Meridiana: shading of the obstacles"),
                     ("subfield", sfid), fix, label, detail=detail))
         for note in sim.notes:
             items.append(Item("warn", "production", note, "", ("phase", "production"),

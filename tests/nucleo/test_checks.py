@@ -127,6 +127,22 @@ class Gather(unittest.TestCase):
         self.assertIn("more modules than the shade costs", expensive.fix_label)
         self.assertTrue(expensive.fix_label.startswith("Compare"))
 
+    def test_obstacle_shade_is_weighted_over_all_the_arrays_of_the_sub_field(self):
+        from types import SimpleNamespace
+        p = self.project()
+        sim = SimpleNamespace(arrays=[
+            {"key": "s1.0", "name": "Copertura est", "obstacle_shading": 0.08, "p_stc_kw": 30.0},
+            {"key": "s1.1", "name": "Copertura ovest", "obstacle_shading": 0.0, "p_stc_kw": 20.0}],
+            notes=[], p_stc_kw=50.0)
+        results = {"s1": SimpleNamespace(count=188)}
+        shaded = [i for i in checks.gather(p, results, {"sim": sim, "shade_free_counts": {"s1": 130}})
+                  if i.area == "shade"]
+        self.assertEqual(len(shaded), 1)
+        self.assertEqual(shaded[0].target, ("subfield", "s1"))
+        self.assertIn("Copertura: the obstacles take 4.8% of the sub-field's annual irradiance after far shading",
+                      shaded[0].text)
+        self.assertIn("for 4.8% obstacle shade", shaded[0].fix_label)
+
     def test_the_count_out_of_the_shadows_comes_from_the_energy_job(self):
         from types import SimpleNamespace
         from unittest import mock

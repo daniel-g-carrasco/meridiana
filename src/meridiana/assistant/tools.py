@@ -498,8 +498,14 @@ def read_results(host, state: State, section: str) -> Outcome:
         out = {"p_stc_kwp": round(sim.p_stc_kw, 2), "p_ac_kw": round(sim.p_ac_kw, 2),
                "energy_kwh": round(sim.energy_kwh), "specific_yield_kwh_kwp": round(sim.specific_yield),
                "pr": round(sim.pr, 3), "losses": [{"step": c.label, "kind": c.kind, "value": round(c.value, 1),
-                                                    "change_pct": None if c.change is None else round(c.change, 2)}
+                                                    "change_pct": None if c.change is None else round(c.change, 2),
+                                                    "basis": _("the whole plant, against the previous step of the same "
+                                                               "quantity, weighted by array power")}
                                                    for c in sim.chain],
+               "obstacle_shading": [{"array": a["name"], "subfield_id": str(a["key"]).split(".")[0],
+                                     "loss_pct": round(100 * float(a.get("obstacle_shading") or 0.0), 2),
+                                     "basis": _("the array's annual irradiance after far shading")}
+                                    for a in sim.arrays],
                "notes": list(sim.notes)}
         if monthly:
             out["monthly_kwh"] = monthly

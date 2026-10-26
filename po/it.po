@@ -645,6 +645,18 @@ msgstr "Nessuna verifica corrisponde a questo filtro."
 msgid "Read the checks"
 msgstr "Ho letto le verifiche"
 
+#: src/meridiana/assistant/tools.py:502
+msgid ""
+"the whole plant, against the previous step of the same quantity, weighted by "
+"array power"
+msgstr ""
+"l'intero impianto, rispetto al passo precedente della stessa grandezza, "
+"ponderato per la potenza degli array"
+
+#: src/meridiana/assistant/tools.py:507
+msgid "the array's annual irradiance after far shading"
+msgstr "l'irraggiamento annuo dell'array dopo le ombre lontane"
+
 #: src/meridiana/assistant/tools.py:313
 msgid "Read the project"
 msgstr "Ho letto il progetto"
@@ -1441,10 +1453,14 @@ msgstr ""
 "Toglie più moduli di quanto costi l'ombra: confronta le alternative prima di "
 "applicarla."
 
-#: src/meridiana/checks.py:307
+#: src/meridiana/checks.py:324
 #, python-brace-format
-msgid "{name}: the obstacles take {pct}% of the irradiance"
-msgstr "{name}: gli ostacoli tolgono il {pct}% dell'irraggiamento"
+msgid ""
+"{name}: the obstacles take {pct}% of the sub-field's annual irradiance after "
+"far shading"
+msgstr ""
+"{name}: gli ostacoli tolgono il {pct}% dell'irraggiamento annuo del "
+"sottocampo dopo le ombre lontane"
 
 #: src/meridiana/checks.py:308 src/meridiana/checks.py:476
 msgid "Meridiana: shading of the obstacles"
