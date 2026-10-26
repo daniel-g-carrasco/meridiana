@@ -10,6 +10,12 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- Harmonised plan labels (R143, R138): rounded string names and module numbers in the catalogue font and the plan's
+  colours, with the window's drawn check, warning and stop symbols instead of font glyphs.
+- Phase-aware panels (R145): Project hides on Production, Consumption, Balance and Report, then returns on the
+  graphical phases only if it was visible; the side panels share the width equally. No animation.
+- Plan rotation (R146): native rotation, alignment with a side of the selected outline, and North up. The round
+  compass follows the view and reports its bearing and compass point; project coordinates never change.
 - Touchpad navigation (R140): pinch zoom in the plan and the 3D view, two-finger scrolling to pan, Ctrl with two
   fingers to zoom, Shift with two fingers to orbit in 3D, and native rotation where Qt supplies it. Plus and minus,
   also with Ctrl, zoom both views; matching buttons are in each view's bar.

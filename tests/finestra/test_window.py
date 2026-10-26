@@ -1591,6 +1591,11 @@ class Stringing(PlantWindow):
         strings = self.win.project.energy["strings"]
         self.assertEqual(strings["strategy"], "rows")
         self.assertNotIn("auto", strings)                                    # the designer's from now on
+        tag = next(it for it in self.win.plan.items_by_kind["wiring"] if it.data(0) == "string")
+        first = plant.strings[tag.data(1)].modules[0][2]
+        anchor = self.win.plan.mapFromScene(QPointF(first[0], -first[1]))
+        top = QPointF(self.win.plan.mapFromScene(tag.pos())) + tag.offset + tag.rect.topLeft()
+        self.assertAlmostEqual(anchor.y() - top.y(), tag.boundingRect().height() + 6, delta=1.0)
         mine = self.runs()
         self.choose(inverter_record(model="AC-10K", ac_power_nominal_w=10000))      # a second inverter
         plant = self.plant(lambda p: len(p.units) == 2)
@@ -1634,7 +1639,7 @@ class Stringing(PlantWindow):
         for i in (0, 1, 3, 4):                                               # the third skipped
             self.click(at(i))
         self.assertEqual([f"{sf}/{k}" for sf, k in self.win.plan.draft], [keys[i] for i in (0, 1, 3, 4)])
-        numbers = sorted(c.text() for it in self.win.plan.items_by_kind["draft"] for c in it.childItems())
+        numbers = sorted(it.text for it in self.win.plan.items_by_kind["draft"] if hasattr(it, "text"))
         self.assertEqual(numbers, ["1", "2", "3", "4"])                    # the order on the modules
         self.assertIn("modules", self.win.plant_page.strings_label.text())
         self.key(Qt.Key.Key_Backspace)

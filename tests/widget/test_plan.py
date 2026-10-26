@@ -871,6 +871,18 @@ class PlanNavigation(unittest.TestCase):
         QApplication.sendEvent(plan.viewport(), wheel)
         self.assertAlmostEqual(plan.transform().m11(), scale * 1.2 ** 0.5)
 
+    def test_string_chips_use_the_design_radius_font_and_drawn_symbols(self):
+        from meridiana.ui import design
+        from meridiana.ui.plan import ChipItem
+        chip = ChipItem("1.3.1", design.font(design.Type.SMALL, design.Type.BOLD, self.plan.font()),
+                        "#06d6a0", "check", self.plan.colours)
+        self.assertEqual(chip.text, "1.3.1")
+        self.assertEqual(chip.symbol_name, "warning")
+        self.assertEqual(chip.radius, design.Radius.INNER)
+        self.assertEqual(chip.font().family(), self.plan.font().family())
+        self.assertTrue(chip.boundingRect().width() > 16)
+        self.assertFalse(chip.childItems())
+
 
 if __name__ == "__main__":
     unittest.main()

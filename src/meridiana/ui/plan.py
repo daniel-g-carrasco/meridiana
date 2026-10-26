@@ -127,6 +127,47 @@ def cosmetic(colour, width: float = 1.5, style=Qt.PenStyle.SolidLine) -> QPen:
     return pen
 
 
+class ChipItem(QGraphicsItem):
+    """A label on the plan: the design system's radius and font, the plan's colours and drawn window symbols."""
+
+    def __init__(self, text: str, font: QFont, colour, state: str = "", colours: dict | None = None):
+        super().__init__()
+        self.text = text
+        self._font = QFont(font)
+        self.colour = QColor(colour)
+        self.symbol_name = {"ok": "check", "check": "warning", "fail": "stop"}.get(state, "")
+        self.colours = colours or {"label_bg": "#14161ac8", "label_fg": "#f2efe6"}
+        self.radius = design.Radius.INNER
+        fm = QFontMetrics(self._font)
+        symbol = 16 if self.symbol_name else 0
+        gap = 4 if self.symbol_name else 0
+        self.rect = QRectF(0, 0, fm.horizontalAdvance(text) + symbol + gap + 12, max(fm.height(), 16) + 4)
+        self.text_rect = QRectF(6, 2, fm.horizontalAdvance(text), self.rect.height() - 4)
+        self.symbol_rect = QRectF(self.rect.width() - 18, (self.rect.height() - 16) / 2, 16, 16)
+        self.offset = QPointF()
+
+    def font(self) -> QFont:
+        return QFont(self._font)
+
+    def boundingRect(self) -> QRectF:
+        return self.rect.translated(self.offset)
+
+    def paint(self, painter: QPainter, option, widget=None) -> None:
+        painter.save()
+        painter.translate(self.offset)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(qcolour(self.colours["label_bg"]))
+        painter.drawRoundedRect(self.rect, self.radius, self.radius)
+        painter.setFont(self._font)
+        painter.setPen(self.colour)
+        painter.drawText(self.text_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, self.text)
+        if self.symbol_name:
+            from . import symbols
+            symbols.paint(painter, self.symbol_rect, self.symbol_name, dark=True)
+        painter.restore()
+
+
 def hints() -> dict:
     return {
         "select": _("Click the smallest object; a second click on the same row selects the row. Esc goes to the "
@@ -859,18 +900,12 @@ class PlanView(QGraphicsView):
         for n, (mx, my) in enumerate(pts, 1):
             if n not in (1, last) and n % step:
                 continue
-            num = QGraphicsSimpleTextItem(str(n))
-            num.setFont(small)
-            num.setBrush(QBrush(QColor("#ffffff")))
-            box = num.boundingRect()
-            half = QPointF(box.width() / 2, box.height() / 2)
-            back = scene.addRect(box.adjusted(-3, -1, 3, 1).translated(-half), QPen(Qt.PenStyle.NoPen),
-                                 QBrush(QColor(10, 12, 16, 215)))
-            num.setParentItem(back)
-            num.setPos(-half)
+            back = ChipItem(str(n), small, QColor("#ffffff"), colours=self.colours)
+            half = QPointF(back.boundingRect().width() / 2, back.boundingRect().height() / 2)
+            back.setPos(QPointF(mx, my) - half)
             back.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
-            back.setPos(QPointF(mx, my))
             back.setZValue(z)
+            scene.addItem(back)
             items.append(back)
         return items
 
@@ -878,12 +913,10 @@ class PlanView(QGraphicsView):
         """Each string in a tint of its own (theme_colors.string_tints; a string touching another never has its
         tint, string_paths.colours): its modules filled, a line through their middles while they are next to each
         other and a dashed jump around the modules it skips, so that a module skipped is seen (R117); the one chosen
-        wider, outlined and numbered; at its first module its name (inverter.input.string) with the traffic light, a
-        mark in the colour of its state (✔ correct, ⚠ to be checked, ✘ out of the window or without input; Sunny
-        Design's colours); the modules in no string with a red outline. A string whose modules are not all drawn
+        wider, outlined and numbered; at its first module its name (inverter.input.string) with the traffic light as
+        a drawn symbol of the window (R138, R143); the modules in no string with a red outline. A string whose modules
+        are not all drawn
         waits for the next layout; the string being drawn again is left to the drawing."""
-        from PySide6.QtWidgets import QGraphicsSimpleTextItem
-
         from .. import string_paths
         scene = self.scene()
         for it in self.items_by_kind.pop("wiring", []):
@@ -902,7 +935,6 @@ class PlanView(QGraphicsView):
             return
         states = self.string_states or {"ok": theme_colors.STATUS["good"], "check": theme_colors.STATUS["warning"],
                                         "fail": theme_colors.STATUS["critical"]}
-        marks = {"ok": "✔", "check": "⚠", "fail": "✘"}
         items = []
         # the modules in no string: a red outline each (Sunny Design), one path for all of them
         laid = self.module_index
@@ -939,27 +971,18 @@ class PlanView(QGraphicsView):
             items += mine
             x, y = r.modules[0][2]
             font = design.font(design.Type.SMALL, design.Type.BOLD, self.font())
-            text = QGraphicsSimpleTextItem(r.label)
-            text.setFont(font)
-            text.setBrush(QBrush(colour))
-            light = QGraphicsSimpleTextItem(marks.get(state, ""))
-            light.setFont(symbol_font(font))
-            light.setBrush(QBrush(QColor(states.get(state, states["check"]))))
-            light.setPos(text.boundingRect().width() + 3, 0)
-            box = text.boundingRect().adjusted(-4, -2, 4 + light.boundingRect().width() + 3, 2)
+            tag = ChipItem(r.label, font, colour, state, self.colours)
+            box = tag.boundingRect()
             lift = box.height() + 6                     # above the first module's middle: its number stays seen
             at = self.mapFromScene(to_scene(x, y))
             place = box.translated(at.x(), at.y() - lift).adjusted(-2, -2, 2, 2)
             if any(place.intersects(other) for other in named):
                 continue                                # zoomed out: its colour says it, its tooltip names it
             named.append(place)
-            tag = scene.addRect(box.translated(0, -lift), QPen(Qt.PenStyle.NoPen), QBrush(QColor(10, 12, 16, 215)))
-            text.setParentItem(tag)
-            light.setParentItem(tag)
-            text.setPos(0, -lift)
-            light.setPos(light.pos().x(), -lift)
-            tag.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
             tag.setPos(to_scene(x, y))
+            tag.offset = QPointF(0, -lift)              # local pixels, not scene metres (ItemIgnoresTransformations)
+            tag.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+            scene.addItem(tag)
             tag.setZValue(Z_WIRING + 1 + (0.5 if chosen else 0.0))
             tag.setToolTip(tip)
             tag.setData(0, "string")
@@ -2105,6 +2128,8 @@ class PlanView(QGraphicsView):
             kind = event.gestureType()
             if kind == Qt.NativeGestureType.ZoomNativeGesture:
                 self.zoom_at(max(0.05, 1.0 + event.value()), event.position().toPoint())
+            elif kind == Qt.NativeGestureType.RotateNativeGesture:
+                self.rotate_view(event.value())
             elif kind in (Qt.NativeGestureType.BeginNativeGesture, Qt.NativeGestureType.EndNativeGesture):
                 pass
             else:
