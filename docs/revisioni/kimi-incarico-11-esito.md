@@ -33,3 +33,21 @@ Risultato del giro:
 | finestra | 132 prove, OK |
 
 [V] Non ci sono fallimenti della base da correggere e nessun commit di correzione separato è necessario. `ruff` sui due nuovi strumenti, `bash -n tools/real_session.sh` e `git diff --check` sono puliti.
+
+## 2. R178: l'animazione della pagina File
+
+[V] Ho fotografato tre proposte nella sessione Wayland reale, tutte di 180 ms e con curva `OutCubic`. I nomi `0, 25, 50, 75, 100` indicano la percentuale del tempo, non il valore della curva. Le 15 immagini definitive sono state aperte e guardate:
+
+| Proposta | Fotogrammi | Giudizio |
+|---|---|---|
+| Dissolvenza e scorrimento di 16 px dal lato File | `foto/kimi11-file-scorrimento-{0,25,50,75,100}.png` | La scelta raccomandata e realizzata: il piccolo spostamento dà la provenienza senza spostare davvero i contenuti; il progetto resta leggibile durante il passaggio |
+| Foglio che si scopre da sinistra | `foto/kimi11-file-foglio-{0,25,50,75,100}.png` | Più legato al gesto di aprire, ma il bordo netto taglia temporaneamente testi e pannelli; resta disponibile come `kind="sheet"` |
+| Sola dissolvenza incrociata | `foto/kimi11-file-dissolvenza-{0,25,50,75,100}.png` | La più discreta, ma tutta la finestra cambia insieme e il passaggio è meno localizzato; resta disponibile come `kind="fade"` |
+
+[V] La realizzazione è in `ui/motion.py`: `Entrance` e `enter()` usano due fotografie e un velo opaco, non `QGraphicsOpacityEffect`, maschere o ridisposizioni ai fotogrammi. `FilePage` usa `slide`; con «meno movimento» appare subito e la chiusura resta immediata. `ui/window.py` non disabilita più gli aggiornamenti durante l'apertura o la chiusura: la fotografia iniziale deve essere reale e il ridisegno non deve restare trattenuto.
+
+[V] Le foto hanno riprodotto due difetti che le prove offscreen iniziali non vedevano: lo sfondo nero catturato con aggiornamenti disabilitati e il velo finale lasciato visibile da un ciclo `processEvents()`. Il primo è risolto catturando con aggiornamenti attivi, il secondo nascondendo il velo prima di `deleteLater`. Le prove ora confrontano anche i pixel prima e dopo e richiedono che il velo finale non sia visibile.
+
+[V] Il giro completo è stato ripetuto dopo la correzione, in chiaro e scuro. `kimi11-giro-file-meta.png` mostra il passaggio reale in scuro, `kimi11-giro-file-aiuto.png` la pagina finale senza residui. Tutte le sezioni rispondono e Esc chiude. Le 23 prove di `test_design_system.py` passano, compresa quella nuova per animazione, pixel, chiusura e movimento ridotto. Tempi e valori dei fotogrammi sono in `kimi11-giro-file.txt`; il giro finale è in `kimi11-giro.txt`.
+
+[V] `docs/design/sistema-grafico.md` descrive la nuova regola. Per il modello grafico condiviso, il punto 2 cambia `ui/motion.py` e aggancia `ui/file_page.py`; non cambia `ui/design.py`, `ui/phasebar.py` o `ui/theme.py`.

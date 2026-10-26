@@ -276,9 +276,11 @@ Regole:
   sotto diventano il nome (semigrassetto se segue una spiegazione), il tasto attenuato accanto, la spiegazione in
   un inchiostro più tenue 4 px sotto; a capo a 340 px; 6 px sopra e sotto e 8 ai lati (una riga: 28 px, come un
   controllo). Vale per ogni suggerimento, da dovunque venga, perché si formatta l'etichetta di Qt quando compare.
-- **Pagina File** (R157: «quando si preme su File, ci deve essere un'animazione semplice»): si srotola dall'alto in
-  180 ms con una maschera che cresce: a ogni fotogramma si dipinge solo la striscia nuova, niente di trasparente,
-  niente da ridisporre; si chiude subito.
+- **Pagina File** (R157, riveduta con R178): entra in 180 ms con una dissolvenza e uno scorrimento di 16 px dal
+  lato del menu (`ui/motion.enter`, `Entrance`). Il velo opaco tiene la fotografia di prima e dipinge quella della
+  pagina: niente `QGraphicsOpacityEffect`, maschere o ridisposizioni ai fotogrammi. Con «meno movimento» la pagina è
+  subito presente; si chiude subito. Le alternative fotografate sono il foglio che si scopre da sinistra e la sola
+  dissolvenza, alla stessa durata.
 - **Cambio di fase** (`ui/phasebar.Phases._changed`, come la barra multifunzione di Office): la pagina e gli
   strumenti della barra cambiano subito; scorre soltanto la linguetta scelta, fino alla nuova fase (110 ms, R97). Gli
   strumenti che entravano scorrendo sfarfallavano (Daniel, 24/10/2026): niente movimento dentro una barra piena di

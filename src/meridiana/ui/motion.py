@@ -12,7 +12,9 @@ for less motion (`set_reduced`).
 `slide(area, change, direction)`: what comes slides in from `direction` while what goes fades (the bar of a phase,
 as Office's ribbon). `hold` and `Veil.play` are the two halves, for a caller that moves other things with it (the
 tab of the phase, ui/phasebar.py). `push(area, change, drop)`: what was there moves down (or up) by `drop` pixels
-to where it goes, a strip at the bottom staying (the menu bar that Alt adds above the phases, R164)."""
+to where it goes, a strip at the bottom staying (the menu bar that Alt adds above the phases, R164).
+`enter(area, change, kind)`: an opaque page appears over the held picture with a fade, a little slide or a sheet
+opening from the left (R178); the veil hides itself at the last frame and with less motion nothing plays."""
 
 from __future__ import annotations
 
@@ -181,3 +183,82 @@ def slide(area: QWidget, change: Callable[[], None], direction: int, ms: int = M
     veil = hold(area, ground)
     change()
     _later(veil, ms, SHIFT if direction >= 0 else -SHIFT)
+
+
+class Entrance(QWidget):
+    """An opaque area entering over what was there before. Two pictures are enough: no opacity effect, no mask and
+    no layout work at the frames. `slide` fades and comes a little from the left, `sheet` opens from that side and
+    `fade` only dissolves. The choices share their duration and their reduced-motion path."""
+
+    def __init__(self, area: QWidget, before: QPixmap, kind: str):
+        super().__init__(area.parentWidget())
+        self.setObjectName("entrance")
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
+        self.area, self.before, self.kind = area, before, kind
+        self.after: QPixmap | None = None
+        self.t = 0.0
+        self.animation = QVariantAnimation(self)
+        self.animation.setStartValue(0.0)
+        self.animation.setEndValue(1.0)
+        self.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self.animation.valueChanged.connect(self._moved)
+        self.animation.finished.connect(self._finish)
+        self.setGeometry(area.geometry())
+        self.show()
+        self.raise_()
+
+    def play(self, ms: int = Motion.NORMAL) -> None:
+        if reduced() or not self.area.isVisible() or self.area.width() < 2 or self.area.height() < 2:
+            self._finish()
+            return
+        try:
+            self.after = self.area.grab()
+        except RuntimeError:
+            self._finish()
+            return
+        self.raise_()
+        self.animation.setDuration(ms)
+        self.animation.start()
+
+    def _finish(self) -> None:
+        self.hide()
+        self.deleteLater()
+
+    def _moved(self, value) -> None:
+        self.t = float(value)
+        self.update()
+
+    def paintEvent(self, event) -> None:
+        p = QPainter(self)
+        p.drawPixmap(0, 0, self.before)
+        if self.after is None:
+            return
+        t = self.t
+        if self.kind == "sheet":
+            p.setClipRect(QRect(0, 0, round(self.width() * t), self.height()))
+            p.drawPixmap(0, 0, self.after)
+            return
+        p.setOpacity(t)
+        dx = Space.XL * (1.0 - t) if self.kind == "slide" else 0.0
+        p.drawPixmap(QPointF(dx, 0), self.after)
+
+
+def enter(area: QWidget, change: Callable[[], None], kind: str = "slide", ms: int = Motion.NORMAL) -> Entrance | None:
+    """Show an opaque `area` with `change`, then play its entrance after the window has settled. The picture before
+    is held from the first frame. With less motion, or no visible window, only `change` happens."""
+    top = area.window()
+    if reduced() or not top.isVisible() or area.width() < 2 or area.height() < 2:
+        change()
+        return None
+    try:
+        before = top.grab(QRect(area.mapTo(top, QPoint(0, 0)), area.size()))
+    except RuntimeError:
+        change()
+        return None
+    entrance = Entrance(area, before, kind)
+    change()
+    entrance.raise_()
+    after_work(entrance, lambda: entrance.play(ms))
+    return entrance
