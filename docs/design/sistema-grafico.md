@@ -69,6 +69,12 @@ Carattere Inter, il testo a 13 px (Daniel, 25/10/2026: 14 px con R95, scelto sul
 Titillium Web, usato fino ad allora, a 13 px si leggeva piccolo e sottile: i suoi file restano in
 `data/fonts/titillium-web` per un ritorno.
 
+La dimensione del testo si sceglie in Preferenze > Aspetto (R133, Daniel 26/10/2026: «farei 12, 13 e 14 come piccolo,
+medio e grande»): Piccolo, Medio (13 px, quella di queste tabelle) e Grande spostano tutta la scala di un pixel in giù o
+in su (`design.set_text_size`, all'avvio, prima di ogni finestra: vale dal prossimo avvio). Perché: su uno schermo al
+100 % i 13 px del testo sono 13 pixel veri e il testo sembra stretto; al 200 % (il 4K di casa) sono 26 (R171, misurato
+sulla finestra vera: stessa larghezza, al pixel, che in Chrome con gli stessi file).
+
 Daniel, 25/10/2026 (R121): «Vedo ancora troppe differenze tra dimensioni testo, stili, colori nelle varie sezioni
 (alcune differenze ci devono essere ma non devono essere troppe e devono avere un senso, e devono essere salvate come
 stile, tipo i testi nelle linguette sono troppo grandi)». Ogni testo della finestra è uno di questi dieci stili, con

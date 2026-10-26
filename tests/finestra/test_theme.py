@@ -94,6 +94,30 @@ class ThemeOfTheWindow(unittest.TestCase):
         self.win._preferences("appearance", run=cancel)
         self.assertEqual((self.cfg.accent, self.win.theme.tokens["accent"]), ("indigo", "#5b4bb0"))
 
+    def test_the_size_of_the_text_is_kept_and_said_for_the_next_start(self):
+        """R133 (Daniel, 26/10/2026: «farei 12, 13 e 14 come piccolo, medio e grande»): the choice in Appearance is
+        saved and the window says it comes with the next start; the text of this window stays as it is."""
+        from unittest import mock
+
+        from PySide6.QtWidgets import QDialog
+
+        from meridiana.ui import design
+
+        def large(dialog):
+            sizes = dialog.appearance.text_size
+            self.assertEqual([sizes.itemData(i) for i in range(sizes.count())], ["small", "medium", "large"])
+            self.assertEqual(sizes.currentData(), "medium")
+            sizes.setCurrentIndex(sizes.findData("large"))
+            return QDialog.DialogCode.Accepted
+        with mock.patch.object(self.win, "tell") as tell:
+            self.win._preferences("appearance", run=large)
+        self.assertEqual(config.load(self.paths.config_file).text_size, "large")
+        self.assertEqual(design.Type.BODY, 13)                       # this window: until the next start
+        tell.assert_called_once()
+        with mock.patch.object(self.win, "tell") as tell:
+            self.win._preferences("appearance", run=lambda d: QDialog.DialogCode.Accepted)
+        tell.assert_not_called()                                     # the same size again: nothing to say
+
     def test_the_sheet_goes_on_the_whole_window_quickly_and_it_draws_in_both_themes_with_the_screenshots_kept(self):
         """A grab() of the window with the Properties and the Production page, light and dark, without errors;
         the images in build/schermate-17a (git ignores build/) for a look on the PC."""

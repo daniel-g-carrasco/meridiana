@@ -10,6 +10,10 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- Size of the text (R133): Small, Medium or Large in Preferences > Appearance moves the whole type scale a
+  pixel down or up, the text at 12, 13 or 14 px; it takes effect at the next start (settings format 21).
+- Dialog symbols (R169): Discard has a bin on red and Cancel an arrow going back on grey, in every dialog;
+  No and Close keep the cross.
 - Inverter sizing (R141): choose the manufacturer first, remembered in the project; the model and quantity together
   follow the requested DC/AC ratio, and the result names both.
 - Harmonised plan labels (R143, R138): rounded string names and module numbers in the catalogue font and the plan's

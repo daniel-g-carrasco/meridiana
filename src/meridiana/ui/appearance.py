@@ -29,6 +29,11 @@ def place_names() -> dict:
     return {"top": _("Under the row of the phases"), "left": _("On the left side, icons only")}
 
 
+def text_size_names() -> dict:
+    """The sizes of the text (design.TEXT_SIZES): the text at 12, 13 or 14 px."""
+    return {"small": _("Small (12 px)"), "medium": _("Medium (13 px)"), "large": _("Large (14 px)")}
+
+
 class Character(QWidget):
     """The assistant as a dot in its colour, until its drawing comes (study 14)."""
 
@@ -110,6 +115,15 @@ class Appearance(QWidget):
             self.backgrounds.addItem(text, key)
         self.backgrounds.setCurrentIndex(max(0, self.backgrounds.findData(cfg.backgrounds)))
         form.addRow(_("Backgrounds"), self.backgrounds)
+        # the size of the text (R133, Daniel 26/10/2026: «farei 12, 13 e 14 come piccolo, medio e grande»): read when
+        # the fonts are made, so it takes effect at the next start
+        self.text_size = QComboBox()
+        for key, text in text_size_names().items():
+            self.text_size.addItem(text, key)
+        self.text_size.setCurrentIndex(max(0, self.text_size.findData(cfg.text_size)))
+        self.text_size.setToolTip(_("On a screen at 100 % the large text reads better; it takes effect at the next "
+                                    "start of Meridiana"))
+        form.addRow(_("Size of the text"), self.text_size)
         self.toolbar = QComboBox()
         for key, text in toolbar_names().items():
             self.toolbar.addItem(text, key)

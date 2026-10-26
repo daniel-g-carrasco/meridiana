@@ -45,6 +45,7 @@ BROUGHT = {
          "assistant_consent", "assistant_voice"},
     19: {"map_sources"},
     20: {"assistant_introduced", "assistant_local_runtime"},
+    21: {"text_size"},
 }
 
 

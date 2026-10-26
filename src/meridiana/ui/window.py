@@ -1289,6 +1289,7 @@ class MainWindow(QMainWindow):
             self._assistant_look(dialog.assistant_animated.isChecked(), dialog.assistant_style.currentData())
             self.assistant_chat.apply_preferences(dialog.meridio.choice())
             self._toolbar_style(dialog.appearance.toolbar.currentData(), dialog.appearance.place.currentData())
+            self._text_size(dialog.appearance.text_size.currentData())
             self._set_shortcuts(dialog.keys.bindings)
             self._network(*dialog.privacy.choice())
             self.cfg.check_updates = dialog.privacy.updates.isChecked()
@@ -1297,6 +1298,15 @@ class MainWindow(QMainWindow):
         else:
             self._appearance(*before)
         self._save_config()
+
+    def _text_size(self, size: str) -> None:
+        """The size of the text chosen (R133): kept, and said that it comes with the next start (the fonts are made
+        with the window)."""
+        from .design import TEXT_SIZES
+        if size not in TEXT_SIZES or size == self.cfg.text_size:
+            return
+        self.cfg.text_size = size
+        self.tell(_("The new size of the text takes effect at the next start of Meridiana."))
 
     def _report_profiles(self, profiles: list, default: str) -> None:
         """The authors of the reports as the preferences wrote them; a logo chosen there is copied into the data

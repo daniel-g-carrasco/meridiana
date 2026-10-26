@@ -69,6 +69,9 @@ def main(argv: list[str]) -> int:
     log.setup(paths.log_file)
     log.install_excepthook()             # the window takes over the telling once it exists
     cfg = config.load(paths.config_file)
+    # the size of the text before any widget or font is made (R133)
+    from .ui import design
+    design.set_text_size(cfg.text_size)
     if cfg.language:
         i18n.setup(cfg.language)
     # spin boxes write numbers as the labels do: in the language of the window

@@ -110,6 +110,37 @@ class Text:
         return {s.key for s in cls.ALL}
 
 
+# the size of the text (R133, Daniel 26/10/2026: «farei 12, 13 e 14 come piccolo, medio e grande»): the whole scale a
+# pixel smaller or larger, the text at 12, 13 or 14 px. Chosen in Preferences > Appearance and set at the start,
+# before any widget is built: a size is read when a font is made (on a screen at 100 % the 13 px of the text are 13
+# pixels, at 200 % they are 26: R171)
+TEXT_SIZES = {"small": -1, "medium": 0, "large": 1}
+_SIZES = {name: getattr(Type, name) for name in ("TINY", "CAPTION", "SMALL", "BODY", "TITLE", "HEADING", "DISPLAY")}
+_STYLES = {name: getattr(Text, name) for name in ("DISPLAY", "HEADING", "TITLE", "STRONG", "BODY", "DESCRIPTION",
+                                                  "CONTROL", "SECONDARY", "CAPTION", "LABEL", "GROUP")}
+
+
+def set_text_size(choice: str) -> None:
+    """The type scale and the styles of `Text` for the size chosen (a key of TEXT_SIZES; any other is the medium)."""
+    import dataclasses
+    step = TEXT_SIZES.get(choice, 0)
+    for name, px in _SIZES.items():
+        setattr(Type, name, px + step)
+    Type.SCALE = tuple(getattr(Type, name) for name in _SIZES)
+    Type.CONTROL = Type.BODY
+    Type.MICRO = Type.CAPTION
+    for name, style in _STYLES.items():
+        setattr(Text, name, dataclasses.replace(style, size=style.size + step))
+    Text.ALL = tuple(getattr(Text, name) for name in _STYLES)
+    Text.BUTTON = Text.STRONG
+
+
+def text_size() -> str:
+    """The size of the text in use: a key of TEXT_SIZES."""
+    step = Type.BODY - _SIZES["BODY"]
+    return next((k for k, v in TEXT_SIZES.items() if v == step), "medium")
+
+
 class Size:
     CONTROL = 28        # a button, a field, a list closed, a tool button with its icon alone
     COMPACT = 22        # the drop-down part of a list, a swatch's row
@@ -169,20 +200,21 @@ class Layout:
     PAGE = (Space.XXL + 4, Space.XXL - 2)   # a page's inside (the File page): 28 at the sides, 22 above and below
 
 
-def font(size: int = Type.BODY, weight: int = Type.REGULAR, base=None):
-    """The application's font at `size` logical pixels and `weight` (a QFont; `base` the font to start from).
-    Prefer text_font with a style of `Text`."""
+def font(size: int | None = None, weight: int = Type.REGULAR, base=None):
+    """The application's font at `size` logical pixels (the text's, Type.BODY, by default) and `weight` (a QFont;
+    `base` the font to start from). Prefer text_font with a style of `Text`."""
     from PySide6.QtGui import QFont
     from PySide6.QtWidgets import QApplication
     f = QFont(base if base is not None else QApplication.font())
-    f.setPixelSize(int(size))
+    f.setPixelSize(int(Type.BODY if size is None else size))
     f.setWeight(QFont.Weight(min(int(weight), Type.SEMIBOLD)))
     return f
 
 
-def text_font(style: TextStyle = Text.BODY, base=None):
-    """The QFont of a style of the catalogue (`base` the font to start from: its family)."""
+def text_font(style: TextStyle | None = None, base=None):
+    """The QFont of a style of the catalogue (Text.BODY by default; `base` the font to start from: its family)."""
     from PySide6.QtGui import QFont
+    style = style or Text.BODY
     f = font(style.size, style.weight, base)
     f.setCapitalization(QFont.Capitalization.AllUppercase if style.caps else QFont.Capitalization.MixedCase)
     f.setLetterSpacing(QFont.SpacingType.PercentageSpacing, 100 + (Type.LETTER_SPACING if style.caps else 0))

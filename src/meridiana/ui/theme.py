@@ -567,9 +567,6 @@ class Theme(QObject):
 _FAMILY: list = []          # the family loaded, once per process
 
 
-BODY_PX = 13                # the text's size at least, in logical pixels (Daniel, 25/10/2026: Inter, then 13 px, R123)
-
-
 def class_fonts(app=None) -> None:
     """The kinds of widget whose text has a style of its own in the catalogue (design.Text): the push buttons, the
     tabs, the tool buttons (chips, pills, tools), the headers of the tables and the status bar; and the kinds the
@@ -613,12 +610,14 @@ def load_fonts() -> str:
     if family and app is not None and app.font().family() != family:
         font = QFont(app.font())
         font.setFamily(family)
-        # at least 13 px: Windows asks for 9 pt, 12 px (Daniel, 25/10/2026: Inter at 14 px, R95, then «da 14 a 13»,
-        # R123); a larger system size stays as it is
+        # at least the text's size, 13 px at the medium size: Windows asks for 9 pt, 12 px (Daniel, 25/10/2026: Inter
+        # at 14 px, R95, then «da 14 a 13», R123; 12, 13 or 14 px with the size chosen, R133); a larger system size
+        # stays as it is
+        from .design import Type
         screen = QGuiApplication.primaryScreen()
         dpi = screen.logicalDotsPerInch() if screen is not None else 96.0
-        if font.pointSizeF() > 0 and font.pointSizeF() * dpi / 72 < BODY_PX - 0.1:
-            font.setPointSizeF(BODY_PX * 72 / dpi)
+        if font.pointSizeF() > 0 and font.pointSizeF() * dpi / 72 < Type.BODY - 0.1:
+            font.setPointSizeF(Type.BODY * 72 / dpi)
         app.setFont(font)
     return family
 

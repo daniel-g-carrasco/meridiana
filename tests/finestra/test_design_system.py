@@ -111,6 +111,26 @@ class Scales(unittest.TestCase):
                                  style.key)
                 self.assertIn(style.tone, ("text", "text2", "muted"))
 
+    def test_the_size_of_the_text_moves_the_whole_scale_by_a_pixel(self):
+        """R133 (Daniel, 26/10/2026: «farei 12, 13 e 14 come piccolo, medio e grande»): small, medium and large put
+        the text at 12, 13 and 14 px and every other size a pixel down or up with it; the catalogue stays closed; an
+        unknown choice is the medium; the default font follows."""
+        from meridiana.ui import design
+        from meridiana.ui.design import Text, Type
+        self.addCleanup(design.set_text_size, "medium")
+        medium = (Type.SCALE, [s.size for s in Text.ALL])
+        for choice, body, step in (("small", 12, -1), ("large", 14, 1), ("medium", 13, 0), ("huge", 13, 0)):
+            with self.subTest(choice):
+                design.set_text_size(choice)
+                self.assertEqual((design.Text.BODY.size, design.Type.BODY, design.Type.CONTROL), (body, body, body))
+                self.assertEqual(design.Type.SCALE, tuple(px + step for px in medium[0]))
+                self.assertEqual([s.size for s in design.Text.ALL], [px + step for px in medium[1]])
+                self.assertIs(design.Text.BUTTON, design.Text.STRONG)
+                self.assertEqual({s.size for s in design.Text.ALL}, set(design.Type.SCALE))
+                self.assertEqual(design.text_size(), choice if choice in design.TEXT_SIZES else "medium")
+                self.assertEqual(design.font().pixelSize(), body)
+                self.assertEqual(design.text_font().pixelSize(), body)
+
     def test_the_accent_of_the_sheet_only_for_the_focus(self):
         """R104 (Daniel, 25/10/2026: «lo vorrei un po' meno presente in tutto Meridiana il colore di accento») and
         R158 (the same evening: «i pulsanti già evidenziati con il colore di accento non devono esistere, né negli
