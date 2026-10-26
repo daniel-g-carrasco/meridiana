@@ -10,6 +10,9 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- Touchpad navigation (R140): pinch zoom in the plan and the 3D view, two-finger scrolling to pan, Ctrl with two
+  fingers to zoom, Shift with two fingers to orbit in 3D, and native rotation where Qt supplies it. Plus and minus,
+  also with Ctrl, zoom both views; matching buttons are in each view's bar.
 - Power optimizers (task 22): a SolarEdge inverter, at a fixed string voltage, takes power optimizers from the
   catalogue («Optimizers…», one or two modules on each) or the ones Meridiana proposes for the module; its
   inputs are its Synergy units. The strings are proposed as few and as alike as SolarEdge's limits allow and

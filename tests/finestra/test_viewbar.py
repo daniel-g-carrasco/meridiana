@@ -11,7 +11,7 @@ from _fixtures import capannone
 
 setUpModule = _setup.keep_global_state          # what the module changes of the process, put back after it
 
-VIEW_COMMANDS = ("view_plan", "view_3d", "view_both", "fit")
+VIEW_COMMANDS = ("view_plan", "view_3d", "view_both", "fit", "zoom_in", "zoom_out")
 PLAN_COMMANDS = VIEW_COMMANDS + ("snaps", "ortho")
 
 
@@ -70,6 +70,24 @@ class ViewBars(unittest.TestCase):
         m = win.statusBar().contentsMargins()
         self.assertGreaterEqual(min(m.left(), m.right()), 6)
         self.assertGreaterEqual(win.coords.contentsMargins().left(), 4)
+
+    def test_zoom_buttons_and_keys_move_both_views_and_say_the_key(self):
+        from PySide6.QtGui import QKeySequence
+        win = self.win
+        for cid, key in (("zoom_in", "+"), ("zoom_out", "-")):
+            action = win.commands[cid]
+            self.assertEqual(action.shortcuts()[0], QKeySequence(key))
+            self.assertIn(key, win.plan.viewbar.buttons[action].toolTip())
+            self.assertFalse(win.plan.viewbar.buttons[action].icon().isNull())
+            self.assertIn(action, win.view3d.viewbar.buttons)
+        plan_scale = win.plan.transform().m11()
+        camera = win.view3d.backend.camera
+        distance = (camera.position - camera.target).dot(camera.position - camera.target)
+        win.plan.viewbar.buttons[win.commands["zoom_in"]].click()
+        self.assertAlmostEqual(win.plan.transform().m11(), plan_scale * 1.2)
+        self.assertLess((camera.position - camera.target).dot(camera.position - camera.target), distance)
+        win.commands["zoom_out"].trigger()
+        self.assertAlmostEqual(win.plan.transform().m11(), plan_scale)
 
     def test_the_keys_and_the_switches_the_selector_of_the_views_and_the_colours_of_the_theme(self):
         from PySide6.QtCore import Qt

@@ -11870,3 +11870,27 @@ msgstr "servono due punti distinti e una distanza maggiore di zero"
 #: src/meridiana/energy/meteo.py:231
 msgid "damaged horizon profile"
 msgstr "profilo dell'orizzonte danneggiato"
+
+#: src/meridiana/shortcuts.py:90
+msgid "Zoom &in"
+msgstr "&Ingrandisci"
+
+#: src/meridiana/shortcuts.py:91
+msgid "Zoom &out"
+msgstr "&Riduci"
+
+#: src/meridiana/ui/window.py:859
+msgid "Both views closer; + and Ctrl++ do the same"
+msgstr "Avvicina entrambe le viste; + e Ctrl++ fanno lo stesso"
+
+#: src/meridiana/ui/window.py:860
+msgid "Both views farther away; - and Ctrl+- do the same"
+msgstr "Allontana entrambe le viste; - e Ctrl+- fanno lo stesso"
+
+#: src/meridiana/ui/window.py:907
+msgid "Zoom in"
+msgstr "Ingrandisci"
+
+#: src/meridiana/ui/window.py:908
+msgid "Zoom out"
+msgstr "Riduci"

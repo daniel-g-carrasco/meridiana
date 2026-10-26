@@ -16,7 +16,8 @@ from .. import log, paths
 # what each icon is in the window, and Lucide's name for it
 NAMES = {"undo": "undo-2", "redo": "redo-2", "select": "mouse-pointer-2", "building": "warehouse", "pitch": "triangle",
          "subfield": "grid-3x3", "exclusion": "square-x", "measure": "ruler", "plan": "map", "3d": "box",
-         "both": "columns-2", "fit": "scan", "site": "map-pin", "snaps": "magnet", "ortho": "triangle-right",
+         "both": "columns-2", "fit": "scan", "zoom_in": "plus", "zoom_out": "minus",
+         "site": "map-pin", "snaps": "magnet", "ortho": "triangle-right",
          "dock": "panel-right", "background": "layers", "eye": "eye",
          # the bars of the phases (task 17b): by the command's id
          "rectangle": "rectangle-horizontal", "square": "square", "fill": "layout-grid", "empty": "eraser",

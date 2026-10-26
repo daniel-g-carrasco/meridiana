@@ -444,6 +444,46 @@ class Navigation(unittest.TestCase):
         b.release(RIGHT, 0, 70, 80)
         self.assertEqual((picked, menus), ([("modules", 7)], [(70, 80)]))
 
+    def native(self, kind, value=0.0, modifiers=None):
+        from PySide6.QtCore import QPointF, Qt
+        from PySide6.QtGui import QNativeGestureEvent, QPointingDevice
+        from PySide6.QtWidgets import QApplication
+        at = QPointF(300, 250)
+        event = QNativeGestureEvent(kind, QPointingDevice.primaryPointingDevice(), 2, at, at,
+                                    QPointF(self.view.mapToGlobal(at.toPoint())), value, QPointF())
+        event.setModifiers(modifiers or Qt.KeyboardModifier.NoModifier)
+        QApplication.sendEvent(self.view, event)
+        return event
+
+    def wheel(self, dx, dy, modifiers=None):
+        from PySide6.QtCore import QPoint, QPointF, Qt
+        from PySide6.QtGui import QWheelEvent
+        from PySide6.QtWidgets import QApplication
+        at = QPointF(300, 250)
+        event = QWheelEvent(at, QPointF(self.view.mapToGlobal(at.toPoint())), QPoint(dx, dy), QPoint(),
+                            Qt.MouseButton.NoButton, modifiers or Qt.KeyboardModifier.NoModifier,
+                            Qt.ScrollPhase.ScrollUpdate, False)
+        QApplication.sendEvent(self.view, event)
+        return event
+
+    def test_touchpad_scroll_pinch_shift_orbit_and_native_rotation(self):
+        from PySide6.QtCore import Qt
+        b = self.backend
+        target = b.camera.target.copy()
+        event = self.wheel(25, -15)
+        self.assertTrue(event.isAccepted())
+        self.assertFalse(np.allclose(b.camera.target, target))
+        point = b.camera.zoom_point(300, 250, *b.size)
+        distance = np.linalg.norm(b.camera.position - point)
+        self.native(Qt.NativeGestureType.ZoomNativeGesture, 0.25)
+        self.assertLess(np.linalg.norm(b.camera.position - point), distance)
+        bearing = b.camera.bearing()
+        self.wheel(30, 0, Qt.KeyboardModifier.ShiftModifier)
+        self.assertAlmostEqual(b.camera.bearing(), (bearing + 30 * 0.35) % 360)
+        bearing = b.camera.bearing()
+        self.native(Qt.NativeGestureType.RotateNativeGesture, 12.0)
+        self.assertAlmostEqual(b.camera.bearing(), (bearing + 12.0) % 360)
+
 
 class Gizmo(unittest.TestCase):
     """The gizmo of Move and Rotate in the 3D view alone (task 16b, steps 5-7): where it stands and how big, the

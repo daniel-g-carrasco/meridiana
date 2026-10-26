@@ -24,7 +24,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
-from PySide6.QtCore import Property, QByteArray, QObject, Qt, QTimer, QUrl, QVariantAnimation, Signal, Slot
+from PySide6.QtCore import Property, QByteArray, QEvent, QObject, Qt, QTimer, QUrl, QVariantAnimation, Signal, Slot
 from PySide6.QtGui import QGuiApplication, QQuaternion, QVector3D
 from PySide6.QtQml import QmlElement, QQmlComponent
 from PySide6.QtQuick3D import QQuick3DGeometry, QQuick3DInstancing
@@ -634,6 +634,27 @@ class Backend(QObject):
         self._press = (self._hit(hit, hx, hy, hz), "", -1)
         self._do(self.navigator.wheel(steps, modifiers(mods), x, y))
 
+    def touch_pan(self, dx: float, dy: float, x: float, y: float) -> None:
+        self._animation.stop()
+        self.user_moved = True
+        w, h = self.size
+        depth = self.camera.zoom_point(x, y, w, h)
+        self.camera.pan(dx, dy, w, h, depth)
+        self.cameraChanged.emit()
+
+    def touch_zoom(self, steps: float, x: float, y: float) -> None:
+        self._animation.stop()
+        self.user_moved = True
+        w, h = self.size
+        self.camera.zoom(steps, self.camera.zoom_point(x, y, w, h))
+        self.cameraChanged.emit()
+
+    def touch_orbit(self, dx: float, dy: float = 0.0) -> None:
+        self._animation.stop()
+        self.user_moved = True
+        self.camera.orbit(dx, dy, self.camera.target, self.orbit_mode)
+        self.cameraChanged.emit()
+
     def _pivot_at(self, x: float, y: float, hit) -> np.ndarray:
         """Where an orbit begun with the pointer at (x, y), over `hit` (the model point there, or None), turns: the
         centre the preferences ask for, brought back to the middle of the view at its depth if it left the view
@@ -852,6 +873,38 @@ class View3D(QuickImage):
         self.marks = MarksOverlay(self.backend, self)
         self.cube = ViewCube(self.backend, self)
         self.cube.fitRequested.connect(self.frame_scene)
+
+    def event(self, event) -> bool:
+        if event.type() == QEvent.Type.NativeGesture:
+            kind = event.gestureType()
+            at = event.position()
+            if kind == Qt.NativeGestureType.ZoomNativeGesture:
+                self.backend.touch_zoom(float(np.log(max(0.05, 1.0 + event.value())) /
+                                              np.log(1.0 / camera.ZOOM_STEP)),
+                                        at.x(), at.y())
+            elif kind == Qt.NativeGestureType.RotateNativeGesture:
+                self.backend.touch_orbit(event.value() / camera.DEGREES_PER_PIXEL)
+            elif kind not in (Qt.NativeGestureType.BeginNativeGesture, Qt.NativeGestureType.EndNativeGesture):
+                return super().event(event)
+            event.accept()
+            return True
+        return super().event(event)
+
+    def wheelEvent(self, event) -> None:
+        pixel = event.pixelDelta()
+        at = event.position()
+        modifiers = event.modifiers()
+        ctrl = modifiers & Qt.KeyboardModifier.ControlModifier and not modifiers & Qt.KeyboardModifier.AltModifier
+        if not pixel.isNull() and ctrl:
+            self.backend.touch_zoom(pixel.y() / 60.0, at.x(), at.y())
+        elif not pixel.isNull() and modifiers & Qt.KeyboardModifier.ShiftModifier:
+            self.backend.touch_orbit(pixel.x(), pixel.y())
+        elif not pixel.isNull():
+            self.backend.touch_pan(pixel.x(), pixel.y(), at.x(), at.y())
+        else:
+            self.backend.wheel(event.angleDelta().y() / 120.0, int(modifiers.value), at.x(), at.y(),
+                               False, 0.0, 0.0, 0.0)
+        event.accept()
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)

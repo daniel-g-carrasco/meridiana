@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (QApplication, QDialog, QDockWidget, QFileDialog, 
 from shapely.geometry import Polygon
 
 from .. import assistant as assistant_core
-from .. import (atomic, catalog, checks, config, jobs, log, manual, mesh, model, move, phases, recovery, rules,
+from .. import (atomic, camera, catalog, checks, config, jobs, log, manual, mesh, model, move, phases, recovery, rules,
                shortcuts, sides, roofs, squaring, templates, theme_colors, tiles, underlay, view_colours, viewaids)
 from ..energy import consumption as consumption_model
 from ..energy import pipeline, system
@@ -860,6 +860,10 @@ class MainWindow(QMainWindow):
         fit = act(view, "fit", self._fit, tip=_("The selection framed in both views; everything when nothing is "
                                                "selected"))
         fit.setIcon(icons.icon("fit"))
+        for cid, factor, tip in (("zoom_in", 1.2, _("Both views closer; + and Ctrl++ do the same")),
+                                 ("zoom_out", 1 / 1.2, _("Both views farther away; - and Ctrl+- do the same"))):
+            action = act(view, cid, lambda _c=False, f=factor: self._zoom(f), tip=tip)
+            action.setIcon(icons.icon(cid))
         # W: in the Plant phase, which has lent the plan, the strings stay (study 16, D.6)
         strings = act(view, "strings", lambda on: self.plan.show_wiring(on or self.split_home is not None), True,
                       _("Each string as a line through its modules, in a colour of its own; always shown in the "
@@ -904,10 +908,13 @@ class MainWindow(QMainWindow):
         self.background_action.setMenu(self.background_menu)
         # the commands of the views inside the views, in a bar of their own (R14, R27; ui/viewbar.py)
         views = [self.view_actions[k] for k in ("plan", "3d", "both")]
-        self.plan.viewbar = ViewBar(self.plan, [views, [fit], [self.snaps_action, self.ortho_action],
+        zoom = [fit, self.commands["zoom_in"], self.commands["zoom_out"]]
+        words = {fit: _("Fit"), self.commands["zoom_in"]: _("Zoom in"),
+                 self.commands["zoom_out"]: _("Zoom out")}
+        self.plan.viewbar = ViewBar(self.plan, [views, zoom, [self.snaps_action, self.ortho_action],
                                                 [self.background_action]], keys=(self.snaps_action, self.ortho_action),
-                                    words={fit: _("Fit")})
-        self.view3d.viewbar = ViewBar(self.view3d, [views, [fit]], words={fit: _("Fit")})
+                                    words=words)
+        self.view3d.viewbar = ViewBar(self.view3d, [views, zoom], words=words)
         self.view3d.viewbar.show_group(0, False)        # side by side at the start: the selector on the plan's bar
         catalogues = bar.addMenu(_("&Catalogues"))
         from .catalog_dialog import kind_titles
@@ -1018,6 +1025,11 @@ class MainWindow(QMainWindow):
         act(help_, "about", self._about)
         keys, self.shortcut_notes = shortcuts.settle(self.cfg.shortcuts)
         self.apply_shortcuts(keys)
+        for view_bar in (self.plan.viewbar, self.view3d.viewbar):
+            for action, button in view_bar.buttons.items():
+                if hasattr(button, "own_tip"):
+                    button.own_tip = view_bar.tip(action)
+                    button.setToolTip(button.own_tip)
         # every command on the window too: its keys work with the menu bar hidden (Alt shows it, ui/menubar.py);
         # an action's shortcut fires only from a widget on screen
         self.addActions([a for a in self.commands.values() if a not in self.actions()])
@@ -1876,6 +1888,13 @@ class MainWindow(QMainWindow):
         radius = max(max(xs) - min(xs), max(ys) - min(ys)) / 2 * 1.2 + 2.0
         self.view3d.backend.user_moved = True
         self.view3d.backend.frame(centre, radius, animate=True)
+
+    def _zoom(self, factor: float) -> None:
+        """Plus and minus, from the keys or either view's bar: both views about their centres."""
+        self.plan.zoom_at(factor, self.plan.viewport().rect().center())
+        backend = self.view3d.backend
+        w, h = backend.size
+        backend.touch_zoom(float(np.log(factor) / np.log(1.0 / camera.ZOOM_STEP)), w / 2, h / 2)
 
     # the project as data
 

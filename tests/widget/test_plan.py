@@ -836,6 +836,41 @@ class PlanNavigation(unittest.TestCase):
         self.assertEqual(plan.selection, ("row", f"s1/{m.rid}"))
         self.assertEqual(doubled, [("s1", m.key)])
 
+    def native(self, kind, value=0.0, modifiers=None):
+        from PySide6.QtCore import QPointF, Qt
+        from PySide6.QtGui import QNativeGestureEvent, QPointingDevice
+        from PySide6.QtWidgets import QApplication
+        at = QPointF(self.plan.viewport().rect().center())
+        event = QNativeGestureEvent(kind, QPointingDevice.primaryPointingDevice(), 2, at, at,
+                                    QPointF(self.plan.viewport().mapToGlobal(at.toPoint())), value, QPointF())
+        event.setModifiers(modifiers or Qt.KeyboardModifier.NoModifier)
+        QApplication.sendEvent(self.plan.viewport(), event)
+        return event
+
+    def test_native_pinch_two_finger_scroll_and_ctrl_scroll_drive_the_plan(self):
+        from PySide6.QtCore import QPoint, QPointF, Qt
+        from PySide6.QtGui import QWheelEvent
+        from PySide6.QtWidgets import QApplication
+        plan = self.plan
+        scale = plan.transform().m11()
+        event = self.native(Qt.NativeGestureType.ZoomNativeGesture, 0.25)
+        self.assertTrue(event.isAccepted())
+        self.assertAlmostEqual(plan.transform().m11(), scale * 1.25)
+        centre = plan.mapToScene(plan.viewport().rect().center())
+        at = QPointF(300, 250)
+        wheel = QWheelEvent(at, QPointF(plan.viewport().mapToGlobal(at.toPoint())), QPoint(18, -12), QPoint(),
+                            Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier,
+                            Qt.ScrollPhase.ScrollUpdate, False)
+        QApplication.sendEvent(plan.viewport(), wheel)
+        self.assertLess((plan.mapToScene(plan.viewport().rect().center()) - centre).manhattanLength(), 200)
+        self.assertNotEqual(plan.mapToScene(plan.viewport().rect().center()), centre)
+        scale = plan.transform().m11()
+        wheel = QWheelEvent(at, QPointF(plan.viewport().mapToGlobal(at.toPoint())), QPoint(0, 30), QPoint(),
+                            Qt.MouseButton.NoButton, Qt.KeyboardModifier.ControlModifier,
+                            Qt.ScrollPhase.ScrollUpdate, False)
+        QApplication.sendEvent(plan.viewport(), wheel)
+        self.assertAlmostEqual(plan.transform().m11(), scale * 1.2 ** 0.5)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2076,6 +2076,16 @@ class PlanView(QGraphicsView):
     def event(self, event):
         """In Move the keys of the gesture are the plan's, not the window's: R turns (it is the rectangle outside
         Move), the digits and the arrows, Tab goes from the distance to the direction, not to the next widget."""
+        if event.type() == QEvent.Type.NativeGesture:
+            kind = event.gestureType()
+            if kind == Qt.NativeGestureType.ZoomNativeGesture:
+                self.zoom_at(max(0.05, 1.0 + event.value()), event.position().toPoint())
+            elif kind in (Qt.NativeGestureType.BeginNativeGesture, Qt.NativeGestureType.EndNativeGesture):
+                pass
+            else:
+                return super().event(event)
+            event.accept()
+            return True
         if getattr(self, "tool", "") == "move":         # events come before __init__ is through
             if event.type() == QEvent.Type.ShortcutOverride and self._move_owns(event):
                 event.accept()

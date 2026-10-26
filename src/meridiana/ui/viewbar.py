@@ -15,7 +15,7 @@ from PySide6.QtCore import QRect, QSize, Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QToolButton, QWidget
 
 from .. import theme_colors
-from .design import Radius, Space
+from .design import Radius, Size, Space
 from .phasebar import ToolButton
 
 MARGIN = Space.M                # from the corner of the view, as the other things over it (ui/plan_overlays)
@@ -59,6 +59,7 @@ class ViewBar(QFrame):
                     b.setToolTip(b.own_tip)
                 b.setAutoRaise(True)
                 b.setFocusPolicy(Qt.FocusPolicy.NoFocus)        # the keyboard stays on the drawing
+                b.setFixedWidth(Size.CHIP + (12 if action.menu() is not None else 0))
                 row.addWidget(b)
                 widgets.append(b)
                 self.buttons[action] = b
@@ -73,8 +74,9 @@ class ViewBar(QFrame):
         return _plain(action.text())
 
     def tip(self, action) -> str:
-        """A button's tooltip: its word, and its key when it has one."""
-        key = action.shortcut().toString(action.shortcut().SequenceFormat.NativeText)
+        """A button's tooltip: its word, and its first key when it has one."""
+        shortcuts = action.shortcuts()
+        key = shortcuts[0].toString(shortcuts[0].SequenceFormat.NativeText) if shortcuts else ""
         return f"{self.label(action)} ({key})" if key else self.label(action)
 
     def set_words(self, on: bool) -> None:
