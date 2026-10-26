@@ -148,6 +148,7 @@ class Backend(QObject):
         self._colours = {k: view_colours.D3[k] for k in ("sky_top", "sky_bottom", "ground", "pivot")}
         self.camera = camera.Camera()
         self.navigator = navigation.Navigator()
+        self.space = False                  # Space held over the view: with the left button it pans (R166)
         self.orbit_mode = "turntable"
         self.pivot_mode = "cursor"                         # "cursor", "selection", "centre"
         self.pivot_hint = True                             # the preference: show the pivot with the orbit's key held
@@ -533,24 +534,28 @@ class Backend(QObject):
     def _hit(self, hit: bool, hx: float, hy: float, hz: float):
         return np.array([hx, hy, hz]) if hit else None
 
+    def _mods_held(self, mods: int) -> set:
+        """The modifiers held, Space among them while the view says it is (R166: Space with the left button pans)."""
+        return modifiers(mods) | ({"space"} if self.space else set())
+
     @Slot(int, int, float, float, bool, float, float, float, str, int)
     def press(self, button, mods, x, y, hit, hx, hy, hz, name, index) -> None:
         if self._gizmo_press(button, mods, x, y):
             return
         self._press = (self._hit(hit, hx, hy, hz), name, index)
-        self._do(self.navigator.press(BUTTONS.get(button, ""), modifiers(mods), x, y))
+        self._do(self.navigator.press(BUTTONS.get(button, ""), self._mods_held(mods), x, y))
 
     @Slot(int, float, float)
     def move(self, mods, x, y) -> None:
         if self._gizmo_move(mods, x, y):
             return
-        self._do(self.navigator.move(x, y, modifiers(mods)))
+        self._do(self.navigator.move(x, y, self._mods_held(mods)))
 
     @Slot(int, int, float, float)
     def release(self, button, mods, x, y) -> None:
         if self._gizmo_release(button, mods, x, y):
             return
-        self._do(self.navigator.release(BUTTONS.get(button, ""), modifiers(mods), x, y))
+        self._do(self.navigator.release(BUTTONS.get(button, ""), self._mods_held(mods), x, y))
 
     @Slot(int, int, float, float)
     def doubleClick(self, button, mods, x, y) -> None:
@@ -960,7 +965,25 @@ class View3D(QuickImage):
         if event.key() == Qt.Key.Key_Escape:
             self.escaped.emit()
             return
+        if event.key() == Qt.Key.Key_Space:                 # held: the left button pans, as in the plan (R166)
+            if not event.isAutoRepeat():
+                self.backend.space = True
+                self.setCursor(Qt.CursorShape.OpenHandCursor)
+            return
         super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event) -> None:
+        if event.key() == Qt.Key.Key_Space and not event.isAutoRepeat():
+            self.backend.space = False
+            self.unsetCursor()
+            return
+        super().keyReleaseEvent(event)
+
+    def focusOutEvent(self, event) -> None:
+        if self.backend.space:                               # Space let go elsewhere: not held here any more
+            self.backend.space = False
+            self.unsetCursor()
+        super().focusOutEvent(event)
 
     def _gizmo_key(self, event) -> bool:
         """The keys of Move in the 3D view: a number opens the field on the last handle taken, the arrows nudge

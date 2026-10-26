@@ -72,6 +72,24 @@ class Styles(unittest.TestCase):
         n.set_style("revit")
         self.assertEqual(drag(n, "middle left"), "")
 
+    def test_in_every_style_the_left_button_with_space_pans_and_with_shift_orbits(self):
+        """R166 (Daniel, 26/10/2026: «Se eseguire alcune delle azioni tipo il trascinamento della vista o la rotazione
+        si potessero fare semplicemente con il tasto sinistro più un tasto, questa roba sarebbe più facile»): Space
+        and Shift with the left button, for a touchpad, after each style's own gestures; a click stays a click."""
+        for key in nav.STYLES:
+            with self.subTest(key):
+                n = nav.Navigator()
+                n.set_style(key)
+                self.assertEqual(drag(n, "left", "space"), "pan")
+                self.assertEqual(drag(n, "left", "shift"), "orbit")
+                rows = dict(nav.table(key))
+                self.assertIn("Space + left", rows["Pan"])
+                self.assertIn("Shift + left", rows["Orbit (3D only)"])
+        n = nav.Navigator()
+        self.assertEqual(click(n, "left"), ["select"])               # the left button alone still selects
+        self.assertEqual(click(n, "left", "ctrl"), ["select"])
+        self.assertEqual(drag(n, "middle", "shift"), "orbit")       # AutoCAD's own, unchanged
+
     def test_autocad_is_revit_with_the_double_middle_click_that_fits(self):
         n = nav.Navigator()
         self.assertEqual(n.style.name, "AutoCAD")               # the provisional default
@@ -255,8 +273,8 @@ class Explained(unittest.TestCase):
     def test_the_table_changes_with_the_style(self):
         autocad, blender, inventor = (dict(nav.table(k)) for k in ("autocad", "blender", "openinventor"))
         self.assertNotEqual(autocad, blender)
-        self.assertEqual(autocad["Pan"], "middle, left + right")
-        self.assertEqual(blender["Orbit (3D only)"], "middle")
+        self.assertEqual(autocad["Pan"], "middle, left + right, Space + left")
+        self.assertEqual(blender["Orbit (3D only)"], "middle, Shift + left")
         self.assertIn("double click of the middle button", autocad["Fit the view"])
         self.assertNotIn("double click", blender["Fit the view"])
         self.assertEqual(inventor["Select"], "a click with Ctrl + left or Shift + left")

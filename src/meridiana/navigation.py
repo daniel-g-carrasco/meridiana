@@ -8,6 +8,8 @@ turns presses, moves, releases, double clicks and the wheel into actions; the pl
 - A press that does not move more than CLICK_PX before its release is a click: the left one selects (Ctrl adds),
   the middle one recentres the view on the point (FreeCAD's lookAtPoint), the right one opens the menu.
 - The wheel zooms towards the cursor in every style.
+- In every style too, after its own gestures, the left button with a key, for a touchpad (R166): Space held pans, as
+  Photoshop's hand and the plan's own, Shift held orbits, as AutoCAD's Shift with the middle button.
 
 Of FreeCAD's styles, what needs a keyboard while the mouse waits (Gesture's H, NX's Ctrl after the middle button)
 or a touch screen is left out: the mouse part only. CAD's zoom «middle held, a short click of the left button,
@@ -19,7 +21,7 @@ from dataclasses import dataclass, field
 
 CLICK_PX = 4.0          # a press that moves less than this is a click (FreeCAD and Qt use a few pixels too)
 BUTTONS = ("left", "middle", "right")
-MODIFIERS = ("ctrl", "shift", "alt")
+MODIFIERS = ("ctrl", "shift", "alt", "space")      # Space: a key held, as a modifier (the views tell it)
 
 
 def g(buttons: str, mods: str = "") -> tuple[frozenset, frozenset]:
@@ -71,6 +73,16 @@ STYLES = {
                       middle_click="", middle_double="recentre"),
 }
 DEFAULT_STYLE = "autocad"
+# in every style, after its own gestures: the left button with a key (Daniel, 26/10/2026: «Se eseguire alcune delle
+# azioni tipo il trascinamento della vista o la rotazione si potessero fare semplicemente con il tasto sinistro più un
+# tasto, questa roba sarebbe più facile»; his choice: Space pans, Shift orbits)
+EVERY_STYLE = {"pan": (g("left", "space"),), "orbit": (g("left", "shift"),)}
+
+
+def gestures(style: Style, kind: str) -> tuple:
+    """The gestures that `kind` ("pan", "orbit", "zoom") has in `style`: its own, then those of every style."""
+    own = getattr(style, kind)
+    return own + tuple(x for x in EVERY_STYLE.get(kind, ()) if x not in own)
 
 
 def style_names() -> dict:
@@ -82,7 +94,7 @@ def gesture_text(gesture: tuple) -> str:
     from .i18n import _
     buttons, mods = gesture
     names = {"left": _("left"), "middle": _("middle"), "right": _("right"), "ctrl": _("Ctrl"), "shift": _("Shift"),
-             "alt": _("Alt")}
+             "alt": _("Alt"), "space": _("Space")}
     words = [names[m] for m in MODIFIERS if m in mods] + [names[b] for b in BUTTONS if b in buttons]
     return " + ".join(words) if buttons else " + ".join(words) + " " + _("and move")
 
@@ -98,7 +110,7 @@ def orbit_keys(style: Style) -> tuple[frozenset, ...]:
 def orbit_key_text(key: str) -> str:
     """The keys of orbit_keys in words, «Shift» or «Shift / Alt», for the preferences; empty when the style has none."""
     from .i18n import _
-    names = {"ctrl": _("Ctrl"), "shift": _("Shift"), "alt": _("Alt")}
+    names = {"ctrl": _("Ctrl"), "shift": _("Shift"), "alt": _("Alt"), "space": _("Space")}
     style = STYLES.get(key, STYLES[DEFAULT_STYLE])
     return " / ".join(" + ".join(names[m] for m in MODIFIERS if m in mods) for mods in orbit_keys(style))
 
@@ -126,8 +138,8 @@ def table(key: str) -> list[tuple[str, str]]:
     select = (_("a click of the left button") if clicks and not clicks[0][1] else
               _("a click with {gestures}").format(gestures=either.join(gesture_text(x) for x in clicks)))
     menu = _("a click of the right button, held still") if style.right_click == "menu" else _("not in this style")
-    return [(_("Pan"), words(style.pan) or _("not in this style")),
-            (_("Orbit (3D only)"), words(style.orbit) or _("not in this style")),
+    return [(_("Pan"), words(gestures(style, "pan")) or _("not in this style")),
+            (_("Orbit (3D only)"), words(gestures(style, "orbit")) or _("not in this style")),
             (_("Zoom"), zoom), (_("Recentre on the point"), recentre), (_("Fit the view"), fit),
             (_("Select"), select), (_("Menu"), menu)]
 
@@ -200,6 +212,9 @@ class Navigator:
         key = (frozenset(buttons), frozenset(mods))
         for kind in ("orbit", "pan", "zoom"):
             if key in getattr(self.style, kind):
+                return kind
+        for kind, keys in EVERY_STYLE.items():             # the left button with a key, in every style (R166)
+            if key in keys:
                 return kind
         return ""
 

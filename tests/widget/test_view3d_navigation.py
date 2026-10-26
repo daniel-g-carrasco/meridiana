@@ -53,6 +53,30 @@ class Navigation(unittest.TestCase):
         self.assertFalse(b.orbiting)                        # and gone after
         self.assertAlmostEqual(abs(b.camera.right()[1]), 0.0, places=9)    # turntable: the vertical stays
 
+    def test_space_and_the_left_button_pan_shift_and_the_left_button_orbit(self):
+        """R166 (Daniel, 26/10/2026, the touchpad): the left button with a key, in every style; Space is held over the
+        view (its key events), Shift comes with the mouse's."""
+        from PySide6.QtCore import QEvent, Qt
+        from PySide6.QtGui import QKeyEvent
+        from PySide6.QtWidgets import QApplication
+        b = self.backend
+        w, h = b.size
+        QApplication.sendEvent(self.view, QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Space, Qt.KeyboardModifier.NoModifier))
+        self.assertTrue(b.space)
+        target, bearing = b.camera.target.copy(), b.camera.bearing()
+        self.drag(1, 0, (w * 0.5, h * 0.5), (w * 0.5 + 40, h * 0.5))           # left with Space: pans
+        self.assertFalse(np.allclose(b.camera.target, target))
+        self.assertAlmostEqual(b.camera.bearing(), bearing, places=6)
+        QApplication.sendEvent(self.view, QKeyEvent(QEvent.Type.KeyRelease, Qt.Key.Key_Space,
+                                                    Qt.KeyboardModifier.NoModifier))
+        self.assertFalse(b.space)
+        bearing = b.camera.bearing()
+        self.drag(1, SHIFT, (w * 0.5, h * 0.6), (w * 0.5 + 40, h * 0.6))       # left with Shift: orbits
+        self.assertAlmostEqual(b.camera.bearing(), (bearing + 40 * 0.35) % 360, places=4)
+        target = b.camera.target.copy()
+        self.drag(1, 0, (w * 0.5, h * 0.5), (w * 0.5 + 40, h * 0.5))           # the left alone: nothing moves
+        self.assertTrue(np.allclose(b.camera.target, target))
+
     # the pivot's cross-hair (task 16g, study 16 G): three rings and a dot on the pivot, PIVOT_PX pixels wide
 
     def marker(self):
