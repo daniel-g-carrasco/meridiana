@@ -31,7 +31,7 @@ from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetrics, QPainter, QPaint
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QGraphicsScene, QGraphicsView
 
 from .. import geo, move, navigation, roofs, sides, theme_colors, tiles, view_colours, viewaids
-from . import plan_overlays, waiting
+from . import plan_overlays, waiting, world_map
 from ..i18n import _, ngettext, number
 from .cards import round_corners
 from . import design
@@ -308,6 +308,7 @@ class PlanView(QGraphicsView):
         self.veil.setVisible(False)
 
         self.origin = geo.Origin(45.4642, 9.19)
+        self.world = world_map.WorldLayer(self.scene(), self.origin, self.scene().sceneRect())
         self.site_mark = QGraphicsEllipseItem(-7, -7, 14, 14)
         self.site_mark.setPen(cosmetic(self.colours["halo"], 4))
         self.site_mark.setBrush(QBrush(qcolour(self.colours["sel"])))
@@ -413,12 +414,14 @@ class PlanView(QGraphicsView):
 
         self.scale(10, 10)               # 10 px per metre to start with
         self.centerOn(0, 0)
+        self.world.set_scale(self.metres_per_pixel())
 
     # the project
 
     def set_origin(self, lat: float, lon: float) -> None:
         if (lat, lon) != (self.origin.lat, self.origin.lon):
             self.origin = geo.Origin(lat, lon)
+            self.world.set_origin(self.origin)
             self._clear_tiles()
             self._choose()                  # another site: the best source may be another one
         self._moved()
@@ -568,6 +571,7 @@ class PlanView(QGraphicsView):
         if self.choice == tiles.AUTO and not self.fallback_from:
             self._choose()
         self.scale_bar.set_scale(mpp)
+        self.world.set_scale(mpp)
         self.site_mark.setVisible(mpp >= 100.0)
         numbered = getattr(self, "numbered_at", 0.0)
         tagged = getattr(self, "tagged_at", 0.0)

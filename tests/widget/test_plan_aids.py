@@ -241,6 +241,24 @@ class PlanAids(unittest.TestCase):
         self.assertFalse(plan.site_mark.isVisible())
         self.assertAlmostEqual(plan.metres_per_pixel(), 0.1)
 
+    def test_natural_earth_draws_offline_alone_and_under_the_tiles(self):
+        from PySide6.QtGui import QTransform
+
+        plan = self.plan
+        plan.loader.offline = True
+        plan.set_source("none")
+        plan.setTransform(QTransform().scale(0.0001, 0.0001))
+        plan.centerOn(0, 0)
+        plan._moved()
+        self.assertTrue(plan.world.country_items["Italy"].isVisible())
+        self.assertTrue(any(label.isVisible() for label in plan.world.labels))
+        self.assertTrue(all(item.zValue() < 0 for item in plan.world.items))
+        plan.set_source("osm")
+        self.assertTrue(plan.world.country_items["Italy"].isVisible())
+        plan.setTransform(QTransform().scale(10, 10))
+        plan._moved()
+        self.assertFalse(plan.world.country_items["Italy"].isVisible())
+
 
 if __name__ == "__main__":
     unittest.main()

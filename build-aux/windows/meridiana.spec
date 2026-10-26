@@ -44,6 +44,7 @@ PVLIB_TABLES = Path(pvlib.__file__).parent / 'data'
 datas = [
     (str(ROOT / 'data' / 'icons'), 'share/icons'),
     (str(ROOT / 'data' / 'fonts'), 'share/fonts'),
+    (str(ROOT / 'data' / 'natural_earth'), 'share/natural_earth'),
     (str(ROOT / 'docs' / 'manuale'), 'share/manuale'),          # read inside the program (help.manual_dir)
     (str(ROOT / 'locale'), 'share/locale'),
     (str(SRC / 'ui' / 'qml'), 'meridiana/ui/qml'),              # view3d.QML_FILE, next to its module

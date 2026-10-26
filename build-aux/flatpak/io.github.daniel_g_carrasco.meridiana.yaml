@@ -59,7 +59,7 @@ modules:
       - cp -r src/meridiana /app/share/meridiana/meridiana
       - find /app/share/meridiana -name __pycache__ -prune -exec rm -rf {} +
       # what paths.shipped finds in /app/share/meridiana: fonts, icons, the manual
-      - cp -r data/fonts data/icons /app/share/meridiana/
+      - cp -r data/fonts data/icons data/natural_earth /app/share/meridiana/
       - cp -r docs/manuale /app/share/meridiana/manuale
       - install -Dm755 bin/meridiana /app/bin/meridiana
       - python3 tools/compile_po.py --dest /app/share/locale
