@@ -637,7 +637,11 @@ msgstr "Prima dimmi perché"
 msgid "the site"
 msgstr "il sito"
 
-#: src/meridiana/assistant/tools.py:262
+#: src/meridiana/assistant/tools.py:289
+msgid "No checks match this filter."
+msgstr "Nessuna verifica corrisponde a questo filtro."
+
+#: src/meridiana/assistant/tools.py:290
 msgid "Read the checks"
 msgstr "Ho letto le verifiche"
 
@@ -1404,7 +1408,16 @@ msgstr ""
 "a terra con il suo modulo, il suo montaggio e le sue distanze. Gli strumenti "
 "Disegna ne creano uno."
 
-#: src/meridiana/checks.py:283
+#: src/meridiana/checks.py:290
+#, python-brace-format
+msgid ""
+"Compare keeping the modules out of the obstacles' shadows on {day}/{month}, "
+"{start} to {end} solar time"
+msgstr ""
+"Confrontare la posa fuori dalle ombre degli ostacoli il {day}/{month}, dalle "
+"{start} alle {end} ora solare"
+
+#: src/meridiana/checks.py:292
 #, python-brace-format
 msgid ""
 "Keep the modules out of the obstacles' shadows on {day}/{month}, {start} to "
@@ -1413,31 +1426,53 @@ msgstr ""
 "Tenere i moduli fuori dalle ombre degli ostacoli il {day}/{month}, dalle "
 "{start} alle {end} ora solare"
 
-#: src/meridiana/checks.py:291
+#: src/meridiana/checks.py:297
 #, python-brace-format
-msgid "{then} modules instead of {now}"
-msgstr "{then} moduli invece di {now}"
+msgid ""
+"{then} modules instead of {now}, {removed}% fewer, for {pct}% obstacle shade"
+msgstr ""
+"{then} moduli invece di {now}, {removed}% in meno, per un'ombra del {pct}%"
 
-#: src/meridiana/checks.py:292
+#: src/meridiana/checks.py:301
+msgid ""
+"This removes more modules than the shade costs; compare the alternatives "
+"before applying it."
+msgstr ""
+"Toglie più moduli di quanto costi l'ombra: confronta le alternative prima di "
+"applicarla."
+
+#: src/meridiana/checks.py:307
 #, python-brace-format
 msgid "{name}: the obstacles take {pct}% of the irradiance"
 msgstr "{name}: gli ostacoli tolgono il {pct}% dell'irraggiamento"
 
-#: src/meridiana/checks.py:293 src/meridiana/checks.py:455
+#: src/meridiana/checks.py:308 src/meridiana/checks.py:476
 msgid "Meridiana: shading of the obstacles"
 msgstr "Meridiana: ombre degli ostacoli"
 
-#: src/meridiana/checks.py:295
+#: src/meridiana/checks.py:303
 msgid ""
 "Chimneys, parapets and plant shade the modules nearby, and a shaded module "
-"drags its whole string. Keep the modules out of the shadows of the design "
-"day (the fix), move the sub-field, or give the obstacles a wider clearance "
-"in their properties."
+"drags its whole string. The correction removes the modules in shadow on the "
+"design day. Moving the sub-field is another road. A wider clearance around "
+"the obstacles removes only the modules next to the obstacles, usually fewer "
+"than the correction, and does not keep more modules."
 msgstr ""
 "Camini, parapetti e impianti ombreggiano i moduli vicini, e un modulo in "
-"ombra trascina tutta la sua stringa. Tieni i moduli fuori dalle ombre del "
-"giorno di progetto (la correzione), sposta il sottocampo, oppure dai agli "
-"ostacoli una fascia di rispetto più ampia nelle loro proprietà."
+"ombra trascina tutta la sua stringa. La correzione toglie i moduli in ombra "
+"nel giorno di progetto. Un'altra strada è spostare il sottocampo. Una fascia "
+"di rispetto più larga attorno agli ostacoli toglie solo i moduli accanto agli "
+"ostacoli, di solito meno della correzione, e non ne conserva di più."
+
+#: src/meridiana/checks.py:311
+msgid ""
+"Here the correction takes away a larger share of the sub-field than the "
+"share of irradiance lost to the obstacles: it is a choice to compare, not "
+"the obvious solution."
+msgstr ""
+"Qui la correzione toglie una quota del sottocampo maggiore della quota di "
+"irraggiamento persa per gli ostacoli: è una scelta da confrontare, non la "
+"soluzione ovvia."
 
 #: src/meridiana/checks.py:300
 msgid ""

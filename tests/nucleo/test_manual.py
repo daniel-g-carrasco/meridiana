@@ -266,6 +266,7 @@ class ManualChecks(unittest.TestCase):
 
     def test_modules_in_the_shade_of_an_obstacle_on_the_design_day_are_counted(self):
         p = project()
+        p.sun_window.update(start=10.5, end=14.0)
         p.exclusions.append(model.ExclusionItem(id="e2", ring=[[10, 8], [11, 8], [11, 9], [10, 9]], kind="chimney",
                                                 building="b1", height=3.0))
         p.subfields[0].filled = True
@@ -276,6 +277,9 @@ class ManualChecks(unittest.TestCase):
                   if i.area == "shade"]
         self.assertEqual(len(shaded), 1)
         self.assertRegex(shaded[0].text, r"\d+ modules? in the shade on the design day")
+        self.assertIn("10:30", shaded[0].detail)
+        self.assertIn("14:00", shaded[0].detail)
+        self.assertNotIn("10,5", shaded[0].detail)
 
     def test_by_hand_the_shadows_of_the_year_offer_no_layout_out_of_them(self):
         from types import SimpleNamespace
