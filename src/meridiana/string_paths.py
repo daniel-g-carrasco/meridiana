@@ -11,7 +11,11 @@ modules' corners (any frame: the plan gives them in its scene), no Qt: the plan 
   as above, so that the way runs along their edges), found among the corners of the modules near the line between the
   two (A* on the corners each can see); the plan draws it dashed, a jump. A way not found there (a jump across more
   than MAX_CORNERS / 4 modules, or modules on top of each other) is the straight line, still a jump: the modules it
-  passes over are not filled with the string's colour, so the jump still shows."""
+  passes over are not filled with the string's colour, so the jump still shows.
+- Jumps routed together (R134) keep their own lanes: a screen-derived sideways offset where there is room, or another
+  way around with the jumps already placed as barriers. One string alone, and strings that never meet, keep the
+  original shortest paths. If touching modules leave no free geometry, the route stays and the lane number gives the
+  plan a different dash pattern."""
 
 from __future__ import annotations
 
@@ -42,6 +46,8 @@ class Router:
         self.sides = sides
         self.size = float(np.median(sides)) if len(sides) else 1.0
         outlines = shapely.polygons(q) if len(q) else np.array([], dtype=object)
+        self.outlines = outlines
+        self.outer_tree = shapely.STRtree(outlines)
         self.polys = shapely.buffer(outlines, -SHRINK * sides, join_style="mitre") if len(q) else outlines
         self.tree = shapely.STRtree(self.polys)
         self._near = None
@@ -61,6 +67,91 @@ class Router:
             a, b = tuple(map(float, self.centres[i])), tuple(map(float, self.centres[j]))
             out.append((self.route(i, j), True) if jump else ([a, b], False))
         return out
+
+    def _offset(self, path, distance: float, ends: tuple[int, int], avoid=()):
+        """A lane beside a polyline. At each corner take the free direction nearest its assigned side, so the lane
+        leaves a shared corner through the gap instead of cutting the next module. The module centres stay fixed."""
+        import shapely
+        if not distance or len(path) < 3:
+            return path
+        points = np.asarray(path, dtype=float)
+        segments = np.diff(points, axis=0)
+        lengths = np.linalg.norm(segments, axis=1)
+        directions = np.divide(segments, lengths[:, None], out=np.zeros_like(segments), where=lengths[:, None] > 0)
+        normals = np.column_stack((-directions[:, 1], directions[:, 0]))
+        turns = [0] + [d * sign for d in range(15, 180, 15) for sign in (1, -1)] + [180]
+        out = points.copy()
+        for k in range(1, len(points) - 1):
+            normal = normals[k - 1] + normals[k]
+            length = float(np.linalg.norm(normal))
+            normal = normal / length if length > 1e-12 else normals[k - 1]
+            bearing = math.atan2(normal[1], normal[0])
+            found = None
+            for turn in turns:
+                angle = bearing + math.radians(turn)
+                candidate = out.copy()
+                candidate[k] = points[k] + distance * np.array([math.cos(angle), math.sin(angle)])
+                line = shapely.LineString(candidate)
+                if self._outside(candidate, ends) and all(not shapely.intersects(line, other) for other in avoid):
+                    found = candidate
+                    break
+            if found is None:
+                return None
+            out = found
+        return [tuple(map(float, p)) for p in out]
+
+    def _outside(self, path, ends: tuple[int, int]) -> bool:
+        """Whether a lane enters no module except the two it connects; running along an edge is not entering."""
+        import shapely
+        line = shapely.LineString(path)
+        oi = self.outer_tree.query(line, predicate="intersects")
+        oi = oi[(oi != ends[0]) & (oi != ends[1])]
+        return not len(oi) or not bool(np.any(shapely.relate_pattern(line, self.outlines[oi], "T********")))
+
+    def legs_together(self, strings: list[list[int]], gap: float):
+        """Routes and lane numbers for strings drawn together. Only jumps that meet get a sideways lane, `gap`
+        scene units wide; every jump of a string uses the same lane. Lanes are tried on both sides and accepted only
+        if they stay out of the other modules and do not meet the routes already placed. Where touching modules leave
+        no geometric lane, the original route stays and its distinct lane number selects another dash pattern."""
+        import shapely
+        base = [self.legs(order) for order in strings]
+        if gap <= 0 or sum(jump for legs in base for _path, jump in legs) <= 1:
+            return base, [0] * len(strings)
+        lines = [[shapely.LineString(path) for path, jump in legs if jump] for legs in base]
+        conflicts = [[False] * len(strings) for _ in strings]
+        for i in range(len(strings)):
+            for j in range(i + 1, len(strings)):
+                conflicts[i][j] = conflicts[j][i] = any(shapely.intersects(a, b) for a in lines[i] for b in lines[j])
+        choices = [0] + [k * sign for k in range(1, 9) for sign in (1, -1)]
+        routed: list = []
+        lanes: list[int] = []
+        for i, order in enumerate(strings):
+            near = [j for j in range(i) if conflicts[i][j]]
+            used = {lanes[j] for j in near}
+            chosen = None
+            for lane in (k for k in choices if k not in used):
+                pairs = list(zip(order, order[1:], strict=False))
+                avoid = [b for j in near for b in lines[j]]
+                candidate = [(self._offset(path, lane * gap, pairs[k], avoid) if jump else path, jump)
+                             for k, (path, jump) in enumerate(base[i])]
+                valid = all(path is not None for path, _jump in candidate)
+                if not valid:
+                    candidate = [(self._route_avoid(a, b, avoid), True) if jump else (path, False)
+                                 for (a, b), (path, jump) in zip(pairs, base[i], strict=True)]
+                    valid = all(path is not None for path, _jump in candidate)
+                if valid:
+                    own = [shapely.LineString(path) for path, jump in candidate if jump]
+                    valid = all(not shapely.intersects(a, b) for j in near for a in own for b in lines[j])
+                    valid = valid and all(self._outside(path, pairs[k]) for k, (path, jump) in enumerate(candidate)
+                                          if jump)
+                if valid:
+                    chosen = lane, candidate
+                    break
+            lane, candidate = chosen or (next(k for k in choices if k not in used), base[i])
+            lanes.append(lane)
+            routed.append(candidate)
+            lines[i] = [shapely.LineString(path) for path, jump in candidate if jump]
+        return routed, lanes
 
     def blocked(self, pairs: list[tuple[int, int]]) -> list[bool]:
         """For each pair of modules, whether the straight line between their middles crosses another module."""
@@ -93,7 +184,15 @@ class Router:
         self.routes[key] = path
         return path
 
-    def _around(self, i: int, j: int, reach: float):
+    def _route_avoid(self, i: int, j: int, avoid):
+        """A different way around, with the jumps already placed treated as barriers too."""
+        for reach in (1.5 * self.size, 4.0 * self.size, 8.0 * self.size):
+            path = self._around(i, j, reach, avoid)
+            if path is not None:
+                return path
+        return None
+
+    def _around(self, i: int, j: int, reach: float, avoid=()):
         """A* over the corners of the modules within `reach` of the line between i and j, from i's middle to j's; None
         when there are more than MAX_CORNERS of them or the way is not found in MAX_STEPS."""
         import shapely
@@ -111,6 +210,7 @@ class Router:
         nearest = np.linalg.norm(corners[:, :, None, :] - own[:, None, :, :], axis=3).argmin(axis=2)
         edges = np.take_along_axis(own, nearest[:, :, None], axis=1).reshape(-1, 2)
         points = np.vstack([a[None, :], b[None, :], corners.reshape(-1, 2)])
+        drawn = np.vstack([a[None, :], b[None, :], edges])
         goal = 1
         best = {0: 0.0}
         came: dict = {}
@@ -124,14 +224,13 @@ class Router:
                 way = [u]
                 while way[-1] in came:
                     way.append(came[way[-1]])
-                # each corner of a module drawn in goes back to the module's own corner: the way runs on the edges
-                # and in the gaps, not a few centimetres inside the modules it passes by
-                return [tuple(map(float, points[k] if k < 2 else edges[k - 2])) for k in reversed(way)]
+                # Corners found on a module drawn in go back to its real corner, on the edge or in the gap.
+                return [tuple(map(float, drawn[k])) for k in reversed(way)]
             closed.add(u)
             others = np.array([k for k in range(len(points)) if k not in closed and k != u])
             if not len(others):
                 continue
-            seen = self._visible(points[u], points[others], (i, j))
+            seen = self._visible(points[u], points[others], (i, j), avoid)
             for v in others[seen]:
                 cost = g + float(np.hypot(*(points[v] - points[u])))
                 if cost < best.get(int(v), math.inf) - 1e-12:
@@ -140,9 +239,9 @@ class Router:
                     heapq.heappush(heap, (cost + float(np.hypot(*(b - points[v]))), cost, int(v)))
         return None
 
-    def _visible(self, p, targets, ends: tuple) -> np.ndarray:
+    def _visible(self, p, targets, ends: tuple, avoid=()) -> np.ndarray:
         """Which of `targets` the point `p` sees: the line to it enters no module but the two `ends` (running along
-        an edge, or touching a corner, is not entering)."""
+        an edge, or touching a corner, is not entering), and meets no jump already placed."""
         import shapely
         lines = shapely.linestrings(np.stack([np.broadcast_to(p, targets.shape), targets], axis=1))
         li, oi = self.tree.query(lines, predicate="intersects")
@@ -152,6 +251,9 @@ class Router:
         if len(li):
             inside = shapely.relate_pattern(lines[li], self.polys[oi], "T********")
             out[li[inside]] = False
+        if avoid:
+            out &= ~np.array([bool(shapely.intersects(line, other)) for line in lines for other in avoid]).reshape(
+                len(lines), len(avoid)).any(axis=1)
         return out
 
     # the colours

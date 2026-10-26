@@ -58,6 +58,48 @@ class Lines(unittest.TestCase):
         self.assertTrue(jump)
         self.assertEqual(len(path), 2)
 
+    def test_three_jumps_sharing_a_corner_have_separate_screen_lanes_at_two_zooms(self):
+        import shapely
+        strings = [[6, 8], [1, 13], [0, 14]]               # three disjoint strings around module 7 (R134)
+        for scale in (10.0, 25.0):
+            with self.subTest(scale=scale):
+                r = string_paths.Router(block(3, 6, 0.8))
+                before = [[leg[0] for leg in r.legs(order)] for order in strings]
+                self.assertEqual(shapely.distance(shapely.LineString(before[0][0]),
+                                                  shapely.LineString(before[1][0])), 0.0)
+                routed, lanes = r.legs_together(strings, 6.0 / scale)
+                self.assertEqual(len(set(lanes)), 3)
+                for i, order in enumerate(strings):
+                    ends = (order[0], order[-1])
+                    self.assertEqual(enters(r, routed[i][0][0], ends), [])
+                    self.assertTrue(routed[i][0][1])
+                    self.assertEqual(routed[i][0][0][0], before[i][0][0])
+                    self.assertEqual(routed[i][0][0][-1], before[i][0][-1])
+                for i in range(3):
+                    for j in range(i + 1, 3):
+                        a = shapely.LineString(routed[i][0][0])
+                        b = shapely.LineString(routed[j][0][0])
+                        self.assertGreaterEqual(shapely.distance(a, b) * scale, 3.0)
+                        va = {tuple(p) for p in routed[i][0][0][1:-1]}
+                        vb = {tuple(p) for p in routed[j][0][0][1:-1]}
+                        self.assertFalse(va & vb)
+
+    def test_touching_rows_keep_modules_clear_and_get_distinct_dash_lanes(self):
+        strings = [[6, 8], [1, 13], [0, 14]]
+        r = string_paths.Router(block(3, 6))
+        routed, lanes = r.legs_together(strings, 0.6)
+        self.assertEqual(len(set(lanes)), 3)                       # no free geometry: the plan varies the dash
+        for order, legs in zip(strings, routed, strict=True):
+            self.assertEqual(enters(r, legs[0][0], (order[0], order[-1])), [])
+
+    def test_one_string_and_strings_that_do_not_meet_keep_their_original_paths(self):
+        r = string_paths.Router(block(3, 6, 0.8))
+        for strings in ([[0, 2]], [[0, 2], [3, 5]]):
+            with self.subTest(strings=strings):
+                routed, lanes = r.legs_together(strings, 0.6)
+                self.assertEqual(routed, [r.legs(order) for order in strings])
+                self.assertEqual(lanes, [0] * len(strings))
+
     def test_eight_thousand_modules_are_routed_in_well_under_a_second(self):
         import time
         quads = block(40, 200, 0.6)
@@ -66,6 +108,10 @@ class Lines(unittest.TestCase):
         legs = r.legs(list(range(len(quads))))
         self.assertLess(time.perf_counter() - start, 3.0)       # about 0,15 s on Daniel's PC, room for a busy one
         self.assertEqual(sum(j for _p, j in legs), 39)          # only the turns from a row to the next
+        start = time.perf_counter()
+        routed, lanes = r.legs_together([list(range(len(quads)))], 0.06)
+        self.assertLess(time.perf_counter() - start, 3.0)
+        self.assertEqual((routed, lanes), ([legs], [0]))
 
 
 class Colours(unittest.TestCase):

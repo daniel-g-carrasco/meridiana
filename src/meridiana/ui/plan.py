@@ -863,7 +863,7 @@ class PlanView(QGraphicsView):
             self.router_of = signature
         return self.router
 
-    def _string_paths(self, order: list[int], jumped: dict | None = None):
+    def _string_paths(self, order: list[int], jumped: dict | None = None, paths: dict | None = None):
         """The modules of a string filled, its line from middle to middle between modules next to each other, and
         its jumps around the modules it skips (string_paths): three painter paths in the scene."""
         router = self.router
@@ -878,7 +878,8 @@ class PlanView(QGraphicsView):
         blocked = [jumped[p] for p in pairs] if jumped is not None else router.blocked(pairs)
         for (a, b), skipped in zip(pairs, blocked, strict=True):
             if skipped:
-                pts = router.route(a, b)
+                pts = paths.get((a, b)) if paths is not None else None
+                pts = pts or router.route(a, b)
                 jump.moveTo(*pts[0])
                 for p in pts[1:]:
                     jump.lineTo(*p)
@@ -888,12 +889,13 @@ class PlanView(QGraphicsView):
         return fill, solid, jump
 
     def _string_items(self, order: list[int], colour: QColor, width: float, z: float, alpha: int,
-                      jumped: dict | None = None, outline: bool = False) -> list:
+                      jumped: dict | None = None, outline: bool = False, paths: dict | None = None,
+                      lane: int = 0) -> list:
         """The items of a string: its modules filled in its colour (the modules it skips are not), the line between
         the modules next to each other over a dark halo, the jumps around the others dashed (R117)."""
         scene = self.scene()
         W = view_colours.WIDTHS
-        fill_path, solid, jump = self._string_paths(order, jumped)
+        fill_path, solid, jump = self._string_paths(order, jumped, paths)
         tint = QColor(colour)
         tint.setAlpha(alpha)
         pen = cosmetic(colour, 1.5) if outline else QPen(Qt.PenStyle.NoPen)
@@ -908,7 +910,11 @@ class PlanView(QGraphicsView):
                 continue
             halo = scene.addPath(path, cosmetic(halo_colour, width + W["halo"]))
             halo.setZValue(z)
-            line = scene.addPath(path, cosmetic(light, width, style))
+            pen = cosmetic(light, width, style)
+            if style == Qt.PenStyle.DashLine and lane:
+                pattern = [2.0 + abs(lane), 1.4]
+                pen.setDashPattern(pattern + ([0.8, 1.4] if lane < 0 else []))
+            line = scene.addPath(path, pen)
             line.setZValue(z + 0.1)
             items += [halo, line]
         return items
@@ -941,11 +947,11 @@ class PlanView(QGraphicsView):
     def _draw_wiring(self) -> None:
         """Each string in a tint of its own (theme_colors.string_tints; a string touching another never has its
         tint, string_paths.colours): its modules filled, a line through their middles while they are next to each
-        other and a dashed jump around the modules it skips, so that a module skipped is seen (R117); the one chosen
-        wider, outlined and numbered; at its first module its name (inverter.input.string) with the traffic light as
-        a drawn symbol of the window (R138, R143); the modules in no string with a red outline. A string whose modules
-        are not all drawn
-        waits for the next layout; the string being drawn again is left to the drawing."""
+        other and a dashed jump around the modules it skips, so that a module skipped is seen (R117); jumps that meet
+        take separate screen-wide lanes (R134); the one chosen wider, outlined and numbered; at its first module its
+        name (inverter.input.string) with the traffic light as a drawn symbol of the window (R138, R143); the modules
+        in no string with a red outline. A string whose modules are not all drawn waits for the next layout; the string
+        being drawn again is left to the drawing."""
         from .. import string_paths
         scene = self.scene()
         for it in self.items_by_kind.pop("wiring", []):
@@ -984,13 +990,21 @@ class PlanView(QGraphicsView):
         pairs = [(o[k], o[k + 1]) for i in shown for o in (orders[i],) for k in range(len(o) - 1)]
         jumped = dict(zip(pairs, router.blocked(pairs), strict=True))
         self.tagged_at = self.metres_per_pixel()
+        routed, lane_numbers = router.legs_together([orders[i] for i in shown], 6.0 * self.tagged_at)
+        lanes = dict(zip(shown, lane_numbers, strict=True))
+        paths = {}
+        for i, legs in zip(shown, routed, strict=True):
+            order = orders[i]
+            for (a, b), (path, jump) in zip(zip(order, order[1:], strict=False), legs, strict=True):
+                if jump:
+                    paths[(a, b)] = path
         named: list = []                                # the names placed, in the view's pixels: none over another
         for i in sorted(shown, key=lambda k: k != self.chosen_string):
             r, order = strings[i], orders[i]
             colour = QColor(self.string_colours[i])
             chosen = i == self.chosen_string
             mine = self._string_items(order, colour, 4.5 if chosen else 2.5, Z_WIRING, 190 if chosen else 140, jumped,
-                                      outline=chosen)
+                                      outline=chosen, paths=paths, lane=lanes[i])
             state = getattr(r, "state", "check")
             why = getattr(r, "why", "")
             tip = _("String {name}: inverter {i}, input {m}, {n} modules").format(

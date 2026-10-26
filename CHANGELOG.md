@@ -14,6 +14,10 @@ software centres show.
   pixel down or up, the text at 12, 13 or 14 px; it takes effect at the next start (settings format 21).
 - Dialog symbols (R169): Discard has a bin on red and Cancel an arrow going back on grey, in every dialog;
   No and Close keep the cross.
+- Separate lanes for overlapping string jumps (R134): routes that share corners or segments move apart by a
+  screen-constant distance where there is room, or take different vertices around the skipped modules. Where touching
+  modules leave no free lane, distinct dash patterns keep the jumps distinguishable. Single and separate strings keep
+  their original paths.
 - Live string drawing context (R142): a pill beside the last module names the inverter and input, counts the modules
   against the accepted range with the string state symbols, and shows the finish, undo and cancel keys. The input is
   highlighted in the right panel until the draft ends; optimised inverters show the count without a judgement.
