@@ -883,6 +883,36 @@ class PlanNavigation(unittest.TestCase):
         self.assertTrue(chip.boundingRect().width() > 16)
         self.assertFalse(chip.childItems())
 
+    def test_a_strings_name_is_a_pill_with_its_colour_as_a_dot_and_its_state_on_the_right_ends_centre(self):
+        """Daniel, 26/10/2026, choosing the trial: the name in the labels' ink after a dot of the string's colour (a
+        dark tint was hard to read as the text's colour); «il pallino del simbolo verde "ok" avesse il centro che
+        corrisponde al centro dell'arrotondamento di destra», and the dot on the left one's."""
+        from PySide6.QtGui import QColor, QImage, QPainter
+        from PySide6.QtCore import Qt
+
+        from meridiana.ui import design
+        from meridiana.ui.plan import ChipItem
+        chip = ChipItem("1.2.1", design.font(design.Type.SMALL, design.Type.BOLD, self.plan.font()),
+                        "#3d2a5c", "ok", self.plan.colours, swatch=True)
+        r, rect = chip.rect.height() / 2, chip.rect
+        self.assertEqual(chip.radius, r)                                    # a pill
+        self.assertEqual(chip.symbol_rect.center().x(), rect.right() - r)   # the right end's centre
+        self.assertEqual(chip.symbol_rect.center().y(), r)
+        self.assertEqual(chip.dot_rect.center().x(), rect.left() + r)       # the left end's centre
+        self.assertEqual(chip.text_rect.left() - chip.dot_rect.right(), design.Space.XS)
+        self.assertEqual(chip.symbol_rect.left() - chip.text_rect.right(), design.Space.XS - 1)
+        image = QImage(int(rect.width()) + 2, int(rect.height()) + 2, QImage.Format.Format_ARGB32_Premultiplied)
+        image.fill(Qt.GlobalColor.transparent)
+        p = QPainter(image)
+        chip.paint(p, None)
+        p.end()
+        dot = QColor.fromRgba(image.pixel(int(chip.dot_rect.center().x()), int(chip.dot_rect.center().y())))
+        self.assertLess(abs(dot.red() - 0x3d) + abs(dot.blue() - 0x5c), 30)      # the string's colour in the dot
+        ink = QColor(self.plan.colours["label_fg"][:7])
+        text = [QColor.fromRgba(image.pixel(x, y)) for x in range(int(chip.text_rect.left()), int(chip.text_rect.right()))
+                for y in range(int(rect.height()))]
+        self.assertTrue(any(abs(c.lightness() - ink.lightness()) < 40 and c.alpha() == 255 for c in text))
+
 
 if __name__ == "__main__":
     unittest.main()

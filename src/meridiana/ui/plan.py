@@ -130,20 +130,39 @@ def cosmetic(colour, width: float = 1.5, style=Qt.PenStyle.SolidLine) -> QPen:
 class ChipItem(QGraphicsItem):
     """A label on the plan: the design system's radius and font, the plan's colours and drawn window symbols."""
 
-    def __init__(self, text: str, font: QFont, colour, state: str = "", colours: dict | None = None):
+    DOT = 8             # a string's colour, a dot before its name (Daniel, 26/10/2026: «mi piace di più la tua»)
+
+    def __init__(self, text: str, font: QFont, colour, state: str = "", colours: dict | None = None,
+                 swatch: bool = False):
         super().__init__()
         self.text = text
         self._font = QFont(font)
         self.colour = QColor(colour)
+        self.swatch = swatch                # the colour as a dot, the text in the labels' ink, a pill as the window's
         self.symbol_name = {"ok": "check", "check": "warning", "fail": "stop"}.get(state, "")
         self.colours = colours or {"label_bg": "#14161ac8", "label_fg": "#f2efe6"}
-        self.radius = design.Radius.INNER
         fm = QFontMetrics(self._font)
-        symbol = 16 if self.symbol_name else 0
-        gap = 4 if self.symbol_name else 0
-        self.rect = QRectF(0, 0, fm.horizontalAdvance(text) + symbol + gap + 12, max(fm.height(), 16) + 4)
-        self.text_rect = QRectF(6, 2, fm.horizontalAdvance(text), self.rect.height() - 4)
-        self.symbol_rect = QRectF(self.rect.width() - 18, (self.rect.height() - 16) / 2, 16, 16)
+        symbol = 14 if self.symbol_name else 0
+        if swatch:
+            # the dot and the symbol each on the centre of the pill's round end, its own side (Daniel, 26/10/2026:
+            # «il pallino del simbolo ... avesse il centro che corrisponde al centro dell'arrotondamento di destra»)
+            height = max(fm.height(), 16) + 6
+            r = self.radius = height / 2
+            gap = design.Space.XS                                # from the dot to the text, from the text to the symbol
+            left = r + self.DOT / 2 + gap
+            right = r + symbol / 2 + gap if symbol else r        # the symbol in the right end, or the end alone
+            width = left + fm.horizontalAdvance(text) + right
+            self.rect = QRectF(0, 0, width, height)
+            self.dot_rect = QRectF(r - self.DOT / 2, r - self.DOT / 2, self.DOT, self.DOT)
+            self.text_rect = QRectF(left, 0, fm.horizontalAdvance(text) + 1, height)
+            self.symbol_rect = QRectF(width - r - symbol / 2, r - symbol / 2, symbol, symbol)
+        else:
+            symbol = 16 if self.symbol_name else 0
+            gap = 4 if self.symbol_name else 0
+            self.radius = design.Radius.INNER
+            self.rect = QRectF(0, 0, fm.horizontalAdvance(text) + symbol + gap + 12, max(fm.height(), 16) + 4)
+            self.text_rect = QRectF(6, 2, fm.horizontalAdvance(text), self.rect.height() - 4)
+            self.symbol_rect = QRectF(self.rect.width() - 18, (self.rect.height() - 16) / 2, 16, 16)
         self.offset = QPointF()
 
     def font(self) -> QFont:
@@ -160,7 +179,13 @@ class ChipItem(QGraphicsItem):
         painter.setBrush(qcolour(self.colours["label_bg"]))
         painter.drawRoundedRect(self.rect, self.radius, self.radius)
         painter.setFont(self._font)
-        painter.setPen(self.colour)
+        if self.swatch:
+            painter.setBrush(self.colour)
+            painter.setPen(QPen(qcolour(self.colours["label_fg"]), 1.0))      # a thin ring: a dark tint stays seen
+            painter.drawEllipse(self.dot_rect)
+            painter.setPen(qcolour(self.colours["label_fg"]))
+        else:
+            painter.setPen(self.colour)
         painter.drawText(self.text_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, self.text)
         if self.symbol_name:
             from . import symbols
@@ -971,7 +996,7 @@ class PlanView(QGraphicsView):
             items += mine
             x, y = r.modules[0][2]
             font = design.font(design.Type.SMALL, design.Type.BOLD, self.font())
-            tag = ChipItem(r.label, font, colour, state, self.colours)
+            tag = ChipItem(r.label, font, colour, state, self.colours, swatch=True)
             box = tag.boundingRect()
             lift = box.height() + 6                     # above the first module's middle: its number stays seen
             at = self.mapFromScene(to_scene(x, y))
