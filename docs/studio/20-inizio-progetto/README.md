@@ -1,3 +1,9 @@
+# Studio 20: iniziare un progetto, le mappe, clienti e commesse, Meridio
+
+26/10/2026. R148, R149 con R131, R150 e R151 di `docs/richieste.md`.
+
+**In breve.**
+
 1. Il «Nuovo» deve portare subito sul posto: mappa e campo unico prima dei dati amministrativi, poi «Crea e disegna».
 2. Mentre si scrive, i suggerimenti vengono da clienti, progetti ed elenchi locali; Nominatim resta solo su richiesta esplicita.
 3. Il campo deve capire coordinate decimali, DMS, collegamenti e UTM con fuso dichiarato; il punto va sempre confermato sulla mappa.
@@ -9,9 +15,6 @@
 9. Meridio deve cercare e aprire con strumenti locali deterministici; il cloud non vede indice, percorsi né commesse riservate.
 10. Prima conviene fare affidabilità delle mappe e inizio guidato, poi anagrafica, indice e strumenti di Meridio, infine le espansioni.
 
-# Studio 20: iniziare un progetto, le mappe, clienti e commesse, Meridio
-
-26/10/2026. R148, R149 con R131, R150 e R151 di `docs/richieste.md`.
 
 **Legenda.** **[V]** verificato nel codice, con una prova o su una fonte indicata. **[I]** deduzione, proposta o stima. I voti vanno da 1 a 10 e valutano l'utilità per Daniel, non la qualità generale del prodotto. Le giornate sono giornate di lavoro, prove comprese, non una data di consegna. **[I]**
 
