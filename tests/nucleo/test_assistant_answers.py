@@ -302,6 +302,23 @@ class Tools(unittest.TestCase):
         selection = json.loads(tools.run("read_selection", {}, host, state).content)
         self.assertIn("params.shade_free", selection["fields_for_propose_edit"])
 
+    def test_undo_and_redo_are_proposals_with_the_step_text_never_applied_by_the_tool(self):
+        host = problems_host()
+        host.history_text = mock.Mock(side_effect=lambda action: "Meridio: tilt" if action == "undo" else "")
+        host.history = mock.Mock()
+        state = tools.State()
+        outcome = tools.run("propose_undo", {"action": "undo"}, host, state)
+        self.assertFalse(outcome.error)
+        self.assertEqual(outcome.proposal.title, "Undo")
+        self.assertIn("Meridio: tilt", outcome.proposal.reason)
+        self.assertEqual((outcome.proposal.kind, outcome.proposal.oid), ("history", "undo"))
+        self.assertFalse(json.loads(outcome.content)["applied"])
+        host.history.assert_not_called()
+        empty = tools.run("propose_undo", {"action": "redo"}, host, state)
+        self.assertTrue(empty.error)
+        self.assertIn("nothing to redo", empty.content)
+        host.history.assert_not_called()
+
     def test_a_fix_of_a_check_gone_meanwhile_is_refused(self):
         host = problems_host()
         state = tools.State()

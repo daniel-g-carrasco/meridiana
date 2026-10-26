@@ -6,8 +6,9 @@ Reading, without asking: `read_checks`, `project_summary`, `read_selection`, `re
 `read_rules`, `search_manual`; `go_to` only moves the window. Proposing, never applying: `propose_fix` offers the
 fix a check already has (the way to prefer: in the trial of study 14, 4.4, a model free to write the fields
 invented one), `propose_edit` a change of the fields the Properties panel and the energy pages have, checked with
-the rules of the project file; a wrong field goes back to the model with the list of the right ones. A proposal is
-a `Proposal` the window shows as a card: the designer applies it with a click, as one step of the undo.
+the rules of the project file; a wrong field goes back to the model with the list of the right ones. `propose_undo`
+offers the current Undo or Redo step. A proposal is a `Proposal` the window shows as a card: only the designer
+applies it with a click.
 
 The tools read the project through a `host`, the window or a test's stand-in, with:
     host.project                the model.Project in hand
@@ -132,9 +133,16 @@ SPECS = {
             "changes": {"type": "object", "description": "field path -> new value, e.g. {\"params.tilt\": 20}"},
             "reason": {"type": "string"}}, ("kind", "changes", "reason")),
     },
+    "propose_undo": {
+        "description": "Propose Undo or Redo as a card with the text of the history step. The designer applies it "
+                       "with a click; you never undo or redo anything yourself. If that direction has no step, the "
+                       "answer says so.",
+        "parameters": _schema({"action": {"type": "string", "enum": ["undo", "redo"]}}, ("action",)),
+    },
 }
 STEP_1 = ("read_checks", "project_summary", "go_to", "search_manual")
-STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "propose_fix", "propose_edit")
+STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "propose_fix", "propose_edit",
+          "propose_undo")
 
 
 def specs(names=None) -> list[dict]:
@@ -649,6 +657,22 @@ def _show(v) -> str:
     return str(v)
 
 
+def propose_undo(host, state: State, action: str) -> Outcome:
+    if action not in ("undo", "redo"):
+        raise ValueError("action must be undo or redo")
+    step = host.history_text(action)
+    if not step:
+        return _error(f"nothing to {action}")
+    state.count += 1
+    title = _("Undo") if action == "undo" else _("Redo")
+    proposal = Proposal(id=f"p{state.count}", title=title, kind="history", oid=action, lines=[],
+                        reason=_("Step: {step}").format(step=step))
+    state.proposals[proposal.id] = proposal
+    return Outcome(_json({"proposed": proposal.id, "step": step, "shown_to_designer": True, "applied": False,
+                          "waiting": "the designer applies it or not with a click"}),
+                   _("Proposed: {what}").format(what=title), proposal=proposal)
+
+
 def propose_fix(host, state: State, check_id: str) -> Outcome:
     it = state.checks.get(check_id)
     if it is None:
@@ -867,4 +891,4 @@ def propose_edit(host, state: State, kind: str, changes, reason: str, id: str = 
 TOOLS = {"read_checks": read_checks, "project_summary": project_summary, "go_to": go_to,
          "search_manual": search_manual, "read_selection": read_selection, "read_results": read_results,
          "read_pedigree": read_pedigree, "read_rules": read_rules, "propose_fix": propose_fix,
-         "propose_edit": propose_edit}
+         "propose_edit": propose_edit, "propose_undo": propose_undo}

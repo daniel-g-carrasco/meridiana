@@ -38,6 +38,8 @@ class Instructions(unittest.TestCase):
         self.assertIn("no emoji", text)                            # his voice would read them (R94)
         self.assertIn("names and values shown in the Properties panel", text)
         self.assertIn("never their internal keys or coded values", text)
+        self.assertIn("I can propose undo or redo", text)
+        self.assertIn("never undo or redo anything yourself", text)
 
     def test_in_english_the_examples_are_english(self):
         text = persona.system("Meridio", "en")

@@ -218,6 +218,28 @@ class Chat(unittest.TestCase):
         self.assertTrue(self.idle())
         self.assertIn("The designer applied p1.", server.requests[-1]["messages"][-1]["content"])
 
+    def test_undo_and_redo_cards_show_the_step_and_only_the_click_moves_history(self):
+        self.serve([tool_answer([("propose_undo", {"action": "undo"})]), text_answer("Ti propongo Annulla."),
+                    tool_answer([("propose_undo", {"action": "redo"})]), text_answer("Ti propongo Ripeti.")])
+        self.win.edit("Change tilt", lambda p: p.subfields[0].params.update(tilt=20.0))
+        self.a.open_panel()
+        self.a.ask("Possiamo tornare indietro?")
+        self.assertTrue(self.idle())
+        self.assertEqual(self.win.project.subfields[0].params["tilt"], 20.0)
+        [card] = self.chat.cards.values()
+        self.assertEqual(card.title(), "Proposal: Undo")
+        self.assertIn("Change tilt", card.findChildren(type(self.a.cost))[0].text())
+        card.buttons["apply"].click()
+        self.assertEqual(self.win.project.subfields[0].params["tilt"], 15.0)
+        self.a.ask("E ripeti?")
+        self.assertTrue(self.idle())
+        [card] = self.chat.cards.values()
+        self.assertEqual(card.title(), "Proposal: Redo")
+        self.assertIn("Change tilt", card.findChildren(type(self.a.cost))[0].text())
+        card.buttons["apply"].click()
+        self.assertEqual(self.win.project.subfields[0].params["tilt"], 20.0)
+        self.assertFalse(self.chat.cards)
+
     def test_a_card_discarded_changes_nothing_and_another_project_drops_the_cards(self):
         self.serve([tool_answer([("propose_edit", {"kind": "subfield", "id": "s1", "changes": {"params.tilt": 25},
                                                    "reason": "x"})]), text_answer("Proposto.")])

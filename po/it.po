@@ -720,6 +720,19 @@ msgstr "no"
 msgid "automatic"
 msgstr "automatico"
 
+#: src/meridiana/assistant/tools.py:668
+msgid "Undo"
+msgstr "Annulla"
+
+#: src/meridiana/assistant/tools.py:668
+msgid "Redo"
+msgstr "Ripeti"
+
+#: src/meridiana/assistant/tools.py:670
+#, python-brace-format
+msgid "Step: {step}"
+msgstr "Passo: {step}"
+
 #: src/meridiana/assistant/tools.py:642 src/meridiana/assistant/tools.py:820
 #, python-brace-format
 msgid "Proposed: {what}"
@@ -9209,6 +9222,11 @@ msgstr "{name}: {what}"
 #, python-brace-format
 msgid "Not applied: {why}"
 msgstr "Non applicata: {why}"
+
+#: src/meridiana/ui/assistant_chat.py:714
+#, python-brace-format
+msgid "Applied: {what}."
+msgstr "Applicata: {what}."
 
 #: src/meridiana/ui/assistant_chat.py:705
 #, python-brace-format

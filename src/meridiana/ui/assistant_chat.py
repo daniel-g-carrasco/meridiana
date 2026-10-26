@@ -5,8 +5,9 @@
   shuts the connection; a generation number drops what a stopped job still says.
 - The tools run on the window's thread between two rounds (assistant/tools.py, through `WindowHost`), at most
   conversation.ROUNDS rounds a question.
-- A proposal is a card in the bubble: «Apply» goes through the window's edit() as one step of the undo (Ctrl+Z),
-  «Discard» leaves the project as it is; the model hears what the designer chose with the next question.
+- A proposal is a card in the bubble: «Apply» makes an edit through the window's edit() as one undo step, or runs
+  the proposed Undo or Redo through the same history bridge as the menu. «Discard» leaves the project as it is;
+  the model hears what the designer chose with the next question.
 - The local model is the default. Claude only with a key in the keyring and the designer's consent, asked the first
   time with what would leave (a card); never for a project marked reserved; the names withheld (privacy.py). No
   network: the question goes to the local model, and it is said.
@@ -163,6 +164,16 @@ class WindowHost:
 
     def fix(self, item) -> None:
         self.win._fix(item)
+
+    def history_text(self, action: str) -> str:
+        undo = self.win.undo
+        return undo.undoText() if action == "undo" else undo.redoText()
+
+    def history(self, action: str) -> None:
+        if action == "undo":
+            self.win.undo.undo()
+        else:
+            self.win.undo.redo()
 
     def set_status(self, tip: str) -> None:
         button = getattr(self.win, "assistant_button", None)
@@ -690,10 +701,12 @@ class Chat(QObject):
         self.widget.add_card(card)
 
     def apply(self, proposal: tools.Proposal) -> None:
-        """«Apply»: one step of the undo, named after Meridio and the proposal."""
+        """«Apply»: an edit or history command chosen by the designer, never by the model."""
         text = _("{name}: {what}").format(name=core.NAME, what=proposal.title)
         try:
-            if proposal.change is not None:
+            if proposal.kind == "history":
+                self.host.history(proposal.oid)
+            elif proposal.change is not None:
                 self.host.edit(text, proposal.change)
             else:
                 self.host.fix(proposal.item)
@@ -702,7 +715,9 @@ class Chat(QObject):
             self.widget.note(_("Not applied: {why}").format(why=error))
         else:
             proposal.state = "applied"
-            self.widget.note(_("Applied: {what}. Ctrl+Z undoes it.").format(what=proposal.title))
+            note = (_("Applied: {what}.") if proposal.kind == "history" else
+                    _("Applied: {what}. Ctrl+Z undoes it."))
+            self.widget.note(note.format(what=proposal.title))
             self.decisions.append(f"The designer applied {proposal.id}.")
         self._drop_card(proposal)
 
