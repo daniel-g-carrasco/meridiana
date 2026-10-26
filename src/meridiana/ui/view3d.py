@@ -891,19 +891,22 @@ class View3D(QuickImage):
         return super().event(event)
 
     def wheelEvent(self, event) -> None:
+        """Two fingers on a touchpad (pixels, in the phases of a scroll) pan, with Shift orbit, with Ctrl zoom; a
+        mouse's wheel goes on to the scene as before, which zooms towards the model's point under the pointer (it
+        went straight to the backend without that point: a review of 26/10/2026)."""
         pixel = event.pixelDelta()
+        if pixel.isNull() or event.phase() == Qt.ScrollPhase.NoScrollPhase:
+            super().wheelEvent(event)
+            return
         at = event.position()
         modifiers = event.modifiers()
         ctrl = modifiers & Qt.KeyboardModifier.ControlModifier and not modifiers & Qt.KeyboardModifier.AltModifier
-        if not pixel.isNull() and ctrl:
+        if ctrl:
             self.backend.touch_zoom(pixel.y() / 60.0, at.x(), at.y())
-        elif not pixel.isNull() and modifiers & Qt.KeyboardModifier.ShiftModifier:
+        elif modifiers & Qt.KeyboardModifier.ShiftModifier:
             self.backend.touch_orbit(pixel.x(), pixel.y())
-        elif not pixel.isNull():
-            self.backend.touch_pan(pixel.x(), pixel.y(), at.x(), at.y())
         else:
-            self.backend.wheel(event.angleDelta().y() / 120.0, int(modifiers.value), at.x(), at.y(),
-                               False, 0.0, 0.0, 0.0)
+            self.backend.touch_pan(pixel.x(), pixel.y(), at.x(), at.y())
         event.accept()
 
     def resizeEvent(self, event) -> None:

@@ -466,6 +466,29 @@ class Navigation(unittest.TestCase):
         QApplication.sendEvent(self.view, event)
         return event
 
+    def test_a_mouse_wheel_goes_on_to_the_scene_which_zooms_towards_the_point_under_the_pointer(self):
+        """Only a touchpad's scroll (pixels in the phases of a scroll) is the view's own: a mouse's wheel goes on to
+        the scene, where the model's point under the pointer is picked (QuickImage.wheelEvent, Scene.qml)."""
+        from unittest import mock
+
+        from PySide6.QtCore import QPoint, QPointF, Qt
+        from PySide6.QtGui import QWheelEvent
+        from PySide6.QtWidgets import QApplication
+
+        from meridiana.ui.quick_image import QuickImage
+        at = QPointF(300, 250)
+        for pixel, phase in ((QPoint(), Qt.ScrollPhase.NoScrollPhase), (QPoint(0, 12), Qt.ScrollPhase.NoScrollPhase)):
+            with mock.patch.object(QuickImage, "wheelEvent") as forwarded:
+                event = QWheelEvent(at, QPointF(self.view.mapToGlobal(at.toPoint())), pixel, QPoint(0, 120),
+                                    Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier, phase, False)
+                QApplication.sendEvent(self.view, event)
+                self.assertEqual(forwarded.call_count, 1, pixel)
+        target = self.backend.camera.target.copy()
+        with mock.patch.object(QuickImage, "wheelEvent") as forwarded:
+            self.wheel(25, -15)                                 # a touchpad: the view's own pan
+            self.assertEqual(forwarded.call_count, 0)
+        self.assertFalse(np.allclose(self.backend.camera.target, target))
+
     def test_touchpad_scroll_pinch_shift_orbit_and_native_rotation(self):
         from PySide6.QtCore import Qt
         b = self.backend
