@@ -10,6 +10,11 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- New projects start from their place (R148): one field reads decimal, DMS and decimal-minute coordinates, Google Maps,
+  OpenStreetMap and Apple links, UTM WGS84 or ED50 and Gauss-Boaga Roma40. Local ISTAT and recent-project suggestions
+  work while typing; Nominatim is asked only by Search. Check the point and choose Create and draw. Optional grid data
+  stay with the project and select CEI 0-21 or 0-16 from the supply voltage. Reserved projects never send names or
+  addresses and never use Claude; map and PVGIS coordinates require separate per-project consents. Project format 16.
 - Reliable maps from roofs to continents (R131, R149, R173): valid tiles stay during every change, failed sources rest
   for three minutes and a visible strip offers Retry and Choose the background without changing the saved choice;
   Automatic uses OpenStreetMap afar and the best local orthophoto within 2 screen m/pixel. The local plan zooms out to
