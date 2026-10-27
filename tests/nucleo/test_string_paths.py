@@ -1,5 +1,5 @@
-"""Where a string's line runs (string_paths.py, R117): straight between modules next to each other, around the modules
-it skips without passing over them, and a colour that no string touching it has."""
+"""Where a string's line runs (string_paths.py, R117, R184): straight between modules next to each other, direct or
+orthogonal dashed jumps, separate lanes and dashes, and a colour that no string touching it has."""
 
 import unittest
 
@@ -40,17 +40,30 @@ class Lines(unittest.TestCase):
         self.assertFalse(r.legs([0, 7])[0][1])                  # corner to corner, the line through the corner
         self.assertFalse(r.legs([5, 11])[0][1])                 # the end of a row and the next row's end
 
-    def test_a_module_skipped_is_gone_around_and_never_passed_over(self):
+    def test_a_module_skipped_makes_a_jump_between_the_two_centres(self):
         for gap in (0.0, 0.8):
             r = string_paths.Router(block(3, 6, gap))
             for a, b in ((0, 2), (0, 13), (2, 15), (0, 17), (6, 9)):
                 with self.subTest(gap=gap, a=a, b=b):
                     (path, jump), = r.legs([a, b])
                     self.assertTrue(jump)
-                    self.assertGreater(len(path), 2)
-                    self.assertEqual(enters(r, path, (a, b)), [])
                     self.assertEqual(path[0], tuple(r.centres[a]))
                     self.assertEqual(path[-1], tuple(r.centres[b]))
+
+    def test_same_row_jump_is_direct_and_cross_row_jump_is_an_orthogonal_bridge_in_the_gap(self):
+        r = string_paths.Router(block(2, 6, 0.8))
+        direct = r.route(0, 2)
+        self.assertEqual(direct, [tuple(r.centres[0]), tuple(r.centres[2])])
+        path = r.route(0, 11)
+        self.assertEqual(len(path), 4)
+        self.assertEqual(enters(r, path, (0, 11)), [])
+        for a, b in zip(path, path[1:], strict=False):
+            self.assertTrue(abs(a[0] - b[0]) < 1e-9 or abs(a[1] - b[1]) < 1e-9, (a, b))
+        self.assertEqual(path[0][0], path[1][0])
+        self.assertEqual(path[1][1], path[2][1])
+        self.assertEqual(path[2][0], path[3][0])
+        self.assertGreater(path[1][1], 2.28)
+        self.assertLess(path[1][1], 3.08)
 
     def test_a_jump_across_many_modules_stays_straight_and_is_still_a_jump(self):
         r = string_paths.Router(block(2, 200, 0.6))
@@ -58,7 +71,7 @@ class Lines(unittest.TestCase):
         self.assertTrue(jump)
         self.assertEqual(len(path), 2)
 
-    def test_three_jumps_sharing_a_corner_have_separate_screen_lanes_at_two_zooms(self):
+    def test_three_direct_jumps_sharing_a_corner_have_distinct_dash_lanes_at_two_zooms(self):
         import shapely
         strings = [[6, 8], [1, 13], [0, 14]]               # three disjoint strings around module 7 (R134)
         for scale in (10.0, 25.0):
@@ -69,28 +82,36 @@ class Lines(unittest.TestCase):
                                                   shapely.LineString(before[1][0])), 0.0)
                 routed, lanes = r.legs_together(strings, 6.0 / scale)
                 self.assertEqual(len(set(lanes)), 3)
-                for i, order in enumerate(strings):
-                    ends = (order[0], order[-1])
-                    self.assertEqual(enters(r, routed[i][0][0], ends), [])
+                for i in range(len(strings)):
                     self.assertTrue(routed[i][0][1])
                     self.assertEqual(routed[i][0][0][0], before[i][0][0])
                     self.assertEqual(routed[i][0][0][-1], before[i][0][-1])
-                for i in range(3):
-                    for j in range(i + 1, 3):
-                        a = shapely.LineString(routed[i][0][0])
-                        b = shapely.LineString(routed[j][0][0])
-                        self.assertGreaterEqual(shapely.distance(a, b) * scale, 3.0)
-                        va = {tuple(p) for p in routed[i][0][0][1:-1]}
-                        vb = {tuple(p) for p in routed[j][0][0][1:-1]}
-                        self.assertFalse(va & vb)
 
-    def test_touching_rows_keep_modules_clear_and_get_distinct_dash_lanes(self):
+    def test_two_overlapping_bridges_take_separate_screen_lanes(self):
+        import shapely
+        strings = [[0, 9], [1, 10]]
+        r = string_paths.Router(block(2, 6, 0.8))
+        before = [[leg[0] for leg in r.legs(order)] for order in strings]
+        self.assertEqual(shapely.distance(shapely.LineString(before[0][0]), shapely.LineString(before[1][0])), 0.0)
+        routed, lanes = r.legs_together(strings, 6.0 / 25.0)
+        self.assertEqual(len(set(lanes)), 2)
+        self.assertNotEqual(routed[1][0][0], before[1][0][0])
+        for i, order in enumerate(strings):
+            self.assertEqual(enters(r, routed[i][0][0], (order[0], order[-1])), [])
+            self.assertEqual(routed[i][0][0][0], before[i][0][0])
+            self.assertEqual(routed[i][0][0][-1], before[i][0][-1])
+        distance = shapely.distance(shapely.LineString(routed[0][0][0]), shapely.LineString(routed[1][0][0]))
+        self.assertGreaterEqual(distance * 25.0, 3.0)
+
+    def test_touching_rows_get_distinct_dash_lanes(self):
         strings = [[6, 8], [1, 13], [0, 14]]
         r = string_paths.Router(block(3, 6))
         routed, lanes = r.legs_together(strings, 0.6)
         self.assertEqual(len(set(lanes)), 3)                       # no free geometry: the plan varies the dash
         for order, legs in zip(strings, routed, strict=True):
-            self.assertEqual(enters(r, legs[0][0], (order[0], order[-1])), [])
+            self.assertTrue(legs[0][1])
+            self.assertEqual(legs[0][0][0], tuple(r.centres[order[0]]))
+            self.assertEqual(legs[0][0][-1], tuple(r.centres[order[-1]]))
 
     def test_one_string_and_strings_that_do_not_meet_keep_their_original_paths(self):
         r = string_paths.Router(block(3, 6, 0.8))

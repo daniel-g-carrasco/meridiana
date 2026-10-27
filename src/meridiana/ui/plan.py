@@ -958,7 +958,7 @@ class PlanView(QGraphicsView):
 
     def _string_paths(self, order: list[int], jumped: dict | None = None, paths: dict | None = None):
         """The modules of a string filled, its line from middle to middle between modules next to each other, and
-        its jumps around the modules it skips (string_paths): three painter paths in the scene."""
+        its jumps between non-neighbouring modules (string_paths): three painter paths in the scene."""
         router = self.router
         fill, solid, jump = QPainterPath(), QPainterPath(), QPainterPath()
         for m in order:
@@ -985,8 +985,8 @@ class PlanView(QGraphicsView):
                       jumped: dict | None = None, outline: bool = False, paths: dict | None = None,
                       lane: int = 0) -> list:
         """The items of a string: its modules filled in its colour (the modules it skips are not), the line between
-        the modules next to each other over a dark halo, the jumps around the others dashed (R117), and a screen-sized
-        dot on every one of its own modules while there is room for it (R186)."""
+        the modules next to each other over a dark halo, the non-neighbouring modules joined by dashed jumps (R184),
+        and a screen-sized dot on every one of its own modules while there is room for it (R186)."""
         scene = self.scene()
         W = view_colours.WIDTHS
         fill_path, solid, jump = self._string_paths(order, jumped, paths)
@@ -1052,7 +1052,7 @@ class PlanView(QGraphicsView):
     def _draw_wiring(self) -> None:
         """Each string in a tint of its own (theme_colors.string_tints; a string touching another never has its
         tint, string_paths.colours): its modules filled, a line through their middles while they are next to each
-        other and a dashed jump around the modules it skips, so that a module skipped is seen (R117); jumps that meet
+        other and a dashed jump between non-neighbouring modules, so that a module skipped is seen (R117); jumps that meet
         take separate screen-wide lanes (R134); the one chosen wider, outlined and numbered; at its first module its
         name (inverter.input.string) with the traffic light as a drawn symbol of the window (R138, R143); the modules
         in no string with a red outline. A string whose modules are not all drawn waits for the next layout; the string
