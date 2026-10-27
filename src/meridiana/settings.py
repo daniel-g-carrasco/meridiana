@@ -59,6 +59,9 @@ class EnergySettings:
     temperature, the strings, and what a PVsyst import left behind."""
     inverters: list = field(default_factory=list)
     dc_ac_ratio: float = 1.1
+    # the maker chosen to size the inverters (R141), remembered for the next time; written since R141 but known to
+    # the file's check only from 27/10/2026 (opening a project left it out with a notice)
+    inverter_maker: str = ""
     losses: Losses = field(default_factory=Losses)
     thermal: dict = field(default_factory=dict)         # sub-field id -> "open", "close", "insulated"
     t_min: float | None = None

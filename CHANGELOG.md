@@ -311,6 +311,8 @@ software centres show.
   opens with its inverter as the first of the list and gives the same year.
 
 ### Fixed
+- Opening a project left out the maker chosen to size the inverters (R141) with a notice in English: the maker is
+  kept, and the notice of keys left out is translated and says «1 key», not «1 keys».
 - A click on a building's wall in 3D selects the building (R175): the point hit lies on the outline, often just
   outside it, and the plan found nothing there.
 - The calendar's month bar was cut at the top by the little window's corners (R176).

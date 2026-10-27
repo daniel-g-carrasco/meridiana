@@ -27,6 +27,16 @@ class Files(unittest.TestCase):
         self.assertIsNone(notice)
         self.assertEqual(q.to_json() | {"modified": None}, p.to_json() | {"modified": None})
 
+    def test_the_maker_chosen_for_the_inverters_comes_back(self):
+        """R141 wrote it in the energy of the variant and the file's check did not know it: Daniel, 27/10/2026,
+        opened his project and read «1 keys this Meridiana does not know were left out: ...inverter_maker»."""
+        p = sample()
+        p.energy["inverter_maker"] = "Huawei"
+        p.save(self.file)
+        q, notice = model.Project.load(self.file)
+        self.assertIsNone(notice)
+        self.assertEqual(q.energy["inverter_maker"], "Huawei")
+
     def test_a_second_save_keeps_the_first_as_backup(self):
         p = sample()
         p.save(self.file)
@@ -118,7 +128,12 @@ class Damaged(unittest.TestCase):
         d = Path(tempfile.mkdtemp())
         (d / "p.meridiana").write_text(json.dumps(data), encoding="utf-8")
         _p, notice = model.Project.load(d / "p.meridiana")
+        self.assertIn("2 keys this Meridiana does not know were left out: ", notice)
         self.assertIn("site.bar", notice)
+        del data["foo"]
+        (d / "p.meridiana").write_text(json.dumps(data), encoding="utf-8")
+        _p, notice = model.Project.load(d / "p.meridiana")
+        self.assertEqual(notice, "1 key this Meridiana does not know was left out: site.bar")     # one, not «1 keys»
 
     def test_the_windows_own_snapshots_skip_the_check(self):
         data = {**self.base(), "foo": 1}

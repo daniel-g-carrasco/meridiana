@@ -1185,7 +1185,10 @@ class Project:
         for note in notes:
             notice = f"{notice}\n{note}" if notice else note
         if unknown:
+            from .i18n import ngettext
             shown = ", ".join(unknown[:8]) + (", ..." if len(unknown) > 8 else "")
-            left = f"{len(unknown)} keys this Meridiana does not know were left out: {shown}"
+            left = ngettext("{n} key this Meridiana does not know was left out: {keys}",
+                            "{n} keys this Meridiana does not know were left out: {keys}",
+                            len(unknown)).format(n=len(unknown), keys=shown)
             notice = f"{notice}\n{left}" if notice else left
         return project, notice
