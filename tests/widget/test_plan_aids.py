@@ -134,6 +134,36 @@ class PlanAids(unittest.TestCase):
                     self.assertLess((actual - expected).manhattanLength(), 3.0,
                                     (angle, factor, item.text, actual, expected))
 
+    def test_every_stringed_module_has_a_screen_sized_dot_until_modules_get_small(self):
+        from PySide6.QtCore import QPointF
+        from PySide6.QtGui import QColor, QTransform
+        from PySide6.QtWidgets import QGraphicsItem
+
+        from meridiana.ui.plan import ChipItem
+
+        plan = self.plan
+        router = plan._router()
+        order = list(range(min(12, len(router.centres))))
+        for angle in (0.0, 30.0, 115.0):
+            plan.setTransform(QTransform().scale(40.0, 40.0).rotate(angle))
+            items = plan._string_items(order, QColor("#ffd166"), 2.5, 35.0, 140)
+            dots = [item for item in items if item.data(0) == "string_dot"]
+            self.assertEqual(len(dots), len(order), angle)
+            for dot in dots:
+                module = dot.data(1)
+                expected = QPointF(plan.mapFromScene(QPointF(*router.centres[module])))
+                actual = QPointF(plan.mapFromScene(dot.pos())) + dot.rect().center()
+                self.assertLess((actual - expected).manhattanLength(), 0.01, (angle, module))
+                self.assertEqual((dot.rect().width(), dot.rect().height()), (ChipItem.DOT, ChipItem.DOT))
+                self.assertTrue(dot.flags() & QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+            for item in items:
+                plan.scene().removeItem(item)
+        plan.setTransform(QTransform().scale(2.0, 2.0))
+        items = plan._string_items(order, QColor("#ffd166"), 2.5, 35.0, 140)
+        self.assertFalse(any(item.data(0) == "string_dot" for item in items))
+        numbers = plan._number_items(order, 100.0, QColor("#ffd166"))
+        self.assertTrue(all(item.swatch and item.colour.name() == "#ffd166" for item in numbers))
+
     def test_the_n_of_the_compass_goes_with_the_arrow_and_a_click_brings_north_up(self):
         """R174 (Daniel, 26/10/2026: «la N di nord non segue la freccia ... la N dovrebbe poter ruotare. e anche un
         modo per riportarlo a nord ci vuole»): the N stands past the arrow's tip, wherever it points; a click on the

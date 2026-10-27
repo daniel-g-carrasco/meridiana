@@ -48,6 +48,7 @@ TILE_UPDATE_MS = 120
 FAILOVER_THRESHOLD = 3           # distinct failed tiles in the current view, after the loader's own retries
 FAILOVER_COOLDOWN = 180.0        # seconds before an unavailable source is tried again by an automatic update
 MIN_PLAN_SCALE = 0.00004          # 20 000 km across 800 px: the site's hemisphere, continents included
+STRING_DOT_MIN_MODULE_PX = 14.0   # below this, 8 px dots merge into the line when modules get small
 
 Z_TILES, Z_BUILDING, Z_PITCH, Z_SUBFIELD, Z_EXCLUSION, Z_MODULES, Z_SELECTION = 0, 10, 12, 20, 25, 30, 40
 Z_WIRING = 35
@@ -984,7 +985,8 @@ class PlanView(QGraphicsView):
                       jumped: dict | None = None, outline: bool = False, paths: dict | None = None,
                       lane: int = 0) -> list:
         """The items of a string: its modules filled in its colour (the modules it skips are not), the line between
-        the modules next to each other over a dark halo, the jumps around the others dashed (R117)."""
+        the modules next to each other over a dark halo, the jumps around the others dashed (R117), and a screen-sized
+        dot on every one of its own modules while there is room for it (R186)."""
         scene = self.scene()
         W = view_colours.WIDTHS
         fill_path, solid, jump = self._string_paths(order, jumped, paths)
@@ -1009,11 +1011,21 @@ class PlanView(QGraphicsView):
             line = scene.addPath(path, pen)
             line.setZValue(z + 0.1)
             items += [halo, line]
+        if self.router.size / self.metres_per_pixel() >= STRING_DOT_MIN_MODULE_PX:
+            rect = QRectF(-ChipItem.DOT / 2, -ChipItem.DOT / 2, ChipItem.DOT, ChipItem.DOT)
+            for m in order:
+                dot = scene.addEllipse(rect, cosmetic(self.colours["label_fg"], 1.0), QBrush(colour))
+                dot.setPos(QPointF(*map(float, self.router.centres[m])))
+                dot.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+                dot.setZValue(z + 0.2)
+                dot.setData(0, "string_dot")
+                dot.setData(1, m)
+                items.append(dot)
         return items
 
-    def _number_items(self, order: list[int], z: float) -> list:
+    def _number_items(self, order: list[int], z: float, colour: QColor | None = None) -> list:
         """The modules of a string numbered in its order (R57): every one when they have room on screen, else one in
-        five or ten, the first and the last always."""
+        five or ten, the first and the last always. The string's dot stays visible inside each number pill (R186)."""
         scene = self.scene()
         small = design.font(design.Type.CAPTION, design.Type.BOLD, self.font())
         mpp = self.metres_per_pixel()
@@ -1027,7 +1039,7 @@ class PlanView(QGraphicsView):
         for n, (mx, my) in enumerate(pts, 1):
             if n not in (1, last) and n % step:
                 continue
-            back = ChipItem(str(n), small, QColor("#ffffff"), colours=self.colours)
+            back = ChipItem(str(n), small, colour or QColor("#ffffff"), colours=self.colours, swatch=True)
             half = QPointF(back.boundingRect().width() / 2, back.boundingRect().height() / 2)
             back.setPos(QPointF(mx, my))
             back.offset = -half                            # local pixels, not scene metres
@@ -1125,7 +1137,7 @@ class PlanView(QGraphicsView):
             tag.setData(1, i)
             items.append(tag)
             if chosen:
-                items += self._number_items(order, Z_WIRING + 0.8)
+                items += self._number_items(order, Z_WIRING + 0.8, colour)
         self.items_by_kind["wiring"] = items
 
     def draft_colour(self) -> str:
@@ -1149,7 +1161,7 @@ class PlanView(QGraphicsView):
             order = [m for m in (self.module_index.get(x, -1) for x in self.draft) if m >= 0]
             if order:
                 items = self._string_items(order, QColor(self.draft_colour()), 3.5, Z_WIRING + 2, 200, outline=True)
-                items += self._number_items(order, Z_WIRING + 2.8)
+                items += self._number_items(order, Z_WIRING + 2.8, QColor(self.draft_colour()))
                 self.items_by_kind["draft"] = items
         self._draw_band()
 
