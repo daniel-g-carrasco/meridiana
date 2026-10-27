@@ -46,6 +46,12 @@ software centres show.
   follow the requested DC/AC ratio, and the result names both.
 - Harmonised plan labels (R143, R138): rounded string names and module numbers in the catalogue font and the plan's
   colours, with the window's drawn check, warning and stop symbols instead of font glyphs.
+- Clear hand-drawn strings (R184, R185, R186): order numbers stay on their modules at every rotation, zoom and pan;
+  every stringed module has an 8 px dot in its string's colour while its short side is at least 14 px on screen. Jumps
+  are dashed and direct within a row, or orthogonal bridges through a free gap between nearby rows, with separate
+  lanes or dash patterns when they overlap and no detours outside the row.
+- Compact plan rotation commands (R183): Align to a side has its own symbol and stays icon-only even when the other
+  view buttons show words. North up leaves the bar but keeps N, the compass click and the right-click menu.
 - Phase-aware panels (R145): Project hides on Production, Consumption, Balance and Report, then returns on the
   graphical phases only if it was visible; the side panels share the width equally. No animation.
 - Plan rotation (R146): native rotation, alignment with a side of the selected outline, and North up. The round

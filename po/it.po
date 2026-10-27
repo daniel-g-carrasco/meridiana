@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: meridiana\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 10:18+0100\n"
+"POT-Creation-Date: 2026-10-28 00:20+0100\n"
 "PO-Revision-Date: 2026-10-22 21:00+0200\n"
 "Last-Translator: Daniel Grasso <code@danielgrasso.com>\n"
 "Language-Team: Italian\n"
@@ -2987,7 +2987,7 @@ msgstr "(proposti da Meridiana)"
 
 #: src/meridiana/energy/plant.py:939 src/meridiana/energy/plant.py:951
 #: src/meridiana/energy/plant.py:974 src/meridiana/ui/catalog_dialog.py:89
-#: src/meridiana/ui/plan.py:2637 src/meridiana/ui/plant_page.py:732
+#: src/meridiana/ui/plan.py:2650 src/meridiana/ui/plant_page.py:732
 #: src/meridiana/ui/window.py:4117 src/meridiana/viewaids.py:155
 #: src/meridiana/viewaids.py:159
 #, python-brace-format
@@ -6173,8 +6173,12 @@ msgstr[1] ""
 #, python-brace-format
 msgid "{n} key this Meridiana does not know was left out: {keys}"
 msgid_plural "{n} keys this Meridiana does not know were left out: {keys}"
-msgstr[0] "{n} voce del file che questa versione di Meridiana non conosce è stata lasciata fuori: {keys}"
-msgstr[1] "{n} voci del file che questa versione di Meridiana non conosce sono state lasciate fuori: {keys}"
+msgstr[0] ""
+"{n} voce del file che questa versione di Meridiana non conosce è stata "
+"lasciata fuori: {keys}"
+msgstr[1] ""
+"{n} voci del file che questa versione di Meridiana non conosce sono state "
+"lasciate fuori: {keys}"
 
 #: src/meridiana/move.py:217
 msgid ""
@@ -12005,7 +12009,7 @@ msgstr "Ancora niente di calcolato."
 msgid "New, open, save, import, export, catalogues, settings and help"
 msgstr "Nuovo, apri, salva, importa, esporta, cataloghi, preferenze e aiuto"
 
-#: src/meridiana/ui/plan.py:204
+#: src/meridiana/ui/plan.py:205
 msgid ""
 "Click the smallest object; a second click on the same row selects the row. "
 "Esc goes to the container; Delete removes the selection."
@@ -12013,7 +12017,7 @@ msgstr ""
 "Fai clic sull'oggetto più piccolo; un secondo clic sulla stessa fila "
 "seleziona la fila. Esc passa al contenitore; Canc elimina la selezione."
 
-#: src/meridiana/ui/plan.py:206
+#: src/meridiana/ui/plan.py:207
 msgid ""
 "Building: click the corners of its outline. Enter or a double click closes "
 "it, Backspace takes the last corner back, Esc cancels. Ctrl draws without "
@@ -12023,7 +12027,7 @@ msgstr ""
 "chiude, Backspace toglie l'ultimo vertice, Esc annulla. Con Ctrl si disegna "
 "senza guide; scrivi un numero per la lunghezza del lato."
 
-#: src/meridiana/ui/plan.py:209
+#: src/meridiana/ui/plan.py:210
 msgid ""
 "Free pitch: draw its outline on a building, then choose its eave side and "
 "slope."
@@ -12031,7 +12035,7 @@ msgstr ""
 "Falda libera: disegnane il contorno su un edificio, poi scegli il lato di "
 "gronda e la pendenza."
 
-#: src/meridiana/ui/plan.py:210
+#: src/meridiana/ui/plan.py:211
 msgid ""
 "Sub-field: draw the area where modules may go, on a roof or on the ground, "
 "or double-click a pitch to take it whole. Modules are laid only when you "
@@ -12041,7 +12045,7 @@ msgstr ""
 "a terra, oppure fai doppio clic su una falda per prenderla intera. I moduli "
 "si posano solo quando lo chiedi, dalle sue proprietà."
 
-#: src/meridiana/ui/plan.py:212
+#: src/meridiana/ui/plan.py:213
 msgid ""
 "Exclusion: draw a skylight, a smoke vent, roof plant or a walkway; modules "
 "keep away from it."
@@ -12049,7 +12053,7 @@ msgstr ""
 "Esclusione: disegna un lucernario, un evacuatore di fumo, un impianto in "
 "copertura o un camminamento; i moduli ne restano lontani."
 
-#: src/meridiana/ui/plan.py:214
+#: src/meridiana/ui/plan.py:215
 msgid ""
 "Row: click where it starts in a sub-field, then where it ends, or type its "
 "length and Enter. It takes the module, the gaps and the orientation of the "
@@ -12059,32 +12063,32 @@ msgstr ""
 "lunghezza e Invio. Prende il modulo, gli spazi e l'orientamento del "
 "sottocampo; rossa, va oltre il bordo o su un'esclusione. Esc annulla."
 
-#: src/meridiana/ui/plan.py:217
+#: src/meridiana/ui/plan.py:218
 msgid "Move: click what to move (a building, a sub-field, an exclusion)."
 msgstr ""
 "Sposta: clicca che cosa spostare (un edificio, un sottocampo, un'esclusione)."
 
-#: src/meridiana/ui/plan.py:218
+#: src/meridiana/ui/plan.py:219
 msgid ""
 "Measure: click two points; the distance stays on screen until the next click."
 msgstr ""
 "Misura: fai clic su due punti; la distanza resta sullo schermo fino al clic "
 "successivo."
 
-#: src/meridiana/ui/plan.py:411
+#: src/meridiana/ui/plan.py:412
 msgid "Laying the modules…"
 msgstr "Posa dei moduli in corso…"
 
-#: src/meridiana/ui/plan.py:494
+#: src/meridiana/ui/plan.py:495
 msgid "No background"
 msgstr "Nessuno sfondo"
 
-#: src/meridiana/ui/plan.py:877
+#: src/meridiana/ui/plan.py:878
 #, python-brace-format
 msgid "This module is already number {n} of the string you are drawing."
 msgstr "Questo modulo è già il numero {n} della stringa che stai disegnando."
 
-#: src/meridiana/ui/plan.py:882
+#: src/meridiana/ui/plan.py:883
 #, python-brace-format
 msgid ""
 "This module is in string {name}: hold Shift and click it to move it into "
@@ -12093,7 +12097,7 @@ msgstr ""
 "Questo modulo è nella stringa {name}: tieni premuto Maiusc e cliccalo per "
 "spostarlo in questa."
 
-#: src/meridiana/ui/plan.py:915
+#: src/meridiana/ui/plan.py:916
 msgid ""
 "Click the modules in order: Enter or a double click closes the string, "
 "Backspace takes back the last one, Esc gives it up."
@@ -12101,23 +12105,23 @@ msgstr ""
 "Clicca i moduli in ordine: Invio o un doppio clic chiudono la stringa, "
 "Backspace toglie l'ultimo, Esc la annulla."
 
-#: src/meridiana/ui/plan.py:1079 src/meridiana/ui/plant_page.py:43
+#: src/meridiana/ui/plan.py:1092 src/meridiana/ui/plant_page.py:43
 #, python-brace-format
 msgid "{n} module in no string"
 msgid_plural "{n} modules in no string"
 msgstr[0] "{n} modulo fuori stringa"
 msgstr[1] "{n} moduli fuori stringa"
 
-#: src/meridiana/ui/plan.py:1102
+#: src/meridiana/ui/plan.py:1115
 #, python-brace-format
 msgid "String {name}: inverter {i}, input {m}, {n} modules"
 msgstr "Stringa {name}: inverter {i}, ingresso {m}, {n} moduli"
 
-#: src/meridiana/ui/plan.py:1302
+#: src/meridiana/ui/plan.py:1315
 msgid "Click the side on the plan; Esc leaves it as it is."
 msgstr "Clicca il lato in pianta; Esc lascia tutto com'è."
 
-#: src/meridiana/ui/plan.py:1524
+#: src/meridiana/ui/plan.py:1537
 msgid ""
 "Rectangle mode: two corners give a side, the third click or a typed number "
 "the depth."
@@ -12125,7 +12129,7 @@ msgstr ""
 "Modo rettangolo: due vertici danno un lato, il terzo clic o un numero "
 "scritto la profondità."
 
-#: src/meridiana/ui/plan.py:1583
+#: src/meridiana/ui/plan.py:1596
 msgid ""
 "Rotate about the cross: click, or type the angle and Enter; steps of 15°, 5° "
 "with Ctrl, 90° with Shift. C makes a copy, R goes back to Move, Esc leaves."
@@ -12133,7 +12137,7 @@ msgstr ""
 "Ruota attorno alla croce: clicca, o scrivi l'angolo e Invio; passi di 15°, "
 "5° con Ctrl, 90° con Maiusc. C fa una copia, R torna a Sposta, Esc esce."
 
-#: src/meridiana/ui/plan.py:1586
+#: src/meridiana/ui/plan.py:1599
 msgid ""
 "Click where it goes, or type the distance and Enter (3 is 3 m along the "
 "pointer, 3;2 is 3 m East and 2 m North, Tab for the direction). Ctrl held at "
@@ -12143,7 +12147,7 @@ msgstr ""
 "3;2 sono 3 m a Est e 2 m a Nord, Tab per la direzione). Ctrl tenuto al clic, "
 "o C, fa una copia."
 
-#: src/meridiana/ui/plan.py:1588
+#: src/meridiana/ui/plan.py:1601
 msgid ""
 "Move: click a base point, or type the move. R turns it (R is the rectangle "
 "only outside Move). Arrows: 10 cm, 1 m with Shift, 1 cm with Ctrl. Esc "
@@ -12153,7 +12157,7 @@ msgstr ""
 "rettangolo solo fuori da Sposta). Frecce: 10 cm, 1 m con Maiusc, 1 cm con "
 "Ctrl. Esc esce."
 
-#: src/meridiana/ui/plan.py:1815
+#: src/meridiana/ui/plan.py:1828
 msgid ""
 "Drag the grip, or click where it goes; Enter or Space switch between Move "
 "and Rotate."
@@ -12161,51 +12165,51 @@ msgstr ""
 "Trascina la maniglia, o clicca dove va; Invio o Spazio passano da Sposta a "
 "Ruota e viceversa."
 
-#: src/meridiana/ui/plan.py:1877
+#: src/meridiana/ui/plan.py:1890
 #, python-brace-format
 msgid "rotation {angle}°"
 msgstr "rotazione {angle}°"
 
-#: src/meridiana/ui/plan.py:1881 src/meridiana/ui/plan.py:2585
-#: src/meridiana/ui/plan.py:2618 src/meridiana/ui/plan.py:2628
-#: src/meridiana/ui/plan.py:2636
+#: src/meridiana/ui/plan.py:1894 src/meridiana/ui/plan.py:2598
+#: src/meridiana/ui/plan.py:2631 src/meridiana/ui/plan.py:2641
+#: src/meridiana/ui/plan.py:2649
 #, python-brace-format
 msgid "{length} m"
 msgstr "{length} m"
 
-#: src/meridiana/ui/plan.py:1882
+#: src/meridiana/ui/plan.py:1895
 #, python-brace-format
 msgid "E {dx} m, N {dy} m"
 msgstr "E {dx} m, N {dy} m"
 
-#: src/meridiana/ui/plan.py:1886
+#: src/meridiana/ui/plan.py:1899
 msgid "a copy"
 msgstr "una copia"
 
-#: src/meridiana/ui/plan.py:2068
+#: src/meridiana/ui/plan.py:2081
 msgid "Drag the corner; it snaps to the other outlines, Ctrl drags it free."
 msgstr ""
 "Trascina il vertice: si aggancia agli altri contorni, con Ctrl si muove "
 "libero."
 
-#: src/meridiana/ui/plan.py:2076
+#: src/meridiana/ui/plan.py:2089
 msgid ""
 "Drag the end of the row: it takes or gives back places, one module at a time."
 msgstr ""
 "Trascina l'estremo della fila: prende o restituisce posti, un modulo alla "
 "volta."
 
-#: src/meridiana/ui/plan.py:2619
+#: src/meridiana/ui/plan.py:2632
 #, python-brace-format
 msgid "direction {bearing}° from North"
 msgstr "direzione {bearing}° da Nord"
 
-#: src/meridiana/ui/plan.py:2621
+#: src/meridiana/ui/plan.py:2634
 #, python-brace-format
 msgid "turn {turn}°"
 msgstr "svolta {turn}°"
 
-#: src/meridiana/ui/plan.py:2625 src/meridiana/ui/plan.py:2635
+#: src/meridiana/ui/plan.py:2638 src/meridiana/ui/plan.py:2648
 #, python-brace-format
 msgid "length: {value}_"
 msgstr "lunghezza: {value}_"
@@ -15133,10 +15137,6 @@ msgstr "Riduci"
 msgid "Align to a side"
 msgstr "Allinea a un lato"
 
-#: src/meridiana/ui/window.py:921 src/meridiana/ui/window.py:3282
-msgid "North up"
-msgstr "Nord in alto"
-
 #: src/meridiana/ui/window.py:928
 msgid "&Catalogues"
 msgstr "&Cataloghi"
@@ -15925,6 +15925,10 @@ msgstr "Elimina"
 #: src/meridiana/ui/window.py:3279
 msgid "Align the view to this side"
 msgstr "Allinea la vista a questo lato"
+
+#: src/meridiana/ui/window.py:3282
+msgid "North up"
+msgstr "Nord in alto"
 
 #: src/meridiana/ui/window.py:3303
 msgid "Close the outline"
