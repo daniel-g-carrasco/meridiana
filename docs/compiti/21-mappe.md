@@ -169,3 +169,24 @@ Tutti WMS in EPSG:3857 salvo Baviera (XYZ) e Renania Settentrionale-Vestfalia (W
    esempio un WMS regionale dalle capabilities, o un XYZ con `{key}` e la chiave nel portachiavi), sceglierla nel
    menu Sfondo; Privacy con le mappe spente: niente richieste.
 4. Le schermate a 2,5x sul secondo schermo e la lettura delle righe.
+
+## 7. Incarico 6 del 26/10/2026: ripiego, due predefiniti e mondo
+
+- **Ripiego visibile** [V: `tests/widget/test_plan_background.py`, server HTTP locale con errori 503 e XML]: tre
+  tessere distinte fallite dopo i tentativi del caricatore fanno riposare la fonte per 180 secondi. Nella vista di
+  prova da 800 x 600, circa 15 tessere, sono il 20 %. Il ripiego sceglie prima un'altra foto adatta al sito, poi lo
+  stradale; Sentinel-2 solo lontano. La striscia offre «Riprova» e «Scegli lo sfondo». `PlanView.choice` non cambia,
+  quindi il guasto non entra nelle preferenze. Il vecchio mosaico resta intero finché quello nuovo non copre la vista.
+- **Due predefiniti** [V: stessa prova]: «Automatica» usa OpenStreetMap oltre 2 m/pixel dello schermo e la migliore
+  foto del sito da 2 m/pixel in giù. Un tetto di 40 m misura 20 pixel alla soglia. La scelta manuale non cambia e
+  l'attribuzione segue sempre la fonte mostrata.
+- **Continenti** [V: `tests/nucleo/test_tiles.py`, `tests/widget/test_plan_aids.py`]: scala minima 0,00004 px/m,
+  25.000 m/pixel; scene da 40.000 km, solo punti entro 80° dal sito. Le tessere a z0-z6 sono suddivise fino a 8 x 8
+  celle e i bordi condividono gli stessi punti. Il sito resta un punto e la scala scrive i km. Europa a 1600 x 1000:
+  prima 39 tessere e 4,878 ms per ridisegno, dopo 12 e 1,811 ms, con immagini generate e nessuna rete.
+- **Natural Earth 1:110m** [V: `tests/nucleo/test_worldmap.py`, stessa prova widget]: pubblico dominio, fonte e termini
+  riletti il 26/10/2026, 177 stati, GeoJSON compresso 209.310 byte in `data/natural_earth/`. Scelto 1:110m invece di
+  1:50m perché serve ai continenti e costa circa 204 KiB nel pacchetto, senza fingere dettaglio locale. Oceano, terre,
+  confini, nomi senza sovrapposizioni e graticola sono sotto le tessere e anche da soli senza rete o con «Nessuno».
+  Roma, Parigi, Il Cairo e Londra cadono negli stati attesi. Flatpak e Windows includono il dato.
+- Esito completo, commit, fotografie e prova Wayland nascosta: `docs/revisioni/kimi-incarico-6-lavori.md`.

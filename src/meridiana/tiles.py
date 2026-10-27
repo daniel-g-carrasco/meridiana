@@ -608,16 +608,38 @@ def best(sources: dict, lon: float, lat: float) -> str:
     return "osm" if "osm" in sources else NONE
 
 
-def effective(choice: str, sources: dict, lon: float, lat: float) -> str:
+AUTO_PHOTO_MPP = 2.0            # a 40 m roof is about 20 screen pixels at this transition
+
+
+def automatic(sources: dict, lon: float, lat: float, metres_per_pixel: float) -> str:
+    """The street map to orient yourself from afar, the best local orthophoto near enough to draw."""
+    if metres_per_pixel > AUTO_PHOTO_MPP and "osm" in sources:
+        return "osm"
+    return best(sources, lon, lat)
+
+
+def effective(choice: str, sources: dict, lon: float, lat: float, metres_per_pixel: float = 0.0) -> str:
     """The source the plan shows for the designer's choice: none, the source chosen where it covers the site, else
-    the best for the site (a source chosen for a French project is not used on an Italian one, and comes back on the
-    next French one)."""
+    the automatic source for this zoom (a source chosen for a French project is not used on an Italian one, and comes
+    back on the next French one)."""
     if choice == NONE:
         return NONE
+    if choice == AUTO:
+        return automatic(sources, lon, lat, metres_per_pixel)
     s = sources.get(choice)
     if s is not None and s.covers(lon, lat):
         return choice
-    return best(sources, lon, lat)
+    return automatic(sources, lon, lat, metres_per_pixel)
+
+
+def fallbacks(sources: dict, failed: str, lon: float, lat: float, detailed: bool = True) -> list[str]:
+    """Other sources for the same place, best first. Near a roof another photo comes first, then a street map;
+    Sentinel-2 is only a distant-view fallback, never a substitute for detail that it cannot provide."""
+    found = covering(sources, lon, lat)
+    photos = [s.key for s in found if s.imagery == "photo" and s.key != failed
+              and (not detailed or s.key != "eox-2016")]
+    maps = [s.key for s in found if s.imagery == "map" and s.key != failed]
+    return photos + maps
 
 
 # the tiles of a view
@@ -649,4 +671,52 @@ def tile_quad(origin: geo.Origin, z: int, x: int, y: int) -> list[tuple[float, f
     for mx, my in corners:
         lon, lat = geo.mercator_to_lonlat(mx, my)
         out.append(origin.to_local(lon, lat))
+    return out
+
+
+HEMISPHERE_DEGREES = 80.0
+
+
+def angular_distance(origin: geo.Origin, lon: float, lat: float) -> float:
+    """Great-circle distance from the site, used to keep the far side off its local tangent plane."""
+    p0, p1 = math.radians(origin.lat), math.radians(lat)
+    dp, dl = p1 - p0, math.radians(lon - origin.lon)
+    a = math.sin(dp / 2) ** 2 + math.cos(p0) * math.cos(p1) * math.sin(dl / 2) ** 2
+    return math.degrees(2 * math.atan2(math.sqrt(a), math.sqrt(max(0.0, 1 - a))))
+
+
+def tile_in_hemisphere(origin: geo.Origin, z: int, x: int, y: int) -> bool:
+    """Whether any of a 3 by 3 sample of a tile lies within the site's visible hemisphere."""
+    w, s, e, n = geo.tile_bounds(x, y, z)
+    for row in range(3):
+        for col in range(3):
+            lon, lat = geo.mercator_to_lonlat(w + (e - w) * col / 2, n - (n - s) * row / 2)
+            if angular_distance(origin, lon, lat) <= HEMISPHERE_DEGREES:
+                return True
+    return False
+
+
+def tile_mesh(origin: geo.Origin, z: int, x: int, y: int):
+    """Texture rectangles and exact local quads. Low zooms are bent in small pieces, with identical points on
+    neighbouring edges; pieces centred beyond 80 degrees from the site are not drawn."""
+    n = 2 ** max(0, min(3, (7 - z) // 2))
+    world = 2 * math.pi * geo.MERCATOR_R
+
+    def point(u, v):
+        return geo.mercator_to_lonlat(-world / 2 + world * (x + u) / 2 ** z,
+                                      world / 2 - world * (y + v) / 2 ** z)
+
+    out = []
+    for row in range(n):
+        for col in range(n):
+            u0, u1 = col / n, (col + 1) / n
+            v0, v1 = row / n, (row + 1) / n
+            corners = [(u0, v0), (u1, v0), (u1, v1), (u0, v1)]
+            quad = []
+            for u, v in corners:
+                lon, lat = point(u, v)
+                quad.append(origin.to_local(lon, lat))
+            lon, lat = point((u0 + u1) / 2, (v0 + v1) / 2)
+            if angular_distance(origin, lon, lat) <= HEMISPHERE_DEGREES:
+                out.append((u0, v0, u1, v1, quad))
     return out

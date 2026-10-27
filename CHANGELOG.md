@@ -10,6 +10,12 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- Reliable maps from roofs to continents (R131, R149, R173): valid tiles stay during every change, failed sources rest
+  for three minutes and a visible strip offers Retry and Choose the background without changing the saved choice;
+  Automatic uses OpenStreetMap afar and the best local orthophoto within 2 screen m/pixel. The local plan zooms out to
+  25,000 m/pixel, bends low-zoom tiles in matching pieces, keeps the site's hemisphere only and marks the project.
+  Natural Earth 1:110m (177 countries, 209,310 compressed bytes, public domain) draws oceans, borders, names and a
+  graticule below the tiles and alone offline or with no background.
 - Size of the text (R133): Small, Medium or Large in Preferences > Appearance moves the whole type scale a
   pixel down or up, the text at 12, 13 or 14 px, at once in the open window (settings format 21).
 - Dialog symbols (R169): Discard has a bin on red and Cancel an arrow going back on grey, in every dialog;

@@ -62,6 +62,9 @@ PAPER = {"bg": "#f3f1ec", "bld_stroke": "#3a352d", "bld_fill": "#3a352d10", "pit
          "module_line": "#c6cbd6", "guide": "#2e6fb0", "halo": "#ffffffe0", "sel": "#c814b4", "hover": "#cc4cc0",
          "draw": "#b85c00", "label_bg": "#1e1c19e6", "label_fg": "#f8f7f4"}
 
+WORLD = {"ocean": "#263943", "land": ("#52665b", "#5c6858", "#4e6261"), "border": "#a0aa98",
+         "graticule": "#78909c35", "label": "#f2efe6", "label_halo": "#14161ae0"}
+
 # the 3D view: the day sky (a gradient around 9cc8314's #cfe0ec), the ground without imagery, the colours of
 # mesh.py; the selection tints what it is and outlines it, what is under the pointer is outlined lighter
 D3 = {"sky_top": "#a9c9e3", "sky_bottom": "#e4edf3", "ground": "#9fae93", "select": SELECT, "hover": HOVER,

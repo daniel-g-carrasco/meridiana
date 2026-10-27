@@ -560,6 +560,9 @@ class MainWindow(QMainWindow):
         self.plan.set_veil(cfg.veil)
         self.plan.set_sources(cfg.map_sources)
         self.plan.set_source(cfg.background)
+        self.plan.fallback_strip.chooseBackground.connect(
+            lambda: self.background_menu.popup(self.plan.fallback_strip.choose.mapToGlobal(
+                self.plan.fallback_strip.choose.rect().center())))
         self._fill_sources()
         # the layout starts after a short pause: a field's arrows clicked again and again lay the modules once
         self.relayout_timer = QTimer(self, singleShot=True, interval=RELAYOUT_PAUSE_MS)

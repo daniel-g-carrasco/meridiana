@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
 
 from .. import theme_colors, viewaids
 from ..i18n import _
@@ -203,6 +203,33 @@ class Attribution(Overlay):
         p.drawText(QRectF(self.rect()), Qt.AlignmentFlag.AlignCenter, self.text)
 
 
+class FallbackStrip(QWidget):
+    """A temporary map failure, said in plain words, with a retry and the ordinary background menu."""
+
+    chooseBackground = Signal()
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setObjectName("card")
+        row = QHBoxLayout(self)
+        row.setContentsMargins(Space.M, Space.S, Space.S, Space.S)
+        row.setSpacing(Space.S)
+        self.message = QLabel(self)
+        self.message.setWordWrap(True)
+        self.retry = QPushButton(_("Retry"), self)
+        self.choose = QPushButton(_("Choose the background"), self)
+        row.addWidget(self.message, 1)
+        row.addWidget(self.retry)
+        row.addWidget(self.choose)
+        self.choose.clicked.connect(self.chooseBackground)
+        self.hide()
+
+    def show_failure(self, failed: str, replacement: str) -> None:
+        self.message.setText(_("{failed} is not reachable: using {replacement}.").format(
+            failed=failed, replacement=replacement))
+        self.show()
+
+
 def place(view) -> None:
     """The overlays in their corners of the viewport (they are children of the view, which has its frame and its
     scroll bars around the viewport)."""
@@ -211,7 +238,14 @@ def place(view) -> None:
     view.scale_bar.move(r.left() + MARGIN, r.bottom() + 1 - view.scale_bar.height() - MARGIN)
     view.attribution.move(r.right() + 1 - view.attribution.width() - MARGIN,
                           r.bottom() + 1 - view.attribution.height() - MARGIN)
-    for overlay in (view.north, view.scale_bar, view.attribution):
-        overlay.raise_()
     if getattr(view, "viewbar", None) is not None:
         view.viewbar.place(r, [view.north.geometry()])
+    strip = view.fallback_strip
+    strip.setMaximumWidth(max(280, r.width() - 2 * MARGIN))
+    strip.adjustSize()
+    top = r.top() + MARGIN
+    if getattr(view, "viewbar", None) is not None:
+        top = max(top, view.viewbar.geometry().bottom() + 1 + Space.S)
+    strip.move(r.left() + MARGIN, top)
+    for overlay in (view.north, view.scale_bar, view.attribution, strip):
+        overlay.raise_()
