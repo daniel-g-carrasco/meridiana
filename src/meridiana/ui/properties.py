@@ -220,10 +220,10 @@ def put(w: QWidget, value, force: bool = False) -> None:
 
 
 class Properties(QScrollArea):
-    """A page per kind of object. A new result or an edit of the object shown sets the values of the page in
-    place: the page is built again only for another object, or when the fields themselves change (a roof
-    type with a slope or without, a pitch from the sun or given). Building it again cost time at every edit,
-    and took away the field being written, with what was in it (study 12, I1, I4, P5)."""
+    """A page per kind and shape of object. A new result, an edit or another object of the same shape sets only
+    the values: the page is built again when the fields themselves change (a roof type with a slope or without,
+    a pitch from the sun or given). Building it again cost time and took away the field being written, with what
+    was in it (study 12, I1, I4, P5)."""
 
     edited = Signal(str, str, dict)        # kind, id, the fields changed
     action = Signal(str, str, str)         # what ("fill", "empty", "fit", "site"), kind, id
@@ -526,9 +526,11 @@ class Properties(QScrollArea):
     # building
 
     def show_building(self, b: model.Building) -> None:
+        if self.kind != "building" or self.oid != b.id:
+            self.drop_typing()
         self.kind, self.oid = "building", b.id
         self.shown = {"object": b}
-        if not self._same(("building", b.id, b.roof.type, len(b.footprint))):
+        if not self._same(("building", b.roof.type, len(b.footprint))):
             self._build_building(b)
         self._refresh()
 
@@ -699,11 +701,13 @@ class Properties(QScrollArea):
                       state: str = "ok", error: str = "") -> None:
         """`state` is where its layout stands (model.Project.layout_state): a layout to do again or failed
         is said above the figures, as FreeCAD marks the objects to recompute and those in error."""
+        if self.kind != "subfield" or self.oid != sf.id:
+            self.drop_typing()
         self.kind, self.oid = "subfield", sf.id
         self.shown = {"project": project, "object": sf, "result": result, "state": state, "error": error}
         p = sf.layout_params()
         flush = p.mounting in layout.FLUSH
-        shape = ("subfield", sf.id, flush, p.mounting == "canopy", None if flush else p.pitch_mode, sf.filled,
+        shape = ("subfield", flush, p.mounting == "canopy", None if flush else p.pitch_mode, sf.filled,
                  sf.manual, len(sf.ring), tuple((k, m["manufacturer"], m["model"]) for k, m in project.modules.items()))
         if not self._same(shape):
             self._build_subfield(project, sf)
@@ -935,9 +939,11 @@ class Properties(QScrollArea):
     # exclusion
 
     def show_exclusion(self, e: model.ExclusionItem) -> None:
+        if self.kind != "exclusion" or self.oid != e.id:
+            self.drop_typing()
         self.kind, self.oid = "exclusion", e.id
         self.shown = {"object": e}
-        if not self._same(("exclusion", e.id, e.height is None, len(e.ring))):
+        if not self._same(("exclusion", e.height is None, len(e.ring))):
             self._build_exclusion(e)
         self._refresh()
 

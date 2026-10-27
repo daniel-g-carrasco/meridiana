@@ -163,18 +163,18 @@ def texts() -> dict[str, Help]:
             _("Between rows"), _("The space between rows on the pitch; on tilted rows the sun gives it."),
             _("On a pitch the modules lie flush and the rows do not shade each other: the gap is a value, for the "
               "clamps and for walking. On tilted rows and on the ground the pitch comes from the sun instead: no "
-              "row shades the next on the design day, between the hours of the site."),
+              "row shades the next on the design day, between the sub-field's hours."),
             manual="1-modello.md#tra-le-file"),
         "subfield.pitch": h(
             _("Row pitch"), _("From the sun, given, or from the ground cover ratio."),
             _("«From the sun»: the shortest pitch with no row shading the next on the design day, between the "
-              "hours of the site. «Given pitch»: a distance you choose. «Ground cover ratio»: the depth of the "
+              "sub-field's hours. «Given pitch»: a distance you choose. «Ground cover ratio»: the depth of the "
               "modules across the row divided by the pitch."),
             ("CEI 82-25/3 6.2",), "1-modello.md#passo-delle-file"),
         "subfield.shade_free": h(
             _("Out of the obstacles' shadows"), _("Takes out the modules the obstacles shade on the design day."),
             _("No module where parapets, plant, chimneys, trees and the other buildings cast their shadow on the "
-              "design day, between the hours of the site: the same rule as the row pitch. When the obstacles "
+              "design day, between the sub-field's hours: the same rule as the row pitch. When the obstacles "
               "take much light, the Checks propose it and say how many modules it costs."),
             manual="1-modello.md#fuori-dalle-ombre-degli-ostacoli"),
         # the exclusion

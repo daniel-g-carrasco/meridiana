@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: meridiana\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 04:07+0100\n"
+"POT-Creation-Date: 2026-10-27 04:33+0100\n"
 "PO-Revision-Date: 2026-10-22 21:00+0200\n"
 "Last-Translator: Daniel Grasso <code@danielgrasso.com>\n"
 "Language-Team: Italian\n"
@@ -1343,7 +1343,7 @@ msgid "{name}: the modules are not laid yet"
 msgstr "{name}: i moduli non sono ancora posati"
 
 #: src/meridiana/checks.py:237 src/meridiana/ui/appearance.py:69
-#: src/meridiana/ui/properties.py:872 src/meridiana/ui/window.py:2610
+#: src/meridiana/ui/properties.py:876 src/meridiana/ui/window.py:2610
 #: src/meridiana/ui/window.py:3256
 msgid "Lay the modules"
 msgstr "Posa i moduli"
@@ -1546,7 +1546,7 @@ msgstr ""
 "nazionali. La pagina Bilancio accetta il prezzo della bolletta, il prezzo di "
 "vendita e il costo dell'offerta."
 
-#: src/meridiana/checks.py:382 src/meridiana/ui/properties.py:867
+#: src/meridiana/checks.py:382 src/meridiana/ui/properties.py:871
 #: src/meridiana/ui/window.py:2466 src/meridiana/ui/window.py:2472
 #: src/meridiana/ui/window.py:2533 src/meridiana/ui/window.py:3254
 msgid "Lay again automatically"
@@ -1667,11 +1667,11 @@ msgstr ""
 "controllalo prima del progetto definitivo, oppure inserisci quello del "
 "progetto."
 
-#: src/meridiana/checks.py:542 src/meridiana/help.py:288
+#: src/meridiana/checks.py:542 src/meridiana/help.py:287
 msgid "To fix"
 msgstr "Da correggere"
 
-#: src/meridiana/checks.py:542 src/meridiana/help.py:293
+#: src/meridiana/checks.py:542 src/meridiana/help.py:292
 msgid "To check"
 msgstr "Da controllare"
 
@@ -2273,7 +2273,7 @@ msgstr "dall'indirizzo del sito"
 msgid "premium tariff"
 msgstr "tariffa premio"
 
-#: src/meridiana/energy/economics.py:432 src/meridiana/help.py:263
+#: src/meridiana/energy/economics.py:432 src/meridiana/help.py:262
 #: src/meridiana/ui/energy_pages.py:854 src/meridiana/ui/report_chapters.py:583
 #: src/meridiana/ui/report_chapters.py:611
 #: src/meridiana/ui/report_chapters.py:618
@@ -4169,7 +4169,7 @@ msgstr "indisponibilità"
 msgid "energy produced in a typical year"
 msgstr "energia prodotta in un anno tipo"
 
-#: src/meridiana/energy/simulate.py:979 src/meridiana/help.py:202
+#: src/meridiana/energy/simulate.py:979 src/meridiana/help.py:201
 #: src/meridiana/ui/energy_pages.py:394 src/meridiana/ui/report_chapters.py:301
 #: src/meridiana/ui/report_chapters.py:465
 msgid "Performance ratio"
@@ -4818,8 +4818,8 @@ msgstr "Passo delle file dal sole"
 msgid "The day and the hours in which no row shades the next one."
 msgstr "Il giorno e le ore in cui nessuna fila fa ombra alla successiva."
 
-#: src/meridiana/help.py:89
 #
+#: src/meridiana/help.py:89
 msgid ""
 "On the design day and between those solar hours, no row shades the next one. "
 "The pitch and the shadows kept out come from this window. The sub-field "
@@ -4828,20 +4828,21 @@ msgid ""
 msgstr ""
 "Nel giorno e tra le ore solari scelte nessuna fila fa ombra alla successiva. "
 "Da questa finestra vengono il passo e le ombre evitate. Il sottocampo segue "
-"il predefinito del progetto finché non lo cambi; «Usa per tutti i sottocampi» "
-"applica ovunque i valori mostrati. La CEI 82-25/3 6.2 dà solo l'angolo limite."
+"il predefinito del progetto finché non lo cambi; «Usa per tutti i "
+"sottocampi» applica ovunque i valori mostrati. La CEI 82-25/3 6.2 dà solo "
+"l'angolo limite."
 
-#: src/meridiana/help.py:96 src/meridiana/ui/properties.py:840
+#: src/meridiana/help.py:95 src/meridiana/ui/properties.py:844
 msgid "Day"
 msgstr "Giorno"
 
-#: src/meridiana/help.py:96
+#: src/meridiana/help.py:95
 msgid ""
 "21 December by default: the lowest sun of the year, the longest shadows."
 msgstr ""
 "Per impostazione il 21 dicembre: il sole più basso, le ombre più lunghe."
 
-#: src/meridiana/help.py:97
+#: src/meridiana/help.py:96
 msgid ""
 "The day on which the rows must not shade each other, with the hours in solar "
 "time (10 to 14 by default). A day nearer the equinox gives a shorter pitch "
@@ -4853,16 +4854,16 @@ msgstr ""
 "un passo più corto e più moduli, con un po' d'ombra tra le file d'inverno al "
 "mattino e alla sera."
 
-#: src/meridiana/help.py:102 src/meridiana/ui/properties.py:472
+#: src/meridiana/help.py:101 src/meridiana/ui/properties.py:472
 msgid "Connection and obligations"
 msgstr "Connessione e obblighi"
 
-#: src/meridiana/help.py:102
+#: src/meridiana/help.py:101
 msgid ""
 "What the rules need beyond the drawing: grid level, obligations, premises."
 msgstr "Ciò che le regole chiedono oltre al disegno: rete, obblighi, unità."
 
-#: src/meridiana/help.py:103
+#: src/meridiana/help.py:102
 msgid ""
 "The connection level comes from the power unless you choose it (the "
 "distributor decides). The minimum renewable capacity depends on the building "
@@ -4874,16 +4875,16 @@ msgstr ""
 "dalla sua destinazione. Potenza impegnata, superficie e unità immobiliare "
 "decidono chi può progettare (DM 37/2008 art. 5 comma 2)."
 
-#: src/meridiana/help.py:109 src/meridiana/shortcuts.py:66
-#: src/meridiana/ui/properties.py:539
+#: src/meridiana/help.py:108 src/meridiana/shortcuts.py:66
+#: src/meridiana/ui/properties.py:541
 msgid "Building"
 msgstr "Edificio"
 
-#: src/meridiana/help.py:109
+#: src/meridiana/help.py:108
 msgid "A footprint with its eave height and roof, where the sub-fields lie."
 msgstr "Un'impronta con altezza di gronda e copertura: lì stanno i sottocampi."
 
-#: src/meridiana/help.py:110
+#: src/meridiana/help.py:109
 msgid ""
 "The building is drawn as its footprint. The eave height and the roof (flat, "
 "mono-pitch, gable, hip or pitches drawn by hand) give the pitches the sub-"
@@ -4895,16 +4896,16 @@ msgstr ""
 "falde su cui stanno i sottocampi e le ombre che l'edificio fa sugli altri. "
 "Sulla copertura piana il parapetto ombreggia i moduli vicini."
 
-#: src/meridiana/help.py:115 src/meridiana/ui/properties.py:570
+#: src/meridiana/help.py:114 src/meridiana/ui/properties.py:572
 msgid "Roof"
 msgstr "Tetto"
 
-#: src/meridiana/help.py:115
+#: src/meridiana/help.py:114
 msgid "Type, covering, slope, ridge height; each side an eave or a gable end."
 msgstr ""
 "Tipo, copertura, pendenza, quota del colmo; ogni lato gronda o testata."
 
-#: src/meridiana/help.py:116
+#: src/meridiana/help.py:115
 msgid ""
 "Gable and hip roofs follow any outline: a pitch for each eave, ridges and "
 "valleys by themselves. A gable end is a side whose wall rises to the roof. "
@@ -4916,15 +4917,15 @@ msgstr ""
 "copertura propone la pendenza (tegole 35 %, coppi 30 %: manuale ANDIL 2025, "
 "p. 7); la quota del colmo, se scritta, la decide."
 
-#: src/meridiana/help.py:121 src/meridiana/ui/properties.py:551
+#: src/meridiana/help.py:120 src/meridiana/ui/properties.py:553
 msgid "Fire brigade"
 msgstr "Prevenzione incendi"
 
-#: src/meridiana/help.py:121
+#: src/meridiana/help.py:120
 msgid "The fire-brigade rules for the modules on this building's roof."
 msgstr "Le regole dei Vigili del Fuoco per i moduli su questa copertura."
 
-#: src/meridiana/help.py:122
+#: src/meridiana/help.py:121
 msgid ""
 "For an activity subject to fire-brigade control, the sub-fields on this "
 "building keep 1 m from the roof edge and from vents and plant, in groups of "
@@ -4936,16 +4937,16 @@ msgstr ""
 "m con corridoi di 2 m: Meridiana li applica da sola. Sul solaio resistente "
 "al fuoco la regola non chiede 1 m dalle pareti sotto."
 
-#: src/meridiana/help.py:127 src/meridiana/ui/properties.py:681
+#: src/meridiana/help.py:126 src/meridiana/ui/properties.py:683
 msgid "Sides"
 msgstr "Lati"
 
-#: src/meridiana/help.py:127
+#: src/meridiana/help.py:126
 msgid "The length of each side: change it and the side stretches, as in CAD."
 msgstr ""
 "La lunghezza di ogni lato: cambiala e il lato si allunga, come nei CAD."
 
-#: src/meridiana/help.py:128
+#: src/meridiana/help.py:127
 msgid ""
 "Each side of the outline with its length. A new length moves the far end of "
 "the side, and what comes after it, as the stretch of the CAD programs; a "
@@ -4955,19 +4956,19 @@ msgstr ""
 "l'estremo del lato, e ciò che segue, come lo stiramento dei programmi CAD; "
 "un doppio clic sulla quota di un lato in pianta fa lo stesso."
 
-#: src/meridiana/help.py:134 src/meridiana/shortcuts.py:68
-#: src/meridiana/ui/properties.py:717 src/meridiana/ui/report_chapters.py:423
+#: src/meridiana/help.py:133 src/meridiana/shortcuts.py:68
+#: src/meridiana/ui/properties.py:721 src/meridiana/ui/report_chapters.py:423
 #: src/meridiana/ui/report_chapters.py:762
 #: src/meridiana/ui/report_chapters.py:785
 #: src/meridiana/ui/report_chapters.py:957
 msgid "Sub-field"
 msgstr "Sottocampo"
 
-#: src/meridiana/help.py:134
+#: src/meridiana/help.py:133
 msgid "The area where the modules go, on a roof pitch or on the ground."
 msgstr "L'area dove vanno i moduli, su una falda o a terra."
 
-#: src/meridiana/help.py:135
+#: src/meridiana/help.py:134
 msgid ""
 "A sub-field is the area drawn for the modules: Meridiana lays them inside "
 "with its mounting, its gaps and the fire-brigade rules of the building it "
@@ -4979,17 +4980,17 @@ msgstr ""
 "su cui sta. «Posa i moduli» avvia la posa; cifre e note del risultato stanno "
 "sotto i pulsanti."
 
-#: src/meridiana/help.py:140 src/meridiana/ui/properties.py:725
+#: src/meridiana/help.py:139 src/meridiana/ui/properties.py:729
 #: src/meridiana/ui/report_chapters.py:423
 #: src/meridiana/ui/report_chapters.py:762
 msgid "Mounting"
 msgstr "Montaggio"
 
-#: src/meridiana/help.py:140
+#: src/meridiana/help.py:139
 msgid "How the modules stand: flush, tilted rows, east-west, ground, canopy."
 msgstr "Complanari, su file inclinate, est-ovest, a terra o in pensilina."
 
-#: src/meridiana/help.py:141
+#: src/meridiana/help.py:140
 msgid ""
 "How the modules stand on the surface: flush with the pitch, integrated in "
 "the roof, on tilted rows (anchored or ballasted), in east-west pairs, on the "
@@ -5001,16 +5002,16 @@ msgstr ""
 "ovest, a terra o in pensilina. Decide l'inclinazione e se il passo tra le "
 "file lo dà il sole."
 
-#: src/meridiana/help.py:146 src/meridiana/ui/properties.py:746
+#: src/meridiana/help.py:145 src/meridiana/ui/properties.py:750
 msgid "Modules per table, across"
 msgstr "Moduli per tavola, in altezza"
 
-#: src/meridiana/help.py:146
+#: src/meridiana/help.py:145
 msgid "Modules one above the other in a table: 2 is the «2V» of ground mounts."
 msgstr ""
 "Moduli uno sopra l'altro in una tavola: 2 è la «2V» dei montaggi a terra."
 
-#: src/meridiana/help.py:147
+#: src/meridiana/help.py:146
 msgid ""
 "How many modules stand one above the other in a table, across the row: with "
 "the modules in portrait, 2 is the «2V» of the ground mounts. More modules "
@@ -5020,15 +5021,15 @@ msgstr ""
 "con i moduli in verticale, 2 è la «2V» dei montaggi a terra. Più moduli in "
 "altezza fanno una fila più alta, quindi un passo più lungo dal sole."
 
-#: src/meridiana/help.py:152 src/meridiana/ui/properties.py:773
+#: src/meridiana/help.py:151 src/meridiana/ui/properties.py:777
 msgid "Gaps and margins"
 msgstr "Distanze e margini"
 
-#: src/meridiana/help.py:152
+#: src/meridiana/help.py:151
 msgid "The free space between modules, rows and tables, and from the edge."
 msgstr "Lo spazio libero tra moduli, file e tavole, e dal bordo."
 
-#: src/meridiana/help.py:153
+#: src/meridiana/help.py:152
 msgid ""
 "The gaps between the modules, from the edge of the area, between the rows "
 "and between the tables. Where the building is subject to fire-brigade "
@@ -5039,15 +5040,15 @@ msgstr ""
 "Se l'edificio è soggetto al controllo dei Vigili del Fuoco, Meridiana tiene "
 "da sola almeno 1 m dal bordo e aggiunge i corridoi tra i gruppi."
 
-#: src/meridiana/help.py:158 src/meridiana/ui/properties.py:776
+#: src/meridiana/help.py:157 src/meridiana/ui/properties.py:780
 msgid "From the edge of the area"
 msgstr "Dal bordo dell'area"
 
-#: src/meridiana/help.py:158
+#: src/meridiana/help.py:157
 msgid "A free strip along the outline, where no module goes."
 msgstr "Una fascia libera lungo il contorno, dove non va nessun modulo."
 
-#: src/meridiana/help.py:159
+#: src/meridiana/help.py:158
 msgid ""
 "A free strip along the outline of the area, where the modules do not go: for "
 "maintenance and for the fire-brigade rules. With an activity subject to "
@@ -5058,76 +5059,79 @@ msgstr ""
 "manutenzione e per le regole dei Vigili del Fuoco. Con l'attività soggetta "
 "vale almeno 1 m (DCPREV 14030/2025, 3.3.5.1), e Meridiana lo applica da sola."
 
-#: src/meridiana/help.py:164 src/meridiana/ui/properties.py:787
+#: src/meridiana/help.py:163 src/meridiana/ui/properties.py:791
 msgid "Between rows"
 msgstr "Tra le file"
 
-#: src/meridiana/help.py:164
+#: src/meridiana/help.py:163
 msgid "The space between rows on the pitch; on tilted rows the sun gives it."
 msgstr "Lo spazio tra le file sulla falda; sulle file inclinate lo dà il sole."
 
-#: src/meridiana/help.py:165
+#: src/meridiana/help.py:164
+#
 msgid ""
 "On a pitch the modules lie flush and the rows do not shade each other: the "
 "gap is a value, for the clamps and for walking. On tilted rows and on the "
 "ground the pitch comes from the sun instead: no row shades the next on the "
-"design day, between the hours of the site."
+"design day, between the sub-field's hours."
 msgstr ""
 "Sulla falda i moduli sono complanari e le file non si fanno ombra: la "
 "distanza è un valore, per i morsetti e per passare. Sulle file inclinate e a "
 "terra il passo lo dà invece il sole: nessuna fila fa ombra alla successiva "
-"nel giorno di progetto, tra le ore del sito."
+"nel giorno di progetto, tra le ore del sottocampo."
 
-#: src/meridiana/help.py:170 src/meridiana/ui/properties.py:805
+#: src/meridiana/help.py:169 src/meridiana/ui/properties.py:809
 msgid "Row pitch"
 msgstr "Passo delle file"
 
-#: src/meridiana/help.py:170
+#: src/meridiana/help.py:169
 msgid "From the sun, given, or from the ground cover ratio."
 msgstr "Dal sole, assegnato, o dal rapporto di copertura del suolo."
 
-#: src/meridiana/help.py:171
+#: src/meridiana/help.py:170
+#
 msgid ""
 "«From the sun»: the shortest pitch with no row shading the next on the "
-"design day, between the hours of the site. «Given pitch»: a distance you "
+"design day, between the sub-field's hours. «Given pitch»: a distance you "
 "choose. «Ground cover ratio»: the depth of the modules across the row "
 "divided by the pitch."
 msgstr ""
 "«Dal sole»: il passo più corto per cui nessuna fila fa ombra alla successiva "
-"nel giorno di progetto, tra le ore del sito. «Passo assegnato»: una distanza "
+"nel giorno di progetto, tra le ore del sottocampo. «Passo assegnato»: una distanza "
 "scelta da te. «Rapporto di copertura (GCR)»: la profondità dei moduli di "
 "traverso alla fila diviso il passo."
 
-#: src/meridiana/help.py:176 src/meridiana/ui/properties.py:797
+#: src/meridiana/help.py:175 src/meridiana/ui/properties.py:801
 msgid "Out of the obstacles' shadows"
 msgstr "Fuori dalle ombre degli ostacoli"
 
-#: src/meridiana/help.py:176
+#: src/meridiana/help.py:175
 msgid "Takes out the modules the obstacles shade on the design day."
 msgstr "Toglie i moduli che gli ostacoli ombreggiano nel giorno di progetto."
 
-#: src/meridiana/help.py:177
+#: src/meridiana/help.py:176
+#
 msgid ""
 "No module where parapets, plant, chimneys, trees and the other buildings "
-"cast their shadow on the design day, between the hours of the site: the same "
+"cast their shadow on the design day, between the sub-field's hours: the same "
 "rule as the row pitch. When the obstacles take much light, the Checks "
 "propose it and say how many modules it costs."
 msgstr ""
 "Nessun modulo dove parapetti, impianti, camini, alberi e gli altri edifici "
-"fanno ombra nel giorno di progetto, tra le ore del sito: la stessa regola "
+"fanno ombra nel giorno di progetto, tra le ore del sottocampo: la stessa regola "
 "del passo tra le file. Quando gli ostacoli tolgono molta luce, le Verifiche "
 "lo propongono e dicono quanti moduli costa."
 
-#: src/meridiana/help.py:183 src/meridiana/shortcuts.py:69
-#: src/meridiana/ui/properties.py:945 src/meridiana/viewaids.py:92
+#: src/meridiana/help.py:182 src/meridiana/shortcuts.py:69
+#: src/meridiana/ui/properties.py:951 src/meridiana/viewaids.py:92
 msgid "Exclusion"
 msgstr "Esclusione"
 
-#: src/meridiana/help.py:183
+#: src/meridiana/help.py:182
 msgid "An area with no modules: skylight, vent, plant, chimney, walkway."
 msgstr "Un'area senza moduli: lucernario, evacuatore, impianto, camino."
 
-#: src/meridiana/help.py:184
+#: src/meridiana/help.py:183
 msgid ""
 "An exclusion keeps the modules out of its outline and of its extra "
 "clearance. With a height it is also an obstacle that casts shadows. Smoke "
@@ -5139,15 +5143,15 @@ msgstr ""
 "aperture e impianti sulla copertura prendono da soli 1 m in più dove valgono "
 "le regole dei Vigili del Fuoco (DCPREV 14030/2025, 3.3.5.1)."
 
-#: src/meridiana/help.py:190 src/meridiana/ui/energy_pages.py:394
+#: src/meridiana/help.py:189 src/meridiana/ui/energy_pages.py:394
 msgid "Energy a year"
 msgstr "Energia all'anno"
 
-#: src/meridiana/help.py:190
+#: src/meridiana/help.py:189
 msgid "The AC energy at the meter in a typical year, every loss included."
 msgstr "L'energia CA al contatore in un anno tipo, con tutte le perdite."
 
-#: src/meridiana/help.py:191
+#: src/meridiana/help.py:190
 msgid ""
 "The energy the system gives at the meter in the typical year of the site, "
 "after the whole chain of losses: shading, reflection, soiling, temperature, "
@@ -5159,17 +5163,17 @@ msgstr ""
 "inverter. È la cifra della relazione; «Come è calcolato» mostra ogni passo "
 "con la sua fonte."
 
-#: src/meridiana/help.py:196 src/meridiana/ui/energy_pages.py:394
+#: src/meridiana/help.py:195 src/meridiana/ui/energy_pages.py:394
 #: src/meridiana/ui/report_chapters.py:300
 #: src/meridiana/ui/report_chapters.py:464
 msgid "Specific yield"
 msgstr "Producibilità specifica"
 
-#: src/meridiana/help.py:196
+#: src/meridiana/help.py:195
 msgid "The kWh produced in a year for each kWp installed."
 msgstr "I kWh prodotti in un anno per ogni kWp installato."
 
-#: src/meridiana/help.py:197
+#: src/meridiana/help.py:196
 msgid ""
 "The energy of a year divided by the power of the modules: it compares plants "
 "of different sizes. In Italy it is often between 1,000 and 1,500 kWh/kWp, "
@@ -5180,12 +5184,12 @@ msgstr ""
 "taglia diversa. In Italia sta spesso tra 1.000 e 1.500 kWh/kWp, da nord a "
 "sud; molto sotto, guarda le ombre e l'orientamento."
 
-#: src/meridiana/help.py:202
+#: src/meridiana/help.py:201
 msgid ""
 "How much of the energy reaching the modules becomes energy at the meter."
 msgstr "Quanta energia che arriva sui moduli diventa energia al contatore."
 
-#: src/meridiana/help.py:203
+#: src/meridiana/help.py:202
 msgid ""
 "The energy at the meter divided by the energy the modules would give at "
 "their nominal power with the irradiation on their plane. Between 75 and 85% "
@@ -5195,16 +5199,16 @@ msgstr ""
 "nominale con l'irraggiamento sul loro piano. Tra 75 e 85 % è normale per un "
 "impianto con poche ombre; più in basso, guarda le perdite."
 
-#: src/meridiana/help.py:208 src/meridiana/ui/catalog_dialog.py:270
+#: src/meridiana/help.py:207 src/meridiana/ui/catalog_dialog.py:270
 #: src/meridiana/ui/energy_pages.py:394
 msgid "Power"
 msgstr "Potenza"
 
-#: src/meridiana/help.py:208
+#: src/meridiana/help.py:207
 msgid "The modules' power at STC, the inverters' AC power and their ratio."
 msgstr "La potenza dei moduli in STC, quella CA degli inverter e il rapporto."
 
-#: src/meridiana/help.py:209
+#: src/meridiana/help.py:208
 msgid ""
 "The sum of the modules' nameplate power at standard test conditions (kWp); "
 "under it, the inverters' AC power and the DC/AC ratio. For the grid rules "
@@ -5216,17 +5220,17 @@ msgstr ""
 "connessione la potenza nominale dell'impianto è la minore delle due (CEI "
 "0-21:2026-07 3.61)."
 
-#: src/meridiana/help.py:214 src/meridiana/ui/energy_pages.py:395
+#: src/meridiana/help.py:213 src/meridiana/ui/energy_pages.py:395
 #: src/meridiana/ui/report_chapters.py:467
 msgid "PVGIS, second opinion"
 msgstr "PVGIS, secondo parere"
 
-#: src/meridiana/help.py:214
+#: src/meridiana/help.py:213
 msgid ""
 "The typical year and the horizon of the site, from the European service."
 msgstr "L'anno tipo e l'orizzonte del sito, dal servizio europeo."
 
-#: src/meridiana/help.py:215
+#: src/meridiana/help.py:214
 msgid ""
 "PVGIS, the service of the European Commission's Joint Research Centre, gives "
 "the typical weather year and the horizon of the site, fetched once and kept "
@@ -5238,16 +5242,16 @@ msgstr ""
 "cache. Il riquadro mostra la sua stima per lo stesso impianto, come secondo "
 "parere."
 
-#: src/meridiana/help.py:220 src/meridiana/ui/energy_pages.py:362
+#: src/meridiana/help.py:219 src/meridiana/ui/energy_pages.py:362
 #: src/meridiana/ui/energy_pages.py:405
 msgid "Losses"
 msgstr "Perdite"
 
-#: src/meridiana/help.py:220
+#: src/meridiana/help.py:219
 msgid "Each item is a step of the chain, from the sun to the meter."
 msgstr "Ogni voce è un passo della catena, dal sole al contatore."
 
-#: src/meridiana/help.py:221
+#: src/meridiana/help.py:220
 msgid ""
 "Each item is a step of the chain from the sun to the meter: shading, "
 "reflection, soiling, temperature, mismatch, wiring, inverter, "
@@ -5259,16 +5263,16 @@ msgstr ""
 "predefiniti sono segnati come tali; «Come è calcolato» mostra la formula e "
 "la fonte di ogni numero."
 
-#: src/meridiana/help.py:227 src/meridiana/ui/energy_pages.py:625
+#: src/meridiana/help.py:226 src/meridiana/ui/energy_pages.py:625
 #: src/meridiana/ui/report_chapters.py:520
 msgid "Consumption a year"
 msgstr "Consumo all'anno"
 
-#: src/meridiana/help.py:227
+#: src/meridiana/help.py:226
 msgid "The energy the site uses in a year, without the system."
 msgstr "L'energia che il sito usa in un anno, senza l'impianto."
 
-#: src/meridiana/help.py:228
+#: src/meridiana/help.py:227
 msgid ""
 "The consumption of a year, from what you entered: a yearly figure, the "
 "bands, the bills month by month, a measured curve or a typical profile. The "
@@ -5280,16 +5284,16 @@ msgstr ""
 "riquadri ne danno la forma: le fasce, l'ora più alta, il carico di base, "
 "quando avviene."
 
-#: src/meridiana/help.py:233
+#: src/meridiana/help.py:232
 msgid "Time bands"
 msgstr "Fasce orarie"
 
-#: src/meridiana/help.py:233
+#: src/meridiana/help.py:232
 msgid "F1 weekdays 8 to 19; F2 and F3 the other hours, nights and holidays."
 msgstr ""
 "F1 da lunedì a venerdì dalle 8 alle 19; F2 e F3 le altre ore e i festivi."
 
-#: src/meridiana/help.py:234
+#: src/meridiana/help.py:233
 msgid ""
 "F1 is Monday to Friday from 8 to 19; F2 Monday to Friday from 7 to 8 and "
 "from 19 to 23, and Saturday from 7 to 23; F3 the nights, Sundays and "
@@ -5301,15 +5305,15 @@ msgstr ""
 "domeniche e i festivi. Un sito che usa l'energia in F1 segue meglio la "
 "produzione del giorno."
 
-#: src/meridiana/help.py:239
+#: src/meridiana/help.py:238
 msgid "Shape of the consumption"
 msgstr "Forma dei consumi"
 
-#: src/meridiana/help.py:239
+#: src/meridiana/help.py:238
 msgid "When the site uses energy: the shape decides the self-consumption."
 msgstr "Quando il sito usa l'energia: la forma decide l'autoconsumo."
 
-#: src/meridiana/help.py:240
+#: src/meridiana/help.py:239
 msgid ""
 "The highest hour; the base load, the power the use stays above in 95% of the "
 "hours; the load factor, the mean over the highest; the share between 8 and "
@@ -5321,18 +5325,18 @@ msgstr ""
 "tra le 8 e le 18 e nei fine settimana e festivi. Un sito attivo di giorno "
 "usa più produzione."
 
-#: src/meridiana/help.py:246 src/meridiana/ui/energy_pages.py:853
+#: src/meridiana/help.py:245 src/meridiana/ui/energy_pages.py:853
 #: src/meridiana/ui/report_chapters.py:304
 #: src/meridiana/ui/report_chapters.py:524
 #: src/meridiana/ui/report_chapters.py:611
 msgid "Self-consumption"
 msgstr "Autoconsumo"
 
-#: src/meridiana/help.py:246
+#: src/meridiana/help.py:245
 msgid "The share of the production used on site, hour by hour."
 msgstr "La parte della produzione usata sul posto, ora per ora."
 
-#: src/meridiana/help.py:247
+#: src/meridiana/help.py:246
 msgid ""
 "The production used on site in the same hour, over the whole production; the "
 "rest goes to the grid. A battery stores part of the surplus for the evening. "
@@ -5342,7 +5346,7 @@ msgstr ""
 "resto va in rete. Una batteria accumula parte dell'eccedenza per la sera. Si "
 "calcola ora per ora sull'anno tipo, non sui totali mensili."
 
-#: src/meridiana/help.py:252 src/meridiana/ui/energy_pages.py:853
+#: src/meridiana/help.py:251 src/meridiana/ui/energy_pages.py:853
 #: src/meridiana/ui/report_chapters.py:305
 #: src/meridiana/ui/report_chapters.py:525
 #: src/meridiana/ui/report_chapters.py:611
@@ -5350,11 +5354,11 @@ msgstr ""
 msgid "Self-sufficiency"
 msgstr "Autosufficienza"
 
-#: src/meridiana/help.py:252
+#: src/meridiana/help.py:251
 msgid "The share of the consumption covered by the system."
 msgstr "La parte dei consumi coperta dall'impianto."
 
-#: src/meridiana/help.py:253
+#: src/meridiana/help.py:252
 msgid ""
 "The consumption covered by the system, directly or through the battery, over "
 "the whole consumption. With storage it rises; without it, the nights always "
@@ -5364,16 +5368,16 @@ msgstr ""
 "dei consumi. Con l'accumulo sale; senza, l'energia della notte viene sempre "
 "dalla rete."
 
-#: src/meridiana/help.py:257
+#: src/meridiana/help.py:256
 msgid "The first year"
 msgstr "Il primo anno"
 
-#: src/meridiana/help.py:257
+#: src/meridiana/help.py:256
 msgid "What the system saves on the bill and earns from the energy sold."
 msgstr ""
 "Il risparmio in bolletta e l'incasso dell'energia venduta, nel primo anno."
 
-#: src/meridiana/help.py:258
+#: src/meridiana/help.py:257
 msgid ""
 "The saving is the energy self-consumed in each band times its price; the "
 "sale is the energy fed in times its value, with the community's incentive "
@@ -5385,11 +5389,11 @@ msgstr ""
 "comunità energetica quando c'è. La bolletta è la sua parte energia, senza "
 "l'impianto e con l'impianto."
 
-#: src/meridiana/help.py:263
+#: src/meridiana/help.py:262
 msgid "What the system is worth today over its years, its cost included."
 msgstr "Quanto vale oggi l'impianto nei suoi anni, costo compreso."
 
-#: src/meridiana/help.py:264
+#: src/meridiana/help.py:263
 msgid ""
 "The cash flows of every year of the analysis (25 by default), discounted at "
 "the rate chosen (4% by default), minus the investment. Positive, the system "
@@ -5401,17 +5405,17 @@ msgstr ""
 "l'impianto rende più di quanto costa a quel tasso; il tasso interno di "
 "rendimento è quello che lo porta a zero."
 
-#: src/meridiana/help.py:269
+#: src/meridiana/help.py:268
 msgid "Return"
 msgstr "Rendimento"
 
-#: src/meridiana/help.py:269
+#: src/meridiana/help.py:268
 msgid ""
 "The investment, the rate of return, the payback and the cost of the energy."
 msgstr ""
 "Investimento, tasso di rendimento, tempo di ritorno e costo dell'energia."
 
-#: src/meridiana/help.py:270
+#: src/meridiana/help.py:269
 msgid ""
 "The investment from the cost per kWp or the offer; the internal rate of "
 "return, at which the net present value is zero; the payback, the year the "
@@ -5423,15 +5427,15 @@ msgstr ""
 "l'anno in cui il flusso di cassa cumulato diventa positivo; il costo "
 "livellato, quanto costa ogni kWh prodotto negli anni."
 
-#: src/meridiana/help.py:275
+#: src/meridiana/help.py:274
 msgid "Prices"
 msgstr "Prezzi"
 
-#: src/meridiana/help.py:275
+#: src/meridiana/help.py:274
 msgid "Indicative values until you enter those of the bill and the offer."
 msgstr "Indicativi finché non inserisci quelli della bolletta e dell'offerta."
 
-#: src/meridiana/help.py:276
+#: src/meridiana/help.py:275
 msgid ""
 "The prices of the energy bought and sold and the costs start from indicative "
 "values, marked as defaults in «How it is computed» and in the Checks; the "
@@ -5443,16 +5447,16 @@ msgstr ""
 "Verifiche; la relazione li elenca. Sostituiscili con quelli della bolletta "
 "(tutti i costi variabili, imposte comprese) e dell'offerta."
 
-#: src/meridiana/help.py:282 src/meridiana/shortcuts.py:110
+#: src/meridiana/help.py:281 src/meridiana/shortcuts.py:110
 #: src/meridiana/ui/window.py:399 src/meridiana/ui/window.py:2029
 msgid "Checks"
 msgstr "Verifiche"
 
-#: src/meridiana/help.py:282
+#: src/meridiana/help.py:281
 msgid "What needs your attention, by level, each with its source."
 msgstr "Ciò che chiede attenzione, per livello, ognuno con la sua fonte."
 
-#: src/meridiana/help.py:283
+#: src/meridiana/help.py:282
 msgid ""
 "The checks gather what needs attention from every part of the project: to "
 "fix, to check, to know, and what passed. A click shows the object in the "
@@ -5464,11 +5468,11 @@ msgstr ""
 "clic mostra l'oggetto nelle viste, la freccia apre il dettaglio, «Correggi» "
 "applica la modifica proposta (Ctrl+.)."
 
-#: src/meridiana/help.py:288
+#: src/meridiana/help.py:287
 msgid "Something the rules or the layout do not allow: do not deliver it so."
 msgstr "Qualcosa che la norma o la posa non ammette: così non si consegna."
 
-#: src/meridiana/help.py:289
+#: src/meridiana/help.py:288
 msgid ""
 "Something a standard or the layout does not allow: the project should not be "
 "delivered like this. «Fix» makes the change proposed, and Undo takes it back."
@@ -5476,11 +5480,11 @@ msgstr ""
 "Qualcosa che una norma o la posa non ammette: il progetto non va consegnato "
 "così. «Correggi» fa la modifica proposta, e Annulla la toglie."
 
-#: src/meridiana/help.py:293
+#: src/meridiana/help.py:292
 msgid "A loss or a risk, not a prohibition: you decide."
 msgstr "Una perdita o un rischio, non un divieto: decidi tu."
 
-#: src/meridiana/help.py:294
+#: src/meridiana/help.py:293
 msgid ""
 "A loss or a risk, not a prohibition: the shade of the obstacles, modules "
 "left out of the strings, a value worth a look. Read the detail under the row "
@@ -5490,15 +5494,15 @@ msgstr ""
 "rimasti fuori dalle stringhe, un valore da guardare. Leggi il dettaglio "
 "sotto la riga (perché, e che cosa fare) e decidi."
 
-#: src/meridiana/help.py:298
+#: src/meridiana/help.py:297
 msgid "To know"
 msgstr "Da sapere"
 
-#: src/meridiana/help.py:298
+#: src/meridiana/help.py:297
 msgid "A fact the report will mention: a threshold passed, a default in use."
 msgstr "Un fatto che la relazione citerà: una soglia superata, un predefinito."
 
-#: src/meridiana/help.py:299
+#: src/meridiana/help.py:298
 msgid ""
 "A fact the report will mention: a threshold passed (the power that asks for "
 "a dedicated interface relay), a rule that applies, a value still at its "
@@ -5510,15 +5514,15 @@ msgstr ""
 "ancora predefinito. Niente da correggere; le note delle regole si copiano "
 "nella relazione tecnica."
 
-#: src/meridiana/help.py:304
+#: src/meridiana/help.py:303
 msgid "Passed"
 msgstr "Superate"
 
-#: src/meridiana/help.py:304
+#: src/meridiana/help.py:303
 msgid "What was checked and found right, closed by default."
 msgstr "Ciò che è stato controllato e trovato a posto, chiuso all'inizio."
 
-#: src/meridiana/help.py:305
+#: src/meridiana/help.py:304
 msgid ""
 "The checks that passed, each with its source: what Meridiana verified and "
 "found right. The section is closed by default, so that what needs attention "
@@ -5528,7 +5532,7 @@ msgstr ""
 "controllato e trovato a posto. La sezione è chiusa per impostazione, perché "
 "venga prima ciò che chiede attenzione."
 
-#: src/meridiana/help.py:309 src/meridiana/ui/checks_page.py:512
+#: src/meridiana/help.py:308 src/meridiana/ui/checks_page.py:512
 #: src/meridiana/ui/report_chapters.py:630
 #: src/meridiana/ui/report_chapters.py:686
 #: src/meridiana/ui/report_chapters.py:705
@@ -5536,11 +5540,11 @@ msgstr ""
 msgid "Source"
 msgstr "Fonte"
 
-#: src/meridiana/help.py:309
+#: src/meridiana/help.py:308
 msgid "The standard with its clause and page, or the model of calculation."
 msgstr "La norma con l'articolo e la pagina, o il modello di calcolo."
 
-#: src/meridiana/help.py:310
+#: src/meridiana/help.py:309
 msgid ""
 "Each check says where it comes from: a standard with its edition, clause and "
 "page, a law, or the model of calculation. The rules that apply are listed "
@@ -5550,7 +5554,7 @@ msgstr ""
 "una legge, o il modello di calcolo. Le regole che si applicano sono elencate "
 "con i loro paragrafi, pronte per la relazione tecnica."
 
-#: src/meridiana/help.py:335
+#: src/meridiana/help.py:334
 #, python-brace-format
 msgid "Explain «{title}» for this project."
 msgstr "Spiegami «{title}» per questo progetto."
@@ -6227,7 +6231,7 @@ msgstr "Posa"
 msgid "Empty"
 msgstr "Svuota"
 
-#: src/meridiana/phases.py:86 src/meridiana/ui/properties.py:872
+#: src/meridiana/phases.py:86 src/meridiana/ui/properties.py:876
 #: src/meridiana/ui/window.py:3256
 msgid "Lay again"
 msgstr "Posa di nuovo"
@@ -10279,7 +10283,7 @@ msgid "Supply point (POD)"
 msgstr "Punto di prelievo (POD)"
 
 #: src/meridiana/ui/energy_pages.py:540 src/meridiana/ui/energy_pages.py:553
-#: src/meridiana/ui/map_sources.py:200 src/meridiana/ui/properties.py:752
+#: src/meridiana/ui/map_sources.py:200 src/meridiana/ui/properties.py:756
 #: src/meridiana/ui/window.py:1737
 msgid "Automatic"
 msgstr "Automatico"
@@ -11422,12 +11426,12 @@ msgstr "Nuova sorgente"
 msgid "Remove"
 msgstr "Togli"
 
-#: src/meridiana/ui/map_sources.py:113 src/meridiana/ui/properties.py:543
-#: src/meridiana/ui/properties.py:721
+#: src/meridiana/ui/map_sources.py:113 src/meridiana/ui/properties.py:545
+#: src/meridiana/ui/properties.py:725
 msgid "Name"
 msgstr "Nome"
 
-#: src/meridiana/ui/map_sources.py:117 src/meridiana/ui/properties.py:576
+#: src/meridiana/ui/map_sources.py:117 src/meridiana/ui/properties.py:578
 msgid "Type"
 msgstr "Tipo"
 
@@ -12973,19 +12977,19 @@ msgstr ""
 "L'indirizzo non indica una regione con regole proprie: valgono quelle "
 "nazionali."
 
-#: src/meridiana/ui/properties.py:546
+#: src/meridiana/ui/properties.py:548
 msgid "Eave height"
 msgstr "Altezza di gronda"
 
-#: src/meridiana/ui/properties.py:554
+#: src/meridiana/ui/properties.py:556
 msgid "Activity subject to control (DPR 151/2011)"
 msgstr "Attività soggetta a controllo (DPR 151/2011)"
 
-#: src/meridiana/ui/properties.py:558
+#: src/meridiana/ui/properties.py:560
 msgid "Fire-resistant roof slab"
 msgstr "Solaio di copertura resistente al fuoco"
 
-#: src/meridiana/ui/properties.py:561
+#: src/meridiana/ui/properties.py:563
 msgid ""
 "For an activity subject to control, the sub-fields keep 1 m from the edge, "
 "groups of at most 20 m and 2 m corridors (DCPREV 14030/2025, 3.3.5.1)."
@@ -12994,29 +12998,29 @@ msgstr ""
 "in gruppi di al massimo 20 m separati da corridoi di 2 m (DCPREV 14030/2025, "
 "3.3.5.1)."
 
-#: src/meridiana/ui/properties.py:580
+#: src/meridiana/ui/properties.py:582
 #, python-brace-format
 msgid "{covering} ({p} %)"
 msgstr "{covering} ({p} %)"
 
-#: src/meridiana/ui/properties.py:591
+#: src/meridiana/ui/properties.py:593
 msgid "Covering"
 msgstr "Copertura"
 
-#: src/meridiana/ui/properties.py:600
+#: src/meridiana/ui/properties.py:602
 msgid "Slope"
 msgstr "Pendenza"
 
-#: src/meridiana/ui/properties.py:604
+#: src/meridiana/ui/properties.py:606
 msgid "Slope (percent)"
 msgstr "Pendenza (percentuale)"
 
-#: src/meridiana/ui/properties.py:605
+#: src/meridiana/ui/properties.py:607
 #, python-brace-format
 msgid "Proposed for {covering}: {p} %, from {source}."
 msgstr "Proposta per {covering}: {p} %, da {source}."
 
-#: src/meridiana/ui/properties.py:612
+#: src/meridiana/ui/properties.py:614
 msgid ""
 "The height of the ridge above the ground: written, it sets the slope (the "
 "highest point of the roof stands there)"
@@ -13024,47 +13028,47 @@ msgstr ""
 "La quota del colmo da terra: se scritta, decide la pendenza (il punto più "
 "alto del tetto sta lì)"
 
-#: src/meridiana/ui/properties.py:617
+#: src/meridiana/ui/properties.py:619
 #, python-brace-format
 msgid "the ridge must stand above the eave ({h} m)"
 msgstr "il colmo deve stare sopra la gronda ({h} m)"
 
-#: src/meridiana/ui/properties.py:623
+#: src/meridiana/ui/properties.py:625
 msgid "Ridge height"
 msgstr "Quota del colmo"
 
-#: src/meridiana/ui/properties.py:628
+#: src/meridiana/ui/properties.py:630
 msgid "Eave on side"
 msgstr "Gronda sul lato"
 
-#: src/meridiana/ui/properties.py:628
+#: src/meridiana/ui/properties.py:630
 msgid "Click on the plan the side the roof goes down to"
 msgstr "Clicca in pianta il lato verso cui scende la falda"
 
-#: src/meridiana/ui/properties.py:631
+#: src/meridiana/ui/properties.py:633
 msgid "Eave"
 msgstr "Gronda"
 
-#: src/meridiana/ui/properties.py:631
+#: src/meridiana/ui/properties.py:633
 msgid "Gable end"
 msgstr "Testata"
 
-#: src/meridiana/ui/properties.py:636 src/meridiana/ui/properties.py:693
+#: src/meridiana/ui/properties.py:638 src/meridiana/ui/properties.py:695
 #, python-brace-format
 msgid "Side {n}"
 msgstr "Lato {n}"
 
-#: src/meridiana/ui/properties.py:637 src/meridiana/ui/properties.py:666
+#: src/meridiana/ui/properties.py:639 src/meridiana/ui/properties.py:668
 msgid "Pick on the plan"
 msgstr "Scegli in pianta"
 
-#: src/meridiana/ui/properties.py:638
+#: src/meridiana/ui/properties.py:640
 msgid ""
 "Click a side on the plan: an eave becomes a gable end, a gable end an eave"
 msgstr ""
 "Clicca un lato in pianta: una gronda diventa testata, una testata gronda"
 
-#: src/meridiana/ui/properties.py:646
+#: src/meridiana/ui/properties.py:648
 msgid ""
 "Height of the parapet above the roof, all round: it casts shadows on the "
 "modules"
@@ -13072,11 +13076,11 @@ msgstr ""
 "Altezza del parapetto sopra la copertura, tutto intorno: proietta ombre sui "
 "moduli"
 
-#: src/meridiana/ui/properties.py:648
+#: src/meridiana/ui/properties.py:650
 msgid "Parapet"
 msgstr "Parapetto"
 
-#: src/meridiana/ui/properties.py:656
+#: src/meridiana/ui/properties.py:658
 #, python-brace-format
 msgid "Side {sides} cannot be a gable end on this outline: it is an eave."
 msgid_plural ""
@@ -13086,109 +13090,110 @@ msgstr[0] ""
 msgstr[1] ""
 "I lati {sides} non possono essere testate su questa impronta: sono gronde."
 
-#: src/meridiana/ui/properties.py:660
+#: src/meridiana/ui/properties.py:662
 msgid "The outline crosses itself: the roof stays flat until it is put right."
 msgstr ""
 "Il contorno si interseca: il tetto resta piano finché non lo si corregge."
 
-#: src/meridiana/ui/properties.py:729
+#: src/meridiana/ui/properties.py:733
 msgid "Catalogue…"
 msgstr "Catalogo…"
 
-#: src/meridiana/ui/properties.py:730
+#: src/meridiana/ui/properties.py:734
 msgid "Choose the module among the datasheets and the CEC list"
 msgstr "Scegli il modulo tra le schede tecniche e la lista CEC"
 
-#: src/meridiana/ui/properties.py:737 src/meridiana/ui/report_chapters.py:762
+#: src/meridiana/ui/properties.py:741 src/meridiana/ui/report_chapters.py:762
 msgid "Module"
 msgstr "Modulo"
 
-#: src/meridiana/ui/properties.py:738
+#: src/meridiana/ui/properties.py:742
 msgid "Portrait"
 msgstr "Verticale"
 
-#: src/meridiana/ui/properties.py:738
+#: src/meridiana/ui/properties.py:742
 msgid "Landscape"
 msgstr "Orizzontale"
 
-#: src/meridiana/ui/properties.py:741
+#: src/meridiana/ui/properties.py:745
 msgid "Orientation"
 msgstr "Disposizione"
 
-#: src/meridiana/ui/properties.py:751
+#: src/meridiana/ui/properties.py:755
 msgid "Module tilt"
 msgstr "Inclinazione dei moduli"
 
-#: src/meridiana/ui/properties.py:770
+#: src/meridiana/ui/properties.py:774
 msgid "Azimuth (from South, + West)"
 msgstr "Azimut (da Sud, + verso Ovest)"
 
-#: src/meridiana/ui/properties.py:776
+#: src/meridiana/ui/properties.py:780
 msgid "Between modules"
 msgstr "Tra i moduli"
 
-#: src/meridiana/ui/properties.py:790
+#: src/meridiana/ui/properties.py:794
 msgid "continuous rows"
 msgstr "file continue"
 
-#: src/meridiana/ui/properties.py:793
+#: src/meridiana/ui/properties.py:797
 msgid "Modules per table, along"
 msgstr "Moduli per tavola, in lunghezza"
 
-#: src/meridiana/ui/properties.py:796
+#: src/meridiana/ui/properties.py:800
 msgid "Between tables"
 msgstr "Tra le tavole"
 
-#: src/meridiana/ui/properties.py:808
+#: src/meridiana/ui/properties.py:812
 msgid "From the sun"
 msgstr "Dal sole"
 
-#: src/meridiana/ui/properties.py:808
+#: src/meridiana/ui/properties.py:812
 msgid "Given pitch"
 msgstr "Passo assegnato"
 
-#: src/meridiana/ui/properties.py:809
+#: src/meridiana/ui/properties.py:813
 msgid "Ground cover ratio"
 msgstr "Rapporto di copertura (GCR)"
 
-#: src/meridiana/ui/properties.py:812 src/meridiana/ui/properties.py:816
+#: src/meridiana/ui/properties.py:816 src/meridiana/ui/properties.py:820
 msgctxt "rows"
 msgid "Pitch"
 msgstr "Passo"
 
-#: src/meridiana/ui/properties.py:820
+#: src/meridiana/ui/properties.py:824
 msgid "Ratio"
 msgstr "Rapporto"
 
-#: src/meridiana/ui/properties.py:822
 #
+#: src/meridiana/ui/properties.py:826
 msgid "This sub-field's own"
 msgstr "Finestra propria del sottocampo"
 
-#: src/meridiana/ui/properties.py:823
 #
+#: src/meridiana/ui/properties.py:827
 msgid "Project default"
 msgstr "Predefinito del progetto"
 
-#: src/meridiana/ui/properties.py:841
+#: src/meridiana/ui/properties.py:845
 msgid "From (solar time)"
 msgstr "Dalle (tempo solare vero)"
 
-#: src/meridiana/ui/properties.py:842
+#: src/meridiana/ui/properties.py:846
 msgid "To (solar time)"
 msgstr "Alle (tempo solare vero)"
 
-#: src/meridiana/ui/properties.py:854
 #
+#: src/meridiana/ui/properties.py:858
 msgid "Use for all sub-fields"
 msgstr "Usa per tutti i sottocampi"
 
-#: src/meridiana/ui/properties.py:855
+#: src/meridiana/ui/properties.py:859
 msgid "Make this the project default and use it in every sub-field"
-msgstr "Rendi questa finestra il predefinito del progetto e usala in ogni sottocampo"
+msgstr ""
+"Rendi questa finestra il predefinito del progetto e usala in ogni sottocampo"
 
-#: src/meridiana/ui/properties.py:858
 #
+#: src/meridiana/ui/properties.py:862
 msgid ""
 "No row shades the next one on that day between those hours. The standards "
 "leave this choice to the designer."
@@ -13196,7 +13201,7 @@ msgstr ""
 "In quel giorno, tra quelle ore, nessuna fila fa ombra alla successiva. Le "
 "norme lasciano la scelta al progettista."
 
-#: src/meridiana/ui/properties.py:868
+#: src/meridiana/ui/properties.py:872
 msgid ""
 "The rows by hand give way to the automatic layout; asked first, and Undo "
 "brings them back"
@@ -13204,11 +13209,11 @@ msgstr ""
 "Le file a mano lasciano il posto alla posa automatica; lo chiede prima, e "
 "Annulla le riporta"
 
-#: src/meridiana/ui/properties.py:877
+#: src/meridiana/ui/properties.py:881
 msgid "Take them out"
 msgstr "Togli i moduli"
 
-#: src/meridiana/ui/properties.py:900
+#: src/meridiana/ui/properties.py:904
 msgid ""
 "To lay out again: the layout is on its way, the figures below are the "
 "previous ones."
@@ -13216,36 +13221,36 @@ msgstr ""
 "Da posare di nuovo: la posa è in arrivo, i numeri qui sotto sono quelli di "
 "prima."
 
-#: src/meridiana/ui/properties.py:902 src/meridiana/ui/window.py:2927
+#: src/meridiana/ui/properties.py:906 src/meridiana/ui/window.py:2927
 #, python-brace-format
 msgid "The layout failed: {why}"
 msgstr "La posa non è riuscita: {why}"
 
-#: src/meridiana/ui/properties.py:916
+#: src/meridiana/ui/properties.py:920
 #, python-brace-format
 msgid "<b>{n} module</b>, Po,cc {kw} kW"
 msgid_plural "<b>{n} modules</b>, Po,cc {kw} kW"
 msgstr[0] "<b>{n} modulo</b>, Po,cc {kw} kW"
 msgstr[1] "<b>{n} moduli</b>, Po,cc {kw} kW"
 
-#: src/meridiana/ui/properties.py:918
+#: src/meridiana/ui/properties.py:922
 #, python-brace-format
 msgid "azimuth {a}°, tilt {t}°"
 msgstr "azimut {a}°, inclinazione {t}°"
 
-#: src/meridiana/ui/properties.py:921
+#: src/meridiana/ui/properties.py:925
 #, python-brace-format
 msgid "row pitch {p} m, clear gap {g} m, limit angle {l}°"
 msgstr "passo {p} m, spazio libero {g} m, angolo limite {l}°"
 
-#: src/meridiana/ui/properties.py:924
+#: src/meridiana/ui/properties.py:928
 #, python-brace-format
 msgid "{n} fire-brigade group"
 msgid_plural "{n} fire-brigade groups"
 msgstr[0] "{n} gruppo VVF"
 msgstr[1] "{n} gruppi VVF"
 
-#: src/meridiana/ui/properties.py:930
+#: src/meridiana/ui/properties.py:934
 #, python-brace-format
 msgid ""
 "Rows by hand: {n} row, kept as it is; the pitch and the rules are checked, "
@@ -13260,36 +13265,36 @@ msgstr[1] ""
 "File a mano: {n} file, tenute come sono; il passo e le regole sono "
 "verificati, non applicati"
 
-#: src/meridiana/ui/properties.py:949
+#: src/meridiana/ui/properties.py:955
 msgid "Kind"
 msgstr "Tipo"
 
-#: src/meridiana/ui/properties.py:952
+#: src/meridiana/ui/properties.py:958
 msgid "Extra clearance"
 msgstr "Distanza aggiuntiva"
 
-#: src/meridiana/ui/properties.py:954
+#: src/meridiana/ui/properties.py:960
 msgid ""
 "How high it rises above the roof (or the ground): it casts shadows on the "
 "modules"
 msgstr ""
 "Quanto si alza sopra la copertura (o il terreno): proietta ombre sui moduli"
 
-#: src/meridiana/ui/properties.py:956
+#: src/meridiana/ui/properties.py:962
 msgid "Height"
 msgstr "Altezza"
 
-#: src/meridiana/ui/properties.py:959
+#: src/meridiana/ui/properties.py:965
 msgid "Height: the default for this kind, indicative; measure it on the site."
 msgstr ""
 "Altezza: il valore predefinito per questo tipo, indicativo; va misurata in "
 "sito."
 
-#: src/meridiana/ui/properties.py:961
+#: src/meridiana/ui/properties.py:967
 msgid "Use the default height of this kind"
 msgstr "Usa l'altezza predefinita di questo tipo"
 
-#: src/meridiana/ui/properties.py:964
+#: src/meridiana/ui/properties.py:970
 msgid ""
 "Smoke vents, openings and roof plant get 1 m more by themselves where the "
 "fire-brigade rules apply (DCPREV 14030/2025, 3.3.5.1)."
@@ -15666,8 +15671,8 @@ msgstr ""
 msgid "Adapt the rows"
 msgstr "Adatta le file"
 
-#: src/meridiana/ui/window.py:2554
 #
+#: src/meridiana/ui/window.py:2554
 msgid "Use the sun window for all sub-fields"
 msgstr "Usa la finestra solare per tutti i sottocampi"
 

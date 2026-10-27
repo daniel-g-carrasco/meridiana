@@ -10,6 +10,10 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- Reused Properties pages (R2): switching between objects of the same kind and shape updates only the values and keeps
+  the scroll position. Unconfirmed text never leaks into the next object. On the large generated project, median
+  switches fell from 57.370 to 1.773 ms between sub-fields, 24.354 to 0.843 ms between buildings and 44.541 to
+  1.495 ms between coplanar sub-fields.
 - Sub-field sun windows (R172): the design day and solar hours moved from Site to Sub-field, under Row pitch when it
   is computed from the sun. Each sub-field follows the project default until changed; Use for all sub-fields updates
   that default and clears individual windows in one undoable step. Layouts, shading checks and the assistant read the

@@ -1,0 +1,78 @@
+[
+  {
+    "name": "window visible",
+    "ok": true
+  },
+  {
+    "name": "initial layout",
+    "ok": true
+  },
+  {
+    "name": "Ctrl comma opens File Settings Appearance",
+    "ok": true
+  },
+  {
+    "name": "photo kimi7-impostazioni-chiaro",
+    "ok": true
+  },
+  {
+    "name": "dark applies and saves",
+    "ok": true
+  },
+  {
+    "name": "photo kimi7-impostazioni-scuro",
+    "ok": true
+  },
+  {
+    "name": "settings undo restores the original theme and saves",
+    "ok": true
+  },
+  {
+    "name": "navigation applies at once",
+    "ok": true
+  },
+  {
+    "name": "navigation undo",
+    "ok": true
+  },
+  {
+    "name": "sun fields in subfield",
+    "ok": true
+  },
+  {
+    "name": "subfield own window",
+    "ok": true
+  },
+  {
+    "name": "photo kimi7-sottocampo-chiaro",
+    "ok": true
+  },
+  {
+    "name": "use for all",
+    "ok": true
+  },
+  {
+    "name": "undo use for all",
+    "ok": true
+  },
+  {
+    "name": "redo use for all",
+    "ok": true
+  },
+  {
+    "name": "photo kimi7-sottocampo-scuro",
+    "ok": true
+  },
+  {
+    "name": "properties values follow new object",
+    "ok": true
+  },
+  {
+    "name": "properties reused",
+    "ok": true
+  },
+  {
+    "name": "all checks passed",
+    "ok": true
+  }
+]

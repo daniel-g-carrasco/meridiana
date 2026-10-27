@@ -146,6 +146,72 @@ class PanelAlone(unittest.TestCase):
         self.assertTrue(any("La zavorra da sola non è un vincolo su una soletta" in text for text in texts))
         self.assertTrue(any("non resta spazio dentro i margini" in text for text in texts))
 
+    def test_pages_are_reused_between_objects_of_the_same_shape_without_old_values(self):
+        import copy
+        from PySide6.QtWidgets import QDoubleSpinBox, QLineEdit
+        p, props = self.p, self.props
+        props.resize(360, 180)
+        props.show()
+        second_building = copy.deepcopy(p.buildings[0])
+        second_building.id = p.new_id("b")
+        second_building.name = "Uffici"
+        second_building.height = 12.0
+        p.buildings.append(second_building)
+        props.show_building(p.buildings[0])
+        self.turn(5)
+        page, built = props.widget(), props.rebuilds
+        props.verticalScrollBar().setValue(props.verticalScrollBar().maximum() // 2)
+        where = props.verticalScrollBar().value()
+        name = page.findChildren(QLineEdit)[0]
+        name.setFocus()
+        name.setText("Not confirmed")
+        props.show_building(second_building)
+        self.turn()
+        self.assertIs(props.widget(), page)
+        self.assertEqual(props.rebuilds, built)
+        self.assertEqual(name.text(), "Uffici")
+        self.assertEqual(props.verticalScrollBar().value(), where)
+        heights = [w for w in page.findChildren(QDoubleSpinBox) if w.maximum() == 300]
+        self.assertEqual(heights[0].value(), 12.0)
+
+        second = copy.deepcopy(p.subfields[0])
+        second.id = p.new_id("s")
+        second.name = "Nord"
+        second.params["tilt"] = 25.0
+        p.subfields.append(second)
+        props.show_subfield(p, p.subfields[0], None)
+        page, built = props.widget(), props.rebuilds
+        props.show_subfield(p, second, None)
+        self.assertIs(props.widget(), page)
+        self.assertEqual(props.rebuilds, built)
+        self.assertEqual(page.findChildren(QLineEdit)[0].text(), "Nord")
+        tilts = [w for w in page.findChildren(QDoubleSpinBox) if w.maximum() == 60]
+        self.assertEqual(tilts[0].value(), 25.0)
+        for sf in p.subfields:
+            sf.params["mounting"] = "coplanar"
+        props.show_subfield(p, p.subfields[0], None)
+        page, built = props.widget(), props.rebuilds
+        props.show_subfield(p, second, None)
+        self.assertIs(props.widget(), page)
+        self.assertEqual(props.rebuilds, built)
+        self.assertEqual(page.findChildren(QLineEdit)[0].text(), "Nord")
+
+    def test_exclusions_of_the_same_shape_reuse_the_page_and_replace_every_value(self):
+        from meridiana import model
+        from PySide6.QtWidgets import QComboBox, QDoubleSpinBox
+        props = self.props
+        ring = [[0, 0], [2, 0], [2, 2], [0, 2]]
+        first = model.ExclusionItem(id="e1", ring=ring, kind="chimney", height=2.5, clearance=0.5)
+        second = model.ExclusionItem(id="e2", ring=ring, kind="tree", height=4.0, clearance=1.5)
+        props.show_exclusion(first)
+        page, built = props.widget(), props.rebuilds
+        props.show_exclusion(second)
+        self.assertIs(props.widget(), page)
+        self.assertEqual(props.rebuilds, built)
+        self.assertEqual(page.findChildren(QComboBox)[0].currentData(), "tree")
+        values = [w.value() for w in page.findChildren(QDoubleSpinBox)]
+        self.assertEqual(values, [1.5, 4.0, 2.0, 2.0, 2.0, 2.0])
+
     def test_from_one_building_to_another_the_page_stays_where_it_was_scrolled(self):
         from meridiana import model
         p, props = self.p, self.props
