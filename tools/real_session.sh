@@ -9,6 +9,10 @@ else
         echo "Usage: $0 command [argument ...]" >&2
         exit 2
     fi
+    root=$(mktemp -d /tmp/meridiana-real-session-XXXXXX) || exit 1
+    export REAL_SESSION_ROOT="$root"
+    export XDG_RUNTIME_DIR="$root/runtime"
+    mkdir -m 700 -p "$XDG_RUNTIME_DIR" || exit 1
     exec dbus-run-session -- "$0" --inside "$@"
 fi
 
@@ -17,10 +21,10 @@ if [[ $# -eq 0 ]]; then
     exit 2
 fi
 
-root=$(mktemp -d /tmp/meridiana-real-session-XXXXXX) || exit 1
+root="$REAL_SESSION_ROOT"
 display="${REAL_SESSION_DISPLAY:-meridiana-prova-$$}"
 size="${REAL_SESSION_SIZE:-1600x1000}"
-runtime="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+runtime="$XDG_RUNTIME_DIR"
 socket="$runtime/$display"
 log="$root/compositor.log"
 shell_pid=""
@@ -55,6 +59,9 @@ cleanup() {
         echo "----- ${compositor:-compositor} ($display) -----" >&2
         command cat "$log" >&2
     fi
+    for mount in "$runtime/doc" "$runtime/gvfs"; do
+        mountpoint -q "$mount" 2>/dev/null && fusermount3 -uz "$mount" 2>/dev/null || true
+    done
     rm -rf -- "$root"
     exit "$status"
 }
