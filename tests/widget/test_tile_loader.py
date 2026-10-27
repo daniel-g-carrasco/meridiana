@@ -69,6 +69,19 @@ class TileCache(unittest.TestCase):
         self.assertIn(("osm", 17, 1, 4), loader.queued)
         self.assertEqual(len(got), 2)
 
+    def test_turning_offline_stops_a_queue_not_yet_sent(self):
+        from meridiana.ui import tileloader
+        loader = tileloader.TileLoader(Path(tempfile.mkdtemp()))
+        self.addCleanup(loader.deleteLater)
+        tile = ("osm", 17, 1, 8)
+        loader.queue.append(tile)
+        loader.queued.add(tile)
+        loader.offline = True
+        loader.net.get = mock.Mock()
+        loader._pump()
+        loader.net.get.assert_not_called()
+        self.assertIn(tile, loader.queue)
+
 
 class Retry(unittest.TestCase):
     @classmethod

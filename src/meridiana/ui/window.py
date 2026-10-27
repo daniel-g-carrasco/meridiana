@@ -65,7 +65,7 @@ WALL_REACH = 0.5                # metres: a click on a building's side in 3D tak
 # below this width (logical pixels: a column of niri, half a laptop screen) the panels share one side
 NARROW = 1000
 # the topics that never change the energy year (session.energy_key): no need to ask whether it is still good
-NO_YEAR = {"project:text", "project:rules", "project:underlays", "project:report"}
+NO_YEAR = {"project:text", "project:privacy", "project:rules", "project:underlays", "project:report"}
 
 
 class LayoutSignals(QObject):
@@ -475,7 +475,7 @@ class MainWindow(QMainWindow):
         self._told_error = False
         self._tile_told = 0.0
         self.plan.loader.tileFailed.connect(self._tile_failed)
-        self.plan.loader.offline = not cfg.network_tiles
+        self._apply_project_network()
 
         self.plan.polygonDrawn.connect(self._drawn)
         self.plan.wholePicked.connect(self._whole_pitch)
@@ -1430,10 +1430,15 @@ class MainWindow(QMainWindow):
         self._fill_sources()
 
     def _network(self, geocoding: bool, pvgis: bool, tiles: bool) -> None:
-        """The three switches of the privacy page, applied: the map loader stops asking the servers."""
+        """The three switches of the privacy page, applied with the project's own consent."""
         self.cfg.network_geocoding, self.cfg.network_pvgis, self.cfg.network_tiles = geocoding, pvgis, tiles
-        self.plan.loader.offline = not tiles
-        if tiles:
+        self._apply_project_network()
+
+    def _apply_project_network(self) -> None:
+        allowed = self.project.online_allowed("tiles", self.cfg.network_tiles)
+        was_offline = self.plan.loader.offline
+        self.plan.loader.offline = not allowed
+        if allowed and was_offline:
             self.plan.tile_timer.start()
 
     def _motion(self, reduced: bool) -> None:
@@ -1973,6 +1978,8 @@ class MainWindow(QMainWindow):
             self._end_draft()
             self.hint.setText(_("The string being drawn was given up: the project changed under it."))
         project = {t for t in topics if t.startswith("project:")}
+        if "project:privacy" in project:
+            self._apply_project_network()
         layouts = any(t.startswith("layout:") for t in topics)
         if project and session_needs_layout(topics):
             self._relayout()
@@ -1980,7 +1987,7 @@ class MainWindow(QMainWindow):
             self._title()
         if "project:site" in project:
             self.plan.set_origin(self.project.site.lat, self.project.site.lon)
-        if (project - {"project:text", "project:rules", "project:fire"}) or layouts:
+        if (project - {"project:text", "project:privacy", "project:rules", "project:fire"}) or layouts:
             self.plan.show_project(self.project, self.session.good_results())
         if "project:variants" in project:
             self._show_variants()
@@ -2686,7 +2693,8 @@ class MainWindow(QMainWindow):
                                       "from it. Start a new project for another site."))
             return
         from .site_dialog import SiteDialog
-        dialog = SiteDialog(self.project.site, self, network=self.cfg.network_geocoding)
+        dialog = SiteDialog(self.project.site, self,
+                            network=self.project.online_allowed("geocoding", self.cfg.network_geocoding))
         if dialog.exec() == QDialog.DialogCode.Accepted:
             site = dialog.result()
             self.edit(_("Move the site"), lambda p: setattr(p, "site", site))
@@ -2703,6 +2711,7 @@ class MainWindow(QMainWindow):
         self.plan.set_laying(True)
 
     def _show_all(self, fit: bool = False) -> None:
+        self._apply_project_network()
         self.plan.set_origin(self.project.site.lat, self.project.site.lon)
         self._relayout()
         self.plan.show_project(self.project, {k: v for k, v in self.results.items() if not isinstance(v, Exception)})
@@ -3096,8 +3105,11 @@ class MainWindow(QMainWindow):
                 self.preview_soon.start()
 
     def _compute_energy(self, fetch: bool) -> None:
-        if fetch and not self.cfg.network_pvgis:
-            self.tell(_("PVGIS is off in Settings > Privacy: computing with the weather already in the cache."))
+        if fetch and not self.project.online_allowed("pvgis", self.cfg.network_pvgis):
+            message = (_("This reserved project has no consent for PVGIS: computing with the weather already "
+                         "in the cache.") if self.project.reserved and self.cfg.network_pvgis else
+                       _("PVGIS is off in Settings > Privacy: computing with the weather already in the cache."))
+            self.tell(message)
             fetch = False
         job = EnergyJob(self.session.energy_asked(), self.snapshot(), self.session.good_results(), self.paths.cache,
                         fetch)
@@ -4690,8 +4702,10 @@ class MainWindow(QMainWindow):
         self.project.site = data["site"]
         self.project.reserved = data["reserved"]
         self.project.network = data.get("network", model.Network())
+        self.project.network_consent = data.get("network_consent", {})
         self.project.sync_network()
         self._mark_saved()
+        self._apply_project_network()
         self.plan.set_source("auto")
         self._select("site", "")
         self._show_all(fit=True)

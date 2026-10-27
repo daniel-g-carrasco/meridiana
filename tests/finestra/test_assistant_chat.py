@@ -532,7 +532,7 @@ class Cloud(unittest.TestCase):
         self.win._select("site", "")                               # the site's properties show it too
         self.app.processEvents()
         from PySide6.QtWidgets import QCheckBox
-        [box] = [b for b in self.win.props.findChildren(QCheckBox) if b.text().startswith("Reserved")]
+        [box] = [b for b in self.win.props.findChildren(QCheckBox) if b.accessibleName().startswith("Reserved")]
         self.assertTrue(box.isChecked())
         self.win.commands["undo"].trigger()
         self.app.processEvents()

@@ -24,6 +24,7 @@ class SitePreview(PlanView):
     locationPicked = Signal(float, float)
 
     def __init__(self, cache_dir, parent=None):
+        self.tiles_allowed = False
         super().__init__(cache_dir, parent)
         self.has_point = False
         self.pressed = None
@@ -45,7 +46,12 @@ class SitePreview(PlanView):
         self.site_mark.hide()
 
     def _moved(self) -> None:
-        super()._moved()
+        if self.tiles_allowed:
+            super()._moved()
+        else:
+            mpp = self.metres_per_pixel()
+            self.scale_bar.set_scale(mpp)
+            self.world.set_scale(mpp)
         self.site_mark.setVisible(self.has_point)
 
     def mousePressEvent(self, event) -> None:
@@ -126,6 +132,8 @@ class NewProjectPage(QWidget):
         form.addRow(_("Project name"), self.name)
         self.reserved = QCheckBox(_("Reserved project: names and addresses never leave this PC"))
         form.addRow(self.reserved)
+        self.maps_consent = QCheckBox(_("Allow online map tiles for this project: the area shown leaves this PC"))
+        form.addRow(self.maps_consent)
         self.distributor = QLineEdit()
         form.addRow(_("Distributor"), self.distributor)
         self.pod = QLineEdit()
@@ -183,6 +191,9 @@ class NewProjectPage(QWidget):
         self.found.currentRowChanged.connect(self._choose_online)
         self.preview.locationPicked.connect(self._picked)
         self.create.clicked.connect(self._create)
+        self.reserved.toggled.connect(self._privacy_changed)
+        self.maps_consent.toggled.connect(lambda _v: self._apply_map_privacy(start=True))
+        self.maps_consent.hide()
 
     def set_choices(self, choices) -> None:
         self.choices = list(choices)
@@ -190,16 +201,30 @@ class NewProjectPage(QWidget):
 
     def showEvent(self, event) -> None:
         super().showEvent(event)
-        self.preview.loader.offline = not self.cfg.network_tiles
-        self.preview.tile_timer.start()
+        self._apply_map_privacy()
 
     def hideEvent(self, event) -> None:
         self.preview.loader.offline = True
         super().hideEvent(event)
 
+    def _privacy_changed(self, reserved: bool) -> None:
+        self.maps_consent.setVisible(reserved)
+        if not reserved:
+            self.maps_consent.setChecked(False)
+        self._apply_map_privacy(start=True)
+
+    def _apply_map_privacy(self, start: bool = False) -> None:
+        allowed = self.cfg.network_tiles and (not self.reserved.isChecked() or self.maps_consent.isChecked())
+        was_offline = self.preview.loader.offline
+        self.preview.tiles_allowed = allowed and (start or self.candidate is not None or self.preview.tiles_allowed)
+        self.preview.loader.offline = not allowed
+        if allowed and was_offline and start:
+            self.preview._moved()
+
     def reset(self) -> None:
         self.query.clear()
         self.name.clear()
+        self.maps_consent.setChecked(False)
         self.reserved.setChecked(False)
         for field in (self.distributor, self.pod, self.practice):
             field.clear()
@@ -244,6 +269,7 @@ class NewProjectPage(QWidget):
                   "map": _("Point clicked on the map")}
         detail = f"{point.datum} {point.zone}".strip()
         self.status.setText(f"{labels.get(point.format, point.format)} · {detail}")
+        self._apply_map_privacy()
         self.preview.set_point(point.lat, point.lon)
         self.create.setEnabled(True)
 
@@ -319,6 +345,9 @@ class NewProjectPage(QWidget):
     def _create(self) -> None:
         if self.candidate is None:
             return
+        import datetime
+        consent = ({"tiles": datetime.date.today().isoformat()}
+                   if self.reserved.isChecked() and self.maps_consent.isChecked() else {})
         site = model.Site(self.candidate.lat, self.candidate.lon, self.address)
         network = model.Network(distributor=self.distributor.text().strip(), pod=self.pod.text().strip(),
                                 voltage_v=self.voltage.value(), phases=self.phases.currentData(),
@@ -326,4 +355,5 @@ class NewProjectPage(QWidget):
                                 available_kw=self.available.value(), requested_kw=self.requested.value(),
                                 practice_code=self.practice.text().strip())
         self.created.emit({"name": self.name.text().strip(), "site": site,
-                           "reserved": self.reserved.isChecked(), "network": network})
+                           "reserved": self.reserved.isChecked(), "network": network,
+                           "network_consent": consent})

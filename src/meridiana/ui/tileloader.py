@@ -64,7 +64,18 @@ class TileLoader(QObject):
         self.decoding: set = set()      # tiles of the cache being read in the decoders' threads
         self.decoders = QThreadPool(self)
         self.decoders.setMaxThreadCount(DECODERS)
-        self.offline = False            # Preferences > Privacy: the cache only, nothing asked to the servers
+        self._offline = False           # Preferences and project privacy: the cache only, nothing asked to servers
+
+    @property
+    def offline(self) -> bool:
+        return self._offline
+
+    @offline.setter
+    def offline(self, value: bool) -> None:
+        self._offline = bool(value)
+        if self._offline:
+            for reply in list(self.in_flight):
+                reply.abort()
 
     def _path(self, key: str, z: int, x: int, y: int) -> Path:
         source = self.sources.get(key)
@@ -111,7 +122,7 @@ class TileLoader(QObject):
         self.queued = set(self.queue)
 
     def _pump(self) -> None:
-        while self.queue and len(self.in_flight) < MAX_IN_FLIGHT:
+        while not self.offline and self.queue and len(self.in_flight) < MAX_IN_FLIGHT:
             tile = self.queue.popleft()
             self.queued.discard(tile)
             key, z, x, y = tile
@@ -136,6 +147,9 @@ class TileLoader(QObject):
         error = reply.error()
         reply.deleteLater()
         if tile is None:
+            return
+        if self.offline:
+            self.attempts.pop(tile, None)
             return
         image = QImage.fromData(data) if error == QNetworkReply.NetworkError.NoError and mime.startswith("image/") else QImage()
         if not image.isNull():

@@ -25,6 +25,7 @@ MERGE_SECONDS = 2.0             # the arrows of a field clicked again and again 
 
 # The topics a change is told by (the window draws by topic, never "everything"; study 18, A 9.1):
 #   project:text        the names (of the project, a building, a sub-field), the project reserved or not
+#   project:privacy     the project reserved or not, or its per-project network consents
 #   project:geometry    a building's outline, height, roof or parapet, a building or an exclusion added, removed
 #                       or changed: the shapes and the shadows
 #   project:subfields   a sub-field, anything but its name
@@ -42,7 +43,7 @@ MERGE_SECONDS = 2.0             # the arrows of a field clicked again and again 
 #   selection           what is selected
 #   checks              the inputs of the checks changed (with the topics that changed them)
 GEOMETRY = ("footprint", "height", "roof", "parapet")
-NO_LAYOUT = {"project:text", "project:underlays", "project:rules", "project:report"}   # what never moves a module
+NO_LAYOUT = {"project:text", "project:privacy", "project:underlays", "project:rules", "project:report"}
 CHECK_INPUTS = {"project:text", "project:fire", "project:rules", "project:energy", "project:subfields",
                 "project:geometry", "project:site", "project:variants"}
 
@@ -57,6 +58,8 @@ def topics_of(before: dict, after: dict) -> set[str]:
     topics: set[str] = set()
     if before.get("name") != after.get("name") or before.get("reserved") != after.get("reserved"):
         topics.add("project:text")
+    if before.get("reserved") != after.get("reserved") or before.get("network_consent") != after.get("network_consent"):
+        topics.add("project:privacy")
     if before.get("site") != after.get("site") or before.get("sun_window") != after.get("sun_window"):
         topics.add("project:site")
     old, new = design_of(before), design_of(after)

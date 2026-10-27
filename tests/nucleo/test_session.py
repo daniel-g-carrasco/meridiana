@@ -157,7 +157,10 @@ class Topics(unittest.TestCase):
             "the losses": (lambda p: p.energy.__setitem__("losses", {"soiling": 5.0}), {"project:energy", "checks"}),
             "the rules": (lambda p: p.rules.__setitem__("obligation", "new"), {"project:rules", "checks"}),
             "a variant": (lambda p: p.add_variant("B"), {"project:variants", "checks"}),
-            "the project reserved": (lambda p: setattr(p, "reserved", True), {"project:text", "checks"}),   # task 14
+            "the project reserved": (lambda p: setattr(p, "reserved", True),
+                                     {"project:text", "project:privacy", "checks"}),
+            "a network consent": (lambda p: setattr(p, "network_consent", {"tiles": "2026-10-27"}),
+                                  {"project:privacy"}),
         }
         for what, (change, expected) in cases.items():
             with self.subTest(what):

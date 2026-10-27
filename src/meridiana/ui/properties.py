@@ -417,7 +417,19 @@ class Properties(QScrollArea):
         reserved.setToolTip(_("Meridio answers about this project only with the local model, whatever his "
                               "settings say"))
         reserved.toggled.connect(lambda v: self.edited.emit("project", "", {"reserved": v}))
-        form.addRow(reserved)
+        form.addRow(WrappedCheck(reserved))
+        self.maps_consent = self._bind(QCheckBox(_("Allow online maps: the area shown leaves this PC")),
+                                       lambda: "tiles" in self._project().network_consent)
+        self.maps_consent.toggled.connect(lambda v: self._network_consent("tiles", v))
+        maps_row = WrappedCheck(self.maps_consent)
+        form.addRow(maps_row)
+        self.weather_consent = self._bind(QCheckBox(_("Allow PVGIS weather: the site coordinates leave this PC")),
+                                          lambda: "pvgis" in self._project().network_consent)
+        self.weather_consent.toggled.connect(lambda v: self._network_consent("pvgis", v))
+        weather_row = WrappedCheck(self.weather_consent)
+        form.addRow(weather_row)
+        for row in (maps_row, weather_row):
+            self._bind(row, lambda: self._project().reserved, lambda w, visible: w.setVisible(visible))
         box.addLayout(form)
         move = QPushButton(_("Find the site…"))
 
@@ -433,6 +445,15 @@ class Properties(QScrollArea):
         box.addWidget(self._network_group())
         box.addWidget(self._rules_group())
         box.addStretch(1)
+
+    def _network_consent(self, service: str, allowed: bool) -> None:
+        import datetime
+        consent = dict(self._project().network_consent)
+        if allowed:
+            consent[service] = datetime.date.today().isoformat()
+        else:
+            consent.pop(service, None)
+        self.edited.emit("project", "", {"network_consent": consent})
 
     def _network_group(self) -> QGroupBox:
         """Optional supply and connection data, shared with the New Project page."""

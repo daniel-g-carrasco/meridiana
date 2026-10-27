@@ -25,7 +25,7 @@ from . import atomic, layout, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 15
+FORMAT_VERSION = 16
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -341,12 +341,13 @@ def _reshaped(data: dict) -> list[str]:
 #          "auto", written down as the designer's at the first layout (_to_14); an older Meridiana would read a file of
 #          14 without strings as «automatic» and lay them by itself
 # 14 -> 15: optional grid data, initialized from the existing rule inputs (_to_15)
+# 15 -> 16: per-project consents for coordinates sent to map and weather services, none before
 MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                     3: lambda data: {**data, "variants": [{"id": "v1", "name": "Base", "note": ""}], "variant": "v1"},
                     4: lambda data: data, 5: lambda data: {**data, "underlays": data.get("underlays", [])},
                     6: _to_7, 7: _to_8, 8: _to_9, 9: _to_10, 10: lambda data: {**data, "report": data.get("report", {})},
                     11: lambda data: {**data, "reserved": data.get("reserved", False)}, 12: lambda data: data,
-                    13: _to_14, 14: _to_15}
+                    13: _to_14, 14: _to_15, 15: lambda data: {**data, "network_consent": data.get("network_consent", {})}}
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
 ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
@@ -800,6 +801,14 @@ def _check_project(data: dict) -> list[str]:
         raise ValueError(f"network.connection: {network.get('connection')!r} is not a connection kind")
     if data.get("reserved", False).__class__ is not bool:
         raise ValueError(f"reserved: {data.get('reserved')!r} is not a switch")
+    consent = _check_dict(data.get("network_consent", {}), "network_consent")
+    for service, day in consent.items():
+        if service not in ("tiles", "pvgis") or not isinstance(day, str):
+            raise ValueError(f"network_consent.{service}: {day!r} is not a consent date")
+        try:
+            datetime.strptime(day, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError(f"network_consent.{service}: {day!r} is not an ISO date") from None
     ids: set[str] = set()
     for i, raw in enumerate(data.get("buildings") or []):
         path = f"buildings[{i}]"
@@ -872,8 +881,8 @@ def _check_project(data: dict) -> list[str]:
     if data.get("report") is not None:
         _check_dict(data["report"], "report")
     known = {"format", "version", "app_version", "name", "site", "sun_window", "buildings", "exclusions",
-             "consumption", "rules", "network", "variants", "variant", "underlays", "report", "reserved", "created",
-             "modified"}
+             "consumption", "rules", "network", "network_consent", "variants", "variant", "underlays", "report",
+             "reserved", "created", "modified"}
     unknown.extend(k for k in data if k not in known)
     return unknown
 
@@ -912,6 +921,8 @@ class Project:
     # reserved: Meridio never sends anything of it to a cloud model, whatever the settings say (task 14; study 14,
     # 6.6); the local model is the only one that reads it
     reserved: bool = False
+    # coordinates may leave a reserved project only to these services, after its own consent (ISO date each)
+    network_consent: dict = field(default_factory=dict)
     created: str = field(default_factory=_now)
     modified: str = field(default_factory=_now)
 
@@ -925,6 +936,14 @@ class Project:
         elif self.network.voltage_v > 0:
             rules["connection"] = "BT" if self.network.voltage_v <= 1000 else "MT"
         self.rules = rules
+
+    def online_allowed(self, service: str, configured: bool) -> bool:
+        """Whether this service may receive project data now, under both the global and project choices."""
+        if not configured:
+            return False
+        if not self.reserved:
+            return True
+        return service in ("tiles", "pvgis") and bool(self.network_consent.get(service))
 
     # ids
 
@@ -1141,7 +1160,7 @@ class Project:
     # files
 
     def to_json(self) -> dict:
-        """The project as the file holds it (format 15): every variant with its design, the one in hand too;
+        """The project as the file holds it (format 16): every variant with its design, the one in hand too;
         the working copy of the fields above goes into its variant."""
         data = asdict(self)
         for k in DESIGN:
@@ -1200,6 +1219,7 @@ class Project:
                 network=build(Network, data.get("network", {})), report=data.get("report") or {},
                 variants=data.get("variants") or [{"id": "v1", "name": "Base", "note": ""}],
                 variant=data.get("variant") or "v1", reserved=data.get("reserved", False) is True,
+                network_consent=dict(data.get("network_consent") or {}),
                 created=data.get("created", _now()), modified=data.get("modified", _now()))
         for raw in data.get("buildings", []):
             b = build(Building, raw)

@@ -279,6 +279,18 @@ class Formats(unittest.TestCase):
         self.assertEqual((old.network.level, old.network.available_kw), ("MT", 80))
         self.assertEqual(old.rules, fourteen["rules"])
 
+    def test_the_sixteenth_format_keeps_each_coordinate_consent_and_old_files_start_offline(self):
+        folder = _setup.FORMATS
+        p, notice = model.Project.load(folder / "progetto-v16.meridiana")
+        self.assertIsNone(notice)
+        self.assertEqual(p.network_consent, {"tiles": "2026-10-27", "pvgis": "2026-10-27"})
+        fifteen = json.loads((folder / "progetto-v15.meridiana").read_text(encoding="utf-8"))
+        self.assertEqual(model.MIGRATIONS[15](fifteen), {**fifteen, "network_consent": {}})
+        old = model.Project.from_json(fifteen)
+        self.assertEqual(old.network_consent, {})
+        self.assertFalse(old.online_allowed("tiles", True))
+        self.assertFalse(old.online_allowed("pvgis", True))
+
     def test_the_input_of_a_sub_field_lays_out_nothing_again(self):
         p = sample()
         sf = p.subfields[0]
