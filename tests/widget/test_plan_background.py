@@ -109,7 +109,10 @@ class Fallback(unittest.TestCase):
             self.assertEqual(len([p for p in self.server.asked if p.startswith("/pcn/")]), pcn_asks)
             view.fallback_strip.retry.click()
             self.assertTrue(_setup.wait_until(self.app, lambda: view.source == "pcn", 5))
-            self.assertGreater(len([p for p in self.server.asked if p.startswith("/pcn/")]), pcn_asks)
+            # the requests reach the test server from the loader's threads a moment later: on Windows the count
+            # read at once was still the old one (27/10/2026)
+            self.assertTrue(_setup.wait_until(
+                self.app, lambda: len([p for p in self.server.asked if p.startswith("/pcn/")]) > pcn_asks, 5))
             self.assertEqual(view.choice, "auto")
 
     def test_old_tiles_stay_until_the_new_view_is_covered(self):
