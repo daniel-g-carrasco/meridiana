@@ -245,7 +245,7 @@ class ReportSide(QWidget):
         self.profile.currentIndexChanged.connect(lambda _i: self._send("profile", self.profile.currentData()))
         signer.addWidget(self.profile, 1)
         manage = QPushButton(_("Profiles…"))
-        manage.setToolTip(_("Preferences > Report: who signs the reports, with the logo and the contacts"))
+        manage.setToolTip(_("Settings > Report: who signs the reports, with the logo and the contacts"))
         manage.clicked.connect(self.profilesAsked.emit)
         signer.addWidget(manage)
         form.addRow(_("Signed by"), signer)
@@ -306,7 +306,7 @@ class ReportSide(QWidget):
             self.profile.clear()
             names = [p["name"] for p in (reports.clean_profile(x) for x in profiles) if p]
             self.profile.addItem(_("Default: {name}").format(name=default or _("nobody")), None)
-            self.profile.setItemData(0, _("The profile Preferences > Report gives the projects that choose none"),
+            self.profile.setItemData(0, _("The profile Settings > Report gives the projects that choose none"),
                                      Qt.ItemDataRole.ToolTipRole)
             self.profile.addItem(_("Nobody: only the project and the date"), "")
             for name in names:

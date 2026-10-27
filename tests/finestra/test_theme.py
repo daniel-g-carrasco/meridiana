@@ -68,31 +68,27 @@ class ThemeOfTheWindow(unittest.TestCase):
         self.assertEqual(plan.backgroundBrush().color().name(), view_colours.PHOTO["bg"])   # the same dark ground
 
     def test_the_preview_changes_at_once_and_the_window_when_the_choice_settles(self):
-        from PySide6.QtWidgets import QDialog
-
         from _setup import wait_until
 
-        def choose(dialog):
-            page = dialog.appearance
-            page.colour.setCurrentIndex(page.colour.findData("indigo"))
-            page._changed()
-            self.assertEqual(page.preview.character.colour.name(),
-                             theme_colors.derive("#5b4bb0", False).tokens["assistant"])
-            self.assertEqual(self.win.theme.tokens["accent"], "#1f6a7a")       # the window: not yet
-            self.assertTrue(wait_until(self.app, lambda: self.win.theme.tokens["accent"] == "#5b4bb0", 3))
-            self.assertIn("4.5:1", page.contrast.text())
-            return QDialog.DialogCode.Accepted
-        self.win._preferences("appearance", run=choose)
+        self.win._preferences("appearance")
+        settings = self.win.file_page.settings
+        self.assertTrue(self.win.file_page.isVisible())
+        page = settings.appearance
+        page.colour.setCurrentIndex(page.colour.findData("indigo"))
+        page._changed()
+        self.assertEqual(page.preview.character.colour.name(),
+                         theme_colors.derive("#5b4bb0", False).tokens["assistant"])
+        self.assertEqual(self.win.theme.tokens["accent"], "#1f6a7a")       # the window: not yet
+        self.assertTrue(wait_until(self.app, lambda: self.win.theme.tokens["accent"] == "#5b4bb0", 3))
+        self.assertIn("4.5:1", page.contrast.text())
         self.assertEqual(config.load(self.paths.config_file).accent, "indigo")
 
-        def cancel(dialog):
-            dialog.appearance.choose_custom("#C0FFEE")
-            # the choice settles and the window shows it (a condition, not a fixed wait), then Cancel takes it back
-            self.assertTrue(wait_until(self.app, lambda: not dialog.appearance.timer.isActive()
-                                       and self.win.theme.tokens["accent"] != "#5b4bb0", 3))
-            return QDialog.DialogCode.Rejected
-        self.win._preferences("appearance", run=cancel)
+        settings.appearance.choose_custom("#C0FFEE")
+        self.assertTrue(wait_until(self.app, lambda: not settings.appearance.timer.isActive()
+                                   and self.win.theme.tokens["accent"] != "#5b4bb0", 3))
+        settings.undo_last()
         self.assertEqual((self.cfg.accent, self.win.theme.tokens["accent"]), ("indigo", "#5b4bb0"))
+        self.assertEqual(config.load(self.paths.config_file).accent, "indigo")
 
     def test_the_size_of_the_text_changes_the_open_window_at_once_each_text_a_pixel(self):
         """R133 (Daniel, 26/10/2026: «farei 12, 13 e 14 come piccolo, medio e grande»; then «il cambio di testo
@@ -100,7 +96,7 @@ class ThemeOfTheWindow(unittest.TestCase):
         saved and the open window follows at once, every text one pixel larger, once, whether its size was given to
         it or taken from its parent; back to the medium, every text as it was."""
         from PySide6.QtGui import QFontInfo
-        from PySide6.QtWidgets import QApplication, QDialog, QLabel
+        from PySide6.QtWidgets import QApplication, QLabel
 
         from meridiana.ui import design, theme
 
@@ -111,19 +107,15 @@ class ThemeOfTheWindow(unittest.TestCase):
         labels = [w for w in widgets if isinstance(w, QLabel) and w.text()]
         self.assertTrue(labels)
 
-        def choose(size):
-            def run(dialog):
-                sizes = dialog.appearance.text_size
-                self.assertEqual([sizes.itemData(i) for i in range(sizes.count())], ["small", "medium", "large"])
-                sizes.setCurrentIndex(sizes.findData(size))
-                return QDialog.DialogCode.Accepted
-            return run
-        self.win._preferences("appearance", run=choose("large"))
+        self.win._preferences("appearance")
+        sizes = self.win.file_page.settings.appearance.text_size
+        self.assertEqual([sizes.itemData(i) for i in range(sizes.count())], ["small", "medium", "large"])
+        sizes.setCurrentIndex(sizes.findData("large"))
         self.assertEqual(config.load(self.paths.config_file).text_size, "large")
         self.assertEqual((design.Type.BODY, design.text_size()), (14, "large"))
         grown = {w: QFontInfo(w.font()).pixelSize() - px for w, px in before.items()}
         self.assertEqual(set(grown.values()), {1}, [(type(w).__name__, d) for w, d in grown.items() if d != 1][:5])
-        self.win._preferences("appearance", run=choose("medium"))
+        sizes.setCurrentIndex(sizes.findData("medium"))
         self.assertEqual({w: QFontInfo(w.font()).pixelSize() for w in before}, before)
 
     def test_the_sheet_goes_on_the_whole_window_quickly_and_it_draws_in_both_themes_with_the_screenshots_kept(self):

@@ -57,7 +57,7 @@ def commands() -> list[Command]:
         c("export_csv", _("Export the &hourly series (CSV)…"), (), "file"),
         c("export_ifc", _("Export the model as IF&C4…"), (), "file"),
         c("copy_notes", _("Copy the notes for the &report"), (), "file"),
-        c("preferences", _("&Preferences…"), ("Ctrl+,",), "file"),
+        c("preferences", _("&Settings…"), ("Ctrl+,",), "file"),
         c("quit", _("&Quit"), ("Ctrl+Q",), "file"),
         c("undo", _("&Undo"), ("Ctrl+Z",), "edit"),
         c("redo", _("&Redo"), ("Ctrl+Y", "Ctrl+Shift+Z"), "edit"),
@@ -227,7 +227,7 @@ def bindings(user: dict) -> dict:
 def differences(current: dict, saved: dict | None = None) -> dict:
     """What differs from the defaults, to keep in the settings: a key given back to its default leaves them.
     The commands of `saved` (the settings as read) that this version does not know keep their keys: after a
-    return to an older version, OK in the preferences took away what the newer one had been given."""
+    return to an older version, saving the settings took away what the newer one had been given."""
     defaults = bindings({})
     out = {cid: keys for cid, keys in current.items() if cid in defaults and keys != defaults[cid]}
     out.update({cid: keys for cid, keys in (saved or {}).items() if cid not in defaults})

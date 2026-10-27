@@ -332,7 +332,7 @@ class Chat(QObject):
         self.refresh()
 
     def apply_preferences(self, choice: dict) -> None:
-        """Preferences > Assistant: where, the local server, the Claude model, the voice, a consent withdrawn."""
+        """Settings > Assistant: where, the local server, the Claude model, the voice, a consent withdrawn."""
         for key in ("assistant_provider", "assistant_local_url", "assistant_local_model", "assistant_local_runtime",
                     "assistant_cloud_model"):
             if key in choice:
@@ -378,7 +378,7 @@ class Chat(QObject):
         except keys.KeyringMissing:
             key = ""
         if not key:
-            self.widget.note(_("No Claude key in the system's keyring (Preferences > Assistant): the question goes "
+            self.widget.note(_("No Claude key in the system's keyring (Settings > Assistant): the question goes "
                                "to the local model."))
             self._start(text, self.make_local())
             return
@@ -519,13 +519,13 @@ class Chat(QObject):
             return _("The model {model} does not call tools, and Meridio reads the project with them. I look for "
                      "another one on this PC…").format(model=getattr(self.provider, "model", ""))
         if error.kind == "auth":
-            return _("Claude refused the key: check it in Preferences > Assistant.")
+            return _("Claude refused the key: check it in Settings > Assistant.")
         if error.kind == "limit":
             return _("The provider's limit is reached: try again in a while.")
         if error.kind == "model":
             model = getattr(self.provider, "model", "")
             if not on_pc:
-                return _("The server does not have the model {model}: check its name in Preferences > "
+                return _("The server does not have the model {model}: check its name in Settings > "
                          "Assistant.").format(model=model)
             if not model:
                 return _("No local model chosen for this server. I look for one on this PC…")
@@ -574,7 +574,7 @@ class Chat(QObject):
                 return
             card = Card(_("On this PC: {runtime}").format(runtime=choice.runtime.name),
                         [_escape(choice.reason(found.machine))],
-                        [("prefs", _("Preferences…")), ("use", _("Use it and ask again"))])
+                        [("prefs", _("Settings…")), ("use", _("Use it and ask again"))])
             card.buttons["use"].clicked.connect(lambda _c=False, c=choice: self.use_local(c, again=True))
             card.buttons["prefs"].clicked.connect(self._survey_preferences)
             self.survey_card = card
@@ -588,7 +588,7 @@ class Chat(QObject):
             return
         card = Card(_("No local model on this PC"),
                     [_escape(_("A few steps give {name} a model of his own on this PC: one program and one command. "
-                               "The guide is in Preferences > Assistant.").format(name=core.NAME))],
+                               "The guide is in Settings > Assistant.").format(name=core.NAME))],
                     [("prefs", _("Show me how"))])
         card.buttons["prefs"].clicked.connect(self._survey_preferences)
         self.survey_card = card

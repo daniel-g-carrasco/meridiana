@@ -139,7 +139,7 @@ class PhaseRow(unittest.TestCase):
 
     def test_the_words_under_the_icons_the_low_window_the_bar_on_the_left_the_preferences_and_the_variant(self):
         from PySide6.QtCore import QPoint, Qt
-        from PySide6.QtWidgets import QDialog, QToolBar
+        from PySide6.QtWidgets import QToolBar
 
         from meridiana.ui.phasebar import LOW, TALL
         win, cfg = self.win, self.cfg
@@ -207,14 +207,16 @@ class PhaseRow(unittest.TestCase):
         self.assertFalse(win.side_bar.isVisible())
         self.assertTrue(win.tabs.bars.isVisible())
 
-        # the preferences choose the words and the place
-        def choose(dialog):
-            self.assertEqual(dialog.appearance.toolbar.currentData(), "text")
-            self.assertEqual(dialog.appearance.place.currentData(), "top")
-            dialog.appearance.toolbar.setCurrentIndex(dialog.appearance.toolbar.findData("icons"))
-            dialog.appearance.place.setCurrentIndex(dialog.appearance.place.findData("left"))
-            return QDialog.DialogCode.Accepted
-        win._preferences("appearance", run=choose)
+        # Ctrl+, opens File > Settings; the choices apply at once
+        self.assertEqual(win.commands["preferences"].shortcut().toString(), "Ctrl+,")
+        win.commands["preferences"].trigger()
+        self.assertTrue(win.file_page.isVisible())
+        win.file_page.settings.show_page("appearance")
+        page = win.file_page.settings.appearance
+        self.assertEqual(page.toolbar.currentData(), "text")
+        self.assertEqual(page.place.currentData(), "top")
+        page.toolbar.setCurrentIndex(page.toolbar.findData("icons"))
+        page.place.setCurrentIndex(page.place.findData("left"))
         self.assertEqual((cfg.toolbar, cfg.toolbar_place), ("icons", "left"))
         self.assertTrue(win.side_bar.isVisible())
         self.assertFalse(win.toolbar_text_action.isChecked())
@@ -431,7 +433,6 @@ class ReportAndPlant(unittest.TestCase):
 
     def test_the_authors_of_the_reports_are_written_in_the_preferences_with_a_copy_of_their_logo(self):
         from PySide6.QtGui import QColor, QImage
-        from PySide6.QtWidgets import QDialog
         win = self.win
         logo = self.paths.cache / "logo-di-prova.png"
         logo.parent.mkdir(parents=True, exist_ok=True)
@@ -439,18 +440,17 @@ class ReportAndPlant(unittest.TestCase):
         image.fill(QColor("#336699"))
         image.save(str(logo))
 
-        def run(dialog):
-            page = dialog.report
-            self.assertIs(dialog.pages.currentWidget(), page)              # the page asked for
-            page._add()
-            page.fields["name"].setText("Studio")
-            page._typed("name")
-            page.fields["signer"].setText("Firmatario")
-            page._typed("signer")
-            page._set_logo(str(logo))
-            page.default.setCurrentIndex(page.default.findData("Studio"))
-            return QDialog.DialogCode.Accepted
-        win._preferences("report", run=run)
+        win._preferences("report")
+        settings = win.file_page.settings
+        page = settings.report
+        self.assertIs(settings.pages.currentWidget(), page)              # the page asked for
+        page._add()
+        page.fields["name"].setText("Studio")
+        page._typed("name")
+        page.fields["signer"].setText("Firmatario")
+        page._typed("signer")
+        page._set_logo(str(logo))
+        page.default.setCurrentIndex(page.default.findData("Studio"))
         self.assertEqual([p["name"] for p in win.cfg.report_profiles], ["Studio"])
         self.assertEqual(win.cfg.report_profile, "Studio")
         kept = win.cfg.report_profiles[0]["logo"]

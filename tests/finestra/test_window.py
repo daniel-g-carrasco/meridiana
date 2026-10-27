@@ -900,7 +900,7 @@ class Window(Journeys):
         self.assertEqual(win.commands["fit"].shortcut().toString(), "Ctrl+L")
         self.assertEqual(win.commands["assistant"].shortcuts(), [])     # not both: Qt would run neither
         self.assertIn("Ctrl+L", win.hint.text())
-        self.assertIn("Preferences", win.hint.text())
+        self.assertIn("Settings", win.hint.text())
         win._set_shortcuts(win.bindings)                    # OK in the preferences
         self.assertEqual(cfg.shortcuts["future_command"], ["Ctrl+K"])  # a newer version's command keeps its key
         self.assertEqual(cfg.shortcuts["fit"], ["Ctrl+L"])

@@ -69,7 +69,7 @@ Carattere Inter, il testo a 13 px (Daniel, 25/10/2026: 14 px con R95, scelto sul
 Titillium Web, usato fino ad allora, a 13 px si leggeva piccolo e sottile: i suoi file restano in
 `data/fonts/titillium-web` per un ritorno.
 
-La dimensione del testo si sceglie in Preferenze > Aspetto (R133, Daniel 26/10/2026: «farei 12, 13 e 14 come piccolo,
+La dimensione del testo si sceglie in File > Impostazioni > Aspetto (R133, Daniel 26/10/2026: «farei 12, 13 e 14 come piccolo,
 medio e grande»): Piccolo, Medio (13 px, quella di queste tabelle) e Grande spostano tutta la scala di un pixel in giù o
 in su (`design.set_text_size` all'avvio; con la finestra aperta `theme.change_text_size`, subito: ogni testo di un
 pixel, una volta sola, anche quelli che la dimensione la prendono dal contenitore). Perché: su uno schermo al
@@ -91,7 +91,7 @@ testo ricco diventa semigrassetto (`design.strong`, `design.semibold`, il foglio
 | `strong` | 13 | semigrassetto | `text` | titolo di un gruppo, nome in una riga, soggetto dell'aiuto, titoli dentro un pannello (risultati, consegne, relazione) e di un grafico, parola di un pulsante (anche «File»), nome della fase in mano, ciò che spicca dentro una frase |
 | `body` | 13 | normale | `text` | il testo: campi, etichette, elenchi (albero del progetto, Verifiche, tabelle), menu, suggerimenti, aiuto, conversazione con Meridio, voci della pagina File |
 | `description` | 13 | normale | `text2` | una frase che spiega sotto un titolo: guida della pagina File, testo dei riquadri File, unità accanto alla cifra |
-| `control` | 13 | normale | `text` | linguette (fasi, grafici, schede accorpate, Preferenze), pillole delle varianti, gettoni e conteggi delle Verifiche, pulsanti strumento con la parola accanto, stati delle consegne |
+| `control` | 13 | normale | `text` | linguette (fasi, grafici e schede accorpate), pillole delle varianti, gettoni e conteggi delle Verifiche, pulsanti strumento con la parola accanto, stati delle consegne |
 | `secondary` | 12 | normale | `text2` | note sotto i campi, barra di stato, parole sotto gli strumenti, etichetta e dettaglio dei riquadri, titoli degli assi, tasti della pagina File, scala e fonte sulla pianta |
 | `caption` | 11 | normale | `muted` | tacche dei grafici, formati dei riquadri File, costo della conversazione |
 | `group` | 10 | normale | `muted` | in maiuscolo con spaziatura del 4 %: i nomi dei gruppi della barra della fase, 4 px sotto i comandi (R159: «più leggeri, piccoli, e distanziati») |
@@ -146,7 +146,7 @@ Daniel, 25/10/2026 (R121): «deve includere tutti i tasti». Sei tipi, ciascuno 
 |---|---|---|---|---|
 | `PUSH` pulsante | 28 | 6 | `strong` | i comandi («Calcola», «Esporta…», «OK»); velo `field`; nessuno pieno di accento (R158), nemmeno il `primary`; `destructive` col testo rosso; spento senza velo |
 | `TOOL` strumento | 28, o icona 24 e parola | 6 | `secondary` sotto l'icona, `control` accanto | barra della fase, barra della vista, barra del sole, pulsanti della barra di stato |
-| `CHIP` pillola | 24 | 12 | `control` | gettoni e conteggi delle Verifiche, «Tabella» dei grafici, pillole delle varianti, linguette dei grafici, delle schede accorpate e delle Preferenze, stati delle consegne |
+| `CHIP` pillola | 24 | 12 | `control` | gettoni e conteggi delle Verifiche, «Tabella» dei grafici, pillole delle varianti, linguette dei grafici e delle schede accorpate, stati delle consegne |
 | `SMALL` piccolo | 20 | 4 | `control` | croce delle schede, puntina e «Sgancia» dell'aiuto, «Correggi» sulle righe delle Verifiche |
 | `HELP` «?» | 16 | 8 | `label` | il «?» di un gruppo o di un riquadro |
 | `NAV` voce | 34 | 6 | `body` | le voci della pagina File |
@@ -232,7 +232,7 @@ Regole:
 | Pagina della fase | foglio di stile (`#phase-pages`) | come una scheda |
 | Pulsante | foglio di stile, `Button.PUSH` | velo `field`, raggio 6, 28 px, stile `strong`; nessuno pieno di accento (R158); `destructive` col testo rosso; sotto il puntatore lo strato `hover` sopra il velo (R160) |
 | Pulsante strumento | `ui/phasebar.py`, foglio di stile, `Button.TOOL` | trasparente, raggio 6; `hover` sotto il puntatore, acceso e premuto in `press` (R158, R160) |
-| Pillola e linguetta | foglio di stile, `Button.CHIP` | 24 px, estremi tondi, stile `control`; le linguette di ogni barra (grafici, schede accorpate, Preferenze) come le pillole delle schede accorpate: fondo `field`, quella scelta sul fondo della scheda col suo filo |
+| Pillola e linguetta | foglio di stile, `Button.CHIP` | 24 px, estremi tondi, stile `control`; le linguette di ogni barra (grafici e schede accorpate) come le pillole delle schede accorpate: fondo `field`, quella scelta sul fondo della scheda col suo filo |
 | Campo (testo, numero, elenco, data) | foglio di stile, `ui/style.pad_fields` | velo `field` senza bordo; bordo `field_line` al passaggio, 2 px di accento col fuoco; frecce piccole e spente; numeri allineati a sinistra |
 | Gruppo | `ui/style.py` (`Group`) | cornice `line`, raggio 6, intestazione piena in `line_soft` per tutta la larghezza, «?» sulla riga del titolo |
 | Riquadro di un risultato | `ui/energy_pages.Tile` | velo `field` senza bordo, raggio 8; etichetta `secondary`, cifra `display`, unità `description`, dettaglio `secondary`; il riquadro chiave è il primo, senza tinta (R104) |

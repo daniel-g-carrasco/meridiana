@@ -137,30 +137,27 @@ class Background(unittest.TestCase):
         plan.set_origin(45.5226, 9.0300)
 
     def test_a_source_added_in_the_preferences_is_offered_used_named_on_the_plan_and_saved(self):
-        from PySide6.QtWidgets import QDialog
-
         from meridiana import config
         win = self.win
 
-        def run(dialog):
-            page = dialog.maps
-            self.assertIs(dialog.pages.currentWidget(), dialog.maps_page)     # the page asked for
-            self.assertEqual(page.site, (45.5226, 9.03))                      # the project's site
-            page._add()
-            page.name.setText("Ortofoto del Comune")
-            page.url.setText("https://tiles.example.org/{z}/{x}/{y}.jpg")
-            page.attribution.setText("© Comune di Rho, CC BY 4.0")
-            page._typed()
-            page.default.setCurrentIndex(page.default.findData(page.choice()[1][0]["key"]))
-            return QDialog.DialogCode.Accepted
-        win._preferences("maps", run=run)
+        win._preferences("maps")
+        settings = win.file_page.settings
+        page = settings.maps
+        self.assertIs(settings.pages.currentWidget(), settings.maps_page)     # the page asked for
+        self.assertEqual(page.site, (45.5226, 9.03))                          # the project's site
+        page._add()
+        page.name.setText("Ortofoto del Comune")
+        page.url.setText("https://tiles.example.org/{z}/{x}/{y}.jpg")
+        page.attribution.setText("© Comune di Rho, CC BY 4.0")
+        page._typed()
+        page.default.setCurrentIndex(page.default.findData(page.choice()[1][0]["key"]))
         [d] = self.cfg.map_sources
         self.assertEqual((self.cfg.background, win.plan.source), (d["key"], d["key"]))
         self.assertEqual(win.plan.attribution.full, "© Comune di Rho, CC BY 4.0")
         win.background_menu.aboutToShow.emit()
         self.assertEqual(win.background_group.checkedAction().data(), d["key"])
         self.assertEqual(config.load(self.paths.config_file).map_sources, [d])          # in the settings file
-        self.assertIn("Preferences > Maps", win.other_sources_action.toolTip())
+        self.assertIn("Settings > Maps", win.other_sources_action.toolTip())
         win._background("auto")
 
     def test_an_image_under_the_drawing_in_scale_moved_turned_hidden_removed_and_saved_where_it_was(self):

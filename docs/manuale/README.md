@@ -14,6 +14,10 @@ Bozza del 24/10/2026 (compito 17d), scritta dai calcoli e dalle regole del progr
 
 I tre comandi stanno anche nel menu Aiuto: un tasto F non è mai l'unica via (sui portatili i tasti F sono spesso tasti multimediali).
 
+## Impostazioni
+
+**File > Impostazioni** riunisce Aspetto, Navigazione, Tastiera, Assistente, Relazione, Mappe e Riservatezza nella finestra principale. Ogni modifica vale e si salva subito. **Annulla l'ultima modifica** torna indietro; **Ripristina i valori predefiniti di questa sezione** chiede conferma nella pagina, senza finestre modali. Il comando si apre anche con Ctrl+,.
+
 ## Meridio, l'assistente
 
 - **Ctrl+L**, o un clic sul personaggio, apre la conversazione. Meridio legge il progetto (verifiche, risultati, regole, il manuale) e risponde con le fonti; se una cifra viene da un valore di serie o da una stima lo dice; non cambia niente da solo: propone, e la proposta si applica con un clic e si annulla con Ctrl+Z.
@@ -22,8 +26,8 @@ I tre comandi stanno anche nel menu Aiuto: un tasto F non è mai l'unica via (su
 
 ### Un modello locale in pochi passi
 
-Preferenze > Assistente > **Modelli locali su questo PC** cerca da sola i programmi che servono modelli (Ollama, LM Studio, llama.cpp, Jan, Lemonade, Docker Model Runner, ogni server compatibile con OpenAI), dice quali sono avviati e quali solo installati, elenca i modelli e consiglia quello che usa meglio gli strumenti e sta nella memoria del PC.
-- **Usa questo** mette server, modello e tipo di server nei campi; OK li tiene.
+File > Impostazioni > Assistente > **Modelli locali su questo PC** cerca da sola i programmi che servono modelli (Ollama, LM Studio, llama.cpp, Jan, Lemonade, Docker Model Runner, ogni server compatibile con OpenAI), dice quali sono avviati e quali solo installati, elenca i modelli e consiglia quello che usa meglio gli strumenti e sta nella memoria del PC.
+- **Usa questo** mette server, modello e tipo di server nei campi; la scelta vale e si salva subito.
 - **Prova** fa una domanda breve: deve tornare come chiamata di uno strumento, come quelle di Meridio. La prima volta il modello si carica dal disco: può volerci un minuto.
 - **Se non c'è niente**, la pagina dà i passi con i comandi da copiare: installare Ollama (da ollama.com/download, oppure `winget install Ollama.Ollama`) e scaricare il modello adatto al PC, per esempio `ollama pull qwen3.6:35b-a3b` su un PC con 32 GB di RAM e una scheda da 8 GB. Con Ollama non serve impostare altro: Meridiana gli chiede da sé il contesto e il ragionamento spento.
 - Chi preferisce llama.cpp: `winget install llama.cpp`, poi `llama-server -hf unsloth/Qwen3.6-35B-A3B-GGUF:UD-IQ4_XS -c 16384` (la porta 9931 è quella di serie di Meridio).
@@ -42,9 +46,9 @@ Preferenze > Assistente > **Modelli locali su questo PC** cerca da sola i progra
 ## Installare e aggiornare
 
 - **Windows**: l'installer `meridiana-setup-vX.Y.Z-windows-x64.exe` delle versioni pubblicate su GitHub installa il programma solo per te, senza diritti di amministratore, e apre i file `.meridiana` con Meridiana; lo zip portabile è lo stesso programma in una cartella. Le impostazioni restano in `%APPDATA%\Meridiana`, le copie di ripristino e le cache in `%LOCALAPPDATA%\Meridiana`: la disinstallazione non le tocca.
-- **Aggiornamenti**: una volta al giorno, un minuto dopo l'avvio, il programma per Windows chiede a GitHub se è uscita una versione più recente (non invia niente di te né dei tuoi progetti); Aiuto > Cerca aggiornamenti chiede subito. Se c'è, una finestra dice che cosa porta: il programma installato scarica l'installer, lo confronta con il checksum che GitHub pubblica e con la firma del progetto (minisign) e, dopo averti chiesto di salvare il progetto, lo avvia; Meridiana si chiude e si riapre aggiornata. Lo zip portabile apre la pagina della versione. Il controllo si spegne in Preferenze > Riservatezza, «Aggiornamenti».
+- **Aggiornamenti**: una volta al giorno, un minuto dopo l'avvio, il programma per Windows chiede a GitHub se è uscita una versione più recente (non invia niente di te né dei tuoi progetti); Aiuto > Cerca aggiornamenti chiede subito. Se c'è, una finestra dice che cosa porta: il programma installato scarica l'installer, lo confronta con il checksum che GitHub pubblica e con la firma del progetto (minisign) e, dopo averti chiesto di salvare il progetto, lo avvia; Meridiana si chiude e si riapre aggiornata. Lo zip portabile apre la pagina della versione. Il controllo si spegne in File > Impostazioni > Riservatezza, «Aggiornamenti».
 - **Linux**: il Flatpak, costruito dal manifest dei sorgenti finché un repository non lo pubblica; i suoi aggiornamenti arriveranno dal centro software del desktop.
-- **Che cosa esce dal PC**: niente di te e mai i file dei progetti. L'indirizzo cercato va a Nominatim di OpenStreetMap, le coordinate del sito a PVGIS, l'area in vista ai server delle mappe, la domanda sulle versioni a GitHub: ognuno con il suo interruttore in Preferenze > Riservatezza. Meridio manda le domande ad Anthropic solo se scegli Claude, dai la tua chiave e acconsenti.
+- **Che cosa esce dal PC**: niente di te e mai i file dei progetti. L'indirizzo cercato va a Nominatim di OpenStreetMap, le coordinate del sito a PVGIS, l'area in vista ai server delle mappe, la domanda sulle versioni a GitHub: ognuno con il suo interruttore in File > Impostazioni > Riservatezza. Meridio manda le domande ad Anthropic solo se scegli Claude, dai la tua chiave e acconsenti.
 
 ## Come leggere i numeri
 

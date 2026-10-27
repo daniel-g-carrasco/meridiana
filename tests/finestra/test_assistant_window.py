@@ -201,15 +201,14 @@ class InTheWindow(unittest.TestCase):
         self.assertTrue(win.assistant.field.hasFocus())
 
     def test_the_preferences_dock_him_choose_his_movements_and_drawing_and_switch_him_off(self):
-        def tick(dialog):
-            self.assertFalse(dialog.assistant_docked.isChecked())
-            self.assertTrue(dialog.assistant_animated.isChecked())
-            self.assertEqual(dialog.assistant_style.currentData(), "smooth")
-            dialog.assistant_docked.setChecked(True)
-            dialog.assistant_animated.setChecked(False)
-            dialog.assistant_style.setCurrentIndex(dialog.assistant_style.findData("pixel"))
-            return dialog.DialogCode.Accepted
-        self.win._preferences(run=tick)
+        self.win._preferences("assistant")
+        settings = self.win.file_page.settings
+        self.assertFalse(settings.assistant_docked.isChecked())
+        self.assertTrue(settings.assistant_animated.isChecked())
+        self.assertEqual(settings.assistant_style.currentData(), "smooth")
+        settings.assistant_docked.setChecked(True)
+        settings.assistant_animated.setChecked(False)
+        settings.assistant_style.setCurrentIndex(settings.assistant_style.findData("pixel"))
         self.assertTrue(self.cfg.assistant_docked and self.win.assistant.docked)
         self.assertEqual((self.cfg.assistant_animated, self.cfg.assistant_style), (False, "pixel"))
         self.assertEqual((self.win.assistant.animated, self.win.assistant.style), (False, "pixel"))
@@ -221,11 +220,10 @@ class InTheWindow(unittest.TestCase):
         win.assistant.open_panel()
         self.app.processEvents()
 
-        def untick(dialog):
-            self.assertEqual(dialog.pages.tabText(dialog.pages.indexOf(dialog.assistant_page)), "Assistant")
-            dialog.assistant.setChecked(False)
-            return dialog.DialogCode.Accepted
-        win._preferences(run=untick)
+        win._preferences("assistant")
+        settings = win.file_page.settings
+        self.assertEqual(settings.pages.tabText(settings.pages.indexOf(settings.assistant_page)), "Assistant")
+        settings.assistant.setChecked(False)
         self.assertFalse(self.cfg.assistant)
         self.assertFalse(win.assistant.isVisible() or win.assistant_button.isVisible()
                          or win.assistant.bubble.isVisible())

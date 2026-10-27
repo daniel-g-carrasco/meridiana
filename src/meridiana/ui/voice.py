@@ -242,9 +242,9 @@ class Voice(QObject):
         if self._choice("assistant_voice_engine", "auto") == "kokoro" and self.engine is None:
             if not speech.worker_python(self._choice("assistant_kokoro_python")):
                 return False, _("No Python on this PC runs the natural voice: name one that has the package "
-                                "kokoro-onnx in Preferences > Assistant.")
+                                "kokoro-onnx in Settings > Assistant.")
             return False, _("The natural voice's model (Kokoro) is not on this PC: its two files go in the folder "
-                            "of Preferences > Assistant.")
+                            "of Settings > Assistant.")
         if self.engine is None and not engines():
             return False, _("No speech engine on this system (on Linux: speech-dispatcher with a voice).")
         return True, ""

@@ -8,10 +8,9 @@ import html
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QHBoxLayout,
-                               QInputDialog, QLabel, QLineEdit, QPushButton, QRadioButton, QScrollArea, QTabWidget,
-                               QVBoxLayout, QWidget)
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QInputDialog, QLabel,
+                               QLineEdit, QPushButton, QRadioButton, QScrollArea, QTabWidget, QVBoxLayout, QWidget)
 
 from .. import assistant, config, navigation
 from ..i18n import _
@@ -113,7 +112,7 @@ class PrivacyPage(QWidget):
         self.pvgis.setChecked(cfg.network_pvgis)
         box.addWidget(self.pvgis)
         self.tiles = QCheckBox(_("Map under the plan: the area in view goes to the server of the source in use, "
-                                 "named at the bottom right of the plan (Preferences > Maps lists them; the Italian "
+                                 "named at the bottom right of the plan (Settings > Maps lists them; the Italian "
                                  "national orthophoto is served over plain http)"))
         self.tiles.setChecked(cfg.network_tiles)
         box.addWidget(self.tiles)
@@ -351,6 +350,8 @@ class ReportPage(QWidget):
     contacts and the logo, written here once and chosen for each project; the one for the projects that choose
     none. Nothing of them is in the program: they stay in the settings of this PC."""
 
+    changed = Signal()
+
     def __init__(self, cfg: config.Config, parent=None):
         super().__init__(parent)
         from .. import reports
@@ -466,12 +467,14 @@ class ReportPage(QWidget):
         self._fill(len(self.profiles) - 1)
         self.fields["name"].setFocus()
         self.fields["name"].selectAll()
+        self.changed.emit()
 
     def _remove(self) -> None:
         if self.current < 0:
             return
         del self.profiles[self.current]
         self._fill(min(self.current, len(self.profiles) - 1))
+        self.changed.emit()
 
     def _choose_logo(self) -> None:
         from PySide6.QtWidgets import QFileDialog
@@ -484,6 +487,7 @@ class ReportPage(QWidget):
         if self.current >= 0:
             self.profiles[self.current]["logo"] = path
             self._show_logo(path)
+            self.changed.emit()
 
     def choice(self) -> tuple[list, str]:
         """The profiles as written (a logo chosen now is still where it was: the window keeps a copy) and the one
@@ -491,88 +495,239 @@ class ReportPage(QWidget):
         return [dict(p) for p in self.profiles], self.default.currentData() or ""
 
 
-class Preferences(QDialog):
+class Preferences(QWidget):
+    """The settings inside File. Every edit is applied by the window at once; the last edits can be undone and each
+    section can restore its defaults with a confirmation drawn here, never in a modal dialog."""
+
+    changed = Signal(str)
+
+    SECTIONS = {
+        "appearance": ("theme", "accent", "backgrounds", "text_size", "toolbar", "toolbar_place"),
+        "navigation": ("navigation", "orbit", "pivot", "pivot_hint"),
+        "assistant": ("assistant", "assistant_docked", "assistant_animated", "assistant_style",
+                      "assistant_provider", "assistant_local_url", "assistant_local_model",
+                      "assistant_local_runtime", "assistant_cloud_model", "assistant_consent", "assistant_voice",
+                      "assistant_voice_engine", "assistant_voice_name", "assistant_kokoro_dir",
+                      "assistant_kokoro_python"),
+        "report": ("report_profiles", "report_profile"),
+        "maps": ("background", "map_sources"),
+        "privacy": ("network_geocoding", "network_pvgis", "network_tiles", "check_updates"),
+    }
+
     def __init__(self, cfg: config.Config, bindings: dict, theme, parent=None, page: str = ""):
         super().__init__(parent)
-        self.setWindowTitle(_("Preferences"))
-        self.resize(680, 600)
+        import copy
+        self._copy = copy.deepcopy
         self.cfg = cfg
+        self.bindings = bindings
+        self.theme = theme
+        self.host = parent
+        self.loading = False
+        self.history: list[tuple[dict, dict]] = []
         box = QVBoxLayout(self)
+        box.setContentsMargins(0, 0, 0, 0)
+        row = QHBoxLayout()
+        self.undo = QPushButton(_("Undo the last change"))
+        self.undo.setEnabled(False)
+        self.undo.clicked.connect(self.undo_last)
+        row.addWidget(self.undo)
+        self.reset = QPushButton(_("Restore defaults for this section"))
+        self.reset.clicked.connect(self.ask_reset)
+        row.addWidget(self.reset)
+        row.addStretch(1)
+        box.addLayout(row)
+        self.confirmation = QWidget()
+        confirm = QHBoxLayout(self.confirmation)
+        confirm.setContentsMargins(0, 0, 0, 0)
+        self.confirm_text = QLabel(_("Restore the default values of this section?"))
+        confirm.addWidget(self.confirm_text, 1)
+        yes = QPushButton(_("Restore defaults"))
+        yes.clicked.connect(self.restore_defaults)
+        confirm.addWidget(yes)
+        no = QPushButton(_("Keep the current values"))
+        no.clicked.connect(self.confirmation.hide)
+        confirm.addWidget(no)
+        self.confirmation.hide()
+        box.addWidget(self.confirmation)
         self.pages = QTabWidget()
-        self.appearance = Appearance(cfg, theme, self)
-        self.pages.addTab(self.appearance, _("Appearance"))
-        self.navigation = NavigationPage(cfg, self)
-        self.pages.addTab(self.navigation, _("Navigation"))
-        self.keys = ShortcutsEditor(bindings, self)
-        self.pages.addTab(self.keys, _("Keyboard"))
-        panel = QWidget()                        # not `page`: that is the page asked for (study 18, G 9.5)
-        inside = QVBoxLayout(panel)
-        self.assistant = QCheckBox(_("Show {name}, the assistant, and its item in the status bar").format(
-            name=assistant.NAME))
-        self.assistant.setChecked(cfg.assistant)
-        inside.addWidget(self.assistant)
-        note = QLabel(_("Off, nothing of the assistant is left in the window: not the character, not the item in "
-                        "the status bar, not its key (Ctrl+L)."))
-        note.setWordWrap(True)
-        inside.addWidget(note)
-        self.assistant_docked = QCheckBox(_("Dock the conversation in the panels, as Project and Properties"))
-        self.assistant_docked.setChecked(cfg.assistant_docked)
-        inside.addWidget(self.assistant_docked)
-        note = QLabel(_("Off, it floats over the views and the conversation opens as its speech bubble. The "
-                        "conversation is the same either way; the button at its head does the same."))
-        note.setWordWrap(True)
-        inside.addWidget(note)
-        self.assistant_animated = QCheckBox(_("{name} animated: the rays turn, the eyes blink and glance, a face "
-                                              "now and then").format(name=assistant.NAME))
-        self.assistant_animated.setChecked(cfg.assistant_animated)
-        inside.addWidget(self.assistant_animated)
-        note = QLabel(_("Off, or when the desktop asks for less motion, the character only changes expression "
-                        "with its state, and the speech bubble opens and closes at once."))
-        note.setWordWrap(True)
-        inside.addWidget(note)
-        form = QFormLayout()
-        self.assistant_style = QComboBox()
-        for key, name in (("smooth", _("Smooth")), ("pixel", _("Pixel"))):
-            self.assistant_style.addItem(name, key)
-        self.assistant_style.setCurrentIndex(max(0, self.assistant_style.findData(cfg.assistant_style)))
-        form.addRow(_("Drawing"), self.assistant_style)
-        inside.addLayout(form)
-        paths = getattr(parent, "paths", None)
-        # the window's search of the local models: a stand-in in the tests, which never knock at the PC's ports
-        survey = getattr(getattr(parent, "assistant_chat", None), "survey", None)
-        self.meridio = MeridioPage(cfg, panel, data_dir=getattr(paths, "data", None), survey=survey)
-        inside.addWidget(self.meridio)
-        inside.addStretch(1)
-        scroll = QScrollArea()                   # the page is taller than the dialog: it scrolls
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        scroll.setWidget(panel)
-        self.assistant_page = scroll
-        self.pages.addTab(scroll, _("Assistant"))
-        self.report = ReportPage(cfg, self)
-        self.pages.addTab(self.report, _("Report"))
-        from .map_sources import MapsPage
-        project = getattr(parent, "project", None)
-        site = (project.site.lat, project.site.lon) if getattr(project, "site", None) is not None else None
-        self.maps = MapsPage(cfg, site, network=lambda: self.privacy.tiles.isChecked())
-        maps = QScrollArea()                     # taller than the dialog, as the assistant's page
-        maps.setWidgetResizable(True)
-        maps.setFrameShape(QScrollArea.Shape.NoFrame)
-        maps.setWidget(self.maps)
-        self.maps_page = maps
-        self.pages.addTab(maps, _("Maps"))
-        self.privacy = PrivacyPage(cfg, self)
-        self.pages.addTab(self.privacy, _("Privacy"))
+        self.pages.tabBar().hide()                 # the sections are chosen in File's list on the left
         box.addWidget(self.pages, 1)
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        box.addWidget(buttons)
+        self._populate()
         self.show_page(page)
 
+    def _populate(self) -> None:
+        current = self.current_section() if self.pages.count() else ""
+        self.loading = True
+        try:
+            while self.pages.count():
+                widget = self.pages.widget(0)
+                self.pages.removeTab(0)
+                widget.deleteLater()
+            cfg, parent = self.cfg, self.host
+            self.appearance = Appearance(cfg, self.theme, self)
+            self.pages.addTab(self.appearance, _("Appearance"))
+            self.navigation = NavigationPage(cfg, self)
+            self.pages.addTab(self.navigation, _("Navigation"))
+            self.keys = ShortcutsEditor(self.bindings, self)
+            self.pages.addTab(self.keys, _("Keyboard"))
+            panel = QWidget()
+            inside = QVBoxLayout(panel)
+            self.assistant = QCheckBox(_("Show {name}, the assistant, and its item in the status bar").format(
+                name=assistant.NAME))
+            self.assistant.setChecked(cfg.assistant)
+            inside.addWidget(self.assistant)
+            note = QLabel(_("Off, nothing of the assistant is left in the window: not the character, not the item in "
+                            "the status bar, not its key (Ctrl+L)."))
+            note.setWordWrap(True)
+            inside.addWidget(note)
+            self.assistant_docked = QCheckBox(_("Dock the conversation in the panels, as Project and Properties"))
+            self.assistant_docked.setChecked(cfg.assistant_docked)
+            inside.addWidget(self.assistant_docked)
+            note = QLabel(_("Off, it floats over the views and the conversation opens as its speech bubble. The "
+                            "conversation is the same either way; the button at its head does the same."))
+            note.setWordWrap(True)
+            inside.addWidget(note)
+            self.assistant_animated = QCheckBox(_("{name} animated: the rays turn, the eyes blink and glance, a face "
+                                                  "now and then").format(name=assistant.NAME))
+            self.assistant_animated.setChecked(cfg.assistant_animated)
+            inside.addWidget(self.assistant_animated)
+            note = QLabel(_("Off, or when the desktop asks for less motion, the character only changes expression "
+                            "with its state, and the speech bubble opens and closes at once."))
+            note.setWordWrap(True)
+            inside.addWidget(note)
+            form = QFormLayout()
+            self.assistant_style = QComboBox()
+            for key, name in (("smooth", _("Smooth")), ("pixel", _("Pixel"))):
+                self.assistant_style.addItem(name, key)
+            self.assistant_style.setCurrentIndex(max(0, self.assistant_style.findData(cfg.assistant_style)))
+            form.addRow(_("Drawing"), self.assistant_style)
+            inside.addLayout(form)
+            paths = getattr(parent, "paths", None)
+            survey = getattr(getattr(parent, "assistant_chat", None), "survey", None)
+            self.meridio = MeridioPage(cfg, panel, data_dir=getattr(paths, "data", None), survey=survey)
+            inside.addWidget(self.meridio)
+            inside.addStretch(1)
+            scroll = QScrollArea()
+            scroll.setWidgetResizable(True)
+            scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+            scroll.setWidget(panel)
+            self.assistant_page = scroll
+            self.pages.addTab(scroll, _("Assistant"))
+            self.report = ReportPage(cfg, self)
+            self.pages.addTab(self.report, _("Report"))
+            from .map_sources import MapsPage
+            project = getattr(parent, "project", None)
+            site = (project.site.lat, project.site.lon) if getattr(project, "site", None) is not None else None
+            self.maps = MapsPage(cfg, site, network=lambda: self.privacy.tiles.isChecked())
+            maps = QScrollArea()
+            maps.setWidgetResizable(True)
+            maps.setFrameShape(QScrollArea.Shape.NoFrame)
+            maps.setWidget(self.maps)
+            self.maps_page = maps
+            self.pages.addTab(maps, _("Maps"))
+            self.privacy = PrivacyPage(cfg, self)
+            self.pages.addTab(self.privacy, _("Privacy"))
+            self._connect()
+        finally:
+            self.loading = False
+        self.show_page(current)
+
+    def _connect(self) -> None:
+        self.appearance.settled.connect(lambda *_a: self._edited("appearance"))
+        for widget in (self.appearance.text_size, self.appearance.toolbar, self.appearance.place):
+            widget.currentIndexChanged.connect(lambda _i: self._edited("appearance"))
+        for widget in (self.navigation.style, self.navigation.orbit, self.navigation.pivot):
+            widget.currentIndexChanged.connect(lambda _i: self._edited("navigation"))
+        self.navigation.hint.toggled.connect(lambda _on: self._edited("navigation"))
+        self.keys.changed.connect(lambda: self._edited("keyboard"))
+        for widget in (self.assistant, self.assistant_docked, self.assistant_animated):
+            widget.toggled.connect(lambda _on: self._edited("assistant"))
+        self.assistant_style.currentIndexChanged.connect(lambda _i: self._edited("assistant"))
+        for widget in (self.meridio.local, self.meridio.claude, self.meridio.voice, self.meridio.withdraw):
+            widget.toggled.connect(lambda _on: self._edited("assistant"))
+        for widget in (self.meridio.url, self.meridio.model, self.meridio.kokoro_dir, self.meridio.kokoro_python):
+            widget.textEdited.connect(lambda _t: self._edited("assistant"))
+        for widget in (self.meridio.api, self.meridio.cloud_model, self.meridio.voice_engine, self.meridio.voice_name):
+            widget.currentIndexChanged.connect(lambda _i: self._edited("assistant"))
+        self.report.default.currentIndexChanged.connect(lambda _i: self._edited("report"))
+        for edit in self.report.fields.values():
+            edit.textEdited.connect(lambda _t: self._edited("report"))
+        self.report.changed.connect(lambda: self._edited("report"))
+        self.maps.changed.connect(lambda: self._edited("maps"))
+        self.maps.default.currentIndexChanged.connect(lambda _i: self._edited("maps"))
+        for widget in (self.maps.name, self.maps.url, self.maps.attribution, self.maps.licence, self.maps.licence_url):
+            widget.textEdited.connect(lambda _t: self._edited("maps"))
+        for widget in (self.maps.kind, self.maps.imagery, self.maps.layer):
+            widget.currentIndexChanged.connect(lambda _i: self._edited("maps") if not self.maps.loading else None)
+        self.maps.max_zoom.valueChanged.connect(lambda _v: self._edited("maps") if not self.maps.loading else None)
+        for widget in (self.privacy.geocoding, self.privacy.pvgis, self.privacy.tiles, self.privacy.updates):
+            widget.toggled.connect(lambda _on: self._edited("privacy"))
+
+    def _snapshot(self) -> tuple[dict, dict]:
+        data = self._copy(self.cfg.to_json())
+        data.pop("version", None)
+        return data, self._copy(self.bindings)
+
+    def _restore(self, snapshot) -> None:
+        data, bindings = snapshot
+        restored = config.Config.from_json(data)
+        for key, value in vars(restored).items():
+            if key not in ("extra", "notices"):
+                setattr(self.cfg, key, self._copy(value))
+        self.bindings.clear()
+        self.bindings.update(self._copy(bindings))
+
+    def _edited(self, section: str) -> None:
+        if self.loading:
+            return
+        self.history.append(self._snapshot())
+        del self.history[:-30]
+        self.undo.setEnabled(True)
+        self.confirmation.hide()
+        self.changed.emit(section)
+
+    def current_section(self) -> str:
+        widget = self.pages.currentWidget()
+        for name, candidate in self._widgets().items():
+            if widget is candidate:
+                return name
+        return "appearance"
+
+    def _widgets(self) -> dict:
+        return {"appearance": self.appearance, "navigation": self.navigation, "keyboard": self.keys,
+                "assistant": self.assistant_page, "report": self.report, "maps": self.maps_page,
+                "privacy": self.privacy}
+
+    def undo_last(self) -> None:
+        if not self.history:
+            return
+        self._restore(self.history.pop())
+        self.undo.setEnabled(bool(self.history))
+        self._populate()
+        self.changed.emit("all")
+
+    def ask_reset(self) -> None:
+        self.confirm_text.setText(_("Restore the default values of {section}?").format(
+            section=self.pages.tabText(self.pages.currentIndex())))
+        self.confirmation.show()
+
+    def restore_defaults(self) -> None:
+        section = self.current_section()
+        self.history.append(self._snapshot())
+        del self.history[:-30]
+        defaults = config.Config()
+        if section == "keyboard":
+            self.bindings.clear()
+            self.bindings.update(self.keys.defaults)
+        else:
+            for key in self.SECTIONS[section]:
+                setattr(self.cfg, key, self._copy(getattr(defaults, key)))
+        self.undo.setEnabled(True)
+        self.confirmation.hide()
+        self._populate()
+        self.changed.emit(section)
+
     def show_page(self, name: str) -> None:
-        widget = {"appearance": self.appearance, "navigation": self.navigation, "keyboard": self.keys,
-                  "assistant": self.assistant_page, "report": self.report, "maps": self.maps_page,
-                  "privacy": self.privacy}.get(name)
+        widget = self._widgets().get(name)
         if widget is not None:
             self.pages.setCurrentWidget(widget)

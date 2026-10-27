@@ -37,31 +37,29 @@ class Navigation(unittest.TestCase):
         b.release(button, mods, *end)
 
     def test_the_preferences_of_the_navigation_reach_the_3d_view_and_the_plan_and_are_kept(self):
-        from PySide6.QtWidgets import QApplication, QDialog
+        from PySide6.QtWidgets import QApplication
 
         from meridiana.ui.theme import SystemAccent
         b = self.backend
 
-        def choose(dialog):
-            page = dialog.navigation
-            before = (page.audience.text(), page.gestures.text())
-            self.assertIn("AutoCAD", before[0])                 # the default, explained
-            self.assertTrue(page.hint.isChecked())
-            self.assertIn("Shift", page.hint_keys.text())       # AutoCAD's key to hold, in words
-            page.style.setCurrentIndex(page.style.findData("opencascade"))
-            self.assertIn("Ctrl", page.hint_keys.text())
-            page.style.setCurrentIndex(page.style.findData("blender"))
-            self.assertFalse(page.hint.isEnabled())             # nothing to hold in that style
-            self.assertNotIn("Shift", page.hint_keys.text())
-            page.orbit.setCurrentIndex(page.orbit.findData("arcball"))
-            page.pivot.setCurrentIndex(page.pivot.findData("selection"))
-            self.assertIn("Blender", page.audience.text())
-            self.assertNotEqual(page.gestures.text(), before[1])
-            for what, how in navigation.table("blender"):          # the table of navigation.py, as it is
-                self.assertIn(html.escape(what), page.gestures.text())
-                self.assertIn(html.escape(how), page.gestures.text())
-            return QDialog.DialogCode.Accepted
-        self.win._preferences("navigation", run=choose)
+        self.win._preferences("navigation")
+        page = self.win.file_page.settings.navigation
+        before = (page.audience.text(), page.gestures.text())
+        self.assertIn("AutoCAD", before[0])                 # the default, explained
+        self.assertTrue(page.hint.isChecked())
+        self.assertIn("Shift", page.hint_keys.text())       # AutoCAD's key to hold, in words
+        page.style.setCurrentIndex(page.style.findData("opencascade"))
+        self.assertIn("Ctrl", page.hint_keys.text())
+        page.style.setCurrentIndex(page.style.findData("blender"))
+        self.assertFalse(page.hint.isEnabled())             # nothing to hold in that style
+        self.assertNotIn("Shift", page.hint_keys.text())
+        page.orbit.setCurrentIndex(page.orbit.findData("arcball"))
+        page.pivot.setCurrentIndex(page.pivot.findData("selection"))
+        self.assertIn("Blender", page.audience.text())
+        self.assertNotEqual(page.gestures.text(), before[1])
+        for what, how in navigation.table("blender"):          # the table of navigation.py, as it is
+            self.assertIn(html.escape(what), page.gestures.text())
+            self.assertIn(html.escape(how), page.gestures.text())
         self.assertEqual((b.navigator.style.name, b.orbit_mode, b.pivot_mode), ("Blender", "arcball", "selection"))
         self.assertEqual(self.win.plan.navigator.style.name, "Blender")         # the plan follows
         saved = config.load(self.paths.config_file)
@@ -74,10 +72,7 @@ class Navigation(unittest.TestCase):
         # hold leaves the choice as it is
         self.win._navigation("autocad", "turntable", "cursor", True)
 
-        def no_hint(dialog):
-            dialog.navigation.hint.setChecked(False)
-            return QDialog.DialogCode.Accepted
-        self.win._preferences("navigation", run=no_hint)
+        self.win.file_page.settings.navigation.hint.setChecked(False)
         self.assertFalse(b.pivot_hint)
         self.assertFalse(self.cfg.pivot_hint)
         self.assertFalse(config.load(self.paths.config_file).pivot_hint)

@@ -890,7 +890,7 @@ class MainWindow(QMainWindow):
         self.source_actions: list = []
         self.other_sources_action = QAction(_("Other sources…"), self)
         self.other_sources_action.setToolTip(_("Every source with its area and its licence, the default choice and "
-                                               "your own sources (WMS, WMTS, XYZ): Preferences > Maps"))
+                                               "your own sources (WMS, WMTS, XYZ): Settings > Maps"))
         self.other_sources_action.triggered.connect(lambda: self._preferences("maps"))
         self.background_menu.addAction(self.other_sources_action)
         # the imagery darkened under the drawing, so that the lines read on a light roof too (Daniel, 23/10/2026)
@@ -1276,32 +1276,38 @@ class MainWindow(QMainWindow):
             else:
                 said.append(_("{keys} is the key of «{commands}»: none of them works with it until one changes.")
                             .format(keys=native, commands="», «".join(names[c] for c in mine)))
-        return " ".join(said) + (" " + _("Preferences > Keyboard to change them.") if said else "")
+        return " ".join(said) + (" " + _("Settings > Keyboard to change them.") if said else "")
 
-    def _preferences(self, page: str = "", run=None) -> None:
-        """Preferences: the appearance follows the choice while the dialog is open, and goes back as it was if
-        it is cancelled. `run` stands in for exec() in the tests."""
-        from .preferences import Preferences
-        before = (self.cfg.theme, self.cfg.accent, self.cfg.backgrounds)
-        dialog = Preferences(self.cfg, self.bindings, self.theme, self, page)
-        dialog.appearance.settled.connect(self._appearance)
-        accepted = (run or (lambda d: d.exec()))(dialog) == QDialog.DialogCode.Accepted
-        if accepted:
-            self._appearance(*dialog.appearance.choice())
-            self._navigation(*dialog.navigation.choice())
-            self._show_assistant(dialog.assistant.isChecked())
-            self._dock_assistant(dialog.assistant_docked.isChecked())
-            self._assistant_look(dialog.assistant_animated.isChecked(), dialog.assistant_style.currentData())
-            self.assistant_chat.apply_preferences(dialog.meridio.choice())
-            self._toolbar_style(dialog.appearance.toolbar.currentData(), dialog.appearance.place.currentData())
-            self._text_size(dialog.appearance.text_size.currentData())
-            self._set_shortcuts(dialog.keys.bindings)
-            self._network(*dialog.privacy.choice())
-            self.cfg.check_updates = dialog.privacy.updates.isChecked()
-            self._maps(*dialog.maps.choice())
-            self._report_profiles(*dialog.report.choice())
+    def _preferences(self, page: str = "") -> None:
+        """The settings live in File and every change is applied and saved as it is made."""
+        section = f"preferences:{page}" if page else "preferences"
+        if self.file_page.isVisible():
+            self.file_page.show_section(section)
         else:
-            self._appearance(*before)
+            self.open_file_page(section)
+
+    def _apply_preferences(self, section: str) -> None:
+        settings = self.file_page.settings
+        if section in ("appearance", "all"):
+            self._appearance(*settings.appearance.choice())
+            self._toolbar_style(settings.appearance.toolbar.currentData(), settings.appearance.place.currentData())
+            self._text_size(settings.appearance.text_size.currentData())
+        if section in ("navigation", "all"):
+            self._navigation(*settings.navigation.choice())
+        if section in ("assistant", "all"):
+            self._show_assistant(settings.assistant.isChecked())
+            self._dock_assistant(settings.assistant_docked.isChecked())
+            self._assistant_look(settings.assistant_animated.isChecked(), settings.assistant_style.currentData())
+            self.assistant_chat.apply_preferences(settings.meridio.choice())
+        if section in ("keyboard", "all"):
+            self._set_shortcuts(settings.keys.bindings)
+        if section in ("privacy", "all"):
+            self._network(*settings.privacy.choice())
+            self.cfg.check_updates = settings.privacy.updates.isChecked()
+        if section in ("maps", "all"):
+            self._maps(*settings.maps.choice())
+        if section in ("report", "all"):
+            self._report_profiles(*settings.report.choice())
         self._save_config()
 
     def _text_size(self, size: str) -> None:
@@ -1413,7 +1419,7 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(0, self, self._preview_step)
 
     def _maps(self, background: str, custom: list) -> None:
-        """Preferences > Maps applied: the default background and the designer's sources."""
+        """Settings > Maps applied: the default background and the designer's sources."""
         self.cfg.map_sources = custom
         self.plan.set_sources(custom)
         self.cfg.background = background
@@ -1449,7 +1455,7 @@ class MainWindow(QMainWindow):
         self._save_config()
 
     def _assistant_look(self, animated: bool, style: str) -> None:
-        """Preferences > Assistant: Meridio animated or still, smooth or pixel (R34); the status bar's icon follows."""
+        """Settings > Assistant: Meridio animated or still, smooth or pixel (R34); the status bar's icon follows."""
         self.cfg.assistant_animated, self.cfg.assistant_style = animated, style
         self.assistant.set_animated(animated)
         self.assistant.set_style(style)
@@ -3079,7 +3085,7 @@ class MainWindow(QMainWindow):
 
     def _compute_energy(self, fetch: bool) -> None:
         if fetch and not self.cfg.network_pvgis:
-            self.tell(_("PVGIS is off in Preferences > Privacy: computing with the weather already in the cache."))
+            self.tell(_("PVGIS is off in Settings > Privacy: computing with the weather already in the cache."))
             fetch = False
         job = EnergyJob(self.session.energy_asked(), self.snapshot(), self.session.good_results(), self.paths.cache,
                         fetch)
@@ -4740,14 +4746,14 @@ class MainWindow(QMainWindow):
         QMessageBox.about(self, _("About Meridiana"), _(
             "<b>Meridiana</b> {version}<br>Photovoltaic design: map, building model, sun path, module layout and "
             "Italian standards.<br><br>GPL-3.0-or-later. Qt for Python (LGPL), Qt Quick 3D (GPL), shapely (BSD), "
-            "numpy (BSD). Backgrounds: the map sources of Preferences > Maps, each named on the plan with its "
+            "numpy (BSD). Backgrounds: the map sources of Settings > Maps, each named on the plan with its "
             "attribution (among them the national orthophoto of the Geoportale Nazionale, MASE, and © OpenStreetMap "
             "contributors); the outlines of their areas from Natural Earth (public domain).").format(version=__version__))
 
     # -- a newer version (updates.py, ui/update_dialog.py; task 18f) ------------------------------------------------
 
     def _daily_update_check(self) -> None:
-        """A minute after the start, once a day, when Preferences > Privacy allows it (the Windows build only:
+        """A minute after the start, once a day, when Settings > Privacy allows it (the Windows build only:
         updates.checks_by_itself); the installers of earlier updates are cleared first."""
         from datetime import date
 

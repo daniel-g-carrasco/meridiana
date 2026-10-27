@@ -10,8 +10,10 @@ software centres show.
 ## [Unreleased]
 
 ### Added
-- Size of the text (R133): Small, Medium or Large in Preferences > Appearance moves the whole type scale a
-  pixel down or up, the text at 12, 13 or 14 px, at once in the open window (settings format 21).
+- Settings inside File (R133): the former Preferences window is now a page with Appearance, Navigation, Keyboard,
+  Assistant, Report, Maps and Privacy. Every choice applies and is saved at once; Undo the last change and restore a
+  section's defaults with an inline confirmation. Size of the text: Small, Medium or Large moves the whole type scale
+  a pixel down or up, the text at 12, 13 or 14 px, at once in the open window (settings format 21).
 - Dialog symbols (R169): Discard has a bin on red and Cancel an arrow going back on grey, in every dialog;
   No and Close keep the cross.
 - Separate lanes for overlapping string jumps (R134): routes that share corners or segments move apart by a

@@ -122,7 +122,7 @@ def files(report: Report) -> None:
     from .. import help as helps
     from .. import i18n, paths
     t = time.perf_counter()
-    report.check("catalogue it", i18n.translation_for("it").gettext("Preferences") != "Preferences",
+    report.check("catalogue it", i18n.translation_for("it").gettext("Settings") != "Settings",
                  "Meridiana's words in Italian", t)
     t = time.perf_counter()
     from .theme import FONT_DIR

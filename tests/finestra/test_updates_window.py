@@ -96,16 +96,13 @@ class UpdatesInTheWindow(unittest.TestCase):
             self.assertEqual(check.call_count, 1)
 
     def test_the_switch_of_preferences_privacy(self):
-        from PySide6.QtWidgets import QDialog
         _setup.window(self, capannone())
         win = self.win
         win.cfg.check_updates = True
 
-        def untick(dialog):
-            self.assertTrue(dialog.privacy.updates.isChecked())
-            dialog.privacy.updates.setChecked(False)
-            return QDialog.DialogCode.Accepted
-        win._preferences("privacy", run=untick)
+        win._preferences("privacy")
+        self.assertTrue(win.file_page.settings.privacy.updates.isChecked())
+        win.file_page.settings.privacy.updates.setChecked(False)
         self.assertFalse(win.cfg.check_updates)
 
 

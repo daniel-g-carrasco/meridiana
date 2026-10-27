@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: meridiana\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 17:42+0100\n"
+"POT-Creation-Date: 2026-10-26 17:57+0100\n"
 "PO-Revision-Date: 2026-10-22 21:00+0200\n"
 "Last-Translator: Daniel Grasso <code@danielgrasso.com>\n"
 "Language-Team: Italian\n"
@@ -1343,8 +1343,8 @@ msgid "{name}: the modules are not laid yet"
 msgstr "{name}: i moduli non sono ancora posati"
 
 #: src/meridiana/checks.py:237 src/meridiana/ui/appearance.py:69
-#: src/meridiana/ui/properties.py:865 src/meridiana/ui/window.py:2567
-#: src/meridiana/ui/window.py:3213
+#: src/meridiana/ui/properties.py:865 src/meridiana/ui/window.py:2603
+#: src/meridiana/ui/window.py:3249
 msgid "Lay the modules"
 msgstr "Posa i moduli"
 
@@ -1547,8 +1547,8 @@ msgstr ""
 "vendita e il costo dell'offerta."
 
 #: src/meridiana/checks.py:382 src/meridiana/ui/properties.py:860
-#: src/meridiana/ui/window.py:2430 src/meridiana/ui/window.py:2436
-#: src/meridiana/ui/window.py:2497 src/meridiana/ui/window.py:3211
+#: src/meridiana/ui/window.py:2466 src/meridiana/ui/window.py:2472
+#: src/meridiana/ui/window.py:2533 src/meridiana/ui/window.py:3247
 msgid "Lay again automatically"
 msgstr "Riposa in automatico"
 
@@ -1710,7 +1710,7 @@ msgstr "{counts} in questo oggetto e dentro"
 msgid "{counts} about this object"
 msgstr "{counts} su questo oggetto"
 
-#: src/meridiana/checks.py:756 src/meridiana/ui/window.py:3915
+#: src/meridiana/checks.py:756 src/meridiana/ui/window.py:3951
 msgid "Complete the strings"
 msgstr "Completa le stringhe"
 
@@ -1997,7 +1997,7 @@ msgstr "dato del progettista"
 msgid "measured load curve"
 msgstr "curva di carico misurata"
 
-#: src/meridiana/energy/consumption.py:345 src/meridiana/ui/file_page.py:293
+#: src/meridiana/energy/consumption.py:345 src/meridiana/ui/file_page.py:292
 msgid "Load curve"
 msgstr "Curva di carico"
 
@@ -2334,7 +2334,7 @@ msgstr ""
 msgid "internal rate of return"
 msgstr "tasso interno di rendimento"
 
-#: src/meridiana/energy/economics.py:445 src/meridiana/ui/preferences.py:434
+#: src/meridiana/energy/economics.py:445 src/meridiana/ui/preferences.py:435
 msgid "none"
 msgstr "nessuno"
 
@@ -2799,7 +2799,7 @@ msgstr ""
 msgid "Fetch the weather of the site first (button above)."
 msgstr "Scarica prima il meteo del sito (pulsante qui sopra)."
 
-#: src/meridiana/energy/pipeline.py:77 src/meridiana/ui/window.py:3072
+#: src/meridiana/energy/pipeline.py:77 src/meridiana/ui/window.py:3108
 msgid "the typical year"
 msgstr "l'anno tipo"
 
@@ -2922,7 +2922,7 @@ msgstr "(proposti da Meridiana)"
 #: src/meridiana/energy/plant.py:939 src/meridiana/energy/plant.py:951
 #: src/meridiana/energy/plant.py:974 src/meridiana/ui/catalog_dialog.py:89
 #: src/meridiana/ui/plan.py:2543 src/meridiana/ui/plant_page.py:732
-#: src/meridiana/ui/window.py:4079 src/meridiana/viewaids.py:155
+#: src/meridiana/ui/window.py:4115 src/meridiana/viewaids.py:155
 #: src/meridiana/viewaids.py:159
 #, python-brace-format
 msgid "{n} module"
@@ -4773,8 +4773,8 @@ msgstr ""
 
 #: src/meridiana/help.py:75 src/meridiana/phases.py:134
 #: src/meridiana/phases.py:136 src/meridiana/shortcuts.py:105
-#: src/meridiana/ui/file_page.py:302 src/meridiana/ui/preferences.py:553
-#: src/meridiana/ui/report_page.py:222 src/meridiana/ui/window.py:3531
+#: src/meridiana/ui/file_page.py:301 src/meridiana/ui/preferences.py:615
+#: src/meridiana/ui/report_page.py:222 src/meridiana/ui/window.py:3567
 msgid "Report"
 msgstr "Relazione"
 
@@ -5442,7 +5442,7 @@ msgstr ""
 "(tutti i costi variabili, imposte comprese) e dell'offerta."
 
 #: src/meridiana/help.py:280 src/meridiana/shortcuts.py:110
-#: src/meridiana/ui/window.py:397 src/meridiana/ui/window.py:2020
+#: src/meridiana/ui/window.py:399 src/meridiana/ui/window.py:2029
 msgid "Checks"
 msgstr "Verifiche"
 
@@ -5946,7 +5946,7 @@ msgstr "l'oggetto da spostare non c'è"
 msgid "a free pitch stays on its building: this would take it out"
 msgstr "una falda libera resta sul suo edificio: così ne uscirebbe"
 
-#: src/meridiana/move.py:313 src/meridiana/ui/window.py:1552
+#: src/meridiana/move.py:313 src/meridiana/ui/window.py:1561
 msgid ""
 "a row turns with its sub-field; a module on its own turns with a double click"
 msgstr ""
@@ -5957,7 +5957,7 @@ msgstr ""
 msgid "a free pitch is copied with its building"
 msgstr "una falda libera si copia con il suo edificio"
 
-#: src/meridiana/move.py:326 src/meridiana/ui/window.py:1549
+#: src/meridiana/move.py:326 src/meridiana/ui/window.py:1558
 msgid "a row is copied with «Add a row at the back»"
 msgstr "una fila si copia con «Aggiungi una fila in coda»"
 
@@ -6199,13 +6199,13 @@ msgid "Edit"
 msgstr "Modifica"
 
 #: src/meridiana/phases.py:78 src/meridiana/shortcuts.py:74
-#: src/meridiana/ui/window.py:1554 src/meridiana/ui/window.py:1569
-#: src/meridiana/ui/window.py:1620
+#: src/meridiana/ui/window.py:1563 src/meridiana/ui/window.py:1578
+#: src/meridiana/ui/window.py:1629
 msgid "Move"
 msgstr "Sposta"
 
 #: src/meridiana/phases.py:79 src/meridiana/shortcuts.py:75
-#: src/meridiana/ui/window.py:1567 src/meridiana/ui/window.py:1620
+#: src/meridiana/ui/window.py:1576 src/meridiana/ui/window.py:1629
 msgid "Rotate"
 msgstr "Ruota"
 
@@ -6226,7 +6226,7 @@ msgid "Empty"
 msgstr "Svuota"
 
 #: src/meridiana/phases.py:86 src/meridiana/ui/properties.py:865
-#: src/meridiana/ui/window.py:3213
+#: src/meridiana/ui/window.py:3249
 msgid "Lay again"
 msgstr "Posa di nuovo"
 
@@ -6282,7 +6282,7 @@ msgstr "PVGIS a fianco"
 msgid "Variants"
 msgstr "Varianti"
 
-#: src/meridiana/phases.py:116 src/meridiana/ui/window.py:3029
+#: src/meridiana/phases.py:116 src/meridiana/ui/window.py:3065
 msgid "Data"
 msgstr "Dati"
 
@@ -6303,7 +6303,7 @@ msgid "Battery"
 msgstr "Batteria"
 
 #: src/meridiana/phases.py:135 src/meridiana/ui/file_page.py:247
-#: src/meridiana/ui/file_page.py:300
+#: src/meridiana/ui/file_page.py:299
 msgid "Export"
 msgstr "Esporta"
 
@@ -6379,7 +6379,7 @@ msgstr "Elenco moduli e stringhe"
 msgid "Comes with task {task}"
 msgstr "Arriva con il compito {task}"
 
-#: src/meridiana/phases.py:235 src/meridiana/ui/window.py:4425
+#: src/meridiana/phases.py:235 src/meridiana/ui/window.py:4461
 msgid "done"
 msgstr "fatto"
 
@@ -6405,7 +6405,7 @@ msgid "module {name} from {file}"
 msgstr "modulo {name} da {file}"
 
 #: src/meridiana/pvsyst/mapping.py:81 src/meridiana/pvsyst/mapping.py:106
-#: src/meridiana/ui/window.py:4335 src/meridiana/ui/window.py:4512
+#: src/meridiana/ui/window.py:4371 src/meridiana/ui/window.py:4548
 #, python-brace-format
 msgid "{file} could not be read: {error}"
 msgstr "Impossibile leggere {file}: {error}"
@@ -6877,8 +6877,8 @@ msgstr ""
 "degli inverter: risultati, energia mese per mese, moduli, stringhe, "
 "parametri."
 
-#: src/meridiana/reports.py:193 src/meridiana/ui/preferences.py:460
-#: src/meridiana/ui/preferences.py:463
+#: src/meridiana/reports.py:193 src/meridiana/ui/preferences.py:461
+#: src/meridiana/ui/preferences.py:464
 msgid "Profile"
 msgstr "Profilo"
 
@@ -6894,7 +6894,7 @@ msgstr "Iscrizione all'albo"
 msgid "Firm"
 msgstr "Studio o società"
 
-#: src/meridiana/reports.py:194 src/meridiana/ui/map_sources.py:117
+#: src/meridiana/reports.py:194 src/meridiana/ui/map_sources.py:119
 #: src/meridiana/ui/properties.py:438 src/meridiana/ui/report_chapters.py:379
 #: src/meridiana/ui/report_chapters.py:801
 msgid "Address"
@@ -8139,8 +8139,8 @@ msgid "Panels"
 msgstr "Pannelli"
 
 #: src/meridiana/shortcuts.py:40 src/meridiana/shortcuts.py:111
-#: src/meridiana/ui/file_page.py:335 src/meridiana/ui/help_box.py:494
-#: src/meridiana/ui/help_box.py:661 src/meridiana/ui/window.py:389
+#: src/meridiana/ui/file_page.py:344 src/meridiana/ui/help_box.py:494
+#: src/meridiana/ui/help_box.py:661 src/meridiana/ui/window.py:391
 msgid "Help"
 msgstr "Aiuto"
 
@@ -8189,18 +8189,18 @@ msgid "Copy the notes for the &report"
 msgstr "Copia le note per la &relazione"
 
 #: src/meridiana/shortcuts.py:60
-msgid "&Preferences…"
-msgstr "&Preferenze…"
+msgid "&Settings…"
+msgstr "Impostazioni…"
 
 #: src/meridiana/shortcuts.py:61
 msgid "&Quit"
 msgstr "&Esci"
 
-#: src/meridiana/shortcuts.py:62 src/meridiana/ui/window.py:755
+#: src/meridiana/shortcuts.py:62 src/meridiana/ui/window.py:758
 msgid "&Undo"
 msgstr "&Annulla"
 
-#: src/meridiana/shortcuts.py:63 src/meridiana/ui/window.py:756
+#: src/meridiana/shortcuts.py:63 src/meridiana/ui/window.py:759
 msgid "&Redo"
 msgstr "&Ripeti"
 
@@ -8305,14 +8305,14 @@ msgstr "Fase successiva"
 msgid "Previous phase"
 msgstr "Fase precedente"
 
-#: src/meridiana/shortcuts.py:108 src/meridiana/ui/file_page.py:258
-#: src/meridiana/ui/file_page.py:275 src/meridiana/ui/properties.py:433
-#: src/meridiana/ui/window.py:365
+#: src/meridiana/shortcuts.py:108 src/meridiana/ui/file_page.py:257
+#: src/meridiana/ui/file_page.py:274 src/meridiana/ui/properties.py:433
+#: src/meridiana/ui/window.py:367
 msgid "Project"
 msgstr "Progetto"
 
-#: src/meridiana/shortcuts.py:109 src/meridiana/ui/window.py:373
-#: src/meridiana/ui/window.py:3027 src/meridiana/ui/window.py:3202
+#: src/meridiana/shortcuts.py:109 src/meridiana/ui/window.py:375
+#: src/meridiana/ui/window.py:3063 src/meridiana/ui/window.py:3238
 msgid "Properties"
 msgstr "Proprietà"
 
@@ -8324,7 +8324,7 @@ msgstr "Vai alle verifiche"
 msgid "Fix the check in hand"
 msgstr "Correggi la verifica in mano"
 
-#: src/meridiana/shortcuts.py:114 src/meridiana/ui/preferences.py:551
+#: src/meridiana/shortcuts.py:114 src/meridiana/ui/preferences.py:613
 msgid "Assistant"
 msgstr "Assistente"
 
@@ -8457,7 +8457,7 @@ msgstr "un lato deve essere più lungo di zero"
 msgid "the side has no length"
 msgstr "il lato non ha lunghezza"
 
-#: src/meridiana/sides.py:58 src/meridiana/ui/window.py:2630
+#: src/meridiana/sides.py:58 src/meridiana/ui/window.py:2666
 msgid "the outline would cross itself or vanish"
 msgstr "il contorno si intreccerebbe o sparirebbe"
 
@@ -9004,17 +9004,17 @@ msgstr "Questo progetto è riservato: la domanda va al modello locale."
 
 #: src/meridiana/ui/assistant_chat.py:381
 msgid ""
-"No Claude key in the system's keyring (Preferences > Assistant): the "
-"question goes to the local model."
+"No Claude key in the system's keyring (Settings > Assistant): the question "
+"goes to the local model."
 msgstr ""
-"Nessuna chiave di Claude nel portachiavi del sistema (Preferenze > "
+"Nessuna chiave di Claude nel portachiavi del sistema (Impostazioni > "
 "Assistente): la domanda va al modello locale."
 
 #: src/meridiana/ui/assistant_chat.py:396
 msgid "Send this question to Claude?"
 msgstr "Mando questa domanda a Claude?"
 
-#: src/meridiana/ui/assistant_chat.py:397 src/meridiana/ui/preferences.py:173
+#: src/meridiana/ui/assistant_chat.py:397 src/meridiana/ui/preferences.py:172
 msgid "Local model"
 msgstr "Modello locale"
 
@@ -9066,8 +9066,8 @@ msgstr ""
 "quelli. Ne cerco un altro su questo PC…"
 
 #: src/meridiana/ui/assistant_chat.py:522
-msgid "Claude refused the key: check it in Preferences > Assistant."
-msgstr "Claude ha rifiutato la chiave: controllala in Preferenze > Assistente."
+msgid "Claude refused the key: check it in Settings > Assistant."
+msgstr "Claude ha rifiutato la chiave: controllala in Impostazioni > Assistente."
 
 #: src/meridiana/ui/assistant_chat.py:524
 msgid "The provider's limit is reached: try again in a while."
@@ -9079,7 +9079,7 @@ msgid ""
 "The server does not have the model {model}: check its name in Preferences > "
 "Assistant."
 msgstr ""
-"Il server non ha il modello {model}: controlla il nome in Preferenze > "
+"Il server non ha il modello {model}: controlla il nome in Impostazioni > "
 "Assistente."
 
 #: src/meridiana/ui/assistant_chat.py:531
@@ -9137,10 +9137,10 @@ msgstr "Nessun modello locale su questo PC"
 #, python-brace-format
 msgid ""
 "A few steps give {name} a model of his own on this PC: one program and one "
-"command. The guide is in Preferences > Assistant."
+"command. The guide is in Settings > Assistant."
 msgstr ""
 "Con pochi passi {name} ha un modello suo su questo PC: un programma e un "
-"comando. La guida è in Preferenze > Assistente."
+"comando. La guida è in Impostazioni > Assistente."
 
 #: src/meridiana/ui/assistant_chat.py:592
 msgid "Show me how"
@@ -9296,7 +9296,7 @@ msgstr "Apri la pagina di download di Ollama"
 msgid "Chosen: {model} on {runtime}. OK keeps it; «Test» tries it now."
 msgstr "Scelto: {model} su {runtime}. OK lo tiene; «Prova» lo prova subito."
 
-#: src/meridiana/ui/assistant_local.py:259 src/meridiana/ui/preferences.py:172
+#: src/meridiana/ui/assistant_local.py:259 src/meridiana/ui/preferences.py:171
 msgid "the one the server serves"
 msgstr "quello che il server offre"
 
@@ -9318,7 +9318,7 @@ msgid "PV modules"
 msgstr "Moduli fotovoltaici"
 
 #: src/meridiana/ui/catalog_dialog.py:40 src/meridiana/ui/plant_page.py:308
-#: src/meridiana/ui/report_chapters.py:292 src/meridiana/ui/window.py:3027
+#: src/meridiana/ui/report_chapters.py:292 src/meridiana/ui/window.py:3063
 msgid "Inverters"
 msgstr "Inverter"
 
@@ -9805,7 +9805,7 @@ msgstr "Salva come SVG…"
 msgid "Save as PNG…"
 msgstr "Salva come PNG…"
 
-#: src/meridiana/ui/charts.py:637 src/meridiana/ui/window.py:3203
+#: src/meridiana/ui/charts.py:637 src/meridiana/ui/window.py:3239
 msgid "Frame it"
 msgstr "Inquadra"
 
@@ -9842,7 +9842,7 @@ msgstr "Per area"
 msgid "Ready for delivery"
 msgstr "Pronto per la consegna"
 
-#: src/meridiana/ui/checks_page.py:58 src/meridiana/ui/window.py:2858
+#: src/meridiana/ui/checks_page.py:58 src/meridiana/ui/window.py:2894
 #, python-brace-format
 msgid "Site: {name}"
 msgstr "Sito: {name}"
@@ -9888,7 +9888,7 @@ msgstr "Cosa"
 msgid "Copy the notes for the report"
 msgstr "Copia le note per la relazione"
 
-#: src/meridiana/ui/checks_page.py:539 src/meridiana/ui/window.py:748
+#: src/meridiana/ui/checks_page.py:539 src/meridiana/ui/window.py:751
 msgid ""
 "The paragraphs of the rules that apply, with their sources, to paste into "
 "the technical report"
@@ -9984,7 +9984,7 @@ msgstr ""
 msgid "The fix «{fix}»: apply it?"
 msgstr "La correzione «{fix}»: la applico?"
 
-#: src/meridiana/ui/checks_page.py:1016 src/meridiana/ui/preferences.py:274
+#: src/meridiana/ui/checks_page.py:1016 src/meridiana/ui/preferences.py:273
 #: src/meridiana/ui/waiting.py:237
 msgid "Cancel"
 msgstr "Annulla"
@@ -10278,8 +10278,8 @@ msgid "Supply point (POD)"
 msgstr "Punto di prelievo (POD)"
 
 #: src/meridiana/ui/energy_pages.py:540 src/meridiana/ui/energy_pages.py:553
-#: src/meridiana/ui/map_sources.py:198 src/meridiana/ui/properties.py:784
-#: src/meridiana/ui/window.py:1728
+#: src/meridiana/ui/map_sources.py:200 src/meridiana/ui/properties.py:784
+#: src/meridiana/ui/window.py:1737
 msgid "Automatic"
 msgstr "Automatico"
 
@@ -10412,8 +10412,8 @@ msgstr "Media tensione"
 msgid "A POD is IT, three digits, E and eight digits: check it on the bill."
 msgstr "Un POD è IT, tre cifre, E e otto cifre: controllalo sulla bolletta."
 
-#: src/meridiana/ui/energy_pages.py:681 src/meridiana/ui/window.py:4512
-#: src/meridiana/ui/window.py:4519
+#: src/meridiana/ui/energy_pages.py:681 src/meridiana/ui/window.py:4548
+#: src/meridiana/ui/window.py:4555
 msgid "Import a load curve"
 msgstr "Importa una curva di carico"
 
@@ -10422,7 +10422,7 @@ msgid "CSV files (*.csv *.txt)"
 msgstr "File CSV (*.csv *.txt)"
 
 #: src/meridiana/ui/energy_pages.py:691 src/meridiana/ui/energy_pages.py:695
-#: src/meridiana/ui/map_sources.py:197 src/meridiana/ui/window.py:1727
+#: src/meridiana/ui/map_sources.py:199 src/meridiana/ui/window.py:1736
 #, python-brace-format
 msgid "Automatic: {name}"
 msgstr "Automatico: {name}"
@@ -10834,14 +10834,14 @@ msgstr "Torna al progetto"
 msgid "New"
 msgstr "Nuovo"
 
-#: src/meridiana/ui/file_page.py:241 src/meridiana/ui/file_page.py:257
-#: src/meridiana/ui/file_page.py:336 src/meridiana/ui/file_page.py:339
-#: src/meridiana/ui/file_page.py:341
+#: src/meridiana/ui/file_page.py:241 src/meridiana/ui/file_page.py:256
+#: src/meridiana/ui/file_page.py:345 src/meridiana/ui/file_page.py:348
+#: src/meridiana/ui/file_page.py:350
 msgid "Open"
 msgstr "Apri"
 
-#: src/meridiana/ui/file_page.py:242 src/meridiana/ui/file_page.py:308
-#: src/meridiana/ui/window.py:4614 src/meridiana/ui/window.py:4673
+#: src/meridiana/ui/file_page.py:242 src/meridiana/ui/file_page.py:307
+#: src/meridiana/ui/window.py:4650 src/meridiana/ui/window.py:4709
 msgid "Save"
 msgstr "Salva"
 
@@ -10853,52 +10853,52 @@ msgstr "Salva con nome"
 msgid "Save a revision"
 msgstr "Salva una revisione"
 
-#: src/meridiana/ui/file_page.py:246 src/meridiana/ui/file_page.py:273
+#: src/meridiana/ui/file_page.py:246 src/meridiana/ui/file_page.py:272
 msgid "Import"
 msgstr "Importa"
 
-#: src/meridiana/ui/file_page.py:249 src/meridiana/ui/file_page.py:319
-#: src/meridiana/ui/file_page.py:329
+#: src/meridiana/ui/file_page.py:249 src/meridiana/ui/file_page.py:318
+#: src/meridiana/ui/file_page.py:328
 msgid "Catalogues"
 msgstr "Cataloghi"
 
-#: src/meridiana/ui/file_page.py:250 src/meridiana/ui/preferences.py:497
+#: src/meridiana/ui/file_page.py:250 src/meridiana/ui/file_page.py:334
 #: src/meridiana/ui/selftest.py:125
-msgid "Preferences"
-msgstr "Preferenze"
+msgid "Settings"
+msgstr "Impostazioni"
 
-#: src/meridiana/ui/file_page.py:252 src/meridiana/ui/file_page.py:334
+#: src/meridiana/ui/file_page.py:251 src/meridiana/ui/file_page.py:343
 msgid "Help and manual"
 msgstr "Aiuto e manuale"
 
-#: src/meridiana/ui/file_page.py:254
+#: src/meridiana/ui/file_page.py:253
 msgid "Quit"
 msgstr "Esci"
 
-#: src/meridiana/ui/file_page.py:257
+#: src/meridiana/ui/file_page.py:256
 msgid "A Meridiana project from a file, or one of the last ones."
 msgstr "Un progetto di Meridiana da un file, o uno degli ultimi aperti."
 
-#: src/meridiana/ui/file_page.py:258
+#: src/meridiana/ui/file_page.py:257
 msgid "A project"
 msgstr "Un progetto"
 
-#: src/meridiana/ui/file_page.py:258
+#: src/meridiana/ui/file_page.py:257
 msgid "A .meridiana file, from wherever it is."
 msgstr "Un file .meridiana, ovunque si trovi."
 
-#: src/meridiana/ui/file_page.py:259 src/meridiana/ui/file_page.py:278
-#: src/meridiana/ui/file_page.py:280 src/meridiana/ui/file_page.py:283
-#: src/meridiana/ui/file_page.py:289 src/meridiana/ui/file_page.py:292
-#: src/meridiana/ui/file_page.py:294
+#: src/meridiana/ui/file_page.py:258 src/meridiana/ui/file_page.py:277
+#: src/meridiana/ui/file_page.py:279 src/meridiana/ui/file_page.py:282
+#: src/meridiana/ui/file_page.py:288 src/meridiana/ui/file_page.py:291
+#: src/meridiana/ui/file_page.py:293
 msgid "Choose the file…"
 msgstr "Scegli il file…"
 
-#: src/meridiana/ui/file_page.py:262
+#: src/meridiana/ui/file_page.py:261
 msgid "Opened recently"
 msgstr "Aperti di recente"
 
-#: src/meridiana/ui/file_page.py:273
+#: src/meridiana/ui/file_page.py:272
 msgid ""
 "What comes from other programs or from a file. Meridiana reads it, tells you "
 "what it took and what it approximated, and you can undo it."
@@ -10906,11 +10906,11 @@ msgstr ""
 "Quello che viene da altri programmi o da un file. Meridiana lo legge, ti "
 "dice cosa ha preso e cosa ha approssimato, e lo puoi annullare."
 
-#: src/meridiana/ui/file_page.py:276
+#: src/meridiana/ui/file_page.py:275
 msgid "PVsyst project"
 msgstr "Progetto PVsyst"
 
-#: src/meridiana/ui/file_page.py:276
+#: src/meridiana/ui/file_page.py:275
 msgid ""
 "The project and the variants next to it, as a new project: Meridiana says "
 "what it approximated."
@@ -10918,11 +10918,11 @@ msgstr ""
 "Il progetto e le varianti accanto, come progetto nuovo: Meridiana dice cosa "
 "ha approssimato."
 
-#: src/meridiana/ui/file_page.py:279
+#: src/meridiana/ui/file_page.py:278
 msgid "IFC model"
 msgstr "Modello IFC"
 
-#: src/meridiana/ui/file_page.py:279
+#: src/meridiana/ui/file_page.py:278
 msgid ""
 "The buildings of an architect's model: outlines, roof planes, heights and "
 "what stands on the roofs."
@@ -10930,78 +10930,78 @@ msgstr ""
 "Gli edifici del modello dell'architetto: contorni, falde, altezze e ciò che "
 "sta sulle coperture."
 
-#: src/meridiana/ui/file_page.py:282
+#: src/meridiana/ui/file_page.py:281
 msgid "Image under the drawing"
 msgstr "Immagine sotto il disegno"
 
-#: src/meridiana/ui/file_page.py:282
+#: src/meridiana/ui/file_page.py:281
 msgid "A site plan or an aerial photo, to scale on the plan."
 msgstr "Una planimetria o una foto aerea, da mettere in scala sulla pianta."
 
-#: src/meridiana/ui/file_page.py:284
+#: src/meridiana/ui/file_page.py:283
 msgid "Typical year and horizon"
 msgstr "Anno tipo e orizzonte"
 
-#: src/meridiana/ui/file_page.py:284
+#: src/meridiana/ui/file_page.py:283
 msgid ""
 "From the European service PVGIS for the project's site; then they stay in "
 "the cache."
 msgstr ""
 "Dal servizio europeo PVGIS per il sito del progetto; poi restano nella cache."
 
-#: src/meridiana/ui/file_page.py:286
+#: src/meridiana/ui/file_page.py:285
 msgid "Fetch"
 msgstr "Scarica"
 
-#: src/meridiana/ui/file_page.py:287
+#: src/meridiana/ui/file_page.py:286
 msgid "Catalogues and consumption"
 msgstr "Cataloghi e consumi"
 
-#: src/meridiana/ui/file_page.py:288
+#: src/meridiana/ui/file_page.py:287
 msgid "Module from PVsyst"
 msgstr "Modulo da PVsyst"
 
-#: src/meridiana/ui/file_page.py:288
+#: src/meridiana/ui/file_page.py:287
 msgid ""
 "Into the modules' catalogue, with the parameters of the one-diode model."
 msgstr "Nel catalogo dei moduli, con i parametri del modello a un diodo."
 
-#: src/meridiana/ui/file_page.py:291
+#: src/meridiana/ui/file_page.py:290
 msgid "Inverter from PVsyst"
 msgstr "Inverter da PVsyst"
 
-#: src/meridiana/ui/file_page.py:291
+#: src/meridiana/ui/file_page.py:290
 msgid "Into the inverters' catalogue, with its efficiency curve."
 msgstr "Nel catalogo degli inverter, con la curva di rendimento."
 
-#: src/meridiana/ui/file_page.py:293
+#: src/meridiana/ui/file_page.py:292
 msgid ""
 "The consumption measured every 15 minutes or every hour, in place of the "
 "profile."
 msgstr "I consumi misurati ogni 15 minuti o ogni ora, al posto del profilo."
 
-#: src/meridiana/ui/file_page.py:300
+#: src/meridiana/ui/file_page.py:299
 msgid "What leaves the project for the client, the authorities or a colleague."
 msgstr ""
 "Quello che esce dal progetto per il committente, gli enti o un collega."
 
-#: src/meridiana/ui/file_page.py:301
+#: src/meridiana/ui/file_page.py:300
 msgid "Documents"
 msgstr "Documenti"
 
-#: src/meridiana/ui/file_page.py:302
+#: src/meridiana/ui/file_page.py:301
 msgid "Production, strings, consumption and economics with every calculation."
 msgstr "Producibilità, stringhe, consumi ed economia con ogni calcolo."
 
-#: src/meridiana/ui/file_page.py:303 src/meridiana/ui/file_page.py:313
+#: src/meridiana/ui/file_page.py:302 src/meridiana/ui/file_page.py:312
 msgid "Export…"
 msgstr "Esporta…"
 
-#: src/meridiana/ui/file_page.py:304
+#: src/meridiana/ui/file_page.py:303
 msgid "Notes for the report"
 msgstr "Note per la relazione"
 
-#: src/meridiana/ui/file_page.py:304
+#: src/meridiana/ui/file_page.py:303
 msgid ""
 "The paragraphs of the rules that apply, with their sources, to paste into "
 "the technical report."
@@ -11009,19 +11009,19 @@ msgstr ""
 "I paragrafi delle regole che valgono, con le loro fonti, da incollare nella "
 "relazione tecnica."
 
-#: src/meridiana/ui/file_page.py:306
+#: src/meridiana/ui/file_page.py:305
 msgid "text"
 msgstr "testo"
 
-#: src/meridiana/ui/file_page.py:306 src/meridiana/ui/window.py:1562
+#: src/meridiana/ui/file_page.py:305 src/meridiana/ui/window.py:1571
 msgid "Copy"
 msgstr "Copia"
 
-#: src/meridiana/ui/file_page.py:307
+#: src/meridiana/ui/file_page.py:306
 msgid "A revision"
 msgstr "Una revisione"
 
-#: src/meridiana/ui/file_page.py:307
+#: src/meridiana/ui/file_page.py:306
 msgid ""
 "A new file next to this one, with the suffix _R01, _R02...: the previous one "
 "stays as it was."
@@ -11029,15 +11029,15 @@ msgstr ""
 "Un file nuovo accanto a questo, con il suffisso _R01, _R02...: il precedente "
 "resta com'era."
 
-#: src/meridiana/ui/file_page.py:310
+#: src/meridiana/ui/file_page.py:309
 msgid "Models"
 msgstr "Modelli"
 
-#: src/meridiana/ui/file_page.py:311
+#: src/meridiana/ui/file_page.py:310
 msgid "IFC4 model"
 msgstr "Modello IFC4"
 
-#: src/meridiana/ui/file_page.py:311
+#: src/meridiana/ui/file_page.py:310
 msgid ""
 "Buildings, roofs, obstacles and every module with its string, georeferenced: "
 "for the architect, the BIM coordinator, FreeCAD."
@@ -11045,7 +11045,7 @@ msgstr ""
 "Edifici, coperture, ostacoli e ogni modulo con la sua stringa, georiferiti: "
 "per l'architetto, il coordinatore BIM, FreeCAD."
 
-#: src/meridiana/ui/file_page.py:319
+#: src/meridiana/ui/file_page.py:318
 msgid ""
 "The modules, the inverters and the batteries Meridiana knows, with their "
 "data sheets: look, filter, add your own."
@@ -11053,53 +11053,61 @@ msgstr ""
 "I moduli, gli inverter e le batterie che Meridiana conosce, con le loro "
 "schede: guarda, filtra, aggiungi i tuoi."
 
-#: src/meridiana/ui/file_page.py:321
+#: src/meridiana/ui/file_page.py:320
 msgid "Every module with its electrical data and its origin."
 msgstr "Ogni modulo con i suoi dati elettrici e la sua origine."
 
-#: src/meridiana/ui/file_page.py:322
+#: src/meridiana/ui/file_page.py:321
 msgid "Every inverter with its inputs, its window and its efficiency."
 msgstr ""
 "Ogni inverter con i suoi ingressi, la sua finestra e il suo rendimento."
 
-#: src/meridiana/ui/file_page.py:323
+#: src/meridiana/ui/file_page.py:322
 msgid "The storage systems with their capacity and power."
 msgstr "Gli accumuli con la loro capacità e potenza."
 
-#: src/meridiana/ui/file_page.py:327
+#: src/meridiana/ui/file_page.py:326
 msgid "Open…"
 msgstr "Apri…"
 
 #: src/meridiana/ui/file_page.py:334
+msgid ""
+"Every choice applies and is saved at once. Undo the last change or restore "
+"the defaults of one section."
+msgstr ""
+"Ogni scelta si applica e si salva subito. Annulla l'ultima modifica o ripristina "
+"i valori predefiniti di una sezione."
+
+#: src/meridiana/ui/file_page.py:343
 msgid "How Meridiana works and how it computes, inside the program."
 msgstr "Come funziona Meridiana e come calcola, dentro il programma."
 
-#: src/meridiana/ui/file_page.py:336
+#: src/meridiana/ui/file_page.py:345
 msgid "Manual"
 msgstr "Manuale"
 
-#: src/meridiana/ui/file_page.py:336
+#: src/meridiana/ui/file_page.py:345
 msgid "The manual, at the chapter of the phase open."
 msgstr "Il manuale, al capitolo della fase aperta."
 
-#: src/meridiana/ui/file_page.py:338 src/meridiana/ui/shortcuts_dialog.py:161
+#: src/meridiana/ui/file_page.py:347 src/meridiana/ui/shortcuts_dialog.py:161
 msgid "Keyboard shortcuts"
 msgstr "Scorciatoie da tastiera"
 
-#: src/meridiana/ui/file_page.py:338
+#: src/meridiana/ui/file_page.py:347
 msgid "Every key of the window, with a search; change them in the same place."
 msgstr ""
 "Ogni tasto della finestra, con la ricerca; si cambiano nello stesso posto."
 
-#: src/meridiana/ui/file_page.py:340 src/meridiana/ui/window.py:4710
+#: src/meridiana/ui/file_page.py:349 src/meridiana/ui/window.py:4746
 msgid "About Meridiana"
 msgstr "Informazioni su Meridiana"
 
-#: src/meridiana/ui/file_page.py:340
+#: src/meridiana/ui/file_page.py:349
 msgid "The version, the licences, the data and where they come from."
 msgstr "La versione, le licenze, i dati e da dove vengono."
 
-#: src/meridiana/ui/file_page.py:368
+#: src/meridiana/ui/file_page.py:377
 msgid "No project opened yet."
 msgstr "Nessun progetto aperto finora."
 
@@ -11210,8 +11218,8 @@ msgstr ""
 msgid "{file} could not be read: {why}"
 msgstr "Non è stato possibile leggere {file}: {why}"
 
-#: src/meridiana/ui/ifc_import.py:266 src/meridiana/ui/window.py:4397
-#: src/meridiana/ui/window.py:4448
+#: src/meridiana/ui/ifc_import.py:266 src/meridiana/ui/window.py:4433
+#: src/meridiana/ui/window.py:4484
 msgid "Import an IFC model"
 msgstr "Importa un modello IFC"
 
@@ -11301,7 +11309,7 @@ msgstr ""
 "Le proprietà degli oggetti sono nella fase Modello; questo pannello si "
 "mostra e si nasconde con Ctrl+1."
 
-#: src/meridiana/ui/inspector.py:79 src/meridiana/ui/window.py:3026
+#: src/meridiana/ui/inspector.py:79 src/meridiana/ui/window.py:3062
 msgid "Deliverables"
 msgstr "Elaborati"
 
@@ -11336,15 +11344,15 @@ msgstr "Licenza: {licence}"
 msgid "Read on {url} on {date}"
 msgstr "Letta su {url} il {date}"
 
-#: src/meridiana/ui/map_sources.py:60
+#: src/meridiana/ui/map_sources.py:62
 msgid "Background of the plan"
 msgstr "Sfondo della pianta"
 
-#: src/meridiana/ui/map_sources.py:64
+#: src/meridiana/ui/map_sources.py:66
 msgid "Start from"
 msgstr "Si parte da"
 
-#: src/meridiana/ui/map_sources.py:66
+#: src/meridiana/ui/map_sources.py:68
 msgid ""
 "Automatic takes the best source for the site of each project: the open "
 "orthophoto of the region or of the country where there is one, else "
@@ -11358,15 +11366,15 @@ msgstr ""
 "copre il sito; altrove si usa quella automatica. L'attribuzione della "
 "sorgente in uso è sempre sulla pianta, in basso a destra."
 
-#: src/meridiana/ui/map_sources.py:78
+#: src/meridiana/ui/map_sources.py:80
 msgid "At the site of the project"
 msgstr "Al sito del progetto"
 
-#: src/meridiana/ui/map_sources.py:81
+#: src/meridiana/ui/map_sources.py:83
 msgid "The program's sources"
 msgstr "Le sorgenti del programma"
 
-#: src/meridiana/ui/map_sources.py:84
+#: src/meridiana/ui/map_sources.py:86
 msgid ""
 "Each licence was read on its official page on 25/10/2026: the address and "
 "the date are in the tooltip. Esri, Google, Bing and Azure are not here: "
@@ -11379,79 +11387,79 @@ msgstr ""
 "conservare i tasselli; si possono aggiungere qui sotto con la tua chiave, "
 "secondo i loro termini."
 
-#: src/meridiana/ui/map_sources.py:94
+#: src/meridiana/ui/map_sources.py:96
 msgid "Your sources"
 msgstr "Le tue sorgenti"
 
-#: src/meridiana/ui/map_sources.py:100 src/meridiana/ui/map_sources.py:318
-#: src/meridiana/ui/map_sources.py:410
+#: src/meridiana/ui/map_sources.py:102 src/meridiana/ui/map_sources.py:320
+#: src/meridiana/ui/map_sources.py:414
 msgid "New source"
 msgstr "Nuova sorgente"
 
-#: src/meridiana/ui/map_sources.py:103 src/meridiana/ui/preferences.py:372
-#: src/meridiana/ui/preferences.py:394 src/meridiana/ui/window.py:1895
+#: src/meridiana/ui/map_sources.py:105 src/meridiana/ui/preferences.py:373
+#: src/meridiana/ui/preferences.py:395 src/meridiana/ui/window.py:1904
 msgid "Remove"
 msgstr "Togli"
 
-#: src/meridiana/ui/map_sources.py:111 src/meridiana/ui/properties.py:575
+#: src/meridiana/ui/map_sources.py:113 src/meridiana/ui/properties.py:575
 #: src/meridiana/ui/properties.py:753
 msgid "Name"
 msgstr "Nome"
 
-#: src/meridiana/ui/map_sources.py:115 src/meridiana/ui/properties.py:608
+#: src/meridiana/ui/map_sources.py:117 src/meridiana/ui/properties.py:608
 msgid "Type"
 msgstr "Tipo"
 
-#: src/meridiana/ui/map_sources.py:119
+#: src/meridiana/ui/map_sources.py:121
 msgid "Read the capabilities"
 msgstr "Leggi le capabilities"
 
-#: src/meridiana/ui/map_sources.py:128
+#: src/meridiana/ui/map_sources.py:130
 msgid "Layer"
 msgstr "Livello"
 
-#: src/meridiana/ui/map_sources.py:130
+#: src/meridiana/ui/map_sources.py:132
 msgid "as its licence asks, for example «© Name of the provider, CC BY 4.0»"
 msgstr ""
 "come la sua licenza chiede, per esempio «© Nome del fornitore, CC BY 4.0»"
 
-#: src/meridiana/ui/map_sources.py:131
+#: src/meridiana/ui/map_sources.py:133
 msgid "Attribution"
 msgstr "Attribuzione"
 
-#: src/meridiana/ui/map_sources.py:133
+#: src/meridiana/ui/map_sources.py:135
 msgid "for example CC BY 4.0, or the terms in a line"
 msgstr "per esempio CC BY 4.0, o i termini in una riga"
 
-#: src/meridiana/ui/map_sources.py:134
+#: src/meridiana/ui/map_sources.py:136
 msgid "Licence"
 msgstr "Licenza"
 
-#: src/meridiana/ui/map_sources.py:136
+#: src/meridiana/ui/map_sources.py:138
 msgid "where you read it"
 msgstr "dove l'hai letta"
 
-#: src/meridiana/ui/map_sources.py:137
+#: src/meridiana/ui/map_sources.py:139
 msgid "Licence address"
 msgstr "Indirizzo della licenza"
 
-#: src/meridiana/ui/map_sources.py:141
+#: src/meridiana/ui/map_sources.py:143
 msgid "It is"
 msgstr "Contenuto"
 
-#: src/meridiana/ui/map_sources.py:144
+#: src/meridiana/ui/map_sources.py:146
 msgid "Highest zoom"
 msgstr "Zoom massimo"
 
-#: src/meridiana/ui/map_sources.py:149 src/meridiana/ui/preferences.py:184
+#: src/meridiana/ui/map_sources.py:151 src/meridiana/ui/preferences.py:183
 msgid "Set the key…"
 msgstr "Imposta la chiave…"
 
-#: src/meridiana/ui/map_sources.py:152
+#: src/meridiana/ui/map_sources.py:154
 msgid "Key"
 msgstr "Chiave"
 
-#: src/meridiana/ui/map_sources.py:160
+#: src/meridiana/ui/map_sources.py:162
 msgid ""
 "An XYZ address is a template with {z}, {x} and {y} (or {-y}), and {key} "
 "where a key goes. For a WMS or a WMTS paste the address of the service or of "
@@ -11467,63 +11475,63 @@ msgstr ""
 "restano nella cache come gli altri; leggi i termini della sorgente prima di "
 "usarla in una relazione."
 
-#: src/meridiana/ui/map_sources.py:185
+#: src/meridiana/ui/map_sources.py:187
 msgid "No source covers the site."
 msgstr "Nessuna sorgente copre il sito."
 
-#: src/meridiana/ui/map_sources.py:201
+#: src/meridiana/ui/map_sources.py:203
 msgid "Automatic: the best for the site"
 msgstr "Automatico: la migliore per il sito"
 
-#: src/meridiana/ui/map_sources.py:206
+#: src/meridiana/ui/map_sources.py:208
 #, python-brace-format
 msgid "{name} (not at this site)"
 msgstr "{name} (non in questo sito)"
 
-#: src/meridiana/ui/map_sources.py:207 src/meridiana/ui/window.py:1731
+#: src/meridiana/ui/map_sources.py:209 src/meridiana/ui/window.py:1740
 msgid "None"
 msgstr "Nessuno"
 
-#: src/meridiana/ui/map_sources.py:219 src/meridiana/ui/map_sources.py:220
-#: src/meridiana/ui/map_sources.py:259 src/meridiana/ui/map_sources.py:260
+#: src/meridiana/ui/map_sources.py:221 src/meridiana/ui/map_sources.py:222
+#: src/meridiana/ui/map_sources.py:261 src/meridiana/ui/map_sources.py:262
 msgid "(no name)"
 msgstr "(senza nome)"
 
-#: src/meridiana/ui/map_sources.py:220 src/meridiana/ui/map_sources.py:260
+#: src/meridiana/ui/map_sources.py:222 src/meridiana/ui/map_sources.py:262
 #, python-brace-format
 msgid "{name} (not used yet)"
 msgstr "{name} (non ancora in uso)"
 
-#: src/meridiana/ui/map_sources.py:255
+#: src/meridiana/ui/map_sources.py:257
 #, python-brace-format
 msgid "Not used until it is complete: {what}"
 msgstr "Non si usa finché non è completa: {what}"
 
-#: src/meridiana/ui/map_sources.py:258
+#: src/meridiana/ui/map_sources.py:260
 #, python-brace-format
 msgid "This address has no {key}: none is needed."
 msgstr "Questo indirizzo non ha {key}: la chiave non serve."
 
-#: src/meridiana/ui/map_sources.py:273
+#: src/meridiana/ui/map_sources.py:275
 msgid "No keyring on this system: a source that needs a key cannot be used."
 msgstr ""
 "Nessun portachiavi su questo sistema: una sorgente che vuole una chiave non "
 "si può usare."
 
-#: src/meridiana/ui/map_sources.py:274
+#: src/meridiana/ui/map_sources.py:276
 #, python-brace-format
 msgid "Key in the system's keyring: {key}"
 msgstr "Chiave nel portachiavi del sistema: {key}"
 
-#: src/meridiana/ui/map_sources.py:274
+#: src/meridiana/ui/map_sources.py:276
 msgid "No key yet."
 msgstr "Ancora nessuna chiave."
 
-#: src/meridiana/ui/map_sources.py:281
+#: src/meridiana/ui/map_sources.py:283
 msgid "Key of the map source"
 msgstr "Chiave della sorgente della mappa"
 
-#: src/meridiana/ui/map_sources.py:281
+#: src/meridiana/ui/map_sources.py:283
 msgid ""
 "The key the provider gave you (it goes to the system's keyring, never to a "
 "file):"
@@ -11531,34 +11539,34 @@ msgstr ""
 "La chiave che ti ha dato il fornitore (va nel portachiavi del sistema, mai "
 "in un file):"
 
-#: src/meridiana/ui/map_sources.py:287
+#: src/meridiana/ui/map_sources.py:289
 #, python-brace-format
 msgid "The key could not be kept: {why}"
 msgstr "Non è stato possibile conservare la chiave: {why}"
 
-#: src/meridiana/ui/map_sources.py:346
+#: src/meridiana/ui/map_sources.py:350
 msgid "Paste the address of the service first."
 msgstr "Prima incolla l'indirizzo del servizio."
 
-#: src/meridiana/ui/map_sources.py:349
-msgid "The map servers are switched off in Preferences > Privacy."
-msgstr "I server delle mappe sono spenti in Preferenze > Privacy."
+#: src/meridiana/ui/map_sources.py:353
+msgid "The map servers are switched off in Settings > Privacy."
+msgstr "I server delle mappe sono spenti in Impostazioni > Privacy."
 
-#: src/meridiana/ui/map_sources.py:357
+#: src/meridiana/ui/map_sources.py:361
 msgid "Reading…"
 msgstr "Lettura…"
 
-#: src/meridiana/ui/map_sources.py:375
+#: src/meridiana/ui/map_sources.py:379
 #, python-brace-format
 msgid "The server did not answer: {error}"
 msgstr "Il server non ha risposto: {error}"
 
-#: src/meridiana/ui/map_sources.py:380
+#: src/meridiana/ui/map_sources.py:384
 #, python-brace-format
 msgid "Not readable: {why}"
 msgstr "Non leggibile: {why}"
 
-#: src/meridiana/ui/map_sources.py:394
+#: src/meridiana/ui/map_sources.py:398
 #, python-brace-format
 msgid ""
 "{title}: {n} layers usable on the plan, {m} not (another grid or system)."
@@ -11566,7 +11574,7 @@ msgstr ""
 "{title}: {n} livelli usabili sulla pianta, {m} no (un'altra griglia o un "
 "altro sistema)."
 
-#: src/meridiana/ui/map_sources.py:396
+#: src/meridiana/ui/map_sources.py:400
 #, python-brace-format
 msgid "{title}: {n} layers usable on the plan."
 msgstr "{title}: {n} livelli usabili sulla pianta."
@@ -11720,7 +11728,7 @@ msgid "Nothing computed yet."
 msgstr "Ancora niente di calcolato."
 
 #: src/meridiana/ui/phasebar.py:353
-msgid "New, open, save, import, export, catalogues, preferences and help"
+msgid "New, open, save, import, export, catalogues, settings and help"
 msgstr "Nuovo, apri, salva, importa, esporta, cataloghi, preferenze e aiuto"
 
 #: src/meridiana/ui/plan.py:200
@@ -12229,43 +12237,43 @@ msgid_plural "{n} input pairs"
 msgstr[0] "{n} coppia d'ingresso"
 msgstr[1] "{n} coppie d'ingresso"
 
-#: src/meridiana/ui/preferences.py:24
+#: src/meridiana/ui/preferences.py:23
 msgid "Turntable: the vertical stays vertical"
 msgstr "Turntable: la verticale resta verticale"
 
-#: src/meridiana/ui/preferences.py:24
+#: src/meridiana/ui/preferences.py:23
 msgid "Arcball: free"
 msgstr "Arcball: libera"
 
-#: src/meridiana/ui/preferences.py:28
+#: src/meridiana/ui/preferences.py:27
 msgid "The point under the cursor"
 msgstr "Il punto sotto il cursore"
 
-#: src/meridiana/ui/preferences.py:28
+#: src/meridiana/ui/preferences.py:27
 msgid "The middle of the selection"
 msgstr "Il centro della selezione"
 
-#: src/meridiana/ui/preferences.py:29
+#: src/meridiana/ui/preferences.py:28
 msgid "The middle of the view"
 msgstr "Il centro della vista"
 
-#: src/meridiana/ui/preferences.py:43
+#: src/meridiana/ui/preferences.py:42
 msgid "Mouse style"
 msgstr "Stile del mouse"
 
-#: src/meridiana/ui/preferences.py:48
+#: src/meridiana/ui/preferences.py:47
 msgid "Orbit"
 msgstr "Orbita"
 
-#: src/meridiana/ui/preferences.py:53
+#: src/meridiana/ui/preferences.py:52
 msgid "Centre of the orbit"
 msgstr "Centro dell'orbita"
 
-#: src/meridiana/ui/preferences.py:54
+#: src/meridiana/ui/preferences.py:53
 msgid "Show the pivot on passing over"
 msgstr "Mostra il perno al passaggio"
 
-#: src/meridiana/ui/preferences.py:69
+#: src/meridiana/ui/preferences.py:68
 msgid ""
 "A gesture is the buttons and keys held while the mouse moves. The same "
 "styles as FreeCAD, plus AutoCAD and SketchUp. The plan pans and zooms the "
@@ -12275,7 +12283,7 @@ msgstr ""
 "muove. Gli stessi stili di FreeCAD, più AutoCAD e SketchUp. La pianta si "
 "sposta e si ingrandisce allo stesso modo; l'orbita è per il 3D."
 
-#: src/meridiana/ui/preferences.py:83
+#: src/meridiana/ui/preferences.py:82
 #, python-brace-format
 msgid ""
 "With the orbit's key held ({keys} in this style) and the mouse moving, a "
@@ -12284,7 +12292,7 @@ msgstr ""
 "Tenendo premuto il tasto dell'orbita ({keys} in questo stile) e muovendo il "
 "mouse, un mirino mostra attorno a che punto girerebbe l'orbita."
 
-#: src/meridiana/ui/preferences.py:85
+#: src/meridiana/ui/preferences.py:84
 msgid ""
 "This style orbits with a button alone, with no key to hold: the pivot shows "
 "only while orbiting."
@@ -12292,7 +12300,7 @@ msgstr ""
 "Questo stile orbita con un pulsante da solo, senza un tasto da tenere: il "
 "perno si vede solo mentre si orbita."
 
-#: src/meridiana/ui/preferences.py:103
+#: src/meridiana/ui/preferences.py:102
 msgid ""
 "Meridiana sends nothing about you anywhere. Three services receive what they "
 "need to answer, and each can be switched off here; off, the program uses "
@@ -12302,11 +12310,11 @@ msgstr ""
 "quello che serve loro per rispondere, e ognuno si può spegnere qui; spento, "
 "il programma usa quello che è già nella cache e lo dice."
 
-#: src/meridiana/ui/preferences.py:108
+#: src/meridiana/ui/preferences.py:107
 msgid "Find the site: the address typed goes to OpenStreetMap's Nominatim"
 msgstr "Trova il sito: l'indirizzo scritto va a Nominatim di OpenStreetMap"
 
-#: src/meridiana/ui/preferences.py:111
+#: src/meridiana/ui/preferences.py:110
 msgid ""
 "Weather and PVGIS estimate: the site's coordinates (five decimals) go to the "
 "European Commission's PVGIS"
@@ -12314,17 +12322,17 @@ msgstr ""
 "Meteo e stima PVGIS: le coordinate del sito (cinque decimali) vanno al PVGIS "
 "della Commissione europea"
 
-#: src/meridiana/ui/preferences.py:115
+#: src/meridiana/ui/preferences.py:114
 msgid ""
 "Map under the plan: the area in view goes to the server of the source in "
-"use, named at the bottom right of the plan (Preferences > Maps lists them; "
-"the Italian national orthophoto is served over plain http)"
+"use, named at the bottom right of the plan (Settings > Maps lists them; the "
+"Italian national orthophoto is served over plain http)"
 msgstr ""
 "Mappa sotto la pianta: l'area inquadrata va al server della sorgente in uso, "
-"indicata in basso a destra della pianta (Preferenze > Mappe le elenca; "
+"indicata in basso a destra della pianta (Impostazioni > Mappe le elenca; "
 "l'ortofoto nazionale italiana è servita in http semplice)"
 
-#: src/meridiana/ui/preferences.py:121
+#: src/meridiana/ui/preferences.py:120
 msgid ""
 "Updates: once a day at start, the Windows program asks GitHub whether a "
 "newer version is out; nothing about you or your projects is sent"
@@ -12333,7 +12341,7 @@ msgstr ""
 "chiede a GitHub se è uscita una versione più recente; non invia niente di te "
 "né dei tuoi progetti"
 
-#: src/meridiana/ui/preferences.py:125
+#: src/meridiana/ui/preferences.py:124
 msgid ""
 "The project file keeps the images you import (without their metadata) and "
 "the recovery copy in the state folder keeps the whole project until it is "
@@ -12343,46 +12351,46 @@ msgstr ""
 "e la copia di ripristino nella cartella di stato conserva tutto il progetto "
 "finché non lo salvi."
 
-#: src/meridiana/ui/preferences.py:150
+#: src/meridiana/ui/preferences.py:149
 #, python-brace-format
 msgid "Where {name} thinks"
 msgstr "Dove pensa {name}"
 
-#: src/meridiana/ui/preferences.py:152
+#: src/meridiana/ui/preferences.py:151
 msgid "The local model, on this PC: nothing leaves it (the default)"
 msgstr "Il modello locale, su questo PC: non esce nulla (predefinito)"
 
-#: src/meridiana/ui/preferences.py:153
+#: src/meridiana/ui/preferences.py:152
 msgid "Claude, with your key and after your consent: for the hard questions"
 msgstr ""
 "Claude, con la tua chiave e dopo il tuo consenso: per le domande difficili"
 
-#: src/meridiana/ui/preferences.py:165
+#: src/meridiana/ui/preferences.py:164
 msgid "Local server"
 msgstr "Server locale"
 
-#: src/meridiana/ui/preferences.py:167
+#: src/meridiana/ui/preferences.py:166
 msgid "OpenAI-compatible (llama-server, LM Studio, Jan…)"
 msgstr "Compatibile con OpenAI (llama-server, LM Studio, Jan…)"
 
-#: src/meridiana/ui/preferences.py:170
+#: src/meridiana/ui/preferences.py:169
 msgid "Kind of server"
 msgstr "Tipo di server"
 
-#: src/meridiana/ui/preferences.py:178
+#: src/meridiana/ui/preferences.py:177
 msgid "Claude model"
 msgstr "Modello di Claude"
 
-#: src/meridiana/ui/preferences.py:187
+#: src/meridiana/ui/preferences.py:186
 msgid "Remove the key"
 msgstr "Togli la chiave"
 
-#: src/meridiana/ui/preferences.py:192
+#: src/meridiana/ui/preferences.py:191
 #, python-brace-format
 msgid "Withdraw the consent to send questions to Claude, given on {date}"
 msgstr "Ritira il consenso a mandare domande a Claude, dato il {date}"
 
-#: src/meridiana/ui/preferences.py:196
+#: src/meridiana/ui/preferences.py:195
 msgid ""
 "The key stays in the system's keyring; a project marked reserved never goes "
 "to the cloud."
@@ -12390,64 +12398,64 @@ msgstr ""
 "La chiave resta nel portachiavi del sistema; un progetto segnato riservato "
 "non va mai nel cloud."
 
-#: src/meridiana/ui/preferences.py:200
+#: src/meridiana/ui/preferences.py:199
 #, python-brace-format
 msgid "{name} reads his answers aloud, in the language of the program"
 msgstr "{name} legge le risposte ad alta voce, nella lingua del programma"
 
-#: src/meridiana/ui/preferences.py:209
+#: src/meridiana/ui/preferences.py:208
 msgid "The natural one when it is on the PC, else the system's"
 msgstr "Quella naturale se c'è sul PC, altrimenti quella del sistema"
 
-#: src/meridiana/ui/preferences.py:210
+#: src/meridiana/ui/preferences.py:209
 msgid "The natural one (Kokoro)"
 msgstr "Quella naturale (Kokoro)"
 
-#: src/meridiana/ui/preferences.py:210
+#: src/meridiana/ui/preferences.py:209
 msgid "The system's"
 msgstr "Quella del sistema"
 
-#: src/meridiana/ui/preferences.py:213
+#: src/meridiana/ui/preferences.py:212
 msgid "Voice"
 msgstr "Voce"
 
-#: src/meridiana/ui/preferences.py:215
+#: src/meridiana/ui/preferences.py:214
 msgid "A man's (Meridio is «he»)"
 msgstr "Maschile (Meridio è «lui»)"
 
-#: src/meridiana/ui/preferences.py:219
+#: src/meridiana/ui/preferences.py:218
 msgid "Who speaks"
 msgstr "Chi parla"
 
-#: src/meridiana/ui/preferences.py:221
+#: src/meridiana/ui/preferences.py:220
 msgid "the folder with kokoro-v1.0.onnx and voices-v1.0.bin"
 msgstr "la cartella con kokoro-v1.0.onnx e voices-v1.0.bin"
 
-#: src/meridiana/ui/preferences.py:223
+#: src/meridiana/ui/preferences.py:222
 msgid "Kokoro's model"
 msgstr "Modello di Kokoro"
 
-#: src/meridiana/ui/preferences.py:227
+#: src/meridiana/ui/preferences.py:226
 msgid "the program's own"
 msgstr "quello del programma"
 
-#: src/meridiana/ui/preferences.py:228
+#: src/meridiana/ui/preferences.py:227
 msgid "none found: a Python with kokoro-onnx"
 msgstr "nessuno trovato: un Python con kokoro-onnx"
 
-#: src/meridiana/ui/preferences.py:229
+#: src/meridiana/ui/preferences.py:228
 msgid "Python for Kokoro"
 msgstr "Python per Kokoro"
 
-#: src/meridiana/ui/preferences.py:234
+#: src/meridiana/ui/preferences.py:233
 msgid "Download the natural voice (about 350 MB)…"
 msgstr "Scarica la voce naturale (circa 350 MB)…"
 
-#: src/meridiana/ui/preferences.py:259 src/meridiana/ui/preferences.py:275
+#: src/meridiana/ui/preferences.py:258 src/meridiana/ui/preferences.py:274
 msgid "Natural voice"
 msgstr "Voce naturale"
 
-#: src/meridiana/ui/preferences.py:260
+#: src/meridiana/ui/preferences.py:259
 #, python-brace-format
 msgid ""
 "Download Kokoro's model (two files, about 350 MB) from its official release "
@@ -12457,26 +12465,26 @@ msgstr ""
 "pubblicazione ufficiale su GitHub ({source}) in {folder}? Non viene inviato "
 "niente di tuo."
 
-#: src/meridiana/ui/preferences.py:274
+#: src/meridiana/ui/preferences.py:273
 msgid "Downloading the natural voice…"
 msgstr "Scarico la voce naturale…"
 
-#: src/meridiana/ui/preferences.py:283
+#: src/meridiana/ui/preferences.py:282
 #, python-brace-format
 msgid "Downloading the natural voice: {done} of {total} MB"
 msgstr "Scarico la voce naturale: {done} di {total} MB"
 
-#: src/meridiana/ui/preferences.py:289
+#: src/meridiana/ui/preferences.py:288
 #, python-brace-format
 msgid "The download did not end: {why}"
 msgstr "Lo scaricamento non è finito: {why}"
 
-#: src/meridiana/ui/preferences.py:301
+#: src/meridiana/ui/preferences.py:300
 #, python-brace-format
 msgid "Natural voice: the model is in {folder}."
 msgstr "Voce naturale: il modello è in {folder}."
 
-#: src/meridiana/ui/preferences.py:302
+#: src/meridiana/ui/preferences.py:301
 #, python-brace-format
 msgid ""
 "Natural voice: no model on this PC. Its two files (kokoro-onnx 1.0, about "
@@ -12487,36 +12495,36 @@ msgstr ""
 "1.0, circa 330 MB) vanno nella cartella qui sopra, oppure in {folder}; il "
 "Python che lo esegue deve avere il pacchetto kokoro-onnx."
 
-#: src/meridiana/ui/preferences.py:311
+#: src/meridiana/ui/preferences.py:310
 msgid "No keyring on this system: Claude cannot be used."
 msgstr "Nessun portachiavi su questo sistema: Claude non si può usare."
 
-#: src/meridiana/ui/preferences.py:315
+#: src/meridiana/ui/preferences.py:314
 #, python-brace-format
 msgid "Claude key in the system's keyring: {key}"
 msgstr "Chiave di Claude nel portachiavi del sistema: {key}"
 
-#: src/meridiana/ui/preferences.py:316
+#: src/meridiana/ui/preferences.py:315
 msgid "No Claude key yet."
 msgstr "Ancora nessuna chiave di Claude."
 
-#: src/meridiana/ui/preferences.py:321
+#: src/meridiana/ui/preferences.py:320
 msgid "Claude key"
 msgstr "Chiave di Claude"
 
-#: src/meridiana/ui/preferences.py:321
+#: src/meridiana/ui/preferences.py:320
 msgid ""
 "Your Anthropic API key (it goes to the system's keyring, never to a file):"
 msgstr ""
 "La tua chiave API di Anthropic (va nel portachiavi del sistema, mai in un "
 "file):"
 
-#: src/meridiana/ui/preferences.py:332
+#: src/meridiana/ui/preferences.py:331
 #, python-brace-format
 msgid "The key could not be removed: {why}"
 msgstr "Non è stato possibile togliere la chiave: {why}"
 
-#: src/meridiana/ui/preferences.py:361
+#: src/meridiana/ui/preferences.py:362
 msgid ""
 "Meridiana has no name in it: what you write here stays in the settings of "
 "this PC and is printed only on the reports signed with that profile."
@@ -12524,60 +12532,80 @@ msgstr ""
 "Meridiana non contiene nomi: quello che scrivi qui resta nelle impostazioni "
 "di questo PC e compare solo nelle relazioni firmate con quel profilo."
 
-#: src/meridiana/ui/preferences.py:369
+#: src/meridiana/ui/preferences.py:370
 msgid "New profile"
 msgstr "Nuovo profilo"
 
-#: src/meridiana/ui/preferences.py:379
+#: src/meridiana/ui/preferences.py:380
 msgid "as you will choose it, for example «Studio»"
 msgstr "come lo sceglierai, per esempio «Studio»"
 
-#: src/meridiana/ui/preferences.py:379
+#: src/meridiana/ui/preferences.py:380
 msgid "for example Ing. Name Surname"
 msgstr "per esempio Ing. Nome Cognome"
 
-#: src/meridiana/ui/preferences.py:380
+#: src/meridiana/ui/preferences.py:381
 msgid "register, province and number"
 msgstr "albo, provincia e numero"
 
-#: src/meridiana/ui/preferences.py:391
+#: src/meridiana/ui/preferences.py:392
 msgid "Choose…"
 msgstr "Scegli…"
 
-#: src/meridiana/ui/preferences.py:403
+#: src/meridiana/ui/preferences.py:404
 msgid "For the projects that choose none"
 msgstr "Per i progetti che non ne scelgono uno"
 
-#: src/meridiana/ui/preferences.py:417
+#: src/meridiana/ui/preferences.py:418
 msgid "Nobody"
 msgstr "Nessuno"
 
-#: src/meridiana/ui/preferences.py:478
+#: src/meridiana/ui/preferences.py:481
 msgid "Logo of the report"
 msgstr "Logo della relazione"
 
-#: src/meridiana/ui/preferences.py:479 src/meridiana/ui/underlays.py:29
+#: src/meridiana/ui/preferences.py:482 src/meridiana/ui/underlays.py:29
 msgid "Images (*.png *.jpg *.jpeg)"
 msgstr "Immagini (*.png *.jpg *.jpeg)"
 
-#: src/meridiana/ui/preferences.py:503
+#: src/meridiana/ui/preferences.py:530
+msgid "Undo the last change"
+msgstr "Annulla l'ultima modifica"
+
+#: src/meridiana/ui/preferences.py:534
+msgid "Restore defaults for this section"
+msgstr "Ripristina i valori predefiniti di questa sezione"
+
+#: src/meridiana/ui/preferences.py:542
+msgid "Restore the default values of this section?"
+msgstr "Ripristinare i valori predefiniti di questa sezione?"
+
+#: src/meridiana/ui/preferences.py:544
+msgid "Restore defaults"
+msgstr "Ripristina i valori predefiniti"
+
+#: src/meridiana/ui/preferences.py:547
+msgid "Keep the current values"
+msgstr "Mantieni i valori attuali"
+
+#: src/meridiana/ui/preferences.py:566
 msgid "Appearance"
 msgstr "Aspetto"
 
-#: src/meridiana/ui/preferences.py:505
+#: src/meridiana/ui/preferences.py:568
 msgid "Navigation"
 msgstr "Navigazione"
 
-#: src/meridiana/ui/preferences.py:507
+#: src/meridiana/ui/preferences.py:570
 msgid "Keyboard"
 msgstr "Tastiera"
 
-#: src/meridiana/ui/preferences.py:510
+#: src/meridiana/ui/preferences.py:573
 #, python-brace-format
 msgid "Show {name}, the assistant, and its item in the status bar"
 msgstr "Mostra {name}, l'assistente, e la sua voce nella barra di stato"
 
-#: src/meridiana/ui/preferences.py:514
+#: src/meridiana/ui/preferences.py:577
 msgid ""
 "Off, nothing of the assistant is left in the window: not the character, not "
 "the item in the status bar, not its key (Ctrl+L)."
@@ -12585,11 +12613,11 @@ msgstr ""
 "Spento, dell'assistente non resta nulla nella finestra: né il personaggio, "
 "né la voce nella barra di stato, né il suo tasto (Ctrl+L)."
 
-#: src/meridiana/ui/preferences.py:518
+#: src/meridiana/ui/preferences.py:581
 msgid "Dock the conversation in the panels, as Project and Properties"
 msgstr "Aggancia la conversazione ai pannelli, come Progetto e Proprietà"
 
-#: src/meridiana/ui/preferences.py:521
+#: src/meridiana/ui/preferences.py:584
 msgid ""
 "Off, it floats over the views and the conversation opens as its speech "
 "bubble. The conversation is the same either way; the button at its head does "
@@ -12599,7 +12627,7 @@ msgstr ""
 "La conversazione è la stessa nei due modi; il pulsante in testa "
 "all'assistente fa la stessa cosa."
 
-#: src/meridiana/ui/preferences.py:525
+#: src/meridiana/ui/preferences.py:588
 #, python-brace-format
 msgid ""
 "{name} animated: the rays turn, the eyes blink and glance, a face now and "
@@ -12608,7 +12636,7 @@ msgstr ""
 "{name} animato: i raggi girano, gli occhi battono e guardano in giro, una "
 "smorfia ogni tanto"
 
-#: src/meridiana/ui/preferences.py:529
+#: src/meridiana/ui/preferences.py:592
 msgid ""
 "Off, or when the desktop asks for less motion, the character only changes "
 "expression with its state, and the speech bubble opens and closes at once."
@@ -12616,25 +12644,30 @@ msgstr ""
 "Spento, o quando il sistema chiede meno movimento, il personaggio cambia "
 "espressione solo con il suo stato, e il fumetto si apre e si chiude subito."
 
-#: src/meridiana/ui/preferences.py:535
+#: src/meridiana/ui/preferences.py:598
 msgid "Smooth"
 msgstr "Liscio"
 
-#: src/meridiana/ui/preferences.py:535
+#: src/meridiana/ui/preferences.py:598
 msgid "Pixel"
 msgstr "Pixel"
 
-#: src/meridiana/ui/preferences.py:538
+#: src/meridiana/ui/preferences.py:601
 msgid "Drawing"
 msgstr "Disegno"
 
-#: src/meridiana/ui/preferences.py:563
+#: src/meridiana/ui/preferences.py:625
 msgid "Maps"
 msgstr "Mappe"
 
-#: src/meridiana/ui/preferences.py:565
+#: src/meridiana/ui/preferences.py:627
 msgid "Privacy"
 msgstr "Riservatezza"
+
+#: src/meridiana/ui/preferences.py:707
+#, python-brace-format
+msgid "Restore the default values of {section}?"
+msgstr "Ripristinare i valori predefiniti di {section}?"
 
 #: src/meridiana/ui/properties.py:27
 msgid "Coplanar on the pitch"
@@ -13164,7 +13197,7 @@ msgstr ""
 "Da posare di nuovo: la posa è in arrivo, i numeri qui sotto sono quelli di "
 "prima."
 
-#: src/meridiana/ui/properties.py:895 src/meridiana/ui/window.py:2884
+#: src/meridiana/ui/properties.py:895 src/meridiana/ui/window.py:2920
 #, python-brace-format
 msgid "The layout failed: {why}"
 msgstr "La posa non è riuscita: {why}"
@@ -13247,7 +13280,7 @@ msgstr ""
 "3.3.5.1)."
 
 #: src/meridiana/ui/pvsyst_import.py:20 src/meridiana/ui/pvsyst_import.py:64
-#: src/meridiana/ui/window.py:4327
+#: src/meridiana/ui/window.py:4363
 msgid "Import a PVsyst project"
 msgstr "Importa un progetto PVsyst"
 
@@ -13608,7 +13641,7 @@ msgstr ""
 msgid "Distances between the rows"
 msgstr "Distanze fra le file"
 
-#: src/meridiana/ui/report_chapters.py:435 src/meridiana/ui/window.py:2885
+#: src/meridiana/ui/report_chapters.py:435 src/meridiana/ui/window.py:2921
 msgid "Exclusions"
 msgstr "Esclusioni"
 
@@ -13963,9 +13996,9 @@ msgstr "Profili…"
 
 #: src/meridiana/ui/report_page.py:248
 msgid ""
-"Preferences > Report: who signs the reports, with the logo and the contacts"
+"Settings > Report: who signs the reports, with the logo and the contacts"
 msgstr ""
-"Preferenze > Relazione: chi firma le relazioni, con il logo e i recapiti"
+"Impostazioni > Relazione: chi firma le relazioni, con il logo e i recapiti"
 
 #: src/meridiana/ui/report_page.py:251
 msgid "Signed by"
@@ -14038,9 +14071,9 @@ msgid "nobody"
 msgstr "nessuno"
 
 #: src/meridiana/ui/report_page.py:309
-msgid "The profile Preferences > Report gives the projects that choose none"
+msgid "The profile Settings > Report gives the projects that choose none"
 msgstr ""
-"Il profilo che Preferenze > Relazione dà ai progetti che non ne scelgono uno"
+"Il profilo che Impostazioni > Relazione dà ai progetti che non ne scelgono uno"
 
 #: src/meridiana/ui/report_page.py:311
 msgid "Nobody: only the project and the date"
@@ -14075,7 +14108,7 @@ msgstr "Lasciato fuori: mancano i dati ({what})."
 msgid "Add attachments"
 msgstr "Aggiungi allegati"
 
-#: src/meridiana/ui/report_page.py:369 src/meridiana/ui/window.py:3519
+#: src/meridiana/ui/report_page.py:369 src/meridiana/ui/window.py:3555
 msgid "PDF files (*.pdf)"
 msgstr "File PDF (*.pdf)"
 
@@ -14161,7 +14194,7 @@ msgstr "Tutti i predefiniti"
 msgid "{keys} is used by {what}: there it would stop working."
 msgstr "{keys} è usato da {what}: lì smetterebbe di funzionare."
 
-#: src/meridiana/ui/site_dialog.py:23 src/meridiana/ui/window.py:2636
+#: src/meridiana/ui/site_dialog.py:23 src/meridiana/ui/window.py:2672
 msgid "Find the site"
 msgstr "Trova il sito"
 
@@ -14178,10 +14211,9 @@ msgid "Coordinates taken."
 msgstr "Coordinate acquisite."
 
 #: src/meridiana/ui/site_dialog.py:66
-msgid ""
-"The address search is off in Preferences > Privacy: type the coordinates."
+msgid "The address search is off in Settings > Privacy: type the coordinates."
 msgstr ""
-"La ricerca dell'indirizzo è spenta in Preferenze > Riservatezza: scrivi le "
+"La ricerca dell'indirizzo è spenta in Impostazioni > Riservatezza: scrivi le "
 "coordinate."
 
 #: src/meridiana/ui/site_dialog.py:69
@@ -14267,7 +14299,7 @@ msgstr ""
 "Alle {time} ({clock}) il sole è a {elevation}° sull'orizzonte, azimut "
 "{azimuth}° (da Sud, + verso Ovest)."
 
-#: src/meridiana/ui/template_dialog.py:56 src/meridiana/ui/window.py:1843
+#: src/meridiana/ui/template_dialog.py:56 src/meridiana/ui/window.py:1852
 msgid "Building from a template"
 msgstr "Edificio da modello"
 
@@ -14469,7 +14501,7 @@ msgstr ""
 "Una variante nuova, copia di quella in uso, da cambiare senza perderla (un "
 "altro modulo, un'altra inclinazione, una batteria) e confrontare le due"
 
-#: src/meridiana/ui/variant_bar.py:69 src/meridiana/ui/window.py:2035
+#: src/meridiana/ui/variant_bar.py:69 src/meridiana/ui/window.py:2044
 #, python-brace-format
 msgid "Work on the variant {name}"
 msgstr "Passa alla variante {name}"
@@ -14592,18 +14624,18 @@ msgstr "La voce naturale si è fermata."
 #: src/meridiana/ui/voice.py:244
 msgid ""
 "No Python on this PC runs the natural voice: name one that has the package "
-"kokoro-onnx in Preferences > Assistant."
+"kokoro-onnx in Settings > Assistant."
 msgstr ""
 "Nessun Python su questo PC fa parlare la voce naturale: indicane uno con il "
-"pacchetto kokoro-onnx in Preferenze > Assistente."
+"pacchetto kokoro-onnx in Impostazioni > Assistente."
 
 #: src/meridiana/ui/voice.py:246
 msgid ""
 "The natural voice's model (Kokoro) is not on this PC: its two files go in "
-"the folder of Preferences > Assistant."
+"the folder of Settings > Assistant."
 msgstr ""
 "Il modello della voce naturale (Kokoro) non è su questo PC: i suoi due file "
-"vanno nella cartella di Preferenze > Assistente."
+"vanno nella cartella di Impostazioni > Assistente."
 
 #: src/meridiana/ui/voice.py:249 src/meridiana/ui/voice.py:321
 #: src/meridiana/ui/voice.py:325
@@ -14618,24 +14650,24 @@ msgstr ""
 msgid "The speech engine did not start: {why}"
 msgstr "Il motore di sintesi vocale non si è avviato: {why}"
 
-#: src/meridiana/ui/window.py:469
+#: src/meridiana/ui/window.py:471
 msgid "The assistant (Ctrl+L): not connected yet"
 msgstr "L'assistente (Ctrl+L): non ancora collegato"
 
-#: src/meridiana/ui/window.py:524
+#: src/meridiana/ui/window.py:527
 #, python-brace-format
 msgid "The 3D view could not start ({why}); the plan works as usual."
 msgstr "La vista 3D non è partita ({why}); la pianta funziona come sempre."
 
-#: src/meridiana/ui/window.py:702
+#: src/meridiana/ui/window.py:705
 msgid "Tools"
 msgstr "Strumenti"
 
-#: src/meridiana/ui/window.py:725
+#: src/meridiana/ui/window.py:728
 msgid "&File"
 msgstr "&File"
 
-#: src/meridiana/ui/window.py:731
+#: src/meridiana/ui/window.py:734
 msgid ""
 "A new file next to this one, with the suffix _R01, _R02...: the previous one "
 "stays as it was"
@@ -14643,7 +14675,7 @@ msgstr ""
 "Un nuovo file accanto a questo, con il suffisso _R01, _R02...: il precedente "
 "resta com'era"
 
-#: src/meridiana/ui/window.py:733
+#: src/meridiana/ui/window.py:736
 msgid ""
 "A PVsyst project (.PRJ) and the variants next to it, as a new project: what "
 "is approximated or missing is said first"
@@ -14651,7 +14683,7 @@ msgstr ""
 "Un progetto PVsyst (.PRJ) e le varianti accanto, come progetto nuovo: prima "
 "si dice cosa è approssimato o manca"
 
-#: src/meridiana/ui/window.py:736
+#: src/meridiana/ui/window.py:739
 msgid ""
 "The buildings of an architect's model (.ifc, .ifczip): outlines, roof "
 "planes, heights and what stands on the roofs, nothing more; one change, "
@@ -14661,13 +14693,13 @@ msgstr ""
 "altezze e ciò che sta sulle coperture, niente di più; una sola modifica, "
 "annullabile con Ctrl+Z"
 
-#: src/meridiana/ui/window.py:740
+#: src/meridiana/ui/window.py:743
 msgid ""
 "Production, strings, consumption and economics with every calculation, as a "
 "PDF"
 msgstr "Produzione, stringhe, consumi ed economia con ogni calcolo, in PDF"
 
-#: src/meridiana/ui/window.py:742
+#: src/meridiana/ui/window.py:745
 msgid ""
 "The typical year hour by hour, with the balance and a header that says each "
 "column's unit and source: the register of the calculations, as a CSV file"
@@ -14675,7 +14707,7 @@ msgstr ""
 "L'anno tipo ora per ora, con il bilancio e un'intestazione che dice unità e "
 "fonte di ogni colonna: il registro dei calcoli, in un file CSV"
 
-#: src/meridiana/ui/window.py:745
+#: src/meridiana/ui/window.py:748
 msgid ""
 "The project as an IFC4 model, georeferenced: buildings, roofs, obstacles and "
 "every module with its string, for the architect or the BIM coordinator"
@@ -14683,42 +14715,42 @@ msgstr ""
 "Il progetto come modello IFC4 georiferito: edifici, coperture, ostacoli e "
 "ogni modulo con la sua stringa, per l'architetto o il coordinatore BIM"
 
-#: src/meridiana/ui/window.py:754
+#: src/meridiana/ui/window.py:757
 msgid "&Edit"
 msgstr "&Modifica"
 
-#: src/meridiana/ui/window.py:760
+#: src/meridiana/ui/window.py:763
 msgid "&Draw"
 msgstr "&Disegna"
 
-#: src/meridiana/ui/window.py:763
+#: src/meridiana/ui/window.py:766
 msgid "Select objects and modules"
 msgstr "Seleziona oggetti e moduli"
 
-#: src/meridiana/ui/window.py:763
+#: src/meridiana/ui/window.py:766
 msgid "Draw a building outline"
 msgstr "Disegna il contorno di un edificio"
 
-#: src/meridiana/ui/window.py:764
+#: src/meridiana/ui/window.py:767
 msgid "Draw a free roof pitch"
 msgstr "Disegna una falda libera"
 
-#: src/meridiana/ui/window.py:764
+#: src/meridiana/ui/window.py:767
 msgid "Draw an area for modules"
 msgstr "Disegna un'area per i moduli"
 
-#: src/meridiana/ui/window.py:765
+#: src/meridiana/ui/window.py:768
 msgid "Draw a skylight, vent, plant or walkway"
 msgstr "Disegna un lucernario, un evacuatore, un impianto o un camminamento"
 
-#: src/meridiana/ui/window.py:766
+#: src/meridiana/ui/window.py:769
 msgid ""
 "Draw a row of modules in a sub-field: two clicks, with its module and gaps"
 msgstr ""
 "Disegna una fila di moduli in un sottocampo: due clic, con il suo modulo e i "
 "suoi spazi"
 
-#: src/meridiana/ui/window.py:767
+#: src/meridiana/ui/window.py:770
 msgid ""
 "Move the selection by two points or a value typed; R inside Move turns it, "
 "Ctrl held at the click makes a copy"
@@ -14726,29 +14758,29 @@ msgstr ""
 "Sposta la selezione con due punti o un valore scritto; R dentro Sposta la "
 "ruota, Ctrl tenuto al clic fa una copia"
 
-#: src/meridiana/ui/window.py:769
+#: src/meridiana/ui/window.py:772
 msgid ""
 "Turn the selection about its middle, in steps of 15°, or by an angle typed"
 msgstr ""
 "Ruota la selezione attorno al suo centro, a passi di 15°, o di un angolo "
 "scritto"
 
-#: src/meridiana/ui/window.py:770
+#: src/meridiana/ui/window.py:773
 msgid "Measure a distance"
 msgstr "Misura una distanza"
 
-#: src/meridiana/ui/window.py:779
+#: src/meridiana/ui/window.py:782
 msgid "Two corners give a side, the third click the depth"
 msgstr "Due vertici danno un lato, il terzo clic la profondità"
 
-#: src/meridiana/ui/window.py:781
+#: src/meridiana/ui/window.py:784
 msgid ""
 "The corners of the selected outline within 13° of a right angle become right "
 "angles"
 msgstr ""
 "Gli angoli del contorno selezionato entro 13° dal retto diventano retti"
 
-#: src/meridiana/ui/window.py:783
+#: src/meridiana/ui/window.py:786
 msgid ""
 "A rectangle, an L, a T, a U or a trapezoid with its measures, placed with a "
 "click on the plan"
@@ -14756,7 +14788,7 @@ msgstr ""
 "Un rettangolo, una L, una T, una U o un trapezio con le sue quote, messo in "
 "pianta con un clic"
 
-#: src/meridiana/ui/window.py:787
+#: src/meridiana/ui/window.py:790
 msgid ""
 "The modules laid in the selected sub-field with its parameters and the fire "
 "brigade rules"
@@ -14764,11 +14796,11 @@ msgstr ""
 "I moduli posati nel sottocampo selezionato con i suoi parametri e le regole "
 "dei Vigili del fuoco"
 
-#: src/meridiana/ui/window.py:789
+#: src/meridiana/ui/window.py:792
 msgid "The modules taken out of the selected sub-field; the outline stays"
 msgstr "I moduli tolti dal sottocampo selezionato; il contorno resta"
 
-#: src/meridiana/ui/window.py:791
+#: src/meridiana/ui/window.py:794
 msgid ""
 "The selected sub-field laid again from its parameters: its rows by hand are "
 "lost"
@@ -14776,46 +14808,46 @@ msgstr ""
 "Il sottocampo selezionato posato di nuovo dai suoi parametri: le sue file a "
 "mano si perdono"
 
-#: src/meridiana/ui/window.py:797
+#: src/meridiana/ui/window.py:800
 msgid ""
 "The point goes to corners, middles and directions; Ctrl held lets it go free"
 msgstr ""
 "Il punto va su vertici, punti medi e direzioni; con Ctrl tenuto resta libero"
 
-#: src/meridiana/ui/window.py:800
+#: src/meridiana/ui/window.py:803
 msgid "The sides go square to the first side drawn (East and North before it)"
 msgstr ""
 "I lati vanno in squadra con il primo lato disegnato (prima di lui Est e Nord)"
 
-#: src/meridiana/ui/window.py:804
+#: src/meridiana/ui/window.py:807
 msgid "&View"
 msgstr "&Visualizza"
 
-#: src/meridiana/ui/window.py:810
+#: src/meridiana/ui/window.py:813
 msgid "The plan alone; again, plan and 3D side by side"
 msgstr "Solo la pianta; di nuovo, pianta e 3D affiancate"
 
-#: src/meridiana/ui/window.py:811
+#: src/meridiana/ui/window.py:814
 msgid "The 3D view alone; again, plan and 3D side by side"
 msgstr "Solo la vista 3D; di nuovo, pianta e 3D affiancate"
 
-#: src/meridiana/ui/window.py:812
+#: src/meridiana/ui/window.py:815
 msgid "Plan and 3D side by side"
 msgstr "Pianta e 3D affiancate"
 
-#: src/meridiana/ui/window.py:820
+#: src/meridiana/ui/window.py:823
 msgid "P&hases"
 msgstr "&Fasi"
 
-#: src/meridiana/ui/window.py:830
+#: src/meridiana/ui/window.py:833
 msgid "The phase after this one; after the last, the first again"
 msgstr "La fase dopo questa; dopo l'ultima, di nuovo la prima"
 
-#: src/meridiana/ui/window.py:832
+#: src/meridiana/ui/window.py:835
 msgid "The phase before this one"
 msgstr "La fase prima di questa"
 
-#: src/meridiana/ui/window.py:836
+#: src/meridiana/ui/window.py:839
 #, python-brace-format
 msgid ""
 "The words under the icons of the bar of the phase; in a window lower than "
@@ -14824,32 +14856,32 @@ msgstr ""
 "Il testo sotto le icone della barra della fase; in una finestra più bassa di "
 "{px} px restano solo le icone"
 
-#: src/meridiana/ui/window.py:839
+#: src/meridiana/ui/window.py:842
 msgid ""
 "The menus always above the phases; off, Alt shows them and they go again"
 msgstr "I menu sempre sopra le fasi; spento, li mostra Alt e poi se ne vanno"
 
-#: src/meridiana/ui/window.py:841
+#: src/meridiana/ui/window.py:844
 msgid "Pa&nels"
 msgstr "Pa&nnelli"
 
-#: src/meridiana/ui/window.py:842
+#: src/meridiana/ui/window.py:845
 msgid "The project's tree: show or hide it"
 msgstr "L'albero del progetto: mostrarlo o nasconderlo"
 
-#: src/meridiana/ui/window.py:843
+#: src/meridiana/ui/window.py:846
 msgid "The properties of what is selected: show or hide them"
 msgstr "Le proprietà di ciò che è selezionato: mostrarle o nasconderle"
 
-#: src/meridiana/ui/window.py:845
+#: src/meridiana/ui/window.py:848
 msgid "The checks of the project: show or hide them"
 msgstr "Le verifiche del progetto: mostrale o nascondile"
 
-#: src/meridiana/ui/window.py:846
+#: src/meridiana/ui/window.py:849
 msgid "The help of the field in hand, under the properties: show or hide it"
 msgstr "L'aiuto del campo in uso, sotto le proprietà: mostralo o nascondilo"
 
-#: src/meridiana/ui/window.py:850
+#: src/meridiana/ui/window.py:853
 msgid ""
 "The checks with the keyboard on them: the arrows go through them, the views "
 "follow"
@@ -14857,13 +14889,13 @@ msgstr ""
 "Le verifiche con la tastiera su di loro: le frecce le scorrono, le viste "
 "seguono"
 
-#: src/meridiana/ui/window.py:852
+#: src/meridiana/ui/window.py:855
 msgid "«Fix» of the item in hand in the Checks panel, as VS Code's quick fix"
 msgstr ""
 "«Correggi» della voce in mano nel pannello Verifiche, come la correzione "
 "rapida di VS Code"
 
-#: src/meridiana/ui/window.py:854
+#: src/meridiana/ui/window.py:857
 #, python-brace-format
 msgid ""
 "{name}, the assistant: open with the cursor in the field, or back to the "
@@ -14872,37 +14904,37 @@ msgstr ""
 "{name}, l'assistente: si apre con il cursore nel campo, o torna al "
 "personaggio"
 
-#: src/meridiana/ui/window.py:858
+#: src/meridiana/ui/window.py:861
 msgid "The panels and the bars out of the way; again, back as they were"
 msgstr "Via pannelli e barre; di nuovo, tornano come erano"
 
-#: src/meridiana/ui/window.py:859
+#: src/meridiana/ui/window.py:862
 msgid "The panels, the bars and the views as at the first start"
 msgstr "Pannelli, barre e viste come al primo avvio"
 
-#: src/meridiana/ui/window.py:862
+#: src/meridiana/ui/window.py:865
 msgid "The selection framed in both views; everything when nothing is selected"
 msgstr "La selezione inquadrata nelle due viste; tutto, se non c'è selezione"
 
-#: src/meridiana/ui/window.py:865
+#: src/meridiana/ui/window.py:868
 msgid "Both views closer; + and Ctrl++ do the same"
 msgstr "Avvicina entrambe le viste; + e Ctrl++ fanno lo stesso"
 
-#: src/meridiana/ui/window.py:866
+#: src/meridiana/ui/window.py:869
 msgid "Both views farther away; - and Ctrl+- do the same"
 msgstr "Allontana entrambe le viste; - e Ctrl+- fanno lo stesso"
 
-#: src/meridiana/ui/window.py:870
+#: src/meridiana/ui/window.py:873
 msgid "Choose a side of the selected outline; the plan turns parallel to it"
 msgstr ""
 "Scegli un lato del contorno selezionato; la pianta ruota parallelamente a "
 "esso"
 
-#: src/meridiana/ui/window.py:871
+#: src/meridiana/ui/window.py:874
 msgid "The plan with true North up again"
 msgstr "Riporta la pianta con il nord vero in alto"
 
-#: src/meridiana/ui/window.py:877
+#: src/meridiana/ui/window.py:880
 msgid ""
 "Each string as a line through its modules, in a colour of its own; always "
 "shown in the Plant phase"
@@ -14910,40 +14942,40 @@ msgstr ""
 "Ogni stringa come una linea tra i suoi moduli, in un colore proprio; sempre "
 "visibili nella fase Impianto"
 
-#: src/meridiana/ui/window.py:883
+#: src/meridiana/ui/window.py:886
 msgid "&Background"
 msgstr "&Sfondo"
 
-#: src/meridiana/ui/window.py:888
+#: src/meridiana/ui/window.py:891
 msgid "Other sources…"
 msgstr "Altre sorgenti…"
 
-#: src/meridiana/ui/window.py:889
+#: src/meridiana/ui/window.py:892
 msgid ""
 "Every source with its area and its licence, the default choice and your own "
-"sources (WMS, WMTS, XYZ): Preferences > Maps"
+"sources (WMS, WMTS, XYZ): Settings > Maps"
 msgstr ""
 "Tutte le sorgenti con la loro area e la loro licenza, la scelta predefinita "
-"e le tue sorgenti (WMS, WMTS, XYZ): Preferenze > Mappe"
+"e le tue sorgenti (WMS, WMTS, XYZ): Impostazioni > Mappe"
 
-#: src/meridiana/ui/window.py:894
+#: src/meridiana/ui/window.py:897
 msgid "Darken the imagery"
 msgstr "Scurisci lo sfondo"
 
-#: src/meridiana/ui/window.py:897 src/meridiana/ui/window.py:1880
+#: src/meridiana/ui/window.py:900 src/meridiana/ui/window.py:1889
 #, python-brace-format
 msgid "{n} %"
 msgstr "{n} %"
 
-#: src/meridiana/ui/window.py:897
+#: src/meridiana/ui/window.py:900
 msgid "Not darkened"
 msgstr "Non scurito"
 
-#: src/meridiana/ui/window.py:905
+#: src/meridiana/ui/window.py:908
 msgid "Import an image…"
 msgstr "Importa un'immagine…"
 
-#: src/meridiana/ui/window.py:906
+#: src/meridiana/ui/window.py:909
 msgid ""
 "A PNG, a JPEG or the first page of a PDF, under the drawing: then in scale "
 "with two points"
@@ -14951,11 +14983,11 @@ msgstr ""
 "Un PNG, un JPEG o la prima pagina di un PDF, sotto il disegno: poi in scala "
 "con due punti"
 
-#: src/meridiana/ui/window.py:913
+#: src/meridiana/ui/window.py:916
 msgid "Background"
 msgstr "Sfondo"
 
-#: src/meridiana/ui/window.py:914
+#: src/meridiana/ui/window.py:917
 msgid ""
 "The plan's background: orthophoto, map or none, how dark, and the images "
 "imported"
@@ -14963,51 +14995,51 @@ msgstr ""
 "Lo sfondo della pianta: ortofoto, mappa o nessuno, quanto scuro, e le "
 "immagini importate"
 
-#: src/meridiana/ui/window.py:922
+#: src/meridiana/ui/window.py:925
 msgid "Fit"
 msgstr "Inquadra"
 
-#: src/meridiana/ui/window.py:922
+#: src/meridiana/ui/window.py:925
 msgid "Zoom in"
 msgstr "Ingrandisci"
 
-#: src/meridiana/ui/window.py:923
+#: src/meridiana/ui/window.py:926
 msgid "Zoom out"
 msgstr "Riduci"
 
-#: src/meridiana/ui/window.py:923
+#: src/meridiana/ui/window.py:926
 msgid "Align to a side"
 msgstr "Allinea a un lato"
 
-#: src/meridiana/ui/window.py:923 src/meridiana/ui/window.py:3244
+#: src/meridiana/ui/window.py:926 src/meridiana/ui/window.py:3280
 msgid "North up"
 msgstr "Nord in alto"
 
-#: src/meridiana/ui/window.py:930
+#: src/meridiana/ui/window.py:933
 msgid "&Catalogues"
 msgstr "&Cataloghi"
 
-#: src/meridiana/ui/window.py:941
+#: src/meridiana/ui/window.py:944
 msgid "Import a module from PVsyst (.PAN)…"
 msgstr "Importa un modulo da PVsyst (.PAN)…"
 
-#: src/meridiana/ui/window.py:942
+#: src/meridiana/ui/window.py:945
 msgid "Import an inverter from PVsyst (.OND)…"
 msgstr "Importa un inverter da PVsyst (.OND)…"
 
-#: src/meridiana/ui/window.py:943
+#: src/meridiana/ui/window.py:946
 msgid "&Site"
 msgstr "&Sito"
 
-#: src/meridiana/ui/window.py:944
+#: src/meridiana/ui/window.py:947
 msgid "&Find the site…"
 msgstr "&Trova il sito…"
 
-#: src/meridiana/ui/window.py:947
+#: src/meridiana/ui/window.py:950
 msgid "Co&mpute"
 msgstr "Calc&olo"
 
-#: src/meridiana/ui/window.py:949
+#: src/meridiana/ui/window.py:952
 msgid ""
 "Production, consumption, balance and economics of the variant in hand, with "
 "the weather in the cache or fetched"
@@ -15015,17 +15047,17 @@ msgstr ""
 "Producibilità, consumi, bilancio ed economia della variante in mano, con il "
 "meteo in cache o scaricato"
 
-#: src/meridiana/ui/window.py:952
+#: src/meridiana/ui/window.py:955
 msgid ""
 "The typical year and the horizon of the site from PVGIS, then the computation"
 msgstr "L'anno tipo e l'orizzonte del sito da PVGIS, poi il calcolo"
 
-#: src/meridiana/ui/window.py:955
+#: src/meridiana/ui/window.py:958
 msgid ""
 "An inverter from the catalogue added to the plant of the variant in hand"
 msgstr "Un inverter dal catalogo aggiunto all'impianto della variante in mano"
 
-#: src/meridiana/ui/window.py:957
+#: src/meridiana/ui/window.py:960
 msgid ""
 "As many inverters as the DC/AC ratio asks, all like the first of the list; "
 "without one, Meridiana sizes one at that ratio"
@@ -15033,11 +15065,11 @@ msgstr ""
 "Tanti inverter quanti ne chiede il rapporto DC/AC, tutti uguali al primo "
 "dell'elenco; senza, Meridiana ne dimensiona uno a quel rapporto"
 
-#: src/meridiana/ui/window.py:961
+#: src/meridiana/ui/window.py:964
 msgid "Strategy"
 msgstr "Strategia"
 
-#: src/meridiana/ui/window.py:967
+#: src/meridiana/ui/window.py:970
 msgid ""
 "Propose the strings with this strategy, in place of those there are (asked "
 "first)"
@@ -15045,7 +15077,7 @@ msgstr ""
 "Propone le stringhe con questa strategia al posto di quelle che ci sono "
 "(prima chiede)"
 
-#: src/meridiana/ui/window.py:976
+#: src/meridiana/ui/window.py:979
 msgid ""
 "Meridiana's strings in place of those there are, once (asked first, one undo "
 "step), with the strategy chosen in its menu: back and forth, a row per "
@@ -15056,7 +15088,7 @@ msgstr ""
 "avanti e indietro, una fila per stringa, a U su due file, una fila per MPPT. "
 "Poi niente le cambia da solo"
 
-#: src/meridiana/ui/window.py:981
+#: src/meridiana/ui/window.py:984
 msgid ""
 "Meridiana's strings for the modules in no string only, on the inputs without "
 "strings first: yours stay as they are"
@@ -15064,7 +15096,7 @@ msgstr ""
 "Le stringhe di Meridiana solo per i moduli fuori stringa, prima sugli "
 "ingressi senza stringhe: le tue restano come sono"
 
-#: src/meridiana/ui/window.py:984
+#: src/meridiana/ui/window.py:987
 msgid ""
 "A new string on the input of the string chosen (the first free input when "
 "none is): click its modules on the plan in order or drag over them; "
@@ -15076,7 +15108,7 @@ msgstr ""
 "trascina sopra di essi; Backspace toglie l'ultimo, Invio o un doppio clic la "
 "chiudono, Esc la annulla"
 
-#: src/meridiana/ui/window.py:989
+#: src/meridiana/ui/window.py:992
 msgid ""
 "Every string deleted, after a question: the modules stay laid, in no string "
 "(one undo step)"
@@ -15084,11 +15116,11 @@ msgstr ""
 "Tutte le stringhe eliminate, dopo una domanda: i moduli restano posati, "
 "fuori stringa (un passo di annulla)"
 
-#: src/meridiana/ui/window.py:992
+#: src/meridiana/ui/window.py:995
 msgid "A measured load curve (CSV, 15 minutes or hourly) as the consumption"
 msgstr "Una curva di carico misurata (CSV, a 15 minuti o oraria) come consumi"
 
-#: src/meridiana/ui/window.py:994
+#: src/meridiana/ui/window.py:997
 msgid ""
 "Where the consumption comes from: a year, the bands, the bills, a curve or a "
 "profile"
@@ -15096,15 +15128,15 @@ msgstr ""
 "Da dove vengono i consumi: un anno, le fasce, le bollette, una curva o un "
 "profilo"
 
-#: src/meridiana/ui/window.py:996
+#: src/meridiana/ui/window.py:999
 msgid "A battery from the catalogue for the balance"
 msgstr "Una batteria dal catalogo per il bilancio"
 
-#: src/meridiana/ui/window.py:997
+#: src/meridiana/ui/window.py:1000
 msgid "V&ariants"
 msgstr "V&arianti"
 
-#: src/meridiana/ui/window.py:999
+#: src/meridiana/ui/window.py:1002
 msgid ""
 "A copy of the variant in hand, to change without losing it: the site is "
 "shared"
@@ -15112,24 +15144,24 @@ msgstr ""
 "Una copia della variante in uso, da modificare senza perderla: il sito è in "
 "comune"
 
-#: src/meridiana/ui/window.py:1000
+#: src/meridiana/ui/window.py:1003
 msgid "&Rename the variant…"
 msgstr "&Rinomina la variante…"
 
-#: src/meridiana/ui/window.py:1001
+#: src/meridiana/ui/window.py:1004
 msgid "&Delete a variant…"
 msgstr "&Elimina una variante…"
 
-#: src/meridiana/ui/window.py:1004
+#: src/meridiana/ui/window.py:1007
 msgid ""
 "Production, self-consumption and economics of every variant, side by side"
 msgstr "Produzione, autoconsumo ed economia di ogni variante, affiancate"
 
-#: src/meridiana/ui/window.py:1023
+#: src/meridiana/ui/window.py:1026
 msgid "&Help"
 msgstr "&Aiuto"
 
-#: src/meridiana/ui/window.py:1026
+#: src/meridiana/ui/window.py:1029
 msgid ""
 "The help of the field with the keyboard, in the box at the foot of the right "
 "panel"
@@ -15137,49 +15169,49 @@ msgstr ""
 "L'aiuto del campo che ha la tastiera, nel riquadro in fondo al pannello di "
 "destra"
 
-#: src/meridiana/ui/window.py:1028
+#: src/meridiana/ui/window.py:1031
 msgid ""
 "The pointer becomes a question mark: the next click explains what it touches"
 msgstr ""
 "Il puntatore diventa un punto di domanda: il clic successivo spiega ciò che "
 "tocca"
 
-#: src/meridiana/ui/window.py:1030
+#: src/meridiana/ui/window.py:1033
 msgid "The manual inside Meridiana, at the chapter of the phase open"
 msgstr "Il manuale dentro Meridiana, al capitolo della fase aperta"
 
-#: src/meridiana/ui/window.py:1032
+#: src/meridiana/ui/window.py:1035
 msgid "Every key of the window, with a search; change them in the same place"
 msgstr ""
 "Tutti i tasti della finestra, con la ricerca; si cambiano nello stesso posto"
 
-#: src/meridiana/ui/window.py:1035
+#: src/meridiana/ui/window.py:1038
 msgid "Whether a newer version is out, from the project's releases on GitHub"
 msgstr ""
 "Se è uscita una versione più recente, dalle versioni pubblicate del progetto "
 "su GitHub"
 
-#: src/meridiana/ui/window.py:1211 src/meridiana/ui/window.py:1219
+#: src/meridiana/ui/window.py:1214 src/meridiana/ui/window.py:1222
 msgid "Select a sub-field first: the modules are laid in it."
 msgstr "Seleziona prima un sottocampo: i moduli si posano lì."
 
-#: src/meridiana/ui/window.py:1238
+#: src/meridiana/ui/window.py:1241
 msgid "Snaps on."
 msgstr "Agganci attivi."
 
-#: src/meridiana/ui/window.py:1238
+#: src/meridiana/ui/window.py:1241
 msgid "Snaps off: the point goes where the pointer is."
 msgstr "Agganci spenti: il punto va dove sta il puntatore."
 
-#: src/meridiana/ui/window.py:1242
+#: src/meridiana/ui/window.py:1245
 msgid "Ortho on: the sides go square."
 msgstr "Orto attivo: i lati vanno in squadra."
 
-#: src/meridiana/ui/window.py:1242
+#: src/meridiana/ui/window.py:1245
 msgid "Ortho off."
 msgstr "Orto spento."
 
-#: src/meridiana/ui/window.py:1270
+#: src/meridiana/ui/window.py:1273
 #, python-brace-format
 msgid ""
 "{keys} stays yours for «{mine}»; «{lost}», which has it by default in this "
@@ -15188,7 +15220,7 @@ msgstr ""
 "{keys} resta tuo per «{mine}»; «{lost}», che in questa versione lo ha come "
 "predefinito, resta senza."
 
-#: src/meridiana/ui/window.py:1274
+#: src/meridiana/ui/window.py:1277
 #, python-brace-format
 msgid ""
 "{keys} is the key of «{commands}»: none of them works with it until one "
@@ -15197,72 +15229,72 @@ msgstr ""
 "{keys} è il tasto di «{commands}»: non funziona per nessuno finché uno non "
 "cambia."
 
-#: src/meridiana/ui/window.py:1276
-msgid "Preferences > Keyboard to change them."
-msgstr "Si cambiano in Preferenze > Tastiera."
+#: src/meridiana/ui/window.py:1279
+msgid "Settings > Keyboard to change them."
+msgstr "Si cambiano in Impostazioni > Tastiera."
 
-#: src/meridiana/ui/window.py:1336
+#: src/meridiana/ui/window.py:1345
 #, python-brace-format
 msgid "The logo could not be copied: {error}"
 msgstr "Non è stato possibile copiare il logo: {error}"
 
-#: src/meridiana/ui/window.py:1361
+#: src/meridiana/ui/window.py:1370
 msgid "Change the report"
 msgstr "Modifica la relazione"
 
-#: src/meridiana/ui/window.py:1407
+#: src/meridiana/ui/window.py:1416
 #, python-brace-format
 msgid "The preview could not be made: {error}"
 msgstr "Non è stato possibile fare l'anteprima: {error}"
 
-#: src/meridiana/ui/window.py:1549 src/meridiana/ui/window.py:1551
-#: src/meridiana/ui/window.py:1555 src/meridiana/ui/window.py:1572
-#: src/meridiana/ui/window.py:1623
+#: src/meridiana/ui/window.py:1558 src/meridiana/ui/window.py:1560
+#: src/meridiana/ui/window.py:1564 src/meridiana/ui/window.py:1581
+#: src/meridiana/ui/window.py:1632
 #, python-brace-format
 msgid "Not moved: {why}"
 msgstr "Non spostato: {why}"
 
-#: src/meridiana/ui/window.py:1620
+#: src/meridiana/ui/window.py:1629
 msgid "Move and rotate"
 msgstr "Sposta e ruota"
 
-#: src/meridiana/ui/window.py:1642
+#: src/meridiana/ui/window.py:1651
 msgid "Select a building, a sub-field or an exclusion to square it."
 msgstr "Seleziona un edificio, un sottocampo o un'esclusione per squadrarlo."
 
-#: src/meridiana/ui/window.py:1647
+#: src/meridiana/ui/window.py:1656
 msgid "No corner is near a right angle: nothing to square."
 msgstr "Nessun angolo è vicino al retto: niente da squadrare."
 
-#: src/meridiana/ui/window.py:1650
+#: src/meridiana/ui/window.py:1659
 msgid "It is square already."
 msgstr "È già squadrato."
 
-#: src/meridiana/ui/window.py:1659 src/meridiana/ui/window.py:3225
+#: src/meridiana/ui/window.py:1668 src/meridiana/ui/window.py:3261
 msgid "Square the corners"
 msgstr "Squadra gli angoli"
 
-#: src/meridiana/ui/window.py:1660
+#: src/meridiana/ui/window.py:1669
 msgid "Squared: Ctrl+Z puts it back as drawn."
 msgstr "Squadrato: Ctrl+Z lo rimette com'era disegnato."
 
-#: src/meridiana/ui/window.py:1728
+#: src/meridiana/ui/window.py:1737
 msgid "The best source for the site of the project, chosen by Meridiana"
 msgstr "La sorgente migliore per il sito del progetto, scelta da Meridiana"
 
-#: src/meridiana/ui/window.py:1731
+#: src/meridiana/ui/window.py:1740
 msgid "The plan alone, on its light ground"
 msgstr "La pianta da sola, sul suo fondo chiaro"
 
-#: src/meridiana/ui/window.py:1760
+#: src/meridiana/ui/window.py:1769
 msgid "Import an image under the drawing"
 msgstr "Importa un'immagine sotto il disegno"
 
-#: src/meridiana/ui/window.py:1767 src/meridiana/ui/window.py:1773
+#: src/meridiana/ui/window.py:1776 src/meridiana/ui/window.py:1782
 msgid "Import an image"
 msgstr "Importa un'immagine"
 
-#: src/meridiana/ui/window.py:1774
+#: src/meridiana/ui/window.py:1783
 msgid ""
 "The image is under the drawing: put it in scale with two points, from the "
 "Background menu of the plan."
@@ -15270,77 +15302,77 @@ msgstr ""
 "L'immagine è sotto il disegno: mettila in scala con due punti, dal menu "
 "Sfondo della pianta."
 
-#: src/meridiana/ui/window.py:1793
+#: src/meridiana/ui/window.py:1802
 msgid "Remove an image"
 msgstr "Togli un'immagine"
 
-#: src/meridiana/ui/window.py:1797
+#: src/meridiana/ui/window.py:1806
 msgid "Rotate the image"
 msgstr "Ruota l'immagine"
 
-#: src/meridiana/ui/window.py:1798
+#: src/meridiana/ui/window.py:1807
 msgid "Degrees, anticlockwise (negative: clockwise):"
 msgstr "Gradi, in senso antiorario (negativi: orario):"
 
-#: src/meridiana/ui/window.py:1802
+#: src/meridiana/ui/window.py:1811
 msgid "Rotate an image"
 msgstr "Ruota un'immagine"
 
-#: src/meridiana/ui/window.py:1807
+#: src/meridiana/ui/window.py:1816
 msgid "In scale"
 msgstr "In scala"
 
-#: src/meridiana/ui/window.py:1807
+#: src/meridiana/ui/window.py:1816
 msgid "The true distance between the two points (for example 7,5 m):"
 msgstr "La distanza vera fra i due punti (per esempio 7,5 m):"
 
-#: src/meridiana/ui/window.py:1829
+#: src/meridiana/ui/window.py:1838
 msgid "Click where the South-West corner of the building goes; Esc gives up"
 msgstr "Clicca dove va l'angolo a sud-ovest dell'edificio; Esc rinuncia"
 
-#: src/meridiana/ui/window.py:1841 src/meridiana/ui/window.py:2135
+#: src/meridiana/ui/window.py:1850 src/meridiana/ui/window.py:2144
 #, python-brace-format
 msgid "Building {n}"
 msgstr "Edificio {n}"
 
-#: src/meridiana/ui/window.py:1845
+#: src/meridiana/ui/window.py:1854
 msgid "The sides can be changed one by one in the Sides group."
 msgstr "I lati si cambiano uno per uno nel gruppo Lati."
 
-#: src/meridiana/ui/window.py:1860
+#: src/meridiana/ui/window.py:1869
 msgid "Put an image in scale"
 msgstr "Metti in scala un'immagine"
 
-#: src/meridiana/ui/window.py:1862
+#: src/meridiana/ui/window.py:1871
 msgid "Move an image"
 msgstr "Sposta un'immagine"
 
-#: src/meridiana/ui/window.py:1872
+#: src/meridiana/ui/window.py:1881
 #, python-brace-format
 msgid "Image {n}"
 msgstr "Immagine {n}"
 
-#: src/meridiana/ui/window.py:1873
+#: src/meridiana/ui/window.py:1882
 msgid "Show"
 msgstr "Mostra"
 
-#: src/meridiana/ui/window.py:1877
+#: src/meridiana/ui/window.py:1886
 msgid "Show or hide an image"
 msgstr "Mostra o nascondi un'immagine"
 
-#: src/meridiana/ui/window.py:1878
+#: src/meridiana/ui/window.py:1887
 msgid "Transparency"
 msgstr "Trasparenza"
 
-#: src/meridiana/ui/window.py:1884
+#: src/meridiana/ui/window.py:1893
 msgid "Transparency of an image"
 msgstr "Trasparenza di un'immagine"
 
-#: src/meridiana/ui/window.py:1886
+#: src/meridiana/ui/window.py:1895
 msgid "In scale with two points…"
 msgstr "In scala con due punti…"
 
-#: src/meridiana/ui/window.py:1888
+#: src/meridiana/ui/window.py:1897
 msgid ""
 "In scale: click the first point of a length you know on the image; Esc gives "
 "up."
@@ -15348,27 +15380,27 @@ msgstr ""
 "In scala: fai clic sul primo punto di una lunghezza nota dell'immagine; Esc "
 "rinuncia."
 
-#: src/meridiana/ui/window.py:1889
+#: src/meridiana/ui/window.py:1898
 msgid "Now the second point; then type how far apart they truly are."
 msgstr "Ora il secondo punto; poi scrivi quanto distano davvero."
 
-#: src/meridiana/ui/window.py:1890
+#: src/meridiana/ui/window.py:1899
 msgid "Move with two points…"
 msgstr "Sposta con due punti…"
 
-#: src/meridiana/ui/window.py:1892
+#: src/meridiana/ui/window.py:1901
 msgid "Move: click a point of the image; Esc gives up."
 msgstr "Sposta: fai clic su un punto dell'immagine; Esc rinuncia."
 
-#: src/meridiana/ui/window.py:1892
+#: src/meridiana/ui/window.py:1901
 msgid "Now where that point goes."
 msgstr "Ora dove va quel punto."
 
-#: src/meridiana/ui/window.py:1893
+#: src/meridiana/ui/window.py:1902
 msgid "Rotate…"
 msgstr "Ruota…"
 
-#: src/meridiana/ui/window.py:1930
+#: src/meridiana/ui/window.py:1939
 msgid ""
 "Select a building, a roof pitch, a sub-field or an exclusion, then align the "
 "view to one of its sides."
@@ -15376,35 +15408,35 @@ msgstr ""
 "Seleziona un edificio, una falda, un sottocampo o un'esclusione, poi allinea "
 "la vista a un suo lato."
 
-#: src/meridiana/ui/window.py:1938
+#: src/meridiana/ui/window.py:1947
 msgid "North is up. The project's coordinates have not changed."
 msgstr "Il nord è in alto. Le coordinate del progetto non sono cambiate."
 
-#: src/meridiana/ui/window.py:1962
+#: src/meridiana/ui/window.py:1971
 msgid "The string being drawn was given up: the project changed under it."
 msgstr ""
 "La stringa che stavi disegnando è stata annullata: il progetto è cambiato "
 "sotto di lei."
 
-#: src/meridiana/ui/window.py:2039
+#: src/meridiana/ui/window.py:2048
 msgid "New variant"
 msgstr "Nuova variante"
 
-#: src/meridiana/ui/window.py:2039
+#: src/meridiana/ui/window.py:2048
 msgid "Name of the new variant (a copy of this one):"
 msgstr "Nome della nuova variante (una copia di questa):"
 
-#: src/meridiana/ui/window.py:2040
+#: src/meridiana/ui/window.py:2049
 #, python-brace-format
 msgid "Variant {n}"
 msgstr "Variante {n}"
 
-#: src/meridiana/ui/window.py:2043
+#: src/meridiana/ui/window.py:2052
 #, python-brace-format
 msgid "New variant {name}"
 msgstr "Nuova variante {name}"
 
-#: src/meridiana/ui/window.py:2044
+#: src/meridiana/ui/window.py:2053
 #, python-brace-format
 msgid ""
 "Working on the variant {name}: change what you want, the others stay as they "
@@ -15413,68 +15445,68 @@ msgstr ""
 "Ora si lavora sulla variante {name}: cambia quello che vuoi, le altre "
 "restano come erano."
 
-#: src/meridiana/ui/window.py:2049 src/meridiana/ui/window.py:2055
+#: src/meridiana/ui/window.py:2058 src/meridiana/ui/window.py:2064
 msgid "Rename the variant"
 msgstr "Rinomina la variante"
 
-#: src/meridiana/ui/window.py:2049 src/meridiana/ui/window.py:3341
+#: src/meridiana/ui/window.py:2058 src/meridiana/ui/window.py:3377
 msgid "Name:"
 msgstr "Nome:"
 
-#: src/meridiana/ui/window.py:2060 src/meridiana/ui/window.py:2064
+#: src/meridiana/ui/window.py:2069 src/meridiana/ui/window.py:2073
 msgid "Delete a variant"
 msgstr "Elimina una variante"
 
-#: src/meridiana/ui/window.py:2060
+#: src/meridiana/ui/window.py:2069
 msgid "There is only the variant in hand: nothing to delete."
 msgstr "C'è solo la variante in uso: niente da eliminare."
 
-#: src/meridiana/ui/window.py:2064
+#: src/meridiana/ui/window.py:2073
 msgid "Which variant? (to delete the one in hand, switch to another first)"
 msgstr "Quale variante? (per eliminare quella in uso, passa prima a un'altra)"
 
-#: src/meridiana/ui/window.py:2069
+#: src/meridiana/ui/window.py:2078
 #, python-brace-format
 msgid "Delete the variant {name}"
 msgstr "Elimina la variante {name}"
 
-#: src/meridiana/ui/window.py:2109
+#: src/meridiana/ui/window.py:2118
 msgid ""
 "Double-click a roof to take a pitch whole; on the ground, draw the area."
 msgstr ""
 "Doppio clic su una copertura per prendere intera una falda; a terra, disegna "
 "l'area."
 
-#: src/meridiana/ui/window.py:2128
+#: src/meridiana/ui/window.py:2137
 msgid "Too small to keep: draw it again."
 msgstr "Troppo piccolo per tenerlo: disegnalo di nuovo."
 
-#: src/meridiana/ui/window.py:2136
+#: src/meridiana/ui/window.py:2145
 msgid "Draw a building"
 msgstr "Disegna un edificio"
 
-#: src/meridiana/ui/window.py:2149
+#: src/meridiana/ui/window.py:2158
 #, python-brace-format
 msgid "Sub-field {n}"
 msgstr "Sottocampo {n}"
 
-#: src/meridiana/ui/window.py:2152
+#: src/meridiana/ui/window.py:2161
 msgid "Draw a sub-field"
 msgstr "Disegna un sottocampo"
 
-#: src/meridiana/ui/window.py:2160
+#: src/meridiana/ui/window.py:2169
 msgid "Draw an exclusion"
 msgstr "Disegna un'esclusione"
 
-#: src/meridiana/ui/window.py:2165
+#: src/meridiana/ui/window.py:2174
 msgid "A pitch belongs to a building: draw it inside one."
 msgstr "Una falda appartiene a un edificio: disegnala al suo interno."
 
-#: src/meridiana/ui/window.py:2176
+#: src/meridiana/ui/window.py:2185
 msgid "Draw a pitch"
 msgstr "Disegna una falda"
 
-#: src/meridiana/ui/window.py:2195
+#: src/meridiana/ui/window.py:2204
 #, python-brace-format
 msgid ""
 "Row {row} of {name}: click a module to select it, or Esc to select the sub-"
@@ -15483,7 +15515,7 @@ msgstr ""
 "Fila {row} di {name}: un clic su un modulo lo seleziona; Esc seleziona il "
 "sottocampo."
 
-#: src/meridiana/ui/window.py:2216
+#: src/meridiana/ui/window.py:2225
 #, python-brace-format
 msgid ""
 "Module {key} of {name}: a second click on the same row selects it; Esc "
@@ -15492,7 +15524,7 @@ msgstr ""
 "Modulo {key} di {name}: un secondo clic sulla stessa fila la seleziona; Esc "
 "seleziona il sottocampo; Canc toglie il modulo dalla posa."
 
-#: src/meridiana/ui/window.py:2281
+#: src/meridiana/ui/window.py:2317
 msgid ""
 "While a string is drawn, Backspace takes back the last module and Esc gives "
 "the string up."
@@ -15500,7 +15532,7 @@ msgstr ""
 "Mentre disegni una stringa, Backspace toglie l'ultimo modulo ed Esc annulla "
 "la stringa."
 
-#: src/meridiana/ui/window.py:2286
+#: src/meridiana/ui/window.py:2322
 msgid ""
 "Choose a string in the list on the right or click one of its modules: Del "
 "deletes it."
@@ -15508,7 +15540,7 @@ msgstr ""
 "Scegli una stringa nell'elenco a destra o clicca uno dei suoi moduli: Canc "
 "la elimina."
 
-#: src/meridiana/ui/window.py:2290
+#: src/meridiana/ui/window.py:2326
 msgid ""
 "Del deletes with Select. While drawing, Backspace takes back the last point "
 "and Esc the whole outline."
@@ -15516,54 +15548,54 @@ msgstr ""
 "Canc cancella con Seleziona. Mentre si disegna, Backspace toglie l'ultimo "
 "punto ed Esc tutto il contorno."
 
-#: src/meridiana/ui/window.py:2302
+#: src/meridiana/ui/window.py:2338
 msgid "Take a module out"
 msgstr "Togli un modulo"
 
-#: src/meridiana/ui/window.py:2306 src/meridiana/ui/window.py:2451
-#: src/meridiana/ui/window.py:2452
+#: src/meridiana/ui/window.py:2342 src/meridiana/ui/window.py:2487
+#: src/meridiana/ui/window.py:2488
 msgid "Take the row away"
 msgstr "Togli la fila"
 
-#: src/meridiana/ui/window.py:2314
+#: src/meridiana/ui/window.py:2350
 msgid "Delete a building"
 msgstr "Elimina un edificio"
 
-#: src/meridiana/ui/window.py:2316
+#: src/meridiana/ui/window.py:2352
 msgid "Delete a sub-field"
 msgstr "Elimina un sottocampo"
 
-#: src/meridiana/ui/window.py:2318
+#: src/meridiana/ui/window.py:2354
 msgid "Delete an exclusion"
 msgstr "Elimina un'esclusione"
 
-#: src/meridiana/ui/window.py:2338 src/meridiana/ui/window.py:2553
-#: src/meridiana/ui/window.py:2618 src/meridiana/ui/window.py:2630
+#: src/meridiana/ui/window.py:2374 src/meridiana/ui/window.py:2589
+#: src/meridiana/ui/window.py:2654 src/meridiana/ui/window.py:2666
 #, python-brace-format
 msgid "Not changed: {why}"
 msgstr "Non modificato: {why}"
 
-#: src/meridiana/ui/window.py:2342
+#: src/meridiana/ui/window.py:2378
 msgid "The rows are yours now: «Lay again automatically» makes them again."
 msgstr "Le file ora sono tue: «Riposa in automatico» le rifà."
 
-#: src/meridiana/ui/window.py:2378
+#: src/meridiana/ui/window.py:2414
 msgid "A row is drawn in a sub-field: start it inside one."
 msgstr "Una fila si disegna in un sottocampo: cominciala dentro un sottocampo."
 
-#: src/meridiana/ui/window.py:2380
+#: src/meridiana/ui/window.py:2416
 msgid "Draw a row"
 msgstr "Disegna una fila"
 
-#: src/meridiana/ui/window.py:2406
+#: src/meridiana/ui/window.py:2442
 msgid "Shorten or lengthen a row"
 msgstr "Accorcia o allunga una fila"
 
-#: src/meridiana/ui/window.py:2421 src/meridiana/ui/window.py:2461
+#: src/meridiana/ui/window.py:2457 src/meridiana/ui/window.py:2497
 msgid "Turn the module"
 msgstr "Gira il modulo"
 
-#: src/meridiana/ui/window.py:2431
+#: src/meridiana/ui/window.py:2467
 msgid ""
 "The rows by hand give way to the automatic layout, and the modules taken out "
 "by hand come back. Undo brings them back. Go on?"
@@ -15571,36 +15603,36 @@ msgstr ""
 "Le file a mano lasciano il posto alla posa automatica, e i moduli tolti a "
 "mano tornano. Annulla le riporta. Procedo?"
 
-#: src/meridiana/ui/window.py:2449
+#: src/meridiana/ui/window.py:2485
 msgid "Select the row"
 msgstr "Seleziona la fila"
 
-#: src/meridiana/ui/window.py:2453 src/meridiana/ui/window.py:2454
+#: src/meridiana/ui/window.py:2489 src/meridiana/ui/window.py:2490
 msgid "Add a row at the back"
 msgstr "Aggiungi una fila in coda"
 
-#: src/meridiana/ui/window.py:2455
+#: src/meridiana/ui/window.py:2491
 msgid "Shorten or lengthen…"
 msgstr "Accorcia o allunga…"
 
-#: src/meridiana/ui/window.py:2457 src/meridiana/ui/window.py:2458
+#: src/meridiana/ui/window.py:2493 src/meridiana/ui/window.py:2494
 msgid "Explode the row"
 msgstr "Esplodi la fila"
 
-#: src/meridiana/ui/window.py:2460
+#: src/meridiana/ui/window.py:2496
 msgid "Turn by 90°"
 msgstr "Gira di 90°"
 
-#: src/meridiana/ui/window.py:2470
+#: src/meridiana/ui/window.py:2506
 msgid "Drag the square at the end of the row: it takes or gives back places."
 msgstr ""
 "Trascina il quadrato all'estremo della fila: prende o restituisce posti."
 
-#: src/meridiana/ui/window.py:2492
+#: src/meridiana/ui/window.py:2528
 msgid "A module of other sizes"
 msgstr "Un modulo di altre misure"
 
-#: src/meridiana/ui/window.py:2493
+#: src/meridiana/ui/window.py:2529
 msgid ""
 "The new module differs by more than 2 cm from the one the rows by hand were "
 "drawn with. Adapt the rows (the same places and modules, the gaps kept), or "
@@ -15610,50 +15642,50 @@ msgstr ""
 "disegnate le file a mano. Adatto le file (gli stessi posti e moduli, gli "
 "spazi tenuti) o riposo il sottocampo in automatico?"
 
-#: src/meridiana/ui/window.py:2496
+#: src/meridiana/ui/window.py:2532
 msgid "Adapt the rows"
 msgstr "Adatta le file"
 
-#: src/meridiana/ui/window.py:2516 src/meridiana/ui/window.py:2539
-#: src/meridiana/ui/window.py:3494
+#: src/meridiana/ui/window.py:2552 src/meridiana/ui/window.py:2575
+#: src/meridiana/ui/window.py:3530
 #, python-brace-format
 msgid "Change {what}"
 msgstr "Modifica {what}"
 
-#: src/meridiana/ui/window.py:2567 src/meridiana/ui/window.py:3217
+#: src/meridiana/ui/window.py:2603 src/meridiana/ui/window.py:3253
 msgid "Take the modules out"
 msgstr "Togli i moduli"
 
-#: src/meridiana/ui/window.py:2571 src/meridiana/ui/window.py:3216
+#: src/meridiana/ui/window.py:2607 src/meridiana/ui/window.py:3252
 msgid "Explode the rows"
 msgstr "Esplodi le file"
 
-#: src/meridiana/ui/window.py:2584
+#: src/meridiana/ui/window.py:2620
 #, python-brace-format
 msgid "Side {n} picked."
 msgstr "Scelto il lato {n}."
 
-#: src/meridiana/ui/window.py:2588
+#: src/meridiana/ui/window.py:2624
 #, python-brace-format
 msgid "Side {n} is a gable end now."
 msgstr "Il lato {n} ora è una testata."
 
-#: src/meridiana/ui/window.py:2589
+#: src/meridiana/ui/window.py:2625
 #, python-brace-format
 msgid "Side {n} is an eave now."
 msgstr "Il lato {n} ora è una gronda."
 
-#: src/meridiana/ui/window.py:2610
+#: src/meridiana/ui/window.py:2646
 #, python-brace-format
 msgid "Length of side {n}"
 msgstr "Lunghezza del lato {n}"
 
-#: src/meridiana/ui/window.py:2611
+#: src/meridiana/ui/window.py:2647
 msgid "New length (m); what lies at the far end of the side moves with it:"
 msgstr ""
 "Nuova lunghezza (m); quello che sta oltre la fine del lato si sposta con lui:"
 
-#: src/meridiana/ui/window.py:2637
+#: src/meridiana/ui/window.py:2673
 msgid ""
 "The site can be moved only before anything is drawn: the drawing is measured "
 "from it. Start a new project for another site."
@@ -15661,129 +15693,129 @@ msgstr ""
 "Il sito si può spostare solo prima di disegnare: il disegno è misurato da "
 "lì. Per un altro sito apri un progetto nuovo."
 
-#: src/meridiana/ui/window.py:2644
+#: src/meridiana/ui/window.py:2680
 msgid "Move the site"
 msgstr "Sposta il sito"
 
-#: src/meridiana/ui/window.py:2726
+#: src/meridiana/ui/window.py:2762
 #, python-brace-format
 msgid "Some sub-fields could not be laid out: {what}"
 msgstr "Alcuni sottocampi non si possono posare: {what}"
 
-#: src/meridiana/ui/window.py:2729
+#: src/meridiana/ui/window.py:2765
 #, python-brace-format
 msgid "{n} module laid in {ms} ms"
 msgid_plural "{n} modules laid in {ms} ms"
 msgstr[0] "{n} modulo posato in {ms} ms"
 msgstr[1] "{n} moduli posati in {ms} ms"
 
-#: src/meridiana/ui/window.py:2867
+#: src/meridiana/ui/window.py:2903
 msgid "Buildings"
 msgstr "Edifici"
 
-#: src/meridiana/ui/window.py:2870
+#: src/meridiana/ui/window.py:2906
 msgid "Sub-fields"
 msgstr "Sottocampi"
 
-#: src/meridiana/ui/window.py:2879
+#: src/meridiana/ui/window.py:2915
 msgid "To lay out again: it changed after its layout"
 msgstr "Da posare di nuovo: è cambiato dopo la sua posa"
 
-#: src/meridiana/ui/window.py:2936
+#: src/meridiana/ui/window.py:2972
 #, python-brace-format
 msgid "The plant could not be read for the energy pages: {error}"
 msgstr "L'impianto non si è potuto leggere per le pagine dell'energia: {error}"
 
-#: src/meridiana/ui/window.py:3026
+#: src/meridiana/ui/window.py:3062
 msgid "Results"
 msgstr "Risultati"
 
-#: src/meridiana/ui/window.py:3052
+#: src/meridiana/ui/window.py:3088
 msgid ""
-"PVGIS is off in Preferences > Privacy: computing with the weather already in "
+"PVGIS is off in Settings > Privacy: computing with the weather already in "
 "the cache."
 msgstr ""
-"PVGIS è spento in Preferenze > Riservatezza: calcolo con il meteo già nella "
+"PVGIS è spento in Impostazioni > Riservatezza: calcolo con il meteo già nella "
 "cache."
 
-#: src/meridiana/ui/window.py:3059
+#: src/meridiana/ui/window.py:3095
 msgid "Computing…"
 msgstr "Calcolo in corso…"
 
-#: src/meridiana/ui/window.py:3059
+#: src/meridiana/ui/window.py:3095
 msgid "Fetching the weather and computing…"
 msgstr "Scarico il meteo e calcolo…"
 
-#: src/meridiana/ui/window.py:3062
+#: src/meridiana/ui/window.py:3098
 #, python-brace-format
 msgid "Production: {what}"
 msgstr "Produzione: {what}"
 
-#: src/meridiana/ui/window.py:3072
+#: src/meridiana/ui/window.py:3108
 #, python-brace-format
 msgid "PVGIS: {what}"
 msgstr "PVGIS: {what}"
 
-#: src/meridiana/ui/window.py:3086
+#: src/meridiana/ui/window.py:3122
 #, python-brace-format
 msgid "PVGIS: {what} ({n} of {total})"
 msgstr "PVGIS: {what} ({n} di {total})"
 
-#: src/meridiana/ui/window.py:3096
+#: src/meridiana/ui/window.py:3132
 msgid "PVGIS stopped: the values are those of the last computation."
 msgstr "PVGIS fermato: i valori sono quelli dell'ultimo calcolo."
 
-#: src/meridiana/ui/window.py:3128
+#: src/meridiana/ui/window.py:3164
 #, python-brace-format
 msgid "The plant could not be read for the checks: {error}"
 msgstr "L'impianto non si è potuto leggere per le verifiche: {error}"
 
-#: src/meridiana/ui/window.py:3168
+#: src/meridiana/ui/window.py:3204
 #, python-brace-format
 msgid "{n} {level}: a click leads to their section in the Checks panel"
 msgstr "{n} {level}: un clic porta alla loro sezione nel pannello Verifiche"
 
-#: src/meridiana/ui/window.py:3184
+#: src/meridiana/ui/window.py:3220
 msgid "A click: these checks in the panel below"
 msgstr "Un clic: queste verifiche nel pannello sotto"
 
-#: src/meridiana/ui/window.py:3209
+#: src/meridiana/ui/window.py:3245
 msgid "Take this module out"
 msgstr "Togli questo modulo dalla posa"
 
-#: src/meridiana/ui/window.py:3219
+#: src/meridiana/ui/window.py:3255
 msgid "A sub-field on each pitch"
 msgstr "Un sottocampo per ogni falda"
 
-#: src/meridiana/ui/window.py:3223
+#: src/meridiana/ui/window.py:3259
 msgid "Rename…"
 msgstr "Rinomina…"
 
-#: src/meridiana/ui/window.py:3224 src/meridiana/ui/window.py:3349
+#: src/meridiana/ui/window.py:3260 src/meridiana/ui/window.py:3385
 msgid "Duplicate"
 msgstr "Duplica"
 
-#: src/meridiana/ui/window.py:3227
+#: src/meridiana/ui/window.py:3263
 msgid "Delete"
 msgstr "Elimina"
 
-#: src/meridiana/ui/window.py:3241
+#: src/meridiana/ui/window.py:3277
 msgid "Align the view to this side"
 msgstr "Allinea la vista a questo lato"
 
-#: src/meridiana/ui/window.py:3265
+#: src/meridiana/ui/window.py:3301
 msgid "Close the outline"
 msgstr "Chiudi il contorno"
 
-#: src/meridiana/ui/window.py:3267
+#: src/meridiana/ui/window.py:3303
 msgid "Remove the last point (Backspace)"
 msgstr "Togli l'ultimo punto (Backspace)"
 
-#: src/meridiana/ui/window.py:3269
+#: src/meridiana/ui/window.py:3305
 msgid "Cancel the drawing (Esc)"
 msgstr "Annulla il disegno (Esc)"
 
-#: src/meridiana/ui/window.py:3309
+#: src/meridiana/ui/window.py:3345
 #, python-brace-format
 msgid ""
 "The view is parallel to side {n}. «North up» (N, or a click on the compass) "
@@ -15792,38 +15824,38 @@ msgstr ""
 "La vista è parallela al lato {n}. «Nord in alto» (N, o un clic sulla "
 "bussola) la riporta; il progetto non ha ruotato."
 
-#: src/meridiana/ui/window.py:3341
+#: src/meridiana/ui/window.py:3377
 msgid "Rename"
 msgstr "Rinomina"
 
-#: src/meridiana/ui/window.py:3418
+#: src/meridiana/ui/window.py:3454
 #, python-brace-format
 msgid "The fix «{fix}» changed nothing."
 msgstr "La correzione «{fix}» non ha cambiato nulla."
 
-#: src/meridiana/ui/window.py:3443
+#: src/meridiana/ui/window.py:3479
 msgid "Fix taken back: the project is as it was."
 msgstr "Correzione annullata: il progetto è com'era."
 
-#: src/meridiana/ui/window.py:3446 src/meridiana/ui/window.py:3459
+#: src/meridiana/ui/window.py:3482 src/meridiana/ui/window.py:3495
 msgid "Fix kept: Ctrl+Z undoes it like any change."
 msgstr "Correzione tenuta: Ctrl+Z la annulla come ogni modifica."
 
-#: src/meridiana/ui/window.py:3460
+#: src/meridiana/ui/window.py:3496
 msgid "Fix undone."
 msgstr "Correzione annullata."
 
-#: src/meridiana/ui/window.py:3485
+#: src/meridiana/ui/window.py:3521
 #, python-brace-format
 msgid "The plant could not be read for the rules: {error}"
 msgstr "L'impianto non si è potuto leggere per le regole: {error}"
 
-#: src/meridiana/ui/window.py:3499 src/meridiana/ui/window.py:3511
-#: src/meridiana/ui/window.py:3519 src/meridiana/ui/window.py:3559
+#: src/meridiana/ui/window.py:3535 src/meridiana/ui/window.py:3547
+#: src/meridiana/ui/window.py:3555 src/meridiana/ui/window.py:3595
 msgid "Export the report"
 msgstr "Esporta la relazione"
 
-#: src/meridiana/ui/window.py:3499
+#: src/meridiana/ui/window.py:3535
 msgid ""
 "Compute the production first (the Production page): the report shows its "
 "results."
@@ -15831,79 +15863,79 @@ msgstr ""
 "Calcola prima la produzione (la pagina Producibilità): la relazione ne "
 "riporta i risultati."
 
-#: src/meridiana/ui/window.py:3503
+#: src/meridiana/ui/window.py:3539
 msgid "A report is being written: wait for it, or Cancel it in the status bar."
 msgstr ""
 "Si sta scrivendo una relazione: aspetta che finisca, o annullala nella barra "
 "di stato."
 
-#: src/meridiana/ui/window.py:3512
+#: src/meridiana/ui/window.py:3548
 msgid "This attachment cannot go in the report:"
 msgid_plural "These attachments cannot go in the report:"
 msgstr[0] "Questo allegato non può entrare nella relazione:"
 msgstr[1] "Questi allegati non possono entrare nella relazione:"
 
-#: src/meridiana/ui/window.py:3514
+#: src/meridiana/ui/window.py:3550
 msgid "Export the report leaving it out?"
 msgid_plural "Export the report leaving them out?"
 msgstr[0] "Esportare la relazione lasciandolo fuori?"
 msgstr[1] "Esportare la relazione lasciandoli fuori?"
 
-#: src/meridiana/ui/window.py:3550
+#: src/meridiana/ui/window.py:3586
 #, python-brace-format
 msgid "Report and register of the calculations written: {file}"
 msgstr "Relazione e registro dei calcoli scritti: {file}"
 
-#: src/meridiana/ui/window.py:3551
+#: src/meridiana/ui/window.py:3587
 #, python-brace-format
 msgid "Report written: {file}"
 msgstr "Relazione scritta: {file}"
 
-#: src/meridiana/ui/window.py:3559
+#: src/meridiana/ui/window.py:3595
 #, python-brace-format
 msgid "The report could not be written: {error}"
 msgstr "Impossibile scrivere la relazione: {error}"
 
-#: src/meridiana/ui/window.py:3562
+#: src/meridiana/ui/window.py:3598
 #, python-brace-format
 msgid "Report: {what}"
 msgstr "Relazione: {what}"
 
-#: src/meridiana/ui/window.py:3569 src/meridiana/ui/window.py:3574
-#: src/meridiana/ui/window.py:3582
+#: src/meridiana/ui/window.py:3605 src/meridiana/ui/window.py:3610
+#: src/meridiana/ui/window.py:3618
 msgid "Export the hourly series"
 msgstr "Esporta la serie oraria"
 
-#: src/meridiana/ui/window.py:3569
+#: src/meridiana/ui/window.py:3605
 msgid ""
 "Compute the production first (the Production page): the series is its year."
 msgstr ""
 "Calcola prima la producibilità (la pagina Producibilità): la serie è il suo "
 "anno."
 
-#: src/meridiana/ui/window.py:3575
+#: src/meridiana/ui/window.py:3611
 msgid "CSV files (*.csv)"
 msgstr "File CSV (*.csv)"
 
-#: src/meridiana/ui/window.py:3582
+#: src/meridiana/ui/window.py:3618
 #, python-brace-format
 msgid "{file} could not be written: {error}"
 msgstr "{file} non si è potuto scrivere: {error}"
 
-#: src/meridiana/ui/window.py:3587
+#: src/meridiana/ui/window.py:3623
 #, python-brace-format
 msgid "Hourly series written: {file}"
 msgstr "Serie oraria scritta: {file}"
 
-#: src/meridiana/ui/window.py:3596
+#: src/meridiana/ui/window.py:3632
 msgid "Report stopped: nothing written."
 msgstr "Relazione fermata: non è stato scritto nulla."
 
-#: src/meridiana/ui/window.py:3601
+#: src/meridiana/ui/window.py:3637
 msgid "Add an inverter from the catalogue"
 msgstr "Aggiungi un inverter dal catalogo"
 
-#: src/meridiana/ui/window.py:3613
+#: src/meridiana/ui/window.py:3649
 msgid ""
 "Inverter added: the strings stay as they are, its inputs are free. «+» on "
 "one of its inputs in the list on the right draws a string there; «Complete» "
@@ -15913,64 +15945,64 @@ msgstr ""
 "liberi. «+» su un suo ingresso nell'elenco a destra disegna una stringa lì; "
 "«Completa» propone stringhe per i moduli fuori stringa."
 
-#: src/meridiana/ui/window.py:3625
+#: src/meridiana/ui/window.py:3661
 msgid "There is no inverter in the catalogue to size."
 msgstr "Non c'è nessun inverter da dimensionare nel catalogo."
 
-#: src/meridiana/ui/window.py:3631
+#: src/meridiana/ui/window.py:3667
 msgid "Size the inverter by itself"
 msgstr "Dimensiona l'inverter da solo"
 
-#: src/meridiana/ui/window.py:3631
+#: src/meridiana/ui/window.py:3667
 msgid "Manufacturer:"
 msgstr "Marca:"
 
-#: src/meridiana/ui/window.py:3639
+#: src/meridiana/ui/window.py:3675
 #, python-brace-format
 msgid "No inverter of {maker} in the catalogue has a nominal AC power."
 msgstr "Nessun inverter {maker} del catalogo ha una potenza AC nominale."
 
-#: src/meridiana/ui/window.py:3656
+#: src/meridiana/ui/window.py:3692
 msgid "Size the inverters by themselves"
 msgstr "Dimensiona gli inverter da soli"
 
-#: src/meridiana/ui/window.py:3658
+#: src/meridiana/ui/window.py:3694
 #, python-brace-format
 msgid "Inverter sized: {n} x {maker} {model}, DC/AC {r}."
 msgid_plural "Inverters sized: {n} x {maker} {model}, DC/AC {r}."
 msgstr[0] "Inverter dimensionato: {n} x {maker} {model}, DC/AC {r}."
 msgstr[1] "Inverter dimensionati: {n} x {maker} {model}, DC/AC {r}."
 
-#: src/meridiana/ui/window.py:3702
+#: src/meridiana/ui/window.py:3738
 #, python-brace-format
 msgid "The strings could not be laid: {error}"
 msgstr "Le stringhe non si sono potute disporre: {error}"
 
-#: src/meridiana/ui/window.py:3758
+#: src/meridiana/ui/window.py:3794
 msgid "Choose the power optimizers"
 msgstr "Scegli gli ottimizzatori di potenza"
 
-#: src/meridiana/ui/window.py:3765
+#: src/meridiana/ui/window.py:3801
 msgid "Back to the optimizers Meridiana proposes"
 msgstr "Torna agli ottimizzatori proposti da Meridiana"
 
-#: src/meridiana/ui/window.py:3771
+#: src/meridiana/ui/window.py:3807
 msgid "Change the modules on each optimizer"
 msgstr "Cambia i moduli su ogni ottimizzatore"
 
-#: src/meridiana/ui/window.py:3776
+#: src/meridiana/ui/window.py:3812
 msgid "Change how many inverters"
 msgstr "Cambia quanti inverter"
 
-#: src/meridiana/ui/window.py:3779
+#: src/meridiana/ui/window.py:3815
 msgid "Take an inverter out"
 msgstr "Togli un inverter"
 
-#: src/meridiana/ui/window.py:3792
+#: src/meridiana/ui/window.py:3828
 msgid "Send a sub-field's strings to an inverter"
 msgstr "Manda le stringhe di un sottocampo a un inverter"
 
-#: src/meridiana/ui/window.py:3826
+#: src/meridiana/ui/window.py:3862
 #, python-brace-format
 msgid ""
 "The string Meridiana proposed for this project is now yours, as it was: from "
@@ -15985,20 +16017,20 @@ msgstr[1] ""
 "Le {n} stringhe che Meridiana proponeva per questo progetto ora sono tue, "
 "com'erano: d'ora in poi niente le cambia da solo."
 
-#: src/meridiana/ui/window.py:3851
+#: src/meridiana/ui/window.py:3887
 msgid "Lay the modules first: the strings are proposed on the modules laid."
 msgstr "Posa prima i moduli: le stringhe si propongono sui moduli posati."
 
-#: src/meridiana/ui/window.py:3861
+#: src/meridiana/ui/window.py:3897
 #, python-brace-format
 msgid "Meridiana could not propose the strings: {error}"
 msgstr "Meridiana non è riuscita a proporre le stringhe: {error}"
 
-#: src/meridiana/ui/window.py:3876
+#: src/meridiana/ui/window.py:3912
 msgid "Propose the strings"
 msgstr "Proponi le stringhe"
 
-#: src/meridiana/ui/window.py:3877
+#: src/meridiana/ui/window.py:3913
 #, python-brace-format
 msgid ""
 "The string there is is replaced by Meridiana's proposal ({strategy}). Undo "
@@ -16013,21 +16045,21 @@ msgstr[1] ""
 "Le {n} stringhe che ci sono vengono sostituite dalla proposta di Meridiana "
 "({strategy}). Annulla le riporta. Procedo?"
 
-#: src/meridiana/ui/window.py:3891
+#: src/meridiana/ui/window.py:3927
 #, python-brace-format
 msgid "Meridiana finds no string to propose: {why}"
 msgstr "Meridiana non trova stringhe da proporre: {why}"
 
-#: src/meridiana/ui/window.py:3892
+#: src/meridiana/ui/window.py:3928
 msgid "the inverter does not take these modules in series"
 msgstr "l'inverter non accetta questi moduli in serie"
 
-#: src/meridiana/ui/window.py:3896
+#: src/meridiana/ui/window.py:3932
 #, python-brace-format
 msgid "Propose the strings: {strategy}"
 msgstr "Proponi le stringhe: {strategy}"
 
-#: src/meridiana/ui/window.py:3898
+#: src/meridiana/ui/window.py:3934
 #, python-brace-format
 msgid ""
 "{n} string proposed by Meridiana ({strategy}): yours now, nothing changes it "
@@ -16042,7 +16074,7 @@ msgstr[1] ""
 "{n} stringhe proposte da Meridiana ({strategy}): ora sono tue, niente le "
 "cambia da solo."
 
-#: src/meridiana/ui/window.py:3912
+#: src/meridiana/ui/window.py:3948
 msgid ""
 "No string to add: the modules in no string are too few for a string, or the "
 "inputs take no more. Draw one by hand, or add an inverter."
@@ -16051,7 +16083,7 @@ msgstr ""
 "una stringa, oppure gli ingressi non ne accettano altre uguali. Disegnane "
 "una a mano, o aggiungi un inverter."
 
-#: src/meridiana/ui/window.py:3916
+#: src/meridiana/ui/window.py:3952
 #, python-brace-format
 msgid ""
 "{n} string added for the modules that were in none; yours stayed as they "
@@ -16066,15 +16098,15 @@ msgstr[1] ""
 "{n} stringhe aggiunte per i moduli che erano fuori stringa; le tue sono "
 "rimaste come erano."
 
-#: src/meridiana/ui/window.py:3925
+#: src/meridiana/ui/window.py:3961
 msgid "There is no string to delete."
 msgstr "Non c'è nessuna stringa da eliminare."
 
-#: src/meridiana/ui/window.py:3928 src/meridiana/ui/window.py:3936
+#: src/meridiana/ui/window.py:3964 src/meridiana/ui/window.py:3972
 msgid "Delete all the strings"
 msgstr "Elimina tutte le stringhe"
 
-#: src/meridiana/ui/window.py:3929
+#: src/meridiana/ui/window.py:3965
 #, python-brace-format
 msgid ""
 "The string is deleted: its modules stay laid, in no string. Undo brings it "
@@ -16089,7 +16121,7 @@ msgstr[1] ""
 "Le {n} stringhe vengono eliminate: i loro moduli restano posati, fuori "
 "stringa. Annulla le riporta. Procedo?"
 
-#: src/meridiana/ui/window.py:3937
+#: src/meridiana/ui/window.py:3973
 msgid ""
 "Every string deleted: draw yours with «+» on an input of the list on the "
 "right, or «Draw»."
@@ -16097,12 +16129,12 @@ msgstr ""
 "Tutte le stringhe eliminate: disegna le tue con «+» su un ingresso "
 "dell'elenco a destra, o con «Disegna»."
 
-#: src/meridiana/ui/window.py:3947
+#: src/meridiana/ui/window.py:3983
 #, python-brace-format
 msgid "Delete string {name}"
 msgstr "Elimina la stringa {name}"
 
-#: src/meridiana/ui/window.py:3949
+#: src/meridiana/ui/window.py:3985
 #, python-brace-format
 msgid ""
 "String {name} deleted: its module is in no string (Ctrl+Z brings it back)."
@@ -16115,7 +16147,7 @@ msgstr[1] ""
 "Stringa {name} eliminata: i suoi {n} moduli sono fuori stringa (Ctrl+Z la "
 "riporta)."
 
-#: src/meridiana/ui/window.py:3978
+#: src/meridiana/ui/window.py:4014
 #, python-brace-format
 msgid ""
 "String {name}: Del deletes it, a double click draws it again, the right "
@@ -16124,7 +16156,7 @@ msgstr ""
 "Stringa {name}: Canc la elimina, un doppio clic la ridisegna, il tasto "
 "destro ha il resto"
 
-#: src/meridiana/ui/window.py:3988
+#: src/meridiana/ui/window.py:4024
 msgid ""
 "This module is in no string: «+» on an input in the list on the right, or "
 "«Draw», then click it."
@@ -16132,11 +16164,11 @@ msgstr ""
 "Questo modulo è fuori stringa: «+» su un ingresso nell'elenco a destra, o "
 "«Disegna», poi cliccalo."
 
-#: src/meridiana/ui/window.py:4007
+#: src/meridiana/ui/window.py:4043
 msgid "The strings are being laid: a moment."
 msgstr "Le stringhe si stanno posando: un momento."
 
-#: src/meridiana/ui/window.py:4036
+#: src/meridiana/ui/window.py:4072
 msgid ""
 "No inverter's input to draw a string on: add an inverter from the catalogue "
 "first."
@@ -16144,50 +16176,50 @@ msgstr ""
 "Nessun ingresso di inverter su cui disegnare una stringa: aggiungi prima un "
 "inverter dal catalogo."
 
-#: src/meridiana/ui/window.py:4076
+#: src/meridiana/ui/window.py:4112
 #, python-brace-format
 msgid "string {name} again"
 msgstr "stringa {name} ridisegnata"
 
-#: src/meridiana/ui/window.py:4078
+#: src/meridiana/ui/window.py:4114
 #, python-brace-format
 msgid "new string {n}.{k}"
 msgstr "nuova stringa {n}.{k}"
 
-#: src/meridiana/ui/window.py:4085
+#: src/meridiana/ui/window.py:4121
 #, python-brace-format
 msgid "{k} short ({lo} to {hi})"
 msgid_plural "{k} short ({lo} to {hi})"
 msgstr[0] "ne manca {k} (da {lo} a {hi})"
 msgstr[1] "ne mancano {k} (da {lo} a {hi})"
 
-#: src/meridiana/ui/window.py:4089
+#: src/meridiana/ui/window.py:4125
 #, python-brace-format
 msgid "{k} too many ({lo} to {hi})"
 msgid_plural "{k} too many ({lo} to {hi})"
 msgstr[0] "{k} di troppo (da {lo} a {hi})"
 msgstr[1] "{k} di troppo (da {lo} a {hi})"
 
-#: src/meridiana/ui/window.py:4093
+#: src/meridiana/ui/window.py:4129
 #, python-brace-format
 msgid "fine ({lo} to {hi})"
 msgstr "va bene (da {lo} a {hi})"
 
-#: src/meridiana/ui/window.py:4096
+#: src/meridiana/ui/window.py:4132
 #, python-brace-format
 msgid "({lo} to {hi})"
 msgstr "(da {lo} a {hi})"
 
-#: src/meridiana/ui/window.py:4099
+#: src/meridiana/ui/window.py:4135
 #, python-brace-format
 msgid "Inverter {n} · {model} · Input {k}"
 msgstr "Inverter {n} · {model} · Ingresso {k}"
 
-#: src/meridiana/ui/window.py:4099
+#: src/meridiana/ui/window.py:4135
 msgid "not chosen"
 msgstr "non scelto"
 
-#: src/meridiana/ui/window.py:4100
+#: src/meridiana/ui/window.py:4136
 msgid ""
 "Enter or double click: finish\n"
 "Backspace: the last one back · Esc: give up"
@@ -16195,7 +16227,7 @@ msgstr ""
 "Invio o doppio clic: chiudi\n"
 "Backspace: togli l'ultimo · Esc: rinuncia"
 
-#: src/meridiana/ui/window.py:4106
+#: src/meridiana/ui/window.py:4142
 msgid ""
 "Click the modules in order (or drag over them); Backspace takes back the "
 "last, Enter or a double click closes the string, Esc gives it up. A module "
@@ -16205,127 +16237,127 @@ msgstr ""
 "l'ultimo, Invio o un doppio clic chiudono la stringa, Esc la annulla. Un "
 "modulo di un'altra stringa: Maiusc e clic lo sposta qui."
 
-#: src/meridiana/ui/window.py:4134
+#: src/meridiana/ui/window.py:4170
 #, python-brace-format
 msgid "Draw string {name} again"
 msgstr "Ridisegna la stringa {name}"
 
-#: src/meridiana/ui/window.py:4137
+#: src/meridiana/ui/window.py:4173
 msgid "No module clicked: no string made."
 msgstr "Nessun modulo cliccato: nessuna stringa fatta."
 
-#: src/meridiana/ui/window.py:4141
+#: src/meridiana/ui/window.py:4177
 #, python-brace-format
 msgid "New string on input {k} of inverter {n}"
 msgstr "Nuova stringa sull'ingresso {k} dell'inverter {n}"
 
-#: src/meridiana/ui/window.py:4149
+#: src/meridiana/ui/window.py:4185
 #, python-brace-format
 msgid "Modules moved from string {names}"
 msgstr "Moduli spostati dalla stringa {names}"
 
-#: src/meridiana/ui/window.py:4151
+#: src/meridiana/ui/window.py:4187
 #, python-brace-format
 msgid "String of {n} module made: Ctrl+Z takes it back."
 msgid_plural "String of {n} modules made: Ctrl+Z takes it back."
 msgstr[0] "Stringa di {n} modulo fatta: Ctrl+Z la toglie."
 msgstr[1] "Stringa di {n} moduli fatta: Ctrl+Z la toglie."
 
-#: src/meridiana/ui/window.py:4162
+#: src/meridiana/ui/window.py:4198
 msgid "String given up: nothing changed."
 msgstr "Stringa annullata: non è cambiato niente."
 
-#: src/meridiana/ui/window.py:4172
+#: src/meridiana/ui/window.py:4208
 msgid "Close the string (Enter)"
 msgstr "Chiudi la stringa (Invio)"
 
-#: src/meridiana/ui/window.py:4174
+#: src/meridiana/ui/window.py:4210
 msgid "Take back the last module (Backspace)"
 msgstr "Togli l'ultimo modulo (Backspace)"
 
-#: src/meridiana/ui/window.py:4177
+#: src/meridiana/ui/window.py:4213
 msgid "Give up the string (Esc)"
 msgstr "Annulla la stringa (Esc)"
 
-#: src/meridiana/ui/window.py:4187
+#: src/meridiana/ui/window.py:4223
 msgid "This module is in no string"
 msgstr "Questo modulo non è in nessuna stringa"
 
-#: src/meridiana/ui/window.py:4190
+#: src/meridiana/ui/window.py:4226
 #, python-brace-format
 msgid "New string from this module, on input {k} of inverter {n}"
 msgstr "Nuova stringa da questo modulo, sull'ingresso {k} dell'inverter {n}"
 
-#: src/meridiana/ui/window.py:4197
+#: src/meridiana/ui/window.py:4233
 #, python-brace-format
 msgid "Skip this module (the rest of {name} stays)"
 msgstr "Salta questo modulo (il resto di {name} resta)"
 
-#: src/meridiana/ui/window.py:4199
+#: src/meridiana/ui/window.py:4235
 #, python-brace-format
 msgid "Take a module out of string {name}"
 msgstr "Togli un modulo dalla stringa {name}"
 
-#: src/meridiana/ui/window.py:4200 src/meridiana/ui/window.py:4202
+#: src/meridiana/ui/window.py:4236 src/meridiana/ui/window.py:4238
 #, python-brace-format
 msgid "String {name} starts here"
 msgstr "La stringa {name} parte da qui"
 
-#: src/meridiana/ui/window.py:4204 src/meridiana/ui/window.py:4206
+#: src/meridiana/ui/window.py:4240 src/meridiana/ui/window.py:4242
 #, python-brace-format
 msgid "String {name} ends here"
 msgstr "La stringa {name} finisce qui"
 
-#: src/meridiana/ui/window.py:4216 src/meridiana/ui/window.py:4218
+#: src/meridiana/ui/window.py:4252 src/meridiana/ui/window.py:4254
 #, python-brace-format
 msgid "Reverse string {name}"
 msgstr "Inverti la stringa {name}"
 
-#: src/meridiana/ui/window.py:4219
+#: src/meridiana/ui/window.py:4255
 #, python-brace-format
 msgid "Draw string {name} again (double click)"
 msgstr "Ridisegna la stringa {name} (doppio clic)"
 
-#: src/meridiana/ui/window.py:4222
+#: src/meridiana/ui/window.py:4258
 #, python-brace-format
 msgid "Move string {name} to"
 msgstr "Sposta la stringa {name} su"
 
-#: src/meridiana/ui/window.py:4229
+#: src/meridiana/ui/window.py:4265
 #, python-brace-format
 msgid "Delete string {name} (Del)"
 msgstr "Elimina la stringa {name} (Canc)"
 
-#: src/meridiana/ui/window.py:4253
+#: src/meridiana/ui/window.py:4289
 #, python-brace-format
 msgid "Move string {name} to input {k} of inverter {n}"
 msgstr "Sposta la stringa {name} sull'ingresso {k} dell'inverter {n}"
 
-#: src/meridiana/ui/window.py:4265
+#: src/meridiana/ui/window.py:4301
 msgid "Choose the battery"
 msgstr "Scegli la batteria"
 
-#: src/meridiana/ui/window.py:4274 src/meridiana/ui/window.py:4283
+#: src/meridiana/ui/window.py:4310 src/meridiana/ui/window.py:4319
 msgid "Choose the module"
 msgstr "Scegli il modulo"
 
-#: src/meridiana/ui/window.py:4289 src/meridiana/ui/window.py:4317
+#: src/meridiana/ui/window.py:4325 src/meridiana/ui/window.py:4353
 msgid "Import a module from PVsyst"
 msgstr "Importa un modulo da PVsyst"
 
-#: src/meridiana/ui/window.py:4289 src/meridiana/ui/window.py:4307
+#: src/meridiana/ui/window.py:4325 src/meridiana/ui/window.py:4343
 msgid "Import an inverter from PVsyst"
 msgstr "Importa un inverter da PVsyst"
 
-#: src/meridiana/ui/window.py:4291
+#: src/meridiana/ui/window.py:4327
 msgid "PVsyst modules (*.pan *.PAN)"
 msgstr "Moduli PVsyst (*.pan *.PAN)"
 
-#: src/meridiana/ui/window.py:4291
+#: src/meridiana/ui/window.py:4327
 msgid "PVsyst inverters (*.ond *.OND)"
 msgstr "Inverter PVsyst (*.ond *.OND)"
 
-#: src/meridiana/ui/window.py:4301
+#: src/meridiana/ui/window.py:4337
 #, python-brace-format
 msgid ""
 "Read from {file}: {name}.\n"
@@ -16340,11 +16372,11 @@ msgstr ""
 "\n"
 "Lo usi?"
 
-#: src/meridiana/ui/window.py:4329
+#: src/meridiana/ui/window.py:4365
 msgid "PVsyst projects (*.prj *.PRJ)"
 msgstr "Progetti PVsyst (*.prj *.PRJ)"
 
-#: src/meridiana/ui/window.py:4338
+#: src/meridiana/ui/window.py:4374
 #, python-brace-format
 msgid ""
 "{file} has no variant next to it (<project>.VC0, .VC1...): export the "
@@ -16353,12 +16385,12 @@ msgstr ""
 "{file} non ha varianti accanto (<progetto>.VC0, .VC1...): esportare il "
 "progetto da PVsyst con le sue varianti."
 
-#: src/meridiana/ui/window.py:4356
+#: src/meridiana/ui/window.py:4392
 #, python-brace-format
 msgid "The variants could not be read: {error}"
 msgstr "Non è stato possibile leggere le varianti: {error}"
 
-#: src/meridiana/ui/window.py:4372
+#: src/meridiana/ui/window.py:4408
 #, python-brace-format
 msgid ""
 "Imported from PVsyst: {n} variants. Save the project; what was approximated "
@@ -16367,7 +16399,7 @@ msgstr ""
 "Importato da PVsyst: {n} varianti. Salva il progetto; ciò che è approssimato "
 "o manca resta tra le verifiche."
 
-#: src/meridiana/ui/window.py:4383
+#: src/meridiana/ui/window.py:4419
 msgid ""
 "The IFC models need IfcOpenShell (LGPL-3.0-or-later), which is not "
 "installed: «pip install ifcopenshell» in Meridiana's Python."
@@ -16375,7 +16407,7 @@ msgstr ""
 "I modelli IFC hanno bisogno di IfcOpenShell (LGPL-3.0-or-later), che non è "
 "installato: «pip install ifcopenshell» nel Python di Meridiana."
 
-#: src/meridiana/ui/window.py:4389
+#: src/meridiana/ui/window.py:4425
 msgid ""
 "An IFC model is being read or written: wait for it, or Cancel it in the "
 "status bar."
@@ -16383,49 +16415,49 @@ msgstr ""
 "Si sta leggendo o scrivendo un modello IFC: aspetta, oppure Annulla nella "
 "barra di stato."
 
-#: src/meridiana/ui/window.py:4402
+#: src/meridiana/ui/window.py:4438
 msgid "IFC models (*.ifc *.IFC *.ifczip *.ifcZIP)"
 msgstr "Modelli IFC (*.ifc *.IFC *.ifczip *.ifcZIP)"
 
-#: src/meridiana/ui/window.py:4411
+#: src/meridiana/ui/window.py:4447
 #, python-brace-format
 msgid "IFC: {file}"
 msgstr "IFC: {file}"
 
-#: src/meridiana/ui/window.py:4415
+#: src/meridiana/ui/window.py:4451
 #, python-brace-format
 msgid "IFC: {what}"
 msgstr "IFC: {what}"
 
-#: src/meridiana/ui/window.py:4423
+#: src/meridiana/ui/window.py:4459
 msgid "opening the file"
 msgstr "apertura del file"
 
-#: src/meridiana/ui/window.py:4423
+#: src/meridiana/ui/window.py:4459
 msgid "the buildings and the storeys"
 msgstr "edifici e piani"
 
-#: src/meridiana/ui/window.py:4423
+#: src/meridiana/ui/window.py:4459
 msgid "the roofs"
 msgstr "le coperture"
 
-#: src/meridiana/ui/window.py:4424
+#: src/meridiana/ui/window.py:4460
 msgid "the shapes"
 msgstr "le forme"
 
-#: src/meridiana/ui/window.py:4424
+#: src/meridiana/ui/window.py:4460
 msgid "the roof planes"
 msgstr "le falde"
 
-#: src/meridiana/ui/window.py:4424
+#: src/meridiana/ui/window.py:4460
 msgid "what stands on the roofs"
 msgstr "ciò che sta sulle coperture"
 
-#: src/meridiana/ui/window.py:4425
+#: src/meridiana/ui/window.py:4461
 msgid "a second try, with the simple shapes only"
 msgstr "un secondo tentativo, con le sole forme semplici"
 
-#: src/meridiana/ui/window.py:4452
+#: src/meridiana/ui/window.py:4488
 #, python-brace-format
 msgid ""
 "From {file}: {n} building, with its roof and what stands on it. Ctrl+Z takes "
@@ -16440,59 +16472,59 @@ msgstr[1] ""
 "Da {file}: {n} edifici, con le loro coperture e ciò che vi sta sopra. Ctrl+Z "
 "li toglie."
 
-#: src/meridiana/ui/window.py:4457 src/meridiana/ui/window.py:4488
+#: src/meridiana/ui/window.py:4493 src/meridiana/ui/window.py:4524
 msgid "Export the model as IFC4"
 msgstr "Esporta il modello in IFC4"
 
-#: src/meridiana/ui/window.py:4462
+#: src/meridiana/ui/window.py:4498
 msgid "IFC models (*.ifc)"
 msgstr "Modelli IFC (*.ifc)"
 
-#: src/meridiana/ui/window.py:4471
+#: src/meridiana/ui/window.py:4507
 #, python-brace-format
 msgid "IFC4: {file}"
 msgstr "IFC4: {file}"
 
-#: src/meridiana/ui/window.py:4475
+#: src/meridiana/ui/window.py:4511
 #, python-brace-format
 msgid "IFC4: {what}"
 msgstr "IFC4: {what}"
 
-#: src/meridiana/ui/window.py:4485
+#: src/meridiana/ui/window.py:4521
 msgid "IFC export stopped: nothing written."
 msgstr "Esportazione IFC fermata: non è stato scritto nulla."
 
-#: src/meridiana/ui/window.py:4488
+#: src/meridiana/ui/window.py:4524
 #, python-brace-format
 msgid "The model could not be written: {error}"
 msgstr "Non è stato possibile scrivere il modello: {error}"
 
-#: src/meridiana/ui/window.py:4494
+#: src/meridiana/ui/window.py:4530
 #, python-brace-format
 msgid "IFC4 written: {file}, {n} module"
 msgid_plural "IFC4 written: {file}, {n} modules"
 msgstr[0] "IFC4 scritto: {file}, {n} modulo"
 msgstr[1] "IFC4 scritto: {file}, {n} moduli"
 
-#: src/meridiana/ui/window.py:4502
+#: src/meridiana/ui/window.py:4538
 msgid "IFC reading stopped: nothing added."
 msgstr "Lettura IFC fermata: non è stato aggiunto nulla."
 
-#: src/meridiana/ui/window.py:4550
+#: src/meridiana/ui/window.py:4586
 #, python-brace-format
 msgid "Meridiana ran into an error: {error}"
 msgstr "Meridiana ha incontrato un errore: {error}"
 
-#: src/meridiana/ui/window.py:4552
+#: src/meridiana/ui/window.py:4588
 #, python-brace-format
 msgid "(the detail is in {file})"
 msgstr "(il dettaglio è in {file})"
 
-#: src/meridiana/ui/window.py:4556
+#: src/meridiana/ui/window.py:4592
 msgid "An error"
 msgstr "Un errore"
 
-#: src/meridiana/ui/window.py:4557
+#: src/meridiana/ui/window.py:4593
 msgid ""
 "The window goes on; if something looks wrong, save with a new name and "
 "reopen."
@@ -16500,25 +16532,25 @@ msgstr ""
 "La finestra va avanti; se qualcosa sembra sbagliato, salva con un nome nuovo "
 "e riapri."
 
-#: src/meridiana/ui/window.py:4564
+#: src/meridiana/ui/window.py:4600
 #, python-brace-format
 msgid "The map tiles of {source} are not loading: {why}"
 msgstr "Le tessere della mappa {source} non si caricano: {why}"
 
-#: src/meridiana/ui/window.py:4572
+#: src/meridiana/ui/window.py:4608
 #, python-brace-format
 msgid "The recovery copy could not be written: {error}"
 msgstr "La copia di ripristino non si è potuta scrivere: {error}"
 
-#: src/meridiana/ui/window.py:4583
+#: src/meridiana/ui/window.py:4619
 msgid "a new project"
 msgstr "un progetto nuovo"
 
-#: src/meridiana/ui/window.py:4586 src/meridiana/ui/window.py:4597
+#: src/meridiana/ui/window.py:4622 src/meridiana/ui/window.py:4633
 msgid "Recover the changes"
 msgstr "Recupera le modifiche"
 
-#: src/meridiana/ui/window.py:4587
+#: src/meridiana/ui/window.py:4623
 #, python-brace-format
 msgid ""
 "Meridiana stopped without saving {name}: a copy of {when} is there. Recover "
@@ -16527,69 +16559,69 @@ msgstr ""
 "Meridiana si è chiuso senza salvare {name}: c'è una copia del {when}. La "
 "recuperi?"
 
-#: src/meridiana/ui/window.py:4597
+#: src/meridiana/ui/window.py:4633
 #, python-brace-format
 msgid "The copy could not be read: {error}"
 msgstr "Impossibile leggere la copia: {error}"
 
-#: src/meridiana/ui/window.py:4604
+#: src/meridiana/ui/window.py:4640
 msgid "Recovered: save it to keep it"
 msgstr "Recuperato: salvalo per tenerlo"
 
-#: src/meridiana/ui/window.py:4614 src/meridiana/ui/window.py:4673
+#: src/meridiana/ui/window.py:4650 src/meridiana/ui/window.py:4709
 #, python-brace-format
 msgid "The project could not be saved: {error}"
 msgstr "Impossibile salvare il progetto: {error}"
 
-#: src/meridiana/ui/window.py:4619
+#: src/meridiana/ui/window.py:4655
 #, python-brace-format
 msgid "New revision saved: {file}; the previous one stays as it was"
 msgstr "Nuova revisione salvata: {file}; la precedente resta com'era"
 
-#: src/meridiana/ui/window.py:4628
+#: src/meridiana/ui/window.py:4664
 msgid "Unsaved changes"
 msgstr "Modifiche non salvate"
 
-#: src/meridiana/ui/window.py:4628
+#: src/meridiana/ui/window.py:4664
 msgid "Save the changes to the project first?"
 msgstr "Salvare prima le modifiche al progetto?"
 
-#: src/meridiana/ui/window.py:4646 src/meridiana/ui/window.py:4656
-#: src/meridiana/ui/window.py:4665
+#: src/meridiana/ui/window.py:4682 src/meridiana/ui/window.py:4692
+#: src/meridiana/ui/window.py:4701
 msgid "Open a project"
 msgstr "Apri un progetto"
 
-#: src/meridiana/ui/window.py:4647 src/meridiana/ui/window.py:4682
+#: src/meridiana/ui/window.py:4683 src/meridiana/ui/window.py:4718
 #, python-brace-format
 msgid "Meridiana projects (*{suffix})"
 msgstr "Progetti Meridiana (*{suffix})"
 
-#: src/meridiana/ui/window.py:4656
+#: src/meridiana/ui/window.py:4692
 #, python-brace-format
 msgid "{file} could not be opened: {error}"
 msgstr "Impossibile aprire {file}: {error}"
 
-#: src/meridiana/ui/window.py:4676
+#: src/meridiana/ui/window.py:4712
 #, python-brace-format
 msgid "Saved {file}"
 msgstr "Salvato {file}"
 
-#: src/meridiana/ui/window.py:4681
+#: src/meridiana/ui/window.py:4717
 msgid "Save the project"
 msgstr "Salva il progetto"
 
-#: src/meridiana/ui/window.py:4706
+#: src/meridiana/ui/window.py:4742
 #, python-brace-format
 msgid "The settings could not be saved: {error}"
 msgstr "Le impostazioni non si sono potute salvare: {error}"
 
-#: src/meridiana/ui/window.py:4711
+#: src/meridiana/ui/window.py:4747
 #, python-brace-format
 msgid ""
 "<b>Meridiana</b> {version}<br>Photovoltaic design: map, building model, sun "
 "path, module layout and Italian standards.<br><br>GPL-3.0-or-later. Qt for "
 "Python (LGPL), Qt Quick 3D (GPL), shapely (BSD), numpy (BSD). Backgrounds: "
-"the map sources of Preferences > Maps, each named on the plan with its "
+"the map sources of Settings > Maps, each named on the plan with its "
 "attribution (among them the national orthophoto of the Geoportale Nazionale, "
 "MASE, and © OpenStreetMap contributors); the outlines of their areas from "
 "Natural Earth (public domain)."
@@ -16597,32 +16629,32 @@ msgstr ""
 "<b>Meridiana</b> {version}<br>Progettazione fotovoltaica: mappa, modello "
 "dell'edificio, percorso del sole, posa dei moduli e norme italiane."
 "<br><br>GPL-3.0 o successive. Qt for Python (LGPL), Qt Quick 3D (GPL), "
-"shapely (BSD), numpy (BSD). Sfondi: le sorgenti delle mappe di Preferenze > "
+"shapely (BSD), numpy (BSD). Sfondi: le sorgenti delle mappe di Impostazioni > "
 "Mappe, ciascuna indicata sulla pianta con la sua attribuzione (fra queste "
 "l'ortofoto nazionale del Geoportale Nazionale, MASE, e © contributori di "
 "OpenStreetMap); i contorni delle loro aree da Natural Earth (pubblico "
 "dominio)."
 
-#: src/meridiana/ui/window.py:4740
+#: src/meridiana/ui/window.py:4776
 msgid "Checking for updates…"
 msgstr "Cerco gli aggiornamenti…"
 
-#: src/meridiana/ui/window.py:4747
+#: src/meridiana/ui/window.py:4783
 #, python-brace-format
 msgid "The check for updates failed: {error}"
 msgstr "Il controllo degli aggiornamenti non è riuscito: {error}"
 
-#: src/meridiana/ui/window.py:4753
+#: src/meridiana/ui/window.py:4789
 #, python-brace-format
 msgid "Meridiana {version} is the latest version."
 msgstr "Meridiana {version} è l'ultima versione."
 
-#: src/meridiana/ui/window.py:4758
+#: src/meridiana/ui/window.py:4794
 #, python-brace-format
 msgid "Version {version} is available: Help > Check for updates."
 msgstr "È disponibile la versione {version}: Aiuto > Cerca aggiornamenti."
 
-#: src/meridiana/ui/window.py:4859
+#: src/meridiana/ui/window.py:4895
 #, python-brace-format
 msgid "The window layout could not be saved: {error}"
 msgstr "La disposizione della finestra non si è potuta salvare: {error}"
@@ -16722,6 +16754,12 @@ msgstr "perimetro {p} m"
 #, python-brace-format
 msgid "area {a} m²"
 msgstr "area {a} m²"
+
+#~ msgid "&Preferences…"
+#~ msgstr "&Preferenze…"
+
+#~ msgid "Preferences"
+#~ msgstr "Preferenze"
 
 #~ msgid "a colour for each string"
 #~ msgstr "un colore per stringa"
