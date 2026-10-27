@@ -12,7 +12,7 @@ from _fixtures import capannone
 setUpModule = _setup.keep_global_state          # what the module changes of the process, put back after it
 
 VIEW_COMMANDS = ("view_plan", "view_3d", "view_both", "fit", "zoom_in", "zoom_out")
-PLAN_COMMANDS = VIEW_COMMANDS + ("view_align", "view_north", "snaps", "ortho")      # turning the plan: R174
+PLAN_COMMANDS = VIEW_COMMANDS + ("view_align", "snaps", "ortho")      # turning the plan: R174, R183
 
 
 class ViewBars(unittest.TestCase):
@@ -80,8 +80,11 @@ class ViewBars(unittest.TestCase):
         """Daniel, 26/10/2026, on the wider screens of the studio: «le scritte e alcuni elementi ora si visualizzano
         deformati più stretti», then «non è solo il testo ma anche elementi come questi tasti»: the buttons of the
         views' bars had been held 24 px wide (36 with a menu), the words cut down to nothing beside the icon and the
-        icons squeezed in grounds taller than wide. As wide as they ask, words or not."""
+        icons squeezed in grounds taller than wide. As wide as they ask, words or not. Align stays icon-only (R183)."""
+        from PySide6.QtCore import Qt
         win = self.win
+        win.plan.resize(540, 500)
+        self.app.processEvents()
         bar = win.plan.viewbar
         for on in (True, False):
             bar.set_words(on)
@@ -90,6 +93,11 @@ class ViewBars(unittest.TestCase):
                 if button.isVisible():
                     self.assertGreaterEqual(button.width(), button.sizeHint().width(), (on, button.text()))
                     self.assertGreaterEqual(button.width(), button.height(), (on, button.text()))   # never taller
+            align = bar.buttons[win.commands["view_align"]]
+            self.assertEqual(align.toolButtonStyle(), Qt.ToolButtonStyle.ToolButtonIconOnly)
+            self.assertFalse(align.icon().isNull())
+            self.assertIn("A", align.toolTip())
+            self.assertFalse(bar.geometry().intersects(win.plan.north.geometry()))
         bar.set_words(False)
 
     def test_zoom_buttons_and_keys_move_both_views_and_say_the_key(self):
@@ -126,18 +134,20 @@ class ViewBars(unittest.TestCase):
 
     def test_turning_the_plan_without_the_menus_buttons_keys_compass_and_right_click(self):
         """R174 (Daniel, 26/10/2026: «non bisognerebbe andare sul menu su alt per aprirlo. mi piacciono i tuoi
-        consigli»): Align and North up in the plan's bar with their keys A and N; a click on the compass brings
-        North up; a right click on a side of an outline offers to align the view to that side."""
+        consigli»), revised by R183: Align is the only rotation command in the plan's bar, with A in its tooltip;
+        North up keeps N, the compass click and the right-click menu, but no button."""
         from PySide6.QtCore import QPoint
         from PySide6.QtGui import QKeySequence
 
         from meridiana.ui.plan import to_scene
         win = self.win
-        for cid, key in (("view_align", "A"), ("view_north", "N")):
-            action = win.commands[cid]
-            self.assertIn(action, win.plan.viewbar.buttons)
-            self.assertIn(QKeySequence(key), action.shortcuts())
-            self.assertIn(key, win.plan.viewbar.buttons[action].toolTip())
+        align = win.commands["view_align"]
+        self.assertIn(align, win.plan.viewbar.buttons)
+        self.assertIn(QKeySequence("A"), align.shortcuts())
+        self.assertIn("A", win.plan.viewbar.buttons[align].toolTip())
+        north = win.commands["view_north"]
+        self.assertNotIn(north, win.plan.viewbar.buttons)
+        self.assertIn(QKeySequence("N"), north.shortcuts())
         building = win.project.buildings[0]
         before = win.project.to_json()
         win.plan.rotate_view(37.0)

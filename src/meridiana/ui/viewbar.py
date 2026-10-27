@@ -22,9 +22,11 @@ MARGIN = Space.M                # from the corner of the view, as the other thin
 
 
 class ViewBar(QFrame):
-    def __init__(self, parent: QWidget, groups: list[list], keys: tuple = (), words: dict | None = None):
+    def __init__(self, parent: QWidget, groups: list[list], keys: tuple = (), words: dict | None = None,
+                 icons_only: tuple = ()):
         """`groups`: lists of QActions, a thin line between one group and the next; `keys`: the actions shown by
-        their key (the drawing aids); `words`: a shorter word for an action than its text («Inquadra»)."""
+        their key (the drawing aids); `words`: a shorter word for an action than its text («Inquadra»);
+        `icons_only`: actions that never take a word when the other buttons do (R183)."""
         super().__init__(parent)
         self.setObjectName("viewbar")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
@@ -34,6 +36,7 @@ class ViewBar(QFrame):
         self.buttons: dict = {}             # the action -> its button
         self.keys = tuple(keys)
         self.words = dict(words or {})
+        self.icons_only = frozenset(icons_only)
         self.last_place = None              # (area, avoid) of the last `place`, to place it again when it narrows
         self.groups: list[list] = []        # the widgets of each group, its line first (none for the first)
         for i, actions in enumerate(groups):
@@ -79,16 +82,20 @@ class ViewBar(QFrame):
         return f"{self.label(action)} ({key})" if key else self.label(action)
 
     def set_words(self, on: bool) -> None:
-        """The buttons with their icons and words, or with their icons alone (a narrow view)."""
+        """The buttons with their icons and words, or with their icons alone (a narrow view); the exceptions stay
+        as icons (R183)."""
         style = Qt.ToolButtonStyle.ToolButtonTextBesideIcon if on else Qt.ToolButtonStyle.ToolButtonIconOnly
         changed = False
-        for b in self.buttons.values():
-            if isinstance(b, ToolButton) and b.toolButtonStyle() != style:
-                b.setToolButtonStyle(style)
+        for action, b in self.buttons.items():
+            own_style = Qt.ToolButtonStyle.ToolButtonIconOnly if action in self.icons_only else style
+            if isinstance(b, ToolButton) and b.toolButtonStyle() != own_style:
+                b.setToolButtonStyle(own_style)
                 b.setIconSize(QSize(16, 16))
                 changed = True
         if changed:
             self.adjustSize()
+            if self.last_place is not None:
+                self.place(*self.last_place)
 
     def show_group(self, n: int, on: bool) -> None:
         """A group (and its line) shown or hidden: the selector of the views on one bar only."""

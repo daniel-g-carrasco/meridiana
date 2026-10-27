@@ -915,13 +915,13 @@ class MainWindow(QMainWindow):
         # the commands of the views inside the views, in a bar of their own (R14, R27; ui/viewbar.py)
         views = [self.view_actions[k] for k in ("plan", "3d", "both")]
         zoom = [fit, self.commands["zoom_in"], self.commands["zoom_out"]]
-        # turning the plan in its bar (R174, Daniel 26/10/2026: «non bisognerebbe andare sul menu su alt per aprirlo»)
-        turn = [self.commands["view_align"], self.commands["view_north"]]
+        # Align stays in the bar as an icon; North up keeps its key, compass click and context menu (R183).
+        turn = [self.commands["view_align"]]
         words = {fit: _("Fit"), self.commands["zoom_in"]: _("Zoom in"),
-                 self.commands["zoom_out"]: _("Zoom out"), turn[0]: _("Align to a side"), turn[1]: _("North up")}
+                 self.commands["zoom_out"]: _("Zoom out"), turn[0]: _("Align to a side")}
         self.plan.viewbar = ViewBar(self.plan, [views, zoom, turn, [self.snaps_action, self.ortho_action],
                                                 [self.background_action]], keys=(self.snaps_action, self.ortho_action),
-                                    words=words)
+                                    words=words, icons_only=tuple(turn))
         self.plan.north.clicked.connect(self._north_view)
         self.view3d.viewbar = ViewBar(self.view3d, [views, zoom], words=words)
         self.view3d.viewbar.show_group(0, False)        # side by side at the start: the selector on the plan's bar
