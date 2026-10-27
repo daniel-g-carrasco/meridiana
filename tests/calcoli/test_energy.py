@@ -256,6 +256,21 @@ class Physics(unittest.TestCase):
         self.assertIsNotNone(wired.record.find("s1.electrical"))
         self.assertGreater(wired.arrays[0]["electrical_shading"], 0.0)
 
+    def test_array_obstacle_shade_and_the_plant_chain_use_the_same_irradiance_basis(self):
+        roof = [(0.0, 0.0), (14.0, 0.0), (14.0, 8.0), (0.0, 8.0)]
+        placed = layout.compute(roof, params=layout.Params(tilt=30.0, pitch_mode="value", pitch=4.0), lat=45.5,
+                                lon=9.0).modules
+        wall = nearshade.prism([(0.0, -2.0), (14.0, -2.0), (14.0, -1.7), (0.0, -1.7)], 0.0, 3.0, "wall")
+        large = ArraySpec("s1.0", "Copertura", 30.0, 0.0, len(placed), module(), placed=placed, obstacles=wall)
+        small = ArraySpec("s2.0", "Sottocampo 2", 30.0, 0.0, max(1, len(placed) // 12), module())
+        sim = simulate(METEO, [large, small])
+        array_loss = sim.arrays[0]["obstacle_shading"]
+        plant_loss = -next(c for c in sim.chain if c.key == "near").change / 100.0
+        weighted = sum(a["p_stc_kw"] * a["obstacle_shading"] for a in sim.arrays) / sim.p_stc_kw
+        self.assertGreater(array_loss, 0.03)
+        self.assertLess(plant_loss, array_loss)
+        self.assertAlmostEqual(plant_loss, weighted, places=12)
+
     def test_the_strings_applied_downstream_give_the_year_simulate_gives_with_them(self):
         """with_strings keeps the first pass (sun, transposition, shadings, temperature, module) and applies the
         array step again: every number equals a whole simulate with the strings (task 18c, step 3)."""

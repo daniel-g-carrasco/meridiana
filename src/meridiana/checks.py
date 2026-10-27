@@ -24,6 +24,11 @@ OBSTACLE_SHADE = 0.03           # share of the irradiance lost to obstacles abov
 C021 = "CEI 0-21:2026-07"
 
 
+def solar_time(value: float) -> str:
+    hours = int(value)
+    return f"{hours:02d}:{round((value - hours) * 60):02d}"
+
+
 @dataclass
 class Item:
     level: str                  # "fail", "warn", "info", "ok"
@@ -218,6 +223,16 @@ def rule_items(f: rules.Facts) -> list[Item]:
     return out
 
 
+def obstacle_shading_by_subfield(sim) -> dict[str, float]:
+    totals = {}
+    for a in sim.arrays:
+        sfid = str(a["key"]).split(".")[0]
+        weight = float(a.get("p_stc_kw") or 0.0) or 1.0
+        lost, power = totals.get(sfid, (0.0, 0.0))
+        totals[sfid] = (lost + weight * float(a.get("obstacle_shading") or 0.0), power + weight)
+    return {sfid: lost / power for sfid, (lost, power) in totals.items() if power}
+
+
 def gather(project, results: dict, energy: dict | None, inverter=None, chosen: bool = False) -> list[Item]:
     """Every item, most serious first. `results` are the layouts by sub-field, `energy` what the energy job
     gave (or None before it ran), `inverter` the InverterSpec of the project."""
@@ -270,31 +285,47 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
 
     sim = energy.get("sim")
     if sim is not None:
-        for a in sim.arrays:
-            lost = float(a.get("obstacle_shading") or 0.0)
+        for sfid, lost in obstacle_shading_by_subfield(sim).items():
             if lost > OBSTACLE_SHADE:
-                sfid = str(a["key"]).split(".")[0]
                 sf = next((s for s in project.subfields if s.id == sfid), None)
                 fix, label = (), ""
+                costly = False
                 # by hand the shadows are a check of their own (manual_items): the option would move nothing
                 if sf is not None and not sf.layout_params().shade_free and not sf.manual:
                     w = project.sun_window
                     fix = ("edit", "subfield", sfid, {"params.shade_free": True})
-                    label = _("Keep the modules out of the obstacles' shadows on {day}/{month}, {start} to {end} "
-                              "solar time").format(day=w["day"], month=w["month"], start=number(w["start"], 1),
-                                                   end=number(w["end"], 1))
                     now = getattr(results.get(sfid), "count", None)
                     # the energy job counts them in its thread; computed here only when it did not
                     counts = energy.get("shade_free_counts")
                     then = counts.get(sfid) if counts is not None else count_out_of_shadows(project, sf)
+                    removed = 100 * (now - then) / now if now and then is not None else 0.0
+                    costly = removed > 100 * lost
+                    action = (_("Compare keeping the modules out of the obstacles' shadows on {day}/{month}, {start} "
+                                "to {end} solar time") if costly else
+                              _("Keep the modules out of the obstacles' shadows on {day}/{month}, {start} to {end} "
+                                "solar time"))
+                    label = action.format(day=w["day"], month=w["month"], start=solar_time(w["start"]),
+                                          end=solar_time(w["end"]))
                     if now is not None and then is not None:
-                        label += ": " + _("{then} modules instead of {now}").format(then=then, now=now)
-                items.append(Item("warn", "shade", _("{name}: the obstacles take {pct}% of the irradiance").format(
-                    name=a["name"], pct=number(100 * lost, 1)), _("Meridiana: shading of the obstacles"),
-                    ("subfield", sfid), fix, label,
-                    detail=_("Chimneys, parapets and plant shade the modules nearby, and a shaded module drags its "
-                             "whole string. Keep the modules out of the shadows of the design day (the fix), move the "
-                             "sub-field, or give the obstacles a wider clearance in their properties.")))
+                        label += ": " + _("{then} modules instead of {now}, {removed}% fewer, for {pct}% obstacle "
+                                          "shade").format(then=then, now=now, removed=number(removed, 0),
+                                                          pct=number(100 * lost, 1))
+                        if costly:
+                            label += ". " + _("This removes more modules than the shade costs; compare the "
+                                              "alternatives before applying it.")
+                detail = _("Chimneys, parapets and plant shade the modules nearby, and a shaded module drags its "
+                           "whole string. The correction removes the modules in shadow on the design day. Moving the "
+                           "sub-field is another road. A wider clearance around the obstacles removes only the modules "
+                           "next to the obstacles, usually fewer than the correction, and does not keep more modules.")
+                if costly:
+                    detail += " " + _("Here the correction takes away a larger share of the sub-field than the share "
+                                      "of irradiance lost to the obstacles: it is a choice to compare, not the obvious "
+                                      "solution.")
+                name = sf.name if sf is not None else sfid
+                items.append(Item("warn", "shade", _("{name}: the obstacles take {pct}% of the sub-field's annual "
+                                                     "irradiance after far shading").format(
+                    name=name, pct=number(100 * lost, 1)), _("Meridiana: shading of the obstacles"),
+                    ("subfield", sfid), fix, label, detail=detail))
         for note in sim.notes:
             items.append(Item("warn", "production", note, "", ("phase", "production"),
                               detail=_("The inverter cuts what the modules give above its AC power. A lower DC/AC "
@@ -456,7 +487,7 @@ def manual_items(project, sf, result, shade=None) -> list[Item]:
                 detail=_("The obstacles cast their shadow on these modules on {day}/{month} between {start} and {end} "
                          "solar time, the day the pitch is computed for. Move them out of it, or lay the sub-field "
                          "again automatically out of the obstacles' shadows.").format(
-                    day=w["day"], month=w["month"], start=number(w["start"], 1), end=number(w["end"], 1))))
+                    day=w["day"], month=w["month"], start=solar_time(w["start"]), end=solar_time(w["end"]))))
     return items
 
 

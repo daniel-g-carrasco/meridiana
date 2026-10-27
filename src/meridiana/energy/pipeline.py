@@ -130,9 +130,8 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None) -> 
     # layout for each shaded sub-field, here and not in the window's thread (it cost 30-40 ms there at each
     # result, 0.3-0.4 s on a large field)
     counts = {}
-    for a in sim.arrays:
-        sfid = str(a["key"]).split(".")[0]
-        if sfid in counts or float(a.get("obstacle_shading") or 0.0) <= checks.OBSTACLE_SHADE:
+    for sfid, lost in checks.obstacle_shading_by_subfield(sim).items():
+        if lost <= checks.OBSTACLE_SHADE:
             continue
         sf = next((s for s in project.subfields if s.id == sfid), None)
         if sf is not None and not sf.layout_params().shade_free and not sf.manual:      # by hand: no such fix

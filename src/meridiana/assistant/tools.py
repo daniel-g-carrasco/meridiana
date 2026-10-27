@@ -6,8 +6,9 @@ Reading, without asking: `read_checks`, `project_summary`, `read_selection`, `re
 `read_rules`, `search_manual`; `go_to` only moves the window. Proposing, never applying: `propose_fix` offers the
 fix a check already has (the way to prefer: in the trial of study 14, 4.4, a model free to write the fields
 invented one), `propose_edit` a change of the fields the Properties panel and the energy pages have, checked with
-the rules of the project file; a wrong field goes back to the model with the list of the right ones. A proposal is
-a `Proposal` the window shows as a card: the designer applies it with a click, as one step of the undo.
+the rules of the project file; a wrong field goes back to the model with the list of the right ones. `propose_undo`
+offers the current Undo or Redo step. A proposal is a `Proposal` the window shows as a card: only the designer
+applies it with a click.
 
 The tools read the project through a `host`, the window or a test's stand-in, with:
     host.project                the model.Project in hand
@@ -36,6 +37,7 @@ from dataclasses import dataclass, field
 
 from .. import checks as checks_module
 from .. import layout, model, settings
+from ..fields import field_label, field_value, mounting_names, pitch_mode_names
 from ..i18n import _, number
 
 RESULT_LIMIT = 6000             # characters of one tool's answer: the local model has 16k tokens for everything
@@ -56,12 +58,16 @@ SPECS = {
         "description": "Read the checks of the project, the most serious first: each with an id, its level (fail, "
                        "warn, info, ok), area, text, source (the standard with edition, clause and page, or "
                        "Meridiana's own reading), the object it is about and whether Meridiana has a fix for it "
-                       "(offer it with propose_fix).",
+                       "(offer it with propose_fix). filtered_counts describes only the checks returned after every "
+                       "filter; project_counts describes the whole project. An empty list means that nothing matches "
+                       "the filters, not that the project has no checks.",
         "parameters": _schema({
             "min_level": {"type": "string", "enum": list(LEVELS),
                           "description": "the lowest level wanted: fail alone, warn and worse (default), ..."},
             "area": {"type": "string", "enum": sorted(checks_module.area_names()),
-                     "description": "only the checks of this area"}}),
+                     "description": "only the checks of this area"},
+            "object_id": {"type": "string", "description": "only checks about this building, sub-field or exclusion "
+                                                           "id from project_summary; a building includes its objects"}}),
     },
     "project_summary": {
         "description": "A summary of the project: the site (coordinates rounded to 0.01 degree), the buildings, "
@@ -127,9 +133,16 @@ SPECS = {
             "changes": {"type": "object", "description": "field path -> new value, e.g. {\"params.tilt\": 20}"},
             "reason": {"type": "string"}}, ("kind", "changes", "reason")),
     },
+    "propose_undo": {
+        "description": "Propose Undo or Redo as a card with the text of the history step. The designer applies it "
+                       "with a click; you never undo or redo anything yourself. If that direction has no step, the "
+                       "answer says so.",
+        "parameters": _schema({"action": {"type": "string", "enum": ["undo", "redo"]}}, ("action",)),
+    },
 }
 STEP_1 = ("read_checks", "project_summary", "go_to", "search_manual")
-STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "propose_fix", "propose_edit")
+STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "propose_fix", "propose_edit",
+          "propose_undo")
 
 
 def specs(names=None) -> list[dict]:
@@ -236,7 +249,25 @@ def _target(project, target) -> dict:
 
 # reading
 
-def read_checks(host, state: State, min_level: str = "warn", area: str = "") -> Outcome:
+def _about_object(project, target, object_id: str) -> bool:
+    if not object_id:
+        return True
+    if len(target) < 2:
+        return False
+    kind, oid = target[:2]
+    if oid == object_id:
+        return True
+    if any(b.id == object_id for b in project.buildings):
+        if kind == "subfield":
+            sf = next((s for s in project.subfields if s.id == oid), None)
+            return sf is not None and sf.building == object_id
+        if kind == "exclusion":
+            exclusion = next((e for e in project.exclusions if e.id == oid), None)
+            return exclusion is not None and exclusion.building == object_id
+    return False
+
+
+def read_checks(host, state: State, min_level: str = "warn", area: str = "", object_id: str = "") -> Outcome:
     if min_level not in LEVELS:
         raise ValueError(f"min_level must be one of {', '.join(LEVELS)}")
     items = list(host.checks())
@@ -244,11 +275,13 @@ def read_checks(host, state: State, min_level: str = "warn", area: str = "") -> 
     names = checks_module.area_names()
     levels = checks_module.level_names()
     out = []
+    selected = []
     state.checks = {}
     for n, it in enumerate(items, 1):
         cid = f"c{n}"
         state.checks[cid] = it
-        if LEVELS.index(it.level) > top or (area and it.area != area):
+        if (LEVELS.index(it.level) > top or (area and it.area != area)
+                or not _about_object(host.project, it.target, object_id)):
             continue
         row = {"id": cid, "level": it.level, "level_name": levels.get(it.level, it.level),
                "area": names.get(it.area, it.area), "text": it.text,
@@ -258,8 +291,12 @@ def read_checks(host, state: State, min_level: str = "warn", area: str = "") -> 
         if it.detail:
             row["detail"] = it.detail
         out.append(row)
-    counts = checks_module.counts(items)
-    return Outcome(_json({"checks": out, "counts": counts}), _("Read the checks"))
+        selected.append(it)
+    result = {"checks": out, "filtered_counts": checks_module.counts(selected),
+              "project_counts": checks_module.counts(items)}
+    if not out:
+        result["message"] = _("No checks match this filter.")
+    return Outcome(_json(result), _("Read the checks"))
 
 
 def _module(project, sf) -> dict:
@@ -287,8 +324,15 @@ def project_summary(host, state: State) -> Outcome:
         params = sf.layout_params()
         subfields.append({"id": sf.id, "name": sf.name, "on": object_name(p, "building", sf.building)
                           if sf.building else "ground", "module": module["name"], "modules_laid": laid,
-                          "power_kwp": round(kw, 2), "mounting": params.mounting, "tilt": params.tilt,
-                          "azimuth": "auto" if params.azimuth is None else params.azimuth,
+                          "power_kwp": round(kw, 2), "mounting": params.mounting,
+                          "mounting_name": mounting_names().get(params.mounting, params.mounting),
+                          "pitch_mode": params.pitch_mode,
+                          "pitch_mode_name": pitch_mode_names().get(params.pitch_mode, params.pitch_mode),
+                          "shade_free": params.shade_free, "shade_free_name": field_value("params.shade_free",
+                                                                                         params.shade_free),
+                          "portrait": params.portrait, "orientation_name": field_value("params.portrait",
+                                                                                       params.portrait),
+                          "tilt": params.tilt, "azimuth": "auto" if params.azimuth is None else params.azimuth,
                           "laid": sf.filled, "by_hand": sf.manual})
     buildings = [{"id": b.id, "name": b.name, "height_m": b.height, "roof": b.roof.type,
                   "slope": round(b.slope(), 1) if hasattr(b, "slope") else b.roof.tilt,
@@ -432,6 +476,8 @@ def read_selection(host, state: State) -> Outcome:
         out.update({"on": object_name(p, "building", sf.building) if sf.building else "ground",
                     "module": _module(p, sf), "modules_laid": _laid(host, sf), "laid": sf.filled,
                     "by_hand": sf.manual, "params": {k: _value(v) for k, v in params.items()},
+                    "params_display": {k: {"label": field_label(f"params.{k}"),
+                                           "value": field_value(f"params.{k}", v)} for k, v in params.items()},
                     "params_set_by_designer": sorted(sf.params)})
         from shapely.geometry import Polygon
         out["area_m2"] = round(Polygon(sf.ring).area, 1)
@@ -470,8 +516,14 @@ def read_results(host, state: State, section: str) -> Outcome:
         out = {"p_stc_kwp": round(sim.p_stc_kw, 2), "p_ac_kw": round(sim.p_ac_kw, 2),
                "energy_kwh": round(sim.energy_kwh), "specific_yield_kwh_kwp": round(sim.specific_yield),
                "pr": round(sim.pr, 3), "losses": [{"step": c.label, "kind": c.kind, "value": round(c.value, 1),
-                                                    "change_pct": None if c.change is None else round(c.change, 2)}
+                                                    "change_pct": None if c.change is None else round(c.change, 2),
+                                                    "basis": _("the whole plant, against the previous step of the same "
+                                                               "quantity, weighted by array power")}
                                                    for c in sim.chain],
+               "obstacle_shading": [{"array": a["name"], "subfield_id": str(a["key"]).split(".")[0],
+                                     "loss_pct": round(100 * float(a.get("obstacle_shading") or 0.0), 2),
+                                     "basis": _("the array's annual irradiance after far shading")}
+                                    for a in sim.arrays],
                "notes": list(sim.notes)}
         if monthly:
             out["monthly_kwh"] = monthly
@@ -603,6 +655,22 @@ def _show(v) -> str:
     if isinstance(v, (list, dict)):
         return json.dumps(v, ensure_ascii=False)[:60]
     return str(v)
+
+
+def propose_undo(host, state: State, action: str) -> Outcome:
+    if action not in ("undo", "redo"):
+        raise ValueError("action must be undo or redo")
+    step = host.history_text(action)
+    if not step:
+        return _error(f"nothing to {action}")
+    state.count += 1
+    title = _("Undo") if action == "undo" else _("Redo")
+    proposal = Proposal(id=f"p{state.count}", title=title, kind="history", oid=action, lines=[],
+                        reason=_("Step: {step}").format(step=step))
+    state.proposals[proposal.id] = proposal
+    return Outcome(_json({"proposed": proposal.id, "step": step, "shown_to_designer": True, "applied": False,
+                          "waiting": "the designer applies it or not with a click"}),
+                   _("Proposed: {what}").format(what=title), proposal=proposal)
 
 
 def propose_fix(host, state: State, check_id: str) -> Outcome:
@@ -823,4 +891,4 @@ def propose_edit(host, state: State, kind: str, changes, reason: str, id: str = 
 TOOLS = {"read_checks": read_checks, "project_summary": project_summary, "go_to": go_to,
          "search_manual": search_manual, "read_selection": read_selection, "read_results": read_results,
          "read_pedigree": read_pedigree, "read_rules": read_rules, "propose_fix": propose_fix,
-         "propose_edit": propose_edit}
+         "propose_edit": propose_edit, "propose_undo": propose_undo}

@@ -91,6 +91,76 @@ class Recorded(unittest.TestCase):
         self.assertEqual(host.went, [("phase", "plant")])
 
 
+class DanielConversation(unittest.TestCase):
+    def test_the_r170_conversation_gives_the_model_unambiguous_answers(self):
+        from types import SimpleNamespace
+        from meridiana import checks, model
+        from meridiana.energy.simulate import ChainStep
+
+        p = capannone_rho()
+        p.subfields[0].name = "Copertura"
+        p.subfields.append(model.SubField(id="s2", name="Sottocampo 2", ring=[[1, 1], [5, 1], [5, 5], [1, 5]],
+                                          building="b1", params={"mounting": "coplanar"}, filled=True))
+        results = {"s1": SimpleNamespace(count=188), "s2": SimpleNamespace(count=15)}
+        sim = SimpleNamespace(
+            arrays=[{"key": "s1.0", "name": "Copertura", "obstacle_shading": 0.033, "p_stc_kw": 84.6},
+                    {"key": "s2.0", "name": "Sottocampo 2", "obstacle_shading": 0.0, "p_stc_kw": 6.75}],
+            notes=[], p_stc_kw=91.35, p_ac_kw=75.0, energy_kwh=100000.0, specific_yield=1095.0, pr=0.82,
+            monthly={}, chain=[ChainStep("far", "Orizzonte", "irradiance", 1000.0, 0.0),
+                               ChainStep("near", "File e ostacoli", "irradiance", 989.6, -1.04)])
+        energy = {"sim": sim, "shade_free_counts": {"s1": 130}}
+        shade = next(i for i in checks.gather(p, results, energy) if i.area == "shade")
+        host = Host(p, energy=energy, selection=("subfield", "s2"), lay=False)
+        host._layouts = results
+        host._checks = [shade, checks.Item("info", "layout", "Sottocampo 2: posa", target=("subfield", "s2"))]
+        host.history_text = lambda action: "Posa fuori dalle ombre" if action == "undo" else ""
+        host.history = mock.Mock()
+        client = FakeAnthropic([
+            [("tool", "read_checks", {"object_id": "s1", "min_level": "info"})],
+            [("tool", "propose_fix", {"check_id": "c1"})],
+            [("tool", "read_results", {"section": "production"}), ("tool", "propose_undo", {"action": "undo"})],
+            [("tool", "read_checks", {"object_id": "s2"})],
+            [("tool", "read_checks", {"object_id": "s2", "min_level": "info"}),
+             ("tool", "read_selection", {}), ("tool", "project_summary", {})],
+            [("text", "Ho letto tutto.")],
+        ])
+        conv = conversation.Conversation()
+        last = conversation.answer(conv, providers.Anthropic(model="claude-haiku-5-5", client=client),
+                                   context.system(lang="it"), "Riprendiamo il progetto", host)
+        self.assertEqual(last.text, "Ho letto tutto.")
+        answers = {}
+        for message in conv.messages:
+            if message["role"] == "tool":
+                answers.setdefault(message["name"], []).append(json.loads(message["content"]))
+        first = answers["read_checks"][0]
+        self.assertEqual(first["filtered_counts"]["warn"], 1)
+        self.assertEqual(first["project_counts"]["info"], 1)
+        self.assertIn("sub-field's annual irradiance after far shading", first["checks"][0]["text"])
+        self.assertIn("10:00", first["checks"][0]["fix"])
+        self.assertIn("14:00", first["checks"][0]["fix"])
+        self.assertIn("130 modules instead of 188, 31% fewer, for 3.3% obstacle shade", first["checks"][0]["fix"])
+        self.assertIn("does not keep more modules", first["checks"][0]["detail"])
+        self.assertFalse(answers["propose_fix"][0]["applied"])
+        production = answers["read_results"][0]
+        self.assertIn("whole plant", production["losses"][1]["basis"])
+        self.assertIn("after far shading", production["obstacle_shading"][0]["basis"])
+        self.assertEqual(answers["propose_undo"][0]["step"], "Posa fuori dalle ombre")
+        self.assertFalse(answers["propose_undo"][0]["applied"])
+        host.history.assert_not_called()
+        empty, small = answers["read_checks"][1:3]
+        self.assertEqual(empty["checks"], [])
+        self.assertEqual(empty["filtered_counts"], {"fail": 0, "warn": 0, "info": 0, "ok": 0})
+        self.assertEqual(empty["project_counts"]["info"], 1)
+        self.assertIn("filter", empty["message"])
+        self.assertEqual(small["filtered_counts"]["info"], 1)
+        selection = answers["read_selection"][0]["params_display"]
+        self.assertEqual(selection["pitch_mode"], {"label": "row pitch", "value": "From the sun"})
+        self.assertEqual(selection["shade_free"], {"label": "out of the shadows", "value": "no"})
+        summary = answers["project_summary"][0]["subfields"][1]
+        self.assertEqual(summary["mounting_name"], "Coplanar on the pitch")
+        self.assertEqual(summary["orientation_name"], "Portrait")
+
+
 class Providers(unittest.TestCase):
     def test_server_sent_events_are_read_with_comments_and_lines_and_end_at_done(self):
         lines = [": keep-alive", "data: {\"a\":", "data: 1}", "", "event: x", "data: two", "", "data: [DONE]", "",
@@ -220,6 +290,63 @@ class Tools(unittest.TestCase):
         self.assertGreater(out["subfields"][0]["modules_laid"], 50)
         self.assertFalse(out["year_computed"])
 
+    def test_layout_parameters_have_the_names_and_values_shown_in_properties(self):
+        host = problems_host(selection=("subfield", "s1"))
+        host.project.subfields[0].params["mounting"] = "coplanar"
+        selection = json.loads(tools.run("read_selection", {}, host, tools.State()).content)
+        shown = selection["params_display"]
+        self.assertEqual(shown["pitch_mode"], {"label": "row pitch", "value": "From the sun"})
+        self.assertEqual(shown["shade_free"], {"label": "out of the shadows", "value": "no"})
+        self.assertEqual(shown["mounting"]["value"], "Coplanar on the pitch")
+        self.assertEqual(shown["portrait"], {"label": "orientation", "value": "Portrait"})
+        summary = json.loads(tools.run("project_summary", {}, host, tools.State()).content)["subfields"][0]
+        self.assertEqual(summary["mounting"], "coplanar")
+        self.assertEqual(summary["mounting_name"], "Coplanar on the pitch")
+        self.assertEqual(summary["pitch_mode_name"], "From the sun")
+        self.assertEqual(summary["shade_free_name"], "no")
+        self.assertEqual(summary["orientation_name"], "Portrait")
+
+    def test_production_results_name_the_plant_and_array_bases_of_obstacle_shade(self):
+        from types import SimpleNamespace
+        from meridiana.energy.simulate import ChainStep
+        sim = SimpleNamespace(
+            p_stc_kw=65.0, p_ac_kw=50.0, energy_kwh=80000.0, specific_yield=1230.0, pr=0.8,
+            monthly={}, notes=[], arrays=[{"key": "s1.0", "name": "Copertura est", "obstacle_shading": 0.033}],
+            chain=[ChainStep("far", "Orizzonte", "irradiance", 1000.0, 0.0),
+                   ChainStep("near", "File e ostacoli", "irradiance", 989.6, -1.04)])
+        host = problems_host(energy={"sim": sim})
+        out = json.loads(tools.run("read_results", {"section": "production"}, host, tools.State()).content)
+        self.assertEqual(out["losses"][1]["change_pct"], -1.04)
+        self.assertIn("whole plant", out["losses"][1]["basis"])
+        self.assertEqual(out["obstacle_shading"][0]["array"], "Copertura est")
+        self.assertEqual(out["obstacle_shading"][0]["subfield_id"], "s1")
+        self.assertEqual(out["obstacle_shading"][0]["loss_pct"], 3.3)
+        self.assertIn("after far shading", out["obstacle_shading"][0]["basis"])
+
+    def test_check_counts_follow_the_filters_and_an_object_finds_checks_in_every_area(self):
+        from meridiana import checks
+        host = problems_host()
+        host._checks = [
+            checks.Item("fail", "layout", "Copertura: posa", target=("subfield", "s1")),
+            checks.Item("warn", "shade", "Copertura: ombre", target=("subfield", "s1")),
+            checks.Item("info", "layout", "Sottocampo 2: posa", target=("subfield", "s2")),
+            checks.Item("ok", "strings", "Stringhe", target=("phase", "plant")),
+        ]
+        out = json.loads(tools.run("read_checks", {"object_id": "s1", "min_level": "info"}, host,
+                                   tools.State()).content)
+        self.assertEqual([c["text"] for c in out["checks"]], ["Copertura: posa", "Copertura: ombre"])
+        self.assertEqual(out["filtered_counts"], {"fail": 1, "warn": 1, "info": 0, "ok": 0})
+        self.assertEqual(out["project_counts"], {"fail": 1, "warn": 1, "info": 1, "ok": 1})
+        self.assertNotIn("counts", out)
+        empty = json.loads(tools.run("read_checks", {"object_id": "s1", "area": "strings"}, host,
+                                     tools.State()).content)
+        self.assertEqual(empty["checks"], [])
+        self.assertEqual(empty["filtered_counts"], {"fail": 0, "warn": 0, "info": 0, "ok": 0})
+        self.assertIn("filter", empty["message"])
+        schema = tools.SPECS["read_checks"]
+        self.assertIn("object_id", schema["parameters"]["properties"])
+        self.assertIn("filtered", schema["description"])
+
     def test_a_proposal_of_a_field_not_allowed_or_out_of_range_comes_back_with_the_fields(self):
         host = problems_host(selection=("subfield", "s1"))
         state = tools.State()
@@ -244,6 +371,23 @@ class Tools(unittest.TestCase):
         self.assertEqual(trial.economics["capex_per_kwp"], 1100.0)
         selection = json.loads(tools.run("read_selection", {}, host, state).content)
         self.assertIn("params.shade_free", selection["fields_for_propose_edit"])
+
+    def test_undo_and_redo_are_proposals_with_the_step_text_never_applied_by_the_tool(self):
+        host = problems_host()
+        host.history_text = mock.Mock(side_effect=lambda action: "Meridio: tilt" if action == "undo" else "")
+        host.history = mock.Mock()
+        state = tools.State()
+        outcome = tools.run("propose_undo", {"action": "undo"}, host, state)
+        self.assertFalse(outcome.error)
+        self.assertEqual(outcome.proposal.title, "Undo")
+        self.assertIn("Meridio: tilt", outcome.proposal.reason)
+        self.assertEqual((outcome.proposal.kind, outcome.proposal.oid), ("history", "undo"))
+        self.assertFalse(json.loads(outcome.content)["applied"])
+        host.history.assert_not_called()
+        empty = tools.run("propose_undo", {"action": "redo"}, host, state)
+        self.assertTrue(empty.error)
+        self.assertIn("nothing to redo", empty.content)
+        host.history.assert_not_called()
 
     def test_a_fix_of_a_check_gone_meanwhile_is_refused(self):
         host = problems_host()

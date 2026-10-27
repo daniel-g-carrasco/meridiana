@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QCheckBox, QCombo
                                QWidget)
 
 from .. import layout, model, roofs, rules, sides
+from ..fields import field_label as field_label, mounting_names, pitch_mode_names
 from ..i18n import _, ngettext, number, pgettext
 from .design import Text, semibold, set_text
 from .help_box import HintLabel, help_button, register
@@ -22,18 +23,6 @@ from .theme import mark
 from .style import Group
 
 
-def mounting_names() -> dict:
-    return {
-        "coplanar": _("Coplanar on the pitch"),
-        "integrated": _("Integrated in the roof (BIPV)"),
-        "tilted_anchored": _("Tilted rows, anchored"),
-        "tilted_ballasted": _("Tilted rows, ballasted"),
-        "east_west": _("East-west pairs"),
-        "ground": _("Ground-mounted rows"),
-        "canopy": _("Canopy or carport"),
-    }
-
-
 def roof_names() -> dict:
     return {"flat": _("Flat"), "mono": _("Mono-pitch"), "gable": _("Gable"), "hip": _("Hip"),
             "free": _("Pitches drawn by hand")}
@@ -41,26 +30,6 @@ def roof_names() -> dict:
 
 def exclusion_names() -> dict:
     return model.exclusion_names()           # in the core since task 16c: the checks name them too
-
-
-def field_label(path: str, kind: str = "") -> str:
-    """What a changed field is called in the Undo menu."""
-    if kind == "exclusion" and path == "height":
-        return _("height")
-    return {
-        "name": _("name"), "height": _("eave height"), "roof.type": _("roof"), "roof.tilt": _("slope"),
-        "roof.eave_side": _("eave side"), "fire.subject": _("fire control"),
-        "fire.roof_fire_resistant": _("fire-resistant slab"), "module": _("module"),
-        "params.mounting": _("mounting"), "params.portrait": _("orientation"), "params.stack": _("modules across"),
-        "params.tilt": _("tilt"), "params.azimuth": _("azimuth"), "params.gap": _("gap between modules"),
-        "params.edge": _("edge margin"), "params.shade_free": _("out of the shadows"), "params.flush_row_gap": _("gap between rows"),
-        "params.table_modules": _("modules per table"), "params.table_gap": _("gap between tables"),
-        "params.pitch_mode": _("row pitch"), "params.pitch": _("row pitch"), "params.gcr": _("ground cover ratio"),
-        "kind": _("kind"), "clearance": _("clearance"), "sun_window": _("sun window"), "parapet": _("parapet"),
-        "use_near": _("shading of the obstacles"), "footprint": _("outline"), "ring": _("outline"),
-        "roof.edges": _("eaves and gable ends"), "roof.ridge_height": _("ridge height"),
-        "roof.covering": _("covering"), "rules": _("connection and obligations"), "reserved": _("reserved"),
-    }.get(path, path)
 
 
 def combo(items, current) -> QComboBox:
@@ -837,8 +806,7 @@ class Properties(QScrollArea):
             pitch = Group(_("Row pitch"))
             help_button(pitch, "subfield.pitch")
             pform = make_form(pitch)
-            mode = self._bind(combo((("sun", _("From the sun")), ("value", _("Given pitch")),
-                                     ("gcr", _("Ground cover ratio"))), p.pitch_mode),
+            mode = self._bind(combo(pitch_mode_names().items(), p.pitch_mode),
                               lambda: self._params().pitch_mode)
             mode.currentIndexChanged.connect(lambda _i: self._emit("params.pitch_mode", mode.currentData()))
             pform.addRow(pgettext("rows", "Pitch"), mode)

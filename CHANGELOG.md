@@ -24,6 +24,8 @@ software centres show.
   ends; optimised inverters show the count without a judgement.
 - Turning the plan without the menus (R174): Align and North up in the plan's bar (A and N), «Align the view to this
   side» on a right click near a side, and a click on the compass for North up; the compass's N turns with its arrow.
+- Meridio can offer Undo and Redo as cards naming the history step; only the designer applies them. Project fields
+  are read with the names and values shown in the Properties panel as well as the keys needed for proposals (R170).
 - Inverter sizing (R141): choose the manufacturer first, remembered in the project; the model and quantity together
   follow the requested DC/AC ratio, and the result names both.
 - Harmonised plan labels (R143, R138): rounded string names and module numbers in the catalogue font and the plan's
@@ -296,6 +298,9 @@ software centres show.
 - The string legend in the plant's strip is gone (R181): the plan's colours already say what it said.
 - Scroll bars sit the same in every page, close to the card's right edge, and the thumb stays off the rounded
   corners (R182).
+- Meridio's checks distinguish filtered from project counts and filter by object. Obstacle shade is aggregated over
+  all the arrays of a sub-field, its irradiance basis is explicit, solar hours are clock times, and the proposed fix
+  states its module cost and when that cost exceeds the shade loss (R170).
 - Selecting modules and rows on a touchpad (R147): the plan takes the nearest module within 6 logical pixels of its
   edge, the second click selects its row in both views, and Esc goes back through the selection levels.
 - The checks said that the modules in no string produce nothing in the simulation: they are counted as if connected;
