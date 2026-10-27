@@ -377,11 +377,15 @@ def _capacity(module: ModuleSpec, unit: Unit, k: int, asked: list) -> int:
     return max(1, stringing.strings_allowed(module, unit.spec, k))
 
 
-def _best_series(group: Group, unit: Unit, cond: Conditions, strategy: str) -> int:
-    """The modules in series for a group's proposal: within the range the inverter takes, the number that leaves
+def _best_series(group: Group, units: list[Unit], cond: Conditions, strategy: str) -> int:
+    """The modules in series for a group's proposal: valid on every inverter that may receive it, and leaving
     fewest modules out (the longer at a tie: fewer strings, less current)."""
-    lo, hi = stringing.series_range(group.module, unit.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
-    if not hi:
+    ranges = [stringing.series_range(group.module, u.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+              for u in units]
+    if not ranges or any(not hi for _lo, hi in ranges):
+        return 0
+    lo, hi = max(lo for lo, _hi in ranges), min(hi for _lo, hi in ranges)
+    if lo > hi:
         return 0
     rows = [len(r) for r in _rows(group.placed)]
     best = None
@@ -563,11 +567,13 @@ def _propose(units: list[Unit], groups: list[Group], s: dict, cond: Conditions, 
     parts = []                                          # (group, strings, starts, n)
     first_plain = next((u for u in units if not u.optimized), units[0])
     for g in groups:
-        unit = (units[g.target[0] - 1] if 0 < g.target[0] <= len(units) else first_plain)
+        targeted = 0 < g.target[0] <= len(units)
+        unit = units[g.target[0] - 1] if targeted else first_plain
+        destinations = [unit] if targeted else [u for u in units if not u.optimized and u.checkable]
         if not unit.checkable and not asked_n:
             out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pm in g.placed]
             continue
-        n = asked_n or _best_series(g, unit, cond, strategy)
+        n = asked_n or _best_series(g, destinations, cond, strategy)
         if n <= 0:
             out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pm in g.placed]
             continue
@@ -589,8 +595,11 @@ def _propose(units: list[Unit], groups: list[Group], s: dict, cond: Conditions, 
                 [(unit_no, k + 1) for k in range(units[unit_no - 1].inputs)]
             taken.update(mine)
             for slot, count in zip(mine, stringing.spread(len(strings), len(mine)), strict=True):
+                room = max(0, _capacity(g.module, units[slot[0] - 1], slot[1] - 1, asked_per) - used[slot])
+                count = min(count, room) if alike(slot, n) else 0
                 place(g, strings[:count], slot)
                 strings = strings[count:]
+            out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pms in strings for pm in pms]
             continue
         if strategy == "row_per_mppt":
             by_row: dict = defaultdict(list)

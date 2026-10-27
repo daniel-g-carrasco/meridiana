@@ -1776,7 +1776,7 @@ msgstr "{counts} in questo oggetto e dentro"
 msgid "{counts} about this object"
 msgstr "{counts} su questo oggetto"
 
-#: src/meridiana/checks.py:787 src/meridiana/ui/window.py:3953
+#: src/meridiana/checks.py:787 src/meridiana/ui/window.py:3956
 msgid "Complete the strings"
 msgstr "Completa le stringhe"
 
@@ -1925,7 +1925,7 @@ msgstr "file PVsyst {file} di {name}"
 #: src/meridiana/energy/optimizers.py:203
 #: src/meridiana/energy/optimizers.py:460
 #: src/meridiana/energy/optimizers.py:495
-#: src/meridiana/energy/optimizers.py:520 src/meridiana/energy/plant.py:890
+#: src/meridiana/energy/optimizers.py:520 src/meridiana/energy/plant.py:899
 #, python-brace-format
 msgid "datasheet of {name}"
 msgstr "scheda tecnica di {name}"
@@ -2963,7 +2963,7 @@ msgstr ""
 "producibilità non è calcolata (scelta di Daniel del 23/10/2026, scelta di "
 "programma)"
 
-#: src/meridiana/energy/plant.py:688
+#: src/meridiana/energy/plant.py:697
 msgid ""
 "Choose an inverter from the catalogue to check the strings: its MPPT window "
 "and currents are needed."
@@ -2971,7 +2971,7 @@ msgstr ""
 "Scegli un inverter dal catalogo per verificare le stringhe: servono la sua "
 "finestra MPPT e le sue correnti."
 
-#: src/meridiana/energy/plant.py:695
+#: src/meridiana/energy/plant.py:704
 #, python-brace-format
 msgid ""
 "{name}: none of SolarEdge's optimizers in the catalogue takes this module; "
@@ -2980,15 +2980,15 @@ msgstr ""
 "{name}: nessun ottimizzatore SolarEdge del catalogo accetta questo modulo; "
 "sceglierne uno nell'Impianto"
 
-#: src/meridiana/energy/plant.py:892 src/meridiana/ui/plant_page.py:622
+#: src/meridiana/energy/plant.py:901 src/meridiana/ui/plant_page.py:622
 #: src/meridiana/ui/report_chapters.py:850
 msgid "(proposed by Meridiana)"
 msgstr "(proposti da Meridiana)"
 
-#: src/meridiana/energy/plant.py:939 src/meridiana/energy/plant.py:951
-#: src/meridiana/energy/plant.py:974 src/meridiana/ui/catalog_dialog.py:89
+#: src/meridiana/energy/plant.py:948 src/meridiana/energy/plant.py:960
+#: src/meridiana/energy/plant.py:983 src/meridiana/ui/catalog_dialog.py:89
 #: src/meridiana/ui/plan.py:2650 src/meridiana/ui/plant_page.py:732
-#: src/meridiana/ui/window.py:4117 src/meridiana/viewaids.py:155
+#: src/meridiana/ui/window.py:4120 src/meridiana/viewaids.py:155
 #: src/meridiana/viewaids.py:159
 #, python-brace-format
 msgid "{n} module"
@@ -2996,67 +2996,67 @@ msgid_plural "{n} modules"
 msgstr[0] "{n} modulo"
 msgstr[1] "{n} moduli"
 
-#: src/meridiana/energy/plant.py:945
+#: src/meridiana/energy/plant.py:954
 #, python-brace-format
 msgid "{n} modules: {k} short of the {lo} the input needs"
 msgstr "{n} moduli: ne mancano {k} ai {lo} che servono all'ingresso"
 
-#: src/meridiana/energy/plant.py:947
+#: src/meridiana/energy/plant.py:956
 #, python-brace-format
 msgid "{n} modules: {k} over the {hi} the input takes"
 msgstr "{n} moduli: {k} oltre i {hi} che l'ingresso accetta"
 
-#: src/meridiana/energy/plant.py:949
+#: src/meridiana/energy/plant.py:958
 #, python-brace-format
 msgid "{n} modules (from {lo} to {hi})"
 msgstr "{n} moduli (da {lo} a {hi})"
 
-#: src/meridiana/energy/plant.py:953
+#: src/meridiana/energy/plant.py:962
 #, python-brace-format
 msgid "Uoc cold {u} V of {lim} V"
 msgstr "Uoc a freddo {u} V su {lim} V"
 
-#: src/meridiana/energy/plant.py:956
+#: src/meridiana/energy/plant.py:965
 #, python-brace-format
 msgid "Umpp {hot}-{cold} V, window {lo}-{hi} V"
 msgstr "Umpp {hot}-{cold} V, finestra {lo}-{hi} V"
 
-#: src/meridiana/energy/plant.py:968
+#: src/meridiana/energy/plant.py:977
 #, python-brace-format
 msgid "{n} optimizers: {k} short of the {lo} SolarEdge asks"
 msgstr "{n} ottimizzatori: {k} in meno dei {lo} che chiede SolarEdge"
 
-#: src/meridiana/energy/plant.py:970
+#: src/meridiana/energy/plant.py:979
 #, python-brace-format
 msgid "{n} optimizers: {k} over the {hi} SolarEdge allows"
 msgstr "{n} ottimizzatori: {k} oltre i {hi} che ammette SolarEdge"
 
-#: src/meridiana/energy/plant.py:972
+#: src/meridiana/energy/plant.py:981
 #, python-brace-format
 msgid "{n} optimizers (from {lo} to {hi})"
 msgstr "{n} ottimizzatori (da {lo} a {hi})"
 
-#: src/meridiana/energy/plant.py:976
+#: src/meridiana/energy/plant.py:985
 #, python-brace-format
 msgid "{p} kW of {lim} kW, {c} kW carried"
 msgstr "{p} kW su {lim} kW, {c} kW portati"
 
-#: src/meridiana/energy/plant.py:1080
+#: src/meridiana/energy/plant.py:1089
 msgid "no input: choose an inverter's input for it"
 msgstr "senza ingresso: scegli un ingresso di un inverter"
 
-#: src/meridiana/energy/plant.py:1101
+#: src/meridiana/energy/plant.py:1110
 msgid ""
 "to be checked: the inverter has no MPPT window (choose one from the "
 "catalogue)"
 msgstr ""
 "da verificare: l'inverter non ha la finestra MPPT (scegline uno dal catalogo)"
 
-#: src/meridiana/energy/plant.py:1108 src/meridiana/energy/plant.py:1189
+#: src/meridiana/energy/plant.py:1117 src/meridiana/energy/plant.py:1198
 msgid "no module left in it"
 msgstr "non ha più moduli"
 
-#: src/meridiana/energy/plant.py:1126
+#: src/meridiana/energy/plant.py:1135
 msgid ""
 "strings not alike on this input (PVsyst asks for identical strings on an "
 "MPPT)"
@@ -3064,47 +3064,47 @@ msgstr ""
 "stringhe diverse su questo ingresso (PVsyst chiede stringhe identiche su un "
 "MPPT)"
 
-#: src/meridiana/energy/plant.py:1128 src/meridiana/energy/plant.py:1204
+#: src/meridiana/energy/plant.py:1137 src/meridiana/energy/plant.py:1213
 #, python-brace-format
 msgid "{n} of its modules are no longer laid"
 msgstr "{n} dei suoi moduli non sono più posati"
 
-#: src/meridiana/energy/plant.py:1131 src/meridiana/energy/plant.py:1207
+#: src/meridiana/energy/plant.py:1140 src/meridiana/energy/plant.py:1216
 msgid "every check passed"
 msgstr "tutte le verifiche superate"
 
-#: src/meridiana/energy/plant.py:1142
+#: src/meridiana/energy/plant.py:1151
 #, python-brace-format
 msgid "{name}: DC/AC ratio"
 msgstr "{name}: rapporto DC/AC"
 
-#: src/meridiana/energy/plant.py:1143
+#: src/meridiana/energy/plant.py:1152
 #, python-brace-format
 msgid "{dc} kWp on {ac} kW: {r}"
 msgstr "{dc} kWp su {ac} kW: {r}"
 
-#: src/meridiana/energy/plant.py:1181
+#: src/meridiana/energy/plant.py:1190
 msgid "to be checked: no optimizer chosen that takes this module"
 msgstr "da verificare: nessun ottimizzatore scelto accetta questo modulo"
 
-#: src/meridiana/energy/plant.py:1219 src/meridiana/energy/plant.py:1228
+#: src/meridiana/energy/plant.py:1228 src/meridiana/energy/plant.py:1237
 #, python-brace-format
 msgid "{name}: power optimizers"
 msgstr "{name}: ottimizzatori di potenza"
 
-#: src/meridiana/energy/plant.py:1220
+#: src/meridiana/energy/plant.py:1229
 msgid ""
 "none of SolarEdge's optimizers in the catalogue takes this module: choose one"
 msgstr ""
 "nessun ottimizzatore SolarEdge del catalogo accetta questo modulo: "
 "sceglierne uno"
 
-#: src/meridiana/energy/plant.py:1224
+#: src/meridiana/energy/plant.py:1233
 #, python-brace-format
 msgid "{name}: the optimizers and the inverter"
 msgstr "{name}: gli ottimizzatori e l'inverter"
 
-#: src/meridiana/energy/plant.py:1229
+#: src/meridiana/energy/plant.py:1238
 #, python-brace-format
 msgid ""
 "{opt}, {n} module on each, proposed by Meridiana: choose them in the Plant "
@@ -3119,7 +3119,7 @@ msgstr[1] ""
 "{opt}, {n} moduli ciascuno, proposti da Meridiana: sceglierli nell'Impianto "
 "per confermarli"
 
-#: src/meridiana/energy/plant.py:1235
+#: src/meridiana/energy/plant.py:1244
 #, python-brace-format
 msgid "{name}, Synergy unit {k}"
 msgstr "{name}, unità Synergy {k}"
@@ -6629,7 +6629,7 @@ msgstr "Elenco moduli e stringhe"
 msgid "Comes with task {task}"
 msgstr "Arriva con il compito {task}"
 
-#: src/meridiana/phases.py:235 src/meridiana/ui/window.py:4463
+#: src/meridiana/phases.py:235 src/meridiana/ui/window.py:4466
 msgid "done"
 msgstr "fatto"
 
@@ -6655,7 +6655,7 @@ msgid "module {name} from {file}"
 msgstr "modulo {name} da {file}"
 
 #: src/meridiana/pvsyst/mapping.py:81 src/meridiana/pvsyst/mapping.py:106
-#: src/meridiana/ui/window.py:4373 src/meridiana/ui/window.py:4550
+#: src/meridiana/ui/window.py:4376 src/meridiana/ui/window.py:4553
 #, python-brace-format
 msgid "{file} could not be read: {error}"
 msgstr "Impossibile leggere {file}: {error}"
@@ -10670,8 +10670,8 @@ msgstr "Media tensione"
 msgid "A POD is IT, three digits, E and eight digits: check it on the bill."
 msgstr "Un POD è IT, tre cifre, E e otto cifre: controllalo sulla bolletta."
 
-#: src/meridiana/ui/energy_pages.py:681 src/meridiana/ui/window.py:4550
-#: src/meridiana/ui/window.py:4557
+#: src/meridiana/ui/energy_pages.py:681 src/meridiana/ui/window.py:4553
+#: src/meridiana/ui/window.py:4560
 msgid "Import a load curve"
 msgstr "Importa una curva di carico"
 
@@ -11099,7 +11099,7 @@ msgid "Open"
 msgstr "Apri"
 
 #: src/meridiana/ui/file_page.py:237 src/meridiana/ui/file_page.py:308
-#: src/meridiana/ui/window.py:4652 src/meridiana/ui/window.py:4711
+#: src/meridiana/ui/window.py:4655 src/meridiana/ui/window.py:4714
 msgid "Save"
 msgstr "Salva"
 
@@ -11377,7 +11377,7 @@ msgid "Every key of the window, with a search; change them in the same place."
 msgstr ""
 "Ogni tasto della finestra, con la ricerca; si cambiano nello stesso posto."
 
-#: src/meridiana/ui/file_page.py:350 src/meridiana/ui/window.py:4748
+#: src/meridiana/ui/file_page.py:350 src/meridiana/ui/window.py:4751
 msgid "About Meridiana"
 msgstr "Informazioni su Meridiana"
 
@@ -11496,8 +11496,8 @@ msgstr ""
 msgid "{file} could not be read: {why}"
 msgstr "Non è stato possibile leggere {file}: {why}"
 
-#: src/meridiana/ui/ifc_import.py:266 src/meridiana/ui/window.py:4435
-#: src/meridiana/ui/window.py:4486
+#: src/meridiana/ui/ifc_import.py:266 src/meridiana/ui/window.py:4438
+#: src/meridiana/ui/window.py:4489
 msgid "Import an IFC model"
 msgstr "Importa un modello IFC"
 
@@ -13405,7 +13405,7 @@ msgstr ""
 "3.3.5.1)."
 
 #: src/meridiana/ui/pvsyst_import.py:20 src/meridiana/ui/pvsyst_import.py:64
-#: src/meridiana/ui/window.py:4365
+#: src/meridiana/ui/window.py:4368
 msgid "Import a PVsyst project"
 msgstr "Importa un progetto PVsyst"
 
@@ -16072,64 +16072,69 @@ msgstr ""
 "liberi. «+» su un suo ingresso nell'elenco a destra disegna una stringa lì; "
 "«Completa» propone stringhe per i moduli fuori stringa."
 
-#: src/meridiana/ui/window.py:3663
+#: src/meridiana/ui/window.py:3660
+msgid ""
+"Lay the modules before sizing the inverters: their DC power is not known yet."
+msgstr "Posa i moduli prima di dimensionare gli inverter: la loro potenza DC non è ancora nota."
+
+#: src/meridiana/ui/window.py:3666
 msgid "There is no inverter in the catalogue to size."
 msgstr "Non c'è nessun inverter da dimensionare nel catalogo."
 
-#: src/meridiana/ui/window.py:3669
+#: src/meridiana/ui/window.py:3672
 msgid "Size the inverter by itself"
 msgstr "Dimensiona l'inverter da solo"
 
-#: src/meridiana/ui/window.py:3669
+#: src/meridiana/ui/window.py:3672
 msgid "Manufacturer:"
 msgstr "Marca:"
 
-#: src/meridiana/ui/window.py:3677
+#: src/meridiana/ui/window.py:3680
 #, python-brace-format
 msgid "No inverter of {maker} in the catalogue has a nominal AC power."
 msgstr "Nessun inverter {maker} del catalogo ha una potenza AC nominale."
 
-#: src/meridiana/ui/window.py:3694
+#: src/meridiana/ui/window.py:3697
 msgid "Size the inverters by themselves"
 msgstr "Dimensiona gli inverter da soli"
 
-#: src/meridiana/ui/window.py:3696
+#: src/meridiana/ui/window.py:3699
 #, python-brace-format
 msgid "Inverter sized: {n} x {maker} {model}, DC/AC {r}."
 msgid_plural "Inverters sized: {n} x {maker} {model}, DC/AC {r}."
 msgstr[0] "Inverter dimensionato: {n} x {maker} {model}, DC/AC {r}."
 msgstr[1] "Inverter dimensionati: {n} x {maker} {model}, DC/AC {r}."
 
-#: src/meridiana/ui/window.py:3740
+#: src/meridiana/ui/window.py:3743
 #, python-brace-format
 msgid "The strings could not be laid: {error}"
 msgstr "Le stringhe non si sono potute disporre: {error}"
 
-#: src/meridiana/ui/window.py:3796
+#: src/meridiana/ui/window.py:3799
 msgid "Choose the power optimizers"
 msgstr "Scegli gli ottimizzatori di potenza"
 
-#: src/meridiana/ui/window.py:3803
+#: src/meridiana/ui/window.py:3806
 msgid "Back to the optimizers Meridiana proposes"
 msgstr "Torna agli ottimizzatori proposti da Meridiana"
 
-#: src/meridiana/ui/window.py:3809
+#: src/meridiana/ui/window.py:3812
 msgid "Change the modules on each optimizer"
 msgstr "Cambia i moduli su ogni ottimizzatore"
 
-#: src/meridiana/ui/window.py:3814
+#: src/meridiana/ui/window.py:3817
 msgid "Change how many inverters"
 msgstr "Cambia quanti inverter"
 
-#: src/meridiana/ui/window.py:3817
+#: src/meridiana/ui/window.py:3820
 msgid "Take an inverter out"
 msgstr "Togli un inverter"
 
-#: src/meridiana/ui/window.py:3830
+#: src/meridiana/ui/window.py:3833
 msgid "Send a sub-field's strings to an inverter"
 msgstr "Manda le stringhe di un sottocampo a un inverter"
 
-#: src/meridiana/ui/window.py:3864
+#: src/meridiana/ui/window.py:3867
 #, python-brace-format
 msgid ""
 "The string Meridiana proposed for this project is now yours, as it was: from "
@@ -16144,20 +16149,20 @@ msgstr[1] ""
 "Le {n} stringhe che Meridiana proponeva per questo progetto ora sono tue, "
 "com'erano: d'ora in poi niente le cambia da solo."
 
-#: src/meridiana/ui/window.py:3889
+#: src/meridiana/ui/window.py:3892
 msgid "Lay the modules first: the strings are proposed on the modules laid."
 msgstr "Posa prima i moduli: le stringhe si propongono sui moduli posati."
 
-#: src/meridiana/ui/window.py:3899
+#: src/meridiana/ui/window.py:3902
 #, python-brace-format
 msgid "Meridiana could not propose the strings: {error}"
 msgstr "Meridiana non è riuscita a proporre le stringhe: {error}"
 
-#: src/meridiana/ui/window.py:3914
+#: src/meridiana/ui/window.py:3917
 msgid "Propose the strings"
 msgstr "Proponi le stringhe"
 
-#: src/meridiana/ui/window.py:3915
+#: src/meridiana/ui/window.py:3918
 #, python-brace-format
 msgid ""
 "The string there is is replaced by Meridiana's proposal ({strategy}). Undo "
@@ -16172,21 +16177,21 @@ msgstr[1] ""
 "Le {n} stringhe che ci sono vengono sostituite dalla proposta di Meridiana "
 "({strategy}). Annulla le riporta. Procedo?"
 
-#: src/meridiana/ui/window.py:3929
+#: src/meridiana/ui/window.py:3932
 #, python-brace-format
 msgid "Meridiana finds no string to propose: {why}"
 msgstr "Meridiana non trova stringhe da proporre: {why}"
 
-#: src/meridiana/ui/window.py:3930
+#: src/meridiana/ui/window.py:3933
 msgid "the inverter does not take these modules in series"
 msgstr "l'inverter non accetta questi moduli in serie"
 
-#: src/meridiana/ui/window.py:3934
+#: src/meridiana/ui/window.py:3937
 #, python-brace-format
 msgid "Propose the strings: {strategy}"
 msgstr "Proponi le stringhe: {strategy}"
 
-#: src/meridiana/ui/window.py:3936
+#: src/meridiana/ui/window.py:3939
 #, python-brace-format
 msgid ""
 "{n} string proposed by Meridiana ({strategy}): yours now, nothing changes it "
@@ -16201,7 +16206,7 @@ msgstr[1] ""
 "{n} stringhe proposte da Meridiana ({strategy}): ora sono tue, niente le "
 "cambia da solo."
 
-#: src/meridiana/ui/window.py:3950
+#: src/meridiana/ui/window.py:3953
 msgid ""
 "No string to add: the modules in no string are too few for a string, or the "
 "inputs take no more. Draw one by hand, or add an inverter."
@@ -16210,7 +16215,7 @@ msgstr ""
 "una stringa, oppure gli ingressi non ne accettano altre uguali. Disegnane "
 "una a mano, o aggiungi un inverter."
 
-#: src/meridiana/ui/window.py:3954
+#: src/meridiana/ui/window.py:3957
 #, python-brace-format
 msgid ""
 "{n} string added for the modules that were in none; yours stayed as they "
@@ -16225,15 +16230,15 @@ msgstr[1] ""
 "{n} stringhe aggiunte per i moduli che erano fuori stringa; le tue sono "
 "rimaste come erano."
 
-#: src/meridiana/ui/window.py:3963
+#: src/meridiana/ui/window.py:3966
 msgid "There is no string to delete."
 msgstr "Non c'è nessuna stringa da eliminare."
 
-#: src/meridiana/ui/window.py:3966 src/meridiana/ui/window.py:3974
+#: src/meridiana/ui/window.py:3969 src/meridiana/ui/window.py:3977
 msgid "Delete all the strings"
 msgstr "Elimina tutte le stringhe"
 
-#: src/meridiana/ui/window.py:3967
+#: src/meridiana/ui/window.py:3970
 #, python-brace-format
 msgid ""
 "The string is deleted: its modules stay laid, in no string. Undo brings it "
@@ -16248,7 +16253,7 @@ msgstr[1] ""
 "Le {n} stringhe vengono eliminate: i loro moduli restano posati, fuori "
 "stringa. Annulla le riporta. Procedo?"
 
-#: src/meridiana/ui/window.py:3975
+#: src/meridiana/ui/window.py:3978
 msgid ""
 "Every string deleted: draw yours with «+» on an input of the list on the "
 "right, or «Draw»."
@@ -16256,12 +16261,12 @@ msgstr ""
 "Tutte le stringhe eliminate: disegna le tue con «+» su un ingresso "
 "dell'elenco a destra, o con «Disegna»."
 
-#: src/meridiana/ui/window.py:3985
+#: src/meridiana/ui/window.py:3988
 #, python-brace-format
 msgid "Delete string {name}"
 msgstr "Elimina la stringa {name}"
 
-#: src/meridiana/ui/window.py:3987
+#: src/meridiana/ui/window.py:3990
 #, python-brace-format
 msgid ""
 "String {name} deleted: its module is in no string (Ctrl+Z brings it back)."
@@ -16274,7 +16279,7 @@ msgstr[1] ""
 "Stringa {name} eliminata: i suoi {n} moduli sono fuori stringa (Ctrl+Z la "
 "riporta)."
 
-#: src/meridiana/ui/window.py:4016
+#: src/meridiana/ui/window.py:4019
 #, python-brace-format
 msgid ""
 "String {name}: Del deletes it, a double click draws it again, the right "
@@ -16283,7 +16288,7 @@ msgstr ""
 "Stringa {name}: Canc la elimina, un doppio clic la ridisegna, il tasto "
 "destro ha il resto"
 
-#: src/meridiana/ui/window.py:4026
+#: src/meridiana/ui/window.py:4029
 msgid ""
 "This module is in no string: «+» on an input in the list on the right, or "
 "«Draw», then click it."
@@ -16291,11 +16296,11 @@ msgstr ""
 "Questo modulo è fuori stringa: «+» su un ingresso nell'elenco a destra, o "
 "«Disegna», poi cliccalo."
 
-#: src/meridiana/ui/window.py:4045
+#: src/meridiana/ui/window.py:4048
 msgid "The strings are being laid: a moment."
 msgstr "Le stringhe si stanno posando: un momento."
 
-#: src/meridiana/ui/window.py:4074
+#: src/meridiana/ui/window.py:4077
 msgid ""
 "No inverter's input to draw a string on: add an inverter from the catalogue "
 "first."
@@ -16303,50 +16308,50 @@ msgstr ""
 "Nessun ingresso di inverter su cui disegnare una stringa: aggiungi prima un "
 "inverter dal catalogo."
 
-#: src/meridiana/ui/window.py:4114
+#: src/meridiana/ui/window.py:4117
 #, python-brace-format
 msgid "string {name} again"
 msgstr "stringa {name} ridisegnata"
 
-#: src/meridiana/ui/window.py:4116
+#: src/meridiana/ui/window.py:4119
 #, python-brace-format
 msgid "new string {n}.{k}"
 msgstr "nuova stringa {n}.{k}"
 
-#: src/meridiana/ui/window.py:4123
+#: src/meridiana/ui/window.py:4126
 #, python-brace-format
 msgid "{k} short ({lo} to {hi})"
 msgid_plural "{k} short ({lo} to {hi})"
 msgstr[0] "ne manca {k} (da {lo} a {hi})"
 msgstr[1] "ne mancano {k} (da {lo} a {hi})"
 
-#: src/meridiana/ui/window.py:4127
+#: src/meridiana/ui/window.py:4130
 #, python-brace-format
 msgid "{k} too many ({lo} to {hi})"
 msgid_plural "{k} too many ({lo} to {hi})"
 msgstr[0] "{k} di troppo (da {lo} a {hi})"
 msgstr[1] "{k} di troppo (da {lo} a {hi})"
 
-#: src/meridiana/ui/window.py:4131
+#: src/meridiana/ui/window.py:4134
 #, python-brace-format
 msgid "fine ({lo} to {hi})"
 msgstr "va bene (da {lo} a {hi})"
 
-#: src/meridiana/ui/window.py:4134
+#: src/meridiana/ui/window.py:4137
 #, python-brace-format
 msgid "({lo} to {hi})"
 msgstr "(da {lo} a {hi})"
 
-#: src/meridiana/ui/window.py:4137
+#: src/meridiana/ui/window.py:4140
 #, python-brace-format
 msgid "Inverter {n} · {model} · Input {k}"
 msgstr "Inverter {n} · {model} · Ingresso {k}"
 
-#: src/meridiana/ui/window.py:4137
+#: src/meridiana/ui/window.py:4140
 msgid "not chosen"
 msgstr "non scelto"
 
-#: src/meridiana/ui/window.py:4138
+#: src/meridiana/ui/window.py:4141
 msgid ""
 "Enter or double click: finish\n"
 "Backspace: the last one back · Esc: give up"
@@ -16354,7 +16359,7 @@ msgstr ""
 "Invio o doppio clic: chiudi\n"
 "Backspace: togli l'ultimo · Esc: rinuncia"
 
-#: src/meridiana/ui/window.py:4144
+#: src/meridiana/ui/window.py:4147
 msgid ""
 "Click the modules in order (or drag over them); Backspace takes back the "
 "last, Enter or a double click closes the string, Esc gives it up. A module "
@@ -16364,127 +16369,127 @@ msgstr ""
 "l'ultimo, Invio o un doppio clic chiudono la stringa, Esc la annulla. Un "
 "modulo di un'altra stringa: Maiusc e clic lo sposta qui."
 
-#: src/meridiana/ui/window.py:4172
+#: src/meridiana/ui/window.py:4175
 #, python-brace-format
 msgid "Draw string {name} again"
 msgstr "Ridisegna la stringa {name}"
 
-#: src/meridiana/ui/window.py:4175
+#: src/meridiana/ui/window.py:4178
 msgid "No module clicked: no string made."
 msgstr "Nessun modulo cliccato: nessuna stringa fatta."
 
-#: src/meridiana/ui/window.py:4179
+#: src/meridiana/ui/window.py:4182
 #, python-brace-format
 msgid "New string on input {k} of inverter {n}"
 msgstr "Nuova stringa sull'ingresso {k} dell'inverter {n}"
 
-#: src/meridiana/ui/window.py:4187
+#: src/meridiana/ui/window.py:4190
 #, python-brace-format
 msgid "Modules moved from string {names}"
 msgstr "Moduli spostati dalla stringa {names}"
 
-#: src/meridiana/ui/window.py:4189
+#: src/meridiana/ui/window.py:4192
 #, python-brace-format
 msgid "String of {n} module made: Ctrl+Z takes it back."
 msgid_plural "String of {n} modules made: Ctrl+Z takes it back."
 msgstr[0] "Stringa di {n} modulo fatta: Ctrl+Z la toglie."
 msgstr[1] "Stringa di {n} moduli fatta: Ctrl+Z la toglie."
 
-#: src/meridiana/ui/window.py:4200
+#: src/meridiana/ui/window.py:4203
 msgid "String given up: nothing changed."
 msgstr "Stringa annullata: non è cambiato niente."
 
-#: src/meridiana/ui/window.py:4210
+#: src/meridiana/ui/window.py:4213
 msgid "Close the string (Enter)"
 msgstr "Chiudi la stringa (Invio)"
 
-#: src/meridiana/ui/window.py:4212
+#: src/meridiana/ui/window.py:4215
 msgid "Take back the last module (Backspace)"
 msgstr "Togli l'ultimo modulo (Backspace)"
 
-#: src/meridiana/ui/window.py:4215
+#: src/meridiana/ui/window.py:4218
 msgid "Give up the string (Esc)"
 msgstr "Annulla la stringa (Esc)"
 
-#: src/meridiana/ui/window.py:4225
+#: src/meridiana/ui/window.py:4228
 msgid "This module is in no string"
 msgstr "Questo modulo non è in nessuna stringa"
 
-#: src/meridiana/ui/window.py:4228
+#: src/meridiana/ui/window.py:4231
 #, python-brace-format
 msgid "New string from this module, on input {k} of inverter {n}"
 msgstr "Nuova stringa da questo modulo, sull'ingresso {k} dell'inverter {n}"
 
-#: src/meridiana/ui/window.py:4235
+#: src/meridiana/ui/window.py:4238
 #, python-brace-format
 msgid "Skip this module (the rest of {name} stays)"
 msgstr "Salta questo modulo (il resto di {name} resta)"
 
-#: src/meridiana/ui/window.py:4237
+#: src/meridiana/ui/window.py:4240
 #, python-brace-format
 msgid "Take a module out of string {name}"
 msgstr "Togli un modulo dalla stringa {name}"
 
-#: src/meridiana/ui/window.py:4238 src/meridiana/ui/window.py:4240
+#: src/meridiana/ui/window.py:4241 src/meridiana/ui/window.py:4243
 #, python-brace-format
 msgid "String {name} starts here"
 msgstr "La stringa {name} parte da qui"
 
-#: src/meridiana/ui/window.py:4242 src/meridiana/ui/window.py:4244
+#: src/meridiana/ui/window.py:4245 src/meridiana/ui/window.py:4247
 #, python-brace-format
 msgid "String {name} ends here"
 msgstr "La stringa {name} finisce qui"
 
-#: src/meridiana/ui/window.py:4254 src/meridiana/ui/window.py:4256
+#: src/meridiana/ui/window.py:4257 src/meridiana/ui/window.py:4259
 #, python-brace-format
 msgid "Reverse string {name}"
 msgstr "Inverti la stringa {name}"
 
-#: src/meridiana/ui/window.py:4257
+#: src/meridiana/ui/window.py:4260
 #, python-brace-format
 msgid "Draw string {name} again (double click)"
 msgstr "Ridisegna la stringa {name} (doppio clic)"
 
-#: src/meridiana/ui/window.py:4260
+#: src/meridiana/ui/window.py:4263
 #, python-brace-format
 msgid "Move string {name} to"
 msgstr "Sposta la stringa {name} su"
 
-#: src/meridiana/ui/window.py:4267
+#: src/meridiana/ui/window.py:4270
 #, python-brace-format
 msgid "Delete string {name} (Del)"
 msgstr "Elimina la stringa {name} (Canc)"
 
-#: src/meridiana/ui/window.py:4291
+#: src/meridiana/ui/window.py:4294
 #, python-brace-format
 msgid "Move string {name} to input {k} of inverter {n}"
 msgstr "Sposta la stringa {name} sull'ingresso {k} dell'inverter {n}"
 
-#: src/meridiana/ui/window.py:4303
+#: src/meridiana/ui/window.py:4306
 msgid "Choose the battery"
 msgstr "Scegli la batteria"
 
-#: src/meridiana/ui/window.py:4312 src/meridiana/ui/window.py:4321
+#: src/meridiana/ui/window.py:4315 src/meridiana/ui/window.py:4324
 msgid "Choose the module"
 msgstr "Scegli il modulo"
 
-#: src/meridiana/ui/window.py:4327 src/meridiana/ui/window.py:4355
+#: src/meridiana/ui/window.py:4330 src/meridiana/ui/window.py:4358
 msgid "Import a module from PVsyst"
 msgstr "Importa un modulo da PVsyst"
 
-#: src/meridiana/ui/window.py:4327 src/meridiana/ui/window.py:4345
+#: src/meridiana/ui/window.py:4330 src/meridiana/ui/window.py:4348
 msgid "Import an inverter from PVsyst"
 msgstr "Importa un inverter da PVsyst"
 
-#: src/meridiana/ui/window.py:4329
+#: src/meridiana/ui/window.py:4332
 msgid "PVsyst modules (*.pan *.PAN)"
 msgstr "Moduli PVsyst (*.pan *.PAN)"
 
-#: src/meridiana/ui/window.py:4329
+#: src/meridiana/ui/window.py:4332
 msgid "PVsyst inverters (*.ond *.OND)"
 msgstr "Inverter PVsyst (*.ond *.OND)"
 
-#: src/meridiana/ui/window.py:4339
+#: src/meridiana/ui/window.py:4342
 #, python-brace-format
 msgid ""
 "Read from {file}: {name}.\n"
@@ -16499,11 +16504,11 @@ msgstr ""
 "\n"
 "Lo usi?"
 
-#: src/meridiana/ui/window.py:4367
+#: src/meridiana/ui/window.py:4370
 msgid "PVsyst projects (*.prj *.PRJ)"
 msgstr "Progetti PVsyst (*.prj *.PRJ)"
 
-#: src/meridiana/ui/window.py:4376
+#: src/meridiana/ui/window.py:4379
 #, python-brace-format
 msgid ""
 "{file} has no variant next to it (<project>.VC0, .VC1...): export the "
@@ -16512,12 +16517,12 @@ msgstr ""
 "{file} non ha varianti accanto (<progetto>.VC0, .VC1...): esportare il "
 "progetto da PVsyst con le sue varianti."
 
-#: src/meridiana/ui/window.py:4394
+#: src/meridiana/ui/window.py:4397
 #, python-brace-format
 msgid "The variants could not be read: {error}"
 msgstr "Non è stato possibile leggere le varianti: {error}"
 
-#: src/meridiana/ui/window.py:4410
+#: src/meridiana/ui/window.py:4413
 #, python-brace-format
 msgid ""
 "Imported from PVsyst: {n} variants. Save the project; what was approximated "
@@ -16526,7 +16531,7 @@ msgstr ""
 "Importato da PVsyst: {n} varianti. Salva il progetto; ciò che è approssimato "
 "o manca resta tra le verifiche."
 
-#: src/meridiana/ui/window.py:4421
+#: src/meridiana/ui/window.py:4424
 msgid ""
 "The IFC models need IfcOpenShell (LGPL-3.0-or-later), which is not "
 "installed: «pip install ifcopenshell» in Meridiana's Python."
@@ -16534,7 +16539,7 @@ msgstr ""
 "I modelli IFC hanno bisogno di IfcOpenShell (LGPL-3.0-or-later), che non è "
 "installato: «pip install ifcopenshell» nel Python di Meridiana."
 
-#: src/meridiana/ui/window.py:4427
+#: src/meridiana/ui/window.py:4430
 msgid ""
 "An IFC model is being read or written: wait for it, or Cancel it in the "
 "status bar."
@@ -16542,49 +16547,49 @@ msgstr ""
 "Si sta leggendo o scrivendo un modello IFC: aspetta, oppure Annulla nella "
 "barra di stato."
 
-#: src/meridiana/ui/window.py:4440
+#: src/meridiana/ui/window.py:4443
 msgid "IFC models (*.ifc *.IFC *.ifczip *.ifcZIP)"
 msgstr "Modelli IFC (*.ifc *.IFC *.ifczip *.ifcZIP)"
 
-#: src/meridiana/ui/window.py:4449
+#: src/meridiana/ui/window.py:4452
 #, python-brace-format
 msgid "IFC: {file}"
 msgstr "IFC: {file}"
 
-#: src/meridiana/ui/window.py:4453
+#: src/meridiana/ui/window.py:4456
 #, python-brace-format
 msgid "IFC: {what}"
 msgstr "IFC: {what}"
 
-#: src/meridiana/ui/window.py:4461
+#: src/meridiana/ui/window.py:4464
 msgid "opening the file"
 msgstr "apertura del file"
 
-#: src/meridiana/ui/window.py:4461
+#: src/meridiana/ui/window.py:4464
 msgid "the buildings and the storeys"
 msgstr "edifici e piani"
 
-#: src/meridiana/ui/window.py:4461
+#: src/meridiana/ui/window.py:4464
 msgid "the roofs"
 msgstr "le coperture"
 
-#: src/meridiana/ui/window.py:4462
+#: src/meridiana/ui/window.py:4465
 msgid "the shapes"
 msgstr "le forme"
 
-#: src/meridiana/ui/window.py:4462
+#: src/meridiana/ui/window.py:4465
 msgid "the roof planes"
 msgstr "le falde"
 
-#: src/meridiana/ui/window.py:4462
+#: src/meridiana/ui/window.py:4465
 msgid "what stands on the roofs"
 msgstr "ciò che sta sulle coperture"
 
-#: src/meridiana/ui/window.py:4463
+#: src/meridiana/ui/window.py:4466
 msgid "a second try, with the simple shapes only"
 msgstr "un secondo tentativo, con le sole forme semplici"
 
-#: src/meridiana/ui/window.py:4490
+#: src/meridiana/ui/window.py:4493
 #, python-brace-format
 msgid ""
 "From {file}: {n} building, with its roof and what stands on it. Ctrl+Z takes "
@@ -16599,59 +16604,59 @@ msgstr[1] ""
 "Da {file}: {n} edifici, con le loro coperture e ciò che vi sta sopra. Ctrl+Z "
 "li toglie."
 
-#: src/meridiana/ui/window.py:4495 src/meridiana/ui/window.py:4526
+#: src/meridiana/ui/window.py:4498 src/meridiana/ui/window.py:4529
 msgid "Export the model as IFC4"
 msgstr "Esporta il modello in IFC4"
 
-#: src/meridiana/ui/window.py:4500
+#: src/meridiana/ui/window.py:4503
 msgid "IFC models (*.ifc)"
 msgstr "Modelli IFC (*.ifc)"
 
-#: src/meridiana/ui/window.py:4509
+#: src/meridiana/ui/window.py:4512
 #, python-brace-format
 msgid "IFC4: {file}"
 msgstr "IFC4: {file}"
 
-#: src/meridiana/ui/window.py:4513
+#: src/meridiana/ui/window.py:4516
 #, python-brace-format
 msgid "IFC4: {what}"
 msgstr "IFC4: {what}"
 
-#: src/meridiana/ui/window.py:4523
+#: src/meridiana/ui/window.py:4526
 msgid "IFC export stopped: nothing written."
 msgstr "Esportazione IFC fermata: non è stato scritto nulla."
 
-#: src/meridiana/ui/window.py:4526
+#: src/meridiana/ui/window.py:4529
 #, python-brace-format
 msgid "The model could not be written: {error}"
 msgstr "Non è stato possibile scrivere il modello: {error}"
 
-#: src/meridiana/ui/window.py:4532
+#: src/meridiana/ui/window.py:4535
 #, python-brace-format
 msgid "IFC4 written: {file}, {n} module"
 msgid_plural "IFC4 written: {file}, {n} modules"
 msgstr[0] "IFC4 scritto: {file}, {n} modulo"
 msgstr[1] "IFC4 scritto: {file}, {n} moduli"
 
-#: src/meridiana/ui/window.py:4540
+#: src/meridiana/ui/window.py:4543
 msgid "IFC reading stopped: nothing added."
 msgstr "Lettura IFC fermata: non è stato aggiunto nulla."
 
-#: src/meridiana/ui/window.py:4588
+#: src/meridiana/ui/window.py:4591
 #, python-brace-format
 msgid "Meridiana ran into an error: {error}"
 msgstr "Meridiana ha incontrato un errore: {error}"
 
-#: src/meridiana/ui/window.py:4590
+#: src/meridiana/ui/window.py:4593
 #, python-brace-format
 msgid "(the detail is in {file})"
 msgstr "(il dettaglio è in {file})"
 
-#: src/meridiana/ui/window.py:4594
+#: src/meridiana/ui/window.py:4597
 msgid "An error"
 msgstr "Un errore"
 
-#: src/meridiana/ui/window.py:4595
+#: src/meridiana/ui/window.py:4598
 msgid ""
 "The window goes on; if something looks wrong, save with a new name and "
 "reopen."
@@ -16659,25 +16664,25 @@ msgstr ""
 "La finestra va avanti; se qualcosa sembra sbagliato, salva con un nome nuovo "
 "e riapri."
 
-#: src/meridiana/ui/window.py:4602
+#: src/meridiana/ui/window.py:4605
 #, python-brace-format
 msgid "The map tiles of {source} are not loading: {why}"
 msgstr "Le tessere della mappa {source} non si caricano: {why}"
 
-#: src/meridiana/ui/window.py:4610
+#: src/meridiana/ui/window.py:4613
 #, python-brace-format
 msgid "The recovery copy could not be written: {error}"
 msgstr "La copia di ripristino non si è potuta scrivere: {error}"
 
-#: src/meridiana/ui/window.py:4621
+#: src/meridiana/ui/window.py:4624
 msgid "a new project"
 msgstr "un progetto nuovo"
 
-#: src/meridiana/ui/window.py:4624 src/meridiana/ui/window.py:4635
+#: src/meridiana/ui/window.py:4627 src/meridiana/ui/window.py:4638
 msgid "Recover the changes"
 msgstr "Recupera le modifiche"
 
-#: src/meridiana/ui/window.py:4625
+#: src/meridiana/ui/window.py:4628
 #, python-brace-format
 msgid ""
 "Meridiana stopped without saving {name}: a copy of {when} is there. Recover "
@@ -16686,63 +16691,63 @@ msgstr ""
 "Meridiana si è chiuso senza salvare {name}: c'è una copia del {when}. La "
 "recuperi?"
 
-#: src/meridiana/ui/window.py:4635
+#: src/meridiana/ui/window.py:4638
 #, python-brace-format
 msgid "The copy could not be read: {error}"
 msgstr "Impossibile leggere la copia: {error}"
 
-#: src/meridiana/ui/window.py:4642
+#: src/meridiana/ui/window.py:4645
 msgid "Recovered: save it to keep it"
 msgstr "Recuperato: salvalo per tenerlo"
 
-#: src/meridiana/ui/window.py:4652 src/meridiana/ui/window.py:4711
+#: src/meridiana/ui/window.py:4655 src/meridiana/ui/window.py:4714
 #, python-brace-format
 msgid "The project could not be saved: {error}"
 msgstr "Impossibile salvare il progetto: {error}"
 
-#: src/meridiana/ui/window.py:4657
+#: src/meridiana/ui/window.py:4660
 #, python-brace-format
 msgid "New revision saved: {file}; the previous one stays as it was"
 msgstr "Nuova revisione salvata: {file}; la precedente resta com'era"
 
-#: src/meridiana/ui/window.py:4666
+#: src/meridiana/ui/window.py:4669
 msgid "Unsaved changes"
 msgstr "Modifiche non salvate"
 
-#: src/meridiana/ui/window.py:4666
+#: src/meridiana/ui/window.py:4669
 msgid "Save the changes to the project first?"
 msgstr "Salvare prima le modifiche al progetto?"
 
-#: src/meridiana/ui/window.py:4684 src/meridiana/ui/window.py:4694
-#: src/meridiana/ui/window.py:4703
+#: src/meridiana/ui/window.py:4687 src/meridiana/ui/window.py:4697
+#: src/meridiana/ui/window.py:4706
 msgid "Open a project"
 msgstr "Apri un progetto"
 
-#: src/meridiana/ui/window.py:4685 src/meridiana/ui/window.py:4720
+#: src/meridiana/ui/window.py:4688 src/meridiana/ui/window.py:4723
 #, python-brace-format
 msgid "Meridiana projects (*{suffix})"
 msgstr "Progetti Meridiana (*{suffix})"
 
-#: src/meridiana/ui/window.py:4694
+#: src/meridiana/ui/window.py:4697
 #, python-brace-format
 msgid "{file} could not be opened: {error}"
 msgstr "Impossibile aprire {file}: {error}"
 
-#: src/meridiana/ui/window.py:4714
+#: src/meridiana/ui/window.py:4717
 #, python-brace-format
 msgid "Saved {file}"
 msgstr "Salvato {file}"
 
-#: src/meridiana/ui/window.py:4719
+#: src/meridiana/ui/window.py:4722
 msgid "Save the project"
 msgstr "Salva il progetto"
 
-#: src/meridiana/ui/window.py:4744
+#: src/meridiana/ui/window.py:4747
 #, python-brace-format
 msgid "The settings could not be saved: {error}"
 msgstr "Le impostazioni non si sono potute salvare: {error}"
 
-#: src/meridiana/ui/window.py:4749
+#: src/meridiana/ui/window.py:4752
 #, python-brace-format
 msgid ""
 "<b>Meridiana</b> {version}<br>Photovoltaic design: map, building model, sun "
@@ -16762,26 +16767,26 @@ msgstr ""
 "OpenStreetMap); i contorni delle loro aree da Natural Earth (pubblico "
 "dominio)."
 
-#: src/meridiana/ui/window.py:4778
+#: src/meridiana/ui/window.py:4781
 msgid "Checking for updates…"
 msgstr "Cerco gli aggiornamenti…"
 
-#: src/meridiana/ui/window.py:4785
+#: src/meridiana/ui/window.py:4788
 #, python-brace-format
 msgid "The check for updates failed: {error}"
 msgstr "Il controllo degli aggiornamenti non è riuscito: {error}"
 
-#: src/meridiana/ui/window.py:4791
+#: src/meridiana/ui/window.py:4794
 #, python-brace-format
 msgid "Meridiana {version} is the latest version."
 msgstr "Meridiana {version} è l'ultima versione."
 
-#: src/meridiana/ui/window.py:4796
+#: src/meridiana/ui/window.py:4799
 #, python-brace-format
 msgid "Version {version} is available: Help > Check for updates."
 msgstr "È disponibile la versione {version}: Aiuto > Cerca aggiornamenti."
 
-#: src/meridiana/ui/window.py:4897
+#: src/meridiana/ui/window.py:4900
 #, python-brace-format
 msgid "The window layout could not be saved: {error}"
 msgstr "La disposizione della finestra non si è potuta salvare: {error}"

@@ -71,7 +71,7 @@ class Layout(unittest.TestCase):
 
     def test_a_real_inverter_and_module_of_the_catalogue(self):
         from meridiana import catalog
-        inv = catalog.search("inverters", "SUN2000-10KTL-M1", source="curated")
+        inv = catalog.search("inverters", "SUN2000-20KTL-M5", source="curated")
         mod = catalog.search("modules", "LR7-54HVH", source="curated")
         if not inv or not mod:
             self.skipTest("the datasheets are not in the catalogue")
@@ -437,6 +437,40 @@ class ByHand(unittest.TestCase):
         self.assertEqual(gone.strings[0].state, "fail")
         said = [i for i in checks.plant_items(gone) if "no longer laid" in i.text]
         self.assertEqual((len(said), said[0].fix), (1, ()))           # the designer's to change: no rewrite (R114)
+
+
+class AutomaticErrors(unittest.TestCase):
+    """Errors reproduced before R187: a proposal must respect every unit and every input, not only the first."""
+
+    def group(self, placed):
+        from meridiana.energy import plant
+        return plant.Group("s1.0", "s1", "s1", module(), placed)
+
+    def test_mixed_inverter_models_do_not_put_a_long_string_on_a_narrow_input(self):
+        from meridiana.energy import plant
+        wide = inverter_rec(model="WIDE", mppt_count=1, dc_current_max_per_mppt_a=[60],
+                            dc_isc_max_per_mppt_a=[80])
+        narrow = inverter_rec(model="NARROW", mppt_count=1, mppt_voltage_max_v=500,
+                              dc_current_max_per_mppt_a=[60], dc_isc_max_per_mppt_a=[80])
+        p = plant_project([(wide, 1), (narrow, 1)], {"auto": True, "strategy": "serpentine"})
+        out = plant.build(p, groups=[self.group(grid(4, 24))])
+        self.assertFalse(out.left)
+        self.assertEqual(len(out.strings), 8)
+        self.assertTrue(all(s.state == "ok" for s in out.strings),
+                        [(s.label, len(s.modules), s.why) for s in out.strings])
+
+    def test_an_explicit_input_never_receives_more_strings_than_its_current_allows(self):
+        from meridiana.energy import plant
+        one = inverter_rec(mppt_count=1, dc_current_max_per_mppt_a=[16], dc_isc_max_per_mppt_a=[20])
+        p = plant_project([(one, 1)], {"auto": True, "strategy": "serpentine", "n_series": 12})
+        out = plant.build(p, groups=[plant.Group("s1.0", "s1", "s1", module(), grid(3, 12), (1, 1))])
+        self.assertEqual(len(out.strings), 1)
+        self.assertEqual(len(out.left), 24)
+        self.assertTrue(all(s.state == "ok" for s in out.strings))
+
+    def test_parallel_capacity_uses_operating_and_short_circuit_current(self):
+        inv = inverter(mppt_count=1, dc_current_max_per_mppt_a=[26], dc_isc_max_per_mppt_a=[40])
+        self.assertEqual(stringing.strings_allowed(module(), inv, 0), 1)
 
 
 class OnlyWhenAsked(unittest.TestCase):

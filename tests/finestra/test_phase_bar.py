@@ -137,6 +137,17 @@ class PhaseRow(unittest.TestCase):
         self.assertIn("AC-10K", message)
         self.assertIn("DC/AC", message)
 
+    def test_sizing_without_modules_laid_says_why_and_changes_nothing(self):
+        from unittest import mock
+        from PySide6.QtWidgets import QInputDialog
+        win = self.win
+        before = win.project.to_json()
+        with mock.patch.object(win.session, "good_results", return_value={}), \
+                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
+            win.commands["inverter_auto"].trigger()
+        self.assertEqual(win.project.to_json(), before)
+        self.assertIn("Lay the modules", win.statusBar().currentMessage())
+
     def test_the_words_under_the_icons_the_low_window_the_bar_on_the_left_the_preferences_and_the_variant(self):
         from PySide6.QtCore import QPoint, Qt
         from PySide6.QtWidgets import QToolBar

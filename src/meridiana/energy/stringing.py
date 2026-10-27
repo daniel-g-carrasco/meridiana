@@ -65,17 +65,17 @@ class StringPlan:
 
 
 def strings_allowed(module: ModuleSpec, inverter: InverterSpec, k: int, ki: float = 1.25) -> int:
-    """How many strings input k takes. The hard limit is the input's maximum short-circuit current against
-    ISC MAX of the strings; an operating current above the input's maximum is not a danger (the inverter
-    holds the current and loses a little power, as PVsyst counts it) but a loss, said as such. Without the
-    short-circuit limit, the operating current decides."""
-    isc_in = inverter.iscmax_per_mppt
-    if isc_in:
-        return int(isc_in[min(k, len(isc_in) - 1)] // (ki * module.isc))
-    i_in = inverter.imax_per_mppt
-    if i_in:
-        return max(1, int(i_in[min(k, len(i_in) - 1)] // module.imp))
-    return 1
+    """How many equal strings input k takes without exceeding either current of its datasheet: the operating
+    current Np x Imp and the maximum short-circuit current Np x 1.25 x Isc. A string drawn by hand may still
+    exceed the operating current and gets the loss warning of `plan`; an automatic proposal never does."""
+    limits = []
+    if inverter.iscmax_per_mppt and ki * module.isc > 0:
+        values = inverter.iscmax_per_mppt
+        limits.append(int(values[min(k, len(values) - 1)] // (ki * module.isc)))
+    if inverter.imax_per_mppt and module.imp > 0:
+        values = inverter.imax_per_mppt
+        limits.append(int(values[min(k, len(values) - 1)] // module.imp))
+    return max(0, min(limits)) if limits else 1
 
 
 def vmp_at(module: ModuleSpec, t_cell: float) -> float:

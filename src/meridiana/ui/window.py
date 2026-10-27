@@ -3656,6 +3656,9 @@ class MainWindow(QMainWindow):
         """«Size it by itself»: the brand first, remembered in the project, then the model and how many at DC/AC."""
         good = self.session.good_results()
         p_stc = sum(a.p_stc for a in system.arrays_of(self.project, good)) if good else 0.0
+        if p_stc <= 0.0:
+            self.tell(_("Lay the modules before sizing the inverters: their DC power is not known yet."))
+            return
         entries = system.inverter_entries(self.project.energy)
         ratio = float((self.project.energy or {}).get("dc_ac_ratio") or 1.1)
         makers = catalog.brands("inverters")
