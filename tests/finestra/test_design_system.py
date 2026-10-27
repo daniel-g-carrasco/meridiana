@@ -504,12 +504,22 @@ class InTheWindow(unittest.TestCase):
         reduced = motion.reduced()
         motion.set_reduced(False)
         self.addCleanup(motion.set_reduced, reduced)
+        page.place()
+        before = win.grab(page.geometry()).toImage()
         win.tabs.header.file_button.click()
         self.assertTrue(_setup.wait_until(self.app, page.isVisible, 3))
-        # it unrolls from the top (R157): shown down to a part of its height, then whole, no mask left
-        self.assertEqual(page.unroll.state(), QAbstractAnimation.State.Running)
-        self.assertLess(page.mask().boundingRect().height(), page.height())
-        self.assertTrue(_setup.wait_until(self.app, lambda: page.unroll.state() == QAbstractAnimation.State.Stopped, 2))
+        # R178: a short fade and slide from the File side, two pictures and no mask or opacity effect
+        self.assertIsNotNone(page.entrance)
+        entrance = page.entrance
+        self.assertEqual(entrance.kind, "slide")
+        for point in ((20, 20), (before.width() // 2, 20), (20, before.height() - 20)):
+            self.assertEqual(entrance.before.toImage().pixelColor(*point), before.pixelColor(*point),
+                             f"the held background changed at {point}, updates disabled make it black")
+        self.assertTrue(_setup.wait_until(self.app, lambda: entrance.after is not None, 2))
+        self.assertEqual(entrance.animation.state(), QAbstractAnimation.State.Running)
+        self.assertTrue(page.mask().isEmpty())
+        self.assertTrue(_setup.wait_until(self.app, lambda: page.entrance is None, 3))
+        self.assertFalse(entrance.isVisible())                                # no stale veil after the last frame
         self.assertTrue(page.mask().isEmpty())
         self.assertTrue(win.tabs.header.file_button.isChecked())
         self.assertFalse(win.tabs.bars.isVisible())                         # the bar of the phase under it
@@ -527,6 +537,18 @@ class InTheWindow(unittest.TestCase):
         self.assertFalse(win.tabs.header.file_button.isChecked())
         self.assertIsNotNone(win.tabs.header.tab_now())                     # the phase marked again
         self.assertEqual(win.cfg.recent[0], str(self.file))                 # the project opened, first
+        page.place()
+        self.app.processEvents()
+        closed = win.grab(page.geometry()).toImage()
+        for point in ((20, 20), (before.width() // 2, 20), (20, before.height() - 20)):
+            self.assertEqual(closed.pixelColor(*point), before.pixelColor(*point))  # no stale File pixels
+        motion.set_reduced(True)
+        win.tabs.header.file_button.click()
+        self.assertTrue(page.isVisible())
+        self.assertIsNone(page.entrance)                                    # less motion: the page is there at once
+        self.assertTrue(page.mask().isEmpty())
+        QTest.keyClick(page, Qt.Key.Key_Escape)
+        motion.set_reduced(False)
 
     def test_choosing_another_variant_keeps_the_pills_still(self):
         """R101: the same pills, another one checked, the same widths: nothing made again, nothing jumps."""

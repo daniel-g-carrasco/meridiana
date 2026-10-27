@@ -1,0 +1,36 @@
+   1.124 s  piattaforma=wayland, Qt=6.12.0, schermi=[('Meta-0', 1600, 1000)]
+   1.567 s  tema light: 443.0 ms
+   1.567 s  proposta scorrimento: durata=180 ms
+   1.784 s  foto kimi11-file-scorrimento-0.png: 1600 x 962, salvata=True, grab=120.1 ms
+   1.994 s  foto kimi11-file-scorrimento-25.png: 1600 x 962, salvata=True, grab=53.9 ms
+   1.994 s  proposta scorrimento, fotogramma=25 %, valore=0.578, tempo=45 ms, stato=State.Paused
+   2.086 s  foto kimi11-file-scorrimento-50.png: 1600 x 962, salvata=True, grab=61.1 ms
+   2.086 s  proposta scorrimento, fotogramma=50 %, valore=0.875, tempo=90 ms, stato=State.Paused
+   2.187 s  foto kimi11-file-scorrimento-75.png: 1600 x 962, salvata=True, grab=69.6 ms
+   2.187 s  proposta scorrimento, fotogramma=75 %, valore=0.984, tempo=135 ms, stato=State.Paused
+   2.283 s  foto kimi11-file-scorrimento-100.png: 1600 x 962, salvata=True, grab=64.5 ms
+   2.283 s  proposta scorrimento, fotogramma=100 %, valore=1.000, tempo=180 ms, stato=State.Stopped
+   2.497 s  proposta foglio: durata=180 ms
+   2.639 s  foto kimi11-file-foglio-0.png: 1600 x 962, salvata=True, grab=141.5 ms
+   2.915 s  foto kimi11-file-foglio-25.png: 1600 x 962, salvata=True, grab=101.4 ms
+   2.915 s  proposta foglio, fotogramma=25 %, valore=0.578, tempo=45 ms, stato=State.Paused
+   3.031 s  foto kimi11-file-foglio-50.png: 1600 x 962, salvata=True, grab=84.1 ms
+   3.031 s  proposta foglio, fotogramma=50 %, valore=0.875, tempo=90 ms, stato=State.Paused
+   3.134 s  foto kimi11-file-foglio-75.png: 1600 x 962, salvata=True, grab=70.4 ms
+   3.134 s  proposta foglio, fotogramma=75 %, valore=0.984, tempo=135 ms, stato=State.Paused
+   3.237 s  foto kimi11-file-foglio-100.png: 1600 x 962, salvata=True, grab=71.4 ms
+   3.238 s  proposta foglio, fotogramma=100 %, valore=1.000, tempo=180 ms, stato=State.Stopped
+   3.465 s  proposta dissolvenza: durata=180 ms
+   3.601 s  foto kimi11-file-dissolvenza-0.png: 1600 x 962, salvata=True, grab=136.0 ms
+   3.836 s  foto kimi11-file-dissolvenza-25.png: 1600 x 962, salvata=True, grab=118.5 ms
+   3.836 s  proposta dissolvenza, fotogramma=25 %, valore=0.578, tempo=45 ms, stato=State.Paused
+   3.986 s  foto kimi11-file-dissolvenza-50.png: 1600 x 962, salvata=True, grab=118.0 ms
+   3.986 s  proposta dissolvenza, fotogramma=50 %, valore=0.875, tempo=90 ms, stato=State.Paused
+   4.126 s  foto kimi11-file-dissolvenza-75.png: 1600 x 962, salvata=True, grab=108.2 ms
+   4.126 s  proposta dissolvenza, fotogramma=75 %, valore=0.984, tempo=135 ms, stato=State.Paused
+   4.257 s  foto kimi11-file-dissolvenza-100.png: 1600 x 962, salvata=True, grab=98.6 ms
+   4.257 s  proposta dissolvenza, fotogramma=100 %, valore=1.000, tempo=180 ms, stato=State.Stopped
+   4.477 s  giro completato
+
+Avvisi Qt:
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x558b4fba5510 but 0x0 is focused (None:0)

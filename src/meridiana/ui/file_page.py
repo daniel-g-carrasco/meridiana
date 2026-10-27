@@ -13,8 +13,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-from PySide6.QtCore import QEasingCurve, QEvent, QRectF, QSize, Qt, QTimer, QVariantAnimation, Signal
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen, QRegion
+from PySide6.QtCore import QEvent, QRectF, QSize, Qt, QTimer, Signal
+from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy,
                                QStackedWidget, QToolButton, QVBoxLayout, QWidget)
 
@@ -140,15 +140,10 @@ class FilePage(QFrame):
         self.items: dict[str, QToolButton] = {}
         self.sections: dict[str, QWidget] = {}
         self.hidden_with_me: list = []              # what stood over the panels (Meridio), back when it closes
-        # it unrolls from the top when it opens (R157): a mask that grows, so that only the strip it uncovers is
-        # painted at each frame; nothing see-through, nothing laid out again (R132: the first frame stays quick)
-        self.unroll = QVariantAnimation(self)
-        self.unroll.setStartValue(0.0)
-        self.unroll.setEndValue(1.0)
-        self.unroll.setDuration(Motion.NORMAL)
-        self.unroll.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self.unroll.valueChanged.connect(self._unrolled)
-        self.unroll.finished.connect(self.clearMask)
+        # R178: the shared entrance, with the alternatives kept for the visual comparison
+        self.entrance = None
+        self.entrance_kind = "slide"
+        self.entrance_duration = Motion.NORMAL
         self._build()
         self.hide()
         window.installEventFilter(self)
@@ -421,25 +416,28 @@ class FilePage(QFrame):
         if assistant is not None and assistant.isVisible() and assistant.parentWidget() is self.host:
             assistant.hide()
             self.hidden_with_me = [assistant]
-        from .motion import reduced
-        self.unroll.stop()
-        if not reduced():
-            self._unrolled(0.0)
-        self.show()
-        self.raise_()
-        self.items[section].setFocus()
-        if not reduced():
-            self.unroll.start()
+        from . import motion
+
+        def present():
+            self.show()
+            self.raise_()
+            self.items[section].setFocus()
+
+        self.entrance = motion.enter(self, present, self.entrance_kind, self.entrance_duration)
+        if self.entrance is not None:
+            self.entrance.animation.finished.connect(self._entered)
         QTimer.singleShot(0, self, self.place)
 
-    def _unrolled(self, value) -> None:
-        """The page shown down to `value` of its height (a mask at least a pixel high: an empty one is none)."""
-        self.setMask(QRegion(0, 0, self.width(), max(1, round(self.height() * float(value)))))
+    def _entered(self) -> None:
+        self.entrance = None
 
     def close_page(self) -> None:
         if self.isVisible():
-            self.unroll.stop()
-            self.clearMask()
+            if self.entrance is not None:
+                self.entrance.animation.stop()
+                self.entrance.hide()
+                self.entrance.deleteLater()
+                self.entrance = None
             self.hide()
             for w in self.hidden_with_me:
                 w.show()

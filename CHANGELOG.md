@@ -239,6 +239,12 @@ software centres show.
   balance of its inputs; the report lists the strings by inverter and input with their modules.
 
 ### Changed
+- The File page enters with a 180 ms crossfade and a 16 px slide from the File button (R178): the shared entrance
+  paints two snapshots under an opaque veil, without effects or relayouts on each frame. Reduced motion shows the
+  page at once; closing stays immediate. The previous unrolling mask is gone.
+- The phase tools follow the order of the work (R180): Model separates drawing, editing, precision and module
+  layout; Comparison has the same name and commands in the result phases; groups have two to five available tools.
+  The rare automatic refill and Delete all strings stay in their menus and panels. Shortcuts are unchanged.
 - The strings are the designer's (task 23; R114-R119, Daniel's usage of 25/10/2026): nothing makes or rewrites them by
   itself any longer. «Propose the strings» (with PVsyst's strategies in its menu) and «Complete the strings» (only the
   modules in no string, on the free inputs first, the designer's strings kept) run once when asked, each one undo

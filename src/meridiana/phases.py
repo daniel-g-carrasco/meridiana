@@ -71,19 +71,19 @@ def phases() -> list[Phase]:
                 T("building_template", _("Template")),
                 T("tool_pitch", icon="pitch"),
                 T("tool_subfield", icon="subfield"),
-                T("tool_exclusion", icon="exclusion"),
-                T("tool_row", _("Row"), icon="row"))),
+                T("tool_exclusion", icon="exclusion"))),
             Group("edit", _("Edit"), (
                 T("tool_select", icon="select"),
                 T("tool_move", _("Move"), icon="move"),
-                T("tool_rotate", _("Rotate"), icon="rotate"),
+                T("tool_rotate", _("Rotate"), icon="rotate"))),
+            Group("precision", _("Precision"), (
                 T("tool_measure", icon="measure"),
                 T("square", _("Square")),
                 T("rectangle", _("Rectangle")))),
             Group("layout", _("Layout"), (
+                T("tool_row", _("Row"), icon="row"),
                 T("fill", _("Lay"), primary=True),
-                T("empty", _("Empty")),
-                T("refill", _("Lay again"))))),
+                T("empty", _("Empty"))))),
             "properties", ("layout", "shade", "import"),
             (_("What do you think of this layout?"),
              _("Are the distances from the edges right for the fire brigade?"),
@@ -95,8 +95,7 @@ def phases() -> list[Phase]:
             Group("strings", _("Strings"), (
                 T("strings_auto", _("Propose")),
                 T("strings_complete", _("Complete")),
-                T("strings_manual", _("Draw")),
-                T("strings_clear", _("Delete all"))))),
+                T("strings_manual", _("Draw"))))),
             "plant", ("strings", "connection"),
             (_("Are the strings right for this inverter?"),
              _("Does this string hold at -10 °C?"),
@@ -106,6 +105,7 @@ def phases() -> list[Phase]:
                 T("compute", _("Compute"), primary=True),
                 T("fetch_pvgis", _("From PVGIS")))),
             Group("compare", _("Comparison"), (
+                T("new_variant", _("New variant"), icon="copy-plus"),
                 T("pvgis_side", _("PVGIS beside"), planned="17c"),
                 T("compare_variants", _("Variants"))))),
             "results", ("production", "shade"),
@@ -114,34 +114,34 @@ def phases() -> list[Phase]:
              _("Is this specific yield plausible for the site?"))),
         Phase("consumption", 4, _("Consumption"), (
             Group("data", _("Data"), (
-                T("import_curve", _("Curve")),
-                T("consumption_base", _("Base")))),),
+                T("consumption_base", _("Base")),
+                T("import_curve", _("Curve")))),),
             "results", ("consumption",),
             (_("Does this load profile look plausible?"),
              _("How much of the production is used on site?"),
              _("Would a battery help here?"))),
         Phase("economics", 5, _("Balance and economics"), (
-            Group("parts", _("Components"), (
-                T("battery_catalog", _("Battery")),)),
             Group("compute", _("Computation"), (
+                T("battery_catalog", _("Battery")),
                 T("compute", _("Compute"), primary=True),)),
             Group("compare", _("Comparison"), (
+                T("new_variant", _("New variant"), icon="copy-plus"),
                 T("compare_variants", _("Variants")),))),
             "results", ("economics",),
             (_("Is the investment worth it?"),
              _("What weighs most on the payback?"),
              _("What would change with a battery?"))),
         Phase("report", 6, _("Report"), (
+            Group("compare", _("Comparison"), (
+                T("new_variant", _("New variant"), icon="copy-plus"),
+                T("compare_variants", _("Compare")))),
             Group("export", _("Export"), (
                 T("export_report", _("Report")),
                 T("export_dxf", _("DXF"), planned="relazione"),
                 T("export_ifc", _("IFC4")),
-                T("export_csv", _("CSV")))),
-            Group("variants", _("Variants"), (
-                T("compare_variants", _("Compare")),
-                T("save_revision", _("Revision")))),
-            Group("notes", _("Notes"), (
-                T("copy_notes", _("Copy the notes")),))),
+                T("export_csv", _("CSV")),
+                T("save_revision", _("Revision")),
+                T("copy_notes", _("Copy the notes"))))),
             "deliverables", ("rules",),
             (_("Is the report complete for the client?"),
              _("Which values are still at their default?"),

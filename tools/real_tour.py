@@ -137,8 +137,7 @@ class Tour(QObject):
         QTest.mouseClick(self.win.tabs.header.file_button, Qt.MouseButton.LeftButton)
         self.wait(90)
         self.shot("kimi12-giro-file-meta")
-        self.until(lambda: not self.win.file_page.unroll.isRunning() if hasattr(self.win.file_page.unroll, "isRunning")
-                   else self.win.file_page.unroll.state() == self.win.file_page.unroll.State.Stopped, 3)
+        self.until(lambda: self.win.file_page.entrance is None, 3)
         self.note(f"File aperto col clic: {(time.monotonic() - begun) * 1000:.1f} ms")
         QTest.mouseClick(self.win.file_page.items["preferences:appearance"], Qt.MouseButton.LeftButton)
         self.wait(250)
@@ -170,6 +169,35 @@ class Tour(QObject):
             raise RuntimeError("Escape did not close File")
         self.note("File chiuso con Esc")
 
+    def file_proposals(self) -> None:
+        from meridiana.ui import motion
+        page = self.win.file_page
+        was_reduced = motion.reduced()
+        motion.set_reduced(False)
+        self.set_theme("light")
+        try:
+            for kind, name in (("slide", "scorrimento"), ("sheet", "foglio"), ("fade", "dissolvenza")):
+                page.entrance_kind = kind
+                self.note(f"proposta {name}: durata={page.entrance_duration} ms")
+                self.shot(f"kimi11-file-{name}-0")
+                QTest.mouseClick(self.win.tabs.header.file_button, Qt.MouseButton.LeftButton)
+                if not self.until(lambda: page.entrance is not None and page.entrance.after is not None, 3):
+                    raise RuntimeError(f"No entrance for {kind}")
+                entrance = page.entrance
+                entrance.animation.pause()
+                for percent in (25, 50, 75, 100):
+                    entrance.animation.setCurrentTime(round(page.entrance_duration * percent / 100))
+                    self.wait(30)
+                    self.shot(f"kimi11-file-{name}-{percent}")
+                    self.note(f"proposta {name}, fotogramma={percent} %, valore={entrance.t:.3f}, "
+                              f"tempo={entrance.animation.currentTime()} ms, stato={entrance.animation.state()}")
+                QTest.keyClick(page, Qt.Key.Key_Escape)
+                self.wait(200)
+                if page.isVisible():
+                    raise RuntimeError(f"File did not close after {kind}")
+        finally:
+            motion.set_reduced(was_reduced)
+
     def toolbars(self) -> None:
         from meridiana.ui import theme
         label = self.args.toolbars
@@ -181,10 +209,10 @@ class Tour(QObject):
                 self.wait(300)
                 for pid in PHASES:
                     self.click_phase(pid)
-                    bar = self.win.bars[pid]
+                    card = self.win.tabs.header.card
                     for colour, italian in THEMES:
                         self.set_theme(colour)
-                        self.shot(f"kimi12-strumenti-{label}-{pid}-{italian}-{width}-{text_name}", bar)
+                        self.shot(f"kimi11-strumenti-{label}-{pid}-{italian}-{width}-{text_name}", card)
         theme.change_text_size("medium", self.app)
 
     def run(self) -> None:
@@ -193,6 +221,8 @@ class Tour(QObject):
                       f"schermi={[(s.name(), s.size().width(), s.size().height()) for s in self.app.screens()]}")
             if self.args.toolbars:
                 self.toolbars()
+            elif self.args.file_proposals:
+                self.file_proposals()
             else:
                 self.tour()
             self.note("giro completato")
@@ -202,7 +232,7 @@ class Tour(QObject):
             traceback.print_exc()
             code = 1
         finally:
-            suffix = f"-{self.args.toolbars}" if self.args.toolbars else ""
+            suffix = f"-{self.args.toolbars}" if self.args.toolbars else "-file" if self.args.file_proposals else ""
             destination = ROOT / "docs" / "revisioni" / f"kimi12-giro{suffix}.txt"
             destination.write_text("\n".join(self.lines + ["", "Avvisi Qt:"] + self.messages) + "\n",
                                    encoding="utf-8")
@@ -213,6 +243,7 @@ class Tour(QObject):
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--toolbars", metavar="LABEL", help="record every phase bar with this before/after label")
+    parser.add_argument("--file-proposals", action="store_true", help="record the three File entrances at five times")
     args = parser.parse_args()
     os.environ.setdefault("PYTHON_KEYRING_BACKEND", "keyring.backends.null.Keyring")
     i18n.setup("it")

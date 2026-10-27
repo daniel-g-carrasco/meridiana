@@ -601,29 +601,21 @@ class MainWindow(QMainWindow):
         if self.file_page.isVisible():
             self.file_page.close_page()
             return
-        # in one step, the window's painting held: the bar hidden and the page shown in the same frame (R98: for a
-        # moment the phase's tools came back between the two)
-        self.setUpdatesEnabled(False)
-        try:
-            self.bars_before_file = self.tabs.bars.isHidden()
-            self.tabs.header.set_file_open(True)
-            self.tabs.bars.hide()
-            self.tabs.header.file_button.setChecked(True)
-            self._settle_layouts()
-            self.file_page.open_page(section)
-        finally:
-            self.setUpdatesEnabled(True)
+        # In one call, without turning to the event loop: the bar and the page change in the same frame (R98).
+        # Updates stay enabled: motion.enter needs a real picture of the window, not the black grab Qt makes here.
+        self.bars_before_file = self.tabs.bars.isHidden()
+        self.tabs.header.set_file_open(True)
+        self.tabs.bars.hide()
+        self.tabs.header.file_button.setChecked(True)
+        self._settle_layouts()
+        self.file_page.open_page(section)
 
     def _file_page_closed(self) -> None:
-        self.setUpdatesEnabled(False)
-        try:
-            self.tabs.header.file_button.setChecked(False)
-            self.tabs.header.set_file_open(False)
-            if not self.bars_before_file:
-                self.tabs.bars.show()
-            self._settle_layouts()
-        finally:
-            self.setUpdatesEnabled(True)
+        self.tabs.header.file_button.setChecked(False)
+        self.tabs.header.set_file_open(False)
+        if not self.bars_before_file:
+            self.tabs.bars.show()
+        self._settle_layouts()
 
     def _settle_layouts(self) -> None:
         """The layouts the bar's going or coming asked for, done now and not on the loop's next turns: the header
@@ -1011,7 +1003,7 @@ class MainWindow(QMainWindow):
         # the icons of the commands the bars of the phases show (ui/icons.NAMES, by the command's id)
         for cid in ("compute", "fetch_pvgis", "inverter_catalog", "inverter_auto", "import_curve", "consumption_base",
                     "battery_catalog", "copy_notes", "export_report", "export_csv", "save_revision", "compare_variants",
-                    "strings_auto", "strings_complete", "strings_manual", "strings_clear", "import_ifc",
+                    "new_variant", "strings_auto", "strings_complete", "strings_manual", "strings_clear", "import_ifc",
                     "export_ifc"):
             self.commands[cid].setIcon(icons.icon(cid))
         # «Variant» in the right corner of the row of the phases (design 2.1): it is of every phase
