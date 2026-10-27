@@ -84,18 +84,19 @@ def texts() -> dict[str, Help]:
               "and the region's rules start from it. It can be moved only before anything is drawn, because the "
               "drawing is measured from it."),
             manual="1-modello.md#il-sito"),
-        "site.sun_window": h(
+        "subfield.sun_window": h(
             _("Row pitch from the sun"), _("The day and the hours in which no row shades the next one."),
-            _("On the design day, between those solar hours, no row shades the next one: the row pitch of the "
-              "tilted rows comes from it, and so do the shadows kept off by «Out of the obstacles' shadows». The "
-              "standards leave the choice to the designer: CEI 82-25/3 6.2 gives only the limit angle."),
+            _("On the design day and between those solar hours, no row shades the next one. The pitch and the "
+              "shadows kept out come from this window. The sub-field follows the project default until changed; "
+              "«Use for all sub-fields» applies the shown values everywhere. CEI 82-25/3 6.2 gives only the limit "
+              "angle."),
             ("CEI 82-25/3 6.2",), "1-modello.md#passo-delle-file-dal-sole"),
-        "site.sun_window.day": h(
+        "subfield.sun_window.day": h(
             _("Day"), _("21 December by default: the lowest sun of the year, the longest shadows."),
             _("The day on which the rows must not shade each other, with the hours in solar time (10 to 14 by "
               "default). A day nearer the equinox gives a shorter pitch and more modules, with some shade between "
               "the rows on winter mornings and evenings."),
-            manual="1-modello.md#giorno-e-ore-di-progetto"),
+            manual="1-modello.md#giorno-e-ore-del-sottocampo"),
         "site.rules": h(
             _("Connection and obligations"), _("What the rules need beyond the drawing: grid level, obligations, premises."),
             _("The connection level comes from the power unless you choose it (the distributor decides). The "
@@ -162,18 +163,18 @@ def texts() -> dict[str, Help]:
             _("Between rows"), _("The space between rows on the pitch; on tilted rows the sun gives it."),
             _("On a pitch the modules lie flush and the rows do not shade each other: the gap is a value, for the "
               "clamps and for walking. On tilted rows and on the ground the pitch comes from the sun instead: no "
-              "row shades the next on the design day, between the hours of the site."),
+              "row shades the next on the design day, between the sub-field's hours."),
             manual="1-modello.md#tra-le-file"),
         "subfield.pitch": h(
             _("Row pitch"), _("From the sun, given, or from the ground cover ratio."),
             _("«From the sun»: the shortest pitch with no row shading the next on the design day, between the "
-              "hours of the site. «Given pitch»: a distance you choose. «Ground cover ratio»: the depth of the "
+              "sub-field's hours. «Given pitch»: a distance you choose. «Ground cover ratio»: the depth of the "
               "modules across the row divided by the pitch."),
             ("CEI 82-25/3 6.2",), "1-modello.md#passo-delle-file"),
         "subfield.shade_free": h(
             _("Out of the obstacles' shadows"), _("Takes out the modules the obstacles shade on the design day."),
             _("No module where parapets, plant, chimneys, trees and the other buildings cast their shadow on the "
-              "design day, between the hours of the site: the same rule as the row pitch. When the obstacles "
+              "design day, between the sub-field's hours: the same rule as the row pitch. When the obstacles "
               "take much light, the Checks propose it and say how many modules it costs."),
             manual="1-modello.md#fuori-dalle-ombre-degli-ostacoli"),
         # the exclusion

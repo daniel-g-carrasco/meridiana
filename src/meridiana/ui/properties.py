@@ -188,10 +188,10 @@ def put(w: QWidget, value, force: bool = False) -> None:
 
 
 class Properties(QScrollArea):
-    """A page per kind of object. A new result or an edit of the object shown sets the values of the page in
-    place: the page is built again only for another object, or when the fields themselves change (a roof
-    type with a slope or without, a pitch from the sun or given). Building it again cost time at every edit,
-    and took away the field being written, with what was in it (study 12, I1, I4, P5)."""
+    """A page per kind and shape of object. A new result, an edit or another object of the same shape sets only
+    the values: the page is built again when the fields themselves change (a roof type with a slope or without,
+    a pitch from the sun or given). Building it again cost time and took away the field being written, with what
+    was in it (study 12, I1, I4, P5)."""
 
     edited = Signal(str, str, dict)        # kind, id, the fields changed
     action = Signal(str, str, str)         # what ("fill", "empty", "fit", "site"), kind, id
@@ -429,39 +429,6 @@ class Properties(QScrollArea):
         move.clicked.connect(lambda: self.action.emit("site", "site", ""))
         box.addWidget(move)
 
-        sun = Group(_("Row pitch from the sun"))
-        help_button(sun, "site.sun_window")
-        sform = make_form(sun)
-
-        def window():
-            return self._project().sun_window
-        day = whole(1, 31)
-        self._bind(day, lambda: int(window()["day"]))
-        month = whole(1, 12)
-        self._bind(month, lambda: int(window()["month"]))
-        start = self._bind(spin(0, 24, 0, " h", 1, 0.5), lambda: float(window()["start"]))
-        end = self._bind(spin(0, 24, 0, " h", 1, 0.5), lambda: float(window()["end"]))
-        row = QHBoxLayout()
-        row.addWidget(day)
-        row.addWidget(QLabel("/"))
-        row.addWidget(month)
-        holder = QWidget()
-        holder.setLayout(row)
-        register(holder, "site.sun_window.day")
-        sform.addRow(_("Day"), holder)
-        sform.addRow(_("From (solar time)"), start)
-        sform.addRow(_("To (solar time)"), end)
-        sform.addRow(self._note(_("No row shades the next one on that day between those hours. The standards leave "
-                                  "this choice to the designer (CEI 82-25/3 6.2 gives only the limit angle).")))
-
-        def send():
-            self.edited.emit("project", "", {"sun_window": {**window(), "day": day.value(), "month": month.value(),
-                                                           "start": start.value(), "end": end.value()}})
-        for wdg in (day, month):
-            wdg.editingFinished.connect(send)
-        for wdg in (start, end):
-            wdg.valueChanged.connect(lambda _v: send())
-        box.addWidget(sun)
         box.addWidget(self._rules_group())
         box.addStretch(1)
 
@@ -527,9 +494,11 @@ class Properties(QScrollArea):
     # building
 
     def show_building(self, b: model.Building) -> None:
+        if self.kind != "building" or self.oid != b.id:
+            self.drop_typing()
         self.kind, self.oid = "building", b.id
         self.shown = {"object": b}
-        if not self._same(("building", b.id, b.roof.type, len(b.footprint))):
+        if not self._same(("building", b.roof.type, len(b.footprint))):
             self._build_building(b)
         self._refresh()
 
@@ -700,18 +669,20 @@ class Properties(QScrollArea):
                       state: str = "ok", error: str = "") -> None:
         """`state` is where its layout stands (model.Project.layout_state): a layout to do again or failed
         is said above the figures, as FreeCAD marks the objects to recompute and those in error."""
+        if self.kind != "subfield" or self.oid != sf.id:
+            self.drop_typing()
         self.kind, self.oid = "subfield", sf.id
         self.shown = {"project": project, "object": sf, "result": result, "state": state, "error": error}
         p = sf.layout_params()
         flush = p.mounting in layout.FLUSH
-        shape = ("subfield", sf.id, flush, p.mounting == "canopy", None if flush else p.pitch_mode, sf.filled,
+        shape = ("subfield", flush, p.mounting == "canopy", None if flush else p.pitch_mode, sf.filled,
                  sf.manual, len(sf.ring), tuple((k, m["manufacturer"], m["model"]) for k, m in project.modules.items()))
         if not self._same(shape):
             self._build_subfield(project, sf)
         self._refresh()
 
     def _params(self) -> layout.Params:
-        return self._object().layout_params()
+        return self._project().fill_params(self._object())
 
     def _build_subfield(self, project: model.Project, sf: model.SubField) -> None:
         p = sf.layout_params()
@@ -818,6 +789,45 @@ class Properties(QScrollArea):
                 v = self._bind(spin(0.1, 1.0, 0.5, "", 2, 0.01), lambda: self._params().gcr)
                 v.valueChanged.connect(lambda x: self._emit("params.gcr", x))
                 pform.addRow(_("Ratio"), v)
+            elif p.pitch_mode == "sun":
+                self.sun_source = self._bind(QLabel(), lambda: _("This sub-field's own") if "window" in
+                                             self._object().params else _("Project default"))
+                register(self.sun_source, "subfield.sun_window")
+                pform.addRow(self.sun_source)
+
+                def window():
+                    return self._params().window
+                self.sun_day = self._bind(whole(1, 31), lambda: window().day)
+                self.sun_month = self._bind(whole(1, 12), lambda: window().month)
+                self.sun_start = self._bind(spin(0, 24, 0, " h", 1, 0.5), lambda: window().start)
+                self.sun_end = self._bind(spin(0, 24, 0, " h", 1, 0.5), lambda: window().end)
+                row = QHBoxLayout()
+                row.addWidget(self.sun_day)
+                row.addWidget(QLabel("/"))
+                row.addWidget(self.sun_month)
+                holder = QWidget()
+                holder.setLayout(row)
+                register(holder, "subfield.sun_window.day")
+                pform.addRow(_("Day"), holder)
+                pform.addRow(_("From (solar time)"), self.sun_start)
+                pform.addRow(_("To (solar time)"), self.sun_end)
+
+                def values():
+                    return {"day": self.sun_day.value(), "month": self.sun_month.value(),
+                            "start": self.sun_start.value(), "end": self.sun_end.value()}
+
+                def send():
+                    self._emit("params.window", values())
+                for wdg in (self.sun_day, self.sun_month):
+                    wdg.editingFinished.connect(send)
+                for wdg in (self.sun_start, self.sun_end):
+                    wdg.valueChanged.connect(lambda _v: send())
+                self.sun_all = QPushButton(_("Use for all sub-fields"))
+                self.sun_all.setToolTip(_("Make this the project default and use it in every sub-field"))
+                self.sun_all.clicked.connect(lambda: self.edited.emit("sun_window", self.oid, {"window": values()}))
+                pform.addRow(self.sun_all)
+                pform.addRow(self._note(_("No row shades the next one on that day between those hours. The standards "
+                                          "leave this choice to the designer.")))
             box.addWidget(pitch)
 
         box.addWidget(self._sides_group(len(sf.ring), lambda: self._object().ring, "ring"))
@@ -896,9 +906,11 @@ class Properties(QScrollArea):
     # exclusion
 
     def show_exclusion(self, e: model.ExclusionItem) -> None:
+        if self.kind != "exclusion" or self.oid != e.id:
+            self.drop_typing()
         self.kind, self.oid = "exclusion", e.id
         self.shown = {"object": e}
-        if not self._same(("exclusion", e.id, e.height is None, len(e.ring))):
+        if not self._same(("exclusion", e.height is None, len(e.ring))):
             self._build_exclusion(e)
         self._refresh()
 

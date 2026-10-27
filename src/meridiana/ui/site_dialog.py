@@ -19,7 +19,7 @@ class SiteDialog(QDialog):
 
     def __init__(self, site: model.Site, parent=None, network: bool = True):
         super().__init__(parent)
-        self.network = network                  # off in Preferences > Privacy: coordinates only
+        self.network = network                  # off in Settings > Privacy: coordinates only
         self.setWindowTitle(_("Find the site"))
         self.site = copy.copy(site)
         box = QVBoxLayout(self)
@@ -63,7 +63,7 @@ class SiteDialog(QDialog):
             self.status.setText(_("Coordinates taken."))
             return
         if not self.network:
-            self.status.setText(_("The address search is off in Preferences > Privacy: type the coordinates."))
+            self.status.setText(_("The address search is off in Settings > Privacy: type the coordinates."))
             return
         if not self.throttle.allow():
             self.status.setText(_("One search a second, please (OpenStreetMap's rule)."))

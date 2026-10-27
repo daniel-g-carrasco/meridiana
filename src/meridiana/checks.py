@@ -292,7 +292,7 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
                 costly = False
                 # by hand the shadows are a check of their own (manual_items): the option would move nothing
                 if sf is not None and not sf.layout_params().shade_free and not sf.manual:
-                    w = project.sun_window
+                    w = vars(project.fill_params(sf).window)
                     fix = ("edit", "subfield", sfid, {"params.shade_free": True})
                     now = getattr(results.get(sfid), "count", None)
                     # the energy job counts them in its thread; computed here only when it did not
@@ -480,7 +480,7 @@ def manual_items(project, sf, result, shade=None) -> list[Item]:
         n = in_shade(project, sf, result, shade)
         if n:
             from .i18n import ngettext
-            w = project.sun_window
+            w = vars(p.window)
             items.append(Item("warn", "shade", ngettext("{name}: {n} module in the shade on the design day",
                                                         "{name}: {n} modules in the shade on the design day", n).format(
                 name=sf.name, n=n), _("Meridiana: shading of the obstacles"), here, fix, label,

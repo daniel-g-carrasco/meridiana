@@ -3,10 +3,10 @@ its own over the window, as Office's and Revit's File (the target, docs/studio/1
 menu bar is hidden and Alt shows it (ui/menubar.py); the page is reached from the «File» button at the left of
 the phases' row, and Esc or «Back to the project» closes it.
 
-On the left the list: Back, New, Open, Save, Save as, Save a revision, Import, Export, Catalogues, Preferences,
-Help and manual, Quit. The commands start at once (the page closes first); Open, Import, Export, Catalogues and
-Help open their section on the right, each thing a tile with its icon, what it does, the formats it takes and its
-button. Every button starts one of the window's commands: the page adds no way of doing things, only a place."""
+On the left the list: Back, New, Open, Save, Save as, Save a revision, Import, Export, Catalogues, Settings with its
+seven sections, Help and manual, Quit. The commands start at once (the page closes first); Open, Import, Export,
+Catalogues, Settings and Help open their section on the right. Every button starts one of the window's commands or
+shows one of these places."""
 
 from __future__ import annotations
 
@@ -247,8 +247,13 @@ class FilePage(QFrame):
         self._item("export", "upload", _("Export"))
         self._rule()
         self._item("catalogues", "library", _("Catalogues"))
-        self._item("preferences", "settings", _("Preferences"), self._keys("preferences"),
-                   self._command("preferences"))
+        self._item("preferences", "settings", _("Settings"), self._keys("preferences"))
+        for key, icon, title in (
+                ("appearance", "eye", _("Appearance")), ("navigation", "select", _("Navigation")),
+                ("keyboard", "keyboard", _("Keyboard")), ("assistant", "wand", _("Assistant")),
+                ("report", "file-text", _("Report")), ("maps", "map", _("Maps")),
+                ("privacy", "info", _("Privacy"))):
+            self._item(f"preferences:{key}", icon, title)
         self._item("help", "circle-question-mark", _("Help and manual"), "F1")
         self.nav_box.addStretch(1)
         self._item("quit", "log-out", _("Quit"), self._keys("quit"), self._command("quit"))
@@ -330,6 +335,16 @@ class FilePage(QFrame):
         cats.finish()
         self.sections["catalogues"] = cats
 
+        # Settings: the former dialog's pages, applied immediately and undoable while this page stays alive.
+        from .preferences import Preferences
+        settings = Section(_("Settings"), _("Every choice applies and is saved at once. Undo the last change or "
+                                             "restore the defaults of one section."))
+        self.settings = Preferences(w.cfg, w.bindings, w.theme, w)
+        self.settings.changed.connect(w._apply_preferences)
+        settings.box.addSpacing(Space.XL)
+        settings.box.addWidget(self.settings, 1)
+        self.sections["preferences"] = settings
+
         # Help
         helps = Section(_("Help and manual"), _("How Meridiana works and how it computes, inside the program."))
         helps.group(_("Help"), [
@@ -348,14 +363,18 @@ class FilePage(QFrame):
     # showing
 
     def show_section(self, key: str) -> None:
-        if key not in self.sections:
+        section, _, page = key.partition(":")
+        if section not in self.sections:
             return
         if key == "open":
             self._recent()
-        self.body.setCurrentWidget(self.sections[key])
+        elif section == "preferences":
+            self.settings._populate()              # the maps read the site of the project open now
+            self.settings.show_page(page)
+        self.body.setCurrentWidget(self.sections[section])
         for k, b in self.items.items():
             if b.isCheckable():
-                b.setChecked(k == key)
+                b.setChecked(k == key or (k == section and not page))
 
     def _recent(self) -> None:
         """The projects opened last, newest first, those still there."""

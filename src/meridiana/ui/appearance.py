@@ -116,7 +116,7 @@ class Appearance(QWidget):
         self.backgrounds.setCurrentIndex(max(0, self.backgrounds.findData(cfg.backgrounds)))
         form.addRow(_("Backgrounds"), self.backgrounds)
         # the size of the text (R133, Daniel 26/10/2026: «farei 12, 13 e 14 come piccolo, medio e grande»): the whole
-        # window with OK (theme.change_text_size)
+        # window at once (theme.change_text_size)
         self.text_size = QComboBox()
         for key, text in text_size_names().items():
             self.text_size.addItem(text, key)

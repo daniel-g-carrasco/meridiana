@@ -350,7 +350,7 @@ class PhaseHeader(QWidget):
         self.file_button.setIconSize(QSize(Icon.CONTROL - 1, Icon.CONTROL - 1))
         self.file_button.setFixedHeight(Button.PUSH[0])         # a push button's height (R121)
         self.file_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.file_button.setToolTip(_("New, open, save, import, export, catalogues, preferences and help"))
+        self.file_button.setToolTip(_("New, open, save, import, export, catalogues, settings and help"))
         self.file_button.toggled.connect(lambda _on: self._file_icon())
         head.addWidget(self.file_button, 0, Qt.AlignmentFlag.AlignVCenter)
         head.addSpacing(Space.L)

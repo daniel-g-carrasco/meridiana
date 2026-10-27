@@ -142,6 +142,22 @@ class Gather(unittest.TestCase):
         self.assertIn("Copertura: the obstacles take 4.8% of the sub-field's annual irradiance after far shading",
                       shaded[0].text)
         self.assertIn("for 4.8% obstacle shade", shaded[0].fix_label)
+    def test_the_shade_texts_use_the_subfields_own_window(self):
+        from types import SimpleNamespace
+        from unittest import mock
+        p = self.project()
+        sf = p.subfields[0]
+        sf.params["window"] = {**p.sun_window, "day": 20, "month": 11, "start": 11.0, "end": 13.0}
+        results = {sf.id: p.fill(sf)}
+        sim = SimpleNamespace(arrays=[{"key": "s1.0", "name": "Copertura", "obstacle_shading": 0.06}], notes=[],
+                              p_stc_kw=50.0)
+        shade = next(i for i in checks.gather(p, results, {"sim": sim}) if i.area == "shade")
+        self.assertIn("20/11", shade.fix_label)
+        sf.manual = True
+        with mock.patch.object(checks, "in_shade", return_value=1):
+            item = next(i for i in checks.manual_items(p, sf, results[sf.id], shade=_shadows()) if i.area == "shade")
+        self.assertIn("20/11", item.detail)
+        self.assertIn("11:00", item.detail)
 
     def test_the_count_out_of_the_shadows_comes_from_the_energy_job(self):
         from types import SimpleNamespace

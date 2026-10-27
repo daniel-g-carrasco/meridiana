@@ -32,6 +32,7 @@ def field_label(path: str, kind: str = "") -> str:
         "params.flush_row_gap": _("gap between rows"), "params.table_modules": _("modules per table"),
         "params.table_gap": _("gap between tables"), "params.pitch_mode": _("row pitch"),
         "params.pitch": pgettext("rows", "Pitch"), "params.gcr": _("ground cover ratio"),
+        "params.window": _("sun window"),
         "kind": _("kind"), "clearance": _("clearance"), "sun_window": _("sun window"), "parapet": _("parapet"),
         "use_near": _("shading of the obstacles"), "footprint": _("outline"), "ring": _("outline"),
         "roof.edges": _("eaves and gable ends"), "roof.ridge_height": _("ridge height"),

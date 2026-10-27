@@ -3,13 +3,13 @@ sources that cover the site in hand and every source of the program with its lic
 in a card), and the designer's own sources: an XYZ template, or a WMS or WMTS read from its capabilities, with the
 attribution its licence asks for (without it the source is not used), the licence and where it was read, and the key
 for the sources that want one (`{key}` in the address; the key goes to the system's keyring, never to the settings).
-The capabilities are asked only when Preferences > Privacy lets the map servers be reached."""
+The capabilities are asked only when Settings > Privacy lets the map servers be reached."""
 
 from __future__ import annotations
 
 from datetime import date
 
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QUrl, Signal
 from PySide6.QtWidgets import (QComboBox, QFormLayout, QHBoxLayout, QInputDialog, QLabel, QLineEdit, QPushButton,
                                QSpinBox, QVBoxLayout, QWidget)
 
@@ -40,9 +40,11 @@ def _rows(sources) -> list:
 
 
 class MapsPage(QWidget):
+    changed = Signal()
+
     def __init__(self, cfg, site=None, network=None, parent=None):
         """`site`: (lat, lon) of the project in hand, None for none; `network()`: whether the map servers may be
-        asked (Preferences > Privacy, as the dialog shows it now)."""
+        asked (Settings > Privacy, as the dialog shows it now)."""
         super().__init__(parent)
         from PySide6.QtNetwork import QNetworkAccessManager
         self.site = site
@@ -321,6 +323,7 @@ class MapsPage(QWidget):
         self._fill(len(self.custom) - 1)
         self.name.setFocus()
         self.name.selectAll()
+        self.changed.emit()
 
     def _remove(self) -> None:
         if self.current < 0:
@@ -334,6 +337,7 @@ class MapsPage(QWidget):
             pass                                    # no keyring: no key was ever kept for it
         self._fill(min(self.current, len(self.custom) - 1))
         self._fill_default(self.default.currentData())
+        self.changed.emit()
 
     # the capabilities
 
@@ -346,7 +350,7 @@ class MapsPage(QWidget):
             self.read_state.setText(_("Paste the address of the service first."))
             return
         if not self.network():
-            self.read_state.setText(_("The map servers are switched off in Preferences > Privacy."))
+            self.read_state.setText(_("The map servers are switched off in Settings > Privacy."))
             return
         from PySide6.QtNetwork import QNetworkRequest
 

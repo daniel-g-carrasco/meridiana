@@ -336,6 +336,30 @@ class Window(Journeys):
         self.assertTrue(self.win.view3d.fitted)
         self.assertIn("tilt", self.win.undo.undoText())
 
+    def a_subfields_sun_window_lays_differently_and_is_undone_redone_and_used_by_all(self):
+        sf = self.win.project.subfields[0]
+        original = self.win.results[self.sid].pitch
+        own = {**self.win.project.sun_window, "start": 9.0, "end": 15.0}
+        self.win._edited("subfield", self.sid, {"params.window": own})
+        self.assertEqual(sf.params["window"], own)
+        self.assertTrue(wait_until(self.app, lambda: self.win.results[self.sid].pitch != original))
+        self.win.undo.undo()
+        self.assertNotIn("window", self.win.project.subfields[0].params)
+        self.assertTrue(wait_until(self.app, lambda: self.win.results[self.sid].pitch == original))
+        self.win.undo.redo()
+        self.assertEqual(self.win.project.subfields[0].params["window"], own)
+        self.assertTrue(wait_until(self.app, lambda: self.win.results[self.sid].pitch != original))
+        before = self.win.project.sun_window
+        self.win._edited("sun_window", self.sid, {"window": own})
+        self.assertEqual(self.win.project.sun_window, own)
+        self.assertTrue(all("window" not in s.params for s in self.win.project.subfields))
+        self.win.undo.undo()
+        self.assertEqual(self.win.project.sun_window, before)
+        self.assertEqual(self.win.project.subfields[0].params["window"], own)
+        self.win.undo.redo()
+        self.assertEqual(self.win.project.sun_window, own)
+        self.assertNotIn("window", self.win.project.subfields[0].params)
+
     def the_sun_of_the_3d_view_starts_on_the_design_day_and_moves(self):
         """The window's share: the site of the project opened, the bar joined to the 3D view. The bar itself, the
         night, the day played: widget/test_sunbar.py."""
@@ -900,7 +924,7 @@ class Window(Journeys):
         self.assertEqual(win.commands["fit"].shortcut().toString(), "Ctrl+L")
         self.assertEqual(win.commands["assistant"].shortcuts(), [])     # not both: Qt would run neither
         self.assertIn("Ctrl+L", win.hint.text())
-        self.assertIn("Preferences", win.hint.text())
+        self.assertIn("Settings", win.hint.text())
         win._set_shortcuts(win.bindings)                    # OK in the preferences
         self.assertEqual(cfg.shortcuts["future_command"], ["Ctrl+K"])  # a newer version's command keeps its key
         self.assertEqual(cfg.shortcuts["fit"], ["Ctrl+L"])

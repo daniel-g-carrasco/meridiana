@@ -16,8 +16,18 @@ software centres show.
   25,000 m/pixel, bends low-zoom tiles in matching pieces, keeps the site's hemisphere only and marks the project.
   Natural Earth 1:110m (177 countries, 209,310 compressed bytes, public domain) draws oceans, borders, names and a
   graticule below the tiles and alone offline or with no background.
-- Size of the text (R133): Small, Medium or Large in Preferences > Appearance moves the whole type scale a
-  pixel down or up, the text at 12, 13 or 14 px, at once in the open window (settings format 21).
+- Reused Properties pages (R2): switching between objects of the same kind and shape updates only the values and keeps
+  the scroll position. Unconfirmed text never leaks into the next object. On the large generated project, median
+  switches fell from 57.370 to 1.773 ms between sub-fields, 24.354 to 0.843 ms between buildings and 44.541 to
+  1.495 ms between coplanar sub-fields.
+- Sub-field sun windows (R172): the design day and solar hours moved from Site to Sub-field, under Row pitch when it
+  is computed from the sun. Each sub-field follows the project default until changed; Use for all sub-fields updates
+  that default and clears individual windows in one undoable step. Layouts, shading checks and the assistant read the
+  sub-field's effective window.
+- Settings inside File (R133): the former Preferences window is now a page with Appearance, Navigation, Keyboard,
+  Assistant, Report, Maps and Privacy. Every choice applies and is saved at once; Undo the last change and restore a
+  section's defaults with an inline confirmation. Size of the text: Small, Medium or Large moves the whole type scale
+  a pixel down or up, the text at 12, 13 or 14 px, at once in the open window (settings format 21).
 - Dialog symbols (R169): Discard has a bin on red and Cancel an arrow going back on grey, in every dialog;
   No and Close keep the cross.
 - Separate lanes for overlapping string jumps (R134): routes that share corners or segments move apart by a

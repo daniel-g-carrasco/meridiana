@@ -346,6 +346,13 @@ class Tools(unittest.TestCase):
         schema = tools.SPECS["read_checks"]
         self.assertIn("object_id", schema["parameters"]["properties"])
         self.assertIn("filtered", schema["description"])
+    def test_the_selected_subfield_reads_its_effective_sun_window(self):
+        host = problems_host(selection=("subfield", "s1"))
+        sf = host.project.subfields[0]
+        sf.params["window"] = {**host.project.sun_window, "day": 20, "month": 11, "start": 11.0, "end": 13.0}
+        out = json.loads(tools.run("read_selection", {}, host, tools.State()).content)
+        self.assertEqual(out["params"]["window"], sf.params["window"])
+        self.assertFalse(out["window_from_project"])
 
     def test_a_proposal_of_a_field_not_allowed_or_out_of_range_comes_back_with_the_fields(self):
         host = problems_host(selection=("subfield", "s1"))

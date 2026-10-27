@@ -121,7 +121,7 @@ class QuestionMarks(unittest.TestCase):
         from PySide6.QtWidgets import QGroupBox
 
         from meridiana.ui.help_box import HelpButton
-        wanted = {"site": {"Row pitch from the sun": "site.sun_window", "Connection and obligations": "site.rules"},
+        wanted = {"site": {"Connection and obligations": "site.rules"},
                   "building": {"Fire brigade": "building.fire", "Sides": "sides"},
                   "subfield tilted": {"Gaps and margins": "subfield.gaps", "Row pitch": "subfield.pitch",
                                       "Sides": "sides"}}
@@ -142,7 +142,7 @@ class QuestionMarks(unittest.TestCase):
                     self.assertLessEqual(b.geometry().right(), group.width())
                     self.assertGreater(b.x(), group.width() // 2)                  # on the right
                     self.assertLess(b.y() + b.height() // 2, 22)                   # on the title's row
-        self.assertEqual(found, 7)
+        self.assertEqual(found, 6)
 
     def test_the_fields_that_do_not_explain_themselves_have_their_phrase_under_them(self):
         from meridiana.ui.help_box import HintLabel
