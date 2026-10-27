@@ -241,9 +241,10 @@ class HelpInTheWindow(unittest.TestCase):
                         seen.add(hid)
                 if isinstance(w, HelpButton):
                     self.assertIn(w.hid, known)
-        for hid in ("site", "site.sun_window", "site.sun_window.day", "site.rules", "building", "building.fire",
+        for hid in ("site", "site.rules", "building", "building.fire",
                     "sides", "subfield", "subfield.mounting", "subfield.stack", "subfield.gaps", "subfield.edge",
-                    "subfield.row_gap", "subfield.pitch", "subfield.shade_free", "exclusion", "production.energy",
+                    "subfield.row_gap", "subfield.pitch", "subfield.sun_window", "subfield.sun_window.day",
+                    "subfield.shade_free", "exclusion", "production.energy",
                     "production.specific_yield", "production.pr", "production.power", "production.pvgis",
                     "production.losses", "consumption.year", "consumption.bands", "consumption.shape",
                     "economics.self_consumption", "economics.self_sufficiency", "economics.first_year",

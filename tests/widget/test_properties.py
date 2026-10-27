@@ -58,8 +58,9 @@ class NarrowPanel(unittest.TestCase):
         props = Properties()
         sent = []
         props.edited.connect(lambda kind, oid, changes: sent.append(changes))
-        for show in (lambda: props.show_site(p, False), lambda: props.show_building(b),
-                     lambda: props.show_subfield(p, p.subfields[0], None)):
+        props.show_site(p, False)
+        self.assertFalse(props.widget().findChildren(QSpinBox))       # no sun window here any more
+        for show in (lambda: props.show_building(b), lambda: props.show_subfield(p, p.subfields[0], None)):
             show()
             fields = props.widget().findChildren(QSpinBox)
             self.assertTrue(fields)
@@ -94,6 +95,23 @@ class PanelAlone(unittest.TestCase):
     def turn(self, n: int = 3) -> None:
         for _ in range(n):
             self.app.processEvents()
+
+    def test_the_sun_window_belongs_to_the_subfield_and_can_be_used_by_all(self):
+        from PySide6.QtWidgets import QGroupBox
+        p, props = self.p, self.props
+        props.show_site(p, False)
+        self.assertNotIn("Row pitch from the sun", [g.title() for g in props.widget().findChildren(QGroupBox)])
+        sf = p.subfields[0]
+        sf.params["mounting"] = "tilted_ballasted"
+        props.show_subfield(p, sf, None)
+        self.assertEqual(props.sun_source.text(), "Project default")
+        props.sun_day.setValue(20)
+        props.sun_start.setValue(11.0)
+        self.assertEqual(self.sent[-1], ("subfield", sf.id, {"params.window": {
+            "day": 20, "month": 12, "start": 11.0, "end": 14.0}}))
+        props.sun_all.click()
+        self.assertEqual(self.sent[-1], ("sun_window", sf.id, {"window": {
+            "day": 20, "month": 12, "start": 11.0, "end": 14.0}}))
 
     def test_a_panel_destroyed_before_the_refocus_gets_no_late_call(self):
         from unittest import mock

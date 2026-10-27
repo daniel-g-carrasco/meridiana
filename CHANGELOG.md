@@ -10,6 +10,10 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- Sub-field sun windows (R172): the design day and solar hours moved from Site to Sub-field, under Row pitch when it
+  is computed from the sun. Each sub-field follows the project default until changed; Use for all sub-fields updates
+  that default and clears individual windows in one undoable step. Layouts, shading checks and the assistant read the
+  sub-field's effective window.
 - Settings inside File (R133): the former Preferences window is now a page with Appearance, Navigation, Keyboard,
   Assistant, Report, Maps and Privacy. Every choice applies and is saved at once; Undo the last change and restore a
   section's defaults with an inline confirmation. Size of the text: Small, Medium or Large moves the whole type scale

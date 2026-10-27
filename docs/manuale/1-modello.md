@@ -10,11 +10,11 @@ Il sito è l'origine del disegno, con latitudine e longitudine. Il sole, il mete
 
 ### Passo delle file dal sole
 
-Il giorno e le ore di progetto valgono per tutto il progetto. In quel giorno, tra quelle ore, nessuna fila fa ombra alla successiva: da qui viene il passo dei sottocampi a file inclinate con il passo «Dal sole», e da qui vengono le ombre che «Fuori dalle ombre degli ostacoli» evita. Le norme lasciano la scelta al progettista: la CEI 82-25/3, 6.2 dà solo l'angolo limite (riferimento citato in `checks.py`).
+Il giorno e le ore si scelgono nel sottocampo, sotto «Passo delle file», quando il passo è «Dal sole». In quel giorno, tra quelle ore, nessuna fila fa ombra alla successiva: da qui viene il passo dei sottocampi a file inclinate, e da qui vengono le ombre che «Fuori dalle ombre degli ostacoli» evita. Le norme lasciano la scelta al progettista: la CEI 82-25/3, 6.2 dà solo l'angolo limite (riferimento citato in `checks.py`).
 
-#### Giorno e ore di progetto
+#### Giorno e ore del sottocampo
 
-Il predefinito è il 21 dicembre, dalle 10 alle 14 in tempo solare vero, controllato ogni 10 minuti (valori predefiniti di Meridiana, `sun.py`, `DesignWindow`). Il 21 dicembre ha il sole più basso dell'anno: le ombre sono le più lunghe e il passo il più largo. Un giorno più vicino all'equinozio dà un passo più corto e più moduli, con un po' d'ombra tra le file d'inverno al mattino e alla sera; la perdita si legge in Producibilità, tra le perdite (ombre tra le file).
+Il predefinito del progetto è il 21 dicembre, dalle 10 alle 14 in tempo solare vero, controllato ogni 10 minuti (valori predefiniti di Meridiana, `sun.py`, `DesignWindow`). Finché il sottocampo usa «Predefinito del progetto», segue questi valori; cambiando giorno o ore si crea la sua finestra propria. «Usa per tutti i sottocampi» copia la finestra mostrata nel predefinito del progetto e toglie le finestre proprie degli altri sottocampi, in un solo passo di Annulla. Il 21 dicembre ha il sole più basso dell'anno: le ombre sono le più lunghe e il passo il più largo. Un giorno più vicino all'equinozio dà un passo più corto e più moduli, con un po' d'ombra tra le file d'inverno al mattino e alla sera; la perdita si legge in Producibilità, tra le perdite (ombre tra le file).
 
 ### Connessione e obblighi
 
@@ -104,7 +104,7 @@ Sulla falda i moduli sono complanari e le file non si fanno ombra: la distanza �
 
 Per le file inclinate e a terra:
 
-- **Dal sole**: il passo più corto per cui nessuna fila fa ombra alla successiva nel giorno di progetto, tra le ore del sito (vedi [Giorno e ore di progetto](#giorno-e-ore-di-progetto)). È il predefinito (`layout.py`, `pitch_mode`).
+- **Dal sole**: il passo più corto per cui nessuna fila fa ombra alla successiva nel giorno scelto, tra le ore del sottocampo (vedi [Giorno e ore del sottocampo](#giorno-e-ore-del-sottocampo)). È il predefinito (`layout.py`, `pitch_mode`).
 - **Passo assegnato**: una distanza scelta da te, da fila a fila.
 - **Rapporto di copertura (GCR)**: la profondità dei moduli di traverso alla fila divisa per il passo; 0,5 per impostazione (`layout.py`, `gcr`).
 

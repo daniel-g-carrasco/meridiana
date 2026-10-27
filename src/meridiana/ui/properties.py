@@ -56,6 +56,7 @@ def field_label(path: str, kind: str = "") -> str:
         "params.edge": _("edge margin"), "params.shade_free": _("out of the shadows"), "params.flush_row_gap": _("gap between rows"),
         "params.table_modules": _("modules per table"), "params.table_gap": _("gap between tables"),
         "params.pitch_mode": _("row pitch"), "params.pitch": _("row pitch"), "params.gcr": _("ground cover ratio"),
+        "params.window": _("sun window"),
         "kind": _("kind"), "clearance": _("clearance"), "sun_window": _("sun window"), "parapet": _("parapet"),
         "use_near": _("shading of the obstacles"), "footprint": _("outline"), "ring": _("outline"),
         "roof.edges": _("eaves and gable ends"), "roof.ridge_height": _("ridge height"),
@@ -460,39 +461,6 @@ class Properties(QScrollArea):
         move.clicked.connect(lambda: self.action.emit("site", "site", ""))
         box.addWidget(move)
 
-        sun = Group(_("Row pitch from the sun"))
-        help_button(sun, "site.sun_window")
-        sform = make_form(sun)
-
-        def window():
-            return self._project().sun_window
-        day = whole(1, 31)
-        self._bind(day, lambda: int(window()["day"]))
-        month = whole(1, 12)
-        self._bind(month, lambda: int(window()["month"]))
-        start = self._bind(spin(0, 24, 0, " h", 1, 0.5), lambda: float(window()["start"]))
-        end = self._bind(spin(0, 24, 0, " h", 1, 0.5), lambda: float(window()["end"]))
-        row = QHBoxLayout()
-        row.addWidget(day)
-        row.addWidget(QLabel("/"))
-        row.addWidget(month)
-        holder = QWidget()
-        holder.setLayout(row)
-        register(holder, "site.sun_window.day")
-        sform.addRow(_("Day"), holder)
-        sform.addRow(_("From (solar time)"), start)
-        sform.addRow(_("To (solar time)"), end)
-        sform.addRow(self._note(_("No row shades the next one on that day between those hours. The standards leave "
-                                  "this choice to the designer (CEI 82-25/3 6.2 gives only the limit angle).")))
-
-        def send():
-            self.edited.emit("project", "", {"sun_window": {**window(), "day": day.value(), "month": month.value(),
-                                                           "start": start.value(), "end": end.value()}})
-        for wdg in (day, month):
-            wdg.editingFinished.connect(send)
-        for wdg in (start, end):
-            wdg.valueChanged.connect(lambda _v: send())
-        box.addWidget(sun)
         box.addWidget(self._rules_group())
         box.addStretch(1)
 
@@ -742,7 +710,7 @@ class Properties(QScrollArea):
         self._refresh()
 
     def _params(self) -> layout.Params:
-        return self._object().layout_params()
+        return self._project().fill_params(self._object())
 
     def _build_subfield(self, project: model.Project, sf: model.SubField) -> None:
         p = sf.layout_params()
@@ -850,6 +818,45 @@ class Properties(QScrollArea):
                 v = self._bind(spin(0.1, 1.0, 0.5, "", 2, 0.01), lambda: self._params().gcr)
                 v.valueChanged.connect(lambda x: self._emit("params.gcr", x))
                 pform.addRow(_("Ratio"), v)
+            elif p.pitch_mode == "sun":
+                self.sun_source = self._bind(QLabel(), lambda: _("This sub-field's own") if "window" in
+                                             self._object().params else _("Project default"))
+                register(self.sun_source, "subfield.sun_window")
+                pform.addRow(self.sun_source)
+
+                def window():
+                    return self._params().window
+                self.sun_day = self._bind(whole(1, 31), lambda: window().day)
+                self.sun_month = self._bind(whole(1, 12), lambda: window().month)
+                self.sun_start = self._bind(spin(0, 24, 0, " h", 1, 0.5), lambda: window().start)
+                self.sun_end = self._bind(spin(0, 24, 0, " h", 1, 0.5), lambda: window().end)
+                row = QHBoxLayout()
+                row.addWidget(self.sun_day)
+                row.addWidget(QLabel("/"))
+                row.addWidget(self.sun_month)
+                holder = QWidget()
+                holder.setLayout(row)
+                register(holder, "subfield.sun_window.day")
+                pform.addRow(_("Day"), holder)
+                pform.addRow(_("From (solar time)"), self.sun_start)
+                pform.addRow(_("To (solar time)"), self.sun_end)
+
+                def values():
+                    return {"day": self.sun_day.value(), "month": self.sun_month.value(),
+                            "start": self.sun_start.value(), "end": self.sun_end.value()}
+
+                def send():
+                    self._emit("params.window", values())
+                for wdg in (self.sun_day, self.sun_month):
+                    wdg.editingFinished.connect(send)
+                for wdg in (self.sun_start, self.sun_end):
+                    wdg.valueChanged.connect(lambda _v: send())
+                self.sun_all = QPushButton(_("Use for all sub-fields"))
+                self.sun_all.setToolTip(_("Make this the project default and use it in every sub-field"))
+                self.sun_all.clicked.connect(lambda: self.edited.emit("sun_window", self.oid, {"window": values()}))
+                pform.addRow(self.sun_all)
+                pform.addRow(self._note(_("No row shades the next one on that day between those hours. The standards "
+                                          "leave this choice to the designer.")))
             box.addWidget(pitch)
 
         box.addWidget(self._sides_group(len(sf.ring), lambda: self._object().ring, "ring"))

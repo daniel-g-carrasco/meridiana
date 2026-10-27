@@ -278,7 +278,7 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
                 fix, label = (), ""
                 # by hand the shadows are a check of their own (manual_items): the option would move nothing
                 if sf is not None and not sf.layout_params().shade_free and not sf.manual:
-                    w = project.sun_window
+                    w = vars(project.fill_params(sf).window)
                     fix = ("edit", "subfield", sfid, {"params.shade_free": True})
                     label = _("Keep the modules out of the obstacles' shadows on {day}/{month}, {start} to {end} "
                               "solar time").format(day=w["day"], month=w["month"], start=number(w["start"], 1),
@@ -449,7 +449,7 @@ def manual_items(project, sf, result, shade=None) -> list[Item]:
         n = in_shade(project, sf, result, shade)
         if n:
             from .i18n import ngettext
-            w = project.sun_window
+            w = vars(p.window)
             items.append(Item("warn", "shade", ngettext("{name}: {n} module in the shade on the design day",
                                                         "{name}: {n} modules in the shade on the design day", n).format(
                 name=sf.name, n=n), _("Meridiana: shading of the obstacles"), here, fix, label,

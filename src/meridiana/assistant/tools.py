@@ -427,11 +427,11 @@ def read_selection(host, state: State) -> Outcome:
             "exclusions": [object_name(p, "exclusion", e.id) for e in p.exclusions if e.building == b.id]})
     elif kind == "subfield" and any(s.id == oid for s in p.subfields):
         sf = next(s for s in p.subfields if s.id == oid)
-        params = dataclasses.asdict(sf.layout_params())
-        params.pop("window", None)
+        params = dataclasses.asdict(p.fill_params(sf))
         out.update({"on": object_name(p, "building", sf.building) if sf.building else "ground",
                     "module": _module(p, sf), "modules_laid": _laid(host, sf), "laid": sf.filled,
                     "by_hand": sf.manual, "params": {k: _value(v) for k, v in params.items()},
+                    "window_from_project": "window" not in sf.params,
                     "params_set_by_designer": sorted(sf.params)})
         from shapely.geometry import Polygon
         out["area_m2"] = round(Polygon(sf.ring).area, 1)

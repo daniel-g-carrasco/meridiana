@@ -2546,6 +2546,13 @@ class MainWindow(QMainWindow):
     # properties
 
     def _edited(self, kind: str, oid: str, changes: dict) -> None:
+        if kind == "sun_window":
+            def use_for_all(p):
+                p.sun_window = dict(changes["window"])
+                for subfield in p.subfields:
+                    subfield.params.pop("window", None)
+            self.edit(_("Use the sun window for all sub-fields"), use_for_all)
+            return
         sf = self.project_subfield(oid) if kind == "subfield" else None
         if sf is not None and sf.manual and set(changes) == {"module"} and changes["module"] != sf.module:
             # the rows by hand follow a new module, or are laid again (task 16c)
