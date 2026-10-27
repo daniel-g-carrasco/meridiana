@@ -122,21 +122,48 @@ class Tour(QObject):
                 self.note("pianta raggiunta col puntatore")
             for theme, italian in THEMES:
                 self.set_theme(theme)
-                self.shot(f"kimi11-giro-{number:02d}-{pid}-{italian}")
+                self.shot(f"kimi12-giro-{number:02d}-{pid}-{italian}")
         self.click_phase("model")
+        self.win.plan.zoom_at(0.0, self.win.plan.viewport().rect().center())
+        self.wait(500)
+        if self.win.plan.transform().m11() > 0.001:
+            raise RuntimeError("The plan did not zoom out to the continents")
+        for theme, italian in THEMES:
+            self.set_theme(theme)
+            self.shot(f"kimi12-mondo-{italian}")
+        self.win.plan.fit()
+        self.wait(250)
         begun = time.monotonic()
         QTest.mouseClick(self.win.tabs.header.file_button, Qt.MouseButton.LeftButton)
         self.wait(90)
-        self.shot("kimi11-giro-file-meta")
+        self.shot("kimi12-giro-file-meta")
         self.until(lambda: not self.win.file_page.unroll.isRunning() if hasattr(self.win.file_page.unroll, "isRunning")
                    else self.win.file_page.unroll.state() == self.win.file_page.unroll.State.Stopped, 3)
         self.note(f"File aperto col clic: {(time.monotonic() - begun) * 1000:.1f} ms")
+        QTest.mouseClick(self.win.file_page.items["preferences:appearance"], Qt.MouseButton.LeftButton)
+        self.wait(250)
+        if self.win.file_page.body.currentWidget() is not self.win.file_page.sections["preferences"]:
+            raise RuntimeError("The Settings section did not open")
+        for theme, italian in THEMES:
+            self.set_theme(theme)
+            self.shot(f"kimi12-impostazioni-{italian}")
+        settings = self.win.file_page.settings
+        sizes = settings.appearance.text_size
+        previous = self.win.cfg.text_size
+        changed = "large" if previous != "large" else "medium"
+        sizes.setCurrentIndex(sizes.findData(changed))
+        if not self.until(lambda: self.win.cfg.text_size == changed, 3):
+            raise RuntimeError("The text size did not apply at once")
+        QTest.mouseClick(settings.undo, Qt.MouseButton.LeftButton)
+        if not self.until(lambda: self.win.cfg.text_size == previous, 3):
+            raise RuntimeError("The settings undo did not restore the text size")
+        self.note(f"Impostazioni: testo {previous} -> {changed} -> {previous}, applicazione e annullamento")
         for key in ("open", "import", "export", "catalogues", "help"):
             QTest.mouseClick(self.win.file_page.items[key], Qt.MouseButton.LeftButton)
             self.wait(150)
             if self.win.file_page.body.currentWidget() is not self.win.file_page.sections[key]:
                 raise RuntimeError(f"The File section {key} did not open")
-        self.shot("kimi11-giro-file-aiuto")
+        self.shot("kimi12-giro-file-aiuto")
         QTest.keyClick(self.win.file_page, Qt.Key.Key_Escape)
         self.wait(250)
         if self.win.file_page.isVisible():
@@ -157,7 +184,7 @@ class Tour(QObject):
                     bar = self.win.bars[pid]
                     for colour, italian in THEMES:
                         self.set_theme(colour)
-                        self.shot(f"kimi11-strumenti-{label}-{pid}-{italian}-{width}-{text_name}", bar)
+                        self.shot(f"kimi12-strumenti-{label}-{pid}-{italian}-{width}-{text_name}", bar)
         theme.change_text_size("medium", self.app)
 
     def run(self) -> None:
@@ -176,7 +203,7 @@ class Tour(QObject):
             code = 1
         finally:
             suffix = f"-{self.args.toolbars}" if self.args.toolbars else ""
-            destination = ROOT / "docs" / "revisioni" / f"kimi11-giro{suffix}.txt"
+            destination = ROOT / "docs" / "revisioni" / f"kimi12-giro{suffix}.txt"
             destination.write_text("\n".join(self.lines + ["", "Avvisi Qt:"] + self.messages) + "\n",
                                    encoding="utf-8")
             self.win.close()
