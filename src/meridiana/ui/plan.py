@@ -1029,7 +1029,8 @@ class PlanView(QGraphicsView):
                 continue
             back = ChipItem(str(n), small, QColor("#ffffff"), colours=self.colours)
             half = QPointF(back.boundingRect().width() / 2, back.boundingRect().height() / 2)
-            back.setPos(QPointF(mx, my) - half)
+            back.setPos(QPointF(mx, my))
+            back.offset = -half                            # local pixels, not scene metres
             back.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
             back.setZValue(z)
             scene.addItem(back)

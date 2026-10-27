@@ -113,6 +113,27 @@ class PlanAids(unittest.TestCase):
                         8 * plan.metres_per_pixel())       # the scene's scroll bars round to whole pixels
         self.assertEqual(plan.north.heading_text(), "0° N")
 
+    def test_string_numbers_stay_on_their_modules_at_every_rotation_zoom_and_pan(self):
+        from PySide6.QtCore import QPoint, QPointF
+
+        plan = self.plan
+        router = plan._router()
+        order = list(range(min(12, len(router.centres))))
+        numbers = plan._number_items(order, 100.0)
+        self.assertTrue(numbers)
+        for angle in (30.0, 115.0):
+            plan.reset_rotation()
+            plan.rotate_view(angle)
+            for factor in (1.0, 1.6, 0.7):
+                plan.zoom_at(factor, QPoint(120, 90))
+                plan.translate_view(37, -23)
+                for item in numbers:
+                    module = order[int(item.text) - 1]
+                    expected = QPointF(plan.mapFromScene(QPointF(*router.centres[module])))
+                    actual = QPointF(plan.mapFromScene(item.pos())) + item.boundingRect().center()
+                    self.assertLess((actual - expected).manhattanLength(), 3.0,
+                                    (angle, factor, item.text, actual, expected))
+
     def test_the_n_of_the_compass_goes_with_the_arrow_and_a_click_brings_north_up(self):
         """R174 (Daniel, 26/10/2026: «la N di nord non segue la freccia ... la N dovrebbe poter ruotare. e anche un
         modo per riportarlo a nord ci vuole»): the N stands past the arrow's tip, wherever it points; a click on the
