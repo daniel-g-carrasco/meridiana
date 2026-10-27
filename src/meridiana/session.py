@@ -63,7 +63,7 @@ def topics_of(before: dict, after: dict) -> set[str]:
     if (before.get("consumption") != after.get("consumption")
             or any(old.get(k) != new.get(k) for k in ("energy", "economics", "modules"))):
         topics.add("project:energy")
-    if before.get("rules") != after.get("rules"):
+    if before.get("rules") != after.get("rules") or before.get("network") != after.get("network"):
         topics.add("project:rules")
     heads = ([{k: v for k, v in var.items() if k != "design"} for var in data.get("variants") or []]
              for data in (before, after))

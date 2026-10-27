@@ -25,7 +25,7 @@ from . import atomic, layout, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 14
+FORMAT_VERSION = 15
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -298,6 +298,15 @@ def _to_14(data: dict) -> dict:
     return out
 
 
+def _to_15(data: dict) -> dict:
+    """14 -> 15: optional grid data, initialized from the rule inputs already present."""
+    rules = data.get("rules") if isinstance(data.get("rules"), dict) else {}
+    level = rules.get("connection") if rules.get("connection") in ("BT", "MT", "AT") else ""
+    contracted = rules.get("contracted_kw") if isinstance(rules.get("contracted_kw"), (int, float)) else 0.0
+    network = {"level": level, "available_kw": contracted}
+    return {**data, "network": data.get("network", network)}
+
+
 def _reshaped(data: dict) -> list[str]:
     """The buildings of a file before format 9 whose gable or hip roof stood on a rectangle that was not their
     outline: from 9 the roof follows the outline, and the designer is told."""
@@ -331,12 +340,13 @@ def _reshaped(data: dict) -> list[str]:
 # 13 -> 14: no string is made by itself any longer: a variant whose strings were Meridiana's live proposal keeps it as
 #          "auto", written down as the designer's at the first layout (_to_14); an older Meridiana would read a file of
 #          14 without strings as «automatic» and lay them by itself
+# 14 -> 15: optional grid data, initialized from the existing rule inputs (_to_15)
 MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                     3: lambda data: {**data, "variants": [{"id": "v1", "name": "Base", "note": ""}], "variant": "v1"},
                     4: lambda data: data, 5: lambda data: {**data, "underlays": data.get("underlays", [])},
                     6: _to_7, 7: _to_8, 8: _to_9, 9: _to_10, 10: lambda data: {**data, "report": data.get("report", {})},
                     11: lambda data: {**data, "reserved": data.get("reserved", False)}, 12: lambda data: data,
-                    13: _to_14}
+                    13: _to_14, 14: _to_15}
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
 ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
@@ -399,6 +409,24 @@ class Site:
     lat: float = 45.4642
     lon: float = 9.1900
     address: str = ""
+
+
+@dataclass
+class Network:
+    distributor: str = ""
+    pod: str = ""
+    voltage_v: float = 0.0
+    phases: str = ""
+    level: str = ""                 # "", BT, MT, AT: chosen, never guessed from power
+    connection: str = ""            # "", existing, new, modification
+    available_kw: float = 0.0       # the existing supply, 0 when not stated
+    requested_kw: float = 0.0       # the new PV connection, a different datum
+    practice_code: str = ""
+
+    def technical_rule(self) -> str:
+        if self.voltage_v <= 0:
+            return ""
+        return "CEI 0-21" if self.voltage_v <= 1000 else "CEI 0-16"
 
 
 @dataclass
@@ -759,6 +787,17 @@ def _check_project(data: dict) -> list[str]:
         settings.check("consumption", _check_dict(data["consumption"], "consumption"), unknown)
     if data.get("rules") is not None:
         _check_dict(data["rules"], "rules")
+    network = _check_dict(data.get("network", {}), "network")
+    _check_fields(Network, network, "network", unknown)
+    _check_number(network.get("voltage_v", 0.0), "network.voltage_v", 0.0, 1_000_000.0)
+    _check_number(network.get("available_kw", 0.0), "network.available_kw", 0.0, 1_000_000_000.0)
+    _check_number(network.get("requested_kw", 0.0), "network.requested_kw", 0.0, 1_000_000_000.0)
+    if network.get("phases", "") not in ("", "1", "3"):
+        raise ValueError(f"network.phases: {network.get('phases')!r} is not one of '', '1', '3'")
+    if network.get("level", "") not in ("", "BT", "MT", "AT"):
+        raise ValueError(f"network.level: {network.get('level')!r} is not one of '', BT, MT, AT")
+    if network.get("connection", "") not in ("", "existing", "new", "modification"):
+        raise ValueError(f"network.connection: {network.get('connection')!r} is not a connection kind")
     if data.get("reserved", False).__class__ is not bool:
         raise ValueError(f"reserved: {data.get('reserved')!r} is not a switch")
     ids: set[str] = set()
@@ -833,7 +872,7 @@ def _check_project(data: dict) -> list[str]:
     if data.get("report") is not None:
         _check_dict(data["report"], "report")
     known = {"format", "version", "app_version", "name", "site", "sun_window", "buildings", "exclusions",
-             "consumption", "rules", "variants", "variant", "underlays", "report", "reserved", "created",
+             "consumption", "rules", "network", "variants", "variant", "underlays", "report", "reserved", "created",
              "modified"}
     unknown.extend(k for k in data if k not in known)
     return unknown
@@ -857,6 +896,7 @@ class Project:
     # ("", none, new, renovation), "public", "use", "permit_2027"; for DM 37/2008 art. 5: "contracted_kw" and
     # "floor_m2" (0: not stated), "premises" ("", productive, domestic, condominium), "risk"
     rules: dict = field(default_factory=dict)
+    network: Network = field(default_factory=Network)
     # the variants in their order, {"id", "name", "note"}: in the file every one of them has its "design" (the
     # DESIGN fields, as JSON); in memory the one being worked on ("variant") has it in the fields above, as the
     # working copy, and no "design" key (to_json puts it back, from_json takes it out)
@@ -874,6 +914,17 @@ class Project:
     reserved: bool = False
     created: str = field(default_factory=_now)
     modified: str = field(default_factory=_now)
+
+    def sync_network(self) -> None:
+        """Keep the rule inputs already used by rules.py, without inventing missing supply data."""
+        rules = dict(self.rules)
+        if self.network.available_kw > 0:
+            rules["contracted_kw"] = self.network.available_kw
+        if self.network.level:
+            rules["connection"] = self.network.level
+        elif self.network.voltage_v > 0:
+            rules["connection"] = "BT" if self.network.voltage_v <= 1000 else "MT"
+        self.rules = rules
 
     # ids
 
@@ -1090,7 +1141,7 @@ class Project:
     # files
 
     def to_json(self) -> dict:
-        """The project as the file holds it (format 14): every variant with its design, the one in hand too;
+        """The project as the file holds it (format 15): every variant with its design, the one in hand too;
         the working copy of the fields above goes into its variant."""
         data = asdict(self)
         for k in DESIGN:
@@ -1146,7 +1197,7 @@ class Project:
         p = cls(name=data.get("name", "Progetto"), site=build(Site, data.get("site", {})),
                 sun_window=data.get("sun_window", asdict(sun.DesignWindow())),
                 consumption=data.get("consumption") or {}, rules=data.get("rules") or {},
-                report=data.get("report") or {},
+                network=build(Network, data.get("network", {})), report=data.get("report") or {},
                 variants=data.get("variants") or [{"id": "v1", "name": "Base", "note": ""}],
                 variant=data.get("variant") or "v1", reserved=data.get("reserved", False) is True,
                 created=data.get("created", _now()), modified=data.get("modified", _now()))

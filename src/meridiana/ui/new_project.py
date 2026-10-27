@@ -8,8 +8,8 @@ import re
 from PySide6.QtCore import Qt, QUrl, Signal
 from PySide6.QtGui import QTransform
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
-from PySide6.QtWidgets import (QCheckBox, QCompleter, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-                               QListWidget, QPushButton, QSizePolicy, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QCompleter, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout,
+                               QLabel, QLineEdit, QListWidget, QPushButton, QSizePolicy, QVBoxLayout, QWidget)
 
 from .. import geo, model, places
 from ..coordinates import CoordinateError, CoordinateReading
@@ -126,6 +126,37 @@ class NewProjectPage(QWidget):
         form.addRow(_("Project name"), self.name)
         self.reserved = QCheckBox(_("Reserved project: names and addresses never leave this PC"))
         form.addRow(self.reserved)
+        self.distributor = QLineEdit()
+        form.addRow(_("Distributor"), self.distributor)
+        self.pod = QLineEdit()
+        form.addRow("POD", self.pod)
+        self.voltage = QDoubleSpinBox(maximum=1_000_000, decimals=0, suffix=" V")
+        self.voltage.setSpecialValueText(_("not stated"))
+        form.addRow(_("Supply voltage"), self.voltage)
+        self.phases = QComboBox()
+        self.phases.addItem(_("not stated"), "")
+        self.phases.addItem(_("Single phase"), "1")
+        self.phases.addItem(_("Three phase"), "3")
+        form.addRow(_("Phases"), self.phases)
+        self.level = QComboBox()
+        self.level.addItem(_("not stated"), "")
+        for level in ("BT", "MT", "AT"):
+            self.level.addItem(level, level)
+        form.addRow(_("Connection level"), self.level)
+        self.connection = QComboBox()
+        self.connection.addItem(_("not stated"), "")
+        for key, label in (("existing", _("Existing connection")), ("new", _("New connection")),
+                           ("modification", _("Modification of the connection"))):
+            self.connection.addItem(label, key)
+        form.addRow(_("Connection"), self.connection)
+        self.available = QDoubleSpinBox(maximum=1_000_000_000, decimals=1, suffix=" kW")
+        self.available.setSpecialValueText(_("not stated"))
+        form.addRow(_("Available or contracted power"), self.available)
+        self.requested = QDoubleSpinBox(maximum=1_000_000_000, decimals=1, suffix=" kW")
+        self.requested.setSpecialValueText(_("not stated"))
+        form.addRow(_("Power requested for the new plant"), self.requested)
+        self.practice = QLineEdit()
+        form.addRow(_("Connection practice code"), self.practice)
         optional_body.setVisible(False)
         self.optional.toggled.connect(optional_body.setVisible)
         optional_layout = QVBoxLayout(self.optional)
@@ -170,6 +201,12 @@ class NewProjectPage(QWidget):
         self.query.clear()
         self.name.clear()
         self.reserved.setChecked(False)
+        for field in (self.distributor, self.pod, self.practice):
+            field.clear()
+        for field in (self.voltage, self.available, self.requested):
+            field.setValue(0)
+        for field in (self.phases, self.level, self.connection):
+            field.setCurrentIndex(0)
         self.optional.setChecked(False)
         self.found.clear()
         self.found.hide()
@@ -283,5 +320,10 @@ class NewProjectPage(QWidget):
         if self.candidate is None:
             return
         site = model.Site(self.candidate.lat, self.candidate.lon, self.address)
+        network = model.Network(distributor=self.distributor.text().strip(), pod=self.pod.text().strip(),
+                                voltage_v=self.voltage.value(), phases=self.phases.currentData(),
+                                level=self.level.currentData(), connection=self.connection.currentData(),
+                                available_kw=self.available.value(), requested_kw=self.requested.value(),
+                                practice_code=self.practice.text().strip())
         self.created.emit({"name": self.name.text().strip(), "site": site,
-                           "reserved": self.reserved.isChecked()})
+                           "reserved": self.reserved.isChecked(), "network": network})

@@ -1,6 +1,6 @@
 """The project file (model.py): everything comes back as it was saved, the previous save kept as .bak, a damaged
 file opened from it and said; a file edited by hand or damaged refused with the path of the key; one frozen file
-for every version of the format, 1 to 14, opened as it is (tests/formati/file), and the migrations field by field.
+for every version of the format, 1 to 15, opened as it is (tests/formati/file), and the migrations field by field.
 The files of the settings and the damaged ones are in test_formats."""
 
 import json
@@ -259,6 +259,25 @@ class Formats(unittest.TestCase):
         fresh = model.Project(name="Nuovo")
         self.assertFalse(plant.build(fresh, groups=[]).auto)
         self.assertIsNone(model.Project.from_json(fresh.to_json()).energy.get("strings"))
+
+    def test_the_fifteenth_format_keeps_optional_grid_data_and_migrates_the_rule_inputs(self):
+        folder = _setup.FORMATS
+        p, notice = model.Project.load(folder / "progetto-v15.meridiana")
+        self.assertIsNone(notice)
+        self.assertEqual(p.network.distributor, "E-distribuzione")
+        self.assertEqual(p.network.pod, "IT001E12345678")
+        self.assertEqual(p.network.voltage_v, 400)
+        self.assertEqual(p.network.technical_rule(), "CEI 0-21")
+        self.assertEqual((p.network.available_kw, p.network.requested_kw), (30, 25))
+        self.assertEqual(p.rules, {"connection": "BT", "contracted_kw": 30})
+        fourteen = json.loads((folder / "progetto-v14.meridiana").read_text(encoding="utf-8"))
+        fourteen["rules"] = {"connection": "MT", "contracted_kw": 80}
+        migrated = model.MIGRATIONS[14](fourteen)
+        self.assertEqual(migrated["network"], {"level": "MT", "available_kw": 80})
+        self.assertEqual(migrated["rules"], fourteen["rules"])
+        old = model.Project.from_json(fourteen)
+        self.assertEqual((old.network.level, old.network.available_kw), ("MT", 80))
+        self.assertEqual(old.rules, fourteen["rules"])
 
     def test_the_input_of_a_sub_field_lays_out_nothing_again(self):
         p = sample()

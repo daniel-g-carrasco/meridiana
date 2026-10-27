@@ -2566,6 +2566,8 @@ class MainWindow(QMainWindow):
             if kind == "project":
                 for k, v in changes.items():
                     setattr(p, k, v)
+                    if k == "network":
+                        p.sync_network()
                 return
             target = {"building": p.building(oid), "subfield": next((s for s in p.subfields if s.id == oid), None),
                       "exclusion": next((e for e in p.exclusions if e.id == oid), None)}.get(kind)
@@ -4687,6 +4689,8 @@ class MainWindow(QMainWindow):
         self.project.name = data["name"] or self.project.name
         self.project.site = data["site"]
         self.project.reserved = data["reserved"]
+        self.project.network = data.get("network", model.Network())
+        self.project.sync_network()
         self._mark_saved()
         self.plan.set_source("auto")
         self._select("site", "")

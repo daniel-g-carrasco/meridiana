@@ -67,12 +67,22 @@ class Page(unittest.TestCase):
         self.page.query.setText("45.5226, 9.03")
         self.page.name.setText("Impianto Rho")
         self.page.reserved.setChecked(True)
+        self.page.distributor.setText("E-distribuzione")
+        self.page.pod.setText("IT001E12345678")
+        self.page.voltage.setValue(400)
+        self.page.available.setValue(30)
+        self.page.requested.setValue(25)
+        self.page.practice.setText("PR-2026-42")
         self.page.create.click()
         self.assertEqual(spy.count(), 1)
         data = spy.at(0)[0]
         self.assertEqual((data["name"], data["reserved"]), ("Impianto Rho", True))
         self.assertEqual((data["site"].lat, data["site"].lon), (45.5226, 9.03))
         self.assertEqual(data["site"].address, "45.5226, 9.03")
+        self.assertEqual(data["network"].distributor, "E-distribuzione")
+        self.assertEqual(data["network"].technical_rule(), "CEI 0-21")
+        self.assertEqual(data["network"].available_kw, 30)
+        self.assertEqual(data["network"].requested_kw, 25)
 
 
 if __name__ == "__main__":
