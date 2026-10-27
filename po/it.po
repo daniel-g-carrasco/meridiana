@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: meridiana\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 05:37+0100\n"
+"POT-Creation-Date: 2026-10-27 09:29+0100\n"
 "PO-Revision-Date: 2026-10-22 21:00+0200\n"
 "Last-Translator: Daniel Grasso <code@danielgrasso.com>\n"
 "Language-Team: Italian\n"
@@ -2063,7 +2063,7 @@ msgstr "dato del progettista"
 msgid "measured load curve"
 msgstr "curva di carico misurata"
 
-#: src/meridiana/energy/consumption.py:345 src/meridiana/ui/file_page.py:298
+#: src/meridiana/energy/consumption.py:345 src/meridiana/ui/file_page.py:304
 msgid "Load curve"
 msgstr "Curva di carico"
 
@@ -5013,7 +5013,7 @@ msgstr ""
 
 #: src/meridiana/help.py:75 src/meridiana/phases.py:134
 #: src/meridiana/phases.py:136 src/meridiana/shortcuts.py:105
-#: src/meridiana/ui/file_page.py:254 src/meridiana/ui/file_page.py:307
+#: src/meridiana/ui/file_page.py:254 src/meridiana/ui/file_page.py:313
 #: src/meridiana/ui/preferences.py:617 src/meridiana/ui/report_page.py:222
 #: src/meridiana/ui/window.py:3577
 msgid "Report"
@@ -6549,7 +6549,7 @@ msgid "Battery"
 msgstr "Batteria"
 
 #: src/meridiana/phases.py:135 src/meridiana/ui/file_page.py:247
-#: src/meridiana/ui/file_page.py:305
+#: src/meridiana/ui/file_page.py:311
 msgid "Export"
 msgstr "Esporta"
 
@@ -8385,7 +8385,7 @@ msgid "Panels"
 msgstr "Pannelli"
 
 #: src/meridiana/shortcuts.py:40 src/meridiana/shortcuts.py:111
-#: src/meridiana/ui/file_page.py:350 src/meridiana/ui/help_box.py:494
+#: src/meridiana/ui/file_page.py:356 src/meridiana/ui/help_box.py:494
 #: src/meridiana/ui/help_box.py:661 src/meridiana/ui/window.py:391
 msgid "Help"
 msgstr "Aiuto"
@@ -8551,8 +8551,8 @@ msgstr "Fase successiva"
 msgid "Previous phase"
 msgstr "Fase precedente"
 
-#: src/meridiana/shortcuts.py:108 src/meridiana/ui/file_page.py:263
-#: src/meridiana/ui/file_page.py:280 src/meridiana/ui/properties.py:402
+#: src/meridiana/shortcuts.py:108 src/meridiana/ui/file_page.py:269
+#: src/meridiana/ui/file_page.py:286 src/meridiana/ui/properties.py:402
 #: src/meridiana/ui/window.py:367
 msgid "Project"
 msgstr "Progetto"
@@ -11084,14 +11084,14 @@ msgstr "Torna al progetto"
 msgid "New"
 msgstr "Nuovo"
 
-#: src/meridiana/ui/file_page.py:241 src/meridiana/ui/file_page.py:262
-#: src/meridiana/ui/file_page.py:351 src/meridiana/ui/file_page.py:354
-#: src/meridiana/ui/file_page.py:356
+#: src/meridiana/ui/file_page.py:241 src/meridiana/ui/file_page.py:268
+#: src/meridiana/ui/file_page.py:357 src/meridiana/ui/file_page.py:360
+#: src/meridiana/ui/file_page.py:362
 msgid "Open"
 msgstr "Apri"
 
-#: src/meridiana/ui/file_page.py:242 src/meridiana/ui/file_page.py:313
-#: src/meridiana/ui/window.py:4660 src/meridiana/ui/window.py:4719
+#: src/meridiana/ui/file_page.py:242 src/meridiana/ui/file_page.py:319
+#: src/meridiana/ui/window.py:4660 src/meridiana/ui/window.py:4727
 msgid "Save"
 msgstr "Salva"
 
@@ -11103,16 +11103,16 @@ msgstr "Salva con nome"
 msgid "Save a revision"
 msgstr "Salva una revisione"
 
-#: src/meridiana/ui/file_page.py:246 src/meridiana/ui/file_page.py:278
+#: src/meridiana/ui/file_page.py:246 src/meridiana/ui/file_page.py:284
 msgid "Import"
 msgstr "Importa"
 
-#: src/meridiana/ui/file_page.py:249 src/meridiana/ui/file_page.py:324
-#: src/meridiana/ui/file_page.py:334
+#: src/meridiana/ui/file_page.py:249 src/meridiana/ui/file_page.py:330
+#: src/meridiana/ui/file_page.py:340
 msgid "Catalogues"
 msgstr "Cataloghi"
 
-#: src/meridiana/ui/file_page.py:250 src/meridiana/ui/file_page.py:340
+#: src/meridiana/ui/file_page.py:250 src/meridiana/ui/file_page.py:346
 #: src/meridiana/ui/selftest.py:125
 msgid "Settings"
 msgstr "Impostazioni"
@@ -11137,7 +11137,7 @@ msgstr "Mappe"
 msgid "Privacy"
 msgstr "Riservatezza"
 
-#: src/meridiana/ui/file_page.py:257 src/meridiana/ui/file_page.py:349
+#: src/meridiana/ui/file_page.py:257 src/meridiana/ui/file_page.py:355
 msgid "Help and manual"
 msgstr "Aiuto e manuale"
 
@@ -11145,30 +11145,30 @@ msgstr "Aiuto e manuale"
 msgid "Quit"
 msgstr "Esci"
 
-#: src/meridiana/ui/file_page.py:262
+#: src/meridiana/ui/file_page.py:268
 msgid "A Meridiana project from a file, or one of the last ones."
 msgstr "Un progetto di Meridiana da un file, o uno degli ultimi aperti."
 
-#: src/meridiana/ui/file_page.py:263
+#: src/meridiana/ui/file_page.py:269
 msgid "A project"
 msgstr "Un progetto"
 
-#: src/meridiana/ui/file_page.py:263
+#: src/meridiana/ui/file_page.py:269
 msgid "A .meridiana file, from wherever it is."
 msgstr "Un file .meridiana, ovunque si trovi."
 
-#: src/meridiana/ui/file_page.py:264 src/meridiana/ui/file_page.py:283
-#: src/meridiana/ui/file_page.py:285 src/meridiana/ui/file_page.py:288
-#: src/meridiana/ui/file_page.py:294 src/meridiana/ui/file_page.py:297
-#: src/meridiana/ui/file_page.py:299
+#: src/meridiana/ui/file_page.py:270 src/meridiana/ui/file_page.py:289
+#: src/meridiana/ui/file_page.py:291 src/meridiana/ui/file_page.py:294
+#: src/meridiana/ui/file_page.py:300 src/meridiana/ui/file_page.py:303
+#: src/meridiana/ui/file_page.py:305
 msgid "Choose the file…"
 msgstr "Scegli il file…"
 
-#: src/meridiana/ui/file_page.py:267
+#: src/meridiana/ui/file_page.py:273
 msgid "Opened recently"
 msgstr "Aperti di recente"
 
-#: src/meridiana/ui/file_page.py:278
+#: src/meridiana/ui/file_page.py:284
 msgid ""
 "What comes from other programs or from a file. Meridiana reads it, tells you "
 "what it took and what it approximated, and you can undo it."
@@ -11176,11 +11176,11 @@ msgstr ""
 "Quello che viene da altri programmi o da un file. Meridiana lo legge, ti "
 "dice cosa ha preso e cosa ha approssimato, e lo puoi annullare."
 
-#: src/meridiana/ui/file_page.py:281
+#: src/meridiana/ui/file_page.py:287
 msgid "PVsyst project"
 msgstr "Progetto PVsyst"
 
-#: src/meridiana/ui/file_page.py:281
+#: src/meridiana/ui/file_page.py:287
 msgid ""
 "The project and the variants next to it, as a new project: Meridiana says "
 "what it approximated."
@@ -11188,11 +11188,11 @@ msgstr ""
 "Il progetto e le varianti accanto, come progetto nuovo: Meridiana dice cosa "
 "ha approssimato."
 
-#: src/meridiana/ui/file_page.py:284
+#: src/meridiana/ui/file_page.py:290
 msgid "IFC model"
 msgstr "Modello IFC"
 
-#: src/meridiana/ui/file_page.py:284
+#: src/meridiana/ui/file_page.py:290
 msgid ""
 "The buildings of an architect's model: outlines, roof planes, heights and "
 "what stands on the roofs."
@@ -11200,78 +11200,78 @@ msgstr ""
 "Gli edifici del modello dell'architetto: contorni, falde, altezze e ciò che "
 "sta sulle coperture."
 
-#: src/meridiana/ui/file_page.py:287
+#: src/meridiana/ui/file_page.py:293
 msgid "Image under the drawing"
 msgstr "Immagine sotto il disegno"
 
-#: src/meridiana/ui/file_page.py:287
+#: src/meridiana/ui/file_page.py:293
 msgid "A site plan or an aerial photo, to scale on the plan."
 msgstr "Una planimetria o una foto aerea, da mettere in scala sulla pianta."
 
-#: src/meridiana/ui/file_page.py:289
+#: src/meridiana/ui/file_page.py:295
 msgid "Typical year and horizon"
 msgstr "Anno tipo e orizzonte"
 
-#: src/meridiana/ui/file_page.py:289
+#: src/meridiana/ui/file_page.py:295
 msgid ""
 "From the European service PVGIS for the project's site; then they stay in "
 "the cache."
 msgstr ""
 "Dal servizio europeo PVGIS per il sito del progetto; poi restano nella cache."
 
-#: src/meridiana/ui/file_page.py:291
+#: src/meridiana/ui/file_page.py:297
 msgid "Fetch"
 msgstr "Scarica"
 
-#: src/meridiana/ui/file_page.py:292
+#: src/meridiana/ui/file_page.py:298
 msgid "Catalogues and consumption"
 msgstr "Cataloghi e consumi"
 
-#: src/meridiana/ui/file_page.py:293
+#: src/meridiana/ui/file_page.py:299
 msgid "Module from PVsyst"
 msgstr "Modulo da PVsyst"
 
-#: src/meridiana/ui/file_page.py:293
+#: src/meridiana/ui/file_page.py:299
 msgid ""
 "Into the modules' catalogue, with the parameters of the one-diode model."
 msgstr "Nel catalogo dei moduli, con i parametri del modello a un diodo."
 
-#: src/meridiana/ui/file_page.py:296
+#: src/meridiana/ui/file_page.py:302
 msgid "Inverter from PVsyst"
 msgstr "Inverter da PVsyst"
 
-#: src/meridiana/ui/file_page.py:296
+#: src/meridiana/ui/file_page.py:302
 msgid "Into the inverters' catalogue, with its efficiency curve."
 msgstr "Nel catalogo degli inverter, con la curva di rendimento."
 
-#: src/meridiana/ui/file_page.py:298
+#: src/meridiana/ui/file_page.py:304
 msgid ""
 "The consumption measured every 15 minutes or every hour, in place of the "
 "profile."
 msgstr "I consumi misurati ogni 15 minuti o ogni ora, al posto del profilo."
 
-#: src/meridiana/ui/file_page.py:305
+#: src/meridiana/ui/file_page.py:311
 msgid "What leaves the project for the client, the authorities or a colleague."
 msgstr ""
 "Quello che esce dal progetto per il committente, gli enti o un collega."
 
-#: src/meridiana/ui/file_page.py:306
+#: src/meridiana/ui/file_page.py:312
 msgid "Documents"
 msgstr "Documenti"
 
-#: src/meridiana/ui/file_page.py:307
+#: src/meridiana/ui/file_page.py:313
 msgid "Production, strings, consumption and economics with every calculation."
 msgstr "Producibilità, stringhe, consumi ed economia con ogni calcolo."
 
-#: src/meridiana/ui/file_page.py:308 src/meridiana/ui/file_page.py:318
+#: src/meridiana/ui/file_page.py:314 src/meridiana/ui/file_page.py:324
 msgid "Export…"
 msgstr "Esporta…"
 
-#: src/meridiana/ui/file_page.py:309
+#: src/meridiana/ui/file_page.py:315
 msgid "Notes for the report"
 msgstr "Note per la relazione"
 
-#: src/meridiana/ui/file_page.py:309
+#: src/meridiana/ui/file_page.py:315
 msgid ""
 "The paragraphs of the rules that apply, with their sources, to paste into "
 "the technical report."
@@ -11279,19 +11279,19 @@ msgstr ""
 "I paragrafi delle regole che valgono, con le loro fonti, da incollare nella "
 "relazione tecnica."
 
-#: src/meridiana/ui/file_page.py:311
+#: src/meridiana/ui/file_page.py:317
 msgid "text"
 msgstr "testo"
 
-#: src/meridiana/ui/file_page.py:311 src/meridiana/ui/window.py:1574
+#: src/meridiana/ui/file_page.py:317 src/meridiana/ui/window.py:1574
 msgid "Copy"
 msgstr "Copia"
 
-#: src/meridiana/ui/file_page.py:312
+#: src/meridiana/ui/file_page.py:318
 msgid "A revision"
 msgstr "Una revisione"
 
-#: src/meridiana/ui/file_page.py:312
+#: src/meridiana/ui/file_page.py:318
 msgid ""
 "A new file next to this one, with the suffix _R01, _R02...: the previous one "
 "stays as it was."
@@ -11299,15 +11299,15 @@ msgstr ""
 "Un file nuovo accanto a questo, con il suffisso _R01, _R02...: il precedente "
 "resta com'era."
 
-#: src/meridiana/ui/file_page.py:315
+#: src/meridiana/ui/file_page.py:321
 msgid "Models"
 msgstr "Modelli"
 
-#: src/meridiana/ui/file_page.py:316
+#: src/meridiana/ui/file_page.py:322
 msgid "IFC4 model"
 msgstr "Modello IFC4"
 
-#: src/meridiana/ui/file_page.py:316
+#: src/meridiana/ui/file_page.py:322
 msgid ""
 "Buildings, roofs, obstacles and every module with its string, georeferenced: "
 "for the architect, the BIM coordinator, FreeCAD."
@@ -11315,7 +11315,7 @@ msgstr ""
 "Edifici, coperture, ostacoli e ogni modulo con la sua stringa, georiferiti: "
 "per l'architetto, il coordinatore BIM, FreeCAD."
 
-#: src/meridiana/ui/file_page.py:324
+#: src/meridiana/ui/file_page.py:330
 msgid ""
 "The modules, the inverters and the batteries Meridiana knows, with their "
 "data sheets: look, filter, add your own."
@@ -11323,24 +11323,24 @@ msgstr ""
 "I moduli, gli inverter e le batterie che Meridiana conosce, con le loro "
 "schede: guarda, filtra, aggiungi i tuoi."
 
-#: src/meridiana/ui/file_page.py:326
+#: src/meridiana/ui/file_page.py:332
 msgid "Every module with its electrical data and its origin."
 msgstr "Ogni modulo con i suoi dati elettrici e la sua origine."
 
-#: src/meridiana/ui/file_page.py:327
+#: src/meridiana/ui/file_page.py:333
 msgid "Every inverter with its inputs, its window and its efficiency."
 msgstr ""
 "Ogni inverter con i suoi ingressi, la sua finestra e il suo rendimento."
 
-#: src/meridiana/ui/file_page.py:328
+#: src/meridiana/ui/file_page.py:334
 msgid "The storage systems with their capacity and power."
 msgstr "Gli accumuli con la loro capacità e potenza."
 
-#: src/meridiana/ui/file_page.py:332
+#: src/meridiana/ui/file_page.py:338
 msgid "Open…"
 msgstr "Apri…"
 
-#: src/meridiana/ui/file_page.py:340
+#: src/meridiana/ui/file_page.py:346
 msgid ""
 "Every choice applies and is saved at once. Undo the last change or restore "
 "the defaults of one section."
@@ -11348,36 +11348,36 @@ msgstr ""
 "Ogni scelta si applica e si salva subito. Annulla l'ultima modifica o "
 "ripristina i valori predefiniti di una sezione."
 
-#: src/meridiana/ui/file_page.py:349
+#: src/meridiana/ui/file_page.py:355
 msgid "How Meridiana works and how it computes, inside the program."
 msgstr "Come funziona Meridiana e come calcola, dentro il programma."
 
-#: src/meridiana/ui/file_page.py:351
+#: src/meridiana/ui/file_page.py:357
 msgid "Manual"
 msgstr "Manuale"
 
-#: src/meridiana/ui/file_page.py:351
+#: src/meridiana/ui/file_page.py:357
 msgid "The manual, at the chapter of the phase open."
 msgstr "Il manuale, al capitolo della fase aperta."
 
-#: src/meridiana/ui/file_page.py:353 src/meridiana/ui/shortcuts_dialog.py:161
+#: src/meridiana/ui/file_page.py:359 src/meridiana/ui/shortcuts_dialog.py:161
 msgid "Keyboard shortcuts"
 msgstr "Scorciatoie da tastiera"
 
-#: src/meridiana/ui/file_page.py:353
+#: src/meridiana/ui/file_page.py:359
 msgid "Every key of the window, with a search; change them in the same place."
 msgstr ""
 "Ogni tasto della finestra, con la ricerca; si cambiano nello stesso posto."
 
-#: src/meridiana/ui/file_page.py:355 src/meridiana/ui/window.py:4756
+#: src/meridiana/ui/file_page.py:361 src/meridiana/ui/window.py:4764
 msgid "About Meridiana"
 msgstr "Informazioni su Meridiana"
 
-#: src/meridiana/ui/file_page.py:355
+#: src/meridiana/ui/file_page.py:361
 msgid "The version, the licences, the data and where they come from."
 msgstr "La versione, le licenze, i dati e da dove vengono."
 
-#: src/meridiana/ui/file_page.py:387
+#: src/meridiana/ui/file_page.py:397
 msgid "No project opened yet."
 msgstr "Nessun progetto aperto finora."
 
@@ -11848,6 +11848,122 @@ msgstr ""
 #, python-brace-format
 msgid "{title}: {n} layers usable on the plan."
 msgstr "{title}: {n} livelli usabili sulla pianta."
+
+#: src/meridiana/ui/new_project.py:84
+msgid "New project"
+msgstr "Nuovo progetto"
+
+#: src/meridiana/ui/new_project.py:87
+msgid ""
+"Start from the place. Type an address, a municipality, coordinates or a map "
+"link; then check the point on the map."
+msgstr ""
+"Prima il posto. Scrivi un indirizzo, un comune, delle coordinate o un "
+"collegamento a una mappa; poi controlla il punto sulla mappa."
+
+#: src/meridiana/ui/new_project.py:102
+msgid "Address, municipality, coordinates or link"
+msgstr "Indirizzo, comune, coordinate o collegamento"
+
+#: src/meridiana/ui/new_project.py:103 src/meridiana/ui/site_dialog.py:29
+msgid "Search"
+msgstr "Cerca"
+
+#: src/meridiana/ui/new_project.py:107
+msgid ""
+"Suggestions while you type come only from ISTAT and your recent projects. "
+"OpenStreetMap Nominatim is asked only by Search."
+msgstr ""
+"Mentre scrivi, i suggerimenti vengono solo da ISTAT e dai progetti recenti. "
+"Nominatim di OpenStreetMap viene interrogato solo con Cerca."
+
+#: src/meridiana/ui/new_project.py:120
+msgid "Optional project data"
+msgstr "Dati facoltativi del progetto"
+
+#: src/meridiana/ui/new_project.py:126
+msgid "Project name"
+msgstr "Nome del progetto"
+
+#: src/meridiana/ui/new_project.py:127
+msgid "Reserved project: names and addresses never leave this PC"
+msgstr "Progetto riservato: nomi e indirizzi non escono mai dal PC"
+
+#: src/meridiana/ui/new_project.py:135
+msgid "Create and draw"
+msgstr "Crea e disegna"
+
+#: src/meridiana/ui/new_project.py:196
+msgid "Decimal degrees"
+msgstr "Gradi decimali"
+
+#: src/meridiana/ui/new_project.py:196
+msgid "Degrees and decimal minutes"
+msgstr "Gradi e primi decimali"
+
+#: src/meridiana/ui/new_project.py:197
+msgid "Map link"
+msgstr "Collegamento a una mappa"
+
+#: src/meridiana/ui/new_project.py:197
+msgid "Projected coordinates"
+msgstr "Coordinate proiettate"
+
+#: src/meridiana/ui/new_project.py:197
+msgid "Local place"
+msgstr "Luogo locale"
+
+#: src/meridiana/ui/new_project.py:198
+msgid "Point clicked on the map"
+msgstr "Punto scelto sulla mappa"
+
+#: src/meridiana/ui/new_project.py:217
+msgid "Write a place first."
+msgstr "Scrivi prima un luogo."
+
+#: src/meridiana/ui/new_project.py:220
+msgid ""
+"A reserved project never sends names or addresses. Use local suggestions, "
+"coordinates or a click on the offline map."
+msgstr ""
+"Un progetto riservato non invia mai nomi o indirizzi. Usa i suggerimenti "
+"locali, le coordinate o un clic sulla mappa offline."
+
+#: src/meridiana/ui/new_project.py:224
+msgid ""
+"The online search is off in Settings > Privacy. Local suggestions and "
+"coordinates still work."
+msgstr ""
+"La ricerca online è spenta in Impostazioni > Riservatezza. I suggerimenti "
+"locali e le coordinate funzionano comunque."
+
+#: src/meridiana/ui/new_project.py:231 src/meridiana/ui/site_dialog.py:69
+msgid "One search a second, please (OpenStreetMap's rule)."
+msgstr "Una ricerca al secondo, per favore (è la regola di OpenStreetMap)."
+
+#: src/meridiana/ui/new_project.py:236
+msgid "Searching with OpenStreetMap Nominatim…"
+msgstr "Ricerca con Nominatim di OpenStreetMap…"
+
+#: src/meridiana/ui/new_project.py:254 src/meridiana/ui/site_dialog.py:95
+#, python-brace-format
+msgid "The search did not answer: {error}"
+msgstr "La ricerca non ha risposto: {error}"
+
+#: src/meridiana/ui/new_project.py:259 src/meridiana/ui/site_dialog.py:100
+msgid "The search answered something unreadable."
+msgstr "La ricerca ha risposto qualcosa di illeggibile."
+
+#: src/meridiana/ui/new_project.py:264 src/meridiana/ui/site_dialog.py:104
+#, python-brace-format
+msgid "{n} place found. Choose it."
+msgid_plural "{n} places found. Choose one."
+msgstr[0] "{n} luogo trovato: sceglilo."
+msgstr[1] "{n} luoghi trovati: scegline uno."
+
+#: src/meridiana/ui/new_project.py:266
+msgid "Nothing found. Try fewer words or type coordinates."
+msgstr "Nessun risultato. Prova con meno parole, oppure scrivi le coordinate."
 
 #: src/meridiana/ui/panel_buttons.py:67
 #, python-brace-format
@@ -14316,10 +14432,6 @@ msgstr "Trova il sito"
 msgid "Address, or coordinates as 45.5226, 9.0300 or 45,5226; 9,0300"
 msgstr "Indirizzo, oppure coordinate come 45,5226; 9,0300 o 45.5226, 9.0300"
 
-#: src/meridiana/ui/site_dialog.py:29
-msgid "Search"
-msgstr "Cerca"
-
 #: src/meridiana/ui/site_dialog.py:63
 msgid "Coordinates taken."
 msgstr "Coordinate acquisite."
@@ -14330,29 +14442,9 @@ msgstr ""
 "La ricerca dell'indirizzo è spenta in Impostazioni > Riservatezza: scrivi le "
 "coordinate."
 
-#: src/meridiana/ui/site_dialog.py:69
-msgid "One search a second, please (OpenStreetMap's rule)."
-msgstr "Una ricerca al secondo, per favore (è la regola di OpenStreetMap)."
-
 #: src/meridiana/ui/site_dialog.py:77
 msgid "Searching…"
 msgstr "Ricerca in corso…"
-
-#: src/meridiana/ui/site_dialog.py:95
-#, python-brace-format
-msgid "The search did not answer: {error}"
-msgstr "La ricerca non ha risposto: {error}"
-
-#: src/meridiana/ui/site_dialog.py:100
-msgid "The search answered something unreadable."
-msgstr "La ricerca ha risposto qualcosa di illeggibile."
-
-#: src/meridiana/ui/site_dialog.py:104
-#, python-brace-format
-msgid "{n} place found. Choose it."
-msgid_plural "{n} places found. Choose one."
-msgstr[0] "{n} luogo trovato: sceglilo."
-msgstr[1] "{n} luoghi trovati: scegline uno."
 
 #: src/meridiana/ui/site_dialog.py:106
 msgid "Nothing found. Try fewer words, or type the coordinates."
@@ -16687,7 +16779,7 @@ msgstr "Impossibile leggere la copia: {error}"
 msgid "Recovered: save it to keep it"
 msgstr "Recuperato: salvalo per tenerlo"
 
-#: src/meridiana/ui/window.py:4660 src/meridiana/ui/window.py:4719
+#: src/meridiana/ui/window.py:4660 src/meridiana/ui/window.py:4727
 #, python-brace-format
 msgid "The project could not be saved: {error}"
 msgstr "Impossibile salvare il progetto: {error}"
@@ -16705,36 +16797,36 @@ msgstr "Modifiche non salvate"
 msgid "Save the changes to the project first?"
 msgstr "Salvare prima le modifiche al progetto?"
 
-#: src/meridiana/ui/window.py:4692 src/meridiana/ui/window.py:4702
-#: src/meridiana/ui/window.py:4711
+#: src/meridiana/ui/window.py:4700 src/meridiana/ui/window.py:4710
+#: src/meridiana/ui/window.py:4719
 msgid "Open a project"
 msgstr "Apri un progetto"
 
-#: src/meridiana/ui/window.py:4693 src/meridiana/ui/window.py:4728
+#: src/meridiana/ui/window.py:4701 src/meridiana/ui/window.py:4736
 #, python-brace-format
 msgid "Meridiana projects (*{suffix})"
 msgstr "Progetti Meridiana (*{suffix})"
 
-#: src/meridiana/ui/window.py:4702
+#: src/meridiana/ui/window.py:4710
 #, python-brace-format
 msgid "{file} could not be opened: {error}"
 msgstr "Impossibile aprire {file}: {error}"
 
-#: src/meridiana/ui/window.py:4722
+#: src/meridiana/ui/window.py:4730
 #, python-brace-format
 msgid "Saved {file}"
 msgstr "Salvato {file}"
 
-#: src/meridiana/ui/window.py:4727
+#: src/meridiana/ui/window.py:4735
 msgid "Save the project"
 msgstr "Salva il progetto"
 
-#: src/meridiana/ui/window.py:4752
+#: src/meridiana/ui/window.py:4760
 #, python-brace-format
 msgid "The settings could not be saved: {error}"
 msgstr "Le impostazioni non si sono potute salvare: {error}"
 
-#: src/meridiana/ui/window.py:4757
+#: src/meridiana/ui/window.py:4765
 #, python-brace-format
 msgid ""
 "<b>Meridiana</b> {version}<br>Photovoltaic design: map, building model, sun "
@@ -16754,26 +16846,26 @@ msgstr ""
 "OpenStreetMap); i contorni delle loro aree da Natural Earth (pubblico "
 "dominio)."
 
-#: src/meridiana/ui/window.py:4786
+#: src/meridiana/ui/window.py:4794
 msgid "Checking for updates…"
 msgstr "Cerco gli aggiornamenti…"
 
-#: src/meridiana/ui/window.py:4793
+#: src/meridiana/ui/window.py:4801
 #, python-brace-format
 msgid "The check for updates failed: {error}"
 msgstr "Il controllo degli aggiornamenti non è riuscito: {error}"
 
-#: src/meridiana/ui/window.py:4799
+#: src/meridiana/ui/window.py:4807
 #, python-brace-format
 msgid "Meridiana {version} is the latest version."
 msgstr "Meridiana {version} è l'ultima versione."
 
-#: src/meridiana/ui/window.py:4804
+#: src/meridiana/ui/window.py:4812
 #, python-brace-format
 msgid "Version {version} is available: Help > Check for updates."
 msgstr "È disponibile la versione {version}: Aiuto > Cerca aggiornamenti."
 
-#: src/meridiana/ui/window.py:4905
+#: src/meridiana/ui/window.py:4913
 #, python-brace-format
 msgid "The window layout could not be saved: {error}"
 msgstr "La disposizione della finestra non si è potuta salvare: {error}"

@@ -4679,12 +4679,20 @@ class MainWindow(QMainWindow):
         return answer == QMessageBox.StandardButton.Discard
 
     def _new(self) -> None:
-        if not self._keep_or_discard():
-            return
+        if self._keep_or_discard():
+            self.file_page.open_page("new")
+
+    def _create_new(self, data: dict) -> None:
         self.session.new()
+        self.project.name = data["name"] or self.project.name
+        self.project.site = data["site"]
+        self.project.reserved = data["reserved"]
         self._mark_saved()
+        self.plan.set_source("auto")
         self._select("site", "")
         self._show_all(fit=True)
+        self.show_phase("model")
+        self.file_page.close_page()
 
     def _open(self) -> None:
         if not self._keep_or_discard():
