@@ -222,23 +222,13 @@ def tile_bounds(x: int, y: int, zoom: int) -> tuple[float, float, float, float]:
     return west, north - size, west + size, north
 
 
+from .coordinates import CoordinateError, read_coordinates
+
+
 def parse_coordinates(text: str) -> tuple[float, float] | None:
-    """Latitude and longitude typed or pasted in decimal degrees: "45.5226, 9.0300" as maps copy them,
-    "45,5226; 9,0300" as an Italian writes them (the semicolon separates when the comma is decimal), or
-    with a space between them. None when the text is not two numbers in range (then it is an address)."""
-    text = text.strip()
-    if ";" in text:
-        parts = [part.strip().replace(",", ".") for part in text.split(";")]
-    elif text.count(",") == 1:
-        parts = [part.strip() for part in text.split(",")]
-    else:
-        parts = text.replace(",", ".").split()
-    if len(parts) != 2:
-        return None
+    """Latitude and longitude read by coordinates.py, or None when the text is not an unambiguous point."""
     try:
-        lat, lon = float(parts[0]), float(parts[1])
-    except ValueError:
+        point = read_coordinates(text)
+    except CoordinateError:
         return None
-    if not (math.isfinite(lat) and math.isfinite(lon) and -90 <= lat <= 90 and -180 <= lon <= 180):
-        return None
-    return lat, lon
+    return point.lat, point.lon

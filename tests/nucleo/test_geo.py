@@ -88,6 +88,74 @@ class Coordinates(unittest.TestCase):
             self.assertIsNone(geo.parse_coordinates(text), text)
 
 
+class CoordinateReader(unittest.TestCase):
+    """Official reference: Roma Monte Mario, published by SISEF with its Roma40, ED50 and WGS84 coordinates:
+    https://foresta.sisef.org/contents/?id=0228-0010128 . Projection and datum parameters:
+    https://epsg.io/3003.proj4 , https://epsg.io/3004.proj4 , https://epsg.io/23032.proj4 ."""
+
+    WGS = (41 + 55 / 60 + 27.851 / 3600, 12 + 27 / 60 + 7.658 / 3600)
+
+    def assert_monte_mario(self, point, metres=3.0):
+        dlat = (point.lat - self.WGS[0]) * 111320.0
+        dlon = (point.lon - self.WGS[1]) * 111320.0 * math.cos(math.radians(self.WGS[0]))
+        self.assertLess(math.hypot(dlat, dlon), metres)
+
+    def test_decimal_degrees_degrees_minutes_and_seconds(self):
+        for text, kind in (("45.5226, 9.0300", "decimal"), ("45,5226; 9,0300", "decimal"),
+                           ('45°31\'21,36"N 9°01\'48,00"E', "dms"), ("45°31,356'N 9°1,800'E", "ddm")):
+            with self.subTest(text=text):
+                point = geo.read_coordinates(text)
+                self.assertAlmostEqual(point.lat, 45.5226, places=9)
+                self.assertAlmostEqual(point.lon, 9.03, places=9)
+                self.assertEqual(point.format, kind)
+                self.assertEqual(point.datum, "WGS84")
+
+    def test_google_openstreetmap_and_apple_links_without_opening_them(self):
+        links = (
+            "https://www.google.com/maps/@45.5226,9.0300,17z",
+            "https://www.google.com/maps/search/?api=1&query=45.5226%2C9.0300",
+            "https://www.openstreetmap.org/?mlat=45.5226&mlon=9.0300#map=17/45.5226/9.0300",
+            "https://www.openstreetmap.org/#map=17/45.5226/9.0300",
+            "https://maps.apple.com/?ll=45.5226,9.0300",
+        )
+        for link in links:
+            with self.subTest(link=link):
+                point = geo.read_coordinates(link)
+                self.assertAlmostEqual(point.lat, 45.5226, places=9)
+                self.assertAlmostEqual(point.lon, 9.03, places=9)
+                self.assertEqual(point.format, "link")
+
+    def test_utm_wgs84_ed50_and_gauss_boaga_with_their_datums(self):
+        point = geo.read_coordinates("UTM WGS84 33N 288734.086 4644522.480")
+        self.assert_monte_mario(point, metres=0.01)
+        self.assertEqual((point.datum, point.zone), ("WGS84", "33N"))
+
+        point = geo.read_coordinates("EPSG:23033 288803.139 4644714.664")
+        self.assertEqual(point.datum, "ED50")
+        self.assertEqual(point.zone, "33N")
+        self.assert_monte_mario(point, metres=4.0)
+
+        point = geo.read_coordinates("Gauss-Boaga Roma40 Ovest 1786287.015 4647159.219")
+        self.assert_monte_mario(point, metres=4.0)
+        self.assertEqual((point.datum, point.zone), ("Roma40", "Ovest"))
+
+    def test_ambiguous_or_impossible_text_says_why(self):
+        cases = {
+            "45, 9, 3": "two coordinates",
+            '45°31\'21" 9°01\'48"': "hemisphere",
+            '45°31\'61"N 9°01\'48"E': "60",
+            "UTM 33N 500000 4644522": "datum",
+            "UTM WGS84 61N 500000 4644522": "zone",
+            "EPSG:3003 1644522": "easting and northing",
+            "https://www.google.com/maps/place/Roma": "coordinates",
+            "95, 9": "latitude",
+        }
+        for text, reason in cases.items():
+            with self.subTest(text=text):
+                with self.assertRaisesRegex(geo.CoordinateError, reason):
+                    geo.read_coordinates(text)
+
+
 class Tiles(unittest.TestCase):
     def test_mercator_goes_and_comes_back(self):
         mx, my = geo.lonlat_to_mercator(9.19, 45.4642)
