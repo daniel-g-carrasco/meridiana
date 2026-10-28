@@ -10,6 +10,10 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- Inverter sizing and clear MPPT inputs (R187, R188): models of different powers from one brand are combined only
+  when every module has a valid string, choosing fewer inverters, then fewer models, then the closest DC/AC ratio.
+  Impossible counts explain the smallest module correction. Every input shows its series range, parallel limit,
+  power and state; the plus draws equal parallel strings, with current and orientation checks.
 - Reliable maps from roofs to continents (R131, R149, R173): valid tiles stay during every change, failed sources rest
   for three minutes and a visible strip offers Retry and Choose the background without changing the saved choice;
   Automatic uses OpenStreetMap afar and the best local orthophoto within 2 screen m/pixel. The local plan zooms out to
