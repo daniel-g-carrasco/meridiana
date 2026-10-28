@@ -474,6 +474,33 @@ class AutomaticErrors(unittest.TestCase):
         self.assertEqual(stringing.strings_allowed(module(), inv, 0), 1)
 
 
+class HandCalculated(unittest.TestCase):
+    def test_open_circuit_voltage_at_minus_ten_degrees(self):
+        p = stringing.plan(module(), inverter(), 12, [1, 0], -10.0, 60.0)
+        self.assertAlmostEqual(p.uoc_max, 40.1 * (1 + 0.0025 * 35) * 12)
+        self.assertAlmostEqual(p.uoc_max, 523.305)
+        step = p.record.find("uocmax")
+        self.assertIn("K_U", step.formula)
+        self.assertEqual(step.result.value, p.uoc_max)
+
+    def test_mpp_voltage_at_the_two_cell_temperatures(self):
+        hot = 12 * stringing.vmp_at(module(), 60.0)
+        cold = 12 * stringing.vmp_at(module(), 20.0)
+        p = stringing.plan(module(), inverter(), 12, [1, 0], -10.0, 60.0, t_cell_cold=20.0)
+        self.assertAlmostEqual(p.vmp_hot, hot)
+        self.assertAlmostEqual(p.vmp_cold, cold)
+        self.assertIn("U_{MPP}(T)", p.record.find("vmp").formula)
+        self.assertTrue(p.ok)
+
+    def test_short_circuit_current_and_power_of_one_input(self):
+        p = stringing.plan(module(), inverter(), 12, [2, 0], -10.0, 60.0)
+        self.assertAlmostEqual(p.power_w, 2 * 12 * 450.0)
+        self.assertAlmostEqual(p.record.find("isc_input0").result.value, 2 * 1.25 * 14.1)
+        self.assertAlmostEqual(p.record.find("power_input0").result.value, 10800.0)
+        self.assertIn("N_p", p.record.find("isc_input0").formula)
+        self.assertFalse(next(c for c in p.checks if c.key == "isc0").ok)
+
+
 class ParallelStrings(unittest.TestCase):
     def test_different_orientations_on_one_input_say_why_they_are_not_uniform(self):
         import dataclasses

@@ -54,6 +54,7 @@ class StringPlan:
     vmp_hot: float = 0.0            # V, the string's MPP voltage at the hottest cell
     vmp_cold: float = 0.0           # V, at the coldest
     window: tuple = (0.0, 0.0)      # V, the inverter's MPPT window (0 where unknown)
+    power_w: float = 0.0            # W at STC on the inputs of this plan
 
     @property
     def ok(self) -> bool:
@@ -126,7 +127,8 @@ def plan(module: ModuleSpec, inverter: InverterSpec, n_series: int, strings_per_
     hottest cell `t_cell_max` and at the coldest `t_cell_cold` (the lowest temperature when not given); before
     the year is computed, the design conditions of energy/plant.py stand in for them, said by `t_cell_source`."""
     rec = Record(_("Strings: checks of CEI 64-8/7"))
-    out = StringPlan(n_series=n_series, strings_per_mppt=list(strings_per_mppt), record=rec)
+    out = StringPlan(n_series=n_series, strings_per_mppt=list(strings_per_mppt), record=rec,
+                     power_w=n_series * sum(strings_per_mppt) * module.pmax)
     if t_cell_cold is None:
         t_cell_cold = t_min if t_min is not None else -10.0
     out.n_series_min, out.n_series_max = series_range(module, inverter, t_min, t_cell_max, t_cell_cold)
@@ -195,6 +197,22 @@ def plan(module: ModuleSpec, inverter: InverterSpec, n_series: int, strings_per_
         if ns <= 0:
             continue
         name = _("input {k}").format(k=k + 1)
+        rec.add(Step(f"isc_input{k}", _("{name}: maximum short-circuit current").format(name=name),
+                     r"I_{SC,in} = N_p\,K_I\,I_{SC\,STC}",
+                     _("Equal strings in parallel add their maximum short-circuit currents on the same input."),
+                     [Quantity(r"N_p", _("strings in parallel"), ns, "", Source("input", _("given by the designer")), 0),
+                      Quantity(r"I_{SC\,STC}", _("short-circuit current of the module"), module.isc, "A", m_src, 2),
+                      Quantity(r"K_I", _("factor of the standard"), ki, "", Source("norm", "KI", f"{NORM}, B.2"), 2)],
+                     Quantity(r"I_{SC,in}", _("maximum short-circuit current of the input"), ns * isc_max, "A",
+                              computed(""), 2), f"{NORM}, Allegato B, B.2, p. 109"))
+        rec.add(Step(f"power_input{k}", _("{name}: DC power at STC").format(name=name),
+                     r"P_{DC,in} = N_s\,N_p\,P_{STC}",
+                     _("Modules in series and equal strings in parallel add their nominal powers."),
+                     [Quantity(r"N_s", _("modules in series"), n_series, "", Source("input", _("given by the designer")), 0),
+                      Quantity(r"N_p", _("strings in parallel"), ns, "", Source("input", _("given by the designer")), 0),
+                      Quantity(r"P_{STC}", _("nominal power of the module"), module.pmax, "W", m_src, 1)],
+                     Quantity(r"P_{DC,in}", _("DC power of the input"), n_series * ns * module.pmax, "W",
+                              computed(""), 1), ""))
         if i_in:
             lim = i_in[min(k, len(i_in) - 1)]
             over = ns * module.imp > lim
