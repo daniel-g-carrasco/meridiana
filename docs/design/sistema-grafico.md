@@ -296,7 +296,9 @@ Regole:
 - **Viste**: angoli disegnati nel colore della scheda; le etichette sopra la pianta stanno a 8 px dai bordi.
 - **Moduli dentro la scheda** (`ui/style.pad_fields`): in una scheda che scorre nessun campo allarga la colonna
   oltre il bordo. Gli elenchi a tendina si accorciano (il testo intero nel suggerimento e nell'elenco aperto), le
-  etichette lunghe vanno a capo, una pila di pagine prende la misura della pagina mostrata, il campo passa sotto la
+  etichette lunghe vanno a capo e la loro altezza minima segue testo, larghezza e carattere, così la riga cresce
+  con loro anche dopo un cambio di impostazioni (`grow_label`, anche per le righe create dopo, R193), una pila di
+  pagine prende la misura della pagina mostrata, il campo passa sotto la
   sua etichetta quando non ci sta accanto, il titolo lungo di un gruppo si accorcia con «...» invece di allargarlo
   (25/10/2026: «Energia acquistata (tutti i costi variabili, imposte comprese)» spingeva i campi del Bilancio oltre la
   scheda), due pulsanti che non ci stanno affiancati vanno uno sotto l'altro. Prima i contenuti uscivano dalla

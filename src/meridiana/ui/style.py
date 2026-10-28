@@ -8,7 +8,7 @@ Python is asked for everything it draws, and the rest of the window stays on Fus
 
 from __future__ import annotations
 
-from PySide6.QtCore import QRect, QRectF, QSize, Qt
+from PySide6.QtCore import QEvent, QObject, QRect, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QGroupBox, QMenu, QProxyStyle, QStyle, QStyleFactory, QWidget
 
@@ -113,6 +113,34 @@ class Group(QGroupBox):
         return QSize(min(hint.width(), max(inside, 2 * TITLE_X + 40)), hint.height())
 
 
+class _LabelGrowth(QObject):
+    """A wrapped label's real height follows its width and font, so its form row grows with it (R193)."""
+
+    def __init__(self, label):
+        super().__init__(label)
+        self.label = label
+        label.installEventFilter(self)
+        self.fit()
+
+    def fit(self):
+        if self.label.width() > 0:
+            needed = self.label.heightForWidth(self.label.width())
+            if needed >= 0 and self.label.minimumHeight() != needed:
+                self.label.setMinimumHeight(needed)
+                self.label.updateGeometry()
+
+    def eventFilter(self, _obj, event) -> bool:
+        if event.type() in (QEvent.Type.Resize, QEvent.Type.FontChange, QEvent.Type.Show):
+            self.fit()
+        return False
+
+
+def grow_label(label) -> None:
+    """Keep a wrapped label, including one added after the window was built, as tall as its text."""
+    if not hasattr(label, "_meridiana_growth"):
+        label._meridiana_growth = _LabelGrowth(label)
+
+
 def pad_fields(root: QWidget) -> None:
     """The text of the number and date fields under `root` off their left edge: a style sheet's padding does not
     reach the line edit inside a QAbstractSpinBox, whose text stood at 2 px from the edge (Daniel, 24/10/2026)."""
@@ -131,6 +159,8 @@ def pad_fields(root: QWidget) -> None:
     for label in root.findChildren(QLabel):
         if not label.wordWrap() and len(label.text()) > 28 and _in_scroll(label) and not label.pixmap():
             label.setWordWrap(True)
+        if label.wordWrap():
+            grow_label(label)
     # a stack of pages in a form as wide as the page shown, not as the widest of them
     for stack in root.findChildren(QStackedWidget):
         if _in_scroll(stack) and not stack.property("fitted"):
