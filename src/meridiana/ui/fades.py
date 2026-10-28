@@ -18,11 +18,10 @@ from PySide6.QtWidgets import QAbstractItemView, QAbstractScrollArea, QWidget
 from .cards import default_tokens
 from .design import Radius, Space
 
-HEIGHT = Space.XL                # logical pixels of a band (24 until R161: «troppo accentuate» on a small screen)
-# the band's opacity from the card's edge in: whole on the edge, so that nothing scrolled reaches the card's line
-# (R177, Daniel 26/10/2026: «i contenuti ... non vengono sfumati correttamente e arrivano fino al limite della scheda
-# sfondandolo», with 0.85 on the edge what was under it showed up to the line), then light at once (R161)
-STOPS = ((0.0, 1.0), (0.18, 0.75), (0.5, 0.28), (1.0, 0.0))
+HEIGHT = Space.L                 # a short veil: the first row becomes readable at once (R192)
+# Whole only at the outermost pixel, so nothing scrolled reaches the card's line (R177). The quick falloff keeps the
+# first visible row clear instead of covering it with the broad veil introduced by R177.
+STOPS = ((0.0, 1.0), (0.16, 0.42), (0.5, 0.10), (1.0, 0.0))
 SOLID = STOPS[0][1]
 _COLOUR = [default_tokens()["panel"]]  # the panels' colour of the theme in use
 _LIVE: "weakref.WeakSet[Fades]" = weakref.WeakSet()

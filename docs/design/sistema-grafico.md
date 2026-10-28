@@ -258,9 +258,10 @@ Regole:
 ## 5. I comportamenti
 
 - **Fine morbida** (`ui/fades.py`): quando un elenco o una pagina continua oltre la scheda, l'ultimo pezzo sfuma nel
-  colore della scheda invece di tagliarsi. La sfumatura è alta 16 px (al massimo un quinto dell'area), piena sul
-  bordo e subito più leggera, dentro la linea e gli angoli tondi della scheda (R161: a 24 px e piena era «troppo accentuata» su uno
-  schermo piccolo e scuro, e passava sopra il bordo), e compare solo dal lato dove c'è altro. Daniel,
+  colore della scheda invece di tagliarsi. La sfumatura è alta 12 px (al massimo un quinto dell'area), piena solo sul
+  filo esterno e subito molto più leggera, dentro la linea e gli angoli tondi della scheda. Così la prima voce resta
+  leggibile anche nel pannello Inverter scorso a metà (R192), senza riaprire il bordo ai contenuti. Compare solo dal
+  lato dove c'è altro e non c'è quando il contenuto è fermo in cima. Daniel,
   24/10/2026: «carina la semplice sfumatura… mantienila come stile». Vale per ogni area che scorre dentro una scheda.
   Nelle pagine e nei pannelli ciò che scorre si ferma 8 px prima delle linee in alto e in basso della scheda
   (`fades.attach(area, air=True)`, `fades.AIR`), e la sfumatura sta sul bordo del contenuto: R177, Daniel
