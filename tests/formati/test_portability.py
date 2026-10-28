@@ -64,7 +64,7 @@ class AutonomousProject(unittest.TestCase):
         self.assertEqual(Path(embedded_profile["logo"]).read_bytes(), b"invented image bytes")
         self.assertIsNone(out.error_sim)
         self.assertGreater(out.sim.energy_kwh, 1000)
-        self.assertEqual(json.loads(file.read_text(encoding="utf-8"))["version"], 17)
+        self.assertEqual(json.loads(file.read_text(encoding="utf-8"))["version"], model.FORMAT_VERSION)
 
     def test_an_external_attachment_left_out_is_said_when_the_project_opens(self):
         p = capannone()
@@ -74,6 +74,38 @@ class AutonomousProject(unittest.TestCase):
         _q, notice = model.Project.load(file, cache_dir=self.folder / "empty")
         self.assertIn("Missing sheet", notice)
         self.assertIn("without an embedded copy", notice)
+
+    def test_resaving_keeps_embedded_attachment_bytes_when_the_cache_is_gone(self):
+        attachment = self.folder / "sheet.pdf"
+        attachment.write_bytes(b"invented attachment bytes")
+        p = capannone()
+        p.report = {"attachments": [{"path": str(attachment), "title": "Sheet"}]}
+        first = self.folder / "first.meridiana"
+        p.save(first)
+        attachment.unlink()
+        q, _notice = model.Project.load(first, cache_dir=self.folder / "cache")
+        Path(q.report["attachments"][0]["path"]).unlink()
+        second = self.folder / "second.meridiana"
+        q.save(second)
+        raw = json.loads(second.read_text(encoding="utf-8"))
+        self.assertIn("data", raw["report"]["attachments"][0])
+        loaded, _notice = model.Project.load(second, cache_dir=self.folder / "empty")
+        self.assertEqual(Path(loaded.report["attachments"][0]["path"]).read_bytes(), b"invented attachment bytes")
+
+    def test_new_site_weather_does_not_keep_the_old_site_horizon(self):
+        p = capannone()
+        first_cache = self.folder / "first-cache"
+        write_cache(clear_sky_meteo(), first_cache)
+        atomic.write_json(meteo._cache_file(first_cache, "horizon", p.site.lat, p.site.lon),
+                          {"azimuth": [0.0], "elevation": [30.0]}, keep_backup=False)
+        p.resources = {"weather": {"tmy": clear_sky_meteo(), "horizon": {"azimuth": [0.0], "elevation": [30.0]}}}
+        p.site = model.Site(lat=40.0, lon=14.0)
+        second_cache = self.folder / "second-cache"
+        write_cache(clear_sky_meteo(lat=40.0, lon=14.0), second_cache)
+        file = self.folder / "mixed.meridiana"
+        p.save(file, cache_dir=second_cache)
+        q, _notice = model.Project.load(file, cache_dir=self.folder / "empty")
+        self.assertNotIn("horizon", q.resources["weather"])
 
     def test_weather_embedded_for_another_site_is_not_used(self):
         cache = self.folder / "cache"

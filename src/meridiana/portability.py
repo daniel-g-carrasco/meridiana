@@ -56,9 +56,13 @@ def embed(project, path: Path, cache_dir: Path | None = None, report_profile: di
     """Put the selected report profile, attachment bytes and cached weather into the project itself."""
     resources = copy.deepcopy(getattr(project, "resources", {}) or {})
     project.report = copy.deepcopy(project.report or {})
+    existing = {item["path"]: item.get("data") for item in project.report.get("attachments") or []
+                if isinstance(item, dict) and isinstance(item.get("path"), str) and isinstance(item.get("data"), str)}
     attachments = []
     for item in reports.clean_attachments(project.report.get("attachments")):
         item = dict(item)
+        if existing.get(item["path"]):
+            item["data"] = existing[item["path"]]
         if not item.get("data"):
             try:
                 item["data"] = _encoded(Path(item["path"]).read_bytes())
@@ -70,11 +74,14 @@ def embed(project, path: Path, cache_dir: Path | None = None, report_profile: di
     resources["report_profile"] = _embedded_profile(report_profile)
     if cache_dir is not None:
         weather = dict(resources.get("weather") or {})
-        for kind in ("tmy", "horizon"):
-            source = meteo._cache_file(Path(cache_dir), kind, project.site.lat, project.site.lon)
-            if source.exists():
-                raw, _notice = atomic.read_json(source)
-                weather[kind] = raw
+        typical = meteo._cache_file(Path(cache_dir), "tmy", project.site.lat, project.site.lon)
+        if typical.exists():
+            weather["tmy"], _notice = atomic.read_json(typical)
+        horizon = meteo._cache_file(Path(cache_dir), "horizon", project.site.lat, project.site.lon)
+        if horizon.exists():
+            weather["horizon"], _notice = atomic.read_json(horizon)
+        elif typical.exists():
+            weather.pop("horizon", None)
         resources["weather"] = weather
     project.resources = resources
 
