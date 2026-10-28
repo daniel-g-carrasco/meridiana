@@ -694,6 +694,7 @@ class StringList(QTreeWidget):
         self.loading = False
         self.adders: dict = {}                  # (unit, input) -> its «+»
         self.input_heads: dict = {}             # (unit, input) -> its section, highlighted while drawing there
+        self.input_info: dict = {}              # (unit, input) -> limits, power and state, always visible
         self.rows: dict = {}                    # index into Plant.strings -> its row
         self.draft_input = (0, 0)
 
@@ -716,11 +717,11 @@ class StringList(QTreeWidget):
         """The inputs and the strings of `plant`, the strings in `colours` (the plan's), the traffic light in
         `states`; the row of string `chosen` selected (without a signal)."""
         from . import marks
-        from .sections import TAIL_ROLE, section
+        from .sections import section
         self.loading = True
         try:
             self.clear()
-            self.adders, self.input_heads, self.rows = {}, {}, {}
+            self.adders, self.input_heads, self.input_info, self.rows = {}, {}, {}, {}
             if plant is None:
                 return
             names = plant_model.state_names()
@@ -731,7 +732,6 @@ class StringList(QTreeWidget):
                 n = len(s.modules)
                 tail = "  " + ngettext("{n} module", "{n} modules", n).format(n=n) + " · " + names.get(s.state, "")
                 row = QTreeWidgetItem(parent, [s.label + tail, ""])
-                row.setData(0, TAIL_ROLE, tail)
                 row.setData(0, Qt.ItemDataRole.UserRole, i)
                 row.setIcon(0, swatch(colours[i] if i < len(colours) else "#888888"))
                 row.setIcon(1, marks.icon(level.get(s.state, "warn")))
@@ -744,9 +744,7 @@ class StringList(QTreeWidget):
                 for k in range(1, u.inputs + 1):
                     slot = plant.inputs.get((u.number, k))
                     mine = list(slot.strings) if slot is not None else []
-                    # the count with its word: «INGRESSO 2  1» read as an input's number
-                    head = section(self, f"{plant_model.unit_label(u)} · {input_name(u, k)}",
-                                   ngettext("{n} string", "{n} strings", len(mine)).format(n=len(mine)))
+                    head = section(self, f"{plant_model.unit_label(u)} · {input_name(u, k)}", "")
                     takes = (optimized_takes(u, slot) if u.optimized else
                              _("takes {n} strings of {lo} to {hi} modules").format(n=slot.allowed, lo=slot.series[0],
                                                                                   hi=slot.series[1])
@@ -754,12 +752,28 @@ class StringList(QTreeWidget):
                     head.setToolTip(0, f"{u.name}: {takes}")
                     self.input_heads[(u.number, k)] = head
                     self._adder(head, u.number, k, takes)
+                    if slot is not None:
+                        series = (_("{lo}-{hi} in series").format(lo=slot.series[0], hi=slot.series[1])
+                                  if slot.series[1] else _("series range not known"))
+                        parallel = _("max {n} in parallel").format(n=slot.allowed)
+                        state = (_("empty") if not mine else
+                                 {"ok": _("correct"), "warn": _("to be checked"), "fail": _("out of limit")}[slot.level])
+                        count = ngettext("{n} string", "{n} strings", len(mine)).format(n=len(mine))
+                        text = _("{series}\n{parallel}\n{power} kWp\n{count} · {state}").format(
+                            series=series, parallel=parallel, power=number(slot.power_w / 1000.0, 2), count=count,
+                            state=state)
+                        info = QTreeWidgetItem(head, [text, ""])
+                        info.setFlags(Qt.ItemFlag.ItemIsEnabled)
+                        info.setIcon(1, marks.icon(slot.level if mine else "info"))
+                        reasons = [slot.why] if slot.why else []
+                        reasons += [plant.strings[i].why for i in mine if plant.strings[i].why]
+                        info.setToolTip(0, "\n".join([takes] + list(dict.fromkeys(reasons))))
+                        self.input_info[(u.number, k)] = info
                     for i in mine:
                         string_row(head, i)
                     if not mine:
                         free = QTreeWidgetItem(head, [_("free: «+» to draw a string on it"), ""])
                         free.setFlags(Qt.ItemFlag.ItemIsEnabled)
-                        free.setForeground(0, self.palette().color(QPalette.ColorRole.PlaceholderText))
                         free.setToolTip(0, takes)
             lost = [i for i, s in enumerate(plant.strings) if not plant.inputs.get((s.inverter, s.mppt))]
             if lost:
@@ -787,8 +801,8 @@ class StringList(QTreeWidget):
         add.setIcon(icons.icon("plus"))
         add.setIconSize(QSize(Icon.CONTROL, Icon.CONTROL))
         add.setAutoRaise(True)
-        add.setToolTip(_("A new string on input {k} of inverter {n}: then click its modules on the plan in order "
-                         "({takes})").format(k=k, n=unit, takes=takes))
+        add.setToolTip(_("Activate input {k} of inverter {n}: draw a string, or another equal string in parallel, "
+                         "by clicking its modules on the plan in order ({takes})").format(k=k, n=unit, takes=takes))
         add.clicked.connect(lambda _c=False, n=unit, m=k: self.newString.emit(n, m))
         box.addWidget(add, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.setItemWidget(head, 1, holder)

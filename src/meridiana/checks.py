@@ -793,6 +793,10 @@ def plant_items(plant) -> list[Item]:
     seen: set = set()
     for (unit_no, k), slot in sorted(plant.inputs.items()):
         unit = plant.unit(unit_no)
+        if slot.why:
+            bad += 1
+            items.append(Item("warn", "strings", _("{inverter}, input {k}: {why}").format(
+                inverter=unit_label(unit), k=k, why=slot.why), "", here))
         # every plan of the input: one per length of its strings (they should be alike; by hand they may not)
         plans = list({id(p): p for p in [slot.plan] + [plant.strings[i].plan for i in slot.strings] if p}.values())
         for p in plans:

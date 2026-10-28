@@ -55,18 +55,19 @@ class TheList(unittest.TestCase):
     def test_each_input_is_a_section_with_its_plus_and_the_strings_under_it(self):
         from PySide6.QtWidgets import QToolButton
 
-        from meridiana.ui.sections import SECTION_ROLE
+        from meridiana.ui.sections import SECTION_ROLE, TAIL_ROLE
         lst = self.list
         heads = [lst.topLevelItem(i) for i in range(lst.topLevelItemCount())]
         self.assertEqual([h.text(0) for h in heads], ["Inverter 1 · Input 1", "Inverter 1 · Input 2"])
-        self.assertEqual([h.data(0, SECTION_ROLE) for h in heads], ["2 strings", "0 strings"])
+        self.assertEqual([h.data(0, SECTION_ROLE) for h in heads], ["", ""])
         self.assertEqual(sorted(lst.rows), [0, 1])
         self.assertTrue(lst.rows[0].text(0).startswith("1.1.1"))
         self.assertIn("8 modules", lst.rows[0].text(0))
+        self.assertIsNone(lst.rows[0].data(0, TAIL_ROLE))                   # standard painting follows a live theme
         self.assertFalse(lst.rows[0].icon(0).isNull())                      # its colour, as on the plan
         self.assertFalse(lst.rows[0].icon(1).isNull())                      # its state, a mark
-        self.assertTrue(heads[1].child(0).text(0).startswith("free"))      # an input without strings says so
-        self.assertFalse(heads[1].child(0).flags() & heads[1].child(0).flags().ItemIsSelectable)
+        self.assertTrue(heads[1].child(1).text(0).startswith("free"))      # an input without strings says so
+        self.assertFalse(heads[1].child(1).flags() & heads[1].child(1).flags().ItemIsSelectable)
         for key, add in lst.adders.items():
             self.assertIsInstance(add, QToolButton)                          # the design system's tool button
             self.assertTrue(add.autoRaise())
@@ -75,6 +76,27 @@ class TheList(unittest.TestCase):
             self.assertIn(f"input {key[1]} of inverter {key[0]}", add.toolTip())
             self.assertEqual(add.styleSheet(), "")                           # no border of its own (R115)
         self.assertGreaterEqual(lst.height(), sum(lst.visualItemRect(r).height() for r in lst.rows.values()))
+
+    def test_every_input_shows_its_range_parallel_limit_power_state_and_reason(self):
+        first = self.list.input_info[(1, 1)].text(0)
+        second = self.list.input_info[(1, 2)].text(0)
+        self.assertIn("6-25 in series", first)
+        self.assertIn("max 1 in parallel", first)
+        self.assertIn("\n", first)
+        self.assertIn("7.20 kWp", first)
+        self.assertIn("2 strings", first)
+        self.assertNotIn("⚠", first)
+        self.assertFalse(self.list.input_info[(1, 1)].icon(1).isNull())
+        self.assertIn("to be checked", first)
+        self.assertEqual(len(first.splitlines()), 4)
+        self.assertEqual(self.list.input_info[(1, 1)].foreground(0).style(),
+                         self.list.input_info[(1, 1)].foreground(0).style().NoBrush)
+        self.assertIn("current", self.list.input_info[(1, 1)].toolTip(0))
+        self.assertIn("0.00 kWp", second)
+        self.assertIn("empty", second)
+        self.assertFalse(self.list.input_info[(1, 2)].icon(1).isNull())
+        self.assertIn("Activate input 2", self.list.adders[(1, 2)].toolTip())
+        self.assertIn("parallel", self.list.adders[(1, 2)].toolTip())
 
     def test_the_input_being_drawn_is_highlighted_until_the_draft_ends(self):
         from meridiana.ui.sections import ACTIVE_ROLE

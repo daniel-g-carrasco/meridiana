@@ -474,6 +474,46 @@ class AutomaticErrors(unittest.TestCase):
         self.assertEqual(stringing.strings_allowed(module(), inv, 0), 1)
 
 
+class ParallelStrings(unittest.TestCase):
+    def test_different_orientations_on_one_input_say_why_they_are_not_uniform(self):
+        import dataclasses
+        from meridiana import checks
+        from meridiana.energy import plant
+        rec = inverter_rec(mppt_count=1, dc_current_max_per_mppt_a=[60], dc_isc_max_per_mppt_a=[80])
+        runs = [{"inverter": 1, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]},
+                {"inverter": 1, "mppt": 1, "modules": [f"s2/0:{s}" for s in range(8)]}]
+        p = plant_project([(rec, 1)], {"runs": runs})
+        south = plant.Group("s1.0", "s1", "s1", module(), grid(1, 8))
+        east = plant.Group("s2.0", "s2", "s2", module(),
+                           [dataclasses.replace(pm, azimuth=90.0) for pm in grid(1, 8)])
+        out = plant.build(p, groups=[south, east])
+        self.assertEqual(out.inputs[(1, 1)].level, "warn")
+        self.assertIn("orientation", out.inputs[(1, 1)].why)
+        self.assertTrue(all(s.state == "check" for s in out.strings))
+        self.assertTrue(all("orientation" in s.why for s in out.strings))
+        self.assertTrue(any("orientation" in i.text for i in checks.plant_items(out)))
+
+    def test_different_lengths_on_one_input_say_why_they_are_not_uniform(self):
+        from meridiana.energy import plant
+        rec = inverter_rec(mppt_count=1, dc_current_max_per_mppt_a=[60], dc_isc_max_per_mppt_a=[80])
+        runs = [{"inverter": 1, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]},
+                {"inverter": 1, "mppt": 1, "modules": [f"s1/1:{s}" for s in range(7)]}]
+        out = plant.build(plant_project([(rec, 1)], {"runs": runs}), groups=[plant.Group(
+            "s1.0", "s1", "s1", module(), grid(2, 8))])
+        self.assertEqual(out.inputs[(1, 1)].level, "warn")
+        self.assertIn("same length", out.inputs[(1, 1)].why)
+        self.assertTrue(all("same length" in s.why for s in out.strings))
+
+    def test_an_input_without_a_known_mppt_window_is_to_be_checked(self):
+        from meridiana.energy import plant
+        rec = inverter_rec(mppt_count=1, mppt_voltage_min_v=None, mppt_voltage_max_v=None)
+        runs = [{"inverter": 1, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]}]
+        out = plant.build(plant_project([(rec, 1)], {"runs": runs}), groups=[plant.Group(
+            "s1.0", "s1", "s1", module(), grid(1, 8))])
+        self.assertEqual(out.inputs[(1, 1)].level, "warn")
+        self.assertEqual(out.strings[0].state, "check")
+
+
 class OnlyWhenAsked(unittest.TestCase):
     """R114 and R118 (Daniel, 25/10/2026): the strings are the designer's; Meridiana proposes them only when asked
     (`propose`), completes them around his (`keep`), and nothing else makes or moves them: an inverter added leaves

@@ -141,6 +141,7 @@ class Input:
     plan: stringing.StringPlan | None = None
     level: str = "ok"                                    # the worst of its checks: "ok", "warn", "fail"
     power_w: float = 0.0                                 # its DC power at STC
+    why: str = ""                                        # why its parallel strings are not uniform
 
     @property
     def used(self) -> bool:
@@ -775,6 +776,8 @@ def build(project, results: dict | None = None, groups: list | None = None, t_ce
                              _("{name}: none of SolarEdge's optimizers in the catalogue takes this module; choose one "
                                "in the Plant").format(name=u.name))
     _by_unit(groups, out)
+    if out.left:
+        out.corrections = _corrections(out.units, groups, cond, out.strategy, out.left)
     if check:
         _check(project, groups, cond, out, p_dc_hourly)
     return out
@@ -1177,11 +1180,21 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
         mine = [out.strings[i] for i in slot.strings]
         slot.power_w = sum(len(x.modules) * modules[x.modules[0][0]].pmax for x in mine if x.modules)
         if not unit.checkable:
+            slot.level = "warn"
             for x in mine:
                 x.state, x.why = "check", _("to be checked: the inverter has no MPPT window (choose one from the "
                                             "catalogue)")
             continue
-        alike = len({(len(x.modules), _module_key(modules[x.modules[0][0]])) for x in mine if x.modules}) <= 1
+        orientations = {(g.sfid, pm.key): (round(pm.tilt, 1), round(pm.azimuth, 1))
+                        for g in groups for pm in g.placed}
+        facings = [tuple(sorted({orientations[(sf, key)] for sf, key, _c in x.modules})) for x in mine if x.modules]
+        orientation_ok = bool(facings) and all(len(f) == 1 and f == facings[0] for f in facings)
+        alike = (len({(len(x.modules), _module_key(modules[x.modules[0][0]])) for x in mine if x.modules}) <= 1
+                 and orientation_ok)
+        if not orientation_ok:
+            slot.why = _("parallel strings must have the same orientation: this input mixes different orientations")
+        elif not alike:
+            slot.why = _("parallel strings must have the same length and module type")
         worst_input = "ok"
         for x in mine:
             if not x.modules:
@@ -1203,8 +1216,7 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
             elif warn or not alike or x.lost:
                 x.state = "check"
                 x.why = "; ".join([f"{c.label}: {c.detail}" for c in warn]
-                                  + ([_("strings not alike on this input (PVsyst asks for identical strings on an "
-                                        "MPPT)")] if not alike else [])
+                                  + ([slot.why] if slot.why else [])
                                   + ([_("{n} of its modules are no longer laid").format(n=len(x.lost))] if x.lost
                                      else []))
             else:
