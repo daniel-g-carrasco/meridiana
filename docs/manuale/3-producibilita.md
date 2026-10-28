@@ -6,7 +6,7 @@ Meridiana calcola l'anno tipo ora per ora, dal sole sui moduli al contatore, con
 
 ### PVGIS
 
-PVGIS è il servizio del Centro comune di ricerca (JRC) della Commissione europea. Dà l'anno meteo tipo del sito (ora per ora: irraggiamento, temperatura, vento) e l'orizzonte lontano, con le montagne e le colline che nascondono il sole basso. Si scaricano una volta e restano nella cache: senza rete Meridiana calcola con ciò che ha già. La rete verso PVGIS si spegne in File > Impostazioni > Riservatezza.
+PVGIS è il servizio del Centro comune di ricerca (JRC) della Commissione europea. Dà l'anno meteo tipo del sito (ora per ora: irraggiamento, temperatura, vento) e l'orizzonte lontano, con le montagne e le colline che nascondono il sole basso. Si scaricano una volta e restano nella cache: senza rete Meridiana calcola con ciò che ha già. Al salvataggio entrano anche nel file del progetto, che così si apre e si calcola su un altro PC senza scaricarli di nuovo. Se cambi il sito, il meteo del posto precedente non viene usato. La rete verso PVGIS si spegne in File > Impostazioni > Riservatezza.
 
 Il riquadro «PVGIS, secondo parere» mostra la stima di PVGIS (servizio PVcalc) per lo stesso impianto: tecnologia crystSi2025, media degli anni 2005-2023 (banca dati SARAH3), come scrive il riquadro stesso. Non è lo stesso conto di Meridiana (un anno tipo contro una media di anni, perdite diverse): uno scarto di qualche punto percentuale è normale, uno grande va guardato.
 

@@ -1356,7 +1356,11 @@ class MainWindow(QMainWindow):
 
     def _report_profile(self) -> dict | None:
         """The profile the project's report is signed with, its logo as a path."""
-        from .. import reports
+        from .. import portability, reports
+        embedded = (self.project.resources or {}).get("report_profile")
+        chosen = reports.settings(self.project)["profile"]
+        if embedded and (chosen is None or chosen == embedded.get("name")):
+            return portability.profile(self.project, self.paths.cache)
         p = reports.profile_for(self.project, self.cfg.report_profiles, self.cfg.report_profile)
         if p and p.get("logo"):
             p = {**p, "logo": str(self.paths.data / "logos" / p["logo"])}
@@ -4669,7 +4673,7 @@ class MainWindow(QMainWindow):
             self._save_as()
             return
         try:
-            target = self.session.save_revision()
+            target = self.session.save_revision(self.paths.cache, self._report_profile())
         except OSError as error:
             QMessageBox.warning(self, _("Save"), _("The project could not be saved: {error}").format(error=error))
             return
@@ -4722,7 +4726,7 @@ class MainWindow(QMainWindow):
 
     def open_path(self, path: Path) -> None:
         try:
-            notice = self.session.open(path)
+            notice = self.session.open(path, self.paths.cache)
         except Exception as error:             # noqa: BLE001  a damaged file is said, never a crash of the slot
             log.complain("open", error)
             QMessageBox.warning(self, _("Open a project"), _("{file} could not be opened: {error}").format(
@@ -4740,7 +4744,7 @@ class MainWindow(QMainWindow):
         if self.path is None:
             return self._save_as()
         try:
-            self.session.save(self.path)
+            self.session.save(self.path, self.paths.cache, self._report_profile())
         except OSError as error:
             QMessageBox.warning(self, _("Save"), _("The project could not be saved: {error}").format(error=error))
             return False

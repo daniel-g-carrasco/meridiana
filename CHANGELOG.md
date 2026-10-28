@@ -10,6 +10,10 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- Self-contained project files (R150): custom modules, inverters and optimizers already travel in the file; report
+  attachments, the selected author's profile and logo, and the site's weather and horizon are now embedded too.
+  Opening on another PC needs no catalogue, profile or weather cache. Missing external resources are named on opening.
+  Project format 17.
 - New projects start from their place (R148): one field reads decimal, DMS and decimal-minute coordinates, Google Maps,
   OpenStreetMap and Apple links, UTM WGS84 or ED50 and Gauss-Boaga Roma40. Local ISTAT and recent-project suggestions
   work while typing; Nominatim is asked only by Search. Check the point and choose Create and draw. Optional grid data

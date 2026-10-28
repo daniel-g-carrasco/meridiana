@@ -1,6 +1,6 @@
 """The weather of the site: a typical year from PVGIS (the European Commission's service, no key needed)
-and the profile of the far horizon. Both are kept in the cache folder: once fetched, the project opens and
-computes without the network, and the source with its date stays in the pedigree.
+and the profile of the far horizon. Both are kept in the cache folder and embedded in the project on save:
+once fetched, the project opens and computes without the network, and the source with its date stays in the pedigree.
 
 The typical year is asked without the horizon (usehorizon=0): the horizon is applied by Meridiana, as its
 own step of the loss chain, so the far shading shows as a loss and not as less sun. PVGIS gives the
@@ -129,8 +129,11 @@ def _from_cache(raw: dict) -> Meteo:
         raise MeteoError(f"damaged weather cache: {error}") from error
 
 
-def typical_year(lat: float, lon: float, cache_dir: Path, refresh: bool = False, timeout: float = 60) -> Meteo:
-    """The PVGIS typical year of the site, from the cache when there, else from the service."""
+def typical_year(lat: float, lon: float, cache_dir: Path, refresh: bool = False, timeout: float = 60,
+                 raw: dict | None = None) -> Meteo:
+    """The PVGIS typical year embedded in the project or cached, else from the service."""
+    if raw is not None:
+        return _from_cache(raw)
     path = _cache_file(cache_dir, "tmy", lat, lon)
     if path.exists() and not refresh:
         try:
@@ -196,11 +199,11 @@ def _tmy_v6(lat: float, lon: float, timeout: float) -> tuple[pd.DataFrame, dict]
     return data[list(COLUMNS)], meta
 
 
-def horizon(lat: float, lon: float, cache_dir: Path, refresh: bool = False, timeout: float = 30) -> Horizon:
-    """The far horizon seen from the site (PVGIS, from a digital terrain model), from the cache when there."""
+def horizon(lat: float, lon: float, cache_dir: Path, refresh: bool = False, timeout: float = 30,
+            raw: dict | None = None) -> Horizon:
+    """The far horizon embedded in the project or cached, else from the terrain service."""
     path = _cache_file(cache_dir, "horizon", lat, lon)
-    raw = None
-    if path.exists() and not refresh:
+    if raw is None and path.exists() and not refresh:
         try:
             raw, _notice = atomic.read_json(path)
         except (OSError, ValueError):

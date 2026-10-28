@@ -13,9 +13,9 @@ data is left out, never written empty.
 
 The attachments are PDF files the designer adds (the datasheets of the modules, of the inverters, of the
 optimizers, the certificates): put after the last chapter, each behind a page that names it and listed in the
-contents with its page (ui/report.py merges them with pypdf). The project holds them as paths: absolute in memory,
-relative to the project's file in the file (`portable`, `resolved`), absolute when they lie on another drive, so
-that a folder moved with its datasheets keeps them."""
+contents with its page (ui/report.py merges them with pypdf). The project embeds their bytes on save and also keeps
+paths: absolute in memory, relative to the project's file in the file (`portable`, `resolved`), so an older project
+still works and a moved one no longer depends on the original files."""
 
 from __future__ import annotations
 

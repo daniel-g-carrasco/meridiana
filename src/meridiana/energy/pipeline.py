@@ -65,7 +65,15 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None) -> 
     step = progress or (lambda *_a: None)
     out = EnergyResult()
     lat, lon = project.site.lat, project.site.lon
-    cached = meteo.cached(lat, lon, cache)
+    weather = (getattr(project, "resources", {}) or {}).get("weather") or {}
+    embedded, embedded_horizon = weather.get("tmy"), weather.get("horizon")
+    try:
+        location = embedded["meta"]["inputs"]["location"]
+        if (float(location["latitude"]), float(location["longitude"])) != (lat, lon):
+            embedded = embedded_horizon = None
+    except (KeyError, TypeError, ValueError):
+        embedded = embedded_horizon = None
+    cached = embedded is not None or meteo.cached(lat, lon, cache)
     arrays = system.arrays_of(project, results)
     ctx = consumption_model.Context(p_stc_kw=sum(a.p_stc for a in arrays) / 1000.0)
     wanted = consumption_model.Consumption.from_dict(project.consumption)
@@ -75,7 +83,7 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None) -> 
         out.error_sim = _("Fetch the weather of the site first (button above).")
         return out
     step(0, STEPS, _("the typical year"))
-    m = meteo.typical_year(lat, lon, cache)
+    m = meteo.typical_year(lat, lon, cache, raw=embedded)
     s = m.summary
     out.meteo_text = _("{source}, fetched {date}. Global horizontal irradiation {ghi} kWh/m², mean "
                        "temperature {t} °C (from {tmin} to {tmax} °C).").format(
@@ -86,7 +94,8 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None) -> 
     step(1, STEPS, _("the horizon"))
     if losses.use_horizon:
         try:
-            hor = meteo.horizon(lat, lon, cache) if (fetch or meteo.cached(lat, lon, cache, "horizon")) else None
+            hor = (meteo.horizon(lat, lon, cache, raw=embedded_horizon)
+                   if (fetch or embedded_horizon is not None or meteo.cached(lat, lon, cache, "horizon")) else None)
         except meteo.MeteoError as error:
             out.notes.append(str(error))
     if not arrays:
