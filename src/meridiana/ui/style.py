@@ -113,6 +113,26 @@ class Group(QGroupBox):
         return QSize(min(hint.width(), max(inside, 2 * TITLE_X + 40)), hint.height())
 
 
+class SectionGate(QObject):
+    """Fields owned by a checkbox, writable in its checked or unchecked state as declared (R194)."""
+
+    def __init__(self, checkbox, reason: str, fields, writable_when_checked: bool = True):
+        super().__init__(checkbox)
+        self.checkbox = checkbox
+        self.reason = reason
+        self.fields = list(fields)
+        self.writable_when_checked = writable_when_checked
+        self.tips = {field: field.toolTip() for field in self.fields}
+        checkbox.toggled.connect(self.apply)
+        self.apply(checkbox.isChecked())
+
+    def apply(self, on: bool) -> None:
+        writable = on == self.writable_when_checked
+        for field in self.fields:
+            field.setEnabled(writable)
+            field.setToolTip(self.tips[field] if writable else self.reason)
+
+
 class _LabelGrowth(QObject):
     """A wrapped label's real height follows its width and font, so its form row grows with it (R193)."""
 

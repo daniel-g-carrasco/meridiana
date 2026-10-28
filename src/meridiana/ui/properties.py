@@ -20,7 +20,7 @@ from .help_box import HintLabel, help_button, register
 from .quantity_field import QuantityField
 from . import symbols
 from .theme import mark
-from .style import Group
+from .style import Group, SectionGate
 
 
 def roof_names() -> dict:
@@ -680,6 +680,7 @@ class Properties(QScrollArea):
         if not self._same(shape):
             self._build_subfield(project, sf)
         self._refresh()
+        self.azimuth_gate.apply(self.azimuth_gate.checkbox.isChecked())   # bound checkboxes change with signals blocked
 
     def _params(self) -> layout.Params:
         return self._project().fill_params(self._object())
@@ -728,12 +729,11 @@ class Properties(QScrollArea):
             q, r = self._params(), self.shown["result"]
             return r.azimuth if r is not None and q.azimuth is None else (q.azimuth or 0.0)
 
-        def enabled(w, on):
-            w.setEnabled(on)
         self._bind(azimuth, azimuth_now)
-        self._bind(azimuth, lambda: self._params().azimuth is not None, enabled)
         auto.toggled.connect(lambda v: self._emit("params.azimuth", None if v else azimuth.value()))
         azimuth.valueChanged.connect(lambda v: self._emit("params.azimuth", v) if not auto.isChecked() else None)
+        self.azimuth_gate = SectionGate(auto, _("Uncheck «Automatic» to enter the azimuth."), [azimuth],
+                                        writable_when_checked=False)
         row = QHBoxLayout()
         row.addWidget(azimuth, 1)
         row.addWidget(auto)
