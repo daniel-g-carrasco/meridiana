@@ -20,6 +20,8 @@ class Labels(unittest.TestCase):
         from PySide6.QtWidgets import QLabel
 
         from meridiana.ui import theme
+        # the text size back to medium afterwards: left at large, the tests after this one ran with it (28/10/2026)
+        self.addCleanup(theme.change_text_size, "medium", self.app)
         failures = []
         for width in (1000, 1600):
             self.win.resize(width, 850)

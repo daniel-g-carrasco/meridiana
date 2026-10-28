@@ -120,6 +120,10 @@ class _LabelGrowth(QObject):
         super().__init__(label)
         self.label = label
         label.installEventFilter(self)
+        # a new text sends the label no event of its own: the status of a page, empty when the page was built, was
+        # cut to one line on Windows («Fetch the weather of the site first», 28/10/2026)
+        set_text = label.setText
+        label.setText = lambda text: (set_text(text), self.fit())[0]
         self.fit()
 
     def fit(self):

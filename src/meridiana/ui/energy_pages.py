@@ -231,6 +231,8 @@ class Page(QWidget):
         self.setMinimumWidth(320)
         self.status = QLabel("")
         self.status.setWordWrap(True)
+        from .style import grow_label
+        grow_label(self.status)              # as tall as the message it is given later (R193)
         self.loading = False                 # filling the form from the project: no edits sent
         self.stale = False                   # the values are those of a year computed before the last change
         # the arc in the top right corner of the results while the year is computed, past the threshold (study

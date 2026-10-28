@@ -106,6 +106,8 @@ class DeliverablesInspector(QScrollArea):
             head = QHBoxLayout()
             title = set_text(QLabel(d.title), Text.STRONG)
             title.setWordWrap(True)             # a long title on two lines, its state still inside the panel
+            from .style import grow_label
+            grow_label(title)                   # and its row as tall as the two lines (R193; «DXF» cut, 28/10/2026)
             head.addWidget(title, 1)
             state = QLabel(names.get(d.state, d.state))
             state.setObjectName(f"state-{d.state}")
