@@ -265,7 +265,7 @@ class PlanAids(unittest.TestCase):
         self.assertGreater(share, 0.95)
         plan.set_tool("select")
 
-    def test_zoom_reaches_europe_with_a_site_mark_kilometres_and_the_same_roof_on_return(self):
+    def test_zoom_reaches_the_whole_equal_earth_world_and_returns_to_the_same_roof(self):
         from PySide6.QtCore import QPoint
         from PySide6.QtGui import QTransform
 
@@ -273,16 +273,22 @@ class PlanAids(unittest.TestCase):
         plan.loader.offline = True
         for _ in range(30):
             plan.zoom_at(0.1, QPoint(plan.viewport().width() // 2, plan.viewport().height() // 2))
-        self.assertLessEqual(plan.metres_per_pixel(), 25000)
+        self.assertGreaterEqual(plan.metres_per_pixel(), 50000)
+        self.assertTrue(plan.world.equal_earth)
         self.assertTrue(plan.site_mark.isVisible())
         self.assertIn("km", plan.scale_bar.text())
-        self.assertLessEqual(len(plan.wanted_tiles), 400)
+        self.assertFalse(plan.scale_bar.isVisible())
         self.assertEqual(plan.north.angle, -plan.view_rotation())
         plan.setTransform(QTransform().scale(10, 10))
         plan.centerOn(0, 0)
         plan._moved()
+        self.assertFalse(plan.world.equal_earth)
         self.assertFalse(plan.site_mark.isVisible())
+        self.assertTrue(plan.scale_bar.isVisible())
         self.assertAlmostEqual(plan.metres_per_pixel(), 0.1)
+        plan.resize(500, 400)
+        plan.zoom_at(0.0, QPoint(250, 200))
+        self.assertAlmostEqual(plan.metres_per_pixel(), 84000, places=6)
 
     def test_natural_earth_draws_offline_alone_and_under_the_tiles(self):
         from PySide6.QtGui import QTransform
@@ -293,14 +299,46 @@ class PlanAids(unittest.TestCase):
         plan.setTransform(QTransform().scale(0.0001, 0.0001))
         plan.centerOn(0, 0)
         plan._moved()
-        self.assertTrue(plan.world.country_items["Italy"].isVisible())
+        for name in ("Italy", "United States of America", "Brazil", "Australia"):
+            self.assertIn(name, plan.world.country_items)
+            self.assertTrue(plan.world.country_items[name].isVisible())
         self.assertTrue(any(label.isVisible() for label in plan.world.labels))
+        occupied = []
+        for label in plan.world.labels:
+            if not label.isVisible():
+                continue
+            rect = label.boundingRect()
+            rect.moveCenter(plan.mapFromScene(plan.world.label_anchors[label]))
+            self.assertFalse(any(rect.intersects(other) for other in occupied), label.text())
+            occupied.append(rect)
         self.assertTrue(all(item.zValue() < 0 for item in plan.world.items))
         plan.set_source("osm")
-        self.assertTrue(plan.world.country_items["Italy"].isVisible())
+        self.assertEqual(plan.attribution.full, "Natural Earth")
         plan.setTransform(QTransform().scale(10, 10))
         plan._moved()
         self.assertFalse(plan.world.country_items["Italy"].isVisible())
+
+    def test_equal_earth_hides_tiles_without_loading_them_and_has_a_quiet_threshold(self):
+        from PySide6.QtGui import QTransform
+        from PySide6.QtWidgets import QGraphicsRectItem
+        plan = self.plan
+        plan.loader.offline = True
+        tile = QGraphicsRectItem(0, 0, 10, 10)
+        plan.scene().addItem(tile)
+        plan.tile_items[("test", 0, 0, 0)] = tile
+        plan.setTransform(QTransform().scale(1 / 2100, 1 / 2100))
+        plan._moved()
+        self.assertTrue(plan.world.equal_earth)
+        self.assertFalse(tile.isVisible())
+        plan._update_tiles()
+        self.assertEqual(plan.wanted_tiles, set())
+        plan.setTransform(QTransform().scale(1 / 1800, 1 / 1800))
+        plan._moved()
+        self.assertTrue(plan.world.equal_earth)
+        plan.setTransform(QTransform().scale(1 / 1400, 1 / 1400))
+        plan._moved()
+        self.assertFalse(plan.world.equal_earth)
+        self.assertTrue(tile.isVisible())
 
 
 if __name__ == "__main__":

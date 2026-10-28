@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import math
 from dataclasses import dataclass
 from functools import cache
 
@@ -11,6 +12,29 @@ from . import paths
 
 DATA = "natural_earth", "ne_110m_admin_0_countries.geojson.gz"
 DECLARED_BYTES = 209310
+EQUAL_EARTH_RADIUS = 6_371_007.2
+A1, A2, A3, A4 = 1.340264, -0.081106, 0.000893, 0.003796
+
+
+def _parallel(phi: float) -> tuple[float, float]:
+    theta = math.asin(math.sqrt(3) * math.sin(phi) / 2)
+    return theta, theta * (A1 + A2 * theta ** 2 + A3 * theta ** 6 + A4 * theta ** 8)
+
+
+def equal_earth(lon: float, lat: float, central_lon: float = 0.0, origin_lat: float = 0.0) -> tuple[float, float]:
+    """Metres east and north in the Equal Earth projection, centred on the site's meridian and latitude.
+
+    The coefficients and equations are Šavrič, Patterson and Jenny's (2018), also used by PROJ's eqearth.
+    """
+    difference = lon - central_lon
+    relative = (difference + 180) % 360 - 180
+    if relative == -180 and difference > 0:
+        relative = 180
+    lam, phi = math.radians(relative), math.radians(lat)
+    theta, y = _parallel(phi)
+    denominator = A1 + 3 * A2 * theta ** 2 + 7 * A3 * theta ** 6 + 9 * A4 * theta ** 8
+    x = 2 * math.sqrt(3) * lam * math.cos(theta) / (3 * denominator)
+    return x * EQUAL_EARTH_RADIUS, (y - _parallel(math.radians(origin_lat))[1]) * EQUAL_EARTH_RADIUS
 
 
 @dataclass(frozen=True)

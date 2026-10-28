@@ -47,7 +47,7 @@ LEFT_WAIT_MS = 150             # how long a left press waits for the other butto
 TILE_UPDATE_MS = 120
 FAILOVER_THRESHOLD = 3           # distinct failed tiles in the current view, after the loader's own retries
 FAILOVER_COOLDOWN = 180.0        # seconds before an unavailable source is tried again by an automatic update
-MIN_PLAN_SCALE = 0.00004          # 20 000 km across 800 px: the site's hemisphere, continents included
+MIN_PLAN_SCALE = 0.00002          # at least 50 000 m/pixel; _minimum_scale fits the whole world in narrow views too
 STRING_DOT_MIN_MODULE_PX = 14.0   # below this, 8 px dots merge into the line when modules get small
 
 Z_TILES, Z_BUILDING, Z_PITCH, Z_SUBFIELD, Z_EXCLUSION, Z_MODULES, Z_SELECTION = 0, 10, 12, 20, 25, 30, 40
@@ -504,14 +504,15 @@ class PlanView(QGraphicsView):
     def _credit(self) -> None:
         """The attribution of the source shown, always on the plan (OpenStreetMap's policy: never behind a switch)."""
         shown = self.background()
-        self.attribution.set_text(shown.credit() if shown else "", self.viewport().width())
+        text = "Natural Earth" if self.world.equal_earth else shown.credit() if shown else ""
+        self.attribution.set_text(text, self.viewport().width())
         plan_overlays.place(self)
 
     def set_veil(self, strength: float) -> None:
         """How much the imagery is darkened, 0 to 1 (view_colours.VEILS)."""
         self.veil_strength = min(1.0, max(0.0, float(strength)))
         self.veil.setBrush(QBrush(qcolour(view_colours.veil(self.veil_strength))))
-        self.veil.setVisible(self.source != "none" and self.veil_strength > 0)
+        self.veil.setVisible(self.source != "none" and self.veil_strength > 0 and not self.world.equal_earth)
 
     def set_marks(self, marks: list) -> None:
         """The marks of the checks: (x, y, level, count, (kind, id)) in metres; above everything but the guides."""
@@ -580,6 +581,12 @@ class PlanView(QGraphicsView):
             self._choose()
         self.scale_bar.set_scale(mpp)
         self.world.set_scale(mpp)
+        far = self.world.equal_earth
+        self.scale_bar.setVisible(not far)
+        for item in self.tile_items.values():
+            item.setVisible(not far)
+        self.veil.setVisible(self.source != "none" and self.veil_strength > 0 and not far)
+        self._credit()
         self.site_mark.setVisible(mpp >= 100.0)
         numbered = getattr(self, "numbered_at", 0.0)
         tagged = getattr(self, "tagged_at", 0.0)
@@ -589,7 +596,7 @@ class PlanView(QGraphicsView):
 
     def _recolour(self) -> None:
         c = view_colours.plan(self.source != "none")
-        self.veil.setVisible(self.source != "none" and self.veil_strength > 0)
+        self.veil.setVisible(self.source != "none" and self.veil_strength > 0 and not self.world.equal_earth)
         if c == self.colours:
             return
         self.colours = c
@@ -1966,10 +1973,15 @@ class PlanView(QGraphicsView):
                                         (Qt.KeyboardModifier.ShiftModifier, "shift"),
                                         (Qt.KeyboardModifier.AltModifier, "alt")) if modifiers & flag}
 
+    def _minimum_scale(self) -> float:
+        """The smallest zoom: the Equal Earth world, 42 by 22 million metres with margins, fits the viewport."""
+        return min(MIN_PLAN_SCALE, max(1, self.viewport().width()) / 42e6,
+                   max(1, self.viewport().height()) / 22e6)
+
     def zoom_at(self, factor: float, view_pos) -> None:
         """Zoom by `factor` keeping the point under `view_pos` where it is."""
         current = math.hypot(self.transform().m11(), self.transform().m21())
-        factor = max(MIN_PLAN_SCALE / current, min(factor, 400.0 / current))
+        factor = max(self._minimum_scale() / current, min(factor, 400.0 / current))
         before = self.mapToScene(view_pos)
         self.scale(factor, factor)
         after = self.mapToScene(view_pos)
@@ -2703,7 +2715,8 @@ class PlanView(QGraphicsView):
 
     def _update_tiles(self) -> None:
         source = self.background()
-        if source is None:
+        if source is None or self.world.equal_earth:
+            self.wanted_tiles = set()
             self.loader.keep_only(set())
             return
         r = self.mapToScene(self.viewport().rect()).boundingRect()
@@ -2743,6 +2756,7 @@ class PlanView(QGraphicsView):
         if not mesh:
             return
         item = TileItem(image, mesh)
+        item.setVisible(not self.world.equal_earth)
         item.setZValue(Z_TILES + (0.5 if key == self.source and z == self.target_zoom else 0.0))
         self.scene().addItem(item)
         self.tile_items[(key, z, x, y)] = item
