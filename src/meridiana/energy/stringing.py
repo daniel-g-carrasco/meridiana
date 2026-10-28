@@ -67,7 +67,8 @@ class StringPlan:
 def strings_allowed(module: ModuleSpec, inverter: InverterSpec, k: int, ki: float = 1.25) -> int:
     """How many equal strings input k takes without exceeding either current of its datasheet: the operating
     current Np x Imp and the maximum short-circuit current Np x 1.25 x Isc. A string drawn by hand may still
-    exceed the operating current and gets the loss warning of `plan`; an automatic proposal never does."""
+    exceed the operating current and gets the loss warning of `plan`; an automatic proposal never does. With no
+    known series fuse, or none that can protect three strings, the proposal stops at two."""
     limits = []
     if inverter.iscmax_per_mppt and ki * module.isc > 0:
         values = inverter.iscmax_per_mppt
@@ -75,6 +76,8 @@ def strings_allowed(module: ModuleSpec, inverter: InverterSpec, k: int, ki: floa
     if inverter.imax_per_mppt and module.imp > 0:
         values = inverter.imax_per_mppt
         limits.append(int(values[min(k, len(values) - 1)] // module.imp))
+    if module.max_series_fuse is None or 1.1 * ki * module.isc > module.max_series_fuse:
+        limits.append(2)
     return max(0, min(limits)) if limits else 1
 
 

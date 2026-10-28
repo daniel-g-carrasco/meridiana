@@ -952,8 +952,8 @@ class MainWindow(QMainWindow):
         act(compute, "inverter_catalog", self._choose_inverter,
             tip=_("An inverter from the catalogue added to the plant of the variant in hand"))
         act(compute, "inverter_auto", self._size_inverters,
-            tip=_("As many inverters as the DC/AC ratio asks, all like the first of the list; without one, Meridiana "
-                  "sizes one at that ratio"))
+            tip=_("Models of different powers of one brand, with every module in a valid string: fewer inverters, "
+                  "then fewer models, then the DC/AC ratio closest to the one requested"))
         # the strings (task 16d; R114-R116): the designer's; Meridiana proposes them only when asked, with one of
         # PVsyst's strategies, or completes them for the modules left out; drawn by hand; all deleted
         self.strategy_menu = QMenu(_("Strategy"), self)
@@ -3653,7 +3653,7 @@ class MainWindow(QMainWindow):
                     "string."))
 
     def _size_inverters(self) -> None:
-        """«Size it by itself»: the brand first, remembered in the project, then the model and how many at DC/AC."""
+        """The brand first, then models of different powers together with a complete, valid string proposal."""
         good = self.session.good_results()
         p_stc = sum(a.p_stc for a in system.arrays_of(self.project, good)) if good else 0.0
         if p_stc <= 0.0:
@@ -3679,26 +3679,23 @@ class MainWindow(QMainWindow):
         if not candidates:
             self.tell(_("No inverter of {maker} in the catalogue has a nominal AC power.").format(maker=maker))
             return
-        first = entries[0] if entries and current.casefold() == maker.casefold() else None
-        options = []
-        for candidate in candidates:
-            count = system.sized_count(p_stc, ratio, candidate)
-            pac = float(candidate.get("ac_power_nominal_w") or candidate.get("pac"))
-            actual = p_stc / (count * pac)
-            options.append((abs(actual - ratio), candidate.get("source") != "curated", candidate, count))
-        if first is not None:
-            rec = first["record"]
-            n = system.sized_count(p_stc, ratio, rec)
-        else:
-            _error, _source, rec, n = min(options)
+        from ..energy import sizing
+        result = sizing.choose(self.project, plant_model.groups_of(self.project, good), candidates, ratio)
+        if not result.ok:
+            self.tell(result.reason)
+            return
 
-        def size(items):
-            items[:] = [{**(first or {"record": rec, "name": ""}), "record": rec, "count": n}]
-        self._entries_edit(_("Size the inverters by themselves"), size, {"inverter_maker": maker})
-        actual = p_stc / (n * float(rec.get("ac_power_nominal_w") or rec.get("pac") or 1.0))
-        self.tell(ngettext("Inverter sized: {n} x {maker} {model}, DC/AC {r}.",
-                           "Inverters sized: {n} x {maker} {model}, DC/AC {r}.", n).format(
-                               n=n, maker=maker, model=rec.get("model", ""), r=number(actual, 2)))
+        def size(p):
+            p.energy["inverter_maker"] = maker
+            p.energy["inverters"] = result.entries
+            p.energy["strings"] = plant_model.touched(p.energy.get("strings"), result.runs)
+            p.energy.pop("inverter", None)
+            p.energy.pop("inverter_count", None)
+        self.edit(_("Size the inverters by themselves"), size)
+        what = " + ".join(f"{e['count']} x {e['record'].get('model', '')}" for e in result.entries)
+        modules = sum(len(r["modules"]) for r in result.runs)
+        self.tell(_("Inverters sized: {what}, DC/AC {r}. All {n} modules have a valid string. Choice: {criterion}."
+                    ).format(what=what, r=number(result.ratio, 2), n=modules, criterion=result.criterion))
 
     # the plant (task 16d)
 

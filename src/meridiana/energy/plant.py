@@ -156,6 +156,7 @@ class Plant:
     left_by_unit: dict = field(default_factory=dict)    # unit (0: none) -> how many modules in no string
     checks: dict = field(default_factory=dict)          # unit -> [stringing.Check] of the inverter
     notes: list = field(default_factory=list)           # what keeps the strings from being proposed or checked
+    corrections: list = field(default_factory=list)     # smallest module-count or input correction for what is left
     auto: bool = False                                  # a proposal of before format 14, to be written down
     strategy: str = "serpentine"
     year: bool = False                                  # the conditions of the typical year, or PVsyst's design ones
@@ -374,23 +375,25 @@ def conditions(project, t_cell_max_year: float | None = None, t_min_year: float 
 def _capacity(module: ModuleSpec, unit: Unit, k: int, asked: list) -> int:
     if asked:
         return max(0, int(asked[min(k, len(asked) - 1)]))
-    return max(1, stringing.strings_allowed(module, unit.spec, k))
+    return max(0, stringing.strings_allowed(module, unit.spec, k))
 
 
 def _best_series(group: Group, units: list[Unit], cond: Conditions, strategy: str) -> int:
-    """The modules in series for a group's proposal: valid on every inverter that may receive it, and leaving
-    fewest modules out (the longer at a tie: fewer strings, less current)."""
+    """The length that leaves fewest modules of a group out, considering only the inverters whose window takes
+    that length and the strings their inputs can carry. At a tie the longer string wins: fewer strings, less current."""
     ranges = [stringing.series_range(group.module, u.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
               for u in units]
-    if not ranges or any(not hi for _lo, hi in ranges):
-        return 0
-    lo, hi = max(lo for lo, _hi in ranges), min(hi for _lo, hi in ranges)
-    if lo > hi:
-        return 0
     rows = [len(r) for r in _rows(group.placed)]
     best = None
-    for n in range(hi, lo - 1, -1):
-        left = _left_out(rows, n, strategy)
+    for n in range(max((hi for _lo, hi in ranges), default=0),
+                   min((lo for lo, _hi in ranges if _hi), default=1) - 1, -1):
+        compatible = [u for u, (lo, hi) in zip(units, ranges, strict=True) if lo <= n <= hi]
+        if not compatible:
+            continue
+        remainder = _left_out(rows, n, strategy)
+        whole = (sum(rows) - remainder) // n
+        capacity = sum(_capacity(group.module, u, k, []) for u in compatible for k in range(u.inputs))
+        left = remainder + max(0, whole - capacity) * n
         if best is None or left < best[0]:
             best = (left, n)
     return best[1] if best else 0
@@ -412,6 +415,67 @@ def _left_out(rows: list[int], n: int, strategy: str) -> int:
                 r += 1
         return left
     return sum(rows) % n
+
+
+def _corrections(units: list[Unit], groups: list[Group], cond: Conditions, strategy: str,
+                 left: list) -> list[str]:
+    """The smallest change that makes each group left out stringable: adding modules is preferred to taking them
+    away at the same distance. Changing inverter or input is always the alternative, with the limiting reason."""
+    out = []
+    for g in groups:
+        if not any(sfid == g.sfid for sfid, _key, _centre in left):
+            continue
+        unit = units_by_number(units, g.target[0])
+        destinations = [unit] if unit is not None else [u for u in units if not u.optimized and u.checkable]
+        ranges = [stringing.series_range(g.module, u.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+                  for u in destinations]
+        original = [len(r) for r in _rows(g.placed)]
+        total = len(g.placed)
+        found = None
+        for delta in range(1, max(41, total + 1)):
+            for sign in (1, -1):
+                changed = total + sign * delta
+                if changed <= 0:
+                    continue
+                rows = [changed] if strategy == "serpentine" else list(original)
+                if strategy != "serpentine":
+                    if sign > 0:
+                        rows[-1] += delta
+                    else:
+                        left_out = delta
+                        for i in range(len(rows) - 1, -1, -1):
+                            take = min(rows[i], left_out)
+                            rows[i] -= take
+                            left_out -= take
+                for n in range(max((hi for _lo, hi in ranges), default=0),
+                               min((lo for lo, _hi in ranges if _hi), default=1) - 1, -1):
+                    if _left_out(rows, n, strategy):
+                        continue
+                    compatible = [u for u, (lo, hi) in zip(destinations, ranges, strict=True) if lo <= n <= hi]
+                    capacity = sum(_capacity(g.module, u, k, []) for u in compatible for k in range(u.inputs))
+                    if compatible and 0 < changed // n <= capacity:
+                        found = (sign, delta, changed, changed // n, n)
+                        break
+                if found is not None:
+                    break
+            if found is not None:
+                break
+        if found is not None:
+            sign, delta, changed, strings, n = found
+            template = (ngettext("Add {delta} module to {name}: {total} = {strings} strings of {series}.",
+                                 "Add {delta} modules to {name}: {total} = {strings} strings of {series}.", delta)
+                        if sign > 0 else
+                        ngettext("Take {delta} module from {name}: {total} = {strings} strings of {series}.",
+                                 "Take {delta} modules from {name}: {total} = {strings} strings of {series}.", delta))
+            out.append(template.format(delta=delta, name=g.name, total=changed, strings=strings, series=n)
+                       + " " + _("Or change the inverter or the input."))
+        elif any(hi for _lo, hi in ranges):
+            out.append(_("{name}: the compatible inputs cannot carry all its strings. Change the inverter or the "
+                         "input.").format(name=g.name))
+        else:
+            out.append(_("{name}: no number of modules fits the MPPT window. Change the inverter or the input."
+                         ).format(name=g.name))
+    return out
 
 
 def _allot(sizes: list[int], need: list[int], free: int) -> list[int]:
@@ -581,7 +645,20 @@ def _propose(units: list[Unit], groups: list[Group], s: dict, cond: Conditions, 
         out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pm in left]
         parts.append((g, strings, starts, n))
 
-    def place(g, chunk, slot):
+    owners: dict = {}
+
+    def signature(g, n):
+        pm = g.placed[0]
+        return (_module_key(g.module), round(pm.tilt, 1), round(pm.azimuth, 1), n)
+
+    def compatible(g, n, slot):
+        unit = units[slot[0] - 1]
+        lo, hi = stringing.series_range(g.module, unit.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+        return ((lo <= n <= hi or asked_n) and alike(slot, n)
+                and (slot not in owners or owners[slot] == signature(g, n)))
+
+    def place(g, n, chunk, slot):
+        owners.setdefault(slot, signature(g, n))
         for pms in chunk:
             used[slot] += 1
             out.strings.append(String(slot[0], slot[1], [(g.sfid, pm.key, tuple(pm.centre)) for pm in pms],
@@ -596,8 +673,8 @@ def _propose(units: list[Unit], groups: list[Group], s: dict, cond: Conditions, 
             taken.update(mine)
             for slot, count in zip(mine, stringing.spread(len(strings), len(mine)), strict=True):
                 room = max(0, _capacity(g.module, units[slot[0] - 1], slot[1] - 1, asked_per) - used[slot])
-                count = min(count, room) if alike(slot, n) else 0
-                place(g, strings[:count], slot)
+                count = min(count, room) if compatible(g, n, slot) else 0
+                place(g, n, strings[:count], slot)
                 strings = strings[count:]
             out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pms in strings for pm in pms]
             continue
@@ -610,38 +687,32 @@ def _propose(units: list[Unit], groups: list[Group], s: dict, cond: Conditions, 
             automatic.append((g, strings, n))
     if not automatic:
         return
-    module = automatic[0][0].module
     free = ([slot for slot in inputs if slot not in taken and not busy.get(slot)]
-            + [slot for slot in inputs if slot not in taken and busy.get(slot)
-               and _capacity(module, units[slot[0] - 1], slot[1] - 1, asked_per) > busy[slot]])
-    first = units[free[0][0] - 1] if free else units[0]
-    caps = [_capacity(g.module, first, 0, asked_per) for g, _strings, _n in automatic]
+            + [slot for slot in inputs if slot not in taken and busy.get(slot)])
     if asked_per:
         # the strings on each input asked by the designer (as before task 16d): filled in order, nothing spread
         k = 0
-        for g, strings, _n in automatic:
+        for g, strings, n in automatic:
             for pms in strings:
                 while k < len(free) and (used[free[k]] >= _capacity(g.module, units[free[k][0] - 1], free[k][1] - 1,
-                                                                     asked_per) or not alike(free[k], len(pms))):
+                                                                     asked_per) or not compatible(g, n, free[k])):
                     k += 1
                 if k >= len(free):
                     out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pm in pms]
                     continue
-                place(g, [pms], free[k])
+                place(g, n, [pms], free[k])
         return
-    need = [max(1, -(-len(strings) // max(1, c))) for (_g, strings, _n), c in zip(automatic, caps, strict=True)]
-    got = _allot([len(strings) for _g, strings, _n in automatic], need, len(free))
-    at = 0
-    for (g, strings, n), m in zip(automatic, got, strict=True):
-        slots = free[at:at + m]
-        at += m
+    for g, strings, n in automatic:
+        slots = [slot for slot in free if compatible(g, n, slot)
+                 and (strategy != "row_per_mppt" or slot not in owners)
+                 and _capacity(g.module, units[slot[0] - 1], slot[1] - 1, asked_per) > used[slot]]
         if not slots:
             out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pms in strings for pm in pms]
             continue
-        room = [max(0, _capacity(g.module, units[u - 1], k - 1, asked_per) - busy.get((u, k), 0))
-                if alike((u, k), n) else 0 for u, k in slots]
+        room = [max(0, _capacity(g.module, units[u - 1], k - 1, asked_per) - used[(u, k)]) for u, k in slots]
+        needed = max(1, -(-len(strings) // max(room)))
+        slots, room = slots[:min(len(strings), needed)], room[:min(len(strings), needed)]
         counts = stringing.spread(min(len(strings), sum(room)), len(slots))
-        # an input that takes fewer than its share keeps its room, the rest goes to the next ones
         for i in range(len(counts)):
             if counts[i] > room[i]:
                 spare = counts[i] - room[i]
@@ -652,7 +723,7 @@ def _propose(units: list[Unit], groups: list[Group], s: dict, cond: Conditions, 
                         counts[j] += add
                         spare -= add
         for slot, count in zip(slots, counts, strict=True):
-            place(g, strings[:count], slot)
+            place(g, n, strings[:count], slot)
             strings = strings[count:]
         out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pms in strings for pm in pms]
 

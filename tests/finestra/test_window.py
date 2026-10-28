@@ -1519,13 +1519,14 @@ class PlantPhase(PlantWindow):
         self.win.strategy_actions["serpentine"].trigger()                 # «Propose»: there, as the sub-field says
         plant = self.plant(lambda p: bool(p.strings))
         self.assertEqual({(s.inverter, s.mppt) for s in plant.strings}, {(1, 2)})
+        self.win._assign_subfield(self.sid, 0, 0)                        # otherwise only input 2 may be used
         from PySide6.QtWidgets import QInputDialog
         with mock.patch("meridiana.ui.window.catalog.load", return_value=(rec,)), \
                 mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
-            self.win.commands["inverter_auto"].trigger()                  # as many alike as the DC/AC ratio asks
-        n = self.win.project.energy["inverters"][0]["count"]
-        p_stc = sum(r.count for r in self.win.session.good_results().values()) * 0.45
-        self.assertEqual(n, max(1, -(-int(p_stc * 1000) // int(1.1 * 10000))))
+            self.win.commands["inverter_auto"].trigger()
+        self.assertGreaterEqual(self.win.project.energy["inverters"][0]["count"], 1)
+        self.assertEqual(sum(len(r["modules"]) for r in self.win.project.energy["strings"]["runs"]),
+                         self.win.results[self.sid].count)
 
     def sizing_asks_the_brand_remembers_it_and_says_the_result(self):
         from PySide6.QtWidgets import QInputDialog
@@ -1535,9 +1536,11 @@ class PlantPhase(PlantWindow):
                 mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)) as asked:
             self.win.commands["inverter_auto"].trigger()
             self.assertEqual(asked.call_count, 1)
-        p_stc = sum(r.count for r in self.win.session.good_results().values()) * 0.45
-        count = max(1, -(-int(p_stc * 1000) // int(1.1 * 10000)))
-        self.assertEqual(self.win.project.energy["inverters"], [{"record": rec, "count": count, "name": ""}])
+        entry = self.win.project.energy["inverters"][0]
+        self.assertEqual(entry["record"], rec)
+        self.assertGreaterEqual(entry["count"], 1)
+        self.assertEqual(sum(len(r["modules"]) for r in self.win.project.energy["strings"]["runs"]),
+                         self.win.results[self.sid].count)
         self.assertEqual(self.win.project.energy["inverter_maker"], "Acme")
         message = self.win.statusBar().currentMessage()
         self.assertIn("AC-10K", message)
@@ -1556,13 +1559,15 @@ class PlantPhase(PlantWindow):
         good = self.win.session.good_results()
         p_stc = sum(a.p_stc for a in system.arrays_of(self.win.project, good))
         target = p_stc / 1.1
-        near = inverter_record(model="NEAR", ac_power_nominal_w=round(target * 0.975))
-        better = inverter_record(model="BETTER", ac_power_nominal_w=round(target * 1.22))
+        room = {"mppt_count": 4, "dc_current_max_per_mppt_a": [60] * 4,
+                "dc_isc_max_per_mppt_a": [100] * 4}
+        near = inverter_record(model="NEAR", ac_power_nominal_w=round(target * 0.975), **room)
+        better = inverter_record(model="BETTER", ac_power_nominal_w=round(target * 1.22), **room)
         with mock.patch("meridiana.ui.window.catalog.load", return_value=(near, better)), \
                 mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
             self.win.commands["inverter_auto"].trigger()
         entry = self.win.project.energy["inverters"][0]
-        self.assertEqual(entry["record"]["model"], "BETTER")
+        self.assertEqual(entry["record"]["model"], "NEAR")
         self.assertEqual(entry["count"], 1)
 
     def test_the_plant_phase_lends_the_plan_production_leads_to_it_and_its_inverters_and_inputs(self):

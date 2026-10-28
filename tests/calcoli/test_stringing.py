@@ -244,7 +244,8 @@ class Plant(unittest.TestCase):
         self.assertEqual(uoc.level, "fail")
         self.assertEqual(uoc.detail, checks.string_detail("uoc"))
         left = next(i for i in items if "in no string" in i.text)
-        self.assertEqual(left.detail, checks.left_detail())
+        self.assertTrue(left.detail.startswith(checks.left_detail()))
+        self.assertIn("Or change the inverter or the input", left.detail)
         defaults = checks.defaults_in_use({"plant": out})
         cold = next(i for i in defaults if "lowest temperature of the site" in i.text)
         self.assertEqual(cold.target, ("phase", "plant"))
@@ -455,7 +456,7 @@ class AutomaticErrors(unittest.TestCase):
         p = plant_project([(wide, 1), (narrow, 1)], {"auto": True, "strategy": "serpentine"})
         out = plant.build(p, groups=[self.group(grid(4, 24))])
         self.assertFalse(out.left)
-        self.assertEqual(len(out.strings), 8)
+        self.assertEqual(len(out.strings), 4)
         self.assertTrue(all(s.state == "ok" for s in out.strings),
                         [(s.label, len(s.modules), s.why) for s in out.strings])
 

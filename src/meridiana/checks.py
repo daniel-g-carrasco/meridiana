@@ -845,7 +845,8 @@ def plant_items(plant) -> list[Item]:
             inverter=unit_label(unit), n=n) if unit is not None else
             ngettext("{n} module in no string and on no inverter", "{n} modules in no string and on no inverter",
                      n).format(n=n))
-        items.append(Item("warn", "strings", text, "", here, complete, complete_label, detail=left_detail()))
+        detail = " ".join([left_detail()] + list(getattr(plant, "corrections", [])))
+        items.append(Item("warn", "strings", text, "", here, complete, complete_label, detail=detail))
     if plant.strings and not bad and not plant.left and any(slot.plan for slot in plant.inputs.values()):
         used = sum(1 for slot in plant.inputs.values() if slot.used)
         if getattr(plant, "optimized", False):
