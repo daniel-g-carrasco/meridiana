@@ -1,0 +1,24 @@
+Comuni italiani, suggerimenti locali
+
+Contenuto: 7.894 comuni italiani con codice ISTAT, denominazione, provincia o unità territoriale,
+regione e un punto rappresentativo calcolato da Meridiana.
+
+Fonti ufficiali ISTAT, lette il 27/10/2026:
+- Elenco dei comuni italiani aggiornato al 21/02/2026:
+  https://www.istat.it/storage/codici-unita-amministrative/Elenco-comuni-italiani.xlsx
+- Confini delle unità amministrative a fini statistici al 01/01/2026, versione generalizzata WGS84 UTM32N:
+  https://www.istat.it/storage/cartografia/confini_amministrativi/generalizzati/2026/Limiti01012026_g.zip
+- Pagina delle fonti e descrizione del dato geografico:
+  https://www.istat.it/it/archivio/222527
+- Note legali ISTAT:
+  https://www.istat.it/it/note-legali
+
+Licenza: Creative Commons Attribution 4.0 International (CC BY 4.0), come dichiarato nelle note legali
+ISTAT salvo diversa indicazione. Attribuzione: ISTAT, Elenco dei comuni italiani e Confini delle unità
+amministrative a fini statistici, 2026.
+
+Modifiche: il file incluso conserva i 7.894 comuni dell'elenco del 21/02/2026. I punti sono calcolati
+come representative_point di Shapely sul poligono comunale più recente disponibile, poi convertiti da
+WGS84 UTM32N a latitudine e longitudine WGS84. Castegnero Nanto unisce i poligoni di Castegnero e Nanto.
+I punti servono solo a centrare la mappa per un suggerimento: non sono sedi municipali, indirizzi o rilievi.
+Il JSON GZIP contiene soltanto dati amministrativi pubblici, nessun dato di progetti o persone.

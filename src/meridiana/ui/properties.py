@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import html
 import math
+from dataclasses import replace
 
 from PySide6.QtCore import QEvent, Qt, QTimer, Signal
 from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, QGroupBox,
@@ -416,7 +417,19 @@ class Properties(QScrollArea):
         reserved.setToolTip(_("Meridio answers about this project only with the local model, whatever his "
                               "settings say"))
         reserved.toggled.connect(lambda v: self.edited.emit("project", "", {"reserved": v}))
-        form.addRow(reserved)
+        form.addRow(WrappedCheck(reserved))
+        self.maps_consent = self._bind(QCheckBox(_("Allow online maps: the area shown leaves this PC")),
+                                       lambda: "tiles" in self._project().network_consent)
+        self.maps_consent.toggled.connect(lambda v: self._network_consent("tiles", v))
+        maps_row = WrappedCheck(self.maps_consent)
+        form.addRow(maps_row)
+        self.weather_consent = self._bind(QCheckBox(_("Allow PVGIS weather: the site coordinates leave this PC")),
+                                          lambda: "pvgis" in self._project().network_consent)
+        self.weather_consent.toggled.connect(lambda v: self._network_consent("pvgis", v))
+        weather_row = WrappedCheck(self.weather_consent)
+        form.addRow(weather_row)
+        for row in (maps_row, weather_row):
+            self._bind(row, lambda: self._project().reserved, lambda w, visible: w.setVisible(visible))
         box.addLayout(form)
         move = QPushButton(_("Find the site…"))
 
@@ -429,12 +442,72 @@ class Properties(QScrollArea):
         move.clicked.connect(lambda: self.action.emit("site", "site", ""))
         box.addWidget(move)
 
+        box.addWidget(self._network_group())
         box.addWidget(self._rules_group())
         box.addStretch(1)
 
+    def _network_consent(self, service: str, allowed: bool) -> None:
+        import datetime
+        consent = dict(self._project().network_consent)
+        if allowed:
+            consent[service] = datetime.date.today().isoformat()
+        else:
+            consent.pop(service, None)
+        self.edited.emit("project", "", {"network_consent": consent})
+
+    def _network_group(self) -> QGroupBox:
+        """Optional supply and connection data, shared with the New Project page."""
+        group = Group(_("Grid connection (optional)"))
+        help_button(group, "site.rules")
+        form = make_form(group)
+
+        def send(**changes):
+            self.edited.emit("project", "", {"network": replace(self._project().network, **changes)})
+
+        self.distributor = self._text(lambda: self._project().network.distributor,
+                                      lambda text: send(distributor=text.strip()))
+        form.addRow(_("Distributor"), self.distributor)
+        self.pod = self._text(lambda: self._project().network.pod, lambda text: send(pod=text.strip()))
+        form.addRow("POD", self.pod)
+        self.voltage = self._bind(spin(0, 1_000_000, 0, " V", 0, 1), lambda: self._project().network.voltage_v)
+        self.voltage.setSpecialValueText(_("not stated"))
+        self.voltage.valueChanged.connect(lambda v: send(voltage_v=float(v)))
+        form.addRow(_("Supply voltage"), self.voltage)
+        self.grid_rule = self._bind(self._note(), lambda: self._project().network.technical_rule())
+        form.addRow(_("Technical rule from voltage"), self.grid_rule)
+        self.phases = self._bind(combo((("", _("not stated")), ("1", _("Single phase")),
+                                       ("3", _("Three phase"))), ""), lambda: self._project().network.phases)
+        self.phases.currentIndexChanged.connect(lambda _i: send(phases=self.phases.currentData()))
+        form.addRow(_("Phases"), self.phases)
+        self.level = self._bind(combo((("", _("not stated")), *[(k, v) for k, v in rules.level_names().items()
+                                                                 if k != "auto"]), ""),
+                                lambda: self._project().network.level)
+        self.level.currentIndexChanged.connect(lambda _i: send(level=self.level.currentData()))
+        form.addRow(_("Connection level"), self.level)
+        self.connection = self._bind(combo((("", _("not stated")), ("existing", _("Existing connection")),
+                                           ("new", _("New connection")),
+                                           ("modification", _("Modification of the connection"))), ""),
+                                     lambda: self._project().network.connection)
+        self.connection.currentIndexChanged.connect(lambda _i: send(connection=self.connection.currentData()))
+        form.addRow(_("Connection"), self.connection)
+        self.available = self._bind(spin(0, 1_000_000_000, 0, " kW", 1, 0.5),
+                                    lambda: self._project().network.available_kw)
+        self.available.setSpecialValueText(_("not stated"))
+        self.available.valueChanged.connect(lambda v: send(available_kw=float(v)))
+        form.addRow(_("Available or contracted power"), self.available)
+        self.requested = self._bind(spin(0, 1_000_000_000, 0, " kW", 1, 0.5),
+                                    lambda: self._project().network.requested_kw)
+        self.requested.setSpecialValueText(_("not stated"))
+        self.requested.valueChanged.connect(lambda v: send(requested_kw=float(v)))
+        form.addRow(_("Power requested for the new plant"), self.requested)
+        self.practice = self._text(lambda: self._project().network.practice_code,
+                                   lambda text: send(practice_code=text.strip()))
+        form.addRow(_("Connection practice code"), self.practice)
+        return group
+
     def _rules_group(self) -> QGroupBox:
-        """What the rules need beyond the drawing: the connection level and the minimum renewable capacity of
-        the building (D.Lgs. 199/2021), with what decides it."""
+        """What the rules need beyond the drawing: the minimum renewable capacity of the building
+        (D.Lgs. 199/2021), with what decides it."""
         def rules_now():
             return dict(self._project().rules or {})
         group = Group(_("Connection and obligations"))
@@ -443,11 +516,6 @@ class Properties(QScrollArea):
 
         def send(key, value):
             self.edited.emit("project", "", {"rules": {**rules_now(), key: value}})
-        level = self._bind(combo(rules.level_names().items(), "auto"), lambda: rules_now().get("connection") or "auto")
-        level.currentIndexChanged.connect(lambda _i: send("connection", level.currentData()))
-        level.setToolTip(_("The distributor decides; CEI 0-16 Tab. 4 indicates low voltage up to 100 kW, medium voltage "
-                           "up to 6 MW for production, high voltage above 10 MW."))
-        form.addRow(_("Connection"), level)
         obligation = self._bind(combo(rules.obligation_names().items(), ""), lambda: rules_now().get("obligation") or "")
         obligation.currentIndexChanged.connect(lambda _i: send("obligation", obligation.currentData()))
         form.addRow(_("Minimum renewable capacity"), obligation)
@@ -460,13 +528,6 @@ class Properties(QScrollArea):
         permit = self._bind(QCheckBox(_("Permit requested from 01/01/2027")), lambda: bool(rules_now().get("permit_2027")))
         permit.toggled.connect(lambda v: send("permit_2027", v))
         form.addRow(permit)
-        # DM 37/2008 art. 5 par. 2: who may design depends on the supply and the premises, not on the PV power
-        contracted = self._bind(spin(0, 100000, 0, " kW", 1, 0.5), lambda: float(rules_now().get("contracted_kw") or 0))
-        contracted.setSpecialValueText(_("not stated"))
-        contracted.setToolTip(_("The contracted power of the supply (the POD), not the power of the PV system: "
-                                "DM 37/2008 art. 5 par. 2 asks for a professional's design above 6 kW."))
-        contracted.valueChanged.connect(lambda v: send("contracted_kw", float(v)))
-        form.addRow(_("Contracted power"), contracted)
         floor = self._bind(spin(0, 1000000, 0, " m²", 0, 10), lambda: float(rules_now().get("floor_m2") or 0))
         floor.setSpecialValueText(_("not stated"))
         floor.setToolTip(_("The floor area of the premises: above 200 m² (production, commerce, services) or 400 m² "

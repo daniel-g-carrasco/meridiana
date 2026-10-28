@@ -6,7 +6,11 @@ Gli strumenti hanno una lettera (predefinita, si cambia in File > Impostazioni >
 
 ## Il sito
 
-Il sito è l'origine del disegno, con latitudine e longitudine. Il sole, il meteo da PVGIS e le regole della regione partono da lì. «Trova il sito…» cerca un indirizzo (OpenStreetMap, servizio Nominatim) o accetta le coordinate. Il sito si sposta solo prima di disegnare: il disegno si misura da esso. La regione si legge dall'indirizzo trovato: oggi solo la Lombardia ha regole proprie, altrove valgono quelle nazionali.
+Il sito è l'origine del disegno, con latitudine e longitudine. Il sole, il meteo da PVGIS e le regole della regione partono da lì. Il sito si sposta solo prima di disegnare: il disegno si misura da esso. La regione si legge dall'indirizzo trovato: oggi solo la Lombardia ha regole proprie, altrove valgono quelle nazionali.
+
+**File > Nuovo** parte dal posto. Nel solo campo puoi scrivere un indirizzo, un comune, coordinate o un collegamento di una mappa. Mentre scrivi, i suggerimenti arrivano soltanto dai comuni ISTAT inclusi nel programma e dai progetti recenti sul PC. **Cerca** interroga Nominatim di OpenStreetMap soltanto quando lo premi. Sono accettati gradi decimali, gradi-primi-secondi, gradi e primi decimali, collegamenti di Google Maps, OpenStreetMap e Apple, UTM WGS84 o ED50 e Gauss-Boaga Roma40; il formato e il datum riconosciuti compaiono sotto il campo, i testi ambigui sono rifiutati con il motivo. Controlla il segno sulla mappa o clicca il punto, poi premi **Crea e disegna**.
+
+I dati facoltativi si aprono sotto il campo: nome del progetto, distributore, POD, tensione, fasi, livello e tipo di connessione, potenze e codice della pratica. La tensione propone la regola tecnica CEI 0-21 o 0-16; questi dati non cambiano il sole né il meteo. Un **progetto riservato** non manda mai nomi o indirizzi a Nominatim e non usa Claude. Le sue coordinate restano sul PC finché non dai due consensi distinti, per le tessere delle mappe e per il meteo PVGIS, nella pagina Nuovo o nelle Proprietà del sito. **Trova il sito…**, nel progetto già creato, segue la stessa regola.
 
 ### Passo delle file dal sole
 

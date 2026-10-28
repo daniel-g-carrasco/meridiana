@@ -25,6 +25,17 @@ software centres show.
   in matching pieces. Beyond regional scale Natural Earth 1:110m (177 countries, 209,310 compressed bytes, public
   domain) draws the whole Equal Earth world with non-overlapping names and the project mark; the maximum zoom fits
   the viewport and zooming back restores the local plan.
+- New projects start from their place (R148): one field reads decimal, DMS and decimal-minute coordinates, Google Maps,
+  OpenStreetMap and Apple links, UTM WGS84 or ED50 and Gauss-Boaga Roma40. Local ISTAT and recent-project suggestions
+  work while typing; Nominatim is asked only by Search. Check the point and choose Create and draw. Optional grid data
+  stay with the project and select CEI 0-21 or 0-16 from the supply voltage. Reserved projects never send names or
+  addresses and never use Claude; map and PVGIS coordinates require separate per-project consents. Project format 16.
+- Reliable maps from roofs to continents (R131, R149, R173): valid tiles stay during every change, failed sources rest
+  for three minutes and a visible strip offers Retry and Choose the background without changing the saved choice;
+  Automatic uses OpenStreetMap afar and the best local orthophoto within 2 screen m/pixel. The local plan zooms out to
+  25,000 m/pixel, bends low-zoom tiles in matching pieces, keeps the site's hemisphere only and marks the project.
+  Natural Earth 1:110m (177 countries, 209,310 compressed bytes, public domain) draws oceans, borders, names and a
+  graticule below the tiles and alone offline or with no background.
 - Reused Properties pages (R2): switching between objects of the same kind and shape updates only the values and keeps
   the scroll position. Unconfirmed text never leaks into the next object. On the large generated project, median
   switches fell from 57.370 to 1.773 ms between sub-fields, 24.354 to 0.843 ms between buildings and 44.541 to

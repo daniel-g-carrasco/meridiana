@@ -253,6 +253,12 @@ class FilePage(QFrame):
         self.nav_box.addStretch(1)
         self._item("quit", "log-out", _("Quit"), self._keys("quit"), self._command("quit"))
 
+        # New: the place first, with only local suggestions while typing
+        from .new_project import NewProjectPage
+        self.new_project = NewProjectPage(w.paths, w.cfg)
+        self.new_project.created.connect(w._create_new)
+        self.sections["new"] = self.new_project
+
         # Open: the file, and the projects opened last
         opening = Section(_("Open"), _("A Meridiana project from a file, or one of the last ones."))
         opening.group(_("Project"), [Tile("folder-open", _("A project"), _("A .meridiana file, from wherever it is."),
@@ -363,6 +369,10 @@ class FilePage(QFrame):
             return
         if key == "open":
             self._recent()
+        elif key == "new":
+            from .. import places
+            self.new_project.reset()
+            self.new_project.set_choices([*places.municipalities(), *places.recent(self.host.cfg.recent)])
         elif section == "preferences":
             self.settings._populate()              # the maps read the site of the project open now
             self.settings.show_page(page)

@@ -57,6 +57,7 @@ Setup are build tools and are not distributed.
 | The curated catalogue (modules, inverters, microinverters, optimizers, batteries) | Technical data read from the manufacturers' datasheets, each record with the datasheet's address and the date it was read; the manufacturers' names and models are theirs | `src/meridiana/catalog/data/*_curated.json` |
 | The application icon (`data/icons/hicolor`) | A placeholder drawn by the author for the template Meridiana started from, to be replaced by the program's own icon | `data/icons/hicolor/` |
 | The outlines of the areas the map sources cover (countries, Italian provinces, Belgian provinces, German Länder, minor islands), simplified by `tools/map_coverage.py` | Natural Earth 1:10m, public domain (https://www.naturalearthdata.com/about/terms-of-use/) | `src/meridiana/mapcoverage.py` |
+| ISTAT municipalities, current names and codes at 21/02/2026 and representative points computed from the administrative boundaries at 01/01/2026 | CC BY 4.0, attribution and modifications in the notice | `data/istat/LICENSE.txt` |
 | Meridio, the assistant's character: the smooth drawing on a grid of 24 and the pixel one on a grid of 17 (R34), drawn for the program; the reference SVG files carry the default colours, the program draws them in the theme's colours from `src/meridiana/assistant/__init__.py` | GPL-3.0-or-later, as the program | `data/meridio/` |
 
 The voice's model, Kokoro 1.0 (hexgrad, Apache-2.0, the files of kokoro-onnx: `kokoro-v1.0.onnx`,
