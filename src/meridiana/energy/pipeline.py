@@ -4,7 +4,8 @@ again with their electrical effect, the counts out of the shadows for the checks
 economics and the sizings. The window's job (`ui/window.py`), the comparison of the variants and the tests
 call it alike (study 18, A 9.3, step 1).
 
-The network is used only when the designer asked (`fetch`): otherwise only what is in the cache."""
+The network is used when the designer asked or the window found the site's data missing (`fetch`): otherwise only
+what is inside the project or in the cache."""
 
 from __future__ import annotations
 
@@ -57,15 +58,18 @@ class Interrupted(Exception):
     two steps, so between two requests to PVGIS; nothing to show and nothing to say."""
 
 
-def compute(project, results: dict, cache: Path, fetch: bool, progress=None) -> EnergyResult:
+def compute(project, results: dict, cache: Path, fetch: bool, progress=None, refresh: bool = False) -> EnergyResult:
     """The pipeline on `project` (a copy of the window's, or any project) with the layouts of its sub-fields
     (`results`: id -> layout.Result, the good ones). MeteoError when the weather asked for could not be had;
     any other error is the caller's to say. `progress(done, STEPS, what)` is called before each step (the
-    window's bar for PVGIS), and may raise Interrupted to stop there."""
+    window's bar for PVGIS), and may raise Interrupted to stop there. `fetch` allows the network; `refresh`
+    downloads again even when the project or cache already has the data."""
     step = progress or (lambda *_a: None)
     out = EnergyResult()
     lat, lon = project.site.lat, project.site.lon
-    cached = meteo.cached(lat, lon, cache)
+    climate = getattr(project, "climate", {}) or {}
+    embedded = climate.get("tmy") if not refresh and meteo.usable(climate.get("tmy"), lat, lon) else None
+    cached = embedded is not None or meteo.cached(lat, lon, cache)
     arrays = system.arrays_of(project, results)
     ctx = consumption_model.Context(p_stc_kw=sum(a.p_stc for a in arrays) / 1000.0)
     wanted = consumption_model.Consumption.from_dict(project.consumption)
@@ -75,7 +79,7 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None) -> 
         out.error_sim = _("Fetch the weather of the site first (button above).")
         return out
     step(0, STEPS, _("the typical year"))
-    m = meteo.typical_year(lat, lon, cache)
+    m = meteo.typical_year(lat, lon, cache, refresh=refresh, embedded=embedded)
     s = m.summary
     out.meteo_text = _("{source}, fetched {date}. Global horizontal irradiation {ghi} kWh/m², mean "
                        "temperature {t} °C (from {tmin} to {tmax} °C).").format(
@@ -86,7 +90,9 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None) -> 
     step(1, STEPS, _("the horizon"))
     if losses.use_horizon:
         try:
-            hor = meteo.horizon(lat, lon, cache) if (fetch or meteo.cached(lat, lon, cache, "horizon")) else None
+            embedded_horizon = climate.get("horizon") if not refresh and embedded is not None else None
+            has_horizon = embedded_horizon is not None or meteo.cached(lat, lon, cache, "horizon")
+            hor = meteo.horizon(lat, lon, cache, refresh=refresh, embedded=embedded_horizon) if (fetch or has_horizon) else None
         except meteo.MeteoError as error:
             out.notes.append(str(error))
     if not arrays:
@@ -174,12 +180,13 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None) -> 
     return out
 
 
-def compute_or_say(project, results: dict, cache: Path, fetch: bool, progress=None) -> EnergyResult:
+def compute_or_say(project, results: dict, cache: Path, fetch: bool, progress=None,
+                   refresh: bool = False) -> EnergyResult:
     """`compute`, with what went wrong in `error_sim` instead of an exception: the weather that could not be
     had in the designer's words, anything else logged and named (a thread's boundary: said out loud, not lost).
     Interrupted goes on to the caller: it asked for it."""
     try:
-        return compute(project, results, cache, fetch, progress)
+        return compute(project, results, cache, fetch, progress, refresh=refresh)
     except Interrupted:
         raise
     except meteo.MeteoError as error:

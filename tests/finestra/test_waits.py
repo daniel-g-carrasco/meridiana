@@ -34,8 +34,8 @@ class WindowWithAYear(unittest.TestCase):
         cls.meteo = clear_sky_meteo(45.5226, 9.03)
 
     def setUp(self):
-        _setup.window(self, capannone(), config.Config(background="none", theme="light"), size=(1400, 900),
-                      cache=self.meteo)
+        _setup.window(self, capannone(), config.Config(background="none", theme="light", network_pvgis=False),
+                      size=(1400, 900), cache=self.meteo)
         self.bid = self.win.project.buildings[0].id
         self.wait_until = _setup.wait_until
 
@@ -179,12 +179,12 @@ class Bars(WindowWithAYear):
         from meridiana.energy import pipeline
         real = pipeline.compute_or_say
 
-        def fake(project, results, cache, fetch, progress=None):
+        def fake(project, results, cache, fetch, progress=None, refresh=False):
             for done, what in enumerate(("the typical year", "the horizon", "PVGIS's estimate")):
                 progress(done, 3, what)
                 steps.append(done)
                 time.sleep(pause)
-            return real(project, results, cache, False)
+            return real(project, results, cache, False, refresh=refresh)
         return fake
 
     def watch(self, widget, until, seconds: float = 20.0) -> list:
@@ -204,6 +204,7 @@ class Bars(WindowWithAYear):
 
         from meridiana.energy import pipeline
         win = self.win
+        win.cfg.network_pvgis = True                         # the explicit PVGIS command allows the network
         steps = []
         bar = win.pvgis_progress
         with mock.patch.object(pipeline, "compute_or_say", self.fake_pvgis(steps)):

@@ -25,7 +25,7 @@ from . import atomic, layout, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 14
+FORMAT_VERSION = 15
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -331,12 +331,13 @@ def _reshaped(data: dict) -> list[str]:
 # 13 -> 14: no string is made by itself any longer: a variant whose strings were Meridiana's live proposal keeps it as
 #          "auto", written down as the designer's at the first layout (_to_14); an older Meridiana would read a file of
 #          14 without strings as «automatic» and lay them by itself
+# 14 -> 15: the typical year and horizon of the site inside the project, so it computes without the cache (R196)
 MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                     3: lambda data: {**data, "variants": [{"id": "v1", "name": "Base", "note": ""}], "variant": "v1"},
                     4: lambda data: data, 5: lambda data: {**data, "underlays": data.get("underlays", [])},
                     6: _to_7, 7: _to_8, 8: _to_9, 9: _to_10, 10: lambda data: {**data, "report": data.get("report", {})},
                     11: lambda data: {**data, "reserved": data.get("reserved", False)}, 12: lambda data: data,
-                    13: _to_14}
+                    13: _to_14, 14: lambda data: {**data, "climate": data.get("climate", {})}}
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
 ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
@@ -753,6 +754,7 @@ def _check_project(data: dict) -> list[str]:
     _check_fields(Site, site, "site", unknown)
     _check_number(site.get("lat", 0.0), "site.lat", -90.0, 90.0)
     _check_number(site.get("lon", 0.0), "site.lon", -180.0, 180.0)
+    _check_dict(data.get("climate", {}), "climate")
     window = _check_dict(data.get("sun_window", {}), "sun_window")
     _check_fields(sun.DesignWindow, window, "sun_window", unknown)
     if data.get("consumption") is not None:
@@ -832,7 +834,7 @@ def _check_project(data: dict) -> list[str]:
         unknown.extend(f"variants[{i}].{k}" for k in v if k not in ("id", "name", "note", "design"))
     if data.get("report") is not None:
         _check_dict(data["report"], "report")
-    known = {"format", "version", "app_version", "name", "site", "sun_window", "buildings", "exclusions",
+    known = {"format", "version", "app_version", "name", "site", "climate", "sun_window", "buildings", "exclusions",
              "consumption", "rules", "variants", "variant", "underlays", "report", "reserved", "created",
              "modified"}
     unknown.extend(k for k in data if k not in known)
@@ -843,6 +845,7 @@ def _check_project(data: dict) -> list[str]:
 class Project:
     name: str = "Nuovo progetto"
     site: Site = field(default_factory=Site)
+    climate: dict = field(default_factory=dict)       # PVGIS's raw typical year and horizon, shared by the variants
     sun_window: dict = field(default_factory=lambda: asdict(sun.DesignWindow()))
     buildings: list[Building] = field(default_factory=list)
     subfields: list[SubField] = field(default_factory=list)
@@ -1090,7 +1093,7 @@ class Project:
     # files
 
     def to_json(self) -> dict:
-        """The project as the file holds it (format 14): every variant with its design, the one in hand too;
+        """The project as the file holds it (format 15): every variant with its design, the one in hand too;
         the working copy of the fields above goes into its variant."""
         data = asdict(self)
         for k in DESIGN:
@@ -1144,7 +1147,7 @@ class Project:
 
         build = _build
         p = cls(name=data.get("name", "Progetto"), site=build(Site, data.get("site", {})),
-                sun_window=data.get("sun_window", asdict(sun.DesignWindow())),
+                climate=data.get("climate") or {}, sun_window=data.get("sun_window", asdict(sun.DesignWindow())),
                 consumption=data.get("consumption") or {}, rules=data.get("rules") or {},
                 report=data.get("report") or {},
                 variants=data.get("variants") or [{"id": "v1", "name": "Base", "note": ""}],

@@ -1,6 +1,6 @@
 """The weather of the site: a typical year from PVGIS (the European Commission's service, no key needed)
-and the profile of the far horizon. Both are kept in the cache folder: once fetched, the project opens and
-computes without the network, and the source with its date stays in the pedigree.
+and the profile of the far horizon. Both are kept raw inside the project and mirrored in the cache: once fetched,
+the project opens and computes without the network, and the source with its date stays in the pedigree.
 
 The typical year is asked without the horizon (usehorizon=0): the horizon is applied by Meridiana, as its
 own step of the loss chain, so the far shading shows as a loss and not as less sun. PVGIS gives the
@@ -35,6 +35,42 @@ if TYPE_CHECKING:
 PVGIS_URL = "https://re.jrc.ec.europa.eu/api/v5_3/"
 PVGIS6_URL = "https://photovoltaic-geographic-information-system.ec.europa.eu/api/v6/"
 COLUMNS = ("ghi", "dni", "dhi", "temp_air", "wind_speed", "pressure", "relative_humidity")
+MOVE_M = 250.0                    # below PVGIS's meaningful spatial resolution, no new download (R196)
+DATABASES = {"SARAH-3", "SARAH-2", "ERA5", "synthetic"}
+
+
+def distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    a, b = math.radians(lat1), math.radians(lat2)
+    h = math.sin((b - a) / 2) ** 2 + math.cos(a) * math.cos(b) * math.sin(math.radians(lon2 - lon1) / 2) ** 2
+    return 6371000.0 * 2 * math.asin(min(1.0, math.sqrt(h)))
+
+
+def usable(raw: dict | None, lat: float, lon: float, kind: str = "tmy") -> bool:
+    """Whether embedded or cached data still belong to this site and a database Meridiana knows."""
+    if not isinstance(raw, dict):
+        return False
+    try:
+        if kind == "tmy":
+            inputs = raw["meta"]["inputs"]
+            place = inputs["location"]
+            metadata = inputs.get("meteo_data", {})
+            databases = {metadata.get("radiation_db"), metadata.get("meteo_db")} - {None}
+            return (distance_m(float(place["latitude"]), float(place["longitude"]), lat, lon) <= MOVE_M
+                    and bool(databases) and databases <= DATABASES)
+        return True
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def capture(project, cache_dir: Path) -> None:
+    """Put the site's downloaded raw data in the project, so the file is autonomous (R150, R196)."""
+    climate = dict(getattr(project, "climate", {}) or {})
+    for kind in ("tmy", "horizon"):
+        path = _cache_file(cache_dir, kind, project.site.lat, project.site.lon)
+        if path.exists():
+            raw, _notice = atomic.read_json(path)
+            climate[kind] = raw
+    project.climate = climate
 
 
 class MeteoError(Exception):
@@ -129,8 +165,11 @@ def _from_cache(raw: dict) -> Meteo:
         raise MeteoError(f"damaged weather cache: {error}") from error
 
 
-def typical_year(lat: float, lon: float, cache_dir: Path, refresh: bool = False, timeout: float = 60) -> Meteo:
-    """The PVGIS typical year of the site, from the cache when there, else from the service."""
+def typical_year(lat: float, lon: float, cache_dir: Path, refresh: bool = False, timeout: float = 60,
+                 embedded: dict | None = None) -> Meteo:
+    """The PVGIS typical year of the site, from the project, the cache or the service."""
+    if embedded is not None:
+        return _from_cache(embedded)
     path = _cache_file(cache_dir, "tmy", lat, lon)
     if path.exists() and not refresh:
         try:
@@ -196,11 +235,12 @@ def _tmy_v6(lat: float, lon: float, timeout: float) -> tuple[pd.DataFrame, dict]
     return data[list(COLUMNS)], meta
 
 
-def horizon(lat: float, lon: float, cache_dir: Path, refresh: bool = False, timeout: float = 30) -> Horizon:
-    """The far horizon seen from the site (PVGIS, from a digital terrain model), from the cache when there."""
+def horizon(lat: float, lon: float, cache_dir: Path, refresh: bool = False, timeout: float = 30,
+            embedded: dict | None = None) -> Horizon:
+    """The far horizon seen from the site, from the project, the cache or PVGIS."""
     path = _cache_file(cache_dir, "horizon", lat, lon)
-    raw = None
-    if path.exists() and not refresh:
+    raw = embedded
+    if raw is None and path.exists() and not refresh:
         try:
             raw, _notice = atomic.read_json(path)
         except (OSError, ValueError):

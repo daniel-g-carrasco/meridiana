@@ -1,6 +1,6 @@
 """The project file (model.py): everything comes back as it was saved, the previous save kept as .bak, a damaged
 file opened from it and said; a file edited by hand or damaged refused with the path of the key; one frozen file
-for every version of the format, 1 to 14, opened as it is (tests/formati/file), and the migrations field by field.
+for every version of the format, 1 to 15, opened as it is (tests/formati/file), and the migrations field by field.
 The files of the settings and the damaged ones are in test_formats."""
 
 import json
