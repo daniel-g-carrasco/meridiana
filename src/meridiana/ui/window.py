@@ -429,6 +429,9 @@ class MainWindow(QMainWindow):
             label.setContentsMargins(Space.S, 0, Space.S, 0)
             label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.statusBar().addPermanentWidget(self.busy)
+        from .save_status import SaveStatus
+        self.save_status = SaveStatus()
+        self.statusBar().addPermanentWidget(self.save_status)
         # the bars with their percentage and Cancel, only for PVGIS and the PDF report (study 16, F4; design 3.10)
         self.pvgis_progress = waiting.Progress()
         self.pvgis_progress.cancelled.connect(self._cancel_pvgis)
@@ -4603,11 +4606,17 @@ class MainWindow(QMainWindow):
             source=tiles.display_name(source) if source else key, why=why))
 
     def _autosave(self) -> None:
+        if not self._dirty():
+            return
+        self.save_status.begin()
         try:
             self.session.autosave(self.paths.state)
         except OSError as error:
+            self.save_status.failed()
             log.complain("autosave", error)
             self.tell(_("The recovery copy could not be written: {error}").format(error=error))
+            return
+        self.save_status.finish(automatic=True)
 
     def _drop_autosave(self) -> None:
         self.session.drop_autosave(self.paths.state)
@@ -4705,12 +4714,15 @@ class MainWindow(QMainWindow):
     def _save(self) -> bool:
         if self.path is None:
             return self._save_as()
+        self.save_status.begin()
         try:
             self.session.save(self.path)
         except OSError as error:
+            self.save_status.failed()
             QMessageBox.warning(self, _("Save"), _("The project could not be saved: {error}").format(error=error))
             return False
         self._mark_saved()
+        self.save_status.finish(automatic=False)
         self.statusBar().showMessage(_("Saved {file}").format(file=self.path.name), 4000)
         return True
 
