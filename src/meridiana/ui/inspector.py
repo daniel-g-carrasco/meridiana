@@ -106,6 +106,8 @@ class DeliverablesInspector(QScrollArea):
             head = QHBoxLayout()
             title = set_text(QLabel(d.title), Text.STRONG)
             title.setWordWrap(True)             # a long title on two lines, its state still inside the panel
+            from .style import grow_label
+            grow_label(title)
             head.addWidget(title, 1)
             state = QLabel(names.get(d.state, d.state))
             state.setObjectName(f"state-{d.state}")
@@ -114,7 +116,6 @@ class DeliverablesInspector(QScrollArea):
             inside.addLayout(head)
             note = QLabel(d.note)
             note.setWordWrap(True)
-            from .style import grow_label
             grow_label(note)
             inside.addWidget(note)
             action = actions.get(d.command) if d.command else None

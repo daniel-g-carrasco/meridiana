@@ -252,7 +252,9 @@ Regole:
 | Aiuto | `ui/help_box.py` | scheda sotto Proprietà; il testo occupa lo spazio che c'è; un «?» o F1 lo blocca sull'argomento (puntina accanto al titolo), «Sgancia» lo mette in una finestrella sua (R44, R68) |
 | Elenco a righe | `ui/rows.RowList` | al posto di una tabella da leggere: nome a sinistra in semigrassetto, cosa è a destra in `text2`, una linea leggera fra due righe; alto quanto le righe, scorre con la scheda |
 | Griglia di campi | `ui/rows.FieldGrid` | al posto di una tabella da scrivere (le bollette): i campi numerici normali in righe e colonne, i nomi a sinistra e in alto, il totale di ogni colonna; Tab da uno all'altro |
-| Meridio | `ui/assistant.py` | il fumetto scivola di 10 px dalla sua parte e si accende; nome `title`, conversazione `body`, «Domande pronte» `label` |
+| Meridio | `ui/assistant.py` | il fumetto scivola di 10 px dalla sua parte e si accende; nome `title` sul lato opposto alla maniglia, conversazione `body`, «Domande pronte» `label`; opzioni come pulsanti del programma con hover, solo fra un turno e l'altro (R197) |
+| Sezione con spunta | `ui/style.py` (`SectionGate`) | campi accesi solo nello stato previsto della spunta, attenuati altrimenti e con il suggerimento che spiega perché; valori conservati (R194) |
+| Stato dei salvataggi | `ui/save_status.py` | piccolo arco durante la scrittura, poi «Salvato alle HH:MM» o «Salvato in automatico alle HH:MM» nella barra di stato; errori invariati (R195) |
 | Barra di scorrimento | `ui/scrollbars.py` (`ScrollStyle`) | un cursore di 6 px, raggio 3, `line` a riposo, `muted` sotto il puntatore, `text2` premuto; nessuna guida, nessuna freccia; niente se non c'è da scorrere |
 
 ## 5. I comportamenti
