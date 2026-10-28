@@ -8,8 +8,8 @@ turns presses, moves, releases, double clicks and the wheel into actions; the pl
 - A press that does not move more than CLICK_PX before its release is a click: the left one selects (Ctrl adds),
   the middle one recentres the view on the point (FreeCAD's lookAtPoint), the right one opens the menu.
 - The wheel zooms towards the cursor in every style.
-- In every style too, after its own gestures, the left button with a key, for a touchpad (R166): Space held pans, as
-  Photoshop's hand and the plan's own, Shift held orbits, as AutoCAD's Shift with the middle button.
+- In every style too, after its own gestures: Space held pans with or without the left button (R166 and R190),
+  Shift with the left button orbits, as AutoCAD's Shift with the middle button.
 
 Of FreeCAD's styles, what needs a keyboard while the mouse waits (Gesture's H, NX's Ctrl after the middle button)
 or a touch screen is left out: the mouse part only. CAD's zoom «middle held, a short click of the left button,
@@ -73,10 +73,9 @@ STYLES = {
                       middle_click="", middle_double="recentre"),
 }
 DEFAULT_STYLE = "autocad"
-# in every style, after its own gestures: the left button with a key (Daniel, 26/10/2026: «Se eseguire alcune delle
-# azioni tipo il trascinamento della vista o la rotazione si potessero fare semplicemente con il tasto sinistro più un
-# tasto, questa roba sarebbe più facile»; his choice: Space pans, Shift orbits)
-EVERY_STYLE = {"pan": (g("left", "space"),), "orbit": (g("left", "shift"),)}
+# in every style, after its own gestures: Space alone or with the left button pans, Shift with the left button
+# orbits (R166 and R190)
+EVERY_STYLE = {"pan": (g("", "space"), g("left", "space")), "orbit": (g("left", "shift"),)}
 
 
 def gestures(style: Style, kind: str) -> tuple:

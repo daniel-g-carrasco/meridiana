@@ -535,8 +535,14 @@ class Backend(QObject):
         return np.array([hx, hy, hz]) if hit else None
 
     def _mods_held(self, mods: int) -> set:
-        """The modifiers held, Space among them while the view says it is (R166: Space with the left button pans)."""
+        """The modifiers held, Space among them while the view says it is (R166 and R190)."""
         return modifiers(mods) | ({"space"} if self.space else set())
+
+    def set_space(self, held: bool) -> None:
+        self.space = held
+        if not held and self.navigator.gesture and self.navigator.last is not None:
+            x, y = self.navigator.last
+            self._do(self.navigator.move(x, y, self._mods_held(0)))
 
     @Slot(int, int, float, float, bool, float, float, float, str, int)
     def press(self, button, mods, x, y, hit, hx, hy, hz, name, index) -> None:
@@ -967,23 +973,23 @@ class View3D(QuickImage):
         if event.key() == Qt.Key.Key_Escape:
             self.escaped.emit()
             return
-        if event.key() == Qt.Key.Key_Space:                 # held: the left button pans, as in the plan (R166)
+        if event.key() == Qt.Key.Key_Space:                 # held: the mouse pans, with or without the left button
             if not event.isAutoRepeat():
-                self.backend.space = True
+                self.backend.set_space(True)
                 self.setCursor(Qt.CursorShape.OpenHandCursor)
             return
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event) -> None:
         if event.key() == Qt.Key.Key_Space and not event.isAutoRepeat():
-            self.backend.space = False
+            self.backend.set_space(False)
             self.unsetCursor()
             return
         super().keyReleaseEvent(event)
 
     def focusOutEvent(self, event) -> None:
         if self.backend.space:                               # Space let go elsewhere: not held here any more
-            self.backend.space = False
+            self.backend.set_space(False)
             self.unsetCursor()
         super().focusOutEvent(event)
 

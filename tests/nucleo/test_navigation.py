@@ -90,6 +90,18 @@ class Styles(unittest.TestCase):
         self.assertEqual(click(n, "left", "ctrl"), ["select"])
         self.assertEqual(drag(n, "middle", "shift"), "orbit")       # AutoCAD's own, unchanged
 
+    def test_space_without_a_mouse_button_pans_in_every_style(self):
+        for key in nav.STYLES:
+            with self.subTest(key):
+                n = nav.Navigator()
+                n.set_style(key)
+                n.move(100, 100, set())
+                actions = n.move(140, 125, {"space"})
+                self.assertEqual([(a.kind, a.phase) for a in actions], [("pan", "begin"), ("pan", "move")])
+                self.assertEqual((actions[-1].dx, actions[-1].dy), (40, 25))
+                actions = n.move(140, 125, set())
+                self.assertEqual([(a.kind, a.phase) for a in actions], [("pan", "end")])
+
     def test_autocad_is_revit_with_the_double_middle_click_that_fits(self):
         n = nav.Navigator()
         self.assertEqual(n.style.name, "AutoCAD")               # the provisional default
@@ -273,7 +285,7 @@ class Explained(unittest.TestCase):
     def test_the_table_changes_with_the_style(self):
         autocad, blender, inventor = (dict(nav.table(k)) for k in ("autocad", "blender", "openinventor"))
         self.assertNotEqual(autocad, blender)
-        self.assertEqual(autocad["Pan"], "middle, left + right, Space + left")
+        self.assertEqual(autocad["Pan"], "middle, left + right, Space and move, Space + left")
         self.assertEqual(blender["Orbit (3D only)"], "middle, Shift + left")
         self.assertIn("double click of the middle button", autocad["Fit the view"])
         self.assertNotIn("double click", blender["Fit the view"])

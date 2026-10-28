@@ -326,6 +326,8 @@ class PlanView(QGraphicsView):
         self.ctrl = False
         self.panning = None
         self.space = False
+        self.space_last: QPointF | None = None
+        self.pointer_position: QPointF | None = None
         self.navigator = navigation.Navigator()   # the mouse's style: pan, zoom, recentre as in the 3D view
         self.left_wait = None                       # a left press held back: (where, modifiers)
         self.left_timer = QTimer(self, singleShot=True, interval=LEFT_WAIT_MS)
@@ -2195,6 +2197,14 @@ class PlanView(QGraphicsView):
         super().mouseDoubleClickEvent(event)
 
     def mouseMoveEvent(self, event):
+        self.pointer_position = QPointF(event.position())
+        if self.space and self.panning is None and not self.navigator.held:
+            if self.space_last is None:
+                self.space_last = QPointF(event.position())
+            d = event.position() - self.space_last
+            self.space_last = QPointF(event.position())
+            self.translate_view(d.x(), d.y())
+            return
         if self.draft is not None:
             # a string being drawn: the line follows the pointer; with the left button held from a module, each module
             # the pointer passes the middle of is taken, as Sunny Design connects them
@@ -2316,6 +2326,8 @@ class PlanView(QGraphicsView):
             return
         if key == Qt.Key.Key_Space and not event.isAutoRepeat():
             self.space = True
+            self.space_last = (QPointF(self.pointer_position) if self.pointer_position is not None
+                               else QPointF(self.mapFromGlobal(self.cursor().pos())))
             self.setCursor(Qt.CursorShape.OpenHandCursor)
             return
         if key == Qt.Key.Key_Control:
@@ -2394,10 +2406,15 @@ class PlanView(QGraphicsView):
             return
         super().keyPressEvent(event)
 
+    def _release_space(self) -> None:
+        self.space = False
+        self.space_last = None
+        self.panning = None
+        self.setCursor(Qt.CursorShape.ArrowCursor if self.tool == "select" else Qt.CursorShape.CrossCursor)
+
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key.Key_Space and not event.isAutoRepeat():
-            self.space = False
-            self.setCursor(Qt.CursorShape.ArrowCursor if self.tool == "select" else Qt.CursorShape.CrossCursor)
+            self._release_space()
             return
         if event.key() == Qt.Key.Key_Control:
             self.ctrl = False
@@ -2411,6 +2428,11 @@ class PlanView(QGraphicsView):
             self._update_cursor(self.mapFromGlobal(self.cursor().pos()))
             return
         super().keyReleaseEvent(event)
+
+    def focusOutEvent(self, event) -> None:
+        if self.space:
+            self._release_space()
+        super().focusOutEvent(event)
 
     def _update_cursor(self, view_pos) -> None:
         scene_pos = self.mapToScene(view_pos)
