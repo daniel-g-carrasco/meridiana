@@ -878,6 +878,8 @@ class View3D(QuickImage):
         self.marks = MarksOverlay(self.backend, self)
         self.cube = ViewCube(self.backend, self)
         self.cube.fitRequested.connect(self.frame_scene)
+        from . import input_log
+        self.input_log = input_log.attach(self, "3d")
 
     def event(self, event) -> bool:
         if event.type() == QEvent.Type.NativeGesture:

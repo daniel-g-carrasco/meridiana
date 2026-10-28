@@ -416,6 +416,9 @@ class PlanView(QGraphicsView):
         self.scale(10, 10)               # 10 px per metre to start with
         self.centerOn(0, 0)
         self.world.set_scale(self.metres_per_pixel())
+        from . import input_log
+        self.input_log = input_log.attach(self.viewport(), "plan")
+        self.input_keys = input_log.attach(self, "plan")
 
     # the project
 
