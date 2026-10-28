@@ -321,28 +321,33 @@ class Character(unittest.TestCase):
         self.assertEqual(system, context.system("Meridio"))
         self.assertIn("Your name is Meridio", system)
 
-    def test_after_an_answer_the_questions_ready_follow_it_and_1_sends_the_first(self):
+    def test_a_change_is_proposed_at_once_not_after_asking_permission(self):
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
         self.window(assistant_introduced=True)
         before = [q.text() for q in self.a.questions]
         self.assertEqual(len([t for t in before if t]), 3)
-        server = self.serve([tool_answer([("read_checks", {"min_level": "warn"})]),
-                             text_answer("C'è un problema: la posa sul tetto. Vuoi che te lo proponga?"),
-                             text_answer("Ecco la proposta.")])
+        server = self.serve([
+            tool_answer([("read_checks", {"min_level": "warn"})]),
+            tool_answer([("propose_edit", {"kind": "subfield", "id": "s1", "changes": {"params.tilt": 20},
+                                           "reason": "meno ombre tra le file"})]),
+            text_answer("Ho preparato la proposta: guardala e applicala se va bene."),
+            text_answer("Serve a ridurre le ombre tra le file."),
+        ])
         self.a.open_panel()
         self.a.ask("Ci sono problemi da sistemare?")
         self.assertTrue(self.idle())
+        self.assertEqual(len(self.chat.cards), 1)
+        self.assertNotIn("Vuoi che", self.a.conversation.toPlainText())
+        self.assertEqual(self.win.project.subfields[0].params["tilt"], 15.0)
         now = [q.text() for q in self.a.questions]
-        self.assertEqual(now[:2], ["Yes, propose it", "First tell me why"])
+        self.assertNotIn("Yes, propose it", now)
         self.assertNotEqual(now, before)
         self.assertTrue(self.a.questions[0].isVisibleTo(self.a.panel))
         self.a.field.setFocus()
         QTest.keyClick(self.a.field, Qt.Key.Key_1)
         self.assertTrue(self.idle())
-        self.assertIn(("you", "Yes, propose it"), self.a.messages)
-        self.assertEqual(len(server.requests), 3)
-        self.assertNotIn("Yes, propose it", [q.text() for q in self.a.questions])     # asked: not offered again
+        self.assertEqual(len(server.requests), 4)
 
     def test_the_last_words_stay_in_sight_when_the_questions_come_back_under_them(self):
         self.window(assistant_introduced=True)

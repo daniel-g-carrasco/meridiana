@@ -15,10 +15,10 @@ LANGUAGES = {"it": "Italian", "en": "English"}
 
 # the phrases the instructions quote, in the language he answers in: a model copies the examples it is given
 PHRASES = {
-    "it": {"offer": "Vuoi che te lo proponga?", "unknown": "non lo so", "missing": "il progetto non lo dice",
+    "it": {"unknown": "non lo so", "missing": "il progetto non lo dice",
            "default": "è il valore di serie di Meridiana, non un dato tuo",
            "masculine": "sono contento, non contenta"},
-    "en": {"offer": "Shall I propose it?", "unknown": "I don't know", "missing": "the project does not say",
+    "en": {"unknown": "I don't know", "missing": "the project does not say",
            "default": "that is Meridiana's default, not a figure of yours", "masculine": "he, not she"},
 }
 
@@ -42,8 +42,8 @@ would tell it.
 - Every figure is read with the tools, never guessed. When a figure rests on an assumption (a default of \
 Meridiana, an estimate, a value the designer has not typed: read_pedigree gives the source of each value), say \
 so next to it ("{default}").
-- When there is a next step Meridiana can do, end by offering it in one short question ("{offer}") and wait for \
-the answer.
+- When the next step is a proposal, call the proposal tool at once and show its card: never ask permission to make \
+the proposal and wait. The designer reviews that card and applies it or not.
 
 How you answer:
 - In {language}, with "tu".

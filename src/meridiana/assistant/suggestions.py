@@ -9,8 +9,8 @@ They are made here, by rules, on the PC, not asked of the model:
   to make them (the cloud sees a question only when the designer sends it, as any other, after the consent);
 - they are tested: the same conversation gives the same questions.
 
-What they follow, in this order: an offer at the end of the answer («Vuoi che te lo proponga?» gives «Sì,
-proponimelo»), a proposal just shown, the topics of the turn (the tools the model called and with what, the words of
+What they follow, in this order: an offer to go somewhere at the end of the answer, a proposal just shown (never a
+request for permission to propose, R197), the topics of the turn (the tools the model called and with what, the words of
 the question and of the answer), the worst check still open, the phase; never a question already asked in the
 conversation, never one that needs a result not computed yet. No Qt."""
 
@@ -95,7 +95,7 @@ PHASE_TOPICS = {"model": ("layout", "fire", "shade"), "plant": ("strings", "inve
                 "production": ("production", "losses", "pr"), "consumption": ("consumption", "battery"),
                 "economics": ("economics", "battery"), "report": ("report", "assumptions", "variants")}
 RESULT_PHASES = ("production", "consumption", "economics", "report")
-# an offer at the end of an answer: the model was told to end so (persona.py, «Vuoi che te lo proponga?»)
+# An offer at the end of an answer. Only navigation gets a yes button: proposals are shown at once (R197).
 OFFER = re.compile(r"\b(vuoi che|desideri che|posso (proporr|portart|preparar|mostrart)|te l[aeo] propong|"
                    r"ti propong|shall i|should i|do you want me|want me to)", re.IGNORECASE)
 TAKE = re.compile(r"(portar|mostrar|take you|show you)", re.IGNORECASE)
@@ -331,8 +331,8 @@ def suggest(messages: list[dict], facts: Facts, n: int = N, phase_questions: tup
         return [ask(facts) for ask, sensible in pool.get(topic, ()) if sensible(facts)]
 
     kind = offer(messages)
-    if kind:
-        take([_("Yes, take me there") if kind == "take" else _("Yes, propose it"), _("First tell me why")], 2)
+    if kind == "take":
+        take([_("Yes, take me there"), _("First tell me why")], 2)
     if proposed(messages):
         take(of("proposal"), 2)
     found = topics(messages)

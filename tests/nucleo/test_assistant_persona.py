@@ -26,13 +26,14 @@ class Instructions(unittest.TestCase):
         self.assertIn("Concise and technically precise", text)
         self.assertIn("In Italian", text)
 
-    def test_he_says_what_he_does_not_know_and_which_figures_are_assumptions_and_offers_the_next_step(self):
+    def test_he_says_what_he_does_not_know_and_proposes_changes_without_asking_permission(self):
         text = persona.system("Meridio", "it")
         self.assertIn("non lo so", text)
         self.assertIn("Every figure is read with the tools, never guessed", text)
         self.assertIn("default of Meridiana", text)
         self.assertIn("read_pedigree gives the source", text)
-        self.assertIn("Vuoi che te lo proponga?", text)            # Daniel liked it (R88)
+        self.assertNotIn("Vuoi che te lo proponga?", text)
+        self.assertIn("call the proposal tool at once", text)
         self.assertIn("Never quote a standard, an article, a threshold or a law from memory", text)
         self.assertIn("do not introduce yourself again", text)
         self.assertIn("no emoji", text)                            # his voice would read them (R94)
@@ -44,7 +45,7 @@ class Instructions(unittest.TestCase):
     def test_in_english_the_examples_are_english(self):
         text = persona.system("Meridio", "en")
         self.assertIn("In English", text)
-        self.assertIn("Shall I propose it?", text)
+        self.assertNotIn("Shall I propose it?", text)
         self.assertNotIn("Vuoi che", text)
         self.assertEqual(persona.system("Meridio", "fr"), text)    # a language without phrases: English
 

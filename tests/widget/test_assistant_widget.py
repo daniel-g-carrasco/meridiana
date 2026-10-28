@@ -57,7 +57,8 @@ class Alone(unittest.TestCase):
         self.assertEqual(shape.tail, "right")                                     # he is at the right
         self.assertEqual(a.bubble.geometry().right() + 1 + assistant.GAP, a.x())
         self.assertEqual(a.bubble.y() + shape.at, a.y() + 23)                     # pointing at his centre
-        self.assertEqual((a.bubble.width(), a.bubble.height()), (320, 400))
+        self.assertEqual(a.bubble.width(), 320)
+        self.assertGreaterEqual(a.bubble.height(), 400)                         # grows if every option does not fit
         self.assertTrue(QRect(0, 0, self.area.width(), self.area.height()).contains(a.bubble.geometry()))
         a.move(12, self.area.height() - 46 - 12)                                  # dragged to the left
         a.dropped()
@@ -426,6 +427,37 @@ class Alone(unittest.TestCase):
         a.reduced_motion = True
         a.answer("Tutto in una volta.")
         self.assertIn("Tutto in una volta.", a.conversation.toPlainText())
+
+
+    def test_response_options_are_program_buttons_with_hover(self):
+        from PySide6.QtCore import QPoint
+        from PySide6.QtTest import QTest
+        from PySide6.QtWidgets import QPushButton
+        a = self.a
+        a.open_panel()
+        self.app.processEvents()
+        self.assertGreaterEqual(a.questions_box.height(), a.questions_box.sizeHint().height())
+        self.assertGreaterEqual(a.bubble.height(), a.panel.sizeHint().height())
+        for question in a.questions:
+            self.assertIsInstance(question, QPushButton)
+            self.assertGreaterEqual(question.label.height(), question.label.heightForWidth(question.label.width()))
+            bottom = question.label.mapTo(a.questions_box, QPoint(0, question.label.height())).y()
+            self.assertLessEqual(bottom, a.questions_box.height())
+        last = a.questions[-1].mapTo(a.panel, QPoint(0, a.questions[-1].height())).y()
+        self.assertLessEqual(last, a.field.y())
+        self.app.processEvents()
+        QTest.mouseMove(a.questions[0])
+        self.assertTrue(a.questions[0].underMouse())
+        a.set_state(assistant.THINKING)
+        self.assertFalse(a.questions_wanted())
+
+    def test_the_name_is_on_the_side_opposite_the_resize_grip(self):
+        from PySide6.QtCore import Qt
+        a = self.a
+        a.open_panel()
+        self.app.processEvents()
+        expected = Qt.AlignmentFlag.AlignRight if a.bubble.shape.grip.endswith("left") else Qt.AlignmentFlag.AlignLeft
+        self.assertEqual(a.title.alignment() & (Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignRight), expected)
 
 
 if __name__ == "__main__":
