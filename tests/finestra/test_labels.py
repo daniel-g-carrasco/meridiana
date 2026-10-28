@@ -20,9 +20,16 @@ class Labels(unittest.TestCase):
         from PySide6.QtWidgets import QLabel
 
         from meridiana.ui import theme
-        # the text size back to medium afterwards: left at large, the tests after this one ran with it (28/10/2026)
         self.addCleanup(theme.change_text_size, "medium", self.app)
         failures = []
+
+        def check(page):
+            for label in self.win.findChildren(QLabel):
+                needed = label.heightForWidth(label.width()) if label.wordWrap() else -1
+                if label.isVisibleTo(self.win) and needed > label.height():
+                    where = label.parentWidget().title() if hasattr(label.parentWidget(), "title") else ""
+                    failures.append((width, text_size, colour, page, where, label.text(), label.height(), needed))
+
         for width in (1000, 1600):
             self.win.resize(width, 850)
             for text_size in ("medium", "large"):
@@ -33,12 +40,13 @@ class Labels(unittest.TestCase):
                     for phase in ("model", "plant", "production", "consumption", "economics", "report"):
                         self.win.show_phase(phase)
                         _setup.turn_events(self.app, 30)
-                        for label in self.win.findChildren(QLabel):
-                            needed = label.heightForWidth(label.width()) if label.wordWrap() else -1
-                            if label.isVisibleTo(self.win) and needed > label.height():
-                                where = label.parentWidget().title() if hasattr(label.parentWidget(), "title") else ""
-                                failures.append((width, text_size, colour, phase, where, label.text(),
-                                                 label.height(), needed))
+                        check(phase)
+                    self.win.open_file_page()
+                    for section in self.win.file_page.sections:
+                        self.win.file_page.show_section(section)
+                        _setup.turn_events(self.app, 30)
+                        check(f"file:{section}")
+                    self.win.file_page.close()
         self.assertEqual(failures, [])
 
 

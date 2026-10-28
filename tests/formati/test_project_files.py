@@ -306,6 +306,19 @@ class Formats(unittest.TestCase):
         self.assertFalse(old.online_allowed("tiles", True))
         self.assertFalse(old.online_allowed("pvgis", True))
 
+    def test_the_seventeenth_format_keeps_the_climate_inside_the_project(self):
+        """R196 (incarico 24): the typical year and the horizon of the site inside the project. Kimi's 24 and 8 had
+        both made a format 15; merged on 28/10/2026, the climate is 17, after 8's grid data (15) and consents (16)."""
+        folder = _setup.FORMATS
+        p, notice = model.Project.load(folder / "progetto-v17.meridiana")
+        self.assertIsNone(notice)
+        self.assertEqual(p.network_consent, {"tiles": "2026-10-27", "pvgis": "2026-10-27"})
+        sixteen = json.loads((folder / "progetto-v16.meridiana").read_text(encoding="utf-8"))
+        self.assertEqual(model.MIGRATIONS[16](sixteen), {**sixteen, "climate": {}})
+        self.assertEqual(model.Project.from_json(sixteen).climate, {})
+        p.climate = {"tmy": {"outputs": {"tmy_hourly": []}}}
+        self.assertEqual(model.Project.from_json(p.to_json()).climate, p.climate)
+
     def test_the_input_of_a_sub_field_lays_out_nothing_again(self):
         p = sample()
         sf = p.subfields[0]

@@ -35,8 +35,8 @@ from PySide6.QtCore import (QByteArray, QEasingCurve, QEvent, QParallelAnimation
                             QPropertyAnimation, QRect, QRectF, QSize, Qt, QTimer, Signal)
 from PySide6.QtGui import QColor, QCursor, QIcon, QPainter, QPainterPath, QPen, QPixmap
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QLineEdit,
-                               QSizeGrip, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QLayout, QLineEdit,
+                               QPushButton, QSizeGrip, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
 
 from .. import assistant
 from ..assistant import text as words
@@ -201,9 +201,8 @@ class Dots(QWidget):
             p.drawEllipse(QPointF(10 + n * 10, y), 3, 3)
 
 
-class QuestionRow(QWidget):
-    """A question ready, as a row of a list: its number (the key that sends it), the whole text wrapped, an
-    arrow; clicked, it is asked."""
+class QuestionRow(QPushButton):
+    """A response option as a program button, with its hover, a number and the whole wrapped text (R197)."""
 
     chosen = Signal(str)
 
@@ -211,7 +210,7 @@ class QuestionRow(QWidget):
         super().__init__(parent)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         row = QHBoxLayout(self)
-        row.setContentsMargins(4, 2, 4, 2)
+        row.setContentsMargins(8, 4, 8, 4)
         row.setSpacing(6)
         self.number = QLabel(str(number))
         self.number.setFixedWidth(12)
@@ -224,21 +223,33 @@ class QuestionRow(QWidget):
         self.arrow = QLabel("›")
         self.arrow.setAlignment(Qt.AlignmentFlag.AlignTop)
         row.addWidget(self.arrow)
+        for child in (self.number, self.label, self.arrow):
+            child.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.clicked.connect(lambda: self.chosen.emit(self.text()))
 
     def text(self) -> str:
         return self.label.text()
 
     def setText(self, text: str) -> None:
         self.label.setText(text)
+        self.setAccessibleName(text)
+        self.setToolTip(text)
 
     def set_colours(self, muted: str) -> None:
         for w in (self.number, self.arrow):
             w.setStyleSheet(f"color: {muted};")
 
-    def mouseReleaseEvent(self, event) -> None:
-        if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(event.position().toPoint()):
-            self.chosen.emit(self.text())
-        super().mouseReleaseEvent(event)
+    def sizeHint(self):
+        hint = super().sizeHint()
+        needed = self.label.heightForWidth(max(0, self.width() - 45))
+        if needed >= 0:
+            hint.setHeight(max(hint.height(), needed + 8))
+        return hint
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self.label.updateGeometry()
+        self.updateGeometry()
 
 
 class Bubble(QFrame):
@@ -274,6 +285,9 @@ class Bubble(QFrame):
         self.setGeometry(QRect(shape.x, shape.y, shape.width, shape.height))
         self.placing = False
         self._place_grip()
+        if hasattr(self.owner, "title"):
+            self.owner.title.setAlignment(Qt.AlignmentFlag.AlignRight if shape.grip.endswith("left")
+                                          else Qt.AlignmentFlag.AlignLeft)
         self.update()
 
     def _place_grip(self) -> None:
@@ -484,6 +498,7 @@ class Assistant(QFrame):
         qbox = QVBoxLayout(self.questions_box)
         qbox.setContentsMargins(0, 0, 0, 0)
         qbox.setSpacing(0)
+        qbox.setSizeConstraint(QLayout.SizeConstraint.SetMinimumSize)
         self.questions_title = QLabel(_("Questions ready: press 1, 2, 3"))
         self.questions_title.setFont(text_font(Text.LABEL))
         qbox.addWidget(self.questions_title)
@@ -494,6 +509,8 @@ class Assistant(QFrame):
             qbox.addWidget(q)
             self.questions.append(q)
         inside.addWidget(self.questions_box)
+        self.questions_timer = QTimer(self.questions_box, singleShot=True)
+        self.questions_timer.timeout.connect(self._fit_questions)
         self.field = QLineEdit()
         self.field.setPlaceholderText(_("Ask {name}…").format(name=assistant.NAME))
         self.field.returnPressed.connect(lambda: self.ask(self.field.text()))
@@ -741,9 +758,41 @@ class Assistant(QFrame):
             log.complain("assistant", error)
             texts = assistant.questions(self.tab)
         texts += [""] * (len(self.questions) - len(texts))
+        changed = texts != [row.text() for row in self.questions]
         for row, text in zip(self.questions, texts, strict=True):
             row.setText(text)
             row.setVisible(bool(text))
+        if changed:
+            self.questions_timer.start(0)
+
+    def _fit_questions(self) -> None:
+        self.questions_box.setMinimumHeight(0 if self.docked else self.questions_box.sizeHint().height())
+        self.panel.layout().activate()
+        self._fit_bubble_content()
+
+    def _fit_bubble_content(self) -> None:
+        if self.docked or not self.opened or self.bubble.shape is None or self.bubble.placing \
+                or self.bubble_animation is not None:
+            return
+        last = self.questions_box.mapTo(self.panel, QPoint(0, self.questions_box.height())).y()
+        overflow = max(0, last - self.field.y())
+        margins = self.bubble.box.contentsMargins()
+        needed = max(self.bubble.height() + overflow + (Space.S if overflow else 0),
+                     self.panel.sizeHint().height() + margins.top() + margins.bottom())
+        if needed <= self.bubble.height():
+            return
+        shape = self.bubble.shape
+        top, _width, available = self.free()
+        bottom = shape.y + shape.height
+        if shape.tail in ("left", "right"):
+            height = min(needed, available)
+            y = max(top, bottom - height)
+        else:
+            height = min(needed, top + available - shape.y)
+            y = shape.y
+        at = shape.at + shape.y - y if shape.tail in ("left", "right") else shape.at
+        self.bubble_dims = (shape.width, height)
+        self.bubble.set_shape(assistant.Bubble(shape.x, y, shape.width, height, shape.tail, at))
 
     def reposition(self, animate: bool = False) -> None:
         self._stop_slide()
@@ -866,6 +915,7 @@ class Assistant(QFrame):
                     break
         self.place_bubble()
         self.bubble.show()
+        self._fit_questions()
         self.bubble.raise_()
         self.raise_()
         if animate and self.moving():
@@ -903,6 +953,7 @@ class Assistant(QFrame):
         self._stop_bubble_animation()
         if self.opened and not self.docked:
             self.place_bubble()                             # the geometry whole again, the effect gone
+            self._fit_questions()
 
     def _stop_bubble_animation(self) -> None:
         if self.bubble_animation is not None:
@@ -1040,6 +1091,9 @@ class Assistant(QFrame):
             return
         typing = self.field.hasFocus()
         self.docked = on
+        constraint = QLayout.SizeConstraint.SetDefaultConstraint if on else QLayout.SizeConstraint.SetMinimumSize
+        self.questions_box.layout().setSizeConstraint(constraint)
+        self.questions_box.setMinimumHeight(0 if on else self.questions_box.sizeHint().height())
         self.dock_button.setChecked(on)
         self.dock_button.setToolTip(_("Float over the views again") if on else
                                      _("Dock in the panels, as Project and Properties"))

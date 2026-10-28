@@ -45,12 +45,13 @@ class Suggestions(unittest.TestCase):
         self.assertEqual(got[0], "How do I fix «Inverter tetto, ingresso 2, 18 in serie: Uoc max…»?")
         self.assertEqual(len(got), 3)
 
-    def test_an_answer_that_ends_offering_a_proposal_gives_yes_first(self):
+    def test_an_old_offer_does_not_delay_the_proposal_with_a_yes_question(self):
         messages = turn("Ci sono problemi da sistemare?", "Due problemi: prima la tensione della stringa, poi "
                         "l'ombra (CEI 64-8/7). Vuoi che te lo proponga?", [("read_checks", {"min_level": "warn"})])
         got = suggest(messages, Facts(phase="model", worst=(UOC, SHADE), subfields=1))
-        self.assertEqual(got[:2], ["Yes, propose it", "First tell me why"])
-        self.assertEqual(got[2], "Which one do I fix first?")         # the answer was about the checks
+        self.assertNotIn("Yes, propose it", got)
+        self.assertEqual(got[:2], ["Which one do I fix first?",
+                                  "How do I fix «Inverter tetto, ingresso 2, 18 in serie: Uoc max…»?"])
 
     def test_an_offer_to_take_the_designer_somewhere_gives_take_me_there(self):
         messages = turn("Dov'è l'ombra?", "È sul sottocampo Sud. Vuoi che ti ci porti, così lo vedi?")

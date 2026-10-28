@@ -23,7 +23,7 @@ from . import waiting
 from .properties import combo, make_form, spin
 from . import symbols
 from .theme import mark_problem
-from .style import Group
+from .style import Group, SectionGate
 
 
 def month_names() -> list[str]:
@@ -382,9 +382,10 @@ class EnergyPage(Page):
             self.loss[key] = s
         self.lid_auto = QCheckBox(_("LID from the module's datasheet"))
         self.lid = spin(0.0, 10.0, 1.0, " %", 1, 0.1)
-        self.lid_auto.toggled.connect(lambda v: (self.lid.setEnabled(not v),
-                                                 self.send("energy", "losses.lid", None if v else self.lid.value())))
+        self.lid_auto.toggled.connect(lambda v: self.send("energy", "losses.lid", None if v else self.lid.value()))
         self.lid.valueChanged.connect(lambda v: self.send("energy", "losses.lid", v) if not self.lid_auto.isChecked() else None)
+        self.lid_gate = SectionGate(self.lid_auto, _("Uncheck «LID from the module's datasheet» to enter a value."),
+                                    [self.lid], writable_when_checked=False)
         lf.addRow(self.lid_auto)
         lf.addRow(_("Light-induced degradation"), self.lid)
         f.addWidget(loss)
@@ -805,6 +806,9 @@ class EconomicsPage(Page):
                            ("centre", _("Centre (+4 €/MWh)")), ("other", _("South and islands"))), "")
         self.zone.currentIndexChanged.connect(lambda _i: self.send("economics", "zone", self.zone.currentData()))
         cer.addRow(_("Zone for the PV correction"), self.zone)
+        self.community_gate = SectionGate(
+            self.community, _("Enable «The system is in a community (CER)» to edit these fields."),
+            [self.fields[key] for key in ("shared_pct", "pz", "trase", "grant_pct")] + [self.zone])
         store = Group(_("Storage"))
         stf = make_form(store)
         self.battery_label = QLabel(_("No battery."))

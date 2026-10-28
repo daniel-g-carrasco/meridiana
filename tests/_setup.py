@@ -287,7 +287,7 @@ def window(test, project=None, cfg=None, size=(1200, 800), answers=None, cache=N
     if cache is not None:
         from _fixtures import write_cache
         write_cache(cache, test.paths.cache)
-    test.cfg = cfg if cfg is not None else config_module.Config(background="none")
+    test.cfg = cfg if cfg is not None else config_module.Config(background="none", network_pvgis=False)
     win = MainWindow(test.paths, test.cfg)
     test.addCleanup(dispose, win)                  # cleanups run last first: the window goes before the patches
     if not pause:

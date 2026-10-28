@@ -29,7 +29,7 @@ from .. import assistant as assistant_core
 from .. import (atomic, camera, catalog, checks, config, jobs, log, manual, mesh, model, move, phases, recovery, rules,
                shortcuts, sides, roofs, squaring, templates, theme_colors, tiles, underlay, view_colours, viewaids)
 from ..energy import consumption as consumption_model
-from ..energy import pipeline, system
+from ..energy import meteo, pipeline, system
 from ..energy import plant as plant_model
 from ..i18n import _, ngettext, number
 from ..paths import Paths
@@ -96,6 +96,33 @@ PREVIEW_REPORT_MS = 700
 WARM_UP_MS = 1500
 
 
+class ClimateSignals(QObject):
+    done = Signal(float, float, dict)
+    failed = Signal(float, float, str)
+
+
+class ClimateJob(QRunnable):
+    """The site's raw typical year and horizon, without computing an energy year (R196)."""
+
+    def __init__(self, lat: float, lon: float, cache: Path, refresh: bool):
+        super().__init__()
+        self.lat, self.lon, self.cache, self.refresh = lat, lon, cache, refresh
+        self.signals = ClimateSignals()
+
+    def run(self):
+        try:
+            meteo.typical_year(self.lat, self.lon, self.cache, refresh=self.refresh)
+            meteo.horizon(self.lat, self.lon, self.cache, refresh=self.refresh)
+            climate = {}
+            for kind in ("tmy", "horizon"):
+                path = meteo._cache_file(self.cache, kind, self.lat, self.lon)
+                climate[kind], _notice = atomic.read_json(path)
+        except (meteo.MeteoError, OSError, ValueError) as error:
+            tell(self.signals.failed, self.lat, self.lon, str(error))
+            return
+        tell(self.signals.done, self.lat, self.lon, climate)
+
+
 class EnergySignals(QObject):
     done = Signal(int, object)
     step = Signal(int, int, int, str)          # generation, steps done, steps (pipeline.STEPS), what comes now
@@ -103,14 +130,16 @@ class EnergySignals(QObject):
 
 class EnergyJob(QRunnable):
     """Production, consumption, balance and economics of the project (energy/pipeline.py), away from the
-    window's thread. The network is used only when the designer asked (fetch): otherwise only what is in the
-    cache. Each step is told (`step`, the bar of PVGIS); `interrupt` (Cancel) stops it before the next one, so
+    window's thread. The network is used when the designer asked or the site's data is missing (fetch): otherwise
+    only what is inside the project or in the cache. Each step is told (`step`, the bar of PVGIS); `interrupt` (Cancel) stops it before the next one, so
     between two requests to PVGIS. A flag of the job and not QThread.requestInterruption: the pool's threads
     live on, and the request would stay on the thread for the next job."""
 
-    def __init__(self, generation: int, snapshot: dict, results: dict, cache: Path, fetch: bool):
+    def __init__(self, generation: int, snapshot: dict, results: dict, cache: Path, fetch: bool,
+                 refresh: bool = False):
         super().__init__()
         self.generation, self.snapshot, self.results, self.cache, self.fetch = generation, snapshot, results, cache, fetch
+        self.refresh = refresh
         self.signals = EnergySignals()
         self.interrupted = False
 
@@ -125,7 +154,8 @@ class EnergyJob(QRunnable):
     def run(self):
         p = model.Project.from_json(self.snapshot, check=False)
         try:
-            out = pipeline.compute_or_say(p, self.results, self.cache, self.fetch, self._progress)
+            out = pipeline.compute_or_say(p, self.results, self.cache, self.fetch, self._progress,
+                                          refresh=self.refresh)
         except pipeline.Interrupted:
             return                          # stopped by the designer: the window awaits this year no longer
         tell(self.signals.done, self.generation, out.as_dict())
@@ -321,7 +351,7 @@ class MainWindow(QMainWindow):
         for page in (self.energy_page, self.consumption_page, self.economics_page):
             page.edited.connect(self._energy_edited)
             page.computeRequested.connect(lambda: self._compute_energy(fetch=True))
-        self.energy_page.fetchRequested.connect(lambda: self._compute_energy(fetch=True))
+        self.energy_page.fetchRequested.connect(lambda: self._compute_energy(fetch=True, refresh=True))
         self.energy_page.inverterRequested.connect(self._choose_inverter)
         self.economics_page.batteryRequested.connect(self._choose_battery)
         self.consumption_page.importRequested.connect(self._import_curve)
@@ -429,6 +459,9 @@ class MainWindow(QMainWindow):
             label.setContentsMargins(Space.S, 0, Space.S, 0)
             label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.statusBar().addPermanentWidget(self.busy)
+        from .save_status import SaveStatus
+        self.save_status = SaveStatus()
+        self.statusBar().addPermanentWidget(self.save_status)
         # the bars with their percentage and Cancel, only for PVGIS and the PDF report (study 16, F4; design 3.10)
         self.pvgis_progress = waiting.Progress()
         self.pvgis_progress.cancelled.connect(self._cancel_pvgis)
@@ -442,6 +475,7 @@ class MainWindow(QMainWindow):
         for progress in (self.pvgis_progress, self.report_progress, self.ifc_progress):
             self.statusBar().addPermanentWidget(progress)
         self.energy_job: EnergyJob | None = None
+        self.climate_job: ClimateJob | None = None
         self.report_run = None                 # (the report's steps, its file, the project's state key then)
         self.report_register = False           # the register of the calculations goes with the report being made
         self.preview_run = None                # (the preview's steps, its pages, its key) while it is made
@@ -946,7 +980,7 @@ class MainWindow(QMainWindow):
         act(compute, "compute", lambda: self._compute_energy(fetch=True),
             tip=_("Production, consumption, balance and economics of the variant in hand, with the weather in the "
                   "cache or fetched"))
-        act(compute, "fetch_pvgis", lambda: self._compute_energy(fetch=True),
+        act(compute, "fetch_pvgis", lambda: self._compute_energy(fetch=True, refresh=True),
             tip=_("The typical year and the horizon of the site from PVGIS, then the computation"))
         compute.addSeparator()
         act(compute, "inverter_catalog", self._choose_inverter,
@@ -1979,6 +2013,7 @@ class MainWindow(QMainWindow):
             self._title()
         if "project:site" in project:
             self.plan.set_origin(self.project.site.lat, self.project.site.lon)
+            self._ensure_climate()
         if (project - {"project:text", "project:privacy", "project:rules", "project:fire"}) or layouts:
             self.plan.show_project(self.project, self.session.good_results())
         if "project:variants" in project:
@@ -3096,15 +3131,70 @@ class MainWindow(QMainWindow):
             if ready:
                 self.preview_soon.start()
 
-    def _compute_energy(self, fetch: bool) -> None:
-        if fetch and not self.project.online_allowed("pvgis", self.cfg.network_pvgis):
-            message = (_("This reserved project has no consent for PVGIS: computing with the weather already "
-                         "in the cache.") if self.project.reserved and self.cfg.network_pvgis else
-                       _("PVGIS is off in Settings > Privacy: computing with the weather already in the cache."))
-            self.tell(message)
-            fetch = False
+    def _pvgis_refused(self) -> str:
+        """Why PVGIS may not be asked for this project, or "": off in the settings, or a reserved project without
+        its consent (R148)."""
+        if self.project.online_allowed("pvgis", self.cfg.network_pvgis):
+            return ""
+        if self.project.reserved and self.cfg.network_pvgis:
+            return _("This reserved project has no consent for PVGIS: computing with the weather already in the cache.")
+        return _("PVGIS is off in Settings > Privacy: computing with the weather already in the cache.")
+
+    def _climate_needed(self) -> bool:
+        climate = self.project.climate or {}
+        return (not meteo.usable(climate.get("tmy"), self.project.site.lat, self.project.site.lon)
+                or not isinstance(climate.get("horizon"), dict))
+
+    def _ensure_climate(self) -> None:
+        if not self._climate_needed() or self.climate_job is not None:
+            return
+        refused = self._pvgis_refused()
+        if refused:
+            self.tell(refused)
+            return
+        lat, lon = self.project.site.lat, self.project.site.lon
+        embedded = (self.project.climate or {}).get("tmy")
+        job = ClimateJob(lat, lon, self.paths.cache, refresh=embedded is not None)
+        job.signals.done.connect(self._climate_done)
+        job.signals.failed.connect(self._climate_failed)
+        self.climate_job = job
+        self.pool.start(job)
+
+    def _climate_done(self, lat: float, lon: float, climate: dict) -> None:
+        self.climate_job = None
+        if (lat, lon) != (self.project.site.lat, self.project.site.lon):
+            self._ensure_climate()
+            return
+        before = self.project.climate
+        self.edit(_("Download the site's weather"), lambda p: setattr(p, "climate", climate))
+        if before != self.project.climate:
+            self._title()
+
+    def _climate_failed(self, lat: float, lon: float, error: str) -> None:
+        self.climate_job = None
+        if (lat, lon) != (self.project.site.lat, self.project.site.lon):
+            self._ensure_climate()
+            return
+        self.tell(_("The weather could not be downloaded: {error}. Meridiana will use the data it has.").format(
+            error=error))
+
+    def _compute_energy(self, fetch: bool, refresh: bool = False) -> None:
+        climate = self.project.climate or {}
+        lat, lon = self.project.site.lat, self.project.site.lon
+        tmy = climate.get("tmy")
+        needed = (not meteo.usable(tmy, lat, lon)
+                  and (tmy is not None or not meteo.cached(lat, lon, self.paths.cache)))
+        losses = system.losses_of(self.project)
+        if losses.use_horizon and climate.get("horizon") is None \
+                and not meteo.cached(lat, lon, self.paths.cache, "horizon"):
+            needed = True
+        fetch, refresh = fetch or needed, refresh or needed
+        refused = self._pvgis_refused() if fetch else ""
+        if refused:
+            self.tell(refused)
+            fetch = refresh = False
         job = EnergyJob(self.session.energy_asked(), self.snapshot(), self.session.good_results(), self.paths.cache,
-                        fetch)
+                        fetch, refresh=refresh)
         job.signals.done.connect(self._energy_done)
         job.signals.step.connect(self._energy_step)
         self.energy_job = job
@@ -3153,6 +3243,20 @@ class MainWindow(QMainWindow):
         if not self.session.energy_done(generation, out):
             return
         self._computing(False)
+        climate = self.project.climate or {}
+        refresh = self.energy_job.refresh if self.energy_job is not None else False
+        keep_climate = (not meteo.usable(climate.get("tmy"), self.project.site.lat, self.project.site.lon)
+                        or not isinstance(climate.get("horizon"), dict) or refresh)
+        if out.get("meteo_text") and keep_climate:
+            before = self.project.climate
+            try:
+                self.edit(_("Download the site's weather"),
+                          lambda p: meteo.capture(p, self.paths.cache))
+            except (OSError, ValueError) as error:
+                log.complain("climate", error)
+                self.tell(_("The weather was computed but could not be kept in the project: {error}").format(error=error))
+            if before != self.project.climate:
+                self._title()                    # new project data: the normal save keeps them (R196)
         if out.get("meteo_text"):
             self.energy_page.show_meteo(out["meteo_text"])
         self.energy_page.show_results(out.get("sim"), out.get("pvgis"), out.get("error_sim", ""))
@@ -4617,11 +4721,17 @@ class MainWindow(QMainWindow):
             source=tiles.display_name(source) if source else key, why=why))
 
     def _autosave(self) -> None:
+        if not self._dirty():
+            return
+        self.save_status.begin()
         try:
             self.session.autosave(self.paths.state)
         except OSError as error:
+            self.save_status.failed()
             log.complain("autosave", error)
             self.tell(_("The recovery copy could not be written: {error}").format(error=error))
+            return
+        self.save_status.finish(automatic=True)
 
     def _drop_autosave(self) -> None:
         self.session.drop_autosave(self.paths.state)
@@ -4725,18 +4835,22 @@ class MainWindow(QMainWindow):
         self._save_config()
         self._select("site", "")
         self._show_all(fit=True)
+        self._ensure_climate()
         if notice:
             QMessageBox.information(self, _("Open a project"), notice)
 
     def _save(self) -> bool:
         if self.path is None:
             return self._save_as()
+        self.save_status.begin()
         try:
             self.session.save(self.path)
         except OSError as error:
+            self.save_status.failed()
             QMessageBox.warning(self, _("Save"), _("The project could not be saved: {error}").format(error=error))
             return False
         self._mark_saved()
+        self.save_status.finish(automatic=False)
         self.statusBar().showMessage(_("Saved {file}").format(file=self.path.name), 4000)
         return True
 

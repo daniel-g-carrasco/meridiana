@@ -116,7 +116,6 @@ class DeliverablesInspector(QScrollArea):
             inside.addLayout(head)
             note = QLabel(d.note)
             note.setWordWrap(True)
-            from .style import grow_label
             grow_label(note)
             inside.addWidget(note)
             action = actions.get(d.command) if d.command else None
