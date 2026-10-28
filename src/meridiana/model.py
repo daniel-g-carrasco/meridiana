@@ -25,7 +25,7 @@ from . import atomic, layout, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 17
+FORMAT_VERSION = 18
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -343,13 +343,16 @@ def _reshaped(data: dict) -> list[str]:
 # 14 -> 15: optional grid data, initialized from the existing rule inputs (_to_15)
 # 15 -> 16: per-project consents for coordinates sent to map and weather services, none before
 # 16 -> 17: embedded report attachments, author profile and weather, empty for a project of before
+# 17 -> 18: job and project-series identity, empty until the project is linked to a local registry
 MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                     3: lambda data: {**data, "variants": [{"id": "v1", "name": "Base", "note": ""}], "variant": "v1"},
                     4: lambda data: data, 5: lambda data: {**data, "underlays": data.get("underlays", [])},
                     6: _to_7, 7: _to_8, 8: _to_9, 9: _to_10, 10: lambda data: {**data, "report": data.get("report", {})},
                     11: lambda data: {**data, "reserved": data.get("reserved", False)}, 12: lambda data: data,
                     13: _to_14, 14: _to_15, 15: lambda data: {**data, "network_consent": data.get("network_consent", {})},
-                    16: lambda data: {**data, "resources": data.get("resources", {})}}
+                    16: lambda data: {**data, "resources": data.get("resources", {})},
+                    17: lambda data: {**data, "job_id": data.get("job_id", ""),
+                                     "series_id": data.get("series_id", "")}}
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
 ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
@@ -884,9 +887,12 @@ def _check_project(data: dict) -> list[str]:
         _check_dict(data["report"], "report")
     if data.get("resources") is not None:
         _check_dict(data["resources"], "resources")
+    for key in ("job_id", "series_id"):
+        if key in data and type(data[key]) is not str:
+            raise ValueError(f"{key}: {data[key]!r} is not text")
     known = {"format", "version", "app_version", "name", "site", "sun_window", "buildings", "exclusions",
              "consumption", "rules", "network", "network_consent", "variants", "variant", "underlays", "report",
-             "resources", "reserved", "created", "modified"}
+             "resources", "reserved", "created", "modified", "job_id", "series_id"}
     unknown.extend(k for k in data if k not in known)
     return unknown
 
@@ -894,6 +900,8 @@ def _check_project(data: dict) -> list[str]:
 @dataclass
 class Project:
     name: str = "Nuovo progetto"
+    job_id: str = ""
+    series_id: str = ""
     site: Site = field(default_factory=Site)
     sun_window: dict = field(default_factory=lambda: asdict(sun.DesignWindow()))
     buildings: list[Building] = field(default_factory=list)
@@ -1166,7 +1174,7 @@ class Project:
     # files
 
     def to_json(self) -> dict:
-        """The project as the file holds it (format 17): every variant with its design, the one in hand too;
+        """The project as the file holds it (format 18): every variant with its design, the one in hand too;
         the working copy of the fields above goes into its variant."""
         data = asdict(self)
         for k in DESIGN:
@@ -1219,7 +1227,8 @@ class Project:
                 unknown.extend(found)
 
         build = _build
-        p = cls(name=data.get("name", "Progetto"), site=build(Site, data.get("site", {})),
+        p = cls(name=data.get("name", "Progetto"), job_id=data.get("job_id", ""),
+                series_id=data.get("series_id", ""), site=build(Site, data.get("site", {})),
                 sun_window=data.get("sun_window", asdict(sun.DesignWindow())),
                 consumption=data.get("consumption") or {}, rules=data.get("rules") or {},
                 network=build(Network, data.get("network", {})), report=data.get("report") or {},

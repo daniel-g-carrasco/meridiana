@@ -72,9 +72,9 @@ class SitePreview(PlanView):
 class NewProjectPage(QWidget):
     created = Signal(dict)
 
-    def __init__(self, paths, cfg, choices=None, parent=None):
+    def __init__(self, paths, cfg, choices=None, parent=None, registry=None):
         super().__init__(parent)
-        self.paths, self.cfg = paths, cfg
+        self.paths, self.cfg, self.registry = paths, cfg, registry
         self.choices = list(places.municipalities() if choices is None else choices)
         self.candidate: CoordinateReading | None = None
         self.address = ""
@@ -130,6 +130,10 @@ class NewProjectPage(QWidget):
         form = QFormLayout(optional_body)
         self.name = QLineEdit()
         form.addRow(_("Project name"), self.name)
+        self.client = QComboBox()
+        form.addRow(_("Client"), self.client)
+        self.job = QComboBox()
+        form.addRow(_("Job"), self.job)
         self.reserved = QCheckBox(_("Reserved project: names and addresses never leave this PC"))
         form.addRow(self.reserved)
         self.maps_consent = QCheckBox(_("Allow online map tiles for this project: the area shown leaves this PC"))
@@ -194,6 +198,41 @@ class NewProjectPage(QWidget):
         self.reserved.toggled.connect(self._privacy_changed)
         self.maps_consent.toggled.connect(lambda _v: self._apply_map_privacy(start=True))
         self.maps_consent.hide()
+        self.client.currentIndexChanged.connect(self._fill_jobs)
+        self.job.currentIndexChanged.connect(self._job_changed)
+        self.refresh_registry()
+
+    def refresh_registry(self) -> None:
+        self.client.blockSignals(True)
+        self.client.clear()
+        self.client.addItem(_("No client"), "")
+        if self.registry is not None:
+            for client in self.registry.list_clients():
+                self.client.addItem(client["name"], client["id"])
+        self.client.blockSignals(False)
+        self._fill_jobs()
+
+    def _fill_jobs(self) -> None:
+        client_id = self.client.currentData() or ""
+        self.job.blockSignals(True)
+        self.job.clear()
+        self.job.addItem(_("No job"), "")
+        if self.registry is not None:
+            for job in self.registry.list_jobs(client_id=client_id):
+                self.job.addItem(f"{job['code']}  {job['name']}", job["id"])
+        self.job.blockSignals(False)
+
+    def _job_reserved(self) -> bool:
+        job = self.registry.job(self.job.currentData()) if self.registry is not None and self.job.currentData() else None
+        return bool(job and job["reserved"])
+
+    def _effective_reserved(self) -> bool:
+        return self.reserved.isChecked() or self._job_reserved()
+
+    def _job_changed(self) -> None:
+        if self._job_reserved():
+            self.reserved.setChecked(True)
+        self._privacy_changed(self.reserved.isChecked())
 
     def set_choices(self, choices) -> None:
         self.choices = list(choices)
@@ -208,13 +247,21 @@ class NewProjectPage(QWidget):
         super().hideEvent(event)
 
     def _privacy_changed(self, reserved: bool) -> None:
+        job_reserved = self._job_reserved()
+        if job_reserved and not reserved:
+            self.reserved.blockSignals(True)
+            self.reserved.setChecked(True)
+            self.reserved.blockSignals(False)
+            reserved = True
+        self.reserved.setEnabled(not job_reserved)
+        self.search.setEnabled(not reserved)
         self.maps_consent.setVisible(reserved)
         if not reserved:
             self.maps_consent.setChecked(False)
         self._apply_map_privacy(start=True)
 
     def _apply_map_privacy(self, start: bool = False) -> None:
-        allowed = self.cfg.network_tiles and (not self.reserved.isChecked() or self.maps_consent.isChecked())
+        allowed = self.cfg.network_tiles and (not self._effective_reserved() or self.maps_consent.isChecked())
         was_offline = self.preview.loader.offline
         self.preview.tiles_allowed = allowed and (start or self.candidate is not None or self.preview.tiles_allowed)
         self.preview.loader.offline = not allowed
@@ -224,6 +271,7 @@ class NewProjectPage(QWidget):
     def reset(self) -> None:
         self.query.clear()
         self.name.clear()
+        self.refresh_registry()
         self.maps_consent.setChecked(False)
         self.reserved.setChecked(False)
         for field in (self.distributor, self.pod, self.practice):
@@ -288,7 +336,7 @@ class NewProjectPage(QWidget):
         if not text:
             self.status.setText(_("Write a place first."))
             return
-        if self.reserved.isChecked():
+        if self._effective_reserved():
             self.status.setText(_("A reserved project never sends names or addresses. Use local suggestions, "
                                   "coordinates or a click on the offline map."))
             return
@@ -354,6 +402,9 @@ class NewProjectPage(QWidget):
                                 level=self.level.currentData(), connection=self.connection.currentData(),
                                 available_kw=self.available.value(), requested_kw=self.requested.value(),
                                 practice_code=self.practice.text().strip())
+        job = self.registry.job(self.job.currentData()) if self.registry is not None and self.job.currentData() else None
         self.created.emit({"name": self.name.text().strip(), "site": site,
-                           "reserved": self.reserved.isChecked(), "network": network,
-                           "network_consent": consent})
+                           "reserved": self.reserved.isChecked() or bool(job and job["reserved"]), "network": network,
+                           "network_consent": consent,
+                           "client_id": job["client_id"] if job is not None else self.client.currentData() or "",
+                           "job_id": self.job.currentData() or ""})

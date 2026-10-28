@@ -1,6 +1,6 @@
 """The project file (model.py): everything comes back as it was saved, the previous save kept as .bak, a damaged
 file opened from it and said; a file edited by hand or damaged refused with the path of the key; one frozen file
-for every version of the format, 1 to 15, opened as it is (tests/formati/file), and the migrations field by field.
+for every version of the format, opened as it is (tests/formati/file), and the migrations field by field.
 The files of the settings and the damaged ones are in test_formats."""
 
 import json
@@ -26,6 +26,16 @@ class Files(unittest.TestCase):
         q, notice = model.Project.load(self.file)
         self.assertIsNone(notice)
         self.assertEqual(q.to_json() | {"modified": None}, p.to_json() | {"modified": None})
+
+    def test_registry_identity_travels_with_the_project(self):
+        p = sample()
+        p.job_id = "example-job-id"
+        p.series_id = "example-series-id"
+        p.save(self.file)
+        q, notice = model.Project.load(self.file)
+        self.assertIsNone(notice)
+        self.assertEqual((q.job_id, q.series_id), ("example-job-id", "example-series-id"))
+        self.assertEqual(json.loads(self.file.read_text(encoding="utf-8"))["version"], 18)
 
     def test_a_second_save_keeps_the_first_as_backup(self):
         p = sample()
