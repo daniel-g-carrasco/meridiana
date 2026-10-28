@@ -836,11 +836,11 @@ class PlanNavigation(unittest.TestCase):
         self.assertEqual(plan.selection, ("row", f"s1/{m.rid}"))
         self.assertEqual(doubled, [("s1", m.key)])
 
-    def native(self, kind, value=0.0, modifiers=None):
+    def native(self, kind, value=0.0, modifiers=None, at=None):
         from PySide6.QtCore import QPointF, Qt
         from PySide6.QtGui import QNativeGestureEvent, QPointingDevice
         from PySide6.QtWidgets import QApplication
-        at = QPointF(self.plan.viewport().rect().center())
+        at = QPointF(self.plan.viewport().rect().center()) if at is None else at
         event = QNativeGestureEvent(kind, QPointingDevice.primaryPointingDevice(), 2, at, at,
                                     QPointF(self.plan.viewport().mapToGlobal(at.toPoint())), value, QPointF())
         event.setModifiers(modifiers or Qt.KeyboardModifier.NoModifier)
@@ -870,6 +870,101 @@ class PlanNavigation(unittest.TestCase):
                             Qt.ScrollPhase.ScrollUpdate, False)
         QApplication.sendEvent(plan.viewport(), wheel)
         self.assertAlmostEqual(plan.transform().m11(), scale * 1.2 ** 0.5)
+
+    def angle_wheel(self, dx, dy, modifiers=None, source=None, phase=None):
+        from PySide6.QtCore import QPoint, QPointF, Qt
+        from PySide6.QtGui import QWheelEvent
+        from PySide6.QtWidgets import QApplication
+        at = QPointF(300, 250)
+        event = QWheelEvent(at, QPointF(self.plan.viewport().mapToGlobal(at.toPoint())), QPoint(), QPoint(dx, dy),
+                            Qt.MouseButton.NoButton, modifiers or Qt.KeyboardModifier.NoModifier,
+                            phase or Qt.ScrollPhase.NoScrollPhase, False,
+                            source or Qt.MouseEventSource.MouseEventNotSynthesized)
+        QApplication.sendEvent(self.plan.viewport(), event)
+        return event
+
+    def test_windows_precision_scrolling_pans_both_axes_and_native_rotation_does_nothing(self):
+        from PySide6.QtCore import Qt
+        plan = self.plan
+        centre = plan.mapToScene(plan.viewport().rect().center())
+        scale, rotation = plan.transform().m11(), plan.view_rotation()
+        self.angle_wheel(120, 60, source=Qt.MouseEventSource.MouseEventSynthesizedBySystem)
+        moved = plan.mapToScene(plan.viewport().rect().center())
+        self.assertAlmostEqual((centre - moved).x(), 60 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
+        self.assertAlmostEqual((centre - moved).y(), 30 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
+        self.assertEqual((plan.transform().m11(), plan.view_rotation()), (scale, rotation))
+        centre = moved
+        self.angle_wheel(0, 60, source=Qt.MouseEventSource.MouseEventSynthesizedBySystem)
+        moved = plan.mapToScene(plan.viewport().rect().center())
+        self.assertAlmostEqual((centre - moved).y(), 30 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
+        self.native(Qt.NativeGestureType.RotateNativeGesture, 17.0)
+        self.assertEqual(plan.view_rotation(), rotation)
+
+    def test_wayland_scroll_phases_follow_both_fingers_without_changing_scale(self):
+        from PySide6.QtCore import QPoint, QPointF, Qt
+        from PySide6.QtGui import QWheelEvent
+        from PySide6.QtWidgets import QApplication
+        plan = self.plan
+        centre = plan.mapToScene(plan.viewport().rect().center())
+        scale = plan.transform().m11()
+        at = QPointF(300, 250)
+        for phase, pixel in ((Qt.ScrollPhase.ScrollBegin, QPoint(4, -3)),
+                             (Qt.ScrollPhase.ScrollUpdate, QPoint(6, -2)),
+                             (Qt.ScrollPhase.ScrollEnd, QPoint())):
+            QApplication.sendEvent(plan.viewport(), QWheelEvent(
+                at, QPointF(plan.viewport().mapToGlobal(at.toPoint())), pixel, QPoint(), Qt.MouseButton.NoButton,
+                Qt.KeyboardModifier.NoModifier, phase, False))
+        moved = plan.mapToScene(plan.viewport().rect().center())
+        self.assertAlmostEqual((centre - moved).x(), 10 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
+        self.assertAlmostEqual((centre - moved).y(), -5 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
+        self.assertEqual(plan.transform().m11(), scale)
+
+    def test_native_and_windows_pinches_keep_the_scene_point_under_the_cursor(self):
+        from PySide6.QtCore import QPointF, Qt
+        plan = self.plan
+        at = QPointF(300, 250)
+        before = plan.mapToScene(at.toPoint())
+        self.native(Qt.NativeGestureType.ZoomNativeGesture, 0.25, at=at)
+        self.assertLess((plan.mapToScene(at.toPoint()) - before).manhattanLength(), 1e-6)
+        before = plan.mapToScene(at.toPoint())
+        scale = plan.transform().m11()
+        self.angle_wheel(0, 60, Qt.KeyboardModifier.ControlModifier)
+        self.assertAlmostEqual(plan.transform().m11(), scale * 1.2 ** 0.5)
+        self.assertLess((plan.mapToScene(at.toPoint()) - before).manhattanLength(), 1e-6)
+        scale = plan.transform().m11()
+        self.angle_wheel(0, 120)
+        self.assertAlmostEqual(plan.transform().m11(), scale * 1.2)
+
+    def test_space_alone_follows_the_mouse_and_windows_auto_repeat_does_not_release_it(self):
+        from PySide6.QtCore import QEvent, QPoint, Qt
+        from PySide6.QtGui import QKeyEvent, QMouseEvent
+        from PySide6.QtWidgets import QApplication
+        plan = self.plan
+        plan.set_tool("building")
+        self.send(QMouseEvent.Type.MouseMove, Qt.MouseButton.NoButton, QPoint(300, 250))
+        QApplication.sendEvent(plan, QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Space,
+                                               Qt.KeyboardModifier.NoModifier))
+        centre = plan.mapToScene(plan.viewport().rect().center())
+        self.send(QMouseEvent.Type.MouseMove, Qt.MouseButton.NoButton, QPoint(360, 280))
+        moved = plan.mapToScene(plan.viewport().rect().center())
+        self.assertAlmostEqual((centre - moved).x(), 60 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
+        self.assertAlmostEqual((centre - moved).y(), 30 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
+        self.assertEqual(plan.chain, [])
+        for kind in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
+            QApplication.sendEvent(plan, QKeyEvent(kind, Qt.Key.Key_Space, Qt.KeyboardModifier.NoModifier,
+                                                   " ", True, 1))
+        self.assertTrue(plan.space)
+        self.send(QMouseEvent.Type.MouseMove, Qt.MouseButton.NoButton, QPoint(370, 290))
+        centre = moved
+        moved = plan.mapToScene(plan.viewport().rect().center())
+        self.assertAlmostEqual((centre - moved).x(), 10 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
+        QApplication.sendEvent(plan, QKeyEvent(QEvent.Type.KeyRelease, Qt.Key.Key_Space,
+                                               Qt.KeyboardModifier.NoModifier))
+        self.assertFalse(plan.space)
+        self.assertEqual(plan.cursor().shape(), Qt.CursorShape.CrossCursor)
+        centre = plan.mapToScene(plan.viewport().rect().center())
+        self.send(QMouseEvent.Type.MouseMove, Qt.MouseButton.NoButton, QPoint(380, 300))
+        self.assertEqual(plan.mapToScene(plan.viewport().rect().center()), centre)
 
     def test_string_chips_use_the_design_radius_font_and_drawn_symbols(self):
         from meridiana.ui import design

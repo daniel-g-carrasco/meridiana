@@ -1905,14 +1905,17 @@ class PlanView(QGraphicsView):
     # events
 
     def wheelEvent(self, event):
-        pixel = event.pixelDelta()
-        if not pixel.isNull() and not event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            # a touchpad's two-finger scroll moves the view
-            self.translate_view(pixel.x(), pixel.y())
-            return
-        steps = event.angleDelta().y() / 120.0 if not event.angleDelta().isNull() else pixel.y() / 60.0
-        self.zoom_at(1.2 ** steps, event.position().toPoint())
-        self._update_cursor(event.position().toPoint())
+        angle, pixel = event.angleDelta(), event.pixelDelta()
+        action, dx, dy = navigation.wheel_action(
+            (angle.x(), angle.y()), (pixel.x(), pixel.y()), event.phase() != Qt.ScrollPhase.NoScrollPhase,
+            event.source() in (Qt.MouseEventSource.MouseEventSynthesizedBySystem,
+                               Qt.MouseEventSource.MouseEventSynthesizedByQt), _ctrl(event.modifiers()))
+        if action == "pan":
+            self.translate_view(dx, dy)
+        else:
+            self.zoom_at(1.2 ** dy, event.position().toPoint())
+            self._update_cursor(event.position().toPoint())
+        event.accept()
 
     def translate_view(self, dx: float, dy: float) -> None:
         """The view moved by (dx, dy) pixels of the screen: the move in the scene's units through the inverse of the
@@ -2285,9 +2288,8 @@ class PlanView(QGraphicsView):
             kind = event.gestureType()
             if kind == Qt.NativeGestureType.ZoomNativeGesture:
                 self.zoom_at(max(0.05, 1.0 + event.value()), event.position().toPoint())
-            elif kind == Qt.NativeGestureType.RotateNativeGesture:
-                self.rotate_view(event.value())
-            elif kind in (Qt.NativeGestureType.BeginNativeGesture, Qt.NativeGestureType.EndNativeGesture):
+            elif kind in (Qt.NativeGestureType.BeginNativeGesture, Qt.NativeGestureType.EndNativeGesture,
+                          Qt.NativeGestureType.RotateNativeGesture):
                 pass
             else:
                 return super().event(event)

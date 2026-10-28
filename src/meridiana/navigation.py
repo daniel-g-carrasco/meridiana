@@ -305,3 +305,26 @@ class Navigator:
     def wheel(self, steps: float, mods, x: float, y: float) -> list[Action]:
         """`steps` of the wheel, positive away from the user (zoom in), as Qt's angleDelta / 120."""
         return [Action("wheel", "once", x, y, 0.0, steps, frozenset(mods))]
+
+
+def wheel_action(angle: tuple[float, float], pixel: tuple[float, float], phased: bool, synthesized: bool,
+                 ctrl: bool) -> tuple[str, float, float]:
+    """One wheel event as (action, dx, dy): touchpads pan on both axes, Ctrl pinches, a mouse wheel zooms.
+
+    Windows precision touchpads send angle deltas, often without phases. Wayland sends pixel deltas in
+    scroll phases. A horizontal angle delta is a pan on either system; a plain vertical, unphased event
+    from a real device remains the mouse's wheel. For zoom, dy is wheel steps; for pan, both are pixels.
+    """
+    if ctrl:
+        steps = angle[1] / 120.0 if angle[1] else pixel[1] / 60.0
+        return "zoom", 0.0, steps
+    if phased or synthesized or angle[0]:
+        if phased and pixel != (0.0, 0.0):
+            dx, dy = pixel
+        elif angle != (0.0, 0.0):
+            dx, dy = angle[0] / 2.0, angle[1] / 2.0
+        else:
+            dx, dy = pixel
+        return "pan", dx, dy
+    steps = angle[1] / 120.0 if angle[1] else pixel[1] / 60.0
+    return "wheel", 0.0, steps

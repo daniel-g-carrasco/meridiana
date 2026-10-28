@@ -77,6 +77,30 @@ class Navigation(unittest.TestCase):
         self.drag(1, 0, (w * 0.5, h * 0.5), (w * 0.5 + 40, h * 0.5))           # the left alone: nothing moves
         self.assertTrue(np.allclose(b.camera.target, target))
 
+    def test_space_alone_pans_and_windows_auto_repeat_does_not_release_it(self):
+        from PySide6.QtCore import QEvent, Qt
+        from PySide6.QtGui import QKeyEvent
+        from PySide6.QtWidgets import QApplication
+        b = self.backend
+        b.move(0, 300, 250)
+        QApplication.sendEvent(self.view, QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Space,
+                                                    Qt.KeyboardModifier.NoModifier))
+        target = b.camera.target.copy()
+        b.move(0, 360, 280)
+        self.assertFalse(np.allclose(b.camera.target, target))
+        QApplication.sendEvent(self.view, QKeyEvent(QEvent.Type.KeyRelease, Qt.Key.Key_Space,
+                                                    Qt.KeyboardModifier.NoModifier, " ", True, 1))
+        self.assertTrue(b.space)
+        target = b.camera.target.copy()
+        b.move(0, 370, 290)
+        self.assertFalse(np.allclose(b.camera.target, target))
+        QApplication.sendEvent(self.view, QKeyEvent(QEvent.Type.KeyRelease, Qt.Key.Key_Space,
+                                                    Qt.KeyboardModifier.NoModifier))
+        self.assertFalse(b.space)
+        target = b.camera.target.copy()
+        b.move(0, 380, 300)
+        self.assertTrue(np.allclose(b.camera.target, target))
+
     # the pivot's cross-hair (task 16g, study 16 G): three rings and a dot on the pivot, PIVOT_PX pixels wide
 
     def marker(self):
@@ -513,7 +537,19 @@ class Navigation(unittest.TestCase):
             self.assertEqual(forwarded.call_count, 0)
         self.assertFalse(np.allclose(self.backend.camera.target, target))
 
-    def test_touchpad_scroll_pinch_shift_orbit_and_native_rotation(self):
+    def angle_wheel(self, dx, dy, modifiers=None, source=None):
+        from PySide6.QtCore import QPoint, QPointF, Qt
+        from PySide6.QtGui import QWheelEvent
+        from PySide6.QtWidgets import QApplication
+        at = QPointF(300, 250)
+        event = QWheelEvent(at, QPointF(self.view.mapToGlobal(at.toPoint())), QPoint(), QPoint(dx, dy),
+                            Qt.MouseButton.NoButton, modifiers or Qt.KeyboardModifier.NoModifier,
+                            Qt.ScrollPhase.NoScrollPhase, False,
+                            source or Qt.MouseEventSource.MouseEventNotSynthesized)
+        QApplication.sendEvent(self.view, event)
+        return event
+
+    def test_touchpad_scroll_and_pinch_do_not_orbit(self):
         from PySide6.QtCore import Qt
         b = self.backend
         target = b.camera.target.copy()
@@ -521,15 +557,32 @@ class Navigation(unittest.TestCase):
         self.assertTrue(event.isAccepted())
         self.assertFalse(np.allclose(b.camera.target, target))
         point = b.camera.zoom_point(300, 250, *b.size)
+        before = b.camera.project(point, *b.size)
         distance = np.linalg.norm(b.camera.position - point)
         self.native(Qt.NativeGestureType.ZoomNativeGesture, 0.25)
         self.assertLess(np.linalg.norm(b.camera.position - point), distance)
+        self.assertTrue(np.allclose(b.camera.project(point, *b.size), before, atol=1e-6))
         bearing = b.camera.bearing()
         self.wheel(30, 0, Qt.KeyboardModifier.ShiftModifier)
-        self.assertAlmostEqual(b.camera.bearing(), (bearing + 30 * 0.35) % 360)
-        bearing = b.camera.bearing()
+        self.assertEqual(b.camera.bearing(), bearing)
         self.native(Qt.NativeGestureType.RotateNativeGesture, 12.0)
-        self.assertAlmostEqual(b.camera.bearing(), (bearing + 12.0) % 360)
+        self.assertEqual(b.camera.bearing(), bearing)
+
+    def test_windows_precision_scroll_pans_and_ctrl_scroll_pinches_at_the_cursor(self):
+        from PySide6.QtCore import Qt
+        b = self.backend
+        target, bearing = b.camera.target.copy(), b.camera.bearing()
+        distance = np.linalg.norm(b.camera.position - target)
+        self.angle_wheel(120, 60, source=Qt.MouseEventSource.MouseEventSynthesizedBySystem)
+        self.assertFalse(np.allclose(b.camera.target, target))
+        self.assertEqual(b.camera.bearing(), bearing)
+        self.assertAlmostEqual(np.linalg.norm(b.camera.position - b.camera.target), distance)
+        point = b.camera.zoom_point(300, 250, *b.size)
+        before = b.camera.project(point, *b.size)
+        distance = np.linalg.norm(b.camera.position - point)
+        self.angle_wheel(0, 60, Qt.KeyboardModifier.ControlModifier)
+        self.assertLess(np.linalg.norm(b.camera.position - point), distance)
+        self.assertTrue(np.allclose(b.camera.project(point, *b.size), before, atol=1e-6))
 
 
 class Gizmo(unittest.TestCase):

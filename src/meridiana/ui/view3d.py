@@ -889,31 +889,31 @@ class View3D(QuickImage):
                 self.backend.touch_zoom(float(np.log(max(0.05, 1.0 + event.value())) /
                                               np.log(1.0 / camera.ZOOM_STEP)),
                                         at.x(), at.y())
-            elif kind == Qt.NativeGestureType.RotateNativeGesture:
-                self.backend.touch_orbit(event.value() / camera.DEGREES_PER_PIXEL)
-            elif kind not in (Qt.NativeGestureType.BeginNativeGesture, Qt.NativeGestureType.EndNativeGesture):
+            elif kind not in (Qt.NativeGestureType.BeginNativeGesture, Qt.NativeGestureType.EndNativeGesture,
+                              Qt.NativeGestureType.RotateNativeGesture):
                 return super().event(event)
             event.accept()
             return True
         return super().event(event)
 
     def wheelEvent(self, event) -> None:
-        """Two fingers on a touchpad (pixels, in the phases of a scroll) pan, with Shift orbit, with Ctrl zoom; a
-        mouse's wheel goes on to the scene as before, which zooms towards the model's point under the pointer (it
-        went straight to the backend without that point: a review of 26/10/2026)."""
-        pixel = event.pixelDelta()
-        if pixel.isNull() or event.phase() == Qt.ScrollPhase.NoScrollPhase:
+        """Two fingers pan on both axes and Ctrl pinches at the cursor; a mouse's wheel goes to the scene, which
+        picks the model's point under the pointer. Windows sends angle deltas, Wayland pixels in scroll phases."""
+        angle, pixel = event.angleDelta(), event.pixelDelta()
+        modifiers = event.modifiers()
+        ctrl = modifiers & Qt.KeyboardModifier.ControlModifier and not modifiers & Qt.KeyboardModifier.AltModifier
+        action, dx, dy = navigation.wheel_action(
+            (angle.x(), angle.y()), (pixel.x(), pixel.y()), event.phase() != Qt.ScrollPhase.NoScrollPhase,
+            event.source() in (Qt.MouseEventSource.MouseEventSynthesizedBySystem,
+                               Qt.MouseEventSource.MouseEventSynthesizedByQt), ctrl)
+        if action == "wheel":
             super().wheelEvent(event)
             return
         at = event.position()
-        modifiers = event.modifiers()
-        ctrl = modifiers & Qt.KeyboardModifier.ControlModifier and not modifiers & Qt.KeyboardModifier.AltModifier
-        if ctrl:
-            self.backend.touch_zoom(pixel.y() / 60.0, at.x(), at.y())
-        elif modifiers & Qt.KeyboardModifier.ShiftModifier:
-            self.backend.touch_orbit(pixel.x(), pixel.y())
+        if action == "zoom":
+            self.backend.touch_zoom(dy, at.x(), at.y())
         else:
-            self.backend.touch_pan(pixel.x(), pixel.y(), at.x(), at.y())
+            self.backend.touch_pan(dx, dy, at.x(), at.y())
         event.accept()
 
     def resizeEvent(self, event) -> None:

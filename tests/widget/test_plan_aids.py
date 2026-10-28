@@ -76,19 +76,11 @@ class PlanAids(unittest.TestCase):
         self.assertLessEqual(bar.pixels, bar.LONGEST)
 
     def test_the_plan_rotates_without_changing_the_project_and_the_compass_follows(self):
-        from PySide6.QtCore import QPointF, Qt
-        from PySide6.QtGui import QNativeGestureEvent, QPointingDevice
-        from PySide6.QtWidgets import QApplication
         plan = self.plan
         before = self.project.to_json()
         centre = plan.mapToScene(plan.viewport().rect().center())
         scale = plan.transform().m11()
-        at = QPointF(plan.viewport().rect().center())
-        event = QNativeGestureEvent(Qt.NativeGestureType.RotateNativeGesture,
-                                    QPointingDevice.primaryPointingDevice(), 2, at, at,
-                                    QPointF(plan.viewport().mapToGlobal(at.toPoint())), 30.0, QPointF())
-        QApplication.sendEvent(plan.viewport(), event)
-        self.assertTrue(event.isAccepted())
+        plan.rotate_view(30.0)
         self.assertAlmostEqual(plan.view_rotation(), 30.0)
         self.assertAlmostEqual(plan.north.angle, -30.0)
         self.assertEqual(plan.north.heading_text(), "30° NE")
