@@ -1,0 +1,24 @@
+   1.669 s  piattaforma=wayland, Qt=6.12.0, schermi=[('Meta-0', 1600, 1000)]
+   2.863 s  cliente, commessa e cartella creati; manifesto solo dopo il consenso
+   3.450 s  foto kimi9-registro-chiaro.png: 1600 x 962
+   6.059 s  foto kimi9-registro-scuro.png: 1600 x 962
+   6.237 s  foto kimi9-import-anteprima-scuro.png: 1600 x 962
+   6.250 s  export JSON, anteprima senza scritture e unione per id
+   6.848 s  commessa riservata senza manifesto; export riservato annullato e poi confermato
+  10.991 s  foto kimi9-nuovo-chiaro.png: 1600 x 962
+  13.603 s  foto kimi9-nuovo-scuro.png: 1600 x 962
+  14.382 s  commessa riservata subito offline; R02 e riapertura di R01 con la stessa serie
+  14.382 s  giro completato
+
+Avvisi Qt:
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e60da8a970 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e60da8a970 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e60da8a970 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e60da8a970 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e60da8a970 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e60da8a970 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e60da8a970 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e60da8a970 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e60da8a970 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e60da8a970 but 0x0 is focused (None:0)
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e60da8a970 but 0x0 is focused (None:0)

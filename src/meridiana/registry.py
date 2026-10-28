@@ -12,7 +12,11 @@ from contextlib import closing, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import atomic
+
 SCHEMA_VERSION = 1
+EXCHANGE_VERSION = 1
+MANIFEST_NAME = ".meridiana-commessa.json"
 STATUSES = ("waiting", "in_progress", "delivered", "archived")
 PHASES = ("preliminary", "definitive", "executive", "construction")
 
@@ -76,6 +80,7 @@ def _path(path) -> str:
 class Registry:
     def __init__(self, path: Path):
         self.path = Path(path)
+        self.manifest_errors: dict[str, tuple[str, str]] = {}
         self.backup_path = self.path.with_name(self.path.name + ".bak")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.connection = sqlite3.connect(self.path, isolation_level=None, timeout=30)
@@ -114,6 +119,7 @@ class Registry:
 
     @contextmanager
     def _write(self):
+        manifests = self._manifest_states()
         self.connection.execute("BEGIN IMMEDIATE")
         try:
             yield self.connection
@@ -123,6 +129,7 @@ class Registry:
         else:
             self.connection.commit()
             self.backup()
+            self._sync_manifests(manifests)
 
     def backup(self, destination: Path | None = None) -> Path:
         """A consistent SQLite backup, written whole or not at all."""
@@ -326,3 +333,215 @@ class Registry:
             connection.execute("UPDATE folders SET manifest_consent = ?, updated = ? WHERE id = ?",
                                (int(allowed), _now(), folder_id))
         return self._folder_row(self.connection.execute("SELECT * FROM folders WHERE id = ?", (folder_id,)).fetchone())
+
+    def _manifest_states(self) -> dict[str, tuple[bool, str]]:
+        rows = self.connection.execute(
+            "SELECT folders.id, folders.path, folders.manifest_consent, jobs.reserved FROM folders "
+            "JOIN jobs ON jobs.id = folders.job_id").fetchall()
+        return {row["id"]: (bool(row["manifest_consent"] and not row["reserved"]), row["path"]) for row in rows}
+
+    def _sync_manifests(self, before: dict[str, tuple[bool, str]]) -> None:
+        after = self._manifest_states()
+        for folder_id in sorted(before.keys() | after.keys()):
+            allowed, folder = after.get(folder_id, (False, ""))
+            if allowed:
+                try:
+                    self.write_manifest(folder_id)
+                except OSError as error:
+                    self.manifest_errors[folder_id] = (folder, str(error))
+                else:
+                    self.manifest_errors.pop(folder_id, None)
+            elif before.get(folder_id, (False, ""))[0] or folder_id in self.manifest_errors:
+                previous = before.get(folder_id, (False, ""))[1]
+                failed = self.manifest_errors.get(folder_id, ("", ""))[0]
+                try:
+                    self.remove_manifest(folder_id, previous or failed or folder)
+                except OSError as error:
+                    self.manifest_errors[folder_id] = (previous or failed or folder, str(error))
+                else:
+                    self.manifest_errors.pop(folder_id, None)
+
+    def write_manifest(self, folder_id: str) -> Path:
+        row = self.connection.execute(
+            "SELECT folders.path, folders.manifest_consent, jobs.* FROM folders "
+            "JOIN jobs ON jobs.id = folders.job_id WHERE folders.id = ?", (folder_id,)).fetchone()
+        if row is None:
+            raise RegistryError("folder not found")
+        if row["reserved"]:
+            raise RegistryError("a reserved job never writes a folder manifest")
+        if not row["manifest_consent"]:
+            raise RegistryError("the folder has not consented to a job manifest")
+        target = Path(row["path"]) / MANIFEST_NAME
+        job = {key: row[key] for key in ("id", "code", "name", "phase")}
+        data = {"format": "meridiana-job-manifest", "version": EXCHANGE_VERSION,
+                "job": job, "projects": self.list_projects(job["id"])}
+        atomic.write_json(target, data)
+        return target
+
+    def remove_manifest(self, folder_id: str, folder: str | Path | None = None) -> None:
+        if folder is None:
+            row = self.connection.execute("SELECT path FROM folders WHERE id = ?", (folder_id,)).fetchone()
+            if row is None:
+                return
+            folder = row["path"]
+        target = Path(folder) / MANIFEST_NAME
+        target.unlink(missing_ok=True)
+        target.with_name(target.name + ".bak").unlink(missing_ok=True)
+
+    def export_data(self) -> dict:
+        jobs = [{key: value for key, value in row.items() if key != "client_name"}
+                for row in self.list_jobs(include_archived=True)]
+        folders = [{**row, "manifest_consent": False} for row in self.list_folders()]
+        return {"format": "meridiana-registry", "version": EXCHANGE_VERSION,
+                "clients": self.list_clients(include_archived=True), "jobs": jobs,
+                "projects": self.list_projects(), "folders": folders}
+
+    def export(self, path: Path) -> Path:
+        target = Path(path)
+        atomic.write_json(target, self.export_data())
+        return target
+
+    def preview_import(self, data: dict) -> dict:
+        _validate_exchange(data)
+        current = self.export_data()
+        preview = {"new": 0, "updated": 0, "unchanged": 0, "conflicts": []}
+        for kind in ("clients", "jobs", "projects", "folders"):
+            existing = {row["id"]: row for row in current[kind]}
+            seen = set()
+            for row in data[kind]:
+                record_id = row.get("id", "") if isinstance(row, dict) else ""
+                if not isinstance(record_id, str) or not record_id:
+                    raise RegistryError(f"an imported {kind} record has no stable id")
+                if record_id in seen:
+                    preview["conflicts"].append(f"duplicate imported id: {record_id}")
+                seen.add(record_id)
+                if record_id not in existing:
+                    preview["new"] += 1
+                elif existing[record_id] == row:
+                    preview["unchanged"] += 1
+                else:
+                    preview["updated"] += 1
+        for kind, key in (("jobs", "code"), ("projects", "path"), ("folders", "path")):
+            existing = {row[key]: row["id"] for row in current[kind]}
+            imported = {}
+            for row in data[kind]:
+                value, record_id = row.get(key), row["id"]
+                if value in imported and imported[value] != record_id:
+                    preview["conflicts"].append(f"duplicate imported {kind} {key}: {value}")
+                imported[value] = record_id
+                if value in existing and existing[value] != record_id:
+                    preview["conflicts"].append(f"conflicting {kind} {key}: {value}")
+        return preview
+
+    def import_data(self, data: dict) -> dict:
+        preview = self.preview_import(data)
+        if preview["conflicts"]:
+            raise RegistryError("the registry import has conflicts; nothing was imported")
+        now = _now()
+        try:
+            with self._write() as connection:
+                for row in data["clients"]:
+                    name = str(row.get("name", "")).strip()
+                    contacts = row.get("contacts", {})
+                    if not name or not isinstance(contacts, dict):
+                        raise RegistryError("an imported client is not valid")
+                    connection.execute(
+                        "INSERT INTO clients(id, name, kind, contacts, notes, archived, created, updated) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name, "
+                        "kind = excluded.kind, contacts = excluded.contacts, notes = excluded.notes, "
+                        "archived = excluded.archived, created = excluded.created, updated = excluded.updated",
+                        (row["id"], name, row.get("kind", "other"), json.dumps(contacts, ensure_ascii=False),
+                         row.get("notes", ""), int(bool(row.get("archived", False))),
+                         row.get("created", now), row.get("updated", now)))
+                for row in data["jobs"]:
+                    code, name = str(row.get("code", "")).strip(), str(row.get("name", "")).strip()
+                    status, phase = row.get("status"), row.get("phase")
+                    if not re.fullmatch(r"\d{5}", code) or not name or status not in STATUSES or phase not in PHASES:
+                        raise RegistryError("an imported job is not valid")
+                    connection.execute(
+                        "INSERT INTO jobs(id, code, name, client_id, status, phase, reserved, due, created, updated) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET code = excluded.code, "
+                        "name = excluded.name, client_id = excluded.client_id, status = excluded.status, "
+                        "phase = excluded.phase, reserved = excluded.reserved, due = excluded.due, "
+                        "created = excluded.created, updated = excluded.updated",
+                        (row["id"], code, name, row["client_id"], status, phase,
+                         int(bool(row.get("reserved", False))), row.get("due", ""),
+                         row.get("created", now), row.get("updated", now)))
+                for row in data["projects"]:
+                    connection.execute(
+                        "INSERT INTO projects(id, job_id, path, title, modified, revision) VALUES (?, ?, ?, ?, ?, ?) "
+                        "ON CONFLICT(id) DO UPDATE SET job_id = excluded.job_id, path = excluded.path, "
+                        "title = excluded.title, modified = excluded.modified, revision = excluded.revision",
+                        (row["id"], row["job_id"], _path(row["path"]), row.get("title", ""),
+                         row.get("modified", now), row.get("revision", "")))
+                for row in data["folders"]:
+                    reserved = connection.execute("SELECT reserved FROM jobs WHERE id = ?", (row["job_id"],)).fetchone()
+                    local = connection.execute("SELECT job_id, path, manifest_consent FROM folders WHERE id = ?",
+                                               (row["id"],)).fetchone()
+                    same_folder = bool(local and local["job_id"] == row["job_id"]
+                                       and local["path"] == _path(row["path"]))
+                    consent = bool(local and local["manifest_consent"] and same_folder) and not bool(reserved["reserved"])
+                    connection.execute(
+                        "INSERT INTO folders(id, job_id, path, manifest_consent, created, updated) "
+                        "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET job_id = excluded.job_id, "
+                        "path = excluded.path, manifest_consent = excluded.manifest_consent, "
+                        "created = excluded.created, updated = excluded.updated",
+                        (row["id"], row["job_id"], _path(row["path"]), int(consent),
+                         row.get("created", now), row.get("updated", now)))
+        except (KeyError, TypeError, sqlite3.Error) as error:
+            raise RegistryError(f"the registry import is not valid: {error}") from error
+        return preview
+
+
+def _validate_records(data: dict) -> None:
+    strings = {
+        "clients": ("id", "name", "kind", "notes", "created", "updated"),
+        "jobs": ("id", "code", "name", "client_id", "status", "phase", "due", "created", "updated"),
+        "projects": ("id", "job_id", "path", "title", "modified", "revision"),
+        "folders": ("id", "job_id", "path", "created", "updated"),
+    }
+    required = {"clients": ("id", "name"), "jobs": ("id", "code", "name", "client_id", "status", "phase"),
+                "projects": ("id", "job_id", "path", "title"), "folders": ("id", "job_id", "path")}
+    booleans = {"clients": ("archived",), "jobs": ("reserved",), "folders": ("manifest_consent",)}
+    for kind in ("clients", "jobs", "projects", "folders"):
+        for row in data[kind]:
+            if not isinstance(row, dict) or any(field not in row for field in required[kind]):
+                raise RegistryError(f"an imported {kind} record is not valid")
+            for field in strings[kind]:
+                if field in row and type(row[field]) is not str:
+                    raise RegistryError(f"an imported {kind} {field} is not text")
+            for field in booleans.get(kind, ()):
+                if field in row and type(row[field]) is not bool:
+                    raise RegistryError(f"an imported {kind} {field} is not a boolean")
+            if not row["id"] or any(field in row and row[field] is None for field in strings[kind]):
+                raise RegistryError(f"an imported {kind} record is not valid")
+            if kind == "clients" and (not row["name"].strip() or
+                                      ("contacts" in row and not isinstance(row["contacts"], dict))):
+                raise RegistryError("an imported client is not valid")
+            if kind == "jobs" and (not re.fullmatch(r"\d{5}", row["code"]) or not row["name"].strip()
+                                   or row["status"] not in STATUSES or row["phase"] not in PHASES):
+                raise RegistryError("an imported job is not valid")
+
+
+def _validate_exchange(data: dict, manifest: bool = False) -> None:
+    expected = "meridiana-job-manifest" if manifest else "meridiana-registry"
+    if not isinstance(data, dict) or data.get("format") != expected:
+        raise RegistryError("the file is not a Meridiana registry exchange")
+    if data.get("version") != EXCHANGE_VERSION:
+        raise RegistryError("the registry exchange version is not supported")
+    if manifest:
+        if not isinstance(data.get("job"), dict) or not isinstance(data.get("projects"), list):
+            raise RegistryError("the job manifest is not valid")
+        return
+    if any(not isinstance(data.get(kind), list) for kind in ("clients", "jobs", "projects", "folders")):
+        raise RegistryError("the registry exchange is not valid")
+    _validate_records(data)
+
+
+def read_exchange(path: Path, manifest: bool = False) -> dict:
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise RegistryError(f"the exchange file could not be read: {error}") from error
+    _validate_exchange(data, manifest=manifest)
+    return data

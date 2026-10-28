@@ -18,6 +18,16 @@ I tre comandi stanno anche nel menu Aiuto: un tasto F non è mai l'unica via (su
 
 **File > Impostazioni** riunisce Aspetto, Navigazione, Tastiera, Assistente, Relazione, Mappe e Riservatezza nella finestra principale. Ogni modifica vale e si salva subito. **Annulla l'ultima modifica** torna indietro; **Ripristina i valori predefiniti di questa sezione** chiede conferma nella pagina, senza finestre modali. Il comando si apre anche con Ctrl+,.
 
+## Clienti e commesse
+
+**File > Clienti e commesse** mostra tre colonne: clienti, commesse e dettaglio con progetti e cartelle collegati. **Nuovo cliente** e **Nuova commessa** li aggiungono senza finestre separate. Il codice commessa è di cinque cifre e resta testo, quindi conserva gli zeri iniziali. Il registro è un database SQLite sul PC, con transazioni e una copia `.bak` aggiornata dopo ogni scrittura. Se il database non si apre, Meridiana avvisa senza sovrascriverlo e usa un registro temporaneo, così i progetti restano utilizzabili.
+
+In **File > Nuovo**, nei dati facoltativi, scegli cliente e commessa. Il nome del cliente va nella relazione; una commessa riservata ferma ricerca online e tessere già quando la scegli. Al salvataggio Meridiana collega il file alla commessa e scrive nel progetto gli id della serie, nel formato 18: salvare R02 e riaprire R01 conserva lo stesso collegamento.
+
+Nella pagina del registro, **Collega cartella** aggiunge una cartella esistente alla commessa senza spostare file. Ogni cartella ha la sua casella: solo quando la attivi Meridiana scrive e aggiorna `.meridiana-commessa.json`. Disattivarla rimuove il manifesto e la sua copia. Una commessa riservata non ha mai un manifesto. Se una cartella non è raggiungibile, l'errore viene mostrato e l'operazione viene ritentata alla scrittura successiva, senza fermare le altre cartelle.
+
+**Esporta registro** crea un JSON completo. Se contiene commesse riservate, Meridiana avvisa che il file non è cifrato prima di scriverlo. I consensi delle cartelle non viaggiano nel file: restano locali e una cartella importata parte sempre senza manifesto. Cambiando percorso o commessa serve un nuovo consenso. **Importa registro** mostra prima nuovi, aggiornati, invariati e conflitti. **Applica importazione** unisce per id e conserva i record che non sono nel file; codici, percorsi o campi non validi bloccano tutto, senza doppioni silenziosi o scritture parziali.
+
 ## Meridio, l'assistente
 
 - **Ctrl+L**, o un clic sul personaggio, apre la conversazione. Meridio legge il progetto (verifiche, risultati, regole, il manuale) e risponde con le fonti; se una cifra viene da un valore di serie o da una stima lo dice; non cambia niente da solo: propone, e la proposta si applica con un clic e si annulla con Ctrl+Z.
