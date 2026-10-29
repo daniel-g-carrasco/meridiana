@@ -456,6 +456,10 @@ class ChecksPanel(unittest.TestCase):
         widths = {b.sizeHint().width() for b in page.counts.values()}
         self.assertEqual(len(widths), 1)
         b = page.counts["info"]
+        # Zero is deliberately muted. Measure visible ink on a positive count.
+        b.setText("12")
+        b.setEnabled(True)
+        self.app.processEvents()
         image = b.grab().toImage()
         ground = QColor(image.pixel(image.width() // 2, 1))
         ink = [x for x in range(image.width()) if any(QColor(image.pixel(x, y)) != ground and

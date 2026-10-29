@@ -1,5 +1,5 @@
 """The project: a site, its buildings with their roof pitches, the sub-fields the designer drew, the
-exclusions, the modules used. Plain data, saved as JSON (atomic.py), coordinates in local metres from the
+exclusions, the modules used. Plain data, a JSON schema in the .mer archive, coordinates in local metres from the
 site origin (geo.py).
 
 The designer's workflow is in steps, and the model keeps them apart: a building is modelled first
@@ -14,6 +14,7 @@ rather than half read and saved back without what this version does not know.
 
 from __future__ import annotations
 
+import copy
 import dataclasses
 import math
 import os
@@ -1202,7 +1203,8 @@ class Project:
         if version.__class__ is not int or version < 1:
             raise ValueError(f"version: {version!r} is not a format number")
         if version > FORMAT_VERSION:
-            raise ValueError(_("made by a newer Meridiana (format {version}); update the program to open it").format(
+            from .project_archive import FutureVersionError
+            raise FutureVersionError(_("made by a newer Meridiana (format {version}); update the program to open it").format(
                 version=version))
         if version < 9 and notes is not None:
             reshaped = _reshaped(data)
@@ -1255,22 +1257,40 @@ class Project:
 
     def save(self, path: Path, cache_dir: Path | None = None, report_profile: dict | None = None) -> None:
         """The project and its external resources written whole or not at all, attachments with relative paths."""
-        from . import portability, reports
-        self.modified = _now()
-        portability.embed(self, Path(path), cache_dir, report_profile)
-        data = self.to_json()
+        from . import portability, project_archive, reports
+        snapshot = copy.deepcopy(self)
+        snapshot.modified = _now()
+        portability.embed(snapshot, Path(path), cache_dir, report_profile)
+        data = snapshot.to_json()
         data["report"] = reports.portable(data.get("report") or {}, Path(os.path.abspath(path)).parent)
-        atomic.write_json(Path(path), data)
+        if Path(path).suffix.casefold() == ".mer":
+            project_archive.write(Path(path), data, validate=self.from_json)
+        else:
+            atomic.write_json(Path(path), data)
+        self.modified, self.report, self.resources = snapshot.modified, snapshot.report, snapshot.resources
 
     @classmethod
     def load(cls, path: Path, cache_dir: Path | None = None) -> tuple["Project", str | None]:
         """The project of the file and, when something is worth saying (the backup was used, keys the program
         does not know were left out, an external resource is missing), the notice; a damaged file raises ValueError
         with the path of the key, an unreadable one OSError."""
-        data, notice = atomic.read_json(Path(path))
+        from . import project_archive
         unknown: list[str] = []
         notes: list[str] = []
-        project = cls.from_json(data, unknown=unknown, notes=notes)
+        notice = None
+        try:
+            data = project_archive.read_document(Path(path))
+            project = cls.from_json(data, unknown=unknown, notes=notes)
+        except project_archive.FutureVersionError:
+            raise
+        except (OSError, ValueError) as error:
+            backup = Path(path).with_name(Path(path).name + ".bak")
+            if not backup.exists():
+                raise
+            unknown.clear()
+            notes.clear()
+            project = cls.from_json(project_archive.read_document(backup), unknown=unknown, notes=notes)
+            notice = f"{Path(path).name} could not be read ({type(error).__name__}: {error}); the previous save was opened"
         from . import portability, reports
         project.report = reports.resolved(project.report, Path(os.path.abspath(path)).parent)
         notes.extend(portability.materialize(project, cache_dir))

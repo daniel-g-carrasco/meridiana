@@ -21,6 +21,7 @@ HEIGHT = Space.L                 # a short veil: the first row becomes readable 
 # Whole only at the outermost pixel, so nothing scrolled reaches the card's line (R177). The quick falloff keeps the
 # first visible row clear instead of covering it with the broad veil introduced by R177.
 STOPS = ((0.0, 1.0), (0.16, 0.42), (0.5, 0.10), (1.0, 0.0))
+PAGE_STOPS = ((0.0, 1.0), (0.18, 0.75), (0.5, 0.28), (1.0, 0.0))
 SOLID = STOPS[0][1]
 _COLOUR = [default_tokens()["panel"]]  # the panels' colour of the theme in use
 _LIVE: "weakref.WeakSet[Fades]" = weakref.WeakSet()
@@ -32,6 +33,7 @@ class Edge(QWidget):
         self.area = area
         self.top = top
         self.table = table
+        self.page = False
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.hide()
@@ -39,15 +41,16 @@ class Edge(QWidget):
     def paintEvent(self, event) -> None:
         """Cover item view boundaries completely; page cards retain their rounded inner outline."""
         p = QPainter(self)
-        if self.table:
+        if self.table or self.page:
             # A viewport is rectangular, even when the surrounding card has round corners.
             # Paint through the boundary pixel centres: inset clipping left a full-colour seam.
-            base = self.area.viewport().palette().color(QPalette.ColorRole.Base)
+            base = (self.area.viewport().palette().color(QPalette.ColorRole.Base) if self.table else
+                    QColor(_COLOUR[0]))
             if self.height() <= 1:
                 p.fillRect(self.rect(), base)
                 return
             g = QLinearGradient(0, 0.5, 0, self.height() - 0.5)
-            for at, alpha in STOPS:
+            for at, alpha in PAGE_STOPS if self.page else STOPS:
                 colour = QColor(base)
                 colour.setAlphaF(alpha)
                 g.setColorAt(at if self.top else 1.0 - at, colour)
@@ -119,12 +122,16 @@ def attach(area: QAbstractScrollArea, air: bool = False, *, table: bool = False)
             area.setViewportMargins(m.left(), AIR, m.right(), AIR)
     found = area.findChild(Fades)
     if found is not None:
-        if table:
-            for edge in found.edges:
-                edge.table = True
-                edge.update()
-        return found
-    return Fades(area, table)
+        controller = found
+    else:
+        controller = Fades(area, table)
+    for edge in controller.edges:
+        edge.table = edge.table or table
+        # A page's viewport is already inset from its card by AIR. Rounding and insetting this
+        # overlay again left an uncovered row and cut text sharply at the viewport boundary.
+        edge.page = edge.page or (air and not isinstance(area, QAbstractItemView))
+        edge.update()
+    return controller
 
 
 def set_colour(colour: str) -> None:

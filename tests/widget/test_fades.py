@@ -70,7 +70,32 @@ class SoftEnds(unittest.TestCase):
         bottom.render(p, QPoint(0, 0))
         p.end()
         middle = QColor.fromRgba(image.pixel(image.width() // 2, image.height() // 2))
-        self.assertLess(middle.alpha(), 50, "the first readable row is not veiled")
+        self.assertLess(middle.alpha(), 90, "the first readable row is not veiled")
+
+    def test_page_fades_cover_the_whole_clipped_boundary_without_a_sharp_seam(self):
+        from PySide6.QtCore import QPoint, Qt
+        from PySide6.QtGui import QImage, QPainter
+        from PySide6.QtWidgets import QLabel, QScrollArea
+        from meridiana.ui import fades
+        area = QScrollArea()
+        self.addCleanup(area.deleteLater)
+        area.setWidget(QLabel("x\n" * 200))
+        area.resize(300, 200)
+        area.show()
+        self.app.processEvents()
+        controller = fades.attach(area, air=True)
+        area.verticalScrollBar().setValue(100)
+        for edge in controller.edges:
+            image = QImage(edge.size(), QImage.Format.Format_ARGB32_Premultiplied)
+            image.fill(Qt.GlobalColor.transparent)
+            painter = QPainter(image)
+            edge.render(painter, QPoint())
+            painter.end()
+            y = 0 if edge.top else image.height() - 1
+            self.assertTrue(all(image.pixelColor(x, y).alpha() == 255 for x in range(image.width())),
+                            "The scroll page is already inset from the card: no sharp unpainted rim")
+            self.assertGreater(image.pixelColor(image.width() // 2, image.height() // 2).alpha(), 50,
+                               "The fade stays visible beyond its first two pixels")
 
 
 if __name__ == "__main__":

@@ -345,3 +345,25 @@ La suite completa Windows ha raccolto 1.593 prove ma si è interrotta con access
 ## 29/10/2026, allineamento completo alle correzioni Qt di Quotario
 
 [V] Il nuovo porting supera lo stato della nota selectbox precedente: tabelle, navigazione e checkbox condivise sono ora trasferite dal template `3f2d069`, conservando le personalizzazioni di Meridiana. Applicabilità, esclusioni, provenienza e verifiche sono in `docs/revisioni/allineamento-template-20261029.md`. Manifest revisionati con hash upstream/consumer distinti; fotografie chiare/scure alle scale 100%, 200% e 250%. Nessun push o rilascio.
+
+## 29/10/2026, decisioni generali da conservare
+
+- Daniel conferma che Meridiana non e ancora stata usata in produzione. Il nuovo `.mer` puo essere progettato come contenitore di progetto e risorse senza requisito di compatibilita con i precedenti `.meridiana`; nessun file esistente va cancellato per questo.
+- R215 e un requisito generale: ripensare congiuntamente dimensionamento, scelta automatica degli inverter e stringatura per tutti gli impianti. Considerare modelli e potenze diverse, limiti di tensione/corrente, MPPT, paralleli, ottimizzatori, orientamenti/inclinazioni e moduli rimasti fuori. Non limitare la revisione agli est-ovest.
+- R216 richiede una modalita est-ovest e compatibilita automatica globale degli orientamenti/inclinazioni, con avvisi quando si forza una combinazione manualmente. R217 richiede pensiline, comprese quelle da parcheggio. Sono requisiti registrati, non funzioni gia verificate.
+- Verifiche durante lo sviluppo proporzionate alla modifica, con test mirati e foto reali dei componenti; suite completa alla fine di un lotto integrato e prima di rilasciare. La quantita dei test non sostituisce la verifica delle schermate usate da Daniel.
+
+
+### Lotto UX, .mer e produzione connessa del 29/10/2026
+
+Sorgenti verificati del lotto in `docs/revisioni/ux-formato-pacchetti-20261029.md`, con esiti grezzi e limiti.
+R224 corretto: i moduli fuori stringa o su inverter/ingressi inesistenti non contribuiscono alla produzione.
+Prova sintetica128moduli: prima63667,84kWh senza collegamenti, ora0; rapporto e regressioni in
+`docs/revisioni/produzione-moduli-collegati-20261029.md`. Resta un modello AC aggregato fra gli inverter attivi.
+Nessuna revisione generale delle ombre o certificazione normativa implicita in questo fix.
+Template Qt aggiornato e push del commit b98bc3797a926df8a56797c05cfe3ee97a32497f. Le ulteriori differenze
+File/tooltip/calendario richieste da Daniel restano registrate, non coperte dalla sola uguaglianza degli hash.
+Suite generale1751prove eseguita una volta; regressioni corrette e riprovate in modo mirato, resta una soglia
+prestazionale del tema1s non superata (1,032s in ripetizione), gia problematica sullo stato precedente.
+Pacchetti ancora in collaudo del binario; nessuna release pubblicata o installazione reale dichiarata.
+Le aggiunte sono conservate in docs/richieste.md fino a R234: non interrompono o azzerano le decisioni precedenti.

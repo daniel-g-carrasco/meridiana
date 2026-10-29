@@ -122,8 +122,8 @@ def string_detail(key: str) -> str:
 
 def left_detail() -> str:
     """Why modules in no string are a problem, and what to do."""
-    return _("A module in no string is connected to no inverter: in the real plant it produces nothing, while the "
-             "production counts it as if it were connected. Draw a string through it, or «Complete the strings»: "
+    return _("A module in no string is connected to no inverter and contributes no energy to the plant's production. "
+             "Draw a string through it, or «Complete the strings»: "
              "Meridiana proposes strings for the modules left out on the free inputs, and yours stay as they are.")
 
 

@@ -106,7 +106,7 @@ def register(widget: QWidget, hid: str, hover: bool = False) -> QWidget:
     return widget
 
 
-class HelpButton(QToolButton):
+class HelpButton(ControlHelpButton):
     """The «?»: a round flat button of 16 px, the short sentence as its tooltip; a click opens the box on its
     text, or the pop-up where the box is not shown. It does not take the keyboard: F1 is the keyboard's way."""
 

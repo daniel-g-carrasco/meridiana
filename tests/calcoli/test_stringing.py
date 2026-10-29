@@ -562,7 +562,7 @@ class OnlyWhenAsked(unittest.TestCase):
         self.assertEqual((out.strings, len(out.left)), ([], 24))
         left = next(i for i in checks.plant_items(out) if "in no string" in i.text)
         self.assertEqual(left.fix, ("command", "strings_complete"))               # «Complete the strings», asked
-        self.assertIn("produces nothing", left.detail)
+        self.assertIn("contributes no energy", left.detail)
 
     def test_an_inverter_added_makes_no_string_and_the_strings_stay_on_their_inverters(self):
         from meridiana.energy import plant

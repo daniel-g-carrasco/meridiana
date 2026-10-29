@@ -115,10 +115,19 @@ class ArraySpec:
     stand_off: float = 0.15         # m, the lowest edge of a row above the roof or the ground
     placed: list = field(default_factory=list, repr=False)       # its layout.PlacedModule, for the shadows
     obstacles: list = field(default_factory=list, repr=False)    # nearshade.Solid that can shade it
+    connected: frozenset | None = field(default=None, repr=False)  # placed keys wired to a real input; None: potential
 
     @property
     def p_stc(self) -> float:
         return self.modules * self.module.pmax
+
+    @property
+    def generating_modules(self) -> int:
+        return self.modules if self.connected is None else sum(pm.key in self.connected for pm in self.placed)
+
+    @property
+    def p_connected(self) -> float:
+        return self.generating_modules * self.module.pmax
 
 
 @dataclass
@@ -377,7 +386,8 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
         if losses.use_near and a.obstacles and a.placed:
             if needed is None:
                 needed = nearshade.needed_cells(sun_az, sun_el)
-            near = nearshade.cached_shading(a.placed, a.obstacles, a.tilt, a.azimuth, needed, layout)
+            illuminated = [pm for pm in a.placed if pm.key in a.connected] if a.connected else a.placed
+            near = nearshade.cached_shading(illuminated, a.obstacles, a.tilt, a.azimuth, needed, layout)
             f_obst = nearshade.at(near.table, sun_az, sun_el)
             beam_left = beam_left * (1.0 - f_obst)
             sky_left = sky_left * near.sky
@@ -423,6 +433,10 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
         # with the temperature coefficient of Isc), for the DC wiring of the array step
         i_ratio = np.divide(a.module.current_at_25(g_eff), float(a.module.current_at_25(1000.0)) or 1.0)
         i_ratio = i_ratio * (1.0 + a.module.alpha_isc / 100.0 * (t_cell - 25.0))
+        # Installed panels still define the physical rows and their temperature, but only a real electrical
+        # connection transfers their power. Apply this before array losses and inverter clipping, never after AC.
+        share = a.generating_modules / a.modules
+        p_nom, p_25, p_t = p_nom * share, p_25 * share, p_t * share
         per_array.append(_ArrayPass(a, g_inc, g_far, g_rows, g_near, g_iam, g_eff, beam_left, iam_b, p_nom, p_25, p_t,
                                     t_cell, i_ratio, shaded, extra_rows, f_obst, near, layout, lid_pct(losses, a.module),
                                     u_c, u_v, eta_mean, dome, alb, sky_mask, ground_lost))
@@ -504,8 +518,9 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
         i_ratio = ap.i_ratio * np.divide(p_el, p_t, out=np.ones(hours), where=p_t > 0)
         squares = np.clip(i_ratio, 0.0, None) ** 2
         if opt is not None:
-            squares = (1.0 - opt.share) * squares + opt.share * np.clip(p_cut / a.p_stc, 0.0, None) ** 2
-        p_dc = np.clip(p_cut - losses.dc_wiring / 100.0 * a.p_stc * squares, 0.0, None)
+            relative_power = np.divide(p_cut, a.p_connected, out=np.zeros(hours), where=a.p_connected > 0)
+            squares = (1.0 - opt.share) * squares + opt.share * np.clip(relative_power, 0.0, None) ** 2
+        p_dc = np.clip(p_cut - losses.dc_wiring / 100.0 * a.p_connected * squares, 0.0, None)
         for key, val in (("poa", g_inc), ("poa_far", g_far), ("poa_near", g_near), ("poa_iam", g_iam),
                          ("poa_eff", g_eff)):
             tot[key] += weights[i] * val
@@ -513,6 +528,7 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
                          ("p_mm", p_mm), ("p_el", p_el), ("p_opt", p_opt), ("p_cut", p_cut), ("p_dc", p_dc)):
             tot[key] += val
         per_array.append({"key": a.key, "name": a.name, "tilt": a.tilt, "azimuth": a.azimuth, "modules": n,
+                          "connected_modules": a.generating_modules, "connected_p_stc_kw": a.p_connected / 1000.0,
                           "p_stc_kw": a.p_stc / 1000.0, "poa_kwh_m2": float(g_inc.sum() / 1000.0),
                           "dc_kwh": float(p_dc.sum() / 1000.0), "t_cell_max": float(np.nanmax(t_cell)),
                           "lid": float(lid), "thermal": a.thermal, "eta_operating": eta_mean})
@@ -578,7 +594,9 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
                             ("iam", _("Reflection on the glass (IAM)"), tot["poa_iam"]),
                             ("soiling", _("Soiling"), tot["poa_eff"])):
         chain.append(ChainStep(key, label, "irradiance", kwh(val)))
-    chain.append(ChainStep("nominal", _("Array nominal energy at STC efficiency"), "energy", kwh(tot["p_nom"])))
+    connection_limited = any(a.generating_modules != a.modules for a in first.arrays)
+    chain.append(ChainStep("nominal", (_("Connected modules' nominal energy at STC efficiency") if connection_limited
+                                      else _("Array nominal energy at STC efficiency")), "energy", kwh(tot["p_nom"])))
     for key, label, val in (("irradiance_level", _("Loss for the irradiance level"), tot["p_25"]),
                             ("temperature", _("Loss for the temperature"), tot["p_t"]),
                             ("quality", _("Module quality"), tot["p_q"]),
@@ -780,12 +798,13 @@ def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: flo
                   Quantity("a", _("modified ideality factor"), sdm["a_ref"], "V", fit, 3)]
         reference = _("De Soto, Klein, Beckman, Solar Energy 80 (2006) 78-88 (pvlib.pvsystem.calcparams_desoto)")
     rec.add(Step(f"{a.key}.module", head + _("Power of the modules"), formula, expl,
-                 [Quantity("N", _("modules"), a.modules, "", designer, 0),
+                 [Quantity("N", _("connected modules") if a.connected is not None else _("modules"),
+                           a.generating_modules, "", designer, 0),
                   Quantity(r"P_{STC}", _("maximum power at STC"), m.pmax, "W", m.source, 1),
                   Quantity(r"\gamma", _("temperature coefficient of the maximum power"), m.gamma_pmax, "%/K", m.source, 3),
                   Quantity("N_s", _("cells in series"), m.cells_in_series, "", computed(_("from the Voc and the count of "
                                                                                           "the datasheet")), 0),
-                  *params], Quantity(r"P_{STC,campo}", _("array power at STC"), a.p_stc / 1000.0, "kWp", computed(""), 2),
+                  *params], Quantity(r"P_{STC,campo}", _("array power at STC"), a.p_connected / 1000.0, "kWp", computed(""), 2),
                  reference))
     lid_src = (Source("input", _("set by the designer")) if losses.lid is not None else
                (Source("data", _("first-year degradation of the datasheet"), m.source.ref) if m.first_year_loss is not None
@@ -890,7 +909,7 @@ def _string_cuts(per_array: list, stage: list, optimizers: Optimizers | None, ho
     out: dict = {}
     if optimizers is None or not optimizers.strings:
         return out
-    each = {ap.a.key: st["p_opt"] / max(1, ap.a.modules) for ap, st in zip(per_array, stage, strict=True)}
+    each = {ap.a.key: st["p_opt"] / max(1, ap.a.generating_modules) for ap, st in zip(per_array, stage, strict=True)}
     for counts, p_max in optimizers.strings:
         parts = {k: n * each[k] for k, n in counts.items() if k in each and n > 0}
         if not parts or not p_max:

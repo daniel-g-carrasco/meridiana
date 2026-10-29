@@ -184,6 +184,27 @@ class HelpInTheWindow(unittest.TestCase):
         self.assertTrue(self.box.isVisible())
         self.assertIsNone(HelpPopup.current)
 
+    def test_corner_help_collapses_and_reopens_from_both_bottom_and_right_commands(self):
+        from PySide6.QtCore import Qt
+        for edge_dock in (self.win.docks[1], self.win.checks_dock):
+            self.win.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.win.help_dock)
+            self.win.splitDockWidget(self.win.docks[1], self.win.help_dock, Qt.Orientation.Vertical)
+            self.box.set_open(True)
+            self.app.processEvents()
+            button = self.win.panel_buttons.buttons[edge_dock]
+            with self.subTest(command=edge_dock.windowTitle()):
+                self.assertTrue(self.box.isVisible())
+                button.click()
+                self.app.processEvents()
+                self.assertTrue(self.win.help_dock.isHidden())
+                self.assertFalse(self.box.opened)
+                self.assertFalse(self.cfg.help_open)
+                button.click()
+                self.app.processEvents()
+                self.assertTrue(self.box.isVisible())
+                self.assertTrue(self.box.opened)
+                self.assertTrue(self.cfg.help_open)
+
     def test_the_links_lead_to_the_computation_to_meridio_and_to_the_chapter_of_the_phase(self):
         from meridiana.energy.pedigree import Record, Step
         # «How it is computed»: the page, its tab and the step

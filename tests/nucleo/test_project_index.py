@@ -59,7 +59,7 @@ class ProjectIndexTest(unittest.TestCase):
         third = project_index.scan([(self.folder, self.metadata)], {row["path"]: row for row in second})
         self.assertEqual(len(third), 1)
         self.assertEqual(third[0]["path"], str(path))
-        self.assertIn("JSON", third[0]["error"])
+        self.assertIn("Project could not be read", third[0]["error"])
 
     def test_an_unchanged_file_takes_the_current_registry_metadata(self):
         self.project_file()

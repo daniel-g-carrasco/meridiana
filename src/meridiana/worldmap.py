@@ -37,6 +37,27 @@ def equal_earth(lon: float, lat: float, central_lon: float = 0.0, origin_lat: fl
     return x * EQUAL_EARTH_RADIUS, (y - _parallel(math.radians(origin_lat))[1]) * EQUAL_EARTH_RADIUS
 
 
+def from_equal_earth(x: float, y: float, central_lon: float = 0.0, origin_lat: float = 0.0) -> tuple[float, float]:
+    """Longitude and latitude of a map point; reject clicks outside the projected globe."""
+    target = y / EQUAL_EARTH_RADIUS + _parallel(math.radians(origin_lat))[1]
+    theta = target / A1
+    for _ in range(12):
+        derivative = A1 + 3 * A2 * theta ** 2 + 7 * A3 * theta ** 6 + 9 * A4 * theta ** 8
+        step = (theta * (A1 + A2 * theta ** 2 + A3 * theta ** 6 + A4 * theta ** 8) - target) / derivative
+        theta -= step
+        if abs(step) < 1e-12:
+            break
+    sine = 2 * math.sin(theta) / math.sqrt(3)
+    if abs(theta) > math.pi / 3 + 1e-10 or abs(sine) > 1 + 1e-10:
+        raise ValueError("outside the Equal Earth map")
+    lat = math.degrees(math.asin(max(-1.0, min(1.0, sine))))
+    derivative = A1 + 3 * A2 * theta ** 2 + 7 * A3 * theta ** 6 + 9 * A4 * theta ** 8
+    relative = math.degrees(3 * x * derivative / (2 * math.sqrt(3) * EQUAL_EARTH_RADIUS * math.cos(theta)))
+    if abs(relative) > 180 + 1e-8:
+        raise ValueError("outside the Equal Earth map")
+    return (relative + central_lon + 180) % 360 - 180, lat
+
+
 @dataclass(frozen=True)
 class Country:
     name: str

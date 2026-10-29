@@ -80,13 +80,17 @@ def isolate(folder: Path, environ=os.environ) -> None:
 
 def sample_project():
     """A shed of 40 x 20 m, 9,5 m high, at Rho, with a sub-field «Sud» on its flat roof, tilted rows at 15°."""
-    from .. import model
+    from .. import catalog, jobs, model
+    from ..energy import plant
     p = model.Project(name="Self-test")
     p.site = model.Site(lat=LAT, lon=LON, address="Rho (MI)")
     b = model.Building(id=p.new_id("b"), name="Capannone", footprint=[[0, 0], [40, 0], [40, 20], [0, 20]], height=9.5)
     p.buildings.append(b)
     p.subfields.append(model.SubField(id=p.new_id("s"), name="Sud", ring=[[1, 1], [39, 1], [39, 19], [1, 19]],
                                       building=b.id, params={"tilt": 15.0}, filled=True))
+    # The package fixture is an explicitly wired plant, like a saved designer proposal.
+    p.energy["inverters"] = [{"record": next(iter(catalog.search("inverters", "SCA100K-T-US-480"))), "count": 1}]
+    p.energy["strings"] = {"runs": plant.propose(p, jobs.layout_of(p)[0])}
     return p
 
 
@@ -161,7 +165,8 @@ def files(report: Report) -> None:
     # them only when it needs one, and count none here)
     report.add("PASS" if authorities else ("FAIL" if sys.platform == "win32" else "INFO"), "TLS authorities",
                f"{authorities} in the system's store", t)
-    for module in ("matplotlib.backends.backend_agg", "pyqtgraph", "scipy.optimize", "shapely", "requests"):
+    for module in ("matplotlib.backends.backend_agg", "pyqtgraph", "scipy.optimize", "shapely", "requests",
+                   "pypdf", "ifcopenshell.geom"):
         t = time.perf_counter()
         try:
             __import__(module)
@@ -224,7 +229,7 @@ def window(report: Report, folder: Path) -> None:
         report.add("FAIL", "system voices", str(error), t)
     synthetic_weather(paths.cache)
     project = sample_project()
-    file = folder / "Self-test.meridiana"
+    file = folder / "Self-test.mer"
     project.save(file)
 
     t = time.perf_counter()
@@ -243,6 +248,19 @@ def window(report: Report, folder: Path) -> None:
     laid = wait(lambda: any(getattr(r, "count", 0) for r in win.results.values()), 60)
     count = sum(getattr(r, "count", 0) for r in win.results.values())
     report.check("layout", laid, f"{count} modules", t)
+
+    t = time.perf_counter()
+    from .. import ifc_export
+    import ifcopenshell
+    try:
+        ifc_path = folder / "Self-test.ifc"
+        ifc_export.export(win.project, win.results, ifc_path)
+        exported = ifcopenshell.open(str(ifc_path))
+        modules = len(exported.by_type("IfcSolarDevice"))
+        report.check("IFC roundtrip", exported.schema == "IFC4" and modules == count and count > 0,
+                     f"{modules} modules, {ifc_path.stat().st_size} bytes", t)
+    except (ImportError, OSError, RuntimeError, ValueError, TypeError) as error:
+        report.add("FAIL", "IFC roundtrip", f"{type(error).__name__}: {error}", t)
 
     t = time.perf_counter()
     status = win.view3d.status()

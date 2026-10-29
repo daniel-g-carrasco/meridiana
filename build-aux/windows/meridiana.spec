@@ -62,7 +62,10 @@ a = Analysis(
     datas=datas,
     # pyqtgraph comes with its data and its Qt templates through hook-pyqtgraph of pyinstaller-hooks-contrib;
     # keyring finds its Windows backend by entry point (hook-keyring)
-    hiddenimports=['keyring.backends.Windows'],
+    # IfcOpenShell's api.run resolves these export operations by name at run time.
+    hiddenimports=['keyring.backends.Windows', 'ifcopenshell.geom',
+                   *['ifcopenshell.api.' + family for family in
+                     ('project', 'root', 'unit', 'context', 'georeference', 'aggregate')]],
     hooksconfig={'matplotlib': {'backends': ['Agg']}},
     excludes=['tkinter', 'PySide6.QtWebEngineCore', 'PySide6.QtWebEngineWidgets', 'PySide6.QtWebEngineQuick',
               'PySide6.Qt3DCore', 'PySide6.QtCharts', 'PySide6.QtGraphs', 'PySide6.QtDataVisualization',

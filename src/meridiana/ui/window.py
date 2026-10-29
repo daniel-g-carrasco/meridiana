@@ -64,7 +64,7 @@ from .viewbar import ViewBar
 from . import waiting
 from .waiting import STALE_MARK
 
-SUFFIX = ".meridiana"
+SUFFIX = ".mer"
 WALL_REACH = 0.5                # metres: a click on a building's side in 3D takes it (R175)
 # below this width (logical pixels: a column of niri, half a laptop screen) the panels share one side
 NARROW = 1000
@@ -4253,8 +4253,7 @@ class MainWindow(QMainWindow):
         self._new_string(*target)
 
     def _input_for_new_string(self) -> tuple | None:
-        """The input a new string goes to: that of the string chosen, else the first input without strings, else the
-        first one."""
+        """Use the chosen string's input, otherwise a free input of the working inverter, then its first input."""
         plant = self.plant_state
         if plant is None or not plant.inputs:
             return None
@@ -4262,8 +4261,10 @@ class MainWindow(QMainWindow):
             s = plant.strings[self.chosen_string]
             if (s.inverter, s.mppt) in plant.inputs:
                 return s.inverter, s.mppt
-        free = [slot for slot, i in sorted(plant.inputs.items()) if not i.strings]
-        return free[0] if free else min(plant.inputs)
+        working = self.plant_inspector.list.working_unit
+        inputs = {slot: value for slot, value in plant.inputs.items() if not working or slot[0] == working}
+        free = [slot for slot, value in sorted(inputs.items()) if not value.strings]
+        return free[0] if free else min(inputs) if inputs else None
 
     def _redraw_string(self, index: int) -> None:
         """A string drawn again from its modules (a double click on it, in the list or on the plan): Backspace takes
@@ -4787,7 +4788,7 @@ class MainWindow(QMainWindow):
         self.save_status.begin()
         try:
             self.session.autosave(self.paths.state)
-        except OSError as error:
+        except (OSError, ValueError) as error:
             self.save_status.failed()
             log.complain("autosave", error)
             self.tell(_("The recovery copy could not be written: {error}").format(error=error))
@@ -4888,7 +4889,7 @@ class MainWindow(QMainWindow):
             return
         try:
             target = self.session.save_revision(self.paths.cache, self._report_profile())
-        except OSError as error:
+        except (OSError, ValueError) as error:
             QMessageBox.warning(self, _("Save"), _("The project could not be saved: {error}").format(error=error))
             return
         self._register_saved(target)
@@ -4974,7 +4975,7 @@ class MainWindow(QMainWindow):
         self.save_status.begin()
         try:
             self.session.save(self.path, self.paths.cache, self._report_profile())
-        except OSError as error:
+        except (OSError, ValueError) as error:
             self.save_status.failed()
             QMessageBox.warning(self, _("Save"), _("The project could not be saved: {error}").format(error=error))
             return False
@@ -4991,11 +4992,15 @@ class MainWindow(QMainWindow):
                                                _("Meridiana projects (*{suffix})").format(suffix=SUFFIX))
         if not name:
             return False
-        path = Path(name if name.endswith(SUFFIX) else name + SUFFIX)
+        path = Path(name if name.casefold().endswith(SUFFIX) else name + SUFFIX)
+        previous = self.path
         self.path = path
+        if not self._save():
+            self.path = previous
+            return False
         self.cfg.last_folder, self.cfg.last_project = str(path.parent), str(path)
         self._save_config()
-        return self._save()
+        return True
 
     RECENT = 8                                   # the projects the File page lists
 

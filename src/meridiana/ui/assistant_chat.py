@@ -176,7 +176,12 @@ class WindowHost:
         return self.win._rules_facts()
 
     def go_to(self, target) -> None:
-        self.win._navigate(tuple(target))
+        from . import navigation_targets
+        navigation_targets.show(self.win, tuple(target))
+
+    def navigation_targets(self) -> list[dict]:
+        from . import navigation_targets
+        return navigation_targets.catalogue(self.win)
 
     def bindings(self):
         return getattr(self.win, "bindings", None)

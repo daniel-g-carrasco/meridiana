@@ -24,7 +24,7 @@ class PlaceSuggestion:
 
     @property
     def display(self) -> str:
-        return f"{self.name}, {self.province} · {self.source}"
+        return ", ".join(part for part in (self.name, self.province) if part)
 
 
 @lru_cache(maxsize=1)
@@ -59,14 +59,15 @@ def _fold(text: str) -> str:
 
 
 def search(text: str, choices, limit: int = 8) -> list[PlaceSuggestion]:
-    text = _fold(text.strip())
-    if len(text) < 2:
+    words = _fold(text.replace(",", " ").strip()).split()
+    if len(" ".join(words)) < 2:
         return []
+    text = " ".join(words)
     ranked = []
     for choice in choices:
         name = _fold(choice.name)
         where = f"{name} {_fold(choice.province)} {_fold(choice.region)}"
-        if text not in where:
+        if not all(word in where for word in words):
             continue
         score = (0 if choice.source == "project" else 1, 0 if name.startswith(text) else 1,
                  name.find(text) if text in name else 999, name)

@@ -17,6 +17,27 @@ class SaveStatus(unittest.TestCase):
     def setUp(self):
         self.win = _setup.window(self, capannone())
 
+    def test_save_as_mer_preserves_the_previous_path_on_failure_and_writes_an_archive_on_success(self):
+        import zipfile
+        from meridiana.model import Project
+        target = self.file.parent / "New project.MER"
+        old = self.win.path
+        previous_config = self.win.cfg.last_project
+        with mock.patch("meridiana.ui.window.QFileDialog.getSaveFileName", return_value=(str(target), "")), \
+                mock.patch.object(self.win.session, "save", side_effect=ValueError("resource exceeds limit")), \
+                mock.patch("meridiana.ui.window.QMessageBox.warning") as warning:
+            self.assertFalse(self.win._save_as())
+            warning.assert_called_once()
+        self.assertEqual(self.win.path, old)
+        self.assertEqual(self.win.cfg.last_project, previous_config)
+        self.assertFalse(target.exists())
+        with mock.patch("meridiana.ui.window.QFileDialog.getSaveFileName", return_value=(str(target), "")):
+            self.assertTrue(self.win._save_as())
+        self.assertEqual(self.win.path, target)
+        self.assertTrue(zipfile.is_zipfile(target))
+        project, _ = Project.load(target)
+        self.assertEqual(project.series_id, self.win.project.series_id)
+
     def test_ctrl_s_shows_activity_then_the_saved_time(self):
         original = self.win.session.save
 

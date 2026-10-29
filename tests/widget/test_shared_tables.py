@@ -53,14 +53,14 @@ class SharedTables(unittest.TestCase):
         theme = _setup.meridiana_look("light")
         controller, = shared_tables.install_data_tables(self.root, excluded=("project-tree", "checks-tree"))
         before = self.table.styleSheet()
-        dark = _setup.meridiana_look("dark")
+        _setup.meridiana_look("dark")
         self.app.processEvents()
         self.app.processEvents()
         self.assertNotEqual(before, self.table.styleSheet())
         self.assertIn(shared_tables.band_colour(self.app.palette()), self.table.styleSheet())
         self.assertIs(self.table.findChild(shared_tables.TableStyle), controller)
         theme.apply()
-        dark.deleteLater()
+        # _setup owns cached themes: deleting one leaves later modules a dead C++ wrapper.
 
 
 if __name__ == "__main__":

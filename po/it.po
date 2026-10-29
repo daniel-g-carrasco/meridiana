@@ -1131,14 +1131,12 @@ msgstr ""
 
 #: src/meridiana/checks.py:125
 msgid ""
-"A module in no string is connected to no inverter: in the real plant it "
-"produces nothing, while the production counts it as if it were connected. "
+"A module in no string is connected to no inverter and contributes no energy to the plant's production. "
 "Draw a string through it, or «Complete the strings»: Meridiana proposes "
 "strings for the modules left out on the free inputs, and yours stay as they "
 "are."
 msgstr ""
-"Un modulo fuori stringa non è collegato a nessun inverter: nell'impianto "
-"vero non produce, mentre la producibilità lo conta come se fosse collegato. "
+"Un modulo fuori stringa non è collegato a nessun inverter e non contribuisce alla producibilità dell'impianto. "
 "Disegna una stringa che lo comprenda, oppure «Completa le stringhe»: "
 "Meridiana propone stringhe per i moduli rimasti fuori sugli ingressi liberi, "
 "e le tue restano come sono."
@@ -17241,9 +17239,6 @@ msgstr "perimetro {p} m"
 msgid "area {a} m²"
 msgstr "area {a} m²"
 
-#~ msgid "Yes, propose it"
-#~ msgstr "Sì, proponimelo"
-
 #~ msgid ""
 #~ "The distributor decides; CEI 0-16 Tab. 4 indicates low voltage up to 100 "
 #~ "kW, medium voltage up to 6 MW for production, high voltage above 10 MW."
@@ -17260,37 +17255,11 @@ msgstr "area {a} m²"
 #~ "dell'impianto FV: il DM 37/2008 art. 5 c. 2 chiede il progetto di un "
 #~ "professionista oltre 6 kW."
 
-#~ msgid ""
-#~ "strings not alike on this input (PVsyst asks for identical strings on an "
-#~ "MPPT)"
-#~ msgstr ""
-#~ "stringhe diverse su questo ingresso (PVsyst chiede stringhe identiche su "
-#~ "un MPPT)"
-
 #, python-brace-format
 #~ msgid "{n} x {model}"
 #~ msgid_plural "{n} x {model}"
 #~ msgstr[0] "{n} modulo"
 #~ msgstr[1] "{n} moduli"
-
-#~ msgid ""
-#~ "As many inverters as the DC/AC ratio asks, all like the first of the "
-#~ "list; without one, Meridiana sizes one at that ratio"
-#~ msgstr ""
-#~ "Tanti inverter quanti ne chiede il rapporto DC/AC, tutti uguali al primo "
-#~ "dell'elenco; senza, Meridiana ne dimensiona uno a quel rapporto"
-
-#, python-brace-format
-#~ msgid "Inverter sized: {n} x {maker} {model}, DC/AC {r}."
-#~ msgid_plural "Inverters sized: {n} x {maker} {model}, DC/AC {r}."
-#~ msgstr[0] "Inverter dimensionato: {n} x {maker} {model}, DC/AC {r}."
-#~ msgstr[1] "Inverter dimensionati: {n} x {maker} {model}, DC/AC {r}."
-
-#~ msgid "Delete all"
-#~ msgstr "Elimina tutte"
-
-#~ msgid "Components"
-#~ msgstr "Componenti"
 
 #~ msgid ""
 #~ "On the design day, between those solar hours, no row shades the next one: "
@@ -17969,3 +17938,88 @@ msgid "The project is saved, but some job files could not be updated: {errors}"
 msgstr ""
 "Il progetto è salvato, ma alcuni file delle commesse non si sono potuti "
 "aggiornare: {errors}"
+
+msgid "Latitude, longitude: 45.5226, 9.0300. Paste coordinates or a full map link above, or paste both coordinates into Latitude."
+msgstr "Latitudine, longitudine: 45.5226, 9.0300. Incolla coordinate o un collegamento completo nel campo sopra, oppure entrambe le coordinate in Latitudine."
+
+msgid "Reserved project"
+msgstr "Progetto riservato"
+
+msgid "Names and addresses never leave this PC."
+msgstr "Nomi e indirizzi rimangono su questo PC."
+
+msgid "Allow online map tiles for this project"
+msgstr "Consenti le mappe online per questo progetto"
+
+msgid "The area shown is sent to the map provider. For reserved projects only, with this explicit consent."
+msgstr "L'area visualizzata viene inviata al fornitore della mappa. Nei progetti riservati serve questo consenso esplicito."
+
+msgid "Enable Optional project data to edit these fields."
+msgstr "Attiva Dati facoltativi del progetto per compilare questi campi."
+
+msgid "Working inverter"
+msgstr "Inverter di lavoro"
+
+msgid "Choose the inverter whose inputs and strings you want to work on"
+msgstr "Scegli l'inverter su cui lavorare con ingressi e stringhe"
+
+msgid "All inverters"
+msgstr "Tutti gli inverter"
+
+msgid "The following commands apply to the whole plant."
+msgstr "I comandi seguenti si applicano all'intero impianto."
+
+msgid "Manage all inverters"
+msgstr "Gestisci tutti gli inverter"
+
+msgid "Show the plant's inverter models, quantities and power optimizers"
+msgstr "Mostra modelli, quantità e ottimizzatori degli inverter dell'impianto"
+
+msgid "The inverters are being checked…"
+msgstr "Verifica degli inverter in corso…"
+
+msgid "{name}\n{kw} kW AC · {n} inputs · {strings}"
+msgstr "{name}\n{kw} kW AC · {n} ingressi · {strings}"
+
+msgid "Whole plant: {summary}"
+msgstr "Intero impianto: {summary}"
+
+msgid "Right panels"
+msgstr "Pannelli sul bordo destro"
+
+msgid "Bottom panels"
+msgstr "Pannelli sul bordo inferiore"
+
+msgid "Suggestions"
+msgstr "Suggerimenti"
+
+msgid "Show or hide suggestions. Keys: 1, 2, 3."
+msgstr "Mostra o nascondi i suggerimenti. Tasti: 1, 2, 3."
+
+msgid "Send message"
+msgstr "Invia messaggio"
+
+msgid "A .mer file with the project and its resources."
+msgstr "Un file .mer con il progetto e le sue risorse."
+
+
+msgid "Online map tiles"
+msgstr "Tasselli cartografici online"
+
+msgid "Report profile"
+msgstr "Profilo della relazione"
+
+msgid "Weather and PVGIS estimate"
+msgstr "Dati meteo e stima PVGIS"
+
+msgid "Only modules connected to an existing inverter input contribute to production; unconnected modules produce zero."
+msgstr "Alla producibilità contribuiscono solo i moduli collegati a un ingresso di un inverter presente; i moduli scollegati producono zero."
+
+msgid "No connected modules"
+msgstr "Nessun modulo collegato"
+
+msgid "Connected modules' nominal energy at STC efficiency"
+msgstr "Energia nominale dei moduli collegati al rendimento STC"
+
+msgid "connected modules"
+msgstr "moduli collegati"

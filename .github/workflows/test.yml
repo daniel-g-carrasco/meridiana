@@ -185,7 +185,7 @@ jobs:
           $p = Start-Process $setup -ArgumentList $opts -Wait -PassThru
           if ($p.ExitCode -ne 0) { Write-Error "install: $($p.ExitCode)"; exit 1 }
           $open = (Get-ItemProperty 'HKCU:\Software\Classes\Meridiana.Project\shell\open\command').'(default)'
-          if ($open -notlike '*Meridiana.exe*%1*') { Write-Error "the .meridiana files are not associated: $open"; exit 1 }
+          if ($open -notlike '*Meridiana.exe*%1*') { Write-Error "the .mer files are not associated: $open"; exit 1 }
           Start-Process "$env:LOCALAPPDATA\Programs\Meridiana\Meridiana.exe"
           Start-Sleep 20
           if (-not (Get-Process Meridiana -ErrorAction SilentlyContinue)) { Write-Error 'the program did not start'; exit 1 }

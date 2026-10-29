@@ -28,8 +28,12 @@ def slot(state_dir: Path, project_path: Path | None) -> Path:
 
 
 def write(state_dir: Path, project_path: Path | None, data: dict) -> Path:
+    from . import model, portability
+    project = model.Project.from_json(data)
+    portability.embed(project, project_path or Path("untitled.mer"))
     path = slot(state_dir, project_path)
-    atomic.write_json(path, {"path": str(project_path) if project_path else "", "saved": time.time(), "project": data},
+    atomic.write_json(path, {"path": str(project_path) if project_path else "", "saved": time.time(),
+                             "project": project.to_json()},
                       keep_backup=False)
     return path
 

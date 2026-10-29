@@ -1,0 +1,65 @@
+name: Flatpak build
+
+# An installable bundle and its smoke-test report only. Publication and release signing are separate actions.
+on:
+  workflow_dispatch:
+  push:
+    branches: ['**']
+    paths:
+      - 'build-aux/flatpak/**'
+      - '.github/workflows/flatpak-build.yml'
+      - 'requirements.txt'
+  pull_request:
+    paths:
+      - 'build-aux/flatpak/**'
+      - '.github/workflows/flatpak-build.yml'
+      - 'requirements.txt'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flatpak-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flatpak:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      MANIFEST: build-aux/flatpak/io.github.daniel_g_carrasco.meridiana.yaml
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1, shared with test.yml
+        with:
+          persist-credentials: false
+      - name: Install the build tools and KDE runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y flatpak flatpak-builder
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive flathub org.kde.Platform//6.11 org.kde.Sdk//6.11 io.qt.PySide.BaseApp//6.11
+      - name: Build without installing the app
+        run: |
+          flatpak-builder --user --disable-rofiles-fuse --ccache=false --repo=repo \
+            --state-dir=flatpak-state build-dir "$MANIFEST"
+      - name: Check the packaged program offscreen
+        run: |
+          mkdir smoke
+          flatpak-builder --run --state-dir=flatpak-state --env=QT_QPA_PLATFORM=offscreen \
+            --filesystem="$PWD/smoke" build-dir "$MANIFEST" \
+            sh -c 'meridiana --self-test "$1/self-test.txt"' sh "$PWD/smoke"
+      - name: Create the installable bundle and checksum
+        run: |
+          flatpak build-bundle repo meridiana-linux-x86_64.flatpak io.github.daniel_g_carrasco.meridiana stable \
+            --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+          sha256sum meridiana-linux-x86_64.flatpak > meridiana-linux-x86_64.flatpak.sha256
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2, shared with test.yml
+        if: always()
+        with:
+          name: meridiana-flatpak-x86_64
+          path: |
+            meridiana-linux-x86_64.flatpak
+            meridiana-linux-x86_64.flatpak.sha256
+            smoke/self-test.txt
+          if-no-files-found: error

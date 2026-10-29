@@ -43,7 +43,7 @@ class Pipeline(unittest.TestCase):
                 mock.patch.object(checks, "count_out_of_shadows", wraps=checks.count_out_of_shadows) as counted:
             out = pipeline.compute(p, results, self.cache, fetch=False)
         self.assertIsNone(out.error_sim)
-        self.assertGreater(out.sim.energy_kwh, 1000)
+        self.assertEqual(out.sim.energy_kwh, 0)
         self.assertGreater(out.load.annual_kwh, 0)
         self.assertIn("npv", out.econ.kpi)
         self.assertIn("error", out.strings)                     # an inverter sized by itself: no window to check
@@ -51,10 +51,10 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(len(out.plant.left), sum(a["modules"] for a in out.sim.arrays))
         self.assertEqual(out.context.production_kwh, out.sim.energy_kwh)
         self.assertEqual(out.battery_kwh, 0.0)
-        self.assertTrue(out.notes)                              # PVGIS's second opinion needs the network
-        # the cost today: one simulation (no strings, hence no second one) and a layout out of the shadows for
+        self.assertTrue(out.notes)                              # unconnected modules are explicitly reported
+        # potential temperature pass, then connected generation, and a layout out of the shadows for
         # each sub-field shaded beyond the threshold (none on a roof without obstacles)
-        self.assertEqual(sim.call_count, 1)
+        self.assertEqual(sim.call_count, 2)
         shaded = [a for a in out.sim.arrays if float(a.get("obstacle_shading") or 0.0) > checks.OBSTACLE_SHADE]
         self.assertEqual(counted.call_count, len(shaded))
         self.assertEqual(out.shade_free_counts, {})
@@ -83,8 +83,8 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(out.strings["t_cell_max"], out.plant.t_cell_max)
         self.assertTrue(all(slot.plan is not None for slot in out.plant.inputs.values() if slot.used))
         # the chimney shades the array: the strings laid give the shade its electrical effect, applied on the
-        # first pass of the one simulation (not a second one: task 18c, step 3)
-        self.assertEqual(sim.call_count, 1)
+        # connected-generation pass; unassigned modules contribute zero
+        self.assertEqual(sim.call_count, 2)
         self.assertEqual(again.call_count, 1)
         self.assertEqual(set(again.call_args[0][1]), {"s1.0"})
         self.assertIs(again.call_args[0][0].parts, out.sim.parts)       # the year with the strings, from the first pass
@@ -162,7 +162,7 @@ class PipelineSteps(unittest.TestCase):
         told = []
         out = pipeline.compute(p, results, cache, False, lambda done, total, what: told.append((done, total, what)))
         self.assertIsNotNone(out.sim)
-        self.assertEqual([d for d, _t, _w in told], [0, 1, 2, 3])      # one array: one request to PVcalc
+        self.assertEqual([d for d, _t, _w in told], [0, 1, 2])         # no connected modules: no request to PVcalc
         self.assertTrue(all(t == pipeline.STEPS for _d, t, _w in told))
         self.assertEqual(told[1][2], "the horizon")
 

@@ -140,7 +140,7 @@ def _angles(text: str) -> CoordinateReading:
         r"([+-]?\d+(?:[.,]\d+)?)°\s*(?:(\d+(?:[.,]\d+)?)'\s*(?:(\d+(?:[.,]\d+)?)\"\s*)?)?([NSEW])",
         re.IGNORECASE)
     matches = list(pattern.finditer(normalized))
-    rest = pattern.sub("", normalized).strip()
+    rest = pattern.sub("", normalized).strip(" ,;\t\r\n")
     if len(matches) != 2 or rest:
         if not re.search(r"[NSEW]", normalized, re.IGNORECASE):
             raise CoordinateError("declare the hemisphere N/S for latitude and E/W for longitude")
@@ -172,10 +172,13 @@ def _link(text: str) -> CoordinateReading:
     host = url.hostname or ""
     query = parse_qs(url.query)
     candidate = ""
-    if "mlat" in query and "mlon" in query:
+    pin = re.search(r"!3d([+-]?\d+(?:\.\d+)?)!4d([+-]?\d+(?:\.\d+)?)", unquote(url.path))
+    if pin and (host == "google.com" or host.endswith(".google.com") or host.startswith("www.google.")):
+        candidate = pin.group(1) + "," + pin.group(2)
+    elif "mlat" in query and "mlon" in query:
         candidate = query["mlat"][0] + "," + query["mlon"][0]
     else:
-        for key in ("query", "q", "ll"):
+        for key in ("query", "q", "ll", "destination"):
             if key in query:
                 candidate = query[key][0]
                 break

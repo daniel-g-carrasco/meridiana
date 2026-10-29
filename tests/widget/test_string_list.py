@@ -11,7 +11,7 @@ import _setup
 setUpModule = _setup.keep_global_state          # what the module changes of the process, put back after it
 
 
-def plant_of(runs):
+def plant_of(runs, count=1):
     """A plant of one inverter with two inputs (energy/plant.build) with the strings `runs` on three rows of eight."""
     from _fixtures import inverter_record
 
@@ -19,7 +19,7 @@ def plant_of(runs):
     from meridiana.energy import plant
     from meridiana.energy.components import ModuleSpec
     p = model.Project(name="Prova")
-    p.energy = {"inverters": [{"record": inverter_record(), "count": 1, "name": ""}],
+    p.energy = {"inverters": [{"record": inverter_record(), "count": count, "name": ""}],
                 "strings": {"runs": runs}}
     placed = []
     for r in range(3):
@@ -136,6 +136,126 @@ class TheList(unittest.TestCase):
         self.assertEqual((lst.current(), got), (0, []))
         lst.choose(-1)
         self.assertEqual(lst.current(), -1)
+
+    def test_a_string_whose_inverter_was_removed_remains_available_for_correction(self):
+        broken = plant_of([{"inverter": 99, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]}])
+        self.list.show_plant(broken, [], {})
+        self.assertIn(0, self.list.rows)
+        self.list.choose(0)
+        self.assertEqual(self.list.current(), 0)
+
+    def test_larger_text_keeps_the_last_input_row_inside_the_list(self):
+        larger = self.list.font()
+        larger.setPixelSize(20)
+        self.list.setFont(larger)
+        self.app.processEvents()
+        last = self.list.topLevelItem(1).child(1)
+        self.assertLessEqual(self.list.visualItemRect(last).bottom(), self.list.viewport().height())
+
+
+class WorkingInverter(unittest.TestCase):
+    """A physical inverter is the workspace; changing it must never edit or renumber the plant."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.app = _setup.qt_or_skip()
+        _setup.meridiana_look()
+
+    def setUp(self):
+        from PySide6.QtGui import QAction
+        from _fixtures import inverter_record
+
+        from meridiana import model
+        from meridiana.ui.plant_page import PlantInspector
+        from meridiana.ui.style import pad_fields
+        self.actions = {key: QAction(key) for key in
+                        ("inverter_catalog", "inverter_auto", "strings_auto", "strings_complete", "strings_clear")}
+        self.panel = PlantInspector(self.actions)
+        self.addCleanup(self.panel.deleteLater)
+        self.project = model.Project(name="Prova")
+        self.project.energy = {"inverters": [{"record": inverter_record(), "count": 3, "name": ""}]}
+        self.plant = plant_of([
+            {"inverter": 1, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]},
+            {"inverter": 2, "mppt": 2, "modules": [f"s1/1:{s}" for s in range(8)]},
+        ], count=3)
+        self.panel.show_plant(self.project, self.plant)
+        pad_fields(self.panel)
+        self.panel.resize(320, 800)
+        self.panel.show()
+        self.app.processEvents()
+
+    def test_default_workspace_shows_one_inverter_with_every_input_including_free_ones(self):
+        self.assertEqual(set(self.panel.list.input_heads), {(1, 1), (1, 2)})
+        self.assertEqual(set(self.panel.list.rows), {0})
+        self.assertEqual(self.panel.working_inverter.currentData(), 1)
+        self.assertEqual([self.panel.working_inverter.itemData(i) for i in range(3)], [1, 2, 3])
+        self.assertTrue(self.panel.inverters_group.isHidden())
+        self.panel.manage_inverters.click()
+        self.assertFalse(self.panel.inverters_group.isHidden())
+        self.assertEqual(self.panel.entry_rows[0][1].value(), 3)
+
+    def test_choosing_a_workspace_keeps_global_string_indices_and_the_new_string_target(self):
+        changes, targets, choices = [], [], []
+        self.panel.edited.connect(lambda *args: changes.append(args))
+        self.panel.list.newString.connect(lambda *args: targets.append(args))
+        self.panel.stringChosen.connect(choices.append)
+        self.panel.list.choose(0)
+        self.panel.working_inverter.setCurrentIndex(1)
+        self.assertEqual(set(self.panel.list.input_heads), {(2, 1), (2, 2)})
+        self.assertEqual(set(self.panel.list.rows), {1})
+        self.panel.list.adders[(2, 1)].click()
+        self.assertEqual(targets, [(2, 1)])
+        self.assertEqual(changes, [])
+        self.assertEqual(choices, [-1])
+        self.assertEqual([s.inverter for s in self.plant.strings], [1, 2])
+
+    def test_plan_choice_switches_workspace_without_emitting_a_selection_back(self):
+        choices = []
+        self.panel.stringChosen.connect(choices.append)
+        self.panel.show_string(self.plant, 1)
+        self.panel.list.choose(1)
+        self.assertEqual(self.panel.working_inverter.currentData(), 2)
+        self.assertEqual(self.panel.list.current(), 1)
+        self.assertEqual(choices, [])
+        self.panel.show_plant(self.project, self.plant, chosen=1)
+        self.assertEqual(self.panel.working_inverter.currentData(), 2)
+
+    def test_draw_uses_the_working_inverter_unless_a_string_is_explicitly_chosen(self):
+        from types import SimpleNamespace
+        from meridiana.ui.window import MainWindow
+
+        self.panel.working_inverter.setCurrentIndex(1)
+        host = SimpleNamespace(plant_state=self.plant, chosen_string=-1, plant_inspector=self.panel)
+        before = [(s.inverter, s.mppt) for s in self.plant.strings]
+        self.assertEqual(MainWindow._input_for_new_string(host), (2, 1))
+        host.chosen_string = 0
+        self.assertEqual(MainWindow._input_for_new_string(host), (1, 1))
+        self.assertEqual([(s.inverter, s.mppt) for s in self.plant.strings], before)
+
+    def test_refresh_preserves_workspace_and_falls_back_when_its_unit_is_removed(self):
+        self.panel.working_inverter.setCurrentIndex(2)
+        self.panel.show_plant(self.project, self.plant)
+        self.assertEqual(self.panel.working_inverter.currentData(), 3)
+        self.panel.show_plant(self.project, None)
+        self.panel.show_plant(self.project, self.plant)
+        self.assertEqual(self.panel.working_inverter.currentData(), 3)
+        smaller = plant_of([], count=1)
+        self.panel.show_plant(self.project, smaller)
+        self.assertEqual(self.panel.working_inverter.currentData(), 1)
+        self.assertEqual(set(self.panel.list.input_heads), {(1, 1), (1, 2)})
+
+    def test_automatic_commands_still_use_the_original_plant_actions(self):
+        calls = []
+        self.panel.working_inverter.setCurrentIndex(1)
+        for key in ("strings_auto", "strings_complete", "strings_clear"):
+            self.actions[key].triggered.connect(lambda _checked=False, k=key: calls.append(k))
+            self.panel.string_buttons[key].click()
+        self.assertEqual(calls, ["strings_auto", "strings_complete", "strings_clear"])
+
+    def test_narrow_inspector_keeps_the_workspace_and_manage_button_inside_the_viewport(self):
+        self.panel.resize(240, 800)
+        self.app.processEvents()
+        self.assertLessEqual(self.panel.widget().width(), self.panel.viewport().width())
 
 
 if __name__ == "__main__":

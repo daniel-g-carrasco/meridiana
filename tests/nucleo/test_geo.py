@@ -125,6 +125,18 @@ class CoordinateReader(unittest.TestCase):
                 self.assertAlmostEqual(point.lon, 9.03, places=9)
                 self.assertEqual(point.format, "link")
 
+    def test_google_degrees_with_a_comma_between_axes_and_pin_links(self):
+        samples = (
+            '45°31\'21.36"N, 9°01\'48.00"E',
+            "https://www.google.com/maps/place/Rho/@45.5,9.0,14z/data=!4m2!3m1!1s0x0!3d45.5226!4d9.03",
+            "https://www.google.com/maps?destination=45.5226%2C9.03",
+        )
+        for text in samples:
+            with self.subTest(text=text):
+                point = geo.read_coordinates(text)
+                self.assertAlmostEqual(point.lat, 45.5226, places=8)
+                self.assertAlmostEqual(point.lon, 9.03, places=8)
+
     def test_utm_wgs84_ed50_and_gauss_boaga_with_their_datums(self):
         point = geo.read_coordinates("UTM WGS84 33N 288734.086 4644522.480")
         self.assert_monte_mario(point, metres=0.01)

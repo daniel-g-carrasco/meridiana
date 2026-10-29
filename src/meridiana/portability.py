@@ -21,7 +21,17 @@ def _encoded(data: bytes) -> str:
 
 
 def _decoded(raw: str) -> bytes:
+    if len(raw) > 4 * ((RESOURCE_LIMIT + 2) // 3):
+        raise ValueError(f"an embedded resource is larger than {RESOURCE_LIMIT >> 20} MB")
     data = base64.b64decode(raw.encode("ascii"), validate=True)
+    if len(data) > RESOURCE_LIMIT:
+        raise ValueError(f"an embedded resource is larger than {RESOURCE_LIMIT >> 20} MB")
+    return data
+
+
+def _read_resource(path: Path) -> bytes:
+    with path.open("rb") as source:
+        data = source.read(RESOURCE_LIMIT + 1)
     if len(data) > RESOURCE_LIMIT:
         raise ValueError(f"an embedded resource is larger than {RESOURCE_LIMIT >> 20} MB")
     return data
@@ -48,7 +58,7 @@ def _embedded_profile(profile: dict | None) -> dict | None:
     if logo:
         path = Path(logo)
         clean["logo_name"] = path.name
-        clean["logo_data"] = _encoded(path.read_bytes())
+        clean["logo_data"] = _encoded(_read_resource(path))
     return clean
 
 
@@ -65,13 +75,14 @@ def embed(project, path: Path, cache_dir: Path | None = None, report_profile: di
             item["data"] = existing[item["path"]]
         if not item.get("data"):
             try:
-                item["data"] = _encoded(Path(item["path"]).read_bytes())
+                item["data"] = _encoded(_read_resource(Path(item["path"])))
             except OSError:
                 pass
         attachments.append(item)
     if project.report.get("attachments") is not None:
         project.report["attachments"] = attachments
-    resources["report_profile"] = _embedded_profile(report_profile)
+    if report_profile is not None:
+        resources["report_profile"] = _embedded_profile(report_profile)
     if cache_dir is not None:
         weather = dict(getattr(project, "climate", {}) or resources.get("weather") or {})
         typical = meteo._cache_file(Path(cache_dir), "tmy", project.site.lat, project.site.lon)

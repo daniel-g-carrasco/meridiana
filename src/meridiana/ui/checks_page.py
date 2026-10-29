@@ -13,10 +13,10 @@ apply can be copied for the technical report."""
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import (QActionGroup, QBrush, QColor, QFont, QFontMetrics, QGuiApplication, QIcon, QPainter,
+from PySide6.QtGui import (QActionGroup, QBrush, QColor, QFont, QFontMetrics, QGuiApplication, QPainter,
                            QPainterPath, QPalette, QPen)
 from PySide6.QtWidgets import (QAbstractItemView, QFrame, QHBoxLayout, QHeaderView, QLabel, QMenu, QPushButton,
-                               QSizePolicy, QStyle, QStyleOptionToolButton, QStyleOptionViewItem, QStylePainter,
+                               QSizePolicy, QStyle, QStyleOptionToolButton, QStyleOptionViewItem,
                                QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from .. import checks, theme_colors
@@ -360,10 +360,8 @@ class ChecksTree(QTreeWidget):
 
 
 class CountChip(QToolButton):
-    """A count of the head (R130): its mark at the left, its number at the right, the same room on both sides and
-    the same width for the four; pressed while its level is among those shown (Daniel, 24/10/2026: «uno deve stare
-    a destra e l'altro a sinistra, e se ne seleziono uno non rimane schiacciato visibilmente»). The pill is the
-    sheet's (Button.CHIP); the mark and the number are drawn here."""
+    """The head's level filter: the same quiet status pill as the tree, at the 24 px interactive size.
+    Its state stays visible while its level is selected; two digit slots keep the four filters equal."""
 
     def __init__(self, level: str):
         super().__init__()
@@ -373,29 +371,25 @@ class CountChip(QToolButton):
         self.setCheckable(True)
         self.setAutoRaise(True)
         self.setIcon(mark_icon(level))
-        t = default_tokens()
-        self.ink = {"text": t["text"], "muted": t["muted"], "on": t["select_fg"]}
 
     def sizeHint(self) -> QSize:
-        from .design import Icon, Size, Space
-        digits = QFontMetrics(self.font()).horizontalAdvance(self.text() if len(self.text()) > 2 else "88")
-        return QSize(Space.M + 1 + Icon.CONTROL + Space.S + digits + Space.M + 1, Size.CHIP)
+        from . import status_pill
+        from .design import Size, Text, text_font
+        return status_pill.size_hint(self.text(), text_font(Text.LABEL, self.font()), Size.CHIP, reserve="88")
 
     def minimumSizeHint(self) -> QSize:
         return self.sizeHint()
 
     def paintEvent(self, event) -> None:
-        from .design import Icon, Space
-        p = QStylePainter(self)
+        from . import status_pill
+        from .design import Text, text_font
+        p = QPainter(self)
         opt = QStyleOptionToolButton()
         self.initStyleOption(opt)
-        opt.text, opt.icon = "", QIcon()
-        p.drawComplexControl(QStyle.ComplexControl.CC_ToolButton, opt)
-        r, size, side = self.rect(), Icon.CONTROL, Space.M + 1
-        self.icon().paint(p, QRect(side, (r.height() - size) // 2, size, size))
-        p.setPen(QColor(self.ink["on"] if self.isChecked() else self.ink["text"] if self.isEnabled()
-                        else self.ink["muted"]))
-        p.drawText(r.adjusted(0, 0, -side, 0), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, self.text())
+        status_pill.paint(p, QRectF(self.rect()), self.level, self.text(), text_font(Text.LABEL, self.font()),
+                          opt.palette, checked=self.isChecked(), hovered=bool(opt.state & QStyle.StateFlag.State_MouseOver),
+                          focused=bool(opt.state & QStyle.StateFlag.State_HasFocus), pressed=self.isDown(),
+                          enabled=self.isEnabled())
 
 
 class ChecksPage(QWidget):
@@ -595,7 +589,6 @@ class ChecksPage(QWidget):
     def set_colours(self, t: dict) -> None:
         """The theme's colours for the cards of the items (F2) and the counts' ink."""
         for b in self.counts.values():
-            b.ink = {"text": t["text"], "muted": t["muted"], "on": t["select_fg"]}
             b.update()
         # the cards of the items stand apart from the panel in both themes: in the dark one the card is the panel,
         # so a veil of white lifts them, and their line is the full one (Daniel, 24/10/2026: «non si intuiscono i

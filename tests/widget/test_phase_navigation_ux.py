@@ -155,3 +155,12 @@ class PhaseNavigationUX(unittest.TestCase):
                     with self.subTest(mode=mode, number=number, scale=scale):
                         self.assertAlmostEqual((min(xs) + max(xs) + 1) / (2 * scale), cx, delta=0.5 / scale + 0.01)
                         self.assertAlmostEqual((min(ys) + max(ys) + 1) / (2 * scale), cy, delta=0.5 / scale + 0.01)
+
+    def test_phase_digits_stay_centred_with_small_and_large_text(self):
+        from meridiana.ui import design
+        original = design.text_size()
+        self.addCleanup(design.set_text_size, original)
+        for choice in ("small", "large"):
+            design.set_text_size(choice)
+            with self.subTest(text_size=choice):
+                self.test_phase_digits_are_centred_on_their_visible_ink_at_every_density()

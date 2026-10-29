@@ -32,17 +32,23 @@ class ReservedNewProject(unittest.TestCase):
 
     def test_reserved_map_and_search_stay_offline_until_their_own_gestures(self):
         self.page.show()
+        self.page.optional.setChecked(True)
         self.page.reserved.setChecked(True)
-        self.assertTrue(self.page.preview.loader.offline)
-        self.page.preview.tile_timer.start.assert_not_called()
-        self.page.query.setText("Via Roma 1, Rho")
-        self.page.search.click()
-        self.page.send.assert_not_called()
-        self.page.maps_consent.setChecked(True)
-        self.assertFalse(self.page.preview.loader.offline)
-        self.page.preview.tile_timer.start.assert_called_once()
-        self.page.search.click()
-        self.page.send.assert_not_called()
+        with mock.patch.object(self.page.preview.loader.net, "get") as get:
+            self.assertTrue(self.page.preview.loader.offline)
+            self.page.query.setText("Via Roma 1, Rho")
+            self.page.search.click()
+            self.page.preview._update_tiles()
+            self.page.send.assert_not_called()
+            get.assert_not_called()
+            self.page.maps_consent.setChecked(True)
+            self.assertTrue(self.page.preview.loader.offline)  # no point to send yet
+            self.page.query.setText("45.5226, 9.03")
+            self.page.preview._update_tiles()
+            self.assertFalse(self.page.preview.loader.offline)
+            get.assert_called()
+            self.page.search.click()
+            self.page.send.assert_not_called()
 
     def test_selecting_a_reserved_job_stops_online_search_and_tiles_before_create(self):
         client = self.registry.create_client("Example client")

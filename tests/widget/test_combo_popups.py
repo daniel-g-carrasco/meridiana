@@ -63,6 +63,13 @@ class ComboPopupTests(unittest.TestCase):
     def test_four_choices_are_fully_visible_after_the_combo_gets_focus(self):
         self.assert_all_rows_fit(self.open_choices())
 
+    def test_a_stretched_settings_field_opens_a_compact_list_with_all_choices(self):
+        self.host.resize(1400, 60)
+        view = self.open_choices()
+        self.assertLessEqual(view.window().width(), 360)
+        self.assertGreaterEqual(view.viewport().width(), view.sizeHintForColumn(0))
+        self.assert_all_rows_fit(view)
+
     def test_bottom_of_last_choice_is_clickable_without_scrolling(self):
         view = self.open_choices()
         rect = view.visualRect(self.combo.model().index(3, 0))

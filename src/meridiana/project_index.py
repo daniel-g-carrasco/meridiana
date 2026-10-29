@@ -8,7 +8,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import model
+from . import model, project_archive
 
 _REVISION = re.compile(r"_R(\d+)$", re.IGNORECASE)
 
@@ -59,14 +59,14 @@ def _power(project: model.Project) -> float:
 
 
 def read(path: Path, metadata: dict | None = None) -> dict:
-    """Read only the searchable facts of one project, never its embedded resources or report."""
+    """Read searchable facts. Archive metadata is checked here; opening checks all binary resource hashes."""
     path = _path(path)
     fingerprint = _fingerprint(path)
     row = _base(path, fingerprint, metadata)
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = project_archive.read_document(path, include_assets=False)
     except (OSError, UnicodeError, ValueError) as error:
-        return {**row, "error": f"JSON could not be read: {error}"}
+        return {**row, "error": f"Project could not be read: {error}"}
     try:
         project = model.Project.from_json(data)
     except (ValueError, TypeError, KeyError, IndexError) as error:
@@ -98,7 +98,8 @@ def scan(folders, known: dict | None = None) -> list[dict]:
     for folder, metadata in folders:
         folder = _path(folder)
         try:
-            files = (folder,) if folder.suffix.casefold() == ".meridiana" else folder.rglob("*.meridiana")
+            files = ((folder,) if folder.suffix.casefold() in (".mer", ".meridiana") else
+                     (p for p in folder.rglob("*") if p.suffix.casefold() in (".mer", ".meridiana") and p.is_file()))
             for path in files:
                 path = _path(path)
                 try:

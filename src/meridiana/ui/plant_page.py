@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import html
 
-from PySide6.QtCore import QPoint, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QEvent, QPoint, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFontMetrics, QIcon, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QFrame, QGroupBox, QHBoxLayout, QLabel, QPushButton,
                                QScrollArea, QSizePolicy, QSpinBox, QToolButton, QTreeWidget, QTreeWidgetItem,
@@ -279,8 +279,9 @@ class PlantPage(QWidget):
 
 
 class PlantInspector(QScrollArea):
-    """The right panel in the Plant phase (design C10; R119: the whole management of the inverters is here): the
-    inverters with their count and optimizers, added from the catalogue or sized; the strings by inverter and input
+    """The right panel in the Plant phase (design C10; R119): one physical inverter chosen as the workspace,
+    with all its inputs and strings; the full plant's models, quantities and optimizers in a separate area.
+    The strings by inverter and input
     (StringList: chosen, drawn, deleted) with Meridiana's proposal and its completion when asked; the rules of the
     proposal and the conditions of the checks; the string chosen with its checks; the inverter and the input of the
     sub-field selected, for the proposal."""
@@ -305,7 +306,21 @@ class PlantInspector(QScrollArea):
         page = QWidget()
         box = QVBoxLayout(page)
         box.setSpacing(8)
-        inv = Group(_("Inverters"))
+        working = Group(_("Working inverter"))
+        work_box = QVBoxLayout(working)
+        self.working_inverter = QComboBox()
+        self.working_inverter.setAccessibleName(_("Working inverter"))
+        self.working_inverter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.working_inverter.setMinimumContentsLength(12)
+        self.working_inverter.setToolTip(_("Choose the inverter whose inputs and strings you want to work on"))
+        self.working_inverter.currentIndexChanged.connect(self._working_changed)
+        work_box.addWidget(self.working_inverter)
+        self.working_summary = QLabel()
+        self.working_summary.setWordWrap(True)
+        work_box.addWidget(self.working_summary)
+        box.addWidget(working)
+
+        inv = self.inverters_group = Group(_("All inverters"))
         inv_box = QVBoxLayout(inv)
         self.describe = QLabel("")
         self.describe.setWordWrap(True)
@@ -328,7 +343,7 @@ class PlantInspector(QScrollArea):
         self.clip_scale = ClipScale()                       # the ratio on its scale of the energy cut (R62)
         form.addRow(self.clip_scale)
         inv_box.addLayout(form)
-        box.addWidget(inv)
+        inv.hide()
 
         # the strings (R115): the list by inverter and input, and what Meridiana does only when asked
         self.strings_group = Group(_("Strings"))
@@ -339,7 +354,12 @@ class PlantInspector(QScrollArea):
         sbox.addWidget(self.state)
         self.list = StringList()
         self.list.chosen.connect(lambda i: self.stringChosen.emit(i) if not self.loading else None)
+        self.list.unitChanged.connect(self._working_shown)
         sbox.addWidget(self.list)
+        scope = QLabel(_("The following commands apply to the whole plant."))
+        scope.setWordWrap(True)
+        scope.setStyleSheet("color: palette(placeholder-text);")
+        sbox.addWidget(scope)
         self.string_buttons = {}
         for cid in ("strings_auto", "strings_complete", "strings_clear"):      # one under the other: a narrow panel
             b = QPushButton(shortcuts.plain(actions[cid].text()))
@@ -351,6 +371,13 @@ class PlantInspector(QScrollArea):
             sbox.addWidget(b)
             self.string_buttons[cid] = b
         box.addWidget(self.strings_group)
+
+        self.manage_inverters = QPushButton(_("Manage all inverters"))
+        self.manage_inverters.setCheckable(True)
+        self.manage_inverters.setToolTip(_("Show the plant's inverter models, quantities and power optimizers"))
+        self.manage_inverters.toggled.connect(inv.setVisible)
+        box.addWidget(self.manage_inverters)
+        box.addWidget(inv)
 
         # the rules of the next proposal and the conditions of the checks
         rules = Group(_("Proposal and checks"))
@@ -425,6 +452,44 @@ class PlantInspector(QScrollArea):
         mppt = int(self.sub_input.currentData() or 0) if inv else 0
         self.assigned.emit(self.subfield, inv, mppt)
 
+    def _working_changed(self, _index: int) -> None:
+        """The workspace changes the view only; commands keep their existing plant-wide scope."""
+        if self.loading:
+            return
+        if self.list.current() >= 0:
+            self.stringChosen.emit(-1)
+        self.list.set_unit(int(self.working_inverter.currentData() or 0))
+
+    def _working_shown(self, unit: int) -> None:
+        """A string selected on the plan brings its physical inverter into the workspace."""
+        blocked = self.working_inverter.blockSignals(True)
+        try:
+            self.working_inverter.setCurrentIndex(self.working_inverter.findData(unit))
+        finally:
+            self.working_inverter.blockSignals(blocked)
+        plant = self.list.plant
+        found = next((u for u in plant.units if u.number == unit), None) if plant is not None else None
+        if found is None:
+            self.working_summary.setText(_("The inverters are being checked…"))
+            return
+        count = sum(1 for s in plant.strings if s.inverter == unit)
+        self.working_summary.setText(_("{name}\n{kw} kW AC · {n} inputs · {strings}").format(
+            name=found.name, kw=number(found.spec.pac / 1000, 1), n=found.inputs,
+            strings=ngettext("{n} string", "{n} strings", count).format(n=count)))
+
+    def _working_units(self, plant) -> None:
+        """Keep a physical unit's number across recalculations, including the pending calculation."""
+        if plant is None:
+            self.working_inverter.setEnabled(False)
+            self.working_summary.setText(_("The inverters are being checked…"))
+            return
+        unit = self.list.working_unit
+        self.working_inverter.clear()
+        for u in plant.units:
+            self.working_inverter.addItem(f"{plant_model.unit_label(u)} · {u.name}", u.number)
+        self.working_inverter.setCurrentIndex(max(0, self.working_inverter.findData(unit)))
+        self.working_inverter.setEnabled(bool(plant.units))
+
     def show_string(self, plant, index: int) -> None:
         """The checks of string `index` of `plant` (hidden when none is chosen): each with its mark, its clause,
         and the conditions they were made at with their source (the pedigree of the plan)."""
@@ -462,6 +527,7 @@ class PlantInspector(QScrollArea):
             self.describe.setText(system.describe(e))
             self._entries(system.inverter_entries(e))
             self._optimizers(plant)
+            self._working_units(plant)
             self.ratio.setValue(float(e.get("dc_ac_ratio") or 1.1))
             if plant is not None:
                 self.clip_scale.set(*plant_model.dcac(plant))
@@ -470,7 +536,8 @@ class PlantInspector(QScrollArea):
             self.strategy.setCurrentIndex(max(0, self.strategy.findData(s.get("strategy") or "serpentine")))
             self.n_series.setValue(int(s.get("n_series") or 0))
             self.t_min.setValue(float(e.get("t_min") if e.get("t_min") is not None else plant_model.DESIGN_COLD))
-            self.state.setText(summary(plant) if plant is not None else _("The strings are being laid…"))
+            self.state.setText(_("Whole plant: {summary}").format(summary=summary(plant))
+                               if plant is not None else _("The strings are being laid…"))
             if plant is not None:
                 text = (
                     _("Checked at the hottest cell of the typical year, {t} °C, and at {c} °C.").format(
@@ -485,6 +552,7 @@ class PlantInspector(QScrollArea):
                     text = only if all(u.optimized for u in plant.units) else f"{text} {only}"
                 self.conditions.setText(text)
             self.list.show_plant(plant, self.colours, self.states, chosen)
+            self._working_shown(self.list.working_unit)
             if plant is not None:
                 self.string_buttons["strings_complete"].setEnabled(bool(plant.left))
                 self.string_buttons["strings_clear"].setEnabled(bool(plant.strings))
@@ -653,7 +721,8 @@ class PlantInspector(QScrollArea):
 class StringList(QTreeWidget):
     """The strings of the plant in the right panel (R115, Daniel 25/10/2026: «se seleziono una stringa non mi porta alla
     stringa, se premo Canc non me la cancella, il + non fa nulla»): a section for each input of each inverter, its
-    name and how many strings it has, «+» at its right to draw a new string on it; under it its strings, each with
+    name and how many strings it has, «+» at its right to draw a new string on it; only the working inverter's
+    inputs are shown, including unused ones. Under each input its strings, each with
     its colour on the plan, its name, its modules and its state as a mark and a word; an input without strings says
     so. A string chosen here is chosen on the plan and brought into view (the window); Del deletes it (the window's
     key), a double click draws it again, the right button opens its menu. As tall as its rows: it scrolls with the
@@ -663,6 +732,7 @@ class StringList(QTreeWidget):
     newString = Signal(int, int)                # unit, input
     redraw = Signal(int)                        # index: drawn again on the plan
     menuAsked = Signal(int, QPoint)             # index, where (global)
+    unitChanged = Signal(int)                  # physical inverter shown, also when chosen on the plan
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -697,13 +767,24 @@ class StringList(QTreeWidget):
         self.input_info: dict = {}              # (unit, input) -> limits, power and state, always visible
         self.rows: dict = {}                    # index into Plant.strings -> its row
         self.draft_input = (0, 0)
+        self.working_unit = 0
+        self.plant = None
+        self.colours: list = []
+        self.states: dict = {}
 
     def sizeHint(self) -> QSize:
         return QSize(200, self.height())
 
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        if event.type() in (QEvent.Type.FontChange, QEvent.Type.StyleChange) and hasattr(self, "rows"):
+            self._fit()
+
     def show_draft(self, unit: int = 0, mppt: int = 0) -> None:
         """Highlight the input being drawn on, and only until the draft is closed or given up."""
         from .sections import ACTIVE_ROLE
+        if unit and not self.loading and unit != self.working_unit:
+            self.set_unit(unit)
         self.draft_input = (int(unit), int(mppt))
         for key, head in self.input_heads.items():
             active = key == self.draft_input and unit > 0
@@ -713,11 +794,24 @@ class StringList(QTreeWidget):
                              self.palette().brush(self.palette().ColorRole.Highlight) if active else None)
         self.viewport().update()
 
-    def show_plant(self, plant, colours: list, states: dict, chosen: int = -1) -> None:
-        """The inputs and the strings of `plant`, the strings in `colours` (the plan's), the traffic light in
-        `states`; the row of string `chosen` selected (without a signal)."""
+    def set_unit(self, unit: int) -> None:
+        """Show every input of one physical inverter without changing the plant or the string indices."""
+        if unit != self.working_unit:
+            self.show_plant(self.plant, self.colours, self.states, unit=unit)
+
+    def show_plant(self, plant, colours: list, states: dict, chosen: int = -1, *, unit: int | None = None) -> None:
+        """All inputs of one physical unit, with global string indices, colours and checks. A chosen string
+        brings its inverter into view; a recalculation otherwise keeps the current workspace."""
         from . import marks
         from .sections import section
+        previous = self.working_unit
+        self.plant, self.colours, self.states = plant, colours, states
+        if plant is not None:
+            wanted = unit if unit is not None else self.working_unit
+            if 0 <= chosen < len(plant.strings):
+                wanted = plant.strings[chosen].inverter
+            units = {u.number for u in plant.units}
+            self.working_unit = wanted if wanted in units else plant.units[0].number if plant.units else 0
         self.loading = True
         try:
             self.clear()
@@ -741,6 +835,8 @@ class StringList(QTreeWidget):
                 self.rows[i] = row
 
             for u in plant.units:
+                if u.number != self.working_unit:
+                    continue
                 for k in range(1, u.inputs + 1):
                     slot = plant.inputs.get((u.number, k))
                     mine = list(slot.strings) if slot is not None else []
@@ -775,7 +871,10 @@ class StringList(QTreeWidget):
                         free = QTreeWidgetItem(head, [_("free: «+» to draw a string on it"), ""])
                         free.setFlags(Qt.ItemFlag.ItemIsEnabled)
                         free.setToolTip(0, takes)
-            lost = [i for i, s in enumerate(plant.strings) if not plant.inputs.get((s.inverter, s.mppt))]
+            # Strings whose inverter has gone must remain reachable for correction in every workspace.
+            lost = [i for i, s in enumerate(plant.strings)
+                    if (s.inverter == self.working_unit or s.inverter not in units)
+                    and not plant.inputs.get((s.inverter, s.mppt))]
             if lost:
                 head = section(self, _("Without an input"), ngettext("{n} string", "{n} strings",
                                                                       len(lost)).format(n=len(lost)))
@@ -788,6 +887,8 @@ class StringList(QTreeWidget):
             self._fit()
         finally:
             self.loading = False
+            if previous != self.working_unit:
+                self.unitChanged.emit(self.working_unit)
 
     def _adder(self, head, unit: int, k: int, takes: str) -> None:
         """«+» on the row of an input: a tool button of the design system with Lucide's «plus»."""
@@ -829,6 +930,10 @@ class StringList(QTreeWidget):
 
     def choose(self, index: int) -> None:
         """String `index` selected (-1: none), without a signal: the plan chose it."""
+        if self.plant is not None and 0 <= index < len(self.plant.strings):
+            unit = self.plant.strings[index].inverter
+            if unit != self.working_unit:
+                self.show_plant(self.plant, self.colours, self.states, chosen=index, unit=unit)
         self.loading = True
         try:
             if index in self.rows:

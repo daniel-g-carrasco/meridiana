@@ -40,7 +40,7 @@ The full list of functions and their state is in `docs/funzionalita.md` (in Ital
 From the [releases](https://github.com/daniel-g-carrasco/meridiana/releases), Windows 10 or 11, 64 bit:
 
 - `meridiana-setup-vX.Y.Z-windows-x64.exe`, the installer: for your user only, no administrator rights; it
-  opens the `.meridiana` project files with Meridiana. Once a day at start the program asks GitHub whether a
+  opens the `.mer` project files with Meridiana. Once a day at start the program asks GitHub whether a
   newer version is out (Preferences > Privacy turns it off; Help > Check for updates asks at once) and offers to
   install it.
 - `meridiana-vX.Y.Z-windows-x64-portable.zip`, the same program in a folder: unzip it and start

@@ -80,10 +80,8 @@ MARK_ROLE = Qt.ItemDataRole.UserRole + 1           # (level, count) of the mark 
 
 
 class MarkDelegate(QStyledItemDelegate):
-    """The column of the marks in the project's tree, as a pill (study 17, T2; the target of 24/10/2026): a pill
-    full of the level's colour with its sign and the number of items in it (the sign keeps the level readable
-    without the colour, WCAG 1.4.1). On a section's header the pill sits with the header's text, below the air
-    above it. The row's selection is the pill of sections.row_pill, across the columns."""
+    """A quiet status pill, shared with the Checks filters. Its minimum 20 px height keeps the sign legible.
+    Section headers place it below their air; the row's selection remains across the columns."""
 
     GAP = 4
     INSET = 4           # inside the pill, around the mark and the number
@@ -93,8 +91,9 @@ class MarkDelegate(QStyledItemDelegate):
     def column_width(cls, metrics) -> int:
         """The width of a column of marks whose numbers reach two figures, for a fixed column (the tree does not
         measure every row again at each change)."""
-        size = float(metrics.height())
-        return round(cls.GAP + size * 0.92 + 3 + metrics.horizontalAdvance("99") + cls.GAP)
+        from . import status_pill
+        from .design import Button, Text, text_font
+        return status_pill.size_hint("99", text_font(Text.LABEL), Button.SMALL[0]).width() + cls.EDGE + cls.GAP
 
     def _size(self, option) -> float:
         return float(option.fontMetrics.height())
@@ -114,53 +113,23 @@ class MarkDelegate(QStyledItemDelegate):
         r = QRectF(option.rect)
         if is_section(index):
             r.adjust(0, AIR, 0, 0)
-        from .design import Text, text_font
+        from . import status_pill
+        from .design import Button, Text, text_font
         font = text_font(Text.LABEL, option.font)          # the count: the catalogue's label (R121)
         text = str(count)
-        from PySide6.QtGui import QFontMetricsF
-
-        from . import symbols
-        height = round(option.fontMetrics.height() * 0.85)
-        mark = height * 0.8                                     # the sign alone, the symbols' (R138)
-        width = mark + 3 + QFontMetricsF(font).horizontalAdvance(text)
-        pill = QRectF(r.right() - self.EDGE - width - 2 * self.INSET - 2, r.center().y() - height / 2,
-                      width + 2 * self.INSET + 2, height)
-        dark = option.palette.color(option.palette.ColorRole.Window).lightnessF() < 0.5
-        ground, ink = pill_colours(level, dark, option)
-        painter.save()
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(ground)
-        painter.drawRoundedRect(pill, pill.height() / 2, pill.height() / 2)
-        x = pill.x() + self.INSET + 1
-        painter.fillPath(symbols.sign(symbols.LEVEL.get(level, "info"),
-                                      QRectF(x - mark * 0.06, pill.center().y() - mark / 2, mark, mark)), ink)
-        painter.setPen(ink)
-        painter.setFont(font)
-        painter.drawText(QRectF(x + mark + 3, pill.y(), pill.right() - x, pill.height()),
-                         Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, text)
-        painter.restore()
+        size = status_pill.size_hint(text, font, Button.SMALL[0])
+        pill = QRectF(r.right() - self.EDGE - size.width(), r.center().y() - size.height() / 2,
+                      size.width(), size.height())
+        status_pill.paint(painter, pill, level, text, font, option.palette)
 
     def sizeHint(self, option, index) -> QSize:
         mark = index.data(MARK_ROLE)
         if not mark:
             return super().sizeHint(option, index)
-        size = self._size(option)
-        width = self.GAP + size * 0.92 + 3 + option.fontMetrics.horizontalAdvance(str(mark[1])) + 2 * self.INSET
-        return QSize(round(width + self.GAP), round(size + self.INSET))
-
-
-def pill_colours(level: str, dark: bool, option) -> tuple[QColor, QColor]:
-    """The ground and the ink of a mark's pill in the tree (the mockups' .mark): the level's colour full, white
-    on it; the warning's ochre in the light theme (its yellow is too light for white), the yellow with dark ink in
-    the dark one; what to know in the muted colour."""
-    if level == "warn":
-        return (QColor(theme_colors.STATUS["warning"]), QColor("#1e1c19")) if dark else \
-            (QColor(theme_colors.WARNING_INK), QColor("#ffffff"))
-    if level == "info":
-        muted = QColor(option.palette.color(option.palette.ColorRole.PlaceholderText))
-        return muted, QColor("#151515") if dark else QColor("#ffffff")
-    return QColor(FILL.get(level, FILL["info"])), QColor("#ffffff")
+        from . import status_pill
+        from .design import Button, Text, text_font
+        size = status_pill.size_hint(str(mark[1]), text_font(Text.LABEL, option.font), Button.SMALL[0])
+        return QSize(size.width() + self.EDGE + self.GAP, max(size.height(), option.fontMetrics.height()) + self.GAP)
 
 
 class MarkItem(QGraphicsItem):

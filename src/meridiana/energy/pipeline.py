@@ -9,7 +9,7 @@ what is inside the project or in the cache."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, replace
 from pathlib import Path
 
 from .. import checks, log
@@ -104,25 +104,46 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
     step(2, STEPS, _("the year hour by hour"))
     sim = simulate(m, arrays, inverter, losses, hor)
     # the strings, from the temperatures of the year; laid on the modules, they give the shade of the
-    # obstacles its electrical effect, applied downstream of the first pass (the sun, the transposition, the
-    # shadings and the temperature are not computed twice: task 18c, step 3)
+    # obstacles its electrical effect. A partial connection needs a second pass for its contributing panels;
+    # a fully connected plant reuses this pass (task 18c, step 3).
     t_cell_max = max(a["t_cell_max"] for a in sim.arrays)
     t_air_min = float(m.data.temp_air.min())
     out.plant = plant.build(project, groups=plant.groups_from_arrays(project, arrays), t_cell_max_year=t_cell_max,
                             t_min_year=t_air_min, p_dc_hourly=sim.hourly.p_dc.to_numpy())
     out.strings = ({"error": out.plant.notes[0]} if out.plant.notes else
                    {"strings": len(out.plant.strings), "t_min": out.plant.t_min, "t_cell_max": t_cell_max})
+    # The first pass is potential generation, used only to determine the year's checking temperatures.
+    # A string without an existing, explicitly chosen inverter/input transfers no power; a sized placeholder
+    # is not an installed inverter. Plant.build already removes duplicate module keys from the runs.
+    real_units = {u.number: u for u in out.plant.units if u.entry >= 0 and u.spec.pac > 0}
+    wired = [s for s in out.plant.strings if s.inverter in real_units
+             and 1 <= s.mppt <= real_units[s.inverter].inputs]
+    connected = {(sf, key) for s in wired for sf, key, _centre in s.modules}
+    arrays = [replace(a, connected=frozenset(pm.key for pm in a.placed
+                                           if (a.key.split(".")[0], pm.key) in connected)) for a in arrays]
+    active_units = {s.inverter for s in wired if s.modules}
+    active_inverter = system.combined([u.spec for n, u in real_units.items() if n in active_units]) if active_units else inverter
+    limited = any(a.generating_modules != a.modules for a in arrays)
+    if limited or (active_inverter.pac_total, active_inverter.eta) != (inverter.pac_total, inverter.eta):
+        inverter = active_inverter
+        sim = simulate(m, arrays, inverter, losses, hor)
+    if limited:
+        out.notes.append(_("Only modules connected to an existing inverter input contribute to production; "
+                           "unconnected modules produce zero."))
     # the power optimizers on the modules (task 22): their efficiency, the module-level MPPT, the strings' limit
-    optimized = plant.optimizers_of(out.plant, arrays)
+    generating_arrays = [replace(a, modules=a.generating_modules,
+                                 placed=[pm for pm in a.placed if pm.key in a.connected])
+                         for a in arrays if a.generating_modules]
+    optimized = plant.optimizers_of(out.plant, generating_arrays)
     by_array = {}
     if out.plant.strings:
         for a in arrays:
-            keys = {pm.key for pm in a.placed}
+            keys = a.connected
             sfid = a.key.split(".")[0]
             # a string by hand may cross two arrays: each array takes its own modules of it; with optimizers each
             # optimizer's modules are a string of their own for the electrical effect of the shade
             runs = []
-            for s in out.plant.strings:
+            for s in wired:
                 mine = [k for sf, k, _c in s.modules if sf == sfid and k in keys]
                 per = plant.optimizer_per(out.plant, s)
                 if mine:
@@ -132,6 +153,9 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
     if (by_array and losses.use_near) or optimized is not None:
         sim = with_strings(sim, by_array if losses.use_near else None, optimized)
     out.sim = sim
+    # Overload checks receive the connected DC year, not the preliminary potential year.
+    out.plant = plant.build(project, groups=plant.groups_from_arrays(project, arrays), t_cell_max_year=t_cell_max,
+                            t_min_year=t_air_min, p_dc_hourly=sim.hourly.p_dc.to_numpy(), p_dc_connected=True)
     # what keeping the modules out of the obstacles' shadows would leave, for the fix the checks offer: a
     # layout for each shaded sub-field, here and not in the window's thread (it cost 30-40 ms there at each
     # result, 0.3-0.4 s on a large field)
@@ -154,7 +178,7 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
         months = [0.0] * 12
         yearly = 0.0
         estimate = None
-        for a in arrays:
+        for a in generating_arrays:
             step(3, STEPS, _("PVGIS's estimate"))           # before each request: a Cancel stops between them
             estimate = pvgis.pvcalc(lat, lon, a.p_stc / 1000.0, a.tilt, a.azimuth,
                                     system.pvgis_loss(losses, inverter.eta, a.module), cache,
@@ -163,6 +187,9 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
             months = [x + y for x, y in zip(months, estimate.monthly_kwh, strict=True)]
         if estimate is not None:
             out.pvgis = pvgis.PVGISEstimate(yearly, months, loss, estimate.source)
+        elif not generating_arrays:
+            from .pedigree import Source
+            out.pvgis = pvgis.PVGISEstimate(0.0, months, loss, Source("computed", _("No connected modules")))
     except meteo.MeteoError as error:
         out.notes.append(str(error))
     degradation = next((a.module.yearly_loss for a in arrays if a.module.yearly_loss is not None), None)

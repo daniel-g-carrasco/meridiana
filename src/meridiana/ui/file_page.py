@@ -284,8 +284,8 @@ class FilePage(QFrame):
 
         # Open: the file, and the projects opened last
         opening = Section(_("Open"), _("A Meridiana project from a file, or one of the last ones."))
-        opening.group(_("Project"), [Tile("folder-open", _("A project"), _("A .meridiana file, from wherever it is."),
-                                          (".meridiana",), _("Choose the file…"), self._command("open"))])
+        opening.group(_("Project"), [Tile("folder-open", _("A project"), _("A .mer file with the project and its resources."),
+                                          (".mer",), _("Choose the file…"), self._command("open"))])
         self.recent_box = QVBoxLayout()
         self.recent_box.setSpacing(0)
         sec = QLabel(_("Opened recently").upper())
@@ -334,7 +334,7 @@ class FilePage(QFrame):
                                                                 "sources, to paste into the technical report."),
                  (_("text"),), _("Copy"), self._command("copy_notes")),
             Tile("copy-plus", _("A revision"), _("A new file next to this one, with the suffix _R01, _R02...: the "
-                                                 "previous one stays as it was."), (".meridiana",), _("Save"),
+                                                 "previous one stays as it was."), (".mer",), _("Save"),
                  self._command("save_revision"))])
         exports.group(_("Models"), [
             Tile("export_ifc", _("IFC4 model"), _("Buildings, roofs, obstacles and every module with its string, "

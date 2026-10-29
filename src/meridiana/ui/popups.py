@@ -26,7 +26,7 @@ import sys
 
 from PySide6 import QtGui
 from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, QRect, Qt
-from PySide6.QtGui import QColor, QGuiApplication, QKeySequence
+from PySide6.QtGui import QColor, QGuiApplication, QKeySequence, QPalette
 from PySide6.QtWidgets import QApplication, QComboBox, QLabel, QWidget
 
 from .. import theme_colors
@@ -35,9 +35,10 @@ from .design import Motion, Space, Type
 
 FADE_MS = Motion.FAST
 TIP_WIDTH = 340                 # a tooltip's text wraps at this width (R162): some 45 characters of the text
+COMBO_WIDTH = 360               # a stretched settings row does not make its list span the whole window
 TIP_SOFT, TIP_KEY = 0.22, 0.42  # the explanation and the key: the tooltip's ink this much towards its ground
 _STATE = {"border": default_tokens()["line"], "motion": True, "tip": default_tokens()["tooltip_fg"],
-          "tip_bg": default_tokens()["tooltip_bg"]}
+          "tip_bg": default_tokens()["tooltip_bg"], "popup_bg": default_tokens()["card"]}
 _KINDS = (Qt.WindowType.Popup, Qt.WindowType.ToolTip)
 _HEAD = re.compile(r"^(?P<name>.+?) \((?P<key>[^()]+)\)$")
 _LAID = "meridiana_tip"         # the label's property: (its text, wrapped, its size) as last laid out
@@ -135,6 +136,8 @@ def _dwm(widget: QWidget, small: bool) -> None:
     try:
         hwnd = wintypes.HWND(int(widget.winId()))
         dwm = ctypes.windll.dwmapi
+        dark = ctypes.c_int(QColor(_STATE["popup_bg"]).lightness() < 128)
+        dwm.DwmSetWindowAttribute(hwnd, 20, ctypes.byref(dark), ctypes.sizeof(dark))
         corner = ctypes.c_int(3 if small else 2)           # DWMWCP_ROUNDSMALL, DWMWCP_ROUND
         dwm.DwmSetWindowAttribute(hwnd, 33, ctypes.byref(corner), ctypes.sizeof(corner))
         c = QColor(_STATE["border"])
@@ -169,7 +172,24 @@ class Popups(QObject):
             popup = obj.view().window()
             if not popup.isVisible():
                 QApplication.sendEvent(popup, QEvent(QEvent.Type.StyleChange))
+                self._size_combo(obj)
         return False
+
+    @staticmethod
+    def _size_combo(combo: QComboBox) -> None:
+        """Fit the list to its choices and a bounded field width before Qt places it on screen."""
+        view = combo.view()
+        popup = view.window()
+        natural = view.sizeHintForColumn(combo.modelColumn()) + 2 * Space.XS + Space.XL
+        screen = combo.screen()
+        limit = min(COMBO_WIDTH, screen.availableGeometry().width()) if screen is not None else COMBO_WIDTH
+        width = min(limit, max(natural, min(combo.width(), limit)))
+        popup.setMaximumWidth(width)
+        popup.resize(width, popup.height())
+        palette = popup.palette()
+        palette.setColor(QPalette.ColorRole.Window, QColor(_STATE["popup_bg"]))
+        palette.setColor(QPalette.ColorRole.Base, QColor(_STATE["popup_bg"]))
+        popup.setPalette(palette)
 
     def _polished(self, obj, event) -> bool:
         """A tooltip's label being made (Qt polishes it in its constructor, before its window exists): see-through
@@ -187,6 +207,8 @@ class Popups(QObject):
         if kind not in _KINDS:
             return False
         try:
+            if kind == Qt.WindowType.Popup and isinstance(obj.parentWidget(), QComboBox):
+                self._size_combo(obj.parentWidget())
             if self.native:
                 _dwm(obj, kind == Qt.WindowType.ToolTip)
             if _STATE["motion"] and self.fades:
@@ -219,6 +241,7 @@ def set_colours(t: dict) -> None:
     """The theme's line colour for the border the system draws; the tooltip's inks."""
     _STATE["border"] = t["line"]
     _STATE["tip"], _STATE["tip_bg"] = t["tooltip_fg"], t["tooltip_bg"]
+    _STATE["popup_bg"] = t["card"]
 
 
 def set_motion(on: bool) -> None:

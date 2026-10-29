@@ -742,7 +742,7 @@ def _number_strings(out: Plant) -> None:
 
 
 def build(project, results: dict | None = None, groups: list | None = None, t_cell_max_year: float | None = None,
-          t_min_year: float | None = None, p_dc_hourly=None, check: bool = True) -> Plant:
+          t_min_year: float | None = None, p_dc_hourly=None, check: bool = True, p_dc_connected: bool = False) -> Plant:
     """The plant of `project` on its layouts (`results`: sub-field id -> layout.Result) or on the energy job's
     groups (groups_from_arrays): the units, the strings (proposed, or the designer's), the modules in no string, and
     with `check` the checks at the conditions of the year (when given: its hottest cell, its lowest temperature, the
@@ -779,7 +779,7 @@ def build(project, results: dict | None = None, groups: list | None = None, t_ce
     if out.left:
         out.corrections = _corrections(out.units, groups, cond, out.strategy, out.left)
     if check:
-        _check(project, groups, cond, out, p_dc_hourly)
+        _check(project, groups, cond, out, p_dc_hourly, p_dc_connected)
     return out
 
 
@@ -1149,7 +1149,7 @@ def _plan(module: ModuleSpec, unit: Unit, k: int, n: int, strings: int, cond: Co
     return out
 
 
-def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hourly) -> None:
+def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hourly, p_dc_connected: bool = False) -> None:
     modules = {g.sfid: g.module for g in groups}
     plans: dict = {}
     for u in out.units:
@@ -1225,7 +1225,7 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
                               key=("ok", "warn", "fail").index)
         slot.level = worst_input
     # the inverters
-    total = sum(len(x.modules) * modules[x.modules[0][0]].pmax for x in out.strings if x.modules) or 0.0
+    total = sum(slot.power_w for slot in out.inputs.values())
     for u in out.units:
         checks = []
         name = unit_label(u)
@@ -1237,7 +1237,7 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
                                                                               r=f"{dc / u.spec.pac:.2f}"), "info"))
             if p_dc_hourly is not None and total > 0 and out.p_stc_w > 0:
                 import numpy as np
-                share = dc / out.p_stc_w
+                share = dc / (total if p_dc_connected else out.p_stc_w)
                 loss = stringing.overload_loss(np.asarray(p_dc_hourly, dtype=float) * share, u.spec.pac, u.spec.eta)
                 out.clipping[u.number] = loss
                 checks.append(stringing.overload_check(name, loss))

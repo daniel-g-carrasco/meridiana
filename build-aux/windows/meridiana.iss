@@ -10,6 +10,9 @@
 #ifndef AppVersion
   #define AppVersion "dev"
 #endif
+#ifndef BundleDir
+  #define BundleDir "..\..\dist\Meridiana"
+#endif
 ; the program's identity (src/meridiana/__init__.py): the AppUserModelID of its taskbar button, and the name of the
 ; mutex it holds while it runs (app.py), which tells an update whether to start it again
 #define AppId "io.github.daniel_g_carrasco.meridiana"
@@ -45,7 +48,7 @@ MinVersion=10.0.17763
 ; project before it starts Setup (the update's dialog), and its recovery copy covers the rest
 CloseApplications=yes
 RestartApplications=no
-; the .meridiana files open with Meridiana: Explorer is told when the associations change
+; the .mer files open with Meridiana: Explorer is told when the associations change
 ChangesAssociations=yes
 
 [Languages]
@@ -57,8 +60,8 @@ italian.AppDescription=Progettazione fotovoltaica: mappa, modello dell'edificio,
 english.AppDescription=Photovoltaic design: map, building model, sun path, module layout and Italian standards
 italian.ProjectType=Progetto Meridiana
 english.ProjectType=Meridiana project
-italian.AssociateFiles=Apri i file .meridiana con Meridiana
-english.AssociateFiles=Open .meridiana files with Meridiana
+italian.AssociateFiles=Apri i file .mer con Meridiana
+english.AssociateFiles=Open .mer files with Meridiana
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; Flags: unchecked
@@ -72,7 +75,7 @@ Name: "associate"; Description: "{cm:AssociateFiles}"
 Type: filesandordirs; Name: "{app}\_internal"
 
 [Files]
-Source: "..\..\dist\Meridiana\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "{#BundleDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Icons]
 ; the AppUserModelID the program's window carries: its taskbar button groups with the shortcut
@@ -83,14 +86,14 @@ Name: "{autodesktop}\Meridiana"; Filename: "{app}\Meridiana.exe"; Tasks: desktop
 ; the type of the project files (HKA: the user's classes for a per-user install, the machine's for all users); a
 ; ProgID of its own, the extension pointing to it, and the program among those that open it; the uninstaller
 ; takes them away, the extension's key only when nothing else is left in it
-Root: HKA; Subkey: "Software\Classes\.meridiana"; ValueType: string; ValueName: ""; ValueData: "{#ProgId}"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: associate
-Root: HKA; Subkey: "Software\Classes\.meridiana"; ValueType: string; ValueName: "Content Type"; ValueData: "application/x-meridiana"; Flags: uninsdeletevalue; Tasks: associate
-Root: HKA; Subkey: "Software\Classes\.meridiana\OpenWithProgids"; ValueType: string; ValueName: "{#ProgId}"; ValueData: ""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\.mer"; ValueType: string; ValueName: ""; ValueData: "{#ProgId}"; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\.mer"; ValueType: string; ValueName: "Content Type"; ValueData: "application/x-meridiana-project+zip"; Flags: uninsdeletevalue; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\.mer\OpenWithProgids"; ValueType: string; ValueName: "{#ProgId}"; ValueData: ""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\{#ProgId}"; ValueType: string; ValueName: ""; ValueData: "{cm:ProjectType}"; Flags: uninsdeletekey; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\{#ProgId}"; ValueType: string; ValueName: "AppUserModelID"; ValueData: "{#AppId}"; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\{#ProgId}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Meridiana.exe,0"; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\{#ProgId}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Meridiana.exe"" ""%1"""; Tasks: associate
-Root: HKA; Subkey: "Software\Classes\Applications\Meridiana.exe\SupportedTypes"; ValueType: string; ValueName: ".meridiana"; ValueData: ""; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Applications\Meridiana.exe\SupportedTypes"; ValueType: string; ValueName: ".mer"; ValueData: ""; Flags: uninsdeletekey
 
 [Run]
 Filename: "{app}\Meridiana.exe"; Description: "{cm:LaunchProgram,Meridiana}"; Flags: nowait postinstall skipifsilent; Check: not AppWasRunning

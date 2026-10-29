@@ -2,6 +2,14 @@
 
 Meridiana calcola l'anno tipo ora per ora, dal sole sui moduli al contatore, con il meteo del sito. A sinistra ciò che decidi (meteo, campi, inverter, stringhe, perdite), a destra i risultati: i riquadri con le cifre, i grafici e «Come è calcolato». Calcola (F5) rifà il conto; il pannello di destra mostra le cifre della variante in mano.
 
+## Collegamento dei moduli
+
+I moduli posati ma fuori stringa non contribuiscono alla producibilita dell'impianto. Contano soltanto quelli
+collegati mediante una stringa a un ingresso di un inverter presente. Senza collegamenti, l'energia calcolata
+è zero. Collegare o scollegare moduli rende i risultati precedenti da ricalcolare: premi F5 dopo la modifica.
+La potenza e il numero dei moduli posati rimangono informazioni geometriche del progetto; non sono una promessa
+di produzione. La stima PVGIS di confronto segue i moduli collegati.
+
 ## Il meteo del sito
 
 ### PVGIS

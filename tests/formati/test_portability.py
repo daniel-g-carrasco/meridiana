@@ -33,6 +33,8 @@ class AutonomousProject(unittest.TestCase):
                             "max_power_w": 700.0}
         p.energy["inverters"] = [{"record": custom_inverter, "count": 1, "name": "",
                                   "optimizer": custom_optimizer, "per_optimizer": 1}]
+        p.energy["strings"] = {"runs": [{"inverter": 1, "mppt": 1,
+                                          "modules": [f"s1/{pm.key}" for pm in jobs.layout_of(p)[0]["s1"].modules[:12]]}]}
         attachment = source / "custom-sheet.pdf"
         attachment.write_bytes(b"%PDF-1.4\n% invented test attachment\n")
         logo = source / "studio.png"

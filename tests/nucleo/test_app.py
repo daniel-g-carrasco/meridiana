@@ -63,7 +63,8 @@ class WindowsIdentity(unittest.TestCase):
         iss = (_setup.ROOT / "build-aux" / "windows" / "meridiana.iss").read_text(encoding="utf-8")
         self.assertIn(f'#define AppId "{meridiana.APP_ID}"', iss)
         self.assertIn("CheckForMutexes('{#AppId}')", iss)
-        self.assertIn(r'Software\Classes\.meridiana', iss)
+        self.assertIn(r'Software\Classes\.mer"', iss)
+        self.assertIn('application/x-meridiana-project+zip', iss)
         self.assertIn('"%1"', iss)
         manifest = (_setup.ROOT / "build-aux" / "windows" / "meridiana.manifest").read_text(encoding="utf-8")
         self.assertNotIn("<dpiAware", manifest)         # Qt makes itself per monitor V2: never decided before it

@@ -9,5 +9,5 @@ Terminal=false
 Categories=Science;Engineering;Qt;
 Keywords=photovoltaic;solar;PV;design;roof;modules;strings;energy;
 Keywords[it]=fotovoltaico;solare;impianto;progettazione;tetto;moduli;stringhe;energia;
-MimeType=application/x-meridiana;
+MimeType=application/x-meridiana-project+zip;
 StartupNotify=true

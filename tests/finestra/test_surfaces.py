@@ -163,7 +163,7 @@ class Tree(unittest.TestCase):
         self.assertEqual(sub.data(0, TAIL_ROLE), " · 128")
         self.assertIsNone(sub.data(0, SECTION_ROLE))
         self.assertGreater(tree.visualItemRect(heads[1]).height(), tree.visualItemRect(sub).height() + 4)
-        # the pills carry the counts of the marks, and the one to fix is painted in its warm red
+        # The pills carry the counts with the shared quiet status backgrounds.
         self.assertEqual(heads[1].data(1, MARK_ROLE), ("fail", 2))
         self.assertEqual(heads[0].data(1, MARK_ROLE), ("info", 1))
         self.assertIsNone(heads[2].data(1, MARK_ROLE))
@@ -175,9 +175,11 @@ class Tree(unittest.TestCase):
         dpr = shot.devicePixelRatio()
         row = shot.copy(round(tree.header().sectionPosition(1) * dpr), round(rect.y() * dpr),
                         round(tree.header().sectionSize(1) * dpr), round(rect.height() * dpr))
-        red = sum(1 for x in range(row.width()) for y in range(row.height())
-                  if row.pixelColor(x, y).red() > 150 and row.pixelColor(x, y).green() < 110)
-        self.assertGreater(red, 20 * dpr * dpr)
+        from meridiana.ui import status_pill
+        ground, ink, _ = status_pill.colours("fail", tree.palette())
+        tinted = sum(1 for x in range(row.width()) for y in range(row.height()) if row.pixelColor(x, y) == ground)
+        self.assertGreater(tinted, 20 * dpr * dpr)
+        self.assertGreater(abs(ground.lightness() - ink.lightness()), 80)
         # a click on a header does not move the selection; a click on the object does; the views lead the tree
         win._select("subfield", self.sid)
         win._tree_clicked(heads[0], 0)

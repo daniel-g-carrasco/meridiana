@@ -25,8 +25,8 @@ class NewProject(unittest.TestCase):
         self.assertTrue(self.win.file_page.isVisible())
         self.assertIs(self.win.project, old)
         page.query.setText(old.name)
-        self.assertIn(old.name, page.suggestion_rows[next(
-            key for key in page.suggestion_rows if key.endswith("project"))].name)
+        self.assertIn(old.name, next(choice.name for choice in page.suggestion_rows.values()
+                                     if choice.source == "project"))
         page.query.setText("45.5226, 9.03")
         page.name.setText("Nuovo Rho")
         page.create.click()

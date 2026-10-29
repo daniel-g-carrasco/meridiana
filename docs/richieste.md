@@ -239,6 +239,34 @@ Stati: **fatto** (con il commit), **in corso** (sessione o compito), **da studia
 | R196 | 27/10 | Meteo: «deve scaricare lui in automatico i dati del meteo (ha senso farglieli scaricare in locale, e aggiornare le volte che viene aperto e ha connessione? o troppa memoria occupata?)» | fatto sul ramo kimi-incarico-24: anno tipo e orizzonte grezzi dentro il progetto, formato 15; `ClimateJob` all'apertura o al cambio sito, di nuovo oltre 250 m, banca dati cambiata o a richiesta; offline usa ciò che ha e lo dice; 695.739 byte misurati per sito | `src/meridiana/energy/meteo.py`, `src/meridiana/energy/pipeline.py`, `tests/nucleo/test_climate.py` |
 | R197 | 27/10 | Meridio: «Il fumetto di Meridio va migliorato come impaginazione. tipo: il suo nome è troppo vicino alla maniglia di ridimensionamento. Le opzioni di risposta devono esserci solo quando serve e rispettare le regole di stile dei tasti (al momento non hanno neanche l'hover) e Meridio non deve prima chiedere “ti faccio la proposta?” che la faccia subito, tanto mica la applica, fa comparire la finestrella apposita per la proposta che dà la possibilità di vederla e applicarla» | fatto sul ramo kimi-incarico-24: nome opposto alla maniglia, opzioni come pulsanti con hover e solo fra un turno e l'altro; istruzioni e strumenti propongono subito, finestrella per vedere e applicare; conversazione ripetuta col provider finto | `src/meridiana/ui/assistant.py`, `src/meridiana/assistant/persona.py`, `tests/finestra/test_assistant_chat.py` |
 
+## Ripresa del 29 ottobre 2026
+
+| ID | Richiesta | Stato |
+|---|---|---|
+| R198 | Nuovo progetto: mappa visibile e ricerca di comuni/indirizzi corretta, senza ISTAT nei nomi | correzioni in verifica, punti 1-4 nel piano UX del 29/10 |
+| R199 | Facoltativi con spunta condivisa, corpo visibile disabilitato e privacy senza ridimensionamenti | correzioni in verifica |
+| R200 | Coordinate comprensibili, anche Google Maps, valutare latitudine e longitudine separate | due campi e incolla universale, in verifica |
+| R201 | Ripristinare sfumature sulle schede | in verifica |
+| R202 | Bussola minimal con centro fisso, N solidale, ricollocazione animata se manca spazio | in verifica |
+| R203 | Migliorare Meridio e la sua conversazione | proposta visiva preparata |
+| R204 | Inverter di lavoro selezionabile nella prima scheda, ingressi e stringhe piu chiari | in verifica |
+| R205 | Proposta di riordino strumenti, schede e proprieta | direzione della proposta HTML approvata da Daniel il 29/10: «ci puo stare dai»; attuazione completa da verificare per fasi |
+| R206 | Aiuto sul bordo destro e inferiore deve collassare da entrambi i comandi | in verifica |
+| R207 | Migliorare gli indicatori di conteggio | Daniel preferisce B (fondo tenue); diminuire margine sinistro tra simbolo e bordo |
+| R208 | Centrare otticamente punto interrogativo e numeri delle fasi | in verifica |
+| R209 | Popup di selezione proporzionati e angoli senza aloni scuri | in verifica, compositore Windows da distinguere da offscreen |
+| R210 | Proposta di riorganizzazione di File e Impostazioni | direzione della proposta HTML approvata da Daniel il 29/10; riordino completo ancora da implementare, tenendo le successive richieste R221-R223 |
+| R211 | Verifiche proporzionate: evitare suite intera a ogni ritocco | approvato: test mirati e lint durante il lavoro, suite alla fine del lotto e prima di release |
+| R212 | Nuovo formato .mer | approvato contenitore unico con progetto e risorse. Il programma non e ancora usato in produzione: compatibilita con .meridiana NON richiesta da Daniel |
+| R213 | Pacchetti installabili nelle diverse tipologie | Windows Setup e ZIP, Linux Flatpak in preparazione; altri canali da valutare per necessita effettive |
+| R214 | Riportare deduzioni e componenti nel template Qt, usare Astra/Sol in modo proporzionato | in corso; assegnazioni nel piano |
+| R215 | Requisito generale: riesaminare in modo ottimale dimensionamento, scelta automatica inverter e stringatura per TUTTI gli impianti | registrato su richiesta esplicita del 29/10. Revisione congiunta di potenze/modelli, MPPT, paralleli, compatibilita e copertura di tutti i moduli; non limitata all'est-ovest |
+| R216 | Modalita moduli est-ovest e stringatura coerente con orientamento e inclinazione | da progettare: automatico evita combinazioni incompatibili in stessa stringa/ottimizzatore; manuale avvisa. La regola di compatibilita vale globalmente |
+| R217 | Modalita dedicata pensiline, anche parcheggi esterni | da progettare: struttura e geometria, posa FV e collegamenti distinti |
+| R218 | Meridio porta alla fase/scheda/impostazione richiesta ed evidenzia brevemente il controllo esatto | in corso: destinazioni enumerate, scroll al controllo, indicazione temporanea, nessuna modifica dei valori |
+| R219 | Rifare il simbolo Allinea a un lato | aggiunto in fondo alla lista il 29/10, su richiesta di Daniel |
+| R220 | Revisione completa di testo libero, Come e calcolato e Relazione | in coda: ricerca best practice per dati, calcoli, tabelle, titoli, paragrafi, header/footer e pagine; riorganizzazione e riscrittura consentite; modelli preconfigurati per destinazione e dettaglio; soluzioni riusabili da portare nel template |
+
 ## Da decidere (Daniel)
 
 - La barra della vista in alto a sinistra o in basso a sinistra (domanda 9 dello studio 18): «fammi schermata di confronto»; non fatta nei compiti 17a e 17b (offscreen non rende), da fare sul PC con la finestra vera (`docs/compiti/17b-fasi.md`, «Da provare sul PC»).
@@ -250,3 +278,23 @@ Stati: **fatto** (con il commit), **in corso** (sessione o compito), **da studia
 Decise il 25/10/2026: il repository diventa pubblico («vai pubblico», dopo il controllo di quello che contiene); IFC4 in
 esportazione e in importazione («vai con gli IFC», con un'importazione efficiente: per il fotovoltaico non servono i
 dettagli); il manuale dentro il repository (c'è già: `docs/manuale`); le interazioni dei grafici erano già fatte (R23).
+
+| R221 | Meridio: distinguere il riquadro conversazione dal pannello e distinguere meglio messaggi utente e assistente | aggiunto in coda il 29/10; superficie, allineamento e gerarchia visiva da rivedere sul programma reale, nei due temi |
+| R222 | Verifiche: comprimendo tutti i gruppi il testo si sposta a sinistra e copre i simboli | aggiunto in coda il 29/10, screenshot utente; rientro e spazio del simbolo devono essere invarianti fra espanso e compresso |
+| R223 | Armonizzazione completa dei comportamenti nel template Qt: preferita animazione File attuale di Meridiana, Quotario ha ereditato quella precedente | aggiunto in coda il 29/10; confrontare Meridiana/template/Quotario, portare animazione e altre differenze riusabili con prova visiva, senza equiparare il controllo degli hash a una parita di comportamento |
+
+| R224 | Moduli non collegati: contributo nullo alla producibilita dell'impianto | verifica urgente avviata il 29/10 dopo screenshot Meridio; controllare motore, aggregazioni, cache e spiegazioni. Blocca consegna definitiva dei pacchetti finche corretto e provato; eventuale potenziale dei moduli posati deve restare distinto |
+
+| R225 | Revisione completa del metodo ombre, con spiegazione comprensibile e riscrittura se errato | aggiunto in coda il 29/10: verificare geometria, ombre fra file e da ostacoli, presenza ed esattezza dell'effetto elettrico; confronti riproducibili e limiti espliciti |
+| R226 | Celle, sottostringhe e diodi di bypass: effetto della forma dell'ombra e perdita dell'intera stringa | da verificare con fonti e casi controllati; l'ipotesi dell'utente sui pannelli successivi a quelli in ombra va spiegata e verificata, non assunta come modello |
+| R227 | Ottimizzatori da uno e due moduli: configurazione, compatibilita e calcolo delle ombre/perdite | verificare cosa è inseribile e cosa viene realmente calcolato, con topologie e casi parzialmente ombreggiati, includendo limiti di tensione/corrente/potenza documentati |
+| R228 | Funzionamento reale delle famiglie di ottimizzatori, compresi MPPT SolarEdge | verificare sui documenti dei costruttori prima di confrontare il modello software; distinguere famiglie e architetture, non generalizzare un modello a tutti |
+| R229 | Catalogo e dimensionamento inverter: MPPT indipendenti, ingressi fisici e ingressi condivisi | esplicitare mappa ingresso-MPPT, paralleli e limiti comuni/separati secondo scheda tecnica; verificare scelta automatica, stringatura e presentazione all'utente |
+
+| R230 | Esportazione BIM parametrizzata e informatizzata del modello, almeno dei moduli FV senza ridisegnarli | requisito futuro aggiunto il 29/10: partire da IFC4 esistente; geometria, posa/orientamento/dimensioni, dati di catalogo/elettrici e appartenenze impianto, identificativi stabili per aggiornamenti. Verificare roundtrip e interoperabilita nel software destinatario; distinguere proprieta leggibili da parametri nativi realmente modificabili, senza promettere equivalenza automatica |
+
+| R231 | Importazione IFC complessi, anche da Revit, con superfici utilizzabili per posare moduli | aggiunto in fondo il 29/10: provare geometrie particolari, precisione e prestazioni, non soltanto apertura file. Valutare rilevamento automatico o superfici ausiliarie di posa create dall'utente, spostabili e orientabili nello spazio, distinte dal modello ricevuto |
+| R232 | Giorni del calendario privi di hover | aggiunto in fondo il 29/10: stato hover coerente con controlli condivisi, verifica temi e giorno selezionato/oggi/disabilitato, riporto nel template Qt |
+
+| R233 | Tooltip: evitare ridisegno/animazione ripetuta da sinistra a destra muovendo il puntatore sullo stesso controllo; migliorare la prima comparsa | aggiunto in fondo il 29/10: comparsa piu rapida, transizione semplice, identita del target stabile, niente riavvio per solo mouse-move, rispetto del movimento ridotto |
+| R234 | Tooltip con stile proprio e riusabile, senza ereditare colore del testo sottostante | aggiunto in fondo il 29/10: palette esplicita testo/sfondo/bordo, compresi i riepiloghi stringhe e moduli fuori stringa sotto l'inverter; prova nei due temi, riporto nel template Qt insieme a R233 |

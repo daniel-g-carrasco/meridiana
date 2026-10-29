@@ -6,13 +6,13 @@ are children of the view, not of the viewport, which carries its children along 
 
 from __future__ import annotations
 
-from PySide6.QtCore import QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QEasingCurve, QPoint, QPointF, QPropertyAnimation, QRect, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
 
 from .. import theme_colors, viewaids
 from ..i18n import _
-from .design import Radius, Size, Space, Text, text_font
+from .design import Motion, Radius, Size, Space, Text, text_font
 
 MARGIN = Space.M         # from the view's edges, as the view's bar (ui/viewbar.py)
 
@@ -54,21 +54,39 @@ class Overlay(QWidget):
 
 
 class NorthArrow(Overlay):
-    """A round compass: the arrow points to true North when the view turns, and the N with it, at its tip, upright to
-    be read (R174, Daniel 26/10/2026: «la N di nord non segue la freccia ... la N dovrebbe poter ruotare»); the line
+    """A round compass: the arrow and the N at its tip rotate together around a fixed central dot; the line
     below says the view's bearing and its nearest compass point; a click brings North up again («anche un modo per
     riportarlo a nord ci vuole»). The project itself never turns."""
 
     clicked = Signal()
     CENTRE = QPointF(28, 28)        # the disc's middle
-    LETTER = 18.0                   # the N's distance from it, on the arrow's line past its tip
+    LETTER = 20.0                   # a clear gap between the small arrow and its letter
 
     def __init__(self, parent):
         super().__init__(parent, mouse=True)
         self.angle = 0.0
         self.rotation = 0.0
         self.setFixedSize(56, 78)
+        self._lower = None
+        self._travel = QPropertyAnimation(self, b"pos", self)
+        self._travel.setEasingCurve(QEasingCurve.Type.OutCubic)
         self.set_rotation(0.0)
+
+    def place_at(self, target: QPoint, lower: bool) -> None:
+        """Animate a change of corner, but follow ordinary resizing immediately."""
+        from . import motion
+        changed = self._lower is not None and lower != self._lower
+        self._lower = lower
+        if self._travel.state() == QPropertyAnimation.State.Running and self._travel.endValue() == target:
+            return
+        self._travel.stop()
+        if changed and self.isVisible() and not motion.reduced():
+            self._travel.setDuration(Motion.SLOW)
+            self._travel.setStartValue(self.pos())
+            self._travel.setEndValue(target)
+            self._travel.start()
+        else:
+            self.move(target)
 
     def set_rotation(self, degrees: float) -> None:
         self.rotation = degrees % 360.0
@@ -104,7 +122,7 @@ class NorthArrow(Overlay):
     def paintEvent(self, _event) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        ink, halo = qcolour(self.colours["label_fg"]), shade(self.colours)
+        ink = qcolour(self.colours["label_fg"])
         fill = qcolour(self.colours["label_bg"])
         fill.setAlphaF(SEE_THROUGH)
         p.setPen(Qt.PenStyle.NoPen)
@@ -112,21 +130,25 @@ class NorthArrow(Overlay):
         p.drawEllipse(QRectF(2, 2, 52, 52))
         p.setFont(text_font(Text.LABEL))
         p.setPen(ink)
-        n = self.letter_centre()
-        p.drawText(QRectF(n.x() - 8, n.y() - 7, 16, 14), Qt.AlignmentFlag.AlignCenter, _("N"))
         p.drawText(QRectF(0, 58, self.width(), 18), Qt.AlignmentFlag.AlignCenter, self.heading_text())
+        p.save()
         p.translate(self.CENTRE)
         p.rotate(self.angle)
-        head = QPainterPath(QPointF(0, -10))
-        head.lineTo(5, -1)
-        head.lineTo(-5, -1)
+        p.drawText(QRectF(-8, -self.LETTER - 7, 16, 14), Qt.AlignmentFlag.AlignCenter, _("N"))
+        head = QPainterPath(QPointF(0, -11))
+        head.lineTo(3.5, -4)
+        head.lineTo(-3.5, -4)
         head.closeSubpath()
-        for pen, width in ((halo, 3.6), (ink, 1.6)):
-            p.setPen(QPen(pen, width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
-            p.drawLine(QPointF(0, -1), QPointF(0, 12))
+        p.setPen(QPen(ink, 1.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+        p.drawLine(QPointF(0, -4), QPointF(0, -2))
+        p.drawLine(QPointF(0, 4), QPointF(0, 10))
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(ink)
         p.drawPath(head)
+        p.restore()
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(ink)
+        p.drawEllipse(self.CENTRE, 2.2, 2.2)
 
 
 class ScaleBar(Overlay):
@@ -234,12 +256,20 @@ def place(view) -> None:
     """The overlays in their corners of the viewport (they are children of the view, which has its frame and its
     scroll bars around the viewport)."""
     r = view.viewport().geometry()
-    view.north.move(r.right() + 1 - view.north.width() - MARGIN, r.top() + MARGIN)
+    x = r.right() + 1 - view.north.width() - MARGIN
+    top = r.top() + MARGIN
+    bar = getattr(view, "viewbar", None)
+    upper = QRect(x, top, view.north.width(), view.north.height())
+    lower = bar is not None and upper.adjusted(-Space.S, 0, 0, 0).intersects(
+        QRect(r.left() + MARGIN, top, bar.width(), bar.height()))
+    y = max(top + (bar.height() + Space.S if bar is not None else 0),
+            r.bottom() + 1 - Size.CONTROL - view.north.height() - 2 * MARGIN) if lower else top
+    view.north.place_at(QPoint(x, y), lower)
     view.scale_bar.move(r.left() + MARGIN, r.bottom() + 1 - view.scale_bar.height() - MARGIN)
     view.attribution.move(r.right() + 1 - view.attribution.width() - MARGIN,
                           r.bottom() + 1 - view.attribution.height() - MARGIN)
     if getattr(view, "viewbar", None) is not None:
-        view.viewbar.place(r, [view.north.geometry()])
+        view.viewbar.place(r)
     strip = view.fallback_strip
     strip.setMaximumWidth(max(280, r.width() - 2 * MARGIN))
     strip.adjustSize()

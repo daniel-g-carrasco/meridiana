@@ -32,6 +32,7 @@ class ViewBars(unittest.TestCase):
         return [ids.get(b.defaultAction()) for b in bar.buttons.values()]
 
     def test_each_view_has_its_bar_in_its_corner_with_the_commands_that_left_the_toolbar_and_their_keys(self):
+        from PySide6.QtCore import QAbstractAnimation
         from PySide6.QtGui import QKeySequence
         from PySide6.QtWidgets import QToolBar, QToolButton
         win = self.win
@@ -43,12 +44,15 @@ class ViewBars(unittest.TestCase):
             self.assertIs(bar.parentWidget(), view)
             self.assertTrue(bar.isVisible())
             self.assertLess(bar.x(), 20)
-        # at the top when it fits beside the compass (R146 made it a round one, 56 px), else below it: never over it
+        # The bar stays at the top; the compass animates to the lower corner when they cannot fit side by side.
         room = plan.viewport().width() - plan.north.width() - 3 * 8
+        self.assertLess(plan.viewbar.y(), 20)
+        self.assertTrue(_setup.wait_until(
+            self.app, lambda: plan.north._travel.state() == QAbstractAnimation.State.Stopped))
         if plan.viewbar.width() <= room:
-            self.assertLess(plan.viewbar.y(), 20)
+            self.assertLess(plan.north.y(), 20)
         else:
-            self.assertGreater(plan.viewbar.y(), plan.north.geometry().bottom())
+            self.assertGreater(plan.north.y(), plan.viewport().height() / 2)
         self.assertFalse(plan.viewbar.geometry().intersects(plan.north.geometry()))
         self.assertFalse(view3d.viewbar.geometry().intersects(view3d.cube.geometry()))
         # in a narrow view the bar goes below the cube, and back up when there is room (side by side the 3D bar

@@ -163,12 +163,12 @@ class PhaseTabBar(QTabBar):
                 p.setPen(Qt.PenStyle.NoPen)
                 p.setBrush(QColor(c["accent"] if on else c["disc"]))
                 p.drawEllipse(disc)
-                p.setFont(self.number_font())
-                p.setPen(QColor(c["accent_fg"] if on else c["muted"]))
-                # Centre the visible ink, not the font's ascent/descent box or its tracking.
-                ink = QFontMetricsF(p.font()).tightBoundingRect(number)
-                p.drawText(QPointF(disc.center().x() - ink.center().x(),
-                                  disc.center().y() - ink.center().y()), number)
+                # The outline retains fractional font metrics: tightBoundingRect and drawText
+                # round differently with small/large text at a fractional screen density.
+                glyph = QPainterPath()
+                glyph.addText(QPointF(), self.number_font(), number)
+                glyph.translate(disc.center() - glyph.boundingRect().center())
+                p.fillPath(glyph, QColor(c["accent_fg"] if on else c["muted"]))
                 x += BADGE + 8
             font = self.name_font(on)
             p.setFont(font)

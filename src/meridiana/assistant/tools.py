@@ -45,7 +45,7 @@ from ..i18n import _, number
 RESULT_LIMIT = 6000             # characters of one tool's answer: the local model has 16k tokens for everything
 MANUAL_HITS = 4
 LEVELS = checks_module.LEVELS   # "fail", "warn", "info", "ok"
-KINDS = ("building", "subfield", "exclusion", "site", "phase")
+KINDS = ("building", "subfield", "exclusion", "site", "phase", "settings", "setting", "property")
 SECTIONS = ("energy", "consumption", "economics")
 
 
@@ -79,11 +79,19 @@ SPECS = {
     },
     "go_to": {
         "description": "Bring the window to an object (building, subfield, exclusion, site) or to a phase (model, "
-                       "plant, production, consumption, economics, report). It changes nothing in the project.",
+                       "plant, production, consumption, economics, report), a settings section, a specific setting "
+                       "or a property. Call list_navigation_targets for registered setting/property IDs first. "
+                       "The window scrolls to and briefly highlights the target without changing any value.",
         "parameters": _schema({
             "kind": {"type": "string", "enum": list(KINDS)},
             "id": {"type": "string", "description": "the object's id from project_summary or read_checks, or "
-                                                    "the phase's id"}}, ("kind",)),
+                                                    "the phase's id, or a registered ID from list_navigation_targets"}}, ("kind",)),
+    },
+    "list_navigation_targets": {
+        "description": "List the real settings sections, options and project property controls this version can "
+                       "show with go_to. Use the returned kind and id verbatim; never invent a control ID. "
+                       "This only lists destinations and changes nothing.",
+        "parameters": _schema(),
     },
     "search_manual": {
         "description": "Search Meridiana's user manual (in Italian) and its commands (menu, keys) for how to do "
@@ -183,7 +191,7 @@ SPECS = {
                                "project_id": {"type": "string"}}, ("action",)),
     },
 }
-STEP_1 = ("read_checks", "project_summary", "go_to", "search_manual")
+STEP_1 = ("read_checks", "project_summary", "go_to", "search_manual", "list_navigation_targets")
 STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "propose_fix", "propose_edit",
           "propose_undo")
 STEP_3 = ("search_projects", "project_revisions", "similar_projects", "prepare_open_project", "list_tasks",
@@ -411,7 +419,15 @@ def go_to(host, state: State, kind: str, id: str = "") -> Outcome:   # noqa: A00
     p = host.project
     if kind not in KINDS:
         raise ValueError(f"kind must be one of {', '.join(KINDS)}")
-    if kind == "phase":
+    shown_name = ""
+    if kind in ("settings", "setting", "property"):
+        rows = _navigation_targets(host)
+        choice = next((row for row in rows if row["kind"] == kind and row["id"] == id), None)
+        if choice is None:
+            return _error("the requested control is not registered", targets=rows)
+        target = (kind, id)
+        shown_name = choice["label"]
+    elif kind == "phase":
         from .. import phases
         if id not in phases.ids():
             return _error(f"no phase {id!r}", phases=phases.ids())
@@ -425,8 +441,19 @@ def go_to(host, state: State, kind: str, id: str = "") -> Outcome:   # noqa: A00
             return _error(f"no {kind} {id!r}", ids=found)
         target = (kind, id)
     host.go_to(target)
-    return Outcome(_json({"done": True, "shown": _target(p, target)}),
-                   _("Went to {what}").format(what=object_name(p, kind, id)))
+    shown = _target(p, target)
+    shown["name"] = shown_name or shown["name"]
+    return Outcome(_json({"done": True, "shown": shown}),
+                   _("Went to {what}").format(what=shown["name"]))
+
+
+def _navigation_targets(host) -> list[dict]:
+    listing = getattr(host, "navigation_targets", None)
+    return listing() if callable(listing) else []
+
+
+def list_navigation_targets(host, state: State) -> Outcome:
+    return Outcome(_json({"targets": _navigation_targets(host)}))
 
 
 def _fold(text: str) -> str:
@@ -1081,6 +1108,7 @@ def prepare_task(host, state: State, action: str, task_id: str = "", text: str =
 
 
 TOOLS = {"read_checks": read_checks, "project_summary": project_summary, "go_to": go_to,
+         "list_navigation_targets": list_navigation_targets,
          "search_manual": search_manual, "read_selection": read_selection, "read_results": read_results,
          "read_pedigree": read_pedigree, "read_rules": read_rules, "propose_fix": propose_fix,
          "propose_edit": propose_edit, "propose_undo": propose_undo, "search_projects": search_projects,

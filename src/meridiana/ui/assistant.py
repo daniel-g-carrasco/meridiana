@@ -36,7 +36,7 @@ from PySide6.QtCore import (QByteArray, QEasingCurve, QEvent, QParallelAnimation
 from PySide6.QtGui import QColor, QCursor, QIcon, QPainter, QPainterPath, QPen, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QLayout, QLineEdit,
-                               QPushButton, QSizeGrip, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
+                               QPushButton, QSizeGrip, QSizePolicy, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
 
 from .. import assistant
 from ..assistant import text as words
@@ -209,19 +209,23 @@ class QuestionRow(QPushButton):
     def __init__(self, number: int, parent=None):
         super().__init__(parent)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        policy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        policy.setHeightForWidth(True)
+        self.setSizePolicy(policy)
         row = QHBoxLayout(self)
-        row.setContentsMargins(8, 4, 8, 4)
-        row.setSpacing(6)
+        self.setObjectName("assistant-suggestion")
+        row.setContentsMargins(Space.M, Space.S, Space.M, Space.S)
+        row.setSpacing(Space.M)
         self.number = QLabel(str(number))
         self.number.setFixedWidth(12)
-        self.number.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
+        self.number.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight)
         row.addWidget(self.number)
         self.label = QLabel()
         self.label.setWordWrap(True)
         self.label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         row.addWidget(self.label, 1)
         self.arrow = QLabel("›")
-        self.arrow.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.arrow.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         row.addWidget(self.arrow)
         for child in (self.number, self.label, self.arrow):
             child.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
@@ -240,11 +244,16 @@ class QuestionRow(QPushButton):
             w.setStyleSheet(f"color: {muted};")
 
     def sizeHint(self):
-        hint = super().sizeHint()
-        needed = self.label.heightForWidth(max(0, self.width() - 45))
-        if needed >= 0:
-            hint.setHeight(max(hint.height(), needed + 8))
+        hint = super().sizeHint().expandedTo(QSize(280, 0))
+        hint.setHeight(self.heightForWidth(hint.width()))
         return hint
+
+    def heightForWidth(self, width: int) -> int:
+        margins = self.layout().contentsMargins()
+        room = (width - margins.left() - margins.right() - self.number.width()
+                - self.arrow.sizeHint().width() - 2 * self.layout().spacing())
+        needed = self.label.heightForWidth(max(1, room))
+        return max(28, needed + margins.top() + margins.bottom())
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
@@ -474,6 +483,8 @@ class Assistant(QFrame):
         self.cost.hide()
         inside.addWidget(self.cost)
         self.conversation = QTextBrowser()
+        self.conversation.setObjectName("assistant-conversation")
+        self.conversation.setFrameShape(QFrame.Shape.NoFrame)
         self.conversation.setOpenLinks(False)
         self.conversation.setMinimumHeight(24)              # it gives way before the field in a low area
         # his bold the catalogue's semibold (R121): «<b>» is 700, a third weight
@@ -497,10 +508,18 @@ class Assistant(QFrame):
         self.questions_box = QWidget(self.panel)
         qbox = QVBoxLayout(self.questions_box)
         qbox.setContentsMargins(0, 0, 0, 0)
-        qbox.setSpacing(0)
+        qbox.setSpacing(Space.XXS)
         qbox.setSizeConstraint(QLayout.SizeConstraint.SetMinimumSize)
-        self.questions_title = QLabel(_("Questions ready: press 1, 2, 3"))
-        self.questions_title.setFont(text_font(Text.LABEL))
+        self.questions_title = QToolButton()
+        self.questions_title.setText(_("Suggestions"))
+        self.questions_title.setToolTip(_("Show or hide suggestions. Keys: 1, 2, 3."))
+        self.questions_title.setAutoRaise(True)
+        self.questions_title.setCheckable(True)
+        self.questions_title.setChecked(True)
+        self.questions_title.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.questions_title.setArrowType(Qt.ArrowType.DownArrow)
+        self.questions_title.setFont(text_font(Text.SECONDARY))
+        self.questions_title.toggled.connect(self._toggle_suggestions)
         qbox.addWidget(self.questions_title)
         self.questions: list[QuestionRow] = []
         for n in range(3):
@@ -514,6 +533,10 @@ class Assistant(QFrame):
         self.field = QLineEdit()
         self.field.setPlaceholderText(_("Ask {name}…").format(name=assistant.NAME))
         self.field.returnPressed.connect(lambda: self.ask(self.field.text()))
+        self.send_action = self.field.addAction(icons.icon("arrow-up"), QLineEdit.ActionPosition.TrailingPosition)
+        self.send_action.setText(_("Send message"))
+        self.send_action.setToolTip(_("Send message"))
+        self.send_action.triggered.connect(lambda: self.ask(self.field.text()))
         self.stop_action = self.field.addAction(QIcon(), QLineEdit.ActionPosition.TrailingPosition)
         self.stop_action.setText(_("Stop"))
         self.stop_action.setToolTip(_("Stop the answer"))
@@ -539,6 +562,8 @@ class Assistant(QFrame):
                         "line": tokens["line"], "muted": tokens["muted"]}
         self.questions_title.setStyleSheet(f"color: {self.colours['muted']};")
         self.cost.setStyleSheet(f"color: {self.colours['muted']};")
+        self.context.setStyleSheet(f"color: {self.colours['muted']};")
+        self.conversation.setStyleSheet("QTextBrowser#assistant-conversation { background: transparent; border: none; }")
         for q in self.questions:
             q.set_colours(self.colours["muted"])
         self.stop_action.setIcon(self._stop_icon())
@@ -742,8 +767,8 @@ class Assistant(QFrame):
         self.tab = tab
         if self.isVisible() and not self.docked and self.drag is None:
             self.stay()
-        names = {"model": _("Model"), "production": _("Production"), "consumption": _("Consumption"),
-                 "economics": _("Balance and economics")}
+        from ..phases import phases
+        names = {phase.id: phase.title for phase in phases()}
         self.context.setText(_("Tab: {tab}").format(tab=names.get(tab, tab)))
         self.fill_questions()
         self.reposition(animate)
@@ -761,9 +786,16 @@ class Assistant(QFrame):
         changed = texts != [row.text() for row in self.questions]
         for row, text in zip(self.questions, texts, strict=True):
             row.setText(text)
-            row.setVisible(bool(text))
+            row.setVisible(bool(text) and self.questions_title.isChecked())
         if changed:
             self.questions_timer.start(0)
+
+    def _toggle_suggestions(self, expanded: bool) -> None:
+        self.questions_title.setArrowType(Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow)
+        for row in self.questions:
+            row.setVisible(expanded and bool(row.text()))
+        self.questions_box.setMinimumHeight(0)
+        self.questions_timer.start(0)
 
     def _fit_questions(self) -> None:
         self.questions_box.setMinimumHeight(0 if self.docked else self.questions_box.sizeHint().height())

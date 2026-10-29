@@ -39,5 +39,32 @@ class SharedControls(unittest.TestCase):
         self.assertFalse(icon.pixmap().isNull())
         self.assertIsNotNone(theme)
 
+    def test_small_question_mark_centres_its_visible_ink_inside_the_circle(self):
+        from PySide6.QtCore import QPoint, Qt
+        from PySide6.QtGui import QImage, QPainter
+        _setup.meridiana_look("light")
+        button = help_box.HelpButton("site")
+        button.setStyleSheet("QToolButton {border: none; color: #000000; background: transparent; padding: 0;}")
+        self.addCleanup(_setup.dispose, button)
+        button.show()
+        self.app.processEvents()
+        for scale in (1, 2, 2.5):
+            image = QImage(round(button.width() * scale), round(button.height() * scale),
+                           QImage.Format.Format_ARGB32_Premultiplied)
+            image.setDevicePixelRatio(scale)
+            image.fill(Qt.GlobalColor.transparent)
+            painter = QPainter(image)
+            button.render(painter, QPoint())
+            painter.end()
+            points = [(x, y) for x in range(image.width()) for y in range(image.height())
+                      if image.pixelColor(x, y).alpha() > 128 and image.pixelColor(x, y).lightness() < 170]
+            self.assertTrue(points)
+            xs, ys = zip(*points, strict=True)
+            with self.subTest(scale=scale):
+                self.assertAlmostEqual((min(xs) + max(xs) + 1) / (2 * scale), button.width() / 2,
+                                       delta=0.5 / scale + 0.01)
+                self.assertAlmostEqual((min(ys) + max(ys) + 1) / (2 * scale), button.height() / 2,
+                                       delta=0.5 / scale + 0.01)
+
 if __name__ == "__main__":
     unittest.main()

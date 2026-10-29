@@ -342,7 +342,9 @@ def evaluate(production: pd.Series, load: pd.Series, p_stc_kw: float, p_ac_kw: f
     payback = _payback(np.cumsum(flows))
     payback_d = _payback(np.cumsum(disc))
     dfac = (1.0 + r) ** np.arange(1, n_years + 1)
-    lcoe = float((capex + np.sum((opex + replacement) / dfac)) / np.sum(years.production.to_numpy() / dfac))
+    discounted_production = float(np.sum(years.production.to_numpy() / dfac))
+    lcoe = (float((capex + np.sum((opex + replacement) / dfac)) / discounted_production)
+            if discounted_production > 0 else float("inf"))
 
     cons_arr, import_arr = hb.consumption.to_numpy(), hb["import"].to_numpy()
     kpi = {"production": year1["production"], "consumption": year1["consumption"], "self": year1["self"],

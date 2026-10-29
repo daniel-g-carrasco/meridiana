@@ -127,8 +127,11 @@ python -m coverage report -m
   `pause=True` keeps it), `meridiana_look` (the window's font and sheet for a widget alone) and
   `keep_global_state`, the `setUpModule` of every module with Qt; `_fixtures.py` the projects and the data they share
   (a test module never imports another one). The CI runs the groups one after the other.
-- Lint and the full suite before every commit. Every fix or feature has its test, with a name that reads as a
-  sentence.
+- During development, run lint and the tests relevant to the changed behaviour before a commit. Inspect
+  screenshots for visual changes, including narrow layouts and large text. Run the full suite once before
+  integrating a coherent batch and before a release, not after every small visual adjustment (Daniel, 29/10/2026).
+  A known failure is reported with its evidence; thresholds are not loosened to obtain a green result.
+  Regression tests cover meaningful behaviour, not a copy of the implementation.
 - On Linux the window's tests run on Qt's offscreen platform, as in the CI. On Daniel's PC they run on his second
   screen (`MERIDIANA_TEST_SCREEN=1`), never on the main one; a cloud session leaves real-window checks to the
   local session and says which ones are still to do.

@@ -560,6 +560,11 @@ class Inverters(unittest.TestCase):
         opened = model.Project.from_json(old)
         self.assertEqual(opened.energy["inverters"], [{"record": rec, "count": 2, "name": ""}])
         in_memory = self.project({"inverter": rec, "inverter_count": 2})     # a dictionary of before, never saved
+        from meridiana import jobs
+        from meridiana.energy import plant
+        runs = plant.propose(today, jobs.layout_of(today)[0])
+        for p in (today, opened, in_memory):
+            p.energy["strings"] = {"runs": runs}  # compare the same explicit electrical connections
         years = [self.year(p).sim for p in (today, opened, in_memory)]
         self.assertEqual({round(s.energy_kwh, 6) for s in years}, {round(years[0].energy_kwh, 6)})
         self.assertAlmostEqual(years[0].p_ac_kw, 20.0)

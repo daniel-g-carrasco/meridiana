@@ -8,15 +8,16 @@ import re
 from PySide6.QtCore import Qt, QUrl, Signal
 from PySide6.QtGui import QTransform
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QCompleter, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout,
-                               QLabel, QLineEdit, QListWidget, QPushButton, QSizePolicy, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QCompleter, QDoubleSpinBox, QFormLayout, QHBoxLayout,
+                               QLabel, QLineEdit, QListWidget, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget)
 
-from .. import geo, model, places
+from .. import geo, model, places, worldmap
 from ..coordinates import CoordinateError, CoordinateReading
 from ..i18n import _, ngettext
 from ..services import geocoding
 from .design import Space, Text, set_text
 from .plan import PlanView
+from .style import SectionGate, grow_label
 from .tileloader import USER_AGENT
 
 
@@ -25,34 +26,59 @@ class SitePreview(PlanView):
 
     def __init__(self, cache_dir, parent=None):
         self.tiles_allowed = False
-        super().__init__(cache_dir, parent)
         self.has_point = False
+        super().__init__(cache_dir, parent)
         self.pressed = None
-        self.set_source("osm")
+        self.loader.offline = True
         self.setMinimumSize(320, 300)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.show_overview()
+
+    def show_overview(self) -> None:
+        self.set_source("none")
+        self.set_origin(41.5, 12.5)
+        self.setTransform(QTransform().fromScale(1 / 1800, 1 / 1800))
+        self.centerOn(0, 0)
+        # PlanView otherwise fits an empty 120 m drawing on the first resize.
+        self.user_moved = True
+        self._moved()
 
     def set_point(self, lat: float, lon: float) -> None:
         self.has_point = True
         self.set_origin(lat, lon)
-        self.setTransform(QTransform().fromScale(1.0, 1.0))
+        scale = 1.0 if self.tiles_allowed else 1 / 600
+        self.setTransform(QTransform().fromScale(scale, scale))
+        self.user_moved = True
         self.centerOn(0, 0)
         self.site_mark.setPos(0, 0)
         self.site_mark.show()
         self._moved()
 
     def clear_point(self) -> None:
+        had_point = self.has_point
         self.has_point = False
         self.site_mark.hide()
+        if had_point:
+            self.show_overview()
 
     def _moved(self) -> None:
-        if self.tiles_allowed:
-            super()._moved()
-        else:
-            mpp = self.metres_per_pixel()
-            self.scale_bar.set_scale(mpp)
-            self.world.set_scale(mpp)
+        super()._moved()
         self.site_mark.setVisible(self.has_point)
+
+    def _credit(self) -> None:
+        if self.source == "none":
+            from . import plan_overlays
+            self.attribution.set_text("Natural Earth", self.viewport().width())
+            plan_overlays.place(self)
+        else:
+            super()._credit()
+
+    def coordinates_at(self, point) -> tuple[float, float]:
+        if self.world.equal_earth:
+            lon, lat = worldmap.from_equal_earth(point.x(), -point.y(), self.origin.lon, self.origin.lat)
+        else:
+            lon, lat = self.origin.to_lonlat(point.x(), -point.y())
+        return lat, lon
 
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
@@ -63,8 +89,12 @@ class SitePreview(PlanView):
         if event.button() == Qt.MouseButton.LeftButton and self.pressed is not None:
             if (event.position().toPoint() - self.pressed).manhattanLength() < 6:
                 point = self.mapToScene(event.position().toPoint())
-                lon, lat = self.origin.to_lonlat(point.x(), -point.y())
-                self.locationPicked.emit(lat, lon)
+                try:
+                    lat, lon = self.coordinates_at(point)
+                except ValueError:
+                    pass  # The margin outside the projected globe is not a geographic point.
+                else:
+                    self.locationPicked.emit(lat, lon)
             self.pressed = None
         super().mouseReleaseEvent(event)
 
@@ -99,17 +129,40 @@ class NewProjectPage(QWidget):
         columns = QHBoxLayout()
         columns.setSpacing(Space.XL)
         outer.addLayout(columns, 1)
-        left = QVBoxLayout()
+        left_panel = QWidget()
+        left_panel.setMinimumWidth(340)
+        left_panel.setMaximumWidth(460)
+        left_panel.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        left = QVBoxLayout(left_panel)
+        left.setContentsMargins(0, 0, 0, 0)
         left.setSpacing(Space.M)
-        columns.addLayout(left, 0)
+        columns.addWidget(left_panel, 2)
         query_row = QHBoxLayout()
         self.query = QLineEdit()
-        self.query.setMinimumWidth(340)
         self.query.setPlaceholderText(_("Address, municipality, coordinates or link"))
         self.search = QPushButton(_("Search"))
         query_row.addWidget(self.query, 1)
         query_row.addWidget(self.search)
         left.addLayout(query_row)
+        coordinate_row = QHBoxLayout()
+        self.latitude = QLineEdit()
+        self.longitude = QLineEdit()
+        for field, label, example in ((self.latitude, _("Latitude"), "45.5226"),
+                                      (self.longitude, _("Longitude"), "9.0300")):
+            column = QVBoxLayout()
+            caption = QLabel(label)
+            caption.setBuddy(field)
+            column.addWidget(caption)
+            field.setPlaceholderText(example)
+            field.setAccessibleName(label)
+            column.addWidget(field)
+            coordinate_row.addLayout(column)
+        left.addLayout(coordinate_row)
+        coordinates_help = QLabel(_("Latitude, longitude: 45.5226, 9.0300. Paste coordinates or a full map link "
+                                   "above, or paste both coordinates into Latitude."))
+        coordinates_help.setWordWrap(True)
+        set_text(coordinates_help, Text.SECONDARY)
+        left.addWidget(coordinates_help)
         privacy = QLabel(_("Suggestions while you type come only from ISTAT and your recent projects. "
                            "OpenStreetMap Nominatim is asked only by Search."))
         privacy.setWordWrap(True)
@@ -123,21 +176,37 @@ class NewProjectPage(QWidget):
         self.found.setMaximumHeight(170)
         self.found.hide()
         left.addWidget(self.found)
-        self.optional = QGroupBox(_("Optional project data"))
-        self.optional.setCheckable(True)
-        self.optional.setChecked(False)
-        optional_body = QWidget()
-        form = QFormLayout(optional_body)
+        self.optional = QCheckBox(_("Optional project data"))
+        left.addWidget(self.optional)
+        optional_scroll = QScrollArea()
+        optional_scroll.setWidgetResizable(True)
+        optional_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        optional_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        optional_scroll.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
+        self.optional_body = QWidget()
+        form = QFormLayout(self.optional_body)
+        form.setContentsMargins(0, 0, Space.S, 0)
+        form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
+        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.name = QLineEdit()
         form.addRow(_("Project name"), self.name)
         self.client = QComboBox()
         form.addRow(_("Client"), self.client)
         self.job = QComboBox()
         form.addRow(_("Job"), self.job)
-        self.reserved = QCheckBox(_("Reserved project: names and addresses never leave this PC"))
+        self.reserved = QCheckBox(_("Reserved project"))
         form.addRow(self.reserved)
-        self.maps_consent = QCheckBox(_("Allow online map tiles for this project: the area shown leaves this PC"))
+        reserved_help = QLabel(_("Names and addresses never leave this PC."))
+        reserved_help.setWordWrap(True)
+        set_text(reserved_help, Text.SECONDARY)
+        form.addRow(reserved_help)
+        self.maps_consent = QCheckBox(_("Allow online map tiles for this project"))
         form.addRow(self.maps_consent)
+        consent_help = QLabel(_("The area shown is sent to the map provider. For reserved projects only, "
+                               "with this explicit consent."))
+        consent_help.setWordWrap(True)
+        set_text(consent_help, Text.SECONDARY)
+        form.addRow(consent_help)
         self.distributor = QLineEdit()
         form.addRow(_("Distributor"), self.distributor)
         self.pod = QLineEdit()
@@ -169,18 +238,19 @@ class NewProjectPage(QWidget):
         form.addRow(_("Power requested for the new plant"), self.requested)
         self.practice = QLineEdit()
         form.addRow(_("Connection practice code"), self.practice)
-        optional_body.setVisible(False)
-        self.optional.toggled.connect(optional_body.setVisible)
-        optional_layout = QVBoxLayout(self.optional)
-        optional_layout.addWidget(optional_body)
-        left.addWidget(self.optional)
-        left.addStretch(1)
+        for label in self.optional_body.findChildren(QLabel):
+            label.setWordWrap(True)
+            grow_label(label)
+        optional_scroll.setWidget(self.optional_body)
+        left.addWidget(optional_scroll, 1)
+        self.optional_gate = SectionGate(self.optional, _("Enable Optional project data to edit these fields."),
+                                         [self.optional_body])
         self.create = QPushButton(_("Create and draw"))
         self.create.setEnabled(False)
         left.addWidget(self.create)
         self.preview = SitePreview(paths.cache)
         self.preview.loader.offline = True
-        columns.addWidget(self.preview, 1)
+        columns.addWidget(self.preview, 5)
 
         self.suggestion_rows: dict[str, places.PlaceSuggestion] = {}
         from PySide6.QtCore import QStringListModel
@@ -191,13 +261,16 @@ class NewProjectPage(QWidget):
         self.query.setCompleter(completer)
         completer.activated[str].connect(self.choose_suggestion)
         self.query.textChanged.connect(self._changed)
+        self.query.returnPressed.connect(self._search)
+        self.latitude.textChanged.connect(self._axes_changed)
+        self.longitude.textChanged.connect(self._axes_changed)
         self.search.clicked.connect(self._search)
         self.found.currentRowChanged.connect(self._choose_online)
         self.preview.locationPicked.connect(self._picked)
         self.create.clicked.connect(self._create)
         self.reserved.toggled.connect(self._privacy_changed)
         self.maps_consent.toggled.connect(lambda _v: self._apply_map_privacy(start=True))
-        self.maps_consent.hide()
+        self.maps_consent.setEnabled(False)
         self.client.currentIndexChanged.connect(self._fill_jobs)
         self.job.currentIndexChanged.connect(self._job_changed)
         self.refresh_registry()
@@ -255,18 +328,20 @@ class NewProjectPage(QWidget):
             reserved = True
         self.reserved.setEnabled(not job_reserved)
         self.search.setEnabled(not reserved)
-        self.maps_consent.setVisible(reserved)
+        self.maps_consent.setEnabled(reserved)
         if not reserved:
             self.maps_consent.setChecked(False)
         self._apply_map_privacy(start=True)
 
     def _apply_map_privacy(self, start: bool = False) -> None:
-        allowed = self.cfg.network_tiles and (not self._effective_reserved() or self.maps_consent.isChecked())
-        was_offline = self.preview.loader.offline
-        self.preview.tiles_allowed = allowed and (start or self.candidate is not None or self.preview.tiles_allowed)
+        allowed = (self.candidate is not None and self.cfg.network_tiles
+                   and (not self._effective_reserved() or self.maps_consent.isChecked()))
+        changed = self.preview.tiles_allowed != allowed
+        self.preview.tiles_allowed = allowed
         self.preview.loader.offline = not allowed
-        if allowed and was_offline and start:
-            self.preview._moved()
+        self.preview.set_source("osm" if allowed else "none")
+        if changed and start and self.candidate is not None:
+            self.preview.set_point(self.candidate.lat, self.candidate.lon)
 
     def reset(self) -> None:
         self.query.clear()
@@ -285,13 +360,17 @@ class NewProjectPage(QWidget):
         self.found.hide()
         self.online_places = []
         self.candidate = None
+        self._set_axes(None)
+        self._apply_map_privacy()
         self.preview.clear_point()
         self.create.setEnabled(False)
         self.status.clear()
 
     @staticmethod
     def _coordinate_shaped(text: str) -> bool:
-        return bool(re.search(r"\d|°|º|https?://|EPSG:|UTM|Gauss", text, re.IGNORECASE))
+        return bool(re.search(r"°|º|https?://|^\s*(?:EPSG:|UTM\b|Gauss|GB\s|\d{1,2}[NSC-HJ-NP-X]\s)",
+                              text, re.IGNORECASE)
+                    or re.fullmatch(r"[\s\d.,;+\-]+", text))
 
     def _changed(self, text: str) -> None:
         rows = places.search(text, self.choices)
@@ -303,15 +382,19 @@ class NewProjectPage(QWidget):
         except CoordinateError as error:
             self.coordinate_error = str(error)
             self.candidate = None
+            self._set_axes(None)
+            self._apply_map_privacy()
             self.preview.clear_point()
             self.create.setEnabled(False)
             self.status.setText(self.coordinate_error if self._coordinate_shaped(text) else "")
             return
         self._take(point, text)
 
-    def _take(self, point: CoordinateReading, address: str) -> None:
+    def _take(self, point: CoordinateReading, address: str, sync_axes: bool = True) -> None:
         self.candidate = point
         self.address = address.strip()
+        if sync_axes:
+            self._set_axes(point)
         labels = {"decimal": _("Decimal degrees"), "dms": "DMS", "ddm": _("Degrees and decimal minutes"),
                   "link": _("Map link"), "grid": _("Projected coordinates"), "place": _("Local place"),
                   "map": _("Point clicked on the map")}
@@ -324,7 +407,40 @@ class NewProjectPage(QWidget):
     def choose_suggestion(self, display: str) -> None:
         choice = self.suggestion_rows.get(display)
         if choice is not None:
-            self._take(CoordinateReading(choice.lat, choice.lon, "place"), choice.name)
+            self.query.blockSignals(True)
+            self.query.setText(choice.display)
+            self.query.blockSignals(False)
+            self._take(CoordinateReading(choice.lat, choice.lon, "place"), choice.display)
+
+    def _set_axes(self, point: CoordinateReading | None) -> None:
+        for field, value in ((self.latitude, point.lat if point else None),
+                             (self.longitude, point.lon if point else None)):
+            field.blockSignals(True)
+            field.setText(format(value, ".8f").rstrip("0").rstrip(".") if value is not None else "")
+            field.blockSignals(False)
+
+    def _axes_changed(self, _text: str) -> None:
+        latitude, longitude = self.latitude.text().strip(), self.longitude.text().strip()
+        pasted_pair = True
+        try:
+            # In a dedicated axis field, an Italian decimal comma is a decimal separator.
+            # Whole pairs use an unambiguous separator (comma + space, semicolon, or two decimals).
+            if re.fullmatch(r"[+-]?\d+(?:[.,]\d*)?", latitude):
+                raise CoordinateError("one coordinate")
+            # A whole pair, DMS, grid reference or map link can be pasted into the first field.
+            point = geo.read_coordinates(latitude)
+        except CoordinateError:
+            pasted_pair = False
+            try:
+                point = geo.read_coordinates(f"{latitude};{longitude}")
+            except CoordinateError as error:
+                self.candidate = None
+                self.create.setEnabled(False)
+                self.status.setText(str(error) if latitude and longitude else "")
+                self._apply_map_privacy()
+                self.preview.clear_point()
+                return
+        self._take(point, f"{point.lat:.8f}, {point.lon:.8f}", sync_axes=pasted_pair)
 
     def _picked(self, lat: float, lon: float) -> None:
         self._take(CoordinateReading(lat, lon, "map"), self.query.text())

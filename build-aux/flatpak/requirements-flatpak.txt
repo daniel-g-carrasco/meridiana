@@ -7,6 +7,8 @@
 #       --ignore-pkg numpy --prefer-wheels=<every package with compiled code> -o python3-requirements
 #
 # (flatpak-builder-tools, pip/; the command with the full list is in docs/progetto.md section 4)
+# IfcOpenShell's wheels use a "none" ABI tag but carry a CPython extension. The generated recipe must select
+# py313 for the Python 3.13 of SDK 6.11, on both architectures; py310 is not interchangeable with py313.
 shapely>=2.0
 pandas>=2.2
 requests>=2.31
@@ -14,5 +16,7 @@ pvlib==0.16.1
 scipy>=1.15
 matplotlib>=3.9
 pyqtgraph>=0.14
+pypdf>=6.0
 anthropic>=2.3
 keyring>=25.7
+ifcopenshell>=0.9.0.post1

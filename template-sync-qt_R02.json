@@ -1,0 +1,170 @@
+{
+  "format": 2,
+  "upstream_version": "b98bc3797a926df8a56797c05cfe3ee97a32497f",
+  "consumer_base": "209bd9a",
+  "hash_normalization": "CRLF normalized to LF",
+  "files": [
+    {
+      "source": "src/qtkit/tables.py",
+      "target": "src/meridiana/ui/shared_tables.py",
+      "upstream_sha256": "6ceebb16df42884cc5551fbbf6ac8f71a2ec6087d771fae404dbe8df61aab554",
+      "target_sha256": "5007ec1f80d133ecbecc5adb5afd24c7d628e3a5808c9762c9e21764cd1f5c84",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/fades.py",
+      "target": "src/meridiana/ui/fades.py",
+      "upstream_sha256": "e2c75b8918d056959ec511b26deee92b26518d7b89c1f702d55eb479bd39c0ab",
+      "target_sha256": "4c2f94b9b9f17e102b5e8b662cf91dd824d33c7ac443713a252af1c66218481a",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/phasebar.py",
+      "target": "src/meridiana/ui/phasebar.py",
+      "upstream_sha256": "8f03e25905e7497bc3ea14fb509d127d7f1eb37cb78e64d8beefa930c2fd450e",
+      "target_sha256": "75e86d9f9a7458042d5a05933468bbeed94e2aac0a4480cc75f5c763358c330b",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/window.py",
+      "target": "src/meridiana/ui/window.py",
+      "upstream_sha256": "1cd5777ffc46d4a1fd2b79eca321cd4e324d4f69309e37fcb1becb5ef5a43198",
+      "target_sha256": "e26246f4dcbed12a4e0783262623a446d1c8c8c122e005cf40a51b98527a5ba4",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/checkboxes.py",
+      "target": "src/meridiana/ui/checkboxes.py",
+      "upstream_sha256": "a102836c850f0f0984dd3276f8c39663024b4fe7d17f5f84c878a7eacb3547b4",
+      "target_sha256": "a7c2f2a974a388c042cca980c38e6795fca14a073239dea6da88ee0dab0226dc",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/scrollbars.py",
+      "target": "src/meridiana/ui/scrollbars.py",
+      "upstream_sha256": "7778cf1c555957fcc4aab3efc1eeba1e00a4fe35d3c0a47280db09b7f9dccb09",
+      "target_sha256": "18205df678259d2a66c95e530df97561a38b57ef61b58b76c7081fecd3f25822",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/style.py",
+      "target": "src/meridiana/ui/style.py",
+      "upstream_sha256": "277cd27d78bff0f33a81b3e4b31c1fb51f3acd7b94c7ae1f5c1c9672e686e4cf",
+      "target_sha256": "30c8a9ece3c3335338897e275593becaf51b49ebeb9440ba6079a8d78790f59c",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/help.py",
+      "target": "src/meridiana/ui/help.py",
+      "upstream_sha256": "9d54b0abcb468e46684586f122c7b5d1d6237e63c962af3d02c7d02f2874813d",
+      "target_sha256": "fb35110ff9847eeca6ab4ba15cb6c52ea6024b950df2b08e134d4cf34640c490",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/theme.py",
+      "target": "src/meridiana/ui/theme.py",
+      "upstream_sha256": "6e20a4c95ed8bd06b73f5cb31aecc618d9a13c00f704295e569919010face1be",
+      "target_sha256": "a9c488abd4a22f2475641db876119125f96eec9a799e765ea537df8e640ce0d6",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/file_page.py",
+      "target": "src/meridiana/ui/file_page.py",
+      "upstream_sha256": "80e16e604e34c25af7a1e88f0fa30694bdeab51a0d79ad11d3757ab410df3c5a",
+      "target_sha256": "eecf70f315c7cff8cd79e112d3fd01e88834a20ad26a7e6d90b309a646941a0f",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/popups.py",
+      "target": "src/meridiana/ui/popups.py",
+      "upstream_sha256": "31bed1c6689927623a05c2e42ed997dd4b3be2cab0014904a594688d19650e5d",
+      "target_sha256": "7c6eb89b9c075f723380492a38dcc532dde6097945fb5986b49fe54f76d71b59",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/gallery.py",
+      "target": "src/meridiana/ui/gallery.py",
+      "upstream_sha256": "d959ebeb15e434c47e86af8bd1f1561bf4633677e5e1428ebef2698551b245db",
+      "target_sha256": "f0c0f3da3acb0373746aed4eb616729d314c0c939f831a338a67944cd04506cf",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    },
+    {
+      "source": "src/qtkit/marks.py",
+      "target": "src/meridiana/ui/marks.py",
+      "status": "adapted",
+      "baseline_version": "b98bc3797a926df8a56797c05cfe3ee97a32497f",
+      "upstream_sha256": "d2520f5a4da9e805501016db117eb0cc3253cadf533b3f0b6d6d2d3ffa7ae3ca",
+      "target_sha256": "417653b897fae597b055b499bb593c7352fc81b0d6a282c74dd4db068d0b8b4b"
+    },
+    {
+      "source": "src/qtkit/status_pill.py",
+      "target": "src/meridiana/ui/status_pill.py",
+      "status": "adapted",
+      "baseline_version": "b98bc3797a926df8a56797c05cfe3ee97a32497f",
+      "upstream_sha256": "b1e9db3a2addeb2c71c558f7a2bd5d4ef2baab69c0c0de8e031cc10bc24c4e96",
+      "target_sha256": "dd1a20fbbe5957e972b186ac7ebfd3eb7963bf60beaef04bda29b50e09340606"
+    },
+    {
+      "source": "src/qtkit/spotlight.py",
+      "target": "src/meridiana/ui/spotlight.py",
+      "status": "adapted",
+      "baseline_version": "b98bc3797a926df8a56797c05cfe3ee97a32497f",
+      "upstream_sha256": "9fda006675c2a9eaceeb74acd5d6259ab3c2ef6bb148c64e00e94c1bb85c8663",
+      "target_sha256": "9fda006675c2a9eaceeb74acd5d6259ab3c2ef6bb148c64e00e94c1bb85c8663"
+    }
+  ],
+  "additional_consumer_files": [
+    {
+      "target": "src/meridiana/ui/help_box.py",
+      "target_sha256": "bb7502195b5a79882613208a187dc847364d8822910cc7f34fb7999433a5add4"
+    },
+    {
+      "target": "src/meridiana/ui/catalog_dialog.py",
+      "target_sha256": "a82a4fe90a336abf2bd728cc21d171920a70f61789c1a9e76d9ed4063d673c50"
+    },
+    {
+      "target": "src/meridiana/ui/charts.py",
+      "target_sha256": "db779e70f9d8369f22216331ff6dd0ec434a12b37a37b8bc7e66196f1d0d8880"
+    },
+    {
+      "target": "src/meridiana/ui/variants.py",
+      "target_sha256": "0f1e489a46ee662012f7249456e343de8655db867a8e87ecbc7d3b61fe286ba8"
+    },
+    {
+      "target": "src/meridiana/ui/shortcuts_dialog.py",
+      "target_sha256": "3d4b3a5f4e095e43d61cf842e8f30bf2b9ef9dc270ce5819e1dafb85d6b2e69f"
+    },
+    {
+      "target": "src/meridiana/ui/panel_buttons.py",
+      "target_sha256": "81a757b744bf9e5175bb3c10cb454c04e14fd205a7d29fb99b776d1b9619e984"
+    },
+    {
+      "target": "src/meridiana/ui/checks_page.py",
+      "target_sha256": "bc2bb3af9169e02f25589630ee188a3afdd4593d0bdad87b9f59fcc3c9b2c05d"
+    },
+    {
+      "target": "src/meridiana/ui/navigation_targets.py",
+      "target_sha256": "84a8d4d673c9aa7d998d0896644af28227a3ee8dcff40dbb165791722ef81382"
+    }
+  ],
+  "not_applicable": [
+    {
+      "source": "src/qtkit/documenttabs.py",
+      "upstream_sha256": "731cd5a2ecb7a91c49e30f385e082d0ee77af278829b930bbd7b44521eb2f016",
+      "reason": "One project per window; docks, chart tabs, preferences and variants retain their distinct application contracts."
+    }
+  ],
+  "revision_note": "2026-10-29: shared usage corrections and spotlight; application-specific adaptations retained."
+}
