@@ -50,7 +50,7 @@ La suite generale è stata avviata una volta per gruppi. Dopo difetti o modifich
 coinvolti. Non si presenta un primo passaggio fallito come un passaggio interamente verde.
 
 - Nucleo:869 prove, una sola aspettativa rimasta sul vecchio suffisso; corretta a .mer,7 prove mirate verdi.
-- Calcoli:193 verdi prima della correzione R224; da rieseguire dopo.
+- Calcoli:193 verdi prima della correzione R224; rieseguiti dopo, esito dettagliato nel punto R224 sotto.
 - Formati:84 verdi; successiva regressione numeri non finiti,15 prove del codec verdi.
 - Widget:440 prove, un errore di ownership nella fixture del tema condiviso. Sequenza10prove riproduceva
   l'errore: corretta senza cambiare asserzioni, verde anche dopo smaltimento oggetti Qt e riuso della cache.
@@ -77,7 +77,7 @@ nuova dopo il congelamento dei sorgenti, con controllo del log e confronto delle
 Il bundle Windows R04 ha poi rilevato un difetto reale: ifcopenshell.geom assente. Ricetta corretta con
 il modulo geometrico e le famiglie API caricate dinamicamente dall'export; il selftest ora esporta e riapre
 un IFC4 completo contando i128 moduli, oltre a verificare le importazioni. R05 interrotto prima di confezionare;
-R06 ricostruito da directory nuova, collaudo del binario in corso.
+R06 ricostruito da directory nuova: il roundtrip ha rilevato le tabelle JSON IFC mancanti. La ricetta ora raccoglie le risorse dati di IfcOpenShell; R07 ha poi esposto il bootstrap EXPRESS: senza parser fisico e moduli rules, IfcOpenShell avviava sys.executable bootstrap.py, cioe una seconda istanza del programma congelato. La prova diagnostica con parser/regole aggiunti supera il roundtrip IFC e termina con 0 errori in 10,81 s. La ricetta include ora anche tali sorgenti e le regole caricate dinamicamente; R08 ricostruito da zero con questa soluzione: selftest del binario con exit 0 e 0 errori in 28,21 s; IFC4 riaperto con 128 moduli e 195263 byte, energia 23683 kWh, PDF 1590540 byte. La fixture salva .mer e lo apre nella finestra.
 La prova Flatpak e le verifiche OSTree sono in `pacchetto-flatpak-20261029.md`.
 Nessuna installazione sull'ambiente reale, firma o pubblicazione di release è stata dichiarata eseguita.
 
@@ -85,7 +85,22 @@ Nessuna installazione sull'ambiente reale, firma o pubblicazione di release è s
 
 R215 dimensionamento/stringatura globale, R216 est-ovest, R217 pensiline, R219 icona Allinea, R220 tipografia e
 relazioni, R221 conversazione Meridio, R222 rientro gruppi Verifiche, R223 armonizzazione comportamenti.
-R224 moduli scollegati è prioritario per correttezza. La direzione HTML File/Impostazioni è approvata da Daniel;
+R224 moduli scollegati è corretto e integrato nel commit 246ec58. La direzione HTML File/Impostazioni è approvata da Daniel;
 la ristrutturazione completa resta da attuare. I nuovi messaggi aggiungono requisiti senza cancellare questi esiti.
 
 Richieste aggiunte in seguito: R225-R229 revisione ombre/ottimizzatori/MPPT; R230 BIM; R231 importazione IFC e superfici ausiliarie; R232 hover calendario; R233-R234 tooltip. Restano in coda, non dichiarate implementate.
+
+## Consegna locale verificata R03
+
+Cartella `C:\Users\Grasso\dev\meridiana-integra-kimi-9-10\dist\packages-20261029-R03`.
+Windows usa il bundle R08; Linux il Flatpak R03. Installer compilato con Inno Setup 6.7.4 in 98,407 s,
+ZIP provato con `7z t` (4325 file, 519120192 byte decompressi), Flatpak importato in OSTree e fsck senza errori.
+Selftest Windows: exit 0, 0 errori in 28,21 s. Selftest Linux: 0 errori in 21,57 s.
+I controlli non sostituiscono installazione/disinstallazione e prova GPU sul desktop, ancora da eseguire.
+Nessuna release pubblicata o firma applicata. Rapporti e `SHA256SUMS.txt` accompagnano gli artefatti.
+
+| File | Byte | SHA-256 |
+| --- | ---: | --- |
+| meridiana-0.1.0-preview20261029-R03-linux-x86_64.flatpak | 185271488 | `fe8719717a27d23e8f31e088a250095f04dfc850fb5c4a9ffe2302f7dc9d761d` |
+| meridiana-0.1.0-preview20261029-R03-windows-x64.zip | 218297157 | `ea5631d6374568a96cf80b2874d5344d12deeb183842315042b46b8ba924d89c` |
+| meridiana-setup-v0.1.0-preview20261029-R03-windows-x64.exe | 155112597 | `1adbc45123c466f04b519e8f2fb6f6432a1d1667c5d05a9238c65e4e7f6ef294` |

@@ -36,6 +36,18 @@ La potenza `sim.p_stc_kw` e `arrays.modules` continuano a descrivere il posato, 
 - Ruff su tutti i sorgenti e test coinvolti: **passato**.
 - Fixture storiche di pipeline, energia e portabilità aggiornate per dichiarare le connessioni quando richiedono produzione positiva.
 
+## Verifica dei consumatori con produzione nulla
+
+Prova mirata già eseguita sulla fixture sintetica con tutti i moduli scollegati, attraverso le API reali dell'app e in una cartella temporanea. Nessuna modifica ai sorgenti è stata necessaria:
+
+- `EconomicsPage`: risultati economici e grafici di dimensionamento e accumulo renderizzati offscreen. LCOE infinito gestito senza eccezioni né `RuntimeWarning`; visualizzazione attuale **`inf €/kWh`**. La resa grafica più esplicativa resta un miglioramento aperto in **R220**, senza cambiamenti al comportamento in questa correzione.
+- `PedigreeView`: record di produzione ed economia di «Come è calcolato» renderizzati, incluse formule e LCOE infinito; schermata acquisita e contenuto disponibile.
+- Relazione PDF completa: esportata e riaperta con successo, **22 pagine, 1.332.309 byte**.
+- Registro dei calcoli: PDF dei metodi di **7 pagine** e CSV di **8.760 righe**. La colonna di produzione è zero in ogni ora; il CSV non contiene valori `inf`.
+- Serializzazione: schema logico verificato con `json.dumps(..., allow_nan=False)`; salvataggio e riapertura del progetto `.mer` riusciti, con stringhe ancora vuote e nessun avviso. Il KPI infinito è un risultato calcolato e non viene persistito nel progetto.
+
+Artefatti della prova: `C:\Users\Grasso\AppData\Local\Temp\meridiana-zero-render-ltexyaf2` (schermate, relazione, registro e progetto). Il renderer Qt Quick software dell'ambiente offscreen ha segnalato l'assenza di RHI: le immagini 3D della relazione non erano disponibili; l'esportazione PDF si è comunque conclusa. Questa prova riguarda i consumatori da sorgente, non il successivo collaudo dei pacchetti.
+
 ## Limiti dichiarati
 
 La conversione AC rimane il modello aggregato esistente tra gli inverter attivi; non è stata introdotta una simulazione oraria separata per ogni inverter o MPPT. Le verifiche di tensione/corrente restano verifiche: il motore non simula ogni protezione o arresto dell'inverter. Un collegamento a un ingresso esistente viene contato anche quando una verifica elettrica segnala un problema; quel problema resta visibile nei controlli.

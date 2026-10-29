@@ -358,12 +358,14 @@ La suite completa Windows ha raccolto 1.593 prove ma si è interrotta con access
 
 Sorgenti verificati del lotto in `docs/revisioni/ux-formato-pacchetti-20261029.md`, con esiti grezzi e limiti.
 R224 corretto: i moduli fuori stringa o su inverter/ingressi inesistenti non contribuiscono alla produzione.
-Prova sintetica128moduli: prima63667,84kWh senza collegamenti, ora0; rapporto e regressioni in
+Prova sintetica con 128 moduli: prima 63667,84 kWh senza collegamenti, ora 0; rapporto e regressioni in
 `docs/revisioni/produzione-moduli-collegati-20261029.md`. Resta un modello AC aggregato fra gli inverter attivi.
 Nessuna revisione generale delle ombre o certificazione normativa implicita in questo fix.
 Template Qt aggiornato e push del commit b98bc3797a926df8a56797c05cfe3ee97a32497f. Le ulteriori differenze
 File/tooltip/calendario richieste da Daniel restano registrate, non coperte dalla sola uguaglianza degli hash.
-Suite generale1751prove eseguita una volta; regressioni corrette e riprovate in modo mirato, resta una soglia
-prestazionale del tema1s non superata (1,032s in ripetizione), gia problematica sullo stato precedente.
-Pacchetti ancora in collaudo del binario; nessuna release pubblicata o installazione reale dichiarata.
+Suite generale di 1751 prove eseguita una volta; regressioni corrette e riprovate in modo mirato, resta una soglia
+prestazionale del tema di 1 s non superata (1,032 s in ripetizione), gia problematica sullo stato precedente.
+Binari Windows R08 e Flatpak R03 collaudati con 0 errori, inclusi export e riapertura IFC4. Artefatti e limiti nella relazione UX; nessuna release pubblicata o installazione reale dichiarata.
 Le aggiunte sono conservate in docs/richieste.md fino a R234: non interrompono o azzerano le decisioni precedenti.
+
+Cartelle Windows `meridiana` e `meridiana-lavoro` integrate al commit 246ec58; locale compilato nella cartella di avvio. Il seguito documentale e la ricetta IFC per Windows non modificano il motore applicativo.

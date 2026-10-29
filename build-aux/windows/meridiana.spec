@@ -28,6 +28,7 @@ import sys
 from pathlib import Path
 
 import pefile
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 ROOT = Path(SPECPATH).parent.parent
 SRC = ROOT / 'src' / 'meridiana'
@@ -55,6 +56,11 @@ datas = [
 # pvlib's tables read at run time (the Linke turbidity of the Ineichen sky, the altitude of a place, the reference
 # spectrum); not its copies of the CEC and Sandia libraries (Meridiana has its own catalogue) nor its sample years
 datas += [(str(PVLIB_TABLES / name), 'pvlib/data') for name in ('LinkeTurbidities.h5', 'Altitude.h5', 'ASTMG173.csv')]
+# IFC API utilities load schema/type maps and other resources beside their modules.
+datas += collect_data_files('ifcopenshell')
+# EXPRESS checks for a physical parser file before importing it. Without it, the
+# library invokes sys.executable as Python, recursively launching the frozen app.
+datas += collect_data_files('ifcopenshell.express', include_py_files=True)
 
 a = Analysis(
     [str(Path(SPECPATH) / 'meridiana_main.py')],
@@ -64,6 +70,7 @@ a = Analysis(
     # keyring finds its Windows backend by entry point (hook-keyring)
     # IfcOpenShell's api.run resolves these export operations by name at run time.
     hiddenimports=['keyring.backends.Windows', 'ifcopenshell.geom',
+                   *collect_submodules('ifcopenshell.express.rules'),
                    *['ifcopenshell.api.' + family for family in
                      ('project', 'root', 'unit', 'context', 'georeference', 'aggregate')]],
     hooksconfig={'matplotlib': {'backends': ['Agg']}},
