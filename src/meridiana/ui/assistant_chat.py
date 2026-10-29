@@ -10,8 +10,9 @@
   shows path and revision first and uses the normal unsaved-changes choice. «Discard» leaves the project as it is;
   the model hears what the designer chose with the next question.
 - The local model is the default. Claude only with a key in the keyring and the designer's consent, asked the first
-  time with what would leave (a card); never for a project marked reserved; the names withheld (privacy.py). No
-  network: the question goes to the local model, and it is said.
+  time with what would leave (a card); never for a project marked reserved; the names withheld (privacy.py). Switching
+  from local to Claude starts a fresh conversation, so no local result crosses that boundary. No network: the question
+  goes to the local model, and it is said.
 - The mark on the character (a house, a cloud) and the menu of his chip say where the next question goes; the line
   under the conversation, the tokens and the cost.
 - His spoken voice (ui/voice.py), off by default: sentence by sentence as the answer comes.
@@ -477,6 +478,8 @@ class Chat(QObject):
         if self.decisions:
             text = "(" + " ".join(self.decisions) + ")\n" + text
             self.decisions = []
+        if provider.cloud and not self.conversation.state.cloud and self.conversation.messages:
+            self.conversation.clear()
         self.conversation.ask(context.question(text, self.host.phase_title(), selection))
         self.provider = provider
         self.conversation.state.cloud = provider.cloud

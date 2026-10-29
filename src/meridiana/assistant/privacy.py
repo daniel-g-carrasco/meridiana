@@ -51,6 +51,7 @@ class Redactor:
         for part in re.split(r"[,;\n]", address):
             add(part, PLACEHOLDERS["address"])
         if path:
+            add(str(Path(path)), PLACEHOLDERS["file"])
             add(Path(path).stem, PLACEHOLDERS["file"])
             add(Path(path).name, PLACEHOLDERS["file"])
         for kind, secret in (more or {}).items():

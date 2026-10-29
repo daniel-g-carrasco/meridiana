@@ -94,20 +94,26 @@ class LayoutJob(QRunnable):
 
 
 class IndexSignals(QObject):
-    done = Signal(int, list)
+    done = Signal(int, list, str)
 
 
 class IndexJob(QRunnable):
-    """A derived index scan, with no Qt or SQLite access in the worker thread."""
+    """Scan and persist derived rows with this worker's own SQLite connection."""
 
-    def __init__(self, generation: int, folders: list, known: dict):
+    def __init__(self, generation: int, folders: list, database: Path):
         super().__init__()
-        self.generation, self.folders, self.known = generation, folders, known
+        self.generation, self.folders, self.database = generation, folders, database
         self.signals = IndexSignals()
 
     def run(self):
-        rows = project_index.scan(self.folders, self.known)
-        tell(self.signals.done, self.generation, rows)
+        try:
+            known = {row["path"]: row for row in project_index.stored(self.database)}
+            rows = project_index.scan(self.folders, known)
+            project_index.persist(self.database, rows)
+        except Exception as error:  # noqa: BLE001  the worker's boundary: the window says what failed
+            tell(self.signals.done, self.generation, [], str(error))
+        else:
+            tell(self.signals.done, self.generation, rows, "")
 
 
 AUTOSAVE_MS = 120_000           # a copy of the unsaved changes every two minutes
@@ -4724,20 +4730,16 @@ class MainWindow(QMainWindow):
                         "job_name": job.get("name", ""), "client_name": client.get("name", ""),
                         "reserved": job.get("reserved", False)}
             folders.append((Path(folder["path"]), metadata))
-        known = {row["path"]: row for row in self.registry.list_index()}
-        job = IndexJob(self.index_generation, folders, known)
+        job = IndexJob(self.index_generation, folders, self.registry.path)
         job.signals.done.connect(self._index_done)
         self.index_job = job
         self.pool.start(job)
 
-    def _index_done(self, generation: int, rows: list) -> None:
-        if generation != self.index_generation or self.registry.connection is None:
+    def _index_done(self, generation: int, rows: list, error: str) -> None:
+        if generation != self.index_generation or self.registry.connection is None or not error:
             return
-        try:
-            self.registry.replace_index(rows)
-        except (OSError, sqlite3.Error, registry.RegistryError) as error:
-            log.complain("project index", error)
-            self.tell(_("The project index could not be updated: {error}").format(error=error))
+        log.complain("project index", error)
+        self.tell(_("The project index could not be updated: {error}").format(error=error))
 
     def _register_saved(self, target: Path) -> None:
         if not self.current_job_id:

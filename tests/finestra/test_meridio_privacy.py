@@ -10,7 +10,7 @@ from _fakes import FakeAnthropic, FakeServer, text_answer
 from _fixtures import capannone
 
 from meridiana import assistant, config
-from meridiana.assistant import providers
+from meridiana.assistant import providers, tools
 
 setUpModule = _setup.keep_global_state
 
@@ -68,6 +68,21 @@ class MeridioPrivacyWindowTest(unittest.TestCase):
         self.assertEqual(result["projects"][0]["id"], "pr1")
         self.assertNotIn("path", result["projects"][0])
         self.assertNotIn("title", result["projects"][0])
+
+    def test_local_reserved_results_do_not_cross_into_a_later_cloud_conversation(self):
+        self.rows[1]["power_kwp"] = 123.0
+        conversation = self.chat.conversation
+        conversation.ask("Local search")
+        outcome = tools.run("search_projects", {"query": ""}, self.chat.host, conversation.state)
+        conversation.add_result(providers.ToolCall("local1", "search_projects", {}), outcome)
+        provider = providers.Anthropic(model="claude-haiku-5-5", client=self.client)
+        self.chat._start("Cloud search", provider)
+        self.assertTrue(self.idle())
+        sent = json.dumps(self.client.calls, default=str)
+        self.assertNotIn("R09", sent)
+        self.assertNotIn("123.0", sent)
+        reused = tools.run("similar_projects", {"project_id": "pr2"}, self.chat.host, conversation.state)
+        self.assertTrue(reused.error)
 
     def test_a_reserved_archive_question_goes_to_the_local_provider(self):
         self.win.assistant.ask("Cerca anche nei progetti riservati")

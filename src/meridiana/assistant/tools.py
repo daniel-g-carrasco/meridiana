@@ -151,9 +151,9 @@ SPECS = {
                                "project_id": {"type": "string"}, "max_distance_km": {"type": "number"}}),
     },
     "project_revisions": {
-        "description": "Show the latest readable revision of each project series, or of one series_id. A newer "
-                       "damaged file never hides the latest valid revision.",
-        "parameters": _schema({"series_id": {"type": "string"}}),
+        "description": "Show the latest readable revision of each project series, or of one series_id or project "
+                       "alias. A newer damaged file never hides the latest valid revision.",
+        "parameters": _schema({"series_id": {"type": "string"}, "project_id": {"type": "string"}}),
     },
     "similar_projects": {
         "description": "Find the latest similar projects: same kind, power within the requested range, mounting, "
@@ -970,7 +970,12 @@ def search_projects(host, state: State, query: str = "", kind: str = "", client:
                    _("Searched the local project index"))
 
 
-def project_revisions(host, state: State, series_id: str = "") -> Outcome:
+def project_revisions(host, state: State, series_id: str = "", project_id: str = "") -> Outcome:
+    if project_id:
+        row = state.projects.get(project_id)
+        if row is None:
+            return _error("unknown project id: search_projects first")
+        series_id = row.get("series_id", "")
     found = project_index.revisions(_index_rows(host, state), series_id)
     projects = [_project_payload(row, state) for row in found[:20]]
     return Outcome(_json({"projects": projects, "truncated": len(found) > len(projects)}),

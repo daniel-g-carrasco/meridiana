@@ -39,7 +39,7 @@ Nella pagina del registro, **Collega cartella** aggiunge una cartella esistente 
 - Meridio cerca nei file `.meridiana` delle cartelle collegate alle commesse. L'indice resta sul PC e si aggiorna in secondo piano. Puoi cercare per testo, commessa, cliente, tipo, potenza, data o distanza. «L'ultimo capannone simile» mostra una sola revisione valida per serie e spiega tipo, potenza, montaggio, inclinazione, distanza e revisione: è un aiuto alla ricerca, non una valutazione tecnica.
 - Prima di aprire, Meridio mostra una scheda con percorso e revisione. Solo **Apri** prosegue, con la solita richiesta di salvare o scartare il lavoro non salvato. **Annulla** in quella richiesta conserva progetto e scheda.
 - **Elenca attività** legge testo, scadenza e stato dal registro locale. Creazione e completamento passano sempre da una scheda di conferma; Meridio non completa attività da solo.
-- Con Claude non vanno l'indice, i progetti riservati, nomi, percorsi o codici commessa. Il programma filtra prima e usa alias; una domanda sui riservati va al modello locale.
+- Con Claude non vanno l'indice, i progetti riservati, nomi, percorsi o codici commessa. Il programma filtra prima e usa alias; una domanda sui riservati va al modello locale. Passando da una conversazione locale a Claude, la conversazione riparte: la storia locale non viene esportata.
 
 ### Un modello locale in pochi passi
 

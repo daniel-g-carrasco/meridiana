@@ -120,6 +120,34 @@ def scan(folders, known: dict | None = None) -> list[dict]:
     return [rows[path] for path in sorted(rows)]
 
 
+def stored(database: Path) -> list[dict]:
+    """Read the derived rows through a connection owned by the calling worker."""
+    import sqlite3
+    connection = sqlite3.connect(database)
+    try:
+        rows = connection.execute("SELECT payload FROM project_index ORDER BY path").fetchall()
+        return [json.loads(row[0]) for row in rows]
+    finally:
+        connection.close()
+
+
+def persist(database: Path, rows: list[dict]) -> None:
+    """Replace derived rows in a worker, without the registry's backups or manifest side effects."""
+    import sqlite3
+    connection = sqlite3.connect(database, isolation_level=None, timeout=30)
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        connection.execute("DELETE FROM project_index")
+        connection.executemany("INSERT INTO project_index(path, payload) VALUES (?, ?)",
+                               [(row["path"], json.dumps(row, ensure_ascii=False, sort_keys=True)) for row in rows])
+        connection.commit()
+    except BaseException:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
 def search(rows: list[dict], query: str = "", kind: str = "", client: str = "", power_from: float = 0.0,
            power_to: float = float("inf"), since: str = "", reference: dict | None = None,
            max_distance_km: float | None = None) -> list[dict]:
@@ -154,10 +182,10 @@ def revisions(rows: list[dict], series_id: str = "") -> list[dict]:
             continue
         key = row.get("series_id") or row.get("path")
         current = series.get(key)
-        candidate = (_date(row), int(row.get("revision_number") or 0))
-        if current is None or candidate > (_date(current), int(current.get("revision_number") or 0)):
+        candidate = (int(row.get("revision_number") or 0), _date(row))
+        if current is None or candidate > (int(current.get("revision_number") or 0), _date(current)):
             series[key] = row
-    return sorted(series.values(), key=lambda row: (_date(row), int(row.get("revision_number") or 0)), reverse=True)
+    return sorted(series.values(), key=lambda row: (int(row.get("revision_number") or 0), _date(row)), reverse=True)
 
 
 def _distance(first: dict, second: dict) -> float:

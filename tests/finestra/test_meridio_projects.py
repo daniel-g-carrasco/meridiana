@@ -51,6 +51,7 @@ class MeridioProjectsWindowTest(unittest.TestCase):
         self.assertEqual(win.path, target)
         self.assertEqual(proposal.state, "applied")
         self.assertTrue(win.assistant.questions_box.isVisible() or win.assistant.panel.height() < 260)
+        self.assertTrue(win.assistant.questions_wanted())
 
     def test_cancelling_the_unsaved_choice_keeps_the_project_and_the_card(self):
         from PySide6.QtWidgets import QMessageBox

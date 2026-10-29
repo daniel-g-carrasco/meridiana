@@ -66,6 +66,15 @@ class MeridioTasksTest(unittest.TestCase):
         self.assertEqual(completed.proposal.item["task_id"], created["id"])
         self.assertFalse(self.reg.task(created["id"])["done"])
 
+    def test_a_project_only_task_inherits_the_reserved_job(self):
+        reserved_job = self.reg.create_job("26043", "Reserved job", self.job["client_id"], reserved=True)
+        self.reg.link_project(reserved_job["id"], self.folder / "secret.meridiana", "Secret project",
+                              project_id="secret-series")
+        task = self.reg.create_task("Secret project task", project_id="secret-series")
+        self.assertTrue(task["reserved"])
+        listed = tools.run("list_tasks", {}, TaskHost(self.reg), tools.State(cloud=True))
+        self.assertEqual(json.loads(listed.content)["tasks"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

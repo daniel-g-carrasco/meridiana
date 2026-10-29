@@ -60,6 +60,12 @@ class MeridioPrivacyTest(unittest.TestCase):
         for secret_text in ("Public shed", "XY", "Example client", "26042", "/jobs"):
             self.assertNotIn(secret_text, redacted)
 
+    def test_the_current_project_full_path_is_redacted_not_only_its_filename(self):
+        from pathlib import Path
+        path = Path("/home/example/Private Client/Project.meridiana")
+        redactor = privacy.Redactor.of(capannone("Current project"), path)
+        self.assertNotIn("/home/example/Private Client", redactor.redact(str(path)))
+
     def test_a_request_about_reserved_projects_forces_the_local_model(self):
         self.assertTrue(privacy.requires_local("Cerca anche nei progetti riservati"))
         self.assertTrue(privacy.requires_local("Show confidential projects"))

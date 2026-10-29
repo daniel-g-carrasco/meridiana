@@ -90,6 +90,20 @@ class MeridioProjectsTest(unittest.TestCase):
         result = json.loads(outcome.content)
         self.assertEqual([(item["revision"], item["title"]) for item in result["projects"]], [("R04", "Latest shed")])
 
+    def test_the_latest_revision_wins_even_when_an_older_revision_was_saved_later(self):
+        older = row("Older edited shed", "same", "R03", "2026-07-01T10:00:00+00:00")
+        self.host._index.append(older)
+        outcome = tools.run("project_revisions", {"series_id": "same"}, self.host, self.state)
+        result = json.loads(outcome.content)
+        self.assertEqual(result["projects"][0]["revision"], "R04")
+
+    def test_revision_lookup_accepts_a_cloud_project_alias(self):
+        cloud = tools.State(cloud=True)
+        tools.run("search_projects", {"query": "shed"}, self.host, cloud)
+        outcome = tools.run("project_revisions", {"project_id": "pr2"}, self.host, cloud)
+        result = json.loads(outcome.content)
+        self.assertEqual([item["revision"] for item in result["projects"]], ["R04"])
+
     def test_search_filters_power_date_and_distance(self):
         far = row("Far shed", "far", "R08", "2026-06-01T10:00:00+00:00")
         far["lat"], far["lon"] = 0.0, 0.0

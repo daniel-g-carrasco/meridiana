@@ -341,9 +341,14 @@ class Registry:
 
     @staticmethod
     def _task_query() -> str:
-        return "SELECT tasks.*, jobs.code AS job_code, jobs.name AS job_name, jobs.reserved, " \
+        return "SELECT tasks.*, jobs.code AS job_code, jobs.name AS job_name, " \
+               "MAX(COALESCE(jobs.reserved, 0), COALESCE(project_jobs.reserved, 0), " \
+               "COALESCE(json_extract(project_index.payload, '$.reserved'), 0)) AS reserved, " \
                "clients.name AS client_name FROM tasks LEFT JOIN jobs ON jobs.id = tasks.job_id " \
-               "LEFT JOIN clients ON clients.id = jobs.client_id"
+               "LEFT JOIN clients ON clients.id = jobs.client_id " \
+               "LEFT JOIN projects ON projects.id = tasks.project_id " \
+               "LEFT JOIN jobs AS project_jobs ON project_jobs.id = projects.job_id " \
+               "LEFT JOIN project_index ON project_index.path = projects.path"
 
     @staticmethod
     def _valid_task(text: str, due: str) -> tuple[str, str]:
@@ -361,8 +366,12 @@ class Registry:
         text, due = self._valid_task(text, due)
         if job_id and self.job(job_id) is None:
             raise RegistryError("job not found")
-        if project_id and not self.connection.execute("SELECT 1 FROM projects WHERE id = ?", (project_id,)).fetchone():
-            raise RegistryError("project not found")
+        if project_id:
+            project = self.connection.execute("SELECT job_id FROM projects WHERE id = ?", (project_id,)).fetchone()
+            if project is None:
+                raise RegistryError("project not found")
+            if job_id and project["job_id"] != job_id:
+                raise RegistryError("the task job and project do not match")
         tid, now = uuid.uuid4().hex, _now()
         with self._write() as connection:
             connection.execute(

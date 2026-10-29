@@ -1230,6 +1230,7 @@ class Assistant(QFrame):
     def remove_card(self, card: QWidget) -> None:
         self.cards_box.removeWidget(card)
         card.hide()
+        card.setProperty("confirmation", False)
         card.deleteLater()
         self.cards.setVisible(self.cards_box.count() > 0)
         self._fit_cards()

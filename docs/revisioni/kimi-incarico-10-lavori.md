@@ -1,4 +1,4 @@
-ESITO: in verifica
+ESITO: verde
 
 # Incarico 10: Meridio trova e apre i progetti
 
@@ -65,7 +65,7 @@ Il commit finale comprende anche documenti, fotografie e la correzione grafica d
 ## Prova reale e correzione grafica
 
 Il comando finale è stato `tools/real_session.sh /var/home/daniel/fvtest/venv314/bin/python tools/real_tour_10.py`,
-su Wayland, Qt 6.12.0, monitor nascosto 1600 x 1000 e runtime privato sotto `/tmp`. Il giro è terminato in 9,460 s.
+su Wayland, Qt 6.12.0, monitor nascosto 1600 x 1000 e runtime privato sotto `/tmp`. Il giro è terminato in 9,857 s.
 Il registro è `docs/revisioni/kimi10-giro.txt`. [V]
 
 Sono stati verificati con clic e controlli sul processo: indice in secondo piano, ultimo capannone simile con motivo,
@@ -93,13 +93,13 @@ Prove offscreen, un gruppo per processo. [V]
 
 | Gruppo | Esito |
 |---|---:|
-| nucleo | 842 prove, OK, 4 saltate |
+| nucleo | 846 prove, OK, 4 saltate |
 | calcoli | 176 prove, OK |
 | formati | 67 prove, OK |
 | esterni | 6 prove, OK, 6 saltate perché gli ingressi esterni non sono abilitati |
 | widget | 340 prove, OK, 1 saltata |
-| finestra | 146 prove, OK in 411,984 s |
-| totale | 1.577 prove, nessun fallimento, 11 saltate |
+| finestra | 148 prove, OK in 419,183 s |
+| totale | 1.583 prove, nessun fallimento, 11 saltate |
 
 Ruff su `src tests tools`, catalogo compilato, `msgfmt --check`, `bash -n tools/real_session.sh` e `git diff --check`
 sono verdi. Il catalogo italiano non ha voci fuzzy. [V]
@@ -110,7 +110,24 @@ modifiche al codice 3D. [V]
 
 ## Revisione indipendente
 
-In verifica.
+Un revisore indipendente ha letto tutto il ramo da `d327b92` a `cf30705`. Ha trovato due problemi critici e quattro
+importanti, tutti corretti con una prova rossa prima e verde dopo:
+
+- una conversazione passata da locale a Claude conservava risultati riservati e i loro alias. Ora il passaggio al cloud
+  riparte da una conversazione nuova, così storia e riferimenti locali non attraversano il confine;
+- il percorso completo del progetto corrente non era redatto fuori dalle cartelle collegate. Ora viene sostituito prima
+  del nome del file e della directory;
+- una revisione più vecchia ma salvata dopo vinceva sulla revisione più alta. Ora conta prima il numero, poi la data;
+- un'attività collegata soltanto a un progetto riservato appariva pubblica. Ora eredita la riservatezza da commessa,
+  progetto e indice, e i collegamenti incoerenti sono rifiutati;
+- lettura, serializzazione, backup e manifesti dell'indice potevano rallentare il thread grafico. Ora il worker legge e
+  scrive con la propria connessione SQLite, senza backup o manifesti per dati ricostruibili;
+- gli alias non permettevano a Claude di chiedere le revisioni di una serie, e le domande non tornavano dopo l'ultima
+  scheda. Entrambi i casi sono coperti da prove.
+
+Non restano rilievi minori differiti. Il revisore non ha giudicato qualità delle risposte di un modello vero o
+prestazioni percepite sull'hardware di Daniel, fuori dalla verifica disponibile. La suite finale del passaggio di
+correzione è in `tests-review-fixes.log` nel registro di lavoro.
 
 ## Da provare sullo schermo di Daniel
 

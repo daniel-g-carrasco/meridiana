@@ -55,6 +55,21 @@ class ProjectIndexWindowTest(unittest.TestCase):
         self.assertEqual(row["revision"], "R01")
         self.assertEqual(row["client_name"], "Example client")
 
+    def test_index_reading_and_persistence_stay_off_the_window_registry(self):
+        root = Path(tempfile.mkdtemp())
+        folder = root / "linked"
+        folder.mkdir()
+        capannone("Indexed project").save(folder / "indexed.meridiana")
+        win = _setup.window(self)
+        job = win.registry.create_job("26042", "Example job", win.registry.create_client("Example client")["id"])
+        win.registry.link_folder(job["id"], folder)
+        with mock.patch.object(win.registry, "list_index", side_effect=AssertionError("index read on UI registry")), \
+                mock.patch.object(win.registry, "replace_index", side_effect=AssertionError("index write on UI registry")):
+            win._refresh_index()
+            database = win.registry.connection
+            self.assertTrue(_setup.wait_until(self.app, lambda: database.execute(
+                "SELECT count(*) FROM project_index").fetchone()[0] == 1))
+
     def test_a_scheduled_refresh_does_not_touch_a_closed_registry(self):
         win = _setup.window(self)
         win.registry.close()
