@@ -60,7 +60,7 @@ class Climate(unittest.TestCase):
         opened, notice = model.Project.load(path)
         self.assertIsNone(notice)
         self.assertEqual(opened.climate, project.climate)
-        self.assertEqual(model.FORMAT_VERSION, 19)
+        self.assertEqual(model.FORMAT_VERSION, 20)
 
     def test_capture_keeps_both_downloads_in_the_project(self):
         project = capannone_rho()

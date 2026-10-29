@@ -466,6 +466,16 @@ def production(ctx: Context) -> list[str]:
     if pv is not None:
         rows.append((_("PVGIS, second opinion"), f"{kwh(pv.yearly_kwh)} kWh ({pv.source.label})"))
     parts = [facts(rows)]
+    inverters = getattr(sim, "inverters", ())
+    if inverters:
+        parts.append(f"<h3>{html.escape(_('Production by inverter'))}</h3>")
+        parts.append(para(_("Each inverter is calculated separately, including its power limit. AC energy includes "
+                            "wiring losses and unavailability; the hourly register keeps the individual results.")))
+        parts.append(table([(f"{inv['number']} · {inv['name']}", number(inv["p_ac_kw"], 2),
+                             kwh(inv["dc_kwh"]), kwh(inv["clipping_kwh"]), kwh(inv["ac_kwh"]))
+                            for inv in inverters],
+                           [_("Inverter"), _("AC rating, kW"), _("DC energy, kWh"),
+                            _("Clipping, kWh"), _("AC energy, kWh")], right=(1, 2, 3, 4)))
     m = sim.monthly
     names = months()
     body = []

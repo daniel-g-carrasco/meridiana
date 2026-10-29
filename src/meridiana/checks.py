@@ -46,6 +46,18 @@ class Item:
 TEXT_LENGTH = 90                # the most characters a text may have: the detail takes the rest
 
 
+def _production_note(note: str, level: str, detail: str = "") -> Item:
+    """Keep model explanations available without turning the check's title into a paragraph."""
+    text = note
+    if len(note) > TEXT_LENGTH:
+        disconnected = _("Only modules connected to an existing inverter input contribute to production; "
+                         "unconnected modules produce zero.")
+        text = (_("Unconnected modules produce no energy") if note == disconnected else
+                _("Production: calculation notes"))
+        detail = note + ("\n\n" + detail if detail else "")
+    return Item(level, "production", text, "", ("phase", "production"), detail=detail)
+
+
 def area_names() -> dict:
     return {"layout": _("Layout"), "shade": _("Shading"), "strings": _("Strings (CEI 64-8/7)"),
             "connection": _("Connection"), "production": _("Production"),
@@ -327,10 +339,10 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
                     name=name, pct=number(100 * lost, 1)), _("Meridiana: shading of the obstacles"),
                     ("subfield", sfid), fix, label, detail=detail))
         for note in sim.notes:
-            items.append(Item("warn", "production", note, "", ("phase", "production"),
-                              detail=_("The inverter cuts what the modules give above its AC power. A lower DC/AC "
-                                       "ratio, a larger inverter or fewer modules shrink the loss; the Production "
-                                       "page shows it among the losses.") if "clip" in note else ""))
+            items.append(_production_note(note, "warn",
+                         _("The inverter cuts what the modules give above its AC power. A lower DC/AC "
+                           "ratio, a larger inverter or fewer modules shrink the loss; the Production "
+                           "page shows it among the losses.") if "clip" in note else ""))
     elif filled:
         items.append(Item("info", "production", energy.get("error_sim") or
                           _("Compute the production to check the shading, the strings and the balance"), "",
@@ -338,7 +350,7 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
                           detail=_("Shading, strings and the balance come from the hourly year: until it is computed "
                                    "the checks that need it are missing.")))
     for note in energy.get("notes") or []:
-        items.append(Item("info", "production", note, "", ("phase", "production")))
+        items.append(_production_note(note, "info"))
 
     strings = energy.get("strings") or {}
     plan = strings.get("plan")

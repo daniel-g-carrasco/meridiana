@@ -16,7 +16,7 @@ from .. import checks, log
 from ..i18n import _, number
 from . import consumption as consumption_model
 from . import economics, meteo, plant, pvgis, system
-from .simulate import simulate, with_strings
+from .simulate import simulate, with_network
 
 
 @dataclass
@@ -135,27 +135,12 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
                                  placed=[pm for pm in a.placed if pm.key in a.connected])
                          for a in arrays if a.generating_modules]
     optimized = plant.optimizers_of(out.plant, generating_arrays)
-    by_array = {}
-    if out.plant.strings:
-        for a in arrays:
-            keys = a.connected
-            sfid = a.key.split(".")[0]
-            # a string by hand may cross two arrays: each array takes its own modules of it; with optimizers each
-            # optimizer's modules are a string of their own for the electrical effect of the shade
-            runs = []
-            for s in wired:
-                mine = [k for sf, k, _c in s.modules if sf == sfid and k in keys]
-                per = plant.optimizer_per(out.plant, s)
-                if mine:
-                    runs += [mine[j:j + per] for j in range(0, len(mine), per)] if per else [mine]
-            if runs and a.obstacles:
-                by_array[a.key] = runs
-    if (by_array and losses.use_near) or optimized is not None:
-        sim = with_strings(sim, by_array if losses.use_near else None, optimized)
+    sim = with_network(sim, out.plant, optimized, progress=lambda: step(2, STEPS, _("the electrical network")))
     out.sim = sim
     # Overload checks receive the connected DC year, not the preliminary potential year.
     out.plant = plant.build(project, groups=plant.groups_from_arrays(project, arrays), t_cell_max_year=t_cell_max,
-                            t_min_year=t_air_min, p_dc_hourly=sim.hourly.p_dc.to_numpy(), p_dc_connected=True)
+                            t_min_year=t_air_min, p_dc_hourly=sim.hourly.p_dc.to_numpy(), p_dc_connected=True,
+                            p_dc_by_inverter={item['number']: item['p_dc'] for item in sim.inverters})
     # what keeping the modules out of the obstacles' shadows would leave, for the fix the checks offer: a
     # layout for each shaded sub-field, here and not in the window's thread (it cost 30-40 ms there at each
     # result, 0.3-0.4 s on a large field)

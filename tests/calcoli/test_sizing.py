@@ -134,7 +134,9 @@ class Impossible(unittest.TestCase):
         rec = inverter("30K", 30, mppt_count=2, dc_current_max_per_mppt_a=[20, 20],
                        dc_isc_max_per_mppt_a=[25, 25], dc_current_max_a=25)
         result = sizing.choose(project(), groups([20, 20]), [rec], 1.0)
-        self.assertFalse(result.ok)  # the greedy assignment still overloads one unit; never certify 26.8 A as 25 A
+        self.assertTrue(result.ok, result.reason)
+        self.assertEqual(result.entries[0]['count'], 2)
+        self.assertEqual({s.inverter for s in result.plant.strings}, {1, 2})
 
     def test_exhausting_the_search_budget_is_not_reported_as_electrical_impossibility(self):
         from unittest.mock import patch

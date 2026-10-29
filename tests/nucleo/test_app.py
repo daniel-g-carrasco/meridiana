@@ -69,6 +69,18 @@ class WindowsIdentity(unittest.TestCase):
         manifest = (_setup.ROOT / "build-aux" / "windows" / "meridiana.manifest").read_text(encoding="utf-8")
         self.assertNotIn("<dpiAware", manifest)         # Qt makes itself per monitor V2: never decided before it
 
+    def test_an_isolated_install_can_skip_shortcuts_and_every_association_entry(self):
+        iss = (_setup.ROOT / "build-aux" / "windows" / "meridiana.iss").read_text(encoding="utf-8")
+        self.assertIn("AllowNoIcons=yes", iss, "/NOICONS needs the optional checkbox even with its page hidden")
+        registry = iss.split("[Registry]", 1)[1].split("[Run]", 1)[0]
+        for line in registry.splitlines():
+            if line.startswith("Root:"):
+                self.assertIn("Tasks: associate", line, "An unchecked association task must write no class keys")
+        supported = next(line for line in registry.splitlines() if "SupportedTypes" in line)
+        self.assertIn("uninsdeletevalue", supported)
+        self.assertIn("uninsdeletekeyifempty", supported)
+        self.assertNotIn("Flags: uninsdeletekey;", supported, "Other registered types must survive uninstall")
+
 
 if __name__ == "__main__":
     unittest.main()

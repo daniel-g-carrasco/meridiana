@@ -208,7 +208,8 @@ def _per_input(rec: dict, key: str, single: str | None) -> list | None:
     if isinstance(v, list) and v and all(isinstance(x, (int, float)) for x in v):
         return [float(x) for x in v]
     if isinstance(v, (int, float)):
-        return [float(v)]
+        trackers = rec.get("mppt_count")
+        return [float(v)] * (trackers if type(trackers) is int and trackers > 0 else 1)
     if single and rec.get("mppt_count") == 1 and isinstance(rec.get(single), (int, float)):
         return [float(rec[single])]
     return None
@@ -427,6 +428,36 @@ class InverterSpec:
     source: Source = field(default_factory=lambda: Source("default", _("typical values")))
     imax_total: float | None = None            # shared DC operating-current limit of the whole inverter
     inputs_per_mppt: list | None = None        # physical connector pairs, not independent trackers
+    imax_by_strings: list | None = None        # per tracker: {number of occupied inputs: operating current}
+    imax_per_input: list | None = None          # rating of each physical input on each tracker, when documented
+    iscmax_per_input: list | None = None
+
+    @staticmethod
+    def _limit(values, mppt: int) -> float | None:
+        if values and 0 <= mppt < len(values):
+            value = values[mppt]
+            if type(value) in (int, float) and math.isfinite(value) and value > 0:
+                return float(value)
+        return None
+
+    def current_limit(self, mppt: int, strings: int = 1) -> float | None:
+        """Operating limit for the actual number of strings on this zero-based tracker."""
+        base = self._limit(self.imax_per_mppt, mppt)
+        if isinstance(self.imax_by_strings, list) and 0 <= mppt < len(self.imax_by_strings):
+            rule = self.imax_by_strings[mppt]
+            value = rule.get(str(strings)) if isinstance(rule, dict) else None
+            if type(value) in (int, float) and math.isfinite(value) and value > 0:
+                return min(base, float(value)) if base is not None else float(value)
+            if isinstance(rule, dict) and rule and strings > 0:
+                # A table without this operating configuration is not permission to use its largest value.
+                return None
+        return base
+
+    def connector_current_limit(self, mppt: int) -> float | None:
+        return self._limit(self.imax_per_input, mppt)
+
+    def connector_isc_limit(self, mppt: int) -> float | None:
+        return self._limit(self.iscmax_per_input, mppt)
 
     @property
     def pac_total(self) -> float:
@@ -452,6 +483,10 @@ class InverterSpec:
                    iscmax_per_mppt=_per_input(rec, "dc_isc_max_per_mppt_a", None),
                    imax_total=float(rec["dc_current_max_a"]) if isinstance(rec.get("dc_current_max_a"), (int, float)) else None,
                    inputs_per_mppt=_per_input(rec, "strings_per_mppt", None),
+                   imax_by_strings=(rec.get("dc_current_max_per_mppt_by_strings_a")
+                                    if isinstance(rec.get("dc_current_max_per_mppt_by_strings_a"), list) else None),
+                   imax_per_input=_per_input(rec, "dc_current_max_per_input_a", None),
+                   iscmax_per_input=_per_input(rec, "dc_isc_max_per_input_a", None),
                    source=Source("data", (_("PVsyst file {file} of {name}") if rec.get("source") == "ond" else
                                           _("datasheet of {name}")).format(
                        file=rec.get("file", ""), name=f"{rec.get('manufacturer', '')} {rec.get('model', '')}".strip()),

@@ -29,6 +29,8 @@ AppUpdatesURL=https://github.com/daniel-g-carrasco/meridiana/releases
 DefaultDirName={autopf}\Meridiana
 DefaultGroupName=Meridiana
 DisableProgramGroupPage=yes
+; Keep /NOICONS effective for an isolated installation even when the group page is hidden.
+AllowNoIcons=yes
 ; per-user install by default (no UAC); the dialog lets the user elevate,
 ; and the command line (/CURRENTUSER, as the program's own update passes it)
 PrivilegesRequired=lowest
@@ -93,7 +95,8 @@ Root: HKA; Subkey: "Software\Classes\{#ProgId}"; ValueType: string; ValueName: "
 Root: HKA; Subkey: "Software\Classes\{#ProgId}"; ValueType: string; ValueName: "AppUserModelID"; ValueData: "{#AppId}"; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\{#ProgId}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Meridiana.exe,0"; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\{#ProgId}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Meridiana.exe"" ""%1"""; Tasks: associate
-Root: HKA; Subkey: "Software\Classes\Applications\Meridiana.exe\SupportedTypes"; ValueType: string; ValueName: ".mer"; ValueData: ""; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Applications\Meridiana.exe"; Flags: uninsdeletekeyifempty; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\Applications\Meridiana.exe\SupportedTypes"; ValueType: string; ValueName: ".mer"; ValueData: ""; Flags: uninsdeletevalue uninsdeletekeyifempty; Tasks: associate
 
 [Run]
 Filename: "{app}\Meridiana.exe"; Description: "{cm:LaunchProgram,Meridiana}"; Flags: nowait postinstall skipifsilent; Check: not AppWasRunning

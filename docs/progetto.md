@@ -391,3 +391,19 @@ Rapporti del seguito in `docs/revisioni/testi-strumenti-pensiline-20261029.md`,
 `ux-condivisa-seguito-20261029.md`; integrazione e nuovi pacchetti nel relativo rapporto finale.
 
 Cartelle Windows `meridiana` e `meridiana-lavoro` integrate al commit 246ec58; locale compilato nella cartella di avvio. Il seguito documentale e la ricetta IFC per Windows non modificano il motore applicativo.
+
+
+## Completamento elettrico, 29 ottobre 2026, R05
+
+La tranche successiva porta il modello elettrico a curve I/V per coorti di celle, bypass, stringhe e MPPT,
+con clipping distinto per inverter. Zero produzione dai moduli scollegati. Gruppi fisici degli ottimizzatori
+uno/due moduli persistenti nello schema 20 e vincoli per MPPT/connettore documentati. Ricerca globale
+vincolata con budget esplicito, cancellazione e nessuna dichiarazione di ottimo in una ricerca troncata.
+Le proposte parziali di stringatura sono ammesse solo dopo verifica; il dimensionamento richiede copertura
+completa. Una regressione fra risultato vecchio e aggiornamento accodato è corretta e verificata.
+
+Rapporto di consegna `docs/revisioni/completamento-consegna-20261029-R05.md`: prove, pacchetti, ipotesi
+fisiche e limite prestazionale del cambio tema. Nessuna validazione sperimentale di campo è dichiarata.
+Le nuove funzioni R235-R240 restano in coda; R241 aggiunge la consegna del Flatpak al laptop via SSH.
+Il template Qt include caselle nelle tabelle e indicazioni sul debounce asincrono (3c6ba3e); il template
+GTK include la correzione della creazione facoltativa delle icone nell’installer (8a3691f).

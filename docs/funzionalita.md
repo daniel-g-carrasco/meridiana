@@ -1,6 +1,14 @@
 # Meridiana: l'elenco delle funzioni e a che punto sono
 
-Stato al 22/10/2026 mattina. Questo elenco risponde alla richiesta di Daniel del 21/10/2026: «Ragionati tu l'elenco completo delle possibilità che questo software deve avere».
+Quadro iniziale al 22/10/2026 mattina, con aggiornamenti successivi nel registro `docs/richieste.md`.
+Questo elenco risponde alla richiesta di Daniel del 21/10/2026: «Ragionati tu l'elenco completo delle possibilità che questo software deve avere».
+
+Aggiornamento del 29/10: il calcolo elettrico ricompone curve I/V, bypass e gruppi fisici di ottimizzatori,
+con conversione e clipping distinti per inverter. La scelta automatica usa una ricerca vincolata con budget
+e cancellazione, dichiarando quando non ha completato la ricerca; il criterio riguarda numero di inverter,
+numero di modelli e rapporto DC/AC, non un ottimo economico o di energia annuale. Le ipotesi delle ombre
+e i limiti di validazione restano espliciti nei rapporti R02 in `docs/revisioni`. I nuovi requisiti R235-R240
+sono in coda nel registro e non sono funzionalità già consegnate.
 
 ## I tre riferimenti
 

@@ -1,6 +1,6 @@
 """Native checkbox indicators: quiet selection, canonical signs and a fully contained focus ring.
 
-Mixed into the application's existing proxy style, so every QCheckBox keeps Qt's interaction and accessibility.
+Mixed into the application's existing proxy style, so checkboxes and item-view checks keep Qt's interaction and accessibility.
 The 16 px square sits in a 22 px allocation: 3 px per side keep the 2 px focus stroke and its antialiasing inside
 the control, including at the left edge and fractional display densities. No widget masks or extra proxy styles.
 """
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
-from PySide6.QtWidgets import QCheckBox, QStyle
+from PySide6.QtWidgets import QAbstractItemView, QCheckBox, QStyle
 
 from .. import theme_colors
 from . import symbols
@@ -19,10 +19,10 @@ class CheckboxStyle:
     """Style mixin; the owning proxy supplies `tokens` and delegates the other native controls."""
 
     def pixelMetric(self, metric, option=None, widget=None):
-        if isinstance(widget, QCheckBox):
+        if isinstance(widget, (QCheckBox, QAbstractItemView)):
             if metric in (QStyle.PixelMetric.PM_IndicatorWidth, QStyle.PixelMetric.PM_IndicatorHeight):
                 return Icon.CONTROL + Space.S
-            if metric == QStyle.PixelMetric.PM_CheckBoxLabelSpacing:
+            if isinstance(widget, QCheckBox) and metric == QStyle.PixelMetric.PM_CheckBoxLabelSpacing:
                 return Space.M
         return super().pixelMetric(metric, option, widget)
 
@@ -33,11 +33,14 @@ class CheckboxStyle:
         return result
 
     def drawPrimitive(self, element, option, painter, widget=None):
-        if not isinstance(widget, QCheckBox) or not self.tokens:
+        checkbox = isinstance(widget, QCheckBox)
+        item_check = (isinstance(widget, QAbstractItemView)
+                      and element == QStyle.PrimitiveElement.PE_IndicatorItemViewItemCheck)
+        if not (checkbox or item_check) or not self.tokens:
             return super().drawPrimitive(element, option, painter, widget)
-        if element == QStyle.PrimitiveElement.PE_FrameFocusRect:
+        if checkbox and element == QStyle.PrimitiveElement.PE_FrameFocusRect:
             return  # The whole focus indicator is drawn around the square below.
-        if element != QStyle.PrimitiveElement.PE_IndicatorCheckBox:
+        if element != QStyle.PrimitiveElement.PE_IndicatorCheckBox and not item_check:
             return super().drawPrimitive(element, option, painter, widget)
         t = self.tokens
         flags = QStyle.StateFlag

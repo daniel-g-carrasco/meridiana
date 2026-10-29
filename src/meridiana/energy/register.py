@@ -10,6 +10,7 @@ the decimal comma, in English «,» and the point; UTF-8 with its mark, so that 
 
 from __future__ import annotations
 
+import csv
 import os
 from dataclasses import dataclass
 from datetime import date
@@ -30,9 +31,9 @@ class Column:
     meaning: str
 
 
-def columns() -> list[Column]:
+def columns(inverters=()) -> list[Column]:
     """Every column the register may have, in its order; `frame` keeps those it has data for."""
-    return [
+    out = [
         Column("ghi", _("Global horizontal"), "W/m²", 1,
                _("global horizontal irradiance, the mean of the hour, from the weather of the site")),
         Column("poa", _("On the plane"), "W/m²", 1,
@@ -50,6 +51,13 @@ def columns() -> list[Column]:
         Column("export", _("Fed in"), "kWh", 4, _("energy fed into the grid in the hour")),
         Column("import", _("Drawn"), "kWh", 4, _("energy drawn from the grid in the hour")),
     ]
+    for inv in inverters:
+        label = f"{inv['number']} · {inv['name']}"
+        for side in ("dc", "ac"):
+            out.append(Column(f"inverter_{inv['number']}_{side}", f"{label} {side.upper()}", "kWh", 4,
+                              _("Hourly energy of this physical inverter; AC includes its clipping, wiring and "
+                                "unavailability. No unused capacity of another inverter compensates its clipping.")))
+    return out
 
 
 def frame(sim, load=None, econ=None):
@@ -64,7 +72,12 @@ def frame(sim, load=None, econ=None):
         data["t_cell"] = np.sum([w * np.asarray(ap.t_cell, dtype=float)
                                  for w, ap in zip(parts.weights, parts.per_array, strict=True)], axis=0)
     data["production"] = h["e_kwh"].to_numpy()
+    inverters = getattr(sim, "inverters", ())
+    for inv in inverters:
+        for side in ("dc", "ac"):
+            data[f"inverter_{inv['number']}_{side}"] = np.asarray(inv[f"p_{side}"], dtype=float) / 1000.0
     out = pd.DataFrame(data, index=h.index)
+    out.attrs["inverters"] = [{"number": inv["number"], "name": inv["name"]} for inv in inverters]
     hb = getattr(econ, "hourly", None) if econ is not None else None
     if hb is not None and len(hb):
         for k in ("consumption", "self", "export", "import"):
@@ -94,7 +107,7 @@ def write_csv(path: Path, table, lines: list[str]) -> None:
     the end: a file stopped half way leaves nothing."""
     italian = language() == "it"
     sep, comma = (";", ",") if italian else (",", ".")
-    known = {c.id: c for c in columns()}
+    known = {c.id: c for c in columns(table.attrs.get("inverters", ()))}
     cols = [known[k] for k in table.columns if k in known]
     head = [_("Local time"), "UTC"] + [f"{c.label} ({c.unit})" for c in cols]
     stamps = table.index.strftime("%Y-%m-%d %H:%M")
@@ -107,10 +120,13 @@ def write_csv(path: Path, table, lines: list[str]) -> None:
     try:
         with open(part, "w", encoding="utf-8-sig", newline="") as f:
             for line in lines:
-                f.write(f"# {line}\r\n")
-            f.write(sep.join(head) + "\r\n")
+                # Free names also appear in metadata: every physical line remains a comment.
+                for physical in line.splitlines() or [""]:
+                    f.write(f"# {physical}\r\n")
+            writer = csv.writer(f, delimiter=sep, lineterminator="\r\n")
+            writer.writerow(head)
             for i in range(len(table)):
-                f.write(sep.join([stamps[i], offsets[i], *(v[i] for v in values)]) + "\r\n")
+                writer.writerow([stamps[i], offsets[i], *(v[i] for v in values)])
         os.replace(part, path)
     finally:
         if part.exists():

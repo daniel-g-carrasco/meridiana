@@ -6,7 +6,8 @@ import _setup
 from PySide6.QtCore import QEvent, QPoint, QRect, Qt
 from PySide6.QtGui import QImage, QPainter
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QCheckBox, QStyle, QStyleOptionButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (QCheckBox, QStyle, QStyleOptionButton, QStyleOptionViewItem,
+                               QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from meridiana.ui import design
 
@@ -63,6 +64,47 @@ class CheckboxTests(unittest.TestCase):
             self.assertEqual(self.box.style().pixelMetric(metric, None, self.box),
                              design.Icon.CONTROL + design.Space.S)
         self.assertGreaterEqual(self.box.sizeHint().height(), design.Size.CONTROL)
+
+    def test_item_view_checks_share_the_indicator_and_keep_native_keyboard_focus(self):
+        tree = QTreeWidget()
+        tree.setHeaderHidden(True)
+        item = QTreeWidgetItem(tree, ["Include this group"])
+        item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+        item.setCheckState(0, Qt.CheckState.Checked)
+        self.host.layout().addWidget(tree)
+        self.app.processEvents()
+        side = design.Icon.CONTROL + design.Space.S
+        for metric in (QStyle.PixelMetric.PM_IndicatorWidth, QStyle.PixelMetric.PM_IndicatorHeight):
+            self.assertEqual(tree.style().pixelMetric(metric, None, tree), side)
+        flags = QStyle.StateFlag
+        for mode in ("light", "dark"):
+            self.theme.cfg.theme = mode
+            self.theme.apply()
+            for scale in (1, 2, 2.5):
+                for state in (flags.State_Enabled, flags.State_Enabled | flags.State_On,
+                              flags.State_Enabled | flags.State_NoChange,
+                              flags.State_Enabled | flags.State_On | flags.State_HasFocus):
+                    with self.subTest(mode=mode, scale=scale, state=state):
+                        expected, margin, _side = self.indicator(state, scale)
+                        actual = QImage(expected.size(), expected.format())
+                        actual.setDevicePixelRatio(scale)
+                        actual.fill(Qt.GlobalColor.transparent)
+                        option = QStyleOptionViewItem()
+                        option.initFrom(tree)
+                        option.rect = QRect(margin, margin, side, side)
+                        option.state = state
+                        painter = QPainter(actual)
+                        tree.style().drawPrimitive(QStyle.PrimitiveElement.PE_IndicatorItemViewItemCheck,
+                                                   option, painter, tree)
+                        painter.end()
+                        self.assertEqual(bytes(actual.constBits()), bytes(expected.constBits()))
+        tree.setCurrentItem(item)
+        tree.setFocus(Qt.FocusReason.TabFocusReason)
+        self.app.processEvents()
+        self.assertTrue(tree.hasFocus())
+        QTest.keyClick(tree, Qt.Key.Key_Space)
+        self.assertEqual(item.checkState(0), Qt.CheckState.Unchecked)
+        self.assertTrue(tree.hasFocus())
 
     def test_checkboxes_inside_field_groups_use_the_same_style(self):
         from meridiana.ui import style

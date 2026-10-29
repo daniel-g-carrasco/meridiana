@@ -176,6 +176,7 @@ class Simulation:
     # the first pass (steps 1-7 of every array), kept so that the year with the strings (with_strings) applies
     # only the array step and the system's again
     parts: object = field(default=None, repr=False, compare=False)
+    inverters: list = field(default_factory=list)   # individually converted/clipped hourly and annual results
 
 
 @dataclass
@@ -211,6 +212,9 @@ class _ArrayPass:
     alb: float
     sky_mask: float
     ground_lost: float
+    beam_clear: np.ndarray | None = None           # effective direct irradiance before row/obstacle shading
+    diffuse_eff: np.ndarray | None = None
+    row_share: np.ndarray | None = None            # one shaded row, before the front-row fraction
 
 
 @dataclass
@@ -284,12 +288,37 @@ def simulate(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | Non
     return _finish(_first_pass(meteo, arrays, inverter, losses, horizon), strings, optimizers)
 
 
+def _network_ac(network, losses, hours):
+    """Convert each inverter separately: spare capacity never absorbs another unit's clipping."""
+    unclipped, clipped, delivered = (np.zeros(hours) for _ in range(3))
+    details = []
+    for n, pdc in network.dc.items():
+        spec = network.specs[n]
+        before, limited = _pvwatts_inverter(pdc, spec.pac, spec.eta)
+        after = limited * (1 - losses.ac_wiring / 100 * limited / spec.pac)
+        unclipped += before
+        clipped += limited
+        delivered += after
+        grid = after * (1 - losses.unavailability / 100)
+        details.append({'number': n, 'name': f'{spec.manufacturer} {spec.model}',
+                        'p_ac_kw': spec.pac / 1000, 'dc_kwh': float(pdc.sum() / 1000),
+                        'clipping_kwh': float((before - limited).sum() / 1000),
+                        'ac_kwh': float(grid.sum() / 1000), 'p_dc': pdc, 'p_ac': grid})
+    return unclipped, clipped, delivered, details
+
+
 def with_strings(sim: Simulation, strings: dict | None, optimizers: Optimizers | None = None) -> Simulation:
     """The year of `sim` again with the strings laid on the modules (the electrical effect of the obstacles'
     shade) and the power optimizers on them: the sun, the transposition, the shadings, the temperature and the
     module's power of the first pass are kept, only the array step and the system's are applied again. The same
     numbers as simulate(..., strings=strings, optimizers=optimizers), at a fraction of its time."""
     return _finish(sim.parts, strings, optimizers)
+
+
+def with_network(sim: Simulation, plant, optimizers: Optimizers | None = None, *, progress=None) -> Simulation:
+    """Recombine the actual cells, strings and MPPTs, and convert each inverter separately."""
+    from .electrical_network import solve
+    return _finish(sim.parts, None, optimizers, network=solve(sim.parts, plant, progress))
 
 
 def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | None, losses: Losses | None,
@@ -348,9 +377,11 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
         ground = ground * alb
         sky_left = (sky - circum) * dome
         beam_left = np.where(blocked, 0.0, sun_part)
+        beam_clear = beam_left.copy()
         g_far = beam_left + sky_left + ground
         # 3b. near shading of tilted rows: every row but the first is shaded by the one in front
         shaded = np.zeros(hours)
+        row_share = np.zeros(hours)
         extra_rows = np.zeros(hours)
         sky_mask = 0.0
         ground_lost = 0.0
@@ -388,7 +419,7 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
             if needed is None:
                 needed = nearshade.needed_cells(sun_az, sun_el)
             illuminated = [pm for pm in a.placed if pm.key in a.connected] if a.connected else a.placed
-            near = nearshade.cached_shading(illuminated, a.obstacles, a.tilt, a.azimuth, needed, layout)
+            near = nearshade.cached_shading(illuminated, a.obstacles, a.tilt, a.azimuth, needed, layout, a.module.cells)
             f_obst = nearshade.at(near.table, sun_az, sun_el)
             beam_left = beam_left * (1.0 - f_obst)
             sky_left = sky_left * near.sky
@@ -440,12 +471,14 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
         p_nom, p_25, p_t = p_nom * share, p_25 * share, p_t * share
         per_array.append(_ArrayPass(a, g_inc, g_far, g_rows, g_near, g_iam, g_eff, beam_left, iam_b, p_nom, p_25, p_t,
                                     t_cell, i_ratio, shaded, extra_rows, f_obst, near, layout, lid_pct(losses, a.module),
-                                    u_c, u_v, eta_mean, dome, alb, sky_mask, ground_lost))
+                                    u_c, u_v, eta_mean, dome, alb, sky_mask, ground_lost,
+                                    beam_clear * iam_b * (1 - losses.soiling / 100),
+                                    (sky_left * iam_sky + ground * iam_ground) * (1 - losses.soiling / 100), row_share))
     return _Pass(meteo, arrays, inverter, losses, hor, index, hours, p_stc, weights, ghi, dhi, temp_air, sun_az, sun_el,
                  per_array)
 
 
-def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = None) -> Simulation:
+def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = None, network=None) -> Simulation:
     """Step 8 of every array (its losses, the electrical effect of the shade with the `strings` given, the power
     optimizers), then the inverter and the AC side, the chain, the months and the record: the whole year from the
     first pass."""
@@ -456,6 +489,8 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
     src_meteo = meteo.source
     rec = Record(_("Production of the system"))
     notes: list[str] = []
+    if network is not None:
+        notes.extend(network.notes)
     rec.add(Step("sun", _("Position of the sun"), r"\theta_z,\ \gamma_s = \mathrm{SPA}(t + \Delta t,\ \varphi,\ \lambda,\ h)",
                  _("Every hour of the typical year, at the instant its irradiance represents (the hour plus the offset "
                    "PVGIS declares), with refraction."),
@@ -474,7 +509,7 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
     for ap in first.per_array:
         a = ap.a
         opt = opts.get(a.key)
-        p_t = ap.p_t
+        p_t = ap.p_t if network is None else network.reference[a.key]
         shaded, extra_rows, f_obst, near = ap.shaded, ap.extra_rows, ap.f_obst, ap.near
         # 8. the array
         p_q = p_t * (1.0 - losses.quality / 100.0)
@@ -499,15 +534,22 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
             any_electrical = True
         # the optimizers convert the share of the modules behind them with their weighted efficiency
         p_opt = p_el * (1.0 - opt.share * (1.0 - opt.eta)) if opt is not None else p_el
+        if network is not None:
+            p_el, p_opt = (network.stages[a.key][k] for k in ('p_el', 'p_opt'))
+            extra, rows_electrical = None, False
+            any_electrical = True
         stage.append({"p_q": p_q, "p_lid": p_lid, "p_mm": p_mm, "p_el": p_el, "p_opt": p_opt, "cut_rows": cut_rows,
                       "cut_obst": cut_obst, "extra": extra, "rows_electrical": rows_electrical, "mismatch": mismatch})
-    cuts = _string_cuts(first.per_array, stage, optimizers, hours)
+    cuts = _string_cuts(first.per_array, stage, optimizers, hours) if network is None else {}
     for i, ap in enumerate(first.per_array):
         a = ap.a
         opt = opts.get(a.key)
         st = stage[i]
         g_inc, g_far, g_rows, g_near, g_iam, g_eff = ap.g_inc, ap.g_far, ap.g_rows, ap.g_near, ap.g_iam, ap.g_eff
         p_nom, p_25, p_t, t_cell, near, layout = ap.p_nom, ap.p_25, ap.p_t, ap.t_cell, ap.near, ap.layout
+        if network is not None:
+            p_t = network.reference[a.key]
+            p_nom, p_25 = network.nominal[a.key], network.at25[a.key]
         lid, u_c, u_v, eta_mean, dome, alb = ap.lid, ap.u_c, ap.u_v, ap.eta_mean, ap.dome, ap.alb
         n = a.modules
         p_mm, p_el, p_opt, extra = st["p_mm"], st["p_el"], st["p_opt"], st["extra"]
@@ -522,6 +564,8 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
             relative_power = np.divide(p_cut, a.p_connected, out=np.zeros(hours), where=a.p_connected > 0)
             squares = (1.0 - opt.share) * squares + opt.share * np.clip(relative_power, 0.0, None) ** 2
         p_dc = np.clip(p_cut - losses.dc_wiring / 100.0 * a.p_connected * squares, 0.0, None)
+        if network is not None:
+            p_cut, p_dc = (network.stages[a.key][k] for k in ('p_cut', 'p_dc'))
         for key, val in (("poa", g_inc), ("poa_far", g_far), ("poa_near", g_near), ("poa_iam", g_iam),
                          ("poa_eff", g_eff)):
             tot[key] += weights[i] * val
@@ -538,7 +582,8 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
         per_array[-1]["row_shading"] = float((g_far - g_rows).sum() / far_sum) if far_sum > 0 else 0.0
         per_array[-1]["obstacle_shading"] = float((g_rows - g_near).sum() / far_sum) if far_sum > 0 else 0.0
         per_array[-1]["albedo_seen"] = alb
-        _array_steps(rec, a, losses, lid, u_c, u_v, src_meteo, hor, dome, alb, eta_mean)
+        _array_steps(rec, a, losses, lid, u_c, u_v, src_meteo, hor, dome, alb, eta_mean,
+                     network=network is not None)
         if a.rows > 1 and a.pitch > 0 and a.slant > 0:
             _rows_step(rec, a, per_array[-1]["row_shading"], ap.sky_mask, ap.ground_lost, losses)
         mm = p_mm.sum()
@@ -559,7 +604,7 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
                                            "mismatch": st["mismatch"], "name": opt.name,
                                            "loss": float(1.0 - p_opt.sum() / el) if el > 0 else 0.0,
                                            "cut": float(1.0 - p_cut.sum() / p_opt.sum()) if p_opt.sum() > 0 else 0.0}
-            _optimizers_step(rec, a, opt, losses, per_array[-1]["optimizers"])
+            _optimizers_step(rec, a, opt, losses, per_array[-1]["optimizers"], network=network is not None)
     if optimizers is not None and tot["p_opt"].sum() > 0:
         share_cut = 1.0 - tot["p_cut"].sum() / tot["p_opt"].sum()
         if share_cut > 0.005:
@@ -569,9 +614,15 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
 
     # inverter and AC side
     pac_nom = inverter.pac_total
-    ac_unclipped, ac = _pvwatts_inverter(tot["p_dc"], pac_nom, inverter.eta)
-    frac_ac = losses.ac_wiring / 100.0 * np.clip(ac / pac_nom, 0.0, None)
-    p_ac = ac * (1.0 - frac_ac)
+    per_inverter = []
+    if network is None:
+        ac_unclipped, ac = _pvwatts_inverter(tot["p_dc"], pac_nom, inverter.eta)
+        frac_ac = losses.ac_wiring / 100.0 * np.clip(ac / pac_nom, 0.0, None)
+        p_ac = ac * (1.0 - frac_ac)
+    else:
+        # Keep the design's nominal rating when nothing is connected; an empty production network does
+        # not remove the installed hardware. Conversion below still uses only each connected unit.
+        ac_unclipped, ac, p_ac, per_inverter = _network_ac(network, losses, hours)
     p_grid = p_ac * (1.0 - losses.unavailability / 100.0)
     if (ac_unclipped - ac).sum() > 0.005 * ac_unclipped.sum():
         notes.append(_("The inverter clips {pct} of the energy: check the DC/AC ratio.").format(
@@ -606,8 +657,10 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
                             *((("electrical", _("Electrical effect of the shading, by string"), tot["p_el"]),)
                               if any_electrical else ()),
                             *((("optimizers", _("Power optimizers"), tot["p_opt"]),) if opts else ()),
-                            *((("string_limit", _("Strings of optimizers beyond their continuous power"),
-                                tot["p_cut"]),) if opts and (tot["p_opt"] - tot["p_cut"]).sum() > 0 else ()),
+                            *((("string_limit", (_("DC operating limits") if network is not None else
+                                                  _("Strings of optimizers beyond their continuous power")),
+                                tot["p_cut"]),) if (opts or network is not None)
+                               and (tot["p_opt"] - tot["p_cut"]).sum() > 0 else ()),
                             ("dc_wiring", _("DC wiring"), tot["p_dc"]),
                             ("inverter", _("Inverter efficiency"), ac_unclipped),
                             ("clipping", _("Inverter clipping over its nominal power"), ac),
@@ -633,10 +686,21 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
         "e_ac": pd.Series(p_grid, index=index).groupby(months).sum() / 1000.0})
     monthly["pr"] = monthly.e_ac / (p0 * monthly.poa)
 
-    _system_steps(rec, inverter, losses, p_stc, energy, h_poa, pr)
+    _system_steps(rec, inverter, losses, p_stc, energy, h_poa, pr, separate=network is not None)
+    if network is not None:
+        rec.add(Step('electrical_network', _("Cell cohorts, bypass diodes and the connected electrical network"),
+                     r"V_s(I)=\sum_j V_j(I),\quad I_p(V)=\sum_s I_s(V),\quad P_{MPP}=\max_V V I_p(V)",
+                     _("The actual connected modules are recombined by series current and parallel voltage, with "
+                       "a global maximum over the sampled curves. Cell-shadow cohorts preserve concentrated and "
+                       "distributed shade separately. Tracker voltage/current windows constrain the operating "
+                       "point. Each inverter has its own efficiency, clipping and AC wiring loss. The unconnected "
+                       "modules contribute zero. Cell diagrams are inferred where absent; reverse circulating "
+                       "currents, cell avalanche and hot spots are not calculated."),
+                     [], Quantity('', _("Individually converted inverters"), len(per_inverter), '', computed(''), 0),
+                     'pvlib single-diode equations; PVsyst Module Layout I/V combination'))
     return Simulation(hourly=hourly, monthly=monthly, chain=chain, record=rec, arrays=per_array,
                       p_stc_kw=p0, p_ac_kw=pac_nom / 1000.0, energy_kwh=energy, specific_yield=energy / p0,
-                      pr=pr, notes=notes, parts=first)
+                      pr=pr, notes=notes, parts=first, inverters=per_inverter)
 
 
 ALBEDO_VANISH_DEG = 20.0           # PVsyst: the far albedo vanishes behind a horizon this high (advanced parameter)
@@ -667,7 +731,7 @@ def _estimate_shade() -> str:
 
 
 def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: float, u_v: float, src_meteo: Source,
-                 hor: Horizon | None, dome: float, alb: float, eta_mean: float) -> None:
+                 hor: Horizon | None, dome: float, alb: float, eta_mean: float, *, network=False) -> None:
     designer = Source("input", _("drawn by the designer"))
     default = Source("default", _("Meridiana's default, can be changed in the losses"))
     m = a.module
@@ -798,6 +862,14 @@ def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: flo
                   Quantity("R_{sh}", _("shunt resistance"), sdm["R_sh_ref"], "Ω", fit, 1),
                   Quantity("a", _("modified ideality factor"), sdm["a_ref"], "V", fit, 3)]
         reference = _("De Soto, Klein, Beckman, Solar Energy 80 (2006) 78-88 (pvlib.pvsystem.calcparams_desoto)")
+    if network:
+        formula = r"P_{ref}=\sum_j \max_V\{V I_j(V,G_{mean,j},T_c)\}"
+        expl = _("The ledger reference sums each connected module's uniform-irradiance maximum power at its "
+                 "mean irradiance and the hour's cell temperature. The one-diode parameters vary with irradiance "
+                 "and temperature; no additional gamma power correction is applied. The electrical-network step "
+                 "then applies the actual cell irradiance distribution and shared operating points. Missing diode "
+                 "parameters use an explicitly reported three-point datasheet curve. Per-array network losses "
+                 "are allocated in proportion to independent module power; the plant total is the circuit result.")
     rec.add(Step(f"{a.key}.module", head + _("Power of the modules"), formula, expl,
                  [Quantity("N", _("connected modules") if a.connected is not None else _("modules"),
                            a.generating_modules, "", designer, 0),
@@ -822,6 +894,12 @@ def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: flo
                   Quantity("m", _("mismatch"), losses.mismatch, "%", default, 1),
                   Quantity("r", _("DC wiring loss at STC"), losses.dc_wiring, "%", default, 1)], None,
                  _("PVsyst help, «Array ohmic wiring loss»: loss fraction at STC, R I² in the simulation")))
+    if network:
+        rec.find(f'{a.key}.array').explanation = _(
+            "Quality, LID and residual module mismatch scale the module currents. One module per optimizer "
+            "removes the residual mismatch allowance. DC wiring is estimated from the actual string operating "
+            "current squared, referred to its module STC current; fixed-voltage optimizer strings use power "
+            "squared relative to their connected STC power. Cable lengths and resistances are not available.")
 
 
 def _electrical_quantities(losses: Losses) -> list[Quantity]:
@@ -891,9 +969,9 @@ def _obstacles_step(rec: Record, a: ArraySpec, near: nearshade.Shading, loss: fl
                    "shadows along the sun's rays on the plane of the modules, row by row. The shaded share of the "
                    "modules' area is computed for the sun's positions every 5° of azimuth and 4° of elevation along "
                    "its path, then read hour by hour; the diffuse light loses the share of the sky the obstacles hide, "
-                   "weighted as for the horizon (every 10° and 8°). The loss is taken proportional to the shaded "
-                   "share: the bypass diodes make the real loss larger when a shadow crosses many cells (the "
-                   "electrical effect is not modelled yet)."),
+                   "weighted as for the horizon (every 10° and 8°). This step records the irradiance loss. "
+                   "The connected electrical network separately evaluates cell irradiance, bypass sections "
+                   "and the common string/MPPT operating point."),
                  [Quantity("", _("obstacles"), shown, "", scene),
                   Quantity(r"f_{cielo,o}", _("share of the diffuse sky still seen"), 100 * near.sky, "%", computed(""), 1)],
                  Quantity(r"\bar{f_o}", _("irradiance lost to the obstacles over the year"), 100 * loss, "%",
@@ -924,7 +1002,7 @@ def _string_cuts(per_array: list, stage: list, optimizers: Optimizers | None, ho
     return out
 
 
-def _optimizers_step(rec: Record, a: ArraySpec, opt: ArrayOptimizers, losses: Losses, got: dict) -> None:
+def _optimizers_step(rec: Record, a: ArraySpec, opt: ArrayOptimizers, losses: Losses, got: dict, *, network=False) -> None:
     rec.add(Step(f"{a.key}.optimizers", a.name + ": " + _("Power optimizers"),
                  r"m' = m\,(1 - s_1),\quad P_{opt} = P_{el}\,[1 - s\,(1 - \eta_{opt})],\quad "
                  r"P_{string} \leq I_{out,max}\,U_{string},\quad I_{DC} = P / U_{string}",
@@ -947,6 +1025,16 @@ def _optimizers_step(rec: Record, a: ArraySpec, opt: ArrayOptimizers, losses: Lo
                           100 * (1.0 - (1.0 - got["loss"]) * (1.0 - got["cut"])), "%", computed(""), 2),
                  _("{datasheet}, p. 1-2 (module-level MPPT, weighted efficiency); SolarEdge, Single String Design "
                    "Guidelines v1.1, p. 4 (the power cut)").format(datasheet=opt.source.ref or opt.source.label)))
+    if network:
+        step = rec.find(f'{a.key}.optimizers')
+        step.formula = r"\sum_j \min(P_j/I,V_{out,max,j})\geq U_{string},\quad I\leq I_{out,max}"
+        step.explanation = _(
+            "Each actual optimizer group shares its own operating point, with series or parallel input topology "
+            "and documented input voltage/current limits. Its efficiency is fixed at the catalogue value. The "
+            "string must reach the inverter's fixed voltage using each optimizer's available power and maximum "
+            "output voltage at one common current. Output current and continuous string power are enforced. "
+            "Rated module input power is a compatibility rating, not an assumed instantaneous clipping limit. "
+            "Missing limits are listed in the notes; optional branch cables and firmware are not inferred.")
 
 
 def _electrical_step(rec: Record, a: ArraySpec, near: nearshade.Shading, n_strings: int, loss: float,
@@ -977,13 +1065,15 @@ def _electrical_step(rec: Record, a: ArraySpec, near: nearshade.Shading, n_strin
 
 
 def _system_steps(rec: Record, inv: InverterSpec, losses: Losses, p_stc: float, energy: float, h_poa: float,
-                  pr: float) -> None:
+                  pr: float, separate: bool = False) -> None:
     default = Source("default", _("Meridiana's default, can be changed in the losses"))
     rec.add(Step("inverter", _("Inverter"),
                  r"\eta = \frac{\eta_{nom}}{0.9637}\left(-0.0162\,\zeta - \frac{0.0059}{\zeta} + 0.9858\right),"
                  r"\quad P_{AC} = \min(\eta\,P_{DC},\ P_{AC,nom})",
-                 _("The efficiency curve of PVWatts scaled to the weighted efficiency of the inverter; above its "
-                   "nominal AC power the inverter clips."),
+                 (_("The PVWatts efficiency curve and nominal AC clipping are applied separately to each connected "
+                    "inverter, then summed; spare capacity on another inverter cannot absorb its clipping.") if separate else
+                  _("The efficiency curve of PVWatts scaled to the weighted efficiency of the inverter; above its "
+                    "nominal AC power the inverter clips.")),
                  [Quantity(r"P_{AC,nom}", _("nominal AC power, all inverters"), inv.pac_total / 1000.0, "kW", inv.source, 2),
                   Quantity(r"\eta_{nom}", _("weighted efficiency"), 100 * inv.eta, "%", inv.source, 1),
                   Quantity(r"P_{STC}/P_{AC,nom}", _("DC/AC ratio"), p_stc / inv.pac_total, "", computed(""), 2)],

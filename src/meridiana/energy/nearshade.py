@@ -32,6 +32,7 @@ import numpy as np
 AZ_STEP, EL_STEP = 5.0, 4.0
 AZIMUTHS = np.arange(0.0, 360.0, AZ_STEP)            # of the sun, from North clockwise
 ELEVATIONS = np.arange(2.0, 90.0, EL_STEP)
+CELL_LEVELS = 17                 # nine cohorts gave a 19% error in the partial-cell regression
 
 
 @dataclass
@@ -50,6 +51,9 @@ class Shading:
     modules: np.ndarray | None = None                 # each module's shaded share, (modules, rows, columns)
     blocks: np.ndarray | None = None                  # the blocks of each module the shadow touches, same shape
     per_module: int = 3                               # blocks a module has
+    block_fractions: np.ndarray | None = None          # uint16/65535, module x block x elevation x azimuth
+    cell_histograms: dict = field(default_factory=dict)  # shaded module index -> block x cohort x solar grid
+    cell_resolved: bool = False
 
 
 def _pieces(ring) -> list[list[int]]:
@@ -361,7 +365,7 @@ def _u_range(pts: np.ndarray, va: np.ndarray, vb: np.ndarray) -> tuple[np.ndarra
 
 
 def shading(modules: list, solids: list[Solid], tilt: float, azimuth: float,
-            needed: np.ndarray | None = None, layout: tuple[int, int] = (3, 1)) -> Shading:
+            needed: np.ndarray | None = None, layout: tuple[int, int] = (3, 1), cell_count: int = 0) -> Shading:
     """The near shading of an array: `modules` are its placed modules (layout.PlacedModule), all with
     `tilt` and `azimuth`; `solids` what can shade them; `needed` the cells of the grid to compute
     (needed_cells), all of them when not given; `layout` the blocks of a module (block_boxes).
@@ -397,6 +401,10 @@ def shading(modules: list, solids: list[Solid], tilt: float, azimuth: float,
     per_module = np.zeros((len(modules), len(suns)), dtype=np.float32)
     touched = np.zeros((len(modules), len(suns)), dtype=np.float32)
     nb = layout[0] * layout[1]
+    block_fraction = np.zeros((len(modules), nb, len(suns_all)), dtype=np.uint16)
+    lit_indices = np.flatnonzero(lit)
+    histograms = {}
+    cells_per_block = cell_count // nb if cell_count and cell_count % nb == 0 else 0
     inset = np.array([1e-3, 1e-3, -1e-3, -1e-3])
     for d, idx in planes.items():
         mods_index = np.array(idx)
@@ -410,6 +418,7 @@ def shading(modules: list, solids: list[Solid], tilt: float, azimuth: float,
         # each module's blocks, a millimetre inside their edges: a shadow that only grazes a block's edge
         # does not count it
         blocks = _block_rects(rects_a, layout) + inset                   # (modules, blocks, 4)
+        area_blocks = _block_rects(rects_a, layout)
         reach = shapely.box(*shapely.total_bounds(boxes))
         hulls, hits = [], []
         for s in solids:
@@ -444,6 +453,25 @@ def shading(modules: list, solids: list[Solid], tilt: float, azimuth: float,
         if len(ci):
             share = rings.areas_in(ci, rects_a[mi]) / mods_area[mi]
             per_module[mods_index[mi], cells[ci]] = np.clip(share, 0.0, 1.0)
+            # Real union area per bypass block, not only whether an obstacle touches it. Quantized to
+            # 1/65535 to keep the annual geometric cache bounded without a material irradiance error.
+            for b in range(nb):
+                block_area = rings.areas_in(ci, area_blocks[mi, b]) / (mods_area[mi] / nb)
+                block_fraction[mods_index[mi], b, lit_indices[cells[ci]]] = np.rint(
+                    np.clip(block_area, 0, 1) * 65535).astype(np.uint16)
+                if cells_per_block:
+                    cell_rects = cell_boxes(area_blocks[mi, b], cells_per_block)
+                    cell_area = (mods_area[mi] / nb / cells_per_block)[:, None]
+                    fractions = rings.areas_in(np.repeat(ci, cells_per_block), cell_rects.reshape(-1, 4))
+                    fractions = np.clip(fractions.reshape(-1, cells_per_block) / cell_area, 0, 1)
+                    hist = cell_histogram(fractions, CELL_LEVELS)
+                    for local in np.unique(mi):
+                        selected = mi == local
+                        key = int(mods_index[local])
+                        if key not in histograms:
+                            histograms[key] = np.zeros((nb, CELL_LEVELS - 1, len(suns_all)), dtype=np.uint16)
+                        histograms[key][b][:, lit_indices[cells[ci[selected]]]] = np.rint(
+                            hist[selected, 1:].T * 65535).astype(np.uint16)
             pi, hi = np.nonzero(hits_a[:, cells[ci]].T)                    # (pair, solid) where it reaches
             hull_rings = _Rings(hulls_a.ravel())
             met = hull_rings.touches(hi * hits_a.shape[1] + cells[ci][pi], blocks[mi[pi]])
@@ -459,18 +487,26 @@ def shading(modules: list, solids: list[Solid], tilt: float, azimuth: float,
     hit[:, lit] = touched
     shape = (len(modules), len(ELEVATIONS), len(AZIMUTHS))
     return Shading(table, diffuse_factor(table, tilt, azimuth, coarse=needed is not None), names,
-                   [pm.key for pm in modules], each.reshape(shape), hit.reshape(shape), nb)
+                   [pm.key for pm in modules], each.reshape(shape), hit.reshape(shape), nb,
+                   block_fraction.reshape(len(modules), nb, len(ELEVATIONS), len(AZIMUTHS)), histograms,
+                   bool(cells_per_block))
 
 
 _CACHE: dict = {}
 _CACHE_LOCK = threading.Lock()
+_CACHE_BYTES = 128 * 1024 * 1024
+
+
+def _cache_bytes(sh):
+    return (sum(a.nbytes for a in (sh.table, sh.modules, sh.blocks, sh.block_fractions) if a is not None)
+            + sum(a.nbytes for a in sh.cell_histograms.values()))
 
 
 def cached_shading(modules: list, solids: list[Solid], tilt: float, azimuth: float,
-                   needed: np.ndarray | None = None, layout: tuple[int, int] = (3, 1)) -> Shading:
+                   needed: np.ndarray | None = None, layout: tuple[int, int] = (3, 1), cell_count: int = 0) -> Shading:
     """shading(), kept for the same scene: a change of the money or of the losses does not cast the
     shadows again."""
-    h = hashlib.sha1(np.array([tilt, azimuth, *layout], dtype=float).tobytes())
+    h = hashlib.sha1(np.array([tilt, azimuth, *layout, cell_count], dtype=float).tobytes())
     for pm in modules:
         h.update(np.array([*np.ravel(pm.corners), pm.z, pm.tilt, pm.azimuth], dtype=float).tobytes())
     for sol in solids:
@@ -482,12 +518,69 @@ def cached_shading(modules: list, solids: list[Solid], tilt: float, azimuth: flo
     with _CACHE_LOCK:
         if key in _CACHE:
             return _CACHE[key]
-    out = shading(modules, solids, tilt, azimuth, needed, layout)
+    out = shading(modules, solids, tilt, azimuth, needed, layout, cell_count)
     with _CACHE_LOCK:
-        while len(_CACHE) >= 16:
+        while _CACHE and (len(_CACHE) >= 16 or sum(_cache_bytes(s) for s in _CACHE.values()) + _cache_bytes(out) > _CACHE_BYTES):
             _CACHE.pop(next(iter(_CACHE)))
-        _CACHE[key] = out
+        if _cache_bytes(out) <= _CACHE_BYTES:
+            _CACHE[key] = out
     return out
+
+
+def block_shares(sh: Shading, modules, azimuth, elevation) -> np.ndarray:
+    """Block shaded fractions, module x hour x block, read only for the requested time chunk."""
+    if sh.block_fractions is None:
+        raise ValueError('per-block shading areas are unavailable')
+    table = sh.block_fractions.reshape(-1, len(ELEVATIONS), len(AZIMUTHS))
+    rows = (np.asarray(modules)[:, None] * sh.per_module + np.arange(sh.per_module)).ravel()
+    values = _read(table, rows, _weights(_corners(azimuth, elevation))) / 65535.0
+    return np.clip(values.reshape(len(modules), sh.per_module, -1).transpose(0, 2, 1), 0, 1)
+
+
+def cell_boxes(rects, count):
+    """Infer a rectangular grid of equal cells within each block; manufacturer wiring is not known."""
+    rects = np.asarray(rects)
+    aspect = (rects[0, 2] - rects[0, 0]) / (rects[0, 3] - rects[0, 1])
+    cols = min((k for k in range(1, count + 1) if count % k == 0), key=lambda k: abs(np.log(k * k / count / aspect)))
+    rows = count // cols
+    x, y = np.meshgrid(np.arange(cols), np.arange(rows))
+    dx = (rects[:, 2] - rects[:, 0])[:, None] / cols
+    dy = (rects[:, 3] - rects[:, 1])[:, None] / rows
+    x0, y0 = rects[:, :1] + dx * x.ravel(), rects[:, 1:2] + dy * y.ravel()
+    return np.stack([x0, y0, x0 + dx, y0 + dy], axis=-1)
+
+
+def cell_histogram(fractions, levels=CELL_LEVELS):
+    """Series-cell fractions at evenly spaced shadow levels; linear weights preserve shaded area."""
+    f = np.clip(np.asarray(fractions), 0, 1)
+    position = f * (levels - 1)
+    low = np.floor(position).astype(int)
+    high = np.minimum(low + 1, levels - 1)
+    mix = position - low
+    out = np.zeros((len(f), levels))
+    row = np.broadcast_to(np.arange(len(f))[:, None], f.shape)
+    np.add.at(out, (row, low), (1 - mix) / f.shape[1])
+    np.add.at(out, (row, high), mix / f.shape[1])
+    return out
+
+
+def cell_cohorts(sh: Shading, module_index: int, azimuth, elevation):
+    """Hour x bypass block x irradiance cohort; clear modules share the zero-shadow cohort."""
+    hours = len(np.atleast_1d(azimuth))
+    out = np.zeros((hours, sh.per_module, CELL_LEVELS))
+    data = sh.cell_histograms.get(module_index)
+    if data is not None:
+        i0, i1, j0, j1, ti, tj, up = _corners(azimuth, elevation)
+        w = len(AZIMUTHS)
+        values = ((1 - ti) * ((1 - tj) * data[..., i0 * w + j0] + tj * data[..., i0 * w + j1])
+                  + ti * ((1 - tj) * data[..., i1 * w + j0] + tj * data[..., i1 * w + j1])) * up / 65535
+        out[..., 1:] = values.transpose(2, 0, 1)
+    elif not sh.cell_resolved and sh.block_fractions is not None:
+        # No usable cell count: preserve the block's mean shading instead of silently treating it as clear.
+        fraction = block_shares(sh, [module_index], azimuth, elevation)[0]
+        return cell_histogram(fraction.reshape(-1, 1)).reshape(hours, sh.per_module, CELL_LEVELS)
+    out[..., 0] = np.maximum(0, 1 - out[..., 1:].sum(axis=2))
+    return out / out.sum(axis=2, keepdims=True)
 
 
 def at(table: np.ndarray, azimuth, elevation) -> np.ndarray:

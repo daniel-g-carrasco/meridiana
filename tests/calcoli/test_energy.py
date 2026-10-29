@@ -546,6 +546,8 @@ class Inverters(unittest.TestCase):
         self.assertAlmostEqual(both.eta, 0.975)
         out = self.year(p)
         self.assertAlmostEqual(out.sim.p_ac_kw, 15.0)
+        self.assertEqual(out.sim.energy_kwh, 0)  # hardware remains installed, but there are no strings
+        self.assertEqual(out.sim.inverters, [])
         self.assertIn("2 x", system.describe({"inverters": [{"record": a, "count": 2, "name": ""}]}))
 
     def test_a_project_of_yesterday_opens_and_gives_the_same_year(self):

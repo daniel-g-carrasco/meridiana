@@ -27,7 +27,7 @@ from . import atomic, layout, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 19
+FORMAT_VERSION = 20
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -357,7 +357,8 @@ MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                                      "series_id": data.get("series_id", "")},
                     18: lambda data: {**data, "bim_id": data.get("bim_id") or str(uuid.uuid5(
                         uuid.NAMESPACE_URL, "meridiana:legacy:" + (data.get("series_id") or
-                        repr((data.get("created", ""), data.get("job_id", ""), data.get("name", ""))))))}}
+                        repr((data.get("created", ""), data.get("job_id", ""), data.get("name", ""))))))},
+                    19: lambda data: data}  # optional explicit optimizer groups; absent keeps legacy order
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
 ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
@@ -1221,7 +1222,7 @@ class Project:
     # files
 
     def to_json(self) -> dict:
-        """The project as the file holds it (format 19): every variant with its design, the one in hand too;
+        """The project as the file holds it (format 20): every variant with its design, the one in hand too;
         the working copy of the fields above goes into its variant."""
         data = asdict(self)
         for k in DESIGN:

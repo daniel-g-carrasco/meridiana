@@ -194,23 +194,6 @@ class Gather(unittest.TestCase):
             checks.count_out_of_shadows(p, sf)
             self.assertEqual(fill.call_count, 2)                        # a name moves no shadow
 
-
-def _shade_free(sf):
-    import copy
-    alt = copy.deepcopy(sf)
-    alt.params["shade_free"] = True
-    return alt
-
-
-def _shadows():
-    from meridiana.energy import system
-    return system.shadow_exclusions
-
-
-def _counts_cleared():
-    from unittest import mock
-    return mock.patch.dict(checks._COUNTS, {}, clear=True)
-
     def test_the_connection_follows_the_voltage_level(self):
         items = checks.connection(400.0, 3, True, "MT", True)
         self.assertEqual([i.level for i in items], ["info"])
@@ -238,7 +221,7 @@ def _counts_cleared():
         sim = SimpleNamespace(arrays=[{"key": "s1.0", "name": "Copertura", "obstacle_shading": 0.06}],
                               notes=["The inverter clips 3.2% of the energy: check the DC/AC ratio."], p_stc_kw=50.0)
         wiring = SimpleNamespace(left=[1, 2, 3])
-        inverter = SimpleNamespace(phases=1, p_ac_kw=50.0)
+        inverter = SimpleNamespace(phases=1, pac_total=50000.0)
         energy = {"sim": sim, "strings": {"plan": plan, "suggestion": None}, "wiring": wiring,
                   "shade_free_counts": {"s1": 7}}
         return p, results, energy, inverter
@@ -298,6 +281,49 @@ def _counts_cleared():
         self.assertTrue(items[0].detail)
         self.assertEqual(checks.defaults_in_use(None), [])
         self.assertEqual(checks.defaults_in_use({"sim": object()}), [])
+
+
+def _shade_free(sf):
+    import copy
+    alt = copy.deepcopy(sf)
+    alt.params["shade_free"] = True
+    return alt
+
+
+def _shadows():
+    from meridiana.energy import system
+    return system.shadow_exclusions
+
+
+def _counts_cleared():
+    from unittest import mock
+    return mock.patch.dict(checks._COUNTS, {}, clear=True)
+
+
+class ProductionNotes(unittest.TestCase):
+    def test_long_notes_keep_the_complete_explanation_in_the_detail(self):
+        from types import SimpleNamespace
+
+        disconnected = ("Only modules connected to an existing inverter input contribute to production; "
+                        "unconnected modules produce zero.")
+        network = ("Electrical production uses sampled cell-cohort I/V curves, bypass sections and common "
+                   "string current; the full electrical explanation must remain available to the designer.")
+        clipping = "The inverter clips energy above its AC power. " * 3
+        short = "Check the inverter's efficiency curve."
+        sim = SimpleNamespace(arrays=[], notes=[network, clipping, short], p_stc_kw=0)
+        items = checks.gather(model.Project(), {}, {"notes": [disconnected], "sim": sim})
+        for note, level in ((disconnected, "info"), (network, "warn"), (clipping, "warn")):
+            with self.subTest(note=note):
+                item = next(item for item in items if note in item.detail)
+                self.assertEqual((item.area, item.level, item.target),
+                                 ("production", level, ("phase", "production")))
+                self.assertLessEqual(len(item.text), checks.TEXT_LENGTH)
+                self.assertNotEqual(item.text, note)
+        disconnected_item = next(item for item in items if disconnected in item.detail)
+        self.assertIn("Unconnected", disconnected_item.text)
+        clipping_item = next(item for item in items if clipping in item.detail)
+        self.assertIn("A lower DC/AC ratio", clipping_item.detail)
+        self.assertTrue(any(item.text == short for item in items))
 
 
 class ByHand(unittest.TestCase):

@@ -66,6 +66,27 @@ class StringPlan:
         return self.n_series * sum(self.strings_per_mppt)
 
 
+class SearchStopped(Exception):
+    """A deterministic search stopped before proving feasibility or infeasibility."""
+
+
+@dataclass
+class SearchBudget:
+    limit: int = 100000
+    cancelled: object = None
+    nodes: int = 0
+    reason: str = ""
+
+    def step(self, depth: int = 0) -> None:
+        if self.cancelled is not None and self.cancelled():
+            self.reason = _("String assignment cancelled; no complete choice has been applied.")
+        elif self.nodes >= self.limit or depth >= 400:
+            self.reason = _("String assignment incomplete: the search limit was reached.")
+        if self.reason:
+            raise SearchStopped(self.reason)
+        self.nodes += 1
+
+
 def strings_allowed(module: ModuleSpec, inverter: InverterSpec, k: int, ki: float = 1.25) -> int:
     """How many equal strings input k takes without exceeding either current of its datasheet: the operating
     current Np x Imp and the maximum short-circuit current Np x 1.25 x Isc. A string drawn by hand may still
@@ -74,15 +95,31 @@ def strings_allowed(module: ModuleSpec, inverter: InverterSpec, k: int, ki: floa
     limits = []
     if inverter.inputs_per_mppt and k < len(inverter.inputs_per_mppt):
         limits.append(int(inverter.inputs_per_mppt[k]))
-    if inverter.iscmax_per_mppt and ki * module.isc > 0:
-        values = inverter.iscmax_per_mppt
-        limits.append(int(values[min(k, len(values) - 1)] // (ki * module.isc)))
-    if inverter.imax_per_mppt and module.imp > 0:
-        values = inverter.imax_per_mppt
-        limits.append(int(values[min(k, len(values) - 1)] // module.imp))
+    isc_limit = inverter._limit(inverter.iscmax_per_mppt, k)
+    if isc_limit is not None and ki * module.isc > 0:
+        limits.append(int(isc_limit // (ki * module.isc)))
+    counts = {1}
+    if inverter.imax_by_strings and 0 <= k < len(inverter.imax_by_strings):
+        rule = inverter.imax_by_strings[k]
+        if isinstance(rule, dict):
+            counts.update(int(n) for n in rule if str(n).isdigit() and int(n) > 0)
+    currents = [inverter.current_limit(k, n) for n in counts]
+    known = [value for value in currents if value is not None]
+    if known and module.imp > 0:
+        limits.append(int(max(known) / module.imp + 1e-9))
+    for value, current in ((inverter.connector_current_limit(k), module.imp),
+                           (inverter.connector_isc_limit(k), ki * module.isc)):
+        if value is not None and current > value + 1e-9:
+            return 0
     if module.max_series_fuse is None or 1.1 * ki * module.isc > module.max_series_fuse:
         limits.append(2)
-    return max(0, min(limits)) if limits else 1
+    upper = max(0, min(limits)) if limits else 1
+    return max((n for n in range(1, upper + 1)
+                if (inverter.current_limit(k, n) is None and
+                    (not inverter.imax_by_strings or k >= len(inverter.imax_by_strings)
+                     or not inverter.imax_by_strings[k]))
+                or (inverter.current_limit(k, n) is not None
+                    and n * module.imp <= inverter.current_limit(k, n) + 1e-9)), default=0)
 
 
 def vmp_at(module: ModuleSpec, t_cell: float) -> float:
@@ -193,7 +230,6 @@ def plan(module: ModuleSpec, inverter: InverterSpec, n_series: int, strings_per_
                   Quantity(r"K_I", _("factor of the standard"), ki, "", Source("norm", "KI", f"{NORM}, B.2"), 2)],
                  Quantity(r"I_{SC\,MAX}", _("maximum short-circuit current"), isc_max, "A", computed(""), 2),
                  f"{NORM}, Allegato B, B.2, p. 109"))
-    i_in = inverter.imax_per_mppt
     isc_in = inverter.iscmax_per_mppt
     if i_mod_max_ocpr is None:
         i_mod_max_ocpr = module.max_series_fuse
@@ -217,11 +253,13 @@ def plan(module: ModuleSpec, inverter: InverterSpec, n_series: int, strings_per_
                       Quantity(r"P_{STC}", _("nominal power of the module"), module.pmax, "W", m_src, 1)],
                      Quantity(r"P_{DC,in}", _("DC power of the input"), n_series * ns * module.pmax, "W",
                               computed(""), 1), ""))
-        if not i_in:
+        operating_limit = inverter.current_limit(k, ns)
+        if operating_limit is None:
             add(f"imp_missing{k}", _("{name}: operating-current limit is unknown").format(name=name), True,
                 _("The inverter's total current is not a per-MPPT limit. Enter the manufacturer's per-MPPT "
                   "data to verify this input."), "warn")
-        if not isc_in:
+        isc_limit = inverter._limit(isc_in, k)
+        if isc_limit is None:
             add(f"isc_missing{k}", _("{name}: short-circuit current limit is unknown").format(name=name), True,
                 _("Enter the manufacturer's short-circuit current limit for this MPPT to verify it."), "warn")
         if inverter.inputs_per_mppt and k < len(inverter.inputs_per_mppt):
@@ -230,14 +268,27 @@ def plan(module: ModuleSpec, inverter: InverterSpec, n_series: int, strings_per_
                 add(f"connections{k}", _("{name}: more strings than physical inputs").format(name=name), True,
                     _("{n} strings on {m} connector pairs: an external parallel connection must be designed; "
                       "the inputs share this MPPT.").format(n=ns, m=connectors), "warn")
-        if i_in:
-            lim = i_in[min(k, len(i_in) - 1)]
+        elif inverter.inputs_per_mppt is not None:
+            add(f"connections_missing{k}", _("{name}: physical input count is unknown").format(name=name), True,
+                _("This tracker has no physical input count in the supplied list."), "warn")
+        if operating_limit is not None:
+            lim = operating_limit
             over = ns * module.imp > lim
             add(f"imp{k}", _("{name}: operating current within the input's maximum").format(name=name), True,
                 (_("{i} A of {lim} A: the inverter holds the current and loses a little power") if over else
                  _("{i} A of {lim} A")).format(i=f"{ns * module.imp:.1f}", lim=f"{lim:.1f}"), "warn" if over else "ok")
-        if isc_in:
-            lim = isc_in[min(k, len(isc_in) - 1)]
+        for suffix, value, current in (("imp", inverter.connector_current_limit(k), module.imp),
+                                        ("isc", inverter.connector_isc_limit(k), isc_max)):
+            values = inverter.imax_per_input if suffix == "imp" else inverter.iscmax_per_input
+            if values is not None and value is None:
+                add(f"connector_{suffix}_missing{k}", _("{name}: physical input current is unknown").format(name=name),
+                    True, _("This tracker has no physical input rating in the supplied list."), "warn")
+            if value is not None:
+                add(f"connector_{suffix}{k}", _("{name}: current of each physical input").format(name=name),
+                    current <= value + 1e-9,
+                    _("{i} A of {lim} A").format(i=f"{current:.1f}", lim=f"{value:.1f}"))
+        if isc_limit is not None:
+            lim = isc_limit
             add(f"isc{k}", _("{name}: short-circuit current within the input's maximum").format(name=name),
                 ns * isc_max <= lim, _("{i} A of {lim} A").format(i=f"{ns * isc_max:.1f}", lim=f"{lim:.1f}"))
         if ns > 2:

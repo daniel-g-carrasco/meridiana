@@ -44,23 +44,34 @@ ausiliarie esplicite nel riepilogo, inizialmente senza moduli.
 
 L'IFC4 esportato conserva identificativi dei moduli, tipi e proprietà di catalogo/posa/impianto. I piani ausiliari
 sono riferimenti virtuali, distinti dagli elementi costruiti. Le proprietà IFC non equivalgono automaticamente
-a famiglie parametriche native di Revit. Il progetto `.mer` incorpora dati e risorse; lo schema 19 conserva
-identità BIM e piani di posa.
+a famiglie parametriche native di Revit. Il progetto `.mer` incorpora dati e risorse; lo schema 20 conserva
+identità BIM, piani di posa e gruppi fisici di moduli sugli ottimizzatori.
 
 ## Dimensionamento e limiti del calcolo
 
 **Dimensiona** cerca inverter e stringhe in un'attività annullabile; se modifichi il progetto nel frattempo,
 la proposta precedente non viene applicata. Il criterio preferisce meno inverter, poi meno modelli e poi
-il rapporto DC/AC più vicino. È una ricerca euristica con un budget dichiarato: una ricerca incompleta non
-dimostra che una soluzione non esista. Numero di MPPT, coppie di connettori fisici e limiti di corrente comuni
-sono informazioni distinte; gli ingressi sullo stesso MPPT non seguono orientamenti indipendenti.
+il rapporto DC/AC più vicino. La ricerca controlla l'assegnazione globale entro i vincoli e il catalogo forniti,
+con un budget dichiarato: se non termina, non applica una scelta come ottima né dichiara impossibile una soluzione.
+Anche **Proponi** e **Completa** lavorano in un'attività annullabile e conservano i collegamenti finché la nuova
+ricerca non è conclusa e verificata. Se gli ingressi non bastano, possono collegare una parte dei moduli,
+segnalando quanti restano scollegati; **Dimensiona** richiede invece una soluzione per tutti i moduli.
+Numero di MPPT, coppie di connettori fisici e limiti di corrente comuni sono informazioni
+distinte; gli ingressi sullo stesso MPPT condividono la tensione di lavoro. I limiti condizionati al numero
+di stringhe vengono applicati quando presenti nella scheda del modello.
 
 Un modulo non collegato non contribuisce alla produzione. L'ombra influenza la corrente comune della stringa:
-non spegne tutti i moduli che vengono dopo quello in ombra. La stima elettrica usa area ombreggiata e blocchi
-di bypass interessati; non risolve tutte le curve corrente-tensione di celle, diodi e MPPT. Due moduli collegati
-a un ottimizzatore non hanno automaticamente due MPPT indipendenti. Compatibilità SolarEdge e famiglie supportate
-sono verificate, ma rendimento annuale, limiti dinamici degli ottimizzatori e clipping aggregato degli inverter
-restano approssimazioni, descritte in **Come è calcolato > Cosa il modello non comprende**.
+non spegne tutti i moduli che vengono dopo quello in ombra. Il calcolo ricompone curve corrente-tensione
+campionate di gruppi di celle, bypass, stringhe e MPPT. Dove manca lo schema interno del costruttore,
+posizioni delle celle e collegamenti sono ipotesi dichiarate. Non vengono simulati punti caldi, valanga inversa
+o firmware proprietari; i confronti numerici non sostituiscono misure sperimentali.
+
+Due moduli su un ottimizzatore condividono il suo MPPT. Dal menu della stringa, **Moduli su ciascun ottimizzatore**
+permette di distinguere coppie e singoli; i gruppi sono conservati anche dopo rimozioni e inversione della stringa.
+I modelli SolarEdge supportati applicano i limiti orari documentati di ingresso e uscita. Dati assenti e
+architetture non supportate sono segnalati. Ogni inverter ha conversione e limitazione proprie: la capacità
+libera di un'altra unità non compensa il suo taglio di potenza. La relazione e il CSV riportano i risultati
+per inverter; le ipotesi rimangono in **Come è calcolato > Cosa il modello non comprende**.
 
 ## Profili della relazione
 

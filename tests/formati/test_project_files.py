@@ -44,7 +44,7 @@ class Files(unittest.TestCase):
         q, notice = model.Project.load(self.file)
         self.assertIsNone(notice)
         self.assertEqual((q.job_id, q.series_id), ("example-job-id", "example-series-id"))
-        self.assertEqual(json.loads(self.file.read_text(encoding="utf-8"))["version"], 19)
+        self.assertEqual(json.loads(self.file.read_text(encoding="utf-8"))["version"], 20)
 
     def test_a_second_save_keeps_the_first_as_backup(self):
         p = sample()

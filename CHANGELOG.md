@@ -9,6 +9,20 @@ software centres show.
 
 ## [Unreleased]
 
+### Electrical completion, 2026-10-29
+
+- Compute connected strings from sampled cell-cohort I/V curves, bypass sections and shared MPPT operating
+  points; enforce documented optimizer limits and calculate conversion and clipping per physical inverter.
+  Missing topology, inferred cell geometry and unsupported architectures remain explicit modelling limits.
+- Search inverter and string assignments across electrical constraints with a shared budget and cancellation;
+  distinguish an incomplete search from proven infeasibility. Propose and Complete run outside the GUI thread.
+- Edit physical single/dual optimizer groups, preserve them during string edits and save them in project schema 20.
+  Model conditional MPPT limits separately from connector and whole-inverter current ratings.
+- Include inverter DC/AC columns in hourly CSV and the corresponding annual report table. Quote arbitrary inverter
+  names correctly in CSV. Keep selected hardware when applying a proposal that only changes wiring.
+- Share item-view checkbox styling with the Qt template; verify Windows popup geometry and native graphics,
+  and fix isolated installer checks so that deselected associations and shortcuts leave no unwanted entries.
+
 ### Added
 - Shared Qt refinements from the updated template: uniform table selection, protected corners, continuous headers
   and final-row separators; compact phase navigation that skips hidden phases; native checkbox variant A with an

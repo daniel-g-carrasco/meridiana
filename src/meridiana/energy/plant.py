@@ -31,6 +31,8 @@ is task 18d, step 3."""
 from __future__ import annotations
 
 import threading
+import copy
+import itertools
 from collections import defaultdict
 from dataclasses import dataclass, field
 
@@ -116,6 +118,7 @@ class String:
     lost: list = field(default_factory=list)            # module keys of the designer's string no longer laid
     run: int = -1                                       # its place in energy["strings"]["runs"] (by hand)
     plan: object = None                                 # stringing.StringPlan its state comes from
+    optimizer_group_sizes: list = field(default_factory=list)
 
     @property
     def label(self) -> str:
@@ -167,6 +170,10 @@ class Plant:
     p_stc_w: float = 0.0
     lost: list = field(default_factory=list)            # (label, [keys]) of the designer's strings, modules gone
     clipping: dict = field(default_factory=dict)        # unit -> % of the year's energy cut by the inverter (R62)
+    search_complete: bool = True
+    search_reason: str = ""
+    search_nodes: int = 0
+    entries: list | None = None                        # None preserves hardware; a list explicitly replaces it
 
     def string_of(self, sfid: str, key: str) -> int:
         """The index of the string a module is in, -1 when in none."""
@@ -628,7 +635,7 @@ def units_by_number(units: list[Unit], number: int) -> Unit | None:
     return next((u for u in units if u.number == number), None)
 
 
-def _propose(units: list[Unit], groups: list[Group], s: dict, cond: Conditions, out: Plant, busy: dict | None = None,
+def _propose_greedy(units: list[Unit], groups: list[Group], s: dict, cond: Conditions, out: Plant, busy: dict | None = None,
              loaded: dict | None = None, lengths: dict | None = None, owners: dict | None = None) -> None:
     """Meridiana's strings: each group in strings by the strategy, on the inputs its sub-field names or on the free
     ones in order, spread as PVsyst spreads them; what does not fit stays out, said. The groups going to an inverter
@@ -729,6 +736,8 @@ def _propose(units: list[Unit], groups: list[Group], s: dict, cond: Conditions, 
                 place(g, n, [pms], free[k])
         return
     for g, strings, n in automatic:
+        if not strings:
+            continue
         slots = [slot for slot in free if compatible(g, n, slot)
                  and (strategy != "row_per_mppt" or slot not in owners)
                  and _capacity(g.module, units[slot[0] - 1], slot[1] - 1, asked_per) > used[slot]]
@@ -754,6 +763,409 @@ def _propose(units: list[Unit], groups: list[Group], s: dict, cond: Conditions, 
         out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pms in strings for pm in pms]
 
 
+def _assignment_buckets(groups, strategy):
+    """Homogeneous electrical pools, retaining row boundaries and paired U geometry where requested."""
+    buckets = []
+    merged = {}
+    for g in sorted(groups, key=lambda g: (g.sfid, g.key)):
+        if not g.placed:
+            continue
+        signature = _group_signature(g)
+        if strategy == "serpentine":
+            key = (signature, g.target)
+            if key not in merged:
+                merged[key] = len(buckets)
+                buckets.append((g, [], False))
+            buckets[merged[key]][1].extend((g, pm) for pm in _path(g.placed, strategy))
+            continue
+        rows = _rows(g.placed)
+        i = 0
+        while i < len(rows):
+            if strategy == "u" and i + 1 < len(rows):
+                a, b = rows[i], rows[i + 1]
+                columns = min(len(a), len(b))
+                buckets.append((g, [(g, pm) for pm in a[:columns] + b[:columns]], True))
+                for tail in (a[columns:], b[columns:]):
+                    if tail:
+                        buckets.append((g, [(g, pm) for pm in tail], False))
+                i += 2
+            else:
+                buckets.append((g, [(g, pm) for pm in rows[i]], False))
+                i += 1
+    return buckets
+
+
+def _optimizer_group_choices(module, unit, n, cond):
+    """All homogeneous physical occupancies, ordered with the fewest optimizers first."""
+    ch, rules = unit.choice, unit.choice.rules
+    allowed = {per for per in range(1, ch.per + 1)
+               if not any(c.level in ("fail", "warn") for c in optimizers.module_checks(
+                   module, ch.optimizer, per, cond.t_min, unit.fixed))}
+    for count in range(max(rules.opt_min, -(-n // ch.per)), min(n, rules.opt_max) + 1):
+        sizes = ((2,) * (n - count) + (1,) * (2 * count - n)) if ch.per == 2 else (1,) * n
+        if set(sizes) <= allowed:
+            yield sizes
+
+
+def _search_assignment(project, units, groups, settings, cond, out, budget, all_groups=None):
+    """Exhaustive electrical assignment of homogeneous strings, bounded by explicit visited states.
+
+    A plain tracker owns one signature and one series length. Fixed-voltage slots permit several lengths/facings,
+    but each proposed string and optimizer remains homogeneous. Every terminal assignment uses the ordinary checks.
+    Counts, not permutations of identical panels, define the search states; routing is materialized only at a leaf.
+    """
+    all_groups = all_groups or groups
+    strategy = settings.get("strategy") or "serpentine"
+    buckets = _assignment_buckets(groups, strategy)
+    slots = [(u, k) for u in units if u.checkable for k in range(1, u.inputs + 1)]
+    lookup = {f"{g.sfid}/{pm.key}": (g, pm) for g in all_groups for pm in g.placed}
+    initial = list(out.strings)
+    counts = [0] * len(slots)
+    owners = [None] * len(slots)
+    currents = [0.0] * len(units)
+    powers = [0.0] * len(units)
+    for j, (u, k) in enumerate(slots):
+        mine = [s for s in initial if (s.inverter, s.mppt) == (u.number, k)]
+        counts[j] = len(mine)
+        sigs = {(*_group_signature(lookup[s.keys[0]][0]), len(s.modules))
+                for s in mine if s.keys and s.keys[0] in lookup}
+        owners[j] = next(iter(sigs)) if len(sigs) == 1 else ("incompatible",) if mine else None
+        for s in mine:
+            specs = [lookup[key][0].module for key in s.keys if key in lookup]
+            currents[u.number - 1] += max((m.imp for m in specs), default=0)
+            powers[u.number - 1] += sum(m.pmax for m in specs)
+    asked_n = int(settings.get("n_series") or 0)
+    asked_per = list(settings.get("per_mppt") or [])
+    domains = {}
+    physical = {}
+    for i, (g, pairs, paired) in enumerate(buckets):
+        for j, (u, k) in enumerate(slots):
+            if (g.target[0] and g.target[0] != u.number) or (g.target[1] and g.target[1] != k):
+                continue
+            pool = (sum(len(other) for gg, other, _paired in buckets
+                        if _group_signature(gg) == _group_signature(g)
+                        and (not gg.target[0] or gg.target[0] == u.number)
+                        and (not gg.target[1] or gg.target[1] == k)) if strategy == "serpentine" else len(pairs))
+            if u.optimized:
+                ch, rules = u.choice, u.choice.rules
+                lo = max(1, rules.opt_min, rules.mod_min)
+                hi = min(pool, rules.opt_max * ch.per, rules.mod_max or pool)
+                cap = u.fixed.pairs or pool // max(1, lo)
+            else:
+                lo, hi = stringing.series_range(g.module, u.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+                cap = _capacity(g.module, u, k - 1, asked_per)
+            if asked_n:
+                lo, hi = max(lo, asked_n), min(hi, asked_n)
+            if hi < lo or not lo or not cap:
+                continue
+            lengths = tuple(n for n in range(min(hi, pool), lo - 1, -1) if not paired or n % 2 == 0)
+            if u.optimized:
+                for n in lengths:
+                    budget.step()
+                    physical[i, j, n] = tuple(_optimizer_group_choices(g.module, u, n, cond))
+                lengths = tuple(n for n in lengths if physical[i, j, n])
+            if lengths:
+                domains[i, j] = (lengths, cap)
+    remaining = [len(pairs) for _g, pairs, _paired in buckets]
+    chosen = []
+    failed = set()
+    by_signature = defaultdict(list)
+    for i, (g, _pairs, _paired) in enumerate(buckets):
+        by_signature[_group_signature(g)].append(i)
+
+    def tracker_bound():
+        if any(u.optimized for u in units):
+            return True
+        needed = 0
+        for signature, indices in by_signature.items():
+            total = sum(remaining[i] for i in indices)
+            if not total:
+                continue
+            capacity = []
+            for j, (_u, _k) in enumerate(slots):
+                room = max((n * (cap - counts[j]) for i in indices if remaining[i] and (i, j) in domains
+                            for lengths, cap in [domains[i, j]] for n in lengths
+                            if owners[j] is None or owners[j] == (*signature, n)
+                            or strategy == "row_per_mppt" and owners[j] == ("row", i)), default=0)
+                capacity.append(max(0, room))
+            for room in sorted(capacity, reverse=True):
+                if total <= 0:
+                    break
+                total -= room
+                needed += bool(room)
+            if total > 0:
+                return False
+        return needed <= len(slots)
+
+    def materialize():
+        used = [0] * len(buckets)
+        found = list(initial)
+        for i, j, n, q, group_sizes, allocation in chosen:
+            g, pairs, paired = buckets[i]
+            u, k = slots[j]
+            pool = []
+            if not paired:
+                for source, take in allocation:
+                    path = buckets[source][1]
+                    pool.extend(path[used[source]:used[source] + take])
+                    used[source] += take
+            for _part in range(q):
+                at = used[i]
+                if paired:
+                    half, columns = n // 2, len(pairs) // 2
+                    chunk = pairs[at // 2:at // 2 + half] + pairs[columns + at // 2:columns + at // 2 + half][::-1]
+                else:
+                    chunk = pool[_part * n:(_part + 1) * n]
+                if paired:
+                    used[i] += n
+                found.append(String(u.number, k, [(gg.sfid, pm.key, tuple(pm.centre)) for gg, pm in chunk],
+                                    optimizer_group_sizes=list(group_sizes)))
+        trial = Plant(units=units, strings=found)
+        _number_strings(trial)
+        _check(project, all_groups, cond, trial, None)
+        valid = (all(s.state == "ok" for s in trial.strings)
+                 and not any(c.level == "fail" or c.key == "imp_total" and c.level == "warn"
+                             for checks in trial.checks.values() for c in checks))
+        return found if valid else None
+
+    def visit(depth=0):
+        budget.step(depth)
+        if not any(remaining):
+            return materialize()
+        state = (tuple(remaining), tuple(counts), tuple(owners),
+                 tuple((i, j, n, q, sizes) for i, j, n, q, sizes, _allocation in chosen if slots[j][0].optimized))
+        if state in failed:
+            return None
+        if not tracker_bound():
+            failed.add(state)
+            return None
+        # First the pool with least electrical freedom. Never commit the scarce input to a flexible pool first.
+        active = [i for i, n in enumerate(remaining) if n]
+        i = min(active, key=lambda i: (sum((i, j) in domains for j in range(len(slots))), -remaining[i], i))
+        g = buckets[i][0]
+        signature = _group_signature(g)
+        seen_slots = set()
+        for j, (u, k) in enumerate(slots):
+            if (i, j) not in domains:
+                continue
+            lengths, cap = domains[i, j]
+            if strategy == "row_per_mppt" and counts[j] and owners[j] != ("row", i):
+                continue
+            # Equivalent empty trackers on the same unit need only one branch, unless explicitly targeted.
+            equivalent = (u.number, tuple(lengths), cap, counts[j], owners[j],
+                          tuple(u.spec.current_limit(k - 1, q) for q in range(1, cap + 1)),
+                          tuple(domains.get((other, j)) for other in active),
+                          u.spec.connector_current_limit(k - 1), u.spec.connector_isc_limit(k - 1))
+            if not u.optimized and not g.target[1] and equivalent in seen_slots:
+                continue
+            seen_slots.add(equivalent)
+            for n in lengths:
+                owner = ("row", i) if strategy == "row_per_mppt" else (*signature, n)
+                if not u.optimized and owners[j] is not None and owners[j] != owner:
+                    continue
+                sources = ([i] + [other for other in active if other != i and (other, j) in domains
+                                  and _group_signature(buckets[other][0]) == signature
+                                  and n in domains[other, j][0]]) if strategy == "serpentine" else [i]
+                room = min(cap - counts[j], sum(remaining[source] for source in sources) // n)
+                for q in range(room, 0, -1):
+                    budget.step(depth)
+                    if strategy == "row_per_mppt" and q * n != remaining[i]:
+                        continue
+                    current = q * g.module.imp
+                    power = q * n * g.module.pmax
+                    if not u.optimized and u.spec.imax_total and currents[u.number - 1] + current > u.spec.imax_total + 1e-9:
+                        continue
+                    if u.optimized and u.fixed.p_dc_max and powers[u.number - 1] + power > u.fixed.p_dc_max + 1e-9:
+                        continue
+                    old_owner = owners[j]
+                    owners[j] = owner
+                    counts[j] += q
+                    currents[u.number - 1] += current
+                    powers[u.number - 1] += power
+                    result = None
+                    for allocation in allocations(sources, q * n, depth):
+                        for source, take in allocation:
+                            remaining[source] -= take
+                        for sizes in physical.get((i, j, n), ((),)):
+                            budget.step(depth)
+                            chosen.append((i, j, n, q, sizes, allocation))
+                            result = visit(depth + 1)
+                            chosen.pop()
+                            if result is not None:
+                                break
+                        for source, take in allocation:
+                            remaining[source] += take
+                        if result is not None:
+                            break
+                    powers[u.number - 1] -= power
+                    currents[u.number - 1] -= current
+                    counts[j] -= q
+                    owners[j] = old_owner
+                    if result is not None:
+                        return result
+        failed.add(state)
+        return None
+
+    def allocations(sources, total, depth, prefix=()):
+        """All ways to draw a homogeneous string batch from compatible destination pools.
+
+        At least one module comes from the selected pool. Every full solution has such a first string, so
+        this ordering removes permutations without forbidding a partly targeted string.
+        """
+        source = sources[0]
+        rest = sources[1:]
+        low = max(1 if not prefix else 0, total - sum(remaining[k] for k in rest))
+        high = min(remaining[source], total)
+        for take in range(high, low - 1, -1):
+            budget.step(depth + len(prefix))
+            allocation = prefix + ((source, take),)
+            if not rest:
+                if take == total:
+                    yield allocation
+            else:
+                yield from allocations(rest, total - take, depth, allocation)
+
+    try:
+        result = visit()
+    except stringing.SearchStopped:
+        out.search_complete = False
+        out.search_reason = budget.reason
+        result = None
+    out.search_nodes = budget.nodes
+    if result is not None:
+        out.strings = result
+        return True
+    return False
+
+
+def _optimizer_entry_variants(project, groups, cond, budget):
+    """All compatible catalogue optimizer choices per unit; explicit hardware is a fixed constraint."""
+    from .. import catalog
+    entries = system.inverter_entries(project.energy)
+    if not any(optimizers.fixed_voltage(e["record"]) and not e.get("optimizer") for e in entries):
+        yield entries
+        return
+    records = catalog.search("optimizers", manufacturer="SolarEdge", limit=None)
+    alternatives = []
+    entry_indices = []
+    for entry_index, entry in enumerate(entries):
+        fixed = optimizers.fixed_voltage(entry["record"])
+        options = [dict(entry, count=1)]
+        if fixed is not None and not entry.get("optimizer"):
+            options = []
+            preferred = optimizers.suggest(groups[0].module, fixed, cond.t_min) if groups else None
+            for rec in records:
+                opt = optimizers.Optimizer.from_record(rec)
+                rules, _why = optimizers.rules_for(opt, fixed)
+                if rules is None:
+                    continue
+                for per in range(1, opt.per_unit + 1):
+                    budget.step()
+                    if any(not any(c.level == "fail" for c in optimizers.module_checks(
+                            g.module, opt, per, cond.t_min, fixed)) for g in groups):
+                        options.append(dict(entry, count=1, optimizer=rec, per_optimizer=per))
+            options.sort(key=lambda item: (not (preferred and item["optimizer"] == preferred[0]
+                                                and item["per_optimizer"] == preferred[1]),
+                                           item["optimizer"].get("model", ""), item["per_optimizer"]))
+            options = options or [dict(entry, count=1)]
+        alternatives.extend([options] * entry["count"])
+        entry_indices.extend([entry_index] * entry["count"])
+    targeted = any(g.target[0] for g in groups)
+    for indices in itertools.product(*(range(len(options)) for options in alternatives)):
+        budget.step()
+        if not targeted and any(entry_indices[i] == entry_indices[i - 1] and indices[i] < indices[i - 1]
+                                for i in range(1, len(indices))):
+            continue
+        chosen = []
+        for i, option in enumerate(indices):
+            item = alternatives[i][option]
+            if chosen and entry_indices[i] == entry_indices[i - 1] and \
+                    {k: v for k, v in chosen[-1].items() if k != "count"} == \
+                    {k: v for k, v in item.items() if k != "count"}:
+                chosen[-1]["count"] += 1
+            else:
+                chosen.append(dict(item))
+        yield chosen
+
+
+def _propose(units, groups, settings, cond, out, busy=None, loaded=None, lengths=None, owners=None,
+             *, project=None, search=None, all_groups=None, families=True):
+    budget = search if search is not None else stringing.SearchBudget()
+    try:
+        budget.step()
+    except stringing.SearchStopped:
+        out.search_complete, out.search_reason, out.search_nodes = False, budget.reason, budget.nodes
+        out.left = [(g.sfid, pm.key, tuple(pm.centre)) for g in groups for pm in g.placed]
+        out.notes.append(out.search_reason)
+        return
+    if families and project is not None and not out.strings and any(u.optimized for u in units):
+        best = None
+        try:
+            for entries in _optimizer_entry_variants(project, groups, cond, budget):
+                candidate = copy.copy(project)
+                candidate.energy = {**project.energy, "inverters": entries}
+                choices = units_of(candidate, sum(len(g.placed) * g.module.pmax for g in groups),
+                                   groups[0].module if groups else None, cond.t_min)
+                for u, before in zip(choices, units, strict=True):
+                    if u.choice is not None and before.choice is not None and before.choice.suggested:
+                        u.choice.suggested = True
+                trial = Plant(units=choices, entries=entries)
+                _propose(choices, groups, settings, cond, trial, busy, loaded, lengths, owners,
+                         project=candidate, search=budget, all_groups=all_groups, families=False)
+                if best is None or len(trial.left) < len(best.left):
+                    best = trial
+                if not trial.search_complete:
+                    out.search_complete, out.search_reason = False, trial.search_reason
+                    break
+                if not trial.left and all(s.state == "ok" for s in trial.strings):
+                    best = trial
+                    break
+        except stringing.SearchStopped:
+            out.search_complete, out.search_reason = False, budget.reason
+        if best is not None:
+            out.units, out.strings, out.left, out.entries = best.units, best.strings, best.left, best.entries
+        else:
+            out.left = [(g.sfid, pm.key, tuple(pm.centre)) for g in groups for pm in g.placed]
+        out.search_nodes = budget.nodes
+        if out.search_reason:
+            out.notes.append(out.search_reason)
+        return
+    initial = list(out.strings)
+    targets = {(g.sfid, pm.key): g.target for g in groups for pm in g.placed}
+
+    def target_mismatch(run):
+        if run.run >= 0:
+            return False                 # Complete preserves the designer's existing connections.
+        return any((target[0] and target[0] != run.inverter) or (target[1] and target[1] != run.mppt)
+                   for sf, key, _centre in run.modules if (target := targets.get((sf, key))) is not None)
+
+    preview = Plant(units=units, strings=list(initial))
+    _propose_greedy(units, groups, settings, cond, preview, busy, loaded, lengths, owners)
+    if project is not None and not preview.left and preview.strings:
+        _number_strings(preview)
+        _check(project, all_groups or groups, cond, preview, None)
+        if (all(s.state == "ok" and not target_mismatch(s) for s in preview.strings)
+                and not any(c.level == "fail" or c.key == "imp_total" and c.level == "warn"
+                            for checks in preview.checks.values() for c in checks)):
+            try:
+                budget.step()
+            except stringing.SearchStopped:
+                out.search_complete, out.search_reason = False, budget.reason
+            else:
+                out.strings, out.search_nodes = preview.strings, budget.nodes
+                return
+    try:
+        if project is not None and _search_assignment(project, units, groups, settings, cond, out, budget, all_groups):
+            return
+    except stringing.SearchStopped:
+        out.search_complete, out.search_reason, out.search_nodes = False, budget.reason, budget.nodes
+    # Keep the best-effort preview for an infeasible or interrupted request; it never proves a sizing candidate.
+    out.strings = [s for s in preview.strings if not target_mismatch(s)]
+    out.left = preview.left + [ref for s in preview.strings if target_mismatch(s) for ref in s.modules]
+    if out.search_reason:
+        out.notes.append(out.search_reason)
+
+
 def _number_strings(out: Plant) -> None:
     """Each string's place on its input, from 1, in the order of the list."""
     seen: dict = defaultdict(int)
@@ -767,7 +1179,8 @@ def _number_strings(out: Plant) -> None:
 
 
 def build(project, results: dict | None = None, groups: list | None = None, t_cell_max_year: float | None = None,
-          t_min_year: float | None = None, p_dc_hourly=None, check: bool = True, p_dc_connected: bool = False) -> Plant:
+          t_min_year: float | None = None, p_dc_hourly=None, check: bool = True, p_dc_connected: bool = False,
+          *, search=None, p_dc_by_inverter=None) -> Plant:
     """The plant of `project` on its layouts (`results`: sub-field id -> layout.Result) or on the energy job's
     groups (groups_from_arrays): the units, the strings (proposed, or the designer's), the modules in no string, and
     with `check` the checks at the conditions of the year (when given: its hottest cell, its lowest temperature, the
@@ -786,7 +1199,7 @@ def build(project, results: dict | None = None, groups: list | None = None, t_ce
     if not groups:
         return out
     if out.auto:
-        _propose(out.units, groups, s, cond, out)
+        _propose(out.units, groups, s, cond, out, project=project, search=search)
     else:
         _runs(groups, s.get("runs") or [], out)
     _number_strings(out)
@@ -804,7 +1217,7 @@ def build(project, results: dict | None = None, groups: list | None = None, t_ce
     if out.left:
         out.corrections = _corrections(out.units, groups, cond, out.strategy, out.left)
     if check:
-        _check(project, groups, cond, out, p_dc_hourly, p_dc_connected)
+        _check(project, groups, cond, out, p_dc_hourly, p_dc_connected, p_dc_by_inverter)
     return out
 
 
@@ -812,11 +1225,13 @@ def build(project, results: dict | None = None, groups: list | None = None, t_ce
 
 def runs_of(plant: Plant) -> list[dict]:
     """The strings of a plant as the file keeps them."""
-    return [{"inverter": s.inverter, "mppt": s.mppt, "modules": s.keys} for s in plant.strings]
+    return [{"inverter": s.inverter, "mppt": s.mppt, "modules": s.keys,
+             **({"optimizer_group_sizes": list(s.optimizer_group_sizes)} if s.optimizer_group_sizes else {})}
+            for s in plant.strings]
 
 
-def propose(project, results: dict | None = None, groups: list | None = None, strategy: str = "",
-            keep: list[dict] | None = None, t_cell_max_year: float | None = None) -> list[dict]:
+def proposal(project, results: dict | None = None, groups: list | None = None, strategy: str = "",
+             keep: list[dict] | None = None, t_cell_max_year: float | None = None, search=None) -> Plant:
     """Meridiana's strings as the file keeps them, made once when the designer asks («Propose the strings», PVsyst's
     «Auto Attribution»): every module laid in strings by `strategy` (the project's when ""), on the inputs as `build`
     spread them when the proposal was live. With `keep` (the designer's strings, «Complete») those stay as they are,
@@ -825,15 +1240,17 @@ def propose(project, results: dict | None = None, groups: list | None = None, st
     import dataclasses
     if groups is None:
         groups = groups_of(project, results or {})
-    if not groups:
-        return [dict(r) for r in keep or []]
+    all_groups = groups
     e = project.energy or {}
     s = dict(e.get("strings") or {}) if (e.get("strings") or {}).__class__ is dict else {}
     if strategy:
         s["strategy"] = strategy
     cond = conditions(project, t_cell_max_year)
     p_stc = sum(len(g.placed) * g.module.pmax for g in groups)
-    units = units_of(project, p_stc, groups[0].module, cond.t_min)
+    units = units_of(project, p_stc, groups[0].module if groups else None, cond.t_min)
+    if not all_groups:
+        reason = _("No laid modules are available for string assignment.")
+        return Plant(units=units, search_complete=False, search_reason=reason, notes=[reason])
     kept = [dict(r, modules=list(r.get("modules") or [])) for r in keep or [] if r.__class__ is dict]
     taken = {k for r in kept for k in r["modules"]}
     busy: dict = defaultdict(int)
@@ -856,9 +1273,21 @@ def propose(project, results: dict | None = None, groups: list | None = None, st
                   for g in groups]
         groups = [g for g in groups if g.placed]
     out = Plant(units=units, strategy=s.get("strategy") or "serpentine")
+    _runs(all_groups, kept, out)
+    out.left = []
     if groups:
-        _propose(units, groups, s, cond, out, dict(busy), dict(loaded), dict(lengths), owners)
-    return kept + runs_of(out)
+        _propose(units, groups, s, cond, out, dict(busy), dict(loaded), dict(lengths), owners,
+                 project=project, search=search, all_groups=all_groups)
+    _number_strings(out)
+    _by_unit(all_groups, out)
+    _check(project, all_groups, cond, out, None)
+    return out
+
+
+def propose(project, results: dict | None = None, groups: list | None = None, strategy: str = "",
+            keep: list[dict] | None = None, t_cell_max_year: float | None = None) -> list[dict]:
+    """Compatibility wrapper; asynchronous callers use proposal() to retain search diagnostics."""
+    return runs_of(proposal(project, results, groups, strategy, keep, t_cell_max_year))
 
 
 def unit_keys(energy: dict | None) -> list[tuple[int, int]]:
@@ -903,8 +1332,31 @@ def set_run(runs: list[dict], index: int, keys: list[str]) -> tuple[list[dict], 
     """String `index` made of the modules `keys`, in their order (a string drawn again by hand); a module of another
     string is taken from it: the new runs and the indices of the strings that lost one."""
     out = [dict(r, modules=list(r.get("modules") or [])) for r in runs]
+    grouping = None
+    if out[index].get("optimizer_group_sizes"):
+        keys = list(dict.fromkeys(keys))
+        positions = {key: i for i, key in enumerate(keys)}
+        physical = optimizers.module_groups(out[index]["modules"], max(out[index]["optimizer_group_sizes"]),
+                                            out[index]["optimizer_group_sizes"])
+        retained = [[key for key in group if key in positions] for group in physical]
+        for group in retained:
+            if len(group) > 1 and max(positions[k] for k in group) - min(positions[k] for k in group) != len(group) - 1:
+                raise ValueError(_("The new string order separates modules of one physical optimizer. "
+                                   "Keep each optimizer's modules together or edit its groups first."))
+        membership = {key: group for group in retained for key in group}
+        grouping = []
+        at = 0
+        while at < len(keys):
+            size = len(membership.get(keys[at], [keys[at]]))
+            grouping.append(size)
+            at += size
     out[index]["modules"] = []
-    return add_modules(out, index, keys)
+    if "optimizer_group_sizes" in out[index]:
+        out[index]["optimizer_group_sizes"] = []
+    out, robbed = add_modules(out, index, keys)
+    if grouping is not None:
+        out[index]["optimizer_group_sizes"] = grouping
+    return out, robbed
 
 
 def run_label(runs: list[dict], index: int) -> str:
@@ -925,6 +1377,26 @@ def touched(strings: dict | None, runs: list[dict]) -> dict:
     return out
 
 
+def materialize_optimizer_groups(runs: list[dict], state: Plant) -> list[dict]:
+    """Make legacy implicit memberships explicit before a gesture can remove or reorder a module."""
+    out = [dict(r, modules=list(r.get("modules") or [])) for r in runs]
+    for r in out:
+        unit = state.unit(r.get("inverter", 0))
+        if unit is not None and unit.optimized and unit.choice is not None and not r.get("optimizer_group_sizes"):
+            r["optimizer_group_sizes"] = [len(g) for g in optimizers.module_groups(r["modules"], unit.choice.per)]
+    return out
+
+
+def _filter_run_groups(run, keep):
+    """Filter modules while retaining each occupied physical optimizer, never pairing formerly separate ones."""
+    before = run["modules"]
+    sizes = run.get("optimizer_group_sizes")
+    if sizes:
+        groups = optimizers.module_groups(before, max(sizes), sizes)
+        run["optimizer_group_sizes"] = [n for g in groups if (n := sum(k in keep for k in g))]
+    run["modules"] = [k for k in before if k in keep]
+
+
 def add_modules(runs: list[dict], index: int, keys: list[str]) -> tuple[list[dict], list[int]]:
     """The modules `keys` at the end of string `index`, in their order; a module of another string is taken
     from it (said: the indices of the strings that lost one). A module already in string `index` stays where it
@@ -937,10 +1409,12 @@ def add_modules(runs: list[dict], index: int, keys: list[str]) -> tuple[list[dic
             continue
         for i, r in enumerate(out):
             if i != index and key in r["modules"]:
-                r["modules"].remove(key)
+                _filter_run_groups(r, set(r["modules"]) - {key})
                 if i not in robbed:
                     robbed.append(i)
         mine.append(key)
+        if "optimizer_group_sizes" in out[index]:
+            out[index]["optimizer_group_sizes"] = [*out[index]["optimizer_group_sizes"], 1]
     return out, robbed
 
 
@@ -949,7 +1423,7 @@ def remove_module(runs: list[dict], key: str) -> tuple[list[dict], int]:
     out = [dict(r, modules=list(r.get("modules") or [])) for r in runs]
     for i, r in enumerate(out):
         if key in r["modules"]:
-            r["modules"].remove(key)
+            _filter_run_groups(r, set(r["modules"]) - {key})
             return out, i
     return out, -1
 
@@ -962,7 +1436,7 @@ def cut_run(runs: list[dict], key: str, keep: str) -> tuple[list[dict], int]:
         mods = r["modules"]
         if key in mods:
             at = mods.index(key)
-            r["modules"] = mods[at:] if keep == "from" else mods[:at + 1]
+            _filter_run_groups(r, set(mods[at:] if keep == "from" else mods[:at + 1]))
             return out, i
     return out, -1
 
@@ -996,6 +1470,10 @@ def optimizers_of(plant: Plant, arrays: list):
         if u is None or not u.optimized or u.choice is None or not s.modules:
             continue
         ch = u.choice
+        try:
+            physical = optimizers.module_groups(s.modules, ch.per, s.optimizer_group_sizes)
+        except ValueError:
+            continue
         counts: dict = defaultdict(int)
         for sf, k, _c in s.modules:
             key = where.get((sf, k))
@@ -1010,10 +1488,12 @@ def optimizers_of(plant: Plant, arrays: list):
             about[key] = (u.fixed.v_string, ch.optimizer.name, Source("data", label, ch.optimizer.datasheet))
             if ch.per == 1:
                 single[key] += n
-        if ch.per > 1 and len(s.modules) % ch.per:
-            last = where.get(s.modules[-1][:2])
-            if last is not None:
-                single[last] += 1
+        if ch.per > 1:
+            for physical_group in physical:
+                if len(physical_group) == 1:
+                    key = where.get(physical_group[0][:2])
+                    if key is not None:
+                        single[key] += 1
         p_cont = s.plan.continuous_w if isinstance(s.plan, optimizers.OptimizedPlan) else (
             ch.rules.p_cont if ch.rules is not None else 0.0)
         strings.append((dict(counts), p_cont))
@@ -1106,6 +1586,8 @@ def reversed_run(runs: list[dict], index: int) -> list[dict]:
     """String `index` the other way round: its first module becomes its end, where the drag goes on."""
     out = [dict(r, modules=list(r.get("modules") or [])) for r in runs]
     out[index]["modules"].reverse()
+    if out[index].get("optimizer_group_sizes"):
+        out[index]["optimizer_group_sizes"] = list(reversed(out[index]["optimizer_group_sizes"]))
     return out
 
 
@@ -1128,6 +1610,7 @@ def _runs(groups: list[Group], runs: list, out: Plant) -> None:
                 lost.append(key)
         inv, mppt = run.get("inverter", 0), run.get("mppt", 0)
         s = String(inv if inv.__class__ is int else 0, mppt if mppt.__class__ is int else 0, mods, run=i, lost=lost)
+        s.optimizer_group_sizes = list(run.get("optimizer_group_sizes") or [])
         out.strings.append(s)
     out.left += [v for k, v in laid.items() if k not in seen]
 
@@ -1148,7 +1631,8 @@ def _by_unit(groups: list[Group], out: Plant) -> None:
 
 
 def _module_key(m: ModuleSpec) -> tuple:
-    return (m.manufacturer, m.model, m.pmax, m.voc, m.isc, m.vmp)
+    return (m.manufacturer, m.model, m.pmax, m.voc, m.isc, m.vmp, m.imp,
+            m.beta_voc, m.max_system_voltage, m.max_series_fuse)
 
 
 _PLANS: dict = {}               # the checks of an input, kept by what they are made of (task 16d, step 7)
@@ -1163,6 +1647,8 @@ def _plan(module: ModuleSpec, unit: Unit, k: int, n: int, strings: int, cond: Co
     key = ((_module_key(module), module.beta_voc, module.max_series_fuse, module.max_system_voltage, module.imp),
            (spec.manufacturer, spec.model, spec.vdc_max, spec.vmppt_min, spec.vmppt_max, unit.inputs,
             tuple(spec.inputs_per_mppt or []),
+            tuple(tuple(sorted(rule.items())) if isinstance(rule, dict) else () for rule in spec.imax_by_strings or []),
+            tuple(spec.imax_per_input or []), tuple(spec.iscmax_per_input or []),
             tuple(spec.imax_per_mppt or ()), tuple(spec.iscmax_per_mppt or ())),
            k, n, strings, cond.t_min, cond.t_cell_max, cond.t_cell_cold, cond.cell_source.label,
            cond.t_min_source.label)
@@ -1181,7 +1667,8 @@ def _plan(module: ModuleSpec, unit: Unit, k: int, n: int, strings: int, cond: Co
     return out
 
 
-def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hourly, p_dc_connected: bool = False) -> None:
+def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hourly, p_dc_connected: bool = False,
+           p_dc_by_inverter=None) -> None:
     modules = {g.sfid: g.module for g in groups}
     plans: dict = {}
     for u in out.units:
@@ -1198,6 +1685,7 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
     for u in out.units:
         if u.optimized:
             _check_optimized(u, out, modules, cond, groups)
+    orientations = {(g.sfid, pm.key): _orientation(pm) for g in groups for pm in g.placed}
     for (unit_no, k), slot in out.inputs.items():
         unit = out.unit(unit_no)
         if unit.optimized:
@@ -1217,8 +1705,6 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
                 x.state, x.why = "check", _("to be checked: the inverter has no MPPT window (choose one from the "
                                             "catalogue)")
             continue
-        orientations = {(g.sfid, pm.key): _orientation(pm)
-                        for g in groups for pm in g.placed}
         facings = [tuple(sorted({orientations[(sf, key)] for sf, key, _c in x.modules})) for x in mine if x.modules]
         orientation_ok = bool(facings) and all(len(f) == 1 and f == facings[0] for f in facings)
         module_types = {_module_key(modules[sf]) for x in mine for sf, _key, _c in x.modules}
@@ -1276,7 +1762,12 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
                                           _("{dc} kWp on {ac} kW: {r}").format(dc=f"{dc / 1000:.2f}",
                                                                               ac=f"{u.spec.pac / 1000:.1f}",
                                                                               r=f"{dc / u.spec.pac:.2f}"), "info"))
-            if p_dc_hourly is not None and total > 0 and out.p_stc_w > 0:
+            if p_dc_by_inverter is not None and u.number in p_dc_by_inverter:
+                import numpy as np
+                loss = stringing.overload_loss(np.asarray(p_dc_by_inverter[u.number], dtype=float), u.spec.pac, u.spec.eta)
+                out.clipping[u.number] = loss
+                checks.append(stringing.overload_check(name, loss))
+            elif p_dc_by_inverter is None and p_dc_hourly is not None and total > 0 and out.p_stc_w > 0:
                 import numpy as np
                 share = dc / (total if p_dc_connected else out.p_stc_w)
                 loss = stringing.overload_loss(np.asarray(p_dc_hourly, dtype=float) * share, u.spec.pac, u.spec.eta)
@@ -1324,18 +1815,25 @@ def _check_optimized(unit: Unit, out: Plant, modules: dict, cond: Conditions, gr
                 worst = "fail"
                 continue
             m = modules[x.modules[0][0]]
-            p = optimizers.string_plan(m, ch.optimizer, ch.per, unit.fixed, ch.rules, len(x.modules), len(mine),
-                                       spread, cond.t_min, cond.t_min_source, _string_power(x, modules))
+            try:
+                pairs = optimizers.module_groups(x.modules, ch.per, x.optimizer_group_sizes)
+                p = optimizers.string_plan(m, ch.optimizer, ch.per, unit.fixed, ch.rules, len(x.modules), len(mine),
+                                           spread, cond.t_min, cond.t_min_source, _string_power(x, modules),
+                                           group_sizes=x.optimizer_group_sizes)
+            except ValueError as error:
+                x.state, x.why = "fail", _("Invalid optimizer grouping: {why}").format(why=str(error))
+                worst = "fail"
+                continue
             if len({orientations[(sf, key)] for sf, key, _c in x.modules}) > 1:
                 p.checks.append(stringing.Check(
                     "opt_orientations", _("Different orientations or tilts in the same string"), True,
                     _("SolarEdge allows a string across several roof planes, but it can lose additional energy. "
-                      "This model does not calculate the optimizers' voltage limits hour by hour."), "warn",
+                      "The hourly model applies documented optimizer voltage and current limits; proprietary "
+                      "control dynamics are not simulated."), "warn",
                     f"{optimizers.SINGLE}, p. 1"))
-            pairs = [x.modules[j:j + ch.per] for j in range(0, len(x.modules), ch.per)]
             # A manual string may use several module types on separate optimizers. Check all types, not just
             # the first one; a mixed pair is rejected below because its shared input needs identical modules.
-            checked = {(_module_key(m), ch.per)}
+            checked = set()
             for pair in pairs:
                 for sf, _key, _c in pair:
                     spec = modules[sf]
@@ -1392,8 +1890,15 @@ def _optimized_unit_checks(unit: Unit, out: Plant, modules: dict, dc_w: float) -
         slot = out.inputs[(unit.number, k)]
         mine = [out.strings[i] for i in slot.strings if out.strings[i].modules]
         where = name if unit.inputs == 1 else _("{name}, Synergy unit {k}").format(name=name, k=k)
-        counts = [optimizers.optimizer_count(len(x.modules), ch.per) for x in mine]
+        valid = []
+        counts = []
+        for x in mine:
+            try:
+                counts.append(len(optimizers.module_groups(x.modules, ch.per, x.optimizer_group_sizes)))
+            except ValueError:
+                continue
+            valid.append(x)
         found += optimizers.unit_checks(where, unit.fixed, ch.optimizer, ch.per,
-                                        [_string_power(x, modules) for x in mine], counts, 0.0, ch.rules)
+                                        [_string_power(x, modules) for x in valid], counts, 0.0, ch.rules)
     found += optimizers.unit_checks(name, unit.fixed, ch.optimizer, ch.per, [], [], dc_w, ch.rules)
     return found

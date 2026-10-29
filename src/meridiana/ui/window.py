@@ -516,7 +516,11 @@ class MainWindow(QMainWindow):
         self.sizing_job = None
         self.sizing_progress = waiting.Progress()
         self.sizing_progress.cancelled.connect(self._cancel_sizing)
-        for progress in (self.pvgis_progress, self.report_progress, self.ifc_progress, self.sizing_progress):
+        self.string_proposal_job = None
+        self.string_proposal_progress = waiting.Progress()
+        self.string_proposal_progress.cancelled.connect(self._cancel_string_proposal)
+        for progress in (self.pvgis_progress, self.report_progress, self.ifc_progress, self.sizing_progress,
+                         self.string_proposal_progress):
             self.statusBar().addPermanentWidget(progress)
         self.energy_job: EnergyJob | None = None
         self.climate_job: ClimateJob | None = None
@@ -3953,7 +3957,7 @@ class MainWindow(QMainWindow):
             log.complain('inverter sizing', result)
             self.tell(_("Inverter search failed: {why}").format(why=str(result)))
             return
-        if not result.ok:
+        if not result.ok or not result.search_complete:
             self.tell(result.reason)
             return
 
@@ -3984,7 +3988,7 @@ class MainWindow(QMainWindow):
         that the checks and the plan come with the change and not a moment later; in a thread while pvlib is not
         loaded whole (the voltages at the cells' temperatures load it: a second and a half, which the window waited
         for at every project opened when no inverter seemed «to check», R120)."""
-        if _pvlib_loaded():
+        if _pvlib_loaded() and not ((self.project.energy or {}).get("strings") or {}).get("auto", False):
             self.plant_timer.stop()
             self._start_plant(now=True)
         else:
@@ -4005,7 +4009,7 @@ class MainWindow(QMainWindow):
         return self.plant_timer.isActive() or self.plant_returned != self.plant_generation
 
     def _plant_done(self, generation: int, out) -> None:
-        if generation != self.plant_generation:
+        if generation != self.plant_generation or self.plant_timer.isActive():
             return                                  # a newer change is on its way
         self.plant_returned = generation
         if isinstance(out, Exception):
@@ -4106,12 +4110,15 @@ class MainWindow(QMainWindow):
     def _runs(self) -> list[dict]:
         """The designer's strings as the file keeps them (energy["strings"]["runs"])."""
         s = (self.project.energy or {}).get("strings") or {}
-        return [dict(r, modules=list(r.get("modules") or [])) for r in s.get("runs") or [] if r.__class__ is dict]
+        runs = [dict(r, modules=list(r.get("modules") or [])) for r in s.get("runs") or [] if r.__class__ is dict]
+        return plant_model.materialize_optimizer_groups(runs, self.plant_state) if self.plant_state is not None else runs
 
-    def _strings_put(self, text: str, runs: list[dict], extra: dict | None = None) -> None:
+    def _strings_put(self, text: str, runs: list[dict], extra: dict | None = None, entries: list | None = None) -> None:
         """The strings `runs` as one undoable step (the empty ones left out), with `extra` keys of energy["strings"]
         (the strategy of a proposal)."""
         def put(p):
+            if entries is not None:
+                p.energy["inverters"] = entries
             s = dict(p.energy.get("strings") or {})
             s.update(extra or {})
             p.energy["strings"] = plant_model.touched(s, runs)
@@ -4127,9 +4134,14 @@ class MainWindow(QMainWindow):
         """A project of before format 14 (or a PVsyst import) had Meridiana's proposal for strings: written down as
         the designer's, as it is on the plan, without an undo step and without asking to save (session.amend), so that
         nothing changes under him and from now on nothing changes them by itself."""
+        if not plant.search_complete:
+            self.tell(plant.search_reason)
+            return
         runs = plant_model.runs_of(plant)
 
         def put(p):
+            if getattr(plant, "entries", None) is not None:
+                p.energy["inverters"] = plant.entries
             p.energy["strings"] = plant_model.touched(p.energy.get("strings"), runs)
         self.session.amend(put)
         if runs:
@@ -4153,25 +4165,75 @@ class MainWindow(QMainWindow):
         if self.stringing_action.isChecked() != drawing:
             self.stringing_action.setChecked(drawing)
 
-    def _proposal(self, strategy: str = "", keep: list | None = None) -> list | None:
-        """Meridiana's strings for the layouts of now (plant.propose); None, said, when there is nothing to propose
-        on. The first proposal loads the module's model (most of a second): the pointer waits."""
+    def _start_string_proposal(self, strategy: str = "", keep: list | None = None) -> None:
+        """Search outside the GUI, keeping the current wiring until a verified proposal is returned."""
+        if self.string_proposal_job is not None:
+            return
+        if not self._layouts_settled():
+            self.tell(_("Wait for the current module layout before proposing strings."))
+            return
         good = self.session.good_results()
         if not good:
             self.tell(_("Lay the modules first: the strings are proposed on the modules laid."))
-            return None
-        from PySide6.QtGui import QCursor
+            return
+        from .sizing_job import StringProposalJob
         year = self._year_conditions()
-        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
-        try:
-            return plant_model.propose(self.project, good, strategy=strategy, keep=keep,
-                                       t_cell_max_year=year[0] if year else None)
-        except Exception as error:      # noqa: BLE001  a proposal that fails is said, the strings stay as they are
-            log.complain("propose strings", error)
-            self.tell(_("Meridiana could not propose the strings: {error}").format(error=error))
-            return None
-        finally:
-            QApplication.restoreOverrideCursor()
+        job = StringProposalJob(self.snapshot(), good, strategy, keep, year[0] if year else None,
+                                self._state_key(), self.session.layout_keys)
+        job.signals.done.connect(self._string_proposal_done)
+        self.string_proposal_job = job
+        self.string_proposal_progress.begin(_("Assigning strings to the available inputs…"))
+        self.string_proposal_progress.unknown()
+        self.pool.start(job)
+
+    def _cancel_string_proposal(self) -> None:
+        if self.string_proposal_job is not None:
+            self.string_proposal_job.interrupt()
+            self.string_proposal_job = None
+            self.tell(_("String search cancelled; the existing strings have been kept."))
+        self.string_proposal_progress.end()
+
+    def _string_proposal_done(self, outcome) -> None:
+        job, result = outcome
+        if self.string_proposal_job is not job:
+            return
+        self.string_proposal_job = None
+        self.string_proposal_progress.end()
+        if job.interrupted:
+            return
+        if job.state != self._state_key() or job.layout_keys != self.session.layout_keys or not self._layouts_settled():
+            self.tell(_("The project changed during string search. No old proposal was applied."))
+            return
+        if isinstance(result, Exception):
+            log.complain("string proposal", result)
+            self.tell(_("Meridiana could not propose the strings: {error}").format(error=result))
+            return
+        failed = [s.why for s in result.strings if s.state != "ok"]
+        failed += [c.detail for checks in result.checks.values() for c in checks
+                   if c.level == "fail" or c.key == "imp_total" and c.level == "warn"]
+        if not result.search_complete or failed:
+            self.tell(_("No complete string proposal was applied: {why}").format(
+                why=result.search_reason or (failed[0] if failed else result.notes[0] if result.notes else
+                    _("the selected inverters cannot accommodate all modules under these constraints"))))
+            return
+        proposal = plant_model.runs_of(result)
+        if job.keep is not None and len(proposal) <= len(job.keep):
+            self.tell(_("No new strings were needed; the existing strings have been kept."))
+            return
+        if not proposal:
+            self.tell(_("No string was found for the current modules and inverter inputs."))
+            return
+        self.chosen_string = -1
+        name = plant_model.strategy_names().get(job.strategy, job.strategy)
+        title = _("Complete the strings") if job.keep is not None else _("Propose the strings: {strategy}").format(
+            strategy=name.lower())
+        self._strings_put(title, proposal, {"strategy": job.strategy} if job.strategy else None,
+                          entries=getattr(result, "entries", None))
+        if result.left:
+            self.tell(_("Connected {n} strings; {m} modules remain unconnected. Review the selected inverters and "
+                        "inputs. Undo restores the previous wiring.").format(n=len(proposal), m=len(result.left)))
+        else:
+            self.tell(_("String assignment completed: {n} strings. Undo restores the previous wiring.").format(n=len(proposal)))
 
     def _strings_propose(self, strategy: str = "") -> None:
         """«Propose the strings» (R114): Meridiana's strings in place of those there are, once, with `strategy` (the
@@ -4192,40 +4254,14 @@ class MainWindow(QMainWindow):
             if answer != QMessageBox.StandardButton.Yes:
                 self._show_string_commands()
                 return
-        proposal = self._proposal(strategy)
-        if proposal is None:
-            self._show_string_commands()
-            return
-        if not proposal:
-            notes = self.plant_state.notes if self.plant_state is not None else []
-            self.tell(_("Meridiana finds no string to propose: {why}").format(
-                why=notes[0] if notes else _("the inverter does not take these modules in series")))
-            self._show_string_commands()
-            return
-        self.chosen_string = -1
-        self._strings_put(_("Propose the strings: {strategy}").format(strategy=name.lower()), proposal,
-                          {"strategy": strategy})
-        self.tell(ngettext("{n} string proposed by Meridiana ({strategy}): yours now, nothing changes it by itself.",
-                           "{n} strings proposed by Meridiana ({strategy}): yours now, nothing changes them by itself.",
-                           len(proposal)).format(n=len(proposal), strategy=name.lower()))
+        self._start_string_proposal(strategy)
 
     def _strings_complete(self) -> None:
         """«Complete the strings»: Meridiana's strings for the modules in no string only, on the inputs without strings
         first, then on those that take more; the designer's strings stay as they are (one undo step)."""
         self._end_draft()
         runs = self._runs()
-        proposal = self._proposal(keep=runs)
-        if proposal is None:
-            return
-        added = len(proposal) - len(runs)
-        if added <= 0:
-            self.tell(_("No string to add: the modules in no string are too few for a string, or the inputs take no "
-                        "more. Draw one by hand, or add an inverter."))
-            return
-        self._strings_put(_("Complete the strings"), proposal)
-        self.tell(ngettext("{n} string added for the modules that were in none; yours stayed as they were.",
-                           "{n} strings added for the modules that were in none; yours stayed as they were.",
-                           added).format(n=added))
+        self._start_string_proposal(keep=runs)
 
     def _strings_clear(self) -> None:
         """«Delete all the strings»: asked first, one undo step; the modules stay laid, in no string."""
@@ -4530,6 +4566,9 @@ class MainWindow(QMainWindow):
         menu.addAction(_("Draw string {name} again (double click)").format(name=name),
                        lambda: self._redraw_string(index))
         plant = self.plant_state
+        unit = plant.unit(runs[index].get("inverter", 0)) if plant is not None else None
+        if unit is not None and unit.choice is not None:
+            menu.addAction(_("Modules on each optimizer…"), lambda: self._optimizer_groups(index))
         move = menu.addMenu(_("Move string {name} to").format(name=name))
         for (unit, mppt) in sorted(plant.inputs) if plant is not None else []:
             u = plant.unit(unit)
@@ -4538,6 +4577,21 @@ class MainWindow(QMainWindow):
             a.setEnabled((runs[index].get("inverter"), runs[index].get("mppt")) != (unit, mppt))
         menu.addSeparator()
         menu.addAction(_("Delete string {name} (Del)").format(name=name), lambda: self._delete_string(index))
+
+    def _optimizer_groups(self, index: int) -> None:
+        """Edit physical optimizer groups in one undoable operation."""
+        from .optimizer_groups import OptimizerGroupsDialog
+        runs = self._runs()
+        if not 0 <= index < len(runs) or self.plant_state is None:
+            return
+        unit = self.plant_state.unit(runs[index].get("inverter", 0))
+        if unit is None or unit.choice is None:
+            return
+        dialog = OptimizerGroupsDialog(runs[index]["modules"], unit.choice.per,
+                                       runs[index].get("optimizer_group_sizes"), self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            runs[index]["optimizer_group_sizes"] = dialog.group_sizes()
+            self._runs_changed(runs, index, _("Change modules on each optimizer"))
 
     def _string_list_menu(self, index: int, where) -> None:
         """The right button on a string of the list: brought into view, then its menu."""
@@ -5283,6 +5337,7 @@ class MainWindow(QMainWindow):
                 run[0].close()
             self._cancel_ifc()
             self._cancel_sizing()
+            self._cancel_string_proposal()
             self._drop_autosave()
             self._save_config()
             self._save_window()

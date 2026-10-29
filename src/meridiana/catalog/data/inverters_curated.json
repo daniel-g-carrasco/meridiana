@@ -307,7 +307,18 @@
       "EU",
       "IT"
     ],
-    "notes": "inclusa al posto della SUN2000-20KTL-M2, assente dagli elenchi prodotti Huawei IT ed EU (ottobre 2026);dc_power_max_w = «Recommended max. PV power» (raccomandata); full-load MPPT 480–800 V; corrente max per MPPT 30 A con due stringhe, 20 A con stringa singola; strings_per_mppt da «30 A (two strings)» per MPPT e «Max. number of inputs 4»; Isc 40 A stampata senza «per MPPT»; corrente AC max 31,9 A a 400 V (33,6 A a 380 V, 30,8 A a 415 V); batteria: 2 terminali Smart String ESS, carica max 21 kW (una stringa) / 25 kW (due stringhe), scarica max 22,0 kW, corrente max 26,25 A per stringa; batterie LUNA2000-5/10/15-S0, LUNA2000-7/14/21-S1; backup non indicato nella scheda; CEI 0-21:2020-12 V1 e «CEI-016» citate; AFCI di serie («Arc fault protection: Yes»); fino a 3 unità in parallelo (con Smart String ESS); ottimizzatori SUN2000-450W-P2/600W-P, MERC-1100W-P/1300W-P; scheda collegata alla pagina supporto del sito IT"
+    "notes": "inclusa al posto della SUN2000-20KTL-M2, assente dagli elenchi prodotti Huawei IT ed EU (ottobre 2026);dc_power_max_w = «Recommended max. PV power» (raccomandata); full-load MPPT 480–800 V; corrente max per MPPT 30 A con due stringhe, 20 A con stringa singola; strings_per_mppt da «30 A (two strings)» per MPPT e «Max. number of inputs 4»; Isc 40 A stampata senza «per MPPT»; corrente AC max 31,9 A a 400 V (33,6 A a 380 V, 30,8 A a 415 V); batteria: 2 terminali Smart String ESS, carica max 21 kW (una stringa) / 25 kW (due stringhe), scarica max 22,0 kW, corrente max 26,25 A per stringa; batterie LUNA2000-5/10/15-S0, LUNA2000-7/14/21-S1; backup non indicato nella scheda; CEI 0-21:2020-12 V1 e «CEI-016» citate; AFCI di serie («Arc fault protection: Yes»); fino a 3 unità in parallelo (con Smart String ESS); ottimizzatori SUN2000-450W-P2/600W-P, MERC-1100W-P/1300W-P; scheda collegata alla pagina supporto del sito IT",
+    "dc_current_max_per_mppt_by_strings_a": [
+      {
+        "1": 20,
+        "2": 30
+      },
+      {
+        "1": 20,
+        "2": 30
+      }
+    ],
+    "dc_input_limits_source": "Huawei SUN2000-12/15/17/20/25K-MB0, 01-202504, p. 2"
   },
   {
     "manufacturer": "Huawei",

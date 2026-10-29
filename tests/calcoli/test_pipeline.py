@@ -73,7 +73,7 @@ class Pipeline(unittest.TestCase):
         p.energy["strings"] = {"auto": True}        # Meridiana's proposal, as a project of before format 14 had it
         results, _keys, _laid = jobs.layout_of(p)
         with mock.patch.object(pipeline, "simulate", wraps=pipeline.simulate) as sim, \
-                mock.patch.object(pipeline, "with_strings", wraps=pipeline.with_strings) as again:
+                mock.patch.object(pipeline, "with_network", wraps=pipeline.with_network) as again:
             out = pipeline.compute(p, results, self.cache, fetch=False)
         strings = out.plant.strings
         self.assertTrue(out.plant.auto)                          # proposed by Meridiana
@@ -86,9 +86,9 @@ class Pipeline(unittest.TestCase):
         # connected-generation pass; unassigned modules contribute zero
         self.assertEqual(sim.call_count, 2)
         self.assertEqual(again.call_count, 1)
-        self.assertEqual(set(again.call_args[0][1]), {"s1.0"})
+        self.assertTrue(again.call_args[0][1].strings)
         self.assertIs(again.call_args[0][0].parts, out.sim.parts)       # the year with the strings, from the first pass
-        self.assertIsNotNone(out.sim.record.find("s1.0.electrical"))
+        self.assertIsNotNone(out.sim.record.find("electrical_network"))
 
     def test_without_the_weather_the_consumption_is_there_and_the_rest_says_why(self):
         p = project()

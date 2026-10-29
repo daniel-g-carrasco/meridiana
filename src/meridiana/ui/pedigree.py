@@ -56,23 +56,24 @@ def limits() -> list[str]:
           "plants with an MV connection)."),
         _("Cables: shares at STC and at the nominal AC power, not lengths, sections and resistivity; no check of the "
           "voltage drop here."),
-        _("Inverters: one efficiency curve for the whole system, clipped at the nominal AC power of the connected inverters "
-          "together; no clipping per MPPT input or per inverter, no start thresholds, no efficiency profile of the "
-          "OND file."),
+        _("Inverters: each connected unit is calculated separately with its nominal power, efficiency and input "
+          "constraints. The conversion curve is PVWatts calibrated to the catalogued efficiency, not the full "
+          "OND efficiency map; firmware, start-up hysteresis and dynamic MPPT tracking are not simulated."),
         _("Trackers: none, the modules are fixed."),
         _("Weather: the PVGIS typical year only; no Meteonorm, no measured years, no weather file of PVsyst."),
         _("Irradiance-level loss is an estimate based on one-diode parameters fitted to a few datasheet points, "
           "unless parameters are available in the module's PVsyst file."),
-        _("Electrical shading uses the Martinez-Moreno estimate from shaded area and affected bypass blocks. "
-          "It does not solve cell, bypass-diode, string or MPPT current-voltage curves. Shade affects the common "
-          "current of a series string; it does not switch off the modules that follow the shaded module. "
-          "Agreement with a reference implementation is not validation against measurements."),
+        _("Electrical shading reconstructs sampled current-voltage curves of differently illuminated cell groups, "
+          "bypass sections, series strings and parallel MPPT inputs. Cell positions and internal connections are "
+          "inferred when the manufacturer does not provide them. Bypass voltage drop and shade discretisation "
+          "are modelling assumptions; reverse breakdown and hot spots are not simulated. A shaded module affects "
+          "the common string current, not only the modules after it. Numerical reference tests are not field measurements."),
         _("Bypass layout comes from the module file when available; otherwise three bypass diodes and the cell "
           "layout inferred from the cell count are assumptions to verify against the manufacturer's diagram."),
-        _("Optimizers: string and module compatibility checks use the supported SolarEdge tables; annual energy "
-          "uses a fixed conversion efficiency. Hourly input-current clipping, output-voltage limits and minimum "
-          "unshaded optimizer count are not simulated. Two modules on one optimizer do not have two independent "
-          "MPPTs. Other optimizer architectures and optional branch-cable wiring are not modeled."),
+        _("Optimizers: supported SolarEdge systems use the actual module groups, input operating window, "
+          "current and output-voltage limits hour by hour when these are documented. Conversion efficiency "
+          "remains fixed. Two modules on one optimizer share its MPPT. Missing limits are reported; other "
+          "optimizer architectures, optional branch cables and proprietary firmware are not inferred."),
     ]
 
 

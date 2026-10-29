@@ -663,7 +663,8 @@ class PlantInspector(QScrollArea):
             if (rec.get("modules_per_unit") or 1) >= 2:
                 per.addItem(_("two modules each"), 2)
             per.setCurrentIndex(max(0, per.findData(e.get("per_optimizer") or 1)))
-            per.setToolTip(_("Modules on each optimizer: two in series where the optimizer takes them"))
+            per.setToolTip(_("Maximum modules on each optimizer. Its model determines series or parallel wiring; "
+                              "edit individual groups from the string menu."))
             per.activated.connect(lambda _x, k=i, w=per: self.perChosen.emit(k, int(w.currentData()))
                                   if not self.loading else None)
             per.setEnabled(per.count() > 1)
@@ -862,6 +863,12 @@ class StringList(QTreeWidget):
                         if not u.optimized:
                             parallel += "\n" + (_("{n} physical inputs share this MPPT").format(n=int(physical))
                                                  if physical is not None else _("Physical input count not specified"))
+                            rules = u.spec.imax_by_strings
+                            if rules and k <= len(rules) and isinstance(rules[k - 1], dict):
+                                limits = [_("{n} strings: {a} A").format(n=n, a=number(a, 1))
+                                          for n, a in rules[k - 1].items()]
+                                if limits:
+                                    parallel += "\n" + "; ".join(limits)
                         state = (_("empty") if not mine else
                                  {"ok": _("correct"), "warn": _("to be checked"), "fail": _("out of limit")}[slot.level])
                         count = ngettext("{n} string", "{n} strings", len(mine)).format(n=len(mine))

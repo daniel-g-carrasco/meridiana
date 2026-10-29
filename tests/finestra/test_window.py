@@ -1202,7 +1202,26 @@ class EnergyPages(Journeys):
         self.assertTrue(wait_until(self.app, lambda: bool(self.win.energy), 60), "the energy job did not come back")
         return self.win.energy
 
+    def connect_production_fixture(self):
+        from meridiana.energy import plant
+        good = self.win.session.good_results()
+
+        def connect(project):
+            rec = inverter_record(mppt_count=4, dc_current_max_per_mppt_a=[60] * 4,
+                                  dc_isc_max_per_mppt_a=[100] * 4, strings_per_mppt=[2] * 4)
+            project.energy["inverters"] = [{"record": rec, "count": 1, "name": ""}]
+            proposed = plant.proposal(project, good)
+            self.assertTrue(proposed.search_complete)
+            self.assertFalse(proposed.left)
+            self.assertTrue(all(s.state == "ok" for s in proposed.strings))
+            project.energy["strings"] = plant.touched(project.energy.get("strings"), plant.runs_of(proposed))
+
+        self.win.edit("Connect production fixture", connect)
+        self.assertEqual(sum(len(r["modules"]) for r in self.win.project.energy["strings"]["runs"]),
+                         sum(r.count for r in good.values()))
+
     def production_consumption_and_economics_from_the_cache(self):
+        self.connect_production_fixture()
         e = self.compute()
         self.assertIsNone(e.get("error_sim"), e.get("error_sim"))
         self.assertGreater(e["sim"].energy_kwh, 1000)
@@ -1216,10 +1235,13 @@ class EnergyPages(Journeys):
             self.app.processEvents()
 
     def without_bills_the_consumption_follows_the_context(self):
+        from meridiana.energy.consumption import YIELD_GUESS
         e = self.compute()
         sim, load = e["sim"], e["load"]
         self.assertGreater(sim.p_stc_kw, 20.0)                       # a roof of 40 x 20 m: a business
-        self.assertAlmostEqual(load.annual_kwh, round(sim.energy_kwh, -2), places=3)
+        self.assertEqual(e["plant"].strings, [])
+        self.assertEqual(sim.energy_kwh, 0.0)                       # the laid modules are not connected
+        self.assertAlmostEqual(load.annual_kwh, round(sim.p_stc_kw * YIELD_GUESS, -2), places=3)
         page = self.win.consumption_page
         self.assertIn(page.profile.itemText(0).split(": ")[-1], page.profile.currentText())
         self.assertTrue(page.guess_note.isVisibleTo(page.side))     # the form stands in the right column
@@ -1306,6 +1328,7 @@ class EnergyPages(Journeys):
     def variants_keep_their_own_design_and_are_compared(self):
         from PySide6.QtGui import QGuiApplication
         from PySide6.QtWidgets import QInputDialog
+        self.connect_production_fixture()
         self.compute()
         base = self.win.project.variant
         with mock.patch.object(QInputDialog, "getText", return_value=("Inclinati 30°", True)):
@@ -1354,11 +1377,13 @@ class EnergyPages(Journeys):
         from meridiana import catalog
         e = self.compute()
         self.assertIn("error", e["strings"])                     # sized by itself: no window to check against
-        rec = next(r for r in catalog.search("inverters", "SCA100K-T-US-480"))
+        rec = next(r for r in catalog.search("inverters", "SUN2000-100KTL-M2"))
         self.win._add_inverter(rec, "Add")
         e = self.compute()
         self.assertEqual(e["plant"].strings, [])                 # an inverter added makes no string (R118)
         self.win.strategy_actions["serpentine"].trigger()           # «Propose the strings»
+        self.assertTrue(wait_until(self.app, lambda: self.win.string_proposal_job is None
+                                   and bool(self.win.project.energy.get("strings", {}).get("runs")), 60))
         e = self.compute()
         plant = e["plant"]
         self.assertFalse(plant.auto)
@@ -1458,6 +1483,11 @@ class PlantPhase(PlantWindow):
     """The Plant phase of task 16d, step 3: between Model and Production, the plan lent with the strings shown, the
     inverters in the right panel; Production keeps a reference to it."""
 
+    def wait_for_sizing(self):
+        self.assertIsNotNone(self.win.sizing_job)
+        self.assertTrue(wait_until(self.app, lambda: self.win.sizing_job is None, 60),
+                        "the inverter sizing job did not come back")
+
     def the_plant_is_the_second_phase_reached_with_ctrl_tab_and_lends_the_plan(self):
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
@@ -1508,7 +1538,8 @@ class PlantPhase(PlantWindow):
         self.assertEqual(self.win.project.energy["inverters"][0]["count"], 1)
 
     def a_sub_field_sent_to_an_inverters_input_and_sized_by_itself(self):
-        rec = inverter_record(ac_power_nominal_w=10000)
+        rec = inverter_record(ac_power_nominal_w=10000, dc_current_max_per_mppt_a=[60, 60],
+                              dc_isc_max_per_mppt_a=[100, 100])
         self.choose(rec)
         self.win.show_phase("plant")
         self.win._select("subfield", self.sid)
@@ -1516,14 +1547,18 @@ class PlantPhase(PlantWindow):
         self.win._assign_subfield(self.sid, 1, 2)
         self.assertEqual((self.win.project.subfields[0].params["inverter"], self.win.project.subfields[0].params["mppt"]),
                          (1, 2))
+        self.assertTrue(wait_until(self.app, self.win._layouts_settled))
         self.win.strategy_actions["serpentine"].trigger()                 # «Propose»: there, as the sub-field says
+        self.assertIsNotNone(self.win.string_proposal_job)
         plant = self.plant(lambda p: bool(p.strings))
         self.assertEqual({(s.inverter, s.mppt) for s in plant.strings}, {(1, 2)})
         self.win._assign_subfield(self.sid, 0, 0)                        # otherwise only input 2 may be used
+        self.assertTrue(wait_until(self.app, self.win._layouts_settled))
         from PySide6.QtWidgets import QInputDialog
         with mock.patch("meridiana.ui.window.catalog.load", return_value=(rec,)), \
                 mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
             self.win.commands["inverter_auto"].trigger()
+            self.wait_for_sizing()
         self.assertGreaterEqual(self.win.project.energy["inverters"][0]["count"], 1)
         self.assertEqual(sum(len(r["modules"]) for r in self.win.project.energy["strings"]["runs"]),
                          self.win.results[self.sid].count)
@@ -1536,6 +1571,7 @@ class PlantPhase(PlantWindow):
                 mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)) as asked:
             self.win.commands["inverter_auto"].trigger()
             self.assertEqual(asked.call_count, 1)
+            self.wait_for_sizing()
         entry = self.win.project.energy["inverters"][0]
         self.assertEqual(entry["record"], rec)
         self.assertGreaterEqual(entry["count"], 1)
@@ -1545,6 +1581,7 @@ class PlantPhase(PlantWindow):
         message = self.win.statusBar().currentMessage()
         self.assertIn("AC-10K", message)
         self.assertIn("DC/AC", message)
+        self.assertTrue(wait_until(self.app, self.win._layouts_settled))
         before = self.win.project.to_json()
         with mock.patch("meridiana.ui.window.catalog.brands", return_value=["Acme", "Other"]), \
                 mock.patch.object(QInputDialog, "getItem", return_value=("Acme", False)) as cancelled:
@@ -1555,6 +1592,7 @@ class PlantPhase(PlantWindow):
     def sizing_chooses_the_model_and_count_together(self):
         from PySide6.QtWidgets import QInputDialog
         self.win._entries_edit("Clear", lambda entries: entries.clear())
+        self.assertTrue(wait_until(self.app, self.win._layouts_settled))
         from meridiana.energy import system
         good = self.win.session.good_results()
         p_stc = sum(a.p_stc for a in system.arrays_of(self.win.project, good))
@@ -1566,6 +1604,7 @@ class PlantPhase(PlantWindow):
         with mock.patch("meridiana.ui.window.catalog.load", return_value=(near, better)), \
                 mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
             self.win.commands["inverter_auto"].trigger()
+            self.wait_for_sizing()
         entry = self.win.project.energy["inverters"][0]
         self.assertEqual(entry["record"]["model"], "NEAR")
         self.assertEqual(entry["count"], 1)
@@ -1671,11 +1710,12 @@ class Stringing(PlantWindow):
         top = QPointF(self.win.plan.mapFromScene(tag.pos())) + tag.offset + tag.rect.topLeft()
         self.assertAlmostEqual(anchor.y() - top.y(), tag.boundingRect().height() + 6, delta=1.0)
         mine = self.runs()
-        self.choose(inverter_record(model="AC-10K", ac_power_nominal_w=10000))      # a second inverter
+        with mock.patch.object(self.win, "tell", wraps=self.win.tell) as told:
+            self.choose(inverter_record(model="AC-10K", ac_power_nominal_w=10000))  # a second inverter
+            self.assertTrue(any("inputs are free" in call.args[0] for call in told.call_args_list))
         plant = self.plant(lambda p: len(p.units) == 2)
         self.assertEqual(self.runs(), mine)                                  # nothing moved, nothing came
         self.assertFalse(any(s.inverter == 2 for s in plant.strings))
-        self.assertIn("inputs are free", self.win.statusBar().currentMessage())
         n = len(plant.strings)
         self.win.commands["strings_complete"].trigger()                      # the modules left, around mine
         plant = self.plant(lambda p: len(p.strings) > n)
@@ -2105,6 +2145,11 @@ class Optimizers(PlantWindow):
         from PySide6.QtWidgets import QDialog
 
         from meridiana import catalog
+        # This journey checks optimizer controls, so its field must fit the chosen SE10K's 15 kW DC limit.
+        # The full 57.6 kWp shed is correctly refused by automatic proposal validation.
+        self.win.edit("Use a field within the inverter DC rating", lambda p: setattr(
+            p.subfields[0], "ring", [[1, 1], [17, 1], [17, 9], [1, 9]]))
+        self.assertTrue(wait_until(self.app, self.win._layouts_settled))
         se = next(r for r in catalog.search("inverters", manufacturer="SolarEdge", limit=None) if r["model"] == "SE10K")
         s500 = next(r for r in catalog.search("optimizers", manufacturer="SolarEdge", limit=None)
                     if r["model"] == "S500")
@@ -2113,9 +2158,11 @@ class Optimizers(PlantWindow):
         self.plant(lambda p: p.optimized)
         self.win.strategy_actions["serpentine"].trigger()                 # «Propose the strings»
         plant = self.plant(lambda p: p.optimized and bool(p.strings))
-        self.assertTrue(plant.units[0].choice.suggested)
+        proposed_model = plant.units[0].choice.optimizer.model
+        self.assertFalse(plant.units[0].choice.suggested)  # accepted proposal persists its physical hardware
+        self.assertEqual(self.win.project.energy["inverters"][0]["optimizer"]["model"], proposed_model)
         inspector = self.win.plant_inspector
-        self.assertIn("proposed by Meridiana", inspector.optimizer_labels[0].text())
+        self.assertIn(proposed_model, inspector.optimizer_labels[0].text())
         self.assertIn("750 V", " ".join(w.text() for w in inspector.findChildren(type(inspector.describe))))
         fake = mock.MagicMock()
         fake.return_value.exec.return_value = QDialog.DialogCode.Accepted
@@ -2141,8 +2188,8 @@ class Optimizers(PlantWindow):
         self.assertTrue(strings)
         self.assertTrue(all("SolarEdge" in i.source or "CEI" not in i.source for i in strings))
         self.win.undo.undo()                                                       # back to the proposal
-        self.assertNotIn("optimizer", self.win.project.energy["inverters"][0])
-        self.plant(lambda p: p.units[0].choice is not None and p.units[0].choice.suggested)
+        self.assertEqual(self.win.project.energy["inverters"][0]["optimizer"]["model"], proposed_model)
+        self.plant(lambda p: p.units[0].choice is not None and p.units[0].choice.optimizer.model == proposed_model)
         lst.adders[(1, 1)].click()
         card = self.win.plant_page.draft_card
         self.assertIn("0 modules", card.text)

@@ -673,7 +673,7 @@ def write_register_csv(project, energy: dict, path: Path) -> None:
     if sim is None:
         return
     table = register.frame(sim, energy.get("load"), energy.get("econ"))
-    known = {c.id: c for c in register.columns()}
+    known = {c.id: c for c in register.columns(table.attrs.get("inverters", ()))}
     sources = [(_("Weather"), energy.get("meteo_text") or "")]
     if energy.get("load") is not None:
         sources.append((_("Consumption"), energy["load"].basis))

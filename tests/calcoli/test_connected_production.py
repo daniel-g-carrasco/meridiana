@@ -56,17 +56,16 @@ class ConnectedProduction(unittest.TestCase):
                 self.assertEqual(out.econ.kpi["production"], 0)
                 remote.assert_not_called()
 
-    def test_partial_connection_matches_the_connected_modules_before_inverter_clipping(self):
+    def test_partial_connection_preserves_capacity_but_produces_only_the_connected_network(self):
         self.project.energy["strings"]["runs"] = [{"inverter": 1, "mppt": 1, "modules": self.keys}]
         out, remote = self.compute()
         array = system.arrays_of(self.project, self.layouts)[0]
-        connected = dataclasses.replace(array, modules=8, placed=array.placed[:8])
-        expected = simulate(self.weather, [connected], system.inverters_of(self.project, connected.p_stc)[0],
-                            system.losses_of(self.project))
-        np.testing.assert_allclose(out.sim.hourly.p_dc, expected.hourly.p_dc, rtol=1e-8, atol=1e-8)
-        np.testing.assert_allclose(out.sim.hourly.p_ac, expected.hourly.p_ac, rtol=1e-8, atol=1e-8)
+        self.assertEqual(sum(len(s.modules) for s in out.plant.strings), 8)
+        np.testing.assert_allclose(out.sim.hourly.p_dc, out.sim.inverters[0]['p_dc'])
+        np.testing.assert_allclose(out.sim.hourly.p_ac, out.sim.inverters[0]['p_ac'])
         self.assertGreater(out.sim.energy_kwh, 0)
-        self.assertEqual(remote.call_args.args[2], connected.p_stc / 1000)
+        self.assertLess(out.sim.hourly.p_dc.max(), 8 * array.module.pmax * 1.2)
+        self.assertEqual(remote.call_args.args[2], 8 * array.module.pmax / 1000)
         self.assertEqual(out.sim.p_stc_kw, array.p_stc / 1000)  # installed capacity still costs money
 
     def test_duplicate_module_references_do_not_generate_twice(self):
@@ -92,14 +91,18 @@ class ConnectedProduction(unittest.TestCase):
         self.project.energy["strings"]["runs"] = []
         self.assertTrue(work.energy_stale())
 
-    def test_fully_connected_plant_keeps_the_previous_hourly_production(self):
+    def test_excessively_long_string_loses_energy_outside_the_mppt_voltage_window(self):
         array = system.arrays_of(self.project, self.layouts)[0]
         self.project.energy["strings"]["runs"] = [{"inverter": 1, "mppt": 1,
                                                    "modules": [f"s1/{pm.key}" for pm in array.placed]}]
         out, _ = self.compute()
-        expected = simulate(self.weather, [array], system.inverters_of(self.project, array.p_stc)[0],
-                            system.losses_of(self.project))
-        np.testing.assert_array_equal(out.sim.hourly.e_kwh, expected.hourly.e_kwh)
+        keys = [f"s1/{pm.key}" for pm in array.placed]
+        self.project.energy['inverters'][0]['record'] = inverter_record(
+            mppt_count=8, dc_current_max_per_mppt_a=[26] * 8, dc_isc_max_per_mppt_a=[40] * 8)
+        self.project.energy['strings']['runs'] = [dict(inverter=1, mppt=i // 16 + 1, modules=keys[i:i+16])
+                                                 for i in range(0, len(keys), 16)]
+        valid, _ = self.compute()
+        self.assertGreater(valid.sim.energy_kwh, out.sim.energy_kwh * 2)
 
     def test_an_unused_inverter_cannot_absorb_the_active_inverters_clipping(self):
         self.project.energy["inverters"][0]["record"]["ac_power_nominal_w"] = 2000

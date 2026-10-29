@@ -198,6 +198,10 @@ def check(section: str, data: dict | None, unknown: list[str], path: str = "") -
         modules = run.get("modules", [])
         if modules.__class__ is not list or any(m.__class__ is not str for m in modules):
             raise ValueError(f"{here}.modules: {modules!r} is not a list of module keys")
+        sizes = run.get("optimizer_group_sizes", [])
+        if (type(sizes) is not list or any(type(n) is not int or n not in (1, 2) for n in sizes)
+                or (sizes and sum(sizes) != len(modules))):
+            raise ValueError(f"{here}.optimizer_group_sizes: invalid partition of the string")
 
 
 def known_paths(section: str) -> set[str]:

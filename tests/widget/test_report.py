@@ -371,9 +371,11 @@ class Report(unittest.TestCase):
         e = self.energy
         table = register.frame(e["sim"], e.get("load"), e.get("econ"))
         self.assertEqual(len(table), 8760)
-        self.assertEqual(list(table.columns), ["ghi", "poa", "temp_air", "t_cell", "production", "consumption",
+        self.assertEqual(list(table.columns), ["ghi", "poa", "temp_air", "t_cell", "production",
+                                               "inverter_1_dc", "inverter_1_ac", "inverter_2_dc", "inverter_2_ac", "consumption",
                                                "self", "export", "import"])
         self.assertAlmostEqual(float(table["production"].sum()), e["sim"].energy_kwh, places=3)
+        self.assertLess(float((table["inverter_1_ac"] + table["inverter_2_ac"] - table["production"]).abs().max()), 1e-9)
         self.assertAlmostEqual(float(table["consumption"].sum()), e["load"].annual_kwh, places=3)
         self.assertTrue(((table["self"] + table["import"] - table["consumption"]).abs() < 1e-9).all())
         self.assertLessEqual(float((table["self"] + table["export"] - table["production"]).max()), 1e-9)
@@ -381,7 +383,8 @@ class Report(unittest.TestCase):
         self.assertTrue((table["t_cell"][sunny] > table["temp_air"][sunny]).all())    # the cells hotter in the sun
         self.assertAlmostEqual(float(table["t_cell"].max()), max(a["t_cell_max"] for a in e["sim"].arrays), places=6)
         bare = register.frame(e["sim"])
-        self.assertEqual(list(bare.columns), ["ghi", "poa", "temp_air", "t_cell", "production"])
+        self.assertEqual(list(bare.columns), ["ghi", "poa", "temp_air", "t_cell", "production",
+                                             "inverter_1_dc", "inverter_1_ac", "inverter_2_dc", "inverter_2_ac"])
 
     def test_the_register_is_written_beside_the_report_as_the_language_reads_it_with_its_header(self):
         import pandas as pd

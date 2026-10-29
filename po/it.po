@@ -18367,3 +18367,264 @@ msgstr "Ricerca inverter non riuscita: {why}"
 
 msgid "Wait for the current module layout before sizing the inverters."
 msgstr "Attendi che la posa dei moduli sia aggiornata prima di dimensionare gli inverter."
+
+
+msgid "Modules on each optimizer"
+msgstr "Moduli su ciascun ottimizzatore"
+
+
+msgid "Check a module to connect it to the same optimizer as the previous module. Modules on one optimizer share its MPPT and must have the same type, orientation and tilt."
+msgstr "Spunta un modulo per collegarlo allo stesso ottimizzatore del precedente. I moduli su un ottimizzatore condividono il suo MPPT e devono avere lo stesso tipo, orientamento e inclinazione."
+
+
+msgid "Join to previous module"
+msgstr "Unisci al modulo precedente"
+
+
+msgid "Optimizer"
+msgstr "Ottimizzatore"
+
+
+msgid "One module each"
+msgstr "Un modulo ciascuno"
+
+
+msgid "Pairs in string order"
+msgstr "Coppie in ordine di stringa"
+
+
+msgid "{n} optimizers for {m} modules"
+msgstr "{n} ottimizzatori per {m} moduli"
+
+
+msgid "An optimizer cannot take more than {n} modules."
+msgstr "Un ottimizzatore non può ricevere più di {n} moduli."
+
+
+msgid "Assigning strings to the available inputs…"
+msgstr "Assegnazione delle stringhe agli ingressi disponibili…"
+
+
+msgid "Wait for the current module layout before proposing strings."
+msgstr "Attendi che la posa dei moduli sia aggiornata prima di proporre le stringhe."
+
+
+msgid "String search cancelled; the existing strings have been kept."
+msgstr "Ricerca delle stringhe annullata; le stringhe esistenti sono state mantenute."
+
+
+msgid "The project changed during string search. No old proposal was applied."
+msgstr "Il progetto è cambiato durante la ricerca delle stringhe. La proposta precedente non è stata applicata."
+
+
+msgid "No new strings were needed; the existing strings have been kept."
+msgstr "Non servono nuove stringhe; quelle esistenti sono state mantenute."
+
+
+msgid "No string was found for the current modules and inverter inputs."
+msgstr "Non è stata trovata una stringa per i moduli e gli ingressi inverter attuali."
+
+
+msgid "Modules on each optimizer…"
+msgstr "Moduli su ciascun ottimizzatore…"
+
+
+msgid "Change modules on each optimizer"
+msgstr "Modifica i moduli su ciascun ottimizzatore"
+
+
+msgid "String assignment completed: {n} strings. Undo restores the previous wiring."
+msgstr "Assegnazione completata: {n} stringhe. Annulla ripristina i collegamenti precedenti."
+
+
+msgid "No complete string proposal was applied: {why}"
+msgstr "Non è stata applicata una proposta completa di stringatura: {why}"
+
+
+msgid "the selected inverters cannot accommodate all modules under these constraints"
+msgstr "gli inverter selezionati non possono ricevere tutti i moduli con questi vincoli"
+
+
+msgid "Maximum modules on each optimizer. Its model determines series or parallel wiring; edit individual groups from the string menu."
+msgstr "Numero massimo di moduli su ciascun ottimizzatore. Il modello determina il collegamento in serie o parallelo; modifica i singoli gruppi dal menu della stringa."
+
+
+msgid "{n} strings: {a} A"
+msgstr "{n} stringhe: {a} A"
+
+
+msgid "Invalid optimizer grouping: {why}"
+msgstr "Raggruppamento degli ottimizzatori non valido: {why}"
+
+
+msgid "String assignment cancelled; no complete choice has been applied."
+msgstr "Assegnazione delle stringhe annullata; nessuna scelta completa applicata."
+
+
+msgid "String assignment incomplete: the search limit was reached."
+msgstr "Assegnazione delle stringhe incompleta: raggiunto il limite della ricerca."
+
+
+msgid "{name}: current of each physical input"
+msgstr "{name}: corrente di ciascun ingresso fisico"
+
+
+msgid "Module {n}"
+msgstr "Modulo {n}"
+
+
+msgid "A shared inverter DC-current limit curtails its MPPT powers proportionally; optimal redistribution between trackers is not simulated."
+msgstr "Un limite comune di corrente CC dell'inverter riduce proporzionalmente le potenze dei suoi MPPT; la redistribuzione ottimale tra inseguitori non è simulata."
+
+
+msgid "AC energy, kWh"
+msgstr "Energia CA, kWh"
+
+
+msgid "AC rating, kW"
+msgstr "Potenza CA, kW"
+
+
+msgid "Cell cohorts, bypass diodes and the connected electrical network"
+msgstr "Gruppi di celle, diodi di bypass e rete elettrica collegata"
+
+
+msgid "Clipping, kWh"
+msgstr "Limitazione, kWh"
+
+
+msgid "DC energy, kWh"
+msgstr "Energia CC, kWh"
+
+
+msgid "Each inverter is calculated separately, including its power limit. AC energy includes wiring losses and unavailability; the hourly register keeps the individual results."
+msgstr "Ogni inverter è calcolato separatamente, incluso il suo limite di potenza. L'energia CA include le perdite nei cavi e l'indisponibilità; il registro orario conserva i singoli risultati."
+
+
+msgid "Electrical production uses sampled cell-cohort I/V curves, bypass sections and common string/MPPT operating points. Cell layout is inferred from module dimensions and cell count unless documented; bypass forward drop is assumed to be 0.5 V. Reverse breakdown, hot spots and inverter tracking dynamics are not simulated."
+msgstr "La produzione elettrica usa curve I/V campionate di gruppi di celle, sezioni bypass e punti di lavoro comuni di stringa/MPPT. In assenza di documentazione, la disposizione delle celle è dedotta dalle dimensioni e dal loro numero; la caduta diretta del bypass è assunta pari a 0,5 V. Non sono simulate valanga inversa, punti caldi e dinamica di inseguimento dell'inverter."
+
+
+msgid "Electrical shading reconstructs sampled current-voltage curves of differently illuminated cell groups, bypass sections, series strings and parallel MPPT inputs. Cell positions and internal connections are inferred when the manufacturer does not provide them. Bypass voltage drop and shade discretisation are modelling assumptions; reverse breakdown and hot spots are not simulated. A shaded module affects the common string current, not only the modules after it. Numerical reference tests are not field measurements."
+msgstr "Le ombre elettriche ricostruiscono curve corrente-tensione campionate di gruppi di celle con illuminazione diversa, sezioni bypass, stringhe in serie e ingressi MPPT in parallelo. Posizioni delle celle e collegamenti interni sono dedotti quando il produttore non li fornisce. Caduta dei bypass e discretizzazione delle ombre sono ipotesi di modello; valanga inversa e punti caldi non sono simulati. Un modulo ombreggiato agisce sulla corrente comune della stringa, non soltanto sui moduli successivi. I confronti numerici non sono misure di campo."
+
+
+msgid "Hourly energy of this physical inverter; AC includes its clipping, wiring and unavailability. No unused capacity of another inverter compensates its clipping."
+msgstr "Energia oraria di questo inverter fisico; la CA include la sua limitazione di potenza, i cavi e l'indisponibilità. La capacità inutilizzata di un altro inverter non compensa la sua limitazione."
+
+
+msgid "Individually converted inverters"
+msgstr "Inverter convertiti separatamente"
+
+
+msgid "Inverters: each connected unit is calculated separately with its nominal power, efficiency and input constraints. The conversion curve is PVWatts calibrated to the catalogued efficiency, not the full OND efficiency map; firmware, start-up hysteresis and dynamic MPPT tracking are not simulated."
+msgstr "Inverter: ogni unità collegata è calcolata separatamente con potenza nominale, rendimento e vincoli degli ingressi. La curva di conversione è PVWatts calibrata al rendimento di catalogo, non la mappa completa di rendimento OND; firmware, isteresi di avvio e inseguimento MPPT dinamico non sono simulati."
+
+
+msgid "No complete string proposal was found within the voltage, current and input limits. The search exhausted the supplied catalogue and the selected geometry constraints."
+msgstr "Non è stata trovata una stringatura completa entro i limiti di tensione, corrente e ingressi. La ricerca ha esaurito il catalogo fornito e i vincoli geometrici selezionati."
+
+
+msgid "No laid modules are available for string assignment."
+msgstr "Non ci sono moduli posati per l'assegnazione delle stringhe."
+
+
+msgid "Optimizers: supported SolarEdge systems use the actual module groups, input operating window, current and output-voltage limits hour by hour when these are documented. Conversion efficiency remains fixed. Two modules on one optimizer share its MPPT. Missing limits are reported; other optimizer architectures, optional branch cables and proprietary firmware are not inferred."
+msgstr "Ottimizzatori: i sistemi SolarEdge supportati usano i gruppi reali di moduli, la finestra di lavoro in ingresso e i limiti di corrente e tensione in uscita ora per ora, quando documentati. Il rendimento di conversione resta fisso. Due moduli su un ottimizzatore condividono il suo MPPT. I limiti mancanti sono segnalati; altre architetture, derivazioni opzionali e firmware proprietari non sono dedotti."
+
+
+msgid "Production by inverter"
+msgstr "Produzione per inverter"
+
+
+msgid "Row shadows and obstacle shadows overlap statistically at cell level; their exact joint shadow geometry is not available in the row approximation."
+msgstr "Le ombre delle file e degli ostacoli si sovrappongono statisticamente a livello di cella; la loro geometria congiunta esatta non è disponibile nell'approssimazione delle file."
+
+
+msgid "The PVWatts efficiency curve and nominal AC clipping are applied separately to each connected inverter, then summed; spare capacity on another inverter cannot absorb its clipping."
+msgstr "La curva di rendimento PVWatts e la limitazione alla potenza nominale CA si applicano separatamente a ogni inverter collegato, poi si sommano; la capacità libera di un altro inverter non può assorbire la potenza tagliata."
+
+
+msgid "The actual connected modules are recombined by series current and parallel voltage, with a global maximum over the sampled curves. Cell-shadow cohorts preserve concentrated and distributed shade separately. Tracker voltage/current windows constrain the operating point. Each inverter has its own efficiency, clipping and AC wiring loss. The unconnected modules contribute zero. Cell diagrams are inferred where absent; reverse circulating currents, cell avalanche and hot spots are not calculated."
+msgstr "I moduli realmente collegati sono ricomposti a corrente comune in serie e tensione comune in parallelo, cercando il massimo globale sulle curve campionate. I gruppi di celle mantengono distinta l'ombra concentrata da quella distribuita. Le finestre di tensione/corrente degli inseguitori limitano il punto di lavoro. Ogni inverter ha il proprio rendimento, la propria limitazione e le proprie perdite CA. I moduli scollegati contribuiscono zero. Gli schemi delle celle sono dedotti se assenti; correnti inverse di circolazione, valanga e punti caldi non sono calcolati."
+
+
+msgid "The obstacles of the scene (exclusions with a height, parapets, the other buildings) cast their shadows along the sun's rays on the plane of the modules, row by row. The shaded share of the modules' area is computed for the sun's positions every 5° of azimuth and 4° of elevation along its path, then read hour by hour; the diffuse light loses the share of the sky the obstacles hide, weighted as for the horizon (every 10° and 8°). This step records the irradiance loss. The connected electrical network separately evaluates cell irradiance, bypass sections and the common string/MPPT operating point."
+msgstr "Gli ostacoli della scena (esclusioni con altezza, parapetti, altri edifici) proiettano le ombre lungo i raggi solari sul piano dei moduli, fila per fila. La quota di superficie ombreggiata è calcolata lungo il percorso solare ogni 5° di azimut e 4° di elevazione, poi letta ora per ora; la luce diffusa perde la porzione di cielo nascosta dagli ostacoli, pesata come per l'orizzonte (ogni 10° e 8°). Questo passaggio registra la perdita di irraggiamento. La rete elettrica collegata valuta separatamente irraggiamento delle celle, sezioni bypass e punto di lavoro comune di stringa/MPPT."
+
+
+msgid "This tracker has no physical input count in the supplied list."
+msgstr "Per questo inseguitore manca il numero degli ingressi fisici nell'elenco fornito."
+
+
+msgid "This tracker has no physical input rating in the supplied list."
+msgstr "Per questo inseguitore manca il limite degli ingressi fisici nell'elenco fornito."
+
+
+msgid "{name}: cell geometry is unavailable; obstacle shading uses the mean irradiance of each bypass block and may overestimate output for localized shadows."
+msgstr "{name}: geometria delle celle non disponibile; le ombre degli ostacoli usano l'irraggiamento medio di ciascun blocco bypass e possono sovrastimare la produzione con ombre localizzate."
+
+
+msgid "{name}: hourly limits unavailable: {fields}; those limits are not enforced."
+msgstr "{name}: limiti orari non disponibili: {fields}; questi limiti non sono applicati."
+
+
+msgid "{name}: no valid single-diode parameters; a three-point datasheet I/V approximation is used and cell mismatch is not resolved."
+msgstr "{name}: parametri a un diodo non validi; viene usata una curva I/V a tre punti di targa senza risolvere la disuniformità tra celle."
+
+
+msgid "{name}: optimizer or fixed-voltage data are missing; this inverter's electrical production is not calculated and contributes zero."
+msgstr "{name}: dati dell'ottimizzatore o della tensione fissa mancanti; la produzione elettrica di questo inverter non è calcolata e contribuisce zero."
+
+
+msgid "{name}: physical input count is unknown"
+msgstr "{name}: numero di ingressi fisici sconosciuto"
+
+
+msgid "{name}: physical input current is unknown"
+msgstr "{name}: corrente degli ingressi fisici sconosciuta"
+
+msgid "DC operating limits"
+msgstr "Limiti di funzionamento in CC"
+
+msgid "Each actual optimizer group shares its own operating point, with series or parallel input topology and documented input voltage/current limits. Its efficiency is fixed at the catalogue value. The string must reach the inverter's fixed voltage using each optimizer's available power and maximum output voltage at one common current. Output current and continuous string power are enforced. Rated module input power is a compatibility rating, not an assumed instantaneous clipping limit. Missing limits are listed in the notes; optional branch cables and firmware are not inferred."
+msgstr "Ogni gruppo fisico di moduli su un ottimizzatore condivide il proprio punto di funzionamento, con ingressi in serie o in parallelo e limiti documentati di tensione e corrente. Il rendimento è fisso al valore di catalogo. La stringa deve raggiungere la tensione fissa dell’inverter usando la potenza disponibile e la tensione massima di uscita di ogni ottimizzatore, alla stessa corrente. Sono applicati i limiti di corrente in uscita e potenza continua di stringa. La potenza nominale dei moduli in ingresso è un limite di compatibilità, non un limite ipotizzato di taglio istantaneo. I limiti mancanti sono elencati nelle note; cavi di derivazione opzionali e firmware non sono dedotti."
+
+msgid "Quality, LID and residual module mismatch scale the module currents. One module per optimizer removes the residual mismatch allowance. DC wiring is estimated from the actual string operating current squared, referred to its module STC current; fixed-voltage optimizer strings use power squared relative to their connected STC power. Cable lengths and resistances are not available."
+msgstr "Qualità, LID e disaccoppiamento residuo dei moduli scalano le correnti dei moduli. Un modulo per ottimizzatore elimina la quota di disaccoppiamento residuo. Il cablaggio in CC è stimato dal quadrato della corrente effettiva della stringa, riferita alla corrente STC del modulo; le stringhe di ottimizzatori a tensione fissa usano il quadrato della potenza riferita alla potenza STC collegata. Lunghezze e resistenze dei cavi non sono disponibili."
+
+msgid "The electrical-shading setting attenuates irradiance contrasts toward the array's mean irradiance before recombining I/V curves; it is not a linear fraction of lost energy."
+msgstr "L’impostazione delle ombre elettriche attenua i contrasti di irradianza verso l’irradianza media del campo prima di ricombinare le curve I/V; non è una frazione lineare della perdita di energia."
+
+msgid "The ledger reference sums each connected module's uniform-irradiance maximum power at its mean irradiance and the hour's cell temperature. The one-diode parameters vary with irradiance and temperature; no additional gamma power correction is applied. The electrical-network step then applies the actual cell irradiance distribution and shared operating points. Missing diode parameters use an explicitly reported three-point datasheet curve. Per-array network losses are allocated in proportion to independent module power; the plant total is the circuit result."
+msgstr "Il riferimento del bilancio somma la potenza massima di ogni modulo collegato a irradianza uniforme, alla sua irradianza media e alla temperatura delle celle nell’ora. I parametri a diodo singolo variano con irradianza e temperatura; non è applicata una correzione aggiuntiva con il coefficiente gamma. Il passaggio della rete elettrica applica poi la distribuzione effettiva di irradianza sulle celle e i punti di funzionamento condivisi. Quando mancano i parametri del diodo si usa una curva a tre punti da scheda tecnica, segnalata esplicitamente. Le perdite di rete per campo sono ripartite in proporzione alla potenza indipendente dei moduli; il totale d’impianto è il risultato del circuito."
+
+msgid "The new string order separates modules of one physical optimizer. Keep each optimizer's modules together or edit its groups first."
+msgstr "Il nuovo ordine della stringa separa i moduli di uno stesso ottimizzatore fisico. Mantieni vicini i suoi moduli oppure modifica prima i gruppi."
+
+msgid "the electrical network"
+msgstr "la rete elettrica"
+
+msgid "{name}, MPPT {mppt}: external parallel strings have no connector mapping. The aggregate connector capacity is enforced, but current sharing among physical connectors is not verified."
+msgstr "{name}, MPPT {mppt}: le stringhe in parallelo esterno non hanno una mappa dei connettori. Si applica la capacità aggregata dei connettori, ma la ripartizione della corrente tra i connettori fisici non è verificata."
+
+msgid "SolarEdge allows a string across several roof planes, but it can lose additional energy. The hourly model applies documented optimizer voltage and current limits; proprietary control dynamics are not simulated."
+msgstr "SolarEdge consente una stringa su più falde, ma può esserci una perdita aggiuntiva di energia. Il modello orario applica i limiti documentati di tensione e corrente degli ottimizzatori; le dinamiche del controllo proprietario non sono simulate."
+
+msgid "{name}, MPPT {mppt}: operating limits unavailable: {fields}; the available bounds are applied, but this operating window is not fully verified."
+msgstr "{name}, MPPT {mppt}: limiti di funzionamento non disponibili: {fields}; si applicano i limiti noti, ma la finestra di funzionamento non è interamente verificata."
+
+msgid "An optimizer supports one or two modules"
+msgstr "Un ottimizzatore supporta uno o due moduli"
+
+msgid "Optimizer groups must partition the string into supported groups"
+msgstr "I gruppi degli ottimizzatori devono suddividere tutta la stringa in gruppi compatibili"
+
+msgid "Connected {n} strings; {m} modules remain unconnected. Review the selected inverters and inputs. Undo restores the previous wiring."
+msgstr "Collegate {n} stringhe; {m} moduli rimangono scollegati. Controlla gli inverter e gli ingressi scelti. Annulla ripristina i collegamenti precedenti."
+
+msgid "Unconnected modules produce no energy"
+msgstr "I moduli scollegati non producono energia"
+
+msgid "Production: calculation notes"
+msgstr "Producibilità: note di calcolo"

@@ -80,6 +80,10 @@ class Optimizer:
     eta: float                      # its weighted efficiency, 0-1
     per_unit: int                   # the most modules it takes (1 or 2); topology depends on the model
     datasheet: str                  # its datasheet, code and date, as printed
+    v_in_min: float | None = None
+    v_in_max: float | None = None
+    v_out_max: float | None = None
+    topology: str = ""              # explicit input wiring; empty for legacy records
 
     @property
     def name(self) -> str:
@@ -88,6 +92,8 @@ class Optimizer:
     @property
     def parallel_inputs(self) -> bool:
         """Dual physical inputs, each with its own Isc rating (DS-000012-ENG p. 3 for P800p)."""
+        if self.topology in ("series", "parallel"):
+            return self.topology == "parallel"
         return self.manufacturer.casefold() == "solaredge" and self.model.casefold() in {"p485", "p800p", "p860", "p960"}
 
     @property
@@ -101,7 +107,7 @@ class Optimizer:
     def from_record(cls, rec: dict) -> Optimizer:
         def num(key, default=0.0):
             v = rec.get(key)
-            return float(v) if v.__class__ in (int, float) else default
+            return float(v) if v.__class__ in (int, float) and math.isfinite(v) else default
         eta = num("efficiency_weighted_pct") or num("efficiency_peak_pct") or 98.5
         per = rec.get("modules_per_unit")
         hub = rec.get("max_input_isc_home_hub_a")
@@ -113,8 +119,31 @@ class Optimizer:
                    i_in_max=float(current) if current.__class__ in (int, float) else None,
                    i_out_max=num("max_output_current_a", 15.0), eta=eta / 100.0,
                    per_unit=per if per.__class__ is int and per in (1, 2) else 1,
+                   v_in_min=num("mppt_voltage_min_v", None), v_in_max=num("mppt_voltage_max_v", None),
+                   v_out_max=num("max_output_voltage_v", None), topology=str(rec.get("input_topology") or ""),
                    datasheet=f"{rec.get('manufacturer', '')} {revision}".strip() if revision else
                    _("datasheet of {name}").format(name=f"{rec.get('manufacturer', '')} {rec.get('model', '')}"))
+
+
+def module_groups(modules: list, per: int, group_sizes: list[int] | None = None) -> list[list]:
+    """Physical optimizer groups in string order, including explicit single modules between pairs.
+
+    A malformed explicit partition is rejected instead of silently changing the wiring.
+    """
+    if type(per) is not int or per not in (1, 2):
+        raise ValueError(_("An optimizer supports one or two modules"))
+    if group_sizes:
+        if (any(type(n) is not int or not 1 <= n <= per for n in group_sizes)
+                or sum(group_sizes) != len(modules)):
+            raise ValueError(_("Optimizer groups must partition the string into supported groups"))
+        sizes = group_sizes
+    else:
+        sizes = [min(per, len(modules) - i) for i in range(0, len(modules), per)]
+    out, offset = [], 0
+    for n in sizes:
+        out.append(modules[offset:offset + n])
+        offset += n
+    return out
 
 
 # the inverter at a fixed string voltage
@@ -412,12 +441,13 @@ class OptimizedPlan(stringing.StringPlan):
 
 def string_plan(module, opt: Optimizer, per: int, inv: FixedVoltage, rules: Rules, modules: int, strings: int,
                 spread_w: float, t_min: float | None, t_min_source: Source | None = None,
-                power_w: float | None = None) -> OptimizedPlan:
+                power_w: float | None = None, group_sizes: list[int] | None = None) -> OptimizedPlan:
     """The checks of one string of `modules` modules on optimizers `opt` (`per` modules each) on an inverter unit with
     `strings` strings whose powers differ by `spread_w`: the module on its optimizer, the optimizers and the modules
     against the fewest and the most, the power against what may be connected and what is carried; each check with its
     source, the steps in the record. `power_w`: the string's power at STC when its modules are not all `module`."""
-    n_opt = optimizer_count(modules, per)
+    groups = module_groups(list(range(modules)), per, group_sizes)
+    n_opt = len(groups)
     power = float(power_w) if power_w is not None else modules * module.pmax
     limit, why = connected_limit(rules, strings, spread_w)
     rec = Record(_("Strings with power optimizers: SolarEdge's design rules"))
@@ -425,7 +455,8 @@ def string_plan(module, opt: Optimizer, per: int, inv: FixedVoltage, rules: Rule
                         limit_w=limit, continuous_w=rules.p_cont, opt_range=(rules.opt_min, rules.opt_max),
                         mod_range=(rules.mod_min, rules.mod_max), v_string=inv.v_string, optimizer=opt.name, per=per,
                         limit_why=why, n_series_min=rules.opt_min, n_series_max=rules.opt_max)
-    out.checks += module_checks(module, opt, per, t_min, inv)
+    for occupancy in sorted({len(g) for g in groups}):
+        out.checks += module_checks(module, opt, occupancy, t_min, inv)
     out.checks.append(_check("opt_count", _("Optimizers in the string within SolarEdge's range"),
                              rules.opt_min <= n_opt <= rules.opt_max,
                              _("{n}, from {lo} to {hi} on this inverter").format(n=n_opt, lo=rules.opt_min,

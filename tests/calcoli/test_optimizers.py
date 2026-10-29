@@ -433,7 +433,7 @@ class ThePipeline(unittest.TestCase):
         results, _keys, _laid = jobs.layout_of(p)
         from meridiana.energy import plant as plant_model
         p.energy["strings"] = plant_model.touched({}, plant_model.propose(p, results))     # «Propose the strings»
-        with mock.patch.object(pipeline, "with_strings", wraps=pipeline.with_strings) as again:
+        with mock.patch.object(pipeline, "with_network", wraps=pipeline.with_network) as again:
             out = pipeline.compute(p, results, cache, fetch=False)
         self.assertTrue(out.plant.optimized)
         self.assertTrue(out.plant.strings)
