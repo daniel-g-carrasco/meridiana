@@ -10,6 +10,11 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- Meridio finds and opens local projects and remembers tasks (R151): a background index covers only linked job folders,
+  with lexical and structured search, latest valid revisions and explained similar projects. Opening always shows path
+  and revision and uses the normal unsaved-changes confirmation. Local tasks have due dates and are created or completed
+  only after a click. Cloud providers receive no index, names, paths or job codes, never reserved rows, only filtered
+  aliases; questions about reserved work stay local. Registry schema 3.
 - Clients and jobs in the window (R150): File > Clients and jobs offers three columns for clients, jobs and details,
   with inline creation. New projects choose their client and job in the optional data; the client reaches the report,
   and a reserved job stops online search and tiles as soon as it is selected. Project format 18 carries job and series

@@ -3,8 +3,8 @@ call, each with its name, its description and the JSON schema of its arguments, 
 from the project as it is now.
 
 Reading, without asking: `read_checks`, `project_summary`, `read_selection`, `read_results`, `read_pedigree`,
-`read_rules`, `search_manual`, `search_projects`, `project_revisions` and `similar_projects`; `go_to` only moves
-the window. Proposing, never applying: `propose_fix` offers the fix a check already has (the way to prefer: in the
+`read_rules`, `search_manual`, `search_projects`, `project_revisions`, `similar_projects` and `list_tasks`; `go_to`
+only moves the window. Proposing, never applying: `propose_fix` offers the fix a check already has (the way to prefer: in the
 trial of study 14, 4.4, a model free to write the fields invented one), `propose_edit` a change of the fields the
 Properties panel and the energy pages have, checked with the rules of the project file; a wrong field goes back to
 the model with the list of the right ones. `propose_undo` offers the current Undo or Redo step.
@@ -168,11 +168,26 @@ SPECS = {
                        "Never opens it: only the designer's click can open, through the normal unsaved-changes flow.",
         "parameters": _schema({"project_id": {"type": "string"}}, ("project_id",)),
     },
+    "list_tasks": {
+        "description": "Read local tasks and due dates, optionally including completed tasks or filtering by job "
+                       "or due date. The returned ids are local aliases for prepare_task.",
+        "parameters": _schema({"include_done": {"type": "boolean"}, "job_id": {"type": "string"},
+                               "due_before": {"type": "string"}}),
+    },
+    "prepare_task": {
+        "description": "Prepare a card to create a local task or complete one returned by list_tasks. Never writes "
+                       "the registry: only the designer's click applies the proposal.",
+        "parameters": _schema({"action": {"type": "string", "enum": ["create", "complete"]},
+                               "task_id": {"type": "string"}, "text": {"type": "string"},
+                               "due": {"type": "string"}, "job_id": {"type": "string"},
+                               "project_id": {"type": "string"}}, ("action",)),
+    },
 }
 STEP_1 = ("read_checks", "project_summary", "go_to", "search_manual")
 STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "propose_fix", "propose_edit",
           "propose_undo")
-STEP_3 = ("search_projects", "project_revisions", "similar_projects", "prepare_open_project")
+STEP_3 = ("search_projects", "project_revisions", "similar_projects", "prepare_open_project", "list_tasks",
+          "prepare_task")
 
 
 def specs(names=None) -> list[dict]:
@@ -215,8 +230,10 @@ class State:
     checks: dict = field(default_factory=dict)
     proposals: dict = field(default_factory=dict)
     projects: dict = field(default_factory=dict)
+    tasks: dict = field(default_factory=dict)
     count: int = 0
     project_count: int = 0
+    task_count: int = 0
     cloud: bool = False
 
 
@@ -1004,9 +1021,63 @@ def prepare_open_project(host, state: State, project_id: str) -> Outcome:
                        title=title, revision=row.get("revision") or "-"), proposal=proposal)
 
 
+def _task_rows(host, state: State) -> list[dict]:
+    rows = list(host.task_rows()) if hasattr(host, "task_rows") else []
+    return [row for row in rows if not state.cloud or not row.get("reserved", False)]
+
+
+def _task_payload(row: dict, state: State) -> dict:
+    state.task_count += 1
+    alias = f"tk{state.task_count}"
+    state.tasks[alias] = row
+    if state.cloud:
+        return {"id": alias, "text": row["text"], "due": row["due"], "done": row["done"]}
+    keys = ("text", "due", "done", "job_id", "project_id", "job_code", "job_name", "client_name", "reserved")
+    return {"id": alias, **{key: row.get(key) for key in keys if key in row}}
+
+
+def list_tasks(host, state: State, include_done: bool = False, job_id: str = "", due_before: str = "") -> Outcome:
+    rows = [row for row in _task_rows(host, state) if (include_done or not row["done"])
+            and (not job_id or row.get("job_id") == job_id) and (not due_before or
+            (row["due"] and row["due"] <= due_before))]
+    tasks = [_task_payload(row, state) for row in rows[:20]]
+    return Outcome(_json({"tasks": tasks, "truncated": len(rows) > len(tasks)}), _("Read the local tasks"))
+
+
+def prepare_task(host, state: State, action: str, task_id: str = "", text: str = "", due: str = "",
+                 job_id: str = "", project_id: str = "") -> Outcome:
+    if action == "create":
+        text = text.strip()
+        if not text:
+            return _error("a task needs text")
+        if due:
+            from datetime import date
+            try:
+                date.fromisoformat(due)
+            except ValueError:
+                return _error("a task due date must be ISO YYYY-MM-DD")
+        item = {"action": "create", "text": text, "due": due, "job_id": job_id, "project_id": project_id}
+        lines = [("Task", "", text), ("Due", "", due or "-")]
+    elif action == "complete":
+        row = state.tasks.get(task_id)
+        if row is None:
+            return _error("list_tasks first and give one of its task ids")
+        text = row["text"]
+        item = {"action": "complete", "task_id": row["id"]}
+        lines = [("Task", "", text), ("State", "open", "done")]
+    else:
+        return _error("action must be create or complete")
+    state.count += 1
+    proposal = Proposal(id=f"p{state.count}", title=text, kind="task", oid=task_id, lines=lines, item=item)
+    state.proposals[proposal.id] = proposal
+    return Outcome(_json({"proposed": proposal.id, "shown_to_designer": True, "applied": False,
+                          "waiting": "the designer confirms the task change"}),
+                   _("Proposed: {what}").format(what=text), proposal=proposal)
+
+
 TOOLS = {"read_checks": read_checks, "project_summary": project_summary, "go_to": go_to,
          "search_manual": search_manual, "read_selection": read_selection, "read_results": read_results,
          "read_pedigree": read_pedigree, "read_rules": read_rules, "propose_fix": propose_fix,
          "propose_edit": propose_edit, "propose_undo": propose_undo, "search_projects": search_projects,
          "project_revisions": project_revisions, "similar_projects": similar_projects,
-         "prepare_open_project": prepare_open_project}
+         "prepare_open_project": prepare_open_project, "list_tasks": list_tasks, "prepare_task": prepare_task}

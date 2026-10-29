@@ -63,7 +63,7 @@ class Redactor:
         found = list(self.pairs)
         for row in rows:
             values = [row.get(key, "") for key in
-                      ("path", "name", "title", "address", "job_code", "job_name", "client_name")]
+                      ("path", "name", "title", "address", "job_code", "job_name", "client_name", "text")]
             path = Path(row.get("path", ""))
             values.extend([path.stem, path.name])
             for value in values:

@@ -1,4 +1,4 @@
-"""The local SQLite registry of clients, jobs, project series and their folders (R150)."""
+"""The local SQLite registry of clients, jobs, project series, folders, index and tasks (R150, R151)."""
 
 from __future__ import annotations
 
@@ -9,12 +9,12 @@ import sqlite3
 import tempfile
 import uuid
 from contextlib import closing, contextmanager
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from . import atomic
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 EXCHANGE_VERSION = 1
 MANIFEST_NAME = ".meridiana-commessa.json"
 STATUSES = ("waiting", "in_progress", "delivered", "archived")
@@ -71,6 +71,20 @@ CREATE TABLE project_index (
 );
 """
 
+_TASK_SCHEMA = """
+CREATE TABLE tasks (
+    id TEXT PRIMARY KEY,
+    text TEXT NOT NULL,
+    due TEXT NOT NULL DEFAULT '',
+    done INTEGER NOT NULL DEFAULT 0,
+    job_id TEXT REFERENCES jobs(id),
+    project_id TEXT REFERENCES projects(id),
+    created TEXT NOT NULL,
+    updated TEXT NOT NULL
+);
+CREATE INDEX tasks_job ON tasks(job_id);
+"""
+
 
 class RegistryError(ValueError):
     """A registry write or schema cannot be accepted."""
@@ -115,7 +129,7 @@ class Registry:
             tables = self.connection.execute("SELECT count(*) FROM sqlite_master WHERE type = 'table'").fetchone()[0]
             if tables:
                 raise RegistryError("an unversioned registry is not empty; no safe migration is known")
-        migrations = {0: _SCHEMA, 1: _INDEX_SCHEMA}
+        migrations = {0: _SCHEMA, 1: _INDEX_SCHEMA, 2: _TASK_SCHEMA}
         while version < SCHEMA_VERSION:
             script = migrations.get(version)
             if script is None:
@@ -320,6 +334,77 @@ class Registry:
     def list_index(self) -> list[dict]:
         rows = self.connection.execute("SELECT payload FROM project_index ORDER BY path").fetchall()
         return [json.loads(row["payload"]) for row in rows]
+
+    @staticmethod
+    def _task_row(row) -> dict:
+        return {**dict(row), "done": bool(row["done"]), "reserved": bool(row["reserved"])}
+
+    @staticmethod
+    def _task_query() -> str:
+        return "SELECT tasks.*, jobs.code AS job_code, jobs.name AS job_name, jobs.reserved, " \
+               "clients.name AS client_name FROM tasks LEFT JOIN jobs ON jobs.id = tasks.job_id " \
+               "LEFT JOIN clients ON clients.id = jobs.client_id"
+
+    @staticmethod
+    def _valid_task(text: str, due: str) -> tuple[str, str]:
+        text = text.strip()
+        if not text:
+            raise RegistryError("a task needs text")
+        if due:
+            try:
+                date.fromisoformat(due)
+            except ValueError:
+                raise RegistryError("a task due date must be ISO YYYY-MM-DD") from None
+        return text, due
+
+    def create_task(self, text: str, due: str = "", job_id: str = "", project_id: str = "") -> dict:
+        text, due = self._valid_task(text, due)
+        if job_id and self.job(job_id) is None:
+            raise RegistryError("job not found")
+        if project_id and not self.connection.execute("SELECT 1 FROM projects WHERE id = ?", (project_id,)).fetchone():
+            raise RegistryError("project not found")
+        tid, now = uuid.uuid4().hex, _now()
+        with self._write() as connection:
+            connection.execute(
+                "INSERT INTO tasks(id, text, due, done, job_id, project_id, created, updated) "
+                "VALUES (?, ?, ?, 0, ?, ?, ?, ?)",
+                (tid, text, due, job_id or None, project_id or None, now, now))
+        return self.task(tid)
+
+    def task(self, task_id: str) -> dict | None:
+        row = self.connection.execute(self._task_query() + " WHERE tasks.id = ?", (task_id,)).fetchone()
+        return self._task_row(row) if row is not None else None
+
+    def list_tasks(self, include_done: bool = False, job_id: str = "", due_before: str = "") -> list[dict]:
+        rows = self.connection.execute(self._task_query() + " ORDER BY tasks.done, tasks.due, tasks.created").fetchall()
+        return [self._task_row(row) for row in rows if (include_done or not row["done"])
+                and (not job_id or row["job_id"] == job_id) and (not due_before or
+                (row["due"] and row["due"] <= due_before))]
+
+    def update_task(self, task_id: str, done: bool | None = None, text: str | None = None,
+                    due: str | None = None) -> dict:
+        fields = {}
+        if done is not None:
+            fields["done"] = int(bool(done))
+        if text is not None or due is not None:
+            current = self.task(task_id)
+            if current is None:
+                raise RegistryError("task not found")
+            new_text, new_due = self._valid_task(current["text"] if text is None else text,
+                                                 current["due"] if due is None else due)
+            fields.update({"text": new_text, "due": new_due})
+        if not fields:
+            current = self.task(task_id)
+            if current is None:
+                raise RegistryError("task not found")
+            return current
+        fields["updated"] = _now()
+        assignments = ", ".join(f"{key} = ?" for key in fields)
+        with self._write() as connection:
+            cursor = connection.execute(f"UPDATE tasks SET {assignments} WHERE id = ?", (*fields.values(), task_id))
+        if cursor.rowcount == 0:
+            raise RegistryError("task not found")
+        return self.task(task_id)
 
     def link_folder(self, job_id: str, path: Path) -> dict:
         fid, now, folder = uuid.uuid4().hex, _now(), _path(path)

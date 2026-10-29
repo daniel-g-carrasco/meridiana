@@ -1118,8 +1118,9 @@ class Assistant(QFrame):
     # the conversation
 
     def questions_wanted(self) -> bool:
-        """The questions ready are shown between turns, not while Meridio answers."""
-        return self.mood.state == assistant.IDLE
+        """The questions ready are shown between turns and not under a proposal confirmation."""
+        pending = any(widget.property("confirmation") for widget in self.cards.children())
+        return self.mood.state == assistant.IDLE and not pending
 
     def ask(self, text: str) -> None:
         text = text.strip()
@@ -1181,7 +1182,7 @@ class Assistant(QFrame):
         self.dots.hide()
         self.stop_action.setVisible(False)
         self.fill_questions()                               # they follow what was just said (R108)
-        self.questions_box.setVisible(self.panel.height() >= QUESTIONS_HEIGHT)
+        self.questions_box.setVisible(self.panel.height() >= QUESTIONS_HEIGHT and self.questions_wanted())
 
     def greet(self, text: str) -> None:
         """What he says of his own, not as an answer (his presentation, R106): in the conversation as his words,
@@ -1216,8 +1217,14 @@ class Assistant(QFrame):
 
     # what the conversation shows besides the words
 
+    def _fit_cards(self) -> None:
+        self.cards.setMinimumHeight(self.cards_box.sizeHint().height())
+        self.cards.updateGeometry()
+
     def add_card(self, card: QWidget) -> None:
         self.cards_box.addWidget(card)
+        self._fit_cards()
+        self.questions_box.setVisible(self.panel.height() >= QUESTIONS_HEIGHT and self.questions_wanted())
         self.cards.show()
 
     def remove_card(self, card: QWidget) -> None:
@@ -1225,6 +1232,8 @@ class Assistant(QFrame):
         card.hide()
         card.deleteLater()
         self.cards.setVisible(self.cards_box.count() > 0)
+        self._fit_cards()
+        self.questions_box.setVisible(self.panel.height() >= QUESTIONS_HEIGHT and self.questions_wanted())
 
     def set_where(self, where: str, label: str, tip: str) -> None:
         """Where the next question goes ("local" or "cloud"): the chip at the head, the mark on the character."""
