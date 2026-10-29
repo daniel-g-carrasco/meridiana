@@ -129,7 +129,7 @@ def commands() -> list[Command]:
         c("strings_clear", _("Delete all the stri&ngs"), (), "compute"),
         c("import_curve", _("Import a load c&urve…"), (), "compute"),
         c("consumption_base", _("&Base of the consumption"), (), "compute"),
-        c("battery_catalog", _("Choose a ba&ttery from the catalogue…"), (), "compute"),
+        c("battery_catalog", _("Configure s&torage…"), (), "compute"),
         c("new_variant", _("&New variant from this one…"), ("Ctrl+Shift+N",), "variants"),
         c("compare_variants", _("&Compare the variants…"), ("Ctrl+Shift+C",), "variants"),
         # help next to things (design C7): F1 on the field with the keyboard, Shift+F1 «What's this?» on what is
@@ -139,6 +139,8 @@ def commands() -> list[Command]:
         c("manual", _("&Manual"), (), "help"),
         c("shortcuts", _("&Keyboard shortcuts"), ("Ctrl+?",), "help"),
         c("check_updates", _("Check for &updates…"), (), "help"),
+        c("guided_tour", _("Guided tour…"), (), "help"),
+        c("report_bug", _("Report a problem…"), (), "help"),
         c("about", _("&About Meridiana"), (), "help"),
     ]
 

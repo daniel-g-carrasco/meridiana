@@ -1,0 +1,24 @@
+{
+  "format": 2,
+  "upstream_version": "acd4ab3108d3c69850a7b87192885c1d69e0efc1",
+  "hash_normalization": "CRLF normalized to LF",
+  "files": [
+    {
+      "source": "src/qtkit/tables.py",
+      "target": "src/meridiana/ui/shared_tables.py",
+      "upstream_sha256": "6ceebb16df42884cc5551fbbf6ac8f71a2ec6087d771fae404dbe8df61aab554",
+      "target_sha256": "5007ec1f80d133ecbecc5adb5afd24c7d628e3a5808c9762c9e21764cd1f5c84",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    }
+  ],
+  "replacements": [
+    [
+      "from . import fades, scrollbars, theme_colors",
+      "from . import fades, scrollbars\nfrom .. import theme_colors"
+    ]
+  ],
+  "preserved_extension": "install_data_tables filters real data tables and keeps navigation delegates untouched.",
+  "consumer_base": "bf0767b",
+  "revision_note": "2026-10-29 R06: reusable GuideCard and opt-in update policy; application-specific attachment and storage controllers."
+}

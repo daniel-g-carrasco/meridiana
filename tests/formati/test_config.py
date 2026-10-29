@@ -246,8 +246,8 @@ class ConfigTest(unittest.TestCase):
                               cfg.assistant_width, cfg.assistant_height, cfg.checks_view, cfg.help_open),
                              ("text", "top", True, "smooth", 320, 400, "level", True))
             save(cfg, path)
-            self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["version"], 21)
-            self.assertEqual(config.CONFIG_VERSION, 21)
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["version"], 22)
+            self.assertEqual(config.CONFIG_VERSION, 22)
             self.assertEqual(cfg.text_size, "medium")                 # the 13 px of before (R133)
             self.assertEqual((cfg.background, cfg.map_sources), ("auto", []))     # the best for the site (R36)
             self.assertEqual((cfg.assistant_voice_engine, cfg.assistant_voice_name), ("auto", ""))

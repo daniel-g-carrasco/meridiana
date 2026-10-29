@@ -18628,3 +18628,538 @@ msgstr "I moduli scollegati non producono energia"
 
 msgid "Production: calculation notes"
 msgstr "Producibilità: note di calcolo"
+
+# Services, personal catalogues and onboarding (R235-R240).
+msgid "Configure"
+msgstr "Configura"
+
+msgid "Configure s&torage…"
+msgstr "Configura accumula&tore…"
+
+msgid "Guided tour…"
+msgstr "Visita guidata…"
+
+msgid "Report a problem…"
+msgstr "Segnala un problema…"
+
+msgid "Your projects"
+msgstr "I tuoi progetti"
+
+msgid "Start from File: create a project, open a saved one, or return to recent work. Save revisions before comparing design alternatives."
+msgstr "Parti da File: crea un progetto, aprine uno salvato o torna ai lavori recenti. Salva una revisione prima di confrontare alternative progettuali."
+
+msgid "Model and place modules"
+msgstr "Modella e posa i moduli"
+
+msgid "Draw buildings and roofs, then define subfields and place modules. Edit, Draw, Layout and Precision collect the tools for each task."
+msgstr "Disegna edifici e coperture, poi definisci i sottocampi e posa i moduli. Modifica, Disegna, Posa e Precisione raccolgono gli strumenti per ogni attività."
+
+msgid "Plan and 3D"
+msgstr "Pianta e 3D"
+
+msgid "Use the view controls to switch between plan and 3D. In a narrow window one view is shown at a time. The compass and Home restore your bearings."
+msgstr "Usa i comandi della vista per passare dalla pianta al 3D. Nelle finestre strette si vede una vista alla volta. La bussola e la vista iniziale aiutano a ritrovare l'orientamento."
+
+msgid "Select, inspect, change"
+msgstr "Seleziona, controlla, modifica"
+
+msgid "Select an object to see its properties. Changes can be undone; help explains the focused field. The site properties hold supply and connection data."
+msgstr "Seleziona un oggetto per vederne le proprietà. Puoi annullare le modifiche; l'aiuto spiega il campo attivo. Le proprietà del sito raccolgono i dati di fornitura e connessione."
+
+msgid "Inverters, strings and storage"
+msgstr "Inverter, stringhe e accumulo"
+
+msgid "Choose the working inverter, inspect its MPPTs and connect strings. Propose and Complete keep manual choices; sizing checks electrical limits. Configure storage beside the inverters."
+msgstr "Scegli l'inverter di lavoro, controlla i suoi MPPT e collega le stringhe. Proponi e Completa conservano le scelte manuali; il dimensionamento verifica i limiti elettrici. Configura l'accumulo accanto agli inverter."
+
+msgid "Checks and explanations"
+msgstr "Verifiche e spiegazioni"
+
+msgid "Review errors, warnings and information. Open a group, read the explanation and follow its destination. A suggested fix is applied only when you choose it."
+msgstr "Esamina errori, avvisi e informazioni. Apri un gruppo, leggi la spiegazione e segui la destinazione indicata. Una correzione proposta si applica solo quando la scegli."
+
+msgid "Production and losses"
+msgstr "Produzione e perdite"
+
+msgid "Calculate the year and inspect losses, shadows and each inverter. Only connected modules contribute energy. Calculation details show assumptions and sources."
+msgstr "Calcola l'anno e controlla perdite, ombre e singoli inverter. Solo i moduli collegati producono energia. I dettagli di calcolo mostrano ipotesi e fonti."
+
+msgid "Enter a load profile or import measured consumption. Compare production with demand before evaluating storage or self-consumption."
+msgstr "Inserisci un profilo di carico o importa consumi misurati. Confronta produzione e fabbisogno prima di valutare accumulo e autoconsumo."
+
+msgid "Review self-consumption, storage operation, costs and returns. Compare variants while keeping each design and its assumptions separate."
+msgstr "Esamina autoconsumo, funzionamento dell'accumulo, costi e ritorni. Confronta varianti conservando separatamente ogni progetto e le sue ipotesi."
+
+msgid "Reports and exchange"
+msgstr "Relazioni e scambio dati"
+
+msgid "Choose the report purpose and detail, inspect the preview, then export. IFC preserves model information; the hourly CSV supports independent checking."
+msgstr "Scegli destinazione e dettaglio della relazione, controlla l'anteprima ed esporta. IFC conserva le informazioni del modello; il CSV orario permette verifiche indipendenti."
+
+msgid "Ask Meridio"
+msgstr "Chiedi a Meridio"
+
+msgid "Ask about the current project, request an explanation or say Show me to reach a setting. Attach a datasheet for review; proposed changes still need your confirmation."
+msgstr "Chiedi del progetto, richiedi una spiegazione o di mostrarti un'impostazione. Allega una scheda tecnica da esaminare; le modifiche proposte richiedono sempre la tua conferma."
+
+msgid "Make the workspace yours"
+msgstr "Adatta l'ambiente di lavoro"
+
+msgid "Settings collect appearance, navigation, keyboard, maps, privacy and Meridio. You can restart this tour from Help or by asking Meridio."
+msgstr "Le impostazioni raccolgono aspetto, navigazione, tastiera, mappe, privacy e Meridio. Puoi riavviare questa visita da Aiuto o chiedendolo a Meridio."
+
+msgid "Choose a PDF or UTF-8 text file."
+msgstr "Scegli un PDF o un file di testo UTF-8."
+
+msgid "No readable text: a scanned PDF needs OCR before attaching."
+msgstr "Nessun testo leggibile: per un PDF scansionato serve l'OCR prima di allegarlo."
+
+msgid "The attachment exceeds the text limit."
+msgstr "L'allegato supera il limite di testo."
+
+msgid "The attachment exceeds the file size limit."
+msgstr "L'allegato supera il limite di dimensione del file."
+
+msgid "The attachment cannot be read as UTF-8 text or PDF."
+msgstr "L'allegato non è leggibile come testo UTF-8 o PDF."
+
+msgid "The PDF cannot be read."
+msgstr "Il PDF non è leggibile."
+
+msgid "Encrypted PDFs cannot be read."
+msgstr "I PDF cifrati non sono leggibili."
+
+msgid "The PDF exceeds the page limit."
+msgstr "Il PDF supera il limite di pagine."
+
+msgid "Opened a bug report draft for your review"
+msgstr "Aperta una bozza di segnalazione da rivedere"
+
+msgid "Started the guided tour"
+msgstr "Visita guidata avviata"
+
+msgid "Prepared a catalogue record for your review"
+msgstr "Preparata una scheda di catalogo da rivedere"
+
+msgid "Unknown product kind or invalid record."
+msgstr "Tipo di prodotto sconosciuto o scheda non valida."
+
+msgid "Voc and Isc must not be smaller than Vmp and Imp."
+msgstr "Voc e Isc non possono essere inferiori a Vmp e Imp."
+
+msgid "The personal catalogue is not a list."
+msgstr "Il catalogo personale non contiene un elenco."
+
+msgid "This model already exists. Use a distinct model or revision name."
+msgstr "Questo modello esiste già. Usa un nome di modello o revisione distinto."
+
+msgid "Inconsistent product data: {issues}"
+msgstr "Dati del prodotto incoerenti: {issues}"
+
+msgid "Required field: {field}"
+msgstr "Campo obbligatorio: {field}"
+
+msgid "A positive stated value is required: {field}"
+msgstr "Serve un valore positivo dichiarato: {field}"
+
+msgid "A stated numeric value is required: {field}"
+msgstr "Serve un valore numerico dichiarato: {field}"
+
+msgid "Invalid numeric list: {field}"
+msgstr "Elenco numerico non valido: {field}"
+
+msgid "Invalid voltage range: {field}"
+msgstr "Intervallo di tensione non valido: {field}"
+
+msgid "AC round-trip efficiency given by the designer"
+msgstr "Rendimento complessivo CA di carica e scarica indicato dal progettista"
+
+msgid " AC-bus equivalent: storage conversion losses are counted once; DC clipping recovery is not modelled."
+msgstr " Equivalente sul bus CA: le perdite di conversione dell'accumulo sono conteggiate una volta; il recupero del clipping in CC non è modellato."
+
+msgid "The battery system does not support the selected coupling."
+msgstr "Il sistema di accumulo non supporta il collegamento selezionato."
+
+msgid "Battery quantity exceeds the documented parallel limit."
+msgstr "La quantità di batterie supera il limite di parallelo documentato."
+
+msgid "AC storage has its own converter; PV inverter brand is independent."
+msgstr "L'accumulo CA ha un proprio convertitore; il marchio dell'inverter FV è indipendente."
+
+msgid "Document the storage coupling and exact model compatibility before calculation."
+msgstr "Documenta collegamento e compatibilità degli esatti modelli prima del calcolo."
+
+msgid "Storage requires usable energy, charge/discharge power and an explicit AC round-trip efficiency."
+msgstr "L'accumulo richiede energia utilizzabile, potenze di carica e scarica e un rendimento complessivo CA esplicito."
+
+msgid "The storage inverter was removed or replaced. Reconnect storage in Plant."
+msgstr "L'inverter dell'accumulo è stato rimosso o sostituito. Ricollega l'accumulo in Impianto."
+
+msgid "Battery quantity must be a positive integer."
+msgstr "La quantità di batterie deve essere un intero positivo."
+
+msgid "Select AC or DC coupling."
+msgstr "Seleziona il collegamento CA o CC."
+
+msgid "An integrated AC converter has not been documented for this battery."
+msgstr "Per questa batteria non è documentato un convertitore CA integrato."
+
+msgid "The selected inverter has no documented storage interface."
+msgstr "L'inverter selezionato non ha un'interfaccia di accumulo documentata."
+
+msgid "No exact-model compatibility evidence is available."
+msgstr "Non sono disponibili attestazioni di compatibilità per questi esatti modelli."
+
+msgid "Operating voltage range is missing; nominal voltage is not a substitute."
+msgstr "Manca l'intervallo di tensione di funzionamento; la tensione nominale non lo sostituisce."
+
+msgid "Inverter storage current limit is unknown."
+msgstr "Il limite di corrente dell'inverter per l'accumulo è sconosciuto."
+
+msgid "Battery power is missing; no power is inferred from capacity."
+msgstr "Manca la potenza della batteria; non viene dedotta dalla capacità."
+
+msgid "Battery quantity is outside the documented compatible configuration."
+msgstr "La quantità di batterie non rientra nella configurazione compatibile documentata."
+
+msgid "Battery operating voltage is outside the inverter storage range."
+msgstr "La tensione operativa della batteria è fuori dall'intervallo dell'inverter per l'accumulo."
+
+msgid "Maximum compatible battery quantity is not documented."
+msgstr "La quantità massima di batterie compatibili non è documentata."
+
+msgid "Inverter storage power limit is unknown."
+msgstr "Il limite di potenza dell'inverter per l'accumulo è sconosciuto."
+
+msgid "Attach PDF or text…"
+msgstr "Allega PDF o testo…"
+
+msgid "Read locally first. Documents are sent only with your message."
+msgstr "Lettura iniziale locale. I documenti vengono inviati solo con il tuo messaggio."
+
+msgid "Attach PDF or text"
+msgstr "Allega PDF o testo"
+
+msgid "Documents (*.pdf *.txt *.md *.csv)"
+msgstr "Documenti (*.pdf *.txt *.md *.csv)"
+
+msgid "Product proposed for review"
+msgstr "Prodotto proposto da rivedere"
+
+msgid "Wait for this message to finish before adding documents."
+msgstr "Attendi la fine di questo messaggio prima di aggiungere documenti."
+
+msgid "The combined attachments exceed 60,000 characters."
+msgstr "Il totale degli allegati supera 60.000 caratteri."
+
+msgid "Wait for document extraction, or remove the pending attachment."
+msgstr "Attendi l'estrazione del documento oppure rimuovi l'allegato in attesa."
+
+msgid "Reserved project or question: documents stay with the local model."
+msgstr "Progetto o domanda riservati: i documenti restano nel modello locale."
+
+msgid "Document analysis cannot execute tools. Start a new conversation to use project tools."
+msgstr "L'analisi dei documenti non può eseguire strumenti. Avvia una nuova conversazione per usare gli strumenti di progetto."
+
+msgid "At most four attachments per message."
+msgstr "Al massimo quattro allegati per messaggio."
+
+msgid "Attached: {name}"
+msgstr "Allegato: {name}"
+
+msgid "Ready locally. Sent only with your next message; cloud use asks again."
+msgstr "Pronto in locale. Verrà inviato solo con il prossimo messaggio; per il cloud serve un nuovo consenso."
+
+msgid "Project tools stay off while documents are in this conversation. Start a new conversation to use them."
+msgstr "Gli strumenti di progetto restano disattivati finché questa conversazione contiene documenti. Avvia una nuova conversazione per usarli."
+
+msgid "No catalogue entry or project value changes until you review and save."
+msgstr "Nessun dato del catalogo o del progetto cambia prima della tua revisione e del salvataggio."
+
+msgid "Review product…"
+msgstr "Rivedi prodotto…"
+
+msgid "Product saved in the personal catalogue."
+msgstr "Prodotto salvato nel catalogo personale."
+
+msgid "Reading: {name}"
+msgstr "Lettura: {name}"
+
+msgid "Local extraction: PDF up to 40 pages, 10 MB, 60,000 characters. No OCR."
+msgstr "Estrazione locale: PDF fino a 40 pagine, 10 MB, 60.000 caratteri. Senza OCR."
+
+msgid "Attachment not read: {reason}"
+msgstr "Allegato non letto: {reason}"
+
+msgid "Attached document text also leaves this PC: {names}"
+msgstr "Anche il testo dei documenti allegati lascia questo PC: {names}"
+
+msgid "AC/DC coupling"
+msgstr "Collegamento CA/CC"
+
+msgid "Efficiency measurement basis"
+msgstr "Base di misura del rendimento"
+
+msgid "Voltage range (V)"
+msgstr "Intervallo di tensione (V)"
+
+msgid "Maximum charge current (A)"
+msgstr "Corrente massima di carica (A)"
+
+msgid "Maximum discharge current (A)"
+msgstr "Corrente massima di scarica (A)"
+
+msgid "Maximum parallel units"
+msgstr "Numero massimo di unità in parallelo"
+
+msgid "Battery voltage range (V)"
+msgstr "Intervallo di tensione della batteria (V)"
+
+msgid "Maximum battery charge power (W)"
+msgstr "Potenza massima di carica batteria (W)"
+
+msgid "Maximum battery discharge power (W)"
+msgstr "Potenza massima di scarica batteria (W)"
+
+msgid "Maximum battery current (A)"
+msgstr "Corrente massima batteria (A)"
+
+msgid "Attested battery compatibility"
+msgstr "Compatibilità batterie attestata"
+
+msgid "Personal catalogue"
+msgstr "Catalogo personale"
+
+msgid "Add personal product…"
+msgstr "Aggiungi prodotto personale…"
+
+msgid "Compare selected products"
+msgstr "Confronta i prodotti selezionati"
+
+msgid "Select two to four rows with Ctrl or Shift, then compare their fields."
+msgstr "Seleziona da due a quattro righe con Ctrl o Maiusc, poi confrontane i campi."
+
+msgid "Review selected as personal product…"
+msgstr "Rivedi la selezione come prodotto personale…"
+
+msgid "Select two to four products to compare (Ctrl or Shift)."
+msgstr "Seleziona da due a quattro prodotti da confrontare (Ctrl o Maiusc)."
+
+msgid "Unknown"
+msgstr "Sconosciuto"
+
+msgid "Product not selected: inconsistent data. {issues}"
+msgstr "Prodotto non selezionato: dati incoerenti. {issues}"
+
+msgid "Review personal product"
+msgstr "Rivedi prodotto personale"
+
+msgid "Product type"
+msgstr "Tipo di prodotto"
+
+msgid "Technical fields in JSON"
+msgstr "Campi tecnici in JSON"
+
+msgid "Check every value against the source. Empty values are unknown. Saving adds a local catalogue entry; it does not change the project."
+msgstr "Controlla ogni valore sulla fonte. I valori vuoti sono sconosciuti. Il salvataggio aggiunge una scheda al catalogo locale; non modifica il progetto."
+
+msgid "Additional fields (JSON). Units: W, V, A, m, kWh"
+msgstr "Campi aggiuntivi (JSON). Unità: W, V, A, m, kWh"
+
+msgid "Source document or URL"
+msgstr "Documento o URL della fonte"
+
+msgid "Required stated value"
+msgstr "Valore dichiarato obbligatorio"
+
+msgid "Technical fields must be a JSON object."
+msgstr "I campi tecnici devono essere un oggetto JSON."
+
+msgid "Not saved: {reason}"
+msgstr "Non salvato: {reason}"
+
+msgid "Report a problem"
+msgstr "Segnala un problema"
+
+msgid "Review this draft before sharing it. The browser opens a GitHub draft; you decide whether to submit it. Reports there are public."
+msgstr "Rivedi la bozza prima di condividerla. Il browser apre una bozza su GitHub; decidi tu se inviarla. Le segnalazioni sono pubbliche."
+
+msgid "What were you doing? What happened, and what did you expect? Add the steps needed to reproduce it."
+msgstr "Cosa stavi facendo? Cosa è successo e cosa ti aspettavi? Aggiungi i passaggi per riprodurre il problema."
+
+msgid "Title"
+msgstr "Titolo"
+
+msgid "Description"
+msgstr "Descrizione"
+
+msgid "Include application and system versions"
+msgstr "Includi versioni del programma e del sistema"
+
+msgid "Include the current phase and object counts"
+msgstr "Includi fase corrente e conteggi degli oggetti"
+
+msgid "Preview of the shared text"
+msgstr "Anteprima del testo condiviso"
+
+msgid "Project files, paths, logs and the conversation are not attached. You can add selected files yourself on GitHub."
+msgstr "File di progetto, percorsi, log e conversazione non sono allegati. Puoi aggiungere personalmente file selezionati su GitHub."
+
+msgid "Copy draft"
+msgstr "Copia bozza"
+
+msgid "Save draft…"
+msgstr "Salva bozza…"
+
+msgid "Open GitHub draft"
+msgstr "Apri bozza su GitHub"
+
+msgid "Close"
+msgstr "Chiudi"
+
+msgid "Save draft"
+msgstr "Salva bozza"
+
+msgid "Text files (*.txt)"
+msgstr "File di testo (*.txt)"
+
+msgid "The browser could not be opened. Copy or save the draft to keep it."
+msgstr "Impossibile aprire il browser. Copia o salva la bozza per conservarla."
+
+msgid "This draft is too long for a browser link. Copy or save it, then paste it into a new issue."
+msgstr "Questa bozza è troppo lunga per un collegamento al browser. Copiala o salvala, poi incollala in una nuova segnalazione."
+
+msgid "The draft could not be saved: {error}"
+msgstr "Impossibile salvare la bozza: {error}"
+
+msgid "Guided tour"
+msgstr "Visita guidata"
+
+msgid "Let Meridio show the phases, tools and settings."
+msgstr "Lascia che Meridio illustri fasi, strumenti e impostazioni."
+
+msgid "Start"
+msgstr "Inizia"
+
+msgid "Prepare a draft, review its contents and choose what to share."
+msgstr "Prepara una bozza, rivedine il contenuto e scegli cosa condividere."
+
+msgid "Prepare"
+msgstr "Prepara"
+
+msgid "Install signed updates automatically"
+msgstr "Installa automaticamente gli aggiornamenti firmati"
+
+msgid "Automatic installation waits until your project has no unsaved changes. You can cancel the download or turn this option off at any time."
+msgstr "L'installazione automatica attende che il progetto non abbia modifiche da salvare. Puoi annullare il download o disattivare questa opzione in qualsiasi momento."
+
+msgid "Automatic installation is available for installed Windows builds. Flatpak updates come from your desktop software centre; portable and source builds are updated manually."
+msgstr "L'installazione automatica è disponibile nelle versioni Windows installate. Gli aggiornamenti Flatpak arrivano dal centro software del sistema; le versioni portatili e da sorgenti si aggiornano manualmente."
+
+msgid "Weather and PVGIS"
+msgstr "Meteo e PVGIS"
+
+msgid "Map tiles"
+msgstr "Tasselli della mappa"
+
+msgid "Check for updates at start"
+msgstr "Controlla aggiornamenti all'avvio"
+
+msgid "Choose battery…"
+msgstr "Scegli batteria…"
+
+msgid "AC: independent storage converter"
+msgstr "CA: convertitore di accumulo indipendente"
+
+msgid "DC: hybrid inverter"
+msgstr "CC: inverter ibrido"
+
+msgid "No inverter selected"
+msgstr "Nessun inverter selezionato"
+
+msgid "Storage inverter"
+msgstr "Inverter dell'accumulo"
+
+msgid "Complete battery systems in parallel"
+msgstr "Sistemi batteria completi in parallelo"
+
+msgid "Not supplied"
+msgstr "Non indicato"
+
+msgid "AC round-trip efficiency (designer input)"
+msgstr "Rendimento complessivo CA (dato del progettista)"
+
+msgid "Hourly balance uses AC production and an equivalent AC round-trip efficiency once. DC coupling does not recover clipped PV energy. Unknown compatibility is not approval."
+msgstr "Il bilancio orario usa la produzione CA e conteggia una volta il rendimento equivalente di carica e scarica. Il collegamento CC non recupera energia FV tagliata dal clipping. Compatibilità sconosciuta non significa approvata."
+
+msgid "Apply storage configuration"
+msgstr "Applica configurazione accumulo"
+
+msgid "Remove storage"
+msgstr "Rimuovi accumulo"
+
+msgid "Model pairing documented"
+msgstr "Abbinamento dei modelli documentato"
+
+msgid "Incompatible configuration"
+msgstr "Configurazione incompatibile"
+
+msgid "Compatibility unknown"
+msgstr "Compatibilità sconosciuta"
+
+msgid "Meridio: guided tour"
+msgstr "Meridio: visita guidata"
+
+msgid "Previous"
+msgstr "Precedente"
+
+msgid "Next"
+msgstr "Successivo"
+
+msgid "Pause tour"
+msgstr "Sospendi visita"
+
+msgid "Welcome"
+msgstr "Benvenuto"
+
+msgid "Let Meridio show you around"
+msgstr "Lascia che Meridio ti accompagni"
+
+msgid "A short tour introduces the phases, tools and settings. You can stop at any time and resume from Help or by asking Meridio. Your project stays unchanged."
+msgstr "Una breve visita presenta fasi, strumenti e impostazioni. Puoi fermarti e riprendere da Aiuto o chiedendolo a Meridio. Il progetto rimane invariato."
+
+msgid "Start tour"
+msgstr "Inizia visita"
+
+msgid "Finish"
+msgstr "Termina"
+
+msgid "Step {current} of {total}"
+msgstr "Passaggio {current} di {total}"
+
+msgid "This area is not available in the current workspace."
+msgstr "Quest'area non è disponibile nell'ambiente di lavoro corrente."
+
+msgid "Flatpak updates are managed by your desktop software centre. Open it to check the installed Flatpak remote."
+msgstr "Gli aggiornamenti Flatpak sono gestiti dal centro software del sistema. Aprilo per controllare il repository Flatpak configurato."
+
+msgid "An update is available. Save your project before installing it: Help > Check for updates."
+msgstr "È disponibile un aggiornamento. Salva il progetto prima di installarlo: Aiuto > Controlla aggiornamenti."
+
+msgid "Install downloaded update"
+msgstr "Installa aggiornamento scaricato"
+
+msgid "Configure storage, its inverter and AC or DC connection"
+msgstr "Configura accumulo, inverter associato e collegamento CA o CC"
+
+msgid "Configure storage"
+msgstr "Configura accumulo"
+
+msgid "Include a selected diagnostic excerpt"
+msgstr "Includi un estratto diagnostico scelto"
+
+msgid "Paste only the diagnostic lines you want to share. Review the redacted preview below."
+msgstr "Incolla solo le righe diagnostiche che vuoi condividere. Controlla sotto l’anteprima con i dati oscurati."
+
+msgid "This conversation includes previously attached document text, which will be sent again."
+msgstr "Questa conversazione contiene il testo di documenti già allegati, che verrà inviato di nuovo."

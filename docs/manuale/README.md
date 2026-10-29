@@ -127,3 +127,38 @@ File > Impostazioni > Assistente > **Modelli locali su questo PC** cerca da sola
 Ogni numero dice da dove viene, con uno di sei tipi di fonte: un valore scritto da te; un valore predefinito di Meridiana, detto come tale; un dato (PVGIS, una scheda tecnica, un catalogo); una norma con edizione, articolo e pagina; un modello pubblicato (Perez 1990, il modello termico di PVsyst); il risultato di un passo precedente. «Come è calcolato», in ogni pagina dei risultati, mostra i passi con le formule; la relazione PDF li riporta e in fondo elenca i valori ancora predefiniti.
 
 In questo manuale i valori predefiniti sono indicati con il file del programma che li fissa, le norme con la regola di `rules.py` o la verifica di `checks.py` che le cita. I numeri dati come «ordine di grandezza» non sono valori di norma: servono a riconoscere un risultato strano.
+
+
+## Aggiornamenti, documenti e assistenza
+
+In Impostazioni > Privacy puoi consentire il controllo degli aggiornamenti e, su Windows installato,
+l’installazione automatica di aggiornamenti firmati. Un progetto con modifiche da salvare blocca
+l’installazione; puoi annullare il download o disattivare il consenso. Le versioni portatili e da sorgenti
+si aggiornano manualmente. Flatpak segue il repository configurato e il centro software del sistema:
+un nuovo numero di versione su GitHub non dimostra che esista un Flatpak installabile.
+
+Meridio accetta PDF con testo e file TXT/MD/CSV UTF-8, anche trascinati: massimo quattro file, 10 MB per
+file, 40 pagine per PDF e 60.000 caratteri complessivi. L’estrazione è locale; per scansioni serve prima
+l’OCR. Il testo parte solo con il messaggio. Per il cloud viene chiesto consenso specifico anche quando
+un messaggio successivo reinvia documenti già nella conversazione. Progetti riservati restano locali.
+Quando la conversazione contiene documenti, gli strumenti che agiscono sul progetto sono disattivati:
+avvia una nuova conversazione per usarli di nuovo. Una scheda proposta resta una bozza da rivedere.
+
+Le finestre di catalogo consentono di aggiungere prodotti personali, copiarne uno da correggere e
+confrontare da due a quattro righe. Ogni scheda personale richiede dati essenziali e fonte; la revisione
+umana non eredita una precedente attestazione di verifica dei valori. I campi tecnici aggiuntivi sono
+attualmente modificabili in JSON con unità esplicite. Una scheda incoerente non può essere selezionata.
+
+L’accumulo si configura in Impianto, accanto agli inverter. Il collegamento CA richiede il proprio
+convertitore; il collegamento CC richiede inverter ibrido, abbinamento documentato e limiti di tensione,
+corrente, potenza e quantità. Il marchio da solo non prova compatibilità. Le quantità in parallelo
+richiedono un limite dichiarato. Applica registra una sola modifica annullabile. I risultati restano
+nel bilancio energetico ed economico. Il modello attuale usa l’equivalente sul bus CA e un rendimento
+complessivo inserito dal progettista: non recupera l’energia FV tagliata dal clipping sul lato CC.
+
+Da Aiuto o File > Aiuto puoi avviare la visita guidata e preparare una segnalazione. Meridio riconosce
+anche «Avvia la visita guidata» e «Segnala un bug» senza collegarsi a un modello. La visita può essere
+saltata, sospesa e ripresa; non modifica il progetto. La segnalazione mostra una bozza modificabile,
+con dati di sistema facoltativi, contesto e righe diagnostiche scelti. L’anteprima oscura percorsi e
+credenziali riconosciuti: controllala sempre. Apri bozza su GitHub apre un modulo pubblico, senza
+inviare la segnalazione. Puoi invece copiare o salvare la bozza in un nuovo file.

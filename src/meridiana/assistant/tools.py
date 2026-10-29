@@ -195,7 +195,7 @@ STEP_1 = ("read_checks", "project_summary", "go_to", "search_manual", "list_navi
 STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "propose_fix", "propose_edit",
           "propose_undo")
 STEP_3 = ("search_projects", "project_revisions", "similar_projects", "prepare_open_project", "list_tasks",
-          "prepare_task")
+          "prepare_task", "prepare_bug_report", "start_guided_tour", "propose_catalog_record")
 
 
 def specs(names=None) -> list[dict]:
@@ -1107,7 +1107,49 @@ def prepare_task(host, state: State, action: str, task_id: str = "", text: str =
                    _("Proposed: {what}").format(what=text), proposal=proposal)
 
 
+def prepare_bug_report(host, state: State, summary: str, details: str = "") -> Outcome:
+    if not isinstance(summary, str) or not summary.strip() or len(summary) > 180:
+        return _error("give a short issue title, at most 180 characters")
+    if not isinstance(details, str) or len(details) > 16000:
+        return _error("details must be text of at most 16000 characters")
+    host.prepare_bug_report(summary, details)
+    return Outcome(_json({"draft_opened": True, "sent": False, "waiting": "the designer reviews and submits"}),
+                   _("Opened a bug report draft for your review"))
+
+
+def start_guided_tour(host, state: State) -> Outcome:
+    host.start_guided_tour()
+    return Outcome(_json({"started": True, "project_changed": False}), _("Started the guided tour"))
+
+
+def propose_catalog_record(host, state: State, kind: str, record: dict) -> Outcome:
+    from ..catalog import KINDS
+    if kind not in KINDS or not isinstance(record, dict):
+        return _error("choose a catalogue kind and a record object")
+    shown = host.prepare_catalog_record(kind, record)
+    return Outcome(_json({"shown_for_review": bool(shown), "saved": False}),
+                   _("Prepared a catalogue record for your review"))
+
+
+SPECS.update({
+    "prepare_bug_report": {
+        "description": "When the designer requests a bug report, or agrees to report a suspected defect, prepare an editable local draft. No report is sent. Include reproduction steps, observed and expected behaviour; never secrets or project content not requested by the designer.",
+        "parameters": _schema({"summary": {"type": "string"}, "details": {"type": "string"}}, ("summary",)),
+    },
+    "start_guided_tour": {
+        "description": "Start or resume Meridio's guided tour when the designer asks to be shown the application. Navigation only, no project changes.",
+        "parameters": _schema(),
+    },
+    "propose_catalog_record": {
+        "description": "Prepare a personal catalogue entry for the designer to review and correct. Never saves automatically. Retain the source and mark missing or uncertain technical values, never invent them.",
+        "parameters": _schema({"kind": {"type": "string", "enum": ["modules", "inverters", "microinverters", "optimizers", "batteries"]}, "record": {"type": "object"}}, ("kind", "record")),
+    },
+})
+
+
 TOOLS = {"read_checks": read_checks, "project_summary": project_summary, "go_to": go_to,
+         "prepare_bug_report": prepare_bug_report, "start_guided_tour": start_guided_tour,
+         "propose_catalog_record": propose_catalog_record,
          "list_navigation_targets": list_navigation_targets,
          "search_manual": search_manual, "read_selection": read_selection, "read_results": read_results,
          "read_pedigree": read_pedigree, "read_rules": read_rules, "propose_fix": propose_fix,

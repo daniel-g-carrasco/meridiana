@@ -359,6 +359,20 @@ class Bubble(QFrame):
         p.drawPath(path.simplified())
 
 
+class SuggestionsBox(QWidget):
+    """Keep natural question height, but allow a dock to cross its compact threshold."""
+
+    def __init__(self, owner, parent=None):
+        super().__init__(parent)
+        self.owner = owner
+
+    def minimumSizeHint(self):
+        hint = super().minimumSizeHint()
+        if self.owner.docked:
+            hint.setHeight(0)
+        return hint
+
+
 class Assistant(QFrame):
     """The floating character; `area` is where he may stand (the main window: over every card, Daniel 24/10/2026),
     between `top` and `bottom` pixels; `home` the card he starts on (the views), in the area's pixels."""
@@ -366,6 +380,8 @@ class Assistant(QFrame):
     openedChanged = Signal(bool)
     dockRequested = Signal(bool)                            # its button: into the panels (True) or floating
     bubbleResized = Signal(int, int)                        # the bubble's size, to remember
+    attachmentRequested = Signal()
+    filesDropped = Signal(list)
     asked = Signal(str)                                     # a question, to the conversation (ui/assistant_chat.py)
     stopped = Signal()                                      # «Stop»: the turn dropped
 
@@ -505,7 +521,7 @@ class Assistant(QFrame):
         self.cards_box.setSpacing(Space.S)
         self.cards.hide()
         inside.addWidget(self.cards)
-        self.questions_box = QWidget(self.panel)
+        self.questions_box = SuggestionsBox(self, self.panel)
         qbox = QVBoxLayout(self.questions_box)
         qbox.setContentsMargins(0, 0, 0, 0)
         qbox.setSpacing(Space.XXS)
@@ -542,7 +558,17 @@ class Assistant(QFrame):
         self.stop_action.setToolTip(_("Stop the answer"))
         self.stop_action.triggered.connect(self.stop)
         self.stop_action.setVisible(False)
+        self.attach_button = QPushButton(_("Attach PDF or text…"))
+        self.attach_button.setToolTip(_("Read locally first. Documents are sent only with your message."))
+        self.attach_button.clicked.connect(self.attachmentRequested)
+        inside.addWidget(self.attach_button)
         inside.addWidget(self.field)
+        self.field.setAcceptDrops(True)
+        self.conversation.setAcceptDrops(True)
+        self.conversation.viewport().setAcceptDrops(True)
+        self.conversation.viewport().installEventFilter(self)
+        self.panel.setAcceptDrops(True)
+        self.document_drop_targets = (self.field, self.conversation, self.conversation.viewport(), self.panel)
         self.messages: list[tuple[str, str]] = []           # (who, text): "you", "assistant" or "note"
         # the filters last, when every widget they look at exists
         for w in (self.face, self.small, self.head, self.bubble, self.panel, self.conversation, self.field, area):
@@ -1034,6 +1060,14 @@ class Assistant(QFrame):
     # events
 
     def eventFilter(self, watched, event) -> bool:
+        if watched in self.document_drop_targets and event.type() in (
+                QEvent.Type.DragEnter, QEvent.Type.DragMove, QEvent.Type.Drop):
+            mime = event.mimeData()
+            if mime.hasUrls() and all(url.isLocalFile() for url in mime.urls()):
+                event.acceptProposedAction()
+                if event.type() == QEvent.Type.Drop:
+                    self.filesDropped.emit([url.toLocalFile() for url in mime.urls()])
+                return True
         kind = event.type()
         if watched is self.area or any(watched is w for w in self.followed):
             # a move too: the page moves when the bar of the phase changes height or the gaps settle (task 17b)
@@ -1130,6 +1164,7 @@ class Assistant(QFrame):
         constraint = QLayout.SizeConstraint.SetDefaultConstraint if on else QLayout.SizeConstraint.SetMinimumSize
         self.questions_box.layout().setSizeConstraint(constraint)
         self.questions_box.setMinimumHeight(0 if on else self.questions_box.sizeHint().height())
+        self.questions_box.updateGeometry()
         self.dock_button.setChecked(on)
         self.dock_button.setToolTip(_("Float over the views again") if on else
                                      _("Dock in the panels, as Project and Properties"))

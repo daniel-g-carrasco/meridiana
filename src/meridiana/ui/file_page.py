@@ -417,6 +417,10 @@ class FilePage(QFrame):
                  self._command("manual")),
             Tile("keyboard", _("Keyboard shortcuts"), _("Every key of the window, with a search; change them in the "
                                                         "same place."), (), _("Open"), self._command("shortcuts")),
+            Tile("book-open", _("Guided tour"), _("Let Meridio show the phases, tools and settings."), (), _("Start"),
+                 self._command("guided_tour")),
+            Tile("message-circle", _("Report a problem"), _("Prepare a draft, review its contents and choose what to share."), (), _("Prepare"),
+                 self._command("report_bug")),
             Tile("info", _("About Meridiana"), _("The version, the licences, the data and where they come from."),
                  (), _("Open"), self._command("about"))])
         helps.finish()

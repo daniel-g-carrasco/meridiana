@@ -75,13 +75,22 @@ def field_names() -> dict:
         "max_output_current_a": _("Maximum output current (A)"), "rapid_shutdown": _("Rapid shutdown"),
         "efficiency_weighted_pct": _("Weighted efficiency (%)"), "efficiency_peak_pct": _("Peak efficiency (%)"),
         "compatible_inverters": _("Compatible inverters"), "warranty_years": _("Warranty (years)"),
-        "notes": _("Notes"),
+        "notes": _("Notes"), "coupling": _("AC/DC coupling"),
+        "efficiency_basis": _("Efficiency measurement basis"), "voltage_range_v": _("Voltage range (V)"),
+        "max_charge_current_a": _("Maximum charge current (A)"),
+        "max_discharge_current_a": _("Maximum discharge current (A)"),
+        "max_parallel_units": _("Maximum parallel units"),
+        "battery_voltage_range_v": _("Battery voltage range (V)"),
+        "battery_charge_power_max_w": _("Maximum battery charge power (W)"),
+        "battery_discharge_power_max_w": _("Maximum battery discharge power (W)"),
+        "battery_current_max_a": _("Maximum battery current (A)"),
+        "storage_compatibility": _("Attested battery compatibility"),
         "datasheet_url": _("Datasheet"), "retrieved": _("Read on"), "source": _("Origin"),
     }
 
 
 def origin_names() -> dict:
-    return {"curated": _("datasheet"), "cec": _("CEC list (USA)")}
+    return {"curated": _("datasheet"), "cec": _("CEC list (USA)"), "personal": _("Personal catalogue")}
 
 
 def how_many(kind: str, n: int) -> str:
@@ -213,6 +222,7 @@ class CatalogDialog(QDialog):
         self.origin.addItem(_("All"), "")
         self.origin.addItem(_("Datasheets read for Meridiana"), "curated")
         self.origin.addItem(_("CEC list (USA)"), "cec")
+        self.origin.addItem(_("Personal catalogue"), "personal")
         self.maker = QComboBox()
         self.maker.setEditable(True)                    # typed, with the completer, among hundreds of makers
         self.maker.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
@@ -283,7 +293,7 @@ class CatalogDialog(QDialog):
         self.table = QTableView()
         self.table.setModel(self.rows)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         # the catalogue's order until a column is clicked: without the indicator at -1, enabling the sorting would
         # sort by the first column at once
@@ -320,6 +330,16 @@ class CatalogDialog(QDialog):
         box.addWidget(split, 1)
         box.addWidget(self.count)
         box.addWidget(self.hint)
+        self.new_product = QPushButton(_("Add personal product…"))
+        self.new_product.clicked.connect(lambda: self._new_personal())
+        self.compare_products = QPushButton(_("Compare selected products"))
+        self.compare_products.setToolTip(_("Select two to four rows with Ctrl or Shift, then compare their fields."))
+        self.compare_products.clicked.connect(self._compare_selected)
+        box.addWidget(self.compare_products)
+        self.revise_product = QPushButton(_("Review selected as personal product…"))
+        self.revise_product.clicked.connect(lambda: self._new_personal(self.chosen()) if self.chosen() else None)
+        box.addWidget(self.revise_product)
+        box.addWidget(self.new_product)
         box.addWidget(buttons)
         self.timer = QTimer(self, singleShot=True, interval=SEARCH_PAUSE_MS)
         self.timer.timeout.connect(self._search)
@@ -344,6 +364,48 @@ class CatalogDialog(QDialog):
             self.reader.signals.done.connect(self._read)
             QThreadPool.globalInstance().start(self.reader)
         else:
+            self._search()
+
+    def _compare_selected(self):
+        rows = self.table.selectionModel().selectedRows()
+        if not 2 <= len(rows) <= 4:
+            self.hint.setText(_("Select two to four products to compare (Ctrl or Shift)."))
+            self.hint.show()
+            return
+        records = [self.record_at(row.row()) for row in rows]
+        names = field_names()
+        present = list(dict.fromkeys(key for rec in records for key in rec))
+        keys = [key for key in names if key in present] + [key for key in present if key not in names]
+        header = "<tr><th></th>" + "".join("<th>" + html.escape(str(r.get("model", ""))) + "</th>"
+                                               for r in records) + "</tr>"
+        lines = []
+        for key in keys:
+            if key == "id":
+                continue
+            values = [r.get(key) for r in records]
+            cells = []
+            for value in values:
+                if value is None or value == "" or value == []:
+                    cells.append(_("Unknown"))
+                elif isinstance(value, bool):
+                    cells.append(_("yes") if value else _("no"))
+                elif isinstance(value, (int, float)):
+                    cells.append(number(value, 3 if abs(value) < 10 else 1))
+                elif key == "source":
+                    cells.append(origin_names().get(value, value))
+                else:
+                    cells.append(str(value))
+            lines.append("<tr><th>" + html.escape(names.get(key, key)) + "</th>" +
+                         "".join("<td>" + html.escape(value) + "</td>" for value in cells) + "</tr>")
+        self.detail.setHtml("<table>" + header + "".join(lines) + "</table>")
+        self.detail.verticalScrollBar().setValue(0)
+
+    def _new_personal(self, record=None):
+        from .catalog_editor import review_record
+        if review_record(self.kind, record, parent=self) is not None:
+            self.model.set_records(catalog.search(self.kind, limit=None))
+            self._fill_makers()
+            self.origin.setCurrentIndex(self.origin.findData("personal"))
             self._search()
 
     def _read(self, error: str) -> None:
@@ -535,6 +597,20 @@ class CatalogDialog(QDialog):
                                             "for the California Energy Commission.")) + "</i></p>"
         self.detail.setHtml(f"<h3>{html.escape(str(r.get('manufacturer', '')))} {html.escape(str(r.get('model', '')))}"
                             f"</h3><table>{''.join(lines)}</table>{note}")
+
+    def accept(self):
+        from ..catalog.audit import audit_record
+        record = self.chosen()
+        if record is None and not self.browse:
+            return
+        if record is not None:
+            issues = audit_record(record, self.kind)["issues"]
+            if issues:
+                self.hint.setText(_("Product not selected: inconsistent data. {issues}").format(
+                    issues="; ".join(issues)))
+                self.hint.show()
+                return
+        super().accept()
 
     def chosen(self) -> dict | None:
         rows = self.table.selectionModel().selectedRows()

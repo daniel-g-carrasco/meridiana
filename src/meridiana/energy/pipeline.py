@@ -179,6 +179,8 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
         out.notes.append(str(error))
     degradation = next((a.module.yearly_loss for a in arrays if a.module.yearly_loss is not None), None)
     degradation = float(degradation) if degradation is not None else None
+    from .storage import validate_connection
+    validate_connection(project.economics, project.energy.get("inverters", []))
     settings = economics.Settings.from_dict(project.economics)
     load = out.load
     out.econ = economics.evaluate(sim.hourly.e_kwh, load.hourly, sim.p_stc_kw, sim.p_ac_kw, settings,

@@ -79,6 +79,9 @@ class Settings:
     trase: float = 0.0              # €/kWh, TRASE of the low-voltage users: from ARERA's table of the year
     battery: dict = field(default_factory=dict)      # a battery of the catalogue; empty: none
     battery_units: int = 1
+    storage_coupling: str = ""      # empty: legacy estimate; ac/dc: explicit AC-bus equivalent
+    storage_inverter: dict = field(default_factory=dict)
+    storage_efficiency_pct: float | None = None  # AC-bus round trip, entered explicitly
     battery_cost_per_kwh: float = 650.0              # €/kWh usable, installed (indicative)
     export_limit_kw: float = -1.0   # kW at the injection point: -1 none, 0 zero export
     defaults: list = field(default_factory=list)   # names the designer has not changed
@@ -119,6 +122,9 @@ class Battery:
 
     @classmethod
     def from_settings(cls, s: Settings) -> Battery | None:
+        if s.storage_coupling:
+            from .storage import operating_battery
+            return operating_battery(vars(s))
         r = s.battery or {}
         e = r.get("usable_energy_kwh") or r.get("nominal_energy_kwh")
         if not e:
@@ -379,16 +385,21 @@ def evaluate(production: pd.Series, load: pd.Series, p_stc_kw: float, p_ac_kw: f
                  Quantity(r"E_{auto}", _("energy self-consumed"), year1["self"], "kWh", computed_, 0), bands.SOURCE))
     if battery is not None:
         bsrc = Source("data", _("datasheet of {name}").format(name=battery.name), (s.battery or {}).get("datasheet_url", ""))
+        eta_source = (Source("input", _("AC round-trip efficiency given by the designer"))
+                      if s.storage_coupling and s.storage_efficiency_pct else bsrc)
+        power_source = computed_ if s.storage_coupling else bsrc
         rec.add(Step("battery", _("Storage"),
                      r"S_h = S_{h-1} + \sqrt{\eta}\,C_h - \frac{D_h}{\sqrt{\eta}},\quad 0 \leq S_h \leq E_u,"
                      r"\ C_h \leq P_c,\ D_h \leq P_d",
                      _("The surplus of each hour charges the battery, the shortfall discharges it, within its usable "
                        "energy and its power; the round-trip efficiency is split half in and half out. The battery "
-                       "starts empty and does not charge from the grid."),
+                       "starts empty and does not charge from the grid.") +
+                     (_(" AC-bus equivalent: storage conversion losses are counted once; DC clipping recovery is not modelled.")
+                      if s.storage_coupling else ""),
                      [Quantity(r"E_u", _("usable energy"), battery.usable_kwh, "kWh", bsrc, 1),
-                      Quantity(r"P_c", _("charge power"), battery.charge_kw, "kW", bsrc, 1),
-                      Quantity(r"P_d", _("discharge power"), battery.discharge_kw, "kW", bsrc, 1),
-                      Quantity(r"\eta", _("round-trip efficiency"), 100 * battery.efficiency, "%", bsrc, 0),
+                      Quantity(r"P_c", _("charge power"), battery.charge_kw, "kW", power_source, 1),
+                      Quantity(r"P_d", _("discharge power"), battery.discharge_kw, "kW", power_source, 1),
+                      Quantity(r"\eta", _("round-trip efficiency"), 100 * battery.efficiency, "%", eta_source, 0),
                       Quantity(r"\sum C_h", _("energy into the battery, first year"), year1["stored"], "kWh", computed_, 0)],
                      Quantity(r"\sum D_h", _("energy from the battery to the loads"), year1["given"], "kWh", computed_, 0),
                      ""))
@@ -512,7 +523,7 @@ def storage_sizing(production: pd.Series, load: pd.Series, p_stc_kw: float, p_ac
         battery = ({"manufacturer": _("generic battery"), "model": f"{kwh:g} kWh", "usable_energy_kwh": kwh,
                     "max_charge_power_w": kwh * 500.0, "max_discharge_power_w": kwh * 500.0,
                     "round_trip_efficiency_pct": 90.0} if kwh > 0 else {})
-        changes = {"battery": battery, "battery_units": 1}
+        changes = {"battery": battery, "battery_units": 1, "storage_coupling": "", "storage_inverter": {}}
         if s.capex_total > 0:
             changes["capex_total"] = max(0.0, offer) + kwh * s.battery_cost_per_kwh
         cases.append((f, kwh, Settings(**{**s.__dict__, **changes})))

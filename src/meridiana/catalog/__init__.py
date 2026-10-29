@@ -181,13 +181,15 @@ def load(kind: str) -> tuple:
     """Every record of a kind, curated first; a tuple, so that the cache cannot be changed by a caller."""
     if kind not in KINDS:
         raise ValueError(kind)
+    from .personal import load as personal_load
+    personal = personal_load(kind)
     if kind == "modules":
         curated = [m for m in (normalise_module(r) for r in _read("modules_curated.json")) if m]
-        return tuple(enrich_module(m) for m in curated + _read("modules_cec.json.gz"))
+        return tuple(enrich_module(m) for m in personal + curated + _read("modules_cec.json.gz"))
     if kind == "inverters":
         curated = [normalise_other(r, kind) for r in _read("inverters_curated.json")]
-        return tuple(curated + _read("inverters_cec.json.gz"))
-    return tuple(normalise_other(r, kind) for r in _read(f"{kind}_curated.json"))
+        return tuple(personal + curated + _read("inverters_cec.json.gz"))
+    return tuple(personal + [normalise_other(r, kind) for r in _read(f"{kind}_curated.json")])
 
 
 def power_of(rec: dict, kind: str) -> float:

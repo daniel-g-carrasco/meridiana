@@ -94,6 +94,7 @@ def phases() -> list[Phase]:
             Group("inverter", _("Inverter"), (
                 T("inverter_catalog", _("Catalogue")),
                 T("inverter_auto", _("Size it")))),
+            Group("storage", _("Storage"), (T("battery_catalog", _("Configure")),)),
             Group("strings", _("Strings"), (
                 T("strings_auto", _("Propose")),
                 T("strings_complete", _("Complete")),
@@ -124,7 +125,6 @@ def phases() -> list[Phase]:
              _("Would a battery help here?"))),
         Phase("economics", 5, _("Balance and economics"), (
             Group("compute", _("Computation"), (
-                T("battery_catalog", _("Battery")),
                 T("compute", _("Compute"), primary=True),)),
             Group("compare", _("Comparison"), (
                 T("new_variant", _("New variant"), icon="copy-plus"),

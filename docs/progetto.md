@@ -412,3 +412,41 @@ Applicazione R05 integrata nelle due cartelle Windows al commit 10da2fc. Install
 verificati; Flatpak R05 installato sul laptop fw13 con checksum/commit e avvio nativo verificati.
 Il self-test generico presume la visibilità del 3D anche sotto soglia responsive: sul laptop è stata
 eseguita una prova aggiuntiva attivando esplicitamente la vista, senza modificare il pacchetto.
+
+
+## Servizi, cataloghi e Meridio, 29 ottobre 2026, sorgenti R06
+
+[V] R235 aggiunge un controller separato per aggiornamenti, avviso persistente all'avvio e installazione
+facoltativa per Windows installato. Il controllo e il download sono asincroni; firma e progetto pulito vengono
+ricontrollati prima di Setup. Il retry non avvia processi duplicati. Flatpak segue il centro software del desktop,
+portable e sorgenti mantengono il percorso manuale. La politica comune è nel template Qt, commit d3769a6.
+Non è stata eseguita un'installazione reale durante i test.
+
+[V] R236 aggiunge estrazione locale asincrona di PDF e testo UTF-8, trascinamento, limiti, anteprima e rimozione.
+L'allegato parte soltanto con il messaggio; il reinvio cloud dei documenti nella cronologia richiede ogni volta
+conferma specifica. I documenti restano dati non attendibili e i tool sono disabilitati nella relativa conversazione.
+Meridio prepara una proposta strutturata da rivedere nell'editor. Il catalogo personale funziona anche senza AI,
+con validazione di campi scalari e strutturati, ricerca per origine e confronto. Le fonti vengono conservate;
+la scheda personale non eredita una verifica precedente o dichiarata dal modello.
+
+[V] R237 porta la configurazione accumulo in Impianto, accanto agli inverter, con AC/DC espliciti, associazione
+esatta e limiti documentati. Il calcolo DC richiede tensioni operative, corrente, potenze direzionali e quantità;
+il parallelo AC richiede il massimo ammesso. Una connessione a inverter rimosso è respinta. Le modifiche passano
+per session.edit e si annullano. Il modello rimane un equivalente sul bus AC con rendimento di ciclo contato
+una sola volta: non simula tutti i flussi DC e non recupera il clipping FV.
+
+[V] R238 resta parziale: audit strutturale di tutti i 24.262 record grezzi distribuiti, quattro incoerenze
+Imp > Isc conservate e bloccate nella scelta. Provenienza NREL/SAM, fonte dichiarata, ignoto e verifica per campo
+restano distinti. Sono stati verificati puntualmente 34 campi, con fonte e pagina; non tutte le schede tecniche.
+
+[V] R239 offre una bozza di segnalazione da Aiuto e Meridio, anteprima modificabile, diagnostica selezionabile,
+copia/salvataggio e apertura deliberata nel browser. Nessun invio automatico né progetto, conversazione o file
+allegati implicitamente. R240 offre invito iniziale saltabile e panoramica in 12 passi, richiamo da Aiuto o Meridio
+anche senza modello, precedente/successivo/pausa e ripresa persistente. La visita usa destinazioni reali e spotlight,
+senza modificare il progetto; non è un manuale esaustivo di ogni campo.
+
+Rapporti: aggiornamenti-20261029-R01, allegati-catalogo-20261029-R01, accumulo-audit-20261029-R01 e
+accumulo-audit-review-20261029-R02 in docs/revisioni. Configurazione migrata una sola volta da 21 a 22.
+Verifiche mirate, review indipendenti e suite integrata completate con correzioni riverificate. Pacchetti R06
+portabile, Setup Windows e Flatpak verificati; integrazione e installazione laptop nella ricevuta finale.
+Il test tempo cambio tema è sensibile al carico, come sulla base: passa dopo la compressione, soglia invariata.

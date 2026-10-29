@@ -46,6 +46,7 @@ BROUGHT = {
     19: {"map_sources"},
     20: {"assistant_introduced", "assistant_local_runtime"},
     21: {"text_size"},
+    22: {"auto_install_updates", "pending_update", "tour_status", "tour_step"},
 }
 
 

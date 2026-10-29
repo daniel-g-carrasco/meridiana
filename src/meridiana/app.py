@@ -90,6 +90,7 @@ def main(argv: list[str]) -> int:
     if not win.offer_recovery() and target and target.exists():
         win.open_path(target)
     win.show()
+    QTimer.singleShot(1200, win, win._offer_tour)
 
     shot = os.environ.get(f"{ENV_PREFIX}_SCREENSHOT")
     if shot:

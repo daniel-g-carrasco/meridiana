@@ -656,6 +656,10 @@ class MainWindow(QMainWindow):
         self.relayout_timer.timeout.connect(self._start_layout)
         self.shown_once = False
         self.update_job = None                   # the check for a newer version in hand (check_updates)
+        from .update_controller import UpdateController
+        self.update_controller = UpdateController(self)
+        self.tour_dialog = None
+        self.feedback_dialog = None
         self.narrow: bool | None = None
         self.auto_plan = False                 # "both" turned into "plan" by a narrow window
         self.before_clean = None               # the layout before «Only the drawing»
@@ -1084,7 +1088,7 @@ class MainWindow(QMainWindow):
         act(compute, "consumption_base", self._consumption_base,
             tip=_("Where the consumption comes from: a year, the bands, the bills, a curve or a profile"))
         act(compute, "battery_catalog", self._choose_battery,
-            tip=_("A battery from the catalogue for the balance"))
+            tip=_("Configure storage, its inverter and AC or DC connection"))
         variants = bar.addMenu(_("V&ariants"))
         act(variants, "new_variant", self._new_variant,
             tip=_("A copy of the variant in hand, to change without losing it: the site is shared"))
@@ -1124,6 +1128,8 @@ class MainWindow(QMainWindow):
                                                             "the same place"))
         act(help_, "check_updates", lambda: self.check_updates(manual=True),
             tip=_("Whether a newer version is out, from the project's releases on GitHub"))
+        act(help_, "guided_tour", self._start_tour)
+        act(help_, "report_bug", self._report_bug)
         act(help_, "about", self._about)
         keys, self.shortcut_notes = shortcuts.settle(self.cfg.shortcuts)
         self.apply_shortcuts(keys)
@@ -1414,6 +1420,7 @@ class MainWindow(QMainWindow):
         if section in ("privacy", "all"):
             self._network(*settings.privacy.choice())
             self.cfg.check_updates = settings.privacy.updates.isChecked()
+            self.cfg.auto_install_updates = settings.privacy.auto_updates.isChecked()
         if section in ("maps", "all"):
             self._maps(*settings.maps.choice())
         if section in ("report", "all"):
@@ -4625,9 +4632,23 @@ class MainWindow(QMainWindow):
         self._show_chosen(self.chosen_string)
 
     def _choose_battery(self) -> None:
-        dialog = CatalogDialog("batteries", self)
-        if dialog.exec() == QDialog.DialogCode.Accepted and (rec := dialog.chosen()):
-            self.edit(_("Choose the battery"), lambda p: set_path(p.economics, "battery", rec))
+        from .storage_page import StoragePage
+        dialog = QDialog(self)
+        dialog.setWindowTitle(_("Storage"))
+        dialog.resize(580, 620)
+        box = QVBoxLayout(dialog)
+
+        def apply_storage(patch):
+            self.edit(_("Configure storage"), lambda p: p.economics.update(patch))
+            dialog.accept()
+
+        page = StoragePage(self.project.economics, self.project.energy.get("inverters", []), apply_storage, dialog)
+        from PySide6.QtWidgets import QScrollArea
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(page)
+        box.addWidget(scroll)
+        dialog.exec()
 
     def _choose_module(self, sfid: str) -> None:
         dialog = CatalogDialog("modules", self)
@@ -5186,47 +5207,56 @@ class MainWindow(QMainWindow):
 
     # -- a newer version (updates.py, ui/update_dialog.py; task 18f) ------------------------------------------------
 
-    def _daily_update_check(self) -> None:
-        """A minute after the start, once a day, when Settings > Privacy allows it (the Windows build only:
-        updates.checks_by_itself); the installers of earlier updates are cleared first."""
-        from datetime import date
-
-        from .. import updates
-        today = date.today().isoformat()
-        if not updates.check_due(self.cfg.check_updates, self.cfg.last_update_check, today):
+    def _report_bug(self, summary="", details="") -> None:
+        from .feedback import FeedbackDialog
+        if self.feedback_dialog is not None:
+            self.feedback_dialog.show()
+            self.feedback_dialog.raise_()
             return
-        self.cfg.last_update_check = today
-        self._save_config()
-        updates.clean_downloads()
-        self.check_updates(manual=False)
+        context = "Phase: " + self.phase() + "\nSubfields: " + str(len(self.project.subfields))
+        dialog = FeedbackDialog(self, summary=str(summary or ""), details=str(details or ""), context=context)
+        self.feedback_dialog = dialog
+        dialog.finished.connect(lambda _result: self._support_closed("feedback_dialog"))
+        dialog.show()
+
+    def _support_closed(self, name):
+        dialog = getattr(self, name)
+        if dialog is not None:
+            dialog.deleteLater()
+            setattr(self, name, None)
+
+    def _offer_tour(self) -> None:
+        if self.cfg.tour_status == "new" and self.tour_dialog is None:
+            self._start_tour(invitation=True)
+
+    def _start_tour(self, invitation=False) -> None:
+        from .tour import TourDialog
+        if self.tour_dialog is not None:
+            self.tour_dialog.show()
+            self.tour_dialog.raise_()
+            return
+        dialog = TourDialog(self, resume=self.cfg.tour_status in ("active", "paused"), invitation=invitation)
+        self.tour_dialog = dialog
+        dialog.finished.connect(lambda _result: self._support_closed("tour_dialog"))
+        dialog.show()
+
+    def _assistant_command(self, text: str) -> bool:
+        from ..tour import local_command
+        command = local_command(text)
+        if command == "tour":
+            self._start_tour()
+        elif command == "bug":
+            self._report_bug()
+        return bool(command)
+
+    def _daily_update_check(self) -> None:
+        self.update_controller.daily()
 
     def check_updates(self, manual: bool) -> None:
-        """The latest release asked of GitHub in the pool; the answer in _update_answer."""
-        from .update_dialog import CheckJob
-        job = CheckJob(manual)
-        job.signals.done.connect(self._update_answer)
-        self.update_job = job                       # (the tests wait on it)
-        if manual:
-            self.tell(_("Checking for updates…"), 10)
-        self.pool.start(job)
+        self.update_controller.check(manual)
 
     def _update_answer(self, release, why: str, manual: bool) -> None:
-        from .. import __version__, updates
-        if release is None:
-            if manual:
-                self.tell(_("The check for updates failed: {error}").format(error=why))
-            else:                                   # offline, at the start: not worth a word in the window
-                log.complain("update check", updates.UpdateError(why))
-            return
-        if not updates.is_newer(release.version):
-            if manual:
-                self.tell(_("Meridiana {version} is the latest version.").format(version=__version__))
-            return
-        if manual or self.isActiveWindow():
-            self.show_update(release)
-        else:
-            self.tell(_("Version {version} is available: Help > Check for updates.").format(version=release.version),
-                      60)
+        self.update_controller.answer(release, why, manual)
 
     def show_update(self, release, run=None, **options):
         """The dialog of a newer version; `run` stands in for exec() in the tests, `options` for its installer and
@@ -5240,6 +5270,7 @@ class MainWindow(QMainWindow):
         super().showEvent(event)
         if not self.shown_once:
             self.shown_once = True
+            self.update_controller.startup()
             QTimer.singleShot(0, self, self._first_layout)    # not called if the window is gone by then
             from .. import updates
             if updates.checks_by_itself():

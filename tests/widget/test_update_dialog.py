@@ -73,6 +73,73 @@ class UpdateDialogTest(unittest.TestCase):
         self.assertEqual(self.started, [])
         self.assertIn("Save", d.status.text())
 
+    def test_downloaded_update_can_be_retried_after_saving_without_downloading_again(self):
+        clean = False
+        d = self.dialog(self.asset(), before=lambda: clean)
+        d.action.click()
+        self.assertTrue(wait_until(self.app, lambda: d.action.isEnabled(), 20))
+        self.assertTrue(d.downloaded_path)
+        clean = True
+        with mock.patch("meridiana.ui.update_dialog.DownloadJob") as download:
+            d.action.click()
+        download.assert_not_called()
+        self.assertEqual(len(self.started), 1)
+
+    def test_revoked_then_restored_consent_allows_retry_of_verified_download(self):
+        allowed = False
+        d = self.dialog(self.asset(), before=lambda: allowed)
+        d.action.click()
+        self.assertTrue(wait_until(self.app, lambda: d.action.isEnabled(), 20))
+        self.assertEqual(self.started, [])
+        d.action.click()
+        self.assertEqual(self.started, [])
+        allowed = True
+        with mock.patch("meridiana.ui.update_dialog.DownloadJob") as download:
+            d.action.click()
+        download.assert_not_called()
+        self.assertEqual(len(self.started), 1)
+
+    def test_verified_retry_starts_setup_only_once_even_with_reentrant_or_duplicate_callbacks(self):
+        import threading
+        from types import SimpleNamespace
+        allowed = False
+        d = self.dialog(self.asset(), before=lambda: allowed)
+        d.job = SimpleNamespace(cancelled=threading.Event())
+        # A completed verified download represented only by an inert path and memory callback.
+        d.downloaded_path = "verified-test-placeholder.exe"
+        calls = []
+
+        def start(args):
+            calls.append(args)
+            d._download()
+            d._downloaded(d.downloaded_path)
+        d.start = start
+        d._download()
+        self.assertTrue(d.action.isEnabled())
+        self.assertEqual(calls, [])
+        allowed = True
+        d.action.click()
+        d.action.click()
+        d._downloaded(d.downloaded_path)
+        self.assertEqual(len(calls), 1)
+        self.assertTrue(d.start_requested)
+        self.assertFalse(d.action.isEnabled())
+
+    def test_failed_setup_start_can_be_retried_without_a_permanent_latch(self):
+        import threading
+        from types import SimpleNamespace
+        d = self.dialog(self.asset(), before=lambda: True)
+        d.job = SimpleNamespace(cancelled=threading.Event())
+        d.downloaded_path = "verified-test-placeholder.exe"
+        d.start = mock.Mock(side_effect=OSError("test failure"))
+        d._download()
+        self.assertFalse(d.start_requested)
+        self.assertTrue(d.action.isEnabled())
+        d.start = self.started.append
+        d.action.click()
+        self.assertEqual(len(self.started), 1)
+        self.assertTrue(d.start_requested)
+
     def test_an_installer_that_does_not_match_is_never_started(self):
         d = self.dialog(self.asset(sha256="0" * 64), before=lambda: True)
         d.action.click()

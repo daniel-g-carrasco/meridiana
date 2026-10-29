@@ -110,6 +110,9 @@ class EconomicsSettings:
     trase: float = 0.0
     battery: dict = field(default_factory=dict)
     battery_units: int = 1
+    storage_coupling: str = ""
+    storage_inverter: dict = field(default_factory=dict)
+    storage_efficiency_pct: float | None = None
     battery_cost_per_kwh: float = 650.0
     export_limit_kw: float = -1.0
 

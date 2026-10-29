@@ -318,7 +318,93 @@
         "2": 30
       }
     ],
-    "dc_input_limits_source": "Huawei SUN2000-12/15/17/20/25K-MB0, 01-202504, p. 2"
+    "dc_input_limits_source": "Huawei SUN2000-12/15/17/20/25K-MB0, 01-202504, p. 2",
+    "battery_charge_power_max_w": 21000,
+    "battery_discharge_power_max_w": 22000,
+    "battery_current_max_a": 26.25,
+    "storage_compatibility": [
+      {
+        "battery_manufacturer": "Huawei",
+        "battery_model": "LUNA2000-5-S1",
+        "units_min": 1,
+        "units_max": 4,
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "page": 2,
+        "revision": "01-202509"
+      },
+      {
+        "battery_manufacturer": "Huawei",
+        "battery_model": "LUNA2000-7-S1",
+        "units_min": 1,
+        "units_max": 4,
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "page": 2,
+        "revision": "01-202509"
+      },
+      {
+        "battery_manufacturer": "Huawei",
+        "battery_model": "LUNA2000-10-S1",
+        "units_min": 1,
+        "units_max": 4,
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "page": 2,
+        "revision": "01-202509"
+      },
+      {
+        "battery_manufacturer": "Huawei",
+        "battery_model": "LUNA2000-14-S1",
+        "units_min": 1,
+        "units_max": 4,
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "page": 2,
+        "revision": "01-202509"
+      },
+      {
+        "battery_manufacturer": "Huawei",
+        "battery_model": "LUNA2000-15-S1",
+        "units_min": 1,
+        "units_max": 4,
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "page": 2,
+        "revision": "01-202509"
+      },
+      {
+        "battery_manufacturer": "Huawei",
+        "battery_model": "LUNA2000-21-S1",
+        "units_min": 1,
+        "units_max": 4,
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "page": 2,
+        "revision": "01-202509"
+      }
+    ],
+    "storage_limit_notes": "Conservative one-string limit: 21 kW charge, 26.25 A. Two-string topology not modelled; datasheet allows 25 kW charge with two strings.",
+    "field_sources": {
+      "battery_charge_power_max_w": {
+        "source": "https://solar.huawei.com/admin/asset/v1/pro/view/c3ba89c365cb42ce92d9ba3c366253f1.pdf",
+        "revision": "01-202504",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "battery_discharge_power_max_w": {
+        "source": "https://solar.huawei.com/admin/asset/v1/pro/view/c3ba89c365cb42ce92d9ba3c366253f1.pdf",
+        "revision": "01-202504",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "battery_current_max_a": {
+        "source": "https://solar.huawei.com/admin/asset/v1/pro/view/c3ba89c365cb42ce92d9ba3c366253f1.pdf",
+        "revision": "01-202504",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "battery_voltage_range_v": {
+        "source": "https://solar.huawei.com/admin/asset/v1/pro/view/c3ba89c365cb42ce92d9ba3c366253f1.pdf",
+        "revision": "01-202504",
+        "page": 2,
+        "verified": "2026-10-29"
+      }
+    }
   },
   {
     "manufacturer": "Huawei",

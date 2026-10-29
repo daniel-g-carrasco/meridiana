@@ -297,3 +297,36 @@ def download(asset: Asset, dest: Path, progress: Callable[[int, int], None] | No
             part.unlink()
         except OSError:
             pass
+
+
+def distribution_channel() -> str:
+    """The active distribution, never inferred from GitHub's release version."""
+    if os.environ.get("FLATPAK_ID") or Path("/.flatpak-info").is_file():
+        return "flatpak"
+    if installed_build():
+        return "installed"
+    if getattr(sys, "frozen", False):
+        return "portable"
+    return "source"
+
+
+def automatic_install_supported() -> bool:
+    return distribution_channel() == "installed"
+
+
+def remember_release(release: Release) -> dict:
+    """Persist only notification data. Installers always require a fresh signed lookup."""
+    return {"version": release.version[:64], "url": release.url[:2048]}
+
+
+def remembered_version(data: object) -> str:
+    if not isinstance(data, dict):
+        return ""
+    version = data.get("version", "")
+    return version if isinstance(version, str) and re.fullmatch(r"\d+(?:\.\d+){1,3}", version) else ""
+
+
+def automatic_install_allowed(*, enabled: bool, opted_in: bool, channel: str,
+                              signed_installer: bool, dirty: bool) -> bool:
+    """Policy only: the downloader must still verify the signature before execution."""
+    return enabled and opted_in and channel == "installed" and signed_installer and not dirty

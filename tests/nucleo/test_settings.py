@@ -34,6 +34,20 @@ class Mirror(unittest.TestCase):
 
 
 class FromDict(unittest.TestCase):
+    def test_storage_fields_survive_typed_read_without_unknown_keys(self):
+        for eta in (None, 90.0):
+            with self.subTest(efficiency=eta):
+                data = {"storage_coupling": "dc", "storage_inverter": {"model": "Hybrid"},
+                        "storage_efficiency_pct": eta}
+                unknown = []
+                read = settings.from_dict(settings.EconomicsSettings, data, "economics", unknown)
+                self.assertEqual(unknown, [])
+                self.assertEqual(read.storage_inverter, data["storage_inverter"])
+                self.assertEqual(read.storage_coupling, "dc")
+                self.assertEqual(read.storage_efficiency_pct, eta)
+        with self.assertRaisesRegex(ValueError, "storage_efficiency_pct"):
+            settings.from_dict(settings.EconomicsSettings, {"storage_efficiency_pct": True}, "economics")
+
     def test_the_known_keys_are_read_and_the_unknown_said(self):
         unknown: list = []
         e = settings.from_dict(settings.EnergySettings, {"dc_ac_ratio": 1.2, "losses": {"soiling": 3.0, "soilng": 1},

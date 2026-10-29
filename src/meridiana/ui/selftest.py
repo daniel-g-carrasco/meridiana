@@ -242,6 +242,8 @@ def window(report: Report, folder: Path) -> None:
     win.resize(1400, 900)
     win.open_path(file)
     win.show()
+    # Narrow native windows may hide 3D through the responsive layout. Expose it before expecting a frame.
+    win._view_mode("3d")
     report.check("window", wait(lambda: win.isVisible(), 10), f"{win.windowTitle()}", t)
 
     t = time.perf_counter()

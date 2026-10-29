@@ -29,7 +29,7 @@ from pathlib import Path
 
 from . import SLUG
 
-CONFIG_VERSION = 21
+CONFIG_VERSION = 22
 
 
 def _v1_to_v2(data: dict) -> dict:
@@ -183,6 +183,13 @@ def _v20_to_v21(data: dict) -> dict:
     return {**data, "text_size": data.get("text_size", "medium")}
 
 
+def _v21_to_v22(data: dict) -> dict:
+    """Optional updates and resumable onboarding do not alter existing project settings."""
+    return {**data, "auto_install_updates": data.get("auto_install_updates", False),
+            "pending_update": data.get("pending_update", {}),
+            "tour_status": data.get("tour_status", "new"), "tour_step": data.get("tour_step", 0)}
+
+
 # from one format version to the next, in order: {from_version: step}
 MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5,
                                                  5: _v5_to_v6, 6: _v6_to_v7, 7: _v7_to_v8, 8: _v8_to_v9,
@@ -190,7 +197,7 @@ MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: 
                                                  12: _v12_to_v13, 13: _v13_to_v14, 14: _v14_to_v15,
                                                  15: _v15_to_v16, 16: _v16_to_v17, 17: _v17_to_v18,
                                                  18: _v18_to_v19, 19: _v19_to_v20,
-                                                 20: _v20_to_v21}
+                                                 20: _v20_to_v21, 21: _v21_to_v22}
 
 
 @dataclass
@@ -232,6 +239,10 @@ class Config:
     assistant_kokoro_python: str = ""
     language: str = ""                   # "" = the desktop's; "en", "it"
     check_updates: bool = True           # Windows: a newer release, once a day at start
+    auto_install_updates: bool = False
+    pending_update: dict = field(default_factory=dict)
+    tour_status: str = "new"             # new, active, paused, skipped, done
+    tour_step: int = 0
     last_update_check: str = ""          # ISO date of the last check made on its own
     last_folder: str = ""                # the folder of the last project opened or saved
     last_project: str = ""               # reopened at start when it still exists

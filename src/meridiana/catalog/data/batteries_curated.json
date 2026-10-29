@@ -477,7 +477,50 @@
       "EU",
       "IT"
     ],
-    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 1 modulo LUNA2000-5-E1."
+    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 1 modulo LUNA2000-5-E1.",
+    "coupling": "dc",
+    "voltage_range_by_phases_v": {
+      "1": [
+        350,
+        560
+      ],
+      "3": [
+        600,
+        980
+      ]
+    },
+    "field_sources": {
+      "coupling": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "voltage_range_by_phases_v": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "usable_energy_kwh": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_charge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_discharge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      }
+    }
   },
   {
     "manufacturer": "Huawei",
@@ -509,7 +552,50 @@
       "EU",
       "IT"
     ],
-    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 1 modulo LUNA2000-7-E1."
+    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 1 modulo LUNA2000-7-E1.",
+    "coupling": "dc",
+    "voltage_range_by_phases_v": {
+      "1": [
+        350,
+        560
+      ],
+      "3": [
+        600,
+        980
+      ]
+    },
+    "field_sources": {
+      "coupling": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "voltage_range_by_phases_v": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "usable_energy_kwh": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_charge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_discharge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      }
+    }
   },
   {
     "manufacturer": "Huawei",
@@ -541,7 +627,50 @@
       "EU",
       "IT"
     ],
-    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 2 moduli LUNA2000-5-E1."
+    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 2 moduli LUNA2000-5-E1.",
+    "coupling": "dc",
+    "voltage_range_by_phases_v": {
+      "1": [
+        350,
+        560
+      ],
+      "3": [
+        600,
+        980
+      ]
+    },
+    "field_sources": {
+      "coupling": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "voltage_range_by_phases_v": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "usable_energy_kwh": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_charge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_discharge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      }
+    }
   },
   {
     "manufacturer": "Huawei",
@@ -573,7 +702,50 @@
       "EU",
       "IT"
     ],
-    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 2 moduli LUNA2000-7-E1."
+    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 2 moduli LUNA2000-7-E1.",
+    "coupling": "dc",
+    "voltage_range_by_phases_v": {
+      "1": [
+        350,
+        560
+      ],
+      "3": [
+        600,
+        980
+      ]
+    },
+    "field_sources": {
+      "coupling": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "voltage_range_by_phases_v": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "usable_energy_kwh": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_charge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_discharge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      }
+    }
   },
   {
     "manufacturer": "Huawei",
@@ -605,7 +777,50 @@
       "EU",
       "IT"
     ],
-    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 3 moduli LUNA2000-5-E1."
+    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 3 moduli LUNA2000-5-E1.",
+    "coupling": "dc",
+    "voltage_range_by_phases_v": {
+      "1": [
+        350,
+        560
+      ],
+      "3": [
+        600,
+        980
+      ]
+    },
+    "field_sources": {
+      "coupling": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "voltage_range_by_phases_v": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "usable_energy_kwh": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_charge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_discharge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      }
+    }
   },
   {
     "manufacturer": "Huawei",
@@ -637,7 +852,50 @@
       "EU",
       "IT"
     ],
-    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 3 moduli LUNA2000-7-E1."
+    "notes": "Scheda LUNA2000-5/7/10/12/14/15/17/19/21-S1 in italiano (pagina Download di solar.huawei.com/it), file Huawei_LUNA2000-S1_Datasheet_IT.pdf p.2. Modulo di potenza LUNA2000-10KW-C1; moduli batteria LUNA2000-5-E1 (5 kWh) o LUNA2000-7-E1 (6,9 kWh), 68 kg. Potenza stampata come 'potenza di carica e scarica max' (unico valore per entrambe). Tensione nominale non stampata: tensione di esercizio 350-560 V (monofase) e 600-980 V (trifase). DoD 100% dichiarata a p.1; energia utilizzabile misurata a 100% DoD, 0,2C, 25 °C. Max 4 sistemi in parallelo (solo con inverter MB0). Rendimento, cicli e garanzia non stampati. Configurazioni miste 12/17/19 kWh non incluse. Configurazione: 3 moduli LUNA2000-7-E1.",
+    "coupling": "dc",
+    "voltage_range_by_phases_v": {
+      "1": [
+        350,
+        560
+      ],
+      "3": [
+        600,
+        980
+      ]
+    },
+    "field_sources": {
+      "coupling": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "voltage_range_by_phases_v": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "usable_energy_kwh": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_charge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      },
+      "max_discharge_power_w": {
+        "source": "https://solar.huawei.com/dam/asset/view/8ab57198f55f4643a1b933163b460d6a.pdf",
+        "revision": "01-202509",
+        "page": 2,
+        "verified": "2026-10-29"
+      }
+    }
   },
   {
     "manufacturer": "Huawei",

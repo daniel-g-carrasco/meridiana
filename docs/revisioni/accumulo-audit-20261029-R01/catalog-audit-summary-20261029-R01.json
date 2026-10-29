@@ -1,0 +1,21 @@
+{
+  "scope": "Structural audit of all bundled raw records; no global datasheet re-verification",
+  "records": 24262,
+  "kinds": {
+    "modules": 21713,
+    "inverters": 2443,
+    "microinverters": 31,
+    "optimizers": 21,
+    "batteries": 54
+  },
+  "states": {
+    "structurally_checked": 24258,
+    "inconsistent": 4
+  },
+  "field_states": {
+    "provenance_dataset": 478267,
+    "unknown": 36713,
+    "source_declared": 8102,
+    "verified_field": 34
+  }
+}

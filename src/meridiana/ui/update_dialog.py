@@ -82,6 +82,8 @@ class UpdateDialog(QDialog):
             updates.installer_of(release) if updates.installed_build() else None)
         self.before_install = before_install
         self.start = start or (lambda args: subprocess.Popen(args, close_fds=True))
+        self.start_requested = False
+        self.downloaded_path: str = ""
         self.job: DownloadJob | None = None
         box = QVBoxLayout(self)
         heading = QLabel(_("Version {version} is available").format(version=release.version))
@@ -130,7 +132,12 @@ class UpdateDialog(QDialog):
         self.accept()
 
     def _download(self) -> None:
+        if self.start_requested:
+            return
         self.action.setEnabled(False)
+        if self.downloaded_path:
+            self._downloaded(self.downloaded_path)
+            return
         self.progress.setVisible(True)
         self.progress.setRange(0, 0)
         self.status.setText(_("Downloading…"))
@@ -152,18 +159,23 @@ class UpdateDialog(QDialog):
         self.action.setEnabled(True)
 
     def _downloaded(self, path: str) -> None:
-        if self.job is None or self.job.cancelled.is_set():
+        if self.start_requested or self.job is None or self.job.cancelled.is_set():
             return                      # «Later» once the last piece was in: not started (gone at the next start)
+        self.downloaded_path = path
         if self.before_install is not None and not self.before_install():
             self.progress.setVisible(False)
             self.status.setText(_("Not installed: the project is still open with its changes. Save it, then try again."))
+            self.action.setText(_("Install downloaded update"))
             self.action.setEnabled(True)
             return
+        self.start_requested = True
+        self.action.setEnabled(False)
         self.status.setText(_("Starting the installer…"))
         try:
             # Setup closes the program, replaces its files and starts it again; its progress shows
             self.start(updates.installer_command(Path(path)))
         except OSError as error:
+            self.start_requested = False
             self._failed(_("Cannot start the installer: {error}").format(error=error.strerror or error))
 
     def done(self, result: int) -> None:

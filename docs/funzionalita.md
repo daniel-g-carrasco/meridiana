@@ -7,8 +7,9 @@ Aggiornamento del 29/10: il calcolo elettrico ricompone curve I/V, bypass e grup
 con conversione e clipping distinti per inverter. La scelta automatica usa una ricerca vincolata con budget
 e cancellazione, dichiarando quando non ha completato la ricerca; il criterio riguarda numero di inverter,
 numero di modelli e rapporto DC/AC, non un ottimo economico o di energia annuale. Le ipotesi delle ombre
-e i limiti di validazione restano espliciti nei rapporti R02 in `docs/revisioni`. I nuovi requisiti R235-R240
-sono in coda nel registro e non sono funzionalità già consegnate.
+e i limiti di validazione restano espliciti nei rapporti R02 in `docs/revisioni`. Il lotto servizi R235-R240 è implementato nei sorgenti, con verifiche mirate e revisione indipendente;
+l'integrazione finale e la preparazione dei nuovi pacchetti sono in corso. R238 resta parziale:
+audit strutturale di 24.262 record, 34 campi riletti con fonte e pagina, senza verifica generale di tutte le schede.
 
 ## I tre riferimenti
 
@@ -87,6 +88,10 @@ A questi si aggiungono le norme italiane, che PVsyst non conosce.
 | Progetti d'esempio | ○ | 2 | |
 | Stima preliminare mensile | ○ | 2 | |
 | Installazione e aggiornamenti (compito 18f) | ◐ | 1 | Windows: bundle PyInstaller costruito e provato con `--self-test` sul PC il 25/10/2026 (377 MB, tutti i controlli superati), installer Inno Setup per utente con l'associazione dei `.meridiana` e lo zip portabile scritti (l'installer si compila sul runner del CI: Inno Setup non è sul PC); aggiornamento da solo una volta al giorno o da Aiuto > Cerca aggiornamenti, con il checksum di GitHub e la firma minisign, interruttore in Preferenze > Riservatezza. Linux: Flatpak sul runtime KDE 6.11 costruito nel WSL, la 3D da provare sul portatile. Manca: la prima release (il segreto minisign e il tag, decisione di Daniel), la prova sui due schermi, il repository Flatpak. `docs/progetto.md` sezione 4. |
+| Aggiornamenti firmati con automatismo facoltativo | ✔ | 2 | R235: controllo asincrono e avviso persistente all'avvio. Opt-in per Windows installato, download annullabile, firma verificata e progetto pulito richiesto prima di Setup; un retry non avvia più installer. Flatpak dal centro software, portable e sorgenti manuali. Nuova installazione reale non eseguita nei test. |
+| Allegati nella chat di Meridio | ✔ | 2 | R236: PDF e testo UTF-8, pulsante o trascinamento, lettura locale asincrona, anteprima e rimozione. Quattro file, 10 MiB ciascuno, 40 pagine PDF, 60.000 caratteri totali. Nessun OCR implicito. Invio con un messaggio esplicito; consenso cloud richiesto anche quando il messaggio reinvia documenti nella cronologia. Documenti come dati non attendibili, tool disabilitati fino a Nuova conversazione; schede proposte da rivedere prima del salvataggio. |
+| Segnalazione di un problema da GUI e Meridio | ✔ | 2 | R239: bozza modificabile con anteprima, versioni e diagnostica selezionabili, copia o salvataggio e apertura deliberata della bozza GitHub. Nessun invio automatico o allegato implicito di progetto, log, file o conversazione. |
+| Visita guidata richiamabile e riprendibile | ✔ | 2 | R240: invito iniziale saltabile, 12 passi sulle fasi e sui comandi principali, navigazione e spotlight, precedente/successivo/pausa. Richiamabile da Aiuto e da Meridio anche senza modello, senza modificare il progetto. Panoramica del programma, non manuale esaustivo di ogni campo. |
 
 ## B. Dati meteo
 
@@ -258,13 +263,14 @@ A questi si aggiungono le norme italiane, che PVsyst non conosce.
 | Calcoli in serie, confronto di varianti | ○ | 2 | |
 | Bilancio di CO2 | ○ | 3 | |
 | Confronto con i dati misurati | ○ | 3 | |
+| Accumulo configurato in Impianto, bilancio AC/DC esplicito | ✔ | 2 | R237: sistemi AC con convertitore proprio e accumulo DC su inverter del progetto con compatibilità esatta documentata. Per DC servono range operativi V, corrente, potenze direzionali e quantità ammesse; per più sistemi AC serve il massimo parallelo. Il rendimento equivalente sul bus AC è applicato una sola volta. Modifiche annullabili, connessione invalidata se l'inverter viene rimosso. Non simula i flussi DC completi e non recupera clipping FV. |
 
 ## L. Database dei componenti
 
 | Funzione | Stato | Fase | Note |
 |---|---|---|---|
 | Moduli: 73 da schede tecniche di 26 marche, più 21.640 dalla lista CEC | ✔ | 1 | Marche più vendute nel mondo, in Europa e in Italia. La lista CEC è la 2026.7.3 del 23/06/2026, ricostruita da `tools/update_cec.py` (vedi sotto); ogni modulo porta la versione e la data della lista. |
-| Inverter: 94 da schede tecniche delle marche più diffuse in Europa e in Italia, più 2.343 dalla lista CEC | ✔ | 1 | |
+| Inverter: 100 da schede tecniche delle marche più diffuse in Europa e in Italia, più 2.343 dalla lista CEC | ✔ | 1 | |
 | Microinverter (31), ottimizzatori (21), batterie (54) da schede tecniche | ✔ | 2 | |
 | Un componente scelto viene copiato nel progetto, che non cambia se cambia il catalogo | ✔ | 1 | |
 | La finestra del catalogo mostra tutte le voci | ✔ | 2 | Tutte le 21.713 righe dei moduli (prima le prime 400), con un modello che fa le celle solo quando si vedono; ordinamento per colonna con un clic, sui dati e non sul testo; il conteggio «N moduli» o «N moduli su 21.713» (R25). |
@@ -272,7 +278,9 @@ A questi si aggiungono le norme italiane, che PVsyst non conosce.
 | Efficienza dei moduli senza dato: ricavata da potenza e dimensioni, segnata «ricavata» | ✔ | 2 | 5.669 moduli della lista CEC hanno le dimensioni; le schede dichiarano la loro. |
 | Bifaccialità stimata per famiglia (PERC 70 %, TOPCon e HJT 80 %) dove la scheda non la dà, segnata «stimata» | ◐ | 2 | Nel campo `bifaciality_estimated`, mai in `bifaciality`; 6 schede TOPCon la ricevono; contatti posteriori, film sottile e famiglia non indicata no. La scheda del catalogo lo dice. Il modello energetico non la legge ancora (il lato posteriore non è calcolato) e il pedigree e la relazione non la citano ancora: quando la useranno devono dire «stimata». |
 | Aggiornamento della lista CEC con `tools/update_cec.py` | ✔ | 2 | Rilegge «CEC Modules.csv» di NREL/SAM (BSD-3), con lato lungo e corto, bifacciale, versione e data; riproduce i 16.854 nomi della lista precedente fino all'arrotondamento dell'ultima cifra. 36 nomi compaiono due volte con valori diversi: si tiene l'ultima riga e lo strumento lo dice. |
-| Voci personali, preferiti, verifica dei dati, export | ○ | 2 | |
+| Catalogo personale e revisione delle schede | ✔ | 2 | R236: inserimento manuale senza AI o proposta Meridio da rivedere nell'editor; campi essenziali, extras strutturati e fonte conservati. Salvataggio locale atomico, modelli esistenti non sovrascritti. Array MPPT e range per fase validati; una scheda personale non eredita la verifica dei campi della scheda originaria. Origine Personale tra i filtri; confronto di due-quattro schede. |
+| Audit generale delle caratteristiche | ◐ | 2 | R238: 24.262 record distribuiti controllati strutturalmente, inclusi i grezzi scartati dalla normalizzazione. Quattro moduli CEC con Imp > Isc non sono selezionabili. Provenienza dataset, fonte dichiarata e verifica puntuale sono distinte; 34 campi verificati con fonte e pagina. La verifica completa delle schede resta aperta. |
+| Preferiti ed export del catalogo personale | ○ | 2 | |
 
 ## M. Altri tipi di impianto
 

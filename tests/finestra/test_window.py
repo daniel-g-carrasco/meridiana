@@ -1500,7 +1500,8 @@ class PlantPhase(PlantWindow):
         self.assertIs(self.win.inspector.currentWidget(), self.win.plant_inspector)
         self.assertEqual(self.win.docks[1].windowTitle(), "Inverters")
         self.assertEqual([b.property("tool") for b in self.win.bars["plant"].buttons().values()],
-                         ["inverter_catalog", "inverter_auto", "strings_auto", "strings_complete", "strings_manual"])
+                         ["inverter_catalog", "inverter_auto", "battery_catalog", "strings_auto",
+                          "strings_complete", "strings_manual"])
         QTest.keyClick(self.win, Qt.Key.Key_PageUp, Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(self.win.phase(), "model")
         self.assertEqual(self.win.split.indexOf(self.win.plan), 0)     # back beside the 3D view

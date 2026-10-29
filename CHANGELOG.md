@@ -1,3 +1,11 @@
+## Servizi e cataloghi, 29 ottobre 2026
+
+- Aggiornamenti firmati facoltativi con consenso revocabile e protezione delle modifiche non salvate.
+- Allegati locali PDF/testo in Meridio, revisione dei prodotti e catalogo personale con confronto.
+- Accumulo AC/DC in Impianto con compatibilità esatta e limiti documentati; audit strutturale del catalogo.
+- Visita guidata riprendibile e bozze di segnalazione dalla GUI e dalla chat, senza invio automatico.
+- Self-test grafico corretto per esporre il 3D anche nelle finestre strette.
+
 # Changelog
 
 What changed in Meridiana, version by version, the newest first. The format

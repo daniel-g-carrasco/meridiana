@@ -121,10 +121,30 @@ class PrivacyPage(QWidget):
                                    "version is out; nothing about you or your projects is sent"))
         self.updates.setChecked(cfg.check_updates)
         box.addWidget(self.updates)
+        from .. import updates
+        self.auto_updates = QCheckBox(_("Install signed updates automatically"))
+        self.auto_updates.setChecked(getattr(cfg, "auto_install_updates", False))
+        self.auto_updates.setEnabled(updates.automatic_install_supported() and self.updates.isChecked())
+        self.updates.toggled.connect(lambda enabled: self.auto_updates.setEnabled(
+            enabled and updates.automatic_install_supported()))
+        box.addWidget(self.auto_updates)
+        saved_note = QLabel(_("Automatic installation waits until your project has no unsaved changes. You can cancel the download or turn this option off at any time."))
+        saved_note.setWordWrap(True)
+        box.addWidget(saved_note)
+        channel_note = QLabel(_("Automatic installation is available for installed Windows builds. Flatpak updates come from your desktop software centre; portable and source builds are updated manually."))
+        channel_note.setWordWrap(True)
+        box.addWidget(channel_note)
         note = QLabel(_("The project file keeps the images you import (without their metadata) and the "
                         "recovery copy in the state folder keeps the whole project until it is saved."))
         note.setWordWrap(True)
         box.addWidget(note)
+        # Keep the service's full privacy explanation while allowing narrow settings pages.
+        for control, title in ((self.geocoding, _("Find the site")), (self.pvgis, _("Weather and PVGIS")),
+                               (self.tiles, _("Map tiles")), (self.updates, _("Check for updates at start"))):
+            description = QLabel(control.text())
+            description.setWordWrap(True)
+            control.setText(title)
+            box.insertWidget(box.indexOf(control) + 1, description)
         box.addStretch(1)
 
     def choice(self) -> tuple[bool, bool, bool]:
@@ -511,7 +531,7 @@ class Preferences(QWidget):
                       "assistant_kokoro_python"),
         "report": ("report_profiles", "report_profile"),
         "maps": ("background", "map_sources"),
-        "privacy": ("network_geocoding", "network_pvgis", "network_tiles", "check_updates"),
+        "privacy": ("network_geocoding", "network_pvgis", "network_tiles", "check_updates", "auto_install_updates"),
     }
 
     def __init__(self, cfg: config.Config, bindings: dict, theme, parent=None, page: str = ""):
@@ -660,7 +680,8 @@ class Preferences(QWidget):
         for widget in (self.maps.kind, self.maps.imagery, self.maps.layer):
             widget.currentIndexChanged.connect(lambda _i: self._edited("maps") if not self.maps.loading else None)
         self.maps.max_zoom.valueChanged.connect(lambda _v: self._edited("maps") if not self.maps.loading else None)
-        for widget in (self.privacy.geocoding, self.privacy.pvgis, self.privacy.tiles, self.privacy.updates):
+        for widget in (self.privacy.geocoding, self.privacy.pvgis, self.privacy.tiles, self.privacy.updates,
+                       self.privacy.auto_updates):
             widget.toggled.connect(lambda _on: self._edited("privacy"))
 
     def _snapshot(self) -> tuple[dict, dict]:

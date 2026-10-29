@@ -25,7 +25,7 @@ class ThePhases(unittest.TestCase):
     def test_the_groups_are_those_of_the_design_without_the_sun_and_the_background(self):
         groups = {p.id: [g.title for g in p.groups] for p in phases.phases()}
         self.assertEqual(groups["model"], ["Edit", "Draw", "Layout", "Precision"])
-        self.assertEqual(groups["plant"], ["Inverter", "Strings"])
+        self.assertEqual(groups["plant"], ["Inverter", "Storage", "Strings"])
         self.assertEqual(groups["production"], ["Computation", "Comparison"])
         self.assertEqual(groups["consumption"], ["Data"])
         self.assertEqual(groups["economics"], ["Computation", "Comparison"])
@@ -35,7 +35,8 @@ class ThePhases(unittest.TestCase):
             self.assertEqual(len(commands), len(set(commands)), p.id)
             for g in p.groups:
                 self.assertNotIn(g.title, ("Sun", "Background"))            # they stay in the views (C5)
-                self.assertTrue(2 <= len([t for t in g.tools if not t.planned]) <= 5, (p.id, g.id))
+                minimum = 1 if (p.id, g.id) in {("plant", "storage"), ("economics", "compute")} else 2
+                self.assertTrue(minimum <= len([t for t in g.tools if not t.planned]) <= 5, (p.id, g.id))
         for pid in ("production", "economics", "report"):
             self.assertIn("new_variant", [t.command for t in phases.by_id(pid).tools()])
         self.assertNotIn("refill", [t.command for t in phases.by_id("model").tools()])
