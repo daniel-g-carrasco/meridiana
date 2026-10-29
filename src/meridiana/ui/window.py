@@ -29,8 +29,8 @@ from PySide6.QtWidgets import (QApplication, QDialog, QDockWidget, QFileDialog, 
 from shapely.geometry import Polygon
 
 from .. import assistant as assistant_core
-from .. import (atomic, camera, catalog, checks, config, jobs, log, manual, mesh, model, move, phases, recovery,
-               registry, rules, shortcuts, sides, roofs, squaring, templates, theme_colors, tiles, underlay,
+from .. import (atomic, camera, catalog, checks, config, jobs, log, manual, mesh, model, move, phases, project_index,
+               recovery, registry, rules, shortcuts, sides, roofs, squaring, templates, theme_colors, tiles, underlay,
                view_colours, viewaids)
 from ..energy import consumption as consumption_model
 from ..energy import pipeline, system
@@ -91,6 +91,23 @@ class LayoutJob(QRunnable):
         t = time.perf_counter()
         results, keys, self.laid = jobs.layout_of(self.project, self.known)
         tell(self.signals.done, self.generation, results, time.perf_counter() - t, keys)
+
+
+class IndexSignals(QObject):
+    done = Signal(int, list)
+
+
+class IndexJob(QRunnable):
+    """A derived index scan, with no Qt or SQLite access in the worker thread."""
+
+    def __init__(self, generation: int, folders: list, known: dict):
+        super().__init__()
+        self.generation, self.folders, self.known = generation, folders, known
+        self.signals = IndexSignals()
+
+    def run(self):
+        rows = project_index.scan(self.folders, self.known)
+        tell(self.signals.done, self.generation, rows)
 
 
 AUTOSAVE_MS = 120_000           # a copy of the unsaved changes every two minutes
@@ -260,6 +277,8 @@ class MainWindow(QMainWindow):
         self.undo = UndoBridge(self.session.undo, self)
         self.undo.cleanChanged.connect(self._clean_changed)
         self.pool = QThreadPool.globalInstance()
+        self.index_generation = 0
+        self.index_job = None
         wheel.guard()                       # the wheel scrolls the forms; a field changes only with the keyboard
         self.theme = Theme(cfg, self)        # Fusion, the palette of the colour chosen, the font (study 13)
 
@@ -613,6 +632,7 @@ class MainWindow(QMainWindow):
         if self.shortcut_notes:
             self.hint.setText(self._shortcut_notice())
         self._title()
+        QTimer.singleShot(0, self._refresh_index)
 
     def open_file_page(self, section: str = "open") -> None:
         """The File page over the window (ui/file_page.py), the bar of the phase put away under it; again, closed."""
@@ -4689,6 +4709,36 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(_("Recovered: save it to keep it"), 8000)
         return True
 
+    def _refresh_index(self) -> None:
+        """Start a fresh scan; a slower, older result never replaces a newer one."""
+        if self.registry.connection is None:
+            return
+        self.index_generation += 1
+        jobs = {row["id"]: row for row in self.registry.list_jobs(include_archived=True)}
+        clients = {row["id"]: row for row in self.registry.list_clients(include_archived=True)}
+        folders = []
+        for folder in self.registry.list_folders():
+            job = jobs.get(folder["job_id"], {})
+            client = clients.get(job.get("client_id", ""), {})
+            metadata = {"job_id": job.get("id", ""), "job_code": job.get("code", ""),
+                        "job_name": job.get("name", ""), "client_name": client.get("name", ""),
+                        "reserved": job.get("reserved", False)}
+            folders.append((Path(folder["path"]), metadata))
+        known = {row["path"]: row for row in self.registry.list_index()}
+        job = IndexJob(self.index_generation, folders, known)
+        job.signals.done.connect(self._index_done)
+        self.index_job = job
+        self.pool.start(job)
+
+    def _index_done(self, generation: int, rows: list) -> None:
+        if generation != self.index_generation or self.registry.connection is None:
+            return
+        try:
+            self.registry.replace_index(rows)
+        except (OSError, sqlite3.Error, registry.RegistryError) as error:
+            log.complain("project index", error)
+            self.tell(_("The project index could not be updated: {error}").format(error=error))
+
     def _register_saved(self, target: Path) -> None:
         if not self.current_job_id:
             return
@@ -4717,6 +4767,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, _("Save"), _("The project could not be saved: {error}").format(error=error))
             return
         self._register_saved(target)
+        self._refresh_index()
         self.cfg.last_project = str(target)
         self._save_config()
         self._mark_saved()
@@ -4787,6 +4838,7 @@ class MainWindow(QMainWindow):
         self._save_config()
         self._select("site", "")
         self._show_all(fit=True)
+        self._refresh_index()
         if notice:
             QMessageBox.information(self, _("Open a project"), notice)
 
@@ -4799,6 +4851,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, _("Save"), _("The project could not be saved: {error}").format(error=error))
             return False
         self._register_saved(self.path)
+        self._refresh_index()
         self._mark_saved()
         self.statusBar().showMessage(_("Saved {file}").format(file=self.path.name), 4000)
         return True
@@ -4996,6 +5049,7 @@ class MainWindow(QMainWindow):
             self._drop_autosave()
             self._save_config()
             self._save_window()
+            self.index_generation += 1
             self.registry.close()
             if self._registry_scratch is not None:
                 self._registry_scratch.cleanup()

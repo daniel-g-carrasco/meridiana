@@ -267,6 +267,7 @@ class FilePage(QFrame):
 
         from .registry_page import RegistryPage
         self.registry_page = RegistryPage(w.registry, w)
+        self.registry_page.changed.connect(w._refresh_index)
         self.sections["registry"] = self.registry_page
 
         # Open: the file, and the projects opened last

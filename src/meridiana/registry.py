@@ -14,7 +14,7 @@ from pathlib import Path
 
 from . import atomic
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 EXCHANGE_VERSION = 1
 MANIFEST_NAME = ".meridiana-commessa.json"
 STATUSES = ("waiting", "in_progress", "delivered", "archived")
@@ -64,6 +64,13 @@ CREATE INDEX projects_job ON projects(job_id);
 CREATE INDEX folders_job ON folders(job_id);
 """
 
+_INDEX_SCHEMA = """
+CREATE TABLE project_index (
+    path TEXT PRIMARY KEY,
+    payload TEXT NOT NULL
+);
+"""
+
 
 class RegistryError(ValueError):
     """A registry write or schema cannot be accepted."""
@@ -108,7 +115,7 @@ class Registry:
             tables = self.connection.execute("SELECT count(*) FROM sqlite_master WHERE type = 'table'").fetchone()[0]
             if tables:
                 raise RegistryError("an unversioned registry is not empty; no safe migration is known")
-        migrations = {0: _SCHEMA}
+        migrations = {0: _SCHEMA, 1: _INDEX_SCHEMA}
         while version < SCHEMA_VERSION:
             script = migrations.get(version)
             if script is None:
@@ -301,6 +308,18 @@ class Registry:
     def unlink_project(self, project_id: str) -> None:
         with self._write() as connection:
             connection.execute("DELETE FROM projects WHERE id = ?", (project_id,))
+
+    def replace_index(self, rows: list[dict]) -> None:
+        """Replace the derived index atomically; the project files remain the source of its contents."""
+        with self._write() as connection:
+            connection.execute("DELETE FROM project_index")
+            connection.executemany(
+                "INSERT INTO project_index(path, payload) VALUES (?, ?)",
+                [(row["path"], json.dumps(row, ensure_ascii=False, sort_keys=True)) for row in rows])
+
+    def list_index(self) -> list[dict]:
+        rows = self.connection.execute("SELECT payload FROM project_index ORDER BY path").fetchall()
+        return [json.loads(row["payload"]) for row in rows]
 
     def link_folder(self, job_id: str, path: Path) -> dict:
         fid, now, folder = uuid.uuid4().hex, _now(), _path(path)
