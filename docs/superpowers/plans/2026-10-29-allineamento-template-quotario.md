@@ -18,7 +18,7 @@ Solo offscreen. Conservare popup locali e loro documentazione. Template e Quotar
 - [x] Checkbox e fasi: nuovi componenti/stili dal template, conservando Group e ScrollStyle; adattare PhaseHeader e navigazione finestra. Prove di stati, fuoco integro, testo a capo, scale 1/2/2,5, fasi nascoste e tasti.
 - [x] Aiuti e File: distinguere gli aiuti di riga da 28 px dai titoli da 16 px, conservare HelpBox/F1; aggiornare tessere e cambio tema. Valutare DocumentTabs senza sostituire dock o varianti. Aggiornare galleria.
 - [x] Verifiche: prove mirate, fotografie sintetiche chiare/scure a scale 1/2/2,5, ispezione reale delle immagini; Ruff e suite complete. Diagnosticare crash report e avviso Slot TableStyle senza dichiararli risolti senza prova. Riconsiderare il limite di tempo del tema, che fallisce anche nella base precedente.
-- [ ] Consegna: rapporto con delta/non applicabili, manifest revisionati con versioni e hash, commit locale dopo verifiche, aggiornamento delle due copie Windows e launcher verificato.
+- [x] Consegna: rapporto con delta/non applicabili, manifest revisionati con versioni e hash, commit locale dopo verifiche, aggiornamento delle due copie Windows e launcher verificato.
 
 ## Rischi da verificare
 

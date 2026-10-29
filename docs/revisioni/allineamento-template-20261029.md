@@ -65,3 +65,11 @@ Gli esiti della suite completa, il commit e la distribuzione dei due checkout so
 [V] Nella stessa esecuzione sono passati sia la prova della relazione del log storico sia il journey nel quale era avvenuto l'arresto del primo giro. Nessun avviso `Slot 'TableStyle::' not found` osservato, senza dichiararne risolta la causa. Il log completo resta nel checkout di integrazione, `ux-suite-completa-r02-no-timer.log`.
 
 [V] Ruff su tutto il repository, `git diff --check`, catalogo italiano compilato e verificatori dei due manifest superati. Trenta prove mirate Linux/WSL superate. Trentasei fotografie finali prodotte e ispezionate. Il codice è pronto per il commit locale e l'aggiornamento dei due checkout, con il limite prestazionale sopra esplicito; nessun push o rilascio.
+
+## Consegna verificata
+
+[V] Codice nel commit locale `ae9d8d8`, sopra l'integrazione Kimi `fce08b9`. Entrambi i checkout `C:\Users\Grasso\dev\meridiana` e `C:\Users\Grasso\dev\meridiana-lavoro` aggiornati con fast-forward allo stesso commit. Le modifiche popup e il diario preesistenti sono inclusi; gli altri file locali sono preservati. Backup preventivo in `C:\Users\Grasso\dev\meridiana-backup-template-20261029-154951`; stash di sicurezza conservati.
+
+[V] In entrambe le copie: catalogo compilato e manifest verificato con gli hash effettivi. Launcher `bin/meridiana-windows.cmd` realmente eseguito con `--self-test`, senza finestre sul desktop. Esiti: `PASS all: 0 failed`, 37,76 s nella copia principale e 37,97 s in quella di lavoro. Verificati energia, PDF e screenshot; il primo frame 3D non viene disegnato dal renderer offscreen in questa prova. Rapporti nei rispettivi `build/launcher-selftest-20261029-R01.txt`.
+
+Per provare il programma: `C:\Users\Grasso\dev\meridiana\bin\meridiana-windows.cmd`. Nessun push o rilascio effettuato. Rimangono aperti il limite prestazionale del tema e la causa nativa degli arresti con dump diagnostico periodico; l'avviso TableStyle non è stato riprodotto. La suite finale completa senza quel timer è terminata con il solo fallimento prestazionale documentato.
