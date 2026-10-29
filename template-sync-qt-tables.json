@@ -1,0 +1,24 @@
+{
+  "format": 1,
+  "upstream_version": "572bd46266336333a861c9d74f2eff08fb018463+uncommitted-tables-sha256:736795a48edffa865615aa5fb4fdc944a44bce0e94e98e71bdcd64aab8f674bd",
+  "mappings": [
+    [
+      "src/qtkit/tables.py",
+      "src/meridiana/ui/shared_tables.py"
+    ]
+  ],
+  "replacements": [
+    [
+      "from . import fades, theme_colors",
+      "from . import fades\nfrom .. import theme_colors"
+    ]
+  ],
+  "files": [
+    {
+      "source": "src/qtkit/tables.py",
+      "target": "src/meridiana/ui/shared_tables.py",
+      "sha256": "e017d795e9663b7f5ae14d84db40559654229071f930db3244d5efc1528730bd",
+      "baseline_version": "572bd46266336333a861c9d74f2eff08fb018463+uncommitted-tables-sha256:736795a48edffa865615aa5fb4fdc944a44bce0e94e98e71bdcd64aab8f674bd"
+    }
+  ]
+}

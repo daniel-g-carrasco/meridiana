@@ -1,0 +1,24 @@
+{
+  "format": 1,
+  "upstream_version": "9acb7a857adecdbe57874282c48e84e21ee463c7",
+  "mappings": [
+    [
+      "src/qtkit/tables.py",
+      "src/meridiana/ui/shared_tables.py"
+    ]
+  ],
+  "replacements": [
+    [
+      "from . import fades, theme_colors",
+      "from . import fades\nfrom .. import theme_colors"
+    ]
+  ],
+  "files": [
+    {
+      "source": "src/qtkit/tables.py",
+      "target": "src/meridiana/ui/shared_tables.py",
+      "sha256": "e017d795e9663b7f5ae14d84db40559654229071f930db3244d5efc1528730bd",
+      "baseline_version": "9acb7a857adecdbe57874282c48e84e21ee463c7"
+    }
+  ]
+}

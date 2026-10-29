@@ -591,6 +591,8 @@ class MainWindow(QMainWindow):
             w.installEventFilter(self)
         self.theme.changed.connect(self._theme_changed)
         self._theme_changed()                   # the palette is already there (Theme applies it at once)
+        from .shared_tables import install_data_tables
+        install_data_tables(self, excluded=("project-tree", "checks-tree"))
         self.plan.set_veil(cfg.veil)
         self.plan.set_sources(cfg.map_sources)
         self.plan.set_source(cfg.background)
