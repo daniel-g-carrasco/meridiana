@@ -237,6 +237,7 @@ class FilePage(QFrame):
         self._item("save", "save", _("Save"), self._keys("save"), self._command("save"))
         self._item("save_as", "save", _("Save as"), self._keys("save_as"), self._command("save_as"))
         self._item("save_revision", "copy-plus", _("Save a revision"), "_R01", self._command("save_revision"))
+        self._item("registry", "library", _("Clients and jobs"))
         self._rule()
         self._item("import", "download", _("Import"))
         self._item("export", "upload", _("Export"))
@@ -255,9 +256,14 @@ class FilePage(QFrame):
 
         # New: the place first, with only local suggestions while typing
         from .new_project import NewProjectPage
-        self.new_project = NewProjectPage(w.paths, w.cfg)
+        self.new_project = NewProjectPage(w.paths, w.cfg, registry=w.registry)
         self.new_project.created.connect(w._create_new)
         self.sections["new"] = self.new_project
+
+        from .registry_page import RegistryPage
+        self.registry_page = RegistryPage(w.registry, w)
+        self.registry_page.changed.connect(w._refresh_index)
+        self.sections["registry"] = self.registry_page
 
         # Open: the file, and the projects opened last
         opening = Section(_("Open"), _("A Meridiana project from a file, or one of the last ones."))
@@ -373,6 +379,8 @@ class FilePage(QFrame):
             from .. import places
             self.new_project.reset()
             self.new_project.set_choices([*places.municipalities(), *places.recent(self.host.cfg.recent)])
+        elif key == "registry":
+            self.registry_page.refresh()
         elif section == "preferences":
             self.settings._populate()              # the maps read the site of the project open now
             self.settings.show_page(page)

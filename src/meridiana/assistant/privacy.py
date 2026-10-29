@@ -4,9 +4,10 @@ else:
   provider and kept in the settings (`consented`, `consent`); the card says what would leave (`what_leaves`);
 - a project marked reserved never goes to the cloud, whatever the settings (`allowed`): its questions go to the
   local model;
-- towards the cloud the project's name, its address and its file's name are replaced by placeholders, and put back
-  in what the model writes (`Redactor`); the coordinates are rounded to 0.01 degree (about 1 km) by the tools
-  themselves, for every model: none needs them closer;
+- towards the cloud the project's and the whole archive's names, paths and job codes are replaced by placeholders,
+  and put back in what the model writes (`Redactor`); reserved rows are filtered before the project tools answer,
+  and questions about reserved material stay local; the coordinates are rounded to 0.01 degree (about 1 km) by the
+  tools themselves, for every model: none needs them closer;
 - from the cloud back to the local model, yes (it is more private); from the local model to the cloud, never by
   itself.
 No Qt."""
@@ -50,12 +51,29 @@ class Redactor:
         for part in re.split(r"[,;\n]", address):
             add(part, PLACEHOLDERS["address"])
         if path:
+            add(str(Path(path)), PLACEHOLDERS["file"])
             add(Path(path).stem, PLACEHOLDERS["file"])
             add(Path(path).name, PLACEHOLDERS["file"])
         for kind, secret in (more or {}).items():
             add(secret, f"[{kind.upper()}]")
         found.sort(key=lambda pair: -len(pair[0]))
         return cls(found)
+
+    def with_archive(self, rows: list[dict]) -> Redactor:
+        """Add every project identifier, including reserved and short names, before anything goes to the cloud."""
+        found = list(self.pairs)
+        for row in rows:
+            values = [row.get(key, "") for key in
+                      ("path", "name", "title", "address", "job_code", "job_name", "client_name", "text")]
+            path = Path(row.get("path", ""))
+            values.extend([path.stem, path.name])
+            for value in values:
+                secret = str(value or "").strip()
+                if secret and all(secret.casefold() != known.casefold() for known, _p in found):
+                    found.append((secret, f"[ARCHIVE_{len(found) + 1}]"))
+        found.sort(key=lambda pair: -len(pair[0]))
+        self.pairs = found
+        return self
 
     def redact(self, text: str) -> str:
         for secret, placeholder in self.pairs:
@@ -104,6 +122,11 @@ def consent(consents: dict, family: str, today: dt.date | None = None) -> dict:
     return {**consents, family: [(today or dt.date.today()).isoformat()]}
 
 
+def requires_local(question: str) -> bool:
+    """A question about reserved material is not even redacted for the cloud: it stays on this PC."""
+    return re.search(r"riservat|reserved|confidential", question.casefold()) is not None
+
+
 def allowed(project, family: str, consents: dict) -> str:
     """Whether a question may go to a cloud provider now: "" yes, "reserved" (never, for this project) or
     "consent" (to be asked first)."""
@@ -120,8 +143,8 @@ def what_leaves(family: str, model: str) -> list[str]:
     return [
         _("To {who}, model {model}: your questions and what Meridio reads to answer them (the checks, a summary "
           "of the project, the results), never the project file.").format(who=who, model=model),
-        _("The project's name, its address and the file's name are replaced by placeholders; the coordinates are "
-          "rounded to about 1 km."),
+        _("Names, paths and job codes from the project and its archive are replaced by aliases; reserved projects "
+          "and archive rows are never sent. Coordinates are rounded to about 1 km."),
         _("Anthropic does not train its models on what the API receives and deletes it within 30 days (its "
           "commercial terms, read on 22/10/2026). The servers may be outside the EU."),
         _("A project marked reserved never leaves the PC: its questions go to the local model."),

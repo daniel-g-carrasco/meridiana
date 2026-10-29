@@ -396,6 +396,7 @@ class ProjectSession:
         data = self.project.to_json() | {"modified": None}
         data["underlays"] = [{**u, "image": [len(u["image"]), u["image"][:64], u["image"][-64:]]}
                              for u in data.get("underlays", [])]
+        data.pop("resources", None)             # rebuilt on save, never a designer's change to undo
         return json.dumps(data, sort_keys=True)
 
     def dirty(self) -> bool:
@@ -419,28 +420,28 @@ class ProjectSession:
     def new(self) -> None:
         self.take(model.Project(), None, saved=True)
 
-    def open(self, path: Path) -> str | None:
+    def open(self, path: Path, cache_dir: Path | None = None) -> str | None:
         """The project of `path` in hand; the notice of the load, if any. A damaged file raises ValueError with
         the path of the key, an unreadable one OSError, and the project in hand stays."""
-        project, notice = model.Project.load(path)
+        project, notice = model.Project.load(path, cache_dir)
         self.take(project, Path(path), saved=True)
         return notice
 
-    def save(self, path: Path | None = None) -> Path:
+    def save(self, path: Path | None = None, cache_dir: Path | None = None, report_profile: dict | None = None) -> Path:
         """The project written to `path` (or its own); OSError when it could not be."""
         target = Path(path) if path is not None else self.path
         if target is None:
             raise ValueError("the project has no file yet")
-        self.project.save(target)
+        self.project.save(target, cache_dir, report_profile)
         self.path = target
         self.mark_saved()
         return target
 
-    def save_revision(self) -> Path:
+    def save_revision(self, cache_dir: Path | None = None, report_profile: dict | None = None) -> Path:
         """A new file next to this one, with the suffix _R01, _R02...: the previous one stays as it was."""
         if self.path is None:
             raise ValueError("the project has no file yet")
-        return self.save(recovery.next_revision(self.path))
+        return self.save(recovery.next_revision(self.path), cache_dir, report_profile)
 
     # autosave and recovery
 

@@ -5,12 +5,14 @@
   shuts the connection; a generation number drops what a stopped job still says.
 - The tools run on the window's thread between two rounds (assistant/tools.py, through `WindowHost`), at most
   conversation.ROUNDS rounds a question.
-- A proposal is a card in the bubble: «Apply» makes an edit through the window's edit() as one undo step, or runs
-  the proposed Undo or Redo through the same history bridge as the menu. «Discard» leaves the project as it is;
+- A proposal is a card in the bubble: «Apply» makes an edit through the window's edit() as one undo step, runs
+  the proposed Undo or Redo through the same history bridge as the menu, or writes a confirmed local task. «Open»
+  shows path and revision first and uses the normal unsaved-changes choice. «Discard» leaves the project as it is;
   the model hears what the designer chose with the next question.
 - The local model is the default. Claude only with a key in the keyring and the designer's consent, asked the first
-  time with what would leave (a card); never for a project marked reserved; the names withheld (privacy.py). No
-  network: the question goes to the local model, and it is said.
+  time with what would leave (a card); never for a project marked reserved; the names withheld (privacy.py). Switching
+  from local to Claude starts a fresh conversation, so no local result crosses that boundary. No network: the question
+  goes to the local model, and it is said.
 - The mark on the character (a house, a cloud) and the menu of his chip say where the next question goes; the line
   under the conversation, the tokens and the cost.
 - His spoken voice (ui/voice.py), off by default: sentence by sentence as the answer comes.
@@ -120,6 +122,31 @@ class WindowHost:
     def path(self):
         return self.win.path
 
+    def index_rows(self):
+        # Privacy is administrative source data, never a stale worker's derived snapshot.
+        jobs = {row["id"]: row for row in self.win.registry.list_jobs(include_archived=True)}
+        return [{**row, "reserved": bool(row.get("reserved") or jobs.get(row.get("job_id"), {}).get("reserved"))}
+                for row in self.win.registry.list_index()]
+
+    def task_rows(self):
+        return self.win.registry.list_tasks(include_done=True)
+
+    def apply_task(self, item):
+        if item["action"] == "create":
+            return self.win.registry.create_task(item["text"], item["due"], item["job_id"], item["project_id"])
+        return self.win.registry.update_task(item["task_id"], done=True)
+
+    def dirty(self):
+        return self.win._dirty()
+
+    def open_project(self, path):
+        from pathlib import Path
+        if not self.win._keep_or_discard():
+            return False
+        target = Path(path)
+        self.win.open_path(target)
+        return self.win.path == target
+
     def checks(self):
         return list(self.win.checks_page.items)
 
@@ -207,6 +234,7 @@ class Card(Group):
             row.addWidget(b)
             self.buttons[key] = b
         box.addLayout(row)
+        self.setMinimumHeight(self.sizeHint().height())
 
 
 def _escape(text: str) -> str:
@@ -379,6 +407,11 @@ class Chat(QObject):
         if not self.wants_cloud():
             self._start(text, self.make_local())
             return
+        if privacy.requires_local(text):
+            self.widget.note(_("Questions about reserved projects stay on this PC: the question goes to the local "
+                               "model."))
+            self._start(text, self.make_local())
+            return
         why = privacy.allowed(self.host.project, "anthropic", self.cfg.assistant_consent)
         if why == "reserved":
             self.widget.note(_("This project is reserved: the question goes to the local model."))
@@ -448,12 +481,18 @@ class Chat(QObject):
         if self.decisions:
             text = "(" + " ".join(self.decisions) + ")\n" + text
             self.decisions = []
+        if provider.cloud and not self.conversation.state.cloud and self.conversation.messages:
+            self.conversation.clear()
         self.conversation.ask(context.question(text, self.host.phase_title(), selection))
         self.provider = provider
+        self.conversation.state.cloud = provider.cloud
         # the report's client is a name as the project's (R61): withheld as well
         client = str((getattr(self.host.project, "report", None) or {}).get("client") or "")
         self.redactor = (privacy.Redactor.of(self.host.project, self.host.path(), {"client": client})
                          if provider.cloud else None)
+        if self.redactor is not None and hasattr(self.host, "index_rows"):
+            tasks = self.host.task_rows() if hasattr(self.host, "task_rows") else []
+            self.redactor.with_archive([*self.host.index_rows(), *tasks])
         self._round()
 
     def _round(self) -> None:
@@ -490,7 +529,8 @@ class Chat(QObject):
             self.widget.note(_("The model declined to answer this question."))
         if r.calls and r.done.reason not in ("length", "refusal"):
             self.widget.settle()                    # the words of this round stay; the tools come
-            self.conversation.run_tools(r.calls, self.host, self._tool_done)
+            self.conversation.run_tools(r.calls, self.host, self._tool_done,
+                                        restore=self.redactor.restore if self.redactor is not None else None)
             if self.conversation.rounds < conversation.ROUNDS:
                 self._round()
                 return
@@ -512,6 +552,7 @@ class Chat(QObject):
         if error.kind == "offline" and self.provider is not None and self.provider.cloud:
             self.widget.note(_("No network: Claude cannot be reached. The question goes to the local model."))
             self.provider, self.redactor = self.make_local(), None
+            self.conversation.state.cloud = False
             self._round()
             return
         self.conversation.close_open_calls()
@@ -682,8 +723,16 @@ class Chat(QObject):
 
     def _show_proposal(self, proposal: tools.Proposal) -> None:
         from .properties import field_label
+        opening = proposal.kind == "open_project"
+        simple = opening or proposal.kind == "task"
+        labels = {"Path": _("Path"), "Revision": _("Revision"), "Task": _("Task"), "Due": _("Due"),
+                  "State": _("State")}
         lines = []
         for path, before, after in proposal.lines:
+            if simple:
+                lines.append(_("{field}: {value}").format(field=_escape(labels.get(path, path)),
+                                                          value=_escape(after)))
+                continue
             label = field_label(path.split(".")[-1] if proposal.kind in tools.SECTIONS else path, proposal.kind)
             lines.append(_("{field}: from {before} to {after}").format(field=_escape(label), before=_escape(before),
                                                                     after=_escape(after)))
@@ -693,18 +742,25 @@ class Chat(QObject):
             lines.append(_("Source: {source}").format(source=_escape(proposal.source)))
         if proposal.network:
             lines.append(_("It computes the year: the weather may be downloaded from PVGIS."))
-        card = Card(_("Proposal: {what}").format(what=proposal.title), lines,
-                    [("discard", _("Discard")), ("apply", _("Apply"))])
+        title = _("Open project: {what}") if opening else _("Proposal: {what}")
+        card = Card(title.format(what=proposal.title), lines,
+                    [("discard", _("Discard")), ("apply", _("Open") if opening else _("Apply"))])
+        card.setProperty("confirmation", opening or proposal.kind == "task")
         card.buttons["apply"].clicked.connect(lambda _c=False, p=proposal: self.apply(p))
         card.buttons["discard"].clicked.connect(lambda _c=False, p=proposal: self.discard(p))
         self.cards[proposal.id] = card
         self.widget.add_card(card)
 
     def apply(self, proposal: tools.Proposal) -> None:
-        """«Apply»: an edit or history command chosen by the designer, never by the model."""
+        """«Apply»: an edit, opening or history command chosen by the designer, never by the model."""
         text = _("{name}: {what}").format(name=core.NAME, what=proposal.title)
         try:
-            if proposal.kind == "history":
+            if proposal.kind == "open_project":
+                if not self.host.open_project(proposal.item["path"]):
+                    return
+            elif proposal.kind == "task":
+                self.host.apply_task(proposal.item)
+            elif proposal.kind == "history":
                 self.host.history(proposal.oid)
             elif proposal.change is not None:
                 self.host.edit(text, proposal.change)
@@ -715,8 +771,12 @@ class Chat(QObject):
             self.widget.note(_("Not applied: {why}").format(why=error))
         else:
             proposal.state = "applied"
-            note = (_("Applied: {what}.") if proposal.kind == "history" else
-                    _("Applied: {what}. Ctrl+Z undoes it."))
+            if proposal.kind == "open_project":
+                note = _("Opened: {what}.")
+            elif proposal.kind in ("history", "task"):
+                note = _("Applied: {what}.")
+            else:
+                note = _("Applied: {what}. Ctrl+Z undoes it.")
             self.widget.note(note.format(what=proposal.title))
             self.decisions.append(f"The designer applied {proposal.id}.")
         self._drop_card(proposal)

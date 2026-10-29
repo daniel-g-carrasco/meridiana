@@ -1,6 +1,6 @@
 """The project file (model.py): everything comes back as it was saved, the previous save kept as .bak, a damaged
 file opened from it and said; a file edited by hand or damaged refused with the path of the key; one frozen file
-for every version of the format, 1 to 15, opened as it is (tests/formati/file), and the migrations field by field.
+for every version of the format, opened as it is (tests/formati/file), and the migrations field by field.
 The files of the settings and the damaged ones are in test_formats."""
 
 import json
@@ -36,6 +36,15 @@ class Files(unittest.TestCase):
         q, notice = model.Project.load(self.file)
         self.assertIsNone(notice)
         self.assertEqual(q.energy["inverter_maker"], "Huawei")
+    def test_registry_identity_travels_with_the_project(self):
+        p = sample()
+        p.job_id = "example-job-id"
+        p.series_id = "example-series-id"
+        p.save(self.file)
+        q, notice = model.Project.load(self.file)
+        self.assertIsNone(notice)
+        self.assertEqual((q.job_id, q.series_id), ("example-job-id", "example-series-id"))
+        self.assertEqual(json.loads(self.file.read_text(encoding="utf-8"))["version"], 18)
 
     def test_a_second_save_keeps_the_first_as_backup(self):
         p = sample()
@@ -314,10 +323,24 @@ class Formats(unittest.TestCase):
         self.assertIsNone(notice)
         self.assertEqual(p.network_consent, {"tiles": "2026-10-27", "pvgis": "2026-10-27"})
         sixteen = json.loads((folder / "progetto-v16.meridiana").read_text(encoding="utf-8"))
-        self.assertEqual(model.MIGRATIONS[16](sixteen), {**sixteen, "climate": {}})
+        self.assertEqual(model.MIGRATIONS[16](sixteen), {**sixteen, "climate": {}, "resources": {}})
         self.assertEqual(model.Project.from_json(sixteen).climate, {})
         p.climate = {"tmy": {"outputs": {"tmy_hourly": []}}}
         self.assertEqual(model.Project.from_json(p.to_json()).climate, p.climate)
+
+    def test_both_seventeenth_formats_keep_weather_and_resources_after_integration(self):
+        data = json.loads((_setup.FORMATS / "progetto-v17.meridiana").read_text(encoding="utf-8"))
+        weather = {"tmy": {"source": "invented offline weather"}}
+        for stored in ({"climate": weather}, {"resources": {"weather": weather}}):
+            with self.subTest(stored=stored):
+                raw = {**data, "climate": {}, "resources": {}, **stored}
+                project = model.Project.from_json(raw)
+                self.assertEqual(project.climate, weather)
+                project.job_id, project.series_id = "job", "series"
+                reopened = model.Project.from_json(project.to_json())
+                self.assertEqual(reopened.climate, weather)
+                self.assertEqual(reopened.resources, project.resources)
+                self.assertEqual((reopened.job_id, reopened.series_id), ("job", "series"))
 
     def test_the_input_of_a_sub_field_lays_out_nothing_again(self):
         p = sample()

@@ -17516,3 +17516,456 @@ msgstr "area {a} m²"
 #~ msgstr ""
 #~ "Nessun inverter nell'elenco: Meridiana ne dimensiona uno al rapporto DC/"
 #~ "AC {r}; aggiungine uno dal catalogo per verificare le stringhe."
+
+#: src/meridiana/assistant/privacy.py:145
+msgid ""
+"Names, paths and job codes from the project and its archive are replaced by "
+"aliases; reserved projects and archive rows are never sent. Coordinates are "
+"rounded to about 1 km."
+msgstr ""
+"Nomi, percorsi e codici commessa del progetto e dell'archivio sono "
+"sostituiti da alias; i progetti riservati e le righe riservate dell'archivio "
+"non sono mai inviati. Le coordinate sono arrotondate a circa 1 km."
+
+#: src/meridiana/assistant/suggestions.py:335
+msgid "Yes, propose it"
+msgstr "Sì, proponimelo"
+
+#: src/meridiana/assistant/tools.py:970
+msgid "Searched the local project index"
+msgstr "Ho cercato nell'indice locale dei progetti"
+
+#: src/meridiana/assistant/tools.py:977
+msgid "Read the latest project revisions"
+msgstr "Ho letto le ultime revisioni dei progetti"
+
+#: src/meridiana/assistant/tools.py:981
+msgid "mixed"
+msgstr "misto"
+
+#: src/meridiana/assistant/tools.py:982
+msgid "same mounting"
+msgstr "stesso montaggio"
+
+#: src/meridiana/assistant/tools.py:982
+msgid "different mounting"
+msgstr "montaggio diverso"
+
+#: src/meridiana/assistant/tools.py:983
+msgid "similar tilt"
+msgstr "inclinazione simile"
+
+#: src/meridiana/assistant/tools.py:983
+msgid "different tilt"
+msgstr "inclinazione diversa"
+
+#: src/meridiana/assistant/tools.py:984
+#, python-brace-format
+msgid ""
+"{kind}, {power} kWp against {reference}, {mounting}, {tilt}, {distance} km, "
+"revision {revision} of {date}"
+msgstr ""
+"{kind}, {power} kWp contro {reference}, {mounting}, {tilt}, {distance} km, "
+"revisione {revision} del {date}"
+
+#: src/meridiana/assistant/tools.py:1005
+msgid "Found similar projects"
+msgstr "Ho trovato progetti simili"
+
+#: src/meridiana/assistant/tools.py:1020
+#, python-brace-format
+msgid "Prepared opening {title}, revision {revision}"
+msgstr "Ho preparato l'apertura di {title}, revisione {revision}"
+
+#: src/meridiana/assistant/tools.py:1044
+msgid "Read the local tasks"
+msgstr "Ho letto le attività locali"
+
+#: src/meridiana/energy/plant.py:1126
+msgid ""
+"strings not alike on this input (PVsyst asks for identical strings on an "
+"MPPT)"
+msgstr ""
+"stringhe diverse su questo ingresso (PVsyst chiede stringhe identiche su un "
+"MPPT)"
+
+#: src/meridiana/phases.py:99
+msgid "Delete all"
+msgstr "Elimina tutte"
+
+#: src/meridiana/phases.py:124
+msgid "Components"
+msgstr "Componenti"
+
+#: src/meridiana/ui/assistant_chat.py:406
+msgid ""
+"Questions about reserved projects stay on this PC: the question goes to the "
+"local model."
+msgstr ""
+"Le domande sui progetti riservati restano su questo PC: la domanda va al "
+"modello locale."
+
+#: src/meridiana/ui/assistant_chat.py:720
+msgid "Path"
+msgstr "Percorso"
+
+#: src/meridiana/ui/assistant_chat.py:720
+msgid "Task"
+msgstr "Attività"
+
+#: src/meridiana/ui/assistant_chat.py:720
+msgid "Due"
+msgstr "Scadenza"
+
+#: src/meridiana/ui/assistant_chat.py:725
+#, python-brace-format
+msgid "{field}: {value}"
+msgstr "{field}: {value}"
+
+#: src/meridiana/ui/assistant_chat.py:737
+#, python-brace-format
+msgid "Open project: {what}"
+msgstr "Apri il progetto: {what}"
+
+#: src/meridiana/ui/assistant_chat.py:766
+#, python-brace-format
+msgid "Opened: {what}."
+msgstr "Aperto: {what}."
+
+#: src/meridiana/ui/file_page.py:245 src/meridiana/ui/registry_page.py:24
+msgid "Clients and jobs"
+msgstr "Clienti e commesse"
+
+#: src/meridiana/ui/new_project.py:136
+msgid "Job"
+msgstr "Commessa"
+
+#: src/meridiana/ui/new_project.py:208
+msgid "No client"
+msgstr "Nessun cliente"
+
+#: src/meridiana/ui/new_project.py:219
+msgid "No job"
+msgstr "Nessuna commessa"
+
+#: src/meridiana/ui/plant_page.py:790
+#, python-brace-format
+msgid ""
+"A new string on input {k} of inverter {n}: then click its modules on the "
+"plan in order ({takes})"
+msgstr ""
+"Una nuova stringa sull'ingresso {k} dell'inverter {n}: poi clicca i suoi "
+"moduli sulla pianta in ordine ({takes})"
+
+#: src/meridiana/ui/registry_page.py:27
+msgid ""
+"Choose a client and a job, or add them here. Everything stays on this PC."
+msgstr ""
+"Scegli cliente e commessa, oppure aggiungili qui. Tutto resta su questo PC."
+
+#: src/meridiana/ui/registry_page.py:32
+msgid "Import registry…"
+msgstr "Importa registro…"
+
+#: src/meridiana/ui/registry_page.py:33
+msgid "Export registry…"
+msgstr "Esporta registro…"
+
+#: src/meridiana/ui/registry_page.py:34
+msgid "Apply import"
+msgstr "Applica importazione"
+
+#: src/meridiana/ui/registry_page.py:41
+msgid "Search by client, job code or name"
+msgstr "Cerca per cliente, codice o nome della commessa"
+
+#: src/meridiana/ui/registry_page.py:51
+msgid "Clients"
+msgstr "Clienti"
+
+#: src/meridiana/ui/registry_page.py:51
+msgid "New client"
+msgstr "Nuovo cliente"
+
+#: src/meridiana/ui/registry_page.py:52
+msgid "Jobs"
+msgstr "Commesse"
+
+#: src/meridiana/ui/registry_page.py:52
+msgid "New job"
+msgstr "Nuova commessa"
+
+#: src/meridiana/ui/registry_page.py:56 src/meridiana/ui/registry_page.py:191
+msgid "Choose a client or a job."
+msgstr "Scegli un cliente o una commessa."
+
+#: src/meridiana/ui/registry_page.py:63
+msgid "Client name"
+msgstr "Nome del cliente"
+
+#: src/meridiana/ui/registry_page.py:64
+msgid "Save client"
+msgstr "Salva cliente"
+
+#: src/meridiana/ui/registry_page.py:70
+msgid "Five digits"
+msgstr "Cinque cifre"
+
+#: src/meridiana/ui/registry_page.py:71
+msgid "Job code"
+msgstr "Codice commessa"
+
+#: src/meridiana/ui/registry_page.py:73
+msgid "Job name"
+msgstr "Nome della commessa"
+
+#: src/meridiana/ui/registry_page.py:76
+msgid "Reserved job"
+msgstr "Commessa riservata"
+
+#: src/meridiana/ui/registry_page.py:79
+msgid "Save job"
+msgstr "Salva commessa"
+
+#: src/meridiana/ui/registry_page.py:82
+msgid "Linked folders"
+msgstr "Cartelle collegate"
+
+#: src/meridiana/ui/registry_page.py:86
+msgid "Link folder…"
+msgstr "Collega cartella…"
+
+#: src/meridiana/ui/registry_page.py:122
+msgid "New record"
+msgstr "Nuova voce"
+
+#: src/meridiana/ui/registry_page.py:146
+#, python-brace-format
+msgid "Some job files could not be written or removed: {errors}"
+msgstr ""
+"Alcuni file delle commesse non si sono potuti scrivere o rimuovere: {errors}"
+
+#: src/meridiana/ui/registry_page.py:167
+msgid "Waiting"
+msgstr "In attesa"
+
+#: src/meridiana/ui/registry_page.py:167
+msgid "In progress"
+msgstr "In corso"
+
+#: src/meridiana/ui/registry_page.py:168
+msgid "Delivered"
+msgstr "Consegnata"
+
+#: src/meridiana/ui/registry_page.py:168
+msgid "Archived"
+msgstr "Archiviata"
+
+#: src/meridiana/ui/registry_page.py:169
+msgid "Preliminary"
+msgstr "Preliminare"
+
+#: src/meridiana/ui/registry_page.py:169
+msgid "Definitive"
+msgstr "Definitivo"
+
+#: src/meridiana/ui/registry_page.py:170
+msgid "Executive"
+msgstr "Esecutivo"
+
+#: src/meridiana/ui/registry_page.py:170
+msgid "Construction"
+msgstr "Costruttivo"
+
+#: src/meridiana/ui/registry_page.py:171
+#, python-brace-format
+msgid ""
+"Job {code}: {name}\n"
+"Client: {client}\n"
+"Status: {status}\n"
+"Phase: {phase}\n"
+"Reserved: {reserved}\n"
+"Projects: {projects}\n"
+"Folders: {folders}"
+msgstr ""
+"Commessa {code}: {name}\n"
+"Cliente: {client}\n"
+"Stato: {status}\n"
+"Fase: {phase}\n"
+"Riservata: {reserved}\n"
+"Progetti: {projects}\n"
+"Cartelle: {folders}"
+
+#: src/meridiana/ui/registry_page.py:178
+#, python-brace-format
+msgid "Write and update {file} in this folder. Reserved jobs never have one."
+msgstr ""
+"Scrivi e aggiorna {file} in questa cartella. Le commesse riservate non ne "
+"hanno uno."
+
+#: src/meridiana/ui/registry_page.py:188
+#, python-brace-format
+msgid ""
+"Client: {name}\n"
+"Kind: {kind}\n"
+"{notes}"
+msgstr ""
+"Cliente: {name}\n"
+"Tipo: {kind}\n"
+"{notes}"
+
+#: src/meridiana/ui/registry_page.py:244
+msgid "Choose a job before linking a folder."
+msgstr "Scegli una commessa prima di collegare una cartella."
+
+#: src/meridiana/ui/registry_page.py:247
+msgid "Link a job folder"
+msgstr "Collega una cartella alla commessa"
+
+#: src/meridiana/ui/registry_page.py:271
+msgid "Import the client and job registry"
+msgstr "Importa il registro di clienti e commesse"
+
+#: src/meridiana/ui/registry_page.py:272 src/meridiana/ui/registry_page.py:314
+msgid "JSON files (*.json)"
+msgstr "File JSON (*.json)"
+
+#: src/meridiana/ui/registry_page.py:286
+#, python-brace-format
+msgid ""
+"Import preview: {new} new, {updated} updated, {unchanged} unchanged. "
+"Existing records are merged by id; records absent from the file stay here."
+msgstr ""
+"Anteprima importazione: {new} nuovi, {updated} aggiornati, {unchanged} "
+"invariati. I record esistenti sono uniti per id; quelli assenti dal file "
+"restano qui."
+
+#: src/meridiana/ui/registry_page.py:290
+#, python-brace-format
+msgid "Conflicts, nothing can be imported: {conflicts}"
+msgstr "Conflitti, non è possibile importare: {conflicts}"
+
+#: src/meridiana/ui/registry_page.py:306
+#, python-brace-format
+msgid "Imported: {new} new, {updated} updated, {unchanged} unchanged."
+msgstr ""
+"Importazione completata: {new} nuovi, {updated} aggiornati, {unchanged} "
+"invariati."
+
+#: src/meridiana/ui/registry_page.py:313
+msgid "Export the client and job registry"
+msgstr "Esporta il registro di clienti e commesse"
+
+#: src/meridiana/ui/registry_page.py:319
+msgid "Export reserved jobs"
+msgstr "Esporta commesse riservate"
+
+#: src/meridiana/ui/registry_page.py:320
+msgid ""
+"The registry contains reserved jobs. The JSON file is not encrypted and "
+"includes their names, contacts, project paths and folder paths. Write it "
+"only where these data may be stored."
+msgstr ""
+"Il registro contiene commesse riservate. Il file JSON non è cifrato e "
+"include nomi, contatti, percorsi dei progetti e delle cartelle. Scrivilo "
+"solo dove questi dati possono essere conservati."
+
+#: src/meridiana/ui/registry_page.py:331
+#, python-brace-format
+msgid "Registry exported to {path}"
+msgstr "Registro esportato in {path}"
+
+#: src/meridiana/ui/registry_page.py:336
+msgid "A client needs a name."
+msgstr "Il cliente deve avere un nome."
+
+#: src/meridiana/ui/registry_page.py:337
+msgid "A job needs a name."
+msgstr "La commessa deve avere un nome."
+
+#: src/meridiana/ui/registry_page.py:338
+msgid "The job code must be exactly five digits."
+msgstr "Il codice commessa deve essere di esattamente cinque cifre."
+
+#: src/meridiana/ui/registry_page.py:339
+msgid "The job status or phase is not valid."
+msgstr "Stato o fase della commessa non validi."
+
+#: src/meridiana/ui/registry_page.py:340
+msgid "A reserved job never writes a folder manifest."
+msgstr "Una commessa riservata non scrive mai un manifesto nella cartella."
+
+#: src/meridiana/ui/registry_page.py:341
+msgid "This folder has not consented to a job manifest."
+msgstr "Questa cartella non ha dato il consenso al manifesto della commessa."
+
+#: src/meridiana/ui/registry_page.py:342
+msgid "This folder is already linked to another job."
+msgstr "Questa cartella è già collegata a un'altra commessa."
+
+#: src/meridiana/ui/registry_page.py:345
+msgid "This job code is already used."
+msgstr "Questo codice commessa è già in uso."
+
+#: src/meridiana/ui/registry_page.py:347
+msgid "This project path is already linked."
+msgstr "Questo percorso del progetto è già collegato."
+
+#: src/meridiana/ui/registry_page.py:349
+msgid "This folder is already linked."
+msgstr "Questa cartella è già collegata."
+
+#: src/meridiana/ui/report_page.py:285
+msgid ""
+"A copy of each file is embedded in the project when it is saved: the project "
+"travels with everything the report needs"
+msgstr ""
+"Una copia di ogni file entra nel progetto quando lo salvi: il progetto "
+"viaggia con tutto ciò che serve alla relazione"
+
+#: src/meridiana/ui/window.py:267
+#, python-brace-format
+msgid ""
+"The registry could not be opened; registry changes are temporary: {error}"
+msgstr ""
+"Il registro non si è potuto aprire; le modifiche al registro sono "
+"temporanee: {error}"
+
+#: src/meridiana/ui/window.py:578
+msgid "Registry unavailable"
+msgstr "Registro non disponibile"
+
+#: src/meridiana/ui/window.py:1001
+msgid ""
+"As many inverters as the DC/AC ratio asks, all like the first of the list; "
+"without one, Meridiana sizes one at that ratio"
+msgstr ""
+"Tanti inverter quanti ne chiede il rapporto DC/AC, tutti uguali al primo "
+"dell'elenco; senza, Meridiana ne dimensiona uno a quel rapporto"
+
+#: src/meridiana/ui/window.py:3760
+#, python-brace-format
+msgid "Inverter sized: {n} x {maker} {model}, DC/AC {r}."
+msgid_plural "Inverters sized: {n} x {maker} {model}, DC/AC {r}."
+msgstr[0] "Inverter dimensionato: {n} x {maker} {model}, DC/AC {r}."
+msgstr[1] "Inverter dimensionati: {n} x {maker} {model}, DC/AC {r}."
+
+#: src/meridiana/ui/window.py:4740
+#, python-brace-format
+msgid "The project index could not be updated: {error}"
+msgstr "Impossibile aggiornare l'indice dei progetti: {error}"
+
+#: src/meridiana/ui/window.py:4754
+#, python-brace-format
+msgid ""
+"The project is saved, but its registry link could not be written: {error}"
+msgstr ""
+"Il progetto è salvato, ma il collegamento nel registro non si è potuto "
+"scrivere: {error}"
+
+#: src/meridiana/ui/window.py:4757
+#, python-brace-format
+msgid "The project is saved, but some job files could not be updated: {errors}"
+msgstr ""
+"Il progetto è salvato, ma alcuni file delle commesse non si sono potuti "
+"aggiornare: {errors}"

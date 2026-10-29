@@ -473,6 +473,14 @@ class ReportAndPlant(unittest.TestCase):
         win._report_edited("profile", "")                                   # nobody, for this project
         self.assertIsNone(win._report_profile())
 
+    def test_an_embedded_author_does_not_prevent_choosing_no_author(self):
+        win = self.win
+        win.project.report = {"profile": "Studio"}
+        win.project.resources = {"report_profile": {"name": "Studio", "signer": "A. Designer", "logo": ""}}
+        self.assertEqual(win._report_profile()["signer"], "A. Designer")
+        win._report_edited("profile", "")
+        self.assertIsNone(win._report_profile())
+
 
 if __name__ == "__main__":
     unittest.main()

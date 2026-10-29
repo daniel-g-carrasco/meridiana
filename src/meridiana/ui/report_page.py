@@ -282,8 +282,8 @@ class ReportSide(QWidget):
         self.attachments_box.setSpacing(Space.S)
         box.addLayout(self.attachments_box)
         self.add_button = QPushButton(_("Add PDF files…"))
-        self.add_button.setToolTip(_("The files stay where they are: the project keeps their place, relative to its "
-                                     "own file"))
+        self.add_button.setToolTip(_("A copy of each file is embedded in the project when it is saved: the project "
+                                     "travels with everything the report needs"))
         self.add_button.clicked.connect(self._add_attachments)
         box.addWidget(self.add_button, 0, Qt.AlignmentFlag.AlignLeft)
         self.items: list[dict] = []              # the attachments as the settings have them

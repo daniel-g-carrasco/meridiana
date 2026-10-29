@@ -11,7 +11,10 @@ project and report gestures.
 
 from __future__ import annotations
 
+import sqlite3
+import tempfile
 import time
+import uuid
 from dataclasses import replace
 from pathlib import Path
 
@@ -26,8 +29,9 @@ from PySide6.QtWidgets import (QApplication, QDialog, QDockWidget, QFileDialog, 
 from shapely.geometry import Polygon
 
 from .. import assistant as assistant_core
-from .. import (atomic, camera, catalog, checks, config, jobs, log, manual, mesh, model, move, phases, recovery, rules,
-               shortcuts, sides, roofs, squaring, templates, theme_colors, tiles, underlay, view_colours, viewaids)
+from .. import (atomic, camera, catalog, checks, config, jobs, log, manual, mesh, model, move, phases, project_index,
+               recovery, registry, rules, shortcuts, sides, roofs, squaring, templates, theme_colors, tiles, underlay,
+               view_colours, viewaids)
 from ..energy import consumption as consumption_model
 from ..energy import meteo, pipeline, system
 from ..energy import plant as plant_model
@@ -87,6 +91,29 @@ class LayoutJob(QRunnable):
         t = time.perf_counter()
         results, keys, self.laid = jobs.layout_of(self.project, self.known)
         tell(self.signals.done, self.generation, results, time.perf_counter() - t, keys)
+
+
+class IndexSignals(QObject):
+    done = Signal(int, list, str)
+
+
+class IndexJob(QRunnable):
+    """Scan and persist derived rows with this worker's own SQLite connection."""
+
+    def __init__(self, generation: int, folders: list, database: Path):
+        super().__init__()
+        self.generation, self.folders, self.database = generation, folders, database
+        self.signals = IndexSignals()
+
+    def run(self):
+        try:
+            known = {row["path"]: row for row in project_index.stored(self.database)}
+            rows = project_index.scan(self.folders, known)
+            project_index.persist(self.database, rows)
+        except Exception as error:  # noqa: BLE001  the worker's boundary: the window says what failed
+            tell(self.signals.done, self.generation, [], str(error))
+        else:
+            tell(self.signals.done, self.generation, rows, "")
 
 
 AUTOSAVE_MS = 120_000           # a copy of the unsaved changes every two minutes
@@ -266,6 +293,17 @@ class MainWindow(QMainWindow):
     def __init__(self, paths: Paths, cfg: config.Config):
         super().__init__()
         self.paths, self.cfg = paths, cfg
+        self._registry_scratch = None
+        self.registry_error = ""
+        try:
+            self.registry = registry.Registry(paths.data / "registry.sqlite3")
+        except (OSError, sqlite3.Error, registry.RegistryError) as error:
+            self._registry_scratch = tempfile.TemporaryDirectory(prefix="meridiana-registry-")
+            self.registry = registry.Registry(Path(self._registry_scratch.name) / "registry.sqlite3")
+            self.registry_error = _("The registry could not be opened; registry changes are temporary: {error}").format(
+                error=error)
+            log.complain("registry", error)
+        self.current_job_id = self.current_project_id = ""
         self.session = ProjectSession()
         self.session.subscribe(self._session_changed)
         self.module_index: list = []           # (sub-field id, module key) per row of the 3D table
@@ -275,6 +313,8 @@ class MainWindow(QMainWindow):
         self.undo = UndoBridge(self.session.undo, self)
         self.undo.cleanChanged.connect(self._clean_changed)
         self.pool = QThreadPool.globalInstance()
+        self.index_generation = 0
+        self.index_job = None
         wheel.guard()                       # the wheel scrolls the forms; a field changes only with the keyboard
         self.theme = Theme(cfg, self)        # Fusion, the palette of the colour chosen, the font (study 13)
 
@@ -573,6 +613,9 @@ class MainWindow(QMainWindow):
         from .menubar import AltMenus
         self.file_page = FilePage(self)
         self.file_page.closed.connect(self._file_page_closed)
+        if self.registry_error:
+            self.tell(self.registry_error, 30.0)
+            QMessageBox.warning(self, _("Registry unavailable"), self.registry_error)
         self.tabs.header.file_button.clicked.connect(lambda _c=False: self.open_file_page())
         self.tabs.tabBar().tabBarClicked.connect(lambda _i: self.file_page.close_page())
         self.bars_before_file = False
@@ -631,6 +674,7 @@ class MainWindow(QMainWindow):
         if self.shortcut_notes:
             self.hint.setText(self._shortcut_notice())
         self._title()
+        QTimer.singleShot(0, self._refresh_index)
 
     def open_file_page(self, section: str = "open") -> None:
         """The File page over the window (ui/file_page.py), the bar of the phase put away under it; again, closed."""
@@ -1384,7 +1428,11 @@ class MainWindow(QMainWindow):
 
     def _report_profile(self) -> dict | None:
         """The profile the project's report is signed with, its logo as a path."""
-        from .. import reports
+        from .. import portability, reports
+        embedded = (self.project.resources or {}).get("report_profile")
+        chosen = reports.settings(self.project)["profile"]
+        if embedded and (chosen is None or chosen == embedded.get("name")):
+            return portability.profile(self.project, self.paths.cache)
         p = reports.profile_for(self.project, self.cfg.report_profiles, self.cfg.report_profile)
         if p and p.get("logo"):
             p = {**p, "logo": str(self.paths.data / "logos" / p["logo"])}
@@ -4522,6 +4570,8 @@ class MainWindow(QMainWindow):
         if not self._keep_or_discard():
             return False
         self.session.take(project, None, saved=False)       # new and unsaved: closing asks
+        self.current_job_id = self.current_project_id = ""
+        self.project.job_id = self.project.series_id = ""
         self._title()
         self._drop_autosave()
         self.cfg.last_folder = str(Path(path).parent)
@@ -4761,6 +4811,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, _("Recover the changes"), _("The copy could not be read: {error}").format(error=error))
             return False
         self.session.take(project, Path(c["path"]) if c["path"] else None, saved=False)   # not saved yet
+        self.current_job_id, self.current_project_id = project.job_id, project.series_id
         self.session.autosaved = c["file"]
         self._select("site", "")
         self._show_all(fit=True)
@@ -4768,15 +4819,71 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(_("Recovered: save it to keep it"), 8000)
         return True
 
+    def _refresh_index(self) -> None:
+        """Start a fresh scan; a slower, older result never replaces a newer one."""
+        if self.registry.connection is None:
+            return
+        self.index_generation += 1
+        if self.index_job is not None:
+            # Coalesce refreshes while a worker runs. Only one worker may persist at a time.
+            return
+        jobs = {row["id"]: row for row in self.registry.list_jobs(include_archived=True)}
+        clients = {row["id"]: row for row in self.registry.list_clients(include_archived=True)}
+        folders = []
+        sources = [*self.registry.list_folders(), *self.registry.list_projects()]
+        for source in sources:
+            job = jobs.get(source["job_id"], {})
+            client = clients.get(job.get("client_id", ""), {})
+            metadata = {"job_id": job.get("id", ""), "job_code": job.get("code", ""),
+                        "job_name": job.get("name", ""), "client_name": client.get("name", ""),
+                        "reserved": job.get("reserved", False)}
+            folders.append((Path(source["path"]), metadata))
+        job = IndexJob(self.index_generation, folders, self.registry.path)
+        job.signals.done.connect(self._index_done)
+        self.index_job = job
+        self.pool.start(job)
+
+    def _index_done(self, generation: int, rows: list, error: str) -> None:
+        self.index_job = None
+        if self.registry.connection is None:
+            return
+        if generation != self.index_generation:
+            self._refresh_index()
+            return
+        if not error:
+            return
+        log.complain("project index", error)
+        self.tell(_("The project index could not be updated: {error}").format(error=error))
+
+    def _register_saved(self, target: Path) -> None:
+        if not self.current_job_id:
+            return
+        stem = target.stem
+        revision = stem.rsplit("_R", 1)[1] if "_R" in stem and stem.rsplit("_R", 1)[1].isdigit() else ""
+        try:
+            linked = self.registry.link_project(self.current_job_id, target, self.project.name,
+                                                project_id=self.current_project_id or None, revision=revision)
+            self.current_project_id = linked["id"]
+            self.project.job_id, self.project.series_id = self.current_job_id, self.current_project_id
+        except (registry.RegistryError, OSError) as error:
+            log.complain("registry", error)
+            self.tell(_("The project is saved, but its registry link could not be written: {error}").format(error=error))
+        if self.registry.manifest_errors:
+            details = "; ".join(message for _path, message in self.registry.manifest_errors.values())
+            self.tell(_("The project is saved, but some job files could not be updated: {errors}").format(
+                errors=details))
+
     def _save_revision(self) -> None:
         if self.path is None:
             self._save_as()
             return
         try:
-            target = self.session.save_revision()
+            target = self.session.save_revision(self.paths.cache, self._report_profile())
         except OSError as error:
             QMessageBox.warning(self, _("Save"), _("The project could not be saved: {error}").format(error=error))
             return
+        self._register_saved(target)
+        self._refresh_index()
         self.cfg.last_project = str(target)
         self._save_config()
         self._mark_saved()
@@ -4807,6 +4914,12 @@ class MainWindow(QMainWindow):
         self.project.reserved = data["reserved"]
         self.project.network = data.get("network", model.Network())
         self.project.network_consent = data.get("network_consent", {})
+        self.current_job_id = data.get("job_id", "")
+        self.current_project_id = uuid.uuid4().hex if self.current_job_id else ""
+        self.project.job_id, self.project.series_id = self.current_job_id, self.current_project_id
+        client = self.registry.client(data.get("client_id", "")) if data.get("client_id") else None
+        if client is not None:
+            self.project.report = {**(self.project.report or {}), "client": client["name"]}
         self.project.sync_network()
         self._mark_saved()
         self._apply_project_network()
@@ -4826,18 +4939,23 @@ class MainWindow(QMainWindow):
 
     def open_path(self, path: Path) -> None:
         try:
-            notice = self.session.open(path)
+            notice = self.session.open(path, self.paths.cache)
         except Exception as error:             # noqa: BLE001  a damaged file is said, never a crash of the slot
             log.complain("open", error)
             QMessageBox.warning(self, _("Open a project"), _("{file} could not be opened: {error}").format(
                 file=path.name, error=error))
             return
         self._mark_saved()
+        linked = self.registry.project_at(path)
+        self.current_job_id = self.project.job_id or (linked["job_id"] if linked else "")
+        self.current_project_id = self.project.series_id or (linked["id"] if linked else "")
+        self.project.job_id, self.project.series_id = self.current_job_id, self.current_project_id
         self.cfg.last_folder, self.cfg.last_project = str(path.parent), str(path)
         self._save_config()
         self._select("site", "")
         self._show_all(fit=True)
         self._ensure_climate()
+        self._refresh_index()
         if notice:
             QMessageBox.information(self, _("Open a project"), notice)
 
@@ -4846,11 +4964,13 @@ class MainWindow(QMainWindow):
             return self._save_as()
         self.save_status.begin()
         try:
-            self.session.save(self.path)
+            self.session.save(self.path, self.paths.cache, self._report_profile())
         except OSError as error:
             self.save_status.failed()
             QMessageBox.warning(self, _("Save"), _("The project could not be saved: {error}").format(error=error))
             return False
+        self._register_saved(self.path)
+        self._refresh_index()
         self._mark_saved()
         self.save_status.finish(automatic=False)
         self.statusBar().showMessage(_("Saved {file}").format(file=self.path.name), 4000)
@@ -5049,6 +5169,10 @@ class MainWindow(QMainWindow):
             self._drop_autosave()
             self._save_config()
             self._save_window()
+            self.index_generation += 1
+            self.registry.close()
+            if self._registry_scratch is not None:
+                self._registry_scratch.cleanup()
             event.accept()
         else:
             event.ignore()

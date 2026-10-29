@@ -20,10 +20,10 @@ class SaveStatus(unittest.TestCase):
     def test_ctrl_s_shows_activity_then_the_saved_time(self):
         original = self.win.session.save
 
-        def watch(path):
+        def watch(path, cache_dir=None, report_profile=None):
             self.assertEqual(self.win.save_status.label.text(), "Saving…")
             self.assertTrue(self.win.save_status.spinner.isVisible())
-            return original(path)
+            return original(path, cache_dir, report_profile)
 
         with mock.patch.object(self.win.session, "save", side_effect=watch), \
                 mock.patch("meridiana.ui.save_status.time.strftime", return_value="10:42"):

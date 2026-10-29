@@ -1,0 +1,14 @@
+   1.728 s  piattaforma=wayland, Qt=6.12.0, schermi=[('Meta-0', 1600, 1000)]
+   2.477 s  scheda apertura: altezza=192, richiesta=192, etichette=[(76, 95, 76), (38, 19, 19)]
+   2.832 s  scheda chiaro: altezza=192, richiesta=192, minimo_layout=88, etichette=[(9, 33, 268, 76), (9, 113, 268, 38)], pulsanti=[(154, 155, 66, 28), (226, 155, 51, 28)], contenitore=192, richiesto=192, domande_y=0
+   2.977 s  foto kimi10-apertura-chiaro.png: 1600 x 962
+   5.400 s  scheda scuro: altezza=192, richiesta=192, minimo_layout=88, etichette=[(9, 33, 268, 76), (9, 113, 268, 38)], pulsanti=[(154, 155, 66, 28), (226, 155, 51, 28)], contenitore=192, richiesto=192, domande_y=0
+   5.473 s  foto kimi10-apertura-scuro.png: 1600 x 962
+   6.260 s  indice, ricerca simile motivata, percorso e revisione; annulla e poi scarta prima di aprire
+   6.680 s  foto kimi10-attivita-scuro.png: 1600 x 962
+   6.732 s  attività creata e completata soltanto dopo i due clic
+   9.857 s  provider cloud finto: solo alias, nessun nome, percorso o commessa
+   9.857 s  giro completato
+
+Avvisi Qt:
+1: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x55e6950ede60 but 0x0 is focused (None:0)

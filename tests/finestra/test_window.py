@@ -1856,6 +1856,10 @@ class Stringing(PlantWindow):
         p.energy["inverters"] = [{"record": inverter_record(), "count": 1, "name": ""}]
         p.energy["strings"] = {"auto": True, "strategy": "rows"}            # a file of 13 migrated: the proposal
         path = Path(tempfile.mkdtemp()) / "vecchio.meridiana"
+        # Keep the offline fixture's climate already embedded: downloading it is a separate, real edit (R196).
+        from meridiana.energy import meteo
+        self.assertTrue(wait_until(self.app, lambda: self.win.pool.activeThreadCount() == 0))
+        meteo.capture(p, self.win.paths.cache)
         p.save(path)
         self.win.open_path(path)
         self.assertTrue(wait_until(self.app, lambda: self.sid in self.win.results))

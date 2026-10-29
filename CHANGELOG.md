@@ -35,6 +35,26 @@ software centres show.
   in matching pieces. Beyond regional scale Natural Earth 1:110m (177 countries, 209,310 compressed bytes, public
   domain) draws the whole Equal Earth world with non-overlapping names and the project mark; the maximum zoom fits
   the viewport and zooming back restores the local plan.
+- Meridio finds and opens local projects and remembers tasks (R151): a background index covers only linked job folders,
+  with lexical and structured search, latest valid revisions and explained similar projects. Opening always shows path
+  and revision and uses the normal unsaved-changes confirmation. Local tasks have due dates and are created or completed
+  only after a click. Cloud providers receive no index, names, paths or job codes, never reserved rows, only filtered
+  aliases; questions about reserved work stay local. Registry schema 3.
+- Clients and jobs in the window (R150): File > Clients and jobs offers three columns for clients, jobs and details,
+  with inline creation. New projects choose their client and job in the optional data; the client reaches the report,
+  and a reserved job stops online search and tiles as soon as it is selected. Project format 18 carries job and series
+  identity, so saving R02 and reopening R01 keeps the same link. Damaged registries open a warned temporary fallback.
+- Local client and job registry (R150): SQLite stores clients, jobs, project series and linked folders with stable
+  ids, textual five-digit job codes, foreign keys and a versioned schema. Immediate transactions, WAL and full
+  synchronisation protect writes; a consistent .bak database is refreshed after every committed change.
+- Folder manifests and registry exchange (R150): a linked folder writes .meridiana-commessa.json only after its own
+  consent, revoking removes it and reserved jobs never have one. Folder consents stay local and never travel in the
+  JSON exchange. Export and import show a preview, merge records by stable id, leave unrelated records in place and
+  refuse conflicting codes, paths or malformed fields without partial writes. Folder failures are named and retried.
+- Self-contained project files (R150): custom modules, inverters and optimizers already travel in the file; report
+  attachments, the selected author's profile and logo, and the site's weather and horizon are now embedded too.
+  Opening on another PC needs no catalogue, profile or weather cache. Missing external resources are named on opening.
+  Re-saving preserves embedded attachments and a new site's weather never retains the old site's horizon. Format 17.
 - New projects start from their place (R148): one field reads decimal, DMS and decimal-minute coordinates, Google Maps,
   OpenStreetMap and Apple links, UTM WGS84 or ED50 and Gauss-Boaga Roma40. Local ISTAT and recent-project suggestions
   work while typing; Nominatim is asked only by Search. Check the point and choose Create and draw. Optional grid data

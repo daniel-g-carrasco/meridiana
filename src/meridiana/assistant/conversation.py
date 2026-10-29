@@ -96,7 +96,8 @@ class Conversation:
             self.messages.append({"role": "tool", "id": c["id"], "name": c["name"], "error": True,
                                   "content": json.dumps({"error": "stopped by the designer"})})
 
-    def run_tools(self, calls: list[ToolCall], host, apply_each: Callable | None = None) -> list[tools.Outcome]:
+    def run_tools(self, calls: list[ToolCall], host, apply_each: Callable | None = None,
+                  restore: Callable[[str], str] | None = None) -> list[tools.Outcome]:
         """The calls of a round answered from the project (`host`), in their order."""
         outcomes = []
         for c in calls:
@@ -104,7 +105,8 @@ class Conversation:
                 outcome = tools.Outcome(json.dumps({"error": "the arguments are not valid JSON", "got": c.raw[:200]}),
                                         error=True)
             else:
-                outcome = tools.run(c.name, c.arguments, host, self.state)
+                arguments = _restore_arguments(c.arguments, restore) if restore is not None else c.arguments
+                outcome = tools.run(c.name, arguments, host, self.state)
             self.add_result(c, outcome)
             outcomes.append(outcome)
             if apply_each is not None:
@@ -112,11 +114,24 @@ class Conversation:
         return outcomes
 
 
+def _restore_arguments(value, restore):
+    """Resolve the cloud's aliases only for local execution; keep its original messages redacted."""
+    if isinstance(value, str):
+        return restore(value)
+    if isinstance(value, dict):
+        return {key: _restore_arguments(item, restore) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_restore_arguments(item, restore) for item in value]
+    return value
+
+
 def answer(conversation: Conversation, provider: Provider, system: str, question: str, host,
-           specs: list[dict] | None = None, on_text=None, on_tool=None, prepare=None) -> Round:
+           specs: list[dict] | None = None, on_text=None, on_tool=None, prepare=None, restore=None) -> Round:
     """A whole turn on this thread: the question, then rounds until an answer without calls or ROUNDS. `prepare`
-    turns the messages into what leaves (privacy.Redactor.messages for a cloud model). ProviderError goes on."""
+    turns the messages into what leaves (privacy.Redactor.messages for a cloud model), and `restore` resolves
+    aliases in local tool arguments (privacy.Redactor.restore). ProviderError goes on."""
     specs = tools.specs() if specs is None else specs
+    conversation.state.cloud = provider.cloud
     conversation.ask(question)
     last = Round()
     while conversation.rounds < ROUNDS:
@@ -125,7 +140,7 @@ def answer(conversation: Conversation, provider: Provider, system: str, question
         conversation.add_round(last, provider)
         if last.done.reason in ("stopped", "length", "refusal") or not last.calls:
             break
-        conversation.run_tools(last.calls, host, on_tool)
+        conversation.run_tools(last.calls, host, on_tool, restore=restore)
     return last
 
 
