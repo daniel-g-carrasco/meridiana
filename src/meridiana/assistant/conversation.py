@@ -117,6 +117,7 @@ def answer(conversation: Conversation, provider: Provider, system: str, question
     """A whole turn on this thread: the question, then rounds until an answer without calls or ROUNDS. `prepare`
     turns the messages into what leaves (privacy.Redactor.messages for a cloud model). ProviderError goes on."""
     specs = tools.specs() if specs is None else specs
+    conversation.state.cloud = provider.cloud
     conversation.ask(question)
     last = Round()
     while conversation.rounds < ROUNDS:

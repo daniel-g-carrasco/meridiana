@@ -394,6 +394,11 @@ class Chat(QObject):
         if not self.wants_cloud():
             self._start(text, self.make_local())
             return
+        if privacy.requires_local(text):
+            self.widget.note(_("Questions about reserved projects stay on this PC: the question goes to the local "
+                               "model."))
+            self._start(text, self.make_local())
+            return
         why = privacy.allowed(self.host.project, "anthropic", self.cfg.assistant_consent)
         if why == "reserved":
             self.widget.note(_("This project is reserved: the question goes to the local model."))
@@ -465,10 +470,13 @@ class Chat(QObject):
             self.decisions = []
         self.conversation.ask(context.question(text, self.host.phase_title(), selection))
         self.provider = provider
+        self.conversation.state.cloud = provider.cloud
         # the report's client is a name as the project's (R61): withheld as well
         client = str((getattr(self.host.project, "report", None) or {}).get("client") or "")
         self.redactor = (privacy.Redactor.of(self.host.project, self.host.path(), {"client": client})
                          if provider.cloud else None)
+        if self.redactor is not None and hasattr(self.host, "index_rows"):
+            self.redactor.with_archive(self.host.index_rows())
         self._round()
 
     def _round(self) -> None:
@@ -527,6 +535,7 @@ class Chat(QObject):
         if error.kind == "offline" and self.provider is not None and self.provider.cloud:
             self.widget.note(_("No network: Claude cannot be reached. The question goes to the local model."))
             self.provider, self.redactor = self.make_local(), None
+            self.conversation.state.cloud = False
             self._round()
             return
         self.conversation.close_open_calls()

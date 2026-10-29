@@ -217,6 +217,7 @@ class State:
     projects: dict = field(default_factory=dict)
     count: int = 0
     project_count: int = 0
+    cloud: bool = False
 
 
 def _json(value) -> str:
@@ -920,14 +921,18 @@ def propose_edit(host, state: State, kind: str, changes, reason: str, id: str = 
                    _("Proposed: {what}").format(what=title), proposal=proposal)
 
 
-def _index_rows(host) -> list[dict]:
-    return list(host.index_rows()) if hasattr(host, "index_rows") else []
+def _index_rows(host, state: State) -> list[dict]:
+    rows = list(host.index_rows()) if hasattr(host, "index_rows") else []
+    return [row for row in rows if not state.cloud or not row.get("reserved", False)]
 
 
 def _project_payload(row: dict, state: State) -> dict:
     state.project_count += 1
     alias = f"pr{state.project_count}"
     state.projects[alias] = row
+    if state.cloud:
+        keys = ("revision", "modified", "file_modified", "kind", "power_kwp")
+        return {"id": alias, **{key: row.get(key) for key in keys if key in row}, "readable": not row.get("error")}
     keys = ("path", "name", "title", "series_id", "revision", "modified", "file_modified", "kind", "power_kwp",
             "job_code", "job_name", "client_name", "address", "reserved", "error")
     return {"id": alias, **{key: row.get(key) for key in keys if key in row}}
@@ -938,10 +943,10 @@ def search_projects(host, state: State, query: str = "", kind: str = "", client:
                     project_id: str = "", max_distance_km: float | None = None) -> Outcome:
     reference = state.projects.get(project_id)
     if reference is None and not project_id and hasattr(host, "path"):
-        reference = next((row for row in _index_rows(host) if row.get("path") == str(host.path())), None)
+        reference = next((row for row in _index_rows(host, state) if row.get("path") == str(host.path())), None)
     if project_id and reference is None:
         return _error("unknown project id: search_projects first")
-    found = project_index.search(_index_rows(host), query, kind, client, power_from, power_to, since,
+    found = project_index.search(_index_rows(host, state), query, kind, client, power_from, power_to, since,
                                  reference, max_distance_km)
     projects = [_project_payload(row, state) for row in found[:20]]
     return Outcome(_json({"projects": projects, "truncated": len(found) > len(projects)}),
@@ -949,7 +954,7 @@ def search_projects(host, state: State, query: str = "", kind: str = "", client:
 
 
 def project_revisions(host, state: State, series_id: str = "") -> Outcome:
-    found = project_index.revisions(_index_rows(host), series_id)
+    found = project_index.revisions(_index_rows(host, state), series_id)
     projects = [_project_payload(row, state) for row in found[:20]]
     return Outcome(_json({"projects": projects, "truncated": len(found) > len(projects)}),
                    _("Read the latest project revisions"))
@@ -970,10 +975,10 @@ def similar_projects(host, state: State, project_id: str = "", power_from: float
                      client: str = "") -> Outcome:
     reference = state.projects.get(project_id)
     if reference is None and not project_id and hasattr(host, "path"):
-        reference = next((row for row in _index_rows(host) if row.get("path") == str(host.path())), None)
+        reference = next((row for row in _index_rows(host, state) if row.get("path") == str(host.path())), None)
     if reference is None:
         return _error("search_projects first and give one of its project ids")
-    found = project_index.similar(_index_rows(host), reference, power_from, power_to, client)
+    found = project_index.similar(_index_rows(host, state), reference, power_from, power_to, client)
     projects = []
     for row in found[:20]:
         projects.append({**_project_payload(row, state), "reason": _reason(row),
