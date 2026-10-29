@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (QAbstractScrollArea, QGraphicsView, QPlainTextEdi
                                QStyleFactory, QTextEdit)
 
 from .checkboxes import CheckboxStyle
-from .design import Radius, Size
+from .design import Motion, Radius, Size
 
 THUMB = Size.THUMB
 END = Radius.CARD               # the thumb's way from the bar's ends: off a card's rounded corners (XS until R182,
@@ -85,6 +85,8 @@ class ScrollStyle(CheckboxStyle, QProxyStyle):
         return super().standardIcon(standard, option, widget)
 
     def styleHint(self, hint, option=None, widget=None, returnData=None):
+        if hint == QStyle.StyleHint.SH_ToolTip_WakeUpDelay:
+            return Motion.NORMAL
         if hint == QStyle.StyleHint.SH_DialogButtonBox_ButtonsHaveIcons:
             return 1                                    # the symbols on Windows too: one look on every system
         return super().styleHint(hint, option, widget, returnData)

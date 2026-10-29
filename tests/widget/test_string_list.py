@@ -58,7 +58,7 @@ class TheList(unittest.TestCase):
         from meridiana.ui.sections import SECTION_ROLE, TAIL_ROLE
         lst = self.list
         heads = [lst.topLevelItem(i) for i in range(lst.topLevelItemCount())]
-        self.assertEqual([h.text(0) for h in heads], ["Inverter 1 · Input 1", "Inverter 1 · Input 2"])
+        self.assertEqual([h.text(0) for h in heads], ["Inverter 1 · MPPT 1", "Inverter 1 · MPPT 2"])
         self.assertEqual([h.data(0, SECTION_ROLE) for h in heads], ["", ""])
         self.assertEqual(sorted(lst.rows), [0, 1])
         self.assertTrue(lst.rows[0].text(0).startswith("1.1.1"))
@@ -88,7 +88,8 @@ class TheList(unittest.TestCase):
         self.assertNotIn("⚠", first)
         self.assertFalse(self.list.input_info[(1, 1)].icon(1).isNull())
         self.assertIn("to be checked", first)
-        self.assertEqual(len(first.splitlines()), 4)
+        self.assertEqual(len(first.splitlines()), 5)
+        self.assertIn("Physical input count not specified", first)
         self.assertEqual(self.list.input_info[(1, 1)].foreground(0).style(),
                          self.list.input_info[(1, 1)].foreground(0).style().NoBrush)
         self.assertIn("current", self.list.input_info[(1, 1)].toolTip(0))

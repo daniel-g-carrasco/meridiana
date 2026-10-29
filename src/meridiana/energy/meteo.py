@@ -178,7 +178,8 @@ def typical_year(lat: float, lon: float, cache_dir: Path, refresh: bool = False,
         except (OSError, ValueError, MeteoError):
             pass                                  # fetched again below
     import requests
-    from pvlib.iotools import get_pvgis_tmy
+    from .dependencies import load_pvlib
+    get_pvgis_tmy = load_pvlib().iotools.get_pvgis_tmy
     try:
         data, meta = get_pvgis_tmy(lat, lon, usehorizon=False, url=PVGIS_URL, timeout=timeout, coerce_year=1990)
     except requests.RequestException as error:
@@ -206,7 +207,8 @@ def _tmy_v6(lat: float, lon: float, timeout: float) -> tuple[pd.DataFrame, dict]
     """The typical year from PVGIS 6, as PVGIS 5.3 gives it: 8760 hours of 1990 in UTC, the columns of
     COLUMNS, and metadata saying where it came from and that the sun belongs half an hour later."""
     import pandas as pd
-    import pvlib
+    from .dependencies import load_pvlib
+    pvlib = load_pvlib()
     raw = _get_json(PVGIS6_URL + "meteorological/typical-meteorological-year",
                     {"latitude": lat, "longitude": lon}, timeout)
     tmy = raw["typical_meteorological_year"]
@@ -247,7 +249,8 @@ def horizon(lat: float, lon: float, cache_dir: Path, refresh: bool = False, time
             raw = None
     if raw is None:
         import requests
-        from pvlib.iotools import get_pvgis_horizon
+        from .dependencies import load_pvlib
+        get_pvgis_horizon = load_pvlib().iotools.get_pvgis_horizon
         try:
             series, _meta = get_pvgis_horizon(lat, lon, url=PVGIS_URL, timeout=timeout)
             raw = {"fetched": date.today().isoformat(), "azimuth": [float(a) for a in series.index],

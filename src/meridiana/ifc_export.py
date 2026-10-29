@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import math
 import os
+import json
+import uuid
 from collections.abc import Callable
 from pathlib import Path
 
@@ -74,6 +76,7 @@ class Writer:
         self.ios = ifcopenshell
         self.api = ifcopenshell.api
         self.guid = ifcopenshell.guid.new
+        self.namespace = uuid.UUID(project.bim_id)
         self.p = project
         self.results = {k: v for k, v in (results or {}).items() if not isinstance(v, Exception)}
         self.strings = strings or {}
@@ -82,6 +85,10 @@ class Writer:
         self.f = ifcopenshell.api.run("project.create_file", version="IFC4")
         self.counts: dict[str, int] = {}
         self.storeys: dict = {}
+        self.contained: dict = {}
+
+    def stable(self, *key) -> str:
+        return self.ios.guid.compress(uuid.uuid5(self.namespace, json.dumps(key, ensure_ascii=False)).hex)
 
     # small things
 
@@ -120,8 +127,10 @@ class Writer:
     def place(self, product, origin=(0.0, 0.0, 0.0), zdir=(0.0, 0.0, 1.0), xdir=(1.0, 0.0, 0.0), relative=None):
         product.ObjectPlacement = self.f.createIfcLocalPlacement(relative, self.axes(origin, zdir, xdir))
 
-    def element(self, ifc_class: str, name: str, predefined: str | None = None, object_type: str | None = None):
+    def element(self, ifc_class: str, name: str, predefined: str | None = None, object_type: str | None = None,
+                identity: tuple | None = None):
         el = self.api.run("root.create_entity", self.f, ifc_class=ifc_class, name=name, predefined_type=predefined)
+        el.GlobalId = self.stable(*(identity or (ifc_class, name)))
         if object_type:
             el.ObjectType = object_type
         self.counts[ifc_class] = self.counts.get(ifc_class, 0) + 1
@@ -142,20 +151,37 @@ class Writer:
                      self.value("IfcInteger", v) if isinstance(v, int) else
                      self.value("IfcReal", float(v)) if isinstance(v, float) else self.value("IfcLabel", str(v)))
             values.append(self.f.createIfcPropertySingleValue(key, None, v, None))
-        ps = self.f.createIfcPropertySet(self.guid(), None, name, None, values)
+        targets = products if isinstance(products, list) else [products]
+        ps = self.f.createIfcPropertySet(self.stable("properties", name, sorted(p.GlobalId for p in targets)),
+                                         None, name, None, values)
         self.f.createIfcRelDefinesByProperties(self.guid(), None, None, None,
                                                products if isinstance(products, list) else [products], ps)
         return ps
 
     def contain(self, products: list, structure) -> None:
         if products:
-            self.f.createIfcRelContainedInSpatialStructure(self.guid(), None, None, None, products, structure)
+            self.contained.setdefault(structure.id(), (structure, []))[1].extend(products)
+
+    def relationships(self) -> None:
+        """One containment per spatial container; deterministic relationship identities survive membership edits."""
+        for holder, products in self.contained.values():
+            self.f.createIfcRelContainedInSpatialStructure(self.stable("contains", holder.GlobalId), None,
+                                                          None, None, list(dict.fromkeys(products)), holder)
+        for rel in self.f.by_type("IfcRelationship"):
+            for attribute in ("RelatingObject", "RelatingStructure", "RelatingGroup", "RelatingType",
+                              "RelatingPropertyDefinition", "RelatingContext"):
+                target = getattr(rel, attribute, None)
+                if target is not None and getattr(target, "GlobalId", None):
+                    extra = sorted(x.GlobalId for x in rel.RelatedDefinitions) if rel.is_a("IfcRelDeclares") else []
+                    rel.GlobalId = self.stable("relationship", rel.is_a(), target.GlobalId, extra)
+                    break
 
     # the project, the site, the buildings
 
     def setup(self) -> None:
         api, f, p = self.api, self.f, self.p
         self.project = api.run("root.create_entity", f, ifc_class="IfcProject", name=p.name)
+        self.project.GlobalId = self.stable("project")
         units = [api.run("unit.add_si_unit", f, unit_type="LENGTHUNIT"),
                  api.run("unit.add_si_unit", f, unit_type="AREAUNIT"),
                  api.run("unit.add_si_unit", f, unit_type="VOLUMEUNIT"),
@@ -168,7 +194,7 @@ class Writer:
         self.ctx_body = api.run("context.add_context", f, context_type="Model", context_identifier="Body",
                                 target_view="MODEL_VIEW", parent=self.ctx_model)
         api.run("georeference.edit_true_north", f, true_north=0.0)       # +Y is the true north
-        self.site = self.element("IfcSite", p.site.address or p.name)
+        self.site = self.element("IfcSite", p.site.address or p.name, identity=("site",))
         self.site.RefLatitude = dms(p.site.lat)
         self.site.RefLongitude = dms(p.site.lon)
         self.site.RefElevation = 0.0
@@ -191,17 +217,17 @@ class Writer:
                                           "Scale": 1.0})
             self.utm = {"epsg": code, "east": east, "north": north, "convergence": gamma, "k": k}
         self.storeys = {}
-        self.building = self.element("IfcBuilding", p.name)
+        self.building = self.element("IfcBuilding", p.name, identity=("building-container",))
         api.run("aggregate.assign_object", f, products=[self.building], relating_object=self.site)
         self.place(self.building, relative=self.site.ObjectPlacement)
         for b in p.buildings:
-            st = self.element("IfcBuildingStorey", b.name)
+            st = self.element("IfcBuildingStorey", b.name, identity=("storey", b.id))
             st.Elevation = 0.0
             api.run("aggregate.assign_object", f, products=[st], relating_object=self.building)
             self.place(st, relative=self.building.ObjectPlacement)
             self.storeys[b.id] = st
         if any(sf.building is None for sf in p.subfields) or any(e.building is None for e in p.exclusions):
-            self.ground = self.element("IfcBuildingStorey", "Terreno")
+            self.ground = self.element("IfcBuildingStorey", "Terreno", identity=("ground",))
             self.ground.Elevation = 0.0
             api.run("aggregate.assign_object", f, products=[self.ground], relating_object=self.building)
             self.place(self.ground, relative=self.building.ObjectPlacement)
@@ -249,7 +275,8 @@ class Writer:
                              key=lambda q: math.dist(a, q))
             top = [a, *between, c]
             prof = [(0.0, 0.0), (length, 0.0)] + [(math.dist(a, q), roof_z(*q)) for q in reversed(top)]
-            wall = self.element("IfcWall", f"{b.name}, parete {i + 1}", predefined="SOLIDWALL")
+            wall = self.element("IfcWall", f"{b.name}, parete {i + 1}", predefined="SOLIDWALL",
+                                identity=("wall", b.id, i))
             wall.Representation = self.f.createIfcProductDefinitionShape(None, None, [
                 self.body([self.extrusion(prof, WALL, down=True)])])
             d = (dx / length, dy / length, 0.0)
@@ -258,7 +285,8 @@ class Writer:
             walls.append(wall)
         self.contain(walls, storey)
 
-        roof = self.element("IfcRoof", f"{b.name}, copertura", predefined=ROOF_KINDS.get(b.roof.type, "FREEFORM"))
+        roof = self.element("IfcRoof", f"{b.name}, copertura", predefined=ROOF_KINDS.get(b.roof.type, "FREEFORM"),
+                            identity=("roof", b.id))
         self.place(roof, relative=storey.ObjectPlacement)
         self.contain([roof], storey)
         slabs = []
@@ -276,7 +304,10 @@ class Writer:
             local = [(float((q - o) @ x), float((q - o) @ y)) for q in pts3]
             if mesh.signed_area(local) < 0:
                 local.reverse()
-            slab = self.element("IfcSlab", f"{b.name}, {pt.name or f'falda {k + 1}'}", predefined="ROOF")
+            pitch_id = (b.roof.free_pitches[k].get("id", k) if b.roof.type == "free" else
+                        pt.side if pt.side is not None else k)
+            slab = self.element("IfcSlab", f"{b.name}, {pt.name or f'falda {k + 1}'}", predefined="ROOF",
+                                identity=("pitch", b.id, pitch_id))
             slab.Representation = self.f.createIfcProductDefinitionShape(None, None, [
                 self.body([self.extrusion(local, SLAB, down=True)])])
             self.place(slab, tuple(o), n, x, roof.ObjectPlacement)
@@ -300,6 +331,7 @@ class Writer:
 
     def obstacles(self) -> None:
         names = {}
+        parts = {}
         by_container: dict = {}
         prisms = self.p.obstacle_prisms()
         for i, o in enumerate(prisms):
@@ -309,7 +341,11 @@ class Writer:
             names[o["kind"]] = names.get(o["kind"], 0) + 1
             label = {"parapet": "Parapetto", "chimney": "Camino", "skylight": "Lucernario", "tree": "Albero",
                      "vent": "Evacuatore", "plant": "Impianto"}.get(o["kind"], "Ostacolo")
-            el = self.element(cls, f"{label} {names[o['kind']]}", predefined=pre, object_type=otype)
+            key = (o["kind"], o["id"])
+            part = parts.get(key, 0)
+            parts[key] = part + 1
+            el = self.element(cls, f"{label} {names[o['kind']]}", predefined=pre, object_type=otype,
+                              identity=("obstacle", *key, part))
             ring = o["ring"]
             cx = sum(q[0] for q in ring) / len(ring)
             cy = sum(q[1] for q in ring) / len(ring)
@@ -329,6 +365,42 @@ class Writer:
 
     # the modules
 
+    def supports(self) -> None:
+        """Enabled auxiliary planes are virtual reference surfaces, also before any module is laid."""
+        for sf in self.p.subfields:
+            if sf.support is None or not sf.support.enabled or len(sf.ring) < 3:
+                continue
+            support = sf.support
+            surface = support.surface()
+            beta = math.radians(surface.tilt)
+            fx, fy = geo.facing_vector(surface.azimuth)
+            normal = np.array([math.sin(beta) * fx, math.sin(beta) * fy, math.cos(beta)])
+            xdir = np.array([-fy, fx, 0.0])
+            ydir = np.cross(normal, xdir)
+            points = [np.array([x, y, surface.z(x, y)]) for x, y in sf.ring]
+            origin = points[0]
+            local = [(float((q - origin) @ xdir), float((q - origin) @ ydir)) for q in points]
+            boundary = self.profile(local).OuterCurve
+            plane = self.f.createIfcPlane(self.f.createIfcAxis2Placement3D(self.point3(0, 0, 0), None, None))
+            bounded = self.f.createIfcCurveBoundedPlane(plane, boundary, [])
+            geometry = self.f.createIfcGeometricSet([bounded])
+            annotation = self.element("IfcAnnotation", sf.name, object_type="MERIDIANA_PLACEMENT_SURFACE",
+                                      identity=("support", self.p.variant, sf.id))
+            annotation.Description = "Virtual placement reference; not a constructed building element."
+            annotation.Representation = self.f.createIfcProductDefinitionShape(None, None, [
+                self.f.createIfcShapeRepresentation(self.ctx_body, "Annotation", "GeometricSet", [geometry])])
+            holder = self.container(sf.building)
+            self.place(annotation, origin, normal, xdir, holder.ObjectPlacement)
+            self.contain([annotation], holder)
+            self.pset(annotation, "Meridiana_Supporto", {
+                "IdProgettoBIM": self.p.bim_id, "IdVariante": self.p.variant, "IdSottocampo": sf.id,
+                "IdEdificio": sf.building, "IndiceFalda": sf.pitch, "Attivo": True,
+                "Inclinazione": self.value("IfcPlaneAngleMeasure", support.tilt),
+                "AzimutCEI": self.value("IfcPlaneAngleMeasure", support.azimuth),
+                "Quota": self.value("IfcLengthMeasure", support.z0),
+                "EstRiferimento": self.value("IfcLengthMeasure", support.x0),
+                "NordRiferimento": self.value("IfcLengthMeasure", support.y0)})
+
     def modules(self) -> int:
         f = self.f
         types: dict = {}
@@ -338,6 +410,7 @@ class Writer:
         identity = f.createIfcCartesianTransformationOperator3D(None, None, self.point3(0, 0, 0), None, None)
         by_string: dict = {}
         of_type: dict = {}              # one IfcRelDefinesByType for each type (its inverse is SET [0:1])
+        all_modules = []
         for sf, result in laid:
             if not result.modules:
                 continue
@@ -363,7 +436,8 @@ class Writer:
                 if getattr(pm, "turned", False):
                     u = np.cross(n, u)
                 origin = np.array([pm.centre[0], pm.centre[1], pm.z]) - n * thick / 2
-                occ = f.createIfcSolarDevice(self.guid(), None, f"{sf.name} {pm.key}", None, None,
+                occ = f.createIfcSolarDevice(self.stable("module", self.p.variant, sf.id, pm.key),
+                                             None, f"{sf.name} {pm.key}", None, None,
                                              f.createIfcLocalPlacement(holder.ObjectPlacement,
                                                                        self.axes(origin, n, u)),
                                              f.createIfcProductDefinitionShape(None, None, [
@@ -373,6 +447,9 @@ class Writer:
                                              None, "SOLARPANEL")
                 label = self.strings.get((sf.id, pm.key), "")
                 self.pset(occ, "Meridiana_Modulo", {
+                    "IdProgettoBIM": self.p.bim_id, "IdVariante": self.p.variant,
+                    "IdModuloCatalogo": sf.module, "IdEdificio": sf.building,
+                    "IndiceFalda": sf.pitch,
                     "IdSottocampo": sf.id, "Sottocampo": sf.name, "Chiave": pm.key, "Fila": int(pm.row),
                     "Posto": int(pm.slot), "Livello": int(pm.level), "Stringa": label or None,
                     "Inclinazione": self.value("IfcPlaneAngleMeasure", float(pm.tilt)),
@@ -388,7 +465,9 @@ class Writer:
             self.counts["IfcSolarDevice"] = self.counts.get("IfcSolarDevice", 0) + len(occs)
             of_type.setdefault(key, []).extend(occs)
             self.contain(occs, holder)
-            grp = f.createIfcGroup(self.guid(), None, f"Sottocampo {sf.name}", None, None)
+            all_modules.extend(occs)
+            grp = f.createIfcGroup(self.stable("subfield", self.p.variant, sf.id),
+                                    None, f"Sottocampo {sf.name}", None, None)
             f.createIfcRelAssignsToGroup(self.guid(), None, None, None, occs, None, grp)
             self.pset(grp, "Meridiana_Sottocampo", {
                 "IdSottocampo": sf.id, "Montaggio": params.mounting, "Moduli": len(occs),
@@ -396,20 +475,32 @@ class Writer:
                 "InclinazioneModuli": self.value("IfcPlaneAngleMeasure", float(result.tilt)),
                 "AzimutCEI": self.value("IfcPlaneAngleMeasure", float(result.azimuth)),
                 "PassoFile": self.value("IfcLengthMeasure", float(result.pitch))})
+            if sf.support is not None:
+                self.pset(grp, "Meridiana_Supporto", {
+                    "Attivo": sf.support.enabled, "Inclinazione": sf.support.tilt,
+                    "AzimutCEI": sf.support.azimuth, "Quota": self.value("IfcLengthMeasure", sf.support.z0),
+                    "EstRiferimento": self.value("IfcLengthMeasure", sf.support.x0),
+                    "NordRiferimento": self.value("IfcLengthMeasure", sf.support.y0)})
         for key, occs in of_type.items():
             f.createIfcRelDefinesByType(self.guid(), None, None, None, occs, types[key][0])
         for label, occs in sorted(by_string.items()):
-            grp = f.createIfcGroup(self.guid(), None, f"Stringa {label}", None, None)
+            grp = f.createIfcGroup(self.stable("string", self.p.variant, label), None, f"Stringa {label}", None, None)
             f.createIfcRelAssignsToGroup(self.guid(), None, None, None, occs, None, grp)
             self.pset(grp, "Meridiana_Stringa", {"Stringa": label, "Moduli": len(occs)})
         self.counts["strings"] = len(by_string)
+        if all_modules:
+            system = self.element("IfcSystem", "Impianto fotovoltaico", identity=("pv-system", self.p.variant))
+            f.createIfcRelAssignsToGroup(self.guid(), None, None, None, all_modules, None, system)
+            self.pset(system, "Meridiana_Impianto", {"IdProgettoBIM": self.p.bim_id,
+                      "IdVariante": self.p.variant, "Variante": self.p.current_variant().get("name", ""),
+                      "ModuliPosati": len(all_modules)})
         return total
 
     def _module_type(self, sf, data: dict, mod, along: float, across: float, thick: float, portrait: bool):
         f = self.f
         label = f"{data.get('manufacturer', '')} {data.get('model', sf.module)}".strip()
         t = self.element("IfcSolarDeviceType", f"{label} ({'verticale' if portrait else 'orizzontale'})",
-                         predefined="SOLARPANEL")
+                         predefined="SOLARPANEL", identity=("module-type", sf.module, portrait))
         prof = f.createIfcRectangleProfileDef("AREA", None, f.createIfcAxis2Placement2D(self.point2(0, 0), None),
                                               float(along), float(across))
         solid = f.createIfcExtrudedAreaSolid(prof, f.createIfcAxis2Placement3D(self.point3(0, 0, 0), None, None),
@@ -447,7 +538,9 @@ class Writer:
         self.setup()
         self.buildings()
         self.obstacles()
+        self.supports()
         n = self.modules()
+        self.relationships()
         self.tell(0.92, "file")
         path = Path(path)
         part = path.with_name(path.name + ".part")

@@ -473,9 +473,14 @@ class PlantInspector(QScrollArea):
             self.working_summary.setText(_("The inverters are being checked…"))
             return
         count = sum(1 for s in plant.strings if s.inverter == unit)
-        self.working_summary.setText(_("{name}\n{kw} kW AC · {n} inputs · {strings}").format(
-            name=found.name, kw=number(found.spec.pac / 1000, 1), n=found.inputs,
-            strings=ngettext("{n} string", "{n} strings", count).format(n=count)))
+        topology = (_("{n} Synergy units").format(n=found.inputs) if found.inputs > 1 else _("Fixed-voltage DC bus")) if found.optimized else (
+            _("{n} MPPT").format(n=found.spec.mppt_count) if found.spec.mppt_count else _("MPPT count not specified"))
+        summary = _("{name}\n{kw} kW AC · {topology} · {strings}").format(
+            name=found.name, kw=number(found.spec.pac / 1000, 1), topology=topology,
+            strings=ngettext("{n} string", "{n} strings", count).format(n=count))
+        if found.spec.imax_total is not None:
+            summary += "\n" + _("Shared inverter DC current limit: {a} A").format(a=number(found.spec.imax_total, 1))
+        self.working_summary.setText(summary)
 
     def _working_units(self, plant) -> None:
         """Keep a physical unit's number across recalculations, including the pending calculation."""
@@ -852,6 +857,11 @@ class StringList(QTreeWidget):
                         series = (_("{lo}-{hi} in series").format(lo=slot.series[0], hi=slot.series[1])
                                   if slot.series[1] else _("series range not known"))
                         parallel = _("max {n} in parallel").format(n=slot.allowed)
+                        connectors = u.spec.inputs_per_mppt
+                        physical = connectors[k - 1] if connectors and k <= len(connectors) else None
+                        if not u.optimized:
+                            parallel += "\n" + (_("{n} physical inputs share this MPPT").format(n=int(physical))
+                                                 if physical is not None else _("Physical input count not specified"))
                         state = (_("empty") if not mine else
                                  {"ok": _("correct"), "warn": _("to be checked"), "fail": _("out of limit")}[slot.level])
                         count = ngettext("{n} string", "{n} strings", len(mine)).format(n=len(mine))
@@ -1017,7 +1027,7 @@ def input_name(unit, k: int) -> str:
     """An input as the Plant names it: «Input 2» of an inverter with MPPT, «Synergy unit 2» of a SolarEdge inverter
     with Synergy units, «Strings» of a SolarEdge inverter with one DC bus (task 22)."""
     if not unit.optimized:
-        return _("Input {k}").format(k=k)
+        return _("MPPT {k}").format(k=k)
     return _("Synergy unit {k}").format(k=k) if unit.inputs > 1 else _("Strings")
 
 

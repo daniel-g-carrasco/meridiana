@@ -425,6 +425,43 @@ def direct_faces(element, cache: dict, scale: float) -> list:
     return [(np.asarray(f, dtype=float) * scale) @ rot.T + move for f in faces]
 
 
+def _support_surfaces(f, structure, cache: dict, scale: float) -> list:
+    """Read our explicitly tagged virtual planes, without treating generic annotations as roofs."""
+    out = []
+    for e in _by_type(f, "IfcAnnotation"):
+        if e.ObjectType != "MERIDIANA_PLACEMENT_SURFACE" or e.Representation is None:
+            continue
+        try:
+            placement = _placement(e.ObjectPlacement, cache, scale)
+            for rep in e.Representation.Representations:
+                for item in rep.Items:
+                    if not item.is_a("IfcGeometricSet"):
+                        continue
+                    for surface in item.Elements:
+                        if not surface.is_a("IfcCurveBoundedPlane") or surface.InnerBoundaries:
+                            continue
+                        xy = _curve_points(surface.OuterBoundary)
+                        points = np.array([(x, y, 0.0) for x, y in xy])
+                        axes = _axis2(surface.BasisSurface.Position)
+                        points = (points @ axes[:3, :3].T + axes[:3, 3]) * scale
+                        points = points @ placement[:3, :3].T + placement[:3, 3]
+                        normal, area = _normal(points)
+                        if normal[2] < 0:
+                            normal = -normal
+                        if area < 1e-4 or normal[2] < math.cos(math.radians(89)):
+                            continue
+                        bid = structure.building_of(e.id())
+                        ground = structure.ground(bid)[0]
+                        out.append({"ring": points[:, :2].tolist(), "normal": normal.tolist(),
+                                    "point": points.mean(axis=0).tolist(), "area": area, "holes": 0,
+                                    "owners": [e.id()], "ground": ground, "name": e.Name or "",
+                                    "ifc": structure.buildings[bid].GlobalId if bid in structure.buildings else "",
+                                    "storey": structure.storey_of(e.id())})
+        except (Unsupported, AttributeError, TypeError, ValueError, IndexError):
+            continue
+    return out
+
+
 def box_points(element, cache: dict, scale: float) -> np.ndarray | None:
     """Way d: the points of an element's body without making any face (the extrusions' profiles at both ends, every
     point of a Brep or a face set), in world metres; None when it has none or they cannot be found."""
@@ -869,6 +906,7 @@ def read(path, mode: str = "direct", lazy: bool = True, threads: int = 1,
     out.update(georeference(f, scale))
     tell(0.05, "structure")
     structure = Structure(f, scale, cache)
+    out["supports"] = _support_surfaces(f, structure, cache, scale)
     times["structure"] = time.perf_counter() - t0 - times["open"]
     products = None
     if mode == "all":

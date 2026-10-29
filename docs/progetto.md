@@ -368,4 +368,26 @@ prestazionale del tema di 1 s non superata (1,032 s in ripetizione), gia problem
 Binari Windows R08 e Flatpak R03 collaudati con 0 errori, inclusi export e riapertura IFC4. Artefatti e limiti nella relazione UX; nessuna release pubblicata o installazione reale dichiarata.
 Le aggiunte sono conservate in docs/richieste.md fino a R234: non interrompono o azzerano le decisioni precedenti.
 
+### Seguito integrato del 29/10/2026
+
+Il seguito conserva tutti gli ID R198-R234. File e Impostazioni hanno navigazione distinta, Meridio separa i
+messaggi per ruolo, il modello offre posa est-ovest e pensiline a una/due falde. Piani ausiliari indipendenti e
+identità BIM persistenti sono nello schema 19 del contenitore `.mer`; IFC4 esporta tipi, proprietà, GUID stabili
+e superfici virtuali. Le geometrie importate sono confrontate con il kernel e tre campioni locali, incluso Revit.
+
+Dimensionamento e stringatura rispettano separazione degli orientamenti, limiti per MPPT/connettori e correnti
+comuni; il bound di ricerca considera anche la capacità elettrica. La ricerca è ora fuori dal thread grafico,
+annullabile e protetta contro risultati riferiti a uno stato precedente. Corretto anche l'avvio concorrente di
+pvlib, senza caricarlo all'importazione della finestra. I limiti del modello elettrico delle ombre restano
+espliciti: R215 e R225-R229 non sono dichiarate completamente chiuse.
+
+Tre profili di relazione per destinazione, tipografia comune, intestazioni ripetute e didascalie tenute con le
+figure sono verificati nel renderer PDF. I componenti condivisi e le correzioni a tooltip, calendario, rientri
+e File sono nel template privato, commit `3da1098cc8e659a3a9f6b20a7ae90d28fdc39e15` (150 test verdi).
+Manifest `template-sync-qt_R03.json` e `template-sync-qt-tables_R04.json`, 21+1 mapping verificati.
+
+Rapporti del seguito in `docs/revisioni/testi-strumenti-pensiline-20261029.md`,
+`ombre-stringatura-audit-20261029.md`, `ifc-bim-seguito-20261029.md` e
+`ux-condivisa-seguito-20261029.md`; integrazione e nuovi pacchetti nel relativo rapporto finale.
+
 Cartelle Windows `meridiana` e `meridiana-lavoro` integrate al commit 246ec58; locale compilato nella cartella di avvio. Il seguito documentale e la ricetta IFC per Windows non modificano il motore applicativo.

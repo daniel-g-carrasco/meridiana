@@ -6,10 +6,11 @@ No accent: the choice is told by the ground, as in the menus."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import QDate, QRectF, QSize, Qt
+from PySide6.QtCore import QDate, QEvent, QModelIndex, QRectF, QSize, Qt
 from PySide6.QtGui import QBrush, QColor, QPalette, QPen, QTextCharFormat
-from PySide6.QtWidgets import QCalendarWidget, QToolButton, QWidget
+from PySide6.QtWidgets import QAbstractItemView, QCalendarWidget, QToolButton, QWidget
 
+from .. import theme_colors
 from . import icons
 from .design import Icon, Line, Radius, Size, Space
 
@@ -24,6 +25,11 @@ class DayPicker(QCalendarWidget):
         self.setVerticalHeaderFormat(QCalendarWidget.VerticalHeaderFormat.NoVerticalHeader)
         self.setHorizontalHeaderFormat(QCalendarWidget.HorizontalHeaderFormat.ShortDayNames)
         self.setGridVisible(False)
+        self._hovered = QModelIndex()
+        self.day_view = self.findChild(QAbstractItemView, "qt_calendar_calendarview")
+        if self.day_view is not None:
+            self.day_view.setMouseTracking(True)
+            self.day_view.viewport().installEventFilter(self)
         for name, icon in (("qt_calendar_prevmonth", "chevron-left"), ("qt_calendar_nextmonth", "chevron-right")):
             button = self.findChild(QToolButton, name)
             if button is not None:
@@ -68,15 +74,39 @@ class DayPicker(QCalendarWidget):
         painter.save()
         painter.setRenderHint(painter.RenderHint.Antialiasing)
         shown = day.month() == self.monthShown() and day.year() == self.yearShown()
+        enabled = self.isEnabled() and self.minimumDate() <= day <= self.maximumDate()
         if day == self.selectedDate():
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(pal.color(QPalette.ColorRole.Mid))
             painter.drawRoundedRect(cell, Radius.INNER, Radius.INNER)
-        elif day == QDate.currentDate():
+        hovered = (self.day_view is not None and self._hovered.isValid()
+                   and self.day_view.visualRect(self._hovered).center() == rect.center())
+        if hovered and enabled:
+            hover = pal.color(QPalette.ColorRole.Text)
+            hover.setAlphaF(theme_colors.HOVER)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(hover)
+            painter.drawRoundedRect(cell, Radius.INNER, Radius.INNER)
+        if day == QDate.currentDate() and day != self.selectedDate():
             painter.setPen(QPen(pal.color(QPalette.ColorRole.Mid), Line.HAIR))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             half = Line.HAIR / 2
             painter.drawRoundedRect(cell.adjusted(half, half, -half, -half), Radius.INNER, Radius.INNER)
-        painter.setPen(pal.color(QPalette.ColorRole.Text if shown else QPalette.ColorRole.PlaceholderText))
+        painter.setPen(pal.color(QPalette.ColorGroup.Active if enabled else QPalette.ColorGroup.Disabled,
+                                 QPalette.ColorRole.Text if shown else QPalette.ColorRole.PlaceholderText))
         painter.drawText(QRectF(rect), Qt.AlignmentFlag.AlignCenter, str(day.day()))
         painter.restore()
+
+    def eventFilter(self, watched, event) -> bool:
+        view = getattr(self, "day_view", None)
+        if view is not None and watched is view.viewport():
+            kind = event.type()
+            if kind in (QEvent.Type.MouseMove, QEvent.Type.Leave):
+                index = view.indexAt(event.position().toPoint()) if kind == QEvent.Type.MouseMove else QModelIndex()
+                if index != self._hovered:
+                    previous, self._hovered = self._hovered, index
+                    if previous.isValid():
+                        view.viewport().update(view.visualRect(previous))
+                    if index.isValid():
+                        view.viewport().update(view.visualRect(index))
+        return super().eventFilter(watched, event)

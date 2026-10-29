@@ -171,4 +171,8 @@ class SectionDelegate(QStyledItemDelegate):
         if index.siblingAtColumn(0).data(SECTION_ROLE) is not None:
             height = QFontMetrics(header_font(option.font)).height() + 6
             size.setHeight(max(size.height(), height) + self.air)
+            if index.column() == 0 and self.column != 0 and not self.pills and option.widget is not None:
+                # paint() aligns the header icon with its children's icons by this extra indent.
+                # Reserve it even when collapsed children no longer contribute a size hint.
+                size.setWidth(size.width() + option.widget.indentation())
         return size

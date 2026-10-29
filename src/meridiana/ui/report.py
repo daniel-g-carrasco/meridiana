@@ -39,28 +39,16 @@ from .report_style import HEAD, INK, MUTED, RULE
 
 IMAGES_SHARE = 0.8         # of the way, the images (what takes the time); the pages the rest
 MARGIN_CM = 2.0
-POINT_SIZE = 9.5
+POINT_SIZE = 10.5
 BLANK = "00"               # a page of the contents before the layout says it
 
 
 def _style() -> str:
-    return (f"<style>body {{ color: {INK}; }} "
-            "h1 { font-size: 24pt; font-weight: 600; margin-top: 0; margin-bottom: 6pt; } "
-            "h2 { font-size: 15pt; font-weight: 600; margin-top: 18pt; margin-bottom: 8pt; } "
-            "h3 { font-size: 11.5pt; font-weight: 600; margin-top: 14pt; margin-bottom: 5pt; } "
-            "h4 { font-size: 10pt; font-weight: 600; margin-top: 10pt; margin-bottom: 3pt; } "
-            "p { margin-top: 0; margin-bottom: 6pt; } "
-            f"table.grid {{ border-collapse: collapse; margin-bottom: 6pt; }} "
-            f"table.grid th {{ background-color: {HEAD}; font-weight: 600; border-bottom: 1px solid {RULE}; }} "
-            f"table.grid td {{ border-bottom: 1px solid {RULE}; vertical-align: top; }} "
-            "table.facts { margin-bottom: 8pt; } "
-            f"td.label {{ color: {MUTED}; }} "
-            f".muted {{ color: {MUTED}; }} "
-            f".caption {{ color: {MUTED}; font-size: 8pt; }} "
-            f".kicker {{ color: {MUTED}; font-size: 10pt; font-weight: 600; }} "
-            f".lead {{ font-size: 13pt; }} "
-            "td.toc { padding: 3pt 0; } "
-            "</style>")
+    from .document_style import css
+    return ("<style>" + css(ink=INK, muted=MUTED, rule=RULE, head=HEAD, paper=True)
+            + f".caption {{ color: {MUTED}; font-size: 8.5pt; }} "
+            + f".kicker {{ color: {MUTED}; font-size: 10pt; font-weight: 600; }} "
+            + ".lead { font-size: 13pt; } td.toc { padding: 4px 0; }</style>")
 
 
 def _cover_rows(project, settings: dict, profile: dict | None) -> list[tuple[str, str]]:
@@ -445,6 +433,22 @@ def _layout(doc: QTextDocument) -> tuple[QSizeF, int]:
     doc.rootFrame().setFrameFormat(frame)
     doc.setPageSize(page)
     doc.pageCount()                                 # laid out now
+    from .document_layout import keep_together
+    groups = []
+    block = doc.begin()
+    while block.isValid():
+        fragment = block.begin()
+        plan = False
+        while not fragment.atEnd():
+            fmt = fragment.fragment().charFormat()
+            if fmt.isImageFormat() and fmt.toImageFormat().name() in ('report://plan', 'report://plan_strings'):
+                plan = True
+            fragment += 1
+        following = block.next()
+        if plan and following.isValid() and following.text().strip():
+            groups.append((block.position(), following.position()))
+        block = following
+    keep_together(doc, groups)
     return page, margin
 
 

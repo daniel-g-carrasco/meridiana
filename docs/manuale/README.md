@@ -22,7 +22,51 @@ I tre comandi stanno anche nel menu Aiuto: un tasto F non è mai l'unica via (su
 
 **File > Clienti e commesse** mostra tre colonne: clienti, commesse e dettaglio con progetti e cartelle collegati. **Nuovo cliente** e **Nuova commessa** li aggiungono senza finestre separate. Il codice commessa è di cinque cifre e resta testo, quindi conserva gli zeri iniziali. Il registro è un database SQLite sul PC, con transazioni e una copia `.bak` aggiornata dopo ogni scrittura. Se il database non si apre, Meridiana avvisa senza sovrascriverlo e usa un registro temporaneo, così i progetti restano utilizzabili.
 
-In **File > Nuovo**, nei dati facoltativi, scegli cliente e commessa. Il nome del cliente va nella relazione; una commessa riservata ferma ricerca online e tessere già quando la scegli. Al salvataggio Meridiana collega il file alla commessa e scrive nel progetto gli id della serie, nel formato 18: salvare R02 e riaprire R01 conserva lo stesso collegamento.
+In **File > Nuovo**, nei dati facoltativi, scegli cliente e commessa. Il nome del cliente va nella relazione; una commessa riservata ferma ricerca online e tessere già quando la scegli. Al salvataggio Meridiana collega il file alla commessa e scrive nel progetto gli id della serie, dal formato 18: salvare R02 e riaprire R01 conserva lo stesso collegamento.
+
+## Posa, pensiline e modello BIM
+
+Nella fase **Modello**, i comandi sono raggruppati in Modifica, Disegna, Posa e Precisione.
+**Est-ovest** dispone file contrapposte nel sottocampo selezionato, su superficie orizzontale. Se ci sono
+file manuali, prima scegli esplicitamente di riposare automaticamente. La proposta elettrica separa i diversi
+orientamenti e le inclinazioni; i collegamenti manuali incompatibili vengono segnalati.
+
+**Pensilina** permette di impostare posti per fila, larghezza e profondità, quota minima del piano, pendenza
+e rotazione. Puoi creare una fila o due falde contrapposte e posarle con un clic. Ogni falda è un sottocampo
+con piano di posa ausiliario modificabile nelle Proprietà. I valori iniziali sono esempi: non comprendono
+travi, pilastri, sagome dei veicoli o verifiche strutturali.
+
+Il **piano di posa ausiliario** può essere attivato anche su un sottocampo esistente: quota al centro, inclinazione
+e azimut sono indipendenti dai bordi del modello ricevuto. Disattivandolo restano memorizzati e torna valido
+il riferimento originario a edificio/falda. Spostamento e rotazione del sottocampo muovono anche il piano.
+Durante l'importazione IFC, superfici non rappresentabili esattamente dal bordo della falda generano aree
+ausiliarie esplicite nel riepilogo, inizialmente senza moduli.
+
+L'IFC4 esportato conserva identificativi dei moduli, tipi e proprietà di catalogo/posa/impianto. I piani ausiliari
+sono riferimenti virtuali, distinti dagli elementi costruiti. Le proprietà IFC non equivalgono automaticamente
+a famiglie parametriche native di Revit. Il progetto `.mer` incorpora dati e risorse; lo schema 19 conserva
+identità BIM e piani di posa.
+
+## Dimensionamento e limiti del calcolo
+
+**Dimensiona** cerca inverter e stringhe in un'attività annullabile; se modifichi il progetto nel frattempo,
+la proposta precedente non viene applicata. Il criterio preferisce meno inverter, poi meno modelli e poi
+il rapporto DC/AC più vicino. È una ricerca euristica con un budget dichiarato: una ricerca incompleta non
+dimostra che una soluzione non esista. Numero di MPPT, coppie di connettori fisici e limiti di corrente comuni
+sono informazioni distinte; gli ingressi sullo stesso MPPT non seguono orientamenti indipendenti.
+
+Un modulo non collegato non contribuisce alla produzione. L'ombra influenza la corrente comune della stringa:
+non spegne tutti i moduli che vengono dopo quello in ombra. La stima elettrica usa area ombreggiata e blocchi
+di bypass interessati; non risolve tutte le curve corrente-tensione di celle, diodi e MPPT. Due moduli collegati
+a un ottimizzatore non hanno automaticamente due MPPT indipendenti. Compatibilità SolarEdge e famiglie supportate
+sono verificate, ma rendimento annuale, limiti dinamici degli ottimizzatori e clipping aggregato degli inverter
+restano approssimazioni, descritte in **Come è calcolato > Cosa il modello non comprende**.
+
+## Profili della relazione
+
+Oltre a Completa e Compatta, puoi scegliere **Presentazione al cliente**, **Revisione del progetto elettrico**
+oppure **Energia e ipotesi di calcolo**, poi adattare i capitoli. I tre nuovi profili mantengono le verifiche.
+Le tabelle ripetono l'intestazione tra pagine e il registro esplicita formule, ingressi, unità, fonti e risultati.
 
 Nella pagina del registro, **Collega cartella** aggiunge una cartella esistente alla commessa senza spostare file. Ogni cartella ha la sua casella: solo quando la attivi Meridiana scrive e aggiorna `.meridiana-commessa.json`. Disattivarla rimuove il manifesto e la sua copia. Una commessa riservata non ha mai un manifesto. Se una cartella non è raggiungibile, l'errore viene mostrato e l'operazione viene ritentata alla scrittura successiva, senza fermare le altre cartelle.
 

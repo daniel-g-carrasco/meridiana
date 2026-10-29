@@ -66,24 +66,26 @@ def phases() -> list[Phase]:
     T = Tool
     return [
         Phase("model", 1, _("Model"), (
-            Group("draw", _("Draw"), (
-                T("tool_building", icon="building"),
-                T("building_template", _("Template")),
-                T("tool_pitch", icon="pitch"),
-                T("tool_subfield", icon="subfield"),
-                T("tool_exclusion", icon="exclusion"))),
             Group("edit", _("Edit"), (
                 T("tool_select", icon="select"),
                 T("tool_move", _("Move"), icon="move"),
                 T("tool_rotate", _("Rotate"), icon="rotate"))),
+            Group("draw", _("Draw"), (
+                T("tool_building", icon="building"),
+                T("building_template", _("Template")),
+                T("carport", _("Canopy")),
+                T("tool_pitch", icon="pitch"),
+                T("tool_exclusion", icon="exclusion"))),
+            Group("layout", _("Layout"), (
+                T("tool_subfield", icon="subfield"),
+                T("tool_row", _("Row"), icon="row"),
+                T("layout_east_west", _("East-west")),
+                T("fill", _("Lay"), primary=True),
+                T("empty", _("Empty")))),
             Group("precision", _("Precision"), (
                 T("tool_measure", icon="measure"),
                 T("square", _("Square")),
-                T("rectangle", _("Rectangle")))),
-            Group("layout", _("Layout"), (
-                T("tool_row", _("Row"), icon="row"),
-                T("fill", _("Lay"), primary=True),
-                T("empty", _("Empty"))))),
+                T("rectangle", _("Rectangle"))))),
             "properties", ("layout", "shade", "import"),
             (_("What do you think of this layout?"),
              _("Are the distances from the edges right for the fire brigade?"),

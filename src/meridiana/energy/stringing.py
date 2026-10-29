@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 
 from ..i18n import _
 from .components import InverterSpec, ModuleSpec
+from .dependencies import load_pvlib
 from .pedigree import Quantity, Record, Source, Step, computed
 
 NORM = "CEI 64-8/7:2024-07"
@@ -71,6 +72,8 @@ def strings_allowed(module: ModuleSpec, inverter: InverterSpec, k: int, ki: floa
     exceed the operating current and gets the loss warning of `plan`; an automatic proposal never does. With no
     known series fuse, or none that can protect three strings, the proposal stops at two."""
     limits = []
+    if inverter.inputs_per_mppt and k < len(inverter.inputs_per_mppt):
+        limits.append(int(inverter.inputs_per_mppt[k]))
     if inverter.iscmax_per_mppt and ki * module.isc > 0:
         values = inverter.iscmax_per_mppt
         limits.append(int(values[min(k, len(values) - 1)] // (ki * module.isc)))
@@ -84,6 +87,7 @@ def strings_allowed(module: ModuleSpec, inverter: InverterSpec, k: int, ki: floa
 
 def vmp_at(module: ModuleSpec, t_cell: float) -> float:
     """MPP voltage of one module at 1000 W/m² and the cell temperature given."""
+    load_pvlib()
     from pvlib.pvsystem import max_power_point
     if module.sdm().get("linear"):
         return module.vmp * (1.0 + module.beta_voc / 100.0 * (t_cell - 25.0))
@@ -213,6 +217,19 @@ def plan(module: ModuleSpec, inverter: InverterSpec, n_series: int, strings_per_
                       Quantity(r"P_{STC}", _("nominal power of the module"), module.pmax, "W", m_src, 1)],
                      Quantity(r"P_{DC,in}", _("DC power of the input"), n_series * ns * module.pmax, "W",
                               computed(""), 1), ""))
+        if not i_in:
+            add(f"imp_missing{k}", _("{name}: operating-current limit is unknown").format(name=name), True,
+                _("The inverter's total current is not a per-MPPT limit. Enter the manufacturer's per-MPPT "
+                  "data to verify this input."), "warn")
+        if not isc_in:
+            add(f"isc_missing{k}", _("{name}: short-circuit current limit is unknown").format(name=name), True,
+                _("Enter the manufacturer's short-circuit current limit for this MPPT to verify it."), "warn")
+        if inverter.inputs_per_mppt and k < len(inverter.inputs_per_mppt):
+            connectors = int(inverter.inputs_per_mppt[k])
+            if ns > connectors:
+                add(f"connections{k}", _("{name}: more strings than physical inputs").format(name=name), True,
+                    _("{n} strings on {m} connector pairs: an external parallel connection must be designed; "
+                      "the inputs share this MPPT.").format(n=ns, m=connectors), "warn")
         if i_in:
             lim = i_in[min(k, len(i_in) - 1)]
             over = ns * module.imp > lim

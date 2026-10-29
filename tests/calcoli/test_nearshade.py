@@ -224,3 +224,25 @@ class OwnRoof(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ElectricalReference(unittest.TestCase):
+    def test_martinez_loss_matches_pvlib_and_is_independent_of_string_order(self):
+        from pvlib.shading import direct_martinez
+        shape = (len(nearshade.ELEVATIONS), len(nearshade.AZIMUTHS))
+        keys = [str(i) for i in range(10)]
+        fractions = np.zeros((10, *shape)); fractions[0] = 1 / 6
+        blocks = np.zeros_like(fractions); blocks[0] = 3
+        sh = nearshade.Shading(fractions.mean(axis=0), 1, keys=keys, modules=fractions,
+                               blocks=blocks, per_module=3)
+        extra = nearshade.electrical(sh, [keys], [180], [30])[0]
+        f = 1 / 60  # one sixth of one of ten equally sized panels
+        reference = float(direct_martinez(1000, 800, f, 3, 30))
+        self.assertAlmostEqual(0.8 * (f + extra), reference, places=12)
+        self.assertAlmostEqual(extra, nearshade.electrical(sh, [list(reversed(keys))], [180], [30])[0], places=12)
+        # Same shaded area but one touched bypass block: the electrical loss must decrease.
+        sh.blocks[0] = 1
+        narrower = nearshade.electrical(sh, [keys], [180], [30])[0]
+        self.assertAlmostEqual(narrower, extra / 3, places=12)
+        self.assertGreater(reference, 0.8 * f)
+        self.assertLess(reference, 1.0)  # shading one panel does not erase every following panel

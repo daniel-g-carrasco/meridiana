@@ -144,7 +144,8 @@ class ClimateJob(QRunnable):
             for kind in ("tmy", "horizon"):
                 path = meteo._cache_file(self.cache, kind, self.lat, self.lon)
                 climate[kind], _notice = atomic.read_json(path)
-        except (meteo.MeteoError, OSError, ValueError) as error:
+        except Exception as error:
+            # A worker must always finish through a signal, including dependency/bootstrap failures.
             tell(self.signals.failed, self.lat, self.lon, str(error))
             return
         tell(self.signals.done, self.lat, self.lon, climate)
@@ -512,7 +513,10 @@ class MainWindow(QMainWindow):
         self.ifc_progress.cancelled.connect(self._cancel_ifc)
         self.ifc_reading = None                # ui.ifc_import.IfcReading while a model is read
         self.ifc_job = None                    # ExportIfcJob while a model is written
-        for progress in (self.pvgis_progress, self.report_progress, self.ifc_progress):
+        self.sizing_job = None
+        self.sizing_progress = waiting.Progress()
+        self.sizing_progress.cancelled.connect(self._cancel_sizing)
+        for progress in (self.pvgis_progress, self.report_progress, self.ifc_progress, self.sizing_progress):
             self.statusBar().addPermanentWidget(progress)
         self.energy_job: EnergyJob | None = None
         self.climate_job: ClimateJob | None = None
@@ -859,6 +863,9 @@ class MainWindow(QMainWindow):
             _("The corners of the selected outline within 13° of a right angle become right angles"))
         act(draw, "building_template", self._building_template, False,
             _("A rectangle, an L, a T, a U or a trapezoid with its measures, placed with a click on the plan"))
+        act(draw, "carport", self._carport, tip=_("Place a canopy with one or two parking rows"))
+        act(draw, "layout_east_west", self._east_west,
+            tip=_("Use opposed module rows in the selected sub-field"))
         draw.addSeparator()
         # the layout of the selected sub-field (the Layout group of the Model's bar; the same as in its properties)
         act(draw, "fill", lambda: self._fill_selected(True),
@@ -1086,7 +1093,7 @@ class MainWindow(QMainWindow):
         for cid in ("compute", "fetch_pvgis", "inverter_catalog", "inverter_auto", "import_curve", "consumption_base",
                     "battery_catalog", "copy_notes", "export_report", "export_csv", "save_revision", "compare_variants",
                     "new_variant", "strings_auto", "strings_complete", "strings_manual", "strings_clear", "import_ifc",
-                    "export_ifc"):
+                    "export_ifc", "carport", "layout_east_west"):
             self.commands[cid].setIcon(icons.icon(cid))
         # «Variant» in the right corner of the row of the phases (design 2.1): it is of every phase
         corner = QWidget()
@@ -1306,6 +1313,21 @@ class MainWindow(QMainWindow):
             self.hint.setText(_("Select a sub-field first: the modules are laid in it."))
             return
         self._action("relayout", "subfield", oid)
+
+    def _east_west(self) -> None:
+        oid = self._selected_subfield()
+        sf = self.project_subfield(oid)
+        if sf is None:
+            self.hint.setText(_("Select a sub-field first: the modules are laid in it."))
+            return
+        if sf.manual:
+            self.hint.setText(_("This sub-field has manual rows. Choose Lay again automatically before changing its layout."))
+            return
+        if self.project.surface_of(sf).tilt > 0.01:
+            self.hint.setText(_("East-west rows need a horizontal placement surface. Select a flat roof or ground area."))
+            return
+        self._edited("subfield", oid, {"params.mounting": "east_west", "filled": True})
+        self.hint.setText(_("Opposed rows are laid. Their orientations stay separate when strings are proposed."))
 
     def _import_curve_file(self) -> None:
         """A load curve from a file (the consumption page's own dialog), on the Consumption phase."""
@@ -1930,6 +1952,28 @@ class MainWindow(QMainWindow):
         self.show_phase("model")
         self.plan.pick_points("template", [_("Click where the South-West corner of the building goes; Esc gives up")])
 
+    def _carport(self) -> None:
+        from .canopy_dialog import CanopyDialog
+        dialog = CanopyDialog(self)
+        if dialog.exec():
+            self.place_carport(dialog.spec())
+
+    def place_carport(self, spec) -> None:
+        spec.validate()
+        self._carport_spec = spec
+        self.show_phase("model")
+        self.plan.pick_points("carport", [_("Click the first corner of the canopy; Esc gives up")])
+
+    def _carport_placed(self, at) -> None:
+        from .. import canopies
+        spec, self._carport_spec = getattr(self, "_carport_spec", None), None
+        if spec is None:
+            return
+        ids = []
+        self.edit(_("Parking canopy"), lambda p: ids.extend(canopies.add(p, spec, at)))
+        self._select("subfield", ids[0])
+        self.hint.setText(_("Each canopy slope has its own editable placement plane and module layout."))
+
     def _template_placed(self, at) -> None:
         pending, self._template = getattr(self, "_template", None), None
         if pending is None:
@@ -1952,6 +1996,9 @@ class MainWindow(QMainWindow):
         what, _sep, uid = purpose.partition(":")
         if what == "template" and points:
             self._template_placed(tuple(map(float, points[0])))
+            return
+        if what == "carport" and points:
+            self._carport_placed(tuple(map(float, points[0])))
             return
         if len(points) < 2:
             return
@@ -2904,6 +2951,12 @@ class MainWindow(QMainWindow):
             pos_all.append(pos)
             nor_all.append(nor)
             col_all.append(col)
+        for sf in self.project.subfields:
+            if sf.support is not None and sf.support.enabled:
+                pos, nor, col = mesh.support_triangles(self.project, sf)
+                pos_all.append(pos)
+                nor_all.append(nor)
+                col_all.append(col)
         cat = (np.concatenate(pos_all) if pos_all else np.zeros((0, 3), np.float32),
                np.concatenate(nor_all) if nor_all else np.zeros((0, 3), np.float32),
                np.concatenate(col_all) if col_all else np.zeros((0, 3), np.float32))
@@ -3831,6 +3884,11 @@ class MainWindow(QMainWindow):
 
     def _size_inverters(self) -> None:
         """The brand first, then models of different powers together with a complete, valid string proposal."""
+        if self.sizing_job is not None:
+            return
+        if not self._layouts_settled():
+            self.tell(_("Wait for the current module layout before sizing the inverters."))
+            return
         good = self.session.good_results()
         p_stc = sum(a.p_stc for a in system.arrays_of(self.project, good)) if good else 0.0
         if p_stc <= 0.0:
@@ -3856,14 +3914,51 @@ class MainWindow(QMainWindow):
         if not candidates:
             self.tell(_("No inverter of {maker} in the catalogue has a nominal AC power.").format(maker=maker))
             return
-        from ..energy import sizing
-        result = sizing.choose(self.project, plant_model.groups_of(self.project, good), candidates, ratio)
+        from .sizing_job import SizingJob
+        if not self._layouts_settled():
+            self.tell(_("Wait for the current module layout before sizing the inverters."))
+            return
+        good = self.session.good_results()
+        ratio = float((self.project.energy or {}).get("dc_ac_ratio") or 1.1)
+        job = SizingJob(self.snapshot(), good, candidates, ratio, maker, self._state_key())
+        job.layout_keys = dict(self.session.layout_keys)
+        job.signals.done.connect(self._sizing_done)
+        self.sizing_job = job
+        self.commands['inverter_auto'].setEnabled(False)
+        self.sizing_progress.begin(_("Searching inverter and string combinations…"))
+        self.sizing_progress.unknown()
+        self.pool.start(job)
+
+    def _cancel_sizing(self) -> None:
+        if self.sizing_job is not None:
+            self.sizing_job.interrupt()
+            self.sizing_job = None
+            self.tell(_("Inverter search cancelled; no choice has been applied."))
+        self.commands['inverter_auto'].setEnabled(True)
+        self.sizing_progress.end()
+
+    def _sizing_done(self, outcome) -> None:
+        job, result = outcome
+        if self.sizing_job is not job:
+            return
+        self.sizing_job = None
+        self.commands['inverter_auto'].setEnabled(True)
+        self.sizing_progress.end()
+        if job.interrupted:
+            return
+        if job.state != self._state_key() or job.layout_keys != self.session.layout_keys or not self._layouts_settled():
+            self.tell(_("The project changed during the search. Run sizing again; no old proposal was applied."))
+            return
+        if isinstance(result, Exception):
+            log.complain('inverter sizing', result)
+            self.tell(_("Inverter search failed: {why}").format(why=str(result)))
+            return
         if not result.ok:
             self.tell(result.reason)
             return
 
         def size(p):
-            p.energy["inverter_maker"] = maker
+            p.energy["inverter_maker"] = job.maker
             p.energy["inverters"] = result.entries
             p.energy["strings"] = plant_model.touched(p.energy.get("strings"), result.runs)
             p.energy.pop("inverter", None)
@@ -4660,13 +4755,20 @@ class MainWindow(QMainWindow):
             plan = dialog.plan()
         else:
             plan = confirm(found)
-        if plan is None or not plan.buildings:
+        if plan is None or not (plan.buildings or plan.supports):
             return
         added: list = []
+        before = {sf.id for sf in self.project.subfields}
         self.edit(_("Import an IFC model"), lambda p: added.extend(ifc_import.apply(p, plan)))
         if added:
             self._select("building", added[0])
+        elif plan.supports:
+            self._select("subfield", next(sf.id for sf in self.project.subfields if sf.id not in before))
         self._show_all(fit=True)
+        if not added:
+            self.hint.setText(_("From {file}: independent placement areas added. Ctrl+Z takes them away.").format(
+                file=Path(path).name))
+            return
         self.hint.setText(ngettext("From {file}: {n} building, with its roof and what stands on it. Ctrl+Z takes it "
                                    "away.", "From {file}: {n} buildings, with their roofs and what stands on them. Ctrl+Z "
                                    "takes them away.", len(added)).format(file=Path(path).name, n=len(added)))
@@ -5180,6 +5282,7 @@ class MainWindow(QMainWindow):
                 run, self.preview_run = self.preview_run, None
                 run[0].close()
             self._cancel_ifc()
+            self._cancel_sizing()
             self._drop_autosave()
             self._save_config()
             self._save_window()

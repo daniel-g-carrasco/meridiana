@@ -24,7 +24,7 @@ class ThePhases(unittest.TestCase):
 
     def test_the_groups_are_those_of_the_design_without_the_sun_and_the_background(self):
         groups = {p.id: [g.title for g in p.groups] for p in phases.phases()}
-        self.assertEqual(groups["model"], ["Draw", "Edit", "Precision", "Layout"])
+        self.assertEqual(groups["model"], ["Edit", "Draw", "Layout", "Precision"])
         self.assertEqual(groups["plant"], ["Inverter", "Strings"])
         self.assertEqual(groups["production"], ["Computation", "Comparison"])
         self.assertEqual(groups["consumption"], ["Data"])
@@ -53,7 +53,7 @@ class ThePhases(unittest.TestCase):
                         self.assertIn(t.command, known)
         model = phases.by_id("model")
         layout = [t.command for g in model.groups if g.id == "layout" for t in g.tools]
-        self.assertEqual(layout, ["tool_row", "fill", "empty"])
+        self.assertEqual(layout, ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty"])
         edit = [t.command for g in model.groups if g.id == "edit" for t in g.tools]
         self.assertEqual(edit, ["tool_select", "tool_move", "tool_rotate"])
         precision = [t.command for g in model.groups if g.id == "precision" for t in g.tools]

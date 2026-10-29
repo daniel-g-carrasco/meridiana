@@ -451,6 +451,18 @@ def recoloured(table: np.ndarray, colour=MODULE, selected=frozenset(), selected_
     return out
 
 
+def support_triangles(project, sf, colour=(0.30, 0.60, 0.65)) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """The auxiliary support as a visible plane, also before laying modules. No change to the received building."""
+    acc = ([], [], [])
+    if sf.support is not None and sf.support.enabled:
+        ring = [tuple(q) for q in sf.ring]
+        surface = project.surface_of(sf)
+        for indices in triangulate(ring):
+            points = [(ring[i][0], ring[i][1], surface.z(*ring[i])) for i in indices]
+            _triangle(acc, *points, colour, (0, 1, 0))
+    return _arrays(*acc)
+
+
 def project_scene(project, results: dict, colours: dict | None = None, sides=None
                   ) -> tuple[tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray, np.ndarray]:
     """The project's 3D scene with nothing selected, as the report draws it (ui/report_3d.py): the triangles of
@@ -472,6 +484,9 @@ def project_scene(project, results: dict, colours: dict | None = None, sides=Non
     for o in project.obstacle_prisms():
         colour = {"tree": c["tree"], "parapet": c["wall"]}.get(o["kind"], c["obstacle"])
         parts.append(prism_triangles(o["ring"], o["z0"], o["z1"], colour))
+    for sf in project.subfields:
+        if sf.support is not None and sf.support.enabled:
+            parts.append(support_triangles(project, sf))
     tri = tuple(np.concatenate([p[i] for p in parts]) if parts else np.zeros((0, 3), np.float32) for i in range(3))
     tables = []
     for sf in project.subfields:

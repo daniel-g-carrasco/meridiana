@@ -103,6 +103,10 @@ def height(project, kind: str, oid: str, point: Point) -> float:
     """The height of the object at a point of the plan: the roof of a building, of the building a sub-field or an
     exclusion lies on, the ground otherwise."""
     from . import model
+    sfid = oid.partition("/")[0] if kind == "row" else oid
+    sf = next((s for s in project.subfields if s.id == sfid), None) if kind in ("subfield", "row") else None
+    if sf is not None and sf.support is not None and sf.support.enabled:
+        return float(project.surface_of(sf).z(*point))
     if kind == "building":
         b = project.building(oid)
     elif kind == "pitch":
@@ -207,6 +211,8 @@ def _keep_on_pitch(project, sf, before) -> None:
     """A sub-field on a roof stays on its pitch: no further out of it than it was (a sub-field drawn a hair over the
     eave can still move). On the ground it stays on the ground."""
     from shapely.geometry import Polygon
+    if sf.support is not None and sf.support.enabled:
+        return
     b = project.building(sf.building)
     if b is None:
         if sf.building is not None:
@@ -223,6 +229,12 @@ def _keep_on_pitch(project, sf, before) -> None:
         raise ValueError(_("the sub-field would leave its pitch: a sub-field moves on its own pitch only"))
 
 
+def _move_support(support, f, degrees: float) -> None:
+    if support is not None:
+        support.x0, support.y0 = f(support.x0, support.y0)
+        support.azimuth = (support.azimuth - degrees + 180.0) % 360.0 - 180.0
+
+
 def _apply(p, kind: str, oid: str, f, degrees: float) -> None:
     from shapely.geometry import Polygon
     if kind == "building":
@@ -236,6 +248,7 @@ def _apply(p, kind: str, oid: str, f, degrees: float) -> None:
             if sf.building == oid:
                 sf.ring, sf.params = _subfield(sf.ring, sf.params, f, degrees)
                 sf.rows = moved_rows(sf.rows, f, degrees)
+                _move_support(sf.support, f, degrees)
         # the sub-fields of the other variants stand on the same building
         for v in p.variants:
             design = v.get("design")
@@ -248,6 +261,10 @@ def _apply(p, kind: str, oid: str, f, degrees: float) -> None:
                         raw["params"] = params
                     if raw.get("rows"):
                         raw["rows"] = moved_rows(raw["rows"], f, degrees)
+                    if raw.get("support"):
+                        support = raw["support"]
+                        support["x0"], support["y0"] = f(support.get("x0", 0.0), support.get("y0", 0.0))
+                        support["azimuth"] = (support.get("azimuth", 0.0) - degrees + 180.0) % 360.0 - 180.0
         for e in p.exclusions:
             if e.building == oid:
                 e.ring = moved(e.ring, f)
@@ -259,6 +276,7 @@ def _apply(p, kind: str, oid: str, f, degrees: float) -> None:
         before = sf.ring
         sf.ring, sf.params = _subfield(sf.ring, sf.params, f, degrees)
         sf.rows = moved_rows(sf.rows, f, degrees)
+        _move_support(sf.support, f, degrees)
         _keep_on_pitch(p, sf, before)
         return
     if kind == "exclusion":
@@ -283,6 +301,7 @@ def _apply(p, kind: str, oid: str, f, degrees: float) -> None:
             if sf.building == b.id and sf.pitch == index:
                 sf.ring, sf.params = _subfield(sf.ring, sf.params, f, degrees)
                 sf.rows = moved_rows(sf.rows, f, degrees)
+                _move_support(sf.support, f, degrees)
         return
     raise ValueError(_("there is no such object to move"))
 

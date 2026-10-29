@@ -1,9 +1,8 @@
 """The little windows that come and go (Daniel, 24/10/2026: «finestrelle… compaiono a scatti»): the tooltips, the
 menus, the lists of the drop-down fields, the help beside things. One look and one way of coming for all of them.
 
-- **Coming**: Qt's own effects fade a tooltip by grabbing the screen behind it and blending it on a timer, and
-  roll the menus open: at 200 % they stutter. They are turned off, and each little window fades in with its
-  window opacity instead (110 ms, composited by the system), unless less motion is asked for.
+- **Coming**: Qt's screen-grab effects are off. Menus and lists fade with window opacity (110 ms) unless less
+  motion is requested. Tooltips appear once after the short wake-up delay, without an entrance to replay.
 - **Corners**: on Windows 11 the system rounds them as it rounds its own (8 px a menu and a popup, 4 px a
   tooltip; Geometry in Windows, learn.microsoft.com), with its shadow and a border in the theme's line colour
   (DwmSetWindowAttribute, DWMWA_WINDOW_CORNER_PREFERENCE and DWMWA_BORDER_COLOR, build 22000 and later). The
@@ -11,8 +10,8 @@ menus, the lists of the drop-down fields, the help beside things. One look and o
   and a tooltip, see-through around its corners, the same 4 px radius (R162: on Linux «c'entra proprio poco»).
 - **Tooltips** (R162, Daniel 25/10/2026: «una larghezza massima in cui il testo va in colonna ... una bella
   formattazione ai contenuti come fanno programmi tipo VS Code»): every tooltip is Qt's one label (QTipLabel),
-  whoever asks for it (a button, an action, a row of a list, a shape on the plan). Taken as it is made, it is laid
-  out again whenever Qt gives it a text: «Name (key)» and the explanation under it (the window's `_tip_head`) as the
+  whoever asks for it (a button, an action, a row of a list, a shape on the plan). Its original text is kept for
+  Qt's reuse checks; an independent document paints «Name (key)» and the explanation under it as the
   name semibold, the key muted beside it, the explanation in the tooltip's softer ink; one line as it is; wrapped at
   TIP_WIDTH pixels when longer.
 
@@ -21,17 +20,18 @@ menus, the lists of the drop-down fields, the help beside things. One look and o
 from __future__ import annotations
 
 import html
+import math
 import re
 import sys
 
 from PySide6 import QtGui
 from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, QRect, Qt
-from PySide6.QtGui import QColor, QGuiApplication, QKeySequence, QPalette
+from PySide6.QtGui import QAbstractTextDocumentLayout, QColor, QGuiApplication, QKeySequence, QPainter, QPalette, QPen, QTextDocument
 from PySide6.QtWidgets import QApplication, QComboBox, QLabel, QWidget
 
 from .. import theme_colors
 from .cards import default_tokens
-from .design import Motion, Space, Type
+from .design import Motion, Radius, Space, Text, Type, text_font
 
 FADE_MS = Motion.FAST
 TIP_WIDTH = 340                 # a tooltip's text wraps at this width (R162): some 45 characters of the text
@@ -41,7 +41,8 @@ _STATE = {"border": default_tokens()["line"], "motion": True, "tip": default_tok
           "tip_bg": default_tokens()["tooltip_bg"], "popup_bg": default_tokens()["card"]}
 _KINDS = (Qt.WindowType.Popup, Qt.WindowType.ToolTip)
 _HEAD = re.compile(r"^(?P<name>.+?) \((?P<key>[^()]+)\)$")
-_LAID = "meridiana_tip"         # the label's property: (its text, wrapped, its size) as last laid out
+_LAID = "meridiana_tip"         # original text, style key, formatted document text, wrapping and size
+_DOCUMENT = "tooltip-document"
 
 
 def _is_key(text: str) -> bool:
@@ -75,51 +76,79 @@ def tip_html(text: str, ink: str | None = None, ground: str | None = None) -> st
 
 
 class TipLayout(QObject):
-    """Watches a tooltip's label from when it is made: every text Qt gives it laid out again (`tip_html`), wrapped
-    at TIP_WIDTH, kept on the screen."""
+    """Lay out and paint Qt's own tooltip without replacing the text Qt uses as its identity."""
 
     def eventFilter(self, label, event) -> bool:
-        if event.type() == QEvent.Type.Resize and isinstance(label, QLabel):
+        if isinstance(label, QLabel):
             try:
-                lay_out_tip(label)
-            except RuntimeError:                            # the label going while it resizes
-                pass
+                if event.type() == QEvent.Type.Resize:
+                    lay_out_tip(label)
+                elif event.type() == QEvent.Type.Paint:
+                    lay_out_tip(label)
+                    paint_tip(label)
+                    return True
+            except RuntimeError:  # The native tooltip can disappear during its last event.
+                return False
         return False
 
 
 def lay_out_tip(label: QLabel) -> None:
-    """The label's text laid out again and its size set; its size set back when Qt measures it again its way (it
-    does, after placing a new tooltip: QTBUG-64550, in QToolTip::showText)."""
+    """Keep the original plain/rich text unchanged: Qt can then reuse it on the same target.
+
+    Replacing plain text with formatted HTML made every repeated showText request look like new content,
+    rebuilding its layout as the pointer moved. A separate document owns typography and colour instead.
+    """
     text = label.text()
+    font = text_font(Text.BODY)
+    key = (text, font.key(), _STATE["tip"], _STATE["tip_bg"], _STATE["border"])
     laid = label.property(_LAID)
-    if laid is not None and text == laid[0]:
-        rich, wrap, size = laid
-        if label.size() == size and label.wordWrap() == wrap:
-            return                                          # its own size, being set
-    else:
+    document = label.findChild(QTextDocument, _DOCUMENT)
+    if laid is None or laid[1] != key or document is None:
         rich = tip_html(text)
-        # its padding here, once: Qt adds the sheet's padding to its own margin, twice the room (42 px a line)
-        label.setMargin(0)
-        label.setIndent(0)
-        label.setContentsMargins(Space.M, Space.S, Space.M, Space.S)          # a line: 28 px, a control's height
-        label.setText(rich)
-        label.setWordWrap(False)
-        size = label.sizeHint()
-        wrap = size.width() > TIP_WIDTH
-        if wrap:                                            # wrapped: as wide as the width, as tall as it takes
-            label.setWordWrap(True)
-            size.setWidth(TIP_WIDTH)
-            size.setHeight(label.heightForWidth(TIP_WIDTH))
-        label.setProperty(_LAID, (rich, wrap, size))
+        if document is None:
+            document = QTextDocument(label)
+            document.setObjectName(_DOCUMENT)
+        document.setDefaultFont(font)
+        document.setDocumentMargin(0)
+        document.setTextWidth(-1)
+        document.setHtml(f'<div style="color:{_STATE["tip"]}">{rich}</div>')
+        natural = math.ceil(document.idealWidth()) + 2 * Space.M
+        wrap = natural > TIP_WIDTH
+        width = min(TIP_WIDTH, natural)
+        document.setTextWidth(max(1, width - 2 * Space.M))
+        size = label.size()
+        size.setWidth(width)
+        size.setHeight(math.ceil(document.size().height()) + 2 * Space.S)
+        label.setProperty(_LAID, (text, key, rich, wrap, size))
+    else:
+        _original, _key, _rich, wrap, size = laid
     label.setWordWrap(wrap)
-    label.resize(size)
+    if label.size() != size:
+        label.resize(size)
     screen = label.screen()
-    if screen is not None:                                  # where Qt put it for its first size: on the screen
+    if screen is not None:
         room, at = screen.availableGeometry(), QRect(label.pos(), size)
         x = min(at.x(), room.right() + 1 - size.width())
         y = min(at.y(), room.bottom() + 1 - size.height())
         if (x, y) != (at.x(), at.y()):
             label.move(max(room.x(), x), max(room.y(), y))
+
+
+def paint_tip(label: QLabel) -> None:
+    """Paint an independent tooltip surface and text, unaffected by a source label's style sheet."""
+    document = label.findChild(QTextDocument, _DOCUMENT)
+    if document is None:
+        return
+    painter = QPainter(label)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.setPen(QPen(QColor(_STATE["border"]), 1))
+    painter.setBrush(QColor(_STATE["tip_bg"]))
+    painter.drawRoundedRect(label.rect().toRectF().adjusted(0.5, 0.5, -0.5, -0.5), Radius.INNER, Radius.INNER)
+    painter.translate(Space.M, Space.S)
+    context = QAbstractTextDocumentLayout.PaintContext()
+    context.palette.setColor(QPalette.ColorRole.Text, QColor(_STATE["tip"]))
+    document.documentLayout().draw(painter, context)
+    painter.end()
 
 
 def native_corners() -> bool:
@@ -195,8 +224,7 @@ class Popups(QObject):
         """A tooltip's label being made (Qt polishes it in its constructor, before its window exists): see-through
         around its corners where the system does not round them, and watched for its texts (R162)."""
         if isinstance(obj, QLabel) and obj.isWindow() and obj.windowType() == Qt.WindowType.ToolTip:
-            if not self.native:
-                obj.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+            obj.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
             obj.installEventFilter(self.tips)
         return False
 
@@ -211,6 +239,11 @@ class Popups(QObject):
                 self._size_combo(obj.parentWidget())
             if self.native:
                 _dwm(obj, kind == Qt.WindowType.ToolTip)
+            if kind == Qt.WindowType.ToolTip:
+                # A tooltip appears once after its short wake-up delay, with no entrance to replay.
+                if obj.windowOpacity() < 1.0:
+                    obj.setWindowOpacity(1.0)
+                return False
             if _STATE["motion"] and self.fades:
                 obj.setWindowOpacity(0.0)                   # the Show event comes before the window is on screen
                 fade = QPropertyAnimation(obj, b"windowOpacity", obj)

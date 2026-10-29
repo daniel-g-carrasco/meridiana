@@ -46,6 +46,7 @@ P_RES = "SolarEdge DS-000047-ITA (15/02/2022)"
 P_COM = "SolarEdge DS-000012-ENG (29/12/2022)"
 SINGLE = "SolarEdge, Single String Design Guidelines v1.1 (08/2026)"
 MODULES = "SolarEdge, Power Optimizer Compatibility with PV Modules v1.0 (01/2025)"
+MULTIPLE = "SolarEdge, Connecting Power Optimizers to Multiple PV Modules v1.7 (11/2025)"
 BIFACIAL = "SolarEdge, Bi-facial Modules with Power Optimizers v1.5 (01/2022)"
 TOGGLE = "SolarEdge, Toggle Fixed String Voltage from 750 to 850 Vdc v1.1 (12/2025)"
 S1400_NOTE = "SolarEdge, S1400/S1500 inverter inter-compatibility v1.1 (06/2025)"
@@ -77,12 +78,17 @@ class Optimizer:
     i_in_max: float | None          # A, the continuous input current it draws at most (None: not printed)
     i_out_max: float                # A, its maximum output current: the string's
     eta: float                      # its weighted efficiency, 0-1
-    per_unit: int                   # the most modules it takes, in series (1 or 2)
+    per_unit: int                   # the most modules it takes (1 or 2); topology depends on the model
     datasheet: str                  # its datasheet, code and date, as printed
 
     @property
     def name(self) -> str:
         return f"{self.manufacturer} {self.model}".strip()
+
+    @property
+    def parallel_inputs(self) -> bool:
+        """Dual physical inputs, each with its own Isc rating (DS-000012-ENG p. 3 for P800p)."""
+        return self.manufacturer.casefold() == "solaredge" and self.model.casefold() in {"p485", "p800p", "p860", "p960"}
 
     @property
     def series(self) -> str:
@@ -356,17 +362,18 @@ def _check(key, label, ok, detail, level="", source="") -> stringing.Check:
 
 def module_checks(module, opt: Optimizer, per: int, t_min: float | None, inv: FixedVoltage | None) -> list:
     """The module on its optimizer: power, Voc at the lowest temperature, Isc, Imp (stringing.Check, with `source`).
-    `per` modules in series on each optimizer add their power and their Voc."""
+    Series inputs add voltage; the P800p/P485 dual parallel inputs keep each module's Voc and per-input Isc.
+    Power is combined in either topology. Branch cables on serial-input models are not modelled here."""
     out = []
     k = max(1, per)
-    note = f"{opt.datasheet}, p. 2"
+    note = f"{opt.datasheet}, p. {3 if opt.model.casefold() == 'p800p' else 2}"
     p = k * module.pmax
     out.append(_check("opt_power", _("Module power within the optimizer's rated input power"), p <= opt.rated_w + 1e-6,
                       (_("{n} x {p} W = {t} W of {r} W (modules with a power tolerance up to +5 % allowed)") if k > 1
                        else _("{t} W of {r} W (modules with a power tolerance up to +5 % allowed)")).format(
                           n=k, p=number(module.pmax, 0), t=number(p, 0), r=number(opt.rated_w, 0)), "",
                       note + (f"; {MODULES}, p. 3" if k > 1 else "")))
-    voc = k * stringing.ku(module, t_min) * module.voc
+    voc = (1 if opt.parallel_inputs else k) * stringing.ku(module, t_min) * module.voc
     out.append(_check("opt_voc", _("Module Voc at the lowest temperature within the optimizer's input"),
                       voc <= opt.voc_max + 1e-6,
                       _("{v} V at {t} °C of {lim} V").format(v=number(voc, 1), t=number(t_min, 0) if t_min is not None
@@ -462,11 +469,15 @@ def _plan_steps(rec: Record, module, opt: Optimizer, per: int, inv: FixedVoltage
     m_src = module.source
     t_src = t_min_source or Source("default", _("Meridiana's prudent default"))
     rec.add(Step("opt_module", _("The module on its optimizer"),
-                 r"k\,P_{STC} \leq P_{opt},\quad k\,K_U\,U_{OC} \leq U_{in,max},\quad I_{SC} \leq I_{SC,max}",
-                 _("Each optimizer tracks the maximum power point of its module (or of its two modules in series, k = "
+                 (r"k\,P_{STC} \leq P_{opt},\quad K_U\,U_{OC} \leq U_{in,max},\quad I_{SC} \leq I_{SC,max}"
+                  if opt.parallel_inputs else
+                  r"k\,P_{STC} \leq P_{opt},\quad k\,K_U\,U_{OC} \leq U_{in,max},\quad I_{SC} \leq I_{SC,max}"),
+                 (_("The modules use separate parallel input connectors: their powers add, their voltages do not. "
+                    "The datasheet's short-circuit current limit applies to each physical input.") if opt.parallel_inputs else
+                  _("Each optimizer tracks the maximum power point of its module (or of its two modules in series, k = "
                    "2): the module's power at STC within the optimizer's rated input power, its open-circuit voltage "
                    "on the coldest morning within the optimizer's absolute maximum input voltage, its short-circuit "
-                   "current within what the optimizer takes; a bifacial module with its front side alone."),
+                   "current within what the optimizer takes; a bifacial module with its front side alone.")),
                  [Quantity("k", _("modules on an optimizer"), per, "", Source("input", _("chosen by the designer")), 0),
                   Quantity(r"P_{STC}", _("module power at STC"), module.pmax, "W", m_src, 0),
                   Quantity(r"P_{opt}", _("optimizer's rated input power"), opt.rated_w, "W", ds, 0),

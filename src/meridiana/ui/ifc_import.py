@@ -211,9 +211,10 @@ class Preview(QWidget):
         self.update()
 
     def paintEvent(self, _event) -> None:
-        if self.plan is None or not self.plan.buildings:
+        if self.plan is None or not (self.plan.buildings or self.plan.supports):
             return
-        rings = [b.footprint for b in self.plan.buildings] + [e.ring for e, _h in self.plan.exclusions]
+        rings = ([b.footprint for b in self.plan.buildings] + [e.ring for e, _h in self.plan.exclusions]
+                 + [sf.ring for sf, _h in self.plan.supports])
         xs = [p[0] for r in rings for p in r] + [0.0]
         ys = [p[1] for r in rings for p in r] + [0.0]
         w, h = max(xs) - min(xs) or 1.0, max(ys) - min(ys) or 1.0
@@ -238,6 +239,9 @@ class Preview(QWidget):
         painter.setPen(QPen(faint, 1.2))
         for e, _h in self.plan.exclusions:
             painter.drawPolygon(QPolygonF([at(x, y) for x, y in e.ring]))
+        painter.setPen(QPen(self.palette().highlight().color(), 1.6, Qt.PenStyle.DashLine))
+        for sf, _h in self.plan.supports:
+            painter.drawPolygon(QPolygonF([at(x, y) for x, y in sf.ring]))
         c = at(0.0, 0.0)
         painter.setPen(QPen(ink, 1.0))
         painter.drawLine(c + QPointF(-6, 0), c + QPointF(6, 0))
@@ -261,6 +265,7 @@ class IfcImportDialog(QDialog):
     def __init__(self, found: dict, project, file_name: str, parent=None):
         super().__init__(parent)
         self.found, self.project = found, project
+        self.file_name = file_name
         self.name = Path(file_name).stem or "IFC"         # a building without a name takes the file's
         self.place = ifc_import.place_of(found)
         self.setWindowTitle(_("Import an IFC model"))
@@ -323,7 +328,7 @@ class IfcImportDialog(QDialog):
         self.problem.setWordWrap(True)
         box.addWidget(self.problem)
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        self.buttons.button(QDialogButtonBox.StandardButton.Ok).setText(_("Add the buildings"))
+        self.buttons.button(QDialogButtonBox.StandardButton.Ok).setText(_("Add the model"))
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
         box.addWidget(self.buttons)
@@ -340,7 +345,7 @@ class IfcImportDialog(QDialog):
 
     def _refresh(self) -> None:
         how, north = self.choice()
-        self._plan = ifc_import.plan(self.found, self.project, how, north, name=self.name)
+        self._plan = ifc_import.plan(self.found, self.project, how, north, name=self.name, source_name=self.file_name)
         self.preview.show_plan(self._plan)
         while self.lists_box.count():
             item = self.lists_box.takeAt(0)
@@ -351,7 +356,8 @@ class IfcImportDialog(QDialog):
             if items:
                 self.lists_box.addWidget(_list(title, items))
         self.lists_box.addStretch(1)
-        why = ifc_import.problem(self._plan) or ("" if self._plan.buildings else _("Nothing to add."))
+        why = ifc_import.problem(self._plan) or ("" if self._plan.buildings or self._plan.supports
+                                               else _("Nothing to add."))
         self.problem.setText(why)
         self.buttons.button(QDialogButtonBox.StandardButton.Ok).setEnabled(not why)
 

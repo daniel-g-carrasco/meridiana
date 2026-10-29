@@ -72,6 +72,13 @@ class PreferencesAlone(unittest.TestCase):
         self.assertFalse(d.privacy.tiles.isChecked())
         self.assertIs(d.pages.currentWidget(), d.privacy)
 
+    def test_reset_confirmation_does_not_survive_a_change_of_category(self):
+        d = self.settings("appearance")
+        d.ask_reset()
+        self.assertTrue(d.confirmation.isVisibleTo(d))
+        d.show_page("navigation")
+        self.assertFalse(d.confirmation.isVisibleTo(d))
+
 
 class KeysEditor(unittest.TestCase):
     @classmethod

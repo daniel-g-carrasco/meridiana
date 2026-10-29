@@ -975,7 +975,7 @@ class EconomicsPage(Page):
         t[6].set(f"{number(100 * k['irr'], 1)} %" if k["irr"] is not None else "–")
         t[7].set(_("{y} years").format(y=number(k["payback"], 1)) if k["payback"] is not None else _("not within the years"),
                  _("discounted {y}").format(y=number(k["payback_discounted"], 1)) if k["payback_discounted"] is not None else "")
-        t[8].set(f"{number(k['lcoe'], 3)} €/kWh")
+        t[8].set(f"{number(k['lcoe'], 3)} €/kWh" if np.isfinite(k['lcoe']) else _("No production"))
         if getattr(econ, "hourly", None) is not None and "self" in econ.hourly:
             carpet, cols, ticks = year_carpet(econ.hourly["self"], month_names())
             self.self_map.heatmap(carpet, [f"{h}:00" for h in range(24)], cols, "kWh/h", 2, ticks=ticks,

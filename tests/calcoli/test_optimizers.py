@@ -226,13 +226,12 @@ class TheProposal(unittest.TestCase):
         self.assertFalse(out.left)
         self.assertTrue(all(s.state == "ok" for s in out.strings))
 
-    def test_two_small_pitches_join_in_one_string(self):
+    def test_small_pitches_with_different_orientations_are_left_for_the_designer(self):
         east = group(grid(1, 6, azimuth=-90.0), "est")
         west = group(grid(1, 6, azimuth=90.0, x0=20.0), "ovest")
         out = plant.build(project("SE3000H", optimizer="S440"), groups=[east, west])
-        self.assertEqual([len(s.modules) for s in out.strings], [12])                # 6 + 6: the minimum is 8
-        self.assertEqual({sf for sf, _k, _c in out.strings[0].modules}, {"est", "ovest"})
-        self.assertEqual(out.strings[0].state, "ok")
+        self.assertEqual(out.strings, [])
+        self.assertEqual(len(out.left), 12)  # neither orientation meets the 8-optimizer minimum
 
     def test_a_synergy_inverter_spreads_alike_strings_over_its_units(self):
         out = plant.build(project("SE50K", optimizer="S1000", per=2), groups=[group(grid(10, 20))])
@@ -426,9 +425,9 @@ class ThePipeline(unittest.TestCase):
         write_cache(clear_sky_meteo(45.5226, 9.03), cache)
         p = model.Project(name="Prova")
         p.site = model.Site(lat=45.5226, lon=9.0300, address="Rho (MI)")
-        p.buildings.append(model.Building(id="b1", name="Casa", footprint=[[0, 0], [12, 0], [12, 8], [0, 8]],
+        p.buildings.append(model.Building(id="b1", name="Casa", footprint=[[0, 0], [20, 0], [20, 8], [0, 8]],
                                           height=6.0))
-        p.subfields.append(model.SubField(id="s1", name="Sud", ring=[[1, 1], [11, 1], [11, 7], [1, 7]],
+        p.subfields.append(model.SubField(id="s1", name="Sud", ring=[[1, 1], [19, 1], [19, 7], [1, 7]],
                                           building="b1", params={"tilt": 15.0}, filled=True))
         p.energy["inverters"] = [{"record": inverter("SE6000H"), "count": 1, "name": ""}]
         results, _keys, _laid = jobs.layout_of(p)
@@ -470,3 +469,52 @@ class TheAssistant(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OrientationAndTopology(unittest.TestCase):
+    def test_small_fields_with_the_same_facing_can_still_form_one_valid_string(self):
+        out = plant.build(project("SE3000H", optimizer="S440"),
+                          groups=[group(grid(1, 6), "a"), group(grid(1, 6, x0=20), "b")])
+        self.assertEqual([len(s.modules) for s in out.strings], [12])
+        self.assertEqual(out.strings[0].state, "ok")
+
+    def test_manual_multifacing_string_warns_but_a_mixed_optimizer_pair_fails(self):
+        from meridiana import checks
+        east, west = group(grid(1, 14, azimuth=-90), "east"), group(grid(1, 14, azimuth=90), "west")
+        a = [f"east/{pm.key}" for pm in east.placed]
+        b = [f"west/{pm.key}" for pm in west.placed]
+        for keys, expected in ((a+b, "check"), ([a[0],b[0]]+a[1:]+b[1:], "fail")):
+            p = project("SE50K", optimizer="S1000", per=2,
+                        strings={"runs": [{"inverter":1,"mppt":1,"modules":keys}]})
+            out = plant.build(p, groups=[east, west])
+            self.assertEqual(out.strings[0].state, expected)
+            self.assertIn("orientation", out.strings[0].why)
+            self.assertTrue(any("orientation" in item.text or "orientation" in item.detail
+                                for item in checks.plant_items(out)))
+
+    def test_p800p_parallel_inputs_do_not_sum_the_modules_voc(self):
+        m = module(pmax=360, voc=60, vmp=50, isc=6.5, imp=6, beta_voc=-0.25)
+        opt = optimizers.Optimizer.from_record({"manufacturer": "SolarEdge", "model": "P800p",
+                                               "rated_input_power_w": 800, "max_input_voltage_v": 83,
+                                               "max_input_isc_a": 7, "modules_per_unit": 2})
+        got = {c.key:c for c in optimizers.module_checks(m, opt, 2, -10, None)}
+        self.assertTrue(got["opt_voc"].ok, got["opt_voc"].detail)
+        self.assertIn("65.2", got["opt_voc"].detail)
+        self.assertTrue(got["opt_isc"].ok)  # datasheet's 7 A limit is per physical input
+        self.assertTrue(got["opt_power"].ok)  # 720 W combined, below 800 W
+
+    def test_every_module_type_in_a_manual_optimized_string_is_checked(self):
+        a = group(grid(1, 8), "a")
+        b = group(grid(1, 2), "b", module(model="overcurrent", isc=25, imp=20))
+        runs = [{"inverter": 1, "mppt": 1, "modules": [f"{g.sfid}/{pm.key}" for g in (a,b) for pm in g.placed]}]
+        out = plant.build(project("SE6000H", optimizer="S500", strings={"runs": runs}), groups=[a,b])
+        self.assertEqual(out.strings[0].state, "fail")
+        self.assertTrue(any(c.key == "opt_isc" and not c.ok for c in out.strings[0].plan.checks))
+
+    def test_proposal_does_not_apply_one_inverters_rules_to_a_different_architecture(self):
+        p = project("SE5000H", optimizer="S500")
+        p.energy["inverters"].append({"record":inverter("SE50K"), "count":1,
+                                       "optimizer":optimizer_rec("S1000"), "per_optimizer":2})
+        out = plant.build(p, groups=[group(grid(4,10))])
+        self.assertTrue(out.strings)
+        self.assertTrue(all(s.state != "fail" for s in out.strings), [s.why for s in out.strings])

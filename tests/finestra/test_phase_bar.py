@@ -133,6 +133,7 @@ class PhaseRow(unittest.TestCase):
                 mock.patch("meridiana.ui.window.catalog.load", return_value=(rec,)), \
                 mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
             win.commands["inverter_auto"].trigger()
+        self.assertTrue(_setup.wait_until(self.app, lambda: win.sizing_job is None))
         message = win.statusBar().currentMessage()
         self.assertIn("AC-10K", message)
         self.assertIn("DC/AC", message)

@@ -77,6 +77,8 @@ def commands() -> list[Command]:
         c("rectangle", _("&Rectangle by three clicks"), ("R",), "draw"),
         c("square", _("S&quare the corners"), ("Q",), "draw"),
         c("building_template", _("Building from a &template…"), (), "draw"),
+        c("carport", _("Parking canopy…"), (), "draw"),
+        c("layout_east_west", _("East-west layout"), (), "draw"),
         c("snaps", _("S&naps"), ("F3",), "draw"),
         c("ortho", _("&Ortho"), ("F8",), "draw"),
         c("fill", _("&Lay the modules"), (), "draw"),

@@ -27,6 +27,24 @@ class Presentation(unittest.TestCase):
         self.a.set_tab('report')
         self.assertIn('Report', self.a.context.text())
 
+    def test_streaming_does_not_pull_a_reader_back_to_the_bottom(self):
+        self.a.messages = [('assistant', 'First paragraph.\n\n' * 90)]
+        self.a._show_messages()
+        self.app.processEvents()
+        bar = self.a.conversation.verticalScrollBar()
+        self.assertGreater(bar.maximum(), 50)
+        bar.setValue(20)
+        self.a.live = 'A new answer being streamed.'
+        self.a._show_messages()
+        self.assertEqual(bar.value(), 20)
+
+    def test_user_markup_is_plain_text_and_roles_have_separate_blocks(self):
+        self.a.messages = [('you', '<b>my question</b>'), ('assistant', 'A clear answer')]
+        self.a._show_messages()
+        self.assertIn('<b>my question</b>', self.a.conversation.toPlainText())
+        frames = self.a.conversation.document().rootFrame().childFrames()
+        self.assertGreaterEqual(len(frames), 2)
+
     def test_suggestions_can_fold_without_losing_their_text_or_sending_a_message(self):
         before = [q.text() for q in self.a.questions]
         self.a.questions_title.click()

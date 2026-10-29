@@ -18023,3 +18023,347 @@ msgstr "Energia nominale dei moduli collegati al rendimento STC"
 
 msgid "connected modules"
 msgstr "moduli collegati"
+
+
+msgid "Save and revisions"
+msgstr "Salva e revisioni"
+
+
+msgid "Back to File"
+msgstr "Torna a File"
+
+
+msgid "Keep the current project, create a copy or preserve a revision."
+msgstr "Salva il progetto, crea una copia o conserva una revisione."
+
+
+msgid "Update the current project file."
+msgstr "Aggiorna il file del progetto corrente."
+
+
+msgid "Choose another name or location for the project."
+msgstr "Scegli un altro nome o una posizione per il progetto."
+
+
+msgid "Keep this version in a new numbered file next to the project."
+msgstr "Conserva questa versione in un nuovo file numerato accanto al progetto."
+
+
+msgid "Arrangement"
+msgstr "Disposizione"
+
+
+msgid "Auxiliary support plane"
+msgstr "Piano di posa ausiliario"
+
+
+msgid "Canopy"
+msgstr "Pensilina"
+
+
+msgid "Canopy row {n}"
+msgstr "Pensilina, fila {n}"
+
+
+msgid "Click the first corner of the canopy; Esc gives up"
+msgstr "Indica il primo angolo della pensilina; Esc annulla"
+
+
+msgid "Client presentation"
+msgstr "Presentazione al cliente"
+
+
+msgid "Creates placement surfaces and modules. Dimensions are editable examples; columns, beams, vehicle clearance and structural checks are not modelled."
+msgstr "Crea superfici di posa e moduli. Le dimensioni sono esempi modificabili; pilastri, travi, sagome di transito e verifiche strutturali non sono modellati."
+
+
+msgid "Depth per row"
+msgstr "Profondità di ogni fila"
+
+
+msgid "Different orientations or tilts in the same string"
+msgstr "Orientamenti o inclinazioni diversi nella stessa stringa"
+
+
+msgid "Each canopy slope has its own editable placement plane and module layout."
+msgstr "Ogni falda della pensilina ha il proprio piano di posa modificabile e la propria disposizione dei moduli."
+
+
+msgid "East-west"
+msgstr "Est-ovest"
+
+
+msgid "East-west layout"
+msgstr "Posa est-ovest"
+
+
+msgid "East-west rows need a horizontal placement surface. Select a flat roof or ground area."
+msgstr "Le file est-ovest richiedono una superficie di posa orizzontale. Seleziona una copertura piana o un'area a terra."
+
+
+msgid "Electrical design review"
+msgstr "Revisione del progetto elettrico"
+
+
+msgid "Elevation at area centre"
+msgstr "Quota al centro dell'area"
+
+
+msgid "Enable the independent placement plane to edit it."
+msgstr "Attiva il piano di posa indipendente per modificarlo."
+
+
+msgid "Energy and assumptions"
+msgstr "Energia e ipotesi di calcolo"
+
+
+msgid "Enter the manufacturer's short-circuit current limit for this MPPT to verify it."
+msgstr "Inserisci il limite di corrente di cortocircuito del costruttore per verificare questo MPPT."
+
+
+msgid "Fixed-voltage DC bus"
+msgstr "Bus DC a tensione fissa"
+
+
+msgid "Independent placement area from {file}, IFC {source}: normal ({nx}, {ny}, {nz}), tilt {tilt}°, azimuth {azimuth}°, local elevation {z} m. Enabled, with no modules; building and pitch retained as references."
+msgstr "Area di posa indipendente da {file}, IFC {source}: normale ({nx}, {ny}, {nz}), inclinazione {tilt}°, azimut {azimuth}°, quota locale {z} m. Attiva, senza moduli; edificio e falda conservati come riferimenti."
+
+
+msgid "Inverter search cancelled; no choice has been applied."
+msgstr "Ricerca inverter annullata; nessuna scelta applicata."
+
+
+msgid "Inverter search incomplete: the limit of {n} combinations was reached. Narrow the catalogue selection and try again."
+msgstr "Ricerca inverter incompleta: raggiunto il limite di {n} combinazioni. Restringi la selezione del catalogo e riprova."
+
+
+msgid "MPPT count not specified"
+msgstr "Numero di MPPT non specificato"
+
+
+msgid "MPPT {k}"
+msgstr "MPPT {k}"
+
+
+msgid "Minimum height of placement plane"
+msgstr "Quota minima del piano di posa"
+
+
+msgid "Modules on the same optimizer: type, orientation and tilt"
+msgstr "Moduli sullo stesso ottimizzatore: tipo, orientamento e inclinazione"
+
+
+msgid "No complete string proposal was found within the voltage, current and input limits. The assignment is heuristic; review the module count, the brand or the string layout."
+msgstr "Non è stata trovata una proposta completa entro i limiti di tensione, corrente e ingressi. L'assegnazione è euristica: rivedi il numero di moduli, la marca o la disposizione delle stringhe."
+
+
+msgid "No production"
+msgstr "Nessuna produzione"
+
+
+msgid "One row, single slope"
+msgstr "Una fila, falda singola"
+
+
+msgid "Opposed rows are laid. Their orientations stay separate when strings are proposed."
+msgstr "Posate le file contrapposte. La proposta di stringatura mantiene separati i loro orientamenti."
+
+
+msgid "Optimizer positions {positions}: modules on one optimizer must have the same type, orientation and tilt. Pairs follow the order of modules in the string."
+msgstr "Ottimizzatori nelle posizioni {positions}: i moduli sullo stesso ottimizzatore devono avere uguali tipo, orientamento e inclinazione. Le coppie seguono l'ordine dei moduli nella stringa."
+
+
+msgid "Parking canopy"
+msgstr "Pensilina per parcheggio"
+
+
+msgid "Parking canopy…"
+msgstr "Pensilina per parcheggio…"
+
+
+msgid "Physical input count not specified"
+msgstr "Numero di ingressi fisici non specificato"
+
+
+msgid "Place a canopy with one or two parking rows"
+msgstr "Posa una pensilina con una o due file di parcheggi"
+
+
+msgid "Plane azimuth (from South, + West)"
+msgstr "Azimut del piano (da Sud, + Ovest)"
+
+
+msgid "Plane tilt"
+msgstr "Inclinazione del piano"
+
+
+msgid "Quantity"
+msgstr "Grandezza"
+
+
+msgid "Results, monthly energy, costs and checks for discussing the project with the client."
+msgstr "Risultati, energia mensile, costi e verifiche per discutere il progetto con il cliente."
+
+
+msgid "Save as…"
+msgstr "Salva con nome…"
+
+
+msgid "Shared inverter DC current limit: {a} A"
+msgstr "Limite complessivo di corrente DC dell'inverter: {a} A"
+
+
+msgid "Site, layout, inverters, strings, checks and component data for a technical review."
+msgstr "Sito, posa, inverter, stringhe, verifiche e dati dei componenti per una revisione tecnica."
+
+
+msgid "SolarEdge allows a string across several roof planes, but it can lose additional energy. This model does not calculate the optimizers' voltage limits hour by hour."
+msgstr "SolarEdge consente una stringa su più falde, ma possono verificarsi perdite aggiuntive. Questo modello non calcola ora per ora i limiti di tensione degli ottimizzatori."
+
+
+msgid "Spaces per row"
+msgstr "Posti per fila"
+
+
+msgid "Symbol"
+msgstr "Simbolo"
+
+
+msgid "The building and pitch remain as references; the received model is unchanged."
+msgstr "Edificio e falda restano come riferimenti; il modello ricevuto non viene modificato."
+
+
+msgid "The inverter's total current is not a per-MPPT limit. Enter the manufacturer's per-MPPT data to verify this input."
+msgstr "La corrente totale dell'inverter non è un limite per MPPT. Inserisci i dati del costruttore per MPPT per verificare questo ingresso."
+
+
+msgid "The modules use separate parallel input connectors: their powers add, their voltages do not. The datasheet's short-circuit current limit applies to each physical input."
+msgstr "I moduli usano connettori di ingresso paralleli separati: le potenze si sommano, le tensioni no. Il limite di corrente di cortocircuito della scheda tecnica vale per ciascun ingresso fisico."
+
+
+msgid "This sub-field has manual rows. Choose Lay again automatically before changing its layout."
+msgstr "Questo sottocampo contiene file manuali. Scegli Riposa automaticamente prima di cambiarne la disposizione."
+
+
+msgid "Two rows, opposed slopes"
+msgstr "Due file, falde contrapposte"
+
+
+msgid "Use an independent placement plane"
+msgstr "Usa un piano di posa indipendente"
+
+
+msgid "Use opposed module rows in the selected sub-field"
+msgstr "Usa file di moduli contrapposte nel sottocampo selezionato"
+
+
+msgid "Value and unit"
+msgstr "Valore e unità"
+
+
+msgid "Weather, production, consumption, economics and calculation methods, with checks."
+msgstr "Meteo, produzione, consumi, economia e metodi di calcolo, con verifiche."
+
+
+msgid "Width per space"
+msgstr "Larghezza di ogni posto"
+
+
+msgid "{a} A total DC current; the per-MPPT limits are not given."
+msgstr "Corrente DC totale {a} A; limiti per MPPT non dichiarati."
+
+
+msgid "{i} A across the MPPTs, total limit {limit} A; per-MPPT limits are checked separately."
+msgstr "Totale sui MPPT: {i} A, limite complessivo {limit} A; i limiti per MPPT sono verificati separatamente."
+
+
+msgid "{name}\n{kw} kW AC · {topology} · {strings}"
+msgstr "{name}\n{kw} kW AC · {topology} · {strings}"
+
+
+msgid "{name}: more strings than physical inputs"
+msgstr "{name}: più stringhe che ingressi fisici"
+
+
+msgid "{name}: operating-current limit is unknown"
+msgstr "{name}: limite di corrente operativa non noto"
+
+
+msgid "{name}: short-circuit current limit is unknown"
+msgstr "{name}: limite di corrente di cortocircuito non noto"
+
+
+msgid "{name}: total DC operating current"
+msgstr "{name}: corrente operativa DC totale"
+
+
+msgid "{n} MPPT"
+msgstr "{n} MPPT"
+
+
+msgid "{n} Synergy units"
+msgstr "{n} unità Synergy"
+
+
+msgid "{n} independent MPPTs"
+msgstr "{n} MPPT indipendenti"
+
+
+msgid "{n} physical DC input pairs; their MPPT mapping is not given."
+msgstr "{n} coppie di ingressi fisici DC; associazione ai MPPT non dichiarata."
+
+
+msgid "{n} physical inputs share this MPPT"
+msgstr "{n} ingressi fisici condividono questo MPPT"
+
+
+msgid "{n} spaces · {width:g} × {depth:g} m footprint"
+msgstr "{n} posti · ingombro {width:g} × {depth:g} m"
+
+
+msgid "{n} strings on {m} connector pairs: an external parallel connection must be designed; the inputs share this MPPT."
+msgstr "{n} stringhe su {m} coppie di connettori: occorre progettare un parallelo esterno; gli ingressi condividono questo MPPT."
+
+
+msgid "Bypass layout comes from the module file when available; otherwise three bypass diodes and the cell layout inferred from the cell count are assumptions to verify against the manufacturer's diagram."
+msgstr "Lo schema dei bypass proviene dal file del modulo quando disponibile; altrimenti tre diodi e la disposizione ricavata dal numero di celle sono ipotesi da verificare sullo schema del costruttore."
+
+
+msgid "Electrical shading uses the Martinez-Moreno estimate from shaded area and affected bypass blocks. It does not solve cell, bypass-diode, string or MPPT current-voltage curves. Shade affects the common current of a series string; it does not switch off the modules that follow the shaded module. Agreement with a reference implementation is not validation against measurements."
+msgstr "L'effetto elettrico delle ombre usa la stima Martinez-Moreno, dall'area in ombra e dai blocchi bypass interessati. Non risolve le curve corrente-tensione di celle, diodi, stringhe o MPPT. L'ombra influenza la corrente comune della stringa, non spegne i moduli successivi a quello ombreggiato. La concordanza con un'implementazione di riferimento non costituisce validazione su misure."
+
+
+msgid "Inverters: one efficiency curve for the whole system, clipped at the nominal AC power of the connected inverters together; no clipping per MPPT input or per inverter, no start thresholds, no efficiency profile of the OND file."
+msgstr "Inverter: una curva di rendimento per l'impianto, limitata alla potenza AC nominale complessiva degli inverter collegati. Non sono simulati il taglio di potenza per singolo inverter o MPPT, le soglie di avvio e il profilo di rendimento del file OND."
+
+
+msgid "Irradiance-level loss is an estimate based on one-diode parameters fitted to a few datasheet points, unless parameters are available in the module's PVsyst file."
+msgstr "La perdita al variare dell'irraggiamento è stimata con parametri a un diodo adattati a pochi punti della scheda tecnica, salvo parametri disponibili nel file PVsyst del modulo."
+
+
+msgid "Optimizers: string and module compatibility checks use the supported SolarEdge tables; annual energy uses a fixed conversion efficiency. Hourly input-current clipping, output-voltage limits and minimum unshaded optimizer count are not simulated. Two modules on one optimizer do not have two independent MPPTs. Other optimizer architectures and optional branch-cable wiring are not modeled."
+msgstr "Ottimizzatori: le verifiche di compatibilità di moduli e stringhe usano le tabelle SolarEdge supportate; l'energia annua usa un rendimento di conversione fisso. Non sono simulati ora per ora la limitazione della corrente di ingresso, i limiti di tensione in uscita e il numero minimo di ottimizzatori non ombreggiati. Due moduli su un ottimizzatore non hanno due MPPT indipendenti. Altre architetture e cablaggi opzionali con derivazioni non sono modellati."
+
+
+msgid "Add the model"
+msgstr "Aggiungi il modello"
+
+
+msgid "From {file}: independent placement areas added. Ctrl+Z takes them away."
+msgstr "Da {file}: aggiunte aree di posa indipendenti. Ctrl+Z le annulla."
+
+
+msgid "Searching inverter and string combinations…"
+msgstr "Ricerca delle combinazioni di inverter e stringhe…"
+
+
+msgid "The project changed during the search. Run sizing again; no old proposal was applied."
+msgstr "Il progetto è cambiato durante la ricerca. Ripeti il dimensionamento; la proposta precedente non è stata applicata."
+
+
+msgid "Inverter search failed: {why}"
+msgstr "Ricerca inverter non riuscita: {why}"
+
+
+msgid "Wait for the current module layout before sizing the inverters."
+msgstr "Attendi che la posa dei moduli sia aggiornata prima di dimensionare gli inverter."

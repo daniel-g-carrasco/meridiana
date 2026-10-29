@@ -59,6 +59,16 @@ class ChecksPanel(unittest.TestCase):
         page = self.page
         return [page.tree.topLevelItem(g) for g in range(page.tree.topLevelItemCount())]
 
+    def test_collapsing_every_group_keeps_the_header_text_clear_of_the_symbol(self):
+        tree = self.page.tree
+        tree.expandAll()
+        self.app.processEvents()
+        before = tree.header().sectionPosition(1)
+        tree.collapseAll()
+        self.app.processEvents()
+        after = tree.header().sectionPosition(1)
+        self.assertEqual(after, before, "A header must reserve its shifted icon even without visible children")
+
     # ----- the sections and the views
 
     def test_by_level_is_the_default_with_what_passed_closed(self):

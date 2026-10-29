@@ -49,11 +49,21 @@ class Inverter(unittest.TestCase):
         self.assertEqual((rec["mppt_voltage_min_v"], rec["mppt_voltage_max_v"], rec["dc_voltage_max_v"]),
                          (200.0, 1000.0, 1100.0))
         self.assertEqual((rec["mppt_count"], rec["phases"]), (4, 3))
-        self.assertEqual(rec["dc_current_max_per_mppt_a"], [32.0] * 4)
+        self.assertEqual(rec["dc_current_max_a"], 128.0)
+        self.assertNotIn("dc_current_max_per_mppt_a", rec)
         inv = InverterSpec.from_record(rec)
         self.assertAlmostEqual(inv.eta, 0.984)
         self.assertIn("AP-50K.OND", inv.source.label)
-        self.assertTrue(any("32" in s for s in said))
+        self.assertTrue(any("128" in s for s in said))
+        self.assertEqual(inv.imax_total, 128.0)
+        self.assertIsNone(inv.imax_per_mppt)
+
+    def test_physical_inputs_do_not_supply_the_missing_tracker_count(self):
+        rec, said = panond.inverter(write(OND.replace("NbMPPT=4", "NbInputs=8"), "inputs.OND"))
+        self.assertNotIn("mppt_count", rec)
+        self.assertEqual(rec["dc_input_pairs"], 8)
+        self.assertNotIn("dc_current_max_per_mppt_a", rec)
+        self.assertTrue(any("NbMPPT" in s for s in said))
 
 
 
@@ -80,7 +90,9 @@ class RealFiles(unittest.TestCase):
         self.assertEqual(rec["manufacturer"], "ChintPower")                       # the file starts with a BOM
         self.assertEqual((rec["ac_power_nominal_w"], rec["mppt_count"], rec["phases"]), (250000.0, 12, 3))
         self.assertEqual((rec["mppt_voltage_min_v"], rec["mppt_voltage_max_v"]), (500.0, 1500.0))
-        self.assertEqual(rec["dc_current_max_per_mppt_a"], [30.0] * 12)
+        self.assertEqual(rec["dc_current_max_a"], 360.0)
+        self.assertEqual(rec["dc_input_pairs"], 36)
+        self.assertNotIn("dc_current_max_per_mppt_a", rec)
 
 
 if __name__ == "__main__":

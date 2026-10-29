@@ -630,3 +630,64 @@ class OnlyWhenAsked(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CompletingCompatibility(unittest.TestCase):
+    def test_completion_preserves_orientation_tilt_and_module_type_on_used_mppt(self):
+        import dataclasses
+        from meridiana.energy import plant
+        rec = inverter_rec(mppt_count=1, dc_current_max_per_mppt_a=[60], dc_isc_max_per_mppt_a=[80])
+        p = plant_project([(rec, 1)], {"runs": [], "n_series": 8})
+        left = plant.Group("s1.0", "s1", "South", module(), grid(1, 8))
+        keep = [{"inverter": 1, "mppt": 1, "modules": [f"s1/{pm.key}" for pm in left.placed]}]
+        for tilt, azimuth, mod in ((15, 90, module()), (30, 0, module()), (15, 0, module(model="different"))):
+            with self.subTest(tilt=tilt, azimuth=azimuth, model=mod.model):
+                other = plant.Group("s2.0", "s2", "Other", mod,
+                                    [dataclasses.replace(pm, tilt=tilt, azimuth=azimuth) for pm in grid(1, 8)])
+                self.assertEqual(plant.propose(p, groups=[left, other], keep=keep), keep)
+        same = plant.Group("s2.0", "s2", "Same", module(), grid(1, 8))
+        self.assertEqual(len(plant.propose(p, groups=[left, same], keep=keep)), 2)
+
+    def test_mixed_manual_string_reports_actual_power_and_warns_about_module_types(self):
+        from meridiana.energy import plant
+        a = plant.Group("a.0", "a", "A", module(), grid(1, 8))
+        b = plant.Group("b.0", "b", "B", module(model="600", pmax=600), grid(1, 8))
+        runs = [{"inverter": 1, "mppt": 1, "modules": [f"{g.sfid}/{pm.key}" for g in (a,b) for pm in g.placed]}]
+        p = plant_project([(inverter_rec(), 1)], {"runs": runs})
+        out = plant.build(p, groups=[a,b])
+        self.assertEqual(out.inputs[(1,1)].power_w, 8 * 450 + 8 * 600)
+        self.assertNotEqual(out.strings[0].state, "ok")
+        self.assertIn("module type", out.strings[0].why)
+
+
+class InputTopology(unittest.TestCase):
+    def test_a_total_current_is_not_repeated_on_each_mppt(self):
+        rec = inverter_rec(mppt_count=2, dc_current_max_a=30)
+        rec.pop("dc_current_max_per_mppt_a")
+        inv = InverterSpec.from_record(rec)
+        self.assertIsNone(inv.imax_per_mppt)
+        self.assertEqual(inv.imax_total, 30)
+        p = stringing.plan(module(), inv, 12, [1,1], -10, 60)
+        self.assertTrue(any(c.key.startswith("imp_missing") and c.level == "warn" for c in p.checks))
+        explicit = InverterSpec.from_record(dict(rec, dc_current_max_per_mppt_a=[15,20]))
+        self.assertEqual(explicit.imax_per_mppt, [15,20])
+        single = InverterSpec.from_record(dict(rec, mppt_count=1))
+        self.assertEqual(single.imax_per_mppt,[30])
+
+    def test_physical_connectors_limit_the_proposal_and_manual_external_parallel_is_said(self):
+        inv = InverterSpec.from_record(inverter_rec(strings_per_mppt=[1,2],
+                                    dc_current_max_per_mppt_a=[60,60], dc_isc_max_per_mppt_a=[80,80]))
+        self.assertEqual(stringing.strings_allowed(module(), inv, 0), 1)
+        self.assertEqual(stringing.strings_allowed(module(), inv, 1), 2)
+        p = stringing.plan(module(), inv, 12, [2,0], -10,60)
+        self.assertTrue(any(c.key == "connections0" and c.level == "warn" for c in p.checks))
+
+    def test_total_operating_current_is_checked_across_independent_mppts(self):
+        from meridiana.energy import plant
+        rec = inverter_rec(dc_current_max_a=25, dc_current_max_per_mppt_a=[20,20])
+        g = plant.Group("s1.0", "s1", "Field", module(), grid(2,8))
+        runs = [{"inverter":1,"mppt":r+1,"modules":[f"s1/{r}:{i}" for i in range(8)]} for r in range(2)]
+        out = plant.build(plant_project([(rec,1)], {"runs":runs}), groups=[g])
+        check = next(c for c in out.checks[1] if c.key == "imp_total")
+        self.assertEqual(check.level, "warn")
+        self.assertIn("26.8 A", check.detail)

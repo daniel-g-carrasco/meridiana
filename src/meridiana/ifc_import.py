@@ -19,7 +19,7 @@ exclusions with their height above the roof."""
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from . import geo, model, roofs, skeleton
 from .i18n import _, ngettext, number
@@ -126,6 +126,7 @@ class Frame:
             self.dx, self.dy = geo.Origin(site.lat, site.lon).to_local(place.lon, place.lat)
         elif how == "origin":
             pts = [self.turn(x, y) for b in found.get("buildings") or [] for x, y in b["footprint"]]
+            pts += [self.turn(x, y) for s in found.get("supports") or [] for x, y in s["ring"]]
             if pts:
                 xs, ys = [p[0] for p in pts], [p[1] for p in pts]
                 self.dx, self.dy = -(min(xs) + max(xs)) / 2, -(min(ys) + max(ys)) / 2
@@ -153,6 +154,7 @@ class Plan:
     moved, and the lists of the summary."""
     buildings: list = field(default_factory=list)       # model.Building, id ""
     exclusions: list = field(default_factory=list)      # (model.ExclusionItem, index of its building or None)
+    supports: list = field(default_factory=list)        # (unfilled model.SubField, index of its building)
     site: model.Site | None = None
     taken: list = field(default_factory=list)
     approximated: list = field(default_factory=list)
@@ -182,6 +184,7 @@ class _Pitch:
         self.px, self.py, self.pz = px, py, float(raw["point"][2]) - ground
         self.area = float(raw.get("area") or 0.0)
         self.holes = int(raw.get("holes") or 0)
+        self.owners = list(raw.get("owners") or [])
 
     def z(self, x: float, y: float) -> float:
         if self.tilt == 0.0:
@@ -294,7 +297,7 @@ def _levels(pitches: list[_Pitch]) -> list[list[_Pitch]]:
 
 
 def plan(found: dict, project: model.Project, how: str = "file", north: str | None = None,
-         name: str = "IFC") -> Plan:
+         name: str = "IFC", source_name: str | None = None) -> Plan:
     """The buildings and the exclusions of `found` (ifc_read.read) for `project`, placed the way `how` says, with the
     north `north` ("map" or "context"; None: the map's when there is one). Nothing of the project is changed."""
     from shapely.geometry import Point, Polygon
@@ -367,6 +370,31 @@ def plan(found: dict, project: model.Project, how: str = "file", north: str | No
                 b.name = f"{b.name} {seen[b.name]}"
     out.buildings = [b for _k, b, _p in made]
 
+    for raw in found.get("supports") or []:
+        candidates = [i for i, (k, _b, _members) in enumerate(made)
+                      if found["buildings"][k].get("ifc") == raw.get("ifc")
+                      and found["buildings"][k].get("storey") == raw.get("storey")]
+        member = _Pitch(raw, frame, float(raw.get("ground") or 0.0))
+        host = min(candidates, key=lambda i: Polygon(out.buildings[i].footprint).distance(Polygon(member.ring))) \
+            if candidates else None
+        _offer_support(out, member, host, project, source_name or name)
+
+    # A roof whose fall is not perpendicular to an outline edge cannot be reproduced by Roof's eave model.
+    # Offer the actual IFC plane as an unfilled, independent placement area in the confirmed import plan.
+    for host, (_k, b, members) in enumerate(made):
+        reproduced = b.pitches()
+        for member in members:
+            if member.holes or not reproduced:
+                continue
+            nearest = min(range(len(reproduced)), key=lambda i: _angle(member.azimuth, reproduced[i].azimuth))
+            pitch = reproduced[nearest]
+            exact = (abs(member.tilt - pitch.tilt) < 0.05
+                     and (member.tilt == 0.0 or _angle(member.azimuth, pitch.azimuth) < 0.05)
+                     and all(abs(member.z(x, y) - pitch.z(x, y)) < 0.01 for x, y in member.ring))
+            if exact:
+                continue
+            _offer_support(out, member, host, project, source_name or name, b.pitch_ref(nearest))
+
     # obstacles: on the building whose roof holds their middle, parapets of a flat roof as its parapet
     kinds: dict = {}
     for o in found.get("obstacles") or []:
@@ -411,6 +439,27 @@ def plan(found: dict, project: model.Project, how: str = "file", north: str | No
     return out
 
 
+def _offer_support(out: Plan, member: _Pitch, host, project, name: str, pitch=None) -> None:
+    source = ", ".join(f"#{oid}" for oid in member.owners) or name
+    if host is not None and pitch is None:
+        b = out.buildings[host]
+        pitches = b.pitches()
+        if pitches:
+            pitch = b.pitch_ref(min(range(len(pitches)), key=lambda i: _angle(member.azimuth, pitches[i].azimuth)))
+    sf = model.SubField(id="", name=f"{name}: {source}", ring=member.ring,
+                        pitch=pitch, module=next(iter(project.modules), "generic-450"),
+                        params={"mounting": "coplanar"}, filled=False,
+                        support=model.SupportPlane(enabled=True, tilt=member.tilt, azimuth=member.azimuth,
+                                                   z0=member.pz, x0=member.px, y0=member.py))
+    out.supports.append((sf, host))
+    out.taken.append(_("Independent placement area from {file}, IFC {source}: normal ({nx}, {ny}, {nz}), "
+                       "tilt {tilt}°, azimuth {azimuth}°, local elevation {z} m. Enabled, with no modules; "
+                       "building and pitch retained as references.").format(
+                           file=name, source=source, nx=number(member.n[0], 6), ny=number(member.n[1], 6),
+                           nz=number(member.n[2], 6), tilt=number(member.tilt, 3),
+                           azimuth=number(member.azimuth, 3), z=number(member.pz, 3)))
+
+
 def _summary(out: Plan, found: dict, place: Place, how: str, notes: dict, kinds: dict, made: list, project) -> None:
     t, a, left = out.taken, out.approximated, out.left_out
     n = len(out.buildings)
@@ -425,7 +474,7 @@ def _summary(out: Plan, found: dict, place: Place, how: str, notes: dict, kinds:
         t.append(_("Roofs: {list}").format(list=", ".join(f"{types[k]} {v}" for k, v in count.items())))
         pitches = sum(len(p) for _k, _b, p in made)
         t.append(ngettext("{n} roof plane", "{n} roof planes", pitches).format(n=pitches))
-    else:
+    elif not out.supports:
         left.append(_("No roof, slab or wall the buildings could be made of."))
     names = {"chimney": _("chimneys"), "skylight": _("skylights"), "tree": _("trees"), "vent": _("smoke vents"),
              "plant": _("roof plants"), "other": _("other obstacles"), "parapet": _("parapet walls")}
@@ -495,6 +544,12 @@ def apply(project: model.Project, p: Plan) -> list[str]:
         project.exclusions.append(model.ExclusionItem(id=project.new_id("e"), ring=[list(q) for q in e.ring],
                                                       kind=e.kind, building=ids[host] if host is not None else None,
                                                       height=e.height))
+    for sf, host in p.supports:
+        project.subfields.append(model.SubField(id=project.new_id("s"), name=sf.name,
+                                                ring=[list(q) for q in sf.ring],
+                                                building=ids[host] if host is not None else None, pitch=sf.pitch,
+                                                module=sf.module, params=dict(sf.params), filled=False,
+                                                support=replace(sf.support)))
     return ids
 
 
@@ -506,4 +561,11 @@ def problem(p: Plan) -> str:
                      "move the site to the model.").format(km=number(model.COORD_LIMIT / 1000, 0))
         if b.height > model.HEIGHT_LIMIT:
             return _("A roof would stand {m} m high: the model's ground was not found.").format(m=number(b.height, 0))
+    for sf, _host in p.supports:
+        if any(not math.isfinite(c) or abs(c) > model.COORD_LIMIT for q in sf.ring for c in q):
+            return _("The buildings would fall more than {km} km from the site: place them at the site's origin, or "
+                     "move the site to the model.").format(km=number(model.COORD_LIMIT / 1000, 0))
+        if not math.isfinite(sf.support.z0) or abs(sf.support.z0) > model.HEIGHT_LIMIT:
+            return _("A roof would stand {m} m high: the model's ground was not found.").format(
+                m=number(sf.support.z0, 0))
     return ""

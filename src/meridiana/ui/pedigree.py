@@ -56,15 +56,23 @@ def limits() -> list[str]:
           "plants with an MV connection)."),
         _("Cables: shares at STC and at the nominal AC power, not lengths, sections and resistivity; no check of the "
           "voltage drop here."),
-        _("Inverters: one efficiency curve for the whole system, clipped at the nominal AC power of all the inverters "
+        _("Inverters: one efficiency curve for the whole system, clipped at the nominal AC power of the connected inverters "
           "together; no clipping per MPPT input or per inverter, no start thresholds, no efficiency profile of the "
           "OND file."),
         _("Trackers: none, the modules are fixed."),
         _("Weather: the PVGIS typical year only; no Meteonorm, no measured years, no weather file of PVsyst."),
-        _("Two steps are estimates, not measurements: the «loss for the irradiance level», which rests on one-diode "
-          "parameters fitted to a few points of the datasheet unless they come from the module's PVsyst file; and "
-          "the electrical effect of the shade on the strings (rows and obstacles), Martinez-Moreno's model without "
-          "an external check, an upper bound of the effect."),
+        _("Irradiance-level loss is an estimate based on one-diode parameters fitted to a few datasheet points, "
+          "unless parameters are available in the module's PVsyst file."),
+        _("Electrical shading uses the Martinez-Moreno estimate from shaded area and affected bypass blocks. "
+          "It does not solve cell, bypass-diode, string or MPPT current-voltage curves. Shade affects the common "
+          "current of a series string; it does not switch off the modules that follow the shaded module. "
+          "Agreement with a reference implementation is not validation against measurements."),
+        _("Bypass layout comes from the module file when available; otherwise three bypass diodes and the cell "
+          "layout inferred from the cell count are assumptions to verify against the manufacturer's diagram."),
+        _("Optimizers: string and module compatibility checks use the supported SolarEdge tables; annual energy "
+          "uses a fixed conversion efficiency. Hourly input-current clipping, output-voltage limits and minimum "
+          "unshaded optimizer count are not simulated. Two modules on one optimizer do not have two independent "
+          "MPPTs. Other optimizer architectures and optional branch-cable wiring are not modeled."),
     ]
 
 
@@ -76,23 +84,25 @@ def limits_html() -> str:
     return f"<h2>{html.escape(_('What the model does not include'))}</h2><p>{html.escape(intro)}</p><ul>{items}</ul>"
 
 
-def records_html(records: list[Record], add_image) -> str:
+def records_html(records: list[Record], add_image, *, paper: bool = False) -> str:
     """The records as HTML, with the section on what the model does not include at the end; add_image(name,
     tex, size) registers a formula image and returns its URL."""
-    c = CHROME[mode()]
+    from .document_style import css
+    c = CHROME["light" if paper else mode()]
     kinds = kind_names()
-    parts = [f"<style>td {{ padding: 2px 8px 2px 0; vertical-align: top; }} .muted {{ color: {c['muted']}; }} "
-             f".kind {{ color: {c['ink2']}; }}</style>"]
+    # The report supplies its paper CSS; screen values must never override it.
+    parts = [] if paper else ["<style>" + css(ink=c['ink'], muted=c['muted'], rule=c['grid'],
+                                             head=c['surface']) + "</style>"]
     n = 0
     for rec in records:
         parts.append(f"<h2>{html.escape(rec.title)}</h2>")
         for step in rec.steps:
             n += 1
             parts.append(f"<h3>{html.escape(step.title)}</h3>")
-            if step.formula:
-                parts.append(f"<p><img src='{add_image(f'f{n}', step.formula, 14.0)}'></p>")
             if step.explanation:
                 parts.append(f"<p>{html.escape(step.explanation)}</p>")
+            if step.formula:
+                parts.append(f"<p class='formula'><img src='{add_image(f'f{n}', step.formula, 14.0)}'></p>")
             rows = []
             for k, q in enumerate(step.inputs):
                 symbol = f"<img src='{add_image(f's{n}_{k}', q.symbol, 11.0)}'>" if q.symbol else ""
@@ -109,10 +119,13 @@ def records_html(records: list[Record], add_image) -> str:
             if step.result is not None:
                 q = step.result
                 symbol = f"<img src='{add_image(f'r{n}', q.symbol, 11.0)}'>" if q.symbol else ""
-                rows.append(f"<tr><td>{symbol}</td><td>{strong(marked(html.escape(q.label)))}</td>"
+                rows.append(f"<tr class='result'><td>{symbol}</td><td>{strong(marked(html.escape(q.label)))}</td>"
                             f"<td align='right'>{strong(marked(html.escape(q.text())))}</td><td></td></tr>")
             if rows:
-                parts.append("<table>" + "".join(rows) + "</table>")
+                heading = "".join(f"<th align='left'>{html.escape(label)}</th>" for label in
+                                  (_("Symbol"), _("Quantity"), _("Value and unit"), _("Source")))
+                parts.append("<table class='grid' width='100%' cellspacing='0' cellpadding='5'><thead><tr>"
+                             + heading + "</tr></thead>" + "".join(rows) + "</table>")
             if step.reference:
                 parts.append(f"<p class='muted'>{html.escape(_('Reference'))}: {html.escape(step.reference)}</p>")
     if records:

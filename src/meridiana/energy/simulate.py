@@ -295,7 +295,8 @@ def with_strings(sim: Simulation, strings: dict | None, optimizers: Optimizers |
 def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | None, losses: Losses | None,
                 horizon: Horizon | None) -> _Pass:
     import pandas as pd
-    import pvlib
+    from .dependencies import load_pvlib
+    pvlib = load_pvlib()
 
     losses = losses or Losses()
     arrays = [a for a in arrays if a.modules > 0]

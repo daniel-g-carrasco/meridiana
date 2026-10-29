@@ -57,6 +57,8 @@ def height_at(project, kind: str, oid: str, x: float, y: float) -> float:
     thing = _thing(project, kind, oid)
     if thing is None:
         return 0.0
+    if kind == "subfield" and thing.support is not None and thing.support.enabled:
+        return float(project.surface_of(thing).z(x, y))
     bid = thing.id if kind == "building" else getattr(thing, "building", None)
     b = project.building(bid)
     z = 0.0
@@ -212,5 +214,7 @@ def outline(project, results: dict, kind: str, oid: str, key: str = ""):
         if prism is not None:
             return mesh.prism_edges(prism["ring"], prism["z0"], prism["z1"])
     b = project.building(getattr(thing, "building", None))
-    zs = model.roof_z(b, ring) if b is not None else [0.0] * len(ring)
+    zs = ([project.surface_of(thing).z(x, y) for x, y in ring]
+          if kind == "subfield" and thing.support is not None and thing.support.enabled else
+          model.roof_z(b, ring) if b is not None else [0.0] * len(ring))
     return mesh.ring_edges([(x, y, z + LIFT) for (x, y), z in zip(ring, zs, strict=True)])

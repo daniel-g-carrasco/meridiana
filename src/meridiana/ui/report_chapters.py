@@ -97,7 +97,7 @@ def table(rows, head=None, right=(), widths=None) -> str:
         for i, h in enumerate(head):
             w = f" width='{widths[i]}'" if widths and widths[i] else ""
             cells.append(f"<th align='{'right' if i in right else 'left'}'{w}>{esc(h)}</th>")
-        out.append("<tr>" + "".join(cells) + "</tr>")
+        out.append("<thead><tr>" + "".join(cells) + "</tr></thead>")
     for row in rows:
         out.append("<tr>" + "".join(f"<td align='{'right' if i in right else 'left'}'>{esc(c)}</td>"
                                     for i, c in enumerate(row)) + "</tr>")
@@ -583,7 +583,7 @@ def economics(ctx: Context) -> list[str]:
             (_("Investment"), f"{kwh(k['capex'])} €"), (_("Net present value"), f"{kwh(k['npv'])} €"),
             (_("Internal rate of return"), f"{number(100 * k['irr'], 1)} %" if k["irr"] is not None else "–"),
             (_("Payback"), _("{y} years").format(y=number(k["payback"], 1)) if k["payback"] is not None else "–"),
-            (_("Levelised cost"), f"{number(k['lcoe'], 3)} €/kWh")]
+            (_("Levelised cost"), f"{number(k['lcoe'], 3)} €/kWh" if math.isfinite(k['lcoe']) else _("No production"))]
     parts = [facts(rows)]
     years = list(econ.years.index)
     cum = [-k["capex"]] + [float(v) for v in econ.years.cumulative]
@@ -647,7 +647,7 @@ def methods(ctx: Context) -> list[str]:
     parts = []
     if records:
         parts.append(records_html(records, lambda name, tex, size: ctx.image(
-            "f_" + name, lambda: formula_png(tex, INK, 220, size), 2.2)))
+            "f_" + name, lambda: formula_png(tex, INK, 220, size), 2.2), paper=True))
         defaults = []
         for r in records:
             for st in r.steps:

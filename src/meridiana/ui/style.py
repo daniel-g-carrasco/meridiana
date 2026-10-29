@@ -13,7 +13,7 @@ from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPainterPath, Q
 from PySide6.QtWidgets import QGroupBox, QMenu, QProxyStyle, QStyle, QStyleFactory, QWidget
 
 from .checkboxes import CheckboxStyle
-from .design import Line, Radius, Space
+from .design import Line, Motion, Radius, Space
 
 GROUP_RADIUS = Radius.CONTROL   # a group is a control's depth (ui/design.py)
 HEAD_PAD = Space.M              # the header band over the title's line of text
@@ -29,6 +29,8 @@ class MeridianaStyle(CheckboxStyle, QProxyStyle):
         self.tokens: dict = {}
 
     def styleHint(self, hint, option=None, widget=None, returnData=None):
+        if hint == QStyle.StyleHint.SH_ToolTip_WakeUpDelay:
+            return Motion.NORMAL
         if hint == QStyle.StyleHint.SH_UnderlineShortcut:
             return 0
         return super().styleHint(hint, option, widget, returnData)

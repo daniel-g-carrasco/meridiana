@@ -18,6 +18,7 @@ import copy
 import dataclasses
 import math
 import os
+import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,7 +27,7 @@ from . import atomic, layout, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 18
+FORMAT_VERSION = 19
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -353,7 +354,10 @@ MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                     13: _to_14, 14: _to_15, 15: lambda data: {**data, "network_consent": data.get("network_consent", {})},
                     16: lambda data: {**data, "resources": data.get("resources", {}), "climate": data.get("climate", {})},
                     17: lambda data: {**data, "job_id": data.get("job_id", ""),
-                                     "series_id": data.get("series_id", "")}}
+                                     "series_id": data.get("series_id", "")},
+                    18: lambda data: {**data, "bim_id": data.get("bim_id") or str(uuid.uuid5(
+                        uuid.NAMESPACE_URL, "meridiana:legacy:" + (data.get("series_id") or
+                        repr((data.get("created", ""), data.get("job_id", ""), data.get("name", ""))))))}}
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
 ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
@@ -599,6 +603,20 @@ class ExclusionItem:
 
 
 @dataclass
+class SupportPlane:
+    """An explicitly enabled placement plane in the site's local metres, independent of a polygon's edges."""
+    enabled: bool = True
+    tilt: float = 0.0
+    azimuth: float = 0.0
+    z0: float = 0.0
+    x0: float = 0.0
+    y0: float = 0.0
+
+    def surface(self) -> layout.Surface:
+        return layout.Surface(tilt=self.tilt, azimuth=self.azimuth, z0=self.z0, x0=self.x0, y0=self.y0)
+
+
+@dataclass
 class SubField:
     id: str
     name: str
@@ -613,6 +631,12 @@ class SubField:
     # makes its own otherwise, and `rows` stays empty
     rows: list = field(default_factory=list)
     manual: bool = False
+    support: SupportPlane | None = None
+
+    def __post_init__(self):
+        if isinstance(self.support, dict):
+            names = {f.name for f in dataclasses.fields(SupportPlane)}
+            self.support = SupportPlane(**{k: v for k, v in self.support.items() if k in names})
 
     def hand_rows(self) -> list[layout.Row]:
         return [layout.Row.of(r) for r in self.rows]
@@ -748,6 +772,15 @@ def _check_design(design: dict, path: str, ids: set[str], unknown: list[str]) ->
             raise ValueError(f"{where}.id: '{raw['id']}' is used twice")
         mine.add(raw["id"])
         _check_rows(raw.get("rows") or [], f"{where}.rows")
+        if raw.get("support") is not None:
+            support = _check_dict(raw["support"], f"{where}.support")
+            _check_fields(SupportPlane, support, f"{where}.support", unknown)
+            if type(support.get("enabled", True)) is not bool:
+                raise ValueError(f"{where}.support.enabled: expected a switch")
+            for key, low, high in (("tilt", 0.0, 89.0), ("azimuth", -180.0, 180.0),
+                                   ("z0", -HEIGHT_LIMIT, HEIGHT_LIMIT),
+                                   ("x0", -COORD_LIMIT, COORD_LIMIT), ("y0", -COORD_LIMIT, COORD_LIMIT)):
+                _check_number(support.get(key, 0.0), f"{where}.support.{key}", low, high)
     unknown.extend(f"{path}.{k}" for k in design if k not in DESIGN)
 
 
@@ -892,9 +925,13 @@ def _check_project(data: dict) -> list[str]:
     for key in ("job_id", "series_id"):
         if key in data and type(data[key]) is not str:
             raise ValueError(f"{key}: {data[key]!r} is not text")
+    try:
+        uuid.UUID(data.get("bim_id", ""))
+    except (ValueError, AttributeError, TypeError):
+        raise ValueError("bim_id: expected a UUID") from None
     known = {"format", "version", "app_version", "name", "site", "climate", "sun_window", "buildings", "exclusions",
              "consumption", "rules", "network", "network_consent", "variants", "variant", "underlays", "report",
-             "resources", "reserved", "created", "modified", "job_id", "series_id"}
+             "resources", "reserved", "created", "modified", "job_id", "series_id", "bim_id"}
     unknown.extend(k for k in data if k not in known)
     return unknown
 
@@ -904,6 +941,7 @@ class Project:
     name: str = "Nuovo progetto"
     job_id: str = ""
     series_id: str = ""
+    bim_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     site: Site = field(default_factory=Site)
     climate: dict = field(default_factory=dict)       # PVGIS's raw typical year and horizon, shared by the variants
     sun_window: dict = field(default_factory=lambda: asdict(sun.DesignWindow()))
@@ -1011,6 +1049,10 @@ class Project:
         if kind == "subfield":
             copy.params, copy.removed, copy.filled = _copy.deepcopy(thing.params), [], False
             copy.rows, copy.manual = [], False
+            copy.support = _copy.deepcopy(thing.support)
+            if copy.support is not None:
+                copy.support.x0 += offset[0]
+                copy.support.y0 += offset[1]
         found.append(copy)
         return copy.id
 
@@ -1076,6 +1118,8 @@ class Project:
     # what the layout needs
 
     def surface_of(self, sf: SubField) -> layout.Surface:
+        if sf.support is not None and sf.support.enabled:
+            return sf.support.surface()
         b = self.building(sf.building)
         if b is None:
             return layout.Surface()
@@ -1177,7 +1221,7 @@ class Project:
     # files
 
     def to_json(self) -> dict:
-        """The project as the file holds it (format 18): every variant with its design, the one in hand too;
+        """The project as the file holds it (format 19): every variant with its design, the one in hand too;
         the working copy of the fields above goes into its variant."""
         data = asdict(self)
         for k in DESIGN:
@@ -1199,6 +1243,7 @@ class Project:
         from .i18n import _
         if not isinstance(data, dict) or data.get("format") != FORMAT:
             raise ValueError(_("not a Meridiana project"))
+        data = copy.deepcopy(data)
         version = data.get("version", 0)
         if version.__class__ is not int or version < 1:
             raise ValueError(f"version: {version!r} is not a format number")
@@ -1225,13 +1270,15 @@ class Project:
         while version < FORMAT_VERSION:
             data = MIGRATIONS[version](data)
             version += 1
+        if "bim_id" not in data:
+            data = MIGRATIONS[18](data)       # hand-authored files without the optional identity
         if check:
             found = _check_project(data)
             if unknown is not None:
                 unknown.extend(found)
 
         build = _build
-        p = cls(name=data.get("name", "Progetto"), job_id=data.get("job_id", ""),
+        p = cls(name=data.get("name", "Progetto"), job_id=data.get("job_id", ""), bim_id=data["bim_id"],
                 series_id=data.get("series_id", ""), site=build(Site, data.get("site", {})),
                 climate=data.get("climate") or (data.get("resources") or {}).get("weather") or {},
                 sun_window=data.get("sun_window", asdict(sun.DesignWindow())),

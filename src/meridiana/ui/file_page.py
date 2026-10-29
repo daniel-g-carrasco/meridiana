@@ -95,6 +95,7 @@ class Section(QScrollArea):
         self.box = QVBoxLayout(body)
         self.box.setContentsMargins(Layout.PAGE[0], Layout.PAGE[1], Layout.PAGE[0], Layout.PAGE[1])
         self.box.setSpacing(0)
+        self._groups: list[tuple[QGridLayout, list, int]] = []
         head = QLabel(title)
         head.setObjectName("fpage-title")
         head.setFont(text_font(Text.DISPLAY))
@@ -118,11 +119,26 @@ class Section(QScrollArea):
         self.box.addSpacing(Space.M)
         grid = QGridLayout()
         grid.setSpacing(Layout.GAP)
-        for i, tile in enumerate(tiles):
-            grid.addWidget(tile, i // 3, i % 3)
-        for c in range(3):
-            grid.setColumnStretch(c, 1)
         self.box.addLayout(grid)
+        self._groups.append((grid, tiles, 0))
+        self._reflow()
+
+    def _reflow(self) -> None:
+        columns = max(1, min(3, (self.viewport().width() - 2 * Layout.PAGE[0]) // 280))
+        for index, (grid, tiles, previous) in enumerate(self._groups):
+            if columns == previous:
+                continue
+            while grid.count():
+                grid.takeAt(0)
+            for col in range(3):
+                grid.setColumnStretch(col, int(col < columns))
+            for i, tile in enumerate(tiles):
+                grid.addWidget(tile, i // columns, i % columns)
+            self._groups[index] = (grid, tiles, columns)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._reflow()
 
     def finish(self) -> None:
         self.box.addStretch(1)
@@ -151,9 +167,16 @@ class FilePage(QFrame):
         self.nav_box = QVBoxLayout(self.nav)
         self.nav_box.setContentsMargins(Space.M, Space.L, Space.M, Space.L)
         self.nav_box.setSpacing(Space.XXS)
-        row.addWidget(self.nav)
+        self.nav_scroll = QScrollArea()
+        self.nav_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.nav_scroll.setWidgetResizable(True)
+        self.nav_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.nav_scroll.setFixedWidth(NAV_WIDTH + 8)
+        self.nav_scroll.setWidget(self.nav)
+        row.addWidget(self.nav_scroll)
         self.body = QStackedWidget()
         row.addWidget(self.body, 1)
+        self.nav_scopes: list[tuple[QWidget, bool]] = []
         self.items: dict[str, QToolButton] = {}
         self.sections: dict[str, QWidget] = {}
         self.hidden_with_me: list = []              # what stood over the panels (Meridio), back when it closes
@@ -218,15 +241,23 @@ class FilePage(QFrame):
             b.clicked.connect(lambda _c=False, k=key: self.show_section(k))
         self.nav_box.addWidget(b)
         self.items[key] = b
+        self.nav_scopes.append((b, key.startswith("preferences:") or key == "settings_back"))
         return b
 
     def _rule(self) -> None:
+        gap = QWidget()
+        box = QVBoxLayout(gap)
+        box.setContentsMargins(0, Space.S, 0, Space.S)
         line = QFrame()
         line.setObjectName("file-rule")
         line.setFixedHeight(1)
-        self.nav_box.addSpacing(Space.S)
-        self.nav_box.addWidget(line)
-        self.nav_box.addSpacing(Space.S)
+        box.addWidget(line)
+        self.nav_box.addWidget(gap)
+        self.nav_scopes.append((gap, False))
+
+    def _nav_mode(self, settings: bool) -> None:
+        for widget, is_settings in self.nav_scopes:
+            widget.setVisible(is_settings == settings)
 
     def _command(self, cid: str) -> Callable:
         """A command of the window, started after the page has closed."""
@@ -251,9 +282,7 @@ class FilePage(QFrame):
         self._rule()
         self._item("new", "file-plus", _("New"), self._keys("new"), self._command("new"))
         self._item("open", "folder-open", _("Open"), self._keys("open"))
-        self._item("save", "save", _("Save"), self._keys("save"), self._command("save"))
-        self._item("save_as", "save", _("Save as"), self._keys("save_as"), self._command("save_as"))
-        self._item("save_revision", "copy-plus", _("Save a revision"), "_R01", self._command("save_revision"))
+        self._item("save", "save", _("Save and revisions"))
         self._item("registry", "library", _("Clients and jobs"))
         self._rule()
         self._item("import", "download", _("Import"))
@@ -261,6 +290,7 @@ class FilePage(QFrame):
         self._rule()
         self._item("catalogues", "library", _("Catalogues"))
         self._item("preferences", "settings", _("Settings"), self._keys("preferences"))
+        self._item("settings_back", "arrow-left", _("Back to File"), slot=lambda: self.show_section("open"))
         for key, icon, title in (
                 ("appearance", "eye", _("Appearance")), ("navigation", "select", _("Navigation")),
                 ("keyboard", "keyboard", _("Keyboard")), ("assistant", "wand", _("Assistant")),
@@ -297,6 +327,16 @@ class FilePage(QFrame):
         opening.box.addLayout(self.recent_box)
         opening.finish()
         self.sections["open"] = opening
+
+        saving = Section(_("Save and revisions"), _("Keep the current project, create a copy or preserve a revision."))
+        saving.group(_("Project"), [
+            Tile("save", _("Save"), _("Update the current project file."), (), _("Save"), self._command("save")),
+            Tile("copy-plus", _("Save as"), _("Choose another name or location for the project."), (".mer",),
+                 _("Save as…"), self._command("save_as")),
+            Tile("copy-plus", _("Save a revision"), _("Keep this version in a new numbered file next to the project."),
+                 ("_R01", "_R02"), _("Save a revision"), self._command("save_revision"))])
+        saving.finish()
+        self.sections["save"] = saving
 
         # Import: what comes from other programs or from a file
         imports = Section(_("Import"), _("What comes from other programs or from a file. Meridiana reads it, tells "
@@ -366,7 +406,8 @@ class FilePage(QFrame):
         self.settings = Preferences(w.cfg, w.bindings, w.theme, w)
         self.settings.changed.connect(w._apply_preferences)
         settings.box.addSpacing(Space.XL)
-        settings.box.addWidget(self.settings, 1)
+        self.settings.setMaximumWidth(860)
+        settings.box.addWidget(self.settings, 1, Qt.AlignmentFlag.AlignLeft)
         self.sections["preferences"] = settings
 
         # Help
@@ -390,6 +431,7 @@ class FilePage(QFrame):
         section, _, page = key.partition(":")
         if section not in self.sections:
             return
+        self._nav_mode(section == "preferences")
         if key == "open":
             self._recent()
         elif key == "new":
@@ -399,8 +441,11 @@ class FilePage(QFrame):
         elif key == "registry":
             self.registry_page.refresh()
         elif section == "preferences":
-            self.settings._populate()              # the maps read the site of the project open now
+            if self.body.currentWidget() is not self.sections["preferences"]:
+                self.settings._populate()          # read the site on entering, not on every category change
             self.settings.show_page(page)
+            page = self.settings.current_section()
+            key = "preferences:" + page
         self.body.setCurrentWidget(self.sections[section])
         for k, b in self.items.items():
             if b.isCheckable():
@@ -456,7 +501,9 @@ class FilePage(QFrame):
         def present():
             self.show()
             self.raise_()
-            self.items[section].setFocus()
+            current = next((item for item in self.items.values() if item.isChecked() and item.isVisible()), None)
+            if current is not None:
+                current.setFocus()
 
         self.entrance = motion.enter(self, present, self.entrance_kind, self.entrance_duration)
         if self.entrance is not None:

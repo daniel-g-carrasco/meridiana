@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from ..i18n import _
+from .dependencies import load_pvlib
 from .pedigree import Source
 
 # typical values of an n-type TOPCon module of 108 half cells, 450 W, for a project with no module chosen yet
@@ -117,6 +118,7 @@ class ModuleSpec:
     def diode_params(self, irradiance, temp_cell=25.0) -> tuple:
         """(I_L, I_0, R_s, R_sh, nNsVth) of the one-diode model at the irradiance and cell temperature given,
         by the model's own form; the single-diode equation then is pvlib.pvsystem.singlediode's."""
+        load_pvlib()
         from pvlib.pvsystem import calcparams_desoto, calcparams_pvsyst
         p = self.sdm()
         if p.get("form") == "pvsyst":
@@ -129,6 +131,7 @@ class ModuleSpec:
     def _mpp_at_25(self, irradiance) -> tuple[np.ndarray, np.ndarray]:
         """Power and current at the maximum power point of one module at 25 °C, for the effective irradiance
         given (W/m²)."""
+        load_pvlib()
         from pvlib.pvsystem import max_power_point
         g = np.clip(np.asarray(irradiance, dtype=float), 0.0, None)
         p = self.sdm()
@@ -206,7 +209,7 @@ def _per_input(rec: dict, key: str, single: str | None) -> list | None:
         return [float(x) for x in v]
     if isinstance(v, (int, float)):
         return [float(v)]
-    if single and isinstance(rec.get(single), (int, float)):
+    if single and rec.get("mppt_count") == 1 and isinstance(rec.get(single), (int, float)):
         return [float(rec[single])]
     return None
 
@@ -217,6 +220,7 @@ def _given_sdm(m: ModuleSpec) -> dict | None:
     g = m.sdm_given
     if not g:
         return None
+    load_pvlib()
     from pvlib.pvsystem import calcparams_desoto, max_power_point
     try:
         p = {k: float(g[k]) for k in ("I_L_ref", "I_o_ref", "R_s", "R_sh_ref", "a_ref")}
@@ -246,6 +250,7 @@ def _light_and_saturation(isc: float, voc: float, rs: float, rsh: float, a: floa
 
 
 def _pvsyst_pmp(p: dict, irradiance: float = 1000.0) -> float:
+    load_pvlib()
     from pvlib.pvsystem import calcparams_pvsyst, max_power_point
     il, io, rs, rsh, nnsvth = calcparams_pvsyst(irradiance, 25.0, p["alpha_sc"], p["gamma_ref"], p["mu_gamma"],
                                                 p["I_L_ref"], p["I_o_ref"], p["R_sh_ref"], p["R_sh_0"], p["R_s"],
@@ -311,6 +316,7 @@ def _fit_pvsyst(vmp: float, imp: float, voc: float, isc: float, alpha_sc: float,
     where a root finder stalls. When the target lies outside what the model can give the nearest value is
     taken and the pedigree prints the value reached. A fit is kept only if it gives the maximum power at STC
     within 1%."""
+    load_pvlib()
     from pvlib.pvsystem import calcparams_pvsyst, max_power_point
     rsh = 100.0 * vmp / imp
     rsh0 = PVSYST_RSH0_FACTOR * rsh
@@ -419,6 +425,8 @@ class InverterSpec:
     imax_per_mppt: list | None = None          # A, the maximum operating current of each input
     iscmax_per_mppt: list | None = None        # A, the maximum short-circuit current of each input
     source: Source = field(default_factory=lambda: Source("default", _("typical values")))
+    imax_total: float | None = None            # shared DC operating-current limit of the whole inverter
+    inputs_per_mppt: list | None = None        # physical connector pairs, not independent trackers
 
     @property
     def pac_total(self) -> float:
@@ -442,6 +450,8 @@ class InverterSpec:
                    phases=rec.get("phases"),
                    imax_per_mppt=_per_input(rec, "dc_current_max_per_mppt_a", "dc_current_max_a"),
                    iscmax_per_mppt=_per_input(rec, "dc_isc_max_per_mppt_a", None),
+                   imax_total=float(rec["dc_current_max_a"]) if isinstance(rec.get("dc_current_max_a"), (int, float)) else None,
+                   inputs_per_mppt=_per_input(rec, "strings_per_mppt", None),
                    source=Source("data", (_("PVsyst file {file} of {name}") if rec.get("source") == "ond" else
                                           _("datasheet of {name}")).format(
                        file=rec.get("file", ""), name=f"{rec.get('manufacturer', '')} {rec.get('model', '')}".strip()),

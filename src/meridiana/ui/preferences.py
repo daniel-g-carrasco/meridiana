@@ -535,7 +535,6 @@ class Preferences(QWidget):
         self.reset.clicked.connect(self.ask_reset)
         row.addWidget(self.reset)
         row.addStretch(1)
-        box.addLayout(row)
         self.confirmation = QWidget()
         confirm = QHBoxLayout(self.confirmation)
         confirm.setContentsMargins(0, 0, 0, 0)
@@ -552,6 +551,7 @@ class Preferences(QWidget):
         self.pages = QTabWidget()
         self.pages.tabBar().hide()                 # the sections are chosen in File's list on the left
         box.addWidget(self.pages, 1)
+        box.addLayout(row)
         self._populate()
         self.show_page(page)
 
@@ -730,4 +730,6 @@ class Preferences(QWidget):
     def show_page(self, name: str) -> None:
         widget = self._widgets().get(name)
         if widget is not None:
+            if widget is not self.pages.currentWidget():
+                self.confirmation.hide()
             self.pages.setCurrentWidget(widget)

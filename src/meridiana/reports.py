@@ -92,6 +92,15 @@ def templates() -> dict[str, Template]:
                  _("The essentials in a few pages, as the inverters' design programs write them: results, "
                    "energy month by month, modules, strings, parameters."),
                  ("overview", "monthly", "fields", "electrical", "parameters"), False),
+        Template("client", _("Client presentation"),
+                 _("Results, monthly energy, costs and checks for discussing the project with the client."),
+                 ("overview", "monthly", "economics", "checks"), False),
+        Template("electrical", _("Electrical design review"),
+                 _("Site, layout, inverters, strings, checks and component data for a technical review."),
+                 ("site", "layout", "plant", "checks", "annexes"), True),
+        Template("energy", _("Energy and assumptions"),
+                 _("Weather, production, consumption, economics and calculation methods, with checks."),
+                 ("site", "production", "consumption", "economics", "checks", "methods"), True),
     ]
     return {t.id: t for t in items}
 

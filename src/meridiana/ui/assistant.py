@@ -375,7 +375,7 @@ class Assistant(QFrame):
         self.setObjectName("assistant")
         t = default_tokens()
         self.colours = {"text": t["text"], "assistant": t["assistant"], "panel": t["panel"], "line": t["line"],
-                        "muted": t["muted"]}
+                        "muted": t["muted"], "view": t["view"], "field": t["field"]}
         self.tab = "model"
         self.followed: list[QWidget] = []                   # widgets its place depends on (follow)
         self.places: dict[str, assistant.Anchor] = {}      # the places the designer dragged it to, per tab
@@ -559,11 +559,15 @@ class Assistant(QFrame):
 
     def set_colours(self, tokens: dict) -> None:
         self.colours = {"text": tokens["text"], "assistant": tokens["assistant"], "panel": tokens["panel"],
-                        "line": tokens["line"], "muted": tokens["muted"]}
+                        "line": tokens["line"], "muted": tokens["muted"],
+                        "view": tokens["view"], "field": tokens["field"]}
         self.questions_title.setStyleSheet(f"color: {self.colours['muted']};")
         self.cost.setStyleSheet(f"color: {self.colours['muted']};")
         self.context.setStyleSheet(f"color: {self.colours['muted']};")
-        self.conversation.setStyleSheet("QTextBrowser#assistant-conversation { background: transparent; border: none; }")
+        self.conversation.setStyleSheet(
+            f"QTextBrowser#assistant-conversation {{ background: {tokens['view']}; color: {tokens['text']};"
+            f" border: 1px solid {tokens['line']}; border-radius: 6px; padding: 6px; }}")
+        self._show_messages()
         for q in self.questions:
             q.set_colours(self.colours["muted"])
         self.stop_action.setIcon(self._stop_icon())
@@ -1215,6 +1219,7 @@ class Assistant(QFrame):
         self.field.clear()
         self.told = self.heard = self._speech()            # what he was still saying, said: the question after it
         self.messages.append(("you", text))
+        self.at_bottom = True
         self._show_messages()
         self.set_state(assistant.THINKING)
         self.questions_box.hide()                           # gone for this turn
@@ -1374,7 +1379,10 @@ class Assistant(QFrame):
         self._show_messages()
 
     def _show_messages(self) -> None:
+        from .conversation_view import message_html
         self.render_timer.stop()
+        bar = self.conversation.verticalScrollBar()
+        position, follow = bar.value(), self.at_bottom
         muted = self.colours["muted"]
         rows = []
         shown = list(self.messages) + ([("assistant", self.live)] if self.live else [])
@@ -1394,8 +1402,7 @@ class Assistant(QFrame):
                 if budget < len(said):
                     said, cut = said[:budget], True
                 budget -= len(said)
-                rows.append(f'<p style="margin-bottom:0"><span style="color:{muted}">{assistant.NAME}</span></p>'
-                            f'{words.html(said)}')
+                rows.append(message_html(assistant.NAME, words.html(said), outgoing=False, colours=self.colours))
                 continue
             if who == "info":                               # what Meridio says of himself (the consent)
                 rows.append(f'<div style="color:{muted}">{words.html(text)}</div>')
@@ -1408,14 +1415,13 @@ class Assistant(QFrame):
                 continue
             body = "<p>" + text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") + "</p>"
             name = _("You")
-            rows.append(f'<p style="margin-bottom:0"><span style="color:{muted}">{name}</span></p>{body}')
+            rows.append(message_html(name, body, outgoing=True, colours=self.colours))
         if not rows and self.empty:                         # an empty conversation: his greeting, attenuated
             safe = self.empty.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             rows.append(f'<p><span style="color:{muted}">{safe}</span></p>')
         self.conversation.setHtml("".join(rows))
-        bar = self.conversation.verticalScrollBar()
-        bar.setValue(bar.maximum())
-        self.at_bottom = True
+        bar.setValue(bar.maximum() if follow else position)
+        self.at_bottom = follow
 
     def _scrolled(self, value: int) -> None:
         self.at_bottom = value >= self.conversation.verticalScrollBar().maximum() - 2

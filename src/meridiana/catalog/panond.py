@@ -162,7 +162,8 @@ def inverter(path: Path) -> tuple[dict, list[str]]:
         raise ValueError(_("{file} is not an inverter PVsyst wrote, or lacks {keys}").format(
             file=Path(path).name, keys=", ".join(missing)))
     pnom = _num(d, "PNomConv")
-    mppts = _num(d, "NbMPPT", "NbInputs")
+    mppts = _num(d, "NbMPPT")
+    connectors = _num(d, "NbInputs")
     imax = _num(d, "IMaxDC")
     phases = {"mono": 1, "tri": 3}.get(str(d.get("MonoTri", "")).lower())
     rec = {
@@ -173,8 +174,9 @@ def inverter(path: Path) -> tuple[dict, list[str]]:
         "mppt_voltage_min_v": _num(d, "VMppMin"), "mppt_voltage_max_v": _num(d, "VMPPMax", "VMppMax"),
         "dc_voltage_max_v": _num(d, "VAbsMax"), "efficiency_euro_pct": _num(d, "EfficEuro"),
         "efficiency_max_pct": _num(d, "EfficMax"), "mppt_count": int(mppts) if mppts else None, "phases": phases,
-        # PVsyst gives one maximum DC current: shared evenly among the inputs, and said so
-        "dc_current_max_per_mppt_a": [imax / mppts] * int(mppts) if imax and mppts else None,
+        # A common limit does not establish any individual tracker's limit or connector mapping.
+        "dc_current_max_a": imax,
+        "dc_input_pairs": int(connectors) if connectors else None,
     }
     rec = {k: v for k, v in rec.items() if v not in (None, "")}
     said = [_("{kw} kW AC, MPPT window {lo}-{hi} V").format(kw=f"{pnom:g}", lo=f"{rec['mppt_voltage_min_v']:g}",
@@ -182,11 +184,13 @@ def inverter(path: Path) -> tuple[dict, list[str]]:
     if "efficiency_euro_pct" in rec:
         said.append(_("European efficiency {e}%").format(e=f"{rec['efficiency_euro_pct']:g}"))
     if mppts:
-        said.append(_("{n} inputs").format(n=int(mppts)))
-    if imax and mppts:
-        said.append(_("{a} A of DC current in all, taken as {b} A an input").format(a=f"{imax:g}", b=f"{imax / mppts:.1f}"))
+        said.append(_("{n} independent MPPTs").format(n=int(mppts)))
+    if connectors:
+        said.append(_("{n} physical DC input pairs; their MPPT mapping is not given.").format(n=int(connectors)))
+    if imax:
+        said.append(_("{a} A total DC current; the per-MPPT limits are not given.").format(a=f"{imax:g}"))
     absent = [k for k in ("VMPPMax", "VAbsMax", "EfficEuro", "NbMPPT", "IMaxDC", "MonoTri")
-              if k not in d and not (k == "VMPPMax" and "VMppMax" in d) and not (k == "NbMPPT" and "NbInputs" in d)]
+              if k not in d and not (k == "VMPPMax" and "VMppMax" in d)]
     if absent:
         said.append(_("not in the file: {keys}").format(keys=", ".join(absent)))
     return rec, said

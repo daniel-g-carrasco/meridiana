@@ -1,0 +1,24 @@
+{
+  "format": 2,
+  "upstream_version": "3da1098cc8e659a3a9f6b20a7ae90d28fdc39e15",
+  "hash_normalization": "CRLF normalized to LF",
+  "files": [
+    {
+      "source": "src/qtkit/tables.py",
+      "target": "src/meridiana/ui/shared_tables.py",
+      "upstream_sha256": "6ceebb16df42884cc5551fbbf6ac8f71a2ec6087d771fae404dbe8df61aab554",
+      "target_sha256": "5007ec1f80d133ecbecc5adb5afd24c7d628e3a5808c9762c9e21764cd1f5c84",
+      "status": "adapted",
+      "baseline_version": "3f2d069c18fdb61f039b983756ad824d21149c7b"
+    }
+  ],
+  "replacements": [
+    [
+      "from . import fades, scrollbars, theme_colors",
+      "from . import fades, scrollbars\nfrom .. import theme_colors"
+    ]
+  ],
+  "preserved_extension": "install_data_tables filters real data tables and keeps navigation delegates untouched.",
+  "consumer_base": "af17add",
+  "revision_note": "2026-10-29: follow-up shared UX, File navigation and technical document layout; application-specific adaptations preserved."
+}

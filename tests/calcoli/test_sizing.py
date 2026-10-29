@@ -53,6 +53,20 @@ def groups(counts: list[int]) -> list:
 
 
 class Combinations(unittest.TestCase):
+    def test_tracker_count_can_require_more_inverters_than_the_power_ratio(self):
+        rec = inverter("30K", 30, mppt_count=1, strings_per_mppt=[1])
+        result = sizing.choose(project(), groups([20, 20]), [rec], 1.0)
+        self.assertTrue(result.ok, result.reason)
+        self.assertEqual(result.entries[0]["count"], 2)
+        self.assertFalse(result.plant.left)
+
+    def test_connector_capacity_can_require_more_inverters_than_the_power_ratio(self):
+        rec = inverter("100K", 100, mppt_count=1, strings_per_mppt=[1])
+        result = sizing.choose(project(), groups([96]), [rec], 1.0)
+        self.assertTrue(result.ok, result.reason)
+        self.assertEqual(result.entries[0]["count"], 4)
+        self.assertEqual([len(s.modules) for s in result.plant.strings], [24] * 4)
+
     def test_powers_of_one_brand_are_combined_when_no_model_alone_strings_every_group(self):
         gs = groups([55, 55])
         gs[1].module = module(pmax=180, vmp=6.0, imp=30.0, voc=10.0, isc=32.0)
@@ -116,6 +130,28 @@ class Catalogue(unittest.TestCase):
 
 
 class Impossible(unittest.TestCase):
+    def test_shared_current_limit_cannot_be_certified_by_individual_tracker_checks(self):
+        rec = inverter("30K", 30, mppt_count=2, dc_current_max_per_mppt_a=[20, 20],
+                       dc_isc_max_per_mppt_a=[25, 25], dc_current_max_a=25)
+        result = sizing.choose(project(), groups([20, 20]), [rec], 1.0)
+        self.assertFalse(result.ok)  # the greedy assignment still overloads one unit; never certify 26.8 A as 25 A
+
+    def test_exhausting_the_search_budget_is_not_reported_as_electrical_impossibility(self):
+        from unittest.mock import patch
+        with patch.object(sizing, "MAX_CANDIDATES", 1):
+            result = sizing.choose(project(), groups([20, 20]),
+                                   [inverter("30K", 30, mppt_count=1), inverter("40K", 40, mppt_count=1)], 1)
+        self.assertFalse(result.ok)
+        self.assertIn("incomplete", result.reason)
+        self.assertFalse(result.search_complete)
+
+    def test_search_can_be_cancelled_without_applying_a_partial_choice(self):
+        result = sizing.choose(project(), groups([20]), [inverter("30K", 30)], 1, cancelled=lambda: True)
+        self.assertFalse(result.ok)
+        self.assertFalse(result.search_complete)
+        self.assertIn("cancelled", result.reason)
+        self.assertEqual(result.entries, [])
+
     def test_a_prime_count_says_why_and_proposes_the_smallest_correction(self):
         rec = inverter("3K", 3, mppt_voltage_min_v=180, mppt_voltage_max_v=350, mppt_count=2)
         p = project([{"record": rec, "count": 1, "name": ""}])

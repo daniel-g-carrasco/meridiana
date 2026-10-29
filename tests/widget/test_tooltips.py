@@ -57,7 +57,8 @@ class Tooltips(unittest.TestCase):
             pump(0.2)
             label = next(x for x in QApplication.topLevelWidgets() if isinstance(x, QLabel)
                          and x.windowType() == Qt.WindowType.ToolTip and x.isVisible())
-            self.assertIn("<p ", label.text())                      # laid out again, as rich text
+            self.assertEqual(label.text(), text)                    # Qt's identity remains the original text
+            self.assertIn("<p ", label.property(popups._LAID)[2])    # the separate document owns rich formatting
             sizes[text[:7]] = (label.width(), label.height(), label.wordWrap())
             QToolTip.hideText()
             pump(0.4)

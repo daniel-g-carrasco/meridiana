@@ -742,6 +742,21 @@ class Properties(QScrollArea):
             self._build_subfield(project, sf)
         self._refresh()
         self.azimuth_gate.apply(self.azimuth_gate.checkbox.isChecked())   # bound checkboxes change with signals blocked
+        self.support_gate.apply(self.support_gate.checkbox.isChecked())
+
+    def _support_reference(self):
+        from .. import move
+        return move.centre(self._project(), "subfield", self.oid) or (0.0, 0.0)
+
+    def _support_now(self):
+        sf = self._object()
+        return sf.support or model.SupportPlane(enabled=False, **vars(self._project().surface_of(sf)))
+
+    def _support_change(self, key, value):
+        support = self._support_now()
+        x, y = self._support_reference()
+        values = {"x0": x, "y0": y, "z0": support.surface().z(x, y), key: value}
+        self._emit("support", replace(support, **values))
 
     def _params(self) -> layout.Params:
         return self._project().fill_params(self._object())
@@ -802,6 +817,29 @@ class Properties(QScrollArea):
         holder.setLayout(row)
         form.addRow(_("Azimuth (from South, + West)"), holder)
         box.addLayout(form)
+
+        support = Group(_("Auxiliary support plane"))
+        support_form = make_form(support)
+        enabled = self._bind(QCheckBox(_("Use an independent placement plane")),
+                             lambda: self._support_now().enabled)
+        enabled.setObjectName("support-enabled")
+        enabled.toggled.connect(lambda value: self._support_change("enabled", value))
+        support_form.addRow(WrappedCheck(enabled))
+        fields = []
+        for key, label, low, high, suffix in (
+                ("z0", _("Elevation at area centre"), -model.HEIGHT_LIMIT, model.HEIGHT_LIMIT, " m"),
+                ("tilt", _("Plane tilt"), 0, 89, " °"),
+                ("azimuth", _("Plane azimuth (from South, + West)"), -180, 180, " °")):
+            value = (lambda: self._support_now().surface().z(*self._support_reference())) if key == "z0" else \
+                (lambda k=key: getattr(self._support_now(), k))
+            field = self._bind(spin(low, high, 0, suffix, 2, 0.1), value)
+            field.setObjectName("support-" + key)
+            field.valueChanged.connect(lambda v, k=key: self._support_change(k, v))
+            support_form.addRow(label, field)
+            fields.append(field)
+        support_form.addRow(self._note(_("The building and pitch remain as references; the received model is unchanged.")))
+        self.support_gate = SectionGate(enabled, _("Enable the independent placement plane to edit it."), fields)
+        box.addWidget(support)
 
         gaps = Group(_("Gaps and margins"))
         help_button(gaps, "subfield.gaps")
