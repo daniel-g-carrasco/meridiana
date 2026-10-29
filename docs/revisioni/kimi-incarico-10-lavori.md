@@ -127,7 +127,7 @@ importanti, tutti corretti con una prova rossa prima e verde dopo:
 
 Non restano rilievi minori differiti. Il revisore non ha giudicato qualità delle risposte di un modello vero o
 prestazioni percepite sull'hardware di Daniel, fuori dalla verifica disponibile. La suite finale del passaggio di
-correzione è in `tests-review-fixes.log` nel registro di lavoro.
+correzione comprende 1.583 prove, tutte superate, 11 saltate.
 
 ## Da provare sullo schermo di Daniel
 
