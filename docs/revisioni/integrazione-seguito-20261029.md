@@ -73,5 +73,27 @@ Restano separate installazione/disinstallazione dei pacchetti, firma, pubblicazi
 
 ## Consegna
 
-I dati finali di commit applicativo, integrazione Windows e pacchetti verificati vengono aggiunti dopo
-il completamento delle prove del binario congelato. Le anteprime precedenti restano conservate.
+Le anteprime precedenti restano conservate. La consegna del seguito è la preview locale R04;
+non costituisce una pubblicazione di release.
+
+Sorgenti applicativi nel commit `3fc6c841d8307bec0ceeb71d9d47f09852be3bd1`, integrato con fast-forward
+nelle cartelle `C:\Users\Grasso\dev\meridiana` e `C:\Users\Grasso\dev\meridiana-lavoro`.
+I 133 file modificati del commit applicativo sono integrati nelle tre cartelle; la documentazione di
+consegna viene completata con un commit successivo, senza cambiare i sorgenti congelati.
+Catalogo italiano compilato in entrambe. Self-test dalla cartella di avvio Windows: 0 errori in 22,65 s,
+IFC riaperto con 128 moduli, energia 23.683 kWh, PDF 1.617.621 byte.
+
+Il primo bundle Windows R09 e il tentativo Linux R04-LF precedono la correzione della posa obsoleta;
+rimangono diagnostici e non sono gli artefatti finali. Linux normalizza CRLF/LF dei soli launcher e metadati
+nella copia di build: `desktop-file-validate` aveva correttamente rifiutato il file desktop con CRLF.
+Il freeze definitivo è registrato in `build/source-manifest-20261029-R10.json`.
+
+Binario Windows definitivo: self-test con zero errori in 19,13 s, IFC con 128 moduli e relazione PDF
+prodotta. Linux Flatpak: zero errori in 16,70 s; verificati anche `.mer`, schema 19, superfici ausiliarie,
+GUID IFC, traduzioni e dipendenze. Import del bundle in un repository temporaneo e controllo OSTree:
+21.749 oggetti integri. Il controllo dei 333 file del freeze Windows non rileva modifiche.
+
+I tre pacchetti sono in `dist/packages-20261029-R04`, accompagnati da `README.txt`, `SHA256SUMS.txt`
+e log. I rapporti `pacchetto-windows-20261029-R04.md` e `pacchetto-flatpak-20261029-R04.md`
+descrivono i singoli controlli. Le foto definitive della posa e della pensilina sono in
+`foto/seguito-20261029/modello-R02`.
