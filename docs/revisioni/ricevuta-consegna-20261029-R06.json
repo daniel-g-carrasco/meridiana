@@ -1,0 +1,78 @@
+{
+  "revision": "R06",
+  "application_commit": "36fc0a0ad50733587ea16440a6df23ce6e4a4ec3",
+  "source_manifest": "source-manifest-20261029-R17.json",
+  "source_manifest_sha256": "c19960fa2b64464a0e9498eed9ff48ec0e420d58a9e4494641a7e7957f8c79a3",
+  "source_files_verified": 353,
+  "template_qt_commit": "acd4ab3108d3c69850a7b87192885c1d69e0efc1",
+  "artifacts": [
+    {
+      "name": "meridiana-portable-20261029-R06-windows-x64.zip",
+      "sha256": "793cbf0035d1ee882ac2eb3018a60108f088556f377f638d386990ee4f22f600",
+      "bytes": 223051966
+    },
+    {
+      "name": "meridiana-setup-v0.1.0-preview20261029-R06-windows-x64.exe",
+      "sha256": "4e9c1e459625219cd888ea049a44a11ae52bb86ba525a5868fceaa0b37b7984f",
+      "bytes": 155315359
+    },
+    {
+      "name": "meridiana-linux-x86_64-20261029-R06.flatpak",
+      "sha256": "97363a4ac79f2fc3723c3d3a7dc75fff825bb113c33efbe0ca4c37295cc9480d",
+      "bytes": 185485168
+    }
+  ],
+  "windows_checkouts": [
+    {
+      "checkout": "C:\\Users\\Grasso\\dev\\meridiana",
+      "application_commit": "36fc0a0ad50733587ea16440a6df23ce6e4a4ec3",
+      "files_verified": 353,
+      "normalization": "CRLF/LF"
+    },
+    {
+      "checkout": "C:\\Users\\Grasso\\dev\\meridiana-lavoro",
+      "application_commit": "36fc0a0ad50733587ea16440a6df23ce6e4a4ec3",
+      "files_verified": 353,
+      "normalization": "CRLF/LF"
+    }
+  ],
+  "windows_native": "PASS portable and isolated installed build; D3D11; zero self-test failures",
+  "linux_native": {
+    "app_id": "io.github.daniel_g_carrasco.meridiana",
+    "host": "fw13 (lucciola)",
+    "version": "0.1.0",
+    "architecture": "x86_64",
+    "branch": "stable",
+    "installation": "user",
+    "runtime": "org.kde.Platform/x86_64/6.11",
+    "application_commit": "36fc0a0ad50733587ea16440a6df23ce6e4a4ec3",
+    "source_baseline": "bf0767b",
+    "source_freeze": "source-manifest-20261029-R17.json",
+    "previous_installed_commit": "ccd091d302a7c2c60d8adf5d7647e4c1f37077536467b0a849d1c4eee46dadb4",
+    "installed_ostree_commit": "350ae0a8fc1f9c981ecf6ceb68e43841445b4ae7ed4f33de46989b88708b2dd0",
+    "bundle": "meridiana-linux-x86_64-20261029-R06.flatpak",
+    "bundle_sha256": "97363a4ac79f2fc3723c3d3a7dc75fff825bb113c33efbe0ca4c37295cc9480d",
+    "remote_sha256_verified": true,
+    "native_standard_self_test": "PASS: 0 failures; Wayland OpenGL; first frame; 13.80 s",
+    "native_explicit_3d_probe": "PASS: 0 failures; rendered image and 30-degree orbit; 11.18 s",
+    "desktop_file_forwarding": true,
+    "mime_type": "application/x-meridiana-project+zip",
+    "runtime_or_bundle_modified": false,
+    "compositor_or_user_preferences_modified": false,
+    "logs_directory": "build/laptop-install-20261029-R06",
+    "images_visually_inspected": true
+  },
+  "validation": {
+    "nucleo": "925 tests, 1 skipped, PASS",
+    "formati": "87 PASS",
+    "calcoli": "272 PASS",
+    "widget": "480 tests, 1 skipped, PASS; later dock regression and related 30 widget tests PASS",
+    "finestra": "183 executed; dock defect corrected and retested, toolbar expectation updated and Plant journey PASS, timing test PASS after compression with original threshold and image checks",
+    "limitations": [
+      "R238 structural audit complete; full primary-datasheet verification remains open",
+      "Storage uses AC-equivalent balance; no DC clipping recovery",
+      "Theme timing is load-sensitive; no universal sub-second guarantee"
+    ]
+  },
+  "publication": "local previews only; no public release; Windows packages unsigned"
+}

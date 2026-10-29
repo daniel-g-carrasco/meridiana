@@ -48,7 +48,7 @@ navigazione e spotlight sui veri elementi, nessuna modifica al progetto.
 - [x] D R239-R240 integratore: feedback.py, ui/feedback.py, tour.py, ui/tour.py; integrazione centrale
   window.py/config.py, assistant/tools.py (nuove azioni), navigation_targets e scorciatoie.
   Prove: privacy bozza, nessun invio automatico, richiamo chat, invito una volta/salta/riprendi, navigazione senza edit.
-- [ ] E revisione indipendente dei diff A-D; traduzioni, controlli finali, port template, integrazione Windows,
+- [x] E revisione indipendente dei diff A-D; traduzioni, controlli finali, port template, integrazione Windows,
   pacchetti nuovi e consegna Linux verificata dopo congelamento (autorizzazione permanente di Daniel).
 
 ## Rischi da verificare
@@ -70,3 +70,7 @@ ma resta aperta la verifica puntuale generale sulle schede originali. Non viene 
 La suite finale ha trovato e corretto due difetti di integrazione (tool non esposti e campi accumulo non tipizzati)
 e una regressione dimensionale della chat con allegati. Le aspettative di fasi e configurazione sono aggiornate.
 Nuovo freeze di consegna: build/source-manifest-20261029-R17.json, 353 file.
+
+Consegna R06 conclusa: commit applicativo 36fc0a0, cartelle Windows integrate, pacchetti verificati e Flatpak
+installato su fw13 con prova nativa. R238 rimane aperta nella lista: audit strutturale completato, verifica
+puntuale generale delle fonti non completata. Le richieste precedenti e quelle aggiunte restano nel registro.

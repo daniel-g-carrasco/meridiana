@@ -414,7 +414,7 @@ Il self-test generico presume la visibilità del 3D anche sotto soglia responsiv
 eseguita una prova aggiuntiva attivando esplicitamente la vista, senza modificare il pacchetto.
 
 
-## Servizi, cataloghi e Meridio, 29 ottobre 2026, sorgenti R06
+## Servizi, cataloghi e Meridio, 29 ottobre 2026, consegna R06
 
 [V] R235 aggiunge un controller separato per aggiornamenti, avviso persistente all'avvio e installazione
 facoltativa per Windows installato. Il controllo e il download sono asincroni; firma e progetto pulito vengono
@@ -448,5 +448,7 @@ senza modificare il progetto; non è un manuale esaustivo di ogni campo.
 Rapporti: aggiornamenti-20261029-R01, allegati-catalogo-20261029-R01, accumulo-audit-20261029-R01 e
 accumulo-audit-review-20261029-R02 in docs/revisioni. Configurazione migrata una sola volta da 21 a 22.
 Verifiche mirate, review indipendenti e suite integrata completate con correzioni riverificate. Pacchetti R06
-portabile, Setup Windows e Flatpak verificati; integrazione e installazione laptop nella ricevuta finale.
+portabile, Setup Windows e Flatpak verificati; integrati nei checkout Windows e Flatpak installato sul laptop fw13, con prove native e ricevuta finale.
 Il test tempo cambio tema è sensibile al carico, come sulla base: passa dopo la compressione, soglia invariata.
+
+[V] Ricevuta finale R06: docs/revisioni/ricevuta-consegna-20261029-R06.json; commit applicativo 36fc0a0.

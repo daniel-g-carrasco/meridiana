@@ -72,4 +72,11 @@ OSTree verificati. Anteprime locali; nessuna pubblicazione o tag impliciti.
 Rapporti: pacchetti-windows-20261029-R06.md, pacchetto-flatpak-20261029-R06.md,
 aggiornamenti-20261029-R01.md, allegati-catalogo-20261029-R01.md,
 accumulo-audit-20261029-R01.md, accumulo-audit-review-20261029-R02.md e accumulo-settings-20261029-R03.md.
-La ricevuta di integrazione e installazione finale viene aggiunta dopo il commit applicativo.
+Consegna conclusa: commit applicativo 36fc0a0ad50733587ea16440a6df23ce6e4a4ec3, integrato con fast-forward
+in meridiana e meridiana-lavoro; tutti i 353 file confrontati, differenze CRLF/LF normalizzate.
+Le traduzioni sono state compilate anche nelle cartelle di avvio. I pacchetti sono in dist/packages-20261029-R06.
+
+Flatpak R06 installato su fw13 (lucciola), checksum remoto e commit OSTree coincidenti. Autotest Wayland/OpenGL
+senza errori, primo frame 3D e rotazione verificati; processi utente preservati. Dettagli in
+installazione-laptop-20261029-R06.md e ricevuta-consegna-20261029-R06.json.
+R238 rimane esplicitamente aperta per la verifica puntuale generale delle schede originali.
