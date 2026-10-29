@@ -295,6 +295,8 @@ class CatalogDialog(QDialog):
         self.table.horizontalHeader().setResizeContentsPrecision(60)       # the widths from the first rows
         self.table.verticalHeader().setDefaultSectionSize(self.table.fontMetrics().height() + 8)
         self.table.verticalHeader().hide()
+        from .shared_tables import install
+        install(self.table)
         self.table.selectionModel().selectionChanged.connect(lambda *_a: self._selected())
         self.table.doubleClicked.connect(lambda _i: None if self.browse else self.accept())
         self.detail = QTextBrowser()

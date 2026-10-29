@@ -21,6 +21,7 @@ from PySide6.QtGui import QColor, QIcon, QPainter, QPalette
 from PySide6.QtWidgets import (QAbstractScrollArea, QGraphicsView, QPlainTextEdit, QProxyStyle, QStyle,
                                QStyleFactory, QTextEdit)
 
+from .checkboxes import CheckboxStyle
 from .design import Radius, Size
 
 THUMB = Size.THUMB
@@ -48,7 +49,7 @@ def keep_room(area: QAbstractScrollArea) -> None:
         area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
 
 
-class ScrollStyle(QProxyStyle):
+class ScrollStyle(CheckboxStyle, QProxyStyle):
     """Fusion with Meridiana's scroll bars. `tokens` are the theme's colours (set by ui/theme.Theme); without them
     the palette's (Mid, PlaceholderText, Text)."""
 

@@ -74,6 +74,8 @@ class VariantsDialog(QDialog):
             self.table.horizontalHeaderItem(self.ids.index(current)).setIcon(dot())
         self.table.setVerticalHeaderLabels([label for _k, label, _d, _b in compare.rows()])
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        from .shared_tables import install
+        install(self.table)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         box.addWidget(self.table, 1)
         note = QLabel(marked(html.escape(_(

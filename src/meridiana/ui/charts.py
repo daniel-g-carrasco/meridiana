@@ -193,6 +193,8 @@ class Chart(QWidget):
         self.canvas.setMinimumHeight(Size.CHART_MIN_HEIGHT)
         self.table = QTableWidget()
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        from .shared_tables import install
+        install(self.table)
         self.note = QLabel()            # the message, when there is nothing to draw
         self.note.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.note.setWordWrap(True)

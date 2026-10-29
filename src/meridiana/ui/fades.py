@@ -10,9 +10,8 @@ from __future__ import annotations
 
 import weakref
 
-from PySide6.QtCore import QEvent, QObject, Qt
-from PySide6.QtCore import QRectF
-from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPainterPath
+from PySide6.QtCore import QEvent, QObject, QRectF, Qt
+from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPainterPath, QPalette
 from PySide6.QtWidgets import QAbstractItemView, QAbstractScrollArea, QWidget
 
 from .cards import default_tokens
@@ -28,17 +27,32 @@ _LIVE: "weakref.WeakSet[Fades]" = weakref.WeakSet()
 
 
 class Edge(QWidget):
-    def __init__(self, area: QAbstractScrollArea, top: bool):
+    def __init__(self, area: QAbstractScrollArea, top: bool, table: bool = False):
         super().__init__(area)
+        self.area = area
         self.top = top
+        self.table = table
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.hide()
 
     def paintEvent(self, event) -> None:
-        """The band inside the card's line and its rounded corners: it went over the border of the pages' cards
-        (R161: «come se la sfumatura del contenuto finisse sopra i bordi»)."""
+        """Cover item view boundaries completely; page cards retain their rounded inner outline."""
         p = QPainter(self)
+        if self.table:
+            # A viewport is rectangular, even when the surrounding card has round corners.
+            # Paint through the boundary pixel centres: inset clipping left a full-colour seam.
+            base = self.area.viewport().palette().color(QPalette.ColorRole.Base)
+            if self.height() <= 1:
+                p.fillRect(self.rect(), base)
+                return
+            g = QLinearGradient(0, 0.5, 0, self.height() - 0.5)
+            for at, alpha in STOPS:
+                colour = QColor(base)
+                colour.setAlphaF(alpha)
+                g.setColorAt(at if self.top else 1.0 - at, colour)
+            p.fillRect(self.rect(), g)
+            return
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         g = QLinearGradient(0, 0, 0, self.height())
         for at, alpha in STOPS:
@@ -56,10 +70,11 @@ class Edge(QWidget):
 
 
 class Fades(QObject):
-    def __init__(self, area: QAbstractScrollArea):
+    def __init__(self, area: QAbstractScrollArea, table: bool = False):
         super().__init__(area)
         self.area = area
-        self.edges = (Edge(area, True), Edge(area, False))
+        self.edges = (Edge(area, True, table), Edge(area, False, table))
+        self.frame = None
         bar = area.verticalScrollBar()
         bar.valueChanged.connect(self.follow)
         bar.rangeChanged.connect(self.follow)
@@ -84,15 +99,18 @@ class Fades(QObject):
         bottom.setVisible(bar.value() < bar.maximum())
         top.raise_()
         bottom.raise_()
+        if self.frame is not None:
+            self.frame.raise_()
 
 
 AIR = Space.S                    # between what scrolls in a page and the card's top and bottom lines (R177)
 
 
-def attach(area: QAbstractScrollArea, air: bool = False) -> Fades | None:
+def attach(area: QAbstractScrollArea, air: bool = False, *, table: bool = False) -> Fades | None:
     """The soft edges of `area`, made once. With `air`, what scrolls stops AIR pixels from the card's top and bottom
-    lines and fades out before them (R177, Daniel 26/10/2026: «arrivano fino al limite della scheda sfondandolo»): for
-    the pages and panels, not the lists, whose top margin is their header's."""
+    lines and fades out before them (Meridiana's R177, Daniel 26/10/2026: «arrivano fino al limite della scheda
+    sfondandolo»): for the pages and panels, not the lists, whose top margin is their header's.
+    `table` opts data tables into their viewport's Base; navigation keeps the panel colour."""
     if area is None:
         return None
     if air and not isinstance(area, QAbstractItemView):
@@ -100,7 +118,13 @@ def attach(area: QAbstractScrollArea, air: bool = False) -> Fades | None:
         if (m.top(), m.bottom()) != (AIR, AIR):
             area.setViewportMargins(m.left(), AIR, m.right(), AIR)
     found = area.findChild(Fades)
-    return found if found is not None else Fades(area)
+    if found is not None:
+        if table:
+            for edge in found.edges:
+                edge.table = True
+                edge.update()
+        return found
+    return Fades(area, table)
 
 
 def set_colour(colour: str) -> None:

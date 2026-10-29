@@ -335,3 +335,13 @@ Compito 18f del 25/10/2026, dal rapporto `studio/18-prove/H-pacchetti.md`. Le mi
 | 28/10/2026 | Revisione indipendente di R150: allegati preservati al risalvataggio, orizzonte del vecchio sito scartato, serie e commessa nel formato 18, consenso legato a id, percorso e commessa, riservato subito offline, avvio con registro danneggiato, import rigoroso ed errori dei manifesti isolati e ritentati | [V] nuove prove rosse poi verdi per ogni caso, compresa R02 con riapertura di R01, campi malformati e volumi che falliscono scrittura o cancellazione |
 
 | 29/10/2026 | Integrazione Windows R150 e R151 con revisione indipendente: registro, progetti autonomi, indice, ricerca e attività di Meridio; compatibilità dei due formati 17 nel 18 | Correzioni e prove documentate in `docs/revisioni/integrazione-9-10-windows-20261029.md` |
+
+## 29/10/2026, popup delle selectbox
+
+[V] Riportata da Quotario la correzione dei margini del popup dopo il focus: quattro scelte entrano interamente, mentre gli elenchi lunghi conservano lo scorrimento. Sette prove popup/tooltip passate su Windows in entrambi i checkout e su Linux/WSL. Dettagli in docs/revisioni/correzione-selectbox-20261029.md.
+
+La suite completa Windows ha raccolto 1.593 prove ma si è interrotta con access violation durante una prova dei report. Non è dichiarata superata; il fix resta nel working tree, senza commit o push. Tabelle, navigazione e checkbox di questo nuovo giro Quotario non sono state portate in Meridiana.
+
+## 29/10/2026, allineamento completo alle correzioni Qt di Quotario
+
+[V] Il nuovo porting supera lo stato della nota selectbox precedente: tabelle, navigazione e checkbox condivise sono ora trasferite dal template `3f2d069`, conservando le personalizzazioni di Meridiana. Applicabilità, esclusioni, provenienza e verifiche sono in `docs/revisioni/allineamento-template-20261029.md`. Manifest revisionati con hash upstream/consumer distinti; fotografie chiare/scure alle scale 100%, 200% e 250%. Nessun push o rilascio.

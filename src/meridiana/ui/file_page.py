@@ -25,6 +25,25 @@ from .design import Icon, Layout, Motion, Radius, Size, Space, Text, text_font
 NAV_WIDTH = 250
 
 
+class TileIcon(QLabel):
+    """A File tile's fixed icon column; rasterise again when its palette changes."""
+
+    def __init__(self, name: str):
+        super().__init__()
+        self.name = name
+        self.setFixedSize(Icon.TILE, Icon.TILE)
+        self._refresh()
+
+    def _refresh(self) -> None:
+        self.setPixmap(icons.icon(self.name).pixmap(QSize(Icon.TILE, Icon.TILE), self.devicePixelRatioF()))
+
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        if event.type() in (QEvent.Type.PaletteChange, QEvent.Type.ApplicationPaletteChange,
+                            QEvent.Type.StyleChange):
+            self._refresh()
+
+
 class Tile(QFrame):
     """A thing to do: its icon, its name, what it does, the formats it takes, its button."""
 
@@ -35,11 +54,9 @@ class Tile(QFrame):
         grid = QGridLayout(self)
         grid.setContentsMargins(Space.XL, Space.L, Space.XL, Space.L)
         grid.setHorizontalSpacing(Space.L)
-        grid.setVerticalSpacing(Space.XXS)
-        mark = QLabel()
-        mark.setPixmap(icons.icon(icon).pixmap(QSize(Icon.TILE, Icon.TILE), self.devicePixelRatioF()))
-        mark.setAlignment(Qt.AlignmentFlag.AlignTop)
-        grid.addWidget(mark, 0, 0, 2, 1)
+        grid.setVerticalSpacing(Space.S)
+        mark = TileIcon(icon)
+        grid.addWidget(mark, 0, 0, 2, 1, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         title = QLabel(name)
         title.setObjectName("ftile-name")
         title.setFont(text_font(Text.TITLE))
@@ -60,7 +77,7 @@ class Tile(QFrame):
         self.button = QPushButton(button)
         self.button.clicked.connect(slot)
         foot.addWidget(self.button)
-        grid.setRowStretch(2, 1)                        # what is left between the text and the foot
+        grid.setRowMinimumHeight(2, Space.XS)
         grid.addLayout(foot, 3, 1)
         grid.setColumnStretch(1, 1)
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)

@@ -43,10 +43,10 @@ ICON_TALL, ICON_LOW = Icon.TILE, Icon.BAR
 # the word under the icon is Text.SECONDARY, the title of the group Text.GROUP (R159): read when used, the size of
 # the text can change with the window open (R133)
 GROUP_GAP = Space.XS                                    # between the commands and their group's name (R159)
-TAB_HEIGHT = Size.TAB       # a tab of the row of the phases
+TAB_HEIGHT = Size.CONTROL + Space.XS   # a compact control with equal breathing room above and below
 HOVER_INSET = Space.XXS     # the ground of a phase under the pointer, in from its tab's sides (R160)
-BADGE = 20                  # the disc of a phase's number
-TAB_PAD = (Space.L - 2, Space.XL)   # inside a tab, left of the disc and right of the name
+BADGE = Button.SMALL[0]      # the disc of a phase's number
+TAB_PAD = (Space.L, Space.L)  # equal space before the disc and after the name
 CARD_PAD = (Space.L - 2, Space.S, Space.L - 2, Space.S - 1)   # inside the card of the bar
 
 
@@ -102,6 +102,16 @@ class PhaseTabBar(QTabBar):
     def minimumTabSizeHint(self, index: int) -> QSize:
         return QSize(TAB_PAD[0] + BADGE + 8 + 24 + TAB_PAD[1], TAB_HEIGHT)
 
+    def setTabVisible(self, index: int, visible: bool) -> None:
+        super().setTabVisible(index, visible)
+        # QTabBar updates its tabs but leaves the parent layout's size hint cached.
+        # Revealing a phase must reclaim available width before any names are elided.
+        self.updateGeometry()
+
+    def hover_rect(self, index: int) -> QRectF:
+        """The hover surface has the same inset on all four sides of its hit rectangle."""
+        return QRectF(self.tabRect(index)).adjusted(HOVER_INSET, HOVER_INSET, -HOVER_INSET, -HOVER_INSET)
+
     def mouseMoveEvent(self, event) -> None:
         super().mouseMoveEvent(event)
         i = self.tabAt(event.position().toPoint())
@@ -119,7 +129,8 @@ class PhaseTabBar(QTabBar):
         row was drawn from scratch at every frame of the slide, 17 a change of phase (R97, R120, 25/10/2026)."""
         ratio = self.devicePixelRatioF()
         key = (self.size().toTuple(), ratio, self.currentIndex(), self.hovered, self.file_open,
-               tuple(self.colours.items()), tuple(self.tabText(i) for i in range(self.count())), self.font().key())
+               tuple(self.colours.items()),
+               tuple((self.tabText(i), self.isTabVisible(i)) for i in range(self.count())), self.font().key())
         if self.picture is None or key != self.drawn_for:
             picture = QPixmap(round(self.width() * ratio), round(self.height() * ratio))
             picture.setDevicePixelRatio(ratio)
@@ -134,33 +145,37 @@ class PhaseTabBar(QTabBar):
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         c = self.colours
         for i in range(self.count()):
+            if not self.isTabVisible(i):
+                continue
             r = self.tabRect(i)
             on = i == self.currentIndex() and not self.file_open
             number, name = self.parts(self.tabText(i))
             if i == self.hovered and not on:
                 # under the pointer: the controls' layer on a control's shape, as «File» beside it (R160: the
                 # phases changed only their name's colour)
-                ground = QRectF(r.left() + HOVER_INSET, r.center().y() + 1 - Size.CONTROL / 2,
-                                r.width() - 2 * HOVER_INSET, Size.CONTROL)
+                ground = self.hover_rect(i)
                 p.setPen(Qt.PenStyle.NoPen)
                 p.setBrush(QColor(c["hover"]))
                 p.drawRoundedRect(ground, Radius.CONTROL, Radius.CONTROL)
             x = r.left() + TAB_PAD[0]
             if number:
-                disc = QRectF(x, r.center().y() - BADGE / 2 + 1, BADGE, BADGE)
+                disc = QRectF(x, QRectF(r).center().y() - BADGE / 2, BADGE, BADGE)
                 p.setPen(Qt.PenStyle.NoPen)
                 p.setBrush(QColor(c["accent"] if on else c["disc"]))
                 p.drawEllipse(disc)
                 p.setFont(self.number_font())
                 p.setPen(QColor(c["accent_fg"] if on else c["muted"]))
-                p.drawText(disc, Qt.AlignmentFlag.AlignCenter, number)
+                # Centre the visible ink, not the font's ascent/descent box or its tracking.
+                ink = QFontMetricsF(p.font()).tightBoundingRect(number)
+                p.drawText(QPointF(disc.center().x() - ink.center().x(),
+                                  disc.center().y() - ink.center().y()), number)
                 x += BADGE + 8
             font = self.name_font(on)
             p.setFont(font)
             p.setPen(QColor(c["text"] if on or i == self.hovered else c["text2"]))
             room = r.right() - TAB_PAD[1] + 1 - x
             text = QFontMetricsF(font).elidedText(name, Qt.TextElideMode.ElideRight, max(0.0, room + 2))
-            p.drawText(QRectF(x, r.top(), max(0, room), r.height() + 2),
+            p.drawText(QRectF(x, r.top(), max(0, room), r.height()),
                        Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, text)
 
 
@@ -515,6 +530,7 @@ class Phases(QWidget):
     are its `header`, which the window sets above the panels."""
 
     currentChanged = Signal(int)
+    phaseVisibilityChanged = Signal(str, bool)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -617,7 +633,18 @@ class Phases(QWidget):
         return self.tab_bar.currentIndex()
 
     def setCurrentIndex(self, index: int) -> None:
-        self.tab_bar.setCurrentIndex(index)
+        if 0 <= index < self.count() and self.tab_bar.isTabVisible(index):
+            self.tab_bar.setCurrentIndex(index)
+
+    def set_phase_visible(self, pid: str, visible: bool) -> None:
+        """Keep a phase in the model while removing its navigation entry."""
+        index = self.index_of_phase(pid)
+        if index < 0 or self.tab_bar.isTabVisible(index) == visible:
+            return
+        self.tab_bar.setTabVisible(index, visible)
+        self.tab_bar.update()
+        self.header.update()
+        self.phaseVisibilityChanged.emit(pid, visible)
 
     def count(self) -> int:
         return self.tab_bar.count()

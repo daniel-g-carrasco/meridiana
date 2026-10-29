@@ -12,6 +12,7 @@ from PySide6.QtCore import QEvent, QObject, QRect, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QGroupBox, QMenu, QProxyStyle, QStyle, QStyleFactory, QWidget
 
+from .checkboxes import CheckboxStyle
 from .design import Line, Radius, Space
 
 GROUP_RADIUS = Radius.CONTROL   # a group is a control's depth (ui/design.py)
@@ -19,7 +20,7 @@ HEAD_PAD = Space.M              # the header band over the title's line of text
 TITLE_X = Line.TEXT_INSET       # the title from the group's left edge, as a field's text
 
 
-class MeridianaStyle(QProxyStyle):
+class MeridianaStyle(CheckboxStyle, QProxyStyle):
     """Fusion, with the groups of C3 and without the menus' underlines. `tokens` are the theme's colours (set by
     ui/theme.Theme at each change)."""
 

@@ -42,6 +42,8 @@ class ShortcutsEditor(QWidget):
         self.tree.setHeaderLabels([_("Command"), _("Keys"), _("Default")])
         self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.tree.setRootIsDecorated(False)
+        from .shared_tables import install
+        install(self.tree)
         self.tree.currentItemChanged.connect(lambda *_a: self._chosen())
         box.addWidget(self.tree, 1)
         row = QHBoxLayout()

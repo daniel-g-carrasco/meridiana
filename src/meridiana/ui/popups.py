@@ -27,7 +27,7 @@ import sys
 from PySide6 import QtGui
 from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, QRect, Qt
 from PySide6.QtGui import QColor, QGuiApplication, QKeySequence
-from PySide6.QtWidgets import QApplication, QLabel, QWidget
+from PySide6.QtWidgets import QApplication, QComboBox, QLabel, QWidget
 
 from .. import theme_colors
 from .cards import default_tokens
@@ -155,6 +155,21 @@ class Popups(QObject):
         from .app_events import events     # the application's one filter (R120)
         events().on((QEvent.Type.Show,), self, self.eventFilter)
         events().on((QEvent.Type.Polish,), self, self._polished)
+        events().on((QEvent.Type.FocusIn,), self, self._combo_focused)
+
+    def _combo_focused(self, obj, event) -> bool:
+        """Refresh the hidden list's margins before Qt measures a focused combo's popup.
+
+        Qt caches PM_MenuVMargin in its container when the combo is made, then measures the popup with the
+        current value. Our focus border reduces field padding by one pixel: stale margins leave the list two
+        pixels short, which adds a scroll strip and clips the last choice even with only four choices.
+        A style-change event lets Qt update its own margins, before showing or restricting it to the screen.
+        """
+        if isinstance(obj, QComboBox):
+            popup = obj.view().window()
+            if not popup.isVisible():
+                QApplication.sendEvent(popup, QEvent(QEvent.Type.StyleChange))
+        return False
 
     def _polished(self, obj, event) -> bool:
         """A tooltip's label being made (Qt polishes it in its constructor, before its window exists): see-through

@@ -10,12 +10,16 @@ software centres show.
 ## [Unreleased]
 
 ### Added
+- Shared Qt refinements from the updated template: uniform table selection, protected corners, continuous headers
+  and final-row separators; compact phase navigation that skips hidden phases; native checkbox variant A with an
+  unclipped focus ring; distinct row/title help controls and theme-aware File tile icons. Application-specific
+  delegates, navigation trees, variants and scrolling-fade settings are preserved.
 - Shared scrolling fades, growing wrapped labels and checkbox-gated sections (R192, R193, R194): a short, clear fade
   keeps content off card borders, form rows follow their labels in every theme and text size, and the CER, automatic
   LID and azimuth fields explain why they are disabled without losing their values.
 - Save feedback and autonomous site climate (R195, R196): the status bar reports manual and automatic saves with their
   time. PVGIS's typical year and horizon download in the background on opening or after a site change when missing,
-  without starting an energy year; they are stored inside project format 15 and refresh only after a move over 250 m,
+  without starting an energy year; they are stored inside the project file and refresh only after a move over 250 m,
   a database change or an explicit request.
 - Meridio's polished bubble and immediate proposals (R197): his name stays opposite the resize grip, response options
   use the program's buttons and hover only between turns, and the model shows the proposal card at once instead of

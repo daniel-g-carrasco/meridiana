@@ -903,10 +903,12 @@ class MainWindow(QMainWindow):
             phase_group.addAction(a)
             self.phase_actions[phase.id] = a
         self.phase_actions["model"].setChecked(True)
+        self.tabs.phaseVisibilityChanged.connect(
+            lambda pid, visible: self.phase_actions[pid].setVisible(visible))
         phase_menu.addSeparator()
-        act(phase_menu, "next_phase", lambda: self.show_phase(phases.next(self.phase())),
+        act(phase_menu, "next_phase", lambda: self._cycle_phase(1),
             tip=_("The phase after this one; after the last, the first again"))
-        act(phase_menu, "previous_phase", lambda: self.show_phase(phases.previous(self.phase())),
+        act(phase_menu, "previous_phase", lambda: self._cycle_phase(-1),
             tip=_("The phase before this one"))
         # the words under the icons of the bar of the phase (design C1): on by default, off by choice or by itself
         # in a low window (design 5.3)
@@ -1169,8 +1171,15 @@ class MainWindow(QMainWindow):
 
     def show_phase(self, pid: str) -> None:
         index = self.tabs.index_of_phase(pid)
-        if index >= 0:
+        if index >= 0 and self.tabs.tabBar().isTabVisible(index):
             self.tabs.setCurrentIndex(index)
+
+    def _cycle_phase(self, step: int) -> None:
+        visible = [i for i in range(self.tabs.count()) if self.tabs.tabBar().isTabVisible(i)]
+        if visible:
+            current = self.tabs.currentIndex()
+            position = visible.index(current) if current in visible else 0
+            self.tabs.setCurrentIndex(visible[(position + step) % len(visible)])
 
     def _theme_changed(self) -> None:
         """The theme's colours to what Qt's palette does not reach: the charts, the cube, the row and the bars of

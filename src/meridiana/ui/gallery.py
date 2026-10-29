@@ -204,10 +204,11 @@ def gallery(theme) -> QMainWindow:
     fix = QToolButton()
     fix.setObjectName("rowfix")
     fix.setText("Correggi")
-    from .help_box import HelpButton
+    from .help_box import HelpButton, RowHelpButton
     small = [fix]
     try:
         small.append(HelpButton("site"))
+        small.append(RowHelpButton("site"))
     except ValueError:
         pass
     cb.addWidget(row(*small))

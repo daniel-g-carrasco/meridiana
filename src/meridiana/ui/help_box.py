@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (QApplication, QDialog, QDockWidget, QFrame, QGrou
 from .. import help as helps
 from ..i18n import _
 from .design import Button, Text, set_text, strong
+from .help import HelpButton as ControlHelpButton
 
 HELP = "help"                   # the dynamic property with a widget's help id
 HOVER = "help_hover"            # the box follows the pointer over it (the result tiles)
@@ -124,6 +125,21 @@ class HelpButton(QToolButton):
         self.setToolTip(h.short)
         self.setAccessibleName(_("Help: {title}").format(title=h.title))
         set_text(self, Text.LABEL)                  # a round button of the global sheet (Button.HELP)
+        register(self, hid)
+        self.clicked.connect(lambda: request(self.hid, self))
+
+
+class RowHelpButton(ControlHelpButton):
+    """The shared 28 px control, routed to the same help view as the small title marks."""
+
+    def __init__(self, hid: str, parent=None):
+        super().__init__(parent)
+        h = helps.get(hid)
+        if h is None:
+            raise ValueError(f"no help {hid!r} in help.py")
+        self.hid = hid
+        self.setToolTip(h.short)
+        self.setAccessibleName(_("Help: {title}").format(title=h.title))
         register(self, hid)
         self.clicked.connect(lambda: request(self.hid, self))
 

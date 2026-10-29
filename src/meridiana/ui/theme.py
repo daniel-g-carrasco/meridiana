@@ -277,6 +277,11 @@ QToolButton#filter:checked, QToolButton#count:checked {{ background: {press}; co
     border-color: {press}; }}
 QToolButton#filter[popupMode="2"] {{ padding-right: {S.XXL}px; }}
 QToolButton#count:disabled {{ color: {t['muted']}; }}
+QToolButton#row-help-button {{ padding: 0; border: 1px solid {t['line']}; border-radius: {Radius.pill(Size.CONTROL):g}px;
+                           min-width: {Size.CONTROL - 2}px; max-width: {Size.CONTROL - 2}px;
+                           min-height: {Size.CONTROL - 2}px; max-height: {Size.CONTROL - 2}px;
+                           color: {t['muted']}; background: transparent; }}
+QToolButton#row-help-button:hover {{ color: {t['text']}; border-color: {t['text']}; }}
 QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QTextEdit, QPlainTextEdit, QDateEdit, QTimeEdit {{
     background: {t['field']}; border: 1px solid transparent; border-radius: {R.CONTROL}px; {control}
     color: {t['text']}; selection-background-color: {t['select_bg']}; selection-color: {t['select_fg']}; }}
