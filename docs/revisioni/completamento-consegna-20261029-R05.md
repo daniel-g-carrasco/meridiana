@@ -59,14 +59,48 @@ La corrispondente copia Linux è `source-r08`; i due script desktop sono normali
 I cataloghi gettext possono avere byte diversi tra compilatori: le voci tradotte sono confrontate semanticamente.
 R11-R13 e gli snapshot Linux precedenti sono intermedi di verifica, non i pacchetti della consegna.
 
-Le ricevute di creazione, integrità, installazione e avvio saranno collegate dopo il completamento dei pacchetti.
+Commit applicativo `10da2fc`, integrato con fast-forward nelle cartelle `meridiana` e `meridiana-lavoro`.
+Catalogo italiano ricompilato nella cartella di avvio; 339 file runtime/risorse confrontati senza differenze
+normalizzando i fine riga. L'icona ICO generata esclusa dal confronto appartiene solo alla preparazione dei pacchetti.
+
+Pacchetti in `dist/packages-20261029-R05`, con `package-receipt-R05.json` e `SHA256SUMS.txt`:
+
+| Artefatto | Byte | SHA256 |
+|---|---:|---|
+| Setup Windows | 155243287 | `9dfcd52512c90d7a343a54708e2d961ba80b4dd6a5ee990bcf807c1cd1b87eac` |
+| ZIP Windows | 218420119 | `adb123f6168412af00537ac0104d9c46cfc787af0ce671b81c7e9bad25c83b60` |
+| Flatpak Linux | 185441592 | `5b2377305aaf1352653a6f29f53b48ce3f8dfc644438fdd26e9eb1b2f53cffab` |
+
+Setup installato, avviato e disinstallato in una cartella nuova: tutti i codici 0; Direct3D11 e primo frame
+superati. Focus invariato, registro/associazioni/collegamenti ripristinati, dati conservati. Rapporto
+`verifica-desktop-pacchetti-20261029-R05.md`. ZIP controllato con `7z t`; Flatpak verificato con import/fsck,
+6 probe e self-test offscreen. Ricevute complete conservate accanto agli artefatti.
 La distribuzione rimane una preview locale: nessun tag o release pubblica creati.
+
+## Installazione sul laptop Linux
+
+R05 installato via SSH su `fw13` (`lucciola`), a livello utente. SHA256 del file trasferito identico alla
+ricevuta; commit installato `ccd091d302a7c2c60d8adf5d7647e4c1f37077536467b0a849d1c4eee46dadb4`,
+runtime KDE 6.11 già disponibile. La voce applicazioni e l'associazione MIME sono esportate da Flatpak.
+
+Il self-test Wayland standard passa cataloghi, calcolo, IFC e PDF, ma fallisce il primo frame: Niri assegna
+921 pixel logici, sotto la soglia responsive di 1000; la finestra mostra la pianta e nasconde il 3D
+(larghezza zero). La diagnosi registra che il renderer salta correttamente la vista non esposta.
+Una sonda sul medesimo Flatpak attiva la modalità 3D tramite il metodo esistente: primo rendering
+158,8 ms, immagine non vuota, self-test zero errori in 9,18 s; ruotando di 30 gradi l'immagine cambia.
+Nessun driver, monitor o preferenza utente modificato. Il limite del self-test standard rimane documentato;
+non viene presentato come un self-test standard completamente verde. Rapporto
+`installazione-laptop-20261029-R05.md`, ricevute in `build/laptop-install-20261029-R05`.
+
+Avvio dal menu applicazioni: Meridiana; oppure `flatpak run io.github.daniel_g_carrasco.meridiana`.
 
 ## Template condivisi
 
 Caselle nelle tabelle e verifiche native nel template Qt `0b5d965`; la lezione sul risultato asincrono
 precedente a un aggiornamento accodato è nel successivo `3c6ba3e7900b15e6ffabdfcb080c79002d74d2e1`.
-I manifest Qt R04 e tabelle R05 verificano 21 + 1 mapping. La correzione dell'installer è riportata
+La precondizione di visibilità nelle prove grafiche responsive è documentata nel successivo
+`9a42824545ed4c80c7be8d8f0931831cb80e79bd`. I manifest Qt R04 e tabelle R05 verificano 21 + 1 mapping
+contro quest’ultimo commit. La correzione dell'installer è riportata
 anche nel template GTK `8a3691f29561826cb2dfbbab50032b02075792a7`. I commit sono pubblicati nei soli
 repository privati dei template; le modifiche preesistenti di Daniel sono state conservate.
 

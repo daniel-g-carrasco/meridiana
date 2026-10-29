@@ -39,9 +39,9 @@ Le scelte visive e il contenitore `.mer` sono già approvati; non viene riaperta
   vincoli comuni, cancellazione e completezza dichiarata. Proprietario Sol.
 - [x] C. Catalogo e ottimizzatori: topologia ingressi, limiti condizionati, accoppiamento esplicito e controlli
   di coerenza in components/optimizers/catalog/model/UI; test di calcolo e roundtrip. Proprietario root.
-- [ ] D. Desktop e installazione: popup/GPU con piattaforma nativa, installazione isolata e disinstallazione,
+- [x] D. Desktop e installazione: popup/GPU con piattaforma nativa, installazione isolata e disinstallazione,
   prove senza alterare impostazioni/progetti/associazioni utente. Eventuali fix comuni anche nel template. Sol.
-- [ ] E. Revisione incrociata e integrazione: suite del lotto, traduzioni, foto, manuale e registro aggiornati;
+- [x] E. Revisione incrociata e integrazione: suite del lotto, traduzioni, foto, manuale e registro aggiornati;
   nuovo freeze, nuovi pacchetti verificati e allineamento della cartella di avvio Windows.
 
 Ogni lotto produce un rapporto distinto con verifiche, fonti e limiti. Il registro generale è aggiornato
@@ -60,3 +60,7 @@ riutilizzando navigazione e spotlight R218. Conservata in coda alle precedenti.
 Consegna aggiuntiva autorizzata da Daniel: al termine dei lotti A-E installare via SSH sul laptop Linux
 l'ultimo Flatpak verificato di questa tranche; confrontare checksum e versione installata, verificare
 l'avvio e conservare la ricevuta. Non sostituire il pacchetto con una build precedente solo perché già disponibile.
+
+Esito: lotti A-E completati, commit applicativo 10da2fc, consegna R05 e R241 installata sul laptop.
+Prove e limiti nel rapporto completamento-consegna-20261029-R05.md, incluso il primo frame
+del self-test standard quando il layout responsive nasconde il 3D. R235-R240 restano in coda.

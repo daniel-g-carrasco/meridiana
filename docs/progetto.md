@@ -407,3 +407,8 @@ fisiche e limite prestazionale del cambio tema. Nessuna validazione sperimentale
 Le nuove funzioni R235-R240 restano in coda; R241 aggiunge la consegna del Flatpak al laptop via SSH.
 Il template Qt include caselle nelle tabelle e indicazioni sul debounce asincrono (3c6ba3e); il template
 GTK include la correzione della creazione facoltativa delle icone nell’installer (8a3691f).
+
+Applicazione R05 integrata nelle due cartelle Windows al commit 10da2fc. Installabile Windows e ZIP
+verificati; Flatpak R05 installato sul laptop fw13 con checksum/commit e avvio nativo verificati.
+Il self-test generico presume la visibilità del 3D anche sotto soglia responsive: sul laptop è stata
+eseguita una prova aggiuntiva attivando esplicitamente la vista, senza modificare il pacchetto.

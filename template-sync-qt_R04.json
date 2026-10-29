@@ -1,6 +1,6 @@
 {
   "format": 2,
-  "upstream_version": "3c6ba3e7900b15e6ffabdfcb080c79002d74d2e1",
+  "upstream_version": "9a42824545ed4c80c7be8d8f0931831cb80e79bd",
   "consumer_base": "b3c0146",
   "hash_normalization": "CRLF normalized to LF",
   "files": [
