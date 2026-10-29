@@ -42,6 +42,7 @@ class ProjectIndexTest(unittest.TestCase):
         self.assertEqual(row["mountings"], ["tilted_anchored"])
         self.assertEqual(row["tilts"], [15.0])
         self.assertEqual(row["revision"], "R04")
+        self.assertEqual(row["revision_number"], 4)
         self.assertFalse(row["reserved"])
         self.assertEqual(row["error"], "")
         self.assertNotIn("resources", row)

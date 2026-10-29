@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: meridiana\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-28 21:54+0100\n"
+"POT-Creation-Date: 2026-10-29 09:00+0100\n"
 "PO-Revision-Date: 2026-10-22 21:00+0200\n"
 "Last-Translator: Daniel Grasso <code@danielgrasso.com>\n"
 "Language-Team: Italian\n"
@@ -633,58 +633,58 @@ msgstr "Sì, proponimelo"
 msgid "First tell me why"
 msgstr "Prima dimmi perché"
 
-#: src/meridiana/assistant/tools.py:231
+#: src/meridiana/assistant/tools.py:261
 msgid "the site"
 msgstr "il sito"
 
-#: src/meridiana/assistant/tools.py:298
+#: src/meridiana/assistant/tools.py:328
 msgid "No checks match this filter."
 msgstr "Nessuna verifica corrisponde a questo filtro."
 
-#: src/meridiana/assistant/tools.py:299
+#: src/meridiana/assistant/tools.py:329
 msgid "Read the checks"
 msgstr "Ho letto le verifiche"
 
-#: src/meridiana/assistant/tools.py:357
+#: src/meridiana/assistant/tools.py:387
 msgid "Read the project"
 msgstr "Ho letto il progetto"
 
-#: src/meridiana/assistant/tools.py:379
+#: src/meridiana/assistant/tools.py:409
 #, python-brace-format
 msgid "Went to {what}"
 msgstr "Ti ho portato su {what}"
 
-#: src/meridiana/assistant/tools.py:450
+#: src/meridiana/assistant/tools.py:480
 #, python-brace-format
 msgid "Searched the manual: «{query}»"
 msgstr "Ho cercato nel manuale: «{query}»"
 
-#: src/meridiana/assistant/tools.py:494
+#: src/meridiana/assistant/tools.py:524
 msgid "Read the selection"
 msgstr "Ho letto la selezione"
 
-#: src/meridiana/assistant/tools.py:498
+#: src/meridiana/assistant/tools.py:528
 msgid "production"
 msgstr "producibilità"
 
-#: src/meridiana/assistant/tools.py:498 src/meridiana/energy/simulate.py:951
+#: src/meridiana/assistant/tools.py:528 src/meridiana/energy/simulate.py:951
 msgid "strings"
 msgstr "stringhe"
 
-#: src/meridiana/assistant/tools.py:498 src/meridiana/energy/economics.py:376
+#: src/meridiana/assistant/tools.py:528 src/meridiana/energy/economics.py:376
 msgid "consumption"
 msgstr "consumi"
 
-#: src/meridiana/assistant/tools.py:499
+#: src/meridiana/assistant/tools.py:529
 msgid "economics"
 msgstr "economia"
 
-#: src/meridiana/assistant/tools.py:504
+#: src/meridiana/assistant/tools.py:534
 #, python-brace-format
 msgid "Read the results: {what}"
 msgstr "Ho letto i risultati: {what}"
 
-#: src/meridiana/assistant/tools.py:520
+#: src/meridiana/assistant/tools.py:550
 msgid ""
 "the whole plant, against the previous step of the same quantity, weighted by "
 "array power"
@@ -692,59 +692,113 @@ msgstr ""
 "l'intero impianto, rispetto al passo precedente della stessa grandezza, "
 "ponderato per la potenza degli array"
 
-#: src/meridiana/assistant/tools.py:525
+#: src/meridiana/assistant/tools.py:555
 msgid "the array's annual irradiance after far shading"
 msgstr "l'irraggiamento annuo dell'array dopo le ombre lontane"
 
-#: src/meridiana/assistant/tools.py:610
+#: src/meridiana/assistant/tools.py:640
 #, python-brace-format
 msgid "Read how it is computed: {what}"
 msgstr "Ho letto come è calcolato: {what}"
 
-#: src/meridiana/assistant/tools.py:643
+#: src/meridiana/assistant/tools.py:673
 msgid "Read the rules that apply"
 msgstr "Ho letto le regole che si applicano"
 
-#: src/meridiana/assistant/tools.py:650 src/meridiana/energy/stringing.py:161
+#: src/meridiana/assistant/tools.py:680 src/meridiana/energy/stringing.py:161
 #: src/meridiana/fields.py:51 src/meridiana/ui/catalog_dialog.py:522
 #: src/meridiana/ui/registry_page.py:175
 msgid "yes"
 msgstr "sì"
 
-#: src/meridiana/assistant/tools.py:650 src/meridiana/fields.py:51
+#: src/meridiana/assistant/tools.py:680 src/meridiana/fields.py:51
 #: src/meridiana/ui/catalog_dialog.py:522 src/meridiana/ui/registry_page.py:175
 msgid "no"
 msgstr "no"
 
-#: src/meridiana/assistant/tools.py:654 src/meridiana/fields.py:53
+#: src/meridiana/assistant/tools.py:684 src/meridiana/fields.py:53
 #: src/meridiana/ui/energy_pages.py:543 src/meridiana/ui/energy_pages.py:575
 #: src/meridiana/ui/plant_page.py:640 src/meridiana/ui/plant_page.py:645
 msgid "automatic"
 msgstr "automatico"
 
-#: src/meridiana/assistant/tools.py:667
+#: src/meridiana/assistant/tools.py:697
 msgid "Undo"
 msgstr "Annulla"
 
-#: src/meridiana/assistant/tools.py:667
+#: src/meridiana/assistant/tools.py:697
 msgid "Redo"
 msgstr "Ripeti"
 
-#: src/meridiana/assistant/tools.py:669
+#: src/meridiana/assistant/tools.py:699
 #, python-brace-format
 msgid "Step: {step}"
 msgstr "Passo: {step}"
 
-#: src/meridiana/assistant/tools.py:673 src/meridiana/assistant/tools.py:710
-#: src/meridiana/assistant/tools.py:888
+#: src/meridiana/assistant/tools.py:703 src/meridiana/assistant/tools.py:740
+#: src/meridiana/assistant/tools.py:918
 #, python-brace-format
 msgid "Proposed: {what}"
 msgstr "Proposta: {what}"
 
-#: src/meridiana/assistant/tools.py:882
+#: src/meridiana/assistant/tools.py:912
 #, python-brace-format
 msgid "{object}: {fields}"
 msgstr "{object}: {fields}"
+
+#: src/meridiana/assistant/tools.py:946
+msgid "Searched the local project index"
+msgstr "Ho cercato nell'indice locale dei progetti"
+
+#: src/meridiana/assistant/tools.py:953
+msgid "Read the latest project revisions"
+msgstr "Ho letto le ultime revisioni dei progetti"
+
+#: src/meridiana/assistant/tools.py:957 src/meridiana/fields.py:26
+msgid "roof"
+msgstr "copertura"
+
+#: src/meridiana/assistant/tools.py:957 src/meridiana/ui/report_chapters.py:415
+msgid "ground"
+msgstr "a terra"
+
+#: src/meridiana/assistant/tools.py:957
+msgid "mixed"
+msgstr "misto"
+
+#: src/meridiana/assistant/tools.py:958
+msgid "same mounting"
+msgstr "stesso montaggio"
+
+#: src/meridiana/assistant/tools.py:958
+msgid "different mounting"
+msgstr "montaggio diverso"
+
+#: src/meridiana/assistant/tools.py:959
+msgid "similar tilt"
+msgstr "inclinazione simile"
+
+#: src/meridiana/assistant/tools.py:959
+msgid "different tilt"
+msgstr "inclinazione diversa"
+
+#: src/meridiana/assistant/tools.py:960
+#, python-brace-format
+msgid ""
+"{kind}, {power} kWp against {reference}, {mounting}, {tilt}, {distance} km, "
+"revision {revision} of {date}"
+msgstr ""
+"{kind}, {power} kWp contro {reference}, {mounting}, {tilt}, {distance} km, "
+"revisione {revision} del {date}"
+
+#: src/meridiana/assistant/tools.py:981
+msgid "Found similar projects"
+msgstr "Ho trovato progetti simili"
+
+#: src/meridiana/assistant/tools.py:996
+#, python-brace-format
+msgid "Prepared opening {title}, revision {revision}"
+msgstr "Ho preparato l'apertura di {title}, revisione {revision}"
 
 #: src/meridiana/capabilities.py:46
 msgid ""
@@ -4634,10 +4688,6 @@ msgid "eave height"
 msgstr "altezza di gronda"
 
 #: src/meridiana/fields.py:26
-msgid "roof"
-msgstr "copertura"
-
-#: src/meridiana/fields.py:26
 msgid "slope"
 msgstr "pendenza"
 
@@ -6571,8 +6621,8 @@ msgstr "CSV"
 msgid "Compare"
 msgstr "Confronta"
 
-#: src/meridiana/phases.py:142 src/meridiana/ui/report.py:83
-#: src/meridiana/ui/report_page.py:259
+#: src/meridiana/phases.py:142 src/meridiana/ui/assistant_chat.py:700
+#: src/meridiana/ui/report.py:83 src/meridiana/ui/report_page.py:259
 msgid "Revision"
 msgstr "Revisione"
 
@@ -8362,7 +8412,7 @@ msgstr "A terra: i limiti dell'attività libera"
 msgid "Storage is part of the plant"
 msgstr "L'accumulo fa parte dell'impianto"
 
-#: src/meridiana/rules.py:544 src/meridiana/ui/assistant_chat.py:693
+#: src/meridiana/rules.py:544 src/meridiana/ui/assistant_chat.py:713
 #: src/meridiana/ui/help_box.py:47 src/meridiana/ui/help_box.py:241
 #, python-brace-format
 msgid "Source: {source}"
@@ -9196,64 +9246,64 @@ msgstr "{name} legge le risposte ad alta voce: spento"
 msgid "You"
 msgstr "Tu"
 
-#: src/meridiana/ui/assistant_chat.py:286
+#: src/meridiana/ui/assistant_chat.py:300
 #, python-brace-format
 msgid "{name} answers with {model}, in the cloud, with your consent"
 msgstr "{name} risponde con {model}, nel cloud, con il tuo consenso"
 
-#: src/meridiana/ui/assistant_chat.py:289
+#: src/meridiana/ui/assistant_chat.py:303
 msgid "Local"
 msgstr "Locale"
 
-#: src/meridiana/ui/assistant_chat.py:291
+#: src/meridiana/ui/assistant_chat.py:305
 #, python-brace-format
 msgid "{name} answers with the local model on this PC ({url})"
 msgstr "{name} risponde con il modello locale su questo PC ({url})"
 
-#: src/meridiana/ui/assistant_chat.py:293
+#: src/meridiana/ui/assistant_chat.py:307
 msgid "(the project is reserved: never to the cloud)"
 msgstr "(il progetto è riservato: mai al cloud)"
 
-#: src/meridiana/ui/assistant_chat.py:295
+#: src/meridiana/ui/assistant_chat.py:309
 #, python-brace-format
 msgid "{name}, the assistant (Ctrl+L): {where}"
 msgstr "{name}, l'assistente (Ctrl+L): {where}"
 
-#: src/meridiana/ui/assistant_chat.py:308
+#: src/meridiana/ui/assistant_chat.py:322
 msgid "Local model, on this PC"
 msgstr "Modello locale, su questo PC"
 
-#: src/meridiana/ui/assistant_chat.py:321
+#: src/meridiana/ui/assistant_chat.py:335
 msgid "Reserved project: never to the cloud"
 msgstr "Progetto riservato: mai al cloud"
 
-#: src/meridiana/ui/assistant_chat.py:325
+#: src/meridiana/ui/assistant_chat.py:339
 msgid "New conversation"
 msgstr "Nuova conversazione"
 
-#: src/meridiana/ui/assistant_chat.py:326
-#: src/meridiana/ui/assistant_chat.py:588
+#: src/meridiana/ui/assistant_chat.py:340
+#: src/meridiana/ui/assistant_chat.py:602
 msgid "Settings…"
 msgstr "Impostazioni…"
 
-#: src/meridiana/ui/assistant_chat.py:341
+#: src/meridiana/ui/assistant_chat.py:355
 msgid "Mark the project reserved"
 msgstr "Segna il progetto come riservato"
 
-#: src/meridiana/ui/assistant_chat.py:341
+#: src/meridiana/ui/assistant_chat.py:355
 msgid "Mark the project not reserved"
 msgstr "Togli il segno di riservato al progetto"
 
-#: src/meridiana/ui/assistant_chat.py:371
+#: src/meridiana/ui/assistant_chat.py:385
 #, python-brace-format
 msgid "About the check «{text}»: why does it matter, and what should I do?"
 msgstr "Sulla verifica «{text}»: perché conta, e che cosa devo fare?"
 
-#: src/meridiana/ui/assistant_chat.py:384
+#: src/meridiana/ui/assistant_chat.py:398
 msgid "This project is reserved: the question goes to the local model."
 msgstr "Questo progetto è riservato: la domanda va al modello locale."
 
-#: src/meridiana/ui/assistant_chat.py:392
+#: src/meridiana/ui/assistant_chat.py:406
 msgid ""
 "No Claude key in the system's keyring (Settings > Assistant): the question "
 "goes to the local model."
@@ -9261,53 +9311,53 @@ msgstr ""
 "Nessuna chiave di Claude nel portachiavi del sistema (Impostazioni > "
 "Assistente): la domanda va al modello locale."
 
-#: src/meridiana/ui/assistant_chat.py:407
+#: src/meridiana/ui/assistant_chat.py:421
 msgid "Send this question to Claude?"
 msgstr "Mando questa domanda a Claude?"
 
-#: src/meridiana/ui/assistant_chat.py:408 src/meridiana/ui/preferences.py:172
+#: src/meridiana/ui/assistant_chat.py:422 src/meridiana/ui/preferences.py:172
 msgid "Local model"
 msgstr "Modello locale"
 
-#: src/meridiana/ui/assistant_chat.py:408
+#: src/meridiana/ui/assistant_chat.py:422
 msgid "Not now"
 msgstr "Non ora"
 
-#: src/meridiana/ui/assistant_chat.py:408
+#: src/meridiana/ui/assistant_chat.py:422
 msgid "Allow and send"
 msgstr "Consenti e invia"
 
-#: src/meridiana/ui/assistant_chat.py:440
+#: src/meridiana/ui/assistant_chat.py:454
 msgid "Not sent."
 msgstr "Non inviata."
 
-#: src/meridiana/ui/assistant_chat.py:488
+#: src/meridiana/ui/assistant_chat.py:502
 msgid "The answer was cut: it was too long."
 msgstr "La risposta è stata tagliata: era troppo lunga."
 
-#: src/meridiana/ui/assistant_chat.py:490
+#: src/meridiana/ui/assistant_chat.py:504
 msgid "The model declined to answer this question."
 msgstr "Il modello non ha voluto rispondere a questa domanda."
 
-#: src/meridiana/ui/assistant_chat.py:497
+#: src/meridiana/ui/assistant_chat.py:511
 msgid "Too many steps for one question: ask again, more precisely."
 msgstr ""
 "Troppi passi per una domanda sola: chiedi di nuovo, in modo più preciso."
 
-#: src/meridiana/ui/assistant_chat.py:513
+#: src/meridiana/ui/assistant_chat.py:527
 msgid ""
 "No network: Claude cannot be reached. The question goes to the local model."
 msgstr ""
 "Niente rete: Claude non è raggiungibile. La domanda va al modello locale."
 
-#: src/meridiana/ui/assistant_chat.py:527
+#: src/meridiana/ui/assistant_chat.py:541
 #, python-brace-format
 msgid ""
 "The local model does not answer at {url}. I look for another one on this PC…"
 msgstr ""
 "Il modello locale non risponde a {url}. Ne cerco un altro su questo PC…"
 
-#: src/meridiana/ui/assistant_chat.py:530
+#: src/meridiana/ui/assistant_chat.py:544
 #, python-brace-format
 msgid ""
 "The model {model} does not call tools, and Meridio reads the project with "
@@ -9316,16 +9366,16 @@ msgstr ""
 "Il modello {model} non chiama gli strumenti, e Meridio legge il progetto con "
 "quelli. Ne cerco un altro su questo PC…"
 
-#: src/meridiana/ui/assistant_chat.py:533
+#: src/meridiana/ui/assistant_chat.py:547
 msgid "Claude refused the key: check it in Settings > Assistant."
 msgstr ""
 "Claude ha rifiutato la chiave: controllala in Impostazioni > Assistente."
 
-#: src/meridiana/ui/assistant_chat.py:535
+#: src/meridiana/ui/assistant_chat.py:549
 msgid "The provider's limit is reached: try again in a while."
 msgstr "Il limite del fornitore è raggiunto: riprova tra un po'."
 
-#: src/meridiana/ui/assistant_chat.py:539
+#: src/meridiana/ui/assistant_chat.py:553
 #, python-brace-format
 msgid ""
 "The server does not have the model {model}: check its name in Settings > "
@@ -9334,17 +9384,17 @@ msgstr ""
 "Il server non ha il modello {model}: controlla il nome in Impostazioni > "
 "Assistente."
 
-#: src/meridiana/ui/assistant_chat.py:542
+#: src/meridiana/ui/assistant_chat.py:556
 msgid "No local model chosen for this server. I look for one on this PC…"
 msgstr ""
 "Nessun modello locale scelto per questo server. Ne cerco uno su questo PC…"
 
-#: src/meridiana/ui/assistant_chat.py:543
+#: src/meridiana/ui/assistant_chat.py:557
 #, python-brace-format
 msgid "The server does not have the model {model}. I look for one on this PC…"
 msgstr "Il server non ha il modello {model}. Ne cerco uno su questo PC…"
 
-#: src/meridiana/ui/assistant_chat.py:545
+#: src/meridiana/ui/assistant_chat.py:559
 msgid ""
 "The library for Claude is not installed (anthropic): the local model still "
 "answers."
@@ -9352,36 +9402,36 @@ msgstr ""
 "La libreria per Claude non è installata (anthropic): il modello locale "
 "risponde comunque."
 
-#: src/meridiana/ui/assistant_chat.py:546
+#: src/meridiana/ui/assistant_chat.py:560
 #, python-brace-format
 msgid "The model's server failed: {detail}"
 msgstr "Il server del modello ha dato errore: {detail}"
 
-#: src/meridiana/ui/assistant_chat.py:583
+#: src/meridiana/ui/assistant_chat.py:597
 #, python-brace-format
 msgid "{runtime} answers now with {model}: ask again."
 msgstr "Ora {runtime} risponde con {model}: rifai la domanda."
 
-#: src/meridiana/ui/assistant_chat.py:586
+#: src/meridiana/ui/assistant_chat.py:600
 #, python-brace-format
 msgid "On this PC: {runtime}"
 msgstr "Su questo PC: {runtime}"
 
-#: src/meridiana/ui/assistant_chat.py:588
+#: src/meridiana/ui/assistant_chat.py:602
 msgid "Use it and ask again"
 msgstr "Usalo e rifai la domanda"
 
-#: src/meridiana/ui/assistant_chat.py:597
+#: src/meridiana/ui/assistant_chat.py:611
 #, python-brace-format
 msgid "{runtime} is on this PC but not running: {how}. Then ask again."
 msgstr ""
 "{runtime} è su questo PC ma non è avviato: {how}. Poi rifai la domanda."
 
-#: src/meridiana/ui/assistant_chat.py:600
+#: src/meridiana/ui/assistant_chat.py:614
 msgid "No local model on this PC"
 msgstr "Nessun modello locale su questo PC"
 
-#: src/meridiana/ui/assistant_chat.py:601
+#: src/meridiana/ui/assistant_chat.py:615
 #, python-brace-format
 msgid ""
 "A few steps give {name} a model of his own on this PC: one program and one "
@@ -9390,58 +9440,83 @@ msgstr ""
 "Con pochi passi {name} ha un modello suo su questo PC: un programma e un "
 "comando. La guida è in Impostazioni > Assistente."
 
-#: src/meridiana/ui/assistant_chat.py:603
+#: src/meridiana/ui/assistant_chat.py:617
 msgid "Show me how"
 msgstr "Fammi vedere come"
 
-#: src/meridiana/ui/assistant_chat.py:617
+#: src/meridiana/ui/assistant_chat.py:631
 #, python-brace-format
 msgid "{name} now thinks with {model} on {runtime}."
 msgstr "Ora {name} pensa con {model} su {runtime}."
 
-#: src/meridiana/ui/assistant_chat.py:688
+#: src/meridiana/ui/assistant_chat.py:700
+msgid "Path"
+msgstr "Percorso"
+
+#: src/meridiana/ui/assistant_chat.py:704
+#, python-brace-format
+msgid "{field}: {value}"
+msgstr "{field}: {value}"
+
+#: src/meridiana/ui/assistant_chat.py:708
 #, python-brace-format
 msgid "{field}: from {before} to {after}"
 msgstr "{field}: da {before} a {after}"
 
-#: src/meridiana/ui/assistant_chat.py:695
+#: src/meridiana/ui/assistant_chat.py:715
 msgid "It computes the year: the weather may be downloaded from PVGIS."
 msgstr "Calcola l'anno: il meteo potrebbe essere scaricato da PVGIS."
 
-#: src/meridiana/ui/assistant_chat.py:696
+#: src/meridiana/ui/assistant_chat.py:716
+#, python-brace-format
+msgid "Open project: {what}"
+msgstr "Apri il progetto: {what}"
+
+#: src/meridiana/ui/assistant_chat.py:716
 #, python-brace-format
 msgid "Proposal: {what}"
 msgstr "Proposta: {what}"
 
-#: src/meridiana/ui/assistant_chat.py:697
+#: src/meridiana/ui/assistant_chat.py:718
 msgid "Discard"
 msgstr "Scarta"
 
-#: src/meridiana/ui/assistant_chat.py:697 src/meridiana/ui/checks_page.py:1015
+#: src/meridiana/ui/assistant_chat.py:718 src/meridiana/ui/file_page.py:241
+#: src/meridiana/ui/file_page.py:274 src/meridiana/ui/file_page.py:363
+#: src/meridiana/ui/file_page.py:366 src/meridiana/ui/file_page.py:368
+msgid "Open"
+msgstr "Apri"
+
+#: src/meridiana/ui/assistant_chat.py:718 src/meridiana/ui/checks_page.py:1015
 msgid "Apply"
 msgstr "Applica"
 
-#: src/meridiana/ui/assistant_chat.py:705
+#: src/meridiana/ui/assistant_chat.py:726
 #, python-brace-format
 msgid "{name}: {what}"
 msgstr "{name}: {what}"
 
-#: src/meridiana/ui/assistant_chat.py:715
+#: src/meridiana/ui/assistant_chat.py:739
 #, python-brace-format
 msgid "Not applied: {why}"
 msgstr "Non applicata: {why}"
 
-#: src/meridiana/ui/assistant_chat.py:718
+#: src/meridiana/ui/assistant_chat.py:743
+#, python-brace-format
+msgid "Opened: {what}."
+msgstr "Aperto: {what}."
+
+#: src/meridiana/ui/assistant_chat.py:745
 #, python-brace-format
 msgid "Applied: {what}."
 msgstr "Applicata: {what}."
 
-#: src/meridiana/ui/assistant_chat.py:719
+#: src/meridiana/ui/assistant_chat.py:747
 #, python-brace-format
 msgid "Applied: {what}. Ctrl+Z undoes it."
 msgstr "Applicata: {what}. Ctrl+Z la annulla."
 
-#: src/meridiana/ui/assistant_chat.py:726
+#: src/meridiana/ui/assistant_chat.py:754
 #, python-brace-format
 msgid "Discarded: {what}."
 msgstr "Scartata: {what}."
@@ -11087,14 +11162,8 @@ msgstr "Torna al progetto"
 msgid "New"
 msgstr "Nuovo"
 
-#: src/meridiana/ui/file_page.py:241 src/meridiana/ui/file_page.py:274
-#: src/meridiana/ui/file_page.py:363 src/meridiana/ui/file_page.py:366
-#: src/meridiana/ui/file_page.py:368
-msgid "Open"
-msgstr "Apri"
-
 #: src/meridiana/ui/file_page.py:242 src/meridiana/ui/file_page.py:325
-#: src/meridiana/ui/window.py:4765 src/meridiana/ui/window.py:4849
+#: src/meridiana/ui/window.py:4767 src/meridiana/ui/window.py:4851
 msgid "Save"
 msgstr "Salva"
 
@@ -11376,7 +11445,7 @@ msgid "Every key of the window, with a search; change them in the same place."
 msgstr ""
 "Ogni tasto della finestra, con la ricerca; si cambiano nello stesso posto."
 
-#: src/meridiana/ui/file_page.py:367 src/meridiana/ui/window.py:4888
+#: src/meridiana/ui/file_page.py:367 src/meridiana/ui/window.py:4890
 msgid "About Meridiana"
 msgstr "Informazioni su Meridiana"
 
@@ -14153,10 +14222,6 @@ msgid ""
 msgstr ""
 "Sul piano: l'irraggiamento sul piano dei moduli, i campi insieme, pesati "
 "sulla loro potenza."
-
-#: src/meridiana/ui/report_chapters.py:415
-msgid "ground"
-msgstr "a terra"
 
 #: src/meridiana/ui/report_chapters.py:420
 #, python-brace-format
@@ -17131,12 +17196,12 @@ msgstr "Impossibile leggere la copia: {error}"
 msgid "Recovered: save it to keep it"
 msgstr "Recuperato: salvalo per tenerlo"
 
-#: src/meridiana/ui/window.py:4738
+#: src/meridiana/ui/window.py:4740
 #, python-brace-format
 msgid "The project index could not be updated: {error}"
 msgstr "Impossibile aggiornare l'indice dei progetti: {error}"
 
-#: src/meridiana/ui/window.py:4752
+#: src/meridiana/ui/window.py:4754
 #, python-brace-format
 msgid ""
 "The project is saved, but its registry link could not be written: {error}"
@@ -17144,61 +17209,61 @@ msgstr ""
 "Il progetto è salvato, ma il collegamento nel registro non si è potuto "
 "scrivere: {error}"
 
-#: src/meridiana/ui/window.py:4755
+#: src/meridiana/ui/window.py:4757
 #, python-brace-format
 msgid "The project is saved, but some job files could not be updated: {errors}"
 msgstr ""
 "Il progetto è salvato, ma alcuni file delle commesse non si sono potuti "
 "aggiornare: {errors}"
 
-#: src/meridiana/ui/window.py:4765 src/meridiana/ui/window.py:4849
+#: src/meridiana/ui/window.py:4767 src/meridiana/ui/window.py:4851
 #, python-brace-format
 msgid "The project could not be saved: {error}"
 msgstr "Impossibile salvare il progetto: {error}"
 
-#: src/meridiana/ui/window.py:4772
+#: src/meridiana/ui/window.py:4774
 #, python-brace-format
 msgid "New revision saved: {file}; the previous one stays as it was"
 msgstr "Nuova revisione salvata: {file}; la precedente resta com'era"
 
-#: src/meridiana/ui/window.py:4781
+#: src/meridiana/ui/window.py:4783
 msgid "Unsaved changes"
 msgstr "Modifiche non salvate"
 
-#: src/meridiana/ui/window.py:4781
+#: src/meridiana/ui/window.py:4783
 msgid "Save the changes to the project first?"
 msgstr "Salvare prima le modifiche al progetto?"
 
-#: src/meridiana/ui/window.py:4817 src/meridiana/ui/window.py:4827
-#: src/meridiana/ui/window.py:4841
+#: src/meridiana/ui/window.py:4819 src/meridiana/ui/window.py:4829
+#: src/meridiana/ui/window.py:4843
 msgid "Open a project"
 msgstr "Apri un progetto"
 
-#: src/meridiana/ui/window.py:4818 src/meridiana/ui/window.py:4860
+#: src/meridiana/ui/window.py:4820 src/meridiana/ui/window.py:4862
 #, python-brace-format
 msgid "Meridiana projects (*{suffix})"
 msgstr "Progetti Meridiana (*{suffix})"
 
-#: src/meridiana/ui/window.py:4827
+#: src/meridiana/ui/window.py:4829
 #, python-brace-format
 msgid "{file} could not be opened: {error}"
 msgstr "Impossibile aprire {file}: {error}"
 
-#: src/meridiana/ui/window.py:4854
+#: src/meridiana/ui/window.py:4856
 #, python-brace-format
 msgid "Saved {file}"
 msgstr "Salvato {file}"
 
-#: src/meridiana/ui/window.py:4859
+#: src/meridiana/ui/window.py:4861
 msgid "Save the project"
 msgstr "Salva il progetto"
 
-#: src/meridiana/ui/window.py:4884
+#: src/meridiana/ui/window.py:4886
 #, python-brace-format
 msgid "The settings could not be saved: {error}"
 msgstr "Le impostazioni non si sono potute salvare: {error}"
 
-#: src/meridiana/ui/window.py:4889
+#: src/meridiana/ui/window.py:4891
 #, python-brace-format
 msgid ""
 "<b>Meridiana</b> {version}<br>Photovoltaic design: map, building model, sun "
@@ -17218,26 +17283,26 @@ msgstr ""
 "OpenStreetMap); i contorni delle loro aree da Natural Earth (pubblico "
 "dominio)."
 
-#: src/meridiana/ui/window.py:4918
+#: src/meridiana/ui/window.py:4920
 msgid "Checking for updates…"
 msgstr "Cerco gli aggiornamenti…"
 
-#: src/meridiana/ui/window.py:4925
+#: src/meridiana/ui/window.py:4927
 #, python-brace-format
 msgid "The check for updates failed: {error}"
 msgstr "Il controllo degli aggiornamenti non è riuscito: {error}"
 
-#: src/meridiana/ui/window.py:4931
+#: src/meridiana/ui/window.py:4933
 #, python-brace-format
 msgid "Meridiana {version} is the latest version."
 msgstr "Meridiana {version} è l'ultima versione."
 
-#: src/meridiana/ui/window.py:4936
+#: src/meridiana/ui/window.py:4938
 #, python-brace-format
 msgid "Version {version} is available: Help > Check for updates."
 msgstr "È disponibile la versione {version}: Aiuto > Cerca aggiornamenti."
 
-#: src/meridiana/ui/window.py:5037
+#: src/meridiana/ui/window.py:5039
 #, python-brace-format
 msgid "The window layout could not be saved: {error}"
 msgstr "La disposizione della finestra non si è potuta salvare: {error}"

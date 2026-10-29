@@ -34,10 +34,11 @@ def _revision(path: Path) -> str:
 
 def _base(path: Path, fingerprint: dict, metadata: dict | None = None) -> dict:
     metadata = metadata or {}
+    revision = _revision(path)
     return {"path": str(path), "name": path.stem, "job_id": metadata.get("job_id", ""),
             "job_code": metadata.get("job_code", ""), "job_name": metadata.get("job_name", ""),
             "client_name": metadata.get("client_name", ""), "reserved": bool(metadata.get("reserved", False)),
-            "revision": _revision(path), "error": "", **fingerprint}
+            "revision": revision, "revision_number": int(revision[1:]) if revision else 0, "error": "", **fingerprint}
 
 
 def _power(project: model.Project) -> float:
@@ -117,3 +118,78 @@ def scan(folders, known: dict | None = None) -> list[dict]:
         except OSError as error:
             rows[str(folder)] = {**_base(folder, {}, metadata), "error": f"Folder could not be scanned: {error}"}
     return [rows[path] for path in sorted(rows)]
+
+
+def search(rows: list[dict], query: str = "", kind: str = "", client: str = "", power_from: float = 0.0,
+           power_to: float = float("inf"), since: str = "", reference: dict | None = None,
+           max_distance_km: float | None = None) -> list[dict]:
+    """Lexical and structured search over the small derived rows, with every word required."""
+    if power_from < 0 or power_to < power_from or (max_distance_km is not None and reference is None):
+        raise ValueError("the search filters are not valid")
+    words = query.casefold().split()
+    client = client.casefold()
+    out = []
+    for row in rows:
+        haystack = " ".join(str(row.get(key, "")) for key in
+                            ("title", "name", "address", "job_code", "job_name", "client_name", "kind")).casefold()
+        power = float(row.get("power_kwp") or 0.0)
+        matches = (all(word in haystack for word in words) and (not kind or row.get("kind") == kind)
+                   and (not client or client in str(row.get("client_name", "")).casefold())
+                   and power_from <= power <= power_to and (not since or _date(row)[:10] >= since)
+                   and (max_distance_km is None or _distance(row, reference) <= max_distance_km))
+        if matches:
+            out.append(row)
+    return out
+
+
+def _date(row: dict) -> str:
+    return str(row.get("modified") or row.get("file_modified") or "")
+
+
+def revisions(rows: list[dict], series_id: str = "") -> list[dict]:
+    """The newest readable revision of each series, never a newer damaged file hiding a valid one."""
+    series = {}
+    for row in rows:
+        if row.get("error") or (series_id and row.get("series_id") != series_id):
+            continue
+        key = row.get("series_id") or row.get("path")
+        current = series.get(key)
+        candidate = (_date(row), int(row.get("revision_number") or 0))
+        if current is None or candidate > (_date(current), int(current.get("revision_number") or 0)):
+            series[key] = row
+    return sorted(series.values(), key=lambda row: (_date(row), int(row.get("revision_number") or 0)), reverse=True)
+
+
+def _distance(first: dict, second: dict) -> float:
+    import math
+    lat1, lon1, lat2, lon2 = (math.radians(float(row.get(key, 0.0)))
+                              for row, key in ((first, "lat"), (first, "lon"), (second, "lat"), (second, "lon")))
+    a = math.sin((lat2 - lat1) / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin((lon2 - lon1) / 2) ** 2
+    return 6371.0 * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def similar(rows: list[dict], reference: dict, power_from: float = 0.5, power_to: float = 2.0,
+            client: str = "") -> list[dict]:
+    """Compatible series newest first, with the components of similarity made explicit."""
+    if not 0 < power_from <= power_to:
+        raise ValueError("the power range is not valid")
+    out = []
+    reference_power = float(reference.get("power_kwp") or 0.0)
+    for row in revisions(rows):
+        if row.get("series_id") == reference.get("series_id") or row.get("kind") != reference.get("kind"):
+            continue
+        power = float(row.get("power_kwp") or 0.0)
+        if reference_power > 0 and not reference_power * power_from <= power <= reference_power * power_to:
+            continue
+        if reference_power == 0 and power != 0:
+            continue
+        if client and client.casefold() not in str(row.get("client_name", "")).casefold():
+            continue
+        same_mounting = bool(set(row.get("mountings") or []) & set(reference.get("mountings") or []))
+        same_tilt = any(abs(a - b) <= 5 for a in (row.get("tilts") or []) for b in (reference.get("tilts") or []))
+        distance = _distance(row, reference)
+        score = 2 * same_mounting + same_tilt + 1 / (1 + distance / 100)
+        out.append({**row, "similarity": round(score, 3), "same_mounting": same_mounting,
+                    "same_tilt": same_tilt, "distance_km": round(distance, 1),
+                    "reference_power_kwp": reference_power})
+    return sorted(out, key=lambda row: (_date(row), row["similarity"]), reverse=True)

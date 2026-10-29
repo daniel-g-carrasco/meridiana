@@ -6,8 +6,9 @@
 - The tools run on the window's thread between two rounds (assistant/tools.py, through `WindowHost`), at most
   conversation.ROUNDS rounds a question.
 - A proposal is a card in the bubble: «Apply» makes an edit through the window's edit() as one undo step, or runs
-  the proposed Undo or Redo through the same history bridge as the menu. «Discard» leaves the project as it is;
-  the model hears what the designer chose with the next question.
+  the proposed Undo or Redo through the same history bridge as the menu. «Open» shows path and revision first and
+  uses the normal unsaved-changes choice. «Discard» leaves the project as it is; the model hears what the designer
+  chose with the next question.
 - The local model is the default. Claude only with a key in the keyring and the designer's consent, asked the first
   time with what would leave (a card); never for a project marked reserved; the names withheld (privacy.py). No
   network: the question goes to the local model, and it is said.
@@ -119,6 +120,20 @@ class WindowHost:
 
     def path(self):
         return self.win.path
+
+    def index_rows(self):
+        return self.win.registry.list_index()
+
+    def dirty(self):
+        return self.win._dirty()
+
+    def open_project(self, path):
+        from pathlib import Path
+        if not self.win._keep_or_discard():
+            return False
+        target = Path(path)
+        self.win.open_path(target)
+        return self.win.path == target
 
     def checks(self):
         return list(self.win.checks_page.items)
@@ -682,8 +697,14 @@ class Chat(QObject):
 
     def _show_proposal(self, proposal: tools.Proposal) -> None:
         from .properties import field_label
+        opening = proposal.kind == "open_project"
+        labels = {"Path": _("Path"), "Revision": _("Revision")}
         lines = []
         for path, before, after in proposal.lines:
+            if opening:
+                lines.append(_("{field}: {value}").format(field=_escape(labels.get(path, path)),
+                                                          value=_escape(after)))
+                continue
             label = field_label(path.split(".")[-1] if proposal.kind in tools.SECTIONS else path, proposal.kind)
             lines.append(_("{field}: from {before} to {after}").format(field=_escape(label), before=_escape(before),
                                                                     after=_escape(after)))
@@ -693,18 +714,22 @@ class Chat(QObject):
             lines.append(_("Source: {source}").format(source=_escape(proposal.source)))
         if proposal.network:
             lines.append(_("It computes the year: the weather may be downloaded from PVGIS."))
-        card = Card(_("Proposal: {what}").format(what=proposal.title), lines,
-                    [("discard", _("Discard")), ("apply", _("Apply"))])
+        title = _("Open project: {what}") if opening else _("Proposal: {what}")
+        card = Card(title.format(what=proposal.title), lines,
+                    [("discard", _("Discard")), ("apply", _("Open") if opening else _("Apply"))])
         card.buttons["apply"].clicked.connect(lambda _c=False, p=proposal: self.apply(p))
         card.buttons["discard"].clicked.connect(lambda _c=False, p=proposal: self.discard(p))
         self.cards[proposal.id] = card
         self.widget.add_card(card)
 
     def apply(self, proposal: tools.Proposal) -> None:
-        """«Apply»: an edit or history command chosen by the designer, never by the model."""
+        """«Apply»: an edit, opening or history command chosen by the designer, never by the model."""
         text = _("{name}: {what}").format(name=core.NAME, what=proposal.title)
         try:
-            if proposal.kind == "history":
+            if proposal.kind == "open_project":
+                if not self.host.open_project(proposal.item["path"]):
+                    return
+            elif proposal.kind == "history":
                 self.host.history(proposal.oid)
             elif proposal.change is not None:
                 self.host.edit(text, proposal.change)
@@ -715,8 +740,12 @@ class Chat(QObject):
             self.widget.note(_("Not applied: {why}").format(why=error))
         else:
             proposal.state = "applied"
-            note = (_("Applied: {what}.") if proposal.kind == "history" else
-                    _("Applied: {what}. Ctrl+Z undoes it."))
+            if proposal.kind == "open_project":
+                note = _("Opened: {what}.")
+            elif proposal.kind == "history":
+                note = _("Applied: {what}.")
+            else:
+                note = _("Applied: {what}. Ctrl+Z undoes it.")
             self.widget.note(note.format(what=proposal.title))
             self.decisions.append(f"The designer applied {proposal.id}.")
         self._drop_card(proposal)

@@ -3,12 +3,13 @@ call, each with its name, its description and the JSON schema of its arguments, 
 from the project as it is now.
 
 Reading, without asking: `read_checks`, `project_summary`, `read_selection`, `read_results`, `read_pedigree`,
-`read_rules`, `search_manual`; `go_to` only moves the window. Proposing, never applying: `propose_fix` offers the
-fix a check already has (the way to prefer: in the trial of study 14, 4.4, a model free to write the fields
-invented one), `propose_edit` a change of the fields the Properties panel and the energy pages have, checked with
-the rules of the project file; a wrong field goes back to the model with the list of the right ones. `propose_undo`
-offers the current Undo or Redo step. A proposal is a `Proposal` the window shows as a card: only the designer
-applies it with a click.
+`read_rules`, `search_manual`, `search_projects`, `project_revisions` and `similar_projects`; `go_to` only moves
+the window. Proposing, never applying: `propose_fix` offers the fix a check already has (the way to prefer: in the
+trial of study 14, 4.4, a model free to write the fields invented one), `propose_edit` a change of the fields the
+Properties panel and the energy pages have, checked with the rules of the project file; a wrong field goes back to
+the model with the list of the right ones. `propose_undo` offers the current Undo or Redo step.
+`prepare_open_project` shows path and revision but never opens by itself. A proposal is a `Proposal` the window
+shows as a card: only the designer applies it with a click.
 
 The tools read the project through a `host`, the window or a test's stand-in, with:
     host.project                the model.Project in hand
@@ -19,6 +20,7 @@ The tools read the project through a `host`, the window or a test's stand-in, wi
     host.selection()            (kind, id) of what is selected
     host.phase()                the id of the phase open
     host.rules_facts()          rules.Facts of the project, or None
+    host.index_rows()           the derived rows of the local project index
     host.go_to(target)          the window brought to ("subfield", id), ("phase", id)...
     host.bindings()             command id -> its keys (shortcuts.bindings), or None for the defaults
 They run on the window's thread, between two rounds of the model: they read the project as it is, without races.
@@ -36,7 +38,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from .. import checks as checks_module
-from .. import layout, model, settings
+from .. import layout, model, project_index, settings
 from ..fields import field_label, field_value, mounting_names, pitch_mode_names
 from ..i18n import _, number
 
@@ -139,16 +141,44 @@ SPECS = {
                        "answer says so.",
         "parameters": _schema({"action": {"type": "string", "enum": ["undo", "redo"]}}, ("action",)),
     },
+    "search_projects": {
+        "description": "Search the local index of projects in linked folders by text, kind, client, power, date "
+                       "or distance from a project id. The returned ids are local aliases for the other tools.",
+        "parameters": _schema({"query": {"type": "string"},
+                               "kind": {"type": "string", "enum": ["", "roof", "ground", "mixed"]},
+                               "client": {"type": "string"}, "power_from": {"type": "number"},
+                               "power_to": {"type": "number"}, "since": {"type": "string"},
+                               "project_id": {"type": "string"}, "max_distance_km": {"type": "number"}}),
+    },
+    "project_revisions": {
+        "description": "Show the latest readable revision of each project series, or of one series_id. A newer "
+                       "damaged file never hides the latest valid revision.",
+        "parameters": _schema({"series_id": {"type": "string"}}),
+    },
+    "similar_projects": {
+        "description": "Find the latest similar projects: same kind, power within the requested range, mounting, "
+                       "tilt and distance explained. Each series appears once, at its latest valid revision.",
+        "parameters": _schema({"project_id": {"type": "string", "description": "an id from search_projects; empty "
+                                                                                "for the project in hand"},
+                               "power_from": {"type": "number"}, "power_to": {"type": "number"},
+                               "client": {"type": "string"}}),
+    },
+    "prepare_open_project": {
+        "description": "Prepare a confirmation card for opening a project id returned by another project tool. "
+                       "Never opens it: only the designer's click can open, through the normal unsaved-changes flow.",
+        "parameters": _schema({"project_id": {"type": "string"}}, ("project_id",)),
+    },
 }
 STEP_1 = ("read_checks", "project_summary", "go_to", "search_manual")
 STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "propose_fix", "propose_edit",
           "propose_undo")
+STEP_3 = ("search_projects", "project_revisions", "similar_projects", "prepare_open_project")
 
 
 def specs(names=None) -> list[dict]:
     """The tools as the providers take them: [{"name", "description", "parameters"}], always in the same order
     (a provider caches what comes before the conversation)."""
-    return [{"name": n, **SPECS[n]} for n in (names or (*STEP_1, *STEP_2))]
+    return [{"name": n, **SPECS[n]} for n in (names or (*STEP_1, *STEP_2, *STEP_3))]
 
 
 # what one call gives back
@@ -184,7 +214,9 @@ class State:
     """What the tools remember within one conversation: the checks by the ids last given, the proposals made."""
     checks: dict = field(default_factory=dict)
     proposals: dict = field(default_factory=dict)
+    projects: dict = field(default_factory=dict)
     count: int = 0
+    project_count: int = 0
 
 
 def _json(value) -> str:
@@ -888,7 +920,88 @@ def propose_edit(host, state: State, kind: str, changes, reason: str, id: str = 
                    _("Proposed: {what}").format(what=title), proposal=proposal)
 
 
+def _index_rows(host) -> list[dict]:
+    return list(host.index_rows()) if hasattr(host, "index_rows") else []
+
+
+def _project_payload(row: dict, state: State) -> dict:
+    state.project_count += 1
+    alias = f"pr{state.project_count}"
+    state.projects[alias] = row
+    keys = ("path", "name", "title", "series_id", "revision", "modified", "file_modified", "kind", "power_kwp",
+            "job_code", "job_name", "client_name", "address", "reserved", "error")
+    return {"id": alias, **{key: row.get(key) for key in keys if key in row}}
+
+
+def search_projects(host, state: State, query: str = "", kind: str = "", client: str = "",
+                    power_from: float = 0.0, power_to: float = float("inf"), since: str = "",
+                    project_id: str = "", max_distance_km: float | None = None) -> Outcome:
+    reference = state.projects.get(project_id)
+    if reference is None and not project_id and hasattr(host, "path"):
+        reference = next((row for row in _index_rows(host) if row.get("path") == str(host.path())), None)
+    if project_id and reference is None:
+        return _error("unknown project id: search_projects first")
+    found = project_index.search(_index_rows(host), query, kind, client, power_from, power_to, since,
+                                 reference, max_distance_km)
+    projects = [_project_payload(row, state) for row in found[:20]]
+    return Outcome(_json({"projects": projects, "truncated": len(found) > len(projects)}),
+                   _("Searched the local project index"))
+
+
+def project_revisions(host, state: State, series_id: str = "") -> Outcome:
+    found = project_index.revisions(_index_rows(host), series_id)
+    projects = [_project_payload(row, state) for row in found[:20]]
+    return Outcome(_json({"projects": projects, "truncated": len(found) > len(projects)}),
+                   _("Read the latest project revisions"))
+
+
+def _reason(row: dict) -> str:
+    kind = {"roof": _("roof"), "ground": _("ground"), "mixed": _("mixed")}.get(row.get("kind"), row.get("kind", ""))
+    mounting = _("same mounting") if row["same_mounting"] else _("different mounting")
+    tilt = _("similar tilt") if row["same_tilt"] else _("different tilt")
+    return _("{kind}, {power} kWp against {reference}, {mounting}, {tilt}, {distance} km, revision {revision} of "
+             "{date}").format(kind=kind, power=number(row.get("power_kwp") or 0, 1),
+                              reference=number(row["reference_power_kwp"], 1), mounting=mounting, tilt=tilt,
+                              distance=number(row["distance_km"], 1), revision=row.get("revision") or "-",
+                              date=str(row.get("modified") or row.get("file_modified") or "")[:10])
+
+
+def similar_projects(host, state: State, project_id: str = "", power_from: float = 0.5, power_to: float = 2.0,
+                     client: str = "") -> Outcome:
+    reference = state.projects.get(project_id)
+    if reference is None and not project_id and hasattr(host, "path"):
+        reference = next((row for row in _index_rows(host) if row.get("path") == str(host.path())), None)
+    if reference is None:
+        return _error("search_projects first and give one of its project ids")
+    found = project_index.similar(_index_rows(host), reference, power_from, power_to, client)
+    projects = []
+    for row in found[:20]:
+        projects.append({**_project_payload(row, state), "reason": _reason(row),
+                         "similarity": row["similarity"], "distance_km": row["distance_km"]})
+    return Outcome(_json({"projects": projects, "truncated": len(found) > len(projects),
+                          "meaning": "similarity helps a search; it is not a technical assessment"}),
+                   _("Found similar projects"))
+
+
+def prepare_open_project(host, state: State, project_id: str) -> Outcome:
+    row = state.projects.get(project_id)
+    if row is None:
+        return _error("search_projects first and give one of its project ids")
+    state.count += 1
+    title = row.get("title") or row.get("name") or project_id
+    proposal = Proposal(id=f"p{state.count}", title=title, kind="open_project", oid=project_id,
+                        lines=[("Path", "", row["path"]), ("Revision", "", row.get("revision") or "-")], item=row)
+    state.proposals[proposal.id] = proposal
+    dirty = bool(host.dirty()) if hasattr(host, "dirty") else False
+    return Outcome(_json({"proposed": proposal.id, "shown_to_designer": True, "applied": False,
+                          "unsaved_changes": dirty, "waiting": "the designer confirms the path and revision"}),
+                   _("Prepared opening {title}, revision {revision}").format(
+                       title=title, revision=row.get("revision") or "-"), proposal=proposal)
+
+
 TOOLS = {"read_checks": read_checks, "project_summary": project_summary, "go_to": go_to,
          "search_manual": search_manual, "read_selection": read_selection, "read_results": read_results,
          "read_pedigree": read_pedigree, "read_rules": read_rules, "propose_fix": propose_fix,
-         "propose_edit": propose_edit, "propose_undo": propose_undo}
+         "propose_edit": propose_edit, "propose_undo": propose_undo, "search_projects": search_projects,
+         "project_revisions": project_revisions, "similar_projects": similar_projects,
+         "prepare_open_project": prepare_open_project}
