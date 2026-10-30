@@ -1,0 +1,94 @@
+{
+  "revision": "R08",
+  "date": "2026-10-30",
+  "application_commit": "c567d7cf3ae8e3f003b3dc0aaa9799b831484119",
+  "previous_delivery": "R07, f83976190e05b48ed2a28cd829961ff4ceeed38d (packages kept in dist/packages-20261030-R07)",
+  "branch": "integra-kimi-9-10",
+  "source_manifest": "source-manifest-20261030-R08.json",
+  "source_manifest_sha256": "cad19716bae9a37439ee64da41720839986f5376878a5399bfc1bf2d9d713cf1",
+  "source_files_verified": 361,
+  "source_changes_versus_R07": "0 added, 0 removed, 9 changed (session.py, updates.py, ui/fades.py, ui/help_box.py, ui/update_controller.py, ui/update_dialog.py, ui/window.py, po/it.po, compiled catalogue)",
+  "source_snapshot": "build/claude-r07/P-source-20261030-R08",
+  "artifacts": [
+    {
+      "name": "meridiana-portable-20261030-R08-windows-x64.zip",
+      "sha256": "653845d1134f51c25bf439bf287d7d81d0de24d2c618c7d1a7edff7cf2fd433b",
+      "bytes": 249474985
+    },
+    {
+      "name": "meridiana-setup-v0.1.0-preview20261030-R08-windows-x64.exe",
+      "sha256": "4abae79600cace580d4be75f616c7e12c4b8e1d8ae032b381871dd3f53db76e6",
+      "bytes": 173394713
+    },
+    {
+      "name": "meridiana-linux-x86_64-20261030-R08.flatpak",
+      "sha256": "6168a30d8677c125d50ee630db0f3a9149a8d882be272b438e2d797f842691ad",
+      "bytes": 213600120
+    }
+  ],
+  "packages_folder": "dist/packages-20261030-R08",
+  "windows": {
+    "bundle": "dist/windows-bundle-20261030-R08/Meridiana",
+    "bundle_files": 5076,
+    "executable_sha256": "9d9d387dd861779bec157a193ac266e5cf62ace04419e8da9d52dfb569dc24c7",
+    "zip_verification": "5076 files, CRC complete, names and sizes identical to the bundle",
+    "user_meridiana_running_during_checks": true,
+    "portable_native_self_test": "PASS: D3D11, first frame 0.50 s, 0 failures in 40.59 s; foreground changed during the run while Daniel was using VS Code (attributed to his activity, not proven)",
+    "frozen_kokoro_worker": {
+      "fake_protocol": "PASS, ready 0.33 s",
+      "real_synthesis": "PASS with weights already on the PC: ready 2.79 s, 98304 PCM bytes in 5.87 s, exit 0",
+      "weights_downloaded": false
+    },
+    "single_instance": "PASS: second start exit 0 in 0.47 s, project opened in the first, first start quits by itself with exit 0 after its screenshot",
+    "update_check_404_logged": false,
+    "installer": "PASS after waiting for the user's Meridiana to close (mutex free at 15:50, nothing closed): isolated per-user install exit 0 in 34.4 s, exe identical to bundle, native self-test D3D11 0 failures with foreground unchanged, uninstall exit 0, registry and shortcuts restored, user data marker preserved; log build/desktop-package-check-20261030-R08",
+    "installed_on_pc": false,
+    "signed": false,
+    "logs": ["build/windows-portable-selftest-20261030-R08", "build/windows-portable-check-20261030-R08-run3.log"]
+  },
+  "defect_save_question_after_open": {
+    "probe": "build/claude-r07/P-instance-exit-probe-R08.py",
+    "source_R08": {"argv_network": "exit 0, 21.8 s", "argv_offline": "exit 0, 19.8 s", "handover_network": "exit 0, 21.3 s", "handover_offline": "exit 0, 24.6 s"},
+    "frozen_R08": {"argv_network": "exit 0, 18.8 s", "argv_offline": "exit 0, 19.0 s", "handover_network": "exit 0, 19.4 s", "handover_offline": "exit 0, 19.6 s"},
+    "control_source_R07": {"argv_network": "hung on the save dialog", "argv_offline": "exit 0, 20.6 s"},
+    "offline_method": "HTTP(S)_PROXY pointed at a closed local port (simulation)"
+  },
+  "linux_package": {
+    "builder": "WSL openSUSE-Tumbleweed, driver build/flatpak-r12-driver.sh (revision r12, cache from r11 including the Kokoro stage)",
+    "exported_imported_ostree_commit": "7bf3dcc1fd518928a8452ab484786b2c5f3d72af5c17536a0b1a095b07a82386",
+    "self_test": "PASS offscreen, 0 failures",
+    "package_probe": "PASS, including real Kokoro synthesis with the Windows weights mounted read-only",
+    "pip_check": "No broken requirements found",
+    "source_verification": "361/361 files equal to the freeze, 337 installed files identical, Italian catalogue equal",
+    "bundle_import_fsck": "PASS, exported and imported commit identical"
+  },
+  "linux_native": {
+    "host": "fw13 (lucciola)",
+    "app_id": "io.github.daniel_g_carrasco.meridiana",
+    "installation": "user",
+    "runtime": "org.kde.Platform/x86_64/6.11",
+    "previous_installed_commit": "e1d47f5441667445b02da21fe5a9f361d522a746ed3d0c6d3f43fd062439d392",
+    "installed_ostree_commit": "7bf3dcc1fd518928a8452ab484786b2c5f3d72af5c17536a0b1a095b07a82386",
+    "remote_sha256_verified": true,
+    "remote_folder": "~/fvtest/meridiana-consegna-20261030-R08",
+    "previous_bundles_preserved": "R07 (e04efc8a...) and R06 (97363a4a...) rechecked",
+    "meridiana_running_before_install": false,
+    "user_processes_stopped": false,
+    "native_environment": "XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 NIRI_SOCKET=/run/user/1000/niri.wayland-1.1878.sock",
+    "native_standard_self_test": "PASS: Wayland OpenGL, first frame, 0 failures in 12.44 s",
+    "native_explicit_3d_probe": "PASS: window 1100 x 821, view 525 x 399, image 1050 x 798, 30-degree orbit changed the image, exit 0 in 11.54 s",
+    "kokoro_in_flatpak": "PASS: kokoro_onnx from /app/lib/python3.13/site-packages, weights found in ~/.local/opt/kokoro, sandbox Python, real synthesis ready 0.92 s, 98304 PCM bytes in 1.37 s",
+    "installed_package_probe": "PASS",
+    "document_portal": "mounted before install and after every probe; never restarted",
+    "meridiana_left_running": false,
+    "logs_directory": "build/laptop-install-20261030-R08"
+  },
+  "not_verified": [
+    "Visual check of the fades in Consumi, Bilancio and Verifiche and of the Help card (in the frozen sources; not inspected by this delivery)",
+    "Touchpad gestures on the laptop (only the programmatic orbit)",
+    "Audible playback of the Kokoro voice",
+    "Kokoro worker run from the installed Windows copy (installed exe identical to the bundle)",
+    "Update over a running real Windows instance; Wayland activation token on hand-over"
+  ],
+  "publication": "none: no push, tag, release or upload"
+}
