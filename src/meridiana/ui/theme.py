@@ -348,7 +348,7 @@ QLabel#state-stale {{ background: transparent; color: {t['text']}; border-color:
 QLabel#state-todo {{ background: {t['line_soft']}; color: {t['text2']}; }}
 QLabel#state-unavailable, QLabel#state-planned {{ background: {t['line_soft']}; color: {t['muted']}; }}
 QFrame#chart-card {{ background: transparent; border: 1px solid {t['line_soft']}; border-radius: {R.CARD}px; }}
-QFrame#chart-card QTabWidget::pane {{ border: none; border-top: 1px solid {t['line_soft']}; top: 0px; }}
+QFrame#chart-card QTabWidget::pane {{ border: none; border-top: 1px solid {t['line_soft']}; top: {S.XS}px; padding-top: {S.M}px; }}
 QToolButton#file-chip {{ background: transparent; color: {t['text']}; border: 1px solid transparent;
                         border-radius: {Button.PUSH[1]}px; padding: {S.XXS}px {S.L - 2}px {S.XXS}px {S.M}px; }}
 QToolButton#file-chip:hover {{ background: {hover}; }}

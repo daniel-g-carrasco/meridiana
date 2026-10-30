@@ -221,8 +221,9 @@ def chart_card(tabs: QTabWidget) -> QFrame:
     # the pills centred in their band (R284): the bar keeps XS above and below each pill, the card adds XS
     # above the bar and the pane's line stands XS under it, so a pill has M of air on both sides; under the
     # line every tab's content starts M lower (R285: one rule for every tab, docs/design/sistema-grafico.md)
+    # the pane's part in theme.py (#chart-card QTabWidget::pane): a sheet of the tabs' own doubled the time of
+    # every change of theme, Qt polishing the charts under it apart from the rest (1.4 s instead of 0.7, 30/10/2026)
     box.setContentsMargins(Space.M, Space.XS, Space.M, Space.M)
-    tabs.setStyleSheet(f"QTabWidget::pane {{ top: {Space.XS}px; padding-top: {Space.M}px; }}")
     box.addWidget(tabs)
     return card
 
