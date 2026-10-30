@@ -118,6 +118,8 @@ class IndexJob(QRunnable):
 
 AUTOSAVE_MS = 120_000           # a copy of the unsaved changes every two minutes
 ENERGY_PAUSE_MS = 500
+PVGIS_STEPS = (0, 1, 3)         # pipeline's steps that ask PVGIS when the year may fetch: the typical year, the
+                                # horizon, its estimate (2, the year and the electrical network, is computed here)
 RELAYOUT_PAUSE_MS = 150
 PREVIEW_REPORT_MS = 700
 WARM_UP_MS = 1500
@@ -153,15 +155,17 @@ class ClimateJob(QRunnable):
 
 class EnergySignals(QObject):
     done = Signal(int, object)
-    step = Signal(int, int, int, str)          # generation, steps done, steps (pipeline.STEPS), what comes now
+    # generation, steps done (a fraction inside the electrical network, R266), steps (pipeline.STEPS), what comes now
+    step = Signal(int, float, int, str)
 
 
 class EnergyJob(QRunnable):
     """Production, consumption, balance and economics of the project (energy/pipeline.py), away from the
     window's thread. The network is used when the designer asked or the site's data is missing (fetch): otherwise
-    only what is inside the project or in the cache. Each step is told (`step`, the bar of PVGIS); `interrupt` (Cancel) stops it before the next one, so
-    between two requests to PVGIS. A flag of the job and not QThread.requestInterruption: the pool's threads
-    live on, and the request would stay on the thread for the next job."""
+    only what is inside the project or in the cache. Each step is told (`step`, the bar of the production); `interrupt`
+    (Cancel, or a newer year asked for) stops it before the next one: between two requests to PVGIS, or between two
+    chunks of hours of the electrical network. A flag of the job and not QThread.requestInterruption: the pool's
+    threads live on, and the request would stay on the thread for the next job."""
 
     def __init__(self, generation: int, snapshot: dict, results: dict, cache: Path, fetch: bool,
                  refresh: bool = False):
@@ -174,10 +178,10 @@ class EnergyJob(QRunnable):
     def interrupt(self) -> None:
         self.interrupted = True
 
-    def _progress(self, done: int, total: int, what: str) -> None:
+    def _progress(self, done: float, total: int, what: str) -> None:
         if self.interrupted:
             raise pipeline.Interrupted()
-        tell(self.signals.step, self.generation, done, total, what)
+        tell(self.signals.step, self.generation, float(done), total, what)
 
     def run(self):
         p = model.Project.from_json(self.snapshot, check=False)
@@ -2113,6 +2117,7 @@ class MainWindow(QMainWindow):
         properties and nothing else: no layout, no year. Another project in the place of this one ("file")
         is shown by the caller, framed."""
         if "file" in topics:
+            self._abandon_year()                # the year on its way was the old project's
             return
         if "restored" in topics:
             self.props.drop_typing()
@@ -2193,6 +2198,7 @@ class MainWindow(QMainWindow):
         if not vid or vid == self.project.variant:
             return
         name = next(v["name"] for v in self.project.variants if v["id"] == vid)
+        self._abandon_year()                    # the year on its way was the other variant's
         self.energy = {}
         self.results = {}
         self.edit(_("Work on the variant {name}").format(name=name), lambda p: p.switch_variant(vid))
@@ -3143,6 +3149,8 @@ class MainWindow(QMainWindow):
             self.tell(_("The plant could not be read for the energy pages: {error}").format(error=error))
             arrays = []
         self.energy_page.show_project(self.project, arrays)
+        for page in (self.energy_page, self.consumption_page):
+            page.show_basis((self.energy or {}).get("basis"))
         if hasattr(self, "plant_page"):
             self.plant_page.show_inverter(system.describe(self.project.energy))
             self.inverter_reference.show_energy(self.project.energy)
@@ -3311,11 +3319,19 @@ class MainWindow(QMainWindow):
         if losses.use_horizon and climate.get("horizon") is None \
                 and not meteo.cached(lat, lon, self.paths.cache, "horizon"):
             needed = True
+        asked = fetch
         fetch, refresh = fetch or needed, refresh or needed
         refused = self._pvgis_refused() if fetch else ""
         if refused:
-            self.tell(refused)
+            # asked by the designer, said; a year computed by itself after a change says it only on a free status
+            # bar: at every change it covered what the change itself said («all 4 strings cleared»..., review H)
+            if asked or not self.statusBar().currentMessage():
+                self.tell(refused)
             fetch = refresh = False
+        if self.energy_job is not None:
+            # the year asked before is awaited no longer: stopped at its next step, not left computing beside this one
+            # (R266: years of a large plant, a minute each, piled up in the pool and the last waited for them all)
+            self.energy_job.interrupt()
         job = EnergyJob(self.session.energy_asked(), self.snapshot(), self.session.good_results(), self.paths.cache,
                         fetch, refresh=refresh)
         job.signals.done.connect(self._energy_done)
@@ -3330,8 +3346,8 @@ class MainWindow(QMainWindow):
 
     def _computing(self, on: bool, fetch: bool = False) -> None:
         """The year on its way (on) or back (off): the arc on the energy pages and, in the status bar, the words or,
-        when PVGIS is asked, the bar with its percentage and Cancel; all of it only past the threshold (study 16,
-        F3 and F4; design 3.10, 3.12)."""
+        when PVGIS is asked or the job tells its first step (_energy_step), the bar with its percentage and Cancel;
+        all of it only past the threshold (study 16, F3 and F4; design 3.10, 3.12)."""
         if on and fetch:
             self.busy_wait.end()
             self.pvgis_progress.begin(_("PVGIS: {what}").format(what=_("the typical year")))
@@ -3344,21 +3360,35 @@ class MainWindow(QMainWindow):
         for page in (self.energy_page, self.consumption_page, self.economics_page):
             page.set_computing(on)
 
-    def _energy_step(self, generation: int, done: int, total: int, what: str) -> None:
-        """A step of the year awaited: the bar of PVGIS moves (pipeline.STEPS: the typical year, the horizon, the year
-        hour by hour, PVGIS's estimate)."""
-        if generation == self.energy_generation and self.pvgis_progress.running():
-            self.pvgis_progress.set(done / total, _("PVGIS: {what} ({n} of {total})").format(
-                what=what, n=done + 1, total=total))
+    def _energy_step(self, generation: int, done: float, total: int, what: str) -> None:
+        """A step of the year awaited: the bar moves (pipeline.STEPS: the typical year, the horizon, the year hour by
+        hour with the electrical network, a fraction of the step at each chunk of hours, PVGIS's estimate). A year
+        computed without the network has its bar and Cancel too, from its first step (R266: the electrical network of
+        a large plant lasts minutes). «PVGIS:» only on the steps that may ask it."""
+        if generation != self.energy_generation:
+            return
+        job = self.energy_job
+        asking = job is not None and job.generation == generation and job.fetch and done in PVGIS_STEPS
+        text = (_("PVGIS: {what} ({n} of {total})") if asking else
+                _("Production: {what} ({n} of {total})")).format(what=what, n=int(done) + 1, total=total)
+        if not self.pvgis_progress.running():
+            self.busy_wait.end()                    # the bar says it: not the words as well
+            self.pvgis_progress.begin(text)
+        self.pvgis_progress.set(done / total, text)
 
-    def _cancel_pvgis(self) -> None:
-        """Cancel on the bar of PVGIS: the year asked for is awaited no longer (its generation passed) and its job stops
-        before its next request; the project and the year in hand stay as they were."""
+    def _abandon_year(self) -> None:
+        """The year on its way is awaited no longer (Cancel, another project or variant in hand): its job stops at its
+        next step, its generation passed so that nothing it might still tell is taken, the waits gone."""
         if self.energy_job is not None:
             self.energy_job.interrupt()
         self.energy_generation += 1
         self._computing(False)
-        said = _("PVGIS stopped: the values are those of the last computation.")
+
+    def _cancel_pvgis(self) -> None:
+        """Cancel on the bar of the production: the year asked for is awaited no longer (its generation passed) and its
+        job stops before its next step; the project and the year in hand stay as they were."""
+        self._abandon_year()
+        said = _("Production stopped: the values are those of the last computation.")
         self.energy_page.status.setText(said)
         self.statusBar().showMessage(said, 6000)
 
@@ -3366,6 +3396,8 @@ class MainWindow(QMainWindow):
         if not self.session.energy_done(generation, out):
             return
         self._computing(False)
+        for page in (self.energy_page, self.consumption_page):
+            page.show_basis(out.get("basis"))
         climate = self.project.climate or {}
         refresh = self.energy_job.refresh if self.energy_job is not None else False
         keep_climate = (not meteo.usable(climate.get("tmy"), self.project.site.lat, self.project.site.lon)
@@ -3914,12 +3946,32 @@ class MainWindow(QMainWindow):
         remembered = (self.project.energy or {}).get("inverter_maker", "")
         current = entries[0]["record"].get("manufacturer", "") if entries else ""
         wanted = remembered or current
-        index = next((i for i, name in enumerate(makers) if name.casefold() == wanted.casefold()), 0)
-        maker, ok = QInputDialog.getItem(self, _("Size the inverter by itself"), _("Manufacturer:"), makers, index,
-                                         False)
+        # the picker (R268, ui/brand_picker.py): a search over the makers, the user's favourites on top, the
+        # project's maker preselected; a maker without one record the sizing can use (the CEC's list gives no MPPT
+        # count: «ABB», «SolarEdge Technologies Ltd») stays reachable but attenuated, after the others, with the
+        # reason and the sizable name to use instead as its tooltip (F, R267)
+        from ..energy import sizing
+        from .brand_picker import NameDialog
+        records = list(catalog.load("inverters"))
+        sizable = {str(r.get("manufacturer", "")).casefold() for r in records if not sizing.missing_fields(r)}
+        dimmed = {}
+        for name in makers:
+            if name.casefold() not in sizable:
+                why = _("No model of {maker} in the catalogue has the datasheet data the sizing needs.").format(
+                    maker=name)
+                if others := sizing.alternatives(name, records):
+                    why += " " + _("Sizable instead: {brands}.").format(brands="; ".join(others))
+                dimmed[name] = why
+        maker, ok, favourites = NameDialog.ask(self, _("Size the inverter by itself"), _("Manufacturer:"), makers,
+                                               current=wanted, favourites=self.cfg.inverter_brand_favourites,
+                                               dimmed=dimmed, placeholder=_("Search a manufacturer"),
+                                               others_title=_("All manufacturers"))
+        if favourites != self.cfg.inverter_brand_favourites:
+            self.cfg.inverter_brand_favourites = favourites        # the user's, kept also when the window is cancelled
+            self._save_config()
         if not ok:
             return
-        candidates = [r for r in catalog.load("inverters")
+        candidates = [r for r in records
                       if str(r.get("manufacturer", "")).casefold() == maker.casefold()
                       and float(r.get("ac_power_nominal_w") or r.get("pac") or 0.0) > 0.0]
         if not candidates:
@@ -3965,7 +4017,12 @@ class MainWindow(QMainWindow):
             self.tell(_("Inverter search failed: {why}").format(why=str(result)))
             return
         if not result.ok or not result.search_complete:
-            self.tell(result.reason)
+            # the reason has a line for each model that cannot do it (R267): the status bar shows the first, the
+            # whole of it in a window
+            first, _sep, rest = result.reason.partition("\n")
+            self.tell(first, 30.0)
+            if rest.strip():
+                QMessageBox.information(self, _("Size the inverter by itself"), result.reason)
             return
 
         def size(p):
@@ -3977,8 +4034,12 @@ class MainWindow(QMainWindow):
         self.edit(_("Size the inverters by themselves"), size)
         what = " + ".join(f"{e['count']} x {e['record'].get('model', '')}" for e in result.entries)
         modules = sum(len(r["modules"]) for r in result.runs)
-        self.tell(_("Inverters sized: {what}, DC/AC {r}. All {n} modules have a valid string. Choice: {criterion}."
-                    ).format(what=what, r=number(result.ratio, 2), n=modules, criterion=result.criterion))
+        message = _("Inverters sized in Plant: {what}, DC/AC {r}. All {n} modules have a valid string. "
+                    "Review Plant > Active inverters and Strings. Choice: {criterion}.").format(
+                        what=what, r=number(result.ratio, 2), n=modules, criterion=result.criterion)
+        if result.notes:            # a condition of the choice (S1400: inverter without DC fuses), combinations undecided
+            message += " " + _("Note: {notes}").format(notes="; ".join(result.notes))
+        self.tell(message, 30.0)
 
     # the plant (task 16d)
 
@@ -4215,7 +4276,9 @@ class MainWindow(QMainWindow):
             log.complain("string proposal", result)
             self.tell(_("Meridiana could not propose the strings: {error}").format(error=result))
             return
-        failed = [s.why for s in result.strings if s.state != "ok"]
+        # a string whose only warning is a condition of its order (S1400: an inverter without DC fuses, R267) may be
+        # proposed, as the automatic sizing proposes it; said with the strings assigned
+        failed = [s.why for s in result.strings if not plant_model.acceptable(s)]
         failed += [c.detail for checks in result.checks.values() for c in checks
                    if c.level == "fail" or c.key == "imp_total" and c.level == "warn"]
         if not result.search_complete or failed:
@@ -4237,10 +4300,17 @@ class MainWindow(QMainWindow):
         self._strings_put(title, proposal, {"strategy": job.strategy} if job.strategy else None,
                           entries=getattr(result, "entries", None))
         if result.left:
-            self.tell(_("Connected {n} strings; {m} modules remain unconnected. Review the selected inverters and "
-                        "inputs. Undo restores the previous wiring.").format(n=len(proposal), m=len(result.left)))
+            message = _("Plant > Strings: {n} strings assigned; {m} modules remain unconnected. "
+                        "Choose the working inverter and review its inputs. Undo restores the previous wiring."
+                        ).format(n=len(proposal), m=len(result.left))
         else:
-            self.tell(_("String assignment completed: {n} strings. Undo restores the previous wiring.").format(n=len(proposal)))
+            message = _("Plant > Strings: {n} strings assigned. Choose the working inverter and review its "
+                        "inputs. Undo restores the previous wiring.").format(n=len(proposal))
+        conditions = plant_model.conditions_of(result.strings)
+        if conditions:              # read longer: a condition of the order (S1400)
+            self.tell(message + " " + _("Note: {notes}").format(notes="; ".join(conditions)), 30.0)
+        else:
+            self.tell(message)
 
     def _strings_propose(self, strategy: str = "") -> None:
         """«Propose the strings» (R114): Meridiana's strings in place of those there are, once, with `strategy` (the
@@ -4287,7 +4357,10 @@ class MainWindow(QMainWindow):
             return
         self.chosen_string = -1
         self._strings_put(_("Delete all the strings"), [])
-        self.tell(_("Every string deleted: draw yours with «+» on an input of the list on the right, or «Draw»."))
+        self.tell(ngettext("Plant > Strings: the string was cleared; its modules stay laid. Use Draw or Propose to "
+                           "start again. Undo restores the previous wiring.",
+                           "Plant > Strings: all {n} strings cleared; the modules stay laid. Use Draw or Propose to "
+                           "start again. Undo restores the previous wiring.", len(runs)).format(n=len(runs)))
 
     def _delete_string(self, index: int) -> None:
         """Del with a string chosen (R115): that string deleted, its modules in no string (one undo step)."""
@@ -4975,9 +5048,11 @@ class MainWindow(QMainWindow):
     def _drop_autosave(self) -> None:
         self.session.drop_autosave(self.paths.state)
 
-    def offer_recovery(self) -> bool:
-        """A copy left by a session that stopped without saving: offered back, the newest first."""
-        copies = recovery.pending(self.paths.state)
+    def offer_recovery(self, asked: Path | None = None) -> bool:
+        """A copy left by a session that stopped without saving: offered back, the newest first; with a project
+        `asked` for by name (app.prepare_workspace) only its own copy. The copies of a Meridiana still running are
+        not offered (recovery.pending), so «No» never deletes them."""
+        copies = recovery.pending(self.paths.state) if asked is None else recovery.pending(self.paths.state, asked)
         if not copies:
             return False
         c = copies[0]
@@ -5005,6 +5080,31 @@ class MainWindow(QMainWindow):
         self._title()
         self.statusBar().showMessage(_("Recovered: save it to keep it"), 8000)
         return True
+
+    def open_handed_over(self, files: list, token: str = "") -> None:
+        """A later start handed over its project (app.main, single_instance.py): the window comes to the front and
+        opens the first file, after asking about the unsaved changes as File > Open does; the project already open
+        is only brought forward, not read again. On Wayland the start's activation token lets the window come
+        forward [I: not tried, no Wayland desktop here]. While a dialog of the window is open the project waits for
+        it to close."""
+        if token:
+            import os
+            os.environ["XDG_ACTIVATION_TOKEN"] = token
+        if self.isMinimized():
+            self.showNormal()
+        self.raise_()
+        self.activateWindow()
+        if not files:
+            return
+        if QApplication.activeModalWidget() is not None:
+            QTimer.singleShot(500, self, lambda: self.open_handed_over(files))
+            return
+        target = Path(files[0])
+        if self.path is not None and recovery.slot(self.paths.state, self.path) == recovery.slot(self.paths.state,
+                                                                                                 target):
+            return                                  # the same file (recovery.slot compares the resolved paths)
+        if self._keep_or_discard() and self.open_path(target) and self.file_page.isVisible():
+            self.file_page.close_page()
 
     def _refresh_index(self) -> None:
         """Start a fresh scan; a slower, older result never replaces a newer one."""
@@ -5124,14 +5224,14 @@ class MainWindow(QMainWindow):
         if name:
             self.open_path(Path(name))
 
-    def open_path(self, path: Path) -> None:
+    def open_path(self, path: Path) -> bool:
         try:
             notice = self.session.open(path, self.paths.cache)
         except Exception as error:             # noqa: BLE001  a damaged file is said, never a crash of the slot
             log.complain("open", error)
             QMessageBox.warning(self, _("Open a project"), _("{file} could not be opened: {error}").format(
                 file=path.name, error=error))
-            return
+            return False
         self._mark_saved()
         linked = self.registry.project_at(path)
         self.current_job_id = self.project.job_id or (linked["job_id"] if linked else "")
@@ -5145,6 +5245,7 @@ class MainWindow(QMainWindow):
         self._refresh_index()
         if notice:
             QMessageBox.information(self, _("Open a project"), notice)
+        return True
 
     def _save(self) -> bool:
         if self.path is None:
@@ -5247,6 +5348,9 @@ class MainWindow(QMainWindow):
             self._start_tour()
         elif command == "bug":
             self._report_bug()
+        elif command == "navigation":
+            from ..assistant.navigation_help import explain
+            self.assistant.answer(explain(self.assistant_chat.host))
         return bool(command)
 
     def _daily_update_check(self) -> None:

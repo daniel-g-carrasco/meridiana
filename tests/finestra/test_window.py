@@ -1501,7 +1501,7 @@ class PlantPhase(PlantWindow):
         self.assertEqual(self.win.docks[1].windowTitle(), "Inverters")
         self.assertEqual([b.property("tool") for b in self.win.bars["plant"].buttons().values()],
                          ["inverter_catalog", "inverter_auto", "battery_catalog", "strings_auto",
-                          "strings_complete", "strings_manual"])
+                          "strings_complete", "strings_manual", "strings_clear"])
         QTest.keyClick(self.win, Qt.Key.Key_PageUp, Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(self.win.phase(), "model")
         self.assertEqual(self.win.split.indexOf(self.win.plan), 0)     # back beside the 3D view
@@ -1555,9 +1555,8 @@ class PlantPhase(PlantWindow):
         self.assertEqual({(s.inverter, s.mppt) for s in plant.strings}, {(1, 2)})
         self.win._assign_subfield(self.sid, 0, 0)                        # otherwise only input 2 may be used
         self.assertTrue(wait_until(self.app, self.win._layouts_settled))
-        from PySide6.QtWidgets import QInputDialog
         with mock.patch("meridiana.ui.window.catalog.load", return_value=(rec,)), \
-                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
+                mock.patch("meridiana.ui.brand_picker.NameDialog.ask", return_value=("Acme", True, [])):
             self.win.commands["inverter_auto"].trigger()
             self.wait_for_sizing()
         self.assertGreaterEqual(self.win.project.energy["inverters"][0]["count"], 1)
@@ -1565,11 +1564,10 @@ class PlantPhase(PlantWindow):
                          self.win.results[self.sid].count)
 
     def sizing_asks_the_brand_remembers_it_and_says_the_result(self):
-        from PySide6.QtWidgets import QInputDialog
         rec = inverter_record(model="AC-10K", ac_power_nominal_w=10000)
         with mock.patch("meridiana.ui.window.catalog.brands", return_value=["Acme", "Other"]), \
                 mock.patch("meridiana.ui.window.catalog.load", return_value=(rec,)), \
-                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)) as asked:
+                mock.patch("meridiana.ui.brand_picker.NameDialog.ask", return_value=("Acme", True, [])) as asked:
             self.win.commands["inverter_auto"].trigger()
             self.assertEqual(asked.call_count, 1)
             self.wait_for_sizing()
@@ -1585,13 +1583,12 @@ class PlantPhase(PlantWindow):
         self.assertTrue(wait_until(self.app, self.win._layouts_settled))
         before = self.win.project.to_json()
         with mock.patch("meridiana.ui.window.catalog.brands", return_value=["Acme", "Other"]), \
-                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", False)) as cancelled:
+                mock.patch("meridiana.ui.brand_picker.NameDialog.ask", return_value=("Acme", False, [])) as cancelled:
             self.win.commands["inverter_auto"].trigger()
-        self.assertEqual(cancelled.call_args.args[4], 0)                 # the remembered brand is preselected
+        self.assertEqual(cancelled.call_args.kwargs["current"], "Acme")                 # the remembered brand is preselected
         self.assertEqual(self.win.project.to_json(), before)
 
     def sizing_chooses_the_model_and_count_together(self):
-        from PySide6.QtWidgets import QInputDialog
         self.win._entries_edit("Clear", lambda entries: entries.clear())
         self.assertTrue(wait_until(self.app, self.win._layouts_settled))
         from meridiana.energy import system
@@ -1603,7 +1600,7 @@ class PlantPhase(PlantWindow):
         near = inverter_record(model="NEAR", ac_power_nominal_w=round(target * 0.975), **room)
         better = inverter_record(model="BETTER", ac_power_nominal_w=round(target * 1.22), **room)
         with mock.patch("meridiana.ui.window.catalog.load", return_value=(near, better)), \
-                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
+                mock.patch("meridiana.ui.brand_picker.NameDialog.ask", return_value=("Acme", True, [])):
             self.win.commands["inverter_auto"].trigger()
             self.wait_for_sizing()
         entry = self.win.project.energy["inverters"][0]
@@ -1722,14 +1719,18 @@ class Stringing(PlantWindow):
         plant = self.plant(lambda p: len(p.strings) > n)
         self.assertEqual(self.runs()[:n], mine)
         self.assertEqual(self.win.undo.undoText(), "Complete the strings")
+        self.assertIn("Plant > Strings:", self.win.statusBar().currentMessage())
+        self.assertIn(f"{len(plant.strings)} strings assigned", self.win.statusBar().currentMessage())
         self.dialogs.clear()
         self.win.strategy_actions["serpentine"].trigger()                    # over strings: asked first
         self.assertEqual([d[0] for d in self.dialogs], ["question"])
         self.dialogs.clear()
+        count_before_clear = len(self.runs())
         self.win.commands["strings_clear"].trigger()                         # all deleted: asked, one step
         self.assertEqual([d[0] for d in self.dialogs], ["question"])
         plant = self.plant(lambda p: not p.strings)
         self.assertEqual(self.win.undo.undoText(), "Delete all the strings")
+        self.assertIn(f"Plant > Strings: all {count_before_clear} strings cleared", self.win.statusBar().currentMessage())
         self.win.undo.undo()
         self.plant(lambda p: bool(p.strings))
 
