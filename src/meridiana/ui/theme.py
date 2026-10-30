@@ -207,7 +207,7 @@ QTreeView, QListView {{ background: {t['card']}; border: 1px solid {t['card_line
                         outline: 0; }}
 QDockWidget QTreeView, QDockWidget QListView {{ background: transparent; border: none; }}
 QTreeView::item {{ padding: {S.XXS}px 0; }}
-QTreeView#checks-tree {{ outline: 0; show-decoration-selected: 0; }}
+QTreeView#checks-tree {{ outline: 0; show-decoration-selected: 0; padding: {S.S}px 0; }}
 QLabel#report-page {{ border: 1px solid {t['line']}; background: #ffffff; }}
 QTreeView#checks-tree::item {{ padding: {S.XS}px {S.XXS}px; border: none; }}
 QTreeView#checks-tree::item:selected, QTreeView#checks-tree::item:hover {{ background: transparent;

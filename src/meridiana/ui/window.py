@@ -1234,7 +1234,9 @@ class MainWindow(QMainWindow):
             fades.attach(area)
         # the checks' rows are drawn on the view's own ground (white in the light theme): the bands fade into it, the
         # panel's colour left a band of another tone that hid nothing (30/10/2026, «velatura ... nel pannello verifiche»)
-        fades.attach(self.checks_page.tree, table=True)
+        # as the right panels and the report (Daniel, 30/10/2026: «quell'effetto lì»): the rows stop short of the
+        # card's lines and fade out with the pages' curve, into the rows' own colour
+        fades.attach(self.checks_page.tree, air=True, table=True, page_list=True)
         fades.set_ground(self.checks_page.tree, self.checks_page.tree.colours["card"])
         # the pages and the panels: what scrolls stops short of the card's lines (R177)
         for area in (self.props, self.inspector.results, self.inspector.deliverables,

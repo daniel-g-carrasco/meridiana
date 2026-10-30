@@ -68,5 +68,17 @@ class NestedFades(unittest.TestCase):
         self.assertGreater(edge.lightness(), 200, edge.name())          # the rows' colour, not black
 
 
+    def test_a_list_can_take_the_pages_fade(self):
+        """The checks fade as the right panels and the report (Daniel, 30/10/2026: «quell'effetto lì»): a list
+        attached with page_list gets the pages' curve; a list without it keeps the lists' lighter one."""
+        from PySide6.QtWidgets import QTreeWidget
+
+        from meridiana.ui import fades
+        plain, paged = QTreeWidget(), QTreeWidget()
+        for view in (plain, paged):
+            self.addCleanup(view.deleteLater)
+        self.assertFalse(fades.attach(plain, air=True).edges[0].page)
+        self.assertTrue(fades.attach(paged, air=True, page_list=True).edges[0].page)
+
 if __name__ == "__main__":
     unittest.main()

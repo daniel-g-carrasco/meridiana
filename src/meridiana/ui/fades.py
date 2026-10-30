@@ -113,14 +113,18 @@ class Fades(QObject):
 AIR = Space.S                    # between what scrolls in a page and the card's top and bottom lines (R177)
 
 
-def attach(area: QAbstractScrollArea, air: bool = False, *, table: bool = False, auto: bool = False) -> Fades | None:
+def attach(area: QAbstractScrollArea, air: bool = False, *, table: bool = False, auto: bool = False,
+           page_list: bool = False) -> Fades | None:
     """The soft edges of `area`, made once. With `air`, what scrolls stops AIR pixels from the card's top and bottom
     lines and fades out before them (Meridiana's R177, Daniel 26/10/2026: «arrivano fino al limite della scheda
     sfondandolo»): for the pages and panels, not the lists, whose top margin is their header's.
     `table` opts data tables into their viewport's Base; navigation keeps the panel colour.
     `auto` is the shared polish's default (R249): it never changes an area a caller attached itself, in whichever
     order the two come, and a caller's plain variant takes back the AIR the polish gave (an area as tall as its
-    text, the help card, scrolled by those pixels)."""
+    text, the help card, scrolled by those pixels).
+    `page_list` gives a list without a header the pages' fade (with `air`): the checks, whose rows Daniel wants to
+    fade as the right panels and the report do (30/10/2026: «la velatura la voglio esattamente per come avveniva
+    ... con le barre di destra. Quell'effetto lì»)."""
     if area is None:
         return None
     # the area's own fades only: a plain findChild searched the children too, found the fades of a table inside a
@@ -129,10 +133,13 @@ def attach(area: QAbstractScrollArea, air: bool = False, *, table: bool = False,
     found = area.findChild(Fades, "", Qt.FindChildOption.FindDirectChildrenOnly)
     if auto and found is not None:
         return found                        # made already, by its caller or by an earlier polish
-    page = air and not isinstance(area, QAbstractItemView)
+    page = air and (page_list or not isinstance(area, QAbstractItemView))
     m = area.viewportMargins()
     given = None
-    if page and (m.top(), m.bottom()) != (AIR, AIR):
+    if page and isinstance(area, QAbstractItemView):
+        pass        # a list puts its viewport margins back at each layout and a style sheet owns its contents margins:
+        #             its AIR is the sheet's padding (theme.py, QTreeView#checks-tree)
+    elif page and (m.top(), m.bottom()) != (AIR, AIR):
         given = (m.top(), m.bottom())
         area.setViewportMargins(m.left(), AIR, m.right(), AIR)
     elif not page and found is not None and found.auto_margins is not None:
