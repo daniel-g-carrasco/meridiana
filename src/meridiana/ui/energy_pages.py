@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QFileDialog, QFrame, QGr
 from ..energy import consumption as cons
 from ..energy.economics import Settings
 from ..energy.simulate import Losses, thermal_names
-from ..i18n import _, number
+from ..i18n import _, ngettext, number
 from .charts import Chart
 from .design import Size, Space
 from .help_box import help_button, register
@@ -194,6 +194,24 @@ class FittedBox(QVBoxLayout):
         return False
 
 
+class FittedFlow(QWidget):
+    """A wrapping command row that reserves its actual height inside the fitted result pages."""
+
+    def __init__(self, widgets):
+        super().__init__()
+        from .report_page import Flow
+        flow = Flow(self, spacing=Space.L)
+        flow.setContentsMargins(0, 0, 0, 0)
+        for widget in widgets:
+            flow.addWidget(widget)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        height = self.layout().heightForWidth(self.width())
+        if height != self.minimumHeight():
+            self.setMinimumHeight(height)
+
+
 def chart_card(tabs: QTabWidget) -> QFrame:
     """The charts of a page in a card of their own, their tabs as pills inside it (D2 and the drafts of the
     phases, 24/10/2026)."""
@@ -222,6 +240,15 @@ class Page(QWidget):
         # on the scale (Daniel, 25/10/2026): 16 all round, 12 between the parts (they were 14 and 10)
         self.results_box.setContentsMargins(Space.XL, Space.XL, Space.XL, Space.XL)
         self.results_box.setSpacing(Space.L)
+        self.calculation_basis = None
+        self.plant_context = QLabel()
+        self.plant_context.setObjectName("calculated-plant")
+        self.plant_context.setWordWrap(True)
+        self.plant_context.setTextFormat(Qt.TextFormat.PlainText)
+        from .style import grow_label
+        grow_label(self.plant_context)
+        self.plant_context.hide()
+        self.results_box.addWidget(self.plant_context)
         self.side = scrolled(self.form)
         self.side.setMinimumWidth(0)
         self.centre = scrolled(self.results)
@@ -231,7 +258,6 @@ class Page(QWidget):
         self.setMinimumWidth(320)
         self.status = QLabel("")
         self.status.setWordWrap(True)
-        from .style import grow_label
         grow_label(self.status)              # as tall as the message it is given later (R193)
         self.loading = False                 # filling the form from the project: no edits sent
         self.stale = False                   # the values are those of a year computed before the last change
@@ -254,10 +280,30 @@ class Page(QWidget):
         computed, still there to read (Daniel, 23/10/2026: grey, not struck through); the phase's title carries the
         mark (the window). The charts keep their colours: the numbers say it."""
         self.stale = on
+        waiting.set_stale(self.plant_context, on)
         tip = stale_tip() if on else ""
         for tile in getattr(getattr(self, "tiles", None), "tiles", []):
             waiting.set_stale(tile.value, on)
             tile.setToolTip(tip)
+
+    def show_basis(self, basis) -> None:
+        """Show the immutable context returned with this computed year, never the current project's counts."""
+        self.calculation_basis = basis
+        self.plant_context.setVisible(basis is not None)
+        if basis is None:
+            self.plant_context.clear()
+            self.plant_context.setToolTip("")
+            return
+        inverter = ngettext("{n} inverter", "{n} inverters", basis.inverter_count).format(n=basis.inverter_count)
+        modules = _("{n} of {total} modules connected").format(n=basis.connected_modules, total=basis.laid_modules)
+        storage = ngettext("{n} battery", "{n} batteries", basis.battery_count).format(n=basis.battery_count)
+        if basis.battery_count:
+            storage += _(", {capacity} kWh usable · {energy} kWh supplied to loads").format(
+                capacity=number(basis.battery_kwh, 1), energy=number(basis.supplied_kwh, 1, grouping=True))
+        self.plant_context.setText(_("Calculated plant: {inverters} · {modules} · {storage}").format(
+            inverters=inverter, modules=modules, storage=storage))
+        detail = "\n".join([*basis.inverters, basis.battery_name] if basis.battery_name else basis.inverters)
+        self.plant_context.setToolTip(self.plant_context.text() + ("\n" + detail if detail else ""))
 
     def send(self, section: str, path: str, value) -> None:
         if not self.loading:
@@ -287,11 +333,10 @@ class EnergyPage(Page):
         strip = QVBoxLayout(self.meteo_strip)
         strip.setContentsMargins(12, 6, 8, 6)
         strip.setSpacing(4)
-        mf = QHBoxLayout()
-        mf.setSpacing(12)
         self.meteo_label = QLabel(_("Not fetched yet."))
         self.meteo_label.setWordWrap(True)
-        fetch = QPushButton(_("Fetch the typical year and the horizon from PVGIS"))
+        fetch = QPushButton(_("Fetch from PVGIS"))
+        fetch.setToolTip(_("Fetch the typical year and the horizon from PVGIS"))
         fetch.clicked.connect(self.fetchRequested.emit)
         self.use_horizon = QCheckBox(_("Shading of the far horizon"))
         self.use_horizon.toggled.connect(lambda v: self.send("energy", "losses.use_horizon", v))
@@ -300,11 +345,9 @@ class EnergyPage(Page):
                                    "on the modules"))
         self.use_near.toggled.connect(lambda v: self.send("energy", "losses.use_near", v))
         strip.addWidget(self.meteo_label)
-        mf.addWidget(fetch)                          # first: the corner on the right is Meridio's
-        mf.addWidget(self.use_horizon)
-        mf.addWidget(self.use_near)
-        mf.addStretch(1)
-        strip.addLayout(mf)
+        # The old unbroken row forced the whole results pane to 880 px, cutting off the calculated plant
+        # context in narrow windows. Reuse the report commands' flow, with the fetch action first.
+        strip.addWidget(FittedFlow((fetch, self.use_horizon, self.use_near)))
 
         arrays = Group(_("Arrays (the modules laid, by orientation)"))
         af = QVBoxLayout(arrays)

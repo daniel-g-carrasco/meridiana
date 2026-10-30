@@ -17,6 +17,7 @@ from ..i18n import _, number
 from . import consumption as consumption_model
 from . import economics, meteo, plant, pvgis, system
 from .simulate import simulate, with_network
+from .calculation_basis import CalculationBasis, basis_of
 
 
 @dataclass
@@ -39,6 +40,7 @@ class EnergyResult:
     sizing: object = None
     storage: object = None
     battery_kwh: float | None = None
+    basis: CalculationBasis | None = None    # immutable context of this result, never today's edited plant
 
     def as_dict(self) -> dict:
         """The keys with a value, `notes` always: `.get("sim") is None` means what it meant."""
@@ -62,7 +64,8 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
     """The pipeline on `project` (a copy of the window's, or any project) with the layouts of its sub-fields
     (`results`: id -> layout.Result, the good ones). MeteoError when the weather asked for could not be had;
     any other error is the caller's to say. `progress(done, STEPS, what)` is called before each step (the
-    window's bar for PVGIS), and may raise Interrupted to stop there. `fetch` allows the network; `refresh`
+    window's bar for PVGIS), and may raise Interrupted to stop there; inside the electrical network `done` is a
+    fraction between 2 and 3, told before each chunk of hours, so that a Cancel stops it there too. `fetch` allows the network; `refresh`
     downloads again even when the project or cache already has the data."""
     step = progress or (lambda *_a: None)
     out = EnergyResult()
@@ -135,7 +138,9 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
                                  placed=[pm for pm in a.placed if pm.key in a.connected])
                          for a in arrays if a.generating_modules]
     optimized = plant.optimizers_of(out.plant, generating_arrays)
-    sim = with_network(sim, out.plant, optimized, progress=lambda: step(2, STEPS, _("the electrical network")))
+    # the longest step on a large plant (R266): told at each chunk of hours with how far it is, 2 to 3 of STEPS
+    sim = with_network(sim, out.plant, optimized,
+                       progress=lambda share: step(2 + share, STEPS, _("the electrical network")))
     out.sim = sim
     # Overload checks receive the connected DC year, not the preliminary potential year.
     out.plant = plant.build(project, groups=plant.groups_from_arrays(project, arrays), t_cell_max_year=t_cell_max,
@@ -191,6 +196,7 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
                                            project.site.address, degradation)
     battery = economics.Battery.from_settings(settings)
     out.battery_kwh = battery.usable_kwh if battery is not None else 0.0
+    out.basis = basis_of(sim, battery=battery, battery_units=settings.battery_units, econ=out.econ)
     return out
 
 

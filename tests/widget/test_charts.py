@@ -223,6 +223,16 @@ class Pointer(Base):
 
     MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
+    def test_stacked_hover_marks_the_column_once_without_outlining_every_segment(self):
+        c = self.chart()
+        c.bars(["Jan", "Feb"], [("direct", [2., 4.]), ("battery", [3., 1.])], "kWh", stacked=True)
+        text = c._hover(0, 2)
+        outline = c._marks[0]
+        self.assertEqual(list(outline.opts["x"]), [0.0])
+        self.assertEqual(list(outline.opts["height"]), [5.0])
+        self.assertIn("total 5", text)
+        self.assertEqual(c.numbers.rows, [["Jan", 2., 3.], ["Feb", 4., 1.]])
+
     def test_the_pointer_reads_the_bar_under_it_with_every_series(self):
         c = self.chart()
         a = [1234.4 + 100 * i for i in range(12)]

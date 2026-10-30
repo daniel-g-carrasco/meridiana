@@ -61,12 +61,22 @@ def optimizer_string_power(power, voltage, voltage_max=None, current_max=None):
     return np.where(possible, low * voltage, 0)
 
 
-def _row_cohorts(ap, pm, hours):
+def _row_key(ap, pm, front=None):
+    """What the row shade of a module depends on besides the hours: None for a module the rows leave clear (a
+    single row, the front row), else its level in the stack. Modules with the same key share their cohorts."""
+    if ap.a.rows <= 1 or ap.row_share is None:
+        return None
+    if pm.row == (front if front is not None else min(p.row for p in ap.a.placed)):
+        return None
+    return getattr(pm, 'level', 0)
+
+
+def _row_cohorts(ap, pm, hours, front=None):
     """Cell-row shade of an infinite row approximation, preserving the actual module stack level."""
     nb = ap.layout[0] * ap.layout[1]
     result = np.zeros((len(hours), nb, nearshade.CELL_LEVELS))
     result[..., 0] = 1
-    if ap.a.rows <= 1 or pm.row == min(p.row for p in ap.a.placed) or ap.row_share is None:
+    if _row_key(ap, pm, front) is None:
         return result
     fraction = np.clip(ap.row_share[hours] * ap.a.stack - getattr(pm, 'level', 0), 0, 1)
     if not fraction.any():
@@ -83,11 +93,29 @@ def _row_cohorts(ap, pm, hours):
     return result
 
 
-def _cohorts(ap, pm, hours, first):
-    result = _row_cohorts(ap, pm, hours)
-    if ap.near is None or pm.key not in ap.near.keys:
+def _obstacle_index(ap, pm, indices=None):
+    """The module's index in the obstacles' shading table, or None when the obstacles never shade it: not in the
+    table, or without a cell histogram where the cells are resolved (cell_cohorts then gives the clear cohort,
+    exactly the one `_row_cohorts` starts from). `indices` is the table's key -> index, made once per array."""
+    if ap.near is None:
+        return None
+    if indices is not None:
+        index = indices.get(pm.key)
+    else:
+        index = ap.near.keys.index(pm.key) if pm.key in ap.near.keys else None
+    if index is None:
+        return None
+    if index not in ap.near.cell_histograms and (ap.near.cell_resolved or ap.near.block_fractions is None):
+        return None
+    return index
+
+
+def _cohorts(ap, pm, hours, first, front=None, indices=None):
+    result = _row_cohorts(ap, pm, hours, front)
+    index = _obstacle_index(ap, pm, indices)
+    if index is None:
         return result
-    obstacle = nearshade.cell_cohorts(ap.near, ap.near.keys.index(pm.key), first.sun_az[hours], first.sun_el[hours])
+    obstacle = nearshade.cell_cohorts(ap.near, index, first.sun_az[hours], first.sun_el[hours])
     if np.all(result[..., 0] == 1):
         return obstacle
     if np.all(obstacle[..., 0] == 1):
@@ -111,8 +139,38 @@ def _overlap_matrix(n):
     return matrix
 
 
+def _module_curve(a, irradiance, temperature, layout, fractions, known):
+    """iv.module_curve of a module over a chunk of hours, each hour another module of the array already had taken
+    from it (R266, under the obstacles' shade: a module is in a chimney's shadow a few hours of a chunk, and the
+    other hours are those of its neighbours in the same row of the table).
+
+    Exact: module_curve decides a few things over the whole chunk (iv.CurvePlan) and then works hour by hour; an
+    hour's curve depends only on the hour's light and temperature (the same for every module of an array), its
+    cohorts and `CurvePlan.hourly`. `known` keeps, for each array and `hourly`, the hours computed in this chunk by
+    their cohorts; the hours not found are computed together, with this module's own plan."""
+    plan = iv.curve_plan(a.module, irradiance, temperature, layout, cell_fractions=fractions)
+    store = known.setdefault((a.key, plan.hourly), {})
+    keys = [(h, fractions[h].tobytes()) for h in range(len(fractions))]
+    todo = [h for h, key in enumerate(keys) if key not in store]
+    if len(todo) == len(keys):
+        curve = iv.module_curve(a.module, irradiance, temperature, layout, cell_fractions=fractions, plan=plan)
+    elif todo:
+        curve = iv.module_curve(a.module, irradiance[todo], temperature[todo], layout, cell_fractions=fractions[todo],
+                                plan=plan)
+    else:
+        curve = None
+    if curve is not None:
+        for i, h in enumerate(todo):
+            store[keys[h]] = curve.voltage[i], curve.current[i]
+        if len(todo) == len(keys):
+            return curve
+    return iv.Curve(np.stack([store[key][0] for key in keys]), np.stack([store[key][1] for key in keys]))
+
+
 def solve(first, plant, progress=None) -> Network:
-    """Return electrical stages and DC by inverter; disconnected or invalid references never generate."""
+    """Return electrical stages and DC by inverter; disconnected or invalid references never generate.
+    `progress(share)` is called before each chunk of hours with the share already done (0 to 1); it may raise to
+    stop the computation there."""
     hours = first.hours
     out = Network()
     arrays = {ap.a.key: ap for ap in first.per_array}
@@ -149,32 +207,54 @@ def solve(first, plant, progress=None) -> Network:
                                "is used and cell mismatch is not resolved.").format(name=ap.a.name))
     daylight = np.flatnonzero(np.maximum.reduce([ap.g_eff for ap in first.per_array]) > 0.1)
     losses = first.losses
-    for start in range(0, len(daylight), CHUNK_HOURS):
+    # What makes two modules' hours alike, found once for the year (R266: the front row of each array was
+    # searched again for every module of every chunk, quadratic in the modules): the row shade depends only on
+    # the module's level in the stack behind the front row, the obstacles' only on the module itself. Modules
+    # with the same shape share one computation of their cohorts in each chunk; nothing is averaged.
+    front = {ap.a.key: min((p.row for p in ap.a.placed), default=0) for ap in first.per_array}
+    indices = {ap.a.key: {k: i for i, k in enumerate(ap.near.keys)} for ap in first.per_array if ap.near is not None}
+
+    def shape_of(ap, pm):
+        index = _obstacle_index(ap, pm, indices.get(ap.a.key))
+        return (ap.a.key, 'obstacle', index) if index is not None else (
+            ap.a.key, 'rows', _row_key(ap, pm, front[ap.a.key]))
+    shapes_of = {key: shape_of(ap, pm) for key, (ap, pm) in location.items()}
+    chunks = -(-len(daylight) // CHUNK_HOURS)
+    for count, start in enumerate(range(0, len(daylight), CHUNK_HOURS)):
         if progress is not None:
-            progress()
+            progress(count / chunks)
         take = daylight[start:start + CHUNK_HOURS]
         cache = {}
         module_data = {}
         counted = set()
+        shapes = {}
+        tally = defaultdict(int)
+        known = {}
 
-        def get_module(ref, optimized_single=False, *, module_data=module_data, take=take, cache=cache, counted=counted):
+        def get_module(ref, optimized_single=False, *, module_data=module_data, take=take, cache=cache,
+                       counted=counted, shapes=shapes, tally=tally, known=known):
             key = tuple(ref[:2])
             memo = (key, optimized_single)
             if memo in module_data:
                 return module_data[memo]
             ap, pm = location[key]
             a = ap.a
-            fractions = _cohorts(ap, pm, take, first)
-            shade = np.linspace(0, 1, fractions.shape[2])
-            beam, diffuse = ap.beam_clear[take], ap.diffuse_eff[take]
-            irradiance = np.broadcast_to(diffuse[:, None, None] + beam[:, None, None] * (1 - shade), fractions.shape)
-            # The comparison switch attenuates contrast toward the legacy array-mean irradiance.
-            strength = np.clip(losses.electrical_fraction / 100, 0, 1) if losses.electrical_shading else 0
-            if strength < 1:
-                irradiance = strength * irradiance + (1 - strength) * ap.g_eff[take, None, None]
-            signature = (a.key, optimized_single, fractions.tobytes())
+            shape = shapes_of[key]
+            if shape not in shapes:
+                fractions = _cohorts(ap, pm, take, first, front[a.key], indices.get(a.key))
+                shapes[shape] = fractions, fractions.tobytes()
+            fractions, raw = shapes[shape]
+            signature = (a.key, optimized_single, raw)
             if signature not in cache:
-                curve = iv.module_curve(a.module, irradiance, ap.t_cell[take], ap.layout, cell_fractions=fractions)
+                shade = np.linspace(0, 1, fractions.shape[2])
+                beam, diffuse = ap.beam_clear[take], ap.diffuse_eff[take]
+                irradiance = np.broadcast_to(diffuse[:, None, None] + beam[:, None, None] * (1 - shade),
+                                             fractions.shape)
+                # The comparison switch attenuates contrast toward the legacy array-mean irradiance.
+                strength = np.clip(losses.electrical_fraction / 100, 0, 1) if losses.electrical_shading else 0
+                if strength < 1:
+                    irradiance = strength * irradiance + (1 - strength) * ap.g_eff[take, None, None]
+                curve = _module_curve(a, irradiance, ap.t_cell[take], ap.layout, fractions, known)
                 mean = (irradiance * fractions).sum(axis=2).mean(axis=1)
                 independent = iv.mpp(curve).power
                 uniform_cells = np.all((fractions == 0) | (np.abs(irradiance - mean[:, None, None]) < 1e-10))
@@ -185,20 +265,38 @@ def solve(first, plant, progress=None) -> Network:
                 factor = (1 - losses.quality / 100) * (1 - ap.lid / 100) * (1 - mismatch / 100)
                 curve = iv.Curve(curve.voltage, curve.current * max(0, factor))
                 cache[signature] = curve, independent * max(0, factor), reference, at25, a.module.pmax * mean / 1000
-            curve, ideal, reference, at25, nominal = cache[signature]
+            curve, ideal, _reference, _at25, _nominal = cache[signature]
             if key not in counted:
-                out.reference[a.key][take] += reference
-                out.at25[a.key][take] += at25
-                out.nominal[a.key][take] += nominal
+                tally[(a.key, signature)] += 1          # added once per shape at the end of the chunk
                 counted.add(key)
             module_data[memo] = (curve, ideal, a.key)
             return module_data[memo]
 
-        def allocate(data, power, stage, *, take=take):
-            denominator = sum(d[1] for d in data)
-            for _curve, weight, key in data:
-                out.stages[key][stage][take] += power * np.divide(weight, denominator, out=np.zeros_like(power),
-                                                                 where=denominator > 0)
+        parts = {}
+
+        def allocate(data, power, stage, *, take=take, parts=parts):
+            """`power` shared among the modules of `data` by their ideal power: summed by array first (the
+            modules' shares of one array add up to the array's), once for each list of modules."""
+            found = parts.get(id(data))
+            if found is None:
+                denominator = sum(d[1] for d in data)
+                weights = {}
+                for _curve, weight, key in data:
+                    weights[key] = weights[key] + weight if key in weights else weight
+                found = parts[id(data)] = (data, [(key, np.divide(weight, denominator, out=np.zeros_like(power),
+                                                                  where=denominator > 0))
+                                                  for key, weight in weights.items()])
+            for key, share in found[1]:
+                out.stages[key][stage][take] += power * share
+
+        strings_of = {}
+
+        def series_of(curves, *, strings_of=strings_of):
+            """A string's curve; strings of the same module curves in the same order are the same string."""
+            memo = tuple(map(id, curves))
+            if memo not in strings_of:
+                strings_of[memo] = iv.series(curves), curves
+            return strings_of[memo][0]
 
         ordinary = defaultdict(list)
         dc_chunks = defaultdict(lambda take=take: np.zeros(len(take)))
@@ -252,10 +350,15 @@ def solve(first, plant, progress=None) -> Network:
                         out.notes.append(note)
             else:
                 data = [get_module(ref) for ref in refs]
-                ordinary[(run.inverter, run.mppt)].append((iv.series([d[0] for d in data]), data))
+                ordinary[(run.inverter, run.mppt)].append((series_of([d[0] for d in data]), data))
+        for (array_key, signature), n in tally.items():
+            _curve, _ideal, reference, at25, nominal = cache[signature]
+            out.reference[array_key][take] += n * reference
+            out.at25[array_key][take] += n * at25
+            out.nominal[array_key][take] += n * nominal
+        trackers = {}
         for (number, mppt), strings in ordinary.items():
             spec = units[number].spec
-            curve = iv.parallel([s[0] for s in strings])
             limit = spec.current_limit(mppt - 1, len(strings))
             maximum = min(v for v in (spec.vmppt_max, spec.vdc_max) if v) if (spec.vmppt_max or spec.vdc_max) else None
             missing = [label for label, value in (('MPPT minimum voltage', spec.vmppt_min),
@@ -267,7 +370,6 @@ def solve(first, plant, progress=None) -> Network:
                     name=units[number].name, mppt=mppt, fields=', '.join(missing))
                 if note not in out.notes:
                     out.notes.append(note)
-            floor = np.full(len(take), spec.vmppt_min or 0.)
             connector_limit = spec.connector_current_limit(mppt - 1)
             ports = spec._limit(spec.inputs_per_mppt, mppt - 1)
             if connector_limit and ports and len(strings) > ports:
@@ -277,13 +379,24 @@ def solve(first, plant, progress=None) -> Network:
                           "not verified.").format(name=units[number].name, mppt=mppt)
                 if note not in out.notes:
                     out.notes.append(note)
-            if connector_limit:
-                for string, _data in strings:
-                    floor = np.maximum(floor, iv.voltage_at(string, np.full((len(take), 1), connector_limit))[:, 0])
-            op = iv.mpp(curve, voltage_min=floor, voltage_max=maximum, current_max=limit)
+            # the operating point depends only on the strings' curves and the tracker's limits: trackers with the
+            # same strings and limits (identical inverters) share it
+            memo = (tuple(id(string) for string, _data in strings), spec.vmppt_min or 0., connector_limit, maximum,
+                    limit)
+            if memo not in trackers:
+                floor = np.full(len(take), spec.vmppt_min or 0.)
+                if connector_limit:
+                    for string, _data in strings:
+                        floor = np.maximum(floor, iv.voltage_at(string, np.full((len(take), 1),
+                                                                                connector_limit))[:, 0])
+                curve = iv.parallel([s[0] for s in strings])
+                trackers[memo] = iv.mpp(curve, voltage_min=floor, voltage_max=maximum, current_max=limit), {}
+            op, at_op = trackers[memo]
             currents[number] += op.current
             for string, data in strings:
-                current = iv.current_at(string, op.voltage[:, None])[:, 0]
+                if id(string) not in at_op:
+                    at_op[id(string)] = iv.current_at(string, op.voltage[:, None])[:, 0]
+                current = at_op[id(string)]
                 power = op.voltage * current
                 for stage in ('p_el', 'p_opt'):
                     allocate(data, power, stage)

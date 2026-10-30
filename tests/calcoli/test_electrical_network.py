@@ -77,10 +77,14 @@ class Network(unittest.TestCase):
 
     def test_network_cancellation_is_observed_before_a_chunk(self):
         first, wiring, _placed = self.fixture()
-        def cancel():
+        told = []
+
+        def cancel(share):
+            told.append(share)
             raise InterruptedError('stop')
         with self.assertRaises(InterruptedError):
             network.solve(first, wiring, cancel)
+        self.assertEqual(told, [0.0])               # the share done, before the first chunk
 
     def test_shared_current_derating_is_separate_from_dc_wiring(self):
         from dataclasses import replace
@@ -114,3 +118,109 @@ class Network(unittest.TestCase):
         self.assertGreater(combined[0] - ac[0], 3000)
         self.assertGreater(details[0]['clipping_kwh'], 4)
         self.assertEqual(details[1]['clipping_kwh'], 0)
+
+
+class SharedShapes(unittest.TestCase):
+    """R266: on a large plant the network computes each shape of module once per chunk of hours (the row in front,
+    each level of the stack behind it, each module the obstacles shade) and each string, tracker and operating point
+    once for identical ones; nothing is averaged, so every string gets what it gets computed alone."""
+
+    def plant(self, slots=4):
+        m = ModuleSpec.from_record(dict(TYPICAL_450, length=1.762, width=1.134))
+        placed = [layout.PlacedModule(row, i, 0, [(i, 3 * row), (i + 1, 3 * row), (i + 1, 3 * row + 2), (i, 3 * row + 2)],
+                                      (i + .5, 3 * row + 1), 0, 10, 0, level=level)
+                  for row in range(2) for level in range(2) for i in range(slots)]
+        a = simulate.ArraySpec('s1.0', 'Field', 10, 0, len(placed), m, rows=2, pitch=3, slant=2, stack=2,
+                               placed=placed)
+        hours = 3
+        ap = SimpleNamespace(a=a, layout=(3, 2), g_eff=np.array([900., 500., 300.]), t_cell=np.array([40., 30., 20.]),
+                             beam_clear=np.array([800., 400., 150.]), diffuse_eff=np.array([100., 100., 150.]),
+                             row_share=np.array([.2, .6, 0.]), near=None, lid=0)
+        first = SimpleNamespace(hours=hours, per_array=[ap], losses=simulate.Losses(quality=0, lid=0, mismatch=1,
+                                                                                    dc_wiring=1),
+                                sun_az=np.array([150., 180., 210.]), sun_el=np.array([20., 30., 10.]))
+        spec = InverterSpec.from_record({'ac_power_nominal_w': 20000, 'mppt_count': 2, 'mppt_voltage_min_v': 1,
+                                         'mppt_voltage_max_v': 1000, 'dc_current_max_per_mppt_a': [30, 30]})
+        # one string for each place: the front row and the row behind, each level of the stack; two more like the
+        # first two on a second inverter, so that identical strings and trackers are met again
+        groups = {}
+        for pm in placed:
+            groups.setdefault((pm.row, pm.level), []).append(('s1', pm.key, pm.centre))
+        strings = [plant.String(1 + n // 2, 1 + n % 2, refs) for n, refs in enumerate(groups.values())]
+        units = [plant.Unit(n, 0, spec, f'Inverter {n}') for n in (1, 2, 3)]
+        return first, plant.Plant(units=units, strings=strings), strings
+
+    def test_each_string_gets_what_it_gets_alone(self):
+        first, wiring, strings = self.plant()
+        together = network.solve(first, wiring)
+        alone = {}
+        for s in strings:
+            one = network.solve(first, plant.Plant(units=wiring.units, strings=[s]))
+            alone.setdefault(s.inverter, np.zeros(first.hours))
+            alone[s.inverter] += one.dc[s.inverter]
+        for number, dc in alone.items():
+            np.testing.assert_allclose(together.dc[number], dc, rtol=1e-12, atol=1e-9)
+        # the shapes are really different: the rows behind lose to the row in front, the lower level more
+        front, behind_low, behind_high = (network.solve(first, plant.Plant(units=wiring.units, strings=[s])).dc[s.inverter]
+                                          for s in (strings[0], strings[2], strings[3]))
+        self.assertLess(behind_low[1], behind_high[1] - 1)
+        self.assertLess(behind_high[1], front[1] - 1)
+        stage = together.stages['s1.0']['p_dc']
+        np.testing.assert_allclose(stage, sum(together.dc.values()), rtol=1e-12)
+
+    def test_the_curves_computed_do_not_grow_with_the_modules(self):
+        from unittest import mock
+
+        from meridiana.energy import nearshade
+        counts = []
+        for slots in (4, 24):           # 16 and 96 modules, the same four places in the rows
+            first, wiring, _strings = self.plant(slots)
+            with mock.patch.object(iv, 'module_curve', wraps=iv.module_curve) as curves, \
+                    mock.patch.object(nearshade, 'cell_histogram', wraps=nearshade.cell_histogram) as cohorts:
+                network.solve(first, wiring)
+            counts.append((curves.call_count, cohorts.call_count))
+        self.assertEqual(counts[0], counts[1])
+
+
+class HoursOfAnotherModule(unittest.TestCase):
+    """R266, under the obstacles' shade: a module's hours already computed for another module of the array (the same
+    light, temperature and cohorts) are taken from it; the curve is the one the module gets computed alone."""
+
+    def test_a_module_takes_the_hours_it_shares_and_gets_its_own_curve(self):
+        from meridiana.energy import nearshade
+        m = ModuleSpec.from_record(dict(TYPICAL_450, length=1.762, width=1.134))
+        a = SimpleNamespace(key='s1.0', module=m)
+        rng = np.random.default_rng(11)
+        hours, blocks, levels = 10, 6, nearshade.CELL_LEVELS
+        shade = np.linspace(0, 1, levels)
+        light = np.broadcast_to((60 + 800 * (1 - shade))[None, None, :] * np.linspace(.3, 1.1, hours)[:, None, None],
+                                (hours, blocks, levels))
+        temperature = np.linspace(5, 45, hours)
+
+        def module(shaded, spread):
+            f = np.zeros((hours, blocks, levels))
+            f[..., 0] = 1
+            for h in shaded:
+                share = rng.uniform(0, 1, (blocks, spread))
+                share /= share.sum(axis=1, keepdims=True)
+                f[h] = 0
+                f[h, :, rng.choice(levels, spread, replace=False)] = share.T
+            return f
+        first, second = module((2, 3, 6), 3), module((1, 6, 8), 6)    # different plans: 3 and 6 cohorts
+        known = {}
+        network._module_curve(a, light, temperature, (3, 2), first, known)
+        computed = []
+        real = iv.module_curve
+
+        def counting(*args, **kwargs):
+            computed.append(len(args[1]))
+            return real(*args, **kwargs)
+        from unittest import mock
+        with mock.patch.object(iv, 'module_curve', counting):
+            got = network._module_curve(a, light, temperature, (3, 2), second, known)
+        # its three shaded hours and the two clear ones the first module had in a shadow (2, 3); the five clear
+        # hours of both were known
+        self.assertEqual(computed, [5])
+        alone = iv.module_curve(m, light, temperature, (3, 2), cell_fractions=second)
+        np.testing.assert_allclose(got.voltage, alone.voltage, rtol=1e-12, atol=1e-12)
+        np.testing.assert_allclose(got.current, alone.current, rtol=1e-12, atol=1e-12)

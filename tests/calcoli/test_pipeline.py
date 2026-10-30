@@ -51,6 +51,8 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(len(out.plant.left), sum(a["modules"] for a in out.sim.arrays))
         self.assertEqual(out.context.production_kwh, out.sim.energy_kwh)
         self.assertEqual(out.battery_kwh, 0.0)
+        self.assertEqual((out.basis.inverter_count, out.basis.connected_modules, out.basis.battery_count), (0, 0, 0))
+        self.assertEqual(out.basis.laid_modules, len(out.plant.left))
         self.assertTrue(out.notes)                              # unconnected modules are explicitly reported
         # potential temperature pass, then connected generation, and a layout out of the shadows for
         # each sub-field shaded beyond the threshold (none on a roof without obstacles)
@@ -89,6 +91,8 @@ class Pipeline(unittest.TestCase):
         self.assertTrue(again.call_args[0][1].strings)
         self.assertIs(again.call_args[0][0].parts, out.sim.parts)       # the year with the strings, from the first pass
         self.assertIsNotNone(out.sim.record.find("electrical_network"))
+        self.assertEqual(out.basis.inverter_count, len(out.sim.inverters))
+        self.assertEqual(out.basis.connected_modules, sum(a["connected_modules"] for a in out.sim.arrays))
 
     def test_without_the_weather_the_consumption_is_there_and_the_rest_says_why(self):
         p = project()
@@ -172,6 +176,35 @@ class PipelineSteps(unittest.TestCase):
 
         with self.assertRaises(pipeline.Interrupted):               # not turned into an error to show
             pipeline.compute_or_say(p, results, cache, False, stop)
+
+    def test_the_electrical_network_tells_how_far_it_is_and_stops_in_the_middle(self):
+        """R266: the network was told at each chunk with the same «3 of 4», the bar stood at 50 % for a minute or
+        more on a large plant; now it says how far it is (from 2 to 3), and a Cancel stops it between two chunks."""
+        from meridiana import catalog
+        cache = Path(tempfile.mkdtemp())
+        write_cache(clear_sky_meteo(45.5226, 9.03), cache)
+        p = project()
+        p.energy["inverters"] = [{"record": next(r for r in catalog.search("inverters", "SCA100K-T-US-480")),
+                                  "count": 1, "name": ""}]
+        p.energy["strings"] = {"auto": True}
+        results, _keys, _laid = jobs.layout_of(p)
+        told = []
+        pipeline.compute(p, results, cache, False, lambda done, total, what: told.append((done, what)))
+        network = [done for done, what in told if what == "the electrical network"]
+        self.assertGreater(len(network), 10)
+        self.assertEqual(network[0], 2)
+        self.assertTrue(all(2 <= a < b < 3 for a, b in zip(network, network[1:], strict=False)))
+        self.assertEqual([done for done, what in told if what != "the electrical network"], [0, 1, 2, 3])
+        asked = []
+
+        def cancel(done, total, what):
+            asked.append(done)
+            if what == "the electrical network" and done > 2.5:
+                raise pipeline.Interrupted()
+
+        with self.assertRaises(pipeline.Interrupted):
+            pipeline.compute_or_say(p, results, cache, False, cancel)
+        self.assertLess(asked[-1], 3)                   # stopped inside the network, before PVGIS's estimate
 
 
 if __name__ == "__main__":

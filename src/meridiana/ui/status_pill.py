@@ -14,8 +14,8 @@ from PySide6.QtGui import QColor, QFont, QGuiApplication, QPainter, QPainterPath
 from .. import theme_colors
 from . import symbols
 
-LEFT, RIGHT, GAP = 6, 8, 4
-SYMBOL = 14
+LEFT, RIGHT, GAP = 6, 10, 4
+SYMBOL = 13
 
 
 @dataclass(frozen=True)

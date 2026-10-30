@@ -212,7 +212,8 @@ def pin(widget: QWidget, host: QWidget, margin: int = 8, where: str = "top-right
 
 
 class Progress(QWidget):
-    """For the long works that know how far they are, and only those (PVGIS and the PDF report; study 16, F4):
+    """For the long works that know how far they are, and only those (every computation of the production, PVGIS
+    and the PDF report; study 16, F4; the production from R266):
     what is being done, the bar with its percentage and Cancel, in the status bar; never a window of its own.
     Shown past the threshold (`begin`), gone at once at the end or at Cancel (`end`)."""
 

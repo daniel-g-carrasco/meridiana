@@ -45,6 +45,18 @@ class WindowWithAYear(unittest.TestCase):
         self.assertTrue(self.wait_until(self.app, lambda: bool(self.win.energy), 60), "the year did not come back")
         return self.win.energy
 
+    def watch(self, widget, until, seconds: float = 20.0) -> list:
+        """What the bar showed, (value, text), while waiting for `until`."""
+        seen = []
+        end = time.perf_counter() + seconds
+        while time.perf_counter() < end and not until():
+            self.app.processEvents()
+            if not widget.isHidden() and (widget.bar.value(), widget.label.text()) not in seen:
+                seen.append((widget.bar.value(), widget.label.text()))
+            time.sleep(0.005)
+        self.assertTrue(until(), seen)
+        return seen
+
 
 class StaleValues(WindowWithAYear):
     PAGES = ("production", "consumption", "economics")
@@ -171,7 +183,8 @@ class Arcs(WindowWithAYear):
 
 
 class Bars(WindowWithAYear):
-    """The bar with its percentage and Cancel, only for PVGIS and the PDF report (study 16, F4)."""
+    """The bar with its percentage and Cancel for the works that know how far they are: PVGIS and the PDF report
+    (study 16, F4), and since R266 every year of the production (Years, below)."""
 
     def fake_pvgis(self, steps: list, pause: float = 0.4):
         """compute_or_say as a PVGIS of three steps, each `pause` long, then the year from the cache; `steps` gets
@@ -186,18 +199,6 @@ class Bars(WindowWithAYear):
                 time.sleep(pause)
             return real(project, results, cache, False, refresh=refresh)
         return fake
-
-    def watch(self, widget, until, seconds: float = 20.0) -> list:
-        """What the bar showed, (value, text), while waiting for `until`."""
-        seen = []
-        end = time.perf_counter() + seconds
-        while time.perf_counter() < end and not until():
-            self.app.processEvents()
-            if not widget.isHidden() and (widget.bar.value(), widget.label.text()) not in seen:
-                seen.append((widget.bar.value(), widget.label.text()))
-            time.sleep(0.005)
-        self.assertTrue(until(), seen)
-        return seen
 
     def test_pvgis_moves_the_bar_step_by_step_and_cancel_half_way_leaves_the_project_as_it_was(self):
         from unittest import mock
@@ -313,6 +314,117 @@ class Bars(WindowWithAYear):
                     run[0].close()
                     setattr(win, name, None)
             part.unlink(missing_ok=True)
+
+
+class Years(WindowWithAYear):
+    """The years of the production asked one after the other (R266, review E): the one before stops, a year computed
+    without the network has its bar and Cancel too, a PVGIS refused does not cover what a change said."""
+
+    def network(self, runs: dict, chunks: int = 40, pause: float = 0.02):
+        """compute_or_say as a long electrical network (`chunks` chunks of hours, `pause` each) and then the year from
+        the cache; `runs` gets, for each job, the chunks it went past, and "stopped" when it was interrupted."""
+        from meridiana.energy import pipeline
+        real = pipeline.compute_or_say
+
+        def fake(project, results, cache, fetch, progress=None, refresh=False):
+            seen = runs.setdefault(progress.__self__, [])          # the job (EnergyJob._progress)
+            try:
+                for i in range(chunks):
+                    progress(2 + i / chunks, 4, "the electrical network")
+                    seen.append(i)
+                    time.sleep(pause)
+            except pipeline.Interrupted:
+                seen.append("stopped")
+                raise
+            return real(project, results, cache, False, refresh=refresh)
+        return fake
+
+    def test_a_year_asked_again_stops_the_one_before_which_tells_nothing(self):
+        from unittest import mock
+
+        from meridiana.energy import pipeline
+        win = self.win
+        runs, told = {}, []
+        with mock.patch.object(pipeline, "compute_or_say", self.network(runs)):
+            win._compute_energy(fetch=False)
+            first = win.energy_job
+            first.signals.done.connect(lambda generation, _out: told.append(generation))
+            self.assertTrue(self.wait_until(self.app, lambda: len(runs.get(first, [])) >= 3, 10))
+            win._compute_energy(fetch=False)                    # a change: the year asked again
+            second = win.energy_job
+            self.assertIsNot(first, second)
+            self.assertTrue(self.wait_until(self.app, lambda: bool(win.energy), 60))
+            self.assertTrue(self.wait_until(self.app, lambda: win.pool.activeThreadCount() == 0, 10))
+        spin(self.app, 50)
+        self.assertEqual(told, [])                              # the first never told a year
+        self.assertEqual(runs[first][-1], "stopped")            # at its next chunk, not after all 40
+        self.assertLess(len(runs[first]), 20)
+        self.assertEqual(runs[second][-1], 39)                  # the one awaited went to the end
+        self.assertTrue(first.interrupted)
+
+    def test_another_project_opened_while_a_year_is_computed_never_gets_that_year(self):
+        from unittest import mock
+
+        from meridiana.energy import pipeline
+        win = self.win
+        runs = {}
+        with mock.patch.object(pipeline, "compute_or_say", self.network(runs, chunks=20, pause=0.03)):
+            win._compute_energy(fetch=False)
+            job = win.energy_job
+            self.assertTrue(self.wait_until(self.app, lambda: len(runs.get(job, [])) >= 2, 10))
+            win.open_path(self.file)                            # another project in hand: the year was of the old one
+            self.assertTrue(self.wait_until(self.app, lambda: win.pool.activeThreadCount() == 0, 20))
+            spin(self.app, 100)
+        self.assertEqual(list(runs), [job])                     # no year asked for the new one (Model phase)
+        self.assertEqual(win.energy, {})                        # and nothing of the old project
+        self.assertTrue(job.interrupted)
+        self.assertEqual(runs[job][-1], "stopped")
+        self.assertTrue(win.pvgis_progress.isHidden() and win.busy.isHidden())
+        self.assertTrue(win.energy_page.spinner.isHidden())
+
+    def test_a_year_without_the_network_has_its_bar_and_cancel(self):
+        from unittest import mock
+
+        from meridiana.energy import pipeline
+        win = self.win
+        bar = win.pvgis_progress
+        runs = {}
+        with mock.patch.object(pipeline, "compute_or_say", self.network(runs, chunks=60, pause=0.03)):
+            win._compute_energy(fetch=False)
+            job = win.energy_job
+            seen = self.watch(bar, lambda: bar.bar.value() >= 60)
+            texts = {t for _v, t in seen}
+            self.assertEqual(texts, {"Production: the electrical network (3 of 4)"})   # never «PVGIS»: no network
+            values = [v for v, _t in seen]
+            self.assertEqual(values, sorted(values))
+            self.assertGreater(values[-1], values[0])           # it moves inside the step of the network
+            self.assertTrue(win.busy.isHidden())                # the bar says it: not the words as well
+            bar.cancel.click()
+            self.assertTrue(bar.isHidden())
+            self.assertTrue(self.wait_until(self.app, lambda: win.pool.activeThreadCount() == 0, 10))
+        self.assertEqual(runs[job][-1], "stopped")
+        self.assertEqual(win.energy, {})
+        self.assertIn("Production stopped", win.energy_page.status.text())
+
+    def test_pvgis_refused_is_said_when_asked_never_over_what_a_change_said(self):
+        from unittest import mock
+
+        from meridiana.energy import meteo
+        win = self.win
+        bar = win.statusBar()
+        said = "Plant > Strings: all 4 strings cleared; the modules stay laid."
+        with mock.patch.object(meteo, "usable", return_value=False), mock.patch.object(meteo, "cached",
+                                                                                      return_value=False):
+            bar.showMessage(said, 15000)
+            win._compute_energy(fetch=False)                    # by itself, after the change that said it
+            self.assertEqual(bar.currentMessage(), said)
+            bar.clearMessage()
+            win._compute_energy(fetch=False)                    # by itself, nothing said: told
+            self.assertIn("PVGIS is off", bar.currentMessage())
+            bar.showMessage(said, 15000)
+            win._compute_energy(fetch=True)                     # asked by the designer: told
+            self.assertIn("PVGIS is off", bar.currentMessage())
+        self.assertTrue(self.wait_until(self.app, lambda: win.pool.activeThreadCount() == 0, 60))
 
 
 if __name__ == "__main__":

@@ -40,7 +40,7 @@ class ThePhases(unittest.TestCase):
         for pid in ("production", "economics", "report"):
             self.assertIn("new_variant", [t.command for t in phases.by_id(pid).tools()])
         self.assertNotIn("refill", [t.command for t in phases.by_id("model").tools()])
-        self.assertNotIn("strings_clear", [t.command for t in phases.by_id("plant").tools()])
+        self.assertIn("strings_clear", [t.command for t in phases.by_id("plant").tools()])
 
     def test_every_command_cited_exists_unless_a_later_task_brings_it(self):
         known = {c.id for c in shortcuts.commands()}

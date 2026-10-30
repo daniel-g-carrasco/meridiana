@@ -30,7 +30,7 @@ from pathlib import Path
 import numpy as np
 import shiboken6
 from PySide6.QtCore import QRectF, Qt, QTimer
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel, QMenu, QMessageBox, QStackedWidget,
                                QTableWidget, QTableWidgetItem, QToolButton, QVBoxLayout, QWidget)
 
@@ -397,8 +397,13 @@ class Chart(QWidget):
         p.grid(y=True)
         self._legend(p, c, font, [(label, colours[s % 8]) for s, (label, _v) in enumerate(series)])
         p.fit([_fmt(lo, decimals), _fmt(top, decimals)], font)
-        outline = self._mark(pg.BarGraphItem(x=[0.0], height=[0.0], width=0.1, brush=None,
-                                             pen=pg.mkPen(c["ink"], width=1.5)))
+        highlight = QColor(c["ink"])
+        highlight.setAlphaF(0.4 if stacked else 1.0)
+        wash = QColor(c["ink"])
+        wash.setAlphaF(0.035)
+        outline = self._mark(pg.BarGraphItem(x=[0.0], height=[0.0], width=0.1,
+                                             brush=wash if stacked else None,
+                                             pen=pg.mkPen(highlight, width=1.0 if stacked else 1.5)))
 
         def hover(x, _y):
             j = int(round(x))
@@ -407,9 +412,14 @@ class Chart(QWidget):
             shown = [sh for sh in shapes if sh[0] not in self.hidden]
             if not shown:
                 return ""
-            outline.setOpts(x=[float(sh[1][j]) for sh in shown],
-                            y0=[float(sh[2][j]) for sh in shown], height=[float(sh[3][j]) for sh in shown],
-                            width=[float(sh[4]) for sh in shown])
+            if stacked:
+                low = min(float(min(sh[2][j], sh[2][j] + sh[3][j])) for sh in shown)
+                high = max(float(max(sh[2][j], sh[2][j] + sh[3][j])) for sh in shown)
+                outline.setOpts(x=[float(j)], y0=[low], height=[high - low], width=[width + 0.06])
+            else:
+                outline.setOpts(x=[float(sh[1][j]) for sh in shown],
+                                y0=[float(sh[2][j]) for sh in shown], height=[float(sh[3][j]) for sh in shown],
+                                width=[float(sh[4]) for sh in shown])
             outline.show()
             if k == 1:
                 return f"{categories[j]}: {_fmt(shown[0][3][j], decimals)} {unit}"

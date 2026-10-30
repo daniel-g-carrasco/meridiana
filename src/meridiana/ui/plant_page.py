@@ -16,6 +16,7 @@ from PySide6.QtGui import QColor, QFontMetrics, QIcon, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QFrame, QGroupBox, QHBoxLayout, QLabel, QPushButton,
                                QScrollArea, QSizePolicy, QSpinBox, QToolButton, QTreeWidget, QTreeWidgetItem,
                                QTreeWidgetItemIterator, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import QStyle, QStyleOptionViewItem
 
 from .. import shortcuts, theme_colors
 from ..energy import optimizers
@@ -28,6 +29,7 @@ from . import icons
 from .theme import mark, symbol_font
 from .design import Icon, Radius, Size, Space, Type, font, strong
 from .style import Group
+from .sections import SectionDelegate
 
 MARKS = {"ok": "✔", "check": "⚠", "fail": "✘"}
 
@@ -43,6 +45,33 @@ def summary(plant) -> str:
         parts.append(ngettext("{n} module in no string", "{n} modules in no string", len(plant.left)).format(
             n=len(plant.left)))
     return " · ".join(parts)
+
+
+def active_overview(plant, limit: int = 6) -> str:
+    """The inverters at work over those chosen (R245), with the rule of the year (energy/pipeline.py): an installed
+    inverter (not one sized by itself) with a string of modules on one of its inputs; then a line for each unit, the
+    first `limit` of them. «Active» is what the production counts: an inverter chosen without strings is idle."""
+    units = [u for u in plant.units if u.entry >= 0 and u.spec.pac > 0]
+    if not units:
+        return _("No inverter selected.")
+    lines, active, power = [], 0, 0.0
+    for u in units:
+        runs = [s for s in plant.strings if s.inverter == u.number and s.modules and 1 <= s.mppt <= u.inputs]
+        if runs:
+            active += 1
+            power += u.spec.pac
+            inputs = len({s.mppt for s in runs})
+            what = (ngettext("{n} string", "{n} strings", len(runs)).format(n=len(runs)) + " " +
+                    ngettext("on {n} input", "on {n} inputs", inputs).format(n=inputs))
+        else:
+            what = _("no strings")
+        lines.append(f"{plant_model.unit_label(u)} · {u.name}: {what}")
+    head = ngettext("{active} of {total} inverter with strings", "{active} of {total} inverters with strings",
+                    len(units)).format(active=active, total=len(units))
+    head += f" · {number(power / 1000.0, 1)} kW AC"
+    more = len(lines) - limit
+    shown = lines[:limit] + ([_("and {n} more").format(n=more)] if more > 0 else [])
+    return "\n".join([head, *shown])
 
 
 class DraftCard(QFrame):
@@ -305,7 +334,15 @@ class PlantInspector(QScrollArea):
         self.colours: list = []                     # each string's colour, as on the plan (the window's)
         page = QWidget()
         box = QVBoxLayout(page)
-        box.setSpacing(8)
+        box.setSpacing(Space.M)
+        overview = Group(_("Active inverters"))
+        overview_box = QVBoxLayout(overview)
+        self.overview = QLabel()
+        self.overview.setTextFormat(Qt.TextFormat.PlainText)
+        self.overview.setWordWrap(True)
+        self.overview.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        overview_box.addWidget(self.overview)
+        box.addWidget(overview)
         working = Group(_("Working inverter"))
         work_box = QVBoxLayout(working)
         self.working_inverter = QComboBox()
@@ -530,7 +567,16 @@ class PlantInspector(QScrollArea):
         try:
             e = project.energy or {}
             self.describe.setText(system.describe(e))
-            self._entries(system.inverter_entries(e))
+            entries = system.inverter_entries(e)
+            count = sum(entry["count"] for entry in entries)
+            if plant is not None:           # what the year will count: the units with strings (R245)
+                self.overview.setText(active_overview(plant))
+                self.overview.setToolTip(active_overview(plant, limit=len(plant.units)))
+            else:                           # the plant on its way: what was chosen, until its strings are known
+                self.overview.setText((ngettext("{n} inverter", "{n} inverters", count).format(n=count) + "\n" +
+                                       system.describe(e)) if entries else _("No inverter selected."))
+                self.overview.setToolTip(self.overview.text())
+            self._entries(entries)
             self._optimizers(plant)
             self._working_units(plant)
             self.ratio.setValue(float(e.get("dc_ac_ratio") or 1.1))
@@ -724,6 +770,19 @@ class PlantInspector(QScrollArea):
         self.sub_input.setEnabled(unit is not None)
 
 
+class StringSectionDelegate(SectionDelegate):
+    """The active input uses the same inset rounded surface as a selected string, below the header's air."""
+
+    def paint(self, painter, option, index) -> None:
+        from .sections import ACTIVE_ROLE, row_pill
+        if index.data(ACTIVE_ROLE):
+            low = QStyleOptionViewItem(option)
+            low.rect.adjust(0, self.air, 0, 0)
+            low.state |= QStyle.StateFlag.State_Selected
+            row_pill(painter, low)
+        super().paint(painter, option, index)
+
+
 class StringList(QTreeWidget):
     """The strings of the plant in the right panel (R115, Daniel 25/10/2026: «se seleziono una stringa non mi porta alla
     stringa, se premo Canc non me la cancella, il + non fa nulla»): a section for each input of each inverter, its
@@ -742,8 +801,8 @@ class StringList(QTreeWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        from .sections import SectionDelegate
         self.setObjectName("strings-list")
+        self.setProperty("row-pills", True)
         self.setHeaderHidden(True)
         self.setIndentation(0)
         self.setRootIsDecorated(False)
@@ -762,7 +821,7 @@ class StringList(QTreeWidget):
         head.setSectionResizeMode(1, head.ResizeMode.Fixed)
         head.resizeSection(1, Size.CONTROL + Space.M)
         for column in (0, 1):
-            self.setItemDelegateForColumn(column, SectionDelegate(self, pills=True))
+            self.setItemDelegateForColumn(column, StringSectionDelegate(self, pills=True))
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._menu)
         self.itemSelectionChanged.connect(self._selected)
@@ -796,8 +855,7 @@ class StringList(QTreeWidget):
             active = key == self.draft_input and unit > 0
             for column in range(2):
                 head.setData(column, ACTIVE_ROLE, active)
-                head.setData(column, Qt.ItemDataRole.BackgroundRole,
-                             self.palette().brush(self.palette().ColorRole.Highlight) if active else None)
+                head.setData(column, Qt.ItemDataRole.BackgroundRole, None)
         self.viewport().update()
 
     def set_unit(self, unit: int) -> None:
@@ -912,7 +970,7 @@ class StringList(QTreeWidget):
         from .sections import AIR
         holder = QWidget()
         box = QHBoxLayout(holder)
-        box.setContentsMargins(0, AIR, 0, 0)
+        box.setContentsMargins(0, AIR, Space.XS, 0)
         box.setSpacing(0)
         add = QToolButton()
         add.setObjectName("add-string")

@@ -98,7 +98,8 @@ def phases() -> list[Phase]:
             Group("strings", _("Strings"), (
                 T("strings_auto", _("Propose")),
                 T("strings_complete", _("Complete")),
-                T("strings_manual", _("Draw"))))),
+                T("strings_manual", _("Draw")),
+                T("strings_clear", _("Start again"))))),
             "plant", ("strings", "connection"),
             (_("Are the strings right for this inverter?"),
              _("Does this string hold at -10 °C?"),

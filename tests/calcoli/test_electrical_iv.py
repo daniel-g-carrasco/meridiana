@@ -122,3 +122,54 @@ class BlockGeometry(unittest.TestCase):
         np.testing.assert_allclose(powers[17], powers[65], rtol=.03)
         self.assertEqual(nearshade.CELL_LEVELS, 17)
         self.assertGreater(abs(powers[9][0] / powers[17][0] - 1), .10)  # rejects an insufficient default resolution
+
+
+class HourByHour(unittest.TestCase):
+    """R266: once module_curve's decisions over a batch of hours are fixed (CurvePlan), each hour is computed alone:
+    the electrical network computes the shaded hours of a module and takes its clear hours from another module."""
+
+    def batch(self):
+        from meridiana.energy import nearshade
+        rng = np.random.default_rng(7)
+        hours, blocks, levels = 8, 6, nearshade.CELL_LEVELS
+        fractions = np.zeros((hours, blocks, levels))
+        fractions[..., 0] = 1
+        for h in (2, 3, 6):                         # three hours in a shadow, the others clear
+            share = rng.uniform(0, 1, (blocks, 3))
+            share /= share.sum(axis=1, keepdims=True)
+            fractions[h] = 0
+            fractions[h, :, [0, 5, 16]] = share.T
+        shade = np.linspace(0, 1, levels)
+        irradiance = np.broadcast_to((80 + 700 * (1 - shade))[None, None, :]
+                                     * np.linspace(.4, 1.2, hours)[:, None, None], fractions.shape)
+        return irradiance, np.linspace(10, 50, hours), fractions
+
+    def test_any_hours_with_the_batchs_plan_are_those_of_the_whole_batch(self):
+        m = module()
+        g, t, f = self.batch()
+        whole = electrical.module_curve(m, g, t, (3, 2), cell_fractions=f)
+        plan = electrical.curve_plan(m, g, t, (3, 2), cell_fractions=f)
+        for hours in ([0], [2, 3], [1, 4, 5, 7], [6]):
+            part = electrical.module_curve(m, g[hours], t[hours], (3, 2), cell_fractions=f[hours], plan=plan)
+            np.testing.assert_allclose(part.voltage, whole.voltage[hours], rtol=1e-12, atol=1e-12)
+            np.testing.assert_allclose(part.current, whole.current[hours], rtol=1e-12, atol=1e-12)
+        # without the plan, the clear hours alone are the one-diode module: not the same samples as in the batch
+        alone = electrical.module_curve(m, g[[0]], t[[0]], (3, 2), cell_fractions=f[[0]])
+        self.assertFalse(np.allclose(alone.voltage, whole.voltage[[0]], rtol=1e-9))
+
+    def test_interp_is_numpys_row_by_row(self):
+        rng = np.random.default_rng(3)
+        xp = np.sort(rng.normal(size=(20, 50)), axis=1)
+        xp[:, :10] = xp[:, :1]                      # repeated dark end points
+        fp = rng.normal(size=(20, 50))
+        x = np.concatenate([rng.normal(size=(20, 30)) * 3, xp[:, ::7]], axis=1)
+        expected = np.array([np.interp(a, b, c) for a, b, c in zip(x, xp, fp, strict=True)])
+        np.testing.assert_array_equal(electrical.interp(x, xp, fp), expected)
+        # one value per row goes through the vectorised search: the same numbers, signs of zero and infinities too
+        fp[:, ::5] = np.inf
+        xp[3] = 0.0
+        for column in (x[:, :1], xp[:, 12:13], np.zeros((20, 1)), np.full((20, 1), -0.0), xp[:, -1:] + 1):
+            expected = np.array([np.interp(a, b, c) for a, b, c in zip(column, xp, fp, strict=True)])
+            got = electrical.interp(column, xp, fp)
+            np.testing.assert_array_equal(got, expected)
+            np.testing.assert_array_equal(np.signbit(got), np.signbit(expected))
