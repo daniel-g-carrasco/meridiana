@@ -37,10 +37,34 @@ class AutomaticClimate(unittest.TestCase):
         raw, _ = atomic.read_json(meteo._cache_file(win.paths.cache, "tmy", win.project.site.lat,
                                                     win.project.site.lon))
         climate = {"tmy": raw, "horizon": {"fetched": "2026-10-28", "azimuth": [0, 180], "elevation": [0, 0]}}
+        win.session.mark_saved()
         win._climate_done(win.project.site.lat, win.project.site.lon, climate)
         self.assertEqual(win.project.climate, climate)
         self.assertFalse(win.energy)
+        # written down by the program, not by the designer: a saved project stays saved and Ctrl+Z does not take it
+        # back (closing a project just opened asked to save, 30/10/2026); the next save carries it into the file
+        self.assertFalse(win._dirty())
+        self.assertFalse(win.session.undo.can_undo())
+
+    def test_a_saved_project_opened_and_closed_asks_nothing_and_keeps_the_weather_at_the_next_save(self):
+        """The case found on the packages (30/10/2026): a saved .mer without weather, opened with the network on,
+        got the download inside it and closing asked to save. Now nothing waits; a real change and a save write
+        the weather into the file too."""
+        from meridiana import model
+        win = self.window(cache=clear_sky_meteo())
+        path = self.file.with_name("salvato.mer")
+        model.Project.from_json(win.project.to_json()).save(path)
+        with mock.patch.object(win.pool, "start"):
+            self.assertTrue(win.open_path(path))
+        raw, _ = atomic.read_json(meteo._cache_file(win.paths.cache, "tmy", win.project.site.lat,
+                                                    win.project.site.lon))
+        climate = {"tmy": raw, "horizon": {"fetched": "2026-10-30", "azimuth": [0, 180], "elevation": [0, 0]}}
+        win._climate_done(win.project.site.lat, win.project.site.lon, climate)
+        self.assertFalse(win._dirty())
+        win.edit("rename", lambda p: setattr(p, "name", "Rinominato"))
         self.assertTrue(win._dirty())
+        win.session.save(path)
+        self.assertEqual(model.Project.load(path)[0].climate, climate)
 
     def test_missing_data_turns_an_offline_computation_into_a_background_fetch(self):
         win = self.window()
@@ -69,11 +93,12 @@ class AutomaticClimate(unittest.TestCase):
     def test_a_result_puts_the_downloads_inside_the_project(self):
         win = self.window(cache=clear_sky_meteo())
         self.assertFalse(win.project.climate)
+        win.session.mark_saved()
         win._energy_done(win.session.energy_generation, {"notes": [], "meteo_text": "synthetic"})
         raw, _ = atomic.read_json(meteo._cache_file(win.paths.cache, "tmy", win.project.site.lat,
                                                     win.project.site.lon))
         self.assertEqual(win.project.climate["tmy"], raw)
-        self.assertTrue(win._dirty(), "the downloaded data waits for the normal project save")
+        self.assertFalse(win._dirty(), "the downloads go into the file with the next save, without asking for one")
 
 
 if __name__ == "__main__":

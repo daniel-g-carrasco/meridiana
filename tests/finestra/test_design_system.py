@@ -775,3 +775,14 @@ class InTheWindow(unittest.TestCase):
         self.app.processEvents()
         self.assertTrue(box.view.scroll.maximumHeight() >= min(lines, box.view.text.height()) or
                         box.view.scroll.maximumHeight() > lines)          # never held to three lines
+        # the text takes the card's room down to the links at its foot: nothing left empty under them (Daniel,
+        # 30/10/2026: «la scheda aiuto per quanto spazio abbia continua a non occuparlo tutto»); the area as tall as
+        # the measured text fell short and left the room below empty
+        for hid in ("subfield", "site"):
+            box.show_help(hid)
+            _setup.turn_events(self.app, 50)
+            links = box.view.links
+            under = box.height() - links.mapTo(box, links.rect().bottomLeft()).y()
+            self.assertLessEqual(under, 12, hid)
+            self.assertGreaterEqual(box.view.scroll.height() + 2, min(box.view.text.height(),
+                                    box.height() - links.height() - box.subject_row.height() - 20), hid)

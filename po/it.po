@@ -19553,3 +19553,7 @@ msgstr "Al più un ottimizzatore con un solo modulo nella stringa"
 #, python-brace-format
 msgid "{n} optimizers with a single module: either one, or all of them"
 msgstr "{n} ottimizzatori con un solo modulo: o uno, o tutti"
+
+#: src/meridiana/updates.py src/meridiana/ui/update_controller.py
+msgid "No version of Meridiana has been published yet."
+msgstr "Nessuna versione di Meridiana è stata ancora pubblicata."

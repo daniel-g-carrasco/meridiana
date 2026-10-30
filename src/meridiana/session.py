@@ -294,9 +294,11 @@ class ProjectSession:
             raise
         after = self.snapshot()
         topics = topics_of(before, after) if before != after else set()
+        # still saved whatever changed, even a part no view follows by topic (the site's weather, R196: opening a
+        # saved project and closing it asked to save, 30/10/2026)
+        if clean and before != after:
+            self.saved_state = self.state_key()
         if topics:
-            if clean:
-                self.saved_state = self.state_key()
             self.changed(*topics)
         return topics
 

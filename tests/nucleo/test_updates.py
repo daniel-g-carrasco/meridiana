@@ -116,6 +116,20 @@ class DownloadTest(unittest.TestCase):
         self.assertEqual(seen, [1000, 2000, 3000])           # the fourth chunk, past the size, not taken
         self.assertFalse((self.tmp / "got.exe.part").exists())
 
+    def test_no_release_yet_is_its_own_answer_not_a_failure(self):
+        """GitHub answers 404 for the latest release of a project that has none: NoRelease, which the window takes
+        as nothing to update to (the check by itself logged «GitHub answered 404» at every start, 30/10/2026)."""
+        import urllib.error
+        missing = urllib.error.HTTPError(updates.LATEST_RELEASE_API, 404, "Not Found", {}, None)
+        with mock.patch.object(updates, "_get", side_effect=missing):
+            with self.assertRaises(updates.NoRelease):
+                updates.latest_release()
+        failing = urllib.error.HTTPError(updates.LATEST_RELEASE_API, 500, "Server Error", {}, None)
+        with mock.patch.object(updates, "_get", side_effect=failing):
+            with self.assertRaises(updates.UpdateError) as caught:
+                updates.latest_release()
+            self.assertNotIsInstance(caught.exception, updates.NoRelease)
+
     def test_an_answer_too_big_for_a_release_is_refused(self):
         answer = self.tmp / "release.json"
         answer.write_text(json.dumps({**RELEASE, "body": "x" * updates.RELEASE_MAX_BYTES}))

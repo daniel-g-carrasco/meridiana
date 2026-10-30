@@ -35,6 +35,9 @@ class CheckJob(QRunnable):
     def run(self):
         try:
             release = updates.latest_release()
+        except updates.NoRelease:
+            tell(self.signals.done, None, "", self.manual)          # no release yet: no reason, not a failure
+            return
         except updates.UpdateError as error:
             tell(self.signals.done, None, str(error), self.manual)
             return

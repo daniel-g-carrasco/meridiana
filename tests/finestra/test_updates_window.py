@@ -58,6 +58,19 @@ class UpdatesInTheWindow(unittest.TestCase):
             self.ask(win, (Path(tempfile.mkdtemp()) / "gone.json").as_uri())
             self.assertIn("failed", win.statusBar().currentMessage())
 
+    def test_no_release_yet_is_said_when_asked_and_kept_quiet_by_itself(self):
+        """GitHub has no release yet (NoRelease, 404): asked by hand the window says so, by itself it neither tells
+        nor logs a failure (the log had «GitHub answered 404» at every start, 30/10/2026)."""
+        from meridiana import log
+        _setup.window(self, capannone())
+        win = self.win
+        with mock.patch.object(log, "complain") as complain:
+            win._update_answer(None, "", False)
+            complain.assert_not_called()
+            win._update_answer(None, "", True)
+        self.assertIn("published", win.statusBar().currentMessage())
+        self.assertIsNone(win.update_job)
+
     def test_a_check_that_answers_after_the_window_is_destroyed_is_dropped(self):
         import threading
 

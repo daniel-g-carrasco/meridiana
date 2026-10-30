@@ -63,6 +63,11 @@ class UpdateError(Exception):
     pass
 
 
+class NoRelease(UpdateError):
+    """GitHub has no release of the project yet (it answers 404 for the latest): nothing to update to, not a
+    failure; the check by itself said «GitHub answered 404» in the log at every start (30/10/2026)."""
+
+
 @dataclass(frozen=True)
 class Asset:
     name: str
@@ -168,6 +173,8 @@ def latest_release(timeout: float = 15.0) -> Release:
             raise UpdateError(_("unexpected answer from GitHub"))
         data = json.loads(raw)
     except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise NoRelease(_("No version of Meridiana has been published yet.")) from None
         raise UpdateError(_("GitHub answered {code}").format(code=e.code)) from None
     except (urllib.error.URLError, OSError, ValueError) as e:
         raise UpdateError(str(getattr(e, "reason", e))) from None

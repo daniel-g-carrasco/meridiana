@@ -61,6 +61,10 @@ class UpdateController(QObject):
     def answer(self, release, why, manual):
         win = self.window
         win.update_job = None
+        if release is None and not why:             # GitHub has no release yet (updates.NoRelease): nothing to do
+            if manual:
+                win.tell(_("No version of Meridiana has been published yet."))
+            return
         if release is None:
             if manual:
                 win.tell(_("The check for updates failed: {error}").format(error=why))

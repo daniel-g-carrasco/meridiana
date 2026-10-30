@@ -288,12 +288,14 @@ class HelpView(QWidget):
         width = max(80, self.scroll.width() or self.width())
         tall = max(self.fontMetrics().lineSpacing(), self._text_height(width))
         if self.fill:
-            # in its own card the text takes the room there is (Daniel, 24/10/2026: «come mai anche se Aiuto ha
-            # tutto questo spazio il suo contenuto viene compresso?»): as tall as it is, scrolled only when the card
-            # is lower, never under two lines
-            self.scroll.want = tall + 2
+            # in its own card the text takes all the room there is, scrolled only when it is longer (Daniel,
+            # 24/10/2026: «come mai anche se Aiuto ha tutto questo spazio il suo contenuto viene compresso?», and again
+            # 30/10/2026: «per quanto spazio abbia continua a non occuparlo tutto»): the area as tall as the text
+            # depended on measuring the text, which fell short and left the card's room empty under a scrolled
+            # text; now it stretches (layout stretch in HelpBox) and the links stay at the card's foot
+            self.scroll.want = 0
             self.scroll.setMinimumHeight(min(tall, 2 * self.fontMetrics().lineSpacing() + 4))
-            self.scroll.setMaximumHeight(tall + 2)
+            self.scroll.setMaximumHeight(16777215)
             self.scroll.updateGeometry()
             return
         self.scroll.setFixedHeight(min(lines, tall))
@@ -532,9 +534,10 @@ class HelpBox(QFrame):
             self.box.setContentsMargins(6, 0, 0, 4)
             self.subject_row.layout().setContentsMargins(0, 0, 6, 0)
             self.subject.setContentsMargins(0, 0, 0, 2)
-            self.view.fill = True               # the text as tall as the card lets it be (R76)
+            self.view.fill = True               # the text takes the card's room (R76, 30/10/2026)
+            self.view.layout().setStretchFactor(self.view.scroll, 1)
+            self.box.setStretchFactor(self.view, 1)
             self.view.settle()
-            self.box.addStretch(1)              # the links right under the text, the room of the card below
             dock.toggleViewAction().toggled.connect(self._dock_toggled)
             host.installEventFilter(self)
         else:

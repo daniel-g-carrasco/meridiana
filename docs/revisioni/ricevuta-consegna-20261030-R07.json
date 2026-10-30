@@ -1,0 +1,94 @@
+{
+  "revision": "R07",
+  "date": "2026-10-30",
+  "application_commit": "f83976190e05b48ed2a28cd829961ff4ceeed38d",
+  "branch": "integra-kimi-9-10",
+  "source_manifest": "source-manifest-20261030-R07.json",
+  "source_manifest_sha256": "14c8a057fd23e57f6f937b77bdaa733989a082c94cb83cc278ec4ec28727c77b",
+  "source_files_verified": 361,
+  "source_snapshot": "build/claude-r07/P-source-20261030-R07",
+  "source_note": "359 tracked files of the packaged paths at f839761 plus the compiled Italian catalogue (identical to tools/compile_po.py --python output of po/it.po) and the Windows icon; packages built from the isolated snapshot copy; the worktree still matched the freeze after packaging",
+  "artifacts": [
+    {
+      "name": "meridiana-portable-20261030-R07-windows-x64.zip",
+      "sha256": "063decd6a2cbb15f538b60ff48729661b7c7d345998ddad9dae1fefda3129dc0",
+      "bytes": 249472210
+    },
+    {
+      "name": "meridiana-setup-v0.1.0-preview20261030-R07-windows-x64.exe",
+      "sha256": "5d2d184c5ea2f56e4cb3849118e30dba45e7aea464111d7b0e868e29eca55215",
+      "bytes": 173379394
+    },
+    {
+      "name": "meridiana-linux-x86_64-20261030-R07.flatpak",
+      "sha256": "e04efc8ab4603f3e63f3e72f92c90edfe30dbf0b1ef4152a152b9ed45e5892f9",
+      "bytes": 213585584
+    }
+  ],
+  "packages_folder": "dist/packages-20261030-R07",
+  "windows": {
+    "bundle": "dist/windows-bundle-20261030-R07/Meridiana",
+    "bundle_files": 5076,
+    "executable_sha256": "e53efdff116d3012ac069cd1cd6e5b8b928e18e736b5a1054131746d2420509c",
+    "pyinstaller": "6.22.3, Python 3.12.6, log build/pyinstaller-20261030-R07.log",
+    "inno": "build/inno-20261030-R07.log, 96.5 s",
+    "zip_verification": "5076 files, CRC complete, names and sizes identical to the bundle",
+    "portable_native_self_test": "PASS: D3D11, first frame 0.45 s, 0 failures in 16.56 s, foreground unchanged",
+    "frozen_kokoro_worker": {
+      "fake_protocol": "PASS, ready 0.32 s",
+      "real_synthesis": "PASS with weights already on the PC (%LOCALAPPDATA%\\Meridiana\\data\\voices\\kokoro): ready 2.03 s, 98304 PCM bytes (2.05 s of audio) in 3.14 s, exit 0",
+      "weights_downloaded": false
+    },
+    "single_instance": "PASS hand-over: second start of the frozen exe exited 0 in 0.37 s and the first opened the handed project (screenshot); the first screenshot run did not quit by itself because a Save dialog appeared at close (see limits), killed after the timeout",
+    "installer": "PASS isolated per-user install (no previous installation on this PC), exe identical to bundle, native self-test D3D11 0 failures, uninstall exit 0, registry and shortcuts restored, user data marker preserved",
+    "installed_on_pc": false,
+    "signed": false,
+    "logs": ["build/windows-portable-selftest-20261030-R07", "build/desktop-package-check-20261030-R07"]
+  },
+  "linux_package": {
+    "builder": "WSL openSUSE-Tumbleweed, base /home/daniel/meridiana-flatpak-20261029-172631, driver build/flatpak-r11-driver.sh (revision r11)",
+    "kokoro_module": "python3-kokoro.json downloaded once with --download-only, then offline build; kokoro-onnx 0.6.1, onnxruntime 1.31.1, espeakng-loader 0.2.4, phonemizer 3.4.0",
+    "exported_imported_ostree_commit": "e1d47f5441667445b02da21fe5a9f361d522a746ed3d0c6d3f43fd062439d392",
+    "self_test": "PASS offscreen, 0 failures",
+    "package_probe": "PASS (build/flatpak-r11-probe-20261030-R07.py), including Kokoro import, espeak phonemes, fake worker and real synthesis with the Windows weights mounted read-only",
+    "pip_check": "No broken requirements found",
+    "source_verification": "361/361 files equal to the freeze (2 CRLF to LF), 337 installed files byte-identical, Italian catalogue 3831 entries equal",
+    "bundle_import_fsck": "PASS, exported and imported commit identical"
+  },
+  "linux_native": {
+    "host": "fw13 (lucciola)",
+    "app_id": "io.github.daniel_g_carrasco.meridiana",
+    "installation": "user",
+    "runtime": "org.kde.Platform/x86_64/6.11",
+    "previous_installed_commit": "350ae0a8fc1f9c981ecf6ceb68e43841445b4ae7ed4f33de46989b88708b2dd0",
+    "installed_ostree_commit": "e1d47f5441667445b02da21fe5a9f361d522a746ed3d0c6d3f43fd062439d392",
+    "remote_sha256_verified": true,
+    "remote_folder": "~/fvtest/meridiana-consegna-20261030-R07",
+    "previous_bundle_preserved": "~/fvtest/meridiana-consegna-20261029-R06 (sha256 97363a4a... rechecked)",
+    "meridiana_running_before_install": false,
+    "user_processes_stopped": false,
+    "native_environment": "XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 NIRI_SOCKET=/run/user/1000/niri.wayland-1.1878.sock (checked from the niri process and the sockets)",
+    "native_standard_self_test": "PASS: Wayland OpenGL, first frame, 0 failures in 18.21 s",
+    "native_explicit_3d_probe": "PASS: test window 1100 x 821 (minimum-size hint on the test window only), view 525 x 399, image 1050 x 798, 30-degree orbit changed the image, exit 0 in 11.65 s; both images inspected",
+    "kokoro_in_flatpak": "PASS: kokoro_onnx imported from /app/lib/python3.13/site-packages; program found ~/.local/opt/kokoro; worker uses sandbox /usr/bin/python3; real synthesis ready 1.24 s, 98304 PCM bytes in 1.70 s",
+    "installed_package_probe": "PASS with MERIDIANA_KOKORO_DIR=~/.local/opt/kokoro",
+    "desktop_file_forwarding": true,
+    "mime_type": "application/x-meridiana-project+zip",
+    "document_portal": "mounted before install and after every probe; never restarted",
+    "meridiana_left_running": false,
+    "logs_directory": "build/laptop-install-20261030-R07"
+  },
+  "not_verified": [
+    "Touchpad gestures on the laptop (only the programmatic 30-degree orbit)",
+    "Audible playback of the Kokoro voice (synthesis checked as PCM bytes only)",
+    "Kokoro worker run from the installed Windows copy (installed exe identical to the bundle; worker tested on the bundle)",
+    "Update over a running real Windows instance; Wayland activation token on hand-over"
+  ],
+  "limits": [
+    "A start that opens a project created by model.Project.save asks to save at close although nothing was edited (source and frozen; MERIDIANA_SCREENSHOT runs hang on the dialog); not investigated further, no code changed",
+    "A fresh configuration checks GitHub for updates at start (check_updates default True); the frozen test run logged 'GitHub ha risposto 404'",
+    "Windows packages unsigned; local previews",
+    "Package checks do not replace the open review and functional items of R07 listed in docs/richieste.md"
+  ],
+  "publication": "none: no push, tag, release or upload"
+}

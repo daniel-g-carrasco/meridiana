@@ -1230,8 +1230,12 @@ class MainWindow(QMainWindow):
         from .cards import set_corner_colour
         set_corner_colour(t["panel"])               # the views' rounded corners on their card
         pages = (self.energy_page, self.consumption_page, self.economics_page)
-        for area in (self.tree, self.checks_page.tree, getattr(self.help_box.view, "scroll", None)):
+        for area in (self.tree, getattr(self.help_box.view, "scroll", None)):
             fades.attach(area)
+        # the checks' rows are drawn on the view's own ground (white in the light theme): the bands fade into it, the
+        # panel's colour left a band of another tone that hid nothing (30/10/2026, «velatura ... nel pannello verifiche»)
+        fades.attach(self.checks_page.tree, table=True)
+        fades.set_ground(self.checks_page.tree, self.checks_page.tree.colours["card"])
         # the pages and the panels: what scrolls stops short of the card's lines (R177)
         for area in (self.props, self.inspector.results, self.inspector.deliverables,
                      getattr(self, "plant_inspector", None), *[a for p in pages for a in (p.side, p.centre)]):
@@ -3296,8 +3300,11 @@ class MainWindow(QMainWindow):
         if (lat, lon) != (self.project.site.lat, self.project.site.lon):
             self._ensure_climate()
             return
+        # what the program writes down by itself (session.amend): no undo step, and a project saved as it was stays
+        # saved; the weather goes into the file with the next save and stays in the cache meanwhile (opening a saved
+        # project and closing it asked to save a change the designer never made, 30/10/2026)
         before = self.project.climate
-        self.edit(_("Download the site's weather"), lambda p: setattr(p, "climate", climate))
+        self.session.amend(lambda p: setattr(p, "climate", climate))
         if before != self.project.climate:
             self._title()
 
@@ -3405,8 +3412,7 @@ class MainWindow(QMainWindow):
         if out.get("meteo_text") and keep_climate:
             before = self.project.climate
             try:
-                self.edit(_("Download the site's weather"),
-                          lambda p: meteo.capture(p, self.paths.cache))
+                self.session.amend(lambda p: meteo.capture(p, self.paths.cache))     # as in _climate_done
             except (OSError, ValueError) as error:
                 log.complain("climate", error)
                 self.tell(_("The weather was computed but could not be kept in the project: {error}").format(error=error))

@@ -34,6 +34,7 @@ class Edge(QWidget):
         self.top = top
         self.table = table
         self.page = False
+        self.ground = ""                     # the colour the rows are drawn on, when the view's own is transparent
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.hide()
@@ -44,7 +45,8 @@ class Edge(QWidget):
         if self.table or self.page:
             # A viewport is rectangular, even when the surrounding card has round corners.
             # Paint through the boundary pixel centres: inset clipping left a full-colour seam.
-            base = (self.area.viewport().palette().color(QPalette.ColorRole.Base) if self.table else
+            base = (QColor(self.ground) if self.ground else
+                    self.area.viewport().palette().color(QPalette.ColorRole.Base) if self.table else
                     QColor(_COLOUR[0]))
             if self.height() <= 1:
                 p.fillRect(self.rect(), base)
@@ -121,7 +123,10 @@ def attach(area: QAbstractScrollArea, air: bool = False, *, table: bool = False,
     text, the help card, scrolled by those pixels)."""
     if area is None:
         return None
-    found = area.findChild(Fades)
+    # the area's own fades only: a plain findChild searched the children too, found the fades of a table inside a
+    # page (Consumption, Balance and economics) and took them for the page's, which then had none, and the table's
+    # turned into a page's (Daniel, 30/10/2026: «problemi di velatura ... in Consumi e in bilancio ed economia»)
+    found = area.findChild(Fades, "", Qt.FindChildOption.FindDirectChildrenOnly)
     if auto and found is not None:
         return found                        # made already, by its caller or by an earlier polish
     page = air and not isinstance(area, QAbstractItemView)
@@ -142,6 +147,17 @@ def attach(area: QAbstractScrollArea, air: bool = False, *, table: bool = False,
         edge.page = page
         edge.update()
     return controller
+
+
+def set_ground(area: QAbstractScrollArea, colour: str) -> None:
+    """The colour `area`'s rows are drawn on, for a view whose own ground is transparent in its card (the checks: their
+    rows on the theme's card, the view's Base black under the dock's transparent style, bands drawn black, 30/10/2026):
+    the bands fade into it. Nothing when the area has no fades."""
+    found = area.findChild(Fades, "", Qt.FindChildOption.FindDirectChildrenOnly) if area is not None else None
+    if found is not None:
+        for edge in found.edges:
+            edge.ground = colour
+            edge.update()
 
 
 def set_colour(colour: str) -> None:
