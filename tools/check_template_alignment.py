@@ -11,7 +11,7 @@ def digest(path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--upstream", type=Path, required=True)
-    parser.add_argument("--manifest", type=Path, default=ROOT / "template-sync-qt_R05.json")
+    parser.add_argument("--manifest", type=Path, default=ROOT / "template-sync-qt_R06.json")
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     if manifest["format"] != 2:
