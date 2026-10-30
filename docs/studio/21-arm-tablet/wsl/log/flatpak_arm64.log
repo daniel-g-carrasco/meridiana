@@ -1,0 +1,31 @@
+﻿wsl : + date
+Fri Oct 30 12:13:41 PM CET 2026
++ flatpak install --noninteractive --arch=aarch64 flathub org.kde.Platform//6.11 io.qt.PySide.BaseApp//6.11
++ tail -5
+Installing runtime/org.freedesktop.Platform.GL.default/aarch64/25.08-extra
+Installing runtime/org.freedesktop.Platform.codecs-extra/aarch64/25.08-extra
+Installing runtime/org.kde.Platform.Locale/aarch64/6.11
+Installing runtime/org.kde.Platform/aarch64/6.11
+Installing app/io.qt.PySide.BaseApp/aarch64/6.11
++ date
+Fri Oct 30 12:15:16 PM CET 2026
++ flatpak list --arch=aarch64
+PySide6 BaseApp	io.qt.PySide.BaseApp	6.11.2	6.11	system
+Mesa	org.freedesktop.Platform.GL.default	26.2.5	25.08	system
+Mesa (Extra)	org.freedesktop.Platform.GL.default	26.2.5	25.08-extra	system
+Codecs Extra Extension	org.freedesktop.Platform.codecs-extra		25.08-extra	system
+KDE Application Platform	org.kde.Platform		6.11	system
++ flatpak run --arch=aarch64 --command=sh io.qt.PySide.BaseApp//6.11 -c $'uname -m; python3 --version; python3 -c 
+"\nimport platform, time\nt = time.perf_counter()\nimport numpy\nfrom PySide6 import QtCore, 
+QtQuick3D\nprint(\\"machine\\", platform.machine(), \\"qt\\", QtCore.qVersion(), \\"numpy\\", numpy.__version__, \\"in 
+%.1f s\\" % (time.perf_counter() - t))\n"'
++ tail -8
+aarch64
+Python 3.13.15
+machine aarch64 qt 6.11.2 numpy 2.3.5 in 4.0 s
+
+real	0m5.705s
+user	0m0.023s
+sys	0m0.017s
++ date
+Fri Oct 30 12:15:22 PM CET 2026

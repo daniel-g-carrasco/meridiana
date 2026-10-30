@@ -1,0 +1,138 @@
+﻿wsl : + date
+Fri Oct 30 12:09:57 PM CET 2026
++ zypper --non-interactive install qemu-linux-user podman
++ tail -15
+(13/26) Installing: libprotobuf-c1-1.5.2-2.8.x86_64 [..done]
+(14/26) Installing: passt-20261002.cba3570-1.1.x86_64 [..done]
+(15/26) Installing: python313-protobuf-7.36.2-1.1.x86_64 [..done]
+(16/26) Installing: qemu-linux-user-11.1.2-1.1.x86_64 [......done]
+(17/26) Installing: registries-conf-default-20260915-1.1.noarch [..done]
+(18/26) Installing: libbsd0-0.11.7-2.12.x86_64 [..done]
+(19/26) Installing: libnftables1-1.1.7-1.1.x86_64 [..done]
+(20/26) Installing: libnl3-200-3.12.0-1.5.x86_64 [..done]
+(21/26) Installing: libcontainers-common-20260915-1.1.noarch [..done]
+(22/26) Installing: nftables-1.1.7-1.1.x86_64 [..done]
+(23/26) Installing: criu-4.2.1-1.1.x86_64 [..done]
+(24/26) Installing: netavark-2.1.0-1.1.x86_64 [..done]
+(25/26) Installing: runc-1.5.1-2.1.x86_64 [..done]
+(26/26) Installing: podman-6.1.2-1.1.x86_64 [.....done]
+Running post-transaction scripts [......done]
++ echo '--- binfmt after install'
++ systemctl restart systemd-binfmt
+--- binfmt after install
++ ls /proc/sys/fs/binfmt_misc/
+qemu-aarch64
+qemu-aarch64_be
+qemu-alpha
+qemu-arm
+qemu-armeb
+qemu-hexagon
+qemu-hppa
+qemu-loongarch64
+qemu-m68k
+qemu-microblaze
+qemu-microblazeel
+qemu-mips
+qemu-mips64
+qemu-mips64el
+qemu-mipsel
+qemu-mipsn32
+qemu-mipsn32el
+qemu-or1k
+qemu-ppc
+qemu-ppc64
+qemu-ppc64le
+qemu-riscv32
+qemu-riscv64
+qemu-s390x
+qemu-sh4
+qemu-sh4eb
+qemu-sparc
+qemu-sparc32plus
+qemu-sparc64
+qemu-xtensa
+qemu-xtensaeb
+register
+status
+WSLInterop
++ cat /proc/sys/fs/binfmt_misc/qemu-aarch64
+enabled
+interpreter /usr/bin/qemu-aarch64
+flags: PF
+offset 0
+magic 7f454c460201010000000000000000000200b700
+mask ffffffffffffff00fffffffffffffffffeffffff
++ ls -la /usr/bin/qemu-aarch64 /usr/bin/qemu-aarch64_be
+-rwxr-xr-x 1 root root 7023272 Oct  1 15:40 /usr/bin/qemu-aarch64
+-rwxr-xr-x 1 root root 7031472 Oct  1 15:40 /usr/bin/qemu-aarch64_be
++ podman --version
+podman version 6.1.2
++ echo '--- flathub remote and aarch64 runtime'
++ flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+--- flathub remote and aarch64 runtime
++ flatpak remote-info --arch=aarch64 flathub org.kde.Platform//6.11
++ head -12
+            ID: org.kde.Platform
+           Ref: runtime/org.kde.Platform/aarch64/6.11
+          Arch: aarch64
+        Branch: 6.11
+    Collection: org.flathub.Stable
+ Download Size: 400.2 MB
+Installed Size: 1.2 GB
+
+        Commit: 9f164fb26ee310cb488314973fa21fef3c8e9241f4a2b4f9b67b3b1fc192020e
+        Parent: 72ae637727b9bb0f848fd6a006cdbc2a090d6c8d98506b45fe33612aa0d9746a
+       Subject: Export org.kde.Platform
+          Date: 2026-10-24 10:35:57 +0000
++ flatpak remote-info --arch=aarch64 flathub org.kde.Sdk//6.11
++ head -5
+            ID: org.kde.Sdk
+           Ref: runtime/org.kde.Sdk/aarch64/6.11
+          Arch: aarch64
+        Branch: 6.11
+    Collection: org.flathub.Stable
++ flatpak remote-info --arch=aarch64 flathub io.qt.PySide.BaseApp//6.11
++ head -8
+            ID: io.qt.PySide.BaseApp
+           Ref: app/io.qt.PySide.BaseApp/aarch64/6.11
+          Arch: aarch64
+        Branch: 6.11
+    Collection: org.flathub.Stable
+ Download Size: 331.4 MB
+Installed Size: 948.8 MB
+       Runtime: org.kde.Platform/aarch64/6.11
++ flatpak remote-info --arch=x86_64 flathub io.qt.PySide.BaseApp//6.11
++ head -8
+            ID: io.qt.PySide.BaseApp
+           Ref: app/io.qt.PySide.BaseApp/x86_64/6.11
+          Arch: x86_64
+        Branch: 6.11
+    Collection: org.flathub.Stable
+ Download Size: 346.5 MB
+Installed Size: 980.5 MB
+       Runtime: org.kde.Platform/x86_64/6.11
++ flatpak remote-ls --arch=aarch64 flathub
++ grep -E 'org.kde.(Platform|Sdk)|io.qt.PySide'
++ head -20
+PySide application base	io.qt.PySide.BaseApp		6.10
+PySide application base	io.qt.PySide.BaseApp		6.11
+PySide application base	io.qt.PySide.BaseApp		6.7
+PySide application base	io.qt.PySide.BaseApp		6.8
+PySide application base	io.qt.PySide.BaseApp		6.9
+kde platform	org.kde.Platform		5.15-25.08
+kde platform	org.kde.Platform		6.10
+kde platform	org.kde.Platform		6.11
+MaliitSailfishOS	org.kde.PlatformInputContexts.MaliitSailfishOS		5.12
+MaliitSailfishOS	org.kde.PlatformInputContexts.MaliitSailfishOS		5.15
+MaliitSailfishOS	org.kde.PlatformInputContexts.MaliitSailfishOS		5.15-21.08
+MaliitSailfishOS	org.kde.PlatformInputContexts.MaliitSailfishOS		5.15-22.08
+QGnomePlatform	org.kde.PlatformTheme.QGnomePlatform		5.12
+QGnomePlatform	org.kde.PlatformTheme.QGnomePlatform		5.15
+QGnomePlatform	org.kde.PlatformTheme.QGnomePlatform		5.15-21.08
+QGnomePlatform	org.kde.PlatformTheme.QGnomePlatform		5.15-22.08
+QGnomePlatform	org.kde.PlatformTheme.QGnomePlatform		5.15-23.08
+QGnomePlatform	org.kde.PlatformTheme.QGnomePlatform		5.15-24.08
+QGnomePlatform	org.kde.PlatformTheme.QGnomePlatform		6.2
+QGnomePlatform	org.kde.PlatformTheme.QGnomePlatform		6.3
++ date
+Fri Oct 30 12:10:13 PM CET 2026
