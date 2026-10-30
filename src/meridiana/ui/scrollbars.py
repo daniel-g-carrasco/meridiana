@@ -18,16 +18,37 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPalette
-from PySide6.QtWidgets import (QAbstractScrollArea, QGraphicsView, QPlainTextEdit, QProxyStyle, QStyle,
-                               QStyleFactory, QTextEdit)
+from PySide6.QtWidgets import (QAbstractScrollArea, QDockWidget, QGraphicsView, QPlainTextEdit, QProxyStyle,
+                               QScrollArea, QStyle, QStyleFactory, QTextEdit)
 
 from .checkboxes import CheckboxStyle
-from .design import Motion, Radius, Size
+from .design import Layout, Motion, Radius, Size
 
 THUMB = Size.THUMB
 END = Radius.CARD               # the thumb's way from the bar's ends: off a card's rounded corners (XS until R182,
                                 # Daniel 26/10/2026: a page's bar runs the card's height, «non deve sforare sopra e
                                 # sotto»)
+
+
+def outer_inset(widget) -> int:
+    """Forms keep PAD beyond the scrollbar; a dock already supplies that same PAD.
+
+    Reserve it in the scrollbar's room, rather than moving Qt's internal containers or
+    changing page layouts. The thumb and its hit rectangle stay aligned at every scale.
+    """
+    if widget is not None and hasattr(widget, "orientation") and widget.orientation() == Qt.Orientation.Horizontal:
+        return 0
+    area = widget
+    while area is not None and not isinstance(area, QAbstractScrollArea):
+        area = area.parentWidget()
+    if not isinstance(area, QScrollArea):
+        return 0
+    parent = area.parentWidget()
+    while parent is not None:
+        if isinstance(parent, QDockWidget) and hasattr(parent, "card_rect"):
+            return 0
+        parent = parent.parentWidget()
+    return Layout.PAD
 
 
 def keeps_room(area: QAbstractScrollArea) -> bool:
@@ -85,6 +106,9 @@ class ScrollStyle(CheckboxStyle, QProxyStyle):
         return super().standardIcon(standard, option, widget)
 
     def styleHint(self, hint, option=None, widget=None, returnData=None):
+        if hint == QStyle.StyleHint.SH_Widget_Animation_Duration:
+            from .motion import reduced
+            return 0 if reduced() else Motion.FAST
         if hint == QStyle.StyleHint.SH_ToolTip_WakeUpDelay:
             return Motion.NORMAL
         if hint == QStyle.StyleHint.SH_DialogButtonBox_ButtonsHaveIcons:
@@ -93,7 +117,7 @@ class ScrollStyle(CheckboxStyle, QProxyStyle):
 
     def pixelMetric(self, metric, option=None, widget=None):
         if metric == QStyle.PixelMetric.PM_ScrollBarExtent:
-            return Size.SCROLLBAR
+            return Size.SCROLLBAR + outer_inset(widget)
         if metric == QStyle.PixelMetric.PM_ScrollBarSliderMin:
             return Size.CONTROL
         if metric == QStyle.PixelMetric.PM_ScrollView_ScrollBarSpacing:
@@ -104,17 +128,20 @@ class ScrollStyle(CheckboxStyle, QProxyStyle):
         out = super().polish(target)
         if isinstance(target, QAbstractScrollArea):
             keep_room(target)
+            if isinstance(target, QScrollArea):
+                from . import fades
+                fades.attach(target, air=True, auto=True)       # never over a caller's own choice
         return out
 
     @staticmethod
-    def _groove(opt) -> QRect:
+    def _groove(opt, widget=None) -> QRect:
         r = opt.rect
         if opt.orientation == Qt.Orientation.Horizontal:
             return r.adjusted(END, 0, -END, 0)
-        return r.adjusted(0, END, 0, -END)
+        return r.adjusted(0, END, -outer_inset(widget), -END)
 
-    def _slider(self, opt) -> QRect:
-        groove = self._groove(opt)
+    def _slider(self, opt, widget=None) -> QRect:
+        groove = self._groove(opt, widget)
         horizontal = opt.orientation == Qt.Orientation.Horizontal
         length = groove.width() if horizontal else groove.height()
         span = opt.maximum - opt.minimum
@@ -130,7 +157,7 @@ class ScrollStyle(CheckboxStyle, QProxyStyle):
         if cc != QStyle.ComplexControl.CC_ScrollBar:
             return super().subControlRect(cc, opt, sc, widget)
         SC = QStyle.SubControl
-        groove, slider = self._groove(opt), self._slider(opt)
+        groove, slider = self._groove(opt, widget), self._slider(opt, widget)
         horizontal = opt.orientation == Qt.Orientation.Horizontal
         if sc == SC.SC_ScrollBarGroove:
             return groove
@@ -159,7 +186,7 @@ class ScrollStyle(CheckboxStyle, QProxyStyle):
             return
         if opt.maximum <= opt.minimum:
             return                      # nothing to scroll: the room stays empty
-        slider = QRectF(self._slider(opt))
+        slider = QRectF(self._slider(opt, widget))
         horizontal = opt.orientation == Qt.Orientation.Horizontal
         across = slider.height() if horizontal else slider.width()
         inset = max(0.0, (across - THUMB) / 2)

@@ -182,6 +182,7 @@ class FilePage(QFrame):
         self.hidden_with_me: list = []              # what stood over the panels (Meridio), back when it closes
         # R178: the shared entrance, with the alternatives kept for the visual comparison
         self.entrance = None
+        self.exit = None                            # the veil of the page leaving (motion.leave), until it has played
         self.entrance_kind = "slide"
         self.entrance_duration = Motion.NORMAL
         self._build()
@@ -432,6 +433,15 @@ class FilePage(QFrame):
     # showing
 
     def show_section(self, key: str) -> None:
+        from . import motion
+        section = key.partition(":")[0]
+        current = self.sections.get(section)
+        if self.isVisible() and current is not self.body.currentWidget():
+            motion.crossfade(self, lambda: self._select_section(key), Motion.FAST)
+        else:
+            self._select_section(key)
+
+    def _select_section(self, key: str) -> None:
         section, _, page = key.partition(":")
         if section not in self.sections:
             return
@@ -491,13 +501,16 @@ class FilePage(QFrame):
 
     def _open_recent(self, path: str) -> None:
         self.close_page()
-        self.host.open_path(Path(path))
+        if not self.host.open_path(Path(path)):     # gone or damaged (said): File > Open again, not an empty project
+            self.host.open_file_page("open")
 
     def open_page(self, section: str = "open") -> None:
+        self._stop_entrance()
         self.place()
         self.show_section(section)
         assistant = getattr(self.host, "assistant", None)
-        if assistant is not None and assistant.isVisible() and assistant.parentWidget() is self.host:
+        touring = assistant is not None and bool(assistant.property("guidedTourActive"))
+        if assistant is not None and assistant.isVisible() and assistant.parentWidget() is self.host and not touring:
             assistant.hide()
             self.hidden_with_me = [assistant]
         from . import motion
@@ -505,30 +518,61 @@ class FilePage(QFrame):
         def present():
             self.show()
             self.raise_()
+            if touring:
+                assistant.raise_()
+                bubble = getattr(assistant, "bubble", None)
+                if bubble is not None:
+                    bubble.raise_()
             current = next((item for item in self.items.values() if item.isChecked() and item.isVisible()), None)
             if current is not None:
                 current.setFocus()
 
         self.entrance = motion.enter(self, present, self.entrance_kind, self.entrance_duration)
         if self.entrance is not None:
-            self.entrance.animation.finished.connect(self._entered)
+            self.entrance.finished.connect(self._entered)
+            if touring:
+                self.entrance.animation.valueChanged.connect(lambda _v: self._raise_tour())
+                self._raise_tour()
         QTimer.singleShot(0, self, self.place)
 
     def _entered(self) -> None:
         self.entrance = None
+        self._raise_tour()
+
+    def _left(self) -> None:
+        self.exit = None
+
+    def _stop_entrance(self) -> None:
+        """The veils still over the page dropped: the entrance when it closes while entering, the exit when it opens
+        again while leaving (two veils showed then, the old picture going and the new one coming over it)."""
+        for veil in (self.entrance, self.exit):
+            if veil is not None:
+                veil.cancel()                       # emits finished: _entered and _left clear the attributes
+        self.entrance = self.exit = None
+
+    def _raise_tour(self) -> None:
+        assistant = getattr(self.host, "assistant", None)
+        if assistant is not None and assistant.property("guidedTourActive"):
+            assistant.raise_()
+            bubble = getattr(assistant, "bubble", None)
+            if bubble is not None:
+                bubble.raise_()
 
     def close_page(self) -> None:
         if self.isVisible():
-            if self.entrance is not None:
-                self.entrance.animation.stop()
-                self.entrance.hide()
-                self.entrance.deleteLater()
-                self.entrance = None
-            self.hide()
-            for w in self.hidden_with_me:
-                w.show()
-            self.hidden_with_me = []
-            self.closed.emit()
+            self._stop_entrance()
+            from . import motion
+
+            def dismiss():
+                self.hide()
+                for w in self.hidden_with_me:
+                    w.show()
+                self.hidden_with_me = []
+                self.closed.emit()
+
+            self.exit = motion.leave(self, dismiss)
+            if self.exit is not None:
+                self.exit.finished.connect(self._left)
 
     def place(self) -> None:
         """Over the panels and the page of the phase: the window's arena, as far from its edges as the cards."""

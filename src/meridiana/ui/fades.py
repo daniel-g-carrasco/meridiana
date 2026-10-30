@@ -78,12 +78,14 @@ class Fades(QObject):
         self.area = area
         self.edges = (Edge(area, True, table), Edge(area, False, table))
         self.frame = None
+        self.auto_margins = None            # the viewport's margins before the polish gave them AIR
         bar = area.verticalScrollBar()
         bar.valueChanged.connect(self.follow)
         bar.rangeChanged.connect(self.follow)
         area.installEventFilter(self)
         area.viewport().installEventFilter(self)
         _LIVE.add(self)
+        self.destroyed.connect(lambda: _LIVE.discard(self))
         self.follow()
 
     def eventFilter(self, obj, event) -> bool:
@@ -109,27 +111,35 @@ class Fades(QObject):
 AIR = Space.S                    # between what scrolls in a page and the card's top and bottom lines (R177)
 
 
-def attach(area: QAbstractScrollArea, air: bool = False, *, table: bool = False) -> Fades | None:
+def attach(area: QAbstractScrollArea, air: bool = False, *, table: bool = False, auto: bool = False) -> Fades | None:
     """The soft edges of `area`, made once. With `air`, what scrolls stops AIR pixels from the card's top and bottom
     lines and fades out before them (Meridiana's R177, Daniel 26/10/2026: «arrivano fino al limite della scheda
     sfondandolo»): for the pages and panels, not the lists, whose top margin is their header's.
-    `table` opts data tables into their viewport's Base; navigation keeps the panel colour."""
+    `table` opts data tables into their viewport's Base; navigation keeps the panel colour.
+    `auto` is the shared polish's default (R249): it never changes an area a caller attached itself, in whichever
+    order the two come, and a caller's plain variant takes back the AIR the polish gave (an area as tall as its
+    text, the help card, scrolled by those pixels)."""
     if area is None:
         return None
-    if air and not isinstance(area, QAbstractItemView):
-        m = area.viewportMargins()
-        if (m.top(), m.bottom()) != (AIR, AIR):
-            area.setViewportMargins(m.left(), AIR, m.right(), AIR)
     found = area.findChild(Fades)
-    if found is not None:
-        controller = found
-    else:
-        controller = Fades(area, table)
+    if auto and found is not None:
+        return found                        # made already, by its caller or by an earlier polish
+    page = air and not isinstance(area, QAbstractItemView)
+    m = area.viewportMargins()
+    given = None
+    if page and (m.top(), m.bottom()) != (AIR, AIR):
+        given = (m.top(), m.bottom())
+        area.setViewportMargins(m.left(), AIR, m.right(), AIR)
+    elif not page and found is not None and found.auto_margins is not None:
+        top, bottom = found.auto_margins
+        area.setViewportMargins(m.left(), top, m.right(), bottom)
+    controller = found if found is not None else Fades(area, table)
+    controller.auto_margins = given if auto else None
     for edge in controller.edges:
         edge.table = edge.table or table
         # A page's viewport is already inset from its card by AIR. Rounding and insetting this
         # overlay again left an uncovered row and cut text sharply at the viewport boundary.
-        edge.page = edge.page or (air and not isinstance(area, QAbstractItemView))
+        edge.page = page
         edge.update()
     return controller
 

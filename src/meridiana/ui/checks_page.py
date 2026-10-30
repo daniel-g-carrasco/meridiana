@@ -161,6 +161,8 @@ class ChecksTree(QTreeWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("checks-tree")
+        from .motion import animate_tree
+        self.tree_motion = animate_tree(self, sections_only=True)
         self.hover_item: QTreeWidgetItem | None = None     # the item under the pointer, its detail counted in
         self.keyboard = False                               # the last move came from the keyboard
         self.viewport().setMouseTracking(True)
@@ -267,7 +269,7 @@ class ChecksTree(QTreeWidget):
                 self.setCurrentItem(row)                # where the keyboard goes on from, drawn only with the focus
                 self.blockSignals(False)
                 if row.childCount():
-                    row.setExpanded(not row.isExpanded())
+                    self.tree_motion.set_expanded(row, not row.isExpanded())
                 self.setFocus(Qt.FocusReason.MouseFocusReason)
                 self.viewport().update()
                 event.accept()
@@ -292,14 +294,20 @@ class ChecksTree(QTreeWidget):
         row = self.currentItem()
         if row is not None and row.parent() is not None and not row.data(0, DETAIL_ROLE):
             if event.key() == Qt.Key.Key_Space and row.childCount():
-                row.setExpanded(not row.isExpanded())
+                self.tree_motion.set_expanded(row, not row.isExpanded())
                 event.accept()
                 return
             if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                 self.shown.emit(row)
                 event.accept()
                 return
-        super().keyPressEvent(event)
+        if row is not None and row.parent() is None and event.key() in (
+                Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Space):
+            expanded = event.key() == Qt.Key.Key_Right or (event.key() == Qt.Key.Key_Space and not row.isExpanded())
+            self.tree_motion.set_expanded(row, expanded)
+            event.accept()
+        else:
+            super().keyPressEvent(event)
 
     def focusInEvent(self, event) -> None:
         super().focusInEvent(event)
@@ -505,8 +513,7 @@ class ChecksPage(QWidget):
         self.tree.setColumnCount(4)
         self.tree.setHeaderLabels(["", _("What"), _("Source"), ""])
         self.tree.setHeaderHidden(True)                 # F2: the columns speak for themselves
-        # the details open at once: Qt's animation was slow and moved the list (Daniel, 24/10/2026)
-        self.tree.setAnimated(False)
+        # Sections share short expansion motion; row details still open at once (R125).
         self.tree.setIndentation(16)
         self.tree.setRootIsDecorated(True)
         self.tree.setWordWrap(True)

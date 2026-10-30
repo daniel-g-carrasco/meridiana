@@ -158,7 +158,7 @@ class Scales(unittest.TestCase):
         from PySide6.QtCore import Qt
         from PySide6.QtWidgets import QLabel, QScrollArea, QTextBrowser, QTreeWidget, QTreeWidgetItem
 
-        from meridiana.ui.design import Size
+        from meridiana.ui.design import Layout, Size
         from meridiana.ui.scrollbars import ScrollStyle
         _setup.meridiana_look()
         self.assertIsInstance(self.app._scroll_style, ScrollStyle)          # under the style sheet's
@@ -172,7 +172,7 @@ class Scales(unittest.TestCase):
         self.app.processEvents()
         bar = area.verticalScrollBar()
         self.assertEqual(area.verticalScrollBarPolicy(), Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.assertEqual(bar.width(), Size.SCROLLBAR)
+        self.assertEqual(bar.width(), Size.SCROLLBAR + Layout.PAD)          # R248: shared card-edge inset
         before = area.viewport().width()
         empty = bar.grab().toImage()
         colours = {empty.pixelColor(x, y).name() for x in range(empty.width()) for y in range(empty.height())}
@@ -538,7 +538,10 @@ class InTheWindow(unittest.TestCase):
         self.assertIsNotNone(win.tabs.header.tab_now())                     # the phase marked again
         self.assertEqual(win.cfg.recent[0], str(self.file))                 # the project opened, first
         page.place()
-        self.app.processEvents()
+        leaving = [effect for effect in win.findChildren(motion.Entrance)
+                   if effect.area is page and effect.kind == "leave"]
+        self.assertEqual(len(leaving), 1)
+        self.assertTrue(_setup.wait_until(self.app, lambda: not leaving[0].isVisible(), 3))
         closed = win.grab(page.geometry()).toImage()
         for point in ((20, 20), (before.width() // 2, 20), (20, before.height() - 20)):
             self.assertEqual(closed.pixelColor(*point), before.pixelColor(*point))  # no stale File pixels
@@ -549,6 +552,71 @@ class InTheWindow(unittest.TestCase):
         self.assertTrue(page.mask().isEmpty())
         QTest.keyClick(page, Qt.Key.Key_Escape)
         motion.set_reduced(False)
+
+    def test_file_opened_again_during_its_exit_shows_one_veil(self):
+        """R252 review (30/10/2026): the window's File command toggles; closed and opened again during the short
+        exit, the exit's picture stayed on screen under the new entrance (the qt-app-template's test caught it)."""
+        from meridiana.ui import motion
+        win = self.win
+        reduced = motion.reduced()
+        motion.set_reduced(False)
+        self.addCleanup(motion.set_reduced, reduced)
+
+        def veils():
+            return [veil for veil in win.findChildren(motion.Entrance) if veil.isVisible()]
+
+        win.open_file_page("open")
+        win.open_file_page("open")                  # the public command toggles the page closed
+        win.open_file_page("export")
+        self.assertEqual(veils(), [win.file_page.entrance])
+        _setup.turn_events(self.app, 40)            # the exit's pending frame does not come back
+        self.assertLessEqual(len(veils()), 1)
+        self.assertTrue(_setup.wait_until(self.app, lambda: win.file_page.entrance is None, 3))
+        self.assertEqual(veils(), [])
+        self.assertTrue(win.file_page.isVisible())
+        self.assertIs(win.file_page.body.currentWidget(), win.file_page.sections["export"])
+        win.file_page.close_page()
+        self.assertTrue(_setup.wait_until(self.app, lambda: not veils(), 3))
+        self.assertIsNone(win.file_page.exit)
+        win.open_file_page("open")                  # closed during its entrance: the entrance goes with it
+        entering = win.file_page.entrance
+        self.assertIsNotNone(entering)
+        win.file_page.close_page()
+        self.assertTrue(entering.done)
+        self.assertEqual(veils(), [win.file_page.exit])
+        self.assertTrue(_setup.wait_until(self.app, lambda: win.file_page.exit is None and not veils(), 3))
+        self.assertFalse(win.file_page.isVisible())
+
+    def test_a_panel_toggled_under_file_changes_without_cutting_the_page(self):
+        """R253 review (30/10/2026): the panel buttons stay in the status bar under File; the collapse's picture layer
+        was raised over the File page and showed it cut into the cards' pictures until the movement ended."""
+        from meridiana.ui import motion
+        from meridiana.ui.dock_motion import Reflow
+        win = self.win
+        reduced = motion.reduced()
+        motion.set_reduced(False)
+        self.addCleanup(motion.set_reduced, reduced)
+        win.open_file_page("open")
+        self.assertTrue(_setup.wait_until(self.app, lambda: win.file_page.entrance is None, 3))
+        dock = win.checks_dock
+        shown = not dock.isHidden()
+        win.panel_buttons.buttons[dock].click()
+        self.assertNotEqual(not dock.isHidden(), shown)
+        self.assertEqual([layer for layer in win.findChildren(Reflow) if layer.isVisible()], [])
+        win.panel_buttons.buttons[dock].click()
+        self.assertEqual(not dock.isHidden(), shown)
+        win.file_page.close_page()
+
+    def test_the_help_card_keeps_the_plain_fades_it_asked_for(self):
+        """R249 review: the shared polish gives a page's AIR to every QScrollArea; the help card, whose height is its
+        text's, asked for plain fades, and the AIR made a text that fits scroll by 12 px."""
+        from meridiana.ui import fades
+        scroll = self.win.help_box.view.scroll
+        margins = scroll.viewportMargins()
+        self.assertEqual((margins.top(), margins.bottom()), (0, 0))
+        self.assertFalse(any(edge.page for edge in scroll.findChild(fades.Fades).edges))
+        self.assertIsNotNone(self.win.props.findChild(fades.Fades))
+        self.assertEqual(self.win.props.viewportMargins().top(), fades.AIR)      # a panel keeps its AIR
 
     def test_choosing_another_variant_keeps_the_pills_still(self):
         """R101: the same pills, another one checked, the same widths: nothing made again, nothing jumps."""

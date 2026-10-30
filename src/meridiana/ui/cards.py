@@ -223,7 +223,7 @@ class CardTitle(QWidget):
         # the dock's child, not the bar's: QDockWidget lays the title bar at x 0 as wide as the content, and the
         # cross of a card against the window's left side fell out of it (2 px of 18 showed; qt-app-template)
         self.close_button = CloseButton(dock)
-        self.close_button.clicked.connect(dock.close)
+        self.close_button.clicked.connect(dock.close_animated)
         dock.windowTitleChanged.connect(lambda _t: self.update())
         dock.featuresChanged.connect(self._features)
         self._features(dock.features())
@@ -292,6 +292,8 @@ class CardDock(QDockWidget):
         self._fit_pending = False
         self.title_bar = CardTitle(self)
         self.setTitleBarWidget(self.title_bar)
+        from .dock_motion import DockDrag
+        self.drag_motion = DockDrag(self, self.title_bar)
         self.topLevelChanged.connect(lambda _f: self._fit())
         theme = getattr(parent, "theme", None)
         if theme is not None and getattr(theme, "tokens", None):
@@ -311,6 +313,18 @@ class CardDock(QDockWidget):
         self.title_bar.close_button.veil = QColor(theme_colors.qt_hex(t["hover"]))      # R160
         self.update()
         self.title_bar.update()
+
+    def close_animated(self) -> None:
+        from .dock_motion import reflow
+        window = self.parentWidget()
+        if isinstance(window, QMainWindow) and not self.isFloating():
+            area = window.dockWidgetArea(self)
+            edge = {Qt.DockWidgetArea.BottomDockWidgetArea: "bottom",
+                    Qt.DockWidgetArea.TopDockWidgetArea: "top",
+                    Qt.DockWidgetArea.LeftDockWidgetArea: "left"}.get(area, "right")
+            reflow(window, self.close, edge=edge)
+        else:
+            self.close()
 
     def card_rect(self) -> QRect:
         """Where the card is drawn, in the dock's own pixels."""

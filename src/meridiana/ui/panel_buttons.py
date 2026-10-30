@@ -51,6 +51,16 @@ class PanelButtons(QWidget):
         return not dock.isHidden() and dock.visibleRegion().isEmpty()
 
     def _clicked(self, dock: QDockWidget) -> None:
+        from .dock_motion import reflow
+        window = dock.parentWidget()
+        if isinstance(window, QMainWindow):
+            edge = {"panel-bottom": "bottom", "panel-right": "right", "panel-left": "left"}.get(
+                self.buttons[dock].property("icon_name"), "right")
+            reflow(window, lambda: self._clicked_now(dock), edge=edge)
+        else:
+            self._clicked_now(dock)
+
+    def _clicked_now(self, dock: QDockWidget) -> None:
         edge = self.buttons[dock].property("icon_name")
         if edge in ("panel-right", "panel-bottom"):
             collapsed = self.collapsed_edges.get(edge, [])

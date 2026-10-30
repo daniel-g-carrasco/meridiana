@@ -226,6 +226,11 @@ QTreeView#project-tree::item {{ padding: {S.XS}px {S.XS}px; border: none; }}
 QTreeView#project-tree::item:selected, QTreeView#project-tree::item:hover {{ background: transparent;
     color: {t['select_fg']}; }}
 QTreeView#project-tree::item:hover:!selected {{ color: {t['text']}; }}
+QTreeView[row-pills="true"] {{ outline: 0; show-decoration-selected: 0; }}
+QTreeView[row-pills="true"]::item {{ padding: {S.XS}px {S.XS}px; border: none; }}
+QTreeView[row-pills="true"]::item:selected, QTreeView[row-pills="true"]::item:hover {{
+    background: transparent; color: {t['select_fg']}; }}
+QTreeView[row-pills="true"]::item:hover:!selected {{ color: {t['text']}; }}
 QHeaderView::section {{ background: transparent; color: {t['muted']}; border: none;
                        border-bottom: 1px solid {t['line']}; padding: {S.XS}px {S.M}px; }}
 QScrollArea {{ background: transparent; border: none; }}
