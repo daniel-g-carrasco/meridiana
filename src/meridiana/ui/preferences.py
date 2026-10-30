@@ -715,6 +715,8 @@ class Preferences(QWidget):
         self.appearance.settled.connect(lambda *_a: self._edited("appearance"))
         for widget in (self.appearance.text_size, self.appearance.toolbar, self.appearance.place):
             widget.currentIndexChanged.connect(lambda _i: self._edited("appearance"))
+        # not a setting: the window puts the panels back at once (R294), nothing for «Undo the last change»
+        self.appearance.layout_reset.clicked.connect(lambda: self.changed.emit("layout"))
         for widget in (self.navigation.style, self.navigation.orbit, self.navigation.pivot):
             widget.currentIndexChanged.connect(lambda _i: self._edited("navigation"))
         self.navigation.hint.toggled.connect(lambda _on: self._edited("navigation"))

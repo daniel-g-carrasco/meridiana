@@ -19589,3 +19589,27 @@ msgstr "Coppie est-ovest posate: il sottocampo ora è est-ovest e le sue file di
 #: src/meridiana/ui/window.py:2645
 msgid "East-west pairs laid. Their two orientations stay apart when strings are proposed."
 msgstr "Coppie est-ovest posate. I due orientamenti restano separati quando si propongono le stringhe."
+
+#: src/meridiana/ui/appearance.py:140
+msgid "Restore the panel layout"
+msgstr "Ripristina la disposizione dei pannelli"
+
+#: src/meridiana/ui/appearance.py:141
+msgid "Every panel back where it was at the first start, open and at its size"
+msgstr "Ogni pannello torna dov'era al primo avvio, aperto e con le sue misure"
+
+#: src/meridiana/ui/window.py:1889
+msgid "The panels are back as at the first start. {keys} again within {seconds} seconds brings back the arrangement before."
+msgstr "I pannelli sono tornati come al primo avvio. {keys} di nuovo entro {seconds} secondi riporta la disposizione di prima."
+
+#: src/meridiana/ui/window.py:1892
+msgid "The panels are back as at the first start."
+msgstr "I pannelli sono tornati come al primo avvio."
+
+#: src/meridiana/ui/window.py:1848
+msgid "The panels are back as they were before."
+msgstr "I pannelli sono tornati com'erano prima."
+
+#: src/meridiana/ui/window.py:1901
+msgid "The saved panel layout left some open panels out of sight: the default layout is back."
+msgstr "La disposizione dei pannelli salvata lasciava alcuni pannelli aperti fuori vista: è tornata quella predefinita."

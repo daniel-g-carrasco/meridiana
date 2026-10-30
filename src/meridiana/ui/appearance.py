@@ -136,6 +136,10 @@ class Appearance(QWidget):
         self.place.setCurrentIndex(max(0, self.place.findData(cfg.toolbar_place)))
         self.place.setToolTip(_("On the left side the bar shows the icons alone, the groups as separators"))
         form.addRow(_("Where"), self.place)
+        # the way back from any arrangement of the cards, broken ones included (R294); the window does it
+        self.layout_reset = QPushButton(_("Restore the panel layout"))
+        self.layout_reset.setToolTip(_("Every panel back where it was at the first start, open and at its size"))
+        form.addRow(_("Panels"), self.layout_reset)
         box.addLayout(form)
         group = Group(_("Preview"))
         gbox = QVBoxLayout(group)

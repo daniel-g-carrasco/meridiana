@@ -11,7 +11,7 @@ from dataclasses import dataclass, replace
 
 from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPoint, QRect, QRectF, Qt, QVariantAnimation
 from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import (QApplication, QDockWidget, QMainWindow, QStatusBar, QToolBar, QWidget)
+from PySide6.QtWidgets import (QApplication, QDockWidget, QMainWindow, QStatusBar, QTabBar, QToolBar, QWidget)
 
 from . import motion
 from .cards import EDGE, GAP, CardDock, arena, default_tokens
@@ -75,6 +75,54 @@ def apply_target(window: QMainWindow, source: QDockWidget, target: DockTarget) -
         extent = size.width() if orientation == Qt.Orientation.Horizontal else size.height()
         window.resizeDocks([source], [extent], orientation)
     _settle_layout(window)
+    _show_tab_bars(window)
+
+
+def _show_tab_bars(window: QMainWindow) -> None:
+    """A layout pass forced in the same turn as a tabify leaves Qt's new tab bar hidden for good (Qt shows it
+    only from its own deferred pass): the panel behind it then had no way back, and the layout saved with it put
+    every panel of that group off the window at the next start (R294). A bar holding two or more panels is shown."""
+    for bar in window.findChildren(QTabBar, options=DIRECT):
+        if bar.count() > 1 and bar.isHidden():
+            bar.show()
+
+
+def lost_panels(window: QMainWindow) -> list[QDockWidget]:
+    """The open panels with no place to be seen: docked outside the window and not a tab behind another one whose
+    tab bar shows (Qt parks a panel at negative coordinates when its tab group lost the bar, R294), or floating
+    off every screen. Asked of a window shown and laid out."""
+    room = window.rect()
+    bars = any(bar.isVisible() and bar.count() > 1 for bar in window.findChildren(QTabBar, options=DIRECT))
+    screens = [screen.availableGeometry() for screen in QApplication.screens()]
+    lost = []
+    for dock in window.findChildren(QDockWidget, options=DIRECT):
+        if dock.isHidden():
+            continue
+        if dock.isFloating():
+            if not any(area.intersects(dock.frameGeometry()) for area in screens):
+                lost.append(dock)
+            continue
+        if room.intersects(dock.geometry()):
+            continue
+        shown = [tab for tab in window.tabifiedDockWidgets(dock) if not tab.isHidden()
+                 and not tab.isFloating() and room.intersects(tab.geometry())]
+        if not (shown and bars):
+            lost.append(dock)
+    return lost
+
+
+def cancel_drags(window: QMainWindow) -> None:
+    """No drag of a panel, no preview and no motion layer left over the cards: before a layout is put back."""
+    for dock in window.findChildren(CardDock, options=DIRECT):
+        drag = getattr(dock, 'drag_motion', None)
+        if drag is not None and drag.solver is not None:
+            drag.finish(cancel=True)
+    for layer in window.findChildren(Reflow, options=DIRECT):
+        layer.drag = None
+        layer.hold_open = False
+        layer.animation.stop()
+        layer.hide()
+        layer.deleteLater()
 
 
 class _Measure(QWidget):
@@ -171,7 +219,10 @@ class LayoutPreview:
                 if not dummy.isHidden() and (not isinstance(dummy, QDockWidget) or not dummy.isFloating())}
 
     def close(self) -> None:
+        # Out of the window's children at once: QMainWindow.restoreState looks its panels up by object name among
+        # all its descendants, and adopted a measuring copy still waiting for deletion as a second "help" (R294).
         self.shadow.hide()
+        self.shadow.setParent(None)
         self.shadow.deleteLater()
 
 

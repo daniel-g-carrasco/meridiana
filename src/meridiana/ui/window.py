@@ -68,6 +68,7 @@ SUFFIX = ".mer"
 WALL_REACH = 0.5                # metres: a click on a building's side in 3D takes it (R175)
 # below this width (logical pixels: a column of niri, half a laptop screen) the panels share one side
 NARROW = 1000
+LAYOUT_UNDO_S = 15             # seconds: the default layout asked again within them brings back the one before (R294)
 # the topics that never change the energy year (session.energy_key): no need to ask whether it is still good
 NO_YEAR = {"project:text", "project:privacy", "project:rules", "project:underlays", "project:report"}
 
@@ -617,7 +618,8 @@ class MainWindow(QMainWindow):
         self.panel_buttons = PanelButtons([(self.docks[0], "panel-left", self.commands["panel_project"]),
                                            (self.checks_dock, "panel-bottom", self.commands["panel_checks"]),
                                            (self.docks[1], "panel-right", self.commands["panel_properties"]),
-                                           (self.help_dock, "circle-question-mark", self.commands["panel_help"])])
+                                           (self.help_dock, "circle-question-mark", self.commands["panel_help"])],
+                                          menu=[self.commands["default_layout"]])     # R294
         self.panel_slot.layout().addWidget(self.panel_buttons)
         set_text_all(self.statusBar(), Text.SECONDARY)     # its words and buttons the catalogue's secondary (R121)
         # the File page and the menu bar hidden until Alt (R40, R53; Daniel's choice of 24/10/2026)
@@ -667,6 +669,7 @@ class MainWindow(QMainWindow):
         self.narrow: bool | None = None
         self.auto_plan = False                 # "both" turned into "plan" by a narrow window
         self.before_clean = None               # the layout before «Only the drawing»
+        self.layout_undo = None                # (the layout before «Restore the default layout», until when) R294
         # the first widths and heights of the target (docs/studio/19-grafica): tree 320, properties 380, checks 230
         # in a window of 1600 px; narrower in a smaller one (the first window takes 85 % of the screen)
         width = int(self.screen().availableGeometry().width() * 0.85)
@@ -1404,6 +1407,9 @@ class MainWindow(QMainWindow):
             self.open_file_page(section)
 
     def _apply_preferences(self, section: str) -> None:
+        if section == "layout":                     # «Restore the panel layout» in Appearance (R294)
+            self._default_layout()
+            return
         settings = self.file_page.settings
         if section in ("appearance", "all"):
             self._appearance(*settings.appearance.choice())
@@ -1828,18 +1834,71 @@ class MainWindow(QMainWindow):
             self._settle_assistant_dock()
             self._toolbar_style()                   # the bar of the phase back where the preferences put it
 
-    def _default_layout(self) -> None:
-        """Panels, bars and views as at the first start: the way back from any arrangement."""
+    def _default_layout(self, *, offer_undo: bool = True) -> None:
+        """Panels, bars and views as at the first start: the way back from any arrangement, a broken one included
+        (R294: a drag that hid the panels, a panel docked off the window or floating off the screens, a preview left
+        over). The saved layout is overwritten. Asked again while its message shows, it brings back the arrangement
+        before, when that one had every open panel in sight."""
+        from .dock_motion import _settle_layout, _show_tab_bars, cancel_drags, lost_panels
+        undo, self.layout_undo = self.layout_undo, None
+        if offer_undo and undo is not None and time.monotonic() < undo[1]:
+            self.restoreState(undo[0])
+            _show_tab_bars(self)
+            self._save_window()
+            self.tell(_("The panels are back as they were before."))
+            return
+        cancel_drags(self)
+        before = None if lost_panels(self) else self.saveState()
         self.clean_action.setChecked(False)
         self.before_clean = None
-        self.restoreState(self.factory_state)
-        for dock in (*self.docks, self.checks_dock):
-            dock.show()
+        for dock in self.findChildren(QDockWidget, options=Qt.FindChildOption.FindDirectChildrenOnly):
+            if dock.isFloating():
+                dock.setFloating(False)
+        panels = (*self.docks, self.help_dock, self.checks_dock)
+        for _twice in range(2):
+            # twice: the cards fit their margins to where the first pass put them, and only then do their minimum
+            # sizes let the second one give every panel its first size (a card carried its old edge's margins)
+            self.restoreState(self.factory_state)
+            for dock in panels:
+                dock.show()
+            _settle_layout(self)
+        if lost_panels(self):
+            # Qt kept a broken tab group through restoreState: the panels put back one by one, as at the start
+            left, right = self.docks
+            self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left)
+            self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, right)
+            self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.help_dock)
+            self.splitDockWidget(right, self.help_dock, Qt.Orientation.Vertical)
+            self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.checks_dock)
+            self.restoreState(self.factory_state)
+            for dock in panels:
+                dock.show()
+            self.layout().activate()
+        _show_tab_bars(self)
         self._settle_assistant_dock()
         self._toolbar_style()
         self._view_mode("both")
         width = self.split.width()
         self.split.setSizes([int(width * 0.55), int(width * 0.45)])
+        if self.isVisible():
+            self._save_window()
+        action = self.commands.get("default_layout")
+        keys = action.shortcut().toString(QKeySequence.SequenceFormat.NativeText) if action is not None else ""
+        if offer_undo and before is not None and keys:
+            self.layout_undo = (before, time.monotonic() + LAYOUT_UNDO_S)
+            self.tell(_("The panels are back as at the first start. {keys} again within {seconds} seconds brings "
+                        "back the arrangement before.").format(keys=keys, seconds=LAYOUT_UNDO_S), LAYOUT_UNDO_S)
+        elif offer_undo:
+            self.tell(_("The panels are back as at the first start."))
+
+    def _check_panels(self) -> None:
+        """At the start: a saved layout that leaves open panels out of sight (R294) gives way to the default one."""
+        from .dock_motion import lost_panels
+        if self.restored and lost_panels(self):
+            log.complain("window state", RuntimeError("open panels out of sight: " +
+                                                      ", ".join(dock.objectName() for dock in lost_panels(self))))
+            self._default_layout(offer_undo=False)
+            self.tell(_("The saved panel layout left some open panels out of sight: the default layout is back."))
 
     def _background(self, key: str) -> None:
         self.cfg.background = key
@@ -5388,6 +5447,7 @@ class MainWindow(QMainWindow):
             self.shown_once = True
             self.update_controller.startup()
             QTimer.singleShot(0, self, self._first_layout)    # not called if the window is gone by then
+            QTimer.singleShot(0, self, self._check_panels)    # a saved layout with panels out of sight (R294)
             from .. import updates
             if updates.checks_by_itself():
                 QTimer.singleShot(updates.CHECK_DELAY_MS, self, self._daily_update_check)
@@ -5465,8 +5525,15 @@ class MainWindow(QMainWindow):
         mode = next((k for k, a in self.view_actions.items() if a.isChecked()), "both")
         split = self.split_home if self.split_home is not None else self.split.saveState()   # the plan at home
         places = dict(self.assistant.places)
+        from .dock_motion import lost_panels
+        state = self.saveState()
+        if self.isVisible() and lost_panels(self):
+            # never a layout with open panels out of sight (R294): it came back at every start
+            log.complain("window state", RuntimeError("not saved, open panels out of sight: " +
+                                                      ", ".join(dock.objectName() for dock in lost_panels(self))))
+            state = self.factory_state
         data = {"geometry": bytes(self.saveGeometry().toBase64()).decode("ascii"),
-                "state": bytes(self.saveState().toBase64()).decode("ascii"),
+                "state": bytes(state.toBase64()).decode("ascii"),
                 "split": bytes(split.toBase64()).decode("ascii"), "view": mode,
                 "assistant": {tab: list(a) for tab, a in places.items()}}
         try:

@@ -1,7 +1,7 @@
 """Shared short section motion, scroll conventions and dock preview regressions."""
 import unittest
 import _setup
-from PySide6.QtCore import QAbstractAnimation, Qt
+from PySide6.QtCore import QAbstractAnimation, QPoint, Qt
 from PySide6.QtWidgets import QLabel, QMainWindow, QScrollArea, QVBoxLayout, QWidget
 from meridiana.ui import motion, fades
 from meridiana.ui.cards import CardDock, PAD
@@ -419,6 +419,92 @@ class DockMotion(unittest.TestCase):
         self.assertEqual(bytes(self.host.saveState()), state)
         QTest.keyClick(title, Qt.Key.Key_Escape)                            # outside a drag the shortcut is free
         self.assertEqual(fired, [True])
+
+    def _drop(self, source, at):
+        """A drag of `source` by its title to `at` (window coordinates): the preview's rectangles, then the drop."""
+        from PySide6.QtTest import QTest
+        title = source.title_bar
+        QTest.mousePress(title, Qt.MouseButton.LeftButton, pos=title.rect().center())
+        point = self.host.mapToGlobal(at)
+        QTest.mouseMove(title, title.mapFromGlobal(point) - title.rect().center() / 4)
+        QTest.mouseMove(title, title.mapFromGlobal(point))
+        drag = source.drag_motion
+        self.assertIsNotNone(drag.solver)
+        target, preview = drag.target, dict(drag.layer.ends)
+        QTest.mouseRelease(title, Qt.MouseButton.LeftButton, pos=title.mapFromGlobal(point))
+        self.assertTrue(self._no_live_layer())
+        _setup.turn_events(self.app, 150)
+        return target, preview
+
+    def _assert_as_previewed(self, preview):
+        for widget, expected in preview.items():
+            if widget.isHidden() or expected.x() < -100 or widget.geometry().x() < -100:
+                continue                    # a tab behind another: off the window in both
+            for value, wanted in zip(widget.geometry().getRect(), expected.getRect(), strict=True):
+                self.assertLessEqual(abs(value - wanted), 2, (widget.objectName(), widget.geometry(), expected))
+
+    def test_a_panel_dropped_on_another_becomes_a_tab_whose_bar_shows(self):
+        # R294: Help dropped on Properties hid Properties for good: the bar of the new tab group stayed hidden (a
+        # layout pass forced in the turn of the tabify), and the layout saved with it lost both panels
+        from PySide6.QtWidgets import QTabBar
+        from meridiana.ui.dock_motion import lost_panels
+        source, anchor = self.docks[2], self.docks[1]
+        target, preview = self._drop(source, anchor.geometry().center())
+        self.assertTrue(target.tab)
+        self.assertEqual(self.host.tabifiedDockWidgets(source), [anchor])
+        bars = [bar for bar in self.host.findChildren(QTabBar) if bar.isVisible() and bar.count() == 2]
+        self.assertEqual(len(bars), 1)
+        self.assertEqual(lost_panels(self.host), [])
+        self._assert_as_previewed(preview)
+        bars[0].setCurrentIndex(1 - bars[0].currentIndex())                # the other tab is one click away
+        self.assertTrue(_setup.wait_until(self.app, lambda: self.host.rect().intersects(anchor.geometry()), 3))
+
+    def test_the_preview_measures_the_cards_between_the_same_bars_as_the_window(self):
+        # R294: the measuring window kept the status bar replaced by setStatusBar, hidden, and arena() took that
+        # one: the bottom cards were measured without their gap and landed 8 px off the preview
+        from meridiana.ui.cards import arena
+        from meridiana.ui.dock_motion import LayoutPreview
+        self.host.statusBar().showMessage('Ready')
+        self.assertTrue(_setup.wait_settled(self.app, lambda: [d.geometry() for d in self.docks]))
+        preview = LayoutPreview(self.host, self.docks[0])
+        self.addCleanup(preview.close)
+        self.assertEqual(arena(preview.shadow), arena(self.host))
+        for source, at in ((self.docks[1], lambda: self.docks[2].geometry().center() + QPoint(0, 30)),
+                           (self.docks[0], lambda: QPoint(6, self.host.height() // 2))):
+            target, predicted = self._drop(source, at())
+            self.assertIsNotNone(target)
+            self._assert_as_previewed(predicted)
+
+    def test_restoring_a_layout_right_after_a_drop_adopts_no_measuring_copy(self):
+        # R294: QMainWindow.restoreState looks panels up by name among all its descendants, depth first; a tab
+        # drop raises the panel after the preview's measuring windows still waiting for deletion, and their copy
+        # of the panel was taken as a new panel of the window
+        from PySide6.QtTest import QTest
+        from PySide6.QtWidgets import QDockWidget
+        state = self.host.saveState()
+        source, anchor = self.docks[2], self.docks[1]
+        title = source.title_bar
+        QTest.mousePress(title, Qt.MouseButton.LeftButton, pos=title.rect().center())
+        for widget in (self.docks[0], anchor):                              # two targets, two measuring windows
+            QTest.mouseMove(title, title.mapFromGlobal(widget.mapToGlobal(widget.rect().center())))
+        QTest.mouseRelease(title, Qt.MouseButton.LeftButton,
+                           pos=title.mapFromGlobal(anchor.mapToGlobal(anchor.rect().center())))
+        self.host.restoreState(state)
+        direct = self.host.findChildren(QDockWidget, options=Qt.FindChildOption.FindDirectChildrenOnly)
+        self.assertEqual(sorted(d.objectName() for d in direct), ['panel_0', 'panel_1', 'panel_2'])
+
+    def test_cancel_drags_clears_a_drag_and_its_layer(self):
+        from PySide6.QtTest import QTest
+        from meridiana.ui.dock_motion import Reflow, cancel_drags
+        state = bytes(self.host.saveState())
+        source, title = self._start_drag()
+        cancel_drags(self.host)
+        self.assertIsNone(source.drag_motion.solver)
+        self.assertIsNone(QWidget.mouseGrabber())
+        QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
+        self.app.processEvents()
+        self.assertEqual([layer for layer in self.host.findChildren(Reflow) if layer.isVisible()], [])
+        self.assertEqual(bytes(self.host.saveState()), state)
 
 class TreeSections(unittest.TestCase):
     def test_checks_group_uses_shared_short_motion_while_details_remain_immediate(self):

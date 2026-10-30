@@ -115,7 +115,7 @@ def commands() -> list[Command]:
         c("fix_check", _("Fix the check in hand"), ("Ctrl+.",), "panels"),
         c("assistant", _("Assistant"), ("Ctrl+L",), "panels"),
         c("clean_screen", _("Only the drawing"), ("Ctrl+0",), "panels"),
-        c("default_layout", _("Restore the default layout"), (), "panels"),
+        c("default_layout", _("Restore the default layout"), ("Ctrl+Shift+0",), "panels"),   # R294
         # the commands of the phases of the results (design 2.4-2.6): F5 as «recompute», and in the Compute menu
         c("compute", _("&Compute"), ("F5",), "compute"),
         c("fetch_pvgis", _("Fetch the weather from &PVGIS"), (), "compute"),

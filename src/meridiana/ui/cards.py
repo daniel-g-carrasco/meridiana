@@ -44,8 +44,10 @@ def arena(window: QMainWindow) -> QRect:
     menu = window.menuWidget()
     if menu is not None and menu.isVisible():
         top = max(top, menu.geometry().bottom() + 1)
-    status = window.findChild(QStatusBar, options=direct)
-    if status is not None and status.isVisible() and status.parentWidget() is window:
+    # the visible one: a window given its status bar by setStatusBar keeps the replaced one, hidden, until it is
+    # deleted, and the panel previews measured their cards against the window's bottom edge (R294)
+    status = next((s for s in window.findChildren(QStatusBar, options=direct) if s.isVisible()), None)
+    if status is not None and status.parentWidget() is window:
         bottom = min(bottom, status.geometry().top())
     for bar in window.findChildren(QToolBar, options=direct):
         if bar.parentWidget() is not window or not bar.isVisible() or bar.isFloating():

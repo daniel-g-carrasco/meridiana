@@ -4,12 +4,13 @@ card, its icon full when the card is on screen and faint when it is closed or co
 bring forward or close their card. Right and bottom operate on every card touching that edge, including a shared
 corner; another click restores the exact group just hidden.
 
-`PanelButtons([(dock, icon, command), ...])`: the command's QAction gives the key for the tooltip."""
+`PanelButtons([(dock, icon, command), ...], menu=[action, ...])`: the command's QAction gives the key for the tooltip;
+`menu` are the actions of the right click on the buttons («Restore the default layout», R294)."""
 
 from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt, QTimer
-from PySide6.QtWidgets import QDockWidget, QHBoxLayout, QMainWindow, QToolButton, QWidget
+from PySide6.QtWidgets import QDockWidget, QHBoxLayout, QMainWindow, QMenu, QToolButton, QWidget
 
 from ..i18n import _
 from . import icons
@@ -17,8 +18,9 @@ from .design import Icon, Space
 
 
 class PanelButtons(QWidget):
-    def __init__(self, cards: list, parent=None):
+    def __init__(self, cards: list, parent=None, menu: list | tuple = ()):
         super().__init__(parent)
+        self.menu_actions = list(menu)
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, Space.S, 0)
         row.setSpacing(Space.XXS)
@@ -40,6 +42,20 @@ class PanelButtons(QWidget):
             row.addWidget(b)
             self.buttons[dock] = b
             self._show(dock)
+
+    def contextMenuEvent(self, event) -> None:
+        if not self.menu_actions:
+            super().contextMenuEvent(event)
+            return
+        menu = self.context_menu()
+        menu.exec(event.globalPos())
+        menu.deleteLater()
+
+    def context_menu(self) -> QMenu:
+        """The right click on the buttons: the way back to the default layout, wherever the cards went (R294)."""
+        menu = QMenu(self)
+        menu.addActions(self.menu_actions)
+        return menu
 
     def _refresh(self) -> None:
         for dock in self.buttons:
