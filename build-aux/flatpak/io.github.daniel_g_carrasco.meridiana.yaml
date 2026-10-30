@@ -55,6 +55,8 @@ cleanup-commands:
 
 modules:
   - python3-requirements.json
+  # The voice runtime is bundled; model weights are downloaded only by explicit user action.
+  - python3-kokoro.json
 
   - name: meridiana
     buildsystem: simple

@@ -13,8 +13,7 @@
 # English; matplotlib for the formulas and the report (Agg only), pvlib with the tables its functions read at run
 # time, scipy, shapely, pyqtgraph, requests, anthropic and keyring; Meridiana's catalogues (share/locale), icons and
 # fonts (share/), the manual (share/manuale), the 3D scene and the product catalogue (next to their modules), and
-# Kokoro's worker as a script another Python can run (assistant/kokoro_worker.py: the voice's model and
-# onnxruntime are not shipped, speech.worker_python).
+# Kokoro's worker and runtime. Model weights are not shipped or downloaded by the build.
 #
 # What is left out: the Qt modules Meridiana does not use, which the QML hook would bring for their QML plugins
 # (Qt 3D, Charts, Graphs, Data Visualization, Location, Positioning, Web*, Sensors, Scxml, Remote Objects, the
@@ -28,7 +27,7 @@ import sys
 from pathlib import Path
 
 import pefile
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules, collect_all
 
 ROOT = Path(SPECPATH).parent.parent
 SRC = ROOT / 'src' / 'meridiana'
@@ -61,15 +60,22 @@ datas += collect_data_files('ifcopenshell')
 # EXPRESS checks for a physical parser file before importing it. Without it, the
 # library invokes sys.executable as Python, recursively launching the frozen app.
 datas += collect_data_files('ifcopenshell.express', include_py_files=True)
+voice_binaries, voice_imports = [], []
+for voice_package in ('kokoro_onnx', 'onnxruntime', 'phonemizer', 'espeakng_loader'):
+    package_data, package_binaries, package_imports = collect_all(voice_package)
+    datas += package_data
+    voice_binaries += package_binaries
+    voice_imports += package_imports
 
 a = Analysis(
     [str(Path(SPECPATH) / 'meridiana_main.py')],
     pathex=[str(ROOT / 'src')],
     datas=datas,
+    binaries=voice_binaries,
     # pyqtgraph comes with its data and its Qt templates through hook-pyqtgraph of pyinstaller-hooks-contrib;
     # keyring finds its Windows backend by entry point (hook-keyring)
     # IfcOpenShell's api.run resolves these export operations by name at run time.
-    hiddenimports=['keyring.backends.Windows', 'ifcopenshell.geom',
+    hiddenimports=[*voice_imports, 'keyring.backends.Windows', 'ifcopenshell.geom',
                    *collect_submodules('ifcopenshell.express.rules'),
                    *['ifcopenshell.api.' + family for family in
                      ('project', 'root', 'unit', 'context', 'georeference', 'aggregate')]],
@@ -77,8 +83,6 @@ a = Analysis(
     excludes=['tkinter', 'PySide6.QtWebEngineCore', 'PySide6.QtWebEngineWidgets', 'PySide6.QtWebEngineQuick',
               'PySide6.Qt3DCore', 'PySide6.QtCharts', 'PySide6.QtGraphs', 'PySide6.QtDataVisualization',
               'PySide6.QtLocation', 'PySide6.QtPositioning', 'PySide6.QtDesigner', 'PySide6.QtTest',
-              # Kokoro's worker runs in another Python (speech.worker_python): its libraries stay out
-              'kokoro_onnx', 'onnxruntime', 'phonemizer', 'espeakng_loader',
               'IPython', 'pytest', 'sphinx'],
 )
 

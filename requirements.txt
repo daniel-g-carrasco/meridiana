@@ -31,9 +31,9 @@ pypdf>=6.0
 anthropic>=2.3
 keyring>=25.7
 # Meridio's natural voice (Kokoro, ui/voice.py): run in a process of its own, only when its model (two files, about
-# 330 MB, not carried by the program) is on the PC; without them the system's voice speaks. No wheel of onnxruntime
-# for Python 3.15 yet (24/10/2026): there Preferences > Assistant names another Python that has kokoro-onnx.
-kokoro-onnx>=0.6; python_version < "3.15"
+# 354 MB, not carried by the program) is on the PC; without them the system's voice speaks.
+# kokoro-onnx 0.6.1 supports Python >=3.10,<3.14 (PyPI metadata checked 29/10/2026).
+kokoro-onnx==0.6.1; python_version < "3.14"
 # The IFC models (studies 15 and 20): IfcOpenShell (LGPL-3.0-or-later), imported only when a model is exported or read;
 # without it the program runs and says what to install. Wheels for Python 3.10-3.15 on Windows, macOS and Linux; it
 # brings lark (MIT) and isodate (BSD). 0.9.0.post1 is the version tried (study 20): the iterator's threads crash on a
