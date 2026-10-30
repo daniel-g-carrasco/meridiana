@@ -11213,6 +11213,10 @@ msgstr "Flusso di cassa netto"
 msgid "Back to the project"
 msgstr "Torna al progetto"
 
+#: src/meridiana/ui/file_page.py:294
+msgid "Esc closes the page; Alt+Left goes back one step"
+msgstr "Esc chiude la pagina; Alt+Freccia sinistra torna indietro di un passo"
+
 #: src/meridiana/ui/file_page.py:235
 msgid "New"
 msgstr "Nuovo"

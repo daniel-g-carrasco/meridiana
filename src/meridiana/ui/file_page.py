@@ -14,7 +14,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QRectF, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QColor, QKeySequence, QPainter, QPainterPath, QPen, QShortcut
 from PySide6.QtWidgets import (QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy,
                                QStackedWidget, QToolButton, QVBoxLayout, QWidget)
 
@@ -180,10 +180,18 @@ class FilePage(QFrame):
         self.items: dict[str, QToolButton] = {}
         self.sections: dict[str, QWidget] = {}
         self.hidden_with_me: list = []              # what stood over the panels (Meridio), back when it closes
+        # R289: the places shown since the page opened, so that one step back (Alt+Left, the Back key) returns to
+        # the one before, and from the first place out of the page: the Settings opened from Meridio go straight
+        # back to the project
+        self.trail: list[str] = []
+        self.current_key = ""
+        QShortcut(QKeySequence(QKeySequence.StandardKey.Back), self, self.back,
+                  context=Qt.ShortcutContext.WidgetWithChildrenShortcut)
         # R178: the shared entrance, with the alternatives kept for the visual comparison
         self.entrance = None
         self.exit = None                            # the veil of the page leaving (motion.leave), until it has played
         self.entrance_kind = "slide"
+        self._settings_read = False             # the settings read before an entrance (show_section)
         self.entrance_duration = Motion.NORMAL
         self._build()
         self.hide()
@@ -242,7 +250,10 @@ class FilePage(QFrame):
             b.clicked.connect(lambda _c=False, k=key: self.show_section(k))
         self.nav_box.addWidget(b)
         self.items[key] = b
-        self.nav_scopes.append((b, key.startswith("preferences:") or key == "settings_back"))
+        # «Back to the project» stands in both lists (None): the Settings opened from Meridio, or from their key,
+        # had only «Back to File» (R289, Daniel 30/10/2026: «un modo per tornare al punto di prima velocemente»)
+        scope = None if key == "back" else (key.startswith("preferences:") or key == "settings_back")
+        self.nav_scopes.append((b, scope))
         return b
 
     def _rule(self) -> None:
@@ -258,7 +269,7 @@ class FilePage(QFrame):
 
     def _nav_mode(self, settings: bool) -> None:
         for widget, is_settings in self.nav_scopes:
-            widget.setVisible(is_settings == settings)
+            widget.setVisible(is_settings is None or is_settings == settings)
 
     def _command(self, cid: str) -> Callable:
         """A command of the window, started after the page has closed."""
@@ -279,7 +290,8 @@ class FilePage(QFrame):
 
     def _build(self) -> None:
         w = self.host
-        self._item("back", "arrow-left", _("Back to the project"), "Esc", self.close_page)
+        back = self._item("back", "arrow-left", _("Back to the project"), "Esc", self.close_page)
+        back.setToolTip(_("Esc closes the page; Alt+Left goes back one step"))
         self._rule()
         self._item("new", "file-plus", _("New"), self._keys("new"), self._command("new"))
         self._item("open", "folder-open", _("Open"), self._keys("open"))
@@ -432,19 +444,39 @@ class FilePage(QFrame):
 
     # showing
 
-    def show_section(self, key: str) -> None:
+    def show_section(self, key: str, retrace: bool = False) -> None:
         from . import motion
         section = key.partition(":")[0]
         current = self.sections.get(section)
         if self.isVisible() and current is not self.body.currentWidget():
-            motion.crossfade(self, lambda: self._select_section(key), Motion.FAST)
+            # the same entrance as File's (Daniel, 30/10/2026: «avevo chiesto un'animazione semplice come quella che
+            # compare quando premo su file»): the crossfade mixed two very different pages for a moment («una
+            # finestrella in sovraimpressione») after holding the old one while the settings were read, 0.3-0.6 s;
+            # they are read ahead now, once File has come in (_read_settings_ahead)
+            entering = self.body.currentWidget() is not self.sections["preferences"]
+            if section == "preferences" and entering and not self._settings_read:
+                self.settings._populate()
+                self._settings_read = True
+            motion.enter(self, lambda: self._select_section(key, retrace), self.entrance_kind, Motion.FAST)
         else:
-            self._select_section(key)
+            self._select_section(key, retrace)
 
-    def _select_section(self, key: str) -> None:
+    def back(self) -> None:
+        """One step back (Alt+Left, the Back key; R289): the place shown before this one, and from the first
+        place out of the page, to the project. Not Ctrl+Z, which undoes the project's last change (and, in the
+        Settings, the last setting)."""
+        if self.trail:
+            self.show_section(self.trail.pop(), retrace=True)
+        else:
+            self.close_page()
+
+    def _select_section(self, key: str, retrace: bool = False) -> None:
         section, _, page = key.partition(":")
         if section not in self.sections:
             return
+        if self.isVisible() and self.current_key and not retrace and self.current_key.partition(":")[0] != section:
+            self.trail.append(self.current_key)
+        self.current_key = key
         self._nav_mode(section == "preferences")
         if key == "open":
             self._recent()
@@ -455,8 +487,9 @@ class FilePage(QFrame):
         elif key == "registry":
             self.registry_page.refresh()
         elif section == "preferences":
-            if self.body.currentWidget() is not self.sections["preferences"]:
+            if self.body.currentWidget() is not self.sections["preferences"] and not self._settings_read:
                 self.settings._populate()          # read the site on entering, not on every category change
+            self._settings_read = False
             self.settings.show_page(page)
             page = self.settings.current_section()
             key = "preferences:" + page
@@ -507,6 +540,9 @@ class FilePage(QFrame):
     def open_page(self, section: str = "open") -> None:
         self._stop_entrance()
         self.place()
+        self.trail = []                             # a new visit: one step back from its first place closes it
+        self.current_key = ""
+        self._settings_read = False                 # the project, and its site in the maps' settings, may be another
         self.show_section(section)
         assistant = getattr(self.host, "assistant", None)
         touring = assistant is not None and bool(assistant.property("guidedTourActive"))
@@ -538,6 +574,15 @@ class FilePage(QFrame):
     def _entered(self) -> None:
         self.entrance = None
         self._raise_tour()
+        QTimer.singleShot(0, self, self._read_settings_ahead)
+
+    def _read_settings_ahead(self) -> None:
+        """The settings read while File is still, so choosing them only shows them: reading them rebuilds their pages,
+        0.3-0.6 s that held the click before its entrance."""
+        shown = self.body.currentWidget() is self.sections["preferences"]
+        if self.isVisible() and not self._settings_read and not shown:
+            self.settings._populate()
+            self._settings_read = True
 
     def _left(self) -> None:
         self.exit = None
