@@ -229,5 +229,42 @@ class People(MeshChecks):
                 props.person("adult", **dimensions)
 
 
+class Cars(MeshChecks):
+    CASES = (
+        ("compact", (4.10, 1.78, 1.48), (4.30, 1.82, 1.52)),
+        ("suv", (4.65, 1.90, 1.70), (4.85, 1.96, 1.78)),
+    )
+
+    def test_every_car_has_the_requested_dimensions_and_a_valid_mesh(self):
+        for kind, first, second in self.CASES:
+            for length, width, height in (first, second):
+                with self.subTest(kind=kind, length=length, width=width, height=height):
+                    shape = props.car(kind, length=length, width=width, height=height)
+                    pos, _nor, _col = self.assert_mesh(shape, props.CAR_TRIANGLE_BUDGET)
+                    self.assert_bounds(pos, length, height, width)
+
+    def test_cars_are_deterministic_and_have_contained_shadows(self):
+        for kind, first, _second in self.CASES:
+            length, width, height = first
+            with self.subTest(kind=kind):
+                one = props.car(kind, length=length, width=width, height=height)
+                two = props.car(kind, length=length, width=width, height=height)
+                for a, b in zip(one, two, strict=True):
+                    np.testing.assert_array_equal(a, b)
+                shadow = props.shadow_solid(kind, length=length, width=width, height=height)
+                self.assert_shadow_inside(shadow, one[0])
+
+    def test_cars_accept_theme_colours_and_rotation(self):
+        shape = props.car("compact", colours={"car": "#6080a0", "tyre": (0.1, 0.1, 0.1)})
+        self.assertTrue(np.any(np.all(np.isclose(shape[2], (96 / 255, 128 / 255, 160 / 255)), axis=1)))
+        turned = props.car("suv", length=4.65, width=1.90, rotation=90.0)[0]
+        self.assert_bounds(turned, 1.90, 1.70, 4.65)
+
+    def test_invalid_car_dimensions_are_rejected(self):
+        for dimensions in ({"length": 0.0}, {"width": -1.0}, {"height": 0.0}):
+            with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
+                props.car("compact", **dimensions)
+
+
 if __name__ == "__main__":
     unittest.main()

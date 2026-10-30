@@ -37,7 +37,14 @@ DEFAULT_COLOURS = {
     "person": (0.25, 0.43, 0.62),
     "skin": (0.76, 0.55, 0.40),
     "helmet": (0.95, 0.70, 0.12),
+    "car": (0.38, 0.56, 0.68),
+    "tyre": (0.09, 0.10, 0.11),
+    "light": (0.92, 0.88, 0.62),
+    "rear": (0.65, 0.16, 0.12),
 }
+
+CAR_KINDS = ("compact", "suv")
+CAR_DEFAULTS = {"compact": (4.10, 1.78, 1.48), "suv": (4.65, 1.90, 1.70)}
 
 PERSON_KINDS = ("adult", "walking", "child", "worker")
 PERSON_DEFAULTS = {
@@ -440,6 +447,53 @@ def person(kind="adult", width=None, depth=None, height=None, rotation=0.0, colo
     return _rotate_qt(builder.arrays(), float(rotation))
 
 
+def _car_dimensions(kind, length, width, height):
+    if kind not in CAR_KINDS:
+        raise ValueError(f"unknown car kind: {kind}")
+    defaults = CAR_DEFAULTS[kind]
+    return tuple(_positive(default if value is None else value, name)
+                 for default, value, name in zip(defaults, (length, width, height), ("length", "width", "height"),
+                                                 strict=True))
+
+
+def _car_cabin(builder, length, width, height, colour):
+    y0 = height * 0.52
+    bottom = np.array(((-length * 0.28, y0, -width * 0.40), (length * 0.32, y0, -width * 0.40),
+                       (length * 0.32, y0, width * 0.40), (-length * 0.28, y0, width * 0.40)))
+    top = np.array(((-length * 0.12, height, -width * 0.30), (length * 0.18, height, -width * 0.30),
+                    (length * 0.18, height, width * 0.30), (-length * 0.12, height, width * 0.30)))
+    centre = np.array((length * 0.02, (y0 + height) / 2, 0.0))
+    for i in range(4):
+        j = (i + 1) % 4
+        outward = (bottom[i] + bottom[j] + top[i] + top[j]) / 4 - centre
+        builder.quad(bottom[i], bottom[j], top[j], top[i], colour, outward)
+        builder.tri((length * 0.02, y0, 0.0), bottom[j], bottom[i], colour, (0, -1, 0))
+        builder.tri((length * 0.02, height, 0.0), top[i], top[j], colour, (0, 1, 0))
+
+
+def car(kind="compact", length=None, width=None, height=None, rotation=0.0, colours=None):
+    """A compact car or SUV, length along local East and wheels resting at height zero."""
+    length, width, height = _car_dimensions(kind, length, width, height)
+    paint, tyre = _colour(colours, "car"), _colour(colours, "tyre")
+    glass = _colour(colours, "glass")
+    builder = _Builder()
+    _box(builder, (0.0, height * 0.36, 0.0), (length, height * 0.36, width * 0.84), paint)
+    _car_cabin(builder, length, width, height, paint)
+    for side in (-1.0, 1.0):
+        _box(builder, (length * 0.02, height * 0.72, side * width * 0.33),
+             (length * 0.34, height * 0.22, width * 0.02), glass)
+    radius = height * 0.18
+    for x in (-length * 0.31, length * 0.31):
+        for side in (-1.0, 1.0):
+            _rod(builder, (x, radius, side * width * 0.5), (x, radius, side * width * 0.38), radius, tyre, 8)
+    for side in (-1.0, 1.0):
+        _box(builder, (length * 0.46, height * 0.40, side * width * 0.25),
+             (length * 0.06, height * 0.10, width * 0.16), _colour(colours, "light"))
+        _box(builder, (-length * 0.46, height * 0.40, side * width * 0.25),
+             (length * 0.06, height * 0.10, width * 0.16), _colour(colours, "rear"))
+    return _rotate_qt(builder.arrays(), float(rotation))
+
+
 def shadow_solid(kind, rotation=0.0, **dimensions):
     """Simplified convex shadow hulls, in model coordinates, contained in the decorative envelope."""
     if kind in TREE_KINDS:
@@ -456,5 +510,11 @@ def shadow_solid(kind, rotation=0.0, **dimensions):
         head_bottom = height * (0.80 if kind == "child" else 0.82)
         solids = (_shadow_box(width * 0.55, depth * 0.75, height * 0.43, height * 0.82),
                   _shadow_box(width * 0.36, depth * 0.64, head_bottom, height))
+        return [_rotate_model(corners, rotation) for corners in solids]
+    if kind in CAR_KINDS:
+        length, width, height = _car_dimensions(kind, dimensions.get("length"), dimensions.get("width"),
+                                                dimensions.get("height"))
+        solids = (_shadow_box(length, width * 0.84, height * 0.18, height * 0.54),
+                  _shadow_box(length * 0.55, width * 0.60, height * 0.52, height))
         return [_rotate_model(corners, rotation) for corners in solids]
     raise ValueError(f"unknown prop kind: {kind}")
