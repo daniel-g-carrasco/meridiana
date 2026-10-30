@@ -28,7 +28,7 @@ import numpy as np
 from PySide6.QtCore import QEvent, QLineF, QPoint, QPointF, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetrics, QPainter, QPainterPath, QPen, QPolygonF,
                            QTransform)
-from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QGraphicsScene, QGraphicsView
+from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QGraphicsScene, QGraphicsView, QLineEdit, QWidget
 
 from .. import geo, move, navigation, roofs, sides, theme_colors, tiles, view_colours, viewaids
 from . import plan_overlays, waiting, world_map
@@ -252,6 +252,144 @@ class TileItem(QGraphicsItem):
             painter.restore()
 
 
+def parse_length(text: str) -> float | None:
+    """A length typed in the side's field: a number with the comma or the point as the decimal mark, «m» allowed
+    after it; None for anything else or for nothing at all."""
+    cleaned = text.strip().lower().removesuffix("m").strip().replace(",", ".")
+    try:
+        value = float(cleaned)
+    except ValueError:
+        return None
+    return value if math.isfinite(value) else None
+
+
+class SideEditor(QWidget):
+    """The field that opens on a side's pill (study 22, 3.6; R276): the side's number in its disc, the length to
+    write, the unit. Enter gives the length (`entered`), Esc or the focus lost leaves it (`left`), a text that is
+    not a length is refused (`refused`, with the text). A child of the plan, placed where the pill is; the plan's
+    own colours, the same in both themes (view_colours), as the pills it stands in for."""
+
+    entered = Signal(float)
+    left = Signal()
+    refused = Signal(str)
+    FIELD_WIDTH = 64            # room for «10000,00»
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.colours = view_colours.plan(False)
+        self.side = 0
+        self.closing = False
+        self.unit = _("{length} m").format(length="").strip()      # the unit as the pills write it
+        self.field = QLineEdit(self)
+        self.field.setFrame(False)
+        self.field.setFont(design.text_font(design.Text.CONTROL, self.font()))
+        self.field.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self.field.installEventFilter(self)
+        self.set_colours(self.colours)
+        self.hide()
+
+    def set_colours(self, colours: dict) -> None:
+        self.colours = colours
+        self.field.setStyleSheet(
+            "QLineEdit {{ background: transparent; border: none; padding: 0; margin: 0; color: {fg}; "
+            "selection-background-color: {sel}; selection-color: {bg}; }}".format(
+                fg=colours["label_fg"][:7], sel=colours["sel"][:7], bg=colours["label_bg"][:7]))
+        self.update()
+
+    def disc(self) -> float:
+        return design.Size.CONTROL - 2 * design.Space.XS
+
+    def open_at(self, side: int, text: str, centre: QPointF) -> None:
+        """The field for side `side` (0-based) with `text` selected, its middle at `centre` (the parent's pixels)."""
+        self.side = side
+        fm = QFontMetrics(self.field.font())
+        h = design.Size.CONTROL
+        unit_w = fm.horizontalAdvance(self.unit)
+        w = design.Space.XS + self.disc() + design.Space.XS + self.FIELD_WIDTH + design.Space.XS + unit_w + design.Space.M
+        self.resize(int(w), h)
+        self.field.setGeometry(int(design.Space.XS + self.disc() + design.Space.XS), 0, self.FIELD_WIDTH, h)
+        parent = self.parentWidget()
+        x = min(max(0.0, centre.x() - w / 2), max(0.0, parent.width() - w)) if parent is not None else centre.x() - w / 2
+        y = min(max(0.0, centre.y() - h / 2), max(0.0, parent.height() - h)) if parent is not None else centre.y() - h / 2
+        self.move(int(round(x)), int(round(y)))
+        self.setToolTip(_("Length of side {n}").format(n=side + 1))
+        self.field.setText(text)
+        self.show()
+        self.raise_()
+        self.field.setFocus(Qt.FocusReason.OtherFocusReason)
+        self.field.selectAll()
+        self.update()
+
+    def apply(self) -> None:
+        text = self.field.text()
+        value = parse_length(text)
+        if value is None or value <= 0.0:
+            self.refused.emit(text)
+            self.field.selectAll()
+            return
+        self._close()
+        self.entered.emit(value)
+
+    def cancel(self) -> None:
+        if self.isVisible():
+            self._close()
+            self.left.emit()
+
+    def _close(self) -> None:
+        self.closing = True
+        try:
+            self.hide()
+        finally:
+            self.closing = False
+
+    def eventFilter(self, watched, event) -> bool:
+        if watched is self.field:
+            if event.type() == QEvent.Type.KeyPress:
+                if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                    self.apply()
+                    return True
+                if event.key() == Qt.Key.Key_Escape:
+                    self.cancel()
+                    return True
+            elif event.type() == QEvent.Type.FocusOut and not self.closing and self.isVisible():
+                self.cancel()
+        return super().eventFilter(watched, event)
+
+    def paintEvent(self, event) -> None:
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        h = self.height()
+        fill = qcolour(self.colours["label_bg"])
+        fill.setAlpha(255)                           # opaque: the number is read, the drawing under it is not
+        accent = qcolour(self.colours["sel"])
+        pen = QPen(accent, design.Line.FOCUS)
+        p.setPen(pen)
+        p.setBrush(QBrush(fill))
+        inset = design.Line.FOCUS / 2
+        p.drawRoundedRect(QRectF(inset, inset, self.width() - 2 * inset, h - 2 * inset),
+                          design.Radius.pill(h), design.Radius.pill(h))
+        draw_disc(p, QPointF(design.Space.XS + self.disc() / 2, h / 2), self.disc(), str(self.side + 1),
+                  qcolour(self.colours["label_fg"]), fill, self.font())
+        p.setPen(qcolour(self.colours["label_fg"]))
+        p.setFont(self.field.font())
+        x = self.field.geometry().right() + 1 + design.Space.XS
+        p.drawText(QRectF(x, 0, self.width() - x, h), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, self.unit)
+        p.end()
+
+
+def draw_disc(painter: QPainter, centre: QPointF, diameter: float, text: str, fill: QColor, ink: QColor, base) -> None:
+    """The side's number in its disc: `fill` the disc, `ink` the digit (the pill's colours the other way round)."""
+    painter.save()
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(QBrush(fill))
+    r = diameter / 2
+    painter.drawEllipse(centre, r, r)
+    painter.setPen(ink)
+    painter.setFont(design.font(design.Type.CAPTION, design.Type.SEMIBOLD, base))
+    painter.drawText(QRectF(centre.x() - r, centre.y() - r, diameter, diameter), Qt.AlignmentFlag.AlignCenter, text)
+    painter.restore()
+
+
 class PlanView(QGraphicsView):
     polygonDrawn = Signal(str, list)       # tool, ring in local metres
     picked = Signal(str, str)              # kind ("building", "pitch", "subfield", "exclusion", ""), id
@@ -260,7 +398,8 @@ class PlanView(QGraphicsView):
     hint = Signal(str)
     cursorInfo = Signal(str)
     edgePicked = Signal(str, str, str, int)    # purpose, kind, id, side picked
-    sideClicked = Signal(str, str, int)         # kind, id, side: a double click on a side of the selected outline
+    sideClicked = Signal(str, str, int)         # kind, id, side: the field of a side of the selected outline opened
+    sideLength = Signal(str, str, int, float)   # kind, id, side, metres: a length written in that field (R276)
     vertexMoved = Signal(str, str, int, float, float)   # kind, id, vertex, where it was dropped (metres)
     menuRequested = Signal(QPoint)                         # a right click held still, in the view's pixels
     wholePicked = Signal(str, float, float)                # a double click with no outline: the tool, the point
@@ -368,6 +507,15 @@ class PlanView(QGraphicsView):
         self.edge_pick = None              # (purpose, kind, id, ring) while a side is being picked
         self.point_pick = None             # (purpose, how many, the points so far, the hints) while points are
         self.edge_hover: int | None = None
+        # the sides of the selected outline (R276, study 22 3.6): the pill under the pointer, the side lit from the
+        # Properties (highlight_side), the side whose field is open; the field itself, a child of the view
+        self.side_hover: int | None = None
+        self.lit_side: int | None = None
+        self.editing_side: int | None = None
+        self.side_editor = SideEditor(self)
+        self.side_editor.entered.connect(self._side_entered)
+        self.side_editor.left.connect(self._side_left)
+        self.side_editor.refused.connect(self._side_refused)
         self.dragging = None               # (kind, id, vertex, ring) while a vertex of the selection is dragged
         self.drag_point: tuple[float, float] | None = None
         self.gesture: move.Gesture | None = None     # a Move or a Rotate in progress (task 16b)
@@ -580,6 +728,7 @@ class PlanView(QGraphicsView):
         """The view moved or zoomed: the tiles a moment later, the scale bar now; the numbers of the string chosen
         thinned again to the zoom when it changed enough."""
         self.tile_timer.start()
+        self.side_editor.cancel()                   # its pill moved from under it
         mpp = self.metres_per_pixel()
         if self.choice == tiles.AUTO and not self.fallback_from:
             self._choose()
@@ -605,7 +754,7 @@ class PlanView(QGraphicsView):
             return
         self.colours = c
         self.setBackgroundBrush(qcolour(c["bg"]))
-        for overlay in (self.north, self.scale_bar, self.attribution):
+        for overlay in (self.north, self.scale_bar, self.attribution, self.side_editor):
             overlay.set_colours(c)
         self._laying_colours()
         if self.drawn is not None:
@@ -1220,6 +1369,9 @@ class PlanView(QGraphicsView):
 
     def set_selection(self, kind: str, oid: str) -> None:
         changed = (kind, oid) != self.selection
+        if changed:
+            self.side_editor.cancel()
+            self.lit_side = self.side_hover = None
         if (kind, oid) != ("subfield", self.selected_module[0]):
             self.selected_module = ("", "")            # a module selected belongs to its sub-field's selection
         self.selection = (kind, oid)
@@ -1363,9 +1515,116 @@ class PlanView(QGraphicsView):
     def _side_near(self, ring, view_pos, pixels: float = 14.0) -> int | None:
         return sides.nearest(ring, from_scene(self.mapToScene(view_pos)), pixels * self.metres_per_pixel())
 
+    # the sides of the selected outline: their pills, the field of a length (R276, study 22 3.6)
+
+    def _side_pills(self, ring) -> list[tuple[int, QRectF, bool, str]]:
+        """The pills of the sides of `ring`, in the viewport's pixels: (side, box, whole, the length's text). A pill
+        is the side's number in its disc and its length, at the side's middle, outside the outline. A side too short
+        for both gets the disc alone (the length is in the field the disc opens); one shorter than the disc, or whose
+        disc would lie on a pill already placed, gets nothing: a clear rule, no two pills one over the other."""
+        font = design.font(design.Type.SMALL, design.Type.REGULAR, self.font())
+        fm = QFontMetrics(font)
+        h = fm.height() + 2 * design.Space.XXS
+        disc = h - 2 * design.Space.XXS
+        n_sides = len(ring)
+        screen = [QPointF(self.mapFromScene(to_scene(*q))) for q in ring]
+        poly = QPolygonF(screen)
+        area = 0.5 * sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(ring, ring[1:] + ring[:1], strict=True))
+        out: list[tuple[int, QRectF, bool, str]] = []
+        for i in range(n_sides):
+            a, b = ring[i], ring[(i + 1) % n_sides]
+            pa, pb = screen[i], screen[(i + 1) % n_sides]
+            dx, dy = pb.x() - pa.x(), pb.y() - pa.y()
+            n = math.hypot(dx, dy)
+            if n < disc:
+                continue
+            text = _("{length} m").format(length=number(math.dist(a, b)))
+            whole_w = design.Space.XXS + disc + design.Space.XS + fm.horizontalAdvance(text) + design.Space.S
+            mid = QPointF((pa.x() + pb.x()) / 2, (pa.y() + pb.y()) / 2)
+            away = h / 2 + design.Space.XXS
+            # outwards: the side of the line where the outline is not (the inner corner of an L, a turned view);
+            # when both candidates agree, the orientation decides as before (anticlockwise in metres)
+            normal = QPointF(dy / n, -dx / n)
+            candidates = [mid + normal * away, mid - normal * away]
+            outside = [c for c in candidates if not poly.containsPoint(c, Qt.FillRule.OddEvenFill)]
+            centre = outside[0] if len(outside) == 1 else candidates[0 if area > 0 else 1]
+            for whole, w in ((True, whole_w), (False, h)):
+                if whole and n < whole_w + design.Space.M:
+                    continue
+                box = QRectF(centre.x() - w / 2, centre.y() - h / 2, w, h)
+                if not any(box.intersects(other) for _s, other, _w, _t in out):
+                    out.append((i, box, whole, text))
+                    break
+        return out
+
+    def _pill_at(self, view_pos) -> int | None:
+        """The side whose pill is under the pointer, while selecting."""
+        ring = self.rings.get(self.selection)
+        if self.tool != "select" or self.edge_pick is not None or not ring or len(ring) < 3:
+            return None
+        p = QPointF(view_pos)
+        return next((side for side, box, _w, _t in self._side_pills(ring) if box.contains(p)), None)
+
+    def edit_side(self, side: int) -> None:
+        """The field of side `side` of the selected outline, open where its pill is (or at the side's middle when the
+        side is too short for a pill): a click on the pill or a double click on the side. Enter gives `sideLength`,
+        Esc leaves it as it is."""
+        ring = self.rings.get(self.selection)
+        if self.tool != "select" or not ring or not 0 <= side < len(ring):
+            return
+        box = next((b for s, b, _w, _t in self._side_pills(ring) if s == side), None)
+        if box is None:
+            pa = self.mapFromScene(to_scene(*ring[side]))
+            pb = self.mapFromScene(to_scene(*ring[(side + 1) % len(ring)]))
+            centre = QPointF((pa.x() + pb.x()) / 2, (pa.y() + pb.y()) / 2)
+        else:
+            centre = box.center()
+        self.editing_side = side
+        self.side_editor.set_colours(self.colours)
+        self.side_editor.open_at(side, number(sides.lengths(ring)[side]),
+                                 QPointF(self.viewport().mapTo(self, centre.toPoint())))
+        self.sideClicked.emit(self.selection[0], self.selection[1], side)
+        self.hint.emit(_("Length of side {n}: Enter applies it, Esc leaves it as it is.").format(n=side + 1))
+        self.viewport().update()
+
+    def _side_entered(self, value: float) -> None:
+        kind, oid = self.selection
+        side, self.editing_side = self.editing_side, None
+        self.hint.emit("")
+        self.setFocus(Qt.FocusReason.OtherFocusReason)
+        self.viewport().update()
+        if side is not None:
+            self.sideLength.emit(kind, oid, side, value)
+
+    def _side_left(self) -> None:
+        self.editing_side = None
+        self.hint.emit("")
+        self.setFocus(Qt.FocusReason.OtherFocusReason)
+        self.viewport().update()
+
+    def _side_refused(self, text: str) -> None:
+        self.hint.emit(_("Not changed: {why}").format(why=_("«{text}» is not a length in metres").format(text=text)))
+
+    def highlight_side(self, kind: str, oid: str, side: int | None) -> None:
+        """Side `side` (0-based) of the selected outline lit on the plan, or none (None): the Properties call it when
+        the pointer passes over the field of a side (study 22, 3.6); the pills of another outline light nothing."""
+        lit = side if side is not None and (kind, oid) == self.selection else None
+        if lit != self.lit_side:
+            self.lit_side = lit
+            self.viewport().update()
+
+    def _lit_side(self) -> int | None:
+        """The side drawn thick: the one being edited, else the one whose pill is under the pointer, else the one
+        lit from the Properties."""
+        if self.editing_side is not None:
+            return self.editing_side
+        return self.side_hover if self.side_hover is not None else self.lit_side
+
     # tools
 
     def set_tool(self, tool: str) -> None:
+        self.side_editor.cancel()
+        self.side_hover = None
         self.tool = tool
         self.chain = []
         self.snap = None
@@ -2100,6 +2359,10 @@ class PlanView(QGraphicsView):
             self._move_press(position, modifiers)
             return
         if self.tool == "select":
+            pill = self._pill_at(position)
+            if pill is not None:                    # a click on a side's pill: its length, written there (R276)
+                self.edit_side(pill)
+                return
             vertex = self._vertex_near(position.toPoint())
             if vertex is not None:
                 ring = self.rings[self.selection]
@@ -2210,9 +2473,11 @@ class PlanView(QGraphicsView):
                 return
         ring = self.rings.get(self.selection)
         if self.tool == "select" and self.edge_pick is None and ring and event.button() == Qt.MouseButton.LeftButton:
-            side = self._side_near(ring, event.position().toPoint())
-            if side is not None:
-                self.sideClicked.emit(self.selection[0], self.selection[1], side)
+            side = self._pill_at(event.position())
+            if side is None:
+                side = self._side_near(ring, event.position().toPoint())
+            if side is not None:                    # the same field as a click on the pill (study 22, 3.6)
+                self.edit_side(side)
                 return
         super().mouseDoubleClickEvent(event)
 
@@ -2467,6 +2732,15 @@ class PlanView(QGraphicsView):
             # that is drawn again. Repainting the whole plan at each move cost 15 ms on a roof and 60-70 ms with
             # 4,700 modules (22/10/2026)
             self.snap = None
+            pill = self._pill_at(view_pos)
+            if pill != self.side_hover:             # the pill under the pointer lights its side (study 22, 3.6)
+                self.side_hover = pill
+                self.setCursor(Qt.CursorShape.PointingHandCursor if pill is not None else Qt.CursorShape.ArrowCursor)
+                self.viewport().update()
+            if pill is not None:
+                self._hover("", "", "")
+                self.cursorInfo.emit(_("Side {n}").format(n=pill + 1))
+                return
             kind, oid, key = self._pick(scene_pos, PICK_PX) if self.edge_pick is None else ("", "", "")
             rid = self.rid_of(oid, key) if kind == "module" else ""
             if rid and self.selection == ("subfield", oid) and self.selected_module[0] == oid and \
@@ -2596,6 +2870,12 @@ class PlanView(QGraphicsView):
             for i, (a, b) in enumerate(zip(pts, pts[1:] + pts[:1], strict=True)):
                 painter.setPen(cosmetic(accent, 5) if i == self.edge_hover else cosmetic(accent, 1.5, Qt.PenStyle.DashLine))
                 painter.drawLine(QLineF(a, b))
+        lit = self._lit_side()
+        ring = self.rings.get(self.selection)
+        if lit is not None and self.tool == "select" and self.edge_pick is None and ring and lit < len(ring):
+            # the side of the pill under the pointer, of the field open or of the Properties' field: thick (3.6)
+            painter.setPen(cosmetic(accent, 5))
+            painter.drawLine(QLineF(to_scene(*ring[lit]), to_scene(*ring[(lit + 1) % len(ring)])))
         painter.restore()
         self._draw_sides(painter)
         self._draw_labels(painter)
@@ -2625,34 +2905,33 @@ class PlanView(QGraphicsView):
         self.row_count = len(quads)
 
     def _draw_sides(self, painter: QPainter) -> None:
-        """The length of each side of the selected outline, at its middle, outside it: a double click on a
-        side changes it."""
+        """The pill of each side of the selected outline (R276, study 22 3.6): its number in a disc and its length,
+        at its middle, outside the outline (_side_pills). A click on the pill, or a double click on the side, opens
+        the length's field; the pill of the side being edited is under the field and is not drawn."""
         ring = self.edge_pick[3] if self.edge_pick is not None else self.rings.get(self.selection)
         if self.tool != "select" or not ring or len(ring) < 3:
             return
         painter.save()
         painter.resetTransform()
         font = design.font(design.Type.SMALL, design.Type.REGULAR, self.font())
-        painter.setFont(font)
-        fm = QFontMetrics(font)
-        area = 0.5 * sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(ring, ring[1:] + ring[:1], strict=True))
-        for i, (a, b) in enumerate(zip(ring, ring[1:] + ring[:1], strict=True)):
-            pa, pb = self.mapFromScene(to_scene(*a)), self.mapFromScene(to_scene(*b))
-            dx, dy = pb.x() - pa.x(), pb.y() - pa.y()
-            n = math.hypot(dx, dy)
-            if n < 40:                       # too short on screen for its measure
+        lit = self.edge_hover if self.edge_pick is not None else self._lit_side()
+        bg, fg, sel = (qcolour(self.colours[k]) for k in ("label_bg", "label_fg", "sel"))
+        for i, box, whole, text in self._side_pills(ring):
+            if i == self.editing_side and self.edge_pick is None:
                 continue
-            # outwards: anticlockwise in metres the inside is on the left; the screen's y points down
-            ox, oy = (dy / n, -dx / n) if area > 0 else (-dy / n, dx / n)
-            text = _("{length} m").format(length=number(math.dist(a, b)))
-            w, h = fm.horizontalAdvance(text) + 8, fm.height() + 2
-            cx, cy = (pa.x() + pb.x()) / 2 + ox * h * 0.9, (pa.y() + pb.y()) / 2 + oy * h * 0.9
-            box = QRectF(cx - w / 2, cy - h / 2, w, h)
+            ink = sel if i == lit else fg
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(qcolour(self.colours["label_bg"]))
-            painter.drawRoundedRect(box, design.Radius.INNER, design.Radius.INNER)
-            painter.setPen(qcolour(self.colours["sel"] if i == self.edge_hover else self.colours["label_fg"]))
-            painter.drawText(box, Qt.AlignmentFlag.AlignCenter, text)
+            painter.setBrush(bg)
+            painter.drawRoundedRect(box, design.Radius.pill(box.height()), design.Radius.pill(box.height()))
+            disc = box.height() - 2 * design.Space.XXS
+            draw_disc(painter, QPointF(box.left() + design.Space.XXS + disc / 2, box.center().y()), disc, str(i + 1),
+                      ink, bg, self.font())
+            if whole:
+                painter.setPen(ink)
+                painter.setFont(font)
+                x = box.left() + design.Space.XXS + disc + design.Space.XS
+                painter.drawText(QRectF(x, box.top(), box.right() - x, box.height()),
+                                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, text)
         painter.restore()
 
     def _mark(self, painter, p: QPointF, colour, kind: str) -> None:

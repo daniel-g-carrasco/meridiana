@@ -129,7 +129,6 @@ class Window(Journeys):
         self.assertNotIn("*", self.win.windowTitle())
 
     def the_eave_picked_on_the_plan_and_a_side_made_longer(self):
-        from PySide6.QtWidgets import QInputDialog
         bid = self.win.project.buildings[0].id
         self.win._edited("building", bid, {"roof.type": "mono", "roof.tilt": 10.0})
         self.win._select("building", bid)
@@ -138,13 +137,13 @@ class Window(Journeys):
         self.win.plan.edgePicked.emit("eave", "building", bid, 2)   # the North side clicked
         self.assertEqual(self.win.project.buildings[0].roof.eave_side, 2)
         self.assertAlmostEqual(self.win.project.buildings[0].pitches()[0].azimuth % 360, 180.0, places=4)
-        with mock.patch.object(QInputDialog, "getDouble", return_value=(50.0, True)):
-            self.win._side_clicked("building", bid, 0)               # the South side, 40 m, made 50
+        steps = self.win.session.undo.count()
+        self.win.plan.sideLength.emit("building", bid, 0, 50.0)      # the South side, 40 m, made 50 on the plan
         self.assertEqual(self.win.project.buildings[0].footprint, [[0, 0], [50.0, 0], [50.0, 20], [0, 20]])
+        self.assertEqual(self.win.session.undo.count(), steps + 1)   # one step of the undo (R276)
         self.win.undo.undo()
         self.assertEqual(self.win.project.buildings[0].footprint, [[0, 0], [40, 0], [40, 20], [0, 20]])
-        with mock.patch.object(QInputDialog, "getDouble", return_value=(0.01, True)):
-            self.win._side_clicked("building", bid, 0)               # it would vanish: refused, said
+        self.win._side_clicked("building", bid, 0, 0.01)             # it would vanish: refused, said
         self.assertIn("Not changed", self.win.hint.text())
 
     def a_side_clicked_as_a_gable_end_changes_the_roof_and_is_undone(self):
@@ -1869,7 +1868,7 @@ class Stringing(PlantWindow):
         self.assertEqual((self.win.chosen_string, self.win.plan.chosen_string), (last, last))
         view = self.win.plan.mapToScene(self.win.plan.viewport().rect()).boundingRect()
         self.assertTrue(view.contains(self.win.plan.string_rect(last)))
-        self.assertIn(plant.strings[last].label, self.win.plant_inspector.string_checks.text())
+        self.assertIn(plant.strings[last].label, self.win.plant_inspector.string_identity.text())
         name = plant.strings[last].label
         _setup.keyboard_or_skip(self, lst)
         QTest.keyClick(lst, Qt.Key.Key_Delete)                               # Del: that string, one step

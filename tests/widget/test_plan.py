@@ -307,7 +307,173 @@ class Sides(PlanCase):
         pos = self.move(6.0, 0.05)                            # on the South side
         QTest.mouseDClick(self.view.viewport(), Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, pos)
         self.assertEqual(asked, [("building", "b1", 0)])
+        self.assertTrue(self.view.side_editor.isVisible())    # the same field as a click on the pill (R276)
+        self.assertEqual(self.view.editing_side, 0)
         self.view.grab()                                      # the measures draw without complaint
+        self.view.side_editor.cancel()
+
+    def pills(self):
+        return {side: (box, whole, text) for side, box, whole, text in
+                self.view._side_pills(self.view.rings[self.view.selection])}
+
+    def pill_click(self, side):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        box = self.pills()[side][0]
+        self.app.sendEvent(self.view.viewport(), self.mouse_move(box.center()))
+        QTest.mouseClick(self.view.viewport(), Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier,
+                         box.center().toPoint())
+
+    def mouse_move(self, pos):
+        from PySide6.QtCore import QEvent, QPointF, Qt
+        from PySide6.QtGui import QMouseEvent
+        pos = QPointF(pos)
+        return QMouseEvent(QEvent.Type.MouseMove, pos, self.view.viewport().mapToGlobal(pos), Qt.MouseButton.NoButton,
+                           Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier)
+
+    def test_the_pills_carry_the_number_and_the_length_outside_the_outline_without_overlapping(self):
+        from PySide6.QtCore import QPointF, Qt
+        from PySide6.QtGui import QPolygonF
+
+        from meridiana.ui.plan import to_scene
+        self.project()
+        self.view.set_tool("select")
+        self.view.set_selection("building", "b1")
+        pills = self.pills()
+        self.assertEqual(sorted(pills), [0, 1, 2, 3])
+        self.assertEqual([pills[i][2] for i in range(4)], ["12.00 m", "8.00 m", "12.00 m", "8.00 m"])
+        self.assertTrue(all(whole for _b, whole, _t in pills.values()))
+        ring = QPolygonF([QPointF(self.view.mapFromScene(to_scene(x, y))) for x, y in [(0, 0), (12, 0), (12, 8), (0, 8)]])
+        for box, _w, _t in pills.values():
+            self.assertFalse(ring.containsPoint(box.center(), Qt.FillRule.OddEvenFill))      # outside the outline
+        boxes = [b for b, _w, _t in pills.values()]
+        self.assertFalse(any(a.intersects(b) for i, a in enumerate(boxes) for b in boxes[i + 1:]))
+        image = self.view.grab().toImage()
+        dpr = image.devicePixelRatio()
+        box = pills[0][0]
+        x, y = box.left() + 2, box.center().y()                   # the pill's left end: its own ground, not the plan's
+        pixel = image.pixelColor(int((x + 0.5) * dpr), int((y + 0.5) * dpr)).name()
+        self.assertNotEqual(pixel, self.view.colours["bg"][:7].lower())
+        # the pointer over a pill lights its side and says which; off it, nothing
+        self.app.sendEvent(self.view.viewport(), self.mouse_move(pills[1][0].center()))
+        self.assertEqual(self.view.side_hover, 1)
+        self.assertEqual(self.view._lit_side(), 1)
+        self.assertEqual(self.view.cursor().shape(), Qt.CursorShape.PointingHandCursor)
+        self.move(6.0, 4.0)
+        self.assertIsNone(self.view.side_hover)
+        # the Properties light a side of the selection (highlight_side), not of another outline
+        self.view.highlight_side("building", "b1", 2)
+        self.assertEqual(self.view._lit_side(), 2)
+        self.view.highlight_side("building", "b2", 1)
+        self.assertIsNone(self.view._lit_side())
+        self.view.grab()
+
+    def test_a_click_on_the_pill_opens_the_field_and_enter_gives_the_length(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        self.project()
+        self.view.set_tool("select")
+        self.view.set_selection("building", "b1")
+        opened, lengths, hints = [], [], []
+        self.view.sideClicked.connect(lambda *a: opened.append(a))
+        self.view.sideLength.connect(lambda *a: lengths.append(a))
+        self.view.hint.connect(hints.append)
+        self.pill_click(1)
+        editor = self.view.side_editor
+        self.assertEqual(opened, [("building", "b1", 1)])
+        self.assertTrue(editor.isVisible())
+        self.assertEqual((editor.field.text(), editor.field.selectedText()), ("8.00", "8.00"))
+        self.assertEqual(self.view.selection, ("building", "b1"))     # the click selected nothing else
+        self.assertIn("Enter", hints[-1])
+        field_centre = editor.mapTo(self.view, editor.rect().center())
+        self.assertLess((field_centre - self.pills()[1][0].center().toPoint()).manhattanLength(), 40)
+        _setup.keyboard_or_skip(self, editor.field)
+        QTest.keyClicks(editor.field, "9,5")                          # the comma as the decimal mark
+        QTest.keyClick(editor.field, Qt.Key.Key_Return)
+        self.assertEqual(lengths, [("building", "b1", 1, 9.5)])
+        self.assertFalse(editor.isVisible())
+        self.assertIsNone(self.view.editing_side)
+        self.assertEqual(hints[-1], "")
+
+    def test_escape_leaves_the_side_and_a_text_that_is_not_a_length_is_refused_and_said(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        self.project()
+        self.view.set_tool("select")
+        self.view.set_selection("building", "b1")
+        lengths, hints = [], []
+        self.view.sideLength.connect(lambda *a: lengths.append(a))
+        self.view.hint.connect(hints.append)
+        self.pill_click(0)
+        editor = self.view.side_editor
+        _setup.keyboard_or_skip(self, editor.field)
+        QTest.keyClicks(editor.field, "abc")
+        QTest.keyClick(editor.field, Qt.Key.Key_Return)
+        self.assertTrue(editor.isVisible())                           # refused: the field stays, the text selected
+        self.assertIn("Not changed", hints[-1])
+        self.assertIn("abc", hints[-1])
+        self.assertEqual(editor.field.selectedText(), "abc")
+        QTest.keyClicks(editor.field, "0")
+        QTest.keyClick(editor.field, Qt.Key.Key_Return)              # nought is no length either
+        self.assertTrue(editor.isVisible())
+        self.assertIn("«0»", hints[-1])
+        QTest.keyClick(editor.field, Qt.Key.Key_Escape)
+        self.assertFalse(editor.isVisible())
+        self.assertEqual(lengths, [])
+        self.assertEqual(self.view.selection, ("building", "b1"))     # Esc in the field did not go back to the site
+        # another selection, or the view moved, closes the field too
+        self.pill_click(2)
+        self.assertTrue(editor.isVisible())
+        self.view.translate_view(20, 0)
+        self.assertFalse(editor.isVisible())
+        self.assertEqual(lengths, [])
+
+    def test_a_short_side_gets_its_number_alone_or_nothing_and_the_field_still_opens(self):
+        from meridiana import model
+        p = model.Project()
+        # 12 m wide, with a notch of 0.3 m: at 60 px/m the notch's sides are 18 px, room for the disc and no more
+        p.buildings.append(model.Building(id="b1", name="Tacca", footprint=[[0, 0], [12, 0], [12, 8], [6.3, 8],
+                                                                             [6.3, 7.7], [6, 7.7], [6, 8], [0, 8]],
+                                          roof=model.Roof(type="flat")))
+        self.view.show_project(p, {})
+        self.view.fit()
+        self.app.processEvents()
+        self.view.set_tool("select")
+        self.view.set_selection("building", "b1")
+        pills = self.pills()
+        self.assertTrue(pills[0][1] and pills[1][1] and pills[7][1])          # the long sides whole
+        short = [s for s in (3, 4, 5) if s in pills]
+        self.assertTrue(all(not pills[s][1] for s in short))                 # the notch: the number alone, if room
+        boxes = [b for b, _w, _t in pills.values()]
+        self.assertFalse(any(a.intersects(b) for i, a in enumerate(boxes) for b in boxes[i + 1:]))
+        self.view.edit_side(4)                                                # a side without a pill: at its middle
+        self.assertTrue(self.view.side_editor.isVisible())
+        self.assertEqual(self.view.editing_side, 4)
+        self.view.grab()
+        self.view.side_editor.cancel()
+
+    def test_the_pills_follow_a_turned_plan_and_their_click_still_opens_the_side(self):
+        from PySide6.QtCore import QPointF, Qt
+        from PySide6.QtGui import QPolygonF
+
+        from meridiana.ui.plan import to_scene
+        self.project()
+        self.view.set_tool("select")
+        self.view.set_selection("building", "b1")
+        self.view.rotate_view(30.0)
+        self.app.processEvents()
+        pills = self.pills()
+        self.assertEqual(sorted(pills), [0, 1, 2, 3])
+        ring = QPolygonF([QPointF(self.view.mapFromScene(to_scene(x, y))) for x, y in [(0, 0), (12, 0), (12, 8), (0, 8)]])
+        for box, _w, _t in pills.values():
+            self.assertFalse(ring.containsPoint(box.center(), Qt.FillRule.OddEvenFill))
+        opened = []
+        self.view.sideClicked.connect(lambda *a: opened.append(a))
+        self.pill_click(3)
+        self.assertEqual(opened, [("building", "b1", 3)])
+        self.assertEqual(self.view.editing_side, 3)
+        self.view.grab()
+        self.view.side_editor.cancel()
 
     def test_a_corner_of_the_selection_is_dragged(self):
         from PySide6.QtCore import Qt

@@ -568,7 +568,7 @@ class MainWindow(QMainWindow):
         self.plan.wholePicked.connect(self._whole_pitch)
         self.plan.picked.connect(self._picked)
         self.plan.edgePicked.connect(self._edge_picked)
-        self.plan.sideClicked.connect(self._side_clicked)
+        self.plan.sideLength.connect(self._side_clicked)
         self.plan.vertexMoved.connect(self._vertex_moved)
         self.plan.transformRequested.connect(self._transform)
         self.plan.toolLeft.connect(lambda: self._set_tool("select"))
@@ -2875,17 +2875,14 @@ class MainWindow(QMainWindow):
                  next((e for e in self.project.exclusions if e.id == oid), None) if kind == "exclusion" else None)
         return ("ring", thing.ring) if thing is not None else None
 
-    def _side_clicked(self, kind: str, oid: str, side: int) -> None:
-        """A double click on a side of the selected outline: its new length, the side stretched to it."""
+    def _side_clicked(self, kind: str, oid: str, side: int, value: float) -> None:
+        """A length written on the plan for a side of the selected outline (the field of its pill, opened by a click
+        on the pill or a double click on the side; R276): the side stretched to it, one step of the undo."""
         found = self._outline(kind, oid)
-        if found is None:
+        if found is None or not 0 <= side < len(ring := found[1]):
             return
-        path, ring = found
-        now = sides.lengths(ring)[side]
-        value, ok = QInputDialog.getDouble(self, _("Length of side {n}").format(n=side + 1),
-                                           _("New length (m); what lies at the far end of the side moves with it:"),
-                                           now, 0.1, 10000.0, 2)
-        if not ok or abs(value - now) < 1e-6:
+        path = found[0]
+        if abs(value - sides.lengths(ring)[side]) < 1e-6:
             return
         try:
             self._edited(kind, oid, {path: sides.stretch(ring, side, value)})
