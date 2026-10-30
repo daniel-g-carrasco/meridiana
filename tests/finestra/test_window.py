@@ -1868,7 +1868,7 @@ class Stringing(PlantWindow):
         self.assertEqual((self.win.chosen_string, self.win.plan.chosen_string), (last, last))
         view = self.win.plan.mapToScene(self.win.plan.viewport().rect()).boundingRect()
         self.assertTrue(view.contains(self.win.plan.string_rect(last)))
-        self.assertIn(plant.strings[last].label, self.win.plant_inspector.string_identity.text())
+        self.assertIn(plant.strings[last].label, self.win.plant_inspector.string_checks.text())
         name = plant.strings[last].label
         _setup.keyboard_or_skip(self, lst)
         QTest.keyClick(lst, Qt.Key.Key_Delete)                               # Del: that string, one step
