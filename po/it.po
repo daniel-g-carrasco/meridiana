@@ -19685,3 +19685,303 @@ msgstr "Flusso di cassa cumulato negli anni: l'investimento all'anno 0, il rient
 #: src/meridiana/ui/report_chapters.py:586
 msgid "Self-consumed: the energy produced and used on site, at the same hour."
 msgstr "Autoconsumata: l'energia prodotta e usata sul posto, nella stessa ora."
+
+#: src/meridiana/ui/tour.py:33
+msgid "Try:"
+msgstr "Prova:"
+
+#: src/meridiana/tour.py:25
+msgid "Your projects live here"
+msgstr "Qui vivono i tuoi progetti"
+
+#: src/meridiana/tour.py:26
+msgid "Hello, I am Meridio: a small sun with a weakness for well-placed modules. Let me show you around; nothing in your project changes while we walk. File is where every project starts and comes back to: new, open, the recent ones, and the revisions you save along the way."
+msgstr "Ciao, sono Meridio: un piccolo sole con un debole per i moduli messi bene. Ti faccio fare un giro; mentre camminiamo il tuo progetto non cambia di una virgola. Da File ogni progetto parte e qui torna: nuovo, apri, i recenti e le revisioni che salvi strada facendo."
+
+#: src/meridiana/tour.py:30
+msgid "New: a site, a name and the first roof in a few minutes."
+msgstr "Nuovo: un sito, un nome e la prima falda in pochi minuti."
+
+#: src/meridiana/tour.py:31
+msgid "Save and revisions: a revision is a new file next to the previous one, never over it."
+msgstr "Salva e revisioni: una revisione è un file nuovo accanto al precedente, mai sopra."
+
+#: src/meridiana/tour.py:32
+msgid "Import and Export: PVsyst, IFC and the hourly CSV."
+msgstr "Importa ed esporta: PVsyst, IFC e il CSV orario."
+
+#: src/meridiana/tour.py:33
+msgid "Ctrl+N new project, Ctrl+O open"
+msgstr "Ctrl+N nuovo progetto, Ctrl+O apri"
+
+#: src/meridiana/tour.py:34
+msgid "Model and place the modules"
+msgstr "Modella e disponi i moduli"
+
+#: src/meridiana/tour.py:35
+msgid "This is where the plant takes shape. Draw the footprint of the buildings and give them roofs; on each roof define the subfields and I fill them with modules at the pitch and orientation you choose. The toolbar follows the task: Edit, Draw, Layout and Precision."
+msgstr "Qui l'impianto prende forma. Disegna il perimetro degli edifici e dagli le coperture; su ogni falda definisci i sottocampi e io li riempio di moduli con il passo e l'orientamento che scegli tu. La barra degli strumenti segue il lavoro: Modifica, Disegna, Disposizione e Precisione."
+
+#: src/meridiana/tour.py:39
+msgid "Roofs flat or pitched on any footprint; the fire brigade rules keep the walkways free."
+msgstr "Coperture piane o a falda su qualunque perimetro; le regole dei Vigili del fuoco tengono liberi i passaggi."
+
+#: src/meridiana/tour.py:40
+msgid "Layout: rows, pitch and setbacks; drag a module to lay out a row by hand."
+msgstr "Disposizione: file, passo e arretramenti; trascina un modulo per disporre una fila a mano."
+
+#: src/meridiana/tour.py:41
+msgid "Undo is always one key away: experiment freely."
+msgstr "Annulla è sempre a un tasto di distanza: sperimenta pure."
+
+#: src/meridiana/tour.py:42
+msgid "Ctrl+Z undo, F fits the drawing to the view"
+msgstr "Ctrl+Z annulla, F adatta il disegno alla vista"
+
+#: src/meridiana/tour.py:43
+msgid "Plan and 3D, side by side"
+msgstr "Pianta e 3D, fianco a fianco"
+
+#: src/meridiana/tour.py:44
+msgid "The plan is for measuring and drawing, the 3D view for seeing roofs and shadows as they really are. In a narrow window one view is shown at a time; the view bar switches between them."
+msgstr "La pianta serve a misurare e disegnare, la vista 3D a vedere coperture e ombre come sono davvero. In una finestra stretta si vede una vista alla volta; la barra delle viste passa dall'una all'altra."
+
+#: src/meridiana/tour.py:47
+msgid "Orbit, pan and zoom follow the navigation style you choose in Settings."
+msgstr "Orbita, pan e zoom seguono lo stile di navigazione che scegli nelle Impostazioni."
+
+#: src/meridiana/tour.py:48
+msgid "The compass and Home put north back where it belongs when you lose your bearings."
+msgstr "La bussola e Home rimettono il nord al suo posto quando perdi l'orientamento."
+
+#: src/meridiana/tour.py:49
+msgid "The sun bar under the 3D view moves the sun through the day and the year, shadows included."
+msgstr "La barra del sole sotto la vista 3D sposta il sole lungo il giorno e l'anno, ombre comprese."
+
+#: src/meridiana/tour.py:50
+msgid "Ctrl+Shift+3 shows or hides the 3D view"
+msgstr "Ctrl+Maiusc+3 mostra o nasconde la vista 3D"
+
+#: src/meridiana/tour.py:52
+msgid "Click an object and its properties come up here: a building, a roof, a subfield, a module. Every field explains itself: put the cursor in it and press F1. The site holds what the grid connection needs: distributor, POD, voltage, phases and the power you ask for."
+msgstr "Fai clic su un oggetto e qui compaiono le sue proprietà: un edificio, una falda, un sottocampo, un modulo. Ogni campo si spiega da sé: metti il cursore dentro e premi F1. Il sito contiene ciò che serve alla connessione: distributore, POD, tensione, fasi e la potenza che richiedi."
+
+#: src/meridiana/tour.py:56
+msgid "Every change is one undo step."
+msgstr "Ogni modifica è un passo di Annulla."
+
+#: src/meridiana/tour.py:57
+msgid "A grey field is computed: change what feeds it, not the result."
+msgstr "Un campo grigio è calcolato: cambia ciò che lo alimenta, non il risultato."
+
+#: src/meridiana/tour.py:58
+msgid "I read these values when you ask me about the project."
+msgstr "Questi valori li leggo io quando mi chiedi del progetto."
+
+#: src/meridiana/tour.py:59
+msgid "F1 help on the field, Shift+F1 what is this"
+msgstr "F1 aiuto sul campo, Maiusc+F1 che cos'è"
+
+#: src/meridiana/tour.py:61
+msgid "Modules make direct current; here it becomes a plant. Pick an inverter from the catalogue or let me size one, then connect the strings to its MPPTs. Propose fills in a sensible stringing, Complete finishes what you started by hand, and neither touches a choice you made yourself."
+msgstr "I moduli fanno corrente continua; qui diventa un impianto. Scegli un inverter dal catalogo o lascia che lo dimensioni io, poi collega le stringhe ai suoi MPPT. Proponi compila una stringatura sensata, Completa finisce quella che hai iniziato a mano, e nessuno dei due tocca una scelta fatta da te."
+
+#: src/meridiana/tour.py:65
+msgid "Sizing checks voltages and currents at the extreme temperatures, and the DC/AC ratio."
+msgstr "Il dimensionamento verifica tensioni e correnti alle temperature estreme e il rapporto DC/AC."
+
+#: src/meridiana/tour.py:66
+msgid "Storage goes beside the inverters: battery, coupling and power."
+msgstr "L'accumulo sta accanto agli inverter: batteria, accoppiamento e potenza."
+
+#: src/meridiana/tour.py:67
+msgid "A string drawn by hand is yours: I never redraw it."
+msgstr "Una stringa disegnata a mano è tua: io non la ridisegno mai."
+
+#: src/meridiana/tour.py:68
+msgid "Compute > Propose the strings, then Complete the strings"
+msgstr "Calcolo > Proponi le stringhe, poi Completa le stringhe"
+
+#: src/meridiana/tour.py:70
+msgid "I keep an eye on the plant and tell you here when something is off: an error that stops the computation, a warning worth a look, or a plain note. Open a group to read why, and where the rule comes from."
+msgstr "Tengo d'occhio l'impianto e qui ti dico quando qualcosa non va: un errore che ferma il calcolo, un avviso che merita uno sguardo o una semplice nota. Apri un gruppo per leggere il perché, e da dove viene la regola."
+
+#: src/meridiana/tour.py:74
+msgid "Follow the destination: the check takes you to the exact field."
+msgstr "Segui la destinazione: la verifica ti porta al campo esatto."
+
+#: src/meridiana/tour.py:75
+msgid "A suggested fix is applied only when you click it, and it is one undo step."
+msgstr "Una correzione suggerita si applica solo se la clicchi, ed è un passo di Annulla."
+
+#: src/meridiana/tour.py:76
+msgid "The checks follow every edit: there is no button to press."
+msgstr "Le verifiche seguono ogni modifica: non c'è nessun pulsante da premere."
+
+#: src/meridiana/tour.py:77
+msgid "Panels > Checks shows or hides this panel"
+msgstr "Pannelli > Verifiche mostra o nasconde questo pannello"
+
+#: src/meridiana/tour.py:79
+msgid "My favourite part. The year is computed hour by hour with the weather of the site: irradiance on each module, temperature, shadows between the rows and from the buildings, wiring, inverter clipping. Only the modules connected to a string contribute energy; the others wait their turn."
+msgstr "La mia parte preferita. L'anno si calcola ora per ora con il meteo del sito: irraggiamento su ogni modulo, temperatura, ombre tra le file e dagli edifici, cablaggi, limitazione dell'inverter. Solo i moduli collegati a una stringa producono energia; gli altri aspettano il loro turno."
+
+#: src/meridiana/tour.py:83
+msgid "The loss diagram says where every kilowatt-hour went."
+msgstr "Il diagramma delle perdite dice dove è finito ogni chilowattora."
+
+#: src/meridiana/tour.py:84
+msgid "One tab per inverter, MPPT by MPPT."
+msgstr "Una scheda per inverter, MPPT per MPPT."
+
+#: src/meridiana/tour.py:85
+msgid "Calculation details list the assumptions and the sources: every number can be checked."
+msgstr "I dettagli del calcolo elencano ipotesi e fonti: ogni numero si può controllare."
+
+#: src/meridiana/tour.py:86
+msgid "F5 computes the year; the weather comes from PVGIS when you allow it"
+msgstr "F5 calcola l'anno; il meteo arriva da PVGIS quando lo permetti"
+
+#: src/meridiana/tour.py:87
+msgid "Consumption, the other half of the balance"
+msgstr "Consumi, l'altra metà del bilancio"
+
+#: src/meridiana/tour.py:88
+msgid "A plant is only as good as the use of its energy. Enter a load profile by hand or import the measured consumption from your distributor, then compare production with demand hour by hour, before you think about storage or self-consumption."
+msgstr "Un impianto vale quanto l'uso che si fa della sua energia. Inserisci un profilo di carico a mano o importa i consumi misurati dal tuo distributore, poi confronta produzione e domanda ora per ora, prima di pensare ad accumulo o autoconsumo."
+
+#: src/meridiana/tour.py:92
+msgid "Measured data: a CSV of hourly values, aligned with the weather year."
+msgstr "Dati misurati: un CSV di valori orari, allineato all'anno meteo."
+
+#: src/meridiana/tour.py:93
+msgid "The base of the consumption separates what is always on from what varies."
+msgstr "La base dei consumi separa ciò che è sempre acceso da ciò che varia."
+
+#: src/meridiana/tour.py:94
+msgid "The chart overlays production and demand: the gap is what storage could fill."
+msgstr "Il grafico sovrappone produzione e domanda: lo scarto è quello che l'accumulo potrebbe coprire."
+
+#: src/meridiana/tour.py:95
+msgid "Compute > Import a load curve…"
+msgstr "Calcolo > Importa una curva di carico…"
+
+#: src/meridiana/tour.py:97
+msgid "Here energy becomes money. Self-consumption, what goes to the grid, how the battery cycles, costs and returns over the years: all from the hourly results of the previous phases, so a change upstream shows up here at once."
+msgstr "Qui l'energia diventa denaro. Autoconsumo, ciò che va in rete, come cicla la batteria, costi e ritorni negli anni: tutto dai risultati orari delle fasi precedenti, così una modifica a monte si vede subito qui."
+
+#: src/meridiana/tour.py:101
+msgid "Variants compare designs side by side, each with its own assumptions."
+msgstr "Le varianti confrontano i progetti fianco a fianco, ciascuno con le sue ipotesi."
+
+#: src/meridiana/tour.py:102
+msgid "Tariffs and incentives are inputs you control, never hidden defaults."
+msgstr "Tariffe e incentivi sono dati che controlli tu, mai valori nascosti."
+
+#: src/meridiana/tour.py:103
+msgid "The payback comes with its assumptions written next to it."
+msgstr "Il tempo di ritorno arriva con le sue ipotesi scritte accanto."
+
+#: src/meridiana/tour.py:104
+msgid "Compute > Variants compares the designs"
+msgstr "Calcolo > Varianti confronta i progetti"
+
+#: src/meridiana/tour.py:106
+msgid "Everything ends up in a document someone else will read. Choose the purpose and the detail of the report, check the preview and export the PDF: every number says where it comes from. For the rest of the team there are IFC for the model and an hourly CSV for independent checks."
+msgstr "Tutto finisce in un documento che leggerà qualcun altro. Scegli lo scopo e il dettaglio della relazione, controlla l'anteprima ed esporta il PDF: ogni numero dice da dove viene. Per il resto del gruppo ci sono l'IFC per il modello e un CSV orario per le verifiche indipendenti."
+
+#: src/meridiana/tour.py:110
+msgid "Complete or summary report, with the signature profile you set in Settings."
+msgstr "Relazione completa o sintetica, con il profilo di firma impostato nelle Impostazioni."
+
+#: src/meridiana/tour.py:111
+msgid "IFC keeps buildings, roofs and modules for BIM."
+msgstr "L'IFC conserva edifici, coperture e moduli per il BIM."
+
+#: src/meridiana/tour.py:112
+msgid "The CSV holds the hourly results: open it in a spreadsheet."
+msgstr "Il CSV contiene i risultati orari: aprilo in un foglio di calcolo."
+
+#: src/meridiana/tour.py:113
+msgid "File > Export"
+msgstr "File > Esporta"
+
+#: src/meridiana/tour.py:114
+msgid "Ask me anything about the plant"
+msgstr "Chiedimi quello che vuoi sull'impianto"
+
+#: src/meridiana/tour.py:115
+msgid "That is me, in my bubble. Ask about the current project, request an explanation of a result, or say «Show me the theme setting» and I take you there and point at it. Attach a datasheet and I read it for you."
+msgstr "Questo sono io, nel mio fumetto. Chiedimi del progetto aperto, fatti spiegare un risultato, oppure dimmi «Mostrami l'impostazione del tema» e ti ci porto indicandotela. Allega una scheda tecnica e la leggo io per te."
+
+#: src/meridiana/tour.py:119
+msgid "I propose, you confirm: nothing changes in the project without your yes."
+msgstr "Io propongo, tu confermi: nel progetto non cambia nulla senza il tuo sì."
+
+#: src/meridiana/tour.py:120
+msgid "I can think on this computer with a local model or in the cloud with your key; the chip above says where."
+msgstr "Posso pensare su questo computer con un modello locale o nel cloud con la tua chiave; l'etichetta qui sopra dice dove."
+
+#: src/meridiana/tour.py:122
+msgid "Drag me where you like; I keep off what you are drawing."
+msgstr "Trascinami dove preferisci; io mi tengo lontano da quello che stai disegnando."
+
+#: src/meridiana/tour.py:123
+msgid "Ctrl+L opens or closes my bubble; keys 1, 2, 3 pick a suggested question"
+msgstr "Ctrl+L apre o chiude il mio fumetto; i tasti 1, 2, 3 scelgono una domanda suggerita"
+
+#: src/meridiana/tour.py:125
+msgid "Appearance, navigation, keyboard, maps, privacy and my own settings live here. The theme follows one colour you choose, light or dark; the navigation style can mimic the CAD you know; the privacy page says what may go online, and nothing does without your leave."
+msgstr "Aspetto, navigazione, tastiera, mappe, privacy e le mie impostazioni stanno qui. Il tema segue un colore che scegli tu, chiaro o scuro; lo stile di navigazione può imitare il CAD che conosci; la pagina della privacy dice cosa può andare in rete, e niente ci va senza il tuo permesso."
+
+#: src/meridiana/tour.py:129
+msgid "Keyboard: every shortcut can be changed, and Ctrl+? lists them."
+msgstr "Tastiera: ogni scorciatoia si può cambiare, e Ctrl+? le elenca."
+
+#: src/meridiana/tour.py:130
+msgid "Privacy: geocoding, PVGIS and map tiles each have their own switch."
+msgstr "Privacy: geocodifica, PVGIS e tessere delle mappe hanno ciascuno il proprio interruttore."
+
+#: src/meridiana/tour.py:131
+msgid "You can restart this tour from Help, or simply ask me."
+msgstr "Puoi rifare questa visita da Aiuto, o semplicemente chiedermelo."
+
+#: src/meridiana/tour.py:132
+msgid "Ctrl+, opens the Settings; Alt+Left takes you back"
+msgstr "Ctrl+, apre le Impostazioni; Alt+Freccia sinistra torna indietro"
+
+#: src/meridiana/tour.py:133
+msgid "Now, let us design"
+msgstr "E ora, progettiamo"
+
+#: src/meridiana/tour.py:134
+msgid "That was the tour: thirteen stops and not one cloud. Now it is your turn. Choose the site for your new project, give it a name and draw the first roof; I stay here in my corner whenever you need a hand or a second opinion."
+msgstr "La visita è finita: tredici tappe e neanche una nuvola. Ora tocca a te. Scegli il sito del tuo nuovo progetto, dagli un nome e disegna la prima falda; io resto qui nel mio angolo, per quando ti serve una mano o un secondo parere."
+
+#: src/meridiana/tour.py:138
+msgid "Start from the address or the coordinates of the site."
+msgstr "Parti dall'indirizzo o dalle coordinate del sito."
+
+#: src/meridiana/tour.py:139
+msgid "Help > Guided tour brings me back any time."
+msgstr "Aiuto > Visita guidata mi richiama in qualunque momento."
+
+#: src/meridiana/tour.py:140
+msgid "Ctrl+N starts a new project"
+msgstr "Ctrl+N avvia un nuovo progetto"
+
+#: src/meridiana/ui/tour.py:93
+msgid "I am Meridio, the small sun of this program. In thirteen short stops I show you the phases, the tools and the settings, and what each one is for. Stop whenever you like and pick up again from Help, or by asking me. Your project stays as it is."
+msgstr "Sono Meridio, il piccolo sole di questo programma. In tredici tappe brevi ti mostro le fasi, gli strumenti e le impostazioni, e a cosa serve ciascuna cosa. Fermati quando vuoi e riprendi da Aiuto, o chiedendolo a me. Il tuo progetto resta com'è."
+
+#: src/meridiana/ui/tour.py:97
+msgid "About three minutes, at your pace."
+msgstr "Circa tre minuti, al tuo ritmo."
+
+#: src/meridiana/ui/tour.py:97
+msgid "Previous and Next move between the stops."
+msgstr "Precedente e Successivo spostano tra le tappe."
+
+#: src/meridiana/ui/tour.py:98
+msgid "Pause tour keeps your place for next time."
+msgstr "Sospendi la visita tiene il segno per la prossima volta."

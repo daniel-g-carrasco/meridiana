@@ -393,32 +393,58 @@ class Bubble(QFrame):
         c = self.owner.colours
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        body = self.body()
-        path = QPainterPath()
-        path.addRoundedRect(body, RADIUS, RADIUS)
-        if self.shape is not None:
-            t, half = assistant.TAIL, 11.0
-            tail = QPainterPath()
-            s = self.shape
-            if s.tail in ("left", "right"):
-                at = min(max(s.at, RADIUS + half), self.height() - RADIUS - half)
-                x = body.left() if s.tail == "left" else body.right()
-                tip = x - t if s.tail == "left" else x + t
-                tail.moveTo(x, at - half)
-                tail.lineTo(tip, at)
-                tail.lineTo(x, at + half)
-            else:
-                at = min(max(s.at, RADIUS + half), self.width() - RADIUS - half)
-                y = body.top() if s.tail == "top" else body.bottom()
-                tip = y - t if s.tail == "top" else y + t
-                tail.moveTo(at - half, y)
-                tail.lineTo(at, tip)
-                tail.lineTo(at + half, y)
-            tail.closeSubpath()
-            path = path.united(tail)
+        s = self.shape
         p.setPen(QPen(QColor(c["line"]), 1.0))
         p.setBrush(QColor(c["panel"]))
-        p.drawPath(path.simplified())
+        p.drawPath(outline(self.width(), self.height(), s.tail if s is not None else "", s.at if s is not None else 0))
+
+
+TAIL_HALF = 11.0                # half the tail's base, px
+
+
+def outline(width: int, height: int, tail: str, at: float) -> QPainterPath:
+    """The bubble as one closed path: the rounded card with the tail let into its side. It was the union of the
+    card and a triangle (`QPainterPath.united`), and at many heights the union kept the tail as a subpath of its
+    own, whose base the pen then stroked: a line between the tail and the card, mostly with the tail on the left
+    (R293, Daniel 30/10/2026: «la freccetta ... è separata da una linea»). `tail` is "left", "right", "top",
+    "bottom" or "" (no tail); `at` is where it points along that side, from the bubble's left or top."""
+    r, t, half = RADIUS, assistant.TAIL if tail else 0, TAIL_HALF
+    body = QRectF(0.5, 0.5, width - 1, height - 1)
+    body.adjust(t if tail == "left" else 0, t if tail == "top" else 0,
+                -t if tail == "right" else 0, -t if tail == "bottom" else 0)
+    left, top, right, bottom = body.left(), body.top(), body.right(), body.bottom()
+    if tail in ("left", "right"):
+        at = min(max(at, r + half), height - r - half)
+    elif tail:
+        at = min(max(at, r + half), width - r - half)
+    path = QPainterPath()
+    path.moveTo(left + r, top)
+    if tail == "top":
+        path.lineTo(at - half, top)
+        path.lineTo(at, top - t)
+        path.lineTo(at + half, top)
+    path.lineTo(right - r, top)
+    path.arcTo(QRectF(right - 2 * r, top, 2 * r, 2 * r), 90, -90)
+    if tail == "right":
+        path.lineTo(right, at - half)
+        path.lineTo(right + t, at)
+        path.lineTo(right, at + half)
+    path.lineTo(right, bottom - r)
+    path.arcTo(QRectF(right - 2 * r, bottom - 2 * r, 2 * r, 2 * r), 0, -90)
+    if tail == "bottom":
+        path.lineTo(at + half, bottom)
+        path.lineTo(at, bottom + t)
+        path.lineTo(at - half, bottom)
+    path.lineTo(left + r, bottom)
+    path.arcTo(QRectF(left, bottom - 2 * r, 2 * r, 2 * r), 270, -90)
+    if tail == "left":
+        path.lineTo(left, at + half)
+        path.lineTo(left - t, at)
+        path.lineTo(left, at - half)
+    path.lineTo(left, top + r)
+    path.arcTo(QRectF(left, top, 2 * r, 2 * r), 180, -90)
+    path.closeSubpath()
+    return path
 
 
 class SuggestionsBox(QWidget):

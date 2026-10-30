@@ -72,6 +72,56 @@ class SupportFlow(unittest.TestCase):
                 dialog.next.mapTo(win.assistant.bubble, dialog.next.rect().bottomRight())), item.id)
         dialog.reject()
 
+    def test_meridio_and_his_bubble_keep_off_what_each_step_points_at(self):
+        # R293: at every step neither he nor the bubble covers the spotlight, at two window sizes; the places the
+        # tour gave him are given back at the end; the step's words are laid out whole (title, text, points, key)
+        from meridiana import assistant as core
+        from meridiana.ui import motion
+        from meridiana.ui.spotlight import Spotlight
+        from meridiana.ui.tour import TOUR_BUBBLE
+        # the steps whose spotlight leaves room for both of them (File and the Checks fill most of the window)
+        clear = {"model", "views", "properties", "plant", "production", "consumption", "economics", "report", "settings"}
+        for size in ((1366, 760), (1920, 1032)):
+            with self.subTest(size=size), patch.object(motion, "reduced", return_value=True):
+                _setup.window(self, cfg=config.Config(background="none", tour_status="paused"), size=size)
+                win, a = self.win, self.win.assistant
+                a.reduced_motion = True
+                win._start_tour()
+                dialog = win.tour_dialog
+                self.assertEqual(a.bubble_dims, TOUR_BUBBLE)
+                from PySide6.QtCore import QPoint
+                for index, item in enumerate(tour.steps()):
+                    if item.id in clear:                    # dragged where he is in the way: over the phases' tabs
+                        a.move(QPoint(core.MARGIN, a.top() + core.MARGIN))
+                        a.dropped()
+                        self.app.processEvents()
+                    dialog.index = index
+                    dialog.present()
+                    self.assertTrue(wait_until(self.app, lambda d=dialog: not d.clear_timer.isActive(), 3), item.id)
+                    lights = [s for s in win.findChildren(Spotlight) if s.isVisible()]
+                    if item.id not in clear:
+                        continue
+                    self.assertTrue(lights, item.id)
+                    keep = lights[-1].geometry()
+                    self.assertIs(dialog.cleared_for, lights[-1], item.id)
+                    self.assertFalse(a.geometry().intersects(keep), (item.id, size, a.geometry(), keep))
+                    self.assertFalse(a.bubble.geometry().intersects(keep), (item.id, size, a.bubble.geometry(), keep))
+                    self.assertTrue(win.rect().contains(a.bubble.geometry()), (item.id, size))
+                    # the words whole: the points as a list, the key in evidence, nothing cut
+                    self.assertIn("<li>", dialog.description.text())
+                    self.assertIn(item.hint.replace(">", "&gt;"), dialog.description.text())
+                    self.assertGreaterEqual(dialog.description.height(),
+                                            dialog.description.heightForWidth(dialog.description.width()), item.id)
+                self.assertGreaterEqual(len(dialog.moved_tabs), 1)      # he did have to move
+                moved = dict(dialog.moved_tabs)
+                dialog.reject()
+                self.assertTrue(wait_until(self.app, lambda w=win: w.tour_dialog is None))
+                for tab, anchor in moved.items():           # the places he was dragged to, given back
+                    self.assertEqual(a.places.get(tab), anchor, tab)
+                self.assertEqual(a.bubble_dims, (self.cfg.assistant_width, self.cfg.assistant_height))
+                self.assertEqual(a.bubble_dims, (320, core.BUBBLE_DEFAULT[1]))
+                _setup.dispose(win)
+
     def test_a_tour_shows_meridio_without_turning_him_on_in_the_settings(self):
         _setup.window(self, cfg=config.Config(background="none", tour_status="paused", assistant=False))
         win = self.win
