@@ -128,5 +128,60 @@ class Trees(MeshChecks):
                 props.tree("broadleaf", **dimensions)
 
 
+class Obstacles(MeshChecks):
+    CASES = (
+        ("chimney", (0.8, 0.6, 1.2), (1.1, 0.7, 1.8)),
+        ("vent", (0.3, 0.3, 0.6), (0.45, 0.45, 0.9)),
+        ("skylight", (1.2, 0.9, 0.25), (1.8, 1.1, 0.35)),
+        ("dome_skylight", (1.2, 0.9, 0.45), (1.8, 1.1, 0.6)),
+        ("plant", (1.4, 0.8, 0.9), (2.0, 1.1, 1.4)),
+        ("antenna", (1.2, 0.5, 2.2), (1.8, 0.7, 3.0)),
+        ("dish", (0.9, 0.7, 1.1), (1.2, 0.9, 1.5)),
+        ("tank", (1.0, 1.0, 1.6), (1.4, 1.4, 2.0)),
+        ("stairwell", (2.8, 2.2, 2.4), (3.5, 2.6, 2.8)),
+        ("elevator", (2.2, 2.0, 2.6), (2.8, 2.4, 3.1)),
+        ("walkway", (3.0, 0.8, 0.25), (4.5, 1.0, 0.35)),
+        ("opening", (1.0, 0.8, 0.1), (1.5, 1.0, 0.15)),
+        ("other", (1.2, 0.9, 0.7), (1.8, 1.2, 1.0)),
+    )
+
+    def test_every_obstacle_has_the_requested_dimensions_and_a_valid_mesh(self):
+        for kind, first, second in self.CASES:
+            for width, depth, height in (first, second):
+                with self.subTest(kind=kind, width=width, depth=depth, height=height):
+                    shape = props.obstacle(kind, width=width, depth=depth, height=height)
+                    pos, _nor, _col = self.assert_mesh(shape, props.OBSTACLE_TRIANGLE_BUDGET)
+                    self.assert_bounds(pos, width, height, depth)
+
+    def test_every_obstacle_is_deterministic(self):
+        for kind, first, _second in self.CASES:
+            width, depth, height = first
+            with self.subTest(kind=kind):
+                one = props.obstacle(kind, width=width, depth=depth, height=height)
+                two = props.obstacle(kind, width=width, depth=depth, height=height)
+                for a, b in zip(one, two, strict=True):
+                    np.testing.assert_array_equal(a, b)
+
+    def test_every_obstacle_shadow_stays_inside_its_decorative_envelope(self):
+        for kind, first, _second in self.CASES:
+            width, depth, height = first
+            with self.subTest(kind=kind):
+                pos = props.obstacle(kind, width=width, depth=depth, height=height)[0]
+                shadow = props.shadow_solid(kind, width=width, depth=depth, height=height)
+                self.assert_shadow_inside(shadow, pos)
+
+    def test_obstacles_accept_theme_colours_and_rotation(self):
+        shape = props.obstacle("plant", width=2.0, depth=1.0, height=1.0,
+                               colours={"obstacle": "#708090", "metal": (0.4, 0.45, 0.5)})
+        self.assertTrue(np.any(np.all(np.isclose(shape[2], (112 / 255, 128 / 255, 144 / 255)), axis=1)))
+        turned = props.obstacle("walkway", width=3.0, depth=0.8, height=0.25, rotation=90.0)[0]
+        self.assert_bounds(turned, 0.8, 0.25, 3.0)
+
+    def test_invalid_obstacle_dimensions_are_rejected(self):
+        for dimensions in ({"width": 0.0}, {"depth": -1.0}, {"height": 0.0}):
+            with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
+                props.obstacle("plant", **dimensions)
+
+
 if __name__ == "__main__":
     unittest.main()
