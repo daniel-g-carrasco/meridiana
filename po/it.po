@@ -19163,3 +19163,393 @@ msgstr "Incolla solo le righe diagnostiche che vuoi condividere. Controlla sotto
 
 msgid "This conversation includes previously attached document text, which will be sent again."
 msgstr "Questa conversazione contiene il testo di documenti già allegati, che verrà inviato di nuovo."
+
+msgid "Start again"
+msgstr "Ricomincia"
+
+msgid "Let us start designing"
+msgstr "Iniziamo a progettare"
+
+msgid "Now it is time to start designing. Choose the site for your new project. I will stay here whenever you need a hand."
+msgstr "Ora è arrivato il momento di iniziare a progettare. Scegli il luogo del nuovo progetto. Io resto qui, quando ti serve una mano."
+
+msgid "Fit in the view toolbar"
+msgstr "Adatta nella barra della vista"
+
+msgid "Two-finger scrolling pans; pinching zooms towards the pointer. Orbit is available in 3D only."
+msgstr "Scorri con due dita per spostarti; avvicinale o allontanale per modificare lo zoom attorno al puntatore. L'orbita è disponibile solo in 3D."
+
+msgid "Open the project workspace to read its navigation settings."
+msgstr "Apri lo spazio di progetto per leggere le impostazioni di navigazione."
+
+msgid "Your navigation profile: {profile}"
+msgstr "Il tuo profilo di navigazione: {profile}"
+
+msgid "3D orbit: {orbit}; pivot: {pivot}"
+msgstr "Orbita 3D: {orbit}; centro di rotazione: {pivot}"
+
+msgid "Hi, I am {name}, Meridiana's assistant. I read your project (the checks, the results, the rules) and answer with the sources; when a figure comes from an assumption, I tell you. I change nothing by myself: I propose, you apply with a click, and Ctrl+Z undoes it. I think with the local model on this PC; with a cloud provider only if you configure it and agree. Where shall we start?"
+msgstr "Ciao, sono {name}, l'assistente di Meridiana. Leggo il tuo progetto (verifiche, risultati e regole) e rispondo indicando le fonti; quando un valore deriva da un'ipotesi, te lo dico. Non modifico nulla da solo: io propongo, tu applichi con un clic e Ctrl+Z annulla. Ragiono con il modello locale su questo PC; con un fornitore cloud solo se lo configuri e acconsenti. Da dove iniziamo?"
+
+msgid "Use an HTTPS API address without a password, query or fragment."
+msgstr "Usa un indirizzo API HTTPS senza password, parametri di ricerca o frammenti."
+
+msgid "Choose a provider."
+msgstr "Scegli un fornitore."
+
+msgid "Enter a model and an API key from your provider account."
+msgstr "Inserisci un modello e una chiave API del tuo account presso il fornitore."
+
+msgid "Read your current navigation settings"
+msgstr "Lette le tue impostazioni di navigazione"
+
+msgid "Set up a model…"
+msgstr "Configura un modello…"
+
+msgid "The provider refused the API key: check it in the model setup."
+msgstr "Il fornitore ha rifiutato la chiave API: controllala nella configurazione del modello."
+
+msgid "I have not found a local model yet. I can help you choose one on this PC or connect a cloud account."
+msgstr "Non ho ancora trovato un modello locale. Posso aiutarti a sceglierne uno per questo PC oppure a collegare un account cloud."
+
+msgid "Model configured. Send your question when you are ready."
+msgstr "Modello configurato. Invia la tua domanda quando vuoi."
+
+msgid "No API key for this provider in the system keyring. Set up a model below."
+msgstr "Nel portachiavi di sistema manca la chiave API di questo fornitore. Configura un modello qui sotto."
+
+msgid "Names and paths are replaced by aliases. Reserved projects stay on this PC."
+msgstr "Nomi e percorsi vengono sostituiti con alias. I progetti riservati rimangono su questo PC."
+
+msgid "The provider's account terms govern billing, retention and data location. Review them before sending."
+msgstr "Le condizioni del fornitore regolano costi, conservazione e ubicazione dei dati. Leggile prima di inviare."
+
+msgid "No network: the cloud provider cannot be reached. The question goes to the local model."
+msgstr "Rete non disponibile: il fornitore cloud non è raggiungibile. La domanda passa al modello locale."
+
+msgid "Send this question to {provider}?"
+msgstr "Inviare questa domanda a {provider}?"
+
+msgid "Waiting for the language model: {seconds} s. The first request may load its weights and read the instructions. You can stop at any time. Speech synthesis starts after text arrives."
+msgstr "In attesa del modello linguistico: {seconds} s. Alla prima richiesta può dover caricare i pesi e leggere le istruzioni. Puoi interrompere quando vuoi. La sintesi vocale inizia dopo l'arrivo del testo."
+
+msgid " (configure first)"
+msgstr " (da configurare)"
+
+msgid "Your questions and project summaries go to {provider}, model {model}, at {endpoint}."
+msgstr "Le tue domande e i riepiloghi del progetto vengono inviati a {provider}, modello {model}, all'indirizzo {endpoint}."
+
+msgid "The model did not answer within {seconds} seconds. Request cancelled in Meridio; try a smaller local model or check the provider connection."
+msgstr "Il modello non ha risposto entro {seconds} secondi. Richiesta annullata in Meridio; prova un modello locale più piccolo o controlla il collegamento al fornitore."
+
+msgid "The suggested Qwen and Gemma 4 weights use Apache-2.0. Download size is approximate; leave extra RAM for the project and other applications. Nothing downloads automatically."
+msgstr "I pesi Qwen e Gemma 4 suggeriti usano la licenza Apache-2.0. La dimensione del download è indicativa; lascia RAM libera per il progetto e le altre applicazioni. Nulla viene scaricato automaticamente."
+
+msgid "Read the model card and licence"
+msgstr "Leggi la scheda del modello e la licenza"
+
+msgid "I could not read the RAM. How much memory does this PC have (GB)?"
+msgstr "Non riesco a rilevare la RAM. Quanta memoria ha questo PC (GB)?"
+
+msgid "Suggest a model for this RAM"
+msgstr "Suggerisci un modello per questa RAM"
+
+msgid "Give Meridio a model"
+msgstr "Dai un modello a Meridio"
+
+msgid "I need a language model to answer you. Choose one on this PC for local work, or connect a provider account. This guide works without a model. The spoken voice is a separate setting."
+msgstr "Per risponderti mi serve un modello linguistico. Scegline uno su questo PC per lavorare in locale, oppure collega l'account di un fornitore. Questa guida funziona anche senza modello. La voce parlata si configura separatamente."
+
+msgid "Choose local or cloud"
+msgstr "Scegli locale o cloud"
+
+msgid "On this PC: private, uses RAM and disk"
+msgstr "Su questo PC: riservato, usa RAM e disco"
+
+msgid "Cloud: API account and usage charges"
+msgstr "Cloud: account API e costi a consumo"
+
+msgid "Provider"
+msgstr "Fornitore"
+
+msgid "API account and instructions"
+msgstr "Account API e istruzioni"
+
+msgid "Create an API key in your provider account, then paste it here. A chat subscription does not necessarily include API credit. Choose a model enabled for your account. Qwen endpoints depend on region and workspace: copy the address from its console."
+msgstr "Crea una chiave API nell'account del fornitore e incollala qui. L'abbonamento a una chat non include necessariamente credito API. Scegli un modello abilitato per il tuo account. Gli indirizzi Qwen dipendono da regione e spazio di lavoro: copiali dalla sua console."
+
+msgid "Model ID from your account"
+msgstr "Identificativo del modello nel tuo account"
+
+msgid "API address"
+msgstr "Indirizzo API"
+
+msgid "Stored only in the system keyring"
+msgstr "Conservata solo nel portachiavi di sistema"
+
+msgid "API key"
+msgstr "Chiave API"
+
+msgid "Save configuration"
+msgstr "Salva configurazione"
+
+msgid "Saving makes no API request. Sending a question asks for consent first."
+msgstr "Il salvataggio non effettua richieste API. Prima di inviare una domanda ti verrà chiesto il consenso."
+
+msgid "Configured. Credentials and model access are checked only when you send a question."
+msgstr "Configurato. Credenziali e accesso al modello vengono verificati solo quando invii una domanda."
+
+msgid "Enter the model ID from your provider account."
+msgstr "Inserisci l'identificativo del modello indicato nell'account del fornitore."
+
+msgid "Paste the API key from your provider account."
+msgstr "Incolla la chiave API del tuo account presso il fornitore."
+
+msgid "Configuration not saved: {why}"
+msgstr "Configurazione non salvata: {why}"
+
+msgid "{n} of {total} connected modules"
+msgstr "{n} moduli collegati su {total}"
+
+msgid ", {capacity} kWh usable · {energy} kWh supplied to loads"
+msgstr ", {capacity} kWh utilizzabili · {energy} kWh forniti ai carichi"
+
+msgid "Calculated plant: {inverters} · {modules} · {storage}"
+msgstr "Impianto calcolato: {inverters} · {modules} · {storage}"
+
+msgid "Active inverters"
+msgstr "Inverter attivi"
+
+msgid "No inverter selected."
+msgstr "Nessun inverter selezionato."
+
+msgid "Configure a local or cloud model…"
+msgstr "Configura un modello locale o cloud…"
+
+msgid "Withdraw all consent to send questions to cloud providers"
+msgstr "Revoca tutti i consensi all'invio di domande ai fornitori cloud"
+
+msgid "Download Kokoro's model (two files, about 350 MB) from its official release on GitHub ({source}) into {folder}? Licence: Apache-2.0. Nothing of yours is sent."
+msgstr "Scaricare il modello Kokoro (due file, circa 350 MB) dal rilascio ufficiale su GitHub ({source}) in {folder}? Licenza: Apache-2.0. Nessun tuo dato viene inviato."
+
+msgid "No system keyring: cloud credentials cannot be stored securely."
+msgstr "Portachiavi di sistema assente: le credenziali cloud non possono essere conservate in modo sicuro."
+
+msgid "{provider} key: {key}"
+msgstr "Chiave {provider}: {key}"
+
+msgid "Your {provider} API key (stored only in the system keyring):"
+msgstr "La tua chiave API {provider} (conservata solo nel portachiavi di sistema):"
+
+msgid "not configured"
+msgstr "non configurato"
+
+msgid "The key could not be stored: {why}"
+msgstr "Impossibile conservare la chiave: {why}"
+
+msgid "Now it is time to start designing. Choose the site for your new project."
+msgstr "Ora è arrivato il momento di iniziare a progettare. Scegli il luogo del nuovo progetto."
+
+msgid "Kokoro did not load within 60 seconds. Check the model files and Python in Settings > Assistant."
+msgstr "Kokoro non si è caricato entro 60 secondi. Controlla i file del modello e Python in Impostazioni > Assistente."
+
+msgid "I need a language model to answer you. Choose local or cloud and I will guide you. The spoken voice is a separate setting."
+msgstr "Per risponderti mi serve un modello linguistico. Scegli locale o cloud: ti guiderò io. La voce parlata si configura separatamente."
+
+msgid "Inverters sized in Plant: {what}, DC/AC {r}. All {n} modules have a valid string. Review Plant > Active inverters and Strings. Choice: {criterion}."
+msgstr "Inverter dimensionati in Impianto: {what}, CC/CA {r}. Tutti i {n} moduli hanno una stringa valida. Consulta Impianto > Inverter attivi e Stringhe. Criterio: {criterion}."
+
+msgid "Plant > Strings: {n} strings assigned; {m} modules remain unconnected. Choose the working inverter and review its inputs. Undo restores the previous wiring."
+msgstr "Impianto > Stringhe: assegnate {n} stringhe; {m} moduli restano scollegati. Scegli l’inverter di lavoro e controlla i suoi ingressi. Annulla ripristina i collegamenti precedenti."
+
+msgid "Plant > Strings: {n} strings assigned. Choose the working inverter and review its inputs. Undo restores the previous wiring."
+msgstr "Impianto > Stringhe: assegnate {n} stringhe. Scegli l’inverter di lavoro e controlla i suoi ingressi. Annulla ripristina i collegamenti precedenti."
+
+msgid "Plant > Strings: all {n} strings cleared; the modules stay laid. Use Draw or Propose to start again. Undo restores the previous wiring."
+msgstr "Impianto > Stringhe: eliminate tutte le {n} stringhe; i moduli restano posati. Usa Disegna o Proponi per ricominciare. Annulla ripristina i collegamenti precedenti."
+
+# Added by hand after the R07 tranche (30/10/2026, lot L): sizing causes, brand picker, production bar, plant summary.
+#, python-brace-format
+msgid "Production: {what} ({n} of {total})"
+msgstr "Produzione: {what} ({n} di {total})"
+
+msgid "Production stopped: the values are those of the last computation."
+msgstr "Calcolo della produzione fermato: i valori sono quelli dell'ultimo calcolo."
+
+#, python-brace-format
+msgid "Note: {notes}"
+msgstr "Nota: {notes}"
+
+#, python-brace-format
+msgid "Plant > Strings: the string was cleared; its modules stay laid. Use Draw or Propose to start again. Undo restores the previous wiring."
+msgid_plural "Plant > Strings: all {n} strings cleared; the modules stay laid. Use Draw or Propose to start again. Undo restores the previous wiring."
+msgstr[0] "Impianto > Stringhe: eliminata la stringa; i suoi moduli restano posati. Usa Disegna o Proponi per ricominciare. Annulla ripristina i collegamenti precedenti."
+msgstr[1] "Impianto > Stringhe: eliminate tutte le {n} stringhe; i moduli restano posati. Usa Disegna o Proponi per ricominciare. Annulla ripristina i collegamenti precedenti."
+
+#, python-brace-format
+msgid "{n} of {total} modules connected"
+msgstr "{n} moduli collegati su {total}"
+
+msgid "Fetch from PVGIS"
+msgstr "Scarica da PVGIS"
+
+msgid "Choose a model from your provider account."
+msgstr "Scegli un modello del tuo account presso il fornitore."
+
+#, python-brace-format
+msgid "The cloud model is not configured: {why}"
+msgstr "Il modello cloud non è configurato: {why}"
+
+msgid "Favourites"
+msgstr "Preferiti"
+
+msgid "Search…"
+msgstr "Cerca…"
+
+msgid "Add to favourites (Ctrl+D)"
+msgstr "Aggiungi ai preferiti (Ctrl+D)"
+
+msgid "Remove from favourites (Ctrl+D)"
+msgstr "Togli dai preferiti (Ctrl+D)"
+
+msgid "Search a manufacturer"
+msgstr "Cerca una marca"
+
+msgid "All manufacturers"
+msgstr "Tutte le marche"
+
+#, python-brace-format
+msgid "No model of {maker} in the catalogue has the datasheet data the sizing needs."
+msgstr "Nessun modello di {maker} nel catalogo ha i dati di scheda tecnica che servono al dimensionamento."
+
+#, python-brace-format
+msgid "Sizable instead: {brands}."
+msgstr "Si possono dimensionare invece: {brands}."
+
+#, python-brace-format
+msgid "{active} of {total} inverter with strings"
+msgid_plural "{active} of {total} inverters with strings"
+msgstr[0] "{active} di {total} inverter con stringhe"
+msgstr[1] "{active} di {total} inverter con stringhe"
+
+#, python-brace-format
+msgid "on {n} input"
+msgid_plural "on {n} inputs"
+msgstr[0] "su {n} ingresso"
+msgstr[1] "su {n} ingressi"
+
+msgid "no strings"
+msgstr "nessuna stringa"
+
+#, python-brace-format
+msgid "and {n} more"
+msgstr "e altri {n}"
+
+msgid "nominal AC power"
+msgstr "potenza CA nominale"
+
+msgid "number of MPPT"
+msgstr "numero di MPPT"
+
+msgid "MPPT minimum voltage"
+msgstr "tensione minima MPPT"
+
+msgid "MPPT maximum voltage"
+msgstr "tensione massima MPPT"
+
+msgid "FIMER took over ABB's solar inverter business on 2 March 2020"
+msgstr "FIMER ha rilevato il ramo inverter fotovoltaici di ABB il 2 marzo 2020"
+
+#, python-brace-format
+msgid "{name}: {n} model with complete data, {lo} to {hi} kW"
+msgid_plural "{name}: {n} models with complete data, {lo} to {hi} kW"
+msgstr[0] "{name}: {n} modello con dati completi, da {lo} a {hi} kW"
+msgstr[1] "{name}: {n} modelli con dati completi, da {lo} a {hi} kW"
+
+#, python-brace-format
+msgid "{field} missing in {n} record"
+msgid_plural "{field} missing in {n} records"
+msgstr[0] "{field} manca in {n} scheda"
+msgstr[1] "{field} manca in {n} schede"
+
+#, python-brace-format
+msgid "None of the {n} inverters of {maker} in the catalogue can be sized: {missing} (for example {model}). Meridiana does not invent missing datasheet values."
+msgstr "Nessuno dei {n} inverter di {maker} nel catalogo si può dimensionare: {missing} (per esempio {model}). Meridiana non inventa i dati che mancano nelle schede."
+
+msgid "These records come from the CEC list of the California Energy Commission, which gives no MPPT count and no current per input"
+msgstr "Queste schede vengono dalla lista CEC della California Energy Commission, che non dà né il numero di MPPT né la corrente per ingresso"
+
+#, python-brace-format
+msgid ", for the US market (grid {volts} V), not for a 230/400 V grid"
+msgstr ", per il mercato USA (rete {volts} V), non per una rete 230/400 V"
+
+#, python-brace-format
+msgid "no SolarEdge optimizer of the catalogue takes {module} (Pmax {p} W, Voc {voc} V, Isc {isc} A): {why}"
+msgstr "nessun ottimizzatore SolarEdge del catalogo accetta {module} (Pmax {p} W, Voc {voc} V, Isc {isc} A): {why}"
+
+#, python-brace-format
+msgid "{group}: {n} modules on one plane, a string needs at least {lo} even with {opt} ({source})"
+msgstr "{group}: {n} moduli sullo stesso piano, una stringa ne vuole almeno {lo} anche con {opt} ({source})"
+
+#, python-brace-format
+msgid "no series length of {module} fits the MPPT window {vmin} to {vmax} V within {vdc} V (cell from {cold} to {hot} °C, lowest {tmin} °C)"
+msgstr "nessun numero di {module} in serie sta nella finestra MPPT da {vmin} a {vmax} V entro {vdc} V (cella da {cold} a {hot} °C, minima {tmin} °C)"
+
+#, python-brace-format
+msgid "{group}: {n} modules, a string needs {lo} to {hi} in series (MPPT from {vmin} V, module Vmp {vmp} V at {hot} °C of cell)"
+msgstr "{group}: {n} moduli, una stringa ne vuole da {lo} a {hi} in serie (MPPT da {vmin} V, Vmp del modulo {vmp} V con la cella a {hot} °C)"
+
+#, python-brace-format
+msgid "{module}: no input takes even one string: the input current limits ({limits}) are below the module's Imp {imp} A or Isc x 1.25 = {i} A"
+msgstr "{module}: nessun ingresso prende nemmeno una stringa: i limiti di corrente degli ingressi ({limits}) sono sotto la Imp del modulo {imp} A o Isc x 1,25 = {i} A"
+
+msgid "string"
+msgstr "stringa"
+
+#, python-brace-format
+msgid "{n} combination could not be decided within {k} search steps: {which}."
+msgid_plural "{n} combinations could not be decided within {k} search steps each: {which}."
+msgstr[0] "{n} combinazione non si è potuta decidere entro {k} passi di ricerca: {which}."
+msgstr[1] "{n} combinazioni non si sono potute decidere entro {k} passi di ricerca ciascuna: {which}."
+
+msgid "Why:"
+msgstr "Perché:"
+
+#, python-brace-format
+msgid "and {n} other"
+msgid_plural "and {n} others"
+msgstr[0] "e {n} altro"
+msgstr[1] "e altri {n}"
+
+#, python-brace-format
+msgid "• and {n} more"
+msgid_plural "• and {n} more"
+msgstr[0] "• e {n} altro"
+msgstr[1] "• e altri {n}"
+
+#, python-brace-format
+msgid "Other names in the catalogue: {brands}."
+msgstr "Altri nomi nel catalogo: {brands}."
+
+msgid "No complete string proposal is possible with these inverters: some modules cannot be strung by any of them, whatever their quantity."
+msgstr "Con questi inverter non è possibile una proposta completa di stringhe: alcuni moduli non possono andare in stringa su nessuno di essi, qualunque sia la quantità."
+
+#, python-brace-format
+msgid "{n} combination ranked before this one could not be decided within the search limit: {which}"
+msgid_plural "{n} combinations ranked before this one could not be decided within the search limit: {which}"
+msgstr[0] "{n} combinazione prima di questa in classifica non si è potuta decidere entro il limite di ricerca: {which}"
+msgstr[1] "{n} combinazioni prima di questa in classifica non si sono potute decidere entro il limite di ricerca: {which}"
+
+msgid "No valid combination was found among those decided, and not every combination could be decided: this is not a proof that none exists."
+msgstr "Nessuna combinazione valida tra quelle decise, e non tutte si sono potute decidere: non è la prova che non ne esista una."
+
+#, python-brace-format
+msgid "{name}: DC power within the Synergy unit's maximum"
+msgstr "{name}: potenza CC entro il massimo dell'unità Synergy"
+
+msgid "At most one optimizer with a single module in the string"
+msgstr "Al più un ottimizzatore con un solo modulo nella stringa"
+
+#, python-brace-format
+msgid "{n} optimizers with a single module: either one, or all of them"
+msgstr "{n} ottimizzatori con un solo modulo: o uno, o tutti"
