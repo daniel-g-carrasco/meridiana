@@ -60,7 +60,7 @@ class NorthArrow(Overlay):
 
     clicked = Signal()
     CENTRE = QPointF(28, 28)        # the disc's middle
-    LETTER = 20.0                   # a clear gap between the small arrow and its letter
+    LETTER = 18.5                   # inside the disc, with a gap above the arrow's 11 px tip
 
     def __init__(self, parent):
         super().__init__(parent, mouse=True)

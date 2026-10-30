@@ -890,13 +890,13 @@ class PlanNavigation(unittest.TestCase):
         scale, rotation = plan.transform().m11(), plan.view_rotation()
         self.angle_wheel(120, 60, source=Qt.MouseEventSource.MouseEventSynthesizedBySystem)
         moved = plan.mapToScene(plan.viewport().rect().center())
-        self.assertAlmostEqual((centre - moved).x(), 60 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
-        self.assertAlmostEqual((centre - moved).y(), 30 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
+        self.assertAlmostEqual((centre - moved).x(), 120 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
+        self.assertAlmostEqual((centre - moved).y(), 60 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
         self.assertEqual((plan.transform().m11(), plan.view_rotation()), (scale, rotation))
         centre = moved
         self.angle_wheel(0, 60, source=Qt.MouseEventSource.MouseEventSynthesizedBySystem)
         moved = plan.mapToScene(plan.viewport().rect().center())
-        self.assertAlmostEqual((centre - moved).y(), 30 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
+        self.assertAlmostEqual((centre - moved).y(), 60 * plan.metres_per_pixel(), delta=plan.metres_per_pixel())
         self.native(Qt.NativeGestureType.RotateNativeGesture, 17.0)
         self.assertEqual(plan.view_rotation(), rotation)
 

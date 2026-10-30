@@ -49,6 +49,7 @@ PIVOT_DOT = 0.26
 SPHERE_RADIUS = 50.0                # Qt Quick 3D's built-in "#Sphere" is 100 units across
 KEY_POLL_MS = 100                   # how often the keyboard is asked while the cross-hair shows for a key held
 FLASH_MS = 1000                     # how long the cross-hair stays on the point a middle click recentred the view on
+TOUCH_PAN_REST_MS = 180              # end an unphased precision scroll after this pause
 
 
 @QmlElement
@@ -171,6 +172,11 @@ class Backend(QObject):
         self._flash.timeout.connect(self._flash_over)
         self._press = None                                 # (hit point or None, object name, instance) at the press
         self._depth = None
+        self._touch_depth = None
+        self._touch_rest = QTimer(self)
+        self._touch_rest.setSingleShot(True)
+        self._touch_rest.setInterval(TOUCH_PAN_REST_MS)
+        self._touch_rest.timeout.connect(self.end_touch_pan)
         self._animation = QVariantAnimation(self)
         self._animation.setDuration(camera.ANIMATION_MS)
         self._animation.setStartValue(0.0)
@@ -450,6 +456,7 @@ class Backend(QObject):
     def go(self, target: camera.Camera, animate: bool = True) -> None:
         """To another camera, in ANIMATION_MS with an ease-out, at once when the system asks for less motion."""
         self._animation.stop()
+        self.end_touch_pan()                              # a scroll going on takes its depth from the new camera
         if not animate or self.reduced_motion:
             self.camera = target
             self.cameraChanged.emit()
@@ -539,6 +546,10 @@ class Backend(QObject):
         return modifiers(mods) | ({"space"} if self.space else set())
 
     def set_space(self, held: bool) -> None:
+        if held and not self.space and not self.navigator.held:
+            # Space alone pans with no pick of its own: what an earlier wheel or click hit is elsewhere, and its
+            # depth made the pan run ahead of or behind the cursor (review B). The ground under it is used.
+            self._press = None
         self.space = held
         if not held and self.navigator.gesture and self.navigator.last is not None:
             x, y = self.navigator.last
@@ -642,18 +653,36 @@ class Backend(QObject):
 
     @Slot(float, int, float, float, bool, float, float, float)
     def wheel(self, steps, mods, x, y, hit, hx, hy, hz) -> None:
-        self._press = (self._hit(hit, hx, hy, hz), "", -1)
+        point = self._hit(hit, hx, hy, hz)
+        if point is not None:
+            # Quick 3D picks against the last rendered frame. Several wheel events may arrive before the
+            # next frame, after Python has already moved its camera. Keep the picked depth, but take the
+            # ray from the current camera and pointer or the zoom anchor drifts towards the old frame.
+            origin, direction = self.camera.ray(x, y, *self.size)
+            depth = float(np.dot(point - origin, self.camera.forward()))
+            along = float(np.dot(direction, self.camera.forward()))
+            point = origin + direction * (depth / along) if depth > 0 and along > 1e-9 else None
+        self._press = (point, "", -1)
         self._do(self.navigator.wheel(steps, modifiers(mods), x, y))
 
     def touch_pan(self, dx: float, dy: float, x: float, y: float) -> None:
         self._animation.stop()
         self.user_moved = True
         w, h = self.size
-        depth = self.camera.zoom_point(x, y, w, h)
-        self.camera.pan(dx, dy, w, h, depth)
+        # As with a mouse drag, keep the first depth for the whole gesture. Picking the ground again at
+        # each event changes the pan plane in perspective and makes a steady scroll drift and accelerate.
+        if self._touch_depth is None:
+            self._touch_depth = self.camera.zoom_point(x, y, w, h)
+        self.camera.pan(dx, dy, w, h, self._touch_depth)
+        self._touch_rest.start()
         self.cameraChanged.emit()
 
+    def end_touch_pan(self) -> None:
+        self._touch_rest.stop()
+        self._touch_depth = None
+
     def touch_zoom(self, steps: float, x: float, y: float) -> None:
+        self.end_touch_pan()
         self._animation.stop()
         self.user_moved = True
         w, h = self.size
@@ -661,6 +690,7 @@ class Backend(QObject):
         self.cameraChanged.emit()
 
     def touch_orbit(self, dx: float, dy: float = 0.0) -> None:
+        self.end_touch_pan()
         self._animation.stop()
         self.user_moved = True
         self.camera.orbit(dx, dy, self.camera.target, self.orbit_mode)
@@ -686,6 +716,7 @@ class Backend(QObject):
         sx, sy = self.navigator.start or (None, None)
         for a in actions:
             if a.kind in ("orbit", "pan", "zoom", "wheel", "recentre"):
+                self.end_touch_pan()
                 self._animation.stop()
                 self.user_moved = True
                 if a.kind != "orbit":
@@ -895,6 +926,10 @@ class View3D(QuickImage):
                 self.backend.touch_zoom(float(np.log(max(0.05, 1.0 + event.value())) /
                                               np.log(1.0 / camera.ZOOM_STEP)),
                                         at.x(), at.y())
+            elif kind == Qt.NativeGestureType.PanNativeGesture:
+                self.backend.touch_pan(event.delta().x(), event.delta().y(), at.x(), at.y())
+            elif kind in (Qt.NativeGestureType.BeginNativeGesture, Qt.NativeGestureType.EndNativeGesture):
+                self.backend.end_touch_pan()
             elif kind not in (Qt.NativeGestureType.BeginNativeGesture, Qt.NativeGestureType.EndNativeGesture,
                               Qt.NativeGestureType.RotateNativeGesture):
                 return super().event(event)
@@ -911,15 +946,20 @@ class View3D(QuickImage):
         action, dx, dy = navigation.wheel_action(
             (angle.x(), angle.y()), (pixel.x(), pixel.y()), event.phase() != Qt.ScrollPhase.NoScrollPhase,
             event.source() in (Qt.MouseEventSource.MouseEventSynthesizedBySystem,
-                               Qt.MouseEventSource.MouseEventSynthesizedByQt), ctrl)
+                               Qt.MouseEventSource.MouseEventSynthesizedByQt), ctrl,
+            touchpad=event.pointingDevice().type() == event.pointingDevice().DeviceType.TouchPad)
         if action == "wheel":
             super().wheelEvent(event)
             return
         at = event.position()
+        if event.phase() == Qt.ScrollPhase.ScrollBegin:
+            self.backend.end_touch_pan()
         if action == "zoom":
             self.backend.touch_zoom(dy, at.x(), at.y())
         else:
             self.backend.touch_pan(dx, dy, at.x(), at.y())
+        if event.phase() == Qt.ScrollPhase.ScrollEnd:
+            self.backend.end_touch_pan()
         event.accept()
 
     def resizeEvent(self, event) -> None:

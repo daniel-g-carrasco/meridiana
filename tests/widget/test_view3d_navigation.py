@@ -101,6 +101,20 @@ class Navigation(unittest.TestCase):
         b.move(0, 380, 300)
         self.assertTrue(np.allclose(b.camera.target, target))
 
+    def test_space_pan_does_not_take_the_depth_of_an_earlier_wheel_or_click(self):
+        """R190 with R242 (review B, 30/10/2026): Space alone has no pick of its own. A wheel or a click made
+        earlier elsewhere left its point behind, and the pan followed that depth instead of the cursor."""
+        b = self.backend
+        w, h = b.size
+        far = b.camera.zoom_point(50, 50, w, h)
+        b.wheel(0.0, 0, 50, 50, True, *far)                 # a wheel far from where Space will pan, no zoom
+        b.move(0, 600, 450)
+        b.set_space(True)
+        point = b.camera.zoom_point(600, 450, w, h)
+        b.move(0, 640, 450)
+        self.assertTrue(np.allclose(b.camera.project(point, w, h), (640, 450), atol=1e-6))
+        b.set_space(False)
+
     # the pivot's cross-hair (task 16g, study 16 G): three rings and a dot on the pivot, PIVOT_PX pixels wide
 
     def marker(self):

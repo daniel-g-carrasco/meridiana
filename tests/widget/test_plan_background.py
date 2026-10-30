@@ -102,7 +102,17 @@ class Fallback(unittest.TestCase):
             self.assertTrue(view.fallback_strip.isVisibleTo(view))
             self.assertIn("Geoportale Nazionale", view.fallback_strip.message.text())
             self.assertEqual(view.choice, "auto")
-            pcn_asks = len([p for p in self.server.asked if p.startswith("/pcn/")])
+
+            def asked():
+                return len([p for p in self.server.asked if p.startswith("/pcn/")])
+            # the requests sent before the source rested may still be reaching the test server: count once they
+            # stop coming (under load, 36 counted and 40 arrived, 30/10/2026); none may come after this point
+            settled, before = 0, asked()
+            while settled < 3:
+                _setup.turn_events(self.app, 10)
+                now = asked()
+                settled, before = (settled + 1, now) if now == before else (0, now)
+            pcn_asks = asked()
             view._update_tiles()
             view._update_tiles()
             self.app.processEvents()

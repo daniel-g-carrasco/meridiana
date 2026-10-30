@@ -307,23 +307,22 @@ class Navigator:
 
 
 def wheel_action(angle: tuple[float, float], pixel: tuple[float, float], phased: bool, synthesized: bool,
-                 ctrl: bool) -> tuple[str, float, float]:
+                 ctrl: bool, *, touchpad: bool = False) -> tuple[str, float, float]:
     """One wheel event as (action, dx, dy): touchpads pan on both axes, Ctrl pinches, a mouse wheel zooms.
 
     Windows precision touchpads send angle deltas, often without phases. Wayland sends pixel deltas in
-    scroll phases. A horizontal angle delta is a pan on either system; a plain vertical, unphased event
-    from a real device remains the mouse's wheel. For zoom, dy is wheel steps; for pan, both are pixels.
+    scroll phases. Device identity and pixel-only events also identify a touchpad when phases are absent.
+    Pixel deltas already express the requested movement: never replace them with the coarse angle fallback.
+    A plain vertical event from a real mouse remains its wheel. For zoom, dy is steps; for pan, both are
+    logical pixels. The angle-only fallback is one logical pixel per unit, twice the old half-angle speed.
+    A phased scroll always moves by its pixels, zero included: Qt's Wayland client rounds them and carries
+    the remainder to the next event, while its angle is twelve times the unrounded movement (review B).
     """
     if ctrl:
         steps = angle[1] / 120.0 if angle[1] else pixel[1] / 60.0
         return "zoom", 0.0, steps
-    if phased or synthesized or angle[0]:
-        if phased and pixel != (0.0, 0.0):
-            dx, dy = pixel
-        elif angle != (0.0, 0.0):
-            dx, dy = angle[0] / 2.0, angle[1] / 2.0
-        else:
-            dx, dy = pixel
+    if touchpad or phased or synthesized or angle[0] or (pixel != (0.0, 0.0) and angle == (0.0, 0.0)):
+        dx, dy = pixel if phased or pixel != (0.0, 0.0) else angle
         return "pan", dx, dy
     steps = angle[1] / 120.0 if angle[1] else pixel[1] / 60.0
     return "wheel", 0.0, steps

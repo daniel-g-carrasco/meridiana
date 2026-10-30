@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QDate, QEvent, QModelIndex, QRectF, QSize, Qt
 from PySide6.QtGui import QBrush, QColor, QPalette, QPen, QTextCharFormat
-from PySide6.QtWidgets import QAbstractItemView, QCalendarWidget, QToolButton, QWidget
+from PySide6.QtWidgets import QAbstractItemView, QCalendarWidget, QSpinBox, QToolButton, QWidget
 
 from .. import theme_colors
 from . import icons
@@ -27,9 +27,19 @@ class DayPicker(QCalendarWidget):
         self.setGridVisible(False)
         self._hovered = QModelIndex()
         self.day_view = self.findChild(QAbstractItemView, "qt_calendar_calendarview")
+        self.day_viewport = self.day_view.viewport() if self.day_view is not None else None
         if self.day_view is not None:
             self.day_view.setMouseTracking(True)
             self.day_view.viewport().installEventFilter(self)
+        month = self.findChild(QToolButton, "qt_calendar_monthbutton")
+        if month is not None and month.menu() is not None:
+            menu = month.menu()
+            menu.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+            menu.setWindowFlag(Qt.WindowType.FramelessWindowHint, True)
+            menu.setStyleSheet(f"QMenu {{ border: 1px solid palette(mid); "
+                              f"border-radius: {Radius.CARD}px; padding: {Space.XS}px; }}")
+        self.setStyleSheet(f"QCalendarWidget#day-picker {{ border: 1px solid palette(mid); "
+                          f"border-radius: {Radius.CARD}px; }}")
         for name, icon in (("qt_calendar_prevmonth", "chevron-left"), ("qt_calendar_nextmonth", "chevron-right")):
             button = self.findChild(QToolButton, name)
             if button is not None:
@@ -43,6 +53,15 @@ class DayPicker(QCalendarWidget):
         if bar is not None and bar.layout() is not None:
             bar.layout().setContentsMargins(Space.XS, NAV_TOP, Space.XS, Space.XXS)
         self.restyle()
+
+    def event(self, event) -> bool:
+        if event.type() == QEvent.Type.ParentChange:
+            popup = self.window()
+            if popup is not self and popup.windowType() == Qt.WindowType.Popup:
+                popup.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+                popup.setWindowFlag(Qt.WindowType.FramelessWindowHint, True)
+                popup.setStyleSheet("QWidget#qt_datetimedit_calendar { background: transparent; border: none; }")
+        return super().event(event)
 
     def restyle(self) -> None:
         """The names of the days in the muted colour on the card's ground, the weekend as the other days (the days
@@ -60,12 +79,22 @@ class DayPicker(QCalendarWidget):
                      for d in range(1, 8))
         cell = max(widest, m.horizontalAdvance("30")) + 2 * Space.M
         bar = self.findChild(QWidget, "qt_calendar_navigationbar")
+        # Qt replaces the short year button by a spin box without relaying out the bar. The themed field
+        # is taller (including its focus border), so reserve its whole slot before Qt swaps them.
+        edit = self.findChild(QSpinBox, "qt_calendar_yearedit")
+        year = self.findChild(QToolButton, "qt_calendar_yearbutton")
+        if edit is not None and year is not None:
+            edit.ensurePolished()
+            height = max(Size.CONTROL, edit.sizeHint().height())
+            year.setMinimumSize(max(year.minimumSizeHint().width(), edit.sizeHint().width()), height)
+            if bar is not None:
+                bar.setMinimumHeight(NAV_TOP + height + Space.XXS)
         header = NAV_TOP + max(Size.CHIP, bar.sizeHint().height() if bar is not None else 0) + Space.XXS
         self.setMinimumSize(QSize(7 * cell + 2 * Space.XS, header + Space.XS + 7 * Size.CHIP + 2 * Space.XS))
 
     def changeEvent(self, event) -> None:
         super().changeEvent(event)
-        if event.type() in (event.Type.PaletteChange, event.Type.StyleChange):
+        if event.type() in (event.Type.PaletteChange, event.Type.StyleChange, event.Type.FontChange):
             self.restyle()
 
     def paintCell(self, painter, rect, day: QDate) -> None:
@@ -99,7 +128,7 @@ class DayPicker(QCalendarWidget):
 
     def eventFilter(self, watched, event) -> bool:
         view = getattr(self, "day_view", None)
-        if view is not None and watched is view.viewport():
+        if view is not None and watched is getattr(self, "day_viewport", None):
             kind = event.type()
             if kind in (QEvent.Type.MouseMove, QEvent.Type.Leave):
                 index = view.indexAt(event.position().toPoint()) if kind == QEvent.Type.MouseMove else QModelIndex()

@@ -1918,11 +1918,12 @@ class PlanView(QGraphicsView):
         action, dx, dy = navigation.wheel_action(
             (angle.x(), angle.y()), (pixel.x(), pixel.y()), event.phase() != Qt.ScrollPhase.NoScrollPhase,
             event.source() in (Qt.MouseEventSource.MouseEventSynthesizedBySystem,
-                               Qt.MouseEventSource.MouseEventSynthesizedByQt), _ctrl(event.modifiers()))
+                               Qt.MouseEventSource.MouseEventSynthesizedByQt), _ctrl(event.modifiers()),
+            touchpad=event.pointingDevice().type() == event.pointingDevice().DeviceType.TouchPad)
         if action == "pan":
             self.translate_view(dx, dy)
         else:
-            self.zoom_at(1.2 ** dy, event.position().toPoint())
+            self.zoom_at(1.2 ** dy, event.position())
             self._update_cursor(event.position().toPoint())
         event.accept()
 
@@ -1982,9 +1983,12 @@ class PlanView(QGraphicsView):
         """Zoom by `factor` keeping the point under `view_pos` where it is."""
         current = math.hypot(self.transform().m11(), self.transform().m21())
         factor = max(self._minimum_scale() / current, min(factor, 400.0 / current))
-        before = self.mapToScene(view_pos)
+        # Pointer positions are logical, including their subpixel part at fractional screen scales.
+        # mapToScene(QPoint) rounds that part away, unlike the viewport transform used for drawing.
+        position = QPointF(view_pos)
+        before = self.viewportTransform().inverted()[0].map(position)
         self.scale(factor, factor)
-        after = self.mapToScene(view_pos)
+        after = self.viewportTransform().inverted()[0].map(position)
         delta = after - before
         self.translate(delta.x(), delta.y())
         self.user_moved = True
@@ -2309,7 +2313,9 @@ class PlanView(QGraphicsView):
         if event.type() == QEvent.Type.NativeGesture:
             kind = event.gestureType()
             if kind == Qt.NativeGestureType.ZoomNativeGesture:
-                self.zoom_at(max(0.05, 1.0 + event.value()), event.position().toPoint())
+                self.zoom_at(max(0.05, 1.0 + event.value()), event.position())
+            elif kind == Qt.NativeGestureType.PanNativeGesture:
+                self.translate_view(event.delta().x(), event.delta().y())
             elif kind in (Qt.NativeGestureType.BeginNativeGesture, Qt.NativeGestureType.EndNativeGesture,
                           Qt.NativeGestureType.RotateNativeGesture):
                 pass
