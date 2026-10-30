@@ -1,6 +1,8 @@
-"""Starting the window: the Qt application, the settings, the main window, a project given on the
-command line or the last one opened. With MERIDIANA_SCREENSHOT set, the window writes a PNG of itself
-after MERIDIANA_SCREENSHOT_DELAY seconds and closes (for the tests and the CI)."""
+"""Starting the window: the Qt application, the settings, the main window and its first page: a copy to
+recover, the project given on the command line, File > New the first time, File > Open afterwards. With
+MERIDIANA_SCREENSHOT set, the window writes a PNG of itself after MERIDIANA_SCREENSHOT_DELAY seconds and closes
+(for the tests and the CI). When a Meridiana is already running, a start hands it its project and ends
+(single_instance.py; never a run for a photograph, see instance_channel)."""
 
 from __future__ import annotations
 
@@ -45,7 +47,48 @@ def windows_identity(app_id: str) -> int:
     return handle or 0
 
 
+def explicit_project(arguments: list[str]) -> Path | None:
+    """The project given on the command line, from the arguments Qt left (QApplication.arguments(): its own
+    options and their values, -platform offscreen or -style Fusion, are taken out); the program's name first."""
+    given = [a for a in arguments[1:] if not a.startswith("-")]
+    return Path(given[0]) if given else None
+
+
+def instance_channel(environ=os.environ) -> str | None:
+    """The channel of the single instance (single_instance.py), or None for none. MERIDIANA_INSTANCE names another
+    channel, or «off»; a run for a photograph (MERIDIANA_SCREENSHOT: the tests, the CI, the scripts of the
+    pictures) has none unless it names one, so that it never hands its project to the window the person has open
+    (Quotario's rule)."""
+    from . import APP_ID, ENV_PREFIX
+    from .single_instance import channel_name
+
+    chosen = environ.get(f"{ENV_PREFIX}_INSTANCE", "")
+    if chosen:
+        return None if chosen == "off" else chosen
+    if environ.get(f"{ENV_PREFIX}_SCREENSHOT"):
+        return None
+    return channel_name(APP_ID, environ=environ)
+
+
+def prepare_workspace(win, explicit: Path | None) -> bool:
+    """Recovery and an explicitly opened document precede onboarding; never reopen the last file implicitly. With
+    a project asked for by name only its own copy is offered (the copies of other projects wait for a start
+    without one): «Yes» on another project's copy left the project asked for unopened, without a word."""
+    if win.offer_recovery(explicit):
+        return False
+    if explicit is not None:
+        if win.open_path(explicit) is False:
+            win.open_file_page("open")
+        return False
+    first = win.cfg.tour_status == "new"
+    win.open_file_page("new" if first else "open")
+    return first
+
+
 def main(argv: list[str]) -> int:
+    if "--kokoro-worker" in argv:
+        from .assistant.kokoro_worker import main as voice_worker
+        return voice_worker(argv[argv.index("--kokoro-worker") + 1:])
     from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QApplication
 
@@ -68,6 +111,23 @@ def main(argv: list[str]) -> int:
     paths = Paths.from_env()
     log.setup(paths.log_file)
     log.install_excepthook()             # the window takes over the telling once it exists
+    # one window for every start: a Meridiana already running takes the project and comes to the front
+    from . import recovery, single_instance
+    explicit = explicit_project(app.arguments())
+    channel = instance_channel()
+    given = [str(explicit.expanduser().resolve())] if explicit is not None else []
+    if channel and single_instance.hand_over(channel, given, os.environ.get("XDG_ACTIVATION_TOKEN", "")):
+        return 0
+    handed: list = []                    # what a later start hands over before the window can take it
+    receiver = None
+    if channel:                          # listened to before the window exists: a start meanwhile waits for it
+        receiver = single_instance.Receiver(channel, app)
+        receiver.listen()
+        receiver.received.connect(lambda files, token: handed.append((files, token)))
+    try:                                 # the recovery copies of this start are its own while it runs
+        recovery.claim(paths.state)
+    except OSError as error:
+        log.complain("claim the recovery copies", error)
     cfg = config.load(paths.config_file)
     # the size of the text before any widget or font is made (R133)
     from .ui import design
@@ -84,13 +144,15 @@ def main(argv: list[str]) -> int:
     from .ui.window import MainWindow
     win = MainWindow(paths, cfg)
     log.tell_with(win.tell_error)
-    given = [a for a in argv[1:] if not a.startswith("-")]
-    target = Path(given[0]) if given else (Path(cfg.last_project) if cfg.last_project else None)
-    # a copy left by a session that stopped without saving comes first: opening the file would drop it
-    if not win.offer_recovery() and target and target.exists():
-        win.open_path(target)
+    show_tour = prepare_workspace(win, explicit)
     win.show()
-    QTimer.singleShot(1200, win, win._offer_tour)
+    if receiver is not None:             # from now on straight to the window; what came meanwhile, in order
+        receiver.received.disconnect()
+        receiver.received.connect(win.open_handed_over)
+        for files, token in handed:
+            win.open_handed_over(files, token)
+    if show_tour and not handed:         # a project handed over meanwhile is the work in hand, not the tour
+        QTimer.singleShot(1200, win, win._offer_tour)
 
     shot = os.environ.get(f"{ENV_PREFIX}_SCREENSHOT")
     if shot:
@@ -100,7 +162,9 @@ def main(argv: list[str]) -> int:
             win.grab().save(shot)
             app.quit()
         QTimer.singleShot(int(delay * 1000), take)
-    return app.exec()
+    code = app.exec()
+    recovery.release(paths.state)
+    return code
 
 
 if __name__ == "__main__":

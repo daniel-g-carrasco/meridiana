@@ -28,6 +28,7 @@ def steps() -> tuple[Step, ...]:
         Step("report", _("Reports and exchange"), _("Choose the report purpose and detail, inspect the preview, then export. IFC preserves model information; the hourly CSV supports independent checking."), ("phase", "report")),
         Step("assistant", _("Ask Meridio"), _("Ask about the current project, request an explanation or say Show me to reach a setting. Attach a datasheet for review; proposed changes still need your confirmation."), ("assistant",)),
         Step("settings", _("Make the workspace yours"), _("Settings collect appearance, navigation, keyboard, maps, privacy and Meridio. You can restart this tour from Help or by asking Meridio."), ("settings", "appearance")),
+        Step("start", _("Let us start designing"), _("Now it is time to start designing. Choose the site for your new project. I will stay here whenever you need a hand."), ("new",)),
     )
 
 
@@ -39,4 +40,6 @@ def local_command(text: str) -> str:
         return "tour"
     if re.fullmatch(r"(?:segnala|segnalare) (?:un |il )?(?:bug|problema|errore)|(?:report|submit) (?:a )?(?:bug|issue)", text):
         return "bug"
+    if re.fullmatch(r"(?:come (?:si naviga|navigo|mi muovo)(?: (?:nel modello|in 2d|in 3d))?|(?:mostra|spiega) (?:i )?(?:comandi di navigazione|gesti del touchpad)|(?:show|explain) navigation controls)", text):
+        return "navigation"
     return ""

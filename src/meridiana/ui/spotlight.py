@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from PySide6.QtCore import QEvent, QRectF, Qt, QVariantAnimation
+from PySide6.QtCore import QEvent, QRect, QRectF, Qt, QVariantAnimation
 from PySide6.QtGui import QColor, QPainter, QPalette, QPen
 from PySide6.QtWidgets import QScrollArea, QWidget
 
@@ -52,13 +52,17 @@ class Spotlight(QWidget):
     def _place(self) -> None:
         rect = self.region() if self.region is not None else self.target.rect()
         origin = self.target.mapTo(self.parentWidget(), rect.topLeft())
-        self.setGeometry(origin.x() - MARGIN, origin.y() - MARGIN,
-                         rect.width() + 2 * MARGIN, rect.height() + 2 * MARGIN)
+        wanted = QRect(origin.x() - MARGIN, origin.y() - MARGIN,
+                       rect.width() + 2 * MARGIN, rect.height() + 2 * MARGIN)
+        visible = wanted.intersected(self.parentWidget().rect())
+        self.setGeometry(visible)
+        self.target_rect = QRectF(origin.x() - visible.x(), origin.y() - visible.y(), rect.width(), rect.height())
 
     def ring_rect(self) -> QRectF:
         pulse = 0.0 if self.still else 1.5 * math.sin(self.progress * math.pi * 2) ** 2
-        inset = MARGIN - 3 - pulse
-        return QRectF(self.rect()).adjusted(inset, inset, -inset, -inset)
+        growth = 3 + pulse
+        ring = self.target_rect.adjusted(-growth, -growth, growth, growth)
+        return ring.intersected(QRectF(self.rect()).adjusted(1.5, 1.5, -1.5, -1.5))
 
     def _advance(self, value) -> None:
         self.progress = float(value)

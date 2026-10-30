@@ -36,6 +36,52 @@ class Spotlight(unittest.TestCase):
         self.app.processEvents()
         return window, edit, scroll, control
 
+    def test_ring_and_pen_stay_inside_window_for_phase_tabs_at_top_edge(self):
+        from PySide6.QtCore import QRectF
+        from PySide6.QtWidgets import QWidget, QPushButton
+        from meridiana.ui import spotlight
+        window=QWidget();window.resize(500,300)
+        self.addCleanup(_setup.dispose,window)
+        target=QPushButton("Phase",window);target.setGeometry(0,0,120,30)
+        window.show();self.app.processEvents()
+        shown=spotlight.reveal(target)
+        self.assertTrue(window.rect().contains(shown.geometry()))
+        for instant in (0,375,750,1125):
+            shown.animation.setCurrentTime(instant)
+            self.assertTrue(QRectF(shown.rect()).contains(shown.ring_rect().adjusted(-1,-1,1,1)))
+
+    def test_ring_hugs_the_target_at_all_four_window_edges(self):
+        # R265: the ring is clipped by the window only on the side that touches it; the other sides keep the gap
+        from PySide6.QtCore import QRectF
+        from PySide6.QtWidgets import QPushButton, QWidget
+        from meridiana.ui import spotlight
+        window = QWidget()
+        window.resize(500, 300)
+        self.addCleanup(_setup.dispose, window)
+        target = QPushButton("Edge", window)
+        window.show()
+        self.app.processEvents()
+        for x, y in ((0, 0), (380, 0), (0, 270), (380, 270), (190, 135)):
+            target.setGeometry(x, y, 120, 30)
+            shown = spotlight.reveal(target)
+            self.assertTrue(window.rect().contains(shown.geometry()), (x, y))
+            for instant in (0, 375, 750, 1125):
+                shown.animation.setCurrentTime(instant)
+                ring = shown.ring_rect().translated(shown.x(), shown.y())
+                self.assertTrue(QRectF(window.rect()).adjusted(1, 1, -1, -1).contains(ring), (x, y, instant))
+                around = QRectF(target.geometry())
+                # every side away from the window's edge surrounds the target, never cuts through it
+                if x > 0:
+                    self.assertLess(ring.left(), around.left())
+                if y > 0:
+                    self.assertLess(ring.top(), around.top())
+                if x + 120 < 500:
+                    self.assertGreater(ring.right(), around.right())
+                if y + 30 < 300:
+                    self.assertGreater(ring.bottom(), around.bottom())
+            shown.finish()
+            self.app.processEvents()
+
     def test_reveal_scrolls_to_the_control_without_changing_value_or_focus(self):
         from PySide6.QtCore import Qt
         from meridiana.ui import spotlight

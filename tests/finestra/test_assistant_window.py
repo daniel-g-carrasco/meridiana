@@ -181,6 +181,13 @@ class InTheWindow(unittest.TestCase):
         self.assertLess(a.panel.height(), QUESTIONS_HEIGHT)
         self.assertFalse(a.questions_box.isVisibleTo(a.panel))
         self.assertTrue(a.field.isVisibleTo(a.panel) and a.conversation.isVisibleTo(a.panel))
+        # a card there (the guide «Give Meridio a model»: no model answers here) scrolls in the low panel instead of
+        # keeping it tall (R07, review H): it is there, shorter than itself, and the field stays under it
+        cards = a.cards_area
+        self.assertTrue(cards.isVisibleTo(a.panel))
+        self.assertLess(cards.height(), a.cards.height())
+        self.assertGreater(cards.verticalScrollBar().maximum(), 0)
+        self.assertLessEqual(cards.geometry().bottom(), a.field.geometry().top())
         # the choice to dock him is remembered; an old layout does not bring an empty panel back
         win.resize(1200, 800)
         win._save_window()

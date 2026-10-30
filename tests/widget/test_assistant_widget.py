@@ -234,6 +234,72 @@ class Alone(unittest.TestCase):
         a.set_bubble_size(100, 100)                                                 # never under the minimum
         self.assertEqual((a.bubble.width(), a.bubble.height()), assistant.BUBBLE_MIN)
 
+    def test_in_all_four_corners_the_grip_resizes_and_the_corner_by_him_stays_after_release(self):
+        """R258: Meridio brought to each corner of the area; the grip is on the bubble's free corner, drawn and
+        dragged mirrored, and the corner beside him has not moved once the button is let go."""
+        from PySide6.QtCore import QEvent, QPointF, Qt
+        from PySide6.QtGui import QMouseEvent
+        a = self.a
+
+        def mouse(kind, grip, at, buttons):
+            self.app.sendEvent(grip, QMouseEvent(kind, grip.mapFromGlobal(at), at, Qt.MouseButton.LeftButton,
+                                                 buttons, Qt.KeyboardModifier.NoModifier))
+        first = a.bubble_dims
+        for h, v in (("left", "top"), ("right", "top"), ("left", "bottom"), ("right", "bottom")):
+            a.close_panel()
+            a.places[a.tab] = (h, v, 12, 12)
+            a.reposition()
+            a.open_panel()
+            self.app.processEvents()
+            g = a.bubble.grip
+            corner = g.corner
+            self.assertEqual(corner, ("top" if v == "bottom" else "bottom") + "-" + ("left" if h == "right" else "right"),
+                             (h, v))
+            self.assertTrue(self.area.rect().contains(a.bubble.geometry()), (h, v))
+            before = a.bubble.geometry()
+            start = QPointF(g.mapToGlobal(g.rect().center()))
+            end = start + QPointF(-30 if corner.endswith("left") else 30, -25 if corner.startswith("top") else 25)
+            mouse(QEvent.Type.MouseButtonPress, g, start, Qt.MouseButton.LeftButton)
+            mouse(QEvent.Type.MouseMove, g, end, Qt.MouseButton.LeftButton)
+            self.app.processEvents()
+            mouse(QEvent.Type.MouseButtonRelease, g, end, Qt.MouseButton.NoButton)
+            self.app.processEvents()
+            after = a.bubble.geometry()
+            self.assertEqual((after.width(), after.height()), (before.width() + 30, before.height() + 25), (h, v))
+            fixed = (after.right() if corner.endswith("left") else after.left(),
+                     after.bottom() if corner.startswith("top") else after.top())
+            self.assertEqual(fixed, (before.right() if corner.endswith("left") else before.left(),
+                                     before.bottom() if corner.startswith("top") else before.top()), (h, v))
+            self.assertFalse(after.intersects(a.geometry()), (h, v))
+            a.set_bubble_size(*first)
+
+    def test_a_card_arriving_in_an_open_bubble_makes_room_instead_of_overlapping(self):
+        """After the guided tour the model's setup card came into a bubble already fitted: the bubble kept its
+        height and the card, the suggestions and the attach button were drawn over each other."""
+        from PySide6.QtWidgets import QLabel
+        a = self.a
+        a.open_panel()
+        self.app.processEvents()
+        a.set_bubble_size(a.bubble.width(), assistant.BUBBLE_MIN[1])
+        self.app.processEvents()
+        from PySide6.QtWidgets import QFrame, QPushButton, QVBoxLayout
+        card = QFrame()                                     # as the setup card: words, a choice, a button
+        rows = QVBoxLayout(card)
+        for n in range(6):
+            rows.addWidget(QLabel(f"A line of the card that needs room, number {n + 1}"))
+        rows.addWidget(QPushButton("Not now"))
+        a.add_card(card)
+        self.app.processEvents()
+        self.app.processEvents()
+        margins = a.bubble.box.contentsMargins()
+        self.assertGreaterEqual(a.bubble.height(),
+                                a.panel.minimumSizeHint().height() + margins.top() + margins.bottom())
+        layout = a.chat_content.layout()
+        shown = [layout.itemAt(i).widget() for i in range(layout.count())]
+        shown = [w for w in shown if w is not None and w.isVisibleTo(a.panel)]
+        for upper, lower in zip(shown, shown[1:], strict=False):
+            self.assertLess(upper.geometry().bottom(), lower.geometry().top(), (upper, lower))
+
     def test_esc_in_the_field_closes_it(self):
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
@@ -444,20 +510,19 @@ class Alone(unittest.TestCase):
             bottom = question.label.mapTo(a.questions_box, QPoint(0, question.label.height())).y()
             self.assertLessEqual(bottom, a.questions_box.height())
         last = a.questions[-1].mapTo(a.panel, QPoint(0, a.questions[-1].height())).y()
-        self.assertLessEqual(last, a.field.y())
+        self.assertLessEqual(last, a.field.mapTo(a.panel, QPoint(0, 0)).y())
         self.app.processEvents()
         QTest.mouseMove(a.questions[0])
         self.assertTrue(a.questions[0].underMouse())
         a.set_state(assistant.THINKING)
         self.assertFalse(a.questions_wanted())
 
-    def test_the_name_is_on_the_side_opposite_the_resize_grip(self):
+    def test_the_name_stays_centred_above_the_controls(self):
         from PySide6.QtCore import Qt
         a = self.a
         a.open_panel()
         self.app.processEvents()
-        expected = Qt.AlignmentFlag.AlignRight if a.bubble.shape.grip.endswith("left") else Qt.AlignmentFlag.AlignLeft
-        self.assertEqual(a.title.alignment() & (Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignRight), expected)
+        self.assertTrue(a.title.alignment() & Qt.AlignmentFlag.AlignHCenter)
 
 
 if __name__ == "__main__":

@@ -21,11 +21,50 @@ class Presentation(unittest.TestCase):
         self.a.open_panel()
         self.app.processEvents()
 
+    def test_header_and_resize_handle_match_all_four_bubble_corners(self):
+        from PySide6.QtCore import Qt
+        from meridiana import assistant
+        for tail, at, corner in (("left",300,"top-right"),("right",300,"top-left"),
+                                 ("left",30,"bottom-right"),("right",30,"bottom-left")):
+            self.a.bubble.set_shape(assistant.Bubble(50,50,400,400,tail,at))
+            self.app.processEvents()
+            self.assertTrue(self.a.title.alignment() & Qt.AlignmentFlag.AlignHCenter)
+            self.assertEqual(self.a.bubble.grip.corner,corner)
+            self.assertTrue(self.a.bubble.rect().contains(self.a.bubble.grip.geometry()))
+            self.assertLess(abs(self.a.title.geometry().center().x()-self.a.head.width()/2),3)
+
     def test_every_phase_has_a_human_readable_name(self):
         self.a.set_tab('plant')
         self.assertIn('Plant', self.a.context.text())
         self.a.set_tab('report')
         self.assertIn('Report', self.a.context.text())
+
+    def test_grip_drag_keeps_opposite_corner_fixed(self):
+        from PySide6.QtCore import QEvent, QPointF, Qt
+        from PySide6.QtGui import QMouseEvent
+        from meridiana import assistant
+        for tail, at in (("left", 500), ("right", 500), ("left", 30), ("right", 30)):
+            bubble = self.a.bubble
+            bubble.set_shape(assistant.Bubble(50, 50, 500, 600, tail, at))
+            self.app.processEvents()
+            grip = bubble.grip
+            corner = grip.corner
+            before = bubble.geometry()
+            point = QPointF(grip.mapToGlobal(grip.rect().center()))
+            self.app.sendEvent(grip, QMouseEvent(QEvent.Type.MouseButtonPress, QPointF(7, 7), point,
+                Qt.MouseButton.LeftButton, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier))
+            dx = -35 if corner.endswith("left") else 35
+            dy = -30 if corner.startswith("top") else 30
+            self.app.sendEvent(grip, QMouseEvent(QEvent.Type.MouseMove, QPointF(7, 7), point+QPointF(dx, dy),
+                Qt.MouseButton.NoButton, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier))
+            after = bubble.geometry()
+            self.assertEqual(after.width(), before.width()+35)
+            self.assertEqual(after.height(), before.height()+30)
+            self.assertEqual(after.right() if corner.endswith("left") else after.left(),
+                             before.right() if corner.endswith("left") else before.left())
+            self.assertEqual(after.bottom() if corner.startswith("top") else after.top(),
+                             before.bottom() if corner.startswith("top") else before.top())
+            grip.drag = None
 
     def test_streaming_does_not_pull_a_reader_back_to_the_bottom(self):
         self.a.messages = [('assistant', 'First paragraph.\n\n' * 90)]
@@ -49,11 +88,12 @@ class Presentation(unittest.TestCase):
         before = [q.text() for q in self.a.questions]
         self.a.questions_title.click()
         self.app.processEvents()
-        self.assertTrue(all(q.isHidden() for q in self.a.questions))
+        self.assertTrue(self.a.questions_content.isHidden())
         self.assertEqual([q.text() for q in self.a.questions], before)
         self.assertEqual(self.a.messages, [])
         self.a.questions_title.click()
-        self.assertTrue(any(not q.isHidden() for q in self.a.questions))
+        self.app.processEvents()
+        self.assertFalse(self.a.questions_content.isHidden())
 
     def test_suggestion_number_and_arrow_are_centred_beside_wrapped_text(self):
         row = self.a.questions[0]

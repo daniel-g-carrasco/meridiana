@@ -36,7 +36,7 @@ from PySide6.QtCore import (QByteArray, QEasingCurve, QEvent, QParallelAnimation
 from PySide6.QtGui import QColor, QCursor, QIcon, QPainter, QPainterPath, QPen, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QLayout, QLineEdit,
-                               QPushButton, QSizeGrip, QSizePolicy, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
+                               QPushButton, QScrollArea, QSizePolicy, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
 
 from .. import assistant
 from ..assistant import text as words
@@ -47,6 +47,7 @@ from .design import Icon, Motion, Space, Text, Type, set_text, text_font
 
 MIN_OPEN_HEIGHT = 220
 QUESTIONS_HEIGHT = 260          # below this the questions ready are hidden: the field and the conversation stay
+DOCKED_CARDS_MIN = 56           # docked, the cards scroll in this much at least (a title and a row of buttons)
 SLIDE_MS = 320                  # his own pace (R155, Daniel 25/10/2026: at 130 ms «troppo rapido, meglio com'era
                                 # prima»)
 # the bubble at its size from the start, fading in as it slides a few pixels from his side, and out the same way:
@@ -261,6 +262,69 @@ class QuestionRow(QPushButton):
         self.updateGeometry()
 
 
+class CornerGrip(QWidget):
+    """A mirrored grip with an explicit fixed opposite corner during the drag."""
+
+    def __init__(self, bubble):
+        super().__init__(bubble)
+        self.bubble = bubble
+        self.corner = "bottom-right"
+        self.drag = None
+
+    def set_corner(self, corner):
+        if self.drag is not None:
+            return
+        self.corner = corner
+        self.setCursor(Qt.CursorShape.SizeFDiagCursor if corner in ("top-left", "bottom-right")
+                       else Qt.CursorShape.SizeBDiagCursor)
+        self.update()
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        p.setPen(QPen(QColor(self.bubble.owner.colours["muted"]), 1.0))
+        if self.corner.endswith("left"):
+            p.translate(self.width(), 0)
+            p.scale(-1, 1)
+        if self.corner.startswith("top"):
+            p.translate(0, self.height())
+            p.scale(1, -1)
+        for offset in (4, 8):
+            p.drawLine(QPointF(self.width()-offset-2, self.height()-2),
+                       QPointF(self.width()-2, self.height()-offset-2))
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag = (event.globalPosition(), self.bubble.geometry())
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.drag is None:
+            return
+        start, initial = self.drag
+        delta = event.globalPosition() - start
+        rect = QRect(initial)
+        minimum = self.bubble.minimumSize().expandedTo(self.bubble.minimumSizeHint())
+        if self.corner.endswith("left"):
+            rect.setLeft(min(initial.left()+round(delta.x()), initial.right()-minimum.width()+1))
+        else:
+            rect.setRight(max(initial.right()+round(delta.x()), initial.left()+minimum.width()-1))
+        if self.corner.startswith("top"):
+            rect.setTop(min(initial.top()+round(delta.y()), initial.bottom()-minimum.height()+1))
+        else:
+            rect.setBottom(max(initial.bottom()+round(delta.y()), initial.top()+minimum.height()-1))
+        self.bubble.placing = True
+        self.bubble.setGeometry(rect)
+        self.bubble.placing = False
+        event.accept()
+
+    def mouseReleaseEvent(self, event):
+        if self.drag is not None and event.button() == Qt.MouseButton.LeftButton:
+            self.drag = None
+            self.bubble.resizedByHand.emit()
+            event.accept()
+
+
 class Bubble(QFrame):
     """The speech bubble: a rounded card with a tail towards the character, resized from the corner opposite the
     tail. A sub-window (Qt.SubWindow) so that the size grip resizes it and not the window."""
@@ -278,7 +342,7 @@ class Bubble(QFrame):
         self.box = QVBoxLayout(self)
         self.box.setContentsMargins(1, 1, 1, 1)
         self.box.setSpacing(0)
-        self.grip = QSizeGrip(self)
+        self.grip = CornerGrip(self)
         self.grip.setFixedSize(14, 14)
         self.grip.raise_()
         self.hide()
@@ -294,15 +358,13 @@ class Bubble(QFrame):
         self.setGeometry(QRect(shape.x, shape.y, shape.width, shape.height))
         self.placing = False
         self._place_grip()
-        if hasattr(self.owner, "title"):
-            self.owner.title.setAlignment(Qt.AlignmentFlag.AlignRight if shape.grip.endswith("left")
-                                          else Qt.AlignmentFlag.AlignLeft)
         self.update()
 
     def _place_grip(self) -> None:
         if self.shape is None:
             return
         corner = self.shape.grip
+        self.grip.set_corner(corner)
         inset = {"left": 2 + (assistant.TAIL if self.shape.tail == "left" else 0),
                  "right": 2 + (assistant.TAIL if self.shape.tail == "right" else 0),
                  "top": 2 + (assistant.TAIL if self.shape.tail == "top" else 0),
@@ -370,6 +432,81 @@ class SuggestionsBox(QWidget):
         hint = super().minimumSizeHint()
         if self.owner.docked:
             hint.setHeight(0)
+        return hint
+
+
+class CardsArea(QScrollArea):
+    """The cards above the field (a proposal, the consent, a guide). Floating, the bubble grows to show them whole, as
+    before; docked in a low panel they scroll in what is left (DOCKED_CARDS_MIN at least): a card never keeps the panel
+    taller than its compact threshold (R07, review H). Never taller than the cards: the conversation keeps the rest."""
+
+    def __init__(self, owner, parent=None):
+        super().__init__(parent)
+        self.owner = owner
+        self.whole = 0                                      # the cards' height, set by Assistant._fit_cards
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.viewport().setAutoFillBackground(False)        # the panel's colour under the cards, as before
+
+    def fit(self, whole: int) -> None:
+        self.whole = whole
+        self.setMaximumHeight(max(0, whole))
+        self.updateGeometry()
+
+    def measure(self) -> int:
+        """The cards' height at the area's width, without a scroll bar (their words wrap); before the area has a width
+        of its own (hidden, never laid out), at their natural width."""
+        cards = self.widget()
+        if self.testAttribute(Qt.WidgetAttribute.WA_WState_Visible) or self.testAttribute(Qt.WidgetAttribute.WA_Resized):
+            height = cards.heightForWidth(self.width())
+            if height >= 0:
+                return height
+        return cards.layout().sizeHint().height()
+
+    def event(self, event) -> bool:
+        out = super().event(event)
+        if event.type() == QEvent.Type.Polish:
+            # after the application's polish (ui/scrollbars.py): no bar's room kept and no air above and below,
+            # the cards as wide and as high as before in the bubble; a bar only while a low dock makes them scroll
+            from . import fades
+            fades.attach(self)
+            self.follow_dock()
+        return out
+
+    def follow_dock(self) -> None:
+        """Floating, no bar (the bubble grows to show the cards whole, as before R07); docked, a bar when needed."""
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded if self.owner.docked
+                                        else Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.updateGeometry()
+
+    def setWidget(self, widget) -> None:
+        super().setWidget(widget)
+        widget.installEventFilter(self)
+
+    def eventFilter(self, watched, event) -> bool:
+        if watched is self.widget() and event.type() == QEvent.Type.LayoutRequest:
+            self._refit()                                   # a card came, went, or its words changed
+        return super().eventFilter(watched, event)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._refit()                                       # narrower, the words of a card wrap: it needs more
+
+    def _refit(self) -> None:
+        whole = self.measure()
+        if whole != self.whole:
+            self.fit(whole)
+            self.owner.questions_timer.start(0)             # the bubble grows to show it whole (docked: it scrolls)
+
+    def sizeHint(self):
+        hint = super().sizeHint()
+        hint.setHeight(self.whole)
+        return hint
+
+    def minimumSizeHint(self):
+        hint = super().minimumSizeHint()
+        hint.setHeight(min(self.whole, DOCKED_CARDS_MIN) if self.owner.docked else self.whole)
         return hint
 
 
@@ -454,13 +591,19 @@ class Assistant(QFrame):
         inside.setContentsMargins(10, 8, 10, 10)
         inside.setSpacing(6)
         self.head = QWidget(self.panel)
-        row = QHBoxLayout(self.head)
+        heading = QVBoxLayout(self.head)
+        heading.setContentsMargins(0, 0, 0, 0)
+        heading.setSpacing(2)
+        self.title = set_text(QLabel(assistant.NAME), Text.TITLE)
+        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        heading.addWidget(self.title)
+        row = QHBoxLayout()
+        heading.addLayout(row)
         row.setContentsMargins(0, 0, 0, 0)
         self.small = Face(28, self)                         # the character at the head, when docked
         self.small.hide()                                   # floating, he is right beside the bubble
         row.addWidget(self.small)
-        self.title = set_text(QLabel(assistant.NAME), Text.TITLE)
-        row.addWidget(self.title, 1)
+        row.addStretch(1)
         # where he thinks, with its menu (the conversation's: ui/assistant_chat.Chat), and his spoken voice; both
         # hidden while nothing is behind him
         self.where_button = QToolButton()
@@ -491,6 +634,11 @@ class Assistant(QFrame):
         self.close_button.clicked.connect(self.close_panel)
         row.addWidget(self.close_button)
         inside.addWidget(self.head)
+        self.chat_content = QWidget(self.panel)
+        inside.addWidget(self.chat_content, 1)
+        inside = QVBoxLayout(self.chat_content)
+        inside.setContentsMargins(0, 0, 0, 0)
+        inside.setSpacing(6)
         self.context = QLabel()                            # what the conversation is about: the tab
         inside.addWidget(self.context)
         self.cost = QLabel()                               # the tokens and the cost of the conversation
@@ -515,12 +663,17 @@ class Assistant(QFrame):
         self.dots = Dots(self, self.panel)
         self.dots.hide()
         inside.addWidget(self.dots)
-        self.cards = QWidget(self.panel)                    # the proposals and the consent, above the field
+        self.cards = QWidget()                              # the proposals and the consent, above the field
+        self.cards.setAutoFillBackground(False)
+        # as wide as the panel, never wider: its words wrap (a scroll area would give it its widest row)
+        self.cards.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.cards_box = QVBoxLayout(self.cards)
         self.cards_box.setContentsMargins(0, 0, 0, 0)
         self.cards_box.setSpacing(Space.S)
-        self.cards.hide()
-        inside.addWidget(self.cards)
+        self.cards_area = CardsArea(self, self.panel)       # whole in the bubble, scrolling in a low dock
+        self.cards_area.setWidget(self.cards)
+        self.cards_area.hide()
+        inside.addWidget(self.cards_area)
         self.questions_box = SuggestionsBox(self, self.panel)
         qbox = QVBoxLayout(self.questions_box)
         qbox.setContentsMargins(0, 0, 0, 0)
@@ -537,11 +690,16 @@ class Assistant(QFrame):
         self.questions_title.setFont(text_font(Text.SECONDARY))
         self.questions_title.toggled.connect(self._toggle_suggestions)
         qbox.addWidget(self.questions_title)
+        self.questions_content = QWidget(self.questions_box)
+        rows = QVBoxLayout(self.questions_content)
+        rows.setContentsMargins(0, 0, 0, 0)
+        rows.setSpacing(Space.XXS)
+        qbox.addWidget(self.questions_content)
         self.questions: list[QuestionRow] = []
         for n in range(3):
             q = QuestionRow(n + 1)
             q.chosen.connect(self.ask)
-            qbox.addWidget(q)
+            rows.addWidget(q)
             self.questions.append(q)
         inside.addWidget(self.questions_box)
         self.questions_timer = QTimer(self.questions_box, singleShot=True)
@@ -816,42 +974,55 @@ class Assistant(QFrame):
         changed = texts != [row.text() for row in self.questions]
         for row, text in zip(self.questions, texts, strict=True):
             row.setText(text)
-            row.setVisible(bool(text) and self.questions_title.isChecked())
+            row.setVisible(bool(text))
         if changed:
             self.questions_timer.start(0)
 
     def _toggle_suggestions(self, expanded: bool) -> None:
         self.questions_title.setArrowType(Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow)
-        for row in self.questions:
-            row.setVisible(expanded and bool(row.text()))
+        from . import motion
         self.questions_box.setMinimumHeight(0)
+        controller = motion.collapse(self.questions_content, expanded, ms=0 if self.reduced_motion else Motion.FAST)
+        if not controller.property("assistantConnected"):
+            controller.animation.finished.connect(self._fit_questions)
+            controller.setProperty("assistantConnected", True)
         self.questions_timer.start(0)
 
     def _fit_questions(self) -> None:
+        from .motion import Collapse
+        controller = self.questions_content.findChild(Collapse)
+        if controller is not None and controller.running:
+            return
         self.questions_box.setMinimumHeight(0 if self.docked else self.questions_box.sizeHint().height())
         self.panel.layout().activate()
         self._fit_bubble_content()
 
     def _fit_bubble_content(self) -> None:
-        if self.docked or not self.opened or self.bubble.shape is None or self.bubble.placing \
+        if self.property("guidedTourActive") or self.docked or not self.opened or self.bubble.shape is None or self.bubble.placing \
                 or self.bubble_animation is not None:
             return
         last = self.questions_box.mapTo(self.panel, QPoint(0, self.questions_box.height())).y()
-        overflow = max(0, last - self.field.y())
+        field_top = self.field.mapTo(self.panel, QPoint(0, 0)).y()
+        overflow = max(0, last - field_top)
         margins = self.bubble.box.contentsMargins()
+        content = max(self.panel.sizeHint().height(), self.panel.minimumSizeHint().height())
         needed = max(self.bubble.height() + overflow + (Space.S if overflow else 0),
-                     self.panel.sizeHint().height() + margins.top() + margins.bottom())
+                     content + margins.top() + margins.bottom())
         if needed <= self.bubble.height():
             return
         shape = self.bubble.shape
         top, _width, available = self.free()
         bottom = shape.y + shape.height
-        if shape.tail in ("left", "right"):
-            height = min(needed, available)
-            y = max(top, bottom - height)
+        # it grows away from the edge that is level with him, inside the margins: in a top corner it grew up to
+        # the bar, then jumped down by the margin at the first resize by hand (R258)
+        highest = min(top + assistant.MARGIN, shape.y)
+        lowest = max(top + available - assistant.MARGIN, bottom)
+        height = min(needed, lowest - highest)
+        if shape.tail == "top" or (shape.tail in ("left", "right")
+                                   and self.y() + assistant.SIZE / 2 < top + available / 2):
+            y = min(shape.y, lowest - height)
         else:
-            height = min(needed, top + available - shape.y)
-            y = shape.y
+            y = max(highest, bottom - height)
         at = shape.at + shape.y - y if shape.tail in ("left", "right") else shape.at
         self.bubble_dims = (shape.width, height)
         self.bubble.set_shape(assistant.Bubble(shape.x, y, shape.width, height, shape.tail, at))
@@ -1084,7 +1255,11 @@ class Assistant(QFrame):
             return False
         if watched is self.panel and kind == QEvent.Type.Resize:
             # a low bubble or panel: the questions ready give way to the conversation and the field
-            self.questions_box.setVisible(event.size().height() >= QUESTIONS_HEIGHT and self.questions_wanted())
+            wanted = event.size().height() >= QUESTIONS_HEIGHT and self.questions_wanted()
+            back = wanted and not self.questions_box.isVisibleTo(self.panel)
+            self.questions_box.setVisible(wanted)
+            if back:                                        # they need their room too: the bubble fits again
+                self.questions_timer.start(0)
             return False
         if watched in (self.field, self.conversation) and kind == QEvent.Type.KeyPress:
             if event.key() == Qt.Key.Key_Escape and self.opened:
@@ -1165,6 +1340,7 @@ class Assistant(QFrame):
         self.questions_box.layout().setSizeConstraint(constraint)
         self.questions_box.setMinimumHeight(0 if on else self.questions_box.sizeHint().height())
         self.questions_box.updateGeometry()
+        self.cards_area.follow_dock()                       # whole in the bubble, scrolling in the dock
         self.dock_button.setChecked(on)
         self.dock_button.setToolTip(_("Float over the views again") if on else
                                      _("Dock in the panels, as Project and Properties"))
@@ -1244,6 +1420,8 @@ class Assistant(QFrame):
 
     def questions_wanted(self) -> bool:
         """The questions ready are shown between turns and not under a proposal confirmation."""
+        if self.property("guidedTourActive"):
+            return False
         pending = any(widget.property("confirmation") for widget in self.cards.children())
         return self.mood.state == assistant.IDLE and not pending
 
@@ -1344,21 +1522,23 @@ class Assistant(QFrame):
     # what the conversation shows besides the words
 
     def _fit_cards(self) -> None:
-        self.cards.setMinimumHeight(self.cards_box.sizeHint().height())
+        # a card is never squeezed: the area scrolls it (its height for the width it has, CardsArea)
         self.cards.updateGeometry()
+        self.cards_area.fit(self.cards_area.measure())
 
     def add_card(self, card: QWidget) -> None:
         self.cards_box.addWidget(card)
         self._fit_cards()
         self.questions_box.setVisible(self.panel.height() >= QUESTIONS_HEIGHT and self.questions_wanted())
-        self.cards.show()
+        self.cards_area.show()
+        self.questions_timer.start(0)                       # an open bubble makes room for it, nothing overlaps
 
     def remove_card(self, card: QWidget) -> None:
         self.cards_box.removeWidget(card)
         card.hide()
         card.setProperty("confirmation", False)
         card.deleteLater()
-        self.cards.setVisible(self.cards_box.count() > 0)
+        self.cards_area.setVisible(self.cards_box.count() > 0)
         self._fit_cards()
         self.questions_box.setVisible(self.panel.height() >= QUESTIONS_HEIGHT and self.questions_wanted())
 

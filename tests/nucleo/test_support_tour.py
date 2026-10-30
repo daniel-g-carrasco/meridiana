@@ -33,7 +33,7 @@ class FeedbackTests(unittest.TestCase):
 class TourTests(unittest.TestCase):
     def test_existing_configuration_migrates_without_enabling_updates(self):
         data = config.migrate({"version": 21, "check_updates": False, "theme": "dark"})
-        self.assertEqual(data["version"], 22)
+        self.assertEqual(data["version"], config.CONFIG_VERSION)        # every later migration runs too
         self.assertFalse(data["check_updates"])
         self.assertFalse(data["auto_install_updates"])
         self.assertEqual(data["tour_status"], "new")
