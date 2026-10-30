@@ -34,7 +34,7 @@ class NarrowPanel(unittest.TestCase):
         d = TemplateDialog()
         self.assertEqual(d.kind.currentData(), "L")
         self.assertEqual(d.outline(), templates.footprint("L"))
-        self.assertEqual(d.preview.ring, templates.footprint("L"))
+        self.assertEqual(d.ring, templates.footprint("L"))
         d.kind.setCurrentIndex(d.kind.findData("U"))
         self.assertEqual(sorted(d.measures()), ["arm", "base", "depth", "width"])
         d.fields["arm"].setValue(13.0)                      # two arms of 13 m in 24: no courtyard left

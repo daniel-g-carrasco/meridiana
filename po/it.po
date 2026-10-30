@@ -19985,3 +19985,127 @@ msgstr "Precedente e Successivo spostano tra le tappe."
 #: src/meridiana/ui/tour.py:98
 msgid "Pause tour keeps your place for next time."
 msgstr "Sospendi la visita tiene il segno per la prossima volta."
+
+#: src/meridiana/help.py:101
+msgid "Distributor, POD, voltage, phases, level and powers of the connection."
+msgstr "Distributore, POD, tensione, fasi, livello e potenze della connessione."
+
+#: src/meridiana/help.py:102
+msgid "The data of the connection to the grid, for the report and the rules: the distributor and the POD of the supply, its voltage (which picks the technical rule of the connection), the phases, the connection level, the power available and the power requested for the plant. What you do not know stays «not stated»."
+msgstr "I dati della connessione alla rete, per la relazione e le regole: il distributore e il POD della fornitura, la tensione (che sceglie la regola tecnica della connessione), le fasi, il livello di connessione, la potenza disponibile e quella richiesta per l'impianto. Ciò che non si sa resta «non indicato»."
+
+#: src/meridiana/help.py:158
+msgid "A plane of its own for the modules, instead of the roof pitch."
+msgstr "Un piano proprio per i moduli, al posto della falda."
+
+#: src/meridiana/help.py:159
+msgid "The modules are laid on a plane of their own, with its elevation at the centre of the area, its tilt and its azimuth, instead of the pitch of the building they stand on: a structure on a flat roof, a canopy whose plane differs from the roof's. The building and the pitch stay as references; the model received is unchanged."
+msgstr "I moduli sono posati su un piano proprio, con la quota al centro dell'area, l'inclinazione e l'azimut, invece che sulla falda dell'edificio: una struttura su un tetto piano, una pensilina con un piano diverso dal tetto. Edificio e falda restano come riferimenti; il modello ricevuto non cambia."
+
+#: src/meridiana/help.py:203
+msgid "The inverters the year counts: installed, with strings on their inputs."
+msgstr "Gli inverter che l'anno conta: installati, con stringhe sugli ingressi."
+
+#: src/meridiana/help.py:204
+msgid "An inverter counts in the production when it is installed (chosen, not sized by itself) and has a string on one of its inputs. The first line says how many of the chosen inverters work and their AC power together; then one line per unit with its strings and inputs. An inverter without strings stays idle."
+msgstr "Un inverter conta nella producibilità quando è installato (scelto, non dimensionato da sé) e ha una stringa su uno dei suoi ingressi. La prima riga dice quanti degli inverter scelti lavorano e la loro potenza CA insieme; poi una riga per unità con stringhe e ingressi. Un inverter senza stringhe resta fermo."
+
+#: src/meridiana/help.py:210
+msgid "The inverter whose inputs and strings the panel shows."
+msgstr "L'inverter di cui il pannello mostra ingressi e stringhe."
+
+#: src/meridiana/help.py:211
+msgid "Choose the physical inverter to work on: the table of its inputs and the list of its strings follow it, and a string chosen on the plan brings its inverter here. «Propose», «Complete» and «Clear» act on the whole plant, whatever inverter is shown. Under the name: AC power, MPPT or Synergy units, strings."
+msgstr "Scegli l'inverter fisico su cui lavorare: la tabella dei suoi ingressi e l'elenco delle sue stringhe lo seguono, e una stringa scelta sulla pianta porta qui il suo inverter. «Proponi», «Completa» e «Svuota» agiscono su tutto l'impianto, qualunque inverter sia mostrato. Sotto il nome: potenza CA, MPPT o unità Synergy, stringhe."
+
+#: src/meridiana/help.py:217
+msgid "The plant's models, how many of each, their optimizers, the DC/AC ratio."
+msgstr "Modelli dell'impianto, quanti per tipo, ottimizzatori, rapporto DC/AC."
+
+#: src/meridiana/help.py:218
+msgid "Every inverter model of the plant with its count; «✕» takes one out. From the catalogue, or sized by Meridiana from the DC/AC ratio when none is chosen. For SolarEdge inverters, the power optimizers of each model with one or two modules each. The scale shows the energy the inverters cut above their nominal power, once the year is computed."
+msgstr "Ogni modello di inverter con la sua quantità; «✕» lo toglie. Dal catalogo, o dimensionato da Meridiana dal rapporto DC/AC se non se ne sceglie nessuno. Per SolarEdge, gli ottimizzatori di ogni modello, con uno o due moduli ciascuno. La scala mostra l'energia tagliata oltre la potenza nominale, ad anno calcolato."
+
+#: src/meridiana/help.py:224
+msgid "The inputs of the working inverter with their strings, and the commands."
+msgstr "Gli ingressi dell'inverter in lavorazione, le loro stringhe, i comandi."
+
+#: src/meridiana/help.py:225
+msgid "One row per input (MPPT): its strings, the modules in series, the open-circuit voltage at the lowest temperature, the MPP voltage at the hottest and the coldest cell, the short-circuit current, each against the inverter's limit. Under it, each string with its colour and state. «+» draws a string on an input."
+msgstr "Una riga per ingresso (MPPT): le stringhe, i moduli in serie, la tensione a vuoto alla temperatura minima, la tensione MPP alla cella più calda e più fredda, la corrente di cortocircuito, ciascuna contro il limite dell'inverter. Sotto, ogni stringa con colore e stato. «+» disegna una stringa su un ingresso."
+
+#: src/meridiana/help.py:231
+msgid "How the next proposal runs, and the temperatures the checks use."
+msgstr "Come procede la prossima proposta, e le temperature delle verifiche."
+
+#: src/meridiana/help.py:232
+msgid "The strategy is how «Propose the strings» walks the modules; the modules in series can be given or left to Meridiana. The lowest temperature of the site sets the open-circuit voltage on the coldest morning, checked against the inverter's and the modules' maximum; the MPP voltage is checked at the hottest and the coldest cell."
+msgstr "La strategia è il modo in cui «Proponi le stringhe» percorre i moduli; i moduli in serie si possono dare o lasciare a Meridiana. La temperatura minima del sito dà la tensione a vuoto del mattino più freddo, verificata contro il massimo dell'inverter e dei moduli; la tensione MPP è verificata alla cella più calda e più fredda."
+
+#: src/meridiana/help.py:238
+msgid "The string chosen on the plan or in the list: path, figures and checks."
+msgstr "La stringa scelta in pianta o nell'elenco: percorso, grandezze, verifiche."
+
+#: src/meridiana/help.py:239
+msgid "Where it goes (inverter and input) and its modules; the modules against what the input takes, the open-circuit voltage at the lowest temperature against the maximum, the MPP voltage at the hottest and coldest cell against the MPPT window, the current against the input's; then each check with its mark and its conditions."
+msgstr "Dove va (inverter e ingresso) e i suoi moduli; i moduli contro quanti ne prende l'ingresso, la tensione a vuoto alla temperatura minima contro il massimo, la tensione MPP alla cella più calda e più fredda contro la finestra MPPT, la corrente contro quella dell'ingresso; poi ogni verifica con il suo segno e le sue condizioni."
+
+#: src/meridiana/help.py:245
+msgid "Where «Propose the strings» sends the strings of this sub-field."
+msgstr "Dove «Proponi le stringhe» manda le stringhe di questo sottocampo."
+
+#: src/meridiana/help.py:246
+msgid "The sub-field selected on the plan, and the inverter and the input its strings go to in the next proposal; «automatic» leaves the choice to Meridiana. The strings of now do not change until you propose again."
+msgstr "Il sottocampo selezionato sulla pianta, e l'inverter e l'ingresso a cui vanno le sue stringhe alla prossima proposta; «automatico» lascia la scelta a Meridiana. Le stringhe di adesso non cambiano finché non si propone di nuovo."
+
+#: src/meridiana/ui/plant_page.py:458
+msgid "Identity and path"
+msgstr "Identità e percorso"
+
+#: src/meridiana/ui/plant_page.py:458
+msgid "Electrical"
+msgstr "Elettrico"
+
+#: src/meridiana/ui/plant_page.py:836
+msgid "Str."
+msgstr "Str."
+
+#: src/meridiana/ui/plant_page.py:836
+msgid "Mod."
+msgstr "Mod."
+
+#: src/meridiana/ui/plant_page.py:839
+msgid "The input of the working inverter"
+msgstr "L'ingresso dell'inverter in lavorazione"
+
+#: src/meridiana/ui/plant_page.py:839
+msgid "Strings on it, of the most it takes in parallel"
+msgstr "Stringhe su di esso, su quante ne prende in parallelo"
+
+#: src/meridiana/ui/plant_page.py:840
+msgid "Modules in series of its strings"
+msgstr "Moduli in serie delle sue stringhe"
+
+#: src/meridiana/ui/plant_page.py:841
+msgid "Open-circuit voltage of a string at the lowest temperature, of the maximum voltage allowed"
+msgstr "Tensione a vuoto di una stringa alla temperatura minima, sulla massima ammessa"
+
+#: src/meridiana/ui/plant_page.py:842
+msgid "MPP voltage of a string at the hottest and at the coldest cell; the MPPT window in the tooltip"
+msgstr "Tensione MPP di una stringa alla cella più calda e più fredda; la finestra MPPT nel suggerimento"
+
+#: src/meridiana/ui/plant_page.py:843
+msgid "Short-circuit current of the input, of the most it takes"
+msgstr "Corrente di cortocircuito dell'ingresso, sulla massima che prende"
+
+#: src/meridiana/ui/plant_page.py:843
+msgid "The worst of its checks"
+msgstr "La peggiore delle sue verifiche"
+
+#: src/meridiana/ui/plant_page.py:589 src/meridiana/ui/plant_page.py:924
+msgid "Isc {detail}"
+msgstr "Isc {detail}"
+
+#: src/meridiana/ui/plant_page.py:600
+msgid "No check yet: the strings are being laid."
+msgstr "Nessuna verifica ancora: le stringhe sono in posa."

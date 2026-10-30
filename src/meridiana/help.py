@@ -97,6 +97,13 @@ def texts() -> dict[str, Help]:
               "default). A day nearer the equinox gives a shorter pitch and more modules, with some shade between "
               "the rows on winter mornings and evenings."),
             manual="1-modello.md#giorno-e-ore-del-sottocampo"),
+        "site.network": h(
+            _("Grid connection (optional)"), _("Distributor, POD, voltage, phases, level and powers of the connection."),
+            _("The data of the connection to the grid, for the report and the rules: the distributor and the POD of "
+              "the supply, its voltage (which picks the technical rule of the connection), the phases, the "
+              "connection level, the power available and the power requested for the plant. What you do not know "
+              "stays «not stated»."),
+            manual="1-modello.md#il-sito"),
         "site.rules": h(
             _("Connection and obligations"), _("What the rules need beyond the drawing: grid level, obligations, premises."),
             _("The connection level comes from the power unless you choose it (the distributor decides). The "
@@ -147,6 +154,13 @@ def texts() -> dict[str, Help]:
               "portrait, 2 is the «2V» of the ground mounts. More modules across make a taller row, so a longer "
               "pitch from the sun."),
             manual="1-modello.md#moduli-per-tavola-in-altezza"),
+        "subfield.support": h(
+            _("Auxiliary support plane"), _("A plane of its own for the modules, instead of the roof pitch."),
+            _("The modules are laid on a plane of their own, with its elevation at the centre of the area, its tilt "
+              "and its azimuth, instead of the pitch of the building they stand on: a structure on a flat roof, a "
+              "canopy whose plane differs from the roof's. The building and the pitch stay as references; the "
+              "model received is unchanged."),
+            manual="1-modello.md#il-sottocampo"),
         "subfield.gaps": h(
             _("Gaps and margins"), _("The free space between modules, rows and tables, and from the edge."),
             _("The gaps between the modules, from the edge of the area, between the rows and between the tables. "
@@ -184,6 +198,55 @@ def texts() -> dict[str, Help]:
               "also an obstacle that casts shadows. Smoke vents, openings and roof plant get 1 m more by "
               "themselves where the fire-brigade rules apply (DCPREV 14030/2025, 3.3.5.1)."),
             ("N15",), "1-modello.md#le-esclusioni"),
+        # the plant (R287: every group of the right panel has its «?»)
+        "plant.overview": h(
+            _("Active inverters"), _("The inverters the year counts: installed, with strings on their inputs."),
+            _("An inverter counts in the production when it is installed (chosen, not sized by itself) and has a "
+              "string on one of its inputs. The first line says how many of the chosen inverters work and their AC "
+              "power together; then one line per unit with its strings and inputs. An inverter without strings "
+              "stays idle."),
+            manual="2-impianto.md#il-pannello-di-destra"),
+        "plant.working": h(
+            _("Working inverter"), _("The inverter whose inputs and strings the panel shows."),
+            _("Choose the physical inverter to work on: the table of its inputs and the list of its strings follow "
+              "it, and a string chosen on the plan brings its inverter here. «Propose», «Complete» and «Clear» act "
+              "on the whole plant, whatever inverter is shown. Under the name: AC power, MPPT or Synergy units, "
+              "strings."),
+            manual="2-impianto.md#il-pannello-di-destra"),
+        "plant.inverters": h(
+            _("All inverters"), _("The plant's models, how many of each, their optimizers, the DC/AC ratio."),
+            _("Every inverter model of the plant with its count; «✕» takes one out. From the catalogue, or sized by "
+              "Meridiana from the DC/AC ratio when none is chosen. For SolarEdge inverters, the power optimizers of "
+              "each model with one or two modules each. The scale shows the energy the inverters cut above their "
+              "nominal power, once the year is computed."),
+            manual="2-impianto.md#il-pannello-di-destra"),
+        "plant.strings": h(
+            _("Strings"), _("The inputs of the working inverter with their strings, and the commands."),
+            _("One row per input (MPPT): its strings, the modules in series, the open-circuit voltage at the lowest "
+              "temperature, the MPP voltage at the hottest and the coldest cell, the short-circuit current, each "
+              "against the inverter's limit. Under it, each string with its colour and state. «+» draws a string "
+              "on an input."),
+            ("CEI 64-8/7:2024",), "2-impianto.md#le-stringhe-sono-tue"),
+        "plant.proposal": h(
+            _("Proposal and checks"), _("How the next proposal runs, and the temperatures the checks use."),
+            _("The strategy is how «Propose the strings» walks the modules; the modules in series can be given or "
+              "left to Meridiana. The lowest temperature of the site sets the open-circuit voltage on the coldest "
+              "morning, checked against the inverter's and the modules' maximum; the MPP voltage is checked at the "
+              "hottest and the coldest cell."),
+            manual="2-impianto.md#le-stringhe-sono-tue"),
+        "plant.string": h(
+            _("String chosen"), _("The string chosen on the plan or in the list: path, figures and checks."),
+            _("Where it goes (inverter and input) and its modules; the modules against what the input takes, the "
+              "open-circuit voltage at the lowest temperature against the maximum, the MPP voltage at the hottest "
+              "and coldest cell against the MPPT window, the current against the input's; then each check with its "
+              "mark and its conditions."),
+            manual="2-impianto.md#il-pannello-di-destra"),
+        "plant.subfield": h(
+            _("Sub-field selected"), _("Where «Propose the strings» sends the strings of this sub-field."),
+            _("The sub-field selected on the plan, and the inverter and the input its strings go to in the next "
+              "proposal; «automatic» leaves the choice to Meridiana. The strings of now do not change until you "
+              "propose again."),
+            manual="2-impianto.md#il-pannello-di-destra"),
         # production
         "production.energy": h(
             _("Energy a year"), _("The AC energy at the meter in a typical year, every loss included."),

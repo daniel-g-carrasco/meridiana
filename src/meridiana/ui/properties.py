@@ -458,7 +458,7 @@ class Properties(QScrollArea):
     def _network_group(self) -> QGroupBox:
         """Optional supply and connection data, shared with the New Project page."""
         group = Group(_("Grid connection (optional)"))
-        help_button(group, "site.rules")
+        help_button(group, "site.network")
         form = make_form(group)
 
         def send(**changes):
@@ -819,6 +819,7 @@ class Properties(QScrollArea):
         box.addLayout(form)
 
         support = Group(_("Auxiliary support plane"))
+        help_button(support, "subfield.support")
         support_form = make_form(support)
         enabled = self._bind(QCheckBox(_("Use an independent placement plane")),
                              lambda: self._support_now().enabled)

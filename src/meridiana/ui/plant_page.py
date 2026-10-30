@@ -25,9 +25,10 @@ from ..energy import system
 from ..i18n import _, ngettext, number
 from .cards import default_tokens
 from .properties import combo, make_form, spin
-from . import icons
+from . import icons, marks, shared_tables
+from .help_box import help_button
 from .theme import mark, symbol_font
-from .design import Icon, Radius, Size, Space, Type, font, strong
+from .design import Icon, Radius, Size, Space, Text, Type, font, set_text, strong
 from .style import Group
 from .sections import SectionDelegate
 
@@ -336,6 +337,7 @@ class PlantInspector(QScrollArea):
         box = QVBoxLayout(page)
         box.setSpacing(Space.M)
         overview = Group(_("Active inverters"))
+        help_button(overview, "plant.overview")
         overview_box = QVBoxLayout(overview)
         self.overview = QLabel()
         self.overview.setTextFormat(Qt.TextFormat.PlainText)
@@ -344,6 +346,7 @@ class PlantInspector(QScrollArea):
         overview_box.addWidget(self.overview)
         box.addWidget(overview)
         working = Group(_("Working inverter"))
+        help_button(working, "plant.working")
         work_box = QVBoxLayout(working)
         self.working_inverter = QComboBox()
         self.working_inverter.setAccessibleName(_("Working inverter"))
@@ -358,6 +361,7 @@ class PlantInspector(QScrollArea):
         box.addWidget(working)
 
         inv = self.inverters_group = Group(_("All inverters"))
+        help_button(inv, "plant.inverters")
         inv_box = QVBoxLayout(inv)
         self.describe = QLabel("")
         self.describe.setWordWrap(True)
@@ -384,11 +388,14 @@ class PlantInspector(QScrollArea):
 
         # the strings (R115): the list by inverter and input, and what Meridiana does only when asked
         self.strings_group = Group(_("Strings"))
+        help_button(self.strings_group, "plant.strings")
         sbox = QVBoxLayout(self.strings_group)
         sbox.setSpacing(Space.S)
         self.state = QLabel("")
         self.state.setWordWrap(True)
         sbox.addWidget(self.state)
+        self.inputs = InputsTable()                 # one input (MPPT) per row, with its figures (R286)
+        sbox.addWidget(self.inputs)
         self.list = StringList()
         self.list.chosen.connect(lambda i: self.stringChosen.emit(i) if not self.loading else None)
         self.list.unitChanged.connect(self._working_shown)
@@ -418,6 +425,7 @@ class PlantInspector(QScrollArea):
 
         # the rules of the next proposal and the conditions of the checks
         rules = Group(_("Proposal and checks"))
+        help_button(rules, "plant.proposal")
         sf = make_form(rules)
         self.strategy = combo(plant_model.strategy_names().items(), "serpentine")
         self.strategy.setToolTip(_("How «Propose the strings» runs along the modules: kept for the next proposal, the "
@@ -443,15 +451,32 @@ class PlantInspector(QScrollArea):
 
         # the string chosen: its checks, live (task 16d, step 7), with where the temperatures come from
         self.string_group = Group(_("String chosen"))
+        help_button(self.string_group, "plant.string")
         sg = QVBoxLayout(self.string_group)
-        self.string_checks = QLabel("")
-        self.string_checks.setTextFormat(Qt.TextFormat.RichText)
-        self.string_checks.setWordWrap(True)
-        sg.addWidget(self.string_checks)
+        sg.setSpacing(Space.M)                      # between the blocks (R286: «maggiore suddivisione»)
+        self.string_blocks: dict = {}
+        for key, title in (("identity", _("Identity and path")), ("electrical", _("Electrical")),
+                           ("checks", _("Checks"))):
+            block = QVBoxLayout()
+            block.setSpacing(Space.XS)
+            block.addWidget(set_text(QLabel(title), Text.LABEL))
+            text = QLabel("")
+            text.setTextFormat(Qt.TextFormat.RichText)
+            text.setWordWrap(True)
+            block.addWidget(text)
+            sg.addLayout(block)
+            self.string_blocks[key] = text
+        self.string_identity = self.string_blocks["identity"]
+        self.string_checks = self.string_blocks["checks"]
+        self.string_source = QLabel("")             # the conditions the checks were made at, muted
+        self.string_source.setWordWrap(True)
+        set_text(self.string_source, Text.SECONDARY)
+        sg.addWidget(self.string_source)
         box.addWidget(self.string_group)
         self.string_group.hide()
 
         self.subfield_group = Group(_("Sub-field selected"))
+        help_button(self.subfield_group, "plant.subfield")
         sub = make_form(self.subfield_group)
         self.subfield_name = QLabel("")
         sub.addRow(self.subfield_name)
@@ -505,6 +530,8 @@ class PlantInspector(QScrollArea):
         finally:
             self.working_inverter.blockSignals(blocked)
         plant = self.list.plant
+        if not self.loading:                    # the list changed its unit by itself (a string chosen on the plan)
+            self.inputs.show_inputs(plant, unit, self.states)
         found = next((u for u in plant.units if u.number == unit), None) if plant is not None else None
         if found is None:
             self.working_summary.setText(_("The inverters are being checked…"))
@@ -545,19 +572,38 @@ class PlantInspector(QScrollArea):
             return html.escape(text, quote=False)
         names = plant_model.state_names()
         light = f"<span style='color: {self.states.get(s.state, '')};'>{mark(MARKS.get(s.state, ''))}</span>"
-        rows = [f"{strong(s.label)} · {len(s.modules)} {_('modules')} · {light} {names.get(s.state, '')}"]
+        # R286: three blocks, each of its own lines, instead of one heap of words
+        unit = plant.unit(s.inverter)
+        identity = [strong(esc(s.label))]
+        if unit is not None:
+            identity.append(esc(f"{plant_model.unit_label(unit)} · {unit.name} · {input_name(unit, s.mppt)}"))
+        else:
+            identity.append(esc(_("Without an input")))
+        identity.append(f"{esc(ngettext('{n} module', '{n} modules', len(s.modules)).format(n=len(s.modules)))} · "
+                        f"{light} {esc(names.get(s.state, ''))}")
+        self.string_identity.setText("<br>".join(identity))
+        electrical = [esc(part) for part in plant_model.voltages(s).split(" · ")]
+        current = next((c.detail for c in (s.plan.checks if s.plan is not None else [])
+                        if c.key.startswith("isc") and c.detail and not c.key.startswith("isc_")), "")
+        if current:
+            electrical.append(esc(_("Isc {detail}").format(detail=current)))
+        self.string_blocks["electrical"].setText("<br>".join(electrical))
         levels = {"ok": "ok", "info": "ok", "warn": "check", "fail": "fail"}
+        rows = []
         for c in (s.plan.checks if s.plan is not None else []):
             k = levels.get(c.level, "check")
             rows.append(f"<span style='color: {self.states.get(k, '')};'>{mark(MARKS[k])}</span> "
                         f"{esc(c.label)}: {esc(c.detail)}")
         if s.plan is None and s.why:
             rows.append(esc(s.why))
+        if not rows:
+            rows.append(esc(_("No check yet: the strings are being laid.")))
+        self.string_checks.setText("<br>".join(rows))
         step = s.plan.record.find("vmp") if s.plan is not None and s.plan.record is not None else None
         cell = next((q for q in (step.inputs if step is not None else []) if q.symbol == r"T_{c,max}"), None)
-        if cell is not None and cell.source is not None:
-            rows.append(f"<span style='color: palette(placeholder-text);'>{esc(cell.source.label)}</span>")
-        self.string_checks.setText("<br>".join(rows))
+        source = cell.source.label if cell is not None and cell.source is not None else ""
+        self.string_source.setText(source)
+        self.string_source.setVisible(bool(source))
 
     def show_plant(self, project, plant, selection: tuple = ("", ""), chosen: int = -1) -> None:
         """The inverters of `project`, the strings of `plant` (None while it is computed), the string chosen, the
@@ -603,6 +649,7 @@ class PlantInspector(QScrollArea):
                     text = only if all(u.optimized for u in plant.units) else f"{text} {only}"
                 self.conditions.setText(text)
             self.list.show_plant(plant, self.colours, self.states, chosen)
+            self.inputs.show_inputs(plant, self.list.working_unit, self.states)
             self._working_shown(self.list.working_unit)
             if plant is not None:
                 self.string_buttons["strings_complete"].setEnabled(bool(plant.left))
@@ -768,6 +815,145 @@ class PlantInspector(QScrollArea):
             self.sub_input.addItem(_("Input {k}").format(k=k), k)
         self.sub_input.setCurrentIndex(max(0, self.sub_input.findData(mppt)))
         self.sub_input.setEnabled(unit is not None)
+
+
+class InputsTable(QTreeWidget):
+    """The inputs (MPPT) of the working inverter as a table, one per row (R286, Daniel 30/10/2026: «un modo decente
+    leggermente più tabellare ... di rappresentare ingressi e stringhe»): its strings against how many it takes, the
+    modules in series of its strings, the open-circuit voltage at the lowest temperature against the maximum, the MPP
+    voltage at the hottest and the coldest cell (the window in the tooltip), the short-circuit current against the
+    input's, and its state as a mark and a word. The shared treatment of the data tables (shared_tables.install),
+    compact; as tall as its rows, it scrolls with the panel, as the list of the strings under it. Every figure comes
+    from the plan of the input (energy/stringing.StringPlan): the table computes nothing."""
+
+    COLUMNS = ("input", "strings", "modules", "voc", "vmp", "isc", "state")
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("inputs-table")
+        self.setColumnCount(len(self.COLUMNS))
+        # short heads: the panel is narrow (the whole words in the tooltips)
+        self.setHeaderLabels([_("Input"), _("Str."), _("Mod."), "Voc", "Umpp", "Isc", ""])
+        head = self.headerItem()
+        for column, tip in enumerate((
+                _("The input of the working inverter"), _("Strings on it, of the most it takes in parallel"),
+                _("Modules in series of its strings"),
+                _("Open-circuit voltage of a string at the lowest temperature, of the maximum voltage allowed"),
+                _("MPP voltage of a string at the hottest and at the coldest cell; the MPPT window in the tooltip"),
+                _("Short-circuit current of the input, of the most it takes"), _("The worst of its checks"))):
+            head.setToolTip(column, tip)
+        self.setRootIsDecorated(False)
+        self.setIndentation(0)
+        self.setUniformRowHeights(True)
+        self.setItemsExpandable(False)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setIconSize(QSize(Icon.CONTROL, Icon.CONTROL))
+        header = self.header()
+        header.setStretchLastSection(False)
+        header.setSectionsClickable(False)
+        header.setSectionResizeMode(0, header.ResizeMode.Stretch)
+        for column in range(1, len(self.COLUMNS)):
+            header.setSectionResizeMode(column, header.ResizeMode.ResizeToContents)
+        self.table_style = shared_tables.install(self, compact=True, soft_edges=False)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.rows: dict = {}                    # (unit, input) -> its row
+        self._fit()
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._fit_columns()
+
+    def _fit_columns(self) -> None:
+        """In a narrow panel the figures go first (Isc, then Umpp, then Voc): what is left is in the state's tooltip
+        and in the string chosen; nothing runs past the group's edge."""
+        header = self.header()
+        for column in range(len(self.COLUMNS)):
+            header.setSectionHidden(column, False)
+        room = self.viewport().width()
+        for column in (5, 4, 3):
+            if header.length() <= room:
+                break
+            header.setSectionHidden(column, True)
+
+    def show_inputs(self, plant, unit: int, states: dict) -> None:
+        """The inputs of `unit` of `plant` (nothing while the plant is computed)."""
+        self.clear()
+        self.rows = {}
+        u = next((x for x in (plant.units if plant is not None else []) if x.number == unit), None)
+        self.setVisible(u is not None)
+        if u is None:
+            self._fit()
+            return
+        level_of = {"ok": "ok", "warn": "check", "fail": "fail"}
+        words = {"ok": _("correct"), "warn": _("to be checked"), "fail": _("out of limit")}
+        for k in range(1, u.inputs + 1):
+            slot = plant.inputs.get((u.number, k))
+            mine = list(slot.strings) if slot is not None else []
+            plan = slot.plan if slot is not None else None
+            texts = [input_name(u, k), "", "", "", "", "", ""]
+            tips = ["", "", "", "", "", "", ""]
+            texts[1] = f"{len(mine)}/{slot.allowed}" if slot is not None and slot.allowed else str(len(mine))
+            tips[1] = (_("max {n} in parallel").format(n=slot.allowed) if slot is not None and slot.allowed else "")
+            lengths = sorted({len(plant.strings[i].modules) for i in mine})
+            texts[2] = ("-" if not lengths else str(lengths[0]) if len(lengths) == 1 else
+                        f"{lengths[0]}-{lengths[-1]}")
+            if slot is not None and slot.series[1]:
+                tips[2] = _("{lo}-{hi} in series").format(lo=slot.series[0], hi=slot.series[1])
+            if isinstance(plan, optimizers.OptimizedPlan):
+                texts[3] = texts[4] = texts[5] = "-"
+                tips[3] = tips[4] = tips[5] = plant_model.optimized_line(plan)
+            elif plan is not None and mine:
+                if plan.uoc_max and plan.v_limit:
+                    texts[3] = f"{number(plan.uoc_max, 0)}/{number(plan.v_limit, 0)}"
+                    tips[3] = _("Uoc cold {u} V of {lim} V").format(u=number(plan.uoc_max, 0),
+                                                                     lim=number(plan.v_limit, 0))
+                lo_v, hi_v = plan.window
+                if plan.vmp_hot:
+                    texts[4] = f"{number(plan.vmp_hot, 0)}-{number(plan.vmp_cold, 0)}"
+                    tips[4] = (_("Umpp {hot}-{cold} V, window {lo}-{hi} V").format(
+                        hot=number(plan.vmp_hot, 0), cold=number(plan.vmp_cold, 0), lo=number(lo_v, 0),
+                        hi=number(hi_v, 0)) if lo_v or hi_v else "")
+                current = next((c.detail for c in plan.checks
+                                if c.key.startswith("isc") and c.detail and not c.key.startswith("isc_")), "")
+                if current:
+                    import re
+                    figures = re.findall(r"\d+(?:[.,]\d+)?", current)
+                    texts[5] = "/".join(figures[:2]) if len(figures) >= 2 else current
+                    tips[5] = _("Isc {detail}").format(detail=current)
+            else:
+                texts[3] = texts[4] = texts[5] = "-"
+            level = (slot.level if slot is not None and mine else "info")
+            # the state as its mark alone (the word and the reasons in the tooltip): a word would not fit the panel
+            reasons = [words.get(level, "") if mine else _("empty")]
+            reasons += ([slot.why] if slot is not None and slot.why else []) + \
+                [plant.strings[i].why for i in mine if plant.strings[i].why]
+            tips[6] = "\n".join(dict.fromkeys(r for r in reasons if r))
+            row = QTreeWidgetItem(self, texts)
+            row.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            row.setIcon(6, marks.icon(level))
+            row.setData(6, Qt.ItemDataRole.UserRole, level)                   # the state, for the tests
+            row.setData(6, Qt.ItemDataRole.AccessibleTextRole, reasons[0])
+            colour = states.get(level_of.get(level, ""), "")
+            if colour and mine:
+                row.setForeground(6, QColor(colour))
+            for column in range(1, 6):
+                row.setTextAlignment(column, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            for column, tip in enumerate(tips):
+                if tip:
+                    row.setToolTip(column, tip)
+            self.rows[(u.number, k)] = row
+        self._fit()
+        self._fit_columns()
+
+    def _fit(self) -> None:
+        """As tall as its header and rows."""
+        self.doItemsLayout()
+        height = 0 if self.header().isHidden() else self.header().height()
+        for i in range(self.topLevelItemCount()):
+            height += self.visualItemRect(self.topLevelItem(i)).height() or self.sizeHintForRow(0)
+        self.setFixedHeight(max(Size.CONTROL, height + 2 * self.frameWidth()))
 
 
 class StringSectionDelegate(SectionDelegate):
@@ -1077,8 +1263,15 @@ class InverterReference(QGroupBox):
 def install_reference(page, go) -> InverterReference:
     """The Production page with the reference in place of its groups «Inverter» and «Strings» (they are the Plant's
     now): the page's own widgets are hidden, not taken away, so that the page goes on as it was written."""
-    old = page.inv_label.parentWidget()
-    strings = page.t_min.parentWidget()
+    def group_of(widget) -> QWidget:
+        """The group a field is in: since R287 a Group keeps its fields in a body of its own, so the field's
+        parent is the body, and hiding the body alone would leave the group's header on the page."""
+        w = widget.parentWidget()
+        while w is not None and not isinstance(w, QGroupBox):
+            w = w.parentWidget()
+        return w if w is not None else widget.parentWidget()
+    old = group_of(page.inv_label)
+    strings = group_of(page.t_min)
     box = page.form_box
     at = box.indexOf(old)
     ref = InverterReference(go)
