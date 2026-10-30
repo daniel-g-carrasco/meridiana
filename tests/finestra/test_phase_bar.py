@@ -128,10 +128,9 @@ class PhaseRow(unittest.TestCase):
         rec = inverter_record(model="AC-10K", ac_power_nominal_w=10000)
         win.project.energy["inverters"] = [{"record": rec, "count": 1, "name": ""}]
         # the sizing asks the brand first (R141): answered here, a dialog left open waited for ever offscreen
-        from PySide6.QtWidgets import QInputDialog
         with mock.patch("meridiana.ui.window.catalog.brands", return_value=["Acme"]), \
                 mock.patch("meridiana.ui.window.catalog.load", return_value=(rec,)), \
-                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
+                mock.patch("meridiana.ui.brand_picker.NameDialog.ask", return_value=("Acme", True, [])):
             win.commands["inverter_auto"].trigger()
         self.assertTrue(_setup.wait_until(self.app, lambda: win.sizing_job is None))
         message = win.statusBar().currentMessage()
@@ -140,11 +139,10 @@ class PhaseRow(unittest.TestCase):
 
     def test_sizing_without_modules_laid_says_why_and_changes_nothing(self):
         from unittest import mock
-        from PySide6.QtWidgets import QInputDialog
         win = self.win
         before = win.project.to_json()
         with mock.patch.object(win.session, "good_results", return_value={}), \
-                mock.patch.object(QInputDialog, "getItem", return_value=("Acme", True)):
+                mock.patch("meridiana.ui.brand_picker.NameDialog.ask", return_value=("Acme", True, [])):
             win.commands["inverter_auto"].trigger()
         self.assertEqual(win.project.to_json(), before)
         self.assertIn("Lay the modules", win.statusBar().currentMessage())

@@ -172,5 +172,114 @@ class Impossible(unittest.TestCase):
         self.assertIn("current", result.reason)
 
 
+def real_groups(counts: list[int], module_model: str) -> list:
+    from meridiana import catalog
+    spec = ModuleSpec.from_record(catalog.search("modules", module_model, source="curated")[0])
+    out = groups(counts)
+    for g in out:
+        g.module = spec
+    return out
+
+
+def brand(name: str) -> list[dict]:
+    from meridiana import catalog
+    return [r for r in catalog.load("inverters") if r.get("manufacturer") == name]
+
+
+class SolarEdgeAndAbb(unittest.TestCase):
+    """R267: the sizing with SolarEdge and ABB/FIMER on real catalogue records, three sizes of plant."""
+
+    def assert_valid(self, result):
+        self.assertTrue(result.ok, result.reason)
+        self.assertTrue(result.search_complete)
+        self.assertFalse(result.plant.left)
+        self.assertTrue(all(plant.acceptable(s) for s in result.plant.strings))
+        self.assertFalse([c for checks in result.plant.checks.values() for c in checks if c.level == "fail"])
+
+    def test_solaredge_residential(self):
+        result = sizing.choose(project(), real_groups([14], "JAM54S40-450/LR"), brand("SolarEdge"), 1.1)
+        self.assert_valid(result)
+        self.assertEqual([(e["record"]["model"], e["count"]) for e in result.entries], [("SE6000H", 1)])
+
+    def test_solaredge_commercial_roof_is_found_without_exhausting_the_search(self):
+        # before: 200,000 steps and 30 s on SE50K, then «search limit reached»
+        result = sizing.choose(project(), real_groups([100], "LR7-54HVH-495M"), brand("SolarEdge"), 1.1)
+        self.assert_valid(result)
+        self.assertEqual([(e["record"]["model"], e["count"]) for e in result.entries], [("SE50K", 1)])
+        self.assertLess(result.search_nodes, 5000)
+        powers = sorted(len(s.modules) * 495 for s in result.plant.strings)
+        self.assertEqual(sum(powers), 49500)
+
+    def test_solaredge_plant_of_hundreds_of_kw_skips_combinations_beyond_the_dc_maximum(self):
+        # before: 1 x SE100K (175 kW DC at most) used the whole search for 372 kWp
+        result = sizing.choose(project(), real_groups([600], "JAM66D45-620/LB"), brand("SolarEdge"), 1.1)
+        self.assert_valid(result)
+        self.assertEqual([(e["record"]["model"], e["count"]) for e in result.entries], [("SE100K", 3)])
+        self.assertTrue(any("S1400" in note for note in result.notes))      # the order's condition is said
+
+    def test_solaredge_east_west_roof_needs_the_s1400_and_says_its_condition(self):
+        # 60 E + 44 W x 495 W: the 44 of the west plane fit one S1400 string only next to another on the same unit
+        groups_ = real_groups([60, 44], "LR7-54HVH-495M")
+        result = sizing.choose(project(), groups_, brand("SolarEdge"), 1.1)
+        self.assert_valid(result)
+        self.assertEqual([(e["record"]["model"], e["count"], e["optimizer"]["model"], e["per_optimizer"])
+                          for e in result.entries], [("SE50K", 1, "S1400", 2)])
+        self.assertEqual(sorted(len(s.modules) for s in result.plant.strings), [27, 33, 44])
+        self.assertTrue(any("S1400" in note for note in result.notes))
+
+    def test_a_plane_too_small_for_any_model_is_said_at_once(self):
+        result = sizing.choose(project(), real_groups([5, 5], "JAM54S40-450/LR"), brand("SolarEdge"), 1.1)
+        self.assertFalse(result.ok)
+        self.assertTrue(result.search_complete)
+        self.assertEqual(result.evaluated, 0)
+        self.assertIn("5 modules on one plane, a string needs at least 6", result.reason)
+
+    def test_abb_records_of_the_cec_say_what_is_missing_and_where_to_go(self):
+        result = sizing.choose(project(), real_groups([100], "LR7-54HVH-495M"), brand("ABB"), 1.1)
+        self.assertFalse(result.ok)
+        self.assertEqual(result.entries, [])
+        self.assertIn("number of MPPT", result.reason)
+        self.assertIn("CEC", result.reason)
+        self.assertIn("FIMER", result.reason)
+
+    def test_solaredge_records_of_the_cec_point_to_the_curated_ones(self):
+        result = sizing.choose(project(), real_groups([14], "JAM54S40-450/LR"), brand("SolarEdge Technologies Ltd"),
+                               1.1)
+        self.assertFalse(result.ok)
+        self.assertIn("SolarEdge: 13 models", result.reason)
+
+    def test_fimer_sizes_the_commercial_and_the_large_plant(self):
+        self.assert_valid(sizing.choose(project(), real_groups([100], "LR7-54HVH-495M"), brand("FIMER"), 1.1))
+        self.assert_valid(sizing.choose(project(), real_groups([600], "JAM66D45-620/LB"), brand("FIMER"), 1.1))
+
+    def test_fimer_residential_says_the_series_length_it_needs(self):
+        # PVS-10-TL: n_min = ceil(460 V / Vmp at 60 °C) = 16 > 14 modules
+        result = sizing.choose(project(), real_groups([14], "JAM54S40-450/LR"), brand("FIMER"), 1.1)
+        self.assertFalse(result.ok)
+        self.assertTrue(result.search_complete)
+        self.assertIn("PVS-10-TL, PVS-20-TL: Field 1: 14 modules, a string needs 16 to 25 in series", result.reason)
+
+
+class SharedSearch(unittest.TestCase):
+    def test_an_undecided_combination_does_not_use_up_the_others_search(self):
+        from unittest.mock import patch
+        real = plant.build
+        calls = []
+
+        def build(p, *args, **kwargs):
+            calls.append(p.energy["inverters"][0]["record"]["model"])
+            if len(calls) == 1:                 # the first combination cannot be decided
+                out = plant.Plant(search_complete=False, search_reason="limit")
+                kwargs["search"].nodes = kwargs["search"].limit
+                return out
+            return real(p, *args, **kwargs)
+        with patch.object(plant, "build", side_effect=build):
+            result = sizing.choose(project(), groups([100]), [inverter("20K", 20), inverter("25K", 25),
+                                                                inverter("50K", 50)], 1.1)
+        self.assertTrue(result.ok, result.reason)
+        self.assertEqual(len(result.undecided), 1)
+        self.assertTrue(any("could not be decided" in note for note in result.notes))
+
+
 if __name__ == "__main__":
     unittest.main()

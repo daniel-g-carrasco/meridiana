@@ -58,6 +58,36 @@ def state_names() -> dict:
     return {"ok": _("correct"), "check": _("to be checked"), "fail": _("out of the window or without input")}
 
 
+# Warnings that state a condition of the order, not a fault of the string: the S1400 is valid only on an inverter
+# variant without integrated DC fuses (DS-000205-EU p. 2, note 4). A proposal may use it; the string stays yellow
+# so that the condition is read, and the sizing says it.
+CONDITIONS = frozenset({"opt_fuses"})
+
+
+def acceptable(s) -> bool:
+    """Whether a string may be part of an automatic proposal: every check passed, or only CONDITIONS warned."""
+    if s.state == "ok":
+        return True
+    if s.state != "check" or s.lost or s.plan is None:
+        return False
+    checks = s.plan.checks
+    warns = [c for c in checks if c.level == "warn"]
+    return (bool(warns) and all(c.key in CONDITIONS for c in warns)
+            and not any(c.level == "fail" or not c.ok for c in checks))
+
+
+def conditions_of(strings: list) -> list[str]:
+    """The CONDITIONS the strings carry, each said once, with its source."""
+    out = []
+    for s in strings:
+        for c in (s.plan.checks if s.plan is not None else []):
+            if c.key in CONDITIONS and c.level == "warn":
+                text = f"{c.label}: {c.detail} ({c.source})" if c.source else f"{c.label}: {c.detail}"
+                if text not in out:
+                    out.append(text)
+    return out
+
+
 @dataclass
 class Unit:
     """One inverter of the plant: its number over the whole plant (from 1), the entry of energy["inverters"] it
@@ -803,8 +833,18 @@ def _optimizer_group_choices(module, unit, n, cond):
                    module, ch.optimizer, per, cond.t_min, unit.fixed))}
     for count in range(max(rules.opt_min, -(-n // ch.per)), min(n, rules.opt_max) + 1):
         sizes = ((2,) * (n - count) + (1,) * (2 * count - n)) if ch.per == 2 else (1,) * n
+        if ch.per == 2 and 1 < sizes.count(1) < len(sizes):
+            continue                    # one single module per string at most, or all (optimizers.string_plan)
         if set(sizes) <= allowed:
             yield sizes
+
+
+def _representable(total: int, lengths: set) -> bool:
+    """Whether `total` modules split into strings whose lengths are all in `lengths` (any number of each)."""
+    reach = [True] + [False] * total
+    for t in range(1, total + 1):
+        reach[t] = any(n <= t and reach[t - n] for n in lengths)
+    return reach[total]
 
 
 def _search_assignment(project, units, groups, settings, cond, out, budget, all_groups=None):
@@ -824,6 +864,7 @@ def _search_assignment(project, units, groups, settings, cond, out, budget, all_
     owners = [None] * len(slots)
     currents = [0.0] * len(units)
     powers = [0.0] * len(units)
+    slot_powers = [0.0] * len(slots)                    # W at STC on each input (a Synergy unit's own limit)
     for j, (u, k) in enumerate(slots):
         mine = [s for s in initial if (s.inverter, s.mppt) == (u.number, k)]
         counts[j] = len(mine)
@@ -834,6 +875,7 @@ def _search_assignment(project, units, groups, settings, cond, out, budget, all_
             specs = [lookup[key][0].module for key in s.keys if key in lookup]
             currents[u.number - 1] += max((m.imp for m in specs), default=0)
             powers[u.number - 1] += sum(m.pmax for m in specs)
+            slot_powers[j] += sum(m.pmax for m in specs)
     asked_n = int(settings.get("n_series") or 0)
     asked_per = list(settings.get("per_mppt") or [])
     domains = {}
@@ -850,6 +892,11 @@ def _search_assignment(project, units, groups, settings, cond, out, budget, all_
                 ch, rules = u.choice, u.choice.rules
                 lo = max(1, rules.opt_min, rules.mod_min)
                 hi = min(pool, rules.opt_max * ch.per, rules.mod_max or pool)
+                # No count of strings lets a string carry more than the table's highest limit
+                # (optimizers.connected_limit never exceeds it): longer strings are never valid leaves.
+                ceiling = max(rules.p_one, rules.p_many, rules.p_cont)
+                if g.module.pmax > 0 and ceiling < float("inf"):
+                    hi = min(hi, int(ceiling / g.module.pmax + 1e-9))
                 cap = u.fixed.pairs or pool // max(1, lo)
             else:
                 lo, hi = stringing.series_range(g.module, u.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
@@ -867,6 +914,18 @@ def _search_assignment(project, units, groups, settings, cond, out, budget, all_
             if lengths:
                 domains[i, j] = (lengths, cap)
     remaining = [len(pairs) for _g, pairs, _paired in buckets]
+    # A necessary condition, cheap and exact: every pool of modules (one signature along the serpentine, one bucket
+    # otherwise) is a sum of string lengths some input allows it; without it no search can succeed (R267: one
+    # optimizer family that cannot string a plane used the whole search before the next family was tried).
+    pools = defaultdict(list)
+    for i, (g, _pairs, _paired) in enumerate(buckets):
+        pools[_group_signature(g) if strategy == "serpentine" else i].append(i)
+    for indices in pools.values():
+        total = sum(remaining[i] for i in indices)
+        lengths = {n for i in indices for j in range(len(slots)) if (i, j) in domains for n in domains[i, j][0]}
+        if total and not _representable(total, lengths):
+            out.search_nodes = budget.nodes
+            return False
     chosen = []
     failed = set()
     by_signature = defaultdict(list)
@@ -923,7 +982,7 @@ def _search_assignment(project, units, groups, settings, cond, out, budget, all_
         trial = Plant(units=units, strings=found)
         _number_strings(trial)
         _check(project, all_groups, cond, trial, None)
-        valid = (all(s.state == "ok" for s in trial.strings)
+        valid = (all(acceptable(s) for s in trial.strings)
                  and not any(c.level == "fail" or c.key == "imp_total" and c.level == "warn"
                              for checks in trial.checks.values() for c in checks))
         return found if valid else None
@@ -977,11 +1036,15 @@ def _search_assignment(project, units, groups, settings, cond, out, budget, all_
                         continue
                     if u.optimized and u.fixed.p_dc_max and powers[u.number - 1] + power > u.fixed.p_dc_max + 1e-9:
                         continue
+                    if (u.optimized and u.fixed.units > 1 and u.fixed.p_dc_max_unit
+                            and slot_powers[j] + power > u.fixed.p_dc_max_unit + 1e-9):
+                        continue
                     old_owner = owners[j]
                     owners[j] = owner
                     counts[j] += q
                     currents[u.number - 1] += current
                     powers[u.number - 1] += power
+                    slot_powers[j] += power
                     result = None
                     for allocation in allocations(sources, q * n, depth):
                         for source, take in allocation:
@@ -998,6 +1061,7 @@ def _search_assignment(project, units, groups, settings, cond, out, budget, all_
                         if result is not None:
                             break
                     powers[u.number - 1] -= power
+                    slot_powers[j] -= power
                     currents[u.number - 1] -= current
                     counts[j] -= q
                     owners[j] = old_owner
@@ -1117,7 +1181,7 @@ def _propose(units, groups, settings, cond, out, busy=None, loaded=None, lengths
                 if not trial.search_complete:
                     out.search_complete, out.search_reason = False, trial.search_reason
                     break
-                if not trial.left and all(s.state == "ok" for s in trial.strings):
+                if not trial.left and all(acceptable(s) for s in trial.strings):
                     best = trial
                     break
         except stringing.SearchStopped:
@@ -1144,7 +1208,7 @@ def _propose(units, groups, settings, cond, out, busy=None, loaded=None, lengths
     if project is not None and not preview.left and preview.strings:
         _number_strings(preview)
         _check(project, all_groups or groups, cond, preview, None)
-        if (all(s.state == "ok" and not target_mismatch(s) for s in preview.strings)
+        if (all(acceptable(s) and not target_mismatch(s) for s in preview.strings)
                 and not any(c.level == "fail" or c.key == "imp_total" and c.level == "warn"
                             for checks in preview.checks.values() for c in checks)):
             try:

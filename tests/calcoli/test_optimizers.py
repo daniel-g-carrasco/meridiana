@@ -86,6 +86,24 @@ class TheInverter(unittest.TestCase):
         self.assertEqual((fv.grid, fv.units, fv.unit_model, fv.v_string), ("three_phase_400", 2, "SE25K", 750.0))
         self.assertEqual(set(fv.inferred), {"grid", "units", "unit model", "voltage"})
 
+    def test_a_synergy_unit_has_its_own_dc_maximum_as_printed(self):
+        # DS-000297-EU p. 1, «Maximum DC Power (Module STC) Inverter / Synergy Unit»: SE100K 175,000 / 58,300 W
+        self.assertEqual(optimizers.fixed_voltage(inverter("SE100K")).p_dc_max_unit, 58300.0)
+        self.assertEqual(optimizers.fixed_voltage(inverter("SE50K")).p_dc_max_unit, 43750.0)
+        self.assertEqual(optimizers.fixed_voltage(inverter("SE10K")).p_dc_max_unit, 15000.0)
+
+    def test_a_synergy_unit_above_its_dc_maximum_fails_even_within_the_inverters(self):
+        # R267: 49.5 kWp all on one SE25K unit of an SE50K was green (87.5 kW for the whole inverter)
+        fv = optimizers.fixed_voltage(inverter("SE50K"))
+        opt = optimizers.Optimizer.from_record(optimizer_rec("S1000"))
+        r, _why = optimizers.rules_for(opt, fv)
+        checks = optimizers.unit_checks("SE50K, Synergy unit 1", fv, opt, 2, [18315.0, 17820.0, 13365.0],
+                                        [19, 18, 14], 0.0, r)
+        bad = [c for c in checks if c.key == "opt_unit_dc_max"]
+        self.assertEqual(len(bad), 1)
+        self.assertFalse(bad[0].ok)
+        self.assertIn("DS-000297-EU", bad[0].source)
+
 
 class TheTables(unittest.TestCase):
     """The rules of the strings by optimizer and inverter, as SolarEdge's tables print them (DS-000091-IT p. 3,
@@ -242,6 +260,54 @@ class TheProposal(unittest.TestCase):
         self.assertEqual(sorted(per_unit), [3, 4])
         self.assertTrue(all(s.state == "ok" for s in out.strings), [s.why for s in out.strings])
         self.assertEqual(out.strings[0].plan.optimizers, math.ceil(sizes[0] / 2))
+
+    def test_a_commercial_roof_on_a_synergy_inverter_is_found_quickly_within_each_unit(self):
+        # R267: 100 x 495 W with S1000 on an SE50K exhausted 200,000 steps before; a valid plan exists
+        from meridiana.energy import stringing
+        rec = catalog.search("modules", "LR7-54HVH-495M", source="curated")[0]
+        g = group(grid(9, 12)[:100])
+        g.module = ModuleSpec.from_record(rec)
+        budget = stringing.SearchBudget(20000)
+        out = plant.build(project("SE50K", optimizer="S1000", per=2), groups=[g], search=budget)
+        self.assertTrue(out.search_complete, out.search_reason)
+        self.assertFalse(out.left)
+        self.assertTrue(all(plant.acceptable(s) for s in out.strings), [s.why for s in out.strings])
+        for k in (1, 2):
+            self.assertLessEqual(out.inputs[(1, k)].power_w, 43750.0)
+        self.assertFalse([c for c in out.checks[1] if c.level == "fail"])
+
+    def test_one_single_module_per_string_of_two_module_optimizers_or_all(self):
+        # DS-000105-IT p. 3, note 2: one optimizer may take a single module if every one does, or if it is the only one
+        fv = optimizers.fixed_voltage(inverter("SE50K"))
+        opt = optimizers.Optimizer.from_record(optimizer_rec("S1000"))
+        r, _why = optimizers.rules_for(opt, fv)
+        m = module(pmax=495, voc=40.64, isc=15.43, imp=14.73, vmp=33.62, beta_voc=-0.2)
+
+        def singles_check(sizes):
+            plan = optimizers.string_plan(m, opt, 2, fv, r, sum(sizes), 1, 0.0, -10.0, group_sizes=sizes)
+            return [c for c in plan.checks if c.key == "opt_singles"]
+        self.assertEqual(singles_check([2] * 13 + [1]), [])
+        self.assertEqual(singles_check([1] * 28), [])
+        bad = singles_check([2] * 12 + [1, 1, 1])
+        self.assertEqual(len(bad), 1)
+        self.assertFalse(bad[0].ok)
+        self.assertIn("note 2", bad[0].source)
+
+    def test_a_plane_that_no_string_length_sums_to_is_rejected_without_a_search(self):
+        self.assertFalse(plant._representable(44, set(range(27, 38))))
+        self.assertTrue(plant._representable(60, set(range(27, 38))))
+        self.assertTrue(plant._representable(0, set()))
+
+    def test_the_s1400_fuse_condition_is_acceptable_and_a_loss_warning_is_not(self):
+        from meridiana.energy import stringing
+        plan = stringing.StringPlan(n_series=30, strings_per_mppt=[1])
+        s = plant.String(1, 1, [("s1", "0:0", (0, 0))], state="check", plan=plan)
+        plan.checks = [stringing.Check("opt_fuses", "S1400", True, "fuses", "warn")]
+        self.assertTrue(plant.acceptable(s))
+        plan.checks.append(stringing.Check("opt_imp", "Imp", True, "clipped", "warn"))
+        self.assertFalse(plant.acceptable(s))
+        s.state = "fail"
+        self.assertFalse(plant.acceptable(s))
 
     def test_the_optimizers_are_proposed_when_none_is_chosen_and_it_is_said(self):
         from meridiana import checks

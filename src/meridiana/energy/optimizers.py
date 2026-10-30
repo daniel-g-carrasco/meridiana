@@ -164,6 +164,7 @@ class FixedVoltage:
     home_hub: bool
     datasheet: str
     inferred: tuple = ()            # what Meridiana inferred: ("grid", "voltage", "unit model", "units")
+    p_dc_max_unit: float = 0.0      # W, the maximum DC power of one Synergy unit at STC (0: unknown)
 
     @property
     def unit_pac(self) -> float:
@@ -171,6 +172,10 @@ class FixedVoltage:
 
 
 SYNERGY = {"SE50K": (2, "SE25K"), "SE66.6K": (2, "SE33.3K"), "SE90K": (3, "SE30K"), "SE100K": (3, "SE33.3K")}
+# W, «Maximum DC Power (Module STC) Inverter / Synergy Unit», the Synergy unit's figure as printed (DS-000297-EU,
+# 05/04/2026, p. 1): SE100K's 58,300 W is not 175,000 / 3, so the figure is read, never divided
+SYNERGY_UNIT_DC = {"SE50K": 43750.0, "SE66.6K": 58275.0, "SE90K": 52500.0, "SE100K": 58300.0}
+SYNERGY_DS = "SolarEdge DS-000297-EU (05/04/2026)"
 COMMERCIAL = ("SE15K", "SE16K", "SE17K", "SE20K", "SE25K", "SE27.6K", "SE30K", "SE33.3K", "SE40K")
 # the string voltage of a commercial column: the continuous power per string over the optimizer's output current of
 # the tables (SE27.6K 13950 W / 18 A = 775 V; SE30K and SE40K 15300 W / 18 A = 850 V), the others 750 V as the
@@ -228,10 +233,14 @@ def fixed_voltage(rec: dict | None) -> FixedVoltage | None:
         voltage = COLUMN_VOLTAGE.get(unit_model) or rec.get("dc_voltage_nominal_v") or GRID_VOLTAGE[grid]
     pairs = rec.get("dc_input_pairs")
     series = f"{rec.get('series') or ''} {model}"
+    p_dc_max = float(rec.get("dc_power_max_w") or 0.0)
+    unit_dc = rec.get("dc_power_max_unit_w")
+    if unit_dc.__class__ not in (int, float) or unit_dc <= 0:
+        unit_dc = SYNERGY_UNIT_DC.get(kw, 0.0) if int(units) > 1 else p_dc_max
     revision = str(rec.get("datasheet_revision") or "").strip()
     return FixedVoltage(model=model, grid=grid, unit_model=unit_model, v_string=float(voltage), units=int(units),
                         pac=float(rec.get("ac_power_nominal_w") or rec.get("pac") or 0.0),
-                        p_dc_max=float(rec.get("dc_power_max_w") or 0.0),
+                        p_dc_max=p_dc_max, p_dc_max_unit=float(unit_dc),
                         pairs=pairs if pairs.__class__ is int and pairs > 0 else 0,
                         home_hub="home hub" in series.casefold(),
                         datasheet=f"{rec.get('manufacturer', '')} {revision}".strip() if revision else
@@ -302,6 +311,7 @@ P_COM_TABLE = {"SE16K": (14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 2),
                "SE33.3K": (14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 3),
                "SE40K": (14, 27, 30, 60, 15300.0, 17550.0, 20300.0, 3)}
 P_COM_MODELS = ("P800P", "P850", "P950", "P1100")
+SINGLE_MODULE_NOTE = {"S1000": "2", "S1200": "2", "S1400": "9"}     # the note of the rule, by datasheet
 
 
 def _residential(opt: Optimizer, inv: FixedVoltage) -> Rules:
@@ -467,6 +477,14 @@ def string_plan(module, opt: Optimizer, per: int, inv: FixedVoltage, rules: Rule
                                  rules.mod_min <= modules <= rules.mod_max,
                                  _("{n}, from {lo} to {hi}").format(n=modules, lo=rules.mod_min, hi=rules.mod_max),
                                  "", rules.source))
+    singles = sum(1 for g in groups if len(g) == 1)
+    if per == 2 and rules.commercial and 1 < singles < n_opt:
+        # «a power optimizer may be connected to a single PV module if each one is, or if it is the only one in the
+        # string» (DS-000105-IT p. 3, note 2; DS-000205-EU p. 3, note 9; DS-000012-ENG p. 3, note 6)
+        note = SINGLE_MODULE_NOTE.get(opt.model.upper(), "6")
+        out.checks.append(_check("opt_singles", _("At most one optimizer with a single module in the string"), False,
+                                 _("{n} optimizers with a single module: either one, or all of them").format(
+                                     n=singles), "", f"{rules.source}, note {note}"))
     ok = power <= limit + 1e-6
     detail = _("{p} W of {lim} W at STC").format(p=number(power, 0, grouping=True),
                                                  lim=number(limit, 0, grouping=True) if math.isfinite(limit) else "∞")
@@ -546,9 +564,16 @@ def _plan_steps(rec: Record, module, opt: Optimizer, per: int, inv: FixedVoltage
 def unit_checks(name: str, inv: FixedVoltage, opt: Optimizer | None, per: int, powers: list[float],
                 optimizers: list[int], total_dc_w: float, rules: Rules | None) -> list:
     """The checks of an inverter unit (a Synergy unit, or the inverter): the optimizers' difference between its
-    strings, the strings on its input pairs; and of the whole inverter (`total_dc_w`, given only once): its maximum DC
-    power, the least of the commercial ones, 1:1 on the Home Hub."""
+    strings, the strings on its input pairs, a Synergy unit's own maximum DC power; and of the whole inverter
+    (`total_dc_w`, given only once): its maximum DC power, the least of the commercial ones, 1:1 on the Home Hub."""
     out = []
+    if inv.units > 1 and inv.p_dc_max_unit and powers:
+        unit_dc = sum(powers)
+        out.append(_check("opt_unit_dc_max", _("{name}: DC power within the Synergy unit's maximum").format(name=name),
+                          unit_dc <= inv.p_dc_max_unit + 1e-6,
+                          _("{p} W of {lim} W at STC").format(p=number(unit_dc, 0, grouping=True),
+                                                              lim=number(inv.p_dc_max_unit, 0, grouping=True)),
+                          "", f"{SYNERGY_DS}, p. 1" if _kw_model(inv.model) in SYNERGY_UNIT_DC else inv.datasheet))
     if rules is not None and rules.diff_opt and len(optimizers) > 1:
         gap = max(optimizers) - min(optimizers)
         out.append(_check("opt_gap", _("{name}: strings within {n} optimizers of each other").format(
