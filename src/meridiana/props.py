@@ -34,6 +34,17 @@ DEFAULT_COLOURS = {
     "metal": (0.42, 0.46, 0.50),
     "glass": (0.35, 0.62, 0.72),
     "dark": (0.12, 0.16, 0.19),
+    "person": (0.25, 0.43, 0.62),
+    "skin": (0.76, 0.55, 0.40),
+    "helmet": (0.95, 0.70, 0.12),
+}
+
+PERSON_KINDS = ("adult", "walking", "child", "worker")
+PERSON_DEFAULTS = {
+    "adult": (0.55, 0.32, 1.75),
+    "walking": (0.58, 0.55, 1.75),
+    "child": (0.42, 0.26, 1.20),
+    "worker": (0.58, 0.34, 1.75),
 }
 
 OBSTACLE_KINDS = ("chimney", "vent", "skylight", "dome_skylight", "plant", "antenna", "dish", "tank",
@@ -382,6 +393,53 @@ def obstacle(kind="other", width=None, depth=None, height=None, rotation=0.0, co
     return _rotate_qt(builder.arrays(), float(rotation))
 
 
+def _person_dimensions(kind, width, depth, height):
+    if kind not in PERSON_KINDS:
+        raise ValueError(f"unknown person kind: {kind}")
+    default_width, default_depth, default_height = PERSON_DEFAULTS[kind]
+    height = _positive(default_height if height is None else height, "height")
+    width = _positive(default_width * height / default_height if width is None else width, "width")
+    depth = _positive(default_depth * height / default_height if depth is None else depth, "depth")
+    return width, depth, height
+
+
+def person(kind="adult", width=None, depth=None, height=None, rotation=0.0, colours=None):
+    """A standing adult, walking adult, child or helmeted worker, with anatomical reference proportions."""
+    width, depth, height = _person_dimensions(kind, width, depth, height)
+    cloth, skin = _colour(colours, "person"), _colour(colours, "skin")
+    dark = _colour(colours, "dark")
+    builder = _Builder()
+    walking = kind == "walking"
+    stride = 1.0 if walking else 0.0
+
+    _box(builder, (0.0, height * 0.625, -depth * 0.125), (width * 0.55, height * 0.39, depth * 0.75), cloth)
+    _box(builder, (0.0, height * 0.45, 0.0), (width * 0.42, height * 0.10, depth * 0.55), dark)
+    for side in (-1.0, 1.0):
+        hip_z = -side * depth * 0.12 * stride
+        foot_z = side * depth * (0.25 if walking else 0.15)
+        _rod(builder, (side * width * 0.15, height * 0.47, hip_z),
+             (side * width * 0.15, height * 0.08, foot_z), width * 0.065, dark)
+        _box(builder, (side * width * 0.15, height * 0.04, foot_z),
+             (width * 0.14, height * 0.08, depth * (0.50 if walking else 0.70)), dark)
+        hand_x = side * width * 0.435
+        hand_z = -side * depth * 0.20 * stride
+        _rod(builder, (side * width * 0.28, height * 0.78, 0.0),
+             (hand_x, height * 0.43, hand_z), width * 0.05, cloth)
+        _box(builder, (hand_x, height * 0.40, hand_z), (width * 0.13, height * 0.08, depth * 0.18), skin)
+
+    _rod(builder, (0.0, height * 0.77, 0.0), (0.0, height * 0.86, 0.0), width * 0.07, skin)
+    head_radius = width * (0.18 if kind == "child" else 0.15)
+    head_bottom = height * (0.80 if kind == "child" else (0.82 if kind == "worker" else 0.84))
+    head_top = height * (0.96 if kind == "worker" else 1.0)
+    _ellipsoid(builder, head_bottom, head_top, head_radius, skin, z_scale=depth * 0.32 / head_radius)
+    if kind == "worker":
+        helmet_radius = width * 0.19
+        _lathe(builder, ((height * 0.93, helmet_radius), (height * 0.97, helmet_radius * 0.88),
+                         (height, 0.0)), 8, _colour(colours, "helmet"),
+               z_scale=depth * 0.38 / helmet_radius)
+    return _rotate_qt(builder.arrays(), float(rotation))
+
+
 def shadow_solid(kind, rotation=0.0, **dimensions):
     """Simplified convex shadow hulls, in model coordinates, contained in the decorative envelope."""
     if kind in TREE_KINDS:
@@ -392,4 +450,11 @@ def shadow_solid(kind, rotation=0.0, **dimensions):
         width, depth, height = _obstacle_dimensions(kind, dimensions.get("width"), dimensions.get("depth"),
                                                     dimensions.get("height"))
         return [_rotate_model(_shadow_box(width, depth, 0.0, height), rotation)]
+    if kind in PERSON_KINDS:
+        width, depth, height = _person_dimensions(kind, dimensions.get("width"), dimensions.get("depth"),
+                                                  dimensions.get("height"))
+        head_bottom = height * (0.80 if kind == "child" else 0.82)
+        solids = (_shadow_box(width * 0.55, depth * 0.75, height * 0.43, height * 0.82),
+                  _shadow_box(width * 0.36, depth * 0.64, head_bottom, height))
+        return [_rotate_model(corners, rotation) for corners in solids]
     raise ValueError(f"unknown prop kind: {kind}")

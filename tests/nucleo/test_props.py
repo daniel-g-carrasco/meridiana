@@ -183,5 +183,51 @@ class Obstacles(MeshChecks):
                 props.obstacle("plant", **dimensions)
 
 
+class People(MeshChecks):
+    CASES = (
+        ("adult", (0.55, 0.32, 1.75), (0.60, 0.35, 1.90)),
+        ("walking", (0.58, 0.55, 1.75), (0.62, 0.60, 1.88)),
+        ("child", (0.42, 0.26, 1.20), (0.38, 0.24, 1.10)),
+        ("worker", (0.58, 0.34, 1.75), (0.62, 0.36, 1.86)),
+    )
+
+    def test_every_person_has_the_requested_dimensions_and_a_valid_mesh(self):
+        for kind, first, second in self.CASES:
+            for width, depth, height in (first, second):
+                with self.subTest(kind=kind, width=width, depth=depth, height=height):
+                    shape = props.person(kind, width=width, depth=depth, height=height)
+                    pos, _nor, _col = self.assert_mesh(shape, props.PERSON_TRIANGLE_BUDGET)
+                    self.assert_bounds(pos, width, height, depth)
+
+    def test_default_adults_and_child_have_their_reference_heights(self):
+        self.assertAlmostEqual(float(props.person("adult")[0][:, 1].max()), 1.75, places=6)
+        self.assertAlmostEqual(float(props.person("walking")[0][:, 1].max()), 1.75, places=6)
+        self.assertAlmostEqual(float(props.person("child")[0][:, 1].max()), 1.20, places=6)
+        self.assertAlmostEqual(float(props.person("worker")[0][:, 1].max()), 1.75, places=6)
+
+    def test_every_person_is_deterministic_and_has_a_contained_shadow(self):
+        for kind, first, _second in self.CASES:
+            width, depth, height = first
+            with self.subTest(kind=kind):
+                one = props.person(kind, width=width, depth=depth, height=height)
+                two = props.person(kind, width=width, depth=depth, height=height)
+                for a, b in zip(one, two, strict=True):
+                    np.testing.assert_array_equal(a, b)
+                shadow = props.shadow_solid(kind, width=width, depth=depth, height=height)
+                self.assert_shadow_inside(shadow, one[0])
+
+    def test_people_accept_theme_colours_and_rotation(self):
+        shape = props.person("worker", colours={"person": "#406080", "helmet": (0.95, 0.7, 0.1)})
+        self.assertTrue(np.any(np.all(np.isclose(shape[2], (64 / 255, 96 / 255, 128 / 255)), axis=1)))
+        self.assertTrue(np.any(np.all(np.isclose(shape[2], (0.95, 0.7, 0.1)), axis=1)))
+        turned = props.person("walking", width=0.58, depth=0.55, rotation=90.0)[0]
+        self.assert_bounds(turned, 0.55, 1.75, 0.58)
+
+    def test_invalid_person_dimensions_are_rejected(self):
+        for dimensions in ({"width": 0.0}, {"depth": -1.0}, {"height": 0.0}):
+            with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
+                props.person("adult", **dimensions)
+
+
 if __name__ == "__main__":
     unittest.main()
