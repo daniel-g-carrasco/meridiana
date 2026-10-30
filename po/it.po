@@ -19561,3 +19561,7 @@ msgstr "{n} ottimizzatori con un solo modulo: o uno, o tutti"
 #: src/meridiana/updates.py src/meridiana/ui/update_controller.py
 msgid "No version of Meridiana has been published yet."
 msgstr "Nessuna versione di Meridiana è stata ancora pubblicata."
+
+#: src/meridiana/ui/assistant_chat.py:508
+msgid "Set up another assistant…"
+msgstr "Configura un altro assistente…"

@@ -7,6 +7,7 @@ rows, page margins and initial focus are explicit choices for the caller.
 
 from __future__ import annotations
 
+import shiboken6
 from PySide6.QtCore import QEvent, QModelIndex, QObject, QPoint, QRect, QRectF, Qt, QTimer
 from PySide6.QtGui import QFont, QPainter, QPainterPath, QPalette, QPixmap
 from PySide6.QtWidgets import QApplication, QStyle, QStyleOption, QTableView, QTreeView, QWidget
@@ -295,6 +296,10 @@ class TableStyle(QObject):
         self._follow_header()
 
     def _follow_header(self) -> None:
+        # a page with tables torn down (a test's dispose, the process ending) still sends a Resize after its header
+        # has gone: RuntimeError, «Internal C++ object (QHeaderView) already deleted»
+        if not shiboken6.isValid(self.header) or not shiboken6.isValid(self.gutter_header):
+            return
         self.gutter_header.setFixedHeight(0 if self.header.isHidden() else self.header.height())
         if hasattr(self, "last_row_line"):
             self.last_row_line.follow()

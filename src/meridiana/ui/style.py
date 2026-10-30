@@ -93,8 +93,27 @@ def shared() -> MeridianaStyle:
         app = QApplication.instance()
         if app is not None:
             style.setParent(app)
+            _watch_fields(style)
         _SHARED.append(style)
     return _SHARED[0]
+
+
+def _watch_fields(owner) -> None:
+    """Every number and date field of the process gets its text inset when Qt polishes it (R283): the sheet's
+    padding never reaches the line edit inside a QAbstractSpinBox, and `pad_fields` was called place by place
+    (the window once, the properties' pages, the gallery), so a field made later in a dialog (the canopy, the
+    templates, the site) stood with its text on the edge. One handler on the application's filter (ui/app_events),
+    alive with the style."""
+    from PySide6.QtCore import QEvent
+    from PySide6.QtWidgets import QAbstractSpinBox
+    from .app_events import events
+
+    def polished(obj, _event) -> bool:
+        if isinstance(obj, QAbstractSpinBox):
+            pad_fields(obj)
+        return False
+
+    events().on((QEvent.Type.Polish,), owner, polished)
 
 
 class Group(QGroupBox):

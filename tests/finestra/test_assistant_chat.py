@@ -596,7 +596,7 @@ class Cloud(unittest.TestCase):
         self.assertEqual(self.client.calls, [])
         self.assertIn("No API key for this provider", self.a.conversation.toPlainText())
         self.assertIsNotNone(self.chat.setup_card)
-        self.assertFalse(any(action.isEnabled() for action in self.chat.model_actions.values()))
+        self.assertFalse(any(action.isVisible() for action in self.chat.model_actions.values()))   # R288: not listed
         self.assertIn("Risponde il modello locale.", self.a.conversation.toPlainText())
 
     def test_with_a_cloud_model_configured_the_guide_does_not_come_when_the_local_one_fails(self):
@@ -623,7 +623,28 @@ class Cloud(unittest.TestCase):
         self.app.processEvents()
         self.assertIn("I have not found a local model yet", self.a.conversation.toPlainText())
         self.assertIsNone(self.chat.setup_card)
-        self.assertTrue(self.chat.provider_actions["mistral"].isEnabled())      # one click away in the chip's menu
+        self.assertTrue(self.chat.provider_actions["mistral"].isVisible())      # one click away in the chip's menu
+
+    def test_the_menu_lists_only_the_assistants_configured_and_one_line_sets_up_another(self):
+        """R288 (Daniel, 30/10/2026): «Meridio non deve mostrare tutti gli assistenti configurabili nelle
+        impostazioni nel suo fumetto ma solo quelli configurati»."""
+        from meridiana.assistant import keys, setup
+        self.chat.apply_preferences({"assistant_provider": "local", "assistant_cloud_profiles": {}})
+        self.chat.refresh()
+        self.assertTrue(self.chat.actions["local"].isVisible())
+        self.assertFalse(any(a.isVisible() for a in self.chat.provider_actions.values()))
+        self.assertFalse(any(a.isVisible() for a in self.chat.model_actions.values()))
+        self.assertEqual(self.chat.setup_action.text(), "Set up a model…")
+        keys.put("mistral", "test-mistral-key")
+        setup.keys_changed()
+        self.chat.apply_preferences({"assistant_cloud_profiles": {
+            "mistral": {"model": "mistral-small-latest", "endpoint": "https://api.mistral.ai/v1"}}})
+        self.chat.refresh()
+        shown = [p for p, a in self.chat.provider_actions.items() if a.isVisible()]
+        self.assertEqual(shown, ["mistral"])
+        self.assertFalse(any(a.isVisible() for a in self.chat.model_actions.values()))     # Claude not configured
+        self.assertEqual(self.chat.setup_action.text(), "Set up another assistant…")
+        self.assertNotIn("configure first", "".join(a.text() for a in self.chat.menu.actions()))
 
     def test_nothing_leaves_without_consent_and_then_without_the_names(self):
         from meridiana.assistant import keys

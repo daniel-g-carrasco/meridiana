@@ -495,15 +495,17 @@ class Chat(QObject):
         configured = self.ready.available(self.cfg)
         # one mark in the menu's exclusive group: a Claude model of the menu, else the provider's line
         on_menu_model = self.cloud_id() == "anthropic" and self.cloud_profile()["model"] in self.model_actions
+        # only the assistants configured are on the menu (R288, Daniel 30/10/2026): the others are reached from
+        # the one line «Set up another assistant…», never listed as choices that cannot be made
         for model, action in self.model_actions.items():
             action.setChecked(self.wants_cloud() and self.cloud_id() == "anthropic" and
                               self.cloud_profile()["model"] == model)
-            action.setEnabled("anthropic" in configured)
+            action.setVisible("anthropic" in configured)
         for provider, action in self.provider_actions.items():
-            action.setEnabled(provider in configured)
+            action.setVisible(provider in configured)
             if not (provider == "anthropic" and on_menu_model):
                 action.setChecked(self.wants_cloud() and self.cloud_id() == provider)
-            action.setText(setup.CLOUD[provider].name + ("" if provider in configured else _(" (configure first)")))
+        self.setup_action.setText(_("Set up another assistant…") if configured else _("Set up a model…"))
         self.reserve_action.blockSignals(True)
         self.reserve_action.setChecked(bool(getattr(self.host.project, "reserved", False)))
         self.reserve_action.blockSignals(False)
@@ -532,7 +534,7 @@ class Chat(QObject):
             group.addAction(action)
             action.triggered.connect(lambda _c=False, p=provider: self.choose(p))
             self.provider_actions[provider] = action
-        menu.addAction(_("Set up a model…"), self.show_setup)
+        self.setup_action = menu.addAction(_("Set up a model…"), self.show_setup)
         menu.addSeparator()
         self.reserve_action = menu.addAction(_("Reserved project: never to the cloud"))
         self.reserve_action.setCheckable(True)

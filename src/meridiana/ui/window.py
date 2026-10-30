@@ -3153,7 +3153,7 @@ class MainWindow(QMainWindow):
             self.tell(_("The plant could not be read for the energy pages: {error}").format(error=error))
             arrays = []
         self.energy_page.show_project(self.project, arrays)
-        for page in (self.energy_page, self.consumption_page):
+        for page in (self.energy_page, self.consumption_page, self.economics_page):     # R292: its basis row too
             page.show_basis((self.energy or {}).get("basis"))
         if hasattr(self, "plant_page"):
             self.plant_page.show_inverter(system.describe(self.project.energy))
@@ -3403,7 +3403,7 @@ class MainWindow(QMainWindow):
         if not self.session.energy_done(generation, out):
             return
         self._computing(False)
-        for page in (self.energy_page, self.consumption_page):
+        for page in (self.energy_page, self.consumption_page, self.economics_page):     # R292: its basis row too
             page.show_basis(out.get("basis"))
         climate = self.project.climate or {}
         refresh = self.energy_job.refresh if self.energy_job is not None else False

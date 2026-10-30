@@ -218,9 +218,25 @@ def chart_card(tabs: QTabWidget) -> QFrame:
     card = QFrame()
     card.setObjectName("chart-card")
     box = QVBoxLayout(card)
-    box.setContentsMargins(8, 6, 8, 8)
+    # the pills centred in their band (R284): the bar keeps XS above and below each pill, the card adds XS
+    # above the bar and the pane's line stands XS under it, so a pill has M of air on both sides; under the
+    # line every tab's content starts M lower (R285: one rule for every tab, docs/design/sistema-grafico.md)
+    box.setContentsMargins(Space.M, Space.XS, Space.M, Space.M)
+    tabs.setStyleSheet(f"QTabWidget::pane {{ top: {Space.XS}px; padding-top: {Space.M}px; }}")
     box.addWidget(tabs)
     return card
+
+
+def tab_stack(widgets) -> QWidget:
+    """Two or three charts (and a note) in one tab, one under the other: no margins of their own, the card and
+    the pane give them (R285), L between them as between the parts of the results."""
+    page = QWidget()
+    box = QVBoxLayout(page)
+    box.setContentsMargins(0, 0, 0, 0)
+    box.setSpacing(Space.L)
+    for w in widgets:
+        box.addWidget(w)
+    return page
 
 
 class Page(QWidget):
@@ -907,33 +923,22 @@ class EconomicsPage(Page):
                           "economics.return", "economics.return", "economics.first_year"))
         r.addWidget(self.tiles)
         tabs = QTabWidget()
-        bal = QWidget()
-        bl = QVBoxLayout(bal)
         self.prod_split = Chart(_("Production: self-consumed and fed in"))
         self.cons_split = Chart(_("Consumption: covered by the system and by the grid"))
-        bl.addWidget(self.prod_split)
-        bl.addWidget(self.cons_split)
+        bal = tab_stack((self.prod_split, self.cons_split))
         self.bill = Chart(_("Energy part of the bill, month by month: without the system and with it"))
         self.cash = Chart(_("Cumulative cash flow"))
         self.flows = Chart(_("Cash flow year by year"))
-        size = QWidget()
-        sl = QVBoxLayout(size)
         self.size_share = Chart(_("Self-consumption and self-sufficiency, by the size of the system"))
         self.size_npv = Chart(_("Net present value, by the size of the system"))
         self.size_note = QLabel("")
         self.size_note.setWordWrap(True)
-        sl.addWidget(self.size_share)
-        sl.addWidget(self.size_npv)
-        sl.addWidget(self.size_note)
-        storage = QWidget()
-        stl = QVBoxLayout(storage)
+        size = tab_stack((self.size_share, self.size_npv, self.size_note))
         self.store_share = Chart(_("Self-sufficiency, by the capacity of the battery"))
         self.store_npv = Chart(_("Net present value, by the capacity of the battery"))
         self.store_note = QLabel("")
         self.store_note.setWordWrap(True)
-        stl.addWidget(self.store_share)
-        stl.addWidget(self.store_npv)
-        stl.addWidget(self.store_note)
+        storage = tab_stack((self.store_share, self.store_npv, self.store_note))
         self.pedigree = PedigreeView()
         # what is used on the spot, hour by hour through the year (R63): when the production meets the load
         self.self_map = Chart(_("Used on the spot, hour by hour: each column a day, each row an hour"))
