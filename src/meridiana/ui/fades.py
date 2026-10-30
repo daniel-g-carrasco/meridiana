@@ -56,6 +56,15 @@ class Edge(QWidget):
                 colour = QColor(base)
                 colour.setAlphaF(alpha)
                 g.setColorAt(at if self.top else 1.0 - at, colour)
+            if self.page:
+                # inside the card's rounded corners: the area is the card's inner shape, and a plain rectangle came
+                # out past the curve at its top left corner (Daniel, 30/10/2026, Balance and economics: «la sfumatura
+                # addirittura può fuoriuscire dalla scheda»)
+                p.setRenderHint(QPainter.RenderHint.Antialiasing)
+                card = QRectF(self.area.rect()).translated(-self.x(), -self.y())
+                shape = QPainterPath()
+                shape.addRoundedRect(card, Radius.CARD, Radius.CARD)
+                p.setClipPath(shape)
             p.fillRect(self.rect(), g)
             return
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
