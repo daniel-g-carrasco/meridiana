@@ -109,6 +109,8 @@ class Documents(unittest.TestCase):
 
     def test_switch_from_document_cloud_to_local_then_cloud_drops_local_history(self):
         self.extracted()
+        # a cloud turn starts only with a cloud destination chosen (Chat.ask): since R07 _start reads its endpoint
+        self.cfg.assistant_provider = 'claude'
         self.cfg.assistant_consent = privacy.consent({}, 'anthropic', dt.date.today())
         self.chat.keys = SimpleNamespace(get=lambda key: 'fake-key')
         cloud = SimpleNamespace(cloud=True, cancel=lambda: None)

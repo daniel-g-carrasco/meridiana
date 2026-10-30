@@ -15,6 +15,7 @@ silence him. No engine, or no voice of the program's language: the speaker is gr
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 from PySide6.QtCore import QLocale, QObject, QProcess, QTimer, Signal
@@ -70,11 +71,18 @@ class Kokoro(QObject):
         self.pump.setInterval(20)
         self.pump.timeout.connect(self._pump)
         self.stopping = False
+        self.load_timeout = QTimer(self)
+        self.load_timeout.setSingleShot(True)
+        self.load_timeout.setInterval(60000)
+        self.load_timeout.timeout.connect(lambda: self._fail(
+            _("Kokoro did not load within 60 seconds. Check the model files and Python in Settings > Assistant.")))
 
     def start(self) -> None:
         p = QProcess(self)
         p.setProgram(self.python)
         args = [str(speech.worker_script()), "--dir", str(self.folder)]
+        if getattr(sys, "frozen", False) and self.python == sys.executable:
+            args = ["--kokoro-worker", "--dir", str(self.folder)]
         p.setArguments(args + (["--fake"] if self.fake else []))
         p.readyReadStandardOutput.connect(self._out)
         p.readyReadStandardError.connect(self._err)
@@ -82,6 +90,7 @@ class Kokoro(QObject):
         p.finished.connect(self._finished)
         self.process = p
         p.start()
+        self.load_timeout.start()
 
     def say(self, sentence: str) -> None:
         if not self.loaded:
@@ -115,6 +124,7 @@ class Kokoro(QObject):
 
     def close(self) -> None:
         self.stopping = True
+        self.load_timeout.stop()
         self.stop()
         if self.process is not None:
             self.process.kill()
@@ -124,6 +134,9 @@ class Kokoro(QObject):
         text = bytes(self.process.readAllStandardError()).decode("utf-8", "replace")
         for line in text.splitlines():
             if line.strip() == "ready":
+                if self.stopping:           # the load timeout came first: its failure stands, the sentences wait for
+                    continue                # the voice that takes Kokoro's place (Voice._kokoro_failed)
+                self.load_timeout.stop()
                 self.loaded = True
                 waiting, self.waiting = self.waiting, []
                 for sentence in waiting:
@@ -192,6 +205,7 @@ class Kokoro(QObject):
             return
         self.stopping = True
         self.pump.stop()
+        self.load_timeout.stop()
         QTimer.singleShot(0, self, lambda: self.failed.emit(why))
 
 
@@ -281,7 +295,8 @@ class Voice(QObject):
         folder = self.natural_model()
         if folder is not None:
             voice = speech.voice_for(self.language, self._choice("assistant_voice_name"))
-            self.kokoro = Kokoro(folder, speech.worker_python(self._choice("assistant_kokoro_python")), voice,
+            self.kokoro = Kokoro(folder, speech.worker_python(self._choice("assistant_kokoro_python"),
+                                                             model_dir=folder), voice,
                                  self.language, self._choice("assistant_voice_engine") == "fake", self)
             self.kokoro.ready.connect(self._kokoro_ready)
             self.kokoro.failed.connect(self._kokoro_failed)

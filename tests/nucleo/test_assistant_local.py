@@ -237,6 +237,11 @@ class Choice(unittest.TestCase):
         self.assertEqual(local.suggested(Machine(32.0)).ollama, "gemma4:26b-a4b-it-qat")
         self.assertEqual(local.suggested(Machine(16.0)).ollama, "qwen3.5:9b")
         self.assertEqual(local.suggested(Machine(8.0)).ollama, "qwen3.5:4b")
+        # R07 review: RAM known and too small for any (budget 0, as typed in the guide's question) is not «unknown»:
+        # the smallest, never the 24 GB download
+        for ram in (2.0, 4.0, 6.0):
+            with self.subTest(ram=ram):
+                self.assertEqual(local.suggested(Machine(ram)).ollama, "qwen3.5:4b")
 
     def test_the_steps_with_their_commands_for_windows_linux_and_with_ollama_already_there(self):
         c, steps = local.guide(DANIEL, "win32")

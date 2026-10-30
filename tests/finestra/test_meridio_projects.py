@@ -38,8 +38,15 @@ class MeridioProjectsWindowTest(unittest.TestCase):
         win = _setup.window(self, capannone("Current project"))
         proposal = self.prepared(win, target)
         card = self.chat_card(win, proposal)
+        # the card whole in the open bubble: never squeezed, nothing to scroll (docked in a low panel it scrolls:
+        # finestra/test_assistant_window.py); measured open, as the designer sees it (the cards are in a scroll area
+        # since R07, laid out when shown)
+        win.assistant.open_panel()
+        area = win.assistant.cards_area
+        self.assertTrue(_setup.wait_until(self.app, lambda: card.height() >= card.minimumSizeHint().height()
+                                          and area.verticalScrollBar().maximum() == 0, 5))
+        self.assertGreaterEqual(area.height(), card.height())
         self.assertGreaterEqual(win.assistant.cards.height(), card.height())
-        self.assertGreaterEqual(win.assistant.cards.height(), card.sizeHint().height())
         self.assertFalse(win.assistant.questions_box.isVisible())
         text = "\n".join(label.text() for label in card.findChildren(QLabel))
         self.assertIn(str(target), text)

@@ -28,6 +28,7 @@ from __future__ import annotations
 import json
 import re
 import threading
+import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 
@@ -89,6 +90,9 @@ class Provider:
     family: str = ""
     cloud: bool = False
     stop: threading.Event = field(default_factory=threading.Event, repr=False)
+    # time.monotonic() of the last event received, reasoning and tool calls included: the window's limit is for
+    # silence, not for the time a reasoning model takes before its first visible word (written by the reader)
+    active: float = field(default=0.0, repr=False, compare=False)
 
     def stream(self, system: str, messages: list[dict], tools: list[dict]) -> Iterator:
         raise NotImplementedError
@@ -132,6 +136,10 @@ def openai_messages(system: str, messages: list[dict]) -> list[dict]:
         if role == "user":
             out.append({"role": "user", "content": m["content"]})
         elif role == "assistant":
+            raw = (m.get("raw") or {}).get("openai")
+            if isinstance(raw, dict):
+                out.append(raw)
+                continue
             turn = {"role": "assistant", "content": m.get("content") or ""}
             calls = m.get("calls") or []
             if calls:
@@ -164,12 +172,15 @@ class OpenAICompatible(Provider):
     llama-server's switch that keeps Qwen's reasoning off (study 14, 4.5: on, the same question takes two or three
     times as long)."""
     base_url: str = "http://127.0.0.1:9931/v1"
-    key: str = ""
+    key: str = field(default="", repr=False)
     local: bool = True
     max_tokens: int = MAX_TOKENS
     family: str = "openai"
     session: object = field(default=None, repr=False)        # a requests.Session, for the tests
     _response: object = field(default=None, repr=False)
+    token_parameter: str = "max_tokens"
+    include_usage: bool = True
+    extra_headers: dict = field(default_factory=dict, repr=False)
 
     def cancel(self) -> None:
         """Stop now, also while the reader waits for a model that reads a long prompt and sends nothing for tens
@@ -201,17 +212,24 @@ class OpenAICompatible(Provider):
 
     def stream(self, system: str, messages: list[dict], tools: list[dict]) -> Iterator:
         import requests
+        if self.stop.is_set():
+            yield Done("stopped")
+            return
         body = {"model": self.model or "local", "messages": openai_messages(system, messages), "stream": True,
-                "stream_options": {"include_usage": True}, "max_tokens": self.max_tokens}
+                self.token_parameter: self.max_tokens}
+        if self.include_usage:
+            body["stream_options"] = {"include_usage": True}
         if tools:
             body["tools"] = openai_tools(tools)
         if self.local:
             body["chat_template_kwargs"] = {"enable_thinking": False}
-        headers = {"Accept": "text/event-stream"}
+        headers = {"Accept": "text/event-stream", **self.extra_headers}
         if self.key:
             headers["Authorization"] = f"Bearer {self.key}"
         url = self.base_url.rstrip("/") + "/chat/completions"
-        http = self.session or requests
+        http = self.session or requests.Session()
+        if self.session is None and self.local:
+            http.trust_env = False
         try:
             response = http.post(url, json=body, headers=headers, stream=True,
                                  timeout=(LOCAL_CONNECT_S, LOCAL_READ_S) if self.local else CLOUD_TIMEOUT_S)
@@ -247,8 +265,10 @@ class OpenAICompatible(Provider):
 
     def _read(self, response) -> Iterator:
         calls: dict[int, dict] = {}
+        content, reasoning = [], []
         reason, model, usage = "end", self.model, None
         for payload in sse_data(response.iter_lines()):
+            self.active = time.monotonic()
             if self.stop.is_set():
                 yield Done("stopped")
                 return
@@ -270,13 +290,18 @@ class OpenAICompatible(Provider):
             for choice in chunk.get("choices") or []:
                 delta = choice.get("delta") or {}
                 if delta.get("content"):
+                    content.append(delta["content"])
                     yield Text(delta["content"])
+                if delta.get("reasoning_content"):
+                    reasoning.append(delta["reasoning_content"])
                 for piece in delta.get("tool_calls") or []:
                     slot = calls.setdefault(int(piece.get("index", len(calls))), {"id": "", "name": "", "arguments": ""})
                     slot["id"] = piece.get("id") or slot["id"]
                     function = piece.get("function") or {}
                     slot["name"] = function.get("name") or slot["name"]
                     slot["arguments"] += function.get("arguments") or ""
+                    if isinstance(piece.get("extra_content"), dict):
+                        slot["extra_content"] = piece["extra_content"]
                 finish = choice.get("finish_reason")
                 if finish:
                     reason = {"tool_calls": "tools", "length": "length", "stop": "end"}.get(finish, "end")
@@ -289,7 +314,17 @@ class OpenAICompatible(Provider):
             reason = "tools"
         if usage is not None:
             yield usage
-        yield Done(reason, model)
+        raw = None
+        if self.cloud and (reasoning or any(c.get("extra_content") for c in calls.values())):
+            raw = {"role": "assistant", "content": "".join(content)}
+            if reasoning:
+                raw["reasoning_content"] = "".join(reasoning)
+            if calls:
+                raw["tool_calls"] = [{"id": c["id"] or f"call_{n}", "type": "function",
+                    "function": {"name": c["name"], "arguments": c["arguments"]},
+                    **({"extra_content": c["extra_content"]} if c.get("extra_content") else {})}
+                    for n, (_index, c) in enumerate(sorted(calls.items()))]
+        yield Done(reason, model, raw)
 
 
 def _body_text(response) -> str:
@@ -388,9 +423,14 @@ class Ollama(OpenAICompatible):
 
     def stream(self, system: str, messages: list[dict], tools: list[dict]) -> Iterator:
         import requests
+        if self.stop.is_set():
+            yield Done("stopped")
+            return
         if not self.model:
             raise ProviderError("model", "no model chosen")
-        http = self.session or requests
+        http = self.session or requests.Session()
+        if self.session is None:
+            http.trust_env = False
         think = self._think(http)
         body = {"model": self.model, "messages": ollama_messages(system, messages), "stream": True,
                 "options": {"num_ctx": self.context, "num_predict": self.max_tokens}, "keep_alive": OLLAMA_KEEP}
@@ -442,6 +482,7 @@ class Ollama(OpenAICompatible):
         calls: list[dict] = []
         reason, model, usage = "end", self.model, None
         for raw in response.iter_lines():
+            self.active = time.monotonic()
             if self.stop.is_set():
                 yield Done("stopped")
                 return
@@ -543,7 +584,8 @@ class Anthropic(Provider):
     adaptively by default; "low" keeps the current questions quick and cheap); `fallbacks` re-runs a refused
     request on another model inside the same call (beta, Sonnet only: the claude-api skill asks it by default);
     `client` stands in for anthropic.Anthropic in the tests."""
-    key: str = ""
+    key: str = field(default="", repr=False)
+    base_url: str = "https://api.anthropic.com"
     effort: str = "low"
     fallbacks: bool = False
     max_tokens: int = MAX_TOKENS_CLOUD
@@ -558,7 +600,8 @@ class Anthropic(Provider):
                 import anthropic
             except ImportError as error:
                 raise ProviderError("missing", "anthropic") from error
-            self.client = anthropic.Anthropic(api_key=self.key, max_retries=1, timeout=CLOUD_TIMEOUT_S)
+            self.client = anthropic.Anthropic(api_key=self.key, base_url=self.base_url,
+                                              max_retries=1, timeout=CLOUD_TIMEOUT_S)
         return self.client
 
     def cancel(self) -> None:
@@ -575,8 +618,10 @@ class Anthropic(Provider):
         the conversation after them."""
         args = {"model": self.model, "max_tokens": self.max_tokens,
                 "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-                "messages": anthropic_messages(messages), "output_config": {"effort": self.effort},
+                "messages": anthropic_messages(messages),
                 "cache_control": {"type": "ephemeral"}}
+        if self.effort:
+            args["output_config"] = {"effort": self.effort}
         if tools:
             args["tools"] = anthropic_tools(tools)
         if self.fallbacks:
@@ -593,6 +638,7 @@ class Anthropic(Provider):
             with opened as stream:
                 self._stream = stream
                 for event in stream:
+                    self.active = time.monotonic()
                     if self.stop.is_set():
                         break
                     if getattr(event, "type", "") == "text" and event.text:

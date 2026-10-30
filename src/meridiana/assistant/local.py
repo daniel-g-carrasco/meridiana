@@ -674,10 +674,13 @@ def choose(runtimes: list[Runtime], pc: Machine) -> Choice | None:
 
 
 def suggested(pc: Machine) -> Candidate:
-    """The model to download on a PC without one: the first of DEFAULTS that fits, else the smallest."""
+    """The model to download on a PC without one: the first of DEFAULTS that fits, else the smallest (also when the
+    memory is not known: the guide asks for it)."""
+    if not pc.ram_gb and not pc.vram_gb:
+        return by_key(DEFAULTS[-1])
     for key in DEFAULTS:
         c = by_key(key)
-        if not pc.budget_gb or need_gb(c.ollama_gb) <= pc.budget_gb:
+        if need_gb(c.ollama_gb) <= pc.budget_gb:
             return c
     return by_key(DEFAULTS[-1])
 

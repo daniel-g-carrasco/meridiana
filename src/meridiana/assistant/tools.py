@@ -93,6 +93,10 @@ SPECS = {
                        "This only lists destinations and changes nothing.",
         "parameters": _schema(),
     },
+    "read_navigation": {
+        "description": "Read the actual mouse/touchpad navigation profile, 3D orbit and pivot, and current keyboard bindings. Always use this before explaining gestures or shortcuts: they may differ from defaults. Orbit applies only to 3D; pan and pointer-centred zoom apply to both views.",
+        "parameters": _schema(),
+    },
     "search_manual": {
         "description": "Search Meridiana's user manual (in Italian) and its commands (menu, keys) for how to do "
                        "something in the program. Use it before explaining how to use Meridiana.",
@@ -191,7 +195,7 @@ SPECS = {
                                "project_id": {"type": "string"}}, ("action",)),
     },
 }
-STEP_1 = ("read_checks", "project_summary", "go_to", "search_manual", "list_navigation_targets")
+STEP_1 = ("read_checks", "project_summary", "go_to", "search_manual", "list_navigation_targets", "read_navigation")
 STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "propose_fix", "propose_edit",
           "propose_undo")
 STEP_3 = ("search_projects", "project_revisions", "similar_projects", "prepare_open_project", "list_tasks",
@@ -450,6 +454,11 @@ def go_to(host, state: State, kind: str, id: str = "") -> Outcome:   # noqa: A00
 def _navigation_targets(host) -> list[dict]:
     listing = getattr(host, "navigation_targets", None)
     return listing() if callable(listing) else []
+
+
+def read_navigation(host, state: State) -> Outcome:
+    from .navigation_help import snapshot
+    return Outcome(_json(snapshot(host)), _("Read your current navigation settings"))
 
 
 def list_navigation_targets(host, state: State) -> Outcome:
@@ -1150,7 +1159,7 @@ SPECS.update({
 TOOLS = {"read_checks": read_checks, "project_summary": project_summary, "go_to": go_to,
          "prepare_bug_report": prepare_bug_report, "start_guided_tour": start_guided_tour,
          "propose_catalog_record": propose_catalog_record,
-         "list_navigation_targets": list_navigation_targets,
+         "list_navigation_targets": list_navigation_targets, "read_navigation": read_navigation,
          "search_manual": search_manual, "read_selection": read_selection, "read_results": read_results,
          "read_pedigree": read_pedigree, "read_rules": read_rules, "propose_fix": propose_fix,
          "propose_edit": propose_edit, "propose_undo": propose_undo, "search_projects": search_projects,

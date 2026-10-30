@@ -87,7 +87,7 @@ class LocalModelsPage(unittest.TestCase):
         page.locals.use.click()
         self.assertEqual((page.url.text(), page.model.text(), page.api.currentData()),
                          ("http://127.0.0.1:11434", "qwen3.6:35b-a3b", "ollama"))
-        self.assertTrue(page.local.isChecked())
+        self.assertEqual(page.destination.currentData(), "local")
         choice = page.choice()
         self.assertEqual((choice["assistant_provider"], choice["assistant_local_runtime"],
                           choice["assistant_local_model"]), ("local", "ollama", "qwen3.6:35b-a3b"))

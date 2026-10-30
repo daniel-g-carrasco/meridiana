@@ -9,8 +9,8 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QInputDialog, QLabel,
-                               QLineEdit, QPushButton, QRadioButton, QScrollArea, QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QInputDialog, QLabel,
+                               QLineEdit, QPushButton, QScrollArea, QTabWidget, QVBoxLayout, QWidget)
 
 from .. import assistant, config, navigation
 from ..i18n import _
@@ -158,9 +158,13 @@ class MeridioPage(QWidget):
     the consent given, the spoken voice. `survey` looks for the local models (assistant/local.survey, a stand-in in
     the tests)."""
 
+    liveChanged = Signal()
+
     def __init__(self, cfg: config.Config, parent=None, data_dir=None, survey=None):
         super().__init__(parent)
-        from ..assistant import costs
+        import copy
+        from ..assistant import setup
+        from .assistant_setup import AssistantSetup
         from .assistant_local import LocalModels
         from .style import Group
         self.cfg = cfg
@@ -168,13 +172,21 @@ class MeridioPage(QWidget):
         box.setContentsMargins(0, 0, 0, 0)
         group = Group(_("Where {name} thinks").format(name=assistant.NAME))
         inside = QVBoxLayout(group)
-        self.local = QRadioButton(_("The local model, on this PC: nothing leaves it (the default)"))
-        self.claude = QRadioButton(_("Claude, with your key and after your consent: for the hard questions"))
-        choice = QButtonGroup(self)
-        for b in (self.local, self.claude):
-            choice.addButton(b)
-            inside.addWidget(b)
-        (self.claude if cfg.assistant_provider == "claude" else self.local).setChecked(True)
+        self.setup_cfg = copy.deepcopy(cfg)
+        self.destination = QComboBox()
+        self.destination.addItem(_("Local model, on this PC"), "local")
+        for provider, spec in setup.CLOUD.items():
+            self.destination.addItem(spec.name, provider)
+        self.destination.setCurrentIndex(max(0, self.destination.findData(setup.canonical(cfg.assistant_provider))))
+        inside.addWidget(self.destination)
+        self.configure = QPushButton(_("Configure a local or cloud model…"))
+        inside.addWidget(self.configure)
+        self.setup = AssistantSetup(self.setup_cfg)
+        self.setup.hide()
+        self.setup.configured.connect(self._setup_configured)
+        self.setup.dismissed.connect(self.setup.hide)
+        self.configure.clicked.connect(self._open_setup)
+        inside.addWidget(self.setup)
         self.locals = LocalModels(survey, lambda: (self.url.text().strip(), self.model.text().strip(),
                                                    self.api.currentData()), self)
         self.locals.chosen.connect(self._use_local)
@@ -190,11 +202,6 @@ class MeridioPage(QWidget):
         self.model = QLineEdit(cfg.assistant_local_model)
         self.model.setPlaceholderText(_("the one the server serves"))
         form.addRow(_("Local model"), self.model)
-        self.cloud_model = QComboBox()
-        for key, text in costs.models().items():
-            self.cloud_model.addItem(text, key)
-        self.cloud_model.setCurrentIndex(max(0, self.cloud_model.findData(cfg.assistant_cloud_model)))
-        form.addRow(_("Claude model"), self.cloud_model)
         inside.addLayout(form)
         row = QHBoxLayout()
         self.key_state = QLabel()
@@ -207,10 +214,8 @@ class MeridioPage(QWidget):
         self.forget_key.clicked.connect(self._forget_key)
         row.addWidget(self.forget_key)
         inside.addLayout(row)
-        given = (cfg.assistant_consent.get("anthropic") or [""])[0]
-        self.withdraw = QCheckBox(_("Withdraw the consent to send questions to Claude, given on {date}").format(
-            date=given))
-        self.withdraw.setVisible(bool(given))
+        self.withdraw = QCheckBox(_("Withdraw all consent to send questions to cloud providers"))
+        self.withdraw.setVisible(bool(cfg.assistant_consent))
         inside.addWidget(self.withdraw)
         note = QLabel(_("The key stays in the system's keyring; a project marked reserved never goes to the cloud."))
         note.setWordWrap(True)
@@ -254,6 +259,7 @@ class MeridioPage(QWidget):
         self.download.clicked.connect(self._download)
         box.addWidget(self.download, 0, Qt.AlignmentFlag.AlignLeft)
         self._show_model()
+        self.destination.currentIndexChanged.connect(self._show_key)
         self._show_key()
 
     def _use_local(self, url: str, model: str, api: str) -> None:
@@ -261,7 +267,39 @@ class MeridioPage(QWidget):
         self.url.setText(url)
         self.model.setText(model)
         self.api.setCurrentIndex(max(0, self.api.findData(api)))
-        self.local.setChecked(True)
+        self.destination.setCurrentIndex(0)
+        self.liveChanged.emit()
+
+    def _setup_configured(self, provider):
+        for field in (self.destination, self.url, self.model, self.api):
+            field.blockSignals(True)
+        self.url.setText(self.setup_cfg.assistant_local_url)
+        self.model.setText(self.setup_cfg.assistant_local_model)
+        self.api.setCurrentIndex(max(0, self.api.findData(self.setup_cfg.assistant_local_runtime)))
+        self.destination.setCurrentIndex(max(0, self.destination.findData(provider)))
+        for field in (self.destination, self.url, self.model, self.api):
+            field.blockSignals(False)
+        self.setup.hide()
+        self._show_key()
+        self.liveChanged.emit()
+
+    def _open_setup(self):
+        if self.setup.isVisible():
+            self.setup.hide()
+            return
+        # Keep manual local edits when the guide subsequently configures a cloud account.
+        for key, value in self.choice().items():
+            if key != "withdraw":
+                setattr(self.setup_cfg, key, value)
+        index = self.setup.provider.findData(self.destination.currentData())
+        if index >= 0:
+            self.setup.provider.setCurrentIndex(index)
+            self.setup.mode.setCurrentIndex(2)
+        self.setup.show()
+
+    def _key_provider(self):
+        provider = self.destination.currentData()
+        return provider if provider != "local" else "anthropic"
 
     def _download(self) -> None:
         """Kokoro's model from its official release into the data folder, after the designer said yes: a thread
@@ -277,7 +315,7 @@ class MeridioPage(QWidget):
         dest = self.data_dir / "voices" / "kokoro"
         ask = QMessageBox.question(self, _("Natural voice"), _(
             "Download Kokoro's model (two files, about 350 MB) from its official release on GitHub "
-            "({source}) into {folder}? Nothing of yours is sent.").format(source=speech.MODEL_SOURCE, folder=dest))
+            "({source}) into {folder}? Licence: Apache-2.0. Nothing of yours is sent.").format(source=speech.MODEL_SOURCE, folder=dest))
         if ask != QMessageBox.StandardButton.Yes:
             return
         state = {"done": 0, "total": 1, "stop": False, "error": None, "over": False}
@@ -322,42 +360,63 @@ class MeridioPage(QWidget):
               "above, or in {folder}; the Python that runs it needs the package kokoro-onnx.").format(
                 folder=(self.data_dir / "voices" / "kokoro") if self.data_dir else "voices/kokoro"))
 
-    def _show_key(self) -> None:
-        from ..assistant import keys
+    def _show_key(self, _index=-1) -> None:
+        from ..assistant import keys, setup
+        configured = setup.available(self.setup_cfg)
+        for index in range(1, self.destination.count()):
+            provider = self.destination.itemData(index)
+            self.destination.setItemText(index, setup.CLOUD[provider].name + (
+                "" if provider in configured else _(" (configure first)")))
+            self.destination.model().item(index).setEnabled(provider in configured)
+        provider = self._key_provider()
+        local = self.destination.currentData() == "local"
+        for widget in (self.key_state, self.set_key, self.forget_key):
+            widget.setVisible(not local)
         try:
-            key = keys.get("anthropic")
+            key = keys.get(provider)
         except keys.KeyringMissing:
-            self.key_state.setText(_("No keyring on this system: Claude cannot be used."))
+            self.key_state.setText(_("No system keyring: cloud credentials cannot be stored securely."))
             self.set_key.setEnabled(False)
             self.forget_key.setEnabled(False)
             return
-        self.key_state.setText(_("Claude key in the system's keyring: {key}").format(key=keys.masked(key)) if key
-                               else _("No Claude key yet."))
+        self.set_key.setEnabled(True)
+        self.key_state.setText(_("{provider} key: {key}").format(
+            provider=setup.CLOUD[provider].name, key=keys.masked(key) if key else _("not configured")))
         self.forget_key.setEnabled(bool(key))
 
     def _set_key(self) -> None:
-        from ..assistant import keys
-        key, ok = QInputDialog.getText(self, _("Claude key"), _("Your Anthropic API key (it goes to the system's "
-                                                               "keyring, never to a file):"), QLineEdit.EchoMode.Password)
+        from ..assistant import keys, setup
+        provider = self._key_provider()
+        key, ok = QInputDialog.getText(self, _("API key"), _("Your {provider} API key (stored only in the system keyring):").format(
+            provider=setup.CLOUD[provider].name), QLineEdit.EchoMode.Password)
         if ok and key.strip():
-            keys.put("anthropic", key)
+            try:
+                keys.put(provider, key)
+            except keys.KeyringMissing as error:
+                self.key_state.setText(_("The key could not be stored: {why}").format(why=error))
+                return
+            setup.keys_changed()            # whoever remembers which providers have a key reads them again
         self._show_key()
+        self.liveChanged.emit()
 
     def _forget_key(self) -> None:
-        from ..assistant import keys
+        from ..assistant import keys, setup
         try:
-            keys.forget("anthropic")
+            keys.forget(self._key_provider())
         except keys.KeyringMissing as error:
             self.key_state.setText(_("The key could not be removed: {why}").format(why=error))
             return
+        setup.keys_changed()
         self._show_key()
+        self.liveChanged.emit()
 
     def choice(self) -> dict:
-        return {"assistant_provider": "claude" if self.claude.isChecked() else "local",
+        return {"assistant_provider": self.destination.currentData() or "local",
+                "assistant_cloud_profiles": self.setup_cfg.assistant_cloud_profiles,
                 "assistant_local_url": self.url.text().strip() or "http://127.0.0.1:9931/v1",
                 "assistant_local_model": self.model.text().strip(),
                 "assistant_local_runtime": self.api.currentData() or "",
-                "assistant_cloud_model": self.cloud_model.currentData(), "withdraw": self.withdraw.isChecked(),
+                "assistant_cloud_model": self.setup_cfg.assistant_cloud_model, "withdraw": self.withdraw.isChecked(),
                 "assistant_voice": self.voice.isChecked(),
                 "assistant_voice_engine": self.voice_engine.currentData(),
                 "assistant_voice_name": self.voice_name.currentData(),
@@ -526,7 +585,7 @@ class Preferences(QWidget):
         "navigation": ("navigation", "orbit", "pivot", "pivot_hint"),
         "assistant": ("assistant", "assistant_docked", "assistant_animated", "assistant_style",
                       "assistant_provider", "assistant_local_url", "assistant_local_model",
-                      "assistant_local_runtime", "assistant_cloud_model", "assistant_consent", "assistant_voice",
+                      "assistant_local_runtime", "assistant_cloud_model", "assistant_cloud_profiles", "assistant_consent", "assistant_voice",
                       "assistant_voice_engine", "assistant_voice_name", "assistant_kokoro_dir",
                       "assistant_kokoro_python"),
         "report": ("report_profiles", "report_profile"),
@@ -663,11 +722,12 @@ class Preferences(QWidget):
         for widget in (self.assistant, self.assistant_docked, self.assistant_animated):
             widget.toggled.connect(lambda _on: self._edited("assistant"))
         self.assistant_style.currentIndexChanged.connect(lambda _i: self._edited("assistant"))
-        for widget in (self.meridio.local, self.meridio.claude, self.meridio.voice, self.meridio.withdraw):
+        self.meridio.liveChanged.connect(lambda: self._edited("assistant"))
+        for widget in (self.meridio.voice, self.meridio.withdraw):
             widget.toggled.connect(lambda _on: self._edited("assistant"))
         for widget in (self.meridio.url, self.meridio.model, self.meridio.kokoro_dir, self.meridio.kokoro_python):
             widget.textEdited.connect(lambda _t: self._edited("assistant"))
-        for widget in (self.meridio.api, self.meridio.cloud_model, self.meridio.voice_engine, self.meridio.voice_name):
+        for widget in (self.meridio.api, self.meridio.destination, self.meridio.voice_engine, self.meridio.voice_name):
             widget.currentIndexChanged.connect(lambda _i: self._edited("assistant"))
         self.report.default.currentIndexChanged.connect(lambda _i: self._edited("report"))
         for edit in self.report.fields.values():

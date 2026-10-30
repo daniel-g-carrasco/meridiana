@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, QThreadPool, QUrl, Signal
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QToolButton,
+from PySide6.QtWidgets import (QApplication, QComboBox, QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QToolButton,
                                QVBoxLayout, QWidget)
 
 from .. import assistant
@@ -201,12 +201,36 @@ class LocalModels(Group):
         if found.choice is not None:
             self.guide.hide()
             return
+        if not found.machine.ram_gb:
+            label = QLabel(_("I could not read the RAM. How much memory does this PC have (GB)?"))
+            label.setWordWrap(True)
+            self.guide_box.addWidget(label)
+            ram = QDoubleSpinBox()
+            ram.setRange(1, 2048)
+            ram.setValue(8)
+            self.guide_box.addWidget(ram)
+            apply = QPushButton(_("Suggest a model for this RAM"))
+            def use_ram():
+                from dataclasses import replace
+                found.machine = replace(found.machine, ram_gb=ram.value())
+                self._show_guide(found)
+            apply.clicked.connect(use_ram)
+            self.guide_box.addWidget(apply)
+            self.guide.show()
+            return
         have = any(rt.kind == "ollama" for rt in found.runtimes)
         c, steps = local.guide(found.machine, have_ollama=have)
         title = QLabel(semibold(_("<b>How to give {name} a model of his own</b>: {model}, {why}.").format(
             name=assistant.NAME, model=_escape(c.title), why=_escape(c.why()))))
         title.setWordWrap(True)
         self.guide_box.addWidget(title)
+        license_note = QLabel(_("The suggested Qwen and Gemma 4 weights use Apache-2.0. Download size is approximate; "
+                               "leave extra RAM for the project and other applications. Nothing downloads automatically."))
+        license_note.setWordWrap(True)
+        self.guide_box.addWidget(license_note)
+        model_page = QPushButton(_("Read the model card and licence"))
+        model_page.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://ollama.com/library/" + c.ollama)))
+        self.guide_box.addWidget(model_page)
         for n, step in enumerate(steps, 1):
             label = QLabel(f"{n}. {_escape(step.text)}")
             label.setWordWrap(True)

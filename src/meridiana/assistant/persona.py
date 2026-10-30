@@ -87,7 +87,7 @@ def presentation(name: str = "Meridio") -> str:
     return _("Hi, I am {name}, Meridiana's assistant. I read your project (the checks, the results, the rules) and "
              "answer with the sources; when a figure comes from an assumption, I tell you. I change nothing by "
              "myself: I propose, you apply with a click, and Ctrl+Z undoes it. I think with the local model on this "
-             "PC; with Claude only if you choose it and agree. Where shall we start?").format(name=name)
+             "PC; with a cloud provider only if you configure it and agree. Where shall we start?").format(name=name)
 
 
 def greeting(name: str = "Meridio") -> str:

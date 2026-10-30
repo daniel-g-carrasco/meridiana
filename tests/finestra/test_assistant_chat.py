@@ -95,6 +95,111 @@ class Chat(unittest.TestCase):
         self.assertTrue(self.idle())
         self.assertIn("Di nuovo qui.", self.said())
 
+    def test_a_model_that_reasons_before_its_first_word_is_not_cut_while_it_sends(self):
+        """R07 review: the window's limit counted from the request to the first visible word, so a reasoning model
+        (DeepSeek, Qwen, Kimi with thinking) streaming its reasoning for longer than the limit was cancelled while
+        it was working, and billed. The limit is for silence; a silent server is still cancelled."""
+        from _fakes import chunk
+
+        from meridiana.assistant import providers
+        answer = ([chunk({"role": "assistant", "content": ""})] + [chunk({"reasoning_content": "penso "})] * 9
+                  + text_answer("Ecco la risposta.")[1:])
+        self.serve([answer], pause=0.35)               # about 3.5 s of reasoning, a piece every 0.35 s
+        with mock.patch.object(providers, "LOCAL_READ_S", 2.0):
+            self.a.open_panel()
+            self.a.ask("Quanto produce?")
+            self.assertTrue(self.idle(15))
+        self.assertIn("Ecco la risposta.", self.said())
+        self.assertNotIn("did not answer within", self.said())
+        import requests
+
+        class Patient(requests.Session):                           # the transport waits longer than the window
+            def post(self, *args, **kwargs):
+                return super().post(*args, **{**kwargs, "timeout": (3.05, 10.0)})
+        server = self.serve([text_answer("Troppo tardi.")])
+        self.chat.make_local = lambda: providers.OpenAICompatible(base_url=server.url, session=Patient())
+        server.hold.set()                                          # the first event, then silence
+        with mock.patch.object(providers, "LOCAL_READ_S", 2.0):
+            self.a.ask("E adesso?")
+            self.assertTrue(self.idle(15))
+        self.assertIn("did not answer within 2 seconds", self.said())
+        server.release()
+
+    def test_the_guide_set_aside_with_not_now_does_not_come_back_at_every_opening(self):
+        """R07 review: with the local model left to the server ("" is a valid choice for llama-server) the guide
+        opened again at every opening of the bubble, after «Not now». Asked from the menu, it still comes."""
+        self.a.open_panel()
+        self.app.processEvents()
+        card = self.chat.setup_card
+        self.assertIsNotNone(card)
+        card.cancel.click()
+        self.assertIsNone(self.chat.setup_card)
+        self.a.close_panel()
+        self.a.open_panel()
+        self.app.processEvents()
+        self.assertIsNone(self.chat.setup_card)
+        self.chat.show_setup()                                     # «Set up a model…» in the chip's menu
+        self.assertIsNotNone(self.chat.setup_card)
+
+    def test_a_local_model_that_answered_needs_no_guide_at_the_next_opening(self):
+        """R07 review (H): the guide looked only at the model's name in the settings; a server that answers with
+        the model it serves ("" in the settings, llama-server) got the guide at every opening."""
+        self.serve([text_answer("Ci sono.")])
+        self.a.open_panel()
+        self.app.processEvents()
+        self.assertIsNotNone(self.chat.setup_card)                 # nothing known yet: the guide is offered
+        self.a.ask("Ci sei?")
+        self.assertTrue(self.idle())
+        self.assertIn("Ci sono.", self.said())
+        self.a.remove_card(self.chat.setup_card)                   # gone with the conversation, not «Not now»
+        self.chat.setup_card = None
+        self.a.close_panel()
+        self.a.open_panel()
+        self.app.processEvents()
+        self.assertIsNone(self.chat.setup_card)
+
+    def test_the_keyring_is_read_once_per_provider_until_a_key_may_have_changed(self):
+        """R07 review (A, H): every refresh of the chip (each change of the project) read the keyring; on Linux a
+        locked keyring asks to be unlocked at each read."""
+        from types import SimpleNamespace
+
+        from meridiana.assistant import setup
+        asked = []
+        self.chat.keys = SimpleNamespace(get=lambda provider: (asked.append(provider), "")[1])
+        self.cfg.assistant_cloud_profiles = {"mistral": {"model": "mistral-small-latest",
+                                                         "endpoint": "https://api.mistral.ai/v1"}}
+        for _ in range(5):
+            self.chat.refresh()
+        self.assertEqual(sorted(asked), ["anthropic", "mistral"])   # Anthropic always has a model (Haiku)
+        setup.keys_changed()                                       # a key stored by the guide
+        self.chat.refresh()
+        self.assertEqual(len(asked), 4)
+        self.chat.apply_preferences({"assistant_voice": False})   # Settings may have stored or forgotten one
+        self.assertEqual(len(asked), 6)
+        self.chat.refresh()
+        self.assertEqual(len(asked), 6)
+
+    def test_another_destination_while_he_answers_stops_the_turn_and_a_voice_change_does_not(self):
+        """R07 review: a change of model while a turn ran dropped it (its late answer is never shown) but left the
+        face thinking and Stop visible for ever; a change of the voice alone must not drop the answer."""
+        server = self.serve([text_answer("Risposta che arriva.", pieces=4)], pause=0.01)
+        server.hold.set()
+        self.a.open_panel()
+        self.a.ask("Quanto produce?")
+        self.assertTrue(server.held.wait(5))
+        self.chat.apply_preferences({"assistant_voice": False, "assistant_provider": "local"})
+        self.assertIsNotNone(self.chat.job)                         # the same destination: still answering
+        self.chat.apply_preferences({"assistant_local_model": "un-altro-modello"})
+        self.assertIsNone(self.chat.job)
+        self.assertEqual(self.a.mood.state, assistant.IDLE)
+        self.assertEqual(self.a.messages[-1], ("note", "Stopped."))
+        self.assertFalse(self.a.stop_action.isVisible())
+        server.release()
+        for _ in range(30):
+            self.app.processEvents()
+            time.sleep(0.01)
+        self.assertNotIn("arriva", self.said())                    # the late answer of the old destination
+
     def test_without_the_local_server_he_says_so_looks_for_another_and_leads_to_the_guide(self):
         from unittest import mock
         self.a.open_panel()
@@ -104,14 +209,15 @@ class Chat(unittest.TestCase):
         self.assertEqual(who, "note")
         self.assertIn("The local model does not answer at http://127.0.0.1:9931/v1. I look for another one", text)
         self.assertTrue(self.a.questions_box.isVisible() or self.a.panel.height() < 260)
-        # nothing on this PC (_fakes.nothing_local): a card leads to the guide in the preferences
-        self.assertTrue(wait_until(self.app, lambda: self.chat.survey_card is not None, 5))
-        card = self.chat.survey_card
-        self.assertEqual(card.title(), "No local model on this PC")
+        # No model: the guide now lives in the conversation and needs no external preferences dialog.
+        self.assertTrue(wait_until(self.app, lambda: self.chat.setup_card is not None, 5))
+        card = self.chat.setup_card
+        self.assertEqual(card.title(), "Give Meridio a model")
+        self.assertEqual(card.mode.count(), 3)
         with mock.patch.object(self.chat.host, "preferences") as preferences:
-            card.buttons["prefs"].click()
-        preferences.assert_called_once_with()
-        self.assertIsNone(self.chat.survey_card)
+            card.mode.setCurrentIndex(2)
+        preferences.assert_not_called()
+        self.assertEqual(card.provider.count(), 7)
 
     def test_a_local_model_found_on_the_pc_is_offered_and_one_click_uses_it_and_asks_again(self):
         from _fakes import FakeRuntime, offline, ollama_answer, ollama_routes
@@ -441,7 +547,7 @@ class Spoken(unittest.TestCase):
 
     def test_without_an_engine_the_speaker_is_greyed_and_says_why(self):
         from meridiana.ui import voice
-        with mock.patch.object(voice, "engines", return_value=[]):
+        with mock.patch.object(voice, "engines", return_value=[]), mock.patch.object(voice.speech, "find_model", return_value=None):
             _setup.window(self, cfg=config.Config(background="none", theme="light", assistant_voice=True))
         b = self.win.assistant.voice_button
         self.assertFalse(b.isEnabled() or b.isChecked())
@@ -488,8 +594,36 @@ class Cloud(unittest.TestCase):
         self.a.ask("Che ne pensi?")
         self.assertTrue(self.idle())
         self.assertEqual(self.client.calls, [])
-        self.assertIn("No Claude key", self.a.conversation.toPlainText())
+        self.assertIn("No API key for this provider", self.a.conversation.toPlainText())
+        self.assertIsNotNone(self.chat.setup_card)
+        self.assertFalse(any(action.isEnabled() for action in self.chat.model_actions.values()))
         self.assertIn("Risponde il modello locale.", self.a.conversation.toPlainText())
+
+    def test_with_a_cloud_model_configured_the_guide_does_not_come_when_the_local_one_fails(self):
+        """R07 review (H): the local model chosen and not running, nothing else on the PC, but a cloud provider
+        configured and answering: the guide «Give Meridio a model» came all the same (after the search, and the
+        first time the bubble opened)."""
+        from _fakes import offline
+
+        from meridiana.assistant import keys
+        keys.put("mistral", "test-mistral-key")
+        self.chat.apply_preferences({"assistant_provider": "local", "assistant_cloud_profiles": {
+            "mistral": {"model": "mistral-small-latest", "endpoint": "https://api.mistral.ai/v1"}}})
+        self.chat.make_local = offline
+        if self.chat.setup_card is not None:                       # offered at setUp: Claude chosen, no key then
+            self.a.remove_card(self.chat.setup_card)
+            self.chat.setup_card = None
+        self.a.close_panel()
+        self.a.open_panel()
+        self.app.processEvents()
+        self.assertIsNone(self.chat.setup_card)
+        self.a.ask("Ci sei?")
+        self.assertTrue(self.idle())
+        self.assertTrue(wait_until(self.app, lambda: not self.chat.surveying, 5))
+        self.app.processEvents()
+        self.assertIn("I have not found a local model yet", self.a.conversation.toPlainText())
+        self.assertIsNone(self.chat.setup_card)
+        self.assertTrue(self.chat.provider_actions["mistral"].isEnabled())      # one click away in the chip's menu
 
     def test_nothing_leaves_without_consent_and_then_without_the_names(self):
         from meridiana.assistant import keys
@@ -559,6 +693,85 @@ class Cloud(unittest.TestCase):
         text = self.a.conversation.toPlainText()
         self.assertIn("No network", text)
         self.assertIn("Risponde il modello locale.", text)
+
+    def test_a_model_chosen_in_the_menu_after_the_setup_is_the_one_used(self):
+        """R07 review: the guided setup writes the Anthropic profile; the chip's menu then wrote only the old
+        assistant_cloud_model, and the profile kept winning. The profile is the one place the model lives."""
+        from meridiana.assistant import keys
+        from meridiana.ui.assistant_setup import AssistantSetup
+        card = AssistantSetup(self.cfg, lambda: None)
+        self.addCleanup(card.deleteLater)
+        card.provider.setCurrentIndex(card.provider.findData("anthropic"))
+        card.model.setText("claude-haiku-5-5")
+        card.key.setText("sk-ant-api-test-0123456789")
+        card.save_cloud()
+        self.assertEqual(keys.get("anthropic"), "sk-ant-api-test-0123456789")
+        self.chat.refresh()
+        sonnet = self.chat.model_actions["claude-sonnet-5-5"]
+        self.assertTrue(sonnet.isEnabled())
+        sonnet.trigger()
+        self.assertEqual(self.chat.cloud_profile()["model"], "claude-sonnet-5-5")
+        self.assertEqual(self.cfg.assistant_cloud_profiles["anthropic"]["model"], "claude-sonnet-5-5")
+        self.assertEqual(self.chat._cloud("sk-ant-api-test").model, "claude-sonnet-5-5")
+        self.assertTrue(sonnet.isChecked())
+        self.assertFalse(self.chat.model_actions["claude-haiku-5-5"].isChecked())
+
+    def test_the_settings_guide_works_on_a_copy_and_a_voice_change_keeps_the_provider(self):
+        """Settings > Assistant: the guide filled and left with «Not now» changes nothing; then a change of the
+        voice is applied at once and leaves the provider, its profile and the consents as they were."""
+        from meridiana.assistant import keys
+        keys.put("mistral", "test-mistral-key")
+        mistral = {"model": "mistral-small-latest", "endpoint": "https://api.mistral.ai/v1"}
+        self.cfg.assistant_provider = "mistral"
+        self.cfg.assistant_cloud_profiles = {"mistral": dict(mistral)}
+        self.cfg.assistant_consent = {"mistral": ["2026-10-30"]}
+        self.win._preferences("assistant")
+        self.app.processEvents()
+        page = self.win.file_page.settings.meridio
+        self.assertEqual(page.destination.currentData(), "mistral")
+        page._open_setup()
+        guide = page.setup
+        guide.provider.setCurrentIndex(guide.provider.findData("openai"))
+        guide.model.setText("gpt-test")
+        guide.key.setText("test-openai-key")
+        guide.cancel.click()                                       # «Not now»
+        self.app.processEvents()
+        self.assertEqual(guide.key.text(), "")
+        self.assertEqual(keys.get("openai"), "")
+        self.assertEqual((self.cfg.assistant_provider, self.cfg.assistant_cloud_profiles),
+                         ("mistral", {"mistral": mistral}))
+        page.voice_engine.setCurrentIndex(page.voice_engine.findData("system"))
+        self.app.processEvents()
+        self.assertEqual(self.cfg.assistant_voice_engine, "system")          # applied at once
+        self.assertEqual((self.cfg.assistant_provider, self.cfg.assistant_cloud_profiles, self.cfg.assistant_consent),
+                         ("mistral", {"mistral": mistral}, {"mistral": ["2026-10-30"]}))
+        self.assertEqual(self.chat.cloud_id(), "mistral")
+
+    def test_a_new_api_address_asks_again_and_starts_a_fresh_conversation(self):
+        """Consent follows the destination: the same provider at another address is asked again, and nothing of
+        the conversation held by the first address goes to the second."""
+        from meridiana.assistant import keys, setup
+        keys.put("anthropic", "sk-ant-api-test-0123456789")
+        self.cfg.assistant_consent = {"anthropic": ["2026-10-24"]}
+        self.client.answers = [[("text", "Prima risposta.")], [("text", "Seconda risposta.")]]
+        self.a.ask("Prima domanda segreta?")
+        self.assertIsNone(self.chat.consent_card)
+        self.assertTrue(self.idle())
+        self.assertEqual(len(self.client.calls), 1)
+        profiles = {"anthropic": {"model": "claude-haiku-5-5", "endpoint": "https://proxy.example.org/anthropic"}}
+        self.chat.apply_preferences({"assistant_provider": "anthropic", "assistant_cloud_profiles": profiles})
+        self.assertEqual(setup.consent_id(self.cfg, "anthropic"), "anthropic:https://proxy.example.org/anthropic")
+        self.a.ask("Seconda domanda?")
+        self.assertIsNotNone(self.chat.consent_card)               # asked again: another destination
+        self.assertIn("https://proxy.example.org/anthropic", self.a.conversation.toPlainText())
+        self.assertEqual(len(self.client.calls), 1)
+        self.chat.consent_card.buttons["allow"].click()
+        self.assertTrue(self.idle())
+        self.assertEqual(len(self.client.calls), 2)
+        sent = json.dumps(self.client.calls[1]["messages"], default=str)
+        self.assertNotIn("Prima domanda", sent)
+        self.assertIn("Seconda domanda", sent)
+        self.assertIn("anthropic:https://proxy.example.org/anthropic", self.cfg.assistant_consent)
 
     def test_the_key_ends_up_in_no_file(self):
         from PySide6.QtWidgets import QInputDialog

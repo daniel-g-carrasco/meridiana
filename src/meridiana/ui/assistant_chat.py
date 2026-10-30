@@ -29,14 +29,15 @@ import datetime as dt
 import json
 import re
 import uuid
+import time
 
-from PySide6.QtCore import QObject, QRunnable, QThreadPool, Qt, Signal
+from PySide6.QtCore import QObject, QRunnable, QThreadPool, QTimer, Qt, Signal
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtWidgets import QFileDialog, QDialog, QPlainTextEdit, QHBoxLayout, QLabel, QMenu, QPushButton, QVBoxLayout
 
 from .. import assistant as core
 from .. import log
-from ..assistant import attachments, context, conversation, costs, keys, local, persona, privacy, providers, suggestions, tools
+from ..assistant import attachments, context, conversation, costs, keys, local, persona, privacy, providers, setup, suggestions, tools
 from ..i18n import _
 from . import tell
 from .design import Space
@@ -159,9 +160,8 @@ class WindowHost:
         from pathlib import Path
         if not self.win._keep_or_discard():
             return False
-        target = Path(path)
-        self.win.open_path(target)
-        return self.win.path == target
+        # what open_path says, not where the window is: the same file reopened and failed left the path as it was
+        return self.win.open_path(Path(path))
 
     def checks(self):
         return list(self.win.checks_page.items)
@@ -201,6 +201,16 @@ class WindowHost:
 
     def bindings(self):
         return getattr(self.win, "bindings", None)
+
+    def navigation_settings(self):
+        """Saved mouse profile plus the orbit and pivot actually used by the 3D backend."""
+        from .. import navigation
+        cfg, backend = self.win.cfg, self.win.view3d.backend
+        style = cfg.navigation if cfg.navigation in navigation.STYLES else navigation.DEFAULT_STYLE
+        return {"style": style, "style_name": navigation.STYLES[style].name,
+                "orbit": backend.orbit_mode, "pivot": backend.pivot_mode,
+                "pivot_hint": backend.pivot_hint, "gestures": navigation.table(style),
+                "bindings": self.bindings() or {}}
 
     @staticmethod
     def key_text(keys: str) -> str:
@@ -284,13 +294,23 @@ class Chat(QObject):
         self.consent_card: Card | None = None
         self.waiting = ""                   # the question waiting for the consent
         self.decisions: list[str] = []      # what the designer did with the proposals since the last question
+        # the providers configured, the keyring asked once each until a key may have changed (setup.Ready)
+        self.ready = setup.Ready(lambda provider: self.keys.get(provider))
         self.keys = keys                    # the keyring (a stand-in in the tests)
+        self.local_answered = False         # the local server answered in this session ("" may be its model)
         self.make_local = self._local
         self.make_cloud = self._cloud
         self.survey = local.survey          # the local models of this PC (a stand-in in the tests)
         self.surveying = False
         self.survey_card: Card | None = None
         self.last_question = ""             # as typed: asked again when another local model is chosen
+        self.setup_card = None
+        self.setup_declined = False         # «Not now» on the guide: not offered again at each opening
+        self.request_started = 0.0
+        self.progress_note = None
+        self.progress_timer = QTimer(self)
+        self.progress_timer.setInterval(1000)
+        self.progress_timer.timeout.connect(self._progress)
         self.survey_job = None              # the search running, kept until it tells
         from .voice import Voice
         paths = getattr(getattr(host, "win", None), "paths", None)
@@ -312,6 +332,31 @@ class Chat(QObject):
             session.subscribe(self._session_changed)
         widget.destroyed.connect(self._gone)
         self.refresh()
+
+    @property
+    def keys(self):
+        return self._keys
+
+    @keys.setter
+    def keys(self, value) -> None:
+        """Another keyring (the tests' stand-ins): nothing remembered of the one before."""
+        self._keys = value
+        self.ready.forget()
+
+    def _cloud_key(self) -> str:
+        """The key of the provider chosen, read now because it is sent; what the chip remembers follows it."""
+        try:
+            key = self.keys.get(self.cloud_id())
+        except keys.KeyringMissing:
+            key = ""
+        self.ready.known[self.cloud_id()] = bool(key)
+        return key
+
+    def model_ready(self) -> bool:
+        """A model Meridio can use, as far as is known without asking one: a local model named in the settings,
+        the local server that answered in this session (with "" it serves its own), or a cloud provider configured.
+        The guide «Give Meridio a model» comes only without any (R07)."""
+        return bool(self.cfg.assistant_local_model or self.local_answered or self.ready.available(self.cfg))
 
     def choose_attachments(self):
         paths, _filter = QFileDialog.getOpenFileNames(self.widget, _("Attach PDF or text"), "",
@@ -410,12 +455,20 @@ class Chat(QObject):
         return providers.OpenAICompatible(model=self.cfg.assistant_local_model, base_url=self.cfg.assistant_local_url)
 
     def _cloud(self, key: str):
-        model = self.cfg.assistant_cloud_model
-        sonnet = model.startswith("claude-sonnet")
-        return providers.Anthropic(model=model, key=key, effort="medium" if sonnet else "low", fallbacks=sonnet)
+        provider = setup.canonical(self.cfg.assistant_provider)
+        return setup.make(provider, setup.profile(self.cfg, provider), key)
+
+    def cloud_id(self):
+        return setup.canonical(self.cfg.assistant_provider)
+
+    def cloud_profile(self):
+        return setup.profile(self.cfg, self.cloud_id())
+
+    def consent_id(self):
+        return setup.consent_id(self.cfg, self.cloud_id())
 
     def wants_cloud(self) -> bool:
-        return self.cfg.assistant_provider == CLAUDE
+        return self.cloud_id() in setup.CLOUD
 
     def goes_to_cloud(self) -> bool:
         """Where the next question would go: the cloud only when chosen and the project is not reserved."""
@@ -426,7 +479,8 @@ class Chat(QObject):
         cloud = self.goes_to_cloud()
         names = costs.short_names()
         if cloud:
-            label = names.get(self.cfg.assistant_cloud_model, self.cfg.assistant_cloud_model)
+            model = self.cloud_profile()["model"]
+            label = names.get(model, model)
             tip = _("{name} answers with {model}, in the cloud, with your consent").format(
                 name=core.NAME, model=label)
         else:
@@ -438,8 +492,18 @@ class Chat(QObject):
         self.widget.set_where("cloud" if cloud else "local", label, tip)
         self.host.set_status(_("{name}, the assistant (Ctrl+L): {where}").format(name=core.NAME, where=tip))
         self.actions["local"].setChecked(not self.wants_cloud())
+        configured = self.ready.available(self.cfg)
+        # one mark in the menu's exclusive group: a Claude model of the menu, else the provider's line
+        on_menu_model = self.cloud_id() == "anthropic" and self.cloud_profile()["model"] in self.model_actions
         for model, action in self.model_actions.items():
-            action.setChecked(self.wants_cloud() and self.cfg.assistant_cloud_model == model)
+            action.setChecked(self.wants_cloud() and self.cloud_id() == "anthropic" and
+                              self.cloud_profile()["model"] == model)
+            action.setEnabled("anthropic" in configured)
+        for provider, action in self.provider_actions.items():
+            action.setEnabled(provider in configured)
+            if not (provider == "anthropic" and on_menu_model):
+                action.setChecked(self.wants_cloud() and self.cloud_id() == provider)
+            action.setText(setup.CLOUD[provider].name + ("" if provider in configured else _(" (configure first)")))
         self.reserve_action.blockSignals(True)
         self.reserve_action.setChecked(bool(getattr(self.host.project, "reserved", False)))
         self.reserve_action.blockSignals(False)
@@ -461,6 +525,14 @@ class Chat(QObject):
             group.addAction(a)
             a.triggered.connect(lambda _c=False, m=model: self.choose(CLAUDE, m))
             self.model_actions[model] = a
+        self.provider_actions = {}
+        for provider, spec in setup.CLOUD.items():
+            action = menu.addAction(spec.name)
+            action.setCheckable(True)
+            group.addAction(action)
+            action.triggered.connect(lambda _c=False, p=provider: self.choose(p))
+            self.provider_actions[provider] = action
+        menu.addAction(_("Set up a model…"), self.show_setup)
         menu.addSeparator()
         self.reserve_action = menu.addAction(_("Reserved project: never to the cloud"))
         self.reserve_action.setCheckable(True)
@@ -472,11 +544,24 @@ class Chat(QObject):
         self.menu = menu
 
     def choose(self, where: str, model: str = "") -> None:
-        self.cfg.assistant_provider = where
+        if setup.canonical(where) != self.cloud_id() or (model and model != self.cloud_profile()["model"]):
+            self._interrupt()
+        self.cfg.assistant_provider = setup.canonical(where)
         if model:
-            self.cfg.assistant_cloud_model = model
+            setup.remember(self.cfg, where, model)     # the profile is where the model lives (setup.profile)
         self.save_config()
         self.refresh()
+
+    WHERE = ("assistant_local_url", "assistant_local_model", "assistant_local_runtime", "assistant_cloud_model",
+             "assistant_cloud_profiles")
+
+    def _interrupt(self) -> None:
+        """Another destination while a turn runs or a consent card waits: both dropped (what the old destination
+        still says is never shown), said as Stop says it, and the face back to idle."""
+        busy = self.job is not None
+        self.stop()
+        if busy:
+            self.widget.answer(_("Stopped."), who="note")
 
     def reserve(self, on: bool) -> None:
         """The project reserved, or not, as one step of the undo (the project's file keeps it)."""
@@ -487,13 +572,20 @@ class Chat(QObject):
         self.refresh()
 
     def apply_preferences(self, choice: dict) -> None:
-        """Settings > Assistant: where, the local server, the Claude model, the voice, a consent withdrawn."""
-        for key in ("assistant_provider", "assistant_local_url", "assistant_local_model", "assistant_local_runtime",
-                    "assistant_cloud_model"):
+        """Settings > Assistant: where, the local server, the cloud models, the voice, a consent withdrawn. Only a
+        change of destination or a consent withdrawn drops the turn running; the voice or the look do not."""
+        self.ready.forget()                 # a key may have been stored or forgotten there
+        moved = ("assistant_provider" in choice and setup.canonical(choice["assistant_provider"]) != self.cloud_id()
+                 or any(k in choice and choice[k] != getattr(self.cfg, k) for k in self.WHERE)
+                 or bool(choice.get("withdraw")))
+        if moved:
+            self._interrupt()
+            self.local_answered = False     # another server or model: not known to answer yet
+        for key in ("assistant_provider", *self.WHERE):
             if key in choice:
                 setattr(self.cfg, key, choice[key])
         if choice.get("withdraw"):
-            self.cfg.assistant_consent = {k: v for k, v in self.cfg.assistant_consent.items() if k != "anthropic"}
+            self.cfg.assistant_consent = {}
         speaking = ("assistant_voice_engine", "assistant_voice_name", "assistant_kokoro_dir", "assistant_kokoro_python")
         if any(k in choice and choice[k] != getattr(self.cfg, k) for k in speaking):
             for k in speaking:
@@ -530,23 +622,29 @@ class Chat(QObject):
         if not self.wants_cloud():
             self._start(text, self.make_local())
             return
+        try:
+            settings = self.cloud_profile()
+            setup.validate_endpoint(settings["endpoint"])
+            if not settings["model"].strip():
+                raise ValueError(_("Choose a model from your provider account."))
+        except ValueError as error:
+            self.widget.answer(_("The cloud model is not configured: {why}").format(why=error), who="note")
+            self.show_setup()
+            return
         if privacy.requires_local(text):
             self.widget.note(_("Questions about reserved projects stay on this PC: the question goes to the local "
                                "model."))
             self._start(text, self.make_local())
             return
-        why = privacy.allowed(self.host.project, "anthropic", self.cfg.assistant_consent)
+        why = privacy.allowed(self.host.project, self.consent_id(), self.cfg.assistant_consent)
         if why == "reserved":
             self.widget.note(_("This project is reserved: the question goes to the local model."))
             self._start(text, self.make_local())
             return
-        try:
-            key = self.keys.get("anthropic")
-        except keys.KeyringMissing:
-            key = ""
+        key = self._cloud_key()
         if not key:
-            self.widget.note(_("No Claude key in the system's keyring (Settings > Assistant): the question goes "
-                               "to the local model."))
+            self.widget.note(_("No API key for this provider in the system keyring. Set up a model below."))
+            self.show_setup()
             self._start(text, self.make_local())
             return
         if why == "consent" or self.attachments or (self.has_attachment_turn and self.conversation.state.cloud):
@@ -558,13 +656,21 @@ class Chat(QObject):
     def _show_consent(self) -> None:
         """What would leave, said by Meridio in the conversation (it scrolls), and the card that asks: the first
         time a question would go to Claude, nothing leaves before a click."""
-        model = costs.short_names().get(self.cfg.assistant_cloud_model, self.cfg.assistant_cloud_model)
-        self.widget.note("\n".join(f"- {line}" for line in privacy.what_leaves("anthropic", model)), who="info")
+        settings = self.cloud_profile()
+        provider = self.cloud_id()
+        if provider == "anthropic" and settings["endpoint"] == setup.CLOUD[provider].endpoint:
+            lines = privacy.what_leaves(provider, settings["model"])
+        else:
+            lines = [_("Your questions and project summaries go to {provider}, model {model}, at {endpoint}.").format(
+                provider=setup.CLOUD[provider].name, model=settings["model"], endpoint=settings["endpoint"]),
+                _("Names and paths are replaced by aliases. Reserved projects stay on this PC."),
+                _("The provider's account terms govern billing, retention and data location. Review them before sending.")]
+        self.widget.note("\n".join(f"- {line}" for line in lines), who="info")
         attached = [_escape(_("Attached document text also leaves this PC: {names}").format(
             names=", ".join(a.name for a in self.attachments.values())))] if self.attachments else []
         if self.has_attachment_turn and self.conversation.state.cloud:
             attached.append(_escape(_("This conversation includes previously attached document text, which will be sent again.")))
-        card = Card(_("Send this question to Claude?"), attached,
+        card = Card(_("Send this question to {provider}?").format(provider=setup.CLOUD[self.cloud_id()].name), attached,
                     [("local", _("Local model")), ("cancel", _("Not now")), ("allow", _("Allow and send"))])
         card.buttons["allow"].clicked.connect(self._consented)
         card.buttons["local"].clicked.connect(self._local_instead)
@@ -579,14 +685,11 @@ class Chat(QObject):
             self.consent_card = None
 
     def _consented(self) -> None:
-        self.cfg.assistant_consent = privacy.consent(self.cfg.assistant_consent, "anthropic", dt.date.today())
+        self.cfg.assistant_consent = privacy.consent(self.cfg.assistant_consent, self.consent_id(), dt.date.today())
         self.save_config()
         text, self.waiting = self.waiting, ""
         self._drop_consent()
-        try:
-            key = self.keys.get("anthropic")
-        except keys.KeyringMissing:
-            key = ""
+        key = self._cloud_key()
         self._start(text, self.make_cloud(key) if key else self.make_local())
 
     def _local_instead(self) -> None:
@@ -611,9 +714,12 @@ class Chat(QObject):
         if self.decisions:
             text = "(" + " ".join(self.decisions) + ")\n" + text
             self.decisions = []
-        if provider.cloud and not self.conversation.state.cloud and self.conversation.messages:
+        destination = (self.cloud_id(), self.cloud_profile()["endpoint"]) if provider.cloud else ("local", "")
+        if provider.cloud and self.conversation.messages and (
+                not self.conversation.state.cloud or getattr(self, "last_destination", None) != destination):
             self.conversation.clear()
             self.has_attachment_turn = False
+        self.last_destination = destination
         self.has_attachment_turn = self.has_attachment_turn or bool(self.attachments)
         if self.attachments:
             text += attachments.message(self.attachments.values())
@@ -643,6 +749,8 @@ class Chat(QObject):
         self.job.signals.done.connect(self._done)
         self.job.signals.failed.connect(self._failed)
         self.widget.set_state(core.THINKING)
+        self.request_started = time.monotonic()
+        self.progress_timer.start()
         self.pool.start(self.job)
 
     def _restore(self, text: str) -> str:
@@ -651,17 +759,21 @@ class Chat(QObject):
     def _text(self, generation: int, piece: str) -> None:
         if generation != self.generation:
             return
+        self._clear_progress()
         self.widget.stream(piece)
         self.voice.feed(piece)
 
     def _done(self, generation: int, r) -> None:
         if generation != self.generation:
             return
+        self._clear_progress()
         self.job = None
         self.conversation.add_round(r, self.provider)
         self._bill()
         if r.done.reason == "stopped":
             return
+        if not getattr(self.provider, "cloud", False):
+            self.local_answered = True
         if r.done.reason == "length":
             self.widget.note(_("The answer was cut: it was too long."))
         elif r.done.reason == "refusal":
@@ -697,9 +809,10 @@ class Chat(QObject):
     def _failed(self, generation: int, error) -> None:
         if generation != self.generation:
             return
+        self._clear_progress()
         self.job = None
         if error.kind == "offline" and self.provider is not None and self.provider.cloud:
-            self.widget.note(_("No network: Claude cannot be reached. The question goes to the local model."))
+            self.widget.note(_("No network: the cloud provider cannot be reached. The question goes to the local model."))
             self.provider, self.redactor = self.make_local(), None
             self.conversation.state.cloud = False
             self._round()
@@ -708,6 +821,7 @@ class Chat(QObject):
         self.voice.stop()
         self.widget.answer(self.said(error), who="note")
         if error.kind in ("offline", "model", "tools") and (self.provider is None or not self.provider.cloud):
+            self.local_answered = False
             self.look_for_local()
 
     def said(self, error) -> str:
@@ -720,7 +834,7 @@ class Chat(QObject):
             return _("The model {model} does not call tools, and Meridio reads the project with them. I look for "
                      "another one on this PC…").format(model=getattr(self.provider, "model", ""))
         if error.kind == "auth":
-            return _("Claude refused the key: check it in Settings > Assistant.")
+            return _("The provider refused the API key: check it in the model setup.")
         if error.kind == "limit":
             return _("The provider's limit is reached: try again in a while.")
         if error.kind == "model":
@@ -737,6 +851,7 @@ class Chat(QObject):
 
     def stop(self) -> None:
         """Stop: the turn dropped now, the connection shut, the voice silent."""
+        self._clear_progress()
         self.generation += 1
         if self.provider is not None:
             self.provider.cancel()
@@ -787,13 +902,63 @@ class Chat(QObject):
             self.widget.note(_("{runtime} is on this PC but not running: {how}. Then ask again.").format(
                 runtime=rt.name, how=rt.start()))
             return
-        card = Card(_("No local model on this PC"),
-                    [_escape(_("A few steps give {name} a model of his own on this PC: one program and one command. "
-                               "The guide is in Settings > Assistant.").format(name=core.NAME))],
-                    [("prefs", _("Show me how"))])
-        card.buttons["prefs"].clicked.connect(self._survey_preferences)
-        self.survey_card = card
-        self.widget.add_card(card)
+        self.widget.note(_("I have not found a local model yet. I can help you choose one on this PC or connect a cloud account."))
+        if not self.ready.available(self.cfg):      # a cloud model configured is one click away in the chip's menu
+            self.show_setup()
+
+    def show_setup(self):
+        if self.setup_card is not None:
+            return
+        from .assistant_setup import AssistantSetup
+        self.setup_card = AssistantSetup(self.cfg, self.save_config)
+        self.setup_card.configured.connect(self._setup_done)
+        self.setup_card.dismissed.connect(self._dismiss_setup)
+        self.setup_card.layoutChanged.connect(self.widget._fit_cards)
+        self.widget.add_card(self.setup_card)
+
+    def _dismiss_setup(self):
+        self.setup_declined = True
+        if self.setup_card is not None:
+            self.widget.remove_card(self.setup_card)
+            self.setup_card = None
+
+    def _setup_done(self, _provider):
+        self._interrupt()
+        self.ready.forget()
+        self.refresh()
+        self.widget.note(_("Model configured. Send your question when you are ready."))
+        if self.setup_card is not None:
+            self.widget.remove_card(self.setup_card)
+            self.setup_card = None
+
+    def _progress(self):
+        if self.job is None:
+            self._clear_progress()
+            return
+        now = time.monotonic()
+        elapsed = int(now - self.request_started)
+        limit = providers.CLOUD_TIMEOUT_S if self.provider.cloud else providers.LOCAL_READ_S
+        # silence, not the wait for the first word: a reasoning model sends its reasoning before it (providers.active)
+        if now - max(self.request_started, getattr(self.provider, "active", 0.0)) >= limit:
+            self.stop()
+            self.widget.answer(_("The model did not answer within {seconds} seconds. Request cancelled in Meridio; try a smaller "
+                                 "local model or check the provider connection.").format(seconds=int(limit)), who="note")
+            return
+        if elapsed < 5:
+            return
+        if self.progress_note is None:
+            self.progress_note = QLabel()
+            self.progress_note.setWordWrap(True)
+            self.widget.add_card(self.progress_note)
+        self.progress_note.setText(_("Waiting for the language model: {seconds} s. The first request may load its "
+                                     "weights and read the instructions. You can stop at any time. "
+                                     "Speech synthesis starts after text arrives.").format(seconds=elapsed))
+
+    def _clear_progress(self):
+        self.progress_timer.stop()
+        if self.progress_note is not None:
+            self.widget.remove_card(self.progress_note)
+            self.progress_note = None
 
     def use_local(self, choice, again: bool = False) -> None:
         """A local model found chosen: its server's address, the model, its API; the question asked again."""
@@ -849,6 +1014,9 @@ class Chat(QObject):
             self.remove_attachment(token)
         self.has_attachment_turn = False
         self._drop_survey()
+        if self.setup_card is not None:
+            self.widget.remove_card(self.setup_card)
+            self.setup_card = None
         for card in list(self.cards.values()):
             self.widget.remove_card(card)
         self.cards.clear()
@@ -866,6 +1034,7 @@ class Chat(QObject):
             self.widget.fill_questions()            # the checks, the results: the questions follow the project
 
     def _gone(self, *_args) -> None:
+        self._clear_progress()
         self.generation += 1
         if self.provider is not None:
             self.provider.cancel()
@@ -955,9 +1124,13 @@ class Chat(QObject):
     def _opened(self, on: bool) -> None:
         """The bubble opened: the first time ever he presents himself, and the questions ready are those of now;
         closed (Esc, its button, Ctrl+L): he stops reading."""
+        if on and self.widget.property("guidedTourActive"):
+            return
         if on:
             if not self.cfg.assistant_introduced and not self.widget.messages:
                 self.introduce()
+            if not self.setup_declined and not self.model_ready():
+                self.show_setup()           # not again after «Not now»
             if self.widget.mood.state == core.IDLE:
                 self.widget.fill_questions()
         else:

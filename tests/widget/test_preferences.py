@@ -79,6 +79,31 @@ class PreferencesAlone(unittest.TestCase):
         d.show_page("navigation")
         self.assertFalse(d.confirmation.isVisibleTo(d))
 
+    def test_a_key_stored_or_removed_here_is_read_again_by_whoever_remembered_it(self):
+        """Meridio's chip remembers whether each provider has a key (setup.Ready, R07): the page that stores or
+        removes one says so (setup.keys_changed), whoever listens to it or not (review H). No real keyring."""
+        from unittest import mock
+
+        from _fakes import nothing_local
+        from meridiana.assistant import keys, setup
+        from meridiana.ui import preferences
+        page = preferences.MeridioPage(config.Config(background="none"), survey=nothing_local)
+        self.addCleanup(_setup.dispose, page)
+        reads = []
+        ready = setup.Ready(lambda provider: reads.append(provider) or "")
+        ready.has_key("anthropic")
+        ready.has_key("anthropic")
+        self.assertEqual(len(reads), 1)                         # remembered
+        with mock.patch.object(keys, "put"), \
+                mock.patch.object(preferences.QInputDialog, "getText", return_value=("sk-test-0000", True)):
+            page._set_key()
+        ready.has_key("anthropic")
+        self.assertEqual(len(reads), 2)                         # stored: asked again
+        with mock.patch.object(keys, "forget"):
+            page._forget_key()
+        ready.has_key("anthropic")
+        self.assertEqual(len(reads), 3)                         # removed: asked again
+
 
 class KeysEditor(unittest.TestCase):
     @classmethod

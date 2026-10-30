@@ -69,7 +69,8 @@ class Voice(unittest.TestCase):
 
     def test_no_engine_at_all_is_said_and_mock_is_never_the_programs(self):
         from meridiana.ui import voice
-        with mock.patch.object(voice, "engines", return_value=[]):
+        with mock.patch.object(voice, "engines", return_value=[]), mock.patch.object(
+                voice.speech, "find_model", return_value=None):
             ok, why = voice.Voice("it").available()
         self.assertFalse(ok)
         self.assertIn("No speech engine", why)
@@ -279,9 +280,9 @@ class NaturalVoice(unittest.TestCase):
         from meridiana.ui import voice
         store = str(Path("C:/Users/x/AppData/Local/Microsoft/WindowsApps/python.exe"))
         real = str(Path("C:/Python312/pythonw.exe"))
-        self.assertEqual(speech.worker_python("", frozen=True, which=lambda name: None), "")
-        self.assertEqual(speech.worker_python("", frozen=True, which=lambda name: store), "")
-        self.assertEqual(speech.worker_python("", frozen=True, which=lambda name: real), real)
+        self.assertEqual(speech.worker_python("", frozen=True, which=lambda name: None), __import__("sys").executable)
+        self.assertEqual(speech.worker_python("", frozen=True, which=lambda name: store), __import__("sys").executable)
+        self.assertEqual(speech.worker_python("", frozen=True, which=lambda name: real), __import__("sys").executable)
         self.assertEqual(speech.worker_python("C:/py/python.exe", frozen=True, which=lambda name: None),
                          "C:/py/python.exe")                         # the settings' first, frozen or not
         self.assertTrue(speech.worker_python("", frozen=False))       # from the sources: the program's own
@@ -323,6 +324,47 @@ class NaturalVoice(unittest.TestCase):
         self.assertIsNone(auto.kokoro)
         # «system»: Kokoro is not even looked for
         self.assertIsNone(voice.Voice("it", settings=self.settings(tmp, engine="system")).natural_model())
+
+    def test_a_ready_read_after_the_load_timeout_leaves_the_sentences_to_the_voice_in_its_place(self):
+        """Kokoro's «ready» in the same turn as its 60 s timeout (R07, review H): the failure stands, the sentence
+        waiting goes to the system's voice, not to the worker that is being closed (where it was lost)."""
+        import sys
+        from pathlib import Path
+
+        from meridiana.ui import voice
+        mock_engine_or_skip(self)
+
+        class Worker:                                   # a worker that has just said «ready»
+            def __init__(self):
+                self.written = []
+
+            def readAllStandardError(self):
+                return b"ready\n"
+
+            def write(self, data):
+                self.written.append(data)
+
+            def kill(self):
+                pass
+
+            def waitForFinished(self, _ms):
+                return True
+
+        v = voice.Voice("en", engine="mock")            # «mock» has no Italian voice: it would refuse the queue
+        self.addCleanup(v.close)
+        k = voice.Kokoro(Path("."), sys.executable, "am_adam", "en", fake=True, parent=v)
+        v.kokoro, v.kind, v.on = k, "kokoro", True
+        k.ready.connect(v._kokoro_ready)
+        k.failed.connect(v._kokoro_failed)
+        k.process = worker = Worker()
+        v._say("First sentence.")
+        self.assertEqual(v.queue, ["First sentence."])
+        k.load_timeout.timeout.emit()                   # 60 s gone...
+        k._err()                                        # ...and «ready» read in the same turn
+        self.assertTrue(wait_until(self.app, lambda: v.kind == "system" and v.said, 5), (v.kind, v.said))
+        self.assertEqual(worker.written, [])            # nothing to the worker being closed
+        self.assertEqual(v.said, ["First sentence."])
+        self.assertFalse(k.loaded)
 
 if __name__ == "__main__":
     unittest.main()

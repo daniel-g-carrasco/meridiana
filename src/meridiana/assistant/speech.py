@@ -58,7 +58,13 @@ def model_dirs(configured: str = "", data_dir: Path | None = None, environ=None)
         out.append(Path(data_dir) / "voices" / "kokoro")
     home = Path.home()
     out += [home / ".local" / "opt" / "kokoro", home / ".local" / "share" / "kokoro"]
-    return out
+    if environ.get("XDG_DATA_HOME"):
+        out.append(Path(environ["XDG_DATA_HOME"]) / "kokoro")
+    if environ.get("LOCALAPPDATA"):
+        out += [Path(environ["LOCALAPPDATA"]) / "Meridiana" / "data" / "voices" / "kokoro",
+                Path(environ["LOCALAPPDATA"]) / "kokoro"]
+    # Common manual installs keep the files in models/ rather than alongside the environment.
+    return list(dict.fromkeys(p for root in out for p in (root, root / "models")))
 
 
 def find_model(configured: str = "", data_dir: Path | None = None, environ=None) -> Path | None:
@@ -162,15 +168,26 @@ def found_python(which=None) -> str:
     return ""
 
 
-def worker_python(configured: str = "", frozen: bool | None = None, which=None) -> str:
-    """The Python that runs the worker: the one of the settings, else the program's own; on Windows its pythonw,
-    so that no console window opens beside the program. A frozen program (the Windows bundle) has no Python of its
-    own, and its executable given the worker would open a second window: there it is a Python found on the PATH,
-    or "" (the natural voice cannot start; the system's speaks, and Preferences says why)."""
+def worker_python(configured: str = "", frozen: bool | None = None, which=None,
+                  model_dir: Path | None = None) -> str:
+    """An explicit interpreter, a valid adjacent environment, or this program's Python.
+    The Windows bundle runs its worker through --kokoro-worker with its own bundled dependencies.
+    Flatpak uses its sandbox runtime, never a host virtualenv with incompatible library paths.
+    """
     if configured:
         return configured
     if getattr(sys, "frozen", False) if frozen is None else frozen:
-        return found_python(which)
+        return sys.executable
+    # Prefer a dedicated environment next to discovered weights; is_file rejects broken symlinks.
+    # A Flatpak must use its own runtime: host virtualenv interpreters are not ABI-compatible in the sandbox.
+    if model_dir is not None and not os.environ.get("FLATPAK_ID"):
+        # never a folder of one PC (~/fvtest/kokoro-venv, Daniel's laptop, was here): another one is named in Settings
+        roots = [Path(model_dir), Path(model_dir).parent, Path.home() / ".local/opt/kokoro"]
+        for root in roots:
+            for prefix in (root / "venv", root / ".venv", root):
+                executable = prefix / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+                if executable.is_file():
+                    return str(executable)
     exe = Path(sys.executable)
     if os.name == "nt" and exe.name.lower() == "python.exe" and exe.with_name("pythonw.exe").is_file():
         return str(exe.with_name("pythonw.exe"))

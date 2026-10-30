@@ -47,6 +47,8 @@ BROUGHT = {
     20: {"assistant_introduced", "assistant_local_runtime"},
     21: {"text_size"},
     22: {"auto_install_updates", "pending_update", "tour_status", "tour_step"},
+    23: {"assistant_cloud_profiles"},
+    24: {"inverter_brand_favourites"},
 }
 
 
@@ -124,6 +126,30 @@ class SettingsFiles(unittest.TestCase):
         self.assertEqual([n.kind for n in cfg.notices], ["recovered"])
         self.assertEqual((cfg.theme, cfg.pivot_hint), ("dark", False))
         self.assertEqual(config.load(self.path).notices, [])   # and written again whole
+
+    def test_the_starred_makers_survive_a_save_and_a_restart_and_anything_else_there_is_damage(self):
+        """R268: the favourites of the picker are a list of texts in the settings (format 24), the first list of
+        texts the file has: written and read back as they are, in their order, accents included; a file that
+        holds something else under that key is damaged, and the previous save is used."""
+        cfg = config.load(self.put("config-v23.json"))
+        self.assertEqual(cfg.inverter_brand_favourites, [])     # migrated from 23: none starred yet
+        cfg.inverter_brand_favourites = ["Huawei", "SMA", "Zeta Énergie"]
+        config.save(cfg, self.path)
+        again = config.load(self.path)
+        self.assertEqual(again.notices, [])
+        self.assertEqual(again.inverter_brand_favourites, ["Huawei", "SMA", "Zeta Énergie"])
+        self.assertEqual(json.loads(self.path.read_text(encoding="utf-8"))["inverter_brand_favourites"],
+                         ["Huawei", "SMA", "Zeta Énergie"])
+        for damaged in ("Huawei", ["Huawei", 3], {"Huawei": True}):
+            with self.subTest(value=damaged):
+                data = json.loads((FOLDER / "config-v24.json").read_text(encoding="utf-8"))
+                data["inverter_brand_favourites"] = damaged
+                self.path.write_text(json.dumps(data), encoding="utf-8")
+                self.put("config-v24.json", "config.json.bak")
+                cfg = config.load(self.path)
+                self.assertEqual([n.kind for n in cfg.notices], ["recovered"])
+                self.assertIn("is not a list of text", cfg.notices[0].reason)
+                self.assertEqual(cfg.inverter_brand_favourites, ["Huawei", "SMA", "Fronius"])  # the previous save
 
 
 class ProjectFiles(unittest.TestCase):

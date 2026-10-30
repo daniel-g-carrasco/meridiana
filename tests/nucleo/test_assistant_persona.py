@@ -64,7 +64,7 @@ class Instructions(unittest.TestCase):
         text = persona.presentation("Meridio")
         self.assertTrue(text.startswith("Hi, I am Meridio, Meridiana's assistant."))
         for part in ("the checks, the results, the rules", "comes from an assumption", "I change nothing by myself",
-                     "Ctrl+Z", "local model on this PC", "Claude only if you choose it"):
+                     "Ctrl+Z", "local model on this PC", "cloud provider only if you configure it"):
             self.assertIn(part, text)
         self.assertLess(len(text), 520)                           # short: a few lines in the bubble
 

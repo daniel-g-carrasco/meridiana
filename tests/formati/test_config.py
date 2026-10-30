@@ -246,8 +246,9 @@ class ConfigTest(unittest.TestCase):
                               cfg.assistant_width, cfg.assistant_height, cfg.checks_view, cfg.help_open),
                              ("text", "top", True, "smooth", 320, 400, "level", True))
             save(cfg, path)
-            self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["version"], 22)
-            self.assertEqual(config.CONFIG_VERSION, 22)
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["version"], 24)
+            self.assertEqual(config.CONFIG_VERSION, 24)
+            self.assertEqual(cfg.inverter_brand_favourites, [])       # no maker starred yet (R268)
             self.assertEqual(cfg.text_size, "medium")                 # the 13 px of before (R133)
             self.assertEqual((cfg.background, cfg.map_sources), ("auto", []))     # the best for the site (R36)
             self.assertEqual((cfg.assistant_voice_engine, cfg.assistant_voice_name), ("auto", ""))
@@ -314,6 +315,25 @@ class ConfigTest(unittest.TestCase):
             self.assertEqual(load(path).assistant_consent, {"anthropic": ["2026-10-24"]})
             path.write_text(json.dumps({"version": 16, "assistant_consent": {"anthropic": True}}), encoding="utf-8")
             self.assertEqual([n.kind for n in load(path).notices], ["recovered"])    # a switch for a table: damage
+
+    def test_cloud_profiles_and_a_pending_update_survive_a_save_and_the_next_start(self):
+        """R07 review: a table of records (provider -> {model, endpoint}) and the update's notice ({version, url})
+        are not tables of keys; read back as damage, they made the next start lose every setting."""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            cfg = Config(assistant_provider="mistral", assistant_cloud_profiles={
+                "mistral": {"model": "mistral-small-latest", "endpoint": "https://api.mistral.ai/v1"}},
+                pending_update={"version": "1.4.0", "url": "https://example.org/r"}, theme="dark")
+            save(cfg, path)
+            save(cfg, path)                                   # the backup holds the same: nothing to recover from
+            again = load(path)
+            self.assertEqual(again.notices, [])
+            self.assertEqual(again, cfg)
+            for bad in ({"mistral": ["m"]}, {"mistral": {"model": 3}}, ["mistral"]):
+                with self.subTest(bad=bad):
+                    path.write_text(json.dumps({"version": config.CONFIG_VERSION, "assistant_cloud_profiles": bad}),
+                                    encoding="utf-8")
+                    self.assertEqual([n.kind for n in load(path).notices], ["recovered"])
 
     def test_no_secret_is_ever_saved(self):
         text = json.dumps(Config(assistant_provider="claude").to_json()).lower()

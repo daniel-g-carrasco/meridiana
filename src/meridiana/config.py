@@ -10,8 +10,8 @@ is migrated on reading; a newer one (an app downgraded) is read for what
 this version knows and written back whole, the unknown settings kept.
 
 Adding a setting: a field with a default of the right type (bool, int,
-str, or a dict of lists of text: a value of another type in the file counts
-as damage). Renaming or
+str, a dict of lists of text, or a list of text named in _TEXT_LISTS: a
+value of another type in the file counts as damage). Renaming or
 changing one: a migration step in MIGRATIONS and CONFIG_VERSION + 1.
 """
 
@@ -29,7 +29,7 @@ from pathlib import Path
 
 from . import SLUG
 
-CONFIG_VERSION = 22
+CONFIG_VERSION = 24
 
 
 def _v1_to_v2(data: dict) -> dict:
@@ -190,6 +190,17 @@ def _v21_to_v22(data: dict) -> dict:
             "tour_status": data.get("tour_status", "new"), "tour_step": data.get("tour_step", 0)}
 
 
+def _v22_to_v23(data: dict) -> dict:
+    """Cloud connection preferences contain no API keys; existing Claude settings remain available."""
+    return {**data, "assistant_cloud_profiles": data.get("assistant_cloud_profiles", {})}
+
+
+def _v23_to_v24(data: dict) -> dict:
+    """Version 24 has the inverter makers the user starred in the sizing's picker (R268, ui/brand_picker.py): none.
+    They are the user's, not the project's: the project keeps the maker it was sized with (energy["inverter_maker"])."""
+    return {**data, "inverter_brand_favourites": data.get("inverter_brand_favourites", [])}
+
+
 # from one format version to the next, in order: {from_version: step}
 MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5,
                                                  5: _v5_to_v6, 6: _v6_to_v7, 7: _v7_to_v8, 8: _v8_to_v9,
@@ -197,7 +208,8 @@ MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: 
                                                  12: _v12_to_v13, 13: _v13_to_v14, 14: _v14_to_v15,
                                                  15: _v15_to_v16, 16: _v16_to_v17, 17: _v17_to_v18,
                                                  18: _v18_to_v19, 19: _v19_to_v20,
-                                                 20: _v20_to_v21, 21: _v21_to_v22}
+                                                 20: _v20_to_v21, 21: _v21_to_v22, 22: _v22_to_v23,
+                                                 23: _v23_to_v24}
 
 
 @dataclass
@@ -227,6 +239,7 @@ class Config:
     assistant_local_model: str = ""
     assistant_local_runtime: str = ""    # its API: "" OpenAI-compatible (llama-server, LM Studio...), "ollama" its own
     assistant_cloud_model: str = "claude-haiku-5-5"
+    assistant_cloud_profiles: dict = field(default_factory=dict)
     assistant_consent: dict = field(default_factory=dict)
     assistant_voice: bool = False        # Meridio reads his answers aloud (ui/voice.py)
     assistant_introduced: bool = False   # he presented himself (persona.presentation), the first time he was opened
@@ -259,6 +272,9 @@ class Config:
     # one a project's report is signed with when the project chose none
     report_profiles: list = field(default_factory=list)
     report_profile: str = ""
+    # the inverter makers starred in the picker of the automatic sizing (R268), in the order they were starred: the
+    # user's favourites, apart from the maker a project was sized with (project.energy["inverter_maker"])
+    inverter_brand_favourites: list = field(default_factory=list)
     # what leaves the PC, each with its switch (Preferences > Privacy): the address typed, to OpenStreetMap's
     # Nominatim; the site's coordinates, to PVGIS; the area in view, to the map servers (tiles.SOURCES)
     network_geocoding: bool = True
@@ -291,15 +307,37 @@ class Config:
         return cfg
 
 
+# the tables that are not of keys (name -> [text]): the update's notice ({"version", "url"}), and the cloud
+# connections, provider -> {"model", "endpoint"} (no secret: the keys stay in the keyring)
+_TEXT_TABLES = {"pending_update"}
+_RECORD_TABLES = {"assistant_cloud_profiles"}
+# the lists that hold texts only (the other lists, `recent`, `report_profiles` and `map_sources`, are read by those
+# who use them, an entry at a time)
+_TEXT_LISTS = {"inverter_brand_favourites"}
+
+
 def _typed(cls, kwargs: dict) -> dict:
     """ValueError when a value has not the type of the field's default (a
     number for a switch, a word for a number): such a file is damaged, and
     the previous save is a better start than a crash later on."""
     for f in fields(cls):
+        if f.name in kwargs and f.name in _TEXT_LISTS:
+            value = kwargs[f.name]
+            if value.__class__ is not list or any(v.__class__ is not str for v in value):
+                raise ValueError(f"{f.name}: {value!r} is not a list of text")
+            continue
         if f.name in kwargs and f.default_factory is dict and f.name != "extra":
             value = kwargs[f.name]
-            if value.__class__ is not dict or any(v.__class__ is not list or any(x.__class__ is not str for x in v)
-                                                  for v in value.values()):
+            if f.name in _TEXT_TABLES:
+                if value.__class__ is not dict or any(v.__class__ is not str for v in value.values()):
+                    raise ValueError(f"{f.name}: {value!r} is not a table of text")
+            elif f.name in _RECORD_TABLES:
+                if value.__class__ is not dict or any(
+                        v.__class__ is not dict or any(x.__class__ is not str for x in v.values())
+                        for v in value.values()):
+                    raise ValueError(f"{f.name}: {value!r} is not a table of records")
+            elif value.__class__ is not dict or any(v.__class__ is not list or any(x.__class__ is not str for x in v)
+                                                    for v in value.values()):
                 raise ValueError(f"{f.name}: {value!r} is not a table of keys")
             continue
         if f.name not in kwargs or f.default is None or f.default.__class__ not in (bool, int, float, str):
