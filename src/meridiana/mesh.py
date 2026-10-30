@@ -383,10 +383,28 @@ def _on_segment(p, a, b, tol: float = 1e-6) -> bool:
     return abs(ap[0] * ab[1] - ap[1] * ab[0]) / math.sqrt(length2) < tol
 
 
-def _module_transforms(tilt, azimuth, along: float, across: float, thickness: float) -> np.ndarray:
+def _module_transforms(tilt, azimuth, along: float, across: float, thickness: float, spin=None) -> np.ndarray:
     """The 3 x 3 matrices (N, 3, 3) of "#Cube" (100 units a side) made modules: the `along` side with the row,
     the `across` side up the tilt, facing the azimuth; for arrays of tilts and azimuths, one multiplication for
-    all the modules of a sub-field (task 18c, step 7)."""
+    all the modules of a sub-field (task 18c, step 7). `spin` (degrees, layout.PlacedModule.spin) turns each about
+    its normal: a row on a pitch that does not run level (R278, R280)."""
+    mats = _level_transforms(tilt, azimuth, along, across, thickness)
+    if spin is None:
+        return mats
+    theta = np.radians(np.asarray(spin, dtype=float))
+    if not theta.any():
+        return mats
+    k = mats[:, :, 1] / np.linalg.norm(mats[:, :, 1], axis=1, keepdims=True)    # the normal, facing out
+    cross = np.zeros((len(k), 3, 3))
+    cross[:, 0, 1], cross[:, 0, 2], cross[:, 1, 2] = -k[:, 2], k[:, 1], -k[:, 0]
+    cross[:, 1, 0], cross[:, 2, 0], cross[:, 2, 1] = k[:, 2], -k[:, 1], k[:, 0]
+    s, c = np.sin(theta)[:, None, None], np.cos(theta)[:, None, None]
+    turn = np.eye(3) + s * cross + (1.0 - c) * (cross @ cross)                    # Rodrigues
+    return turn @ mats
+
+
+def _level_transforms(tilt, azimuth, along: float, across: float, thickness: float) -> np.ndarray:
+    """_module_transforms with the `along` side level."""
     b = np.radians(geo.azimuth_to_bearing(np.asarray(azimuth, dtype=float)))
     fe, fn = np.sin(b), np.cos(b)
     yaw = np.arctan2(fe, -fn)                 # local +z towards the side the module faces
@@ -417,7 +435,8 @@ def _module_transform(m, along: float, across: float, thickness: float) -> tuple
     """The 3 x 3 matrix and the place of one module."""
     x, y = m.centre
     a, c = _sides([m], along, across)
-    return _module_transforms([m.tilt], [m.azimuth], a, c, thickness)[0], to_qt(x, y, m.z)
+    return (_module_transforms([m.tilt], [m.azimuth], a, c, thickness, [getattr(m, "spin", 0.0)])[0],
+            to_qt(x, y, m.z))
 
 
 def module_table(modules, along: float, across: float, thickness: float = 0.035,
@@ -430,7 +449,8 @@ def module_table(modules, along: float, across: float, thickness: float = 0.035,
     if n == 0:
         return table
     a, c = _sides(modules, along, across)
-    mats = _module_transforms([m.tilt for m in modules], [m.azimuth for m in modules], a, c, thickness)
+    mats = _module_transforms([m.tilt for m in modules], [m.azimuth for m in modules], a, c, thickness,
+                              [getattr(m, "spin", 0.0) for m in modules])
     centres = np.array([m.centre for m in modules], dtype=float)
     table[:, 0:3], table[:, 3] = mats[:, 0], centres[:, 0]
     table[:, 4:7], table[:, 7] = mats[:, 1], [m.z for m in modules]

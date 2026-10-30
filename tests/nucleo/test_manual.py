@@ -18,7 +18,7 @@ setUpModule = _setup.keep_global_state          # what the module changes of the
 class Drawing(unittest.TestCase):
     def test_a_row_drawn_on_an_empty_sub_field_takes_its_module_gap_and_orientation(self):
         p = project()
-        rid = manual.draw(p, "s1", (5.0, 3.0), (15.0, 3.2))(p)
+        rid = manual.draw(p, "s1", (5.0, 3.0), (15.0, 3.0))(p)        # a line level: a row oblique is R280's
         sf = p.subfields[0]
         self.assertTrue(sf.manual and sf.filled)
         r = laid(p)

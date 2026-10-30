@@ -177,6 +177,9 @@ class PlacedModule:
     key: str = ""                         # its id, stable while its row is (Row)
     rid: str = ""                         # the id of its row
     turned: bool = False                  # its row turned by 90°: along and across swapped
+    # degrees about its own normal (right hand, facing out) from the place where its `along` side is level: a row
+    # on a pitch that does not run level (R278, R280); 0 for every module of a level row
+    spin: float = 0.0
 
     def __post_init__(self):
         if not self.key:                  # a module made without a row (the tests' grids): «row:slot[:level]»
@@ -281,10 +284,30 @@ def row_azimuth(area: Polygon, surface: Surface, p: Params) -> float:
 @dataclass
 class Frame:
     """The work frame of rows facing `azimuth`: the plan turned by `rot` degrees so that they face -v, and on a
-    flush plane v scaled back along the slope (`slope`, the cosine of the tilt)."""
+    flush plane v scaled back along the slope (`slope`, the cosine of the tilt). On the plane of a pitch whose rows
+    do not run level (`on_plane`, R278, R280) the frame is the plane's own, in true metres on it: `m` is the plan to
+    work linear map (a, b, c, d), u along the row, v square to it on the plane, towards the back."""
     azimuth: float
     rot: float
     slope: float
+    m: tuple | None = None
+
+    @classmethod
+    def on_plane(cls, azimuth: float, plane_tilt: float, plane_azimuth: float) -> "Frame":
+        """The frame of a row facing `azimuth` (its plan direction, the side its front edge looks to) on the plane
+        of tilt and azimuth given: the plan turned so that the plane faces -v, v scaled back along the slope (the
+        plane's own metres), then turned so that the row's plan direction lifted onto the plane runs along u."""
+        first = cls.of(plane_azimuth, plane_tilt, True)
+        level = cls.of(azimuth, 0.0, False)
+        ax, ay = level.along()
+        cu, cv = first.to_work(ax, ay)
+        phi = math.atan2(cv, cu)
+        c1, s1 = first._cs(first.rot)
+        k = 1.0 / first.slope
+        cp, sp = math.cos(-phi), math.sin(-phi)
+        # M = R(-phi) . S(1, k) . R(rot)
+        a, b, c, d = c1, -s1, k * s1, k * c1
+        return cls(azimuth, level.rot, 1.0, (cp * a - sp * c, cp * b - sp * d, sp * a + cp * c, sp * b + cp * d))
 
     @classmethod
     def of(cls, azimuth: float, tilt: float, flush: bool) -> "Frame":
@@ -299,10 +322,17 @@ class Frame:
         return (0.0 if abs(c) < 2.5e-16 else c), (0.0 if abs(s) < 2.5e-16 else s)
 
     def to_work(self, x: float, y: float) -> tuple[float, float]:
+        if self.m is not None:
+            a, b, c, d = self.m
+            return a * x + b * y, c * x + d * y
         c, s = self._cs(self.rot)
         return c * x - s * y, (s * x + c * y) / self.slope
 
     def to_plan(self, u: float, v: float) -> tuple[float, float]:
+        if self.m is not None:
+            a, b, c, d = self.m
+            det = a * d - b * c
+            return (d * u - b * v) / det, (a * v - c * u) / det
         c, s = self._cs(-self.rot)
         v = v * self.slope
         return c * u - s * v, s * u + c * v
@@ -335,9 +365,11 @@ class Sizes:
     gap: float
     stack_gap: float
     ridge_gap: float
+    plane: tuple | None = None        # (tilt, azimuth) of the pitch the rows stand on, None on a level surface
 
     @classmethod
-    def of(cls, module: Module, p: Params, tilt: float, turned: bool = False) -> "Sizes":
+    def of(cls, module: Module, p: Params, tilt: float, turned: bool = False,
+           surface: Surface | None = None) -> "Sizes":
         portrait = bool(p.portrait) != bool(turned)
         along = module.width if portrait else module.length
         across = module.length if portrait else module.width
@@ -352,8 +384,20 @@ class Sizes:
         else:
             depth = table_across * math.cos(math.radians(tilt))
             rise = table_across * math.sin(math.radians(tilt))
+        plane = (surface.tilt, surface.azimuth) if surface is not None and surface.tilt > 0 else None
         return cls(along, across, stack, depth, rise, flush, tilt, p.mounting == "east_west", p.gap, p.stack_gap,
-                   p.ew_ridge_gap)
+                   p.ew_ridge_gap, plane)
+
+
+def row_frame(azimuth: float, size: Sizes) -> Frame:
+    """The work frame of a row facing `azimuth` with the sizes of its sub-field: on a pitch, the plane's own for
+    east-west pairs (their feet on it, R278) and for flush rows that do not run level (R280); else Frame.of."""
+    plane = size.plane
+    if plane is not None and (size.east_west or size.flush):
+        level = abs((azimuth - plane[1] + 180.0) % 360.0 - 180.0) < 1e-6
+        if size.east_west or not level:
+            return Frame.on_plane(azimuth, plane[0], plane[1])
+    return Frame.of(azimuth, size.tilt, size.flush)
 
 
 def compute(area_ring, surface: Surface | None = None, module: Module | None = None, params: Params | None = None,
@@ -380,15 +424,17 @@ def compute(area_ring, surface: Surface | None = None, module: Module | None = N
     alpha = row_azimuth(area, surface, p)
     if rows is not None and rows:
         alpha = rows[0].azimuth                   # the rows by hand keep their own
-    frame = Frame.of(alpha, tilt, p.mounting in FLUSH)
+    size = Sizes.of(module, p, tilt, surface=surface)
+    frame = row_frame(alpha, size)
     rot, slope = frame.rot, frame.slope
 
     def to_work(g):
+        if frame.m is not None:
+            return affinity.affine_transform(g, [*frame.m, 0.0, 0.0])
         g = affinity.rotate(g, rot, origin=(0, 0))
         return affinity.scale(g, 1.0, 1.0 / slope, origin=(0, 0)) if slope != 1.0 else g
 
     usable = usable_area(area, p, exclusions)
-    size = Sizes.of(module, p, tilt)
     depth, rise = size.depth, size.rise
     if size.flush:
         clearance = p.flush_row_gap
@@ -548,8 +594,8 @@ def modules_of(rows: list[Row], module: Module, params: Params, surface: Surface
     batches: dict = {}               # (azimuth, turned) -> [(order, pending...)]
     order = 0
     for row, line in zip(rows, line_of, strict=True):
-        size = Sizes.of(module, p, tilt, row.turned)
-        frame = Frame.of(row.azimuth, tilt, flush)
+        size = Sizes.of(module, p, tilt, row.turned, surface)
+        frame = row_frame(row.azimuth, size)
         u_o, v0 = frame.to_work(row.x, row.y)
         depth, across, shrink = size.depth, size.across, (1.0 if flush else math.cos(math.radians(tilt)))
         halves = [(v0, v0 + depth)] if not size.east_west else [
@@ -576,13 +622,17 @@ def modules_of(rows: list[Row], module: Module, params: Params, surface: Surface
                         lo_v = va + start * shrink
                         hi_v = lo_v + across * shrink
                     lift = 0.0 if flush else (start + across / 2) * math.sin(math.radians(tilt))
+                    # the heights above the surface of the module's edges at lo_v and at hi_v (on a plane, R278)
+                    low, high = (0.0, 0.0) if flush else (start * math.sin(math.radians(tilt)),
+                                                          (start + across) * math.sin(math.radians(tilt)))
                     batch.append((line, slot, 0, k, back_alpha if back else round(row.azimuth, 2), u0, lo_v, hi_v,
-                                  lift, key, row.id, order))
+                                  lift, key, row.id, order, *((high, low) if back else (low, high))))
                     order += 1
     placed: list = [None] * order
     for (_az, turned), (frame, size, pending) in batches.items():
-        for pm, entry in zip(_place(pending, size.along, frame.rot, frame.slope, surface, p.stand_off, tilt),
-                             pending, strict=True):
+        made = (_place_on_plane(pending, size.along, frame, surface, p.stand_off, flush) if frame.m is not None else
+                _place(pending, size.along, frame.rot, frame.slope, surface, p.stand_off, tilt))
+        for pm, entry in zip(made, pending, strict=True):
             pm.turned = bool(turned)
             placed[entry[11]] = pm
     return placed
@@ -621,9 +671,13 @@ def _boxes(placed: list[PlacedModule], members: list[int], frame: Frame) -> list
     if not members:
         return []
     xy = np.array([placed[i].corners for i in members], dtype=float)          # (n, 4, 2)
-    c, s = frame._cs(frame.rot)
-    u = c * xy[:, :, 0] - s * xy[:, :, 1]
-    v = (s * xy[:, :, 0] + c * xy[:, :, 1]) / frame.slope
+    if frame.m is not None:
+        a, b, c, d = frame.m
+        u, v = a * xy[:, :, 0] + b * xy[:, :, 1], c * xy[:, :, 0] + d * xy[:, :, 1]
+    else:
+        c, s = frame._cs(frame.rot)
+        u = c * xy[:, :, 0] - s * xy[:, :, 1]
+        v = (s * xy[:, :, 0] + c * xy[:, :, 1]) / frame.slope
     lo_u, hi_u, lo_v, hi_v = (a.tolist() for a in (u.min(axis=1), u.max(axis=1), v.min(axis=1), v.max(axis=1)))
     return [(lo_u[k], hi_u[k], lo_v[k], hi_v[k], placed[i].row, placed[i].rid) for k, i in enumerate(members)]
 
@@ -713,3 +767,55 @@ def _place(pending: list[tuple], along: float, rot: float, slope: float, surface
             for i, (r, s, g, k, a, cx_i, cy_i) in enumerate(zip(rows.tolist(), slots.tolist(), groups.tolist(),
                                                                 levels.tolist(), alphas.tolist(), cx.tolist(),
                                                                 cy.tolist(), strict=True))]
+
+
+def _place_on_plane(pending: list[tuple], along: float, frame: Frame, surface: Surface,
+                    stand_off: float, flush: bool) -> list[PlacedModule]:
+    """The placed modules of rows in the frame of a pitch's plane (Frame.on_plane; R278, R280): each rectangle
+    (u0, lo_v, hi_v) is on the plane, in its metres, and its edges at lo_v and hi_v stand the heights given above
+    it along its normal (an east-west pair's foot and ridge), the stand-off added along the normal too; a flush row
+    stands its stand-off straight up, as `_place` lays the level rows beside it. The corners are those of the
+    module in space brought down to the plan, in the order of `_place`; the tilt and the azimuth are those of the
+    module's own plane, the spin turns it about its normal to lie along the row."""
+    if not pending:
+        return []
+    cols = list(zip(*pending, strict=True))
+    u0, lo_v, hi_v = (np.array(c, dtype=float) for c in cols[5:8])
+    low, high = np.array(cols[12], dtype=float), np.array(cols[13], dtype=float)
+    u1 = u0 + along
+    us = np.stack([u1, u1, u0, u0], axis=1)
+    vs = np.stack([lo_v, hi_v, hi_v, lo_v], axis=1)
+    hs = np.stack([low, high, high, low], axis=1) + (0.0 if flush else stand_off)
+    a, b, c, d = frame.m
+    det = a * d - b * c
+    x, y = (d * us - b * vs) / det, (a * vs - c * us) / det
+    fx, fy = geo.facing_vector(surface.azimuth)
+    beta = math.radians(surface.tilt)
+    n = np.array([math.sin(beta) * fx, math.sin(beta) * fy, math.cos(beta)])
+    pts = np.stack([x, y, surface.z_of(x, y) + (stand_off if flush else 0.0)], axis=2) + hs[..., None] * n
+    out = []
+    for i, entry in enumerate(pending):
+        p0, p1, _p2, p3 = pts[i]
+        side = p0 - p3
+        side /= np.linalg.norm(side)
+        normal = np.cross(side, p1 - p0)
+        normal /= np.linalg.norm(normal)
+        if normal[2] < 0:
+            normal = -normal
+        # to a millionth of a degree: the halves of a row read as one orientation, a corner off its place by less
+        # than a micrometre
+        tilt = round(math.degrees(math.acos(min(1.0, float(normal[2])))), 6)
+        azimuth = (round(geo.bearing_to_azimuth(math.degrees(math.atan2(normal[0], normal[1]))), 6) if tilt > 1e-6
+                   else entry[4])
+        bb = math.radians(geo.azimuth_to_bearing(azimuth))
+        level = np.array([-math.cos(bb), math.sin(bb), 0.0])
+        t = math.radians(tilt)
+        facing = np.array([math.sin(t) * math.sin(bb), math.sin(t) * math.cos(bb), math.cos(t)])
+        spin = round(math.degrees(math.atan2(float(np.cross(level, side) @ facing), float(level @ side))), 6)
+        centre = pts[i].mean(axis=0)
+        out.append(PlacedModule(row=entry[0], slot=entry[1], group=entry[2],
+                                corners=[(float(q[0]), float(q[1])) for q in pts[i]],
+                                centre=(float(centre[0]), float(centre[1])), z=float(centre[2]), tilt=tilt,
+                                azimuth=azimuth, level=entry[3], key=entry[9], rid=entry[10],
+                                spin=0.0 if abs(spin) < 1e-6 else spin))
+    return out

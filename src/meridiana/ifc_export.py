@@ -433,6 +433,9 @@ class Writer:
                 n = np.array([math.sin(beta) * fe, math.sin(beta) * fn, math.cos(beta)])
                 # along the row; turned by 90 degrees (layout.Row.turned) the type's long side goes up the slope
                 u = np.array([-fn, fe, 0.0])
+                spin = math.radians(getattr(pm, "spin", 0.0))
+                if spin:                    # a row on a pitch that does not run level (R278, R280)
+                    u = u * math.cos(spin) + np.cross(n, u) * math.sin(spin)
                 if getattr(pm, "turned", False):
                     u = np.cross(n, u)
                 origin = np.array([pm.centre[0], pm.centre[1], pm.z]) - n * thick / 2

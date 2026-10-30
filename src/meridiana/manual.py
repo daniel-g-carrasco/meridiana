@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from . import layout
+from . import geo, layout
 from .i18n import _
 
 OUTSIDE_TOLERANCE = 0.01        # m2 of modules a move may take further out of the sub-field
@@ -53,11 +53,12 @@ def _shade():
     return system.shadow_exclusions
 
 
-def frame(project, sf, rows: list[layout.Row] | None = None) -> tuple[layout.Frame, layout.Sizes, layout.Params]:
+def frame(project, sf, rows: list[layout.Row] | None = None,
+          params: layout.Params | None = None) -> tuple[layout.Frame, layout.Sizes, layout.Params]:
     """The work frame of the sub-field's rows (that of its rows, or the one its automatic layout would take), the
-    sizes of a row and the parameters."""
+    sizes of a row (on the plane of its surface) and the parameters (`params`, or the sub-field's)."""
     from shapely.geometry import Polygon
-    p = project.fill_params(sf)
+    p = params or project.fill_params(sf)
     surface = project.surface_of(sf)
     tilt = layout.mount_tilt(surface, p)
     if rows:
@@ -65,27 +66,34 @@ def frame(project, sf, rows: list[layout.Row] | None = None) -> tuple[layout.Fra
     else:
         area = Polygon([tuple(map(float, q)) for q in sf.ring]).buffer(0)
         azimuth = layout.row_azimuth(area, surface, p)
-    return layout.Frame.of(azimuth, tilt, p.mounting in layout.FLUSH), layout.Sizes.of(project.module_of(sf), p, tilt), p
+    size = layout.Sizes.of(project.module_of(sf), p, tilt, surface=surface)
+    return layout.row_frame(azimuth, size), size, p
 
 
-def footprint(project, sf, rows: list[layout.Row]):
+def east_west_params(project, sf) -> layout.Params:
+    """The sub-field's parameters with its modules in east-west pairs (the East-west tool, R279)."""
+    import dataclasses
+    return dataclasses.replace(project.fill_params(sf), mounting="east_west")
+
+
+def footprint(project, sf, rows: list[layout.Row], params: layout.Params | None = None):
     """The plan shape of the modules of `rows` (shapely), as the layout would lay them."""
     from shapely.geometry import MultiPolygon, Polygon
-    placed = layout.modules_of(rows, project.module_of(sf), project.fill_params(sf), project.surface_of(sf))
+    placed = layout.modules_of(rows, project.module_of(sf), params or project.fill_params(sf), project.surface_of(sf))
     return MultiPolygon([Polygon(m.corners) for m in placed]) if placed else MultiPolygon()
 
 
-def corners(project, sf, rows: list[layout.Row]) -> list:
+def corners(project, sf, rows: list[layout.Row], params: layout.Params | None = None) -> list:
     """The plan corners of each module of `rows`: what the plan draws while a row is drawn or moved."""
-    placed = layout.modules_of(rows, project.module_of(sf), project.fill_params(sf), project.surface_of(sf))
+    placed = layout.modules_of(rows, project.module_of(sf), params or project.fill_params(sf), project.surface_of(sf))
     return [m.corners for m in placed]
 
 
-def trouble(project, sf, rows: list[layout.Row]) -> bool:
+def trouble(project, sf, rows: list[layout.Row], params: layout.Params | None = None) -> bool:
     """Whether the modules of `rows` go out of the area the layout would use (the sub-field less its edge band) or
     onto an exclusion with its clearance: the row drawn red (PV*SOL), kept all the same."""
     from shapely.geometry import Polygon
-    shape = footprint(project, sf, rows)
+    shape = footprint(project, sf, rows, params)
     if shape.is_empty:
         return False
     area = Polygon([tuple(map(float, q)) for q in sf.ring]).buffer(0)
@@ -151,11 +159,35 @@ def places_along(length: float, size: layout.Sizes, p: layout.Params) -> list[fl
     return [round(k * step, 6) for k in range(n)]
 
 
-def line_row(project, sf, start, end, rows: list[layout.Row], rid: str | None = None) -> layout.Row:
-    """The row from `start` to `end` (plan points): its front edge starts at `start` and runs along the sub-field's
-    rows as far as the projection of `end` (the side the pointer is), with the module, the gap, the tables and the
-    orientation of the sub-field (study 16, C.6: the row takes the sub-field's)."""
-    f, size, p = frame(project, sf, rows)
+def line_azimuth(start, end, near: float, inside=None, either: bool = False) -> float:
+    """The azimuth of a row whose front edge runs from `start` to `end`: square to the line, on the side closest to
+    `near` (the sub-field's rows); `near` itself for a line of no length. When both sides are as close, or when
+    either will do (`either`: an east-west pair faces both ways), the row goes from the line towards `inside` (the
+    middle of the sub-field) rather than out of it."""
+    import math
+    dx, dy = float(end[0]) - float(start[0]), float(end[1]) - float(start[1])
+    if math.hypot(dx, dy) < 1e-9:
+        return near
+    bearing = math.degrees(math.atan2(dx, dy))
+    sides = [geo.bearing_to_azimuth(bearing + turn) for turn in (90.0, -90.0)]
+    off = [abs((a - near + 180.0) % 360.0 - 180.0) for a in sides]
+    if inside is not None and (either or abs(off[0] - off[1]) < 1e-6):
+        tx, ty = float(inside[0]) - float(start[0]), float(inside[1]) - float(start[1])
+        # the back of the row (away from the side it faces) towards the middle
+        return round(max(sides, key=lambda a: -(geo.facing_vector(a)[0] * tx + geo.facing_vector(a)[1] * ty)), 6)
+    return round(sides[0] if off[0] <= off[1] else sides[1], 6)
+
+
+def line_row(project, sf, start, end, rows: list[layout.Row], rid: str | None = None,
+             params: layout.Params | None = None) -> layout.Row:
+    """The row from `start` to `end` (plan points): its front edge starts at `start` and runs along the line drawn
+    (R280: the row follows the line, its modules square to it, facing the side of the sub-field's rows) as far as
+    `end`, with the module, the gap, the tables of the sub-field (`params`, or its own). On a pitch the length is
+    measured on it."""
+    from shapely.geometry import Polygon
+    f, size, p = frame(project, sf, rows, params)
+    middle = Polygon([tuple(map(float, q)) for q in sf.ring]).centroid
+    f = layout.row_frame(line_azimuth(start, end, f.azimuth, (middle.x, middle.y), size.east_west), size)
     us, vs = f.to_work(float(start[0]), float(start[1]))
     ue, _ve = f.to_work(float(end[0]), float(end[1]))
     length = abs(ue - us)
@@ -166,16 +198,24 @@ def line_row(project, sf, start, end, rows: list[layout.Row], rid: str | None = 
     return layout.Row(rid or new_id(rows), x, y, f.azimuth, places)
 
 
-def draw(project, sfid: str, start, end, result=None) -> Callable:
+def draw(project, sfid: str, start, end, result=None, east_west: bool = False) -> Callable:
     """The change that adds the row drawn from `start` to `end` to the sub-field, which becomes (or stays) by hand
-    and laid; the change gives the new row's id."""
+    and laid; the change gives the new row's id. With `east_west` (the East-west tool, R279) the row is of east-west
+    pairs and the sub-field's mounting becomes east-west in the same step; the rows it had of another mounting give
+    way (one mounting for a sub-field, study 16 C.3), with the modules taken out of them."""
     sf = _subfield(project, sfid)
     rows = _hand(project, sfid, result) if sf.filled or sf.manual else []
-    row = line_row(project, sf, start, end, rows)
+    params = east_west_params(project, sf) if east_west else None
+    row = line_row(project, sf, start, end, rows, params=params)
+    keep = rows if not east_west or project.fill_params(sf).mounting == "east_west" else []
 
     def change(p):
         target = _subfield(p, sfid)
-        _store(target, rows + [row])
+        if east_west:
+            target.params["mounting"] = "east_west"
+            if not keep:
+                target.removed = []
+        _store(target, keep + [row])
         return row.id
     return change
 
@@ -206,7 +246,7 @@ def append(project, sfid: str, rid: str, result=None) -> Callable:
     pitch = float(getattr(result, "pitch", 0.0) or 0.0) if result is not None and not isinstance(result, Exception) \
         else 0.0
     pitch = max(pitch, size.depth)
-    own = layout.Frame.of(like.azimuth, size.tilt, size.flush)       # the frame of the row it is like
+    own = layout.row_frame(like.azimuth, size)       # the frame of the row it is like
     u0, _v = own.to_work(like.x, like.y)
     back = max(own.to_work(r.x, r.y)[1] for r in rows if abs(r.azimuth - like.azimuth) < 1e-6)
     x, y = own.to_plan(u0, back + pitch)
@@ -225,7 +265,7 @@ def resize(project, sfid: str, rid: str, point, result=None) -> Callable:
     rows = _hand(project, sfid, result)
     row = _row(rows, rid)
     f, size, p = frame(project, sf, rows)
-    own = layout.Frame.of(row.azimuth, size.tilt, size.flush)
+    own = layout.row_frame(row.azimuth, size)
     u_o, _v = own.to_work(row.x, row.y)
     reach = own.to_work(float(point[0]), float(point[1]))[0] - u_o
     along = size.across if row.turned else size.along
@@ -258,7 +298,7 @@ def explode(project, sfid: str, rid: str | None = None, result=None) -> Callable
         if (rid is not None and row.id != rid) or row.count <= 1:
             out.append(row)
             continue
-        own = layout.Frame.of(row.azimuth, size.tilt, size.flush)
+        own = layout.row_frame(row.azimuth, size)
         u_o, v0 = own.to_work(row.x, row.y)
         for i, u in enumerate(row.places):
             x, y = own.to_plan(u_o + u, v0)
@@ -286,7 +326,7 @@ def turn(project, sfid: str, rid: str, result=None) -> Callable:
     module = project.module_of(sf)
     before = layout.Sizes.of(module, p, size.tilt, row.turned)
     after = layout.Sizes.of(module, p, size.tilt, not row.turned)
-    own = layout.Frame.of(row.azimuth, size.tilt, size.flush)
+    own = layout.row_frame(row.azimuth, size)
     u_o, v0 = own.to_work(row.x, row.y)
     cu, cv = u_o + before.along / 2, v0 + before.depth / 2
     x, y = own.to_plan(cu - after.along / 2, cv - after.depth / 2)
@@ -418,7 +458,7 @@ def length_of(row: layout.Row, size: layout.Sizes) -> float:
 
 def end_point(row: layout.Row, size: layout.Sizes) -> tuple[float, float]:
     """The plan point at the end of the row's front edge: the grip that lengthens it."""
-    own = layout.Frame.of(row.azimuth, size.tilt, size.flush)
+    own = layout.row_frame(row.azimuth, size)
     u_o, v0 = own.to_work(row.x, row.y)
     along = size.across if row.turned else size.along
     return own.to_plan(u_o + (row.places[-1] if row.places else 0.0) + along, v0)

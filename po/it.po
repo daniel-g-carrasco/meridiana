@@ -19565,3 +19565,27 @@ msgstr "Nessuna versione di Meridiana è stata ancora pubblicata."
 #: src/meridiana/ui/assistant_chat.py:508
 msgid "Set up another assistant…"
 msgstr "Configura un altro assistente…"
+
+#: src/meridiana/ui/plan.py:216
+msgid "Row: click where it starts in a sub-field, then where it ends, or type its length and Enter. It runs along the line, with the module and the gaps of the sub-field; red, it goes beyond the edge or onto an exclusion. Esc cancels."
+msgstr "Fila: fai clic dove comincia in un sottocampo, poi dove finisce, oppure scrivi la lunghezza e premi Invio. Segue la linea, con il modulo e le distanze del sottocampo; in rosso, esce dal bordo o finisce su un'esclusione. Esc annulla."
+
+#: src/meridiana/ui/plan.py:219
+msgid "East-west: click where the pairs start in a sub-field, then where they end, or type the length and Enter. Each place is a pair facing both ways along the line; the sub-field becomes east-west. Esc cancels."
+msgstr "Est-ovest: fai clic dove cominciano le coppie in un sottocampo, poi dove finiscono, oppure scrivi la lunghezza e premi Invio. Ogni posto è una coppia rivolta ai due lati lungo la linea; il sottocampo diventa est-ovest. Esc annulla."
+
+#: src/meridiana/ui/window.py:884
+msgid "Draw east-west pairs of modules in a sub-field: two clicks, along the line"
+msgstr "Disegna coppie di moduli est-ovest in un sottocampo: due clic, lungo la linea"
+
+#: src/meridiana/ui/window.py:2640
+msgid "Draw east-west pairs"
+msgstr "Disegna coppie est-ovest"
+
+#: src/meridiana/ui/window.py:2643
+msgid "East-west pairs laid: the sub-field is east-west now and its rows of another mounting gave way. Undo brings them back."
+msgstr "Coppie est-ovest posate: il sottocampo ora è est-ovest e le sue file di un altro montaggio sono state tolte. Annulla le riporta."
+
+#: src/meridiana/ui/window.py:2645
+msgid "East-west pairs laid. Their two orientations stay apart when strings are proposed."
+msgstr "Coppie est-ovest posate. I due orientamenti restano separati quando si propongono le stringhe."

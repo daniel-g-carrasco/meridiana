@@ -39,7 +39,8 @@ from ..snapping import EXACT, Guide, Snap, Snapper, ortho
 from .theme import symbol_font
 from .tileloader import TileLoader
 
-TOOLS = ("select", "building", "pitch", "subfield", "exclusion", "row", "move", "measure")
+TOOLS = ("select", "building", "pitch", "subfield", "exclusion", "row", "east_west", "move", "measure")
+ROW_TOOLS = ("row", "east_west")   # a row drawn by a line: of the sub-field's modules, or of east-west pairs (R279)
 DRAWING = {"building", "pitch", "subfield", "exclusion"}
 MOVABLE = ("building", "subfield", "exclusion", "row")   # what Move takes (task 16b; a row, task 16c)
 ARROWS = {Qt.Key.Key_Left: "left", Qt.Key.Key_Right: "right", Qt.Key.Key_Up: "up", Qt.Key.Key_Down: "down"}
@@ -213,8 +214,11 @@ def hints() -> dict:
         "exclusion": _("Exclusion: draw a skylight, a smoke vent, roof plant or a walkway; modules keep away "
                        "from it."),
         "row": _("Row: click where it starts in a sub-field, then where it ends, or type its length and Enter. It "
-                 "takes the module, the gaps and the orientation of the sub-field; red, it goes beyond the edge or "
-                 "onto an exclusion. Esc cancels."),
+                 "runs along the line, with the module and the gaps of the sub-field; red, it goes beyond the edge "
+                 "or onto an exclusion. Esc cancels."),
+        "east_west": _("East-west: click where the pairs start in a sub-field, then where they end, or type the length "
+                       "and Enter. Each place is a pair facing both ways along the line; the sub-field becomes "
+                       "east-west. Esc cancels."),
         "move": _("Move: click what to move (a building, a sub-field, an exclusion)."),
         "measure": _("Measure: click two points; the distance stays on screen until the next click."),
     }
@@ -2143,7 +2147,7 @@ class PlanView(QGraphicsView):
             self.measure = [p] if len(self.measure) != 1 else [self.measure[0], p]
             self.viewport().update()
             return
-        if self.tool == "row":
+        if self.tool in ROW_TOOLS:
             if self.typed and self._apply_typed_row():
                 return
             p = self.snap.point if self.snap else from_scene(scene_pos)
@@ -2361,7 +2365,7 @@ class PlanView(QGraphicsView):
         if self.tool in DRAWING and key == Qt.Key.Key_R and not event.modifiers() & ~Qt.KeyboardModifier.KeypadModifier:
             self.toggle_rectangle()
             return
-        if self.tool == "row":
+        if self.tool in ROW_TOOLS:
             if text and (text.isdigit() or text in ",.") and self.row_start is not None:
                 self.typed += text
                 self.viewport().update()
@@ -2479,7 +2483,7 @@ class PlanView(QGraphicsView):
             return
         if self.tool in DRAWING:
             chain = self.chain
-        elif self.tool == "row":
+        elif self.tool in ROW_TOOLS:
             chain = [self.row_start] if self.row_start is not None else []
         else:
             chain = self.measure[:1]
@@ -2488,7 +2492,7 @@ class PlanView(QGraphicsView):
             t = (cursor[0] - last[0]) * self.lock_dir[0] + (cursor[1] - last[1]) * self.lock_dir[1]
             point = (last[0] + t * self.lock_dir[0], last[1] + t * self.lock_dir[1])
             self.snap = Snapper._measure(Snap(point, "direction", [Guide(last, point, "polar", "⇧")]), chain)
-        elif self.tool in DRAWING or self.tool in ("measure", "row"):
+        elif self.tool in DRAWING or self.tool in ("measure", *ROW_TOOLS):
             self.snap = self.snapper.snap(cursor, chain, self.metres_per_pixel(), free=self.ctrl or not self.snaps_on)
             if self.ortho and self.tool in DRAWING and chain and self.snap.kind not in EXACT:
                 point = ortho(chain, cursor)
@@ -2555,7 +2559,7 @@ class PlanView(QGraphicsView):
             painter.drawLine(QLineF(a, b))
             painter.setPen(cosmetic(draw, W["measure"]))
             painter.drawLine(QLineF(a, b))
-        if self.tool == "row" and self.row_start is not None:
+        if self.tool in ROW_TOOLS and self.row_start is not None:
             self._draw_row(painter, draw, halo)
         end = self._row_end() if self.tool == "select" else None
         if end is not None:                         # the grip at the end of the selected row
@@ -2687,7 +2691,7 @@ class PlanView(QGraphicsView):
         if self.tool == "move" and self.gesture is not None and self.move_pointer is not None:
             anchor = self.mapFromScene(to_scene(*self.move_pointer))
             lines = self._move_labels()
-        end = self._row_pointer() if self.tool == "row" else None
+        end = self._row_pointer() if self.tool in ROW_TOOLS else None
         if end is not None:
             anchor = self.mapFromScene(to_scene(*end))
             lines = ([_("length: {value}_").format(value=self.typed)] if self.typed else []) + [

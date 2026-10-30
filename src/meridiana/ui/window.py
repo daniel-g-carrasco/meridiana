@@ -876,8 +876,11 @@ class MainWindow(QMainWindow):
         act(draw, "building_template", self._building_template, False,
             _("A rectangle, an L, a T, a U or a trapezoid with its measures, placed with a click on the plan"))
         act(draw, "carport", self._carport, tip=_("Place a canopy with one or two parking rows"))
-        act(draw, "layout_east_west", self._east_west,
-            tip=_("Use opposed module rows in the selected sub-field"))
+        # east-west pairs laid straight along a line, as the Row tool does (R279): a tool of the group
+        self.tool_actions["east_west"] = act(draw, "layout_east_west", self._east_west, True,
+                                             _("Draw east-west pairs of modules in a sub-field: two clicks, along the "
+                                               "line"))
+        group.addAction(self.tool_actions["east_west"])
         draw.addSeparator()
         # the layout of the selected sub-field (the Layout group of the Model's bar; the same as in its properties)
         act(draw, "fill", lambda: self._fill_selected(True),
@@ -1332,20 +1335,10 @@ class MainWindow(QMainWindow):
             return
         self._action("relayout", "subfield", oid)
 
-    def _east_west(self) -> None:
-        oid = self._selected_subfield()
-        sf = self.project_subfield(oid)
-        if sf is None:
-            self.hint.setText(_("Select a sub-field first: the modules are laid in it."))
-            return
-        if sf.manual:
-            self.hint.setText(_("This sub-field has manual rows. Choose Lay again automatically before changing its layout."))
-            return
-        if self.project.surface_of(sf).tilt > 0.01:
-            self.hint.setText(_("East-west rows need a horizontal placement surface. Select a flat roof or ground area."))
-            return
-        self._edited("subfield", oid, {"params.mounting": "east_west", "filled": True})
-        self.hint.setText(_("Opposed rows are laid. Their orientations stay separate when strings are proposed."))
+    def _east_west(self, _checked: bool = False) -> None:
+        """«East-west» (R279): the tool that lays east-west pairs along a line drawn, as Row does (`_row_drawn`),
+        on a flat roof, on the ground or on a pitch (R278)."""
+        self._set_tool("east_west")
 
     def _import_curve_file(self) -> None:
         """A load curve from a file (the consumption page's own dialog), on the Consumption phase."""
@@ -2566,18 +2559,31 @@ class MainWindow(QMainWindow):
         if sf is None:
             return [], True
         try:
-            row = manual.line_row(self.project, sf, start, end, self._hand_rows(sf))
-            return manual.corners(self.project, sf, [row]), manual.trouble(self.project, sf, [row])
+            params = manual.east_west_params(self.project, sf) if self.plan.tool == "east_west" else None
+            row = manual.line_row(self.project, sf, start, end, self._hand_rows(sf), params=params)
+            return (manual.corners(self.project, sf, [row], params),
+                    manual.trouble(self.project, sf, [row], params))
         except ValueError:
             return [], True
 
     def _row_drawn(self, start, end) -> None:
-        """A row drawn with the Row tool: in the sub-field where it starts, which becomes by hand (and laid)."""
+        """A row drawn with the Row tool: in the sub-field where it starts, which becomes by hand (and laid); with the
+        East-west tool a row of east-west pairs, the sub-field east-west in the same step (R279)."""
         sfid = self._subfield_at(start)
         if not sfid:
             self.hint.setText(_("A row is drawn in a sub-field: start it inside one."))
             return
-        self._row_edit(_("Draw a row"), lambda r: manual.draw(self.project, sfid, start, end, r), sfid)
+        if self.plan.tool != "east_west":
+            self._row_edit(_("Draw a row"), lambda r: manual.draw(self.project, sfid, start, end, r), sfid)
+            return
+        sf = self.project_subfield(sfid)
+        other = (sf.filled or sf.manual) and self.project.fill_params(sf).mounting != "east_west"
+        made = self._row_edit(_("Draw east-west pairs"),
+                              lambda r: manual.draw(self.project, sfid, start, end, r, east_west=True), sfid)
+        if made is not None:
+            self.hint.setText(_("East-west pairs laid: the sub-field is east-west now and its rows of another "
+                                "mounting gave way. Undo brings them back.") if other else
+                              _("East-west pairs laid. Their two orientations stay apart when strings are proposed."))
 
     def _row_info(self, oid: str) -> dict | None:
         """The outline of a row and the end of its front edge (the grip that lengthens it), for the plan; kept while
