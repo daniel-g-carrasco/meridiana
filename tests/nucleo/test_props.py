@@ -100,10 +100,13 @@ class Trees(MeshChecks):
                                    dimensions["height"], dimensions["crown_diameter"])
 
     def test_trees_are_deterministic_and_accept_theme_colours(self):
+        for kind, dimensions in TREE_CASES:
+            with self.subTest(kind=kind):
+                first = props.tree(kind, **dimensions)
+                second = props.tree(kind, **dimensions)
+                for a, b in zip(first, second, strict=True):
+                    np.testing.assert_array_equal(a, b)
         first = props.tree("broadleaf", colours={"tree": "#408060", "trunk": (0.3, 0.2, 0.1)})
-        second = props.tree("broadleaf", colours={"tree": "#408060", "trunk": (0.3, 0.2, 0.1)})
-        for a, b in zip(first, second, strict=True):
-            np.testing.assert_array_equal(a, b)
         self.assertTrue(np.any(np.all(np.isclose(first[2], (64 / 255, 128 / 255, 96 / 255)), axis=1)))
 
     def test_tree_rotation_is_around_the_vertical_qt_axis(self):
@@ -264,6 +267,41 @@ class Cars(MeshChecks):
         for dimensions in ({"length": 0.0}, {"width": -1.0}, {"height": 0.0}):
             with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
                 props.car("compact", **dimensions)
+
+
+class GalleryScenes(unittest.TestCase):
+    @staticmethod
+    def gallery():
+        import sys
+        sys.path.insert(0, str(_setup.ROOT))
+        from tools import props_gallery
+        return props_gallery
+
+    def test_the_lineup_has_finite_geometry_and_no_modules(self):
+        shape, table = self.gallery().lineup_scene()
+        self.assertGreater(len(shape[0]), 24 * 3)
+        self.assertEqual(len(table), 0)
+        self.assertTrue(np.isfinite(shape[0]).all())
+        self.assertAlmostEqual(float(shape[0][:, 1].min()), 0.0, places=5)
+
+    def test_the_realistic_scene_has_modules_and_a_standing_building(self):
+        shape, table = self.gallery().realistic_scene()
+        self.assertGreaterEqual(len(table), 24)
+        self.assertGreater(float(shape[0][:, 1].max()), 5.0)
+        self.assertTrue(np.isfinite(shape[0]).all())
+        self.assertEqual(table.dtype, np.float32)
+
+    def test_capture_jobs_use_the_apply_argument_order(self):
+        jobs = self.gallery().shot_jobs()
+        self.assertEqual(len(jobs), 12)
+        self.assertEqual(jobs[0], ("light", "galleria", "assonometrica"))
+        self.assertEqual(jobs[-1], ("dark", "realistica", "alto"))
+
+    def test_the_lineup_fits_a_close_review_camera(self):
+        pos = self.gallery().lineup_scene()[0][0]
+        span = pos.max(axis=0) - pos.min(axis=0)
+        self.assertLessEqual(float(span[0]), 50.0)
+        self.assertLessEqual(float(span[2]), 30.0)
 
 
 if __name__ == "__main__":
