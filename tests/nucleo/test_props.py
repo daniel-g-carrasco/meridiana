@@ -269,6 +269,27 @@ class Cars(MeshChecks):
                 props.car("compact", **dimensions)
 
 
+class Palettes(unittest.TestCase):
+    def test_every_object_only_uses_colours_declared_by_the_light_or_dark_palette(self):
+        dark = {
+            **props.DEFAULT_COLOURS,
+            "tree": (0.38, 0.54, 0.34),
+            "obstacle": (0.62, 0.63, 0.66),
+            "metal": (0.50, 0.54, 0.58),
+            "glass": (0.42, 0.58, 0.66),
+        }
+        factories = ((props.TREE_KINDS, props.tree), (props.OBSTACLE_KINDS, props.obstacle),
+                     (props.PERSON_KINDS, props.person), (props.CAR_KINDS, props.car))
+        for theme, palette in (("light", props.DEFAULT_COLOURS), ("dark", dark)):
+            for kinds, factory in factories:
+                for kind in kinds:
+                    with self.subTest(theme=theme, kind=kind):
+                        colours = np.unique(factory(kind, rotation=37.0, colours=palette)[2], axis=0)
+                        for colour in colours:
+                            self.assertTrue(any(np.allclose(colour, declared, rtol=0, atol=1e-7)
+                                                for declared in palette.values()), colour)
+
+
 class GalleryScenes(unittest.TestCase):
     @staticmethod
     def gallery():

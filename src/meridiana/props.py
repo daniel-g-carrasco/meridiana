@@ -204,7 +204,7 @@ def _rotate_qt(shape, degrees):
     angle = math.radians(degrees)
     c, s = math.cos(angle), math.sin(angle)
     matrix = np.array(((c, 0.0, s), (0.0, 1.0, 0.0), (-s, 0.0, c)))
-    return tuple(np.asarray(array, dtype=np.float32) @ matrix.T for array in shape)
+    return tuple(np.asarray(array, dtype=np.float32) @ matrix.T for array in shape[:2]) + (shape[2],)
 
 
 def _rotate_model(points, degrees):

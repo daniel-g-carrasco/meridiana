@@ -56,7 +56,7 @@ I valori sono quelli delle chiamate predefinite e non cambiano con le misure. I 
 
 ## Prove
 
-[V] `tests/nucleo/test_props.py` contiene 23 prove. Per ogni tipo usa almeno due insiemi di misure e controlla:
+[V] `tests/nucleo/test_props.py` contiene 24 prove. Per ogni tipo usa almeno due insiemi di misure e controlla:
 
 - ingombro esterno uguale a quello richiesto, con tolleranza di 0,00002 m;
 - array `float32`, valori finiti, normali unitarie e concordi con l'orientamento dei triangoli;
@@ -64,13 +64,14 @@ I valori sono quelli delle chiamate predefinite e non cambiano con le misure. I 
 - rispetto del budget, risultato identico a ogni chiamata, rotazione e colori personalizzati;
 - volumi d'ombra contenuti nell'ingombro decorativo;
 - misure non valide rifiutate;
+- appartenenza di ogni colore generato alla tavolozza dichiarata, in chiaro e in scuro, per tutti gli oggetti ruotati;
 - presenza degli oggetti nelle due scene e ordine corretto delle dodici catture.
 
 [V] Il comando mirato `python -m unittest nucleo.test_mesh nucleo.test_props` ha superato 47 prove, comprese quelle
 preesistenti delle mesh. Una generazione di 500 latifoglie ha prodotto 52.000 triangoli in 2,10 s durante la suite,
 circa 4,21 ms per albero, senza Qt.
 
-[V] La galleria è stata aperta solo con `tools/real_session.sh`. Ha prodotto dodici immagini a 1600 x 1000: due
+[V] La galleria è stata aperta solo con `tools/real_session.sh`. Ha prodotto dodici immagini a 1600 x 962: due
 scene, due temi e tre punti di vista. Le ho guardate tutte. Ho corretto l'ordine scena/tema nella coda, ravvicinato
 la galleria e spostato persone, palma e auto per evitare occlusioni nella scena realistica. Alla fine di ogni prova
 `findmnt /run/user/1000/doc` ha confermato che il montaggio del portale documenti era ancora presente.
@@ -137,3 +138,31 @@ di Qt. La ripetizione ha dato lo stesso esito: 481 prove verdi, poi segfault. È
 una prova fallita sugli oggetti; non ho cambiato codice estraneo per inseguirlo.
 
 [V] Ho riletto da solo tutto il diff e le prove, senza subagent. Non risultano difetti aperti nell'incarico.
+
+## Seguito 1: tavolozza delle mesh ruotate
+
+[V] La causa dei colori fuori tavolozza era in `_rotate_qt` di `props.py`: la matrice di rotazione veniva applicata a
+posizioni, normali e anche colori. Ogni angolo mescolava quindi i canali RGB e poteva produrre valori negativi. La
+galleria non passava colori sbagliati e i valori di `DEFAULT_COLOURS` erano già corretti.
+
+[V] Prima della correzione, `galleria-chiaro-assonometrica.png` mostrava la palma giallo acido, la siepe giallo-verde,
+il serbatoio ocra e la passerella gialla. Nella scena realistica la palma aveva lo stesso difetto. Dopo la correzione,
+le stesse fotografie mostrano tutta la vegetazione nel verde di `mesh.TREE`, gli ostacoli nei grigi di
+`mesh.OBSTACLE` e del metallo, i lucernari in azzurro-grigio e la passerella in grigio. Il casco dell'operaio resta
+giallo. Ho confrontato e guardato tutte le dodici immagini nuove, chiare e scure, nei tre punti di vista.
+
+[V] La nuova prova `Palettes.test_every_object_only_uses_colours_declared_by_the_light_or_dark_palette` genera tutti
+i 24 tipi con rotazione di 37 gradi, con la tavolozza chiara predefinita e con una tavolozza scura dichiarata. Prima
+falliva in tutti i 48 casi, con colori non dichiarati e anche componenti negative. Dopo la correzione passa. Il gruppo
+`nucleo.test_props` supera tutte le 24 prove e Ruff è pulito sui tre file Python nuovi.
+
+[V] Le dodici foto sono state rifatte con gli stessi nomi usando soltanto `tools/real_session.sh`. Al termine
+`findmnt /run/user/1000/doc` ha confermato che il montaggio del portale documenti era ancora presente. Non sono
+rimaste finestre o sessioni grafiche aperte.
+
+[V] Nella verifica finale del seguito, Ruff su `src`, `tests` e `tools` è pulito. I gruppi `nucleo`, `calcoli` e
+`formati` hanno superato rispettivamente 949, 272 e 87 prove. Il gruppo `widget` ha superato tutte le 481 prove,
+poi il processo è terminato con lo stesso segfault nello smaltimento di Qt già riscontrato e documentato sopra.
+Un primo tentativo del gruppo `finestra` è stato interrotto dal limite di 600 secondi senza aver riportato fallimenti.
+La ripetizione verbosa, senza quel limite, ha superato tutte le 183 prove in 909,6 secondi. Anche `msgfmt --check` è
+pulito; il suo artefatto `messages.mo` è stato eliminato.
