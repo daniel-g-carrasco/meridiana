@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="560" viewBox="0 0 1240 560"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2b2622"/></marker></defs><rect x="0" y="0" width="1240" height="560" rx="6" fill="#f4f1ec" stroke="none" stroke-width="0"/>
+<text x="20" y="30" font-family="Segoe UI" font-size="15" fill="#2b2622" text-anchor="start" font-weight="bold">Falda disegnata a mano (R274): la gronda, poi la profondità; angolo, colmo e punto di arrivo nella scheda che segue il puntatore</text>
+<text x="20" y="62" font-family="Segoe UI" font-size="12" fill="#2b2622" text-anchor="start" font-weight="bold">1. Due clic: la linea di gronda</text>
+<polygon points="20.0,196.0 200.0,196.0 200.0,70.0 20.0,70.0" fill="#fbf9f6" stroke="#2b2622" stroke-width="1.5" stroke-linejoin="round"/>
+<line x1="38" y1="178" x2="182" y2="178" stroke="#3f7d4a" stroke-width="3" stroke-linecap="round"/>
+<circle cx="38" cy="178" r="4" fill="#3f7d4a" stroke="#3f7d4a" stroke-width="1.5"/>
+<circle cx="182" cy="178" r="4" fill="#3f7d4a" stroke="#3f7d4a" stroke-width="1.5"/>
+<text x="110.0" y="194" font-family="Segoe UI" font-size="10" fill="#3f7d4a" text-anchor="middle" font-weight="normal">gronda · 16,00 m · quota 6,00 m (gronda edificio)</text>
+<text x="400" y="62" font-family="Segoe UI" font-size="12" fill="#2b2622" text-anchor="start" font-weight="bold">2. Il puntatore sale: la falda si forma; un numero digitato è la profondità</text>
+<polygon points="400.0,196.0 580.0,196.0 580.0,70.0 400.0,70.0" fill="#fbf9f6" stroke="#2b2622" stroke-width="1.5" stroke-linejoin="round"/>
+<polygon points="418.0,178.0 562.0,178.0 562.0,115.0 418.0,115.0" fill="#e6efe7" stroke="#2b2622" stroke-width="1.2" stroke-linejoin="round"/>
+<line x1="418" y1="178" x2="562" y2="178" stroke="#3f7d4a" stroke-width="3" stroke-linecap="round"/>
+<line x1="418" y1="115" x2="562" y2="115" stroke="#b7791f" stroke-width="3" stroke-linecap="round"/>
+<line x1="490.0" y1="121" x2="490.0" y2="170" stroke="#2b2622" stroke-width="1.2" marker-end="url(#arrow)" stroke-linecap="round"/>
+<text x="496.0" y="146.5" font-family="Segoe UI" font-size="9" fill="#7a6f66" text-anchor="start" font-weight="normal">pendenza</text>
+<text x="490.0" y="107" font-family="Segoe UI" font-size="10" fill="#b7791f" text-anchor="middle" font-weight="normal">colmo</text>
+<rect x="615" y="80" width="160" height="118" rx="8" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="625" y="98" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="bold">Falda</text>
+<text x="625" y="120" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">Profondità</text>
+<text x="765" y="120" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="end" font-weight="normal">7,00 m</text>
+<text x="625" y="139" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">Inclinazione</text>
+<text x="765" y="139" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="end" font-weight="normal">20,0°  ◂ 36 %</text>
+<text x="625" y="158" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">Quota colmo</text>
+<text x="765" y="158" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="end" font-weight="normal">8,55 m</text>
+<text x="625" y="177" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">Gronda</text>
+<text x="765" y="177" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="end" font-weight="normal">6,00 m</text>
+<rect x="691" y="126" width="78" height="16" rx="4" fill="#f0e3d1" stroke="#8a5a1e" stroke-width="1"/>
+<text x="625" y="192" font-family="Segoe UI" font-size="9" fill="#7a6f66" text-anchor="start" font-weight="normal">Tab: gronda ⇄ colmo   Invio: fatto</text>
+<text x="820" y="62" font-family="Segoe UI" font-size="12" fill="#2b2622" text-anchor="start" font-weight="bold">3. Tab scambia gronda e colmo (R274), senza ridisegnare</text>
+<polygon points="820.0,196.0 1000.0,196.0 1000.0,70.0 820.0,70.0" fill="#fbf9f6" stroke="#2b2622" stroke-width="1.5" stroke-linejoin="round"/>
+<polygon points="838.0,178.0 982.0,178.0 982.0,115.0 838.0,115.0" fill="#e6efe7" stroke="#2b2622" stroke-width="1.2" stroke-linejoin="round"/>
+<line x1="838" y1="178" x2="982" y2="178" stroke="#b7791f" stroke-width="3" stroke-linecap="round"/>
+<line x1="838" y1="115" x2="982" y2="115" stroke="#3f7d4a" stroke-width="3" stroke-linecap="round"/>
+<line x1="910.0" y1="172" x2="910.0" y2="123" stroke="#2b2622" stroke-width="1.2" marker-end="url(#arrow)" stroke-linecap="round"/>
+<text x="910.0" y="194" font-family="Segoe UI" font-size="10" fill="#b7791f" text-anchor="middle" font-weight="normal">colmo</text>
+<text x="910.0" y="107" font-family="Segoe UI" font-size="10" fill="#3f7d4a" text-anchor="middle" font-weight="normal">gronda (quota 6,00 m)</text>
+<text x="20" y="250" font-family="Segoe UI" font-size="12" fill="#2b2622" text-anchor="start" font-weight="bold">Tre modi di chiudere la falda, uno solo per volta (gli altri due si ricalcolano):</text>
+<text x="30" y="274" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="bold">•  Inclinazione</text>
+<text x="170" y="274" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">digita «20» nella scheda o ruota il campo: la profondità resta, la quota del colmo segue (gronda + profondità × tan α)</text>
+<text x="30" y="296" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="bold">•  Quota del colmo</text>
+<text x="170" y="296" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">digita la quota in metri: l'inclinazione segue; rifiutata sotto la gronda (come oggi ridge_written)</text>
+<text x="30" y="318" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="bold">•  Punto di arrivo</text>
+<text x="170" y="318" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">clic su un punto della pianta (un altro colmo, un muro, un aggancio): la profondità diventa la distanza dalla gronda; Maiusc tiene l'ortogonale come oggi</text>
+<text x="20" y="350" font-family="Segoe UI" font-size="11" fill="#7a6f66" text-anchor="start" font-weight="normal">Valori iniziali: inclinazione proposta dal manto dell'edificio (roofs.proposed_tilt, 35 % tegole), gronda = quota di gronda dell'edificio.</text>
+<text x="20" y="370" font-family="Segoe UI" font-size="11" fill="#7a6f66" text-anchor="start" font-weight="normal">La scheda è la stessa «misura accanto al puntatore» di oggi (plan._draw_labels) con tre campi scrivibili; non una finestra modale.</text>
+<text x="20" y="400" font-family="Segoe UI" font-size="11" fill="#7a6f66" text-anchor="start" font-weight="normal">Dopo il disegno: la falda ha le proprietà Gronda (lato, quota), Inclinazione, Quota colmo, Profondità, e il pulsante «Scambia gronda e colmo»; i lati si tirano come gli altri (R276).</text>
+<text x="20" y="430" font-family="Segoe UI" font-size="11" fill="#7a6f66" text-anchor="start" font-weight="normal">Dati: nessun formato nuovo per la falda libera (anello + eave_side + eave + tilt bastano); la quota del colmo è derivata.</text>
+<text x="20" y="480" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal" font-style="italic">Il tasto Tab durante il disegno va verificato contro gli usi di Tab nella pianta (ciclo dei campi? nessuno oggi in plan.py: da confermare).</text></svg>

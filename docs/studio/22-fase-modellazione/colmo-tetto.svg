@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="580" viewBox="0 0 1240 580"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2b2622"/></marker></defs><rect x="0" y="0" width="1240" height="580" rx="6" fill="#f4f1ec" stroke="none" stroke-width="0"/>
+<text x="20" y="30" font-family="Segoe UI" font-size="15" fill="#2b2622" text-anchor="start" font-weight="bold">Solo il colmo (R275): si disegna il colmo, il tetto ipotetico viene da sé</text>
+<text x="20" y="62" font-family="Segoe UI" font-size="12" fill="#2b2622" text-anchor="start" font-weight="bold">a. Rettangolo: un segmento di colmo</text>
+<polygon points="20.0,270.0 212.0,270.0 212.0,174.0 20.0,174.0" fill="#fbf9f6" stroke="#2b2622" stroke-width="1.5" stroke-linejoin="round"/>
+<line x1="44" y1="222" x2="188" y2="222" stroke="#b7791f" stroke-width="3.5" stroke-linecap="round"/>
+<circle cx="44" cy="222" r="4" fill="#b7791f" stroke="#b7791f" stroke-width="1.5"/>
+<circle cx="188" cy="222" r="4" fill="#b7791f" stroke="#b7791f" stroke-width="1.5"/>
+<text x="116" y="212" font-family="Segoe UI" font-size="10" fill="#b7791f" text-anchor="middle" font-weight="normal">colmo disegnato (2 clic) · quota 9,00 m</text>
+<polygon points="280.0,270.0 472.0,270.0 472.0,174.0 280.0,174.0" fill="#fbf9f6" stroke="#2b2622" stroke-width="1.5" stroke-linejoin="round"/>
+<line x1="280" y1="222" x2="472" y2="222" stroke="#b7791f" stroke-width="3" stroke-linecap="round"/>
+<line x1="280" y1="270" x2="472" y2="270" stroke="#3f7d4a" stroke-width="3" stroke-linecap="round"/>
+<line x1="280" y1="174" x2="472" y2="174" stroke="#3f7d4a" stroke-width="3" stroke-linecap="round"/>
+<line x1="280" y1="270" x2="280" y2="174" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+<line x1="472" y1="270" x2="472" y2="174" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+<text x="376" y="258" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">due falde, testate ai lati toccati dai capi</text>
+<text x="376" y="192" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">il colmo si allunga fino ai lati</text>
+<line x1="224" y1="222" x2="268" y2="222" stroke="#2b2622" stroke-width="1.5" marker-end="url(#arrow)" stroke-linecap="round"/>
+<text x="620" y="62" font-family="Segoe UI" font-size="12" fill="#2b2622" text-anchor="start" font-weight="bold">b. Pianta a L: una spezzata di colmo</text>
+<polygon points="620.0,270.0 812.0,270.0 812.0,190.0 700.0,190.0 700.0,110.0 620.0,110.0" fill="#fbf9f6" stroke="#2b2622" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="660.0,134.0 660.0,230.0 780.0,230.0" fill="none" stroke="#b7791f" stroke-width="3.5" stroke-linejoin="round"/>
+<circle cx="660" cy="230" r="4" fill="#b7791f" stroke="#b7791f" stroke-width="1.5"/>
+<circle cx="780" cy="230" r="4" fill="#b7791f" stroke="#b7791f" stroke-width="1.5"/>
+<circle cx="660" cy="134" r="4" fill="#b7791f" stroke="#b7791f" stroke-width="1.5"/>
+<text x="652" y="244" font-family="Segoe UI" font-size="10" fill="#b7791f" text-anchor="end" font-weight="normal">3 clic, Invio</text>
+<polygon points="880.0,270.0 1072.0,270.0 1072.0,190.0 960.0,190.0 960.0,110.0 880.0,110.0" fill="#fbf9f6" stroke="#2b2622" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="920.0,110.0 920.0,230.0 1072.0,230.0" fill="none" stroke="#b7791f" stroke-width="3" stroke-linejoin="round"/>
+<line x1="960" y1="190" x2="920" y2="230" stroke="#3b6ea5" stroke-width="2.5" stroke-linecap="round"/>
+<text x="966" y="204" font-family="Segoe UI" font-size="9" fill="#3b6ea5" text-anchor="start" font-weight="normal">compluvio</text>
+<text x="976" y="288" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">scheletro dritto (skeleton.py) con il colmo come vincolo</text>
+<line x1="824" y1="190" x2="868" y2="190" stroke="#2b2622" stroke-width="1.5" marker-end="url(#arrow)" stroke-linecap="round"/>
+<text x="20" y="300" font-family="Segoe UI" font-size="12" fill="#2b2622" text-anchor="start" font-weight="bold">Che cosa fa il programma</text>
+<text x="30" y="320" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">1. Il colmo si disegna dentro un edificio (come la falda oggi, _host). Ogni segmento è parallelo a un lato:</text>
+<text x="30" y="336" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">    si aggancia all'asse del rettangolo o ai lati vicini (snapping.py); fuori asse, avviso.</text>
+<text x="30" y="352" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">2. I lati toccati (o quasi) dai capi del colmo diventano testate, gli altri gronde: è roof.edges di oggi</text>
+<text x="30" y="368" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">    (formato 9), scritto dal gesto invece che lato per lato.</text>
+<text x="30" y="384" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">3. La quota del colmo, chiesta a fine disegno (campo accanto al puntatore, prevalore = gronda + metà larghezza</text>
+<text x="30" y="400" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">    × tan 35 %), dà la pendenza con roofs.slope_from_heights: è il ridge_height di oggi.</text>
+<text x="30" y="416" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">4. Il tetto è «gable» sullo scheletro dritto (roofs.pitched): sulla L i compluvi vengono da soli. Il colmo</text>
+<text x="30" y="432" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">    disegnato è conservato (roof.ridge_line) per poterlo spostare o riquotare.</text>
+<text x="30" y="448" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">5. Colmo fuori asse (falde di larghezza diversa) = due pendenze diverse: scheletro pesato, oggi non c'è.</text>
+<text x="30" y="464" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="start" font-weight="normal">    Primo lotto: il colmo si aggancia all'asse e lo dice; secondo lotto: asimmetrico.</text>
+<text x="20" y="490" font-family="Segoe UI" font-size="11" fill="#7a6f66" text-anchor="start" font-weight="normal">Dati: formato 21, Roof.ridge_line: list | None (punti in metri). Migrazione 20 → 21: None per tutti i tetti di prima; chi ha ridge_height e edges resta com'è.</text>
+<text x="20" y="510" font-family="Segoe UI" font-size="11" fill="#7a6f66" text-anchor="start" font-weight="normal">Prova dove decide: 306 piante di 16-prove/scheletro-riferimento.json, colmo centrato: le falde devono coincidere con quelle del gable con le stesse testate.</text></svg>

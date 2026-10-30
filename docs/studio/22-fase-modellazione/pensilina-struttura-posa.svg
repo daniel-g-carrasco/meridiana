@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="520" viewBox="0 0 1240 520"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2b2622"/></marker></defs><rect x="0" y="0" width="1240" height="520" rx="6" fill="#f4f1ec" stroke="none" stroke-width="0"/>
+<text x="20" y="30" font-family="Segoe UI" font-size="15" fill="#2b2622" text-anchor="start" font-weight="bold">Pensilina (R281): oggi due piani di posa con i moduli; dopo, la struttura in Modellazione e la posa semplificata in Impianto</text>
+<text x="20" y="66" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="bold">OGGI (canopies.py): «Crea superfici di posa e moduli»</text>
+<polygon points="90.0,260.3 189.7,306.8 234.6,278.1 134.9,231.7" fill="#dde5f2" stroke="#2b2622" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="92.3,259.9 102.8,264.8 115.1,257.0 104.6,252.1" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="107.3,250.4 117.8,255.2 130.0,247.4 119.6,242.5" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="122.3,240.8 132.7,245.7 145.0,237.9 134.5,233.0" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="104.8,265.7 115.3,270.6 127.5,262.8 117.1,257.9" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="119.8,256.2 130.2,261.0 142.5,253.2 132.0,248.3" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="134.7,246.6 145.2,251.5 157.4,243.7 147.0,238.8" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="117.3,271.5 127.7,276.4 140.0,268.6 129.5,263.7" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="132.2,262.0 142.7,266.9 155.0,259.0 144.5,254.1" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="147.2,252.4 157.6,257.3 169.9,249.5 159.4,244.6" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="129.7,277.3 140.2,282.2 152.5,274.4 142.0,269.5" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="144.7,267.8 155.1,272.7 167.4,264.8 156.9,260.0" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="159.6,258.2 170.1,263.1 182.4,255.3 171.9,250.4" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="142.2,283.1 152.7,288.0 164.9,280.2 154.5,275.3" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="157.1,273.6 167.6,278.5 179.9,270.7 169.4,265.8" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="172.1,264.0 182.6,268.9 194.8,261.1 184.4,256.2" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="154.7,289.0 165.1,293.8 177.4,286.0 166.9,281.1" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="169.6,279.4 180.1,284.3 192.3,276.5 181.9,271.6" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="184.6,269.9 195.0,274.7 207.3,266.9 196.8,262.0" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="167.1,294.8 177.6,299.7 189.8,291.8 179.4,286.9" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="182.1,285.2 192.5,290.1 204.8,282.3 194.3,277.4" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="197.0,275.7 207.5,280.6 219.8,272.7 209.3,267.8" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="179.6,300.6 190.0,305.5 202.3,297.6 191.8,292.8" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="194.5,291.0 205.0,295.9 217.3,288.1 206.8,283.2" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="209.5,281.5 220.0,286.4 232.2,278.5 221.7,273.7" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="134.9,231.7 234.6,278.1 279.4,264.9 179.7,218.5" fill="#dde5f2" stroke="#2b2622" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="137.2,231.7 147.7,236.6 159.9,233.0 149.5,228.1" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="152.2,227.3 162.6,232.2 174.9,228.6 164.4,223.7" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="167.1,222.9 177.6,227.8 189.8,224.2 179.4,219.3" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="149.7,237.5 160.1,242.4 172.4,238.8 161.9,233.9" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="164.6,233.1 175.1,238.0 187.4,234.4 176.9,229.5" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="179.6,228.7 190.0,233.6 202.3,230.0 191.8,225.1" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="162.1,243.3 172.6,248.2 184.9,244.6 174.4,239.7" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="177.1,238.9 187.6,243.8 199.8,240.2 189.3,235.3" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="192.0,234.5 202.5,239.4 214.8,235.8 204.3,230.9" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="174.6,249.2 185.1,254.0 197.3,250.4 186.9,245.5" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="189.5,244.8 200.0,249.6 212.3,246.0 201.8,241.2" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="204.5,240.4 215.0,245.2 227.2,241.6 216.8,236.8" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="187.1,255.0 197.5,259.8 209.8,256.2 199.3,251.4" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="202.0,250.6 212.5,255.4 224.7,251.8 214.3,247.0" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="217.0,246.2 227.4,251.1 239.7,247.4 229.2,242.6" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="199.5,260.8 210.0,265.7 222.2,262.1 211.8,257.2" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="214.5,256.4 224.9,261.3 237.2,257.7 226.7,252.8" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="229.4,252.0 239.9,256.9 252.2,253.3 241.7,248.4" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="212.0,266.6 222.4,271.5 234.7,267.9 224.2,263.0" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="226.9,262.2 237.4,267.1 249.7,263.5 239.2,258.6" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="241.9,257.8 252.4,262.7 264.6,259.1 254.1,254.2" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="224.4,272.4 234.9,277.3 247.2,273.7 236.7,268.8" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="239.4,268.0 249.9,272.9 262.1,269.3 251.7,264.4" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="254.3,263.6 264.8,268.5 277.1,264.9 266.6,260.0" fill="#2f4f7f" stroke="none" stroke-width="0" stroke-linejoin="round"/>
+<text x="20" y="350" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">piani sospesi a 2,70 m, nessun pilastro né trave: in 3D e in IFC galleggiano</text>
+<text x="20" y="366" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">le due file opposte si incontrano sul colmo in mezzo; otto opzioni nella finestra</text>
+<text x="560" y="66" font-family="Segoe UI" font-size="12" fill="#3f7d4a" text-anchor="start" font-weight="bold">DOPO: 1 Modellazione › Pensilina (struttura)</text>
+<line x1="642.4311177291571" y1="279.54019802191766" x2="642.4311177291571" y2="245.97532506760191" stroke="#2b2622" stroke-width="3" stroke-linecap="round"/>
+<line x1="692.2780460161728" y1="302.78420241765616" x2="692.2780460161728" y2="269.2193294633404" stroke="#2b2622" stroke-width="3" stroke-linecap="round"/>
+<line x1="742.1249743031885" y1="326.0282068133946" x2="742.1249743031885" y2="292.46333385907883" stroke="#2b2622" stroke-width="3" stroke-linecap="round"/>
+<line x1="642.4311177291571" y1="245.97532506760191" x2="742.1249743031885" y2="292.46333385907883" stroke="#2b2622" stroke-width="3" stroke-linecap="round"/>
+<polygon points="620.0,260.3 719.7,306.8 764.6,278.1 664.9,231.7" fill="#e6efe7" stroke="#2b2622" stroke-width="1.5" stroke-linejoin="round"/>
+<line x1="631.2155588645785" y1="253.13766253380095" x2="730.90941543861" y2="299.6256713252779" stroke="#999" stroke-width="1" stroke-linecap="round"/>
+<line x1="642.4311177291571" y1="245.97532506760191" x2="742.1249743031885" y2="292.46333385907883" stroke="#999" stroke-width="1" stroke-linecap="round"/>
+<line x1="653.6466765937356" y1="238.81298760140288" x2="753.3405331677671" y2="285.3009963928798" stroke="#999" stroke-width="1" stroke-linecap="round"/>
+<line x1="620.0" y1="260.3" x2="719.6938565740315" y2="306.78800879147695" stroke="#2b2622" stroke-width="1.5" stroke-linecap="round"/>
+<rect x="666.2469282870157" y="289.5440043957385" width="35.2" height="15.0" rx="7.5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="683.8469282870158" y="300.5440043957385" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="middle" font-weight="normal">10 m</text>
+<line x1="719.6938565740315" y1="306.78800879147695" x2="764.5560920323456" y2="278.13865892668076" stroke="#2b2622" stroke-width="1.5" stroke-linecap="round"/>
+<rect x="741.4249743031885" y="278.46333385907883" width="29.4" height="15.0" rx="7.5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="756.1249743031885" y="289.46333385907883" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="middle" font-weight="normal">5 m</text>
+<line x1="719.6938565740315" y1="336.48800879147694" x2="719.6938565740315" y2="306.78800879147695" stroke="#2b2622" stroke-width="1.5" stroke-linecap="round"/>
+<rect x="713.1938565740315" y="307.638008791477" width="41.0" height="15.0" rx="7.5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="733.6938565740315" y="318.638008791477" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="middle" font-weight="normal">2.7 m</text>
+<line x1="664.8622354583142" y1="231.65065013520385" x2="764.5560920323456" y2="278.13865892668076" stroke="#2b2622" stroke-width="1.5" stroke-linecap="round"/>
+<rect x="672.90916374533" y="240.89465453094232" width="23.6" height="15.0" rx="7.5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="684.70916374533" y="251.89465453094232" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="middle" font-weight="normal">8°</text>
+<polygon points="620.0,290.0 719.7,336.5 764.6,315.6 664.9,269.1" fill="none" stroke="#b8ada3" stroke-width="1" stroke-dasharray="3,3" stroke-linejoin="round"/>
+<text x="560" y="350" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">pilastri, trave, piano di copertura (falda unica o due falde)</text>
+<text x="560" y="376" font-family="Segoe UI" font-size="12" fill="#3f7d4a" text-anchor="start" font-weight="bold">DOPO: 2 Impianto › Pannelli › Su pensilina</text>
+<rect x="560" y="386" width="300" height="112" rx="8" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="570" y="408" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">Orientamento</text>
+<text x="850" y="408" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="end" font-weight="normal">lungo la falda ▾</text>
+<text x="570" y="430" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">File di moduli</text>
+<text x="850" y="430" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="end" font-weight="normal">2 (riempie la profondità)</text>
+<text x="570" y="452" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">Sporto oltre la struttura</text>
+<text x="850" y="452" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="end" font-weight="normal">0,20 m</text>
+<text x="570" y="474" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">Bordo</text>
+<text x="850" y="474" font-family="Segoe UI" font-size="10" fill="#2b2622" text-anchor="end" font-weight="normal">0,10 m</text>
+<text x="880" y="410" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">Una sola falda = un sottocampo; i moduli</text>
+<text x="880" y="426" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">coprono tutta la falda, senza file né</text>
+<text x="880" y="442" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">corridoi: niente «passo», niente «altezza</text>
+<text x="880" y="458" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">dal piano». La pendenza è quella della struttura.</text>
+<text x="880" y="486" font-family="Segoe UI" font-size="10" fill="#3f7d4a" text-anchor="start" font-weight="bold">Nessun modulo appare in Modellazione.</text></svg>

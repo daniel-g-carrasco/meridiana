@@ -1,0 +1,245 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="700" viewBox="0 0 1240 700"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2b2622"/></marker></defs><rect x="0" y="0" width="1240" height="700" rx="6" fill="#f4f1ec" stroke="none" stroke-width="0"/>
+<text x="20" y="30" font-family="Segoe UI" font-size="16" fill="#2b2622" text-anchor="start" font-weight="bold">Prima e dopo: le fasi e le barre di Modello/Modellazione e di Impianto</text>
+<text x="20" y="66" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="bold">OGGI (phases.py, R205)</text>
+<rect x="20" y="76" width="80.4" height="28" rx="5" fill="#f0e3d1" stroke="#8a5a1e" stroke-width="1"/>
+<text x="30" y="95" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">1</text>
+<text x="44" y="95" font-family="Segoe UI" font-size="12" fill="#2b2622" text-anchor="start" font-weight="normal">Modello</text>
+<text x="116.4" y="95" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">2</text>
+<text x="130.4" y="95" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="normal">Impianto</text>
+<text x="210.0" y="95" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">3</text>
+<text x="224.0" y="95" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="normal">Producibilità</text>
+<text x="339.6" y="95" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">4</text>
+<text x="353.6" y="95" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="normal">Consumi</text>
+<text x="426.0" y="95" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">5</text>
+<text x="440.0" y="95" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="normal">Bilancio ed economia</text>
+<text x="606.0" y="95" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">6</text>
+<text x="620.0" y="95" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="normal">Relazione</text>
+<text x="20" y="130" font-family="Segoe UI" font-size="11" fill="#7a6f66" text-anchor="start" font-weight="normal">1 Modello</text>
+<rect x="20" y="138" width="77" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="58.5" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="58.5" y="173" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Seleziona</text>
+<text x="93" y="149" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">V</text>
+<rect x="101" y="138" width="58" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="130.0" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="130.0" y="173" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Sposta</text>
+<text x="155" y="149" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">M</text>
+<rect x="163" y="138" width="58" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="192.0" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="192.0" y="173" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Ruota</text>
+<text x="120.5" y="198" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Modifica</text>
+<line x1="229" y1="142" x2="229" y2="178" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="239" y="138" width="70" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="274.0" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="274.0" y="173" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Edificio</text>
+<text x="305" y="149" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">B</text>
+<rect x="313" y="138" width="63" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="344.5" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="344.5" y="173" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Modello</text>
+<rect x="380" y="138" width="77" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="418.5" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="418.5" y="173" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Pensilina</text>
+<rect x="461" y="138" width="58" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="490.0" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="490.0" y="173" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Falda</text>
+<text x="515" y="149" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">P</text>
+<rect x="523" y="138" width="84" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="565.0" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="565.0" y="173" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Esclusione</text>
+<text x="603" y="149" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">X</text>
+<text x="423.0" y="198" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Disegna</text>
+<line x1="615" y1="142" x2="615" y2="178" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="625" y="138" width="84" height="44" rx="5" fill="#ffffff" stroke="#c9bfb4" stroke-width="2" stroke-dasharray="4,3"/>
+<text x="667.0" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="667.0" y="173" font-family="Segoe UI" font-size="11" fill="#c9bfb4" text-anchor="middle" font-weight="normal">Sottocampo</text>
+<text x="705" y="149" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">S</text>
+<rect x="713" y="138" width="58" height="44" rx="5" fill="#ffffff" stroke="#c9bfb4" stroke-width="2" stroke-dasharray="4,3"/>
+<text x="742.0" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="742.0" y="173" font-family="Segoe UI" font-size="11" fill="#c9bfb4" text-anchor="middle" font-weight="normal">Fila</text>
+<text x="767" y="149" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">L</text>
+<rect x="775" y="138" width="77" height="44" rx="5" fill="#ffffff" stroke="#c9bfb4" stroke-width="2" stroke-dasharray="4,3"/>
+<text x="813.5" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="813.5" y="173" font-family="Segoe UI" font-size="11" fill="#c9bfb4" text-anchor="middle" font-weight="normal">Est-ovest</text>
+<rect x="856" y="138" width="58" height="44" rx="5" fill="#f0e3d1" stroke="#c9bfb4" stroke-width="2" stroke-dasharray="4,3"/>
+<text x="885.0" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="885.0" y="173" font-family="Segoe UI" font-size="11" fill="#c9bfb4" text-anchor="middle" font-weight="normal">Posa</text>
+<rect x="918" y="138" width="58" height="44" rx="5" fill="#ffffff" stroke="#c9bfb4" stroke-width="2" stroke-dasharray="4,3"/>
+<text x="947.0" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="947.0" y="173" font-family="Segoe UI" font-size="11" fill="#c9bfb4" text-anchor="middle" font-weight="normal">Svuota</text>
+<text x="800.5" y="198" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Posa</text>
+<line x1="984" y1="142" x2="984" y2="178" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="994" y="138" width="58" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="1023.0" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="1023.0" y="173" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Misura</text>
+<text x="1048" y="149" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">D</text>
+<rect x="1056" y="138" width="63" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="1087.5" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="1087.5" y="173" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Squadra</text>
+<text x="1115" y="149" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">Q</text>
+<rect x="1123" y="138" width="84" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="1165.0" y="156" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="1165.0" y="173" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Rettangolo</text>
+<text x="1203" y="149" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">R</text>
+<text x="1100.5" y="198" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Precisione</text>
+<line x1="1215" y1="142" x2="1215" y2="178" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<text x="20" y="230" font-family="Segoe UI" font-size="11" fill="#7a6f66" text-anchor="start" font-weight="normal">2 Impianto</text>
+<rect x="20" y="238" width="70" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="55.0" y="256" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="55.0" y="273" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Catalogo</text>
+<rect x="94" y="238" width="84" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="136.0" y="256" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="136.0" y="273" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Dimensiona</text>
+<text x="99.0" y="298" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Inverter</text>
+<line x1="186" y1="242" x2="186" y2="278" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="196" y="238" width="77" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="234.5" y="256" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="234.5" y="273" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Configura</text>
+<text x="234.5" y="298" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Accumulo</text>
+<line x1="281" y1="242" x2="281" y2="278" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="291" y="238" width="63" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="322.5" y="256" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="322.5" y="273" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Proponi</text>
+<rect x="358" y="238" width="70" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="393.0" y="256" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="393.0" y="273" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Completa</text>
+<rect x="432" y="238" width="63" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="463.5" y="256" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="463.5" y="273" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Disegna</text>
+<rect x="499" y="238" width="84" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="541.0" y="256" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="541.0" y="273" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Ricomincia</text>
+<text x="437.0" y="298" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Stringhe</text>
+<line x1="591" y1="242" x2="591" y2="278" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<text x="640" y="262" font-family="Segoe UI" font-size="11" fill="#7a6f66" text-anchor="start" font-weight="normal" font-style="italic">la posa dei moduli sta in Modello; l'impianto parte dagli inverter</text>
+<line x1="20" y1="330" x2="1220" y2="330" stroke="#b8ada3" stroke-width="1" stroke-dasharray="6,4" stroke-linecap="round"/>
+<text x="20" y="362" font-family="Segoe UI" font-size="12" fill="#3f7d4a" text-anchor="start" font-weight="bold">PROPOSTA (R277)</text>
+<rect x="20" y="372" width="116.4" height="28" rx="5" fill="#f0e3d1" stroke="#8a5a1e" stroke-width="1"/>
+<text x="30" y="391" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">1</text>
+<text x="44" y="391" font-family="Segoe UI" font-size="12" fill="#2b2622" text-anchor="start" font-weight="normal">Modellazione</text>
+<text x="152.4" y="391" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">2</text>
+<text x="166.4" y="391" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="normal">Impianto</text>
+<text x="246.0" y="391" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">3</text>
+<text x="260.0" y="391" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="normal">Producibilità</text>
+<text x="375.6" y="391" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">4</text>
+<text x="389.6" y="391" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="normal">Consumi</text>
+<text x="462.0" y="391" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">5</text>
+<text x="476.0" y="391" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="normal">Bilancio ed economia</text>
+<text x="642.0" y="391" font-family="Segoe UI" font-size="11" fill="#8a5a1e" text-anchor="start" font-weight="bold">6</text>
+<text x="656.0" y="391" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="start" font-weight="normal">Relazione</text>
+<text x="20" y="426" font-family="Segoe UI" font-size="11" fill="#7a6f66" text-anchor="start" font-weight="normal">1 Modellazione: solo il sito e i volumi</text>
+<rect x="20" y="434" width="77" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="58.5" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="58.5" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Seleziona</text>
+<text x="93" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">V</text>
+<rect x="101" y="434" width="58" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="130.0" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="130.0" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Sposta</text>
+<text x="155" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">M</text>
+<rect x="163" y="434" width="58" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="192.0" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="192.0" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Ruota</text>
+<text x="120.5" y="494" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Modifica</text>
+<line x1="229" y1="438" x2="229" y2="474" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="239" y="434" width="70" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="274.0" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="274.0" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Edificio</text>
+<text x="305" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">B</text>
+<rect x="313" y="434" width="84" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="355.0" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="355.0" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Da modello</text>
+<text x="393" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">E</text>
+<rect x="401" y="434" width="77" height="44" rx="5" fill="#ffffff" stroke="#3f7d4a" stroke-width="2"/>
+<text x="439.5" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="439.5" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Pensilina</text>
+<text x="474" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">T</text>
+<text x="358.5" y="494" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Edifici</text>
+<line x1="486" y1="438" x2="486" y2="474" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="496" y="434" width="58" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="525.0" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="525.0" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Falda</text>
+<text x="550" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">P</text>
+<rect x="558" y="434" width="58" height="44" rx="5" fill="#ffffff" stroke="#3f7d4a" stroke-width="2"/>
+<text x="587.0" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="587.0" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Colmo</text>
+<text x="612" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">C</text>
+<rect x="620" y="434" width="58" height="44" rx="5" fill="#ffffff" stroke="#3f7d4a" stroke-width="2"/>
+<text x="649.0" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="649.0" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Tipo…</text>
+<text x="587.0" y="494" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Tetto</text>
+<line x1="686" y1="438" x2="686" y2="474" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="696" y="434" width="84" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="738.0" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="738.0" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Esclusione</text>
+<text x="776" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">X</text>
+<rect x="784" y="434" width="84" height="44" rx="5" fill="#ffffff" stroke="#3f7d4a" stroke-width="2"/>
+<text x="826.0" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="826.0" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Oggetto 3D</text>
+<text x="864" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">O</text>
+<text x="782.0" y="494" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Ostacoli</text>
+<line x1="876" y1="438" x2="876" y2="474" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="886" y="434" width="58" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="915.0" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="915.0" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Misura</text>
+<text x="940" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">D</text>
+<rect x="948" y="434" width="63" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="979.5" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="979.5" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Squadra</text>
+<text x="1007" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">Q</text>
+<rect x="1015" y="434" width="84" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="1057.0" y="452" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="1057.0" y="469" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Rettangolo</text>
+<text x="1095" y="445" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">R</text>
+<text x="992.5" y="494" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Precisione</text>
+<line x1="1107" y1="438" x2="1107" y2="474" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<text x="20" y="526" font-family="Segoe UI" font-size="11" fill="#7a6f66" text-anchor="start" font-weight="normal">2 Impianto: pannelli, poi inverter, poi accumulo; le stringhe chiudono</text>
+<rect x="20" y="534" width="84" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="62.0" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="62.0" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Sottocampo</text>
+<text x="100" y="545" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">S</text>
+<rect x="108" y="534" width="58" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="137.0" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="137.0" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Fila</text>
+<text x="162" y="545" font-family="Segoe UI" font-size="8" fill="#7a6f66" text-anchor="end" font-weight="normal">L</text>
+<rect x="170" y="534" width="77" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="208.5" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="208.5" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Est-ovest</text>
+<rect x="251" y="534" width="98" height="44" rx="5" fill="#ffffff" stroke="#3f7d4a" stroke-width="2"/>
+<text x="300.0" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="300.0" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Su pensilina</text>
+<rect x="353" y="534" width="58" height="44" rx="5" fill="#f0e3d1" stroke="#b8ada3" stroke-width="1"/>
+<text x="382.0" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="382.0" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Posa</text>
+<rect x="415" y="534" width="58" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="444.0" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="444.0" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Svuota</text>
+<text x="246.5" y="594" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Pannelli</text>
+<line x1="481" y1="538" x2="481" y2="574" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="491" y="534" width="70" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="526.0" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="526.0" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Catalogo</text>
+<rect x="565" y="534" width="84" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="607.0" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="607.0" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Dimensiona</text>
+<text x="570.0" y="594" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Inverter</text>
+<line x1="657" y1="538" x2="657" y2="574" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="667" y="534" width="77" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="705.5" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="705.5" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Configura</text>
+<text x="705.5" y="594" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Accumulo</text>
+<line x1="752" y1="538" x2="752" y2="574" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<rect x="762" y="534" width="63" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="793.5" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="793.5" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Proponi</text>
+<rect x="829" y="534" width="70" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="864.0" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="864.0" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Completa</text>
+<rect x="903" y="534" width="63" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="934.5" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="934.5" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Disegna</text>
+<rect x="970" y="534" width="84" height="44" rx="5" fill="#ffffff" stroke="#b8ada3" stroke-width="1"/>
+<text x="1012.0" y="552" font-family="Segoe UI" font-size="12" fill="#7a6f66" text-anchor="middle" font-weight="normal">⬚</text>
+<text x="1012.0" y="569" font-family="Segoe UI" font-size="11" fill="#2b2622" text-anchor="middle" font-weight="normal">Ricomincia</text>
+<text x="908.0" y="594" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="middle" font-weight="normal">Stringhe</text>
+<line x1="1062" y1="538" x2="1062" y2="574" stroke="#b8ada3" stroke-width="1" stroke-linecap="round"/>
+<text x="20" y="630" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">Legenda: bordo verde = comando nuovo; tratteggio grigio = comando che lascia questa barra; fondo ambra = pulsante principale della fase.</text>
+<text x="20" y="648" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">I tasti C, E, O, T oggi sono liberi (shortcuts.py); «Tipo…» apre il gruppo Tetto nelle proprietà.</text>
+<text x="20" y="666" font-family="Segoe UI" font-size="10" fill="#7a6f66" text-anchor="start" font-weight="normal">Le fasi restano sei e sono luoghi, non tappe (design 2.1): i tasti Ctrl+1…6 non cambiano.</text></svg>
