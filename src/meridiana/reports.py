@@ -66,8 +66,9 @@ def chapters() -> dict[str, Chapter]:
                 _("Every check with its result and its source, the notes of the rules that apply")),
         Chapter("methods", _("Parameters and methods"), ("sim",),
                 _("How each number is computed: models, losses, thresholds, with source and formula")),
-        Chapter("annexes", _("Annexes"), ("sim",),
-                _("The data of the modules and of the inverters used")),
+        Chapter("annexes", _("Component data"), ("sim",),
+                _("The data of the modules and of the inverters used")),      # «Annexes» until R291: the PDF
+                                                                              # attachments are the attachments
         Chapter("overview", _("System overview and results"), ("sim",),
                 _("The headline numbers, the layout in 3D and the plan of the modules")),
         Chapter("monthly", _("Estimated monthly energy"), ("sim",),

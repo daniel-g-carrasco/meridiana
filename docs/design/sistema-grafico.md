@@ -369,3 +369,29 @@ Il modello a sé esiste dal 24/10/2026: `%USERPROFILE%\dev\qt-app-template`, pac
 una finestra d'esempio. Il 25/10/2026 (R122) vi sono stati portati il catalogo dei testi, i tipi di tasti, le barre
 di scorrimento, il calendario, i campi data e il cursore, le pillole delle schede accorpate e la minore presenza
 dell'accento; la provenienza commit per commit è nel suo `docs/da-dove-viene.md`.
+
+## 8. La carta: la relazione e i documenti stampati
+
+La relazione (`ui/report.py`, `ui/report_chapters.py`, foglio in `ui/document_style.py` con `paper=True`, colori in
+`ui/report_style.py`) non segue il tema della finestra: è carta bianca, inchiostro `INK`, secondario `MUTED`, filetti
+`RULE`, fondo delle intestazioni `HEAD`, in chiaro e in scuro. Regole (R291, Daniel 30/10/2026: «la relazione è
+brutta, va rivista da un punto di vista estetico e di esposizione dei contenuti»):
+
+- **Quattro gradini di titolo, tutti semigrassetto**: h1 23 pt (solo il titolo del progetto), h2 16 pt (i capitoli,
+  numerati, ognuno su una pagina nuova nel modello Completo), h3 12 pt (le sezioni), h4 10,5 pt (le voci); testo
+  10,5 pt, didascalie e note 8,5 pt in `MUTED`. Lo spazio sopra un titolo cala con il livello (24, 18, 14 px). Un
+  testo preso da un altro modulo (i record di «Come è calcolato») entra con i titoli **abbassati di un livello**.
+- **Tabelle**: un punto meno del testo (9,5 pt), celle 4×6 px, intestazione su `HEAD` ripetuta a ogni pagina, un
+  filetto `RULE` sotto ogni riga; **i numeri a destra e nudi, l'unità nell'intestazione** («Azimut, °», «PR, %»,
+  «Valore attuale netto, €»); la riga del totale o del progetto evidenziata (`tr.result`); una riga di gruppo
+  (`td.group`) al posto di una colonna che ripete lo stesso nome; larghezze date alle colonne delle tabelle larghe,
+  così le parole dell'intestazione non si spezzano; mai una tabella più larga della pagina.
+- **Fatti** (`facts`): etichetta in `MUTED` al 34 %, valore in inchiostro normale; semigrassetto solo per i numeri
+  di testa della Sintesi.
+- **Figure** (`figure`): centrate, larghe 620 px (16 cm), con la didascalia numerata subito sotto («Figura n. ...»),
+  a interlinea 100 % perché il 125 % dei paragrafi lasciava una fascia bianca sotto l'immagine; la pianta alta
+  quanto chiede il suo disegno; la legenda dei grafici sopra il grafico, mai sulle barre.
+- **Niente due volte**: la pianta sta nella Sintesi e non torna in Coperture e posa; le verifiche delle stringhe
+  una volta per ogni tipo di stringa, con gli ingressi su cui vale; le verifiche del capitolo per ambito.
+- **Copertina**: nel Completo dipinta a sé (`_paint_cover`); nel Sintetico un blocco chiuso da un filetto `<hr>`
+  prima del primo capitolo. Intestazione e piè di pagina a 7,5 pt in `MUTED` dalla seconda pagina.

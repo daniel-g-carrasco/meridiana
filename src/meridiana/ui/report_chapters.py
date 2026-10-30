@@ -15,7 +15,7 @@ import html
 import io
 import math
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -41,9 +41,14 @@ class Context:
     data: dict
     image: Callable                  # image(name, make, ratio=1.0) -> the URL of the image `make()` draws
     settings: dict
+    chosen: tuple = ()               # the ids of the chapters written, in order: a chapter leaves out what another has
+    figures: list = field(default_factory=list)      # the captions numbered so far (figure)
 
     def get(self, key: str):
         return self.data.get(key)
+
+    def has_chapter(self, cid: str) -> bool:
+        return cid in self.chosen
 
 
 def mark(symbol: str) -> str:
@@ -88,27 +93,45 @@ def kwh(v) -> str:
     return number(float(v), 0, grouping=True)
 
 
-def table(rows, head=None, right=(), widths=None) -> str:
-    """A table of the document: a header row on a light ground, the numbers (`right`, column indexes) aligned
-    right."""
-    out = ["<table class='grid' width='100%' cellspacing='0' cellpadding='4'>"]
+def table(rows, head=None, right=(), widths=None, mark: int | None = None) -> str:
+    """A table of the document: a header row on a light ground (repeated on every page), the numbers (`right`,
+    column indexes) aligned right and bare, their unit in the header; a row that is a string is a group row
+    across the columns, naming the rows that follow; `mark`: the index of the row drawn as the result."""
+    columns = len(head) if head else max((len(r) for r in rows if not isinstance(r, str)), default=1)
+    out = ["<table class='grid' width='100%' cellspacing='0' cellpadding='0'>"]
     if head:
         cells = []
         for i, h in enumerate(head):
             w = f" width='{widths[i]}'" if widths and widths[i] else ""
             cells.append(f"<th align='{'right' if i in right else 'left'}'{w}>{esc(h)}</th>")
         out.append("<thead><tr>" + "".join(cells) + "</tr></thead>")
-    for row in rows:
-        out.append("<tr>" + "".join(f"<td align='{'right' if i in right else 'left'}'>{esc(c)}</td>"
-                                    for i, c in enumerate(row)) + "</tr>")
+    for n, row in enumerate(rows):
+        if isinstance(row, str):
+            out.append(f"<tr><td class='group' colspan='{columns}'>{esc(row)}</td></tr>")
+            continue
+        cls = " class='result'" if mark is not None and n == mark else ""
+        out.append(f"<tr{cls}>" + "".join(f"<td align='{'right' if i in right else 'left'}'>{esc(c)}</td>"
+                                          for i, c in enumerate(row)) + "</tr>")
     out.append("</table>")
     return "".join(out)
 
 
-def facts(rows) -> str:
-    """Label and value, two columns, the value in bold: the headline numbers."""
-    body = "".join(f"<tr><td class='label' width='48%'>{esc(a)}</td><td><b>{esc(b)}</b></td></tr>" for a, b in rows)
+def facts(rows, strong: bool = False) -> str:
+    """Label and value, two columns: the label muted, the value in the ink (semibold only for the headline numbers,
+    `strong`: a long value in bold reads heavy)."""
+    body = "".join(f"<tr><td class='label' width='34%'>{esc(a)}</td><td>{f'<b>{esc(b)}</b>' if strong else esc(b)}"
+                   "</td></tr>" for a, b in rows)
     return f"<table class='facts' width='100%' cellspacing='0' cellpadding='3'>{body}</table>"
+
+
+def figure(ctx: Context, url: str, caption: str, width: int = 620) -> str:
+    """A figure of the report: the image centred, under it its numbered caption («Figure n. ...»), muted and
+    smaller, so the text can refer to it; the number counts through the whole report."""
+    ctx.figures.append(caption)
+    text = _("Figure {n}. {caption}").format(n=len(ctx.figures), caption=caption)
+    # line-height 100%: the paragraphs' 125% would leave a band of white under the picture (R291)
+    return (f"<p align='center' style='margin-top: 6px; margin-bottom: 4px; line-height: 100%'>"
+            f"<img src='{url}' width='{width}'></p><p class='caption' align='center'>{html.escape(text)}</p>")
 
 
 def para(text: str, cls: str = "") -> str:
@@ -172,7 +195,10 @@ def plan_png(project, results: dict, plant=None, width_in: float = 7.0, height_i
         return b""
     span_x, span_y = max(box[1] - box[0], 1.0), max(box[3] - box[2], 1.0)
     if height_in is None:
-        height_in = min(5.6, max(2.4, width_in * (span_y * 1.2 + 0.1 * span_x) / (span_x * 1.12)))
+        # as tall as the drawn extent wants (the limits set below: 3.5 pads across, 3.6 down), so the picture ends
+        # where the plan ends and its caption follows it, with no white band in between (R291)
+        pad = 0.04 * max(span_x, span_y)
+        height_in = min(5.6, max(1.6, width_in * (span_y + 3.6 * pad) / (span_x + 3.5 * pad)))
     import matplotlib
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     from matplotlib.collections import PolyCollection
@@ -317,7 +343,7 @@ def _plan(ctx: Context, strings: bool = False) -> str:
     url = ctx.image(name, lambda: plan_png(ctx.project, results, plant))
     caption = (_("The strings on the modules: each in a hue of its own, from its label along its modules.") if strings
                else _("Plan of the modules laid: buildings, sub-fields (dashed), exclusions; north up."))
-    return f"<p align='center'><img src='{url}' width='620'></p>{para(caption, 'caption')}"
+    return figure(ctx, url, caption)
 
 
 def _views(ctx: Context) -> str:
@@ -332,7 +358,7 @@ def _views(ctx: Context) -> str:
     cells = []
     for vid, (_bearing, _elevation, caption) in report_3d.views().items():
         url = ctx.image(f"view_{vid}", lambda vid=vid: report_3d.picture(ctx.project, results, vid))
-        cells.append(f"<td align='center' width='50%'><img src='{url}' width='300'><br>"
+        cells.append(f"<td align='center' width='50%' style='line-height: 100%'><img src='{url}' width='300'><br>"
                      f"<span class='caption'>{html.escape(caption)}</span></td>")
     return ("<table width='100%' cellspacing='0' cellpadding='3' style='margin-top: 4pt; margin-bottom: 6pt'><tr>"
             + "".join(cells) + "</tr></table>")
@@ -350,13 +376,21 @@ def _monthly_chart(ctx: Context) -> str:
         ax.bar(x - (w / 2 if pv is not None else 0), mine, w, color=col[0], label="Meridiana")
         if pv is not None:
             ax.bar(x + w / 2, pv.monthly_kwh, w, color=col[1], label="PVGIS")
-            leg = ax.legend(frameon=False, fontsize=7, loc="upper left", ncols=2)
-            for t in leg.get_texts():
-                t.set_color(c["ink2"])
+            _legend_above(ax, c, 2)
         ax.set_xticks(x, names)
         ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _p: number(v, 0, grouping=True)))
         ax.set_ylabel("kWh", fontsize=7, color=c["ink2"])
-    return f"<p align='center'><img src='{ctx.image('monthly', lambda: figure_png(draw))}' width='620'></p>"
+    caption = (_("Energy delivered month by month, Meridiana beside PVGIS.") if pv is not None
+               else _("Energy delivered month by month."))
+    return figure(ctx, ctx.image('monthly', lambda: figure_png(draw)), caption)
+
+
+def _legend_above(ax, c, columns: int) -> None:
+    """The legend of a chart above its plot, never on the bars."""
+    leg = ax.legend(frameon=False, fontsize=7, loc="lower left", bbox_to_anchor=(0, 1.0), ncols=columns,
+                    borderaxespad=0)
+    for t in leg.get_texts():
+        t.set_color(c["ink2"])
 
 
 # the chapters of «Complete»
@@ -369,7 +403,7 @@ def summary(ctx: Context) -> list[str]:
                     "each kWp.", "A system of {kwp} kWp on {n} sub-fields: in the typical year it produces {e} kWh, "
                     "{y} kWh for each kWp.", max(1, n_sf)).format(
         kwp=number(sim.p_stc_kw, 1), n=max(1, n_sf), e=kwh(sim.energy_kwh), y=kwh(sim.specific_yield))
-    return [para(text), facts(_headline(ctx)), _views(ctx), _plan(ctx)]
+    return [para(text), facts(_headline(ctx), strong=True), _views(ctx), _plan(ctx)]
 
 
 def site(ctx: Context) -> list[str]:
@@ -414,14 +448,15 @@ def layout(ctx: Context) -> list[str]:
         kw = len(mods) * p.module_of(sf).power_kw
         where = buildings.get(sf.building, "") if sf.building else _("ground")
         rows.append((sf.name, where, number(r.area, 0), str(len(mods)), number(kw, 2),
-                     mounts.get(params.mounting, params.mounting), f"{number(r.azimuth, 0)}°", f"{number(r.tilt, 0)}°",
+                     mounts.get(params.mounting, params.mounting), number(r.azimuth, 0), number(r.tilt, 0),
                      number(r.pitch, 2) if r.pitch else "–"))
         if r.pitch:
             rules.append(_("{name}: rows {pitch} m apart, {gap} m free behind each, the sun above {angle}° clears "
                            "them (limit angle, CEI 82-25/3, Fig. 1).").format(
                 name=sf.name, pitch=number(r.pitch, 2), gap=number(r.clearance, 2), angle=number(r.limit_angle, 1)))
-    parts = [table(rows, [_("Sub-field"), _("On"), _("Area, m²"), _("Modules"), "kWp", _("Mounting"), _("Azimuth"),
-                          _("Tilt"), _("Pitch, m")], right=(2, 3, 4, 6, 7, 8))]
+    parts = [table(rows, [_("Sub-field"), _("On"), _("Area, m²"), _("Modules"), "kWp", _("Mounting"),
+                          f"{_('Azimuth')}, °", f"{_('Tilt')}, °", _("Pitch, m")], right=(2, 3, 4, 6, 7, 8),
+                   widths=("14%", "14%", "8%", "9%", "8%", "13%", "10%", "15%", "9%"))]
     parts.append(para(_("Azimuth from the south, positive towards the west (CEI 82-25); area as drawn, in plan."),
                       "caption"))
     if rules:
@@ -434,7 +469,8 @@ def layout(ctx: Context) -> list[str]:
         names = model.exclusion_kind_names() if hasattr(model, "exclusion_kind_names") else {}
         parts.append(f"<h3>{html.escape(_('Exclusions'))}</h3>")
         parts.append(para("; ".join(f"{names.get(k, k)}: {n}" for k, n in sorted(kinds.items()))))
-    parts.append(_plan(ctx))
+    if not ctx.has_chapter("summary"):
+        parts.append(_plan(ctx))                      # the summary has the plan already: once in the report
     return parts
 
 
@@ -475,23 +511,24 @@ def production(ctx: Context) -> list[str]:
                              kwh(inv["dc_kwh"]), kwh(inv["clipping_kwh"]), kwh(inv["ac_kwh"]))
                             for inv in inverters],
                            [_("Inverter"), _("AC rating, kW"), _("DC energy, kWh"),
-                            _("Clipping, kWh"), _("AC energy, kWh")], right=(1, 2, 3, 4)))
+                            _("Clipping, kWh"), _("AC energy, kWh")], right=(1, 2, 3, 4),
+                           widths=("36%", "15%", "17%", "15%", "17%")))
     m = sim.monthly
     names = months()
     body = []
     for i in range(min(12, len(m))):
         row = [names[i], kwh(m.poa.iloc[i]), kwh(m.e_ac.iloc[i]), kwh(m.e_ac.iloc[i] / sim.p_stc_kw if sim.p_stc_kw else 0),
-               f"{number(100 * m.pr.iloc[i], 1)} %"]
+               number(100 * m.pr.iloc[i], 1)]
         if pv is not None:
             row.append(kwh(pv.monthly_kwh[i]))
         body.append(row)
-    total = [_("Year"), kwh(m.poa.sum()), kwh(sim.energy_kwh), kwh(sim.specific_yield), f"{number(100 * sim.pr, 1)} %"]
+    total = [_("Year"), kwh(m.poa.sum()), kwh(sim.energy_kwh), kwh(sim.specific_yield), number(100 * sim.pr, 1)]
     if pv is not None:
         total.append(kwh(pv.yearly_kwh))
     body.append(total)
-    head = [_("Month"), _("On the plane, kWh/m²"), _("Energy, kWh"), "kWh/kWp", "PR"] + (["PVGIS, kWh"] if pv else [])
+    head = [_("Month"), _("On the plane, kWh/m²"), _("Energy, kWh"), "kWh/kWp", "PR, %"] + (["PVGIS, kWh"] if pv else [])
     parts.append(f"<h3>{html.escape(_('Month by month'))}</h3>")
-    parts.append(table(body, head, right=tuple(range(1, len(head)))))
+    parts.append(table(body, head, right=tuple(range(1, len(head))), mark=len(body) - 1))
     parts.append(_monthly_chart(ctx))
     steps = [s for s in sim.chain if s.change is not None]
     if steps:
@@ -510,16 +547,16 @@ def production(ctx: Context) -> list[str]:
         parts.append(f"<h3>{html.escape(_('From the sun to the grid'))}</h3>")
         parts.append(para(_("Each step against the one before: the irradiation on the plane against the horizontal, "
                             "then the losses down to the energy delivered.")))
-        parts.append(f"<p align='center'><img src='{ctx.image('chain', lambda: figure_png(chain, 7.0, 3.6))}' "
-                     "width='620'></p>")
+        parts.append(figure(ctx, ctx.image('chain', lambda: figure_png(chain, 7.0, 3.6)),
+                            _("From the sun to the grid: each step as a percentage of the one before.")))
     shaded = [a for a in sim.arrays if (a.get("row_shading") or 0) + (a.get("obstacle_shading") or 0) > 0.0005]
     if shaded:
         parts.append(f"<h3>{html.escape(_('Shading'))}</h3>")
-        parts.append(table([(a["name"], f"{number(100 * (a.get('row_shading') or 0), 1)} %",
-                             f"{number(100 * (a.get('obstacle_shading') or 0), 1)} %",
-                             f"{number(100 * (a.get('rows_electrical') or 0), 1)} %") for a in sim.arrays],
-                           [_("Array"), _("Rows, linear"), _("Obstacles, linear"), _("Rows, electrical")],
-                           right=(1, 2, 3)))
+        parts.append(table([(a["name"], number(100 * (a.get('row_shading') or 0), 1),
+                             number(100 * (a.get('obstacle_shading') or 0), 1),
+                             number(100 * (a.get('rows_electrical') or 0), 1)) for a in sim.arrays],
+                           [_("Array"), f"{_('Rows, linear')}, %", f"{_('Obstacles, linear')}, %",
+                            f"{_('Rows, electrical')}, %"], right=(1, 2, 3)))
     return parts
 
 
@@ -543,9 +580,10 @@ def consumption(ctx: Context) -> list[str]:
         body.append((_("Year"), kwh(mo["production"].sum()), kwh(mo["consumption"].sum()), kwh(mo["self"].sum()),
                      kwh(mo["export"].sum()), kwh(mo["import"].sum())))
         parts.append(f"<h3>{html.escape(_('Month by month'))}</h3>")
-        parts.append(table(body, [_("Month"), _("Produced"), _("Consumed"), _("Self-consumed"), _("Fed in"),
-                                  _("Drawn")], right=(1, 2, 3, 4, 5)))
-        parts.append(para(_("kWh; self-consumed: the energy produced and used on site, at the same hour."), "caption"))
+        parts.append(table(body, [_("Month"), f"{_('Produced')}, kWh", f"{_('Consumed')}, kWh",
+                                  f"{_('Self-consumed')}, kWh", f"{_('Fed in')}, kWh", f"{_('Drawn')}, kWh"],
+                           right=(1, 2, 3, 4, 5), mark=12))
+        parts.append(para(_("Self-consumed: the energy produced and used on site, at the same hour."), "caption"))
 
         def bars(ax, c, col):
             x = np.arange(12)
@@ -553,13 +591,12 @@ def consumption(ctx: Context) -> list[str]:
             ax.bar(x + 0.2, mo["consumption"].to_numpy(), 0.4, color=col[2], label=_("Consumed"))
             ax.plot(x, mo["self"].to_numpy(), color=c["ink"], linewidth=1.2, marker="o", markersize=2.5,
                     label=_("Self-consumed"))
-            leg = ax.legend(frameon=False, fontsize=7, loc="upper left", ncols=3)
-            for t in leg.get_texts():
-                t.set_color(c["ink2"])
+            _legend_above(ax, c, 3)
             ax.set_xticks(x, names)
             ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _p: number(v, 0, grouping=True)))
             ax.set_ylabel("kWh", fontsize=7, color=c["ink2"])
-        parts.append(f"<p align='center'><img src='{ctx.image('balance', lambda: figure_png(bars))}' width='620'></p>")
+        parts.append(figure(ctx, ctx.image('balance', lambda: figure_png(bars)),
+                            _("Production and consumption month by month, with the energy self-consumed.")))
     hourly = getattr(econ, "hourly", None) if econ is not None else None
     if hourly is not None and "self" in getattr(hourly, "columns", []):
         from .energy_pages import year_carpet
@@ -577,10 +614,9 @@ def consumption(ctx: Context) -> list[str]:
             bar.outline.set_visible(False)
             bar.set_label("kW", fontsize=7, color=c["ink2"])
         parts.append(f"<h3>{html.escape(_('Self-consumption hour by hour'))}</h3>")
-        parts.append(f"<p align='center'><img src='{ctx.image('carpet', lambda: figure_png(carpet, 7.0, 2.6))}' "
-                     "width='620'></p>")
-        parts.append(para(_("A column for each day of the year, the hours from the bottom up: the darker, the more "
-                            "of the consumption the system covers at that hour."), "caption"))
+        parts.append(figure(ctx, ctx.image('carpet', lambda: figure_png(carpet, 7.0, 2.6)),
+                            _("A column for each day of the year, the hours from the bottom up: the darker, the "
+                              "more of the consumption the system covers at that hour.")))
     return parts
 
 
@@ -606,26 +642,31 @@ def economics(ctx: Context) -> list[str]:
         ax.set_ylabel("€", fontsize=7, color=c["ink2"])
         ax.set_xlabel(_("year"), fontsize=7, color=c["ink2"])
     parts.append(f"<h3>{html.escape(_('Cumulative cash flow'))}</h3>")
-    parts.append(f"<p align='center'><img src='{ctx.image('cash', lambda: figure_png(cash))}' width='620'></p>")
+    parts.append(figure(ctx, ctx.image('cash', lambda: figure_png(cash)),
+                        _("Cumulative cash flow over the years: the investment at year 0, the payback where the "
+                          "line crosses zero.")))
     sizing, storage, sim = ctx.get("sizing"), ctx.get("storage"), ctx.get("sim")
     if sizing is not None and sim is not None:
         parts.append(f"<h3>{html.escape(_('Size of the system and of the storage'))}</h3>")
         parts.append(para(_("The same system smaller and larger, the production and the investment in the same "
                             "proportions; then a generic battery of growing capacity. What changes is what the "
                             "system covers of the consumption and what it is worth.")))
-        body = []
+        body, here = [], None
         for _i, row in sizing.iterrows():
-            here = " ◀" if abs(float(row.kwp) - sim.p_stc_kw) < 1e-6 else ""
-            body.append((number(float(row.kwp), 1) + here, f"{number(100 * float(row.self_ratio), 0)} %",
-                         f"{number(100 * float(row.self_sufficiency), 0)} %", f"{kwh(float(row.npv))} €"))
-        parts.append(table(body, ["kWp", _("Self-consumption"), _("Self-sufficiency"), _("Net present value")],
-                           right=(0, 1, 2, 3)))
+            if abs(float(row.kwp) - sim.p_stc_kw) < 1e-6:
+                here = len(body)
+            body.append((number(float(row.kwp), 1), number(100 * float(row.self_ratio), 0),
+                         number(100 * float(row.self_sufficiency), 0), kwh(float(row.npv))))
+        parts.append(table(body, ["kWp", f"{_('Self-consumption')}, %", f"{_('Self-sufficiency')}, %",
+                                  f"{_('Net present value')}, €"], right=(0, 1, 2, 3), mark=here))
+        parts.append(para(_("The highlighted row is this project."), "caption"))
         if storage is not None:
             frame, generic = storage
             parts.append(para(_("Each capacity is {generic}.").format(generic=generic)))
-            parts.append(table([(number(float(r.kwh), 1), f"{number(100 * float(r.self_sufficiency), 0)} %",
-                                 f"{kwh(float(r.npv))} €") for _i, r in frame.iterrows()],
-                               ["kWh", _("Self-sufficiency"), _("Net present value")], right=(0, 1, 2)))
+            parts.append(table([(number(float(r.kwh), 1), number(100 * float(r.self_sufficiency), 0),
+                                 kwh(float(r.npv))) for _i, r in frame.iterrows()],
+                               [f"{_('Storage')}, kWh", f"{_('Self-sufficiency')}, %", f"{_('Net present value')}, €"],
+                               right=(0, 1, 2)))
     return parts
 
 
@@ -634,10 +675,17 @@ def checks(ctx: Context) -> list[str]:
     parts = []
     items = ctx.get("checks") or []
     if items:
+        # by area, each area a group row: the area's name was repeated on every row (R291)
         areas = area_names()
-        parts.append(table([(Html(mark(MARKS[it.level])), areas.get(it.area, it.area), it.text,
-                             Html(f"<span class='muted'>{html.escape(it.source)}</span>")) for it in items],
-                           ["", _("Area"), _("Check"), _("Source")], widths=("4%", "16%", "52%", "28%")))
+        order = list(areas) + sorted({it.area for it in items} - set(areas))
+        rows: list = []
+        for area in order:
+            mine = [it for it in items if it.area == area]
+            if mine:
+                rows.append(areas.get(area, area))
+                rows += [(Html(mark(MARKS[it.level])), it.text,
+                          Html(f"<span class='muted'>{html.escape(it.source)}</span>")) for it in mine]
+        parts.append(table(rows, ["", _("Check"), _("Source")], widths=("4%", "64%", "32%")))
     notes = ctx.get("rules_notes") or []
     if notes:
         parts.append(f"<h3>{html.escape(_('Notes for the technical report'))}</h3>")
@@ -656,8 +704,11 @@ def methods(ctx: Context) -> list[str]:
                            getattr(load, "record", None), getattr(econ, "record", None)) if r is not None]
     parts = []
     if records:
-        parts.append(records_html(records, lambda name, tex, size: ctx.image(
-            "f_" + name, lambda: formula_png(tex, INK, 220, size), 2.2), paper=True))
+        text = records_html(records, lambda name, tex, size: ctx.image(
+            "f_" + name, lambda: formula_png(tex, INK, 220, size), 2.2), paper=True)
+        # the records' headings a level down: inside the chapter they are its sections, not chapters (R291)
+        parts.append(text.replace("<h3>", "<h4>").replace("</h3>", "</h4>").replace("<h2>", "<h3>")
+                     .replace("</h2>", "</h3>"))
         defaults = []
         for r in records:
             for st in r.steps:
@@ -738,7 +789,7 @@ def annexes(ctx: Context) -> list[str]:
 # the chapters of «Compact»
 
 def overview(ctx: Context) -> list[str]:
-    return [facts(_headline(ctx)), _views(ctx), _plan(ctx)]
+    return [facts(_headline(ctx), strong=True), _views(ctx), _plan(ctx)]
 
 
 def monthly(ctx: Context) -> list[str]:
@@ -748,8 +799,8 @@ def monthly(ctx: Context) -> list[str]:
     body = [(names[i], kwh(m.e_ac.iloc[i]), kwh(m.e_ac.iloc[i] / sim.p_stc_kw if sim.p_stc_kw else 0))
             for i in range(min(12, len(m)))]
     body.append((_("Year"), kwh(sim.energy_kwh), kwh(sim.specific_yield)))
-    return [table(body, [_("Month"), _("Energy, kWh"), "kWh/kWp"], right=(1, 2), widths=("40%", "30%", "30%")),
-            _monthly_chart(ctx)]
+    return [table(body, [_("Month"), _("Energy, kWh"), "kWh/kWp"], right=(1, 2), widths=("40%", "30%", "30%"),
+                  mark=len(body) - 1), _monthly_chart(ctx)]
 
 
 def fields(ctx: Context) -> list[str]:
@@ -768,9 +819,10 @@ def fields(ctx: Context) -> list[str]:
         params = sf.layout_params()
         rows.append((sf.name, f"{spec.manufacturer} {spec.model}".strip(), str(len(mods)),
                      number(len(mods) * spec.pmax / 1000, 2), mounts.get(params.mounting, params.mounting),
-                     f"{number(r.azimuth, 0)}°", f"{number(r.tilt, 0)}°"))
-    return [table(rows, [_("Sub-field"), _("Module"), _("Modules"), "kWp", _("Mounting"), _("Azimuth"), _("Tilt")],
-                  right=(2, 3, 5, 6)),
+                     number(r.azimuth, 0), number(r.tilt, 0)))
+    return [table(rows, [_("Sub-field"), _("Module"), _("Modules"), "kWp", _("Mounting"), f"{_('Azimuth')}, °",
+                         f"{_('Tilt')}, °"], right=(2, 3, 5, 6),
+                  widths=("16%", "28%", "9%", "9%", "18%", "10%", "10%")),
             para(_("Azimuth from the south, positive towards the west (CEI 82-25)."), "caption")]
 
 
@@ -816,7 +868,7 @@ def parameters(ctx: Context) -> list[str]:
     steps = [st for st in sim.chain if st.change is not None]
     if steps:
         parts.append(f"<h3>{html.escape(_('Losses and gains applied'))}</h3>")
-        parts.append(table([(st.label, f"{number(st.change, 1)} %") for st in steps], [_("Step"), _("Change")],
+        parts.append(table([(st.label, number(st.change, 1)) for st in steps], [_("Step"), f"{_('Change')}, %"],
                            right=(1,), widths=("75%", "25%")))
     return parts
 
@@ -905,6 +957,29 @@ def _optimized_parts(plant, u) -> list[str]:
     return parts
 
 
+def _string_plans(plant, units) -> list[tuple[int, list, list[str]]]:
+    """The kinds of string checked on `units`, each once: (modules in series, the rows of its checks, the inputs
+    «inverter.input» it is on). Two plans are one kind when their checks say the same, the input's own number
+    taken off the labels that name it («input 1: ...», stringing.py)."""
+    kinds: dict = {}
+    for u in units:
+        prefixes = {f"{_('input {k}').format(k=k)}: ": "" for k in range(1, u.inputs + 1)}
+        for k in range(1, u.inputs + 1):
+            slot = plant.inputs.get((u.number, k))
+            for p in {id(p): p for p in [plant.strings[i].plan for i in (slot.strings if slot else [])] if p}.values():
+                rows = []
+                for c in p.checks:
+                    label = c.label
+                    for prefix in prefixes:
+                        if label.startswith(prefix):
+                            label = label[len(prefix):]
+                            label = label[:1].upper() + label[1:]
+                    rows.append((Html(mark(MARKS.get(c.level, "✔"))), label, c.detail))
+                key = (p.n_series, tuple((c.level, r[1], r[2]) for c, r in zip(p.checks, rows, strict=True)))
+                kinds.setdefault(key, (p.n_series, rows, []))[2].append(f"{u.number}.{k}")
+    return list(kinds.values())
+
+
 def plant_parts(project, plant) -> list[str]:
     """The strings of the plant: for each inverter its inputs with the strings, the modules in series and the
     state; the checks of each input with their clauses (CEI 64-8/7) and the conditions they were made at; then
@@ -932,31 +1007,37 @@ def plant_parts(project, plant) -> list[str]:
         when = _("The strings checked by SolarEdge's tables, the modules' Voc at {t} °C.").format(
             t=number(plant.t_min, 0))
     parts.append(f"<p>{html.escape(head)} {html.escape(when)}</p>")
-    for u in plant.units:
-        parts.append(f"<h4>{html.escape(plant_model.unit_label(u))}: {html.escape(u.name)}</h4>")
-        if u.optimized:
-            parts += _optimized_parts(plant, u)
-            continue
+    plain = [u for u in plant.units if not u.optimized]
+    if plain:
+        # one table for every input of every inverter, then the checks once for each kind of string: the same 25
+        # modules in series were checked, and written, four times for two inverters of two inputs (R291)
         rows = []
-        for k in range(1, u.inputs + 1):
-            slot = plant.inputs.get((u.number, k))
-            mine = [plant.strings[i] for i in (slot.strings if slot is not None else [])]
-            series = ", ".join(sorted({str(len(s.modules)) for s in mine})) or "–"
-            worst = max((s.state for s in mine), key=("ok", "check", "fail").index) if mine else ""
-            state = (Html(f"{mark(MARKS[{'ok': 'ok', 'check': 'warn', 'fail': 'fail'}[worst]])} "
-                          f"{html.escape(states[worst])}") if mine else "–")
-            rows.append((str(k), str(len(mine)) if mine else _("free"), series, state))
-        parts.append(table(rows, [_("Input"), _("Strings"), _("Modules in series"), _("State")], right=(0, 1, 2)))
-        for k in range(1, u.inputs + 1):
-            slot = plant.inputs.get((u.number, k))
-            plans = list({id(p): p for p in [plant.strings[i].plan for i in (slot.strings if slot else [])]
-                          if p}.values())
-            for p in plans:
-                parts.append(para(_("Input {k}, {n} modules in series").format(k=k, n=p.n_series), "muted"))
-                parts.append(table([(Html(mark(MARKS.get(c.level, "✔"))), c.label, c.detail) for c in p.checks],
-                                   widths=("4%", "48%", "48%")))
-        for c in plant.checks.get(u.number, []):
-            parts.append(f"<p>{mark(MARKS.get(c.level, '✔'))} {html.escape(c.label)}: {html.escape(c.detail)}</p>")
+        for u in plain:
+            for k in range(1, u.inputs + 1):
+                slot = plant.inputs.get((u.number, k))
+                mine = [plant.strings[i] for i in (slot.strings if slot is not None else [])]
+                series = ", ".join(sorted({str(len(s.modules)) for s in mine})) or "–"
+                worst = max((s.state for s in mine), key=("ok", "check", "fail").index) if mine else ""
+                state = (Html(f"{mark(MARKS[{'ok': 'ok', 'check': 'warn', 'fail': 'fail'}[worst]])} "
+                              f"{html.escape(states[worst])}") if mine else "–")
+                rows.append((f"{plant_model.unit_label(u)}: {u.name}" if k == 1 else "", str(k),
+                             str(len(mine)) if mine else _("free"), series, state))
+        parts.append(table(rows, [_("Inverter"), _("Input"), _("Strings"), _("Modules in series"), _("State")],
+                           right=(1, 2, 3), widths=("36%", "12%", "12%", "20%", "20%")))
+        parts.append(f"<h4>{html.escape(_('Checks of the strings'))}</h4>")
+        for n_series, checks_rows, where in _string_plans(plant, plain):
+            parts.append(para(_("Strings of {n} modules in series, on the inputs {where}.").format(
+                n=n_series, where=", ".join(where)), "muted"))
+            parts.append(table(checks_rows, widths=("4%", "48%", "48%")))
+        own = [(Html(mark(MARKS.get(c.level, "✔"))), f"{c.label}: {c.detail}")
+               for u in plain for c in plant.checks.get(u.number, [])]
+        if own:
+            parts.append(f"<h4>{html.escape(_('Checks of the inverters'))}</h4>")
+            parts.append(table(own, widths=("4%", "96%")))
+    for u in plant.units:
+        if u.optimized:
+            parts.append(f"<h4>{html.escape(plant_model.unit_label(u))}: {html.escape(u.name)}</h4>")
+            parts += _optimized_parts(plant, u)
     parts.append(f"<h4>{html.escape(_('The strings on the modules'))}</h4>")
     rows = []
     for s in sorted(plant.strings, key=lambda x: (x.inverter, x.mppt, x.index)):

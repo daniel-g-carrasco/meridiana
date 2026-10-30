@@ -19629,3 +19629,59 @@ msgstr "{what}: tra {low} e {high}"
 #: src/meridiana/ui/canopy_dialog.py:110
 msgid "Between {low} and {high}"
 msgstr "Tra {low} e {high}"
+
+#: src/meridiana/ui/plan.py:1587
+msgid "Length of side {n}: Enter applies it, Esc leaves it as it is."
+msgstr "Lunghezza del lato {n}: Invio la applica, Esc la lascia com'è."
+
+#: src/meridiana/ui/plan.py:1606
+msgid "«{text}» is not a length in metres"
+msgstr "«{text}» non è una lunghezza in metri"
+
+#: src/meridiana/reports.py:69
+msgid "Component data"
+msgstr "Dati dei componenti"
+
+#: src/meridiana/ui/report_chapters.py:131
+msgid "Figure {n}. {caption}"
+msgstr "Figura {n}. {caption}"
+
+#: src/meridiana/ui/report_chapters.py:1027
+msgid "Checks of the strings"
+msgstr "Verifiche delle stringhe"
+
+#: src/meridiana/ui/report_chapters.py:1035
+msgid "Checks of the inverters"
+msgstr "Verifiche degli inverter"
+
+#: src/meridiana/ui/report_chapters.py:1029
+msgid "Strings of {n} modules in series, on the inputs {where}."
+msgstr "Stringhe di {n} moduli in serie, sugli ingressi {where}."
+
+#: src/meridiana/ui/report_chapters.py:662
+msgid "The highlighted row is this project."
+msgstr "La riga evidenziata è questo progetto."
+
+#: src/meridiana/ui/report_chapters.py:383
+msgid "Energy delivered month by month, Meridiana beside PVGIS."
+msgstr "Energia prodotta mese per mese, Meridiana accanto a PVGIS."
+
+#: src/meridiana/ui/report_chapters.py:384
+msgid "Energy delivered month by month."
+msgstr "Energia prodotta mese per mese."
+
+#: src/meridiana/ui/report_chapters.py:551
+msgid "From the sun to the grid: each step as a percentage of the one before."
+msgstr "Dal sole alla rete: ogni passaggio in percentuale del precedente."
+
+#: src/meridiana/ui/report_chapters.py:599
+msgid "Production and consumption month by month, with the energy self-consumed."
+msgstr "Produzione e consumi mese per mese, con l'energia autoconsumata."
+
+#: src/meridiana/ui/report_chapters.py:646
+msgid "Cumulative cash flow over the years: the investment at year 0, the payback where the line crosses zero."
+msgstr "Flusso di cassa cumulato negli anni: l'investimento all'anno 0, il rientro dove la linea attraversa lo zero."
+
+#: src/meridiana/ui/report_chapters.py:586
+msgid "Self-consumed: the energy produced and used on site, at the same hour."
+msgstr "Autoconsumata: l'energia prodotta e usata sul posto, nella stessa ora."

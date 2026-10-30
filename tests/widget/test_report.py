@@ -101,9 +101,10 @@ class Report(unittest.TestCase):
         where = [text.find(h) for h in order]
         self.assertNotIn(-1, where, [h for h, w in zip(order, where, strict=True) if w < 0])
         self.assertEqual(where, sorted(where))
-        for h in ("<h3>Strings (CEI 64-8/7)</h3>", "<h4>Inverter 1: Acme AC-20K</h4>", "<h4>Inverter 2: Acme AC-20K</h4>",
-                  "<h4>The strings on the modules</h4>", "<h3>Notes for the technical report</h3>",
-                  "<h3>Values still at their default</h3>"):
+        for h in ("<h3>Strings (CEI 64-8/7)</h3>", "<td align='left'>Inverter 1: Acme AC-20K</td>",
+                  "<td align='left'>Inverter 2: Acme AC-20K</td>", "<h4>Checks of the strings</h4>",
+                  "<h4>Checks of the inverters</h4>", "<h4>The strings on the modules</h4>",
+                  "<h3>Notes for the technical report</h3>", "<h3>Values still at their default</h3>"):
             self.assertIn(h, text)
         for n, t in enumerate(titles, 1):                                  # the contents list them all
             self.assertIn(f"<td class='toc'>{n}. {t}</td>", text)
@@ -130,7 +131,7 @@ class Report(unittest.TestCase):
         self.p.report = {"off": ["economics", "annexes"]}
         text, _images = self.html()
         self.assertNotIn(". Economics</", text)
-        self.assertNotIn(". Annexes</", text)
+        self.assertNotIn(". Component data</", text)
         self.assertIn("7. Checks and standards", text)                     # the numbers follow what is written
         bare = {k: v for k, v in self.energy.items() if k not in ("plant", "rules_facts", "checks", "load", "econ")}
         self.p.report = {}
@@ -164,6 +165,80 @@ class Report(unittest.TestCase):
         self.assertTrue(report_chapters._symbol_png("check").startswith(b"\x89PNG"))
         self.assertEqual(_keys_text(["0:0", "0:1", "0:2", "1:2", "1:1", "1:0", "3:5"]), "0:0-2, 1:2-0, 3:5")
         self.assertEqual(_keys_text(["0:0", "0:2", "0:3:1"]), "0:0, 0:2, 0:3:1")
+
+    # the look of the report (R291, 30/10/2026): one hierarchy of headings, the units in the headers, nothing twice
+
+    def test_the_headings_are_one_hierarchy_and_the_plan_is_drawn_once(self):
+        """Chapters are the only h2 (the records of the methods come in a level down); the plan is in the summary
+        and not again in the layout; the strings' checks are written once for each kind of string."""
+        from meridiana import reports
+        text, images = self.html()
+        chapters = reports.plan(self.p, self.energy)
+        self.assertEqual(text.count("<h2"), 1 + len(chapters))                # the contents, then the chapters
+        self.assertEqual([c.id for c in chapters], ["summary", "site", "layout", "plant", "production",
+                                                    "consumption", "economics", "checks", "methods", "annexes"])
+        self.assertEqual(images.count("plan"), 1)
+        self.assertEqual(images.count("plan_strings"), 1)
+        self.assertIn("<h3>What the model does not include</h3>", text)       # was an h2 inside chapter 9
+        self.assertIn("Strings of 25 modules in series, on the inputs 1.1, 1.2, 2.1, 2.2.", text)
+        self.assertEqual(text.count("Modules in series within the range the input takes"), 1)
+        self.assertEqual(text.count("Figure 1. "), 1)                          # the figures numbered through
+        self.assertIn("Figure 2. ", text)
+        self.p.report = {"off": ["summary"]}
+        _text, images = self.html()
+        self.assertEqual(images.count("plan"), 1)                              # without the summary, the layout's
+
+    def test_the_numbers_of_a_table_are_bare_with_the_unit_in_the_header(self):
+        """A right-aligned cell holds a number (or a dash, or «free»): «0°», «66,3 %» and «46.613 €» carried their
+        unit in every row; the checks of the chapter are grouped by area in group rows."""
+        import re
+        from meridiana import i18n
+        for template in ("complete", "compact"):
+            self.p.report = {"template": template}
+            text, _images = self.html()
+            mine = [t for t in text.split("<table") if t.startswith(" class='grid' width='100%' cellspacing='0' "
+                                                                   "cellpadding='0'")]       # report_chapters.table
+            cells = [c for t in mine for c in re.findall(r"<td align='right'>(.*?)</td>", t)]
+            self.assertGreater(len(cells), 20)
+            for cell in cells:
+                plain = re.sub(r"<[^>]+>", "", cell).replace("&#x27;", "'")
+                self.assertRegex(plain, rf"^(-?[\d.,]+|–|{i18n._('free')})$", cell)
+            for head in ("Azimuth, °", "Tilt, °"):
+                self.assertIn(f">{head}</th>", text)
+        self.p.report = {}
+        text, _images = self.html()
+        self.assertIn("PR, %", text)
+        self.assertIn("<td class='group' colspan='3'>Rules and report notes</td>", text)
+        self.assertEqual(text.count("Rules and report notes"), 1)              # once as a group, not on every row
+
+    def test_no_table_is_wider_than_the_page_and_the_tables_cells_are_a_point_smaller(self):
+        from PySide6.QtGui import QTextTable
+        from meridiana.ui import report
+        for template in ("complete", "compact"):
+            self.p.report = {"template": template}
+            steps = report._document(self.p, self.energy, self.PROFILE)
+            while True:
+                try:
+                    next(steps)
+                except StopIteration as done:
+                    doc, page, margin, _chrome = done.value
+                    break
+            layout = doc.documentLayout()
+
+            def walk(frame, found):
+                for child in frame.childFrames():
+                    if isinstance(child, QTextTable):
+                        found.append(child)
+                    walk(child, found)
+                return found
+            tables = walk(doc.rootFrame(), [])
+            self.assertGreater(len(tables), 5)
+            for t in tables:
+                with self.subTest(template=template, table=t.firstCursorPosition().block().text()[:30]):
+                    self.assertLessEqual(layout.frameBoundingRect(t).width(), page.width() - 2 * margin + 2)
+            grid = next(t for t in tables if t.format().headerRowCount() == 1)
+            size = grid.cellAt(1, 0).firstCursorPosition().charFormat().fontPointSize()
+            self.assertAlmostEqual(size, 9.5, places=1)
 
     def test_the_checks_and_the_notes_of_the_rules_carry_their_sources(self):
         text, _images = self.html()

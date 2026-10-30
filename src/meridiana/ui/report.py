@@ -46,9 +46,10 @@ BLANK = "00"               # a page of the contents before the layout says it
 def _style() -> str:
     from .document_style import css
     return ("<style>" + css(ink=INK, muted=MUTED, rule=RULE, head=HEAD, paper=True)
-            + f".caption {{ color: {MUTED}; font-size: 8.5pt; }} "
+            + f".caption {{ color: {MUTED}; font-size: 8.5pt; margin-bottom: 12px; }} "
             + f".kicker {{ color: {MUTED}; font-size: 10pt; font-weight: 600; }} "
-            + ".lead { font-size: 13pt; } td.toc { padding: 4px 0; }</style>")
+            + f".lead {{ font-size: 13pt; }} td.toc {{ padding: 6px 0; border-bottom: 1px solid {RULE}; }}"
+            + "</style>")
 
 
 def _cover_rows(project, settings: dict, profile: dict | None) -> list[tuple[str, str]]:
@@ -176,8 +177,9 @@ def _cover(project, data: dict, settings: dict, profile: dict | None, template, 
             logo = f"<img src='{image('logo', lambda: Path(path).read_bytes())}' height='56'>"
         parts.append("<table width='100%' cellspacing='0' cellpadding='0'><tr>"
                      f"<td valign='top'>{logo}</td><td align='right' valign='top'>{right}</td></tr></table>")
+        parts.append("<hr>")                                  # the author above the line, the project under it
     sim = data.get("sim")
-    parts.append(f"<p class='kicker' style='margin-top: 18pt'>{html.escape(_('TECHNICAL REPORT'))}</p>")
+    parts.append(f"<p class='kicker' style='margin-top: 24pt'>{html.escape(_('TECHNICAL REPORT'))}</p>")
     parts.append(f"<h1>{html.escape(project.name)}</h1>")
     what = _("Photovoltaic system")
     if sim is not None:
@@ -189,6 +191,7 @@ def _cover(project, data: dict, settings: dict, profile: dict | None, template, 
     parts.append(f"<table cellspacing='0' cellpadding='3' style='margin-top: 14pt'>{body}</table>")
     parts.append(f"<p class='caption' style='margin-top: 18pt'>"
                  f"{html.escape(_('Report made by Meridiana {v}').format(v=__version__))}</p>")
+    parts.append("<hr>")                                      # the cover block closed before the first chapter
     return parts
 
 
@@ -311,11 +314,13 @@ def _compose_parts(project, data: dict, image, profile: dict | None, pages: dict
     data = _with_notes(data)
     settings = reports.settings(project)
     template = reports.templates()[settings["template"]]
-    ctx = Context(project, data, image, settings)
-    parts = [_style()]
+    chosen = reports.plan(project, data)
     if only:
         chapter = reports.chapters()[only]
         chosen = [] if reports.missing(chapter, data) else [chapter]
+    ctx = Context(project, data, image, settings, tuple(c.id for c in chosen))
+    parts = [_style()]
+    if only:
         parts.append(f"<p class='kicker'>{html.escape(_('REGISTER OF THE CALCULATIONS'))}</p>")
         parts.append(f"<h1>{html.escape(project.name)}</h1>")
         parts.append(para(_("How each number of the report is computed: the models, the losses and the thresholds, "
@@ -326,7 +331,6 @@ def _compose_parts(project, data: dict, image, profile: dict | None, pages: dict
             parts += [x for x in BUILDERS[c.id](ctx) if x]
         return "".join(parts), chosen
     attached = attached or []
-    chosen = reports.plan(project, data)
     parts += _cover(project, data, settings, profile, template, image)
     if template.contents and (chosen or attached):
         parts += _contents(chosen, pages, attached)
