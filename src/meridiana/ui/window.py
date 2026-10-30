@@ -2053,10 +2053,11 @@ class MainWindow(QMainWindow):
         bid = self.project.new_id("b")
         n = len(self.project.buildings) + 1
         footprint = templates.placed(ring, at, turn)
+        from . import template_dialog
 
         def add(p):
             p.buildings.append(model.Building(id=bid, name=_("Building {n}").format(n=n), footprint=footprint,
-                                              height=6.0))
+                                              height=template_dialog.HEIGHT))   # as its preview drew it
         self.edit(_("Building from a template"), add)
         self._select("building", bid)
         self.hint.setText(_("The sides can be changed one by one in the Sides group."))

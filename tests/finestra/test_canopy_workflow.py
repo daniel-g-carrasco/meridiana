@@ -49,4 +49,4 @@ class CanopyWorkflow(unittest.TestCase):
         dialog.rows.setCurrentIndex(1)
         dialog.fields['turn'].setValue(30)
         self.assertEqual(dialog.spec().rows, 2)
-        self.assertEqual(len(dialog.preview.ring), 4)
+        self.assertEqual(len(dialog.ring), 4)

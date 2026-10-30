@@ -19613,3 +19613,19 @@ msgstr "I pannelli sono tornati com'erano prima."
 #: src/meridiana/ui/window.py:1901
 msgid "The saved panel layout left some open panels out of sight: the default layout is back."
 msgstr "La disposizione dei pannelli salvata lasciava alcuni pannelli aperti fuori vista: è tornata quella predefinita."
+
+#: src/meridiana/ui/canopy_dialog.py:41 src/meridiana/ui/template_dialog.py:149
+msgid "Drag to turn · click a side to write its length"
+msgstr "Trascina per girare · clic su un lato per scriverne la lunghezza"
+
+#: src/meridiana/ui/template_dialog.py:48
+msgid "A slanted side must be longer than its run along the base, {run} m"
+msgstr "Un lato obliquo deve essere più lungo della sua proiezione sulla base, {run} m"
+
+#: src/meridiana/ui/template_dialog.py:236
+msgid "{what}: between {low} and {high}"
+msgstr "{what}: tra {low} e {high}"
+
+#: src/meridiana/ui/canopy_dialog.py:110
+msgid "Between {low} and {high}"
+msgstr "Tra {low} e {high}"
