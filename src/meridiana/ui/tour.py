@@ -127,6 +127,20 @@ class TourDialog(GuideCard):
             avatar.bubble.raise_()
         self.clear_polls = 0
         self.clear_timer.start()
+        QTimer.singleShot(0, self, self._fit_bubble)
+
+    def _fit_bubble(self) -> None:
+        """The bubble as tall as the step needs, up to TOUR_BUBBLE: at a fixed 560 px a short step left half of it
+        empty (31/10/2026). Its width stays, so the text wraps as it was measured."""
+        avatar = self.host.assistant
+        if avatar.docked or not self.isVisible() or self.width() < 2:
+            return
+        box = self.layout()
+        need = box.heightForWidth(self.width()) if box.hasHeightForWidth() else box.sizeHint().height()
+        height = avatar.bubble_dims[1]
+        wanted = max(core.BUBBLE_MIN[1], min(TOUR_BUBBLE[1], height - (self.height() - need) + Space.S))
+        if abs(wanted - height) > 2:
+            avatar.set_bubble_size(TOUR_BUBBLE[0], wanted)
 
     def _show_target(self, target):
         win = self.host
