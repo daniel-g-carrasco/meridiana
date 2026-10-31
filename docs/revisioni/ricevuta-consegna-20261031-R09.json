@@ -1,0 +1,104 @@
+{
+  "revision": "R09",
+  "date": "2026-10-31",
+  "application_commit": "e740ce600fae8ac1e6691d679df40a9dfd170c64",
+  "head_at_freeze": "94de7bd6c96b98388904094e174c3b7647dbf196",
+  "previous_delivery": "R08, c567d7cf3ae8e3f003b3dc0aaa9799b831484119 (packages kept in dist/packages-20261030-R08)",
+  "branch": "integra-kimi-9-10",
+  "source_manifest": "source-manifest-20261031-R09.json",
+  "source_manifest_sha256": "87b995a63ec9ffbd54d57b065c60dc11ca65e2dc46b01f4695a727ba2f06ee2f",
+  "source_files_verified": 364,
+  "source_changes_versus_R08": "3 added (data/icons/meridiana/object_3d.svg, src/meridiana/props.py, src/meridiana/ui/preview3d.py), 0 removed, 75 changed; project format 20 -> 22",
+  "freeze_method": "tracked files from the git objects of e740ce6 (git cat-file --filters), because the worktree had uncommitted edits to energy/plant.py and energy/stringing.py; compiled catalogue and icon from the worktree (catalogue identical to tools/compile_po.py --python output)",
+  "source_snapshot": "build/claude-r07/P-source-20261031-R09",
+  "worktree_matches_freeze_after_packaging": false,
+  "worktree_mismatches_after_packaging": 43,
+  "artifacts": [
+    {
+      "name": "meridiana-portable-20261031-R09-windows-x64.zip",
+      "sha256": "d25673fef5211d0c02977ed09f789e07fd620a219e57074d05d67278cb7f907f",
+      "bytes": 249655281
+    },
+    {
+      "name": "meridiana-setup-v0.1.0-preview20261031-R09-windows-x64.exe",
+      "sha256": "6f95e57ed7f1f1723c3d8239a723a0d449e33a8db143e4479c490784e5f80457",
+      "bytes": 173568898
+    },
+    {
+      "name": "meridiana-linux-x86_64-20261031-R09.flatpak",
+      "sha256": "fc45d75204e74d2f5b9da65ac1f5cb04aff9d92ba5a6c6f654226e8dd932df0e",
+      "bytes": 213711312
+    }
+  ],
+  "packages_folder": "dist/packages-20261031-R09",
+  "windows": {
+    "bundle": "dist/windows-bundle-20261031-R09/Meridiana",
+    "bundle_files": 5077,
+    "executable_sha256": "527c21ac09072bfbd7bcf3b57fb30539c2af2ac0555891ed69c5d10076472329",
+    "zip_verification": "5077 files, CRC complete, names and sizes identical to the bundle",
+    "user_meridiana_running_during_checks": false,
+    "portable_native_self_test": "PASS: D3D11, first frame 0.47 s, 0 failures in 26.95 s, foreground unchanged",
+    "frozen_kokoro_worker": {
+      "fake_protocol": "PASS, ready 0.37 s",
+      "real_synthesis": "PASS with weights already on the PC: ready 2.66 s, 98304 PCM bytes in 4.66 s, exit 0",
+      "weights_downloaded": false
+    },
+    "single_instance": "PASS: private channel meridiana-r09-package-probe, second start exit 0 in 0.42 s, project opened in the first, first start quits by itself with exit 0 after its screenshot",
+    "update_check_404_logged": false,
+    "installer": "PASS: isolated per-user install exit 0, exe identical to bundle, native self-test D3D11 first frame 0.38 s, 0 failures in 16.28 s, foreground unchanged, uninstall exit 0, registry and shortcuts restored, user data marker preserved; log build/desktop-package-check-20261031-R09",
+    "installed_on_pc": false,
+    "signed": false,
+    "logs": [
+      "build/windows-portable-selftest-20261031-R09",
+      "build/windows-portable-check-20261031-R09.log",
+      "build/pyinstaller-20261031-R09.log",
+      "build/windows-package-20261031-R09.log"
+    ]
+  },
+  "linux_package": {
+    "builder": "WSL openSUSE-Tumbleweed, driver build/flatpak-r13-driver.sh (revision r13, cache from r12 including the Kokoro stage)",
+    "build_runtime": "org.kde.Platform//6.11 fe192771... (2026-09-19, Qt 6.11.2), io.qt.PySide.BaseApp//6.11 a6cddcbc... (2026-09-15, PySide 6.11.2)",
+    "exported_imported_ostree_commit": "b40c51f0c8b2af4142c0822ada0e7c01e9e19d935b7fd675ce21456d03db0fae",
+    "self_test": "PASS offscreen, 0 failures",
+    "package_probe": "PASS after updating the probe's project format check from 20 to 22 and rerunning only the probe on the same build-dir-r13 (build/flatpak-r13-probe-rerun.sh); first run stopped on that assertion; real Kokoro synthesis with the Windows weights mounted read-only",
+    "pip_check": "No broken requirements found",
+    "source_verification": "364/364 files equal to the freeze, 340 installed files identical, Italian catalogue equal (4111 entries)",
+    "bundle_import_fsck": "PASS, exported and imported commit identical"
+  },
+  "linux_native": {
+    "host": "fw13 (lucciola)",
+    "app_id": "io.github.daniel_g_carrasco.meridiana",
+    "installation": "user",
+    "runtime": "org.kde.Platform/x86_64/6.11, system, commit fb23e178... auto-updated 2026-10-31 04:34, Qt 6.11.3",
+    "previous_installed_commit": "7bf3dcc1fd518928a8452ab484786b2c5f3d72af5c17536a0b1a095b07a82386",
+    "installed_ostree_commit": "b40c51f0c8b2af4142c0822ada0e7c01e9e19d935b7fd675ce21456d03db0fae",
+    "remote_sha256_verified": true,
+    "remote_folder": "~/fvtest/meridiana-consegna-20261031-R09",
+    "previous_bundles_preserved": "R08 (6168a30d...) rechecked",
+    "meridiana_running_before_install": false,
+    "user_processes_stopped": false,
+    "native_environment": "XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 NIRI_SOCKET=/run/user/1000/niri.wayland-1.1878.sock",
+    "native_standard_self_test": "FAIL exit 2: ImportError PySide6/QtCore.abi3.so undefined symbol _ZN14QObjectPrivateC2E16QtPrivate_6_11_2 (Qt_6_PRIVATE_API)",
+    "native_explicit_3d_probe": "FAIL exit 1, same ImportError",
+    "kokoro_in_flatpak": "PASS: real synthesis ready 0.85 s, 98304 PCM bytes in 1.25 s",
+    "installed_package_probe": "FAIL exit 1 at the first Qt import; the non-Qt checks before it passed",
+    "cause": "the laptop's KDE 6.11 runtime moved to Qt 6.11.3 while Flathub's io.qt.PySide.BaseApp//6.11 (a6cddcbc, PySide 6.11.2) still links the Qt 6.11.2 private API; old runtime commit no longer installed",
+    "R08_would_also_fail": "deduced (same BaseApp), not reinstalled",
+    "document_portal": "mounted before install and after every probe; never restarted",
+    "meridiana_left_running": false,
+    "logs_directory": "build/laptop-install-20261031-R09"
+  },
+  "open_decision": [
+    "pin the laptop runtime to fe192771... and mask it",
+    "wait for a Flathub BaseApp rebuilt on Qt 6.11.3, then update WSL runtime/SDK/BaseApp and rebuild (r14)",
+    "build PySide in the manifest"
+  ],
+  "not_verified": [
+    "Native Wayland run on the laptop (self-test, 3D view, installed package probe): failed on the updated runtime",
+    "The Flatpak on the current runtime: WSL checks used the 19/09 runtime",
+    "Visual check of this revision's new functions",
+    "Touchpad gestures, audible Kokoro voice, Kokoro worker of the installed Windows copy (exe identical to the bundle)",
+    "Update over a running real Windows instance; Wayland activation token on hand-over"
+  ],
+  "publication": "none: no push, tag, release or upload"
+}
