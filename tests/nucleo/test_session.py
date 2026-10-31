@@ -334,7 +334,9 @@ class Outdated(unittest.TestCase):
         s.energy_done(s.energy_asked(), {"notes": []})
         self.assertFalse(s.energy_outdated())
         s.edit("height", lambda q: setattr(q.building(b.id), "height", 12.0))
-        self.assertFalse(s.energy_stale())                      # the layout in hand is still the one computed
+        # a building's height shades the year by itself (session.energy_key, «shade», 31/10/2026): stale at once,
+        # not only when the layout comes back
+        self.assertTrue(s.energy_stale())
         self.assertTrue(s.energy_outdated())                    # the year no longer answers for the project
         s.undo.undo()
         self.assertFalse(s.energy_outdated())                   # back to the inputs of the year

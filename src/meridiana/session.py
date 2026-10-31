@@ -346,7 +346,12 @@ class ProjectSession:
         wired = {sf.id: [sf.params.get(k) for k in model.ELECTRICAL] for sf in p.subfields}
         data = {"layouts": sorted(keys.items()), "energy": p.energy,
                 "consumption": p.consumption, "economics": p.economics, "modules": p.modules,
-                "site": dataclasses.asdict(p.site), "wired": wired}
+                "site": dataclasses.asdict(p.site), "wired": wired,
+                # what shades the modules in the year (energy/system.obstacles_of): every building and obstacle with
+                # its height; the layout's key holds them only for a sub-field kept out of the shadows, so a chimney
+                # made taller left the year computed as good (found 31/10/2026)
+                "shade": {"buildings": [b.geometry_key() for b in p.buildings],
+                          "obstacles": [[e.ring, e.kind, e.height, e.building] for e in p.exclusions]}}
         shading = [dataclasses.asdict(x) for x in p.props if x.casts_shadow()]
         if shading:                         # R269: a tree placed shades the year; only then, the keys of before stay
             data["props"] = shading
