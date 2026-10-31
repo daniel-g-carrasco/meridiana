@@ -559,7 +559,9 @@ class Properties(QScrollArea):
             self.drop_typing()
         self.kind, self.oid = "building", b.id
         self.shown = {"object": b}
-        if not self._same(("building", b.roof.type, len(b.footprint))):
+        # the free pitches, each with its fields (R274): their number and their corners make the page
+        free = tuple(len(f["ring"]) for f in b.roof.free_pitches) if b.roof.type == "free" else ()
+        if not self._same(("building", b.roof.type, len(b.footprint), free, b.canopy is not None)):
             self._build_building(b)
         self._refresh()
 
@@ -575,6 +577,19 @@ class Properties(QScrollArea):
         height = self._bind(spin(0.5, 300, b.height, " m"), lambda: self._object().height)
         height.valueChanged.connect(lambda v: self._emit("height", v))
         form.addRow(_("Eave height"), height)
+        if b.canopy is not None:    # R281: a canopy's spaces and columns; its height is the one under the low edge
+            form.labelForField(height).setText(_("Clear height"))
+            bays = self._bind(whole(1, 100), lambda: self._object().canopy.bays)
+            bays.valueChanged.connect(lambda v: self._emit("canopy.bays", v))
+            form.addRow(_("Spaces per row"), bays)
+            pillars = self._bind(combo([("cantilever", _("Cantilever, one line")), ("two_rows", _("Two lines"))],
+                                       b.canopy.pillars), lambda: self._object().canopy.pillars)
+            pillars.currentIndexChanged.connect(lambda _i: self._emit("canopy.pillars", pillars.currentData()))
+            form.addRow(_("Columns"), pillars)
+            columns = self._bind(whole(0, 200), lambda: self._object().canopy.columns)
+            columns.setSpecialValueText(_("Proposed"))
+            columns.valueChanged.connect(lambda v: self._emit("canopy.columns", v))
+            form.addRow(_("Columns per line"), columns)
         box.addLayout(form)
         box.addWidget(self._roof_group(b))
         box.addWidget(self._sides_group(len(b.footprint), lambda: self._object().footprint, "footprint"))
@@ -672,12 +687,75 @@ class Properties(QScrollArea):
             problem = self._note()
             problem.setTextFormat(Qt.TextFormat.RichText)
             form.addRow(self._bind(problem, self._roof_note))
+        if b.roof.type == "free":
+            for i in range(len(b.roof.free_pitches)):
+                self._free_pitch_rows(form, i)
         if b.roof.type == "flat":
-            parapet = self._bind(spin(0, 5, b.parapet, " m", 2, 0.1), lambda: self._object().parapet)
+            parapet =self._bind(spin(0, 5, b.parapet, " m", 2, 0.1), lambda: self._object().parapet)
             parapet.setToolTip(_("Height of the parapet above the roof, all round: it casts shadows on the modules"))
             parapet.valueChanged.connect(lambda v: self._emit("parapet", v))
             form.addRow(_("Parapet"), parapet)
         return group
+
+    def _free_pitch(self, i: int) -> dict:
+        found = self._object().roof.free_pitches
+        return found[i] if i < len(found) else {"ring": [[0, 0], [1, 0], [0, 1]], "eave_side": 0, "eave": 0.0,
+                                                "tilt": 0.0}
+
+    def _free_send(self, i: int, **changes) -> None:
+        """A free pitch changed: the whole list of them sent as one change, one step of the undo (R274)."""
+        pitches = [dict(f) for f in self._object().roof.free_pitches]
+        if i < len(pitches):
+            pitches[i].update(changes)
+            self._emit("roof.free_pitches", pitches)
+
+    def _free_pitch_rows(self, form: QFormLayout, i: int) -> None:
+        """The fields of a free pitch (R274, study 22, 3.4): its eave side, also clicked on the plan, the eave
+        height, the slope in degrees and in percent, the ridge height that sets the slope when written (refused
+        at or under the eave, as on a gable roof), its depth, and eave and ridge swapped."""
+        form.addRow(QLabel(semibold("<b>" + html.escape(_("Pitch {n}").format(n=i + 1)) + "</b>")))
+        n = len(self._free_pitch(i)["ring"])
+        side = whole(1, n)
+        self._bind(side, lambda: self._free_pitch(i)["eave_side"] % n + 1)
+        side.valueChanged.connect(lambda v: self._free_send(i, eave_side=v - 1))
+        form.addRow(_("Eave on side"), self._with_pick(side, f"free_eave:{i}",
+                                                       _("Click on the plan the side the pitch goes down to")))
+        eave = self._bind(spin(0, 1000, 0.0, " m", 2, 0.1), lambda: self._free_pitch(i)["eave"])
+        eave.valueChanged.connect(lambda v: self._free_send(i, eave=round(v, 3)))
+        form.addRow(_("Eave height"), eave)
+        tilt = self._bind(spin(0, 80, 0.0, " °", 1, 1), lambda: self._free_pitch(i)["tilt"])
+        tilt.valueChanged.connect(lambda v: self._free_send(i, tilt=v))
+        form.addRow(_("Slope"), tilt)
+        percent = self._bind(spin(0, 600, 0, " %", 1, 1),
+                             lambda: math.tan(math.radians(self._free_pitch(i)["tilt"])) * 100)
+        percent.valueChanged.connect(lambda v: self._free_send(i, tilt=math.degrees(math.atan(v / 100))))
+        form.addRow(_("Slope (percent)"), percent)
+
+        def ridge_now():
+            f = self._free_pitch(i)
+            return roofs.free_ridge(f["ring"], f["eave_side"], f["eave"], f["tilt"])
+        ridge = self._bind(spin(0, 1000, 0.0, " m", 2, 0.1), ridge_now)
+        ridge.setToolTip(_("The height of the top of the pitch above the ground: written, it sets the slope"))
+
+        def ridge_written(value):
+            f = self._free_pitch(i)
+            try:
+                tilt_now = roofs.free_tilt(f["ring"], f["eave_side"], f["eave"], value)
+            except ValueError as error:
+                self.action.emit("refused:" + str(error), self.kind, self.oid)
+                put(ridge, ridge_now(), True)
+                return
+            self._free_send(i, tilt=tilt_now)
+        ridge.valueChanged.connect(ridge_written)
+        form.addRow(_("Ridge height"), ridge)
+        depth = self._bind(self._note(), lambda: _("Depth from the eave: {v} m").format(
+            v=number(roofs.free_depth(self._free_pitch(i)["ring"], self._free_pitch(i)["eave_side"]))))
+        form.addRow(depth)
+        swap = QPushButton(_("Swap eave and ridge"))
+        swap.setToolTip(_("The eave goes to the side across, at the same height; the pitch turns over"))
+        swap.clicked.connect(lambda: self._free_send(
+            i, eave_side=roofs.opposite_side(self._free_pitch(i)["ring"], self._free_pitch(i)["eave_side"])))
+        form.addRow(swap)
 
     def _roof_note(self) -> str:
         """What the roof could not be as asked (model.Building.roof_problem), or nothing."""

@@ -32,16 +32,17 @@ from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QGraphicsScen
 
 from .. import geo, move, navigation, roofs, sides, theme_colors, tiles, view_colours, viewaids
 from . import plan_overlays, waiting, world_map
-from ..i18n import _, ngettext, number
+from ..i18n import _, ngettext, number, pgettext
 from .cards import round_corners
 from . import design
 from ..snapping import EXACT, Guide, Snap, Snapper, ortho
 from .theme import symbol_font
 from .tileloader import TileLoader
 
-TOOLS = ("select", "building", "pitch", "subfield", "exclusion", "row", "east_west", "move", "measure")
+TOOLS = ("select", "building", "pitch", "ridge", "subfield", "exclusion", "row", "east_west", "move", "measure")
 ROW_TOOLS = ("row", "east_west")   # a row drawn by a line: of the sub-field's modules, or of east-west pairs (R279)
-DRAWING = {"building", "pitch", "subfield", "exclusion"}
+DRAWING = {"building", "pitch", "ridge", "subfield", "exclusion"}   # ridge: a line, not an outline (R275)
+PITCH_FIELDS = ("depth", "tilt", "ridge", "eave")   # the rows of the Pitch card a number typed goes to (R274)
 MOVABLE = ("building", "subfield", "exclusion", "row")   # what Move takes (task 16b; a row, task 16c)
 ARROWS = {Qt.Key.Key_Left: "left", Qt.Key.Key_Right: "right", Qt.Key.Key_Up: "up", Qt.Key.Key_Down: "down"}
 LEFT_WAIT_MS = 150             # how long a left press waits for the other button of a gesture (left + right)
@@ -208,7 +209,12 @@ def hints() -> dict:
         "building": _("Building: click the corners of its outline. Enter or a double click closes it, Backspace "
                       "takes the last corner back, Esc cancels. Ctrl draws without guides; type a number for the "
                       "length of the side."),
-        "pitch": _("Free pitch: draw its outline on a building, then choose its eave side and slope."),
+        "pitch": _("Free pitch: two clicks give the eave, then the pointer or a number the depth. Up and Down "
+                   "choose what a number gives (depth, slope, ridge height, eave height), Tab swaps eave and ridge, "
+                   "Enter or a third click closes. R draws it corner by corner."),
+        "ridge": _("Ridge: click its ends inside a building (more points for an L or a T, then Enter); the roof "
+                   "follows. Type a number for the ridge height. A side touched by the ridge is a gable end, a "
+                   "ridge ending inside makes a hip."),
         "subfield": _("Sub-field: draw the area where modules may go, on a roof or on the ground, or double-click "
                       "a pitch to take it whole. Modules are laid only when you ask, from its properties."),
         "exclusion": _("Exclusion: draw a skylight, a smoke vent, roof plant or a walkway; modules keep away "
@@ -425,6 +431,10 @@ class PlanView(QGraphicsView):
     rowDrawn = Signal(list, list)
     rowResized = Signal(str, float, float)
     moduleDoubleClicked = Signal(str, str)
+    # a free pitch drawn (R274): its ring and what its card says, {"swapped", "tilt", "ridge", "eave"} (None: the
+    # building's own); a ridge drawn (R275): its points and the ridge height typed, or None
+    pitchDrawn = Signal(list, dict)
+    ridgeDrawn = Signal(list, object)
 
     def __init__(self, cache_dir, parent=None):
         super().__init__(parent)
@@ -485,6 +495,10 @@ class PlanView(QGraphicsView):
         self.pending_fit: QRectF | None = None
         self.user_moved = False            # zoomed or moved by hand: a resize keeps the view as it is
         self.rect_mode = False             # R: three clicks make a rectangle
+        self.pitch_points = False          # R in the Pitch tool: its outline corner by corner, not from the eave
+        self.pitch_card: dict = {}         # the Pitch card while drawing (R274): field, tilt, ridge, eave, swapped
+        self.ridge_typed: float | None = None    # the ridge height typed with the Ridge tool (R275)
+        self._run_cache: tuple = ("", 0.0)       # (geometry of a building, ridge_run of its outline): Ridge card
         self.wiring = None                 # energy/plant.Plant of the last strings laid
         self.wiring_on = True
         self.strings_mode = False          # the Plant phase: a click on a module is about its string
@@ -1634,6 +1648,7 @@ class PlanView(QGraphicsView):
         self.snapper.reset()
         self._drop_gesture()
         self.rotate_next = False
+        self._reset_roof_draft()
         self.setCursor(Qt.CursorShape.ArrowCursor if tool == "select" else Qt.CursorShape.CrossCursor)
         # selecting, only what changes is drawn again (the outline under the pointer); drawing, the guides follow
         # the pointer over the whole view
@@ -1699,18 +1714,210 @@ class PlanView(QGraphicsView):
         self.snap = None
         self.typed = ""
         self.snapper.reset()
+        self._reset_roof_draft()
         self.viewport().update()
 
     def _finish(self) -> None:
+        if self.tool == "ridge":                    # a line, closed with two points (R275)
+            if len(self.chain) >= 2:
+                points, ridge = [list(p) for p in self.chain], self.ridge_typed
+                self.chain, self.snap, self.typed = [], None, ""
+                self.snapper.reset()
+                self._reset_roof_draft()
+                self.ridgeDrawn.emit(points, ridge)
+            self.viewport().update()
+            return
         if len(self.chain) >= 3:
             ring = list(self.chain)
             tool = self.tool
+            card = self.pitch_values(ring) if tool == "pitch" else None
             self.chain = []
             self.snap = None
             self.typed = ""
             self.snapper.reset()
-            self.polygonDrawn.emit(tool, ring)
+            self._reset_roof_draft()
+            if card is not None:
+                self.pitchDrawn.emit(ring, card["spec"])
+            else:
+                self.polygonDrawn.emit(tool, ring)
         self.viewport().update()
+
+    # the roof tools (study 22, 3.4 and 3.5): the Pitch card and the Ridge card next to the pointer
+
+    def _reset_roof_draft(self) -> None:
+        self.pitch_card = {"field": "depth", "tilt": None, "ridge": None, "eave": None, "swapped": False}
+        self.ridge_typed = None
+
+    def _rect_now(self) -> bool:
+        """Three clicks make a rectangle: R in the drawing tools; in the Pitch tool always, its eave and then its
+        depth, unless R asked for its corners one by one (R274)."""
+        if self.tool == "pitch":
+            return not self.pitch_points
+        return self.rect_mode and self.tool != "ridge"
+
+    def _building_at(self, point):
+        """The building of the project shown under a point (metres), or None."""
+        if self.drawn is None or point is None:
+            return None
+        from shapely.geometry import Point, Polygon
+        here = Point(*point)
+        return next((b for b in self.drawn[0].buildings if len(b.footprint) >= 3 and
+                     Polygon(b.footprint).buffer(1e-6).contains(here)), None)
+
+    def _pitch_ring(self, point=None) -> list | None:
+        """The pitch being drawn as it would close now: the rectangle on its eave to the pointer, or its corners
+        and the pointer."""
+        if len(self.chain) < 2:
+            return None
+        here = point or (self.snap.point if self.snap else None)
+        if self._rect_now():
+            return self._rectangle(here) if here is not None else None
+        return list(self.chain) + ([here] if here is not None and math.dist(here, self.chain[-1]) > 1e-6 else [])
+
+    def pitch_values(self, ring=None) -> dict | None:
+        """What the Pitch card shows for `ring` (the pitch as it would close now when not given): depth, slope,
+        ridge height and eave height, and the spec the window builds the pitch from (roofs.free_spec)."""
+        ring = ring or self._pitch_ring()
+        if not ring or len(ring) < 3:
+            return None
+        card = self.pitch_card
+        b = self._building_at(self.chain[0] if self.chain else ring[0])
+        eave = card["eave"] if card["eave"] is not None else (b.height if b is not None else 0.0)
+        proposed = roofs.proposed_tilt((b.roof.covering if b is not None else "") or roofs.DEFAULT_COVERING)
+        tilt = card["tilt"] if card["tilt"] is not None else proposed
+        try:
+            pitch = roofs.free_spec(ring, card["swapped"], eave, tilt, card["ridge"])
+        except ValueError:                          # a ridge written that the pitch now cannot reach: the slope
+            pitch = roofs.free_spec(ring, card["swapped"], eave, tilt)
+        depth = roofs.free_depth(ring, pitch["eave_side"])
+        return {"depth": depth, "tilt": pitch["tilt"], "eave": eave, "eave_side": pitch["eave_side"],
+                "ridge": roofs.free_ridge(ring, pitch["eave_side"], eave, pitch["tilt"]),
+                "spec": {"swapped": card["swapped"], "tilt": card["tilt"], "ridge": card["ridge"],
+                         "eave": card["eave"]}}
+
+    def pitch_key(self, event) -> bool:
+        """The keys of the Pitch card (R274): Tab swaps eave and ridge; two points given, Up and Down choose the
+        row a number goes to and Enter writes it (the depth closes the pitch, the others stay)."""
+        if self.tool != "pitch" or not self.chain:
+            return False
+        key = event.key()
+        if key in (Qt.Key.Key_Tab, Qt.Key.Key_Backtab):
+            self.pitch_card["swapped"] = not self.pitch_card["swapped"]
+            self.hint.emit(_("Eave and ridge swapped.") if self.pitch_card["swapped"] else
+                           _("Eave on the first side again."))
+            self.viewport().update()
+            return True
+        if len(self.chain) < 2:
+            return False
+        if key in (Qt.Key.Key_Up, Qt.Key.Key_Down):
+            k = PITCH_FIELDS.index(self.pitch_card["field"]) + (1 if key == Qt.Key.Key_Down else -1)
+            self.pitch_card["field"] = PITCH_FIELDS[k % len(PITCH_FIELDS)]
+            self.typed = ""
+            self.viewport().update()
+            return True
+        if event.text() == "%" and self.pitch_card["field"] == "tilt":
+            self.typed += "%"
+            self.viewport().update()
+            return True
+        if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            field = self.pitch_card["field"]
+            if not self.typed:                     # nothing written: the pitch closes where the pointer is
+                if self._rect_now():
+                    ring = self._pitch_ring()
+                    if ring and math.dist(ring[1], ring[2]) > 0.05:
+                        self.chain = ring
+                        self._finish()
+                else:
+                    self._finish()
+            elif field == "depth":
+                if not self._apply_typed():
+                    self._finish()
+            else:
+                self._pitch_written(field, self.typed)
+                self.typed = ""
+            self.viewport().update()
+            return True
+        return False
+
+    def _pitch_written(self, field: str, text: str) -> None:
+        """A number written in a row of the Pitch card: the slope (degrees, or percent with %), the ridge height
+        (refused at or under the eave, as the Roof group does) or the eave height. The slope and the ridge are two
+        ways of saying the same: the last written wins."""
+        percent = text.endswith("%")
+        value = move.parse(text.rstrip("%"))
+        if value is None:
+            return
+        card = self.pitch_card
+        if field == "tilt":
+            tilt = roofs.slope_from_percent(value) if percent else value
+            if not 0.0 <= tilt <= 80.0:
+                self.hint.emit(_("Not changed: {why}").format(why=_("the slope goes from 0 to 80°")))
+                return
+            card["tilt"], card["ridge"] = tilt, None
+        elif field == "ridge":
+            now = self.pitch_values()
+            eave = now["eave"] if now else (card["eave"] or 0.0)
+            if value <= eave + 1e-3:
+                self.hint.emit(_("Not changed: {why}").format(
+                    why=_("the ridge must stand above the eave ({h} m)").format(h=number(eave))))
+                return
+            card["ridge"] = value
+        elif field == "eave" and 0.0 <= value <= 1000.0:
+            card["eave"] = value
+
+    def ridge_values(self) -> dict | None:
+        """What the Ridge card shows (R275): the ridge height, typed or proposed (the eave plus the run of the
+        outline at the slope its covering proposes), and the eave."""
+        b = self._building_at(self.chain[0] if self.chain else (self.snap.point if self.snap else None))
+        if b is None:
+            return None
+        if self._run_cache[0] != b.geometry_key():
+            self._run_cache = (b.geometry_key(), roofs.ridge_run(b.footprint))
+        tilt = roofs.proposed_tilt(b.roof.covering or roofs.DEFAULT_COVERING)
+        proposed = b.height + self._run_cache[1] * math.tan(math.radians(tilt))
+        return {"ridge": self.ridge_typed if self.ridge_typed is not None else proposed, "eave": b.height,
+                "typed": self.ridge_typed is not None, "sides": len(b.footprint)}
+
+    def ridge_key(self, event) -> bool:
+        """The keys of the Ridge tool (R275): a number is the ridge height, Enter writes it and closes a ridge of
+        two points or more; Backspace and Esc as in the other tools."""
+        if self.tool != "ridge":
+            return False
+        key, text = event.key(), event.text()
+        if text and (text.isdigit() or text in ",.") and self.chain:
+            self.typed += text
+            self.viewport().update()
+            return True
+        if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            if self.typed:
+                value = move.parse(self.typed)
+                self.typed = ""
+                now = self.ridge_values()
+                eave = now["eave"] if now else 0.0
+                if value is None or value <= eave + 1e-3:
+                    self.hint.emit(_("Not changed: {why}").format(
+                        why=_("the ridge must stand above the eave ({h} m)").format(h=number(eave))))
+                    self.viewport().update()
+                    return True
+                self.ridge_typed = value
+            self._finish()
+            return True
+        return False
+
+    def _ridge_click(self, p) -> None:
+        """A click of the Ridge tool: a point of the ridge; on the last point again it closes, and on an outline of
+        four sides the second point closes it (a rectangle, a trapezoid: one segment)."""
+        if self.chain and math.dist(p, self.chain[-1]) <= 6 * self.metres_per_pixel():
+            self._finish()
+            return
+        if self.chain or self._building_at(p) is not None:
+            self.chain.append(p)
+        else:
+            self.hint.emit(_("A ridge belongs to a building: click inside one."))
+            return
+        now = self.ridge_values()
+        if len(self.chain) == 2 and now is not None and now["sides"] == 4:
+            self._finish()
 
     def _apply_typed(self) -> bool:
         """What was typed while drawing: "length" along the current direction, "length;angle" at that turn
@@ -1728,7 +1935,7 @@ class PlanView(QGraphicsView):
         self.typed = ""
         last = self.chain[-1]
         here = self.snap.point if self.snap else last
-        if self.rect_mode and len(self.chain) == 2:
+        if self._rect_now() and len(self.chain) == 2:
             self.chain = self._rectangle(here, depth=length)
             self._finish()
             return True
@@ -1808,6 +2015,12 @@ class PlanView(QGraphicsView):
         return abs((point[0] - ax) * (by - ay) - (point[1] - ay) * (bx - ax)) / n
 
     def toggle_rectangle(self) -> None:
+        if self.tool == "pitch":                    # R274: the pitch from its eave, or corner by corner
+            self.pitch_points = not self.pitch_points
+            self.hint.emit(_("Free pitch corner by corner: the first side is the eave; Enter closes.")
+                           if self.pitch_points else hints()["pitch"])
+            self.viewport().update()
+            return
         self.rect_mode = not self.rect_mode
         self.hint.emit(_("Rectangle mode: two corners give a side, the third click or a typed number the depth.")
                        if self.rect_mode else hints()[self.tool])
@@ -2426,7 +2639,11 @@ class PlanView(QGraphicsView):
                 self.viewport().update()
                 return
             p = self.snap.point if self.snap else from_scene(scene_pos)
-            if self.rect_mode and len(self.chain) == 2:
+            if self.tool == "ridge":
+                self._ridge_click(p)
+                self.viewport().update()
+                return
+            if self._rect_now() and len(self.chain) == 2:
                 rect = self._rectangle(p)
                 if math.dist(rect[1], rect[2]) > 0.05:
                     self.chain = rect
@@ -2592,6 +2809,10 @@ class PlanView(QGraphicsView):
                 return super().event(event)
             event.accept()
             return True
+        if getattr(self, "tool", "") == "pitch" and self.chain and event.type() == QEvent.Type.KeyPress and \
+                event.key() in (Qt.Key.Key_Tab, Qt.Key.Key_Backtab):
+            self.keyPressEvent(event)                   # Tab swaps eave and ridge, only while a pitch is drawn
+            return True
         if getattr(self, "tool", "") == "move":         # events come before __init__ is through
             if event.type() == QEvent.Type.ShortcutOverride and self._move_owns(event):
                 event.accept()
@@ -2629,6 +2850,8 @@ class PlanView(QGraphicsView):
             return
         if self.tool in DRAWING and key == Qt.Key.Key_R and not event.modifiers() & ~Qt.KeyboardModifier.KeypadModifier:
             self.toggle_rectangle()
+            return
+        if self.pitch_key(event) or self.ridge_key(event):      # the Pitch and Ridge cards (R274, R275)
             return
         if self.tool in ROW_TOOLS:
             if text and (text.isdigit() or text in ",.") and self.row_start is not None:
@@ -2673,6 +2896,7 @@ class PlanView(QGraphicsView):
                 else:
                     self.chain, self.measure = [], []
                     self.snapper.reset()
+                    self._reset_roof_draft()
                 self.viewport().update()
                 return
         if self.strings_mode and self.draft is None and key == Qt.Key.Key_Escape and self.chosen_string >= 0:
@@ -2771,7 +2995,7 @@ class PlanView(QGraphicsView):
             if self.ortho and self.tool in DRAWING and chain and self.snap.kind not in EXACT:
                 point = ortho(chain, cursor)
                 self.snap = Snapper._measure(Snap(point, "direction", [Guide(chain[-1], point, "polar", "F8")]), chain)
-            if self.tool in DRAWING and self.rect_mode and len(chain) == 2 and self._depth(self.snap.point) < 1e-6:
+            if self.tool in DRAWING and self._rect_now() and len(chain) == 2 and self._depth(self.snap.point) < 1e-6:
                 # the third click of a rectangle gives its depth: a point snapped back onto the line of the
                 # first side (an edge met by its extension) would give none, and a small rectangle never closed
                 self.snap = self.snapper.snap(cursor, chain, self.metres_per_pixel(), free=True)
@@ -2796,7 +3020,7 @@ class PlanView(QGraphicsView):
         W = view_colours.WIDTHS
         halo = cosmetic(self.colours["halo"], W["draw"] + W["halo"])
         guide = qcolour(self.colours["guide"])
-        if self.tool in DRAWING and self.rect_mode and len(self.chain) == 2 and self.snap:
+        if self.tool in DRAWING and self._rect_now() and len(self.chain) == 2 and self.snap:
             rect = QPolygonF([to_scene(*q) for q in self._rectangle(self.snap.point)])
             painter.setPen(halo)
             painter.drawPolygon(rect)
@@ -2811,11 +3035,22 @@ class PlanView(QGraphicsView):
                 painter.drawPolyline(QPolygonF(pts))
                 painter.setPen(cosmetic(draw, W["draw"]))
                 painter.drawPolyline(QPolygonF(pts))
-                if len(self.chain) >= 2 and self.snap:
+                if len(self.chain) >= 2 and self.snap and self.tool != "ridge":    # a ridge is not closed
                     painter.setPen(cosmetic(draw, 1.2, Qt.PenStyle.DashLine))
                     painter.drawLine(QLineF(pts[-1], pts[0]))
             for p in pts[:-1] if self.snap and self.chain else pts:
                 self._mark(painter, p, draw, "vertex")
+        if self.tool == "pitch" and len(self.chain) >= 2 and self.snap:
+            # the eave of the pitch being drawn, thick in the accent over a halo: Tab moves it across (R274)
+            now = self.pitch_values()
+            ring = self._pitch_ring()
+            if now is not None and ring:
+                a, b = ring[now["eave_side"] % len(ring)], ring[(now["eave_side"] + 1) % len(ring)]
+                eave = QLineF(to_scene(*a), to_scene(*b))
+                painter.setPen(cosmetic(self.colours["halo"], W["draw"] + 3 + W["halo"]))
+                painter.drawLine(eave)
+                painter.setPen(cosmetic(accent, W["draw"] + 3))
+                painter.drawLine(eave)
         if self.snap and (self.tool in DRAWING or self.tool in ("measure", "move")):
             painter.setPen(cosmetic(guide, 1, Qt.PenStyle.DashLine))
             for g in self.snap.guides:
@@ -2949,6 +3184,39 @@ class PlanView(QGraphicsView):
         elif kind in ("edge", "direction"):
             painter.drawEllipse(p, r, r)
 
+    def _card_lines(self) -> list[str]:
+        """The Pitch card (two points given) and the Ridge card, as lines of the label next to the pointer: the row
+        a number goes to is marked, and shows what is being typed (study 22, 3.4 and 3.5)."""
+        if self.tool == "pitch" and len(self.chain) >= 2 and self.snap:
+            now = self.pitch_values()
+            if now is None:
+                return []
+            field = self.pitch_card["field"]
+            rows = {"depth": (_("Depth"), _("{v} m").format(v=number(now["depth"]))),
+                    "tilt": (_("Slope"), _("{d}° ({p} %)").format(
+                        d=number(now["tilt"], 1), p=number(math.tan(math.radians(now["tilt"])) * 100, 0))),
+                    "ridge": (_("Ridge height"), _("{v} m").format(v=number(now["ridge"]))),
+                    "eave": (_("Eave height"), _("{v} m").format(v=number(now["eave"])))}
+            lines = [pgettext("roof", "Pitch") + (" · " + _("eave and ridge swapped") if self.pitch_card["swapped"] else "")]
+            for key in PITCH_FIELDS:
+                label, value = rows[key]
+                if key == field:
+                    lines.append(f"→ {label}: {self.typed}_" if self.typed else f"→ {label}: {value}")
+                else:
+                    lines.append(f"   {label}: {value}")
+            lines.append(_("↑↓ row · Tab eave ↔ ridge · Enter done"))
+            return lines
+        if self.tool == "ridge" and (self.chain or self.snap):
+            now = self.ridge_values()
+            if now is None:
+                return []
+            height = f"{self.typed}_" if self.typed else _("{v} m").format(v=number(now["ridge"]))
+            return [_("Ridge"), _("Ridge height: {v}").format(v=height) +
+                    ("" if now["typed"] or self.typed else " " + _("(proposed)")),
+                    _("Eave height: {v} m").format(v=number(now["eave"])),
+                    _("type the ridge height · Enter done")]
+        return []
+
     def _draw_labels(self, painter: QPainter) -> None:
         """The measures next to the cursor, in screen pixels: length, direction, turn, typed length."""
         lines = []
@@ -2964,6 +3232,9 @@ class PlanView(QGraphicsView):
                 lines.append(self.snap.guides[0].label)
         if self.typed:
             lines.insert(0, _("length: {value}_").format(value=self.typed))
+        card = self._card_lines()
+        if card:
+            lines = card
         if self.tool == "measure" and len(self.measure) == 2:
             anchor = self.mapFromScene(to_scene(*self.measure[1]))
             lines = [_("{length} m").format(length=number(math.dist(*self.measure)))]

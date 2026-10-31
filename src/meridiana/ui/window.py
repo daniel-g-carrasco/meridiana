@@ -565,6 +565,8 @@ class MainWindow(QMainWindow):
         self._apply_project_network()
 
         self.plan.polygonDrawn.connect(self._drawn)
+        self.plan.pitchDrawn.connect(self._pitch_drawn)         # R274: a free pitch with its card
+        self.plan.ridgeDrawn.connect(self._ridge_drawn)         # R275: a ridge, the roof from it
         self.plan.wholePicked.connect(self._whole_pitch)
         self.plan.picked.connect(self._picked)
         self.plan.edgePicked.connect(self._edge_picked)
@@ -870,6 +872,14 @@ class MainWindow(QMainWindow):
             a.setIcon(icons.icon(tool))
             group.addAction(a)
             self.tool_actions[tool] = a
+        # R275: the Ridge tool (study 22, 3.5); its name and key C come with "tool_ridge" in shortcuts.py, a plain
+        # action until then; its button goes in the Draw group of the Modelling bar (phases.py)
+        ridge = act(draw, "tool_ridge", lambda _c=False: self._set_tool("ridge"), True,
+                    _("Draw the ridge of a building: the roof follows, gable or hip by where the ridge ends"),
+                    action=None if "tool_ridge" in known else QAction(_("Ridge"), self))
+        ridge.setIcon(icons.icon("ridge"))
+        group.addAction(ridge)
+        self.tool_actions["ridge"] = ridge
         self.tool_actions["select"].setChecked(True)
         draw.addSeparator()
         self.rect_action = act(draw, "rectangle", self._rectangle_mode, True,
@@ -2417,21 +2427,76 @@ class MainWindow(QMainWindow):
             self.edit(_("Draw an exclusion"), add)
             self._select("exclusion", eid)
         elif tool == "pitch":
-            b, _pitch = self._host(ring)
-            if b is None:
-                self.hint.setText(_("A pitch belongs to a building: draw it inside one."))
-                return
+            self._pitch_drawn(ring, {})            # R274: a pitch without its card, the building's own values
 
-            def add(p):
-                bb = p.building(b.id)
-                if bb.roof.type != "free":
-                    bb.roof.type = "free"
-                    bb.roof.free_pitches = []
-                # the slope of a new pitched roof, 35 % (Daniel, 23/10/2026; roofs.COVERINGS)
-                bb.roof.free_pitches.append({"ring": ring, "eave_side": 0, "eave": bb.height,
-                                             "tilt": roofs.proposed_tilt(bb.roof.covering or roofs.DEFAULT_COVERING)})
-            self.edit(_("Draw a pitch"), add)
-            self._select("building", b.id)
+    def _pitch_drawn(self, ring: list, card: dict) -> None:
+        """A free pitch drawn (R274, study 22, 3.4): its eave on the first side, or across with Tab; the eave height,
+        the slope or the ridge height of its card, else the building's eave and the slope its covering proposes
+        (35 % for tiles, Daniel 23/10/2026; roofs.COVERINGS). One step of the undo."""
+        import time
+        self.last_drawn_at = time.monotonic()
+        ring = [[round(x, 4), round(y, 4)] for x, y in ring]
+        if Polygon(ring).area < 0.5:
+            self.hint.setText(_("Too small to keep: draw it again."))
+            return
+        b, _pitch = self._host(ring)
+        if b is None:
+            self.hint.setText(_("A pitch belongs to a building: draw it inside one."))
+            return
+        eave = card.get("eave") if card.get("eave") is not None else b.height
+        tilt = card.get("tilt") if card.get("tilt") is not None else \
+            roofs.proposed_tilt(b.roof.covering or roofs.DEFAULT_COVERING)
+        try:
+            pitch = roofs.free_spec(ring, bool(card.get("swapped")), eave, tilt, card.get("ridge"))
+        except ValueError as error:                  # the ridge written cannot stand on this pitch: the slope
+            pitch = roofs.free_spec(ring, bool(card.get("swapped")), eave, tilt)
+            self.hint.setText(_("Ridge height not used: {why}").format(why=error))
+        pitch["ring"] = ring
+
+        def add(p):
+            bb = p.building(b.id)
+            if bb.roof.type != "free":
+                bb.roof.type = "free"
+                bb.roof.free_pitches = []
+            bb.roof.free_pitches.append(pitch)
+        self.edit(_("Draw a pitch"), add)
+        self._select("building", b.id)
+
+    def _ridge_drawn(self, points: list, ridge) -> None:
+        """A ridge drawn in a building (R275, study 22, 3.5): the sides it touches become gable ends, the others
+        eaves, and the straight skeleton makes the roof, with the ridge height typed or the slope the covering
+        proposes. The ridge stands on the building's axis (Daniel, decision 4): one drawn off it is said. One step
+        of the undo; an outline that cannot carry it changes nothing and says why."""
+        from shapely.geometry import Point
+        b = next((bb for bb in self.project.buildings if points and len(bb.footprint) >= 3 and
+                  Polygon(bb.footprint).buffer(1e-6).contains(Point(*points[0]))), None)
+        if b is None:
+            self.hint.setText(_("A ridge belongs to a building: draw it inside one."))
+            return
+        covering = b.roof.covering or roofs.DEFAULT_COVERING
+        tilt = b.roof.tilt if b.roof.type in model.PITCHED and b.roof.tilt > 0 else roofs.proposed_tilt(covering)
+        try:
+            found = roofs.from_ridge(b.footprint, points, b.height, tilt, ridge)
+        except roofs.skeleton.SkeletonError:
+            self.hint.setText(_("Not changed: {why}").format(why=_("this outline cannot carry a pitched roof (it "
+                                                                   "crosses itself)")))
+            return
+
+        def apply(p):
+            r = p.building(b.id).roof
+            r.type, r.edges, r.ridge_height, r.tilt, r.covering = found.kind, found.edges, ridge, tilt, covering
+            r.free_pitches = []
+        self.edit(_("Draw a ridge"), apply)
+        self._select("building", b.id)
+        said = [_("Roof from the ridge: {kind}.").format(kind=_("gable") if found.kind == "gable" else _("hip"))]
+        if found.off_axis:
+            said.append(_("The ridge is put on the building's axis: a ridge off the axis would need pitches of "
+                          "different slope, not available yet."))
+        if found.dropped:
+            said.append(ngettext("Side {sides} cannot be a gable end on this outline: it is an eave.",
+                                 "Sides {sides} cannot be gable ends on this outline: they are eaves.",
+                                 len(found.dropped)).format(sides=", ".join(str(s + 1) for s in found.dropped)))
+        self.hint.setText(" ".join(said))
 
     def _picked(self, kind: str, oid: str) -> None:
         if kind == "pitch":
@@ -2860,6 +2925,13 @@ class MainWindow(QMainWindow):
         elif what in ("pick_eave", "pick_gable") and self.project.building(oid) is not None:
             self.show_phase("model")
             self.plan.pick_edge(what[5:], "building", oid, self.project.building(oid).footprint)
+        elif what.startswith("pick_free_eave:") and self.project.building(oid) is not None:
+            # R274: the eave of a free pitch, clicked among the sides of that pitch
+            index = int(what.rpartition(":")[2])
+            free = self.project.building(oid).roof.free_pitches
+            if index < len(free):
+                self.show_phase("model")
+                self.plan.pick_edge(what[5:], "building", oid, free[index]["ring"])
         elif what == "site":
             self._find_site()
         elif what == "catalog_module":
@@ -2888,6 +2960,13 @@ class MainWindow(QMainWindow):
         if purpose == "eave":
             self._edited("building", oid, {"roof.eave_side": side})
             self.hint.setText(_("Side {n} picked.").format(n=side + 1))
+        elif purpose.startswith("free_eave:"):        # R274: the eave of a free pitch, one step of the undo
+            index = int(purpose.rpartition(":")[2])
+            pitches = [dict(f) for f in b.roof.free_pitches]
+            if index < len(pitches):
+                pitches[index]["eave_side"] = side
+                self._edited("building", oid, {"roof.free_pitches": pitches})
+                self.hint.setText(_("Side {n} picked.").format(n=side + 1))
         elif purpose == "gable":
             edges = b.with_side(side)
             self._edited("building", oid, {"roof.edges": edges})

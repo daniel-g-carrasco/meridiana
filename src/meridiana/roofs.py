@@ -230,3 +230,154 @@ def ridges(pitches, eave: float) -> list[tuple[tuple[float, float], tuple[float,
 def free(ring, eave_side: int, eave: float, tilt: float) -> Pitch:
     """A pitch the designer drew: the plane goes down towards side `eave_side`, at height `eave` there."""
     return mono(ring, eave_side, eave, tilt)[0]
+
+
+# A free pitch by its numbers (R274, study 22, 3.4): its depth from the eave, the ridge it reaches, the slope a
+# ridge written gives, the side across from the eave (the eave and the ridge swapped). The ridge is derived:
+# the file keeps ring, eave side, eave and slope only.
+
+def _side_ends(ring, side: int):
+    ring = [tuple(map(float, p)) for p in ring]
+    return ring, ring[side % len(ring)], ring[(side + 1) % len(ring)]
+
+
+def free_depth(ring, eave_side: int) -> float:
+    """How far a free pitch runs from its eave, in plan: the distance of its farthest corner from the eave's line."""
+    ring, a, b = _side_ends(ring, eave_side)
+    length = math.dist(a, b)
+    if length < 1e-9:
+        return 0.0
+    return max(abs((p[0] - a[0]) * (b[1] - a[1]) - (p[1] - a[1]) * (b[0] - a[0])) / length for p in ring)
+
+
+def free_ridge(ring, eave_side: int, eave: float, tilt: float) -> float:
+    """The height of the top of a free pitch: the eave plus its depth at its slope."""
+    return eave + free_depth(ring, eave_side) * math.tan(math.radians(tilt))
+
+
+def free_tilt(ring, eave_side: int, eave: float, ridge: float) -> float:
+    """The slope that brings a free pitch from `eave` to `ridge` over its depth; ValueError, said for the designer,
+    for a ridge not above the eave or a pitch without depth."""
+    if ridge <= eave + 1e-3:
+        from .i18n import number
+        raise ValueError(_("the ridge must stand above the eave ({h} m)").format(h=number(eave)))
+    depth = free_depth(ring, eave_side)
+    if depth <= 1e-6:
+        raise ValueError(_("the pitch has no depth"))
+    return slope_from_heights(eave, ridge, depth)
+
+
+def opposite_side(ring, side: int) -> int:
+    """The side across from `side`: the one whose middle lies farthest from its line (on a rectangle, the side
+    parallel to it). Where the eave goes when eave and ridge are swapped."""
+    ring, a, b = _side_ends(ring, side)
+    n = len(ring)
+    length = math.dist(a, b) or 1.0
+
+    def far(i):
+        p, q = ring[i], ring[(i + 1) % n]
+        mx, my = (p[0] + q[0]) / 2, (p[1] + q[1]) / 2
+        return abs((mx - a[0]) * (b[1] - a[1]) - (my - a[1]) * (b[0] - a[0])) / length
+    return max((i for i in range(n) if i != side % n), key=far)
+
+
+def free_spec(ring, swapped: bool, eave: float, tilt: float, ridge: float | None = None) -> dict:
+    """A free pitch drawn from its first side, as the file keeps it: the eave on that side, or across from it
+    when eave and ridge are swapped (Tab); the slope `tilt`, or the one a `ridge` height gives (ValueError at or
+    under the eave)."""
+    ring = [[float(x), float(y)] for x, y in ring]
+    side = opposite_side(ring, 0) if swapped else 0
+    if ridge is not None:
+        tilt = free_tilt(ring, side, eave, ridge)
+    return {"ring": ring, "eave_side": side, "eave": float(eave), "tilt": float(tilt)}
+
+
+# The roof from its ridge (R275, study 22, 3.5): the designer draws the ridge, the sides its points touch become
+# gable ends, the others eaves, and the straight skeleton makes the roof. The ridge stands on the building's axis
+# (Daniel, 31/10/2026, decision 4): a ridge drawn off it is said, not followed (pitches of different slope would
+# need a weighted skeleton, study 22 L6b).
+
+CROSSING = 30.0            # degrees: a side within this of the ridge's direction runs along it, beyond it crosses it
+
+
+@dataclass
+class RidgeRoof:
+    kind: str                          # "gable" with a gable end at least, "hip" without
+    edges: list[str]                   # "eave" or "gable" for each side of the outline, as Roof.edges
+    pitches: list[Pitch]
+    off_axis: bool                     # the ridge drawn is not where the roof's stands
+    dropped: list[int]                 # gable ends asked that the outline cannot take (they are eaves)
+
+
+def _segment_distance(p, a, b) -> float:
+    ax, ay = a
+    dx, dy = b[0] - ax, b[1] - ay
+    d2 = dx * dx + dy * dy
+    t = 0.0 if d2 < 1e-18 else max(0.0, min(1.0, ((p[0] - ax) * dx + (p[1] - ay) * dy) / d2))
+    return math.hypot(p[0] - ax - t * dx, p[1] - ay - t * dy)
+
+
+def _angle(u, v) -> float:
+    """The angle between two directions, 0-90 degrees, whichever way each one goes."""
+    a = abs(math.degrees(math.atan2(u[1], u[0]) - math.atan2(v[1], v[0]))) % 180.0
+    return min(a, 180.0 - a)
+
+
+def ridge_gables(footprint, points) -> set[int]:
+    """The sides a drawn ridge touches: for each point of it, the nearest side crossing the ridge there when it
+    is nearer than half the distance to the sides running along it (on the axis of a rectangle, within a
+    quarter of its width from the end). A point inside, an L's corner, touches nothing: a ridge ending inside
+    the outline makes a hip there."""
+    ring = [tuple(map(float, p)) for p in footprint]
+    pts = [tuple(map(float, p)) for p in points]
+    n = len(ring)
+    out: set[int] = set()
+    for k, p in enumerate(pts):
+        dirs = [(q[0] - p[0], q[1] - p[1]) for q in (pts[k - 1] if k > 0 else None, pts[k + 1] if k + 1 < len(pts)
+                                                     else None) if q is not None and math.dist(p, q) > 1e-6]
+        if not dirs:
+            continue
+        side_dirs = [(ring[(i + 1) % n][0] - ring[i][0], ring[(i + 1) % n][1] - ring[i][1]) for i in range(n)]
+        dist = [_segment_distance(p, ring[i], ring[(i + 1) % n]) for i in range(n)]
+        for u in dirs:
+            along = [dist[i] for i in range(n) if _angle(side_dirs[i], u) <= CROSSING]
+            across = [i for i in range(n) if _angle(side_dirs[i], u) > CROSSING]
+            if not across:
+                continue
+            near = min(across, key=lambda i: dist[i])
+            if not along or dist[near] <= 0.5 * min(along):
+                out.add(near)
+    return out
+
+
+def from_ridge(footprint, points, eave: float, tilt: float, ridge: float | None = None) -> RidgeRoof:
+    """The roof a drawn ridge stands for: gable ends where its points touch the outline (ridge_gables), the
+    others eaves, built by the straight skeleton at `tilt`, or at the slope that brings its top to `ridge`.
+    SkeletonError when the outline cannot carry a pitched roof (it crosses itself)."""
+    ring = [tuple(map(float, p)) for p in footprint]
+    pts = [tuple(map(float, p)) for p in points]
+    asked = ridge_gables(ring, pts)
+    found, dropped = pitched(ring, eave, tilt, asked, ridge)
+    used = asked - dropped
+    edges = ["gable" if i in used else "eave" for i in range(len(ring))]
+    tolerance = max(0.15, 0.03 * math.sqrt(Polygon(ring).area))
+    roof_ridges = ridges(found, eave)
+    off = False
+    for a, b in zip(pts, pts[1:], strict=False):
+        if math.dist(a, b) <= tolerance:
+            continue
+        mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+        near = min(roof_ridges, key=lambda s: _segment_distance(mid, *s), default=None)
+        if near is None or _segment_distance(mid, *near) > tolerance or \
+                _angle((b[0] - a[0], b[1] - a[1]), (near[1][0] - near[0][0], near[1][1] - near[0][1])) > 10.0:
+            off = True
+    return RidgeRoof("gable" if used else "hip", edges, found, off, sorted(dropped))
+
+
+def ridge_run(footprint) -> float:
+    """The largest horizontal run of a pitched roof on the outline, from an eave to the top (half the width of a
+    rectangle): what a proposed slope multiplies to give the ridge's height. 0 when no roof can be built."""
+    try:
+        return ridge_height(pitched(footprint, 0.0, 45.0)[0])
+    except skeleton.SkeletonError:
+        return 0.0
