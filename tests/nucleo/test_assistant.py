@@ -274,7 +274,7 @@ class Places(unittest.TestCase):
     def test_three_questions_ready_for_each_tab(self):
         for tab in assistant.TABS:
             self.assertEqual(len(assistant.questions(tab)), 3)
-        self.assertIn("layout", assistant.questions("model")[0])
+        self.assertIn("roof", assistant.questions("model")[0])          # the Modelling is the model alone (R277)
 
 
 class SpeechBubble(unittest.TestCase):

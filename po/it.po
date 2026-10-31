@@ -20109,3 +20109,407 @@ msgstr "Isc {detail}"
 #: src/meridiana/ui/plant_page.py:600
 msgid "No check yet: the strings are being laid."
 msgstr "Nessuna verifica ancora: le stringhe sono in posa."
+
+#: src/meridiana/help.py:45 src/meridiana/phases.py:79 src/meridiana/shortcuts.py:104
+msgid "Modelling"
+msgstr "Modellazione"
+
+#: src/meridiana/phases.py:93
+msgid "Obstacles"
+msgstr "Ostacoli"
+
+#: src/meridiana/phases.py:94
+msgid "3D object"
+msgstr "Oggetto 3D"
+
+#: src/meridiana/phases.py:110
+msgid "On canopy"
+msgstr "Su pensilina"
+
+#: src/meridiana/phases.py:100
+msgid "Is the roof plausible?"
+msgstr "Il tetto è plausibile?"
+
+#: src/meridiana/phases.py:101
+msgid "Is any obstacle missing for the shadows?"
+msgstr "Manca qualche ostacolo per le ombre?"
+
+#: src/meridiana/phases.py:102
+msgid "Are the heights consistent with the photo?"
+msgstr "Le quote sono coerenti con la foto?"
+
+#: src/meridiana/ui/plant_page.py:891
+msgid "Select a sub-field on the plan to see its layout here, or draw one with «Sub-field»."
+msgstr "Seleziona un sottocampo in pianta per vederne qui la posa, oppure disegnane uno con «Sottocampo»."
+
+#: src/meridiana/ui/inspector.py:39
+msgid "The properties of the objects are in the Modelling phase; this panel shows or hides with Ctrl+P."
+msgstr "Le proprietà degli oggetti sono nella fase Modellazione; questo pannello si mostra o si nasconde con Ctrl+P."
+
+#: src/meridiana/help.py:45
+msgid "The model: buildings, roofs, canopies and obstacles."
+msgstr "Il modello: edifici, tetti, pensiline e ostacoli."
+
+#: src/meridiana/help.py:46
+msgid "Draw the buildings with their roofs, the canopies as structures and the exclusions; the modules are laid in the Plant phase. Select an object to see its properties above: this box explains the field you are in. F1 explains a field, Shift+F1 what you click next."
+msgstr "Disegna gli edifici con i loro tetti, le pensiline come strutture e le esclusioni; i moduli si posano nella fase Impianto. Seleziona un oggetto per vederne le proprietà qui sopra: questo riquadro spiega il campo in cui sei. F1 spiega un campo, Maiusc+F1 quello che clicchi dopo."
+
+#: src/meridiana/help.py:51
+msgid "Panels, inverters and storage, in this order; then the strings."
+msgstr "Pannelli, inverter e accumulo, in quest'ordine; poi le stringhe."
+
+#: src/meridiana/help.py:52
+msgid "The sub-fields with their modules laid, the inverters, chosen from the catalogue or sized by Meridiana, the storage and the strings, checked against CEI 64-8/7: the voltage at the coldest cell and the current at the hottest, within what the inverter and the modules stand."
+msgstr "I sottocampi con i moduli posati, gli inverter, scelti dal catalogo o dimensionati da Meridiana, l'accumulo e le stringhe, verificate secondo la CEI 64-8/7: la tensione alla cella più fredda e la corrente alla più calda, entro quanto reggono l'inverter e i moduli."
+
+#: src/meridiana/tour.py:34
+msgid "Model the buildings and the roofs"
+msgstr "Modella edifici e tetti"
+
+#: src/meridiana/tour.py:35
+msgid "This is where the place takes shape. Draw the footprint of the buildings and give them roofs, add the canopies and what casts a shadow; the modules come in the next phase. The toolbar follows the task: Edit, Draw and Precision."
+msgstr "Qui il luogo prende forma. Disegna il perimetro degli edifici e dagli le coperture, aggiungi le pensiline e ciò che fa ombra; i moduli arrivano nella fase successiva. La barra degli strumenti segue il lavoro: Modifica, Disegna e Precisione."
+
+#: src/meridiana/tour.py:39
+msgid "Roofs flat or pitched on any footprint, drawn pitch by pitch when they are irregular."
+msgstr "Coperture piane o a falda su qualunque perimetro, disegnate falda per falda quando sono irregolari."
+
+#: src/meridiana/tour.py:40
+msgid "The measures typed while drawing are exact: the plan is a drawing, not a sketch."
+msgstr "Le misure scritte mentre disegni sono esatte: la pianta è un disegno, non uno schizzo."
+
+#: src/meridiana/tour.py:60
+msgid "Panels, inverters and storage"
+msgstr "Pannelli, inverter e accumulo"
+
+#: src/meridiana/tour.py:61
+msgid "Here the model becomes a plant, in the order of the work. Draw the subfields on the roofs and I fill them with modules at the pitch and orientation you choose; then pick an inverter from the catalogue or let me size one, add the storage, and connect the strings to the MPPTs."
+msgstr "Qui il modello diventa un impianto, nell'ordine del lavoro. Disegna i sottocampi sulle coperture e io li riempio di moduli con il passo e l'orientamento che scegli tu; poi scegli un inverter dal catalogo o lascia che lo dimensioni io, aggiungi l'accumulo e collega le stringhe agli MPPT."
+
+#: src/meridiana/tour.py:65
+msgid "Panels: subfields, rows and setbacks; the fire brigade rules keep the walkways free."
+msgstr "Pannelli: sottocampi, file e arretramenti; le regole dei Vigili del fuoco tengono liberi i passaggi."
+
+#: src/meridiana/tour.py:68
+msgid "S draws a subfield, Ctrl+2 opens this phase"
+msgstr "S disegna un sottocampo, Ctrl+2 apre questa fase"
+
+#: src/meridiana/roofs.py:266
+msgid "the pitch has no depth"
+msgstr "la falda non ha profondità"
+
+#: src/meridiana/ui/plan.py:212
+msgid "Free pitch: two clicks give the eave, then the pointer or a number the depth. Up and Down choose what a number gives (depth, slope, ridge height, eave height), Tab swaps eave and ridge, Enter or a third click closes. R draws it corner by corner."
+msgstr "Falda libera: due clic danno la gronda, poi il puntatore o un numero la profondità. Su e Giù scelgono che cosa dà un numero (profondità, inclinazione, quota del colmo, quota di gronda), Tab scambia gronda e colmo, Invio o un terzo clic chiude. R la disegna vertice per vertice."
+
+#: src/meridiana/ui/plan.py:215
+msgid "Ridge: click its ends inside a building (more points for an L or a T, then Enter); the roof follows. Type a number for the ridge height. A side touched by the ridge is a gable end, a ridge ending inside makes a hip."
+msgstr "Colmo: clicca i suoi estremi dentro un edificio (più punti per una L o una T, poi Invio); il tetto segue. Digita un numero per la quota del colmo. Un lato toccato dal colmo è una testata, un colmo che finisce dentro fa un padiglione."
+
+#: src/meridiana/ui/plan.py:1806
+msgid "Eave and ridge swapped."
+msgstr "Gronda e colmo scambiati."
+
+#: src/meridiana/ui/plan.py:1807
+msgid "Eave on the first side again."
+msgstr "Gronda di nuovo sul primo lato."
+
+#: src/meridiana/ui/plan.py:1854
+msgid "the slope goes from 0 to 80°"
+msgstr "l'inclinazione va da 0 a 80°"
+
+#: src/meridiana/ui/plan.py:1916
+msgid "A ridge belongs to a building: click inside one."
+msgstr "Un colmo appartiene a un edificio: clicca dentro uno."
+
+#: src/meridiana/ui/plan.py:2020
+msgid "Free pitch corner by corner: the first side is the eave; Enter closes."
+msgstr "Falda libera vertice per vertice: il primo lato è la gronda; Invio chiude."
+
+#: src/meridiana/ui/plan.py:3195
+msgid "Depth"
+msgstr "Profondità"
+
+#: src/meridiana/ui/plan.py:3195 src/meridiana/ui/plan.py:3198 src/meridiana/ui/plan.py:3199 src/meridiana/ui/plan.py:3213
+msgid "{v} m"
+msgstr "{v} m"
+
+#: src/meridiana/ui/plan.py:3196
+msgid "{d}° ({p} %)"
+msgstr "{d}° ({p} %)"
+
+#: src/meridiana/ui/plan.py:3200
+msgid "eave and ridge swapped"
+msgstr "gronda e colmo scambiati"
+
+#: src/meridiana/ui/plan.py:3207
+msgid "↑↓ row · Tab eave ↔ ridge · Enter done"
+msgstr "↑↓ riga · Tab gronda ↔ colmo · Invio fatto"
+
+#: src/meridiana/shortcuts.py:68 src/meridiana/ui/plan.py:3214 src/meridiana/ui/window.py:879
+msgid "Ridge"
+msgstr "Colmo"
+
+#: src/meridiana/ui/plan.py:3214
+msgid "Ridge height: {v}"
+msgstr "Quota colmo: {v}"
+
+#: src/meridiana/ui/plan.py:3215
+msgid "(proposed)"
+msgstr "(proposta)"
+
+#: src/meridiana/ui/plan.py:3216
+msgid "Eave height: {v} m"
+msgstr "Quota di gronda: {v} m"
+
+#: src/meridiana/ui/plan.py:3217
+msgid "type the ridge height · Enter done"
+msgstr "digita la quota del colmo · Invio fatto"
+
+#: src/meridiana/ui/window.py:878
+msgid "Draw the ridge of a building: the roof follows, gable or hip by where the ridge ends"
+msgstr "Disegna il colmo di un edificio: il tetto segue, a capanna o a padiglione secondo dove finisce il colmo"
+
+#: src/meridiana/ui/window.py:2478
+msgid "Ridge height not used: {why}"
+msgstr "Quota del colmo non usata: {why}"
+
+#: src/meridiana/ui/window.py:2499
+msgid "A ridge belongs to a building: draw it inside one."
+msgstr "Un colmo appartiene a un edificio: disegnalo dentro uno."
+
+#: src/meridiana/ui/window.py:2506
+msgid "this outline cannot carry a pitched roof (it crosses itself)"
+msgstr "questa pianta non può portare un tetto a falde (si incrocia)"
+
+#: src/meridiana/ui/window.py:2514
+msgid "Draw a ridge"
+msgstr "Disegna un colmo"
+
+#: src/meridiana/ui/window.py:2516
+msgid "Roof from the ridge: {kind}."
+msgstr "Tetto dal colmo: {kind}."
+
+#: src/meridiana/ui/window.py:2518
+msgid "The ridge is put on the building's axis: a ridge off the axis would need pitches of different slope, not available yet."
+msgstr "Il colmo è messo sull'asse dell'edificio: un colmo fuori asse vorrebbe falde di pendenza diversa, non ancora disponibili."
+
+#: src/meridiana/ui/properties.py:716
+msgid "Pitch {n}"
+msgstr "Falda {n}"
+
+#: src/meridiana/ui/properties.py:722
+msgid "Click on the plan the side the pitch goes down to"
+msgstr "Clicca sulla pianta il lato verso cui scende la falda"
+
+#: src/meridiana/ui/properties.py:738
+msgid "The height of the top of the pitch above the ground: written, it sets the slope"
+msgstr "La quota della sommità della falda da terra: scritta, dà l'inclinazione"
+
+#: src/meridiana/ui/properties.py:751
+msgid "Depth from the eave: {v} m"
+msgstr "Profondità dalla gronda: {v} m"
+
+#: src/meridiana/ui/properties.py:754
+msgid "Swap eave and ridge"
+msgstr "Scambia gronda e colmo"
+
+#: src/meridiana/ui/properties.py:755
+msgid "The eave goes to the side across, at the same height; the pitch turns over"
+msgstr "La gronda va al lato di fronte, alla stessa quota; la falda si ribalta"
+
+#: src/meridiana/canopies.py:78 src/meridiana/model.py:409
+msgid "Canopy {n}"
+msgstr "Pensilina {n}"
+
+#: src/meridiana/canopies.py:219
+msgid "there is no such canopy"
+msgstr "questa pensilina non c'è"
+
+#: src/meridiana/canopies.py:222
+msgid "{value} is out of range"
+msgstr "{value} è fuori dall'intervallo"
+
+#: src/meridiana/canopies.py:229
+msgid "{name}, slope {n}"
+msgstr "{name}, falda {n}"
+
+#: src/meridiana/ui/canopy_dialog.py:33
+msgid "Parking spaces"
+msgstr "Posti auto"
+
+#: src/meridiana/ui/canopy_dialog.py:39
+msgid "How many cars park side by side in a row"
+msgstr "Quante auto si parcheggiano affiancate in una fila"
+
+#: src/meridiana/ui/canopy_dialog.py:43
+msgid "Rows"
+msgstr "File"
+
+#: src/meridiana/ui/canopy_dialog.py:40
+msgid "One row, one slope"
+msgstr "Una fila, una falda"
+
+#: src/meridiana/ui/canopy_dialog.py:40
+msgid "Two rows, back to back"
+msgstr "Due file, schiena contro schiena"
+
+#: src/meridiana/ui/canopy_dialog.py:41
+msgid "Two rows face each other under two slopes that meet at a ridge"
+msgstr "Due file una di fronte all'altra, sotto due falde che si incontrano al colmo"
+
+#: src/meridiana/ui/canopy_dialog.py:50
+msgid "Width of a space"
+msgstr "Larghezza del posto"
+
+#: src/meridiana/ui/canopy_dialog.py:50
+msgid "Across a car, side to side"
+msgstr "Di traverso all'auto, da fianco a fianco"
+
+#: src/meridiana/ui/canopy_dialog.py:51
+msgid "Depth of a space"
+msgstr "Profondità del posto"
+
+#: src/meridiana/ui/canopy_dialog.py:51
+msgid "Along a car, front to back"
+msgstr "Lungo l'auto, dal muso al retro"
+
+#: src/meridiana/ui/canopy_dialog.py:53
+msgid "Structure"
+msgstr "Struttura"
+
+#: src/meridiana/ui/canopy_dialog.py:56 src/meridiana/ui/properties.py:581
+msgid "Clear height"
+msgstr "Altezza libera"
+
+#: src/meridiana/ui/canopy_dialog.py:57
+msgid "Under the low edge of the roof: what a vehicle passes under"
+msgstr "Sotto il bordo basso della copertura: ciò sotto cui passa un veicolo"
+
+#: src/meridiana/ui/canopy_dialog.py:58
+msgid "Of the roof plane, the same for the modules on it"
+msgstr "Del piano di copertura, la stessa dei moduli posati sopra"
+
+#: src/meridiana/ui/canopy_dialog.py:62 src/meridiana/ui/properties.py:588
+msgid "Columns"
+msgstr "Pilastri"
+
+#: src/meridiana/ui/canopy_dialog.py:59 src/meridiana/ui/properties.py:585
+msgid "Cantilever, one line"
+msgstr "A sbalzo, una fila"
+
+#: src/meridiana/ui/canopy_dialog.py:59 src/meridiana/ui/properties.py:585
+msgid "Two lines"
+msgstr "Su due file"
+
+#: src/meridiana/ui/canopy_dialog.py:60
+msgid "One line of columns under the high edge, the roof projecting from it; or a line at each long edge"
+msgstr "Una fila di pilastri sotto il bordo alto, con la copertura a sbalzo; oppure una fila su ogni lato lungo"
+
+#: src/meridiana/ui/canopy_dialog.py:66 src/meridiana/ui/properties.py:592
+msgid "Columns per line"
+msgstr "Pilastri per fila"
+
+#: src/meridiana/ui/canopy_dialog.py:65
+msgid "Columns on each line; the first value is the one proposed, one every two spaces"
+msgstr "Pilastri su ogni fila; il primo valore è quello proposto, uno ogni due posti"
+
+#: src/meridiana/ui/canopy_dialog.py:67
+msgid "Turn"
+msgstr "Rotazione"
+
+#: src/meridiana/ui/canopy_dialog.py:68
+msgid "The rows run East at 0°; the canopy can also be turned on the plan afterwards"
+msgstr "A 0° le file corrono verso est; la pensilina si può ruotare anche dopo, in pianta"
+
+#: src/meridiana/ui/canopy_dialog.py:106
+msgid "{n}, proposed"
+msgstr "{n}, proposti"
+
+#: src/meridiana/ui/canopy_dialog.py:112
+msgid "{n} spaces · {width} × {depth} m · {columns} columns"
+msgstr "{n} posti · {width} × {depth} m · {columns} pilastri"
+
+#: src/meridiana/ui/canopy_dialog.py:84
+msgid "Draws the structure only: columns, beams and the roof. The modules are laid on it afterwards, in Plant › On a canopy. Indicative sizes, not a structural design."
+msgstr "Disegna solo la struttura: pilastri, travi e copertura. I moduli si posano dopo, in Impianto › Su pensilina. Misure indicative, non un progetto strutturale."
+
+#: src/meridiana/ui/canopy_dialog.py:159 src/meridiana/ui/window.py:2105
+msgid "Modules on a canopy"
+msgstr "Moduli su pensilina"
+
+#: src/meridiana/ui/canopy_dialog.py:167
+msgid "Along the slope"
+msgstr "Lungo la falda"
+
+#: src/meridiana/ui/canopy_dialog.py:167
+msgid "Across the slope"
+msgstr "Di traverso"
+
+#: src/meridiana/ui/canopy_dialog.py:168
+msgid "The long side of the modules up the slope, or level along the rows"
+msgstr "Il lato lungo dei moduli in salita lungo la falda, oppure in piano lungo le file"
+
+#: src/meridiana/ui/canopy_dialog.py:172
+msgid "Gap between modules"
+msgstr "Distanza tra i moduli"
+
+#: src/meridiana/ui/canopy_dialog.py:171
+msgid "Between two modules, along the rows and up the slope (the clamps)"
+msgstr "Tra due moduli, lungo le file e lungo la falda (i morsetti)"
+
+#: src/meridiana/ui/canopy_dialog.py:175
+msgid "Beyond the structure"
+msgstr "Oltre la struttura"
+
+#: src/meridiana/ui/canopy_dialog.py:174
+msgid "How far the modules may go beyond the structure, on the outer sides"
+msgstr "Di quanto i moduli possono sporgere oltre la struttura, sui lati esterni"
+
+#: src/meridiana/ui/canopy_dialog.py:178
+msgid "Free edge"
+msgstr "Bordo libero"
+
+#: src/meridiana/ui/canopy_dialog.py:177
+msgid "A free band along the outline of each slope"
+msgstr "Una fascia libera lungo il contorno di ogni falda"
+
+#: src/meridiana/ui/canopy_dialog.py:180
+msgid "A sub-field on each slope, flush with the roof plane; those the canopy had are replaced. The slope and the height are the structure's."
+msgstr "Un sottocampo per falda, complanare alla copertura; quelli che la pensilina aveva vengono sostituiti. Pendenza e altezza sono quelle della struttura."
+
+#: src/meridiana/ui/canopy_dialog.py:182
+msgid "There is no canopy yet: place one in Modelling with «Parking canopy…»."
+msgstr "Non c'è ancora una pensilina: mettine una in Modellazione con «Pensilina per parcheggio…»."
+
+#: src/meridiana/ui/window.py:892
+msgid "Place a canopy's structure: columns, beams and roof, no module"
+msgstr "Mette la struttura di una pensilina: pilastri, travi e copertura, nessun modulo"
+
+#: src/meridiana/ui/window.py:894
+msgid "The modules laid on a canopy: a sub-field on each slope, flush with its roof"
+msgstr "I moduli posati su una pensilina: un sottocampo per falda, complanare alla copertura"
+
+#: src/meridiana/shortcuts.py:82 src/meridiana/ui/window.py:895
+msgid "On a canopy…"
+msgstr "Su pensilina…"
+
+#: src/meridiana/ui/window.py:2086
+msgid "The canopy is its structure: lay the modules on it in Plant › On a canopy."
+msgstr "La pensilina è la sua struttura: posa i moduli in Impianto › Su pensilina."
+
+#: src/meridiana/model.py
+msgid "{n} parking canopy of an earlier format is now a structure with its columns ({names}): check its spaces and columns."
+msgid_plural "{n} parking canopies of an earlier format are now structures with their columns ({names}): check their spaces and columns."
+msgstr[0] "{n} pensilina di un formato precedente ora è una struttura con i suoi pilastri ({names}): controllane posti e pilastri."
+msgstr[1] "{n} pensiline di un formato precedente ora sono strutture con i loro pilastri ({names}): controllane posti e pilastri."
+
+#: src/meridiana/model.py
+msgid "{n} canopy slope changed by hand could not be read as a structure: it stays a sub-field on its own plane."
+msgid_plural "{n} canopy slopes changed by hand could not be read as a structure: they stay sub-fields on their own planes."
+msgstr[0] "{n} falda di pensilina modificata a mano non si è potuta leggere come struttura: resta un sottocampo sul suo piano."
+msgstr[1] "{n} falde di pensilina modificate a mano non si sono potute leggere come struttura: restano sottocampi sui loro piani."
+
+#: src/meridiana/ui/properties.py
+msgid "Proposed"
+msgstr "Proposto"

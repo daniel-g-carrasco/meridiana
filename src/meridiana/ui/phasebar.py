@@ -227,6 +227,9 @@ class ToolGroup(QWidget):
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(2)
         for tool in tools:
+            if actions[tool.command].icon().isNull() and tool.icon:
+                # a command that came without an icon takes the one its tool was designed with (R277: «On canopy»)
+                actions[tool.command].setIcon(icons.icon(tool.icon))
             b = ToolButton(actions[tool.command], tool.label or _plain(actions[tool.command].text()))
             b.setProperty("tool", tool.command)
             b.setFont(text_font(Text.SECONDARY, b.font()))
@@ -274,7 +277,8 @@ def _plain(text: str) -> str:
 
 class PhaseBar(QToolBar):
     """The bar of one phase, from its groups; a tool whose command the window has no action for is left out (the
-    planned ones, phases.Tool.planned)."""
+    planned ones, phases.Tool.planned), and comes in at its designed place once the window has the action (R277:
+    «Su pensilina» with the canopy's task); a group with none of its tools is left out whole."""
 
     def __init__(self, phase: phases.Phase, actions: dict, parent=None):
         super().__init__(phase.title, parent)
@@ -289,7 +293,7 @@ class PhaseBar(QToolBar):
         self.lines: list[QFrame] = []
         self.text = True
         for group in phase.groups:
-            tools = [t for t in group.tools if not t.planned and t.command in actions]
+            tools = [t for t in group.tools if t.command in actions]
             if not tools:
                 continue
             if self.groups:

@@ -42,16 +42,16 @@ def texts() -> dict[str, Help]:
     return {
         # the phases: what the box says when nothing else is in hand
         "phase.model": h(
-            _("Model"), _("The drawing: buildings, sub-fields, exclusions and the modules laid."),
-            _("Draw the buildings with their roofs, the sub-fields where the modules go and the exclusions. "
-              "Select an object to see its properties above: this box explains the field you are in. F1 "
-              "explains a field, Shift+F1 what you click next."),
-            manual="1-modello.md#1-modello"),
+            _("Modelling"), _("The model: buildings, roofs, canopies and obstacles."),
+            _("Draw the buildings with their roofs, the canopies as structures and the exclusions; the modules are "
+              "laid in the Plant phase. Select an object to see its properties above: this box explains the field "
+              "you are in. F1 explains a field, Shift+F1 what you click next."),
+            manual="1-modello.md#1-modellazione"),
         "phase.plant": h(
-            _("Plant"), _("Inverters and strings: what joins the modules to the grid."),
-            _("The inverters, chosen from the catalogue or sized by Meridiana, and the strings, checked against "
-              "CEI 64-8/7: the voltage at the coldest cell and the current at the hottest, within what the "
-              "inverter and the modules stand."),
+            _("Plant"), _("Panels, inverters and storage, in this order; then the strings."),
+            _("The sub-fields with their modules laid, the inverters, chosen from the catalogue or sized by "
+              "Meridiana, the storage and the strings, checked against CEI 64-8/7: the voltage at the coldest cell "
+              "and the current at the hottest, within what the inverter and the modules stand."),
             ("CEI 64-8/7:2024",), "2-impianto.md#2-impianto"),
         "phase.production": h(
             _("Production"), _("The energy of a typical year, hour by hour, with every loss."),

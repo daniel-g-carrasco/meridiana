@@ -143,7 +143,7 @@ class ChecksOnTheViews(unittest.TestCase):
         # «This phase»: the phase the window shows
         page.phase_button.click()
         win.show_phase("plant")
-        self.assertEqual(self.shown(), ["d", "e"])
+        self.assertEqual(self.shown(), ["a", "b", "c", "d", "e"])   # the layout is laid in the Plant (R277)
         win.show_phase("model")
         page.phase_button.click()
         # Ctrl+. applies the fix of the item in hand

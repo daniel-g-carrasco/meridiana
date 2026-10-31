@@ -31,13 +31,13 @@ def steps() -> tuple[Step, ...]:
               _("Save and revisions: a revision is a new file next to the previous one, never over it."),
               _("Import and Export: PVsyst, IFC and the hourly CSV.")),
              _("Ctrl+N new project, Ctrl+O open")),
-        Step("model", _("Model and place the modules"),
-             _("This is where the plant takes shape. Draw the footprint of the buildings and give them roofs; on "
-               "each roof define the subfields and I fill them with modules at the pitch and orientation you "
-               "choose. The toolbar follows the task: Edit, Draw, Layout and Precision."),
+        Step("model", _("Model the buildings and the roofs"),
+             _("This is where the place takes shape. Draw the footprint of the buildings and give them roofs, add "
+               "the canopies and what casts a shadow; the modules come in the next phase. The toolbar follows the "
+               "task: Edit, Draw and Precision."),
              ("phase", "model"),
-             (_("Roofs flat or pitched on any footprint; the fire brigade rules keep the walkways free."),
-              _("Layout: rows, pitch and setbacks; drag a module to lay out a row by hand."),
+             (_("Roofs flat or pitched on any footprint, drawn pitch by pitch when they are irregular."),
+              _("The measures typed while drawing are exact: the plan is a drawing, not a sketch."),
               _("Undo is always one key away: experiment freely.")),
              _("Ctrl+Z undo, F fits the drawing to the view")),
         Step("views", _("Plan and 3D, side by side"),
@@ -57,15 +57,15 @@ def steps() -> tuple[Step, ...]:
               _("A grey field is computed: change what feeds it, not the result."),
               _("I read these values when you ask me about the project.")),
              _("F1 help on the field, Shift+F1 what is this")),
-        Step("plant", _("Inverters, strings and storage"),
-             _("Modules make direct current; here it becomes a plant. Pick an inverter from the catalogue or let "
-               "me size one, then connect the strings to its MPPTs. Propose fills in a sensible stringing, "
-               "Complete finishes what you started by hand, and neither touches a choice you made yourself."),
+        Step("plant", _("Panels, inverters and storage"),
+             _("Here the model becomes a plant, in the order of the work. Draw the subfields on the roofs and I fill "
+               "them with modules at the pitch and orientation you choose; then pick an inverter from the catalogue "
+               "or let me size one, add the storage, and connect the strings to the MPPTs."),
              ("phase", "plant"),
-             (_("Sizing checks voltages and currents at the extreme temperatures, and the DC/AC ratio."),
-              _("Storage goes beside the inverters: battery, coupling and power."),
+             (_("Panels: subfields, rows and setbacks; the fire brigade rules keep the walkways free."),
+              _("Sizing checks voltages and currents at the extreme temperatures, and the DC/AC ratio."),
               _("A string drawn by hand is yours: I never redraw it.")),
-             _("Compute > Propose the strings, then Complete the strings")),
+             _("S draws a subfield, Ctrl+2 opens this phase")),
         Step("checks", _("Checks and explanations"),
              _("I keep an eye on the plant and tell you here when something is off: an error that stops the "
                "computation, a warning worth a look, or a plain note. Open a group to read why, and where the "

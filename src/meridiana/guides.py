@@ -64,7 +64,7 @@ def guides() -> dict[str, Guide]:
               "it, Ctrl leaves a copy.")), "1-modello.md#spostare-e-ruotare"),
         "measure": g(_("Measuring"), (
             _("Click the first point; it snaps as when drawing."),
-            _("Click the second: the distance stays on screen until the next click.")), "1-modello.md#1-modello"),
+            _("Click the second: the distance stays on screen until the next click.")), "1-modello.md#1-modellazione"),
     }
 
 

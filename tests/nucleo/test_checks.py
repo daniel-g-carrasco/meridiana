@@ -410,7 +410,7 @@ class Grouped(unittest.TestCase):
         self.assertEqual(checks.in_phase(items, "model"), [0, 1, 2, 3, 7])
         # the areas a phase declares (phases.py) are kept there too: the Plant's strings and connection, the
         # shading in the Production, the rules in the Report
-        self.assertEqual(checks.in_phase(items, "plant"), [2, 6])
+        self.assertEqual(checks.in_phase(items, "plant"), [0, 2, 3, 6])    # the layout is laid in the Plant (R277)
         self.assertEqual(checks.in_phase(items, "production"), [1, 6])
         self.assertEqual(checks.in_phase(items, "report"), [7])
         self.assertEqual(checks.in_phase(items + [Item("info", "import", "x")], "nowhere"), [8])

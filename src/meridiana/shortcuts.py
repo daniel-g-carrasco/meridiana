@@ -65,6 +65,7 @@ def commands() -> list[Command]:
         c("tool_select", _("Select"), ("V",), "draw"),
         c("tool_building", _("Building"), ("B",), "draw"),
         c("tool_pitch", pgettext("roof", "Pitch"), ("P",), "draw"),
+        c("tool_ridge", _("Ridge"), ("C",), "draw"),                     # R275
         c("tool_subfield", _("Sub-field"), ("S",), "draw"),
         c("tool_exclusion", _("Exclusion"), ("X",), "draw"),
         # a row of modules drawn by hand (task 16c): L was free (design 2.2)
@@ -78,6 +79,7 @@ def commands() -> list[Command]:
         c("square", _("S&quare the corners"), ("Q",), "draw"),
         c("building_template", _("Building from a &template…"), (), "draw"),
         c("carport", _("Parking canopy…"), (), "draw"),
+        c("canopy_layout", _("On a canopy…"), (), "draw"),               # R281
         c("layout_east_west", _("East-west layout"), (), "draw"),
         c("snaps", _("S&naps"), ("F3",), "draw"),
         c("ortho", _("&Ortho"), ("F8",), "draw"),
@@ -99,7 +101,7 @@ def commands() -> list[Command]:
         c("menu_bar", _("&Menu bar"), (), "view"),
         # the phases by their numbers (Daniel, 24/10/2026: «le fasi con Ctrl+numero», Properties to Ctrl+P), and in
         # turn with Ctrl+Tab and Ctrl+PgDown as the browsers and the IDEs; Shift+Tab reaches Qt as Backtab
-        c("phase_model", _("Model"), ("Ctrl+1",), "phases"),
+        c("phase_model", _("Modelling"), ("Ctrl+1",), "phases"),      # R277
         c("phase_plant", _("Plant"), ("Ctrl+2",), "phases"),
         c("phase_production", _("Production"), ("Ctrl+3",), "phases"),
         c("phase_consumption", _("Consumption"), ("Ctrl+4",), "phases"),

@@ -1,15 +1,21 @@
 """The six phases of the work, described once (design document, 2.1 and 3.3; study 17, B4; Daniel, 23/10/2026:
-«bella la suddivisione in fasi»): 1 Model, 2 Plant, 3 Production, 4 Consumption, 5 Balance and economics,
+«bella la suddivisione in fasi»): 1 Modelling, 2 Plant, 3 Production, 4 Consumption, 5 Balance and economics,
 6 Report. Each phase has its number and title, the groups of its bar with the commands in order, the inspector
 the right panel shows, the areas of the checks it produces and the three questions ready for Meridio. No Qt here:
 the window builds the row of the phases and the bar of each from this, and never reasons with «index == 0».
+
+The Modelling holds the model alone, the site, the buildings, the roofs, the canopies as structures, the
+obstacles; the modules are laid in the Plant, before the inverters and the storage (R277, study 22, 3.1-3.3;
+Daniel, 30/10/2026: «in Impianto, con ordine, si metteranno i pannelli, poi gli inverter e poi l'accumulo»). The
+phase is the interface's only: a project keeps none of it, and the ids stay those of before («model», «plant»).
 
 The phases are places, not stages (design 2.1): every one is always open, none asks for the previous one to be
 finished; the numbers say the natural order of the work, and are keys too: Ctrl+1 to Ctrl+6 (Daniel, 24/10/2026,
 past C8), with Ctrl+Tab, Ctrl+PgDown and Ctrl+PgUp to move between them.
 
 A command the bar cites must exist in shortcuts.py, except the ones a later task brings (`planned`: the task's
-name): they stay here so that the bar is designed once, and are left out of the bar until that task wires them.
+name): they stay here so that the bar is designed once, and the bar leaves them out until the window has their
+action; then they come in by themselves, where they were designed (R277: «Su pensilina», canopy_layout).
 Nothing of the views (the sun, the background) is here: that stays in the views' own bars (R27, C5)."""
 
 from __future__ import annotations
@@ -44,18 +50,23 @@ class Phase:
     number: int
     title: str
     groups: tuple
-    inspector: str                  # "properties", "plant" (the inverters, C10), "results" or "deliverables"
+    inspector: str                  # "properties", "plant" (panels, inverters, storage: R277), "results" or
+                                    # "deliverables"
     areas: tuple                    # of checks.area_names()
     questions: tuple                # three, for Meridio
 
     @property
     def label(self) -> str:
-        """As the row of the phases writes it: «1 Modello»."""
+        """As the row of the phases writes it: «1 Modellazione»."""
         return f"{self.number} {self.title}"
 
     def tools(self, planned: bool = False) -> list[Tool]:
         """The tools of the bar in their order; `planned` includes those a later task brings."""
         return [t for g in self.groups for t in g.tools if planned or not t.planned]
+
+    def commands(self) -> list[str]:
+        """Every command the bar cites, planned ones included."""
+        return [t.command for t in self.tools(planned=True)]
 
 
 INSPECTORS = ("properties", "plant", "results", "deliverables")
@@ -65,7 +76,7 @@ def phases() -> list[Phase]:
     """The six phases in order, with the groups of the design document (3.3)."""
     T = Tool
     return [
-        Phase("model", 1, _("Model"), (
+        Phase("model", 1, _("Modelling"), (
             Group("edit", _("Edit"), (
                 T("tool_select", icon="select"),
                 T("tool_move", _("Move"), icon="move"),
@@ -75,22 +86,30 @@ def phases() -> list[Phase]:
                 T("building_template", _("Template")),
                 T("carport", _("Canopy")),
                 T("tool_pitch", icon="pitch"),
-                T("tool_exclusion", icon="exclusion"))),
-            Group("layout", _("Layout"), (
-                T("tool_subfield", icon="subfield"),
-                T("tool_row", _("Row"), icon="row"),
-                T("layout_east_west", _("East-west")),
-                T("fill", _("Lay"), primary=True),
-                T("empty", _("Empty")))),
+                T("tool_ridge", icon="ridge"))),        # R275: the roof from its ridge
+            # the objects of the scene (trees, cars, people) once they are part of the program (study 22, 3.2 and
+            # question 10: on the bar only when they are there)
+            Group("obstacles", _("Obstacles"), (
+                T("tool_exclusion", icon="exclusion"),  # an exclusion is an obstacle on the roof (a vent, a skylight)
+                T("object_3d", _("3D object"), planned="oggetti-3d"))),
             Group("precision", _("Precision"), (
                 T("tool_measure", icon="measure"),
                 T("square", _("Square")),
                 T("rectangle", _("Rectangle"))))),
-            "properties", ("layout", "shade", "import"),
-            (_("What do you think of this layout?"),
-             _("Are the distances from the edges right for the fire brigade?"),
-             _("Where can I gain power without shadows?"))),
+            "properties", ("shade", "import"),
+            (_("Is the roof plausible?"),
+             _("Is any obstacle missing for the shadows?"),
+             _("Are the heights consistent with the photo?"))),
+        # the work in the order Daniel asked for (R277): the modules, then the inverters, then the storage; the
+        # strings close, they need both
         Phase("plant", 2, _("Plant"), (
+            Group("modules", _("Panels"), (
+                T("tool_subfield", icon="subfield"),
+                T("tool_row", _("Row"), icon="row"),
+                T("layout_east_west", _("East-west")),
+                T("canopy_layout", _("On canopy"), icon="carport"),
+                T("fill", _("Lay"), primary=True),
+                T("empty", _("Empty")))),
             Group("inverter", _("Inverter"), (
                 T("inverter_catalog", _("Catalogue")),
                 T("inverter_auto", _("Size it")))),
@@ -100,10 +119,10 @@ def phases() -> list[Phase]:
                 T("strings_complete", _("Complete")),
                 T("strings_manual", _("Draw")),
                 T("strings_clear", _("Start again"))))),
-            "plant", ("strings", "connection"),
-            (_("Are the strings right for this inverter?"),
-             _("Does this string hold at -10 °C?"),
-             _("Is the DC/AC ratio reasonable here?"))),
+            "plant", ("layout", "strings", "connection"),
+            (_("What do you think of this layout?"),
+             _("Are the distances from the edges right for the fire brigade?"),
+             _("Are the strings right for this inverter?"))),
         Phase("production", 3, _("Production"), (
             Group("compute", _("Computation"), (
                 T("compute", _("Compute"), primary=True),
@@ -162,6 +181,25 @@ def by_id(pid: str) -> Phase:
         if p.id == pid:
             return p
     raise KeyError(pid)
+
+
+# the plan's tools that work wherever the plan is (the Modelling and the Plant, which borrows it): choosing what to
+# edit and measuring never take the designer to another phase (R277)
+PLAN_PHASES = ("model", "plant")
+SHARED_TOOLS = ("tool_select", "tool_measure")
+
+
+def home(command: str, current: str) -> str:
+    """The phase a command of the plan works in, seen from the phase `current`: `current` itself when its bar has
+    the command, or when the command is shared by the phases of the plan; else the first phase whose bar has it;
+    else the Modelling. «Sub-field» asked in the Modelling opens the Plant, «Building» asked in the Plant opens
+    the Modelling, «Select» stays where it is (R277)."""
+    if current in PLAN_PHASES and (command in SHARED_TOOLS or command in by_id(current).commands()):
+        return current
+    for p in phases():
+        if command in p.commands():
+            return p.id
+    return "model"
 
 
 def by_number(number: int) -> Phase:

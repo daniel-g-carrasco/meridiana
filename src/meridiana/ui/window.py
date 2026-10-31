@@ -53,7 +53,7 @@ from .marks import icon as mark_icon
 from .report_page import ReportPage, ReportSide
 from .phasebar import LOW_WINDOW, PhaseBar, Phases
 from .plan import MOVABLE, PlanView, from_scene
-from .plant_page import PlantInspector, PlantPage, input_name, install_reference
+from .plant_page import PlantInspector, PlantPage, PlantSide, input_name, install_reference  # R277: PlantSide
 from .properties import Properties, field_label
 from .checks_page import ChecksPage
 from .sunbar import SunBar
@@ -1172,7 +1172,11 @@ class MainWindow(QMainWindow):
         the preferences ask for."""
         self.plant_page = PlantPage(self.commands)
         self.plant_inspector = PlantInspector(self.commands)
-        self.inspector.add_plant(self.plant_inspector)
+        # R277: the Plant's right panel, Panels (the selected sub-field's card), Inverter (the inspector above),
+        # Storage, in the order of the work
+        self.plant_side = PlantSide(self.plant_inspector, self.commands, lambda: self.project)
+        self.inspector.add_plant(self.plant_side)
+        self.plant_side.sectionOpened.connect(lambda _sid: self._plant_clicks())     # R277: what a click is about
         self.plant_inspector.countChanged.connect(self._inverter_count)
         self.plant_inspector.removed.connect(self._inverter_removed)
         self.plant_inspector.edited.connect(lambda path, value: self._energy_edited("energy", path, value))
@@ -1638,7 +1642,7 @@ class MainWindow(QMainWindow):
     def _assistant_avoid(self) -> list[tuple[int, int, int, int]]:
         """What Meridio's bubble must not cover, in the window's coordinates: the selection drawn on the plan and
         the points being picked (design 3.9), when the plan is in view on the model."""
-        if self.phase() != "model" or not self.plan.isVisibleTo(self.tabs):
+        if self.phase() not in phases.PLAN_PHASES or not self.plan.isVisibleTo(self.tabs):    # R277: the Plant too
             return []
         points = list(self.plan.rings.get(tuple(self.plan.selection), []))
         if self.plan.point_pick is not None and len(self.plan.point_pick) > 2:
@@ -1674,15 +1678,36 @@ class MainWindow(QMainWindow):
         else:
             self.plan.selection_back()
 
+    @staticmethod
+    def _tool_command(tool: str) -> str:
+        """R277: the command of a tool of the plan, as phases.py names it."""
+        return "layout_east_west" if tool == "east_west" else "tool_" + tool
+
     def _set_tool(self, tool: str) -> None:
-        self.show_phase("model")                    # drawing happens on the model
+        # R277: drawing happens where its bar is: the outlines in the Modelling, the sub-fields and the rows in the
+        # Plant; choosing and measuring where the plan is now (phases.home)
+        self.show_phase(phases.home(self._tool_command(tool), self.phase()))
         self.tool_actions[tool].setChecked(True)
         self.plan.set_tool(tool)
+        self._plant_clicks()
         self._show_gizmo()
         self._guide()                               # the help card on the first step of the tool (R43)
         # drawing needs the plan; Move works in the 3D view as well (task 16b)
-        if tool not in ("select", "move") and not self.view_actions["plan"].isChecked() and self.split.sizes()[0] == 0:
+        if (tool not in ("select", "move") and self.phase() == "model" and not self.view_actions["plan"].isChecked()
+                and self.split.sizes()[0] == 0):    # R277: in the Plant the plan is lent, always in view
             self._view_mode("both")
+
+    def _plant_clicks(self) -> None:
+        """R277: in the Plant a click on a module is about its string with Select and the Inverter or the Storage
+        section open; with Panels open it selects the module, its row, its sub-field, as in the Modelling; with
+        Sub-field, Row or East-west the plan draws (a string being drawn is given up first)."""
+        if self.phase() != "plant" or not hasattr(self, "plant_page") or self.plant_page.plan is None:
+            return
+        strings = self.plan.tool == "select" and self.plant_side.current != "panels"
+        if not strings and self.draft_target is not None:
+            self._end_draft()
+        if strings != self.plan.strings_mode:
+            self.plan.set_strings_mode(strings)
 
     def _rotate_tool(self, _checked=False) -> None:
         """Rotate, in the Edit group: Move turning the selection (R inside Move does the same; design 2.2)."""
@@ -2624,8 +2649,9 @@ class MainWindow(QMainWindow):
     def _delete_key(self) -> None:
         """Del, a key of the whole window: it deletes the selection only with Select. While a sub-field was
         being drawn on a building, it deleted the building with its sub-fields (review, 23/10/2026). In the Plant
-        phase it deletes the string chosen and nothing else (R115)."""
-        if self.phase() == "plant":
+        phase, while the clicks are about the strings, it deletes the string chosen and nothing else (R115); with
+        the Panels or a tool of theirs, as in the Modelling (R277)."""
+        if self.phase() == "plant" and (self.plan.strings_mode or self.plan.draft is not None):    # R277
             if self.plan.draft is not None:
                 self.hint.setText(_("While a string is drawn, Backspace takes back the last module and Esc gives the "
                                     "string up."))
@@ -3383,12 +3409,14 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "plant_page") or self.plant_page.plan is not None:
             return
         self.split_home = self.split.saveState()
-        if self.plan.tool != "select":              # the Plant phase draws strings, not outlines
+        # R277: the Plant draws sub-fields, rows and strings, not outlines: a tool of the Modelling goes back to
+        # Select; the strings take the clicks with Select only (_plant_clicks)
+        if phases.home(self._tool_command(self.plan.tool), "plant") != "plant":
             self.tool_actions["select"].setChecked(True)
             self.plan.set_tool("select")
         self.plant_page.lend(self.plan)
         self.plan.show_wiring(True)
-        self.plan.set_strings_mode(True)
+        self._plant_clicks()
         if self.plant_state is None:
             self._plant_soon()
 
@@ -3398,6 +3426,9 @@ class MainWindow(QMainWindow):
             return
         self._end_draft()
         self.plan.set_strings_mode(False)
+        if phases.home(self._tool_command(self.plan.tool), "model") != "model":     # R277: Sub-field, Row,
+            self.tool_actions["select"].setChecked(True)                            # East-west stay in the Plant
+            self.plan.set_tool("select")
         self.chosen_string = -1
         self.plan.choose_string(-1)
         self.split.insertWidget(0, self.plan)
@@ -3416,7 +3447,7 @@ class MainWindow(QMainWindow):
         phase = phases.by_id(self.phase())
         self.inspector.set_kind(phase.inspector, phase.id)
         title = {"results": _("Results"), "deliverables": _("Deliverables"),
-                 "plant": _("Inverters")}.get(phase.inspector, _("Properties"))
+                 "plant": _("Plant")}.get(phase.inspector, _("Properties"))     # R277: panels, inverters, storage
         if phase.inspector == "results" and phase.id in self.inspector.sides:
             title = _("Data")                       # what is typed in the phase (the drafts of 24/10/2026)
         self.docks[1].setWindowTitle(title)
@@ -4611,6 +4642,10 @@ class MainWindow(QMainWindow):
         if plant is None:
             self.tell(_("The strings are being laid: a moment."))
             return
+        # R277: a string is drawn with Select and the Inverter open (the clicks to the strings)
+        self.plant_side.open("inverter")
+        if self.plan.tool != "select":
+            self._set_tool("select")
         self.plan.end_draft()
         self.draft_target = {"unit": int(unit), "mppt": int(mppt), "run": int(run)}
         modules = [[sf, key] for sf, key, _c in plant.strings[run].modules] if 0 <= run < len(plant.strings) else []

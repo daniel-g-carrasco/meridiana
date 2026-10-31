@@ -1,5 +1,6 @@
 """The right panel follows the phase (study 12, N2; study 12a, 4.2 and 4.7; design document 3.6): the properties
-of what is selected in the Model and in the Plant, the figures of the variant in hand in Production, Consumption
+of what is selected in the Modelling; in the Plant its page of three sections, panels (the selected sub-field's
+properties, lent there), inverters and storage (R277); the figures of the variant in hand in Production, Consumption
 and Balance, where the model's properties are of no use, the deliverables with their state in the Report. One
 panel, not panels that come and go by themselves, which disorients; its title changes, the panel does not; Ctrl+1
 shows or hides it. Which inspector each phase has is said by phases.py."""
@@ -35,8 +36,8 @@ class ResultsInspector(QScrollArea):
         box.addLayout(form)
         self.figures = QFormLayout()
         box.addLayout(self.figures)
-        self.note = QLabel(_("The properties of the objects are in the Model phase; this panel shows or hides with "
-                             "Ctrl+1."))
+        self.note = QLabel(_("The properties of the objects are in the Modelling phase; this panel shows or hides "
+                             "with Ctrl+P."))
         self.note.setWordWrap(True)
         set_text(self.note, Text.SECONDARY)
         box.addWidget(self.note)
@@ -143,7 +144,8 @@ class Inspector(QStackedWidget):
         self.addWidget(self.deliverables)
 
     def add_plant(self, widget) -> None:
-        """The Plant phase's inspector (design C10): made by the window once its actions are there."""
+        """The Plant phase's inspector (design C10; R277: ui/plant_page.PlantSide, which borrows the properties
+        while it is shown): made by the window once its actions are there."""
         self.plant = widget
         self.addWidget(widget)
 
@@ -156,6 +158,13 @@ class Inspector(QStackedWidget):
     def set_kind(self, kind: str, pid: str = "") -> None:
         """What the phase wants (phases.Phase.inspector): "properties", "plant", "results" or "deliverables"; a
         phase of results with a form of its own shows the form."""
+        lends = self.plant is not None and hasattr(self.plant, "lend")
+        if kind == "plant" and lends:
+            if self.indexOf(self.properties) >= 0:
+                self.removeWidget(self.properties)
+            self.plant.lend(self.properties)        # the sub-field's card in the Plant's Panels (R277)
+        elif lends and self.plant.give_back() is not None:
+            self.insertWidget(0, self.properties)
         if kind == "results" and pid in self.sides:
             self.setCurrentWidget(self.sides[pid])
             return

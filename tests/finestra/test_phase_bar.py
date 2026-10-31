@@ -36,7 +36,7 @@ class PhaseRow(unittest.TestCase):
         win = self.win
         tabs = win.tabs
         self.assertEqual([tabs.tabText(i) for i in range(tabs.count())],
-                         ["1 Model", "2 Plant", "3 Production", "4 Consumption", "5 Balance and economics", "6 Report"])
+                         ["1 Modelling", "2 Plant", "3 Production", "4 Consumption", "5 Balance and economics", "6 Report"])
         self.assertEqual(win.phase(), "model")
         self.assertIs(tabs.currentWidget(), win.split)
         win.show_phase("report")
@@ -69,9 +69,11 @@ class PhaseRow(unittest.TestCase):
                 bar = win.tabs.bars.currentWidget()
                 self.assertIs(bar, win.bars[phase.id])
                 self.assertEqual(bar.phase.id, phase.id)
+                # the planned tools come in once the window has their action (R277)
                 self.assertEqual([g.title.text() for g in bar.groups],
-                                 [g.title for g in phase.groups if any(not t.planned for t in g.tools)])
-                self.assertEqual(list(bar.buttons()), [t.command for t in phase.tools()])
+                                 [g.title for g in phase.groups if any(t.command in win.commands for t in g.tools)])
+                self.assertEqual(list(bar.buttons()),
+                                 [t.command for t in phase.tools(planned=True) if t.command in win.commands])
                 for cid, button in bar.buttons().items():
                     self.assertIs(button.defaultAction(), win.commands[cid])
                     self.assertEqual(button.toolButtonStyle(), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
@@ -81,11 +83,12 @@ class PhaseRow(unittest.TestCase):
                 self.assertLessEqual(len(primaries), 1)
                 self.assertEqual(bar.height(), win.tabs.bars.height())      # the same height in every phase
                 self.assertTrue(bar.isVisibleTo(win))
-        self.assertEqual(win.bars["model"].primary().property("tool"), "fill")
+        self.assertIsNone(win.bars["model"].primary())                  # R277: the Modelling's gesture is drawing
+        self.assertEqual(win.bars["plant"].primary().property("tool"), "fill")
         self.assertEqual(win.bars["production"].primary().property("tool"), "compute")
         self.assertEqual(win.bars["model"].buttons()["tool_building"].text(), "Building")
-        self.assertEqual(win.bars["model"].buttons()["fill"].text(), "Lay")           # short, the name in the tip
-        self.assertIn("Lay the modules", win.bars["model"].buttons()["fill"].toolTip())
+        self.assertEqual(win.bars["plant"].buttons()["fill"].text(), "Lay")           # short, the name in the tip
+        self.assertIn("Lay the modules", win.bars["plant"].buttons()["fill"].toolTip())
         self.assertIn("(B)", win.bars["model"].buttons()["tool_building"].toolTip())
         self.assertNotIn("Sun", [g.title.text() for g in win.bars["model"].groups])  # C5: in the views
         # the tools of the model bring the model phase back; the checks lead to a phase by its id
@@ -292,8 +295,8 @@ class ReportAndPlant(unittest.TestCase):
         win.show_phase("plant")
         self.assertIs(win.tabs.currentWidget(), win.plant_page)
         self.assertIn("sized by itself", win.plant_page.inv_label.text())
-        self.assertIs(win.inspector.currentWidget(), win.plant_inspector)      # design C10
-        self.assertEqual(win.docks[1].windowTitle(), "Inverters")
+        self.assertIs(win.inspector.currentWidget(), win.plant_side)           # design C10, R277
+        self.assertEqual(win.docks[1].windowTitle(), "Plant")
         win.show_phase("production")
         self.assertEqual(win.docks[1].windowTitle(), "Data")
         self.assertEqual(win.inspector.results.heading.text(), "Production")

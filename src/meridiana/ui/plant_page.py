@@ -243,6 +243,9 @@ class PlantPage(QWidget):
         self.texts.setLayout(texts)
         texts.setContentsMargins(0, 0, 0, 0)
         self.texts.setMinimumWidth(44 * self.inv_label.fontMetrics().averageCharWidth())
+        # R277: no wider than 50 characters: the Plant's bar has the Panels' tools too, and the strip asking for
+        # its long words whole (533 px with a string being drawn) went into the bar's overflow menu at 1400 px
+        self.strip.setMaximumWidth(50 * self.inv_label.fontMetrics().averageCharWidth())
         strip.addWidget(self.texts, 1)
         # where the legend was (R181: «la legenda che non serve a nulla»): the string being drawn, nothing otherwise
         self.draft_card = DraftCard()
@@ -494,6 +497,7 @@ class PlantInspector(QScrollArea):
         self.subfield_group.hide()
         box.addStretch(1)
         self.setWidget(page)
+        self.side = None                            # the Plant's page of three sections (PlantSide)
 
     def sizeHint(self) -> QSize:
         """Modest: the right panel is a stack of the phases' inspectors and takes the widest hint of them, so this
@@ -657,6 +661,8 @@ class PlantInspector(QScrollArea):
             self._subfield(project, plant, selection)
         finally:
             self.loading = False
+        if self.side is not None:                   # R277: the sub-field's card and the storage beside
+            self.side.follow(project, selection, chosen)
 
     def _entries(self, entries: list) -> None:
         """One row per inverter of the list: its name, how many, take it out. Made again only when the list changes
@@ -815,6 +821,167 @@ class PlantInspector(QScrollArea):
             self.sub_input.addItem(_("Input {k}").format(k=k), k)
         self.sub_input.setCurrentIndex(max(0, self.sub_input.findData(mppt)))
         self.sub_input.setEnabled(unit is not None)
+
+
+def storage_summary(economics: dict | None) -> str:
+    """The storage of the project in a line (the Storage section of the Plant, R277): the battery, how many, the
+    coupling; «No battery» without one."""
+    e = economics or {}
+    battery = e.get("battery") or {}
+    name = f"{battery.get('manufacturer', '')} {battery.get('model', '')}".strip()
+    if not name:
+        return _("No battery")
+    units = int(e.get("battery_units") or 1)
+    coupling = {"ac": _("AC: independent storage converter"), "dc": _("DC: hybrid inverter")}.get(
+        e.get("storage_coupling") or "", "")
+    text = f"{units} × {name}" if units > 1 else name
+    return f"{text}\n{coupling}" if coupling else text
+
+
+class PlantSection(Group):
+    """One of the three sections of the Plant's right panel (R277): a group that folds as every other (R287), and
+    tells the page when it opens, so that one only is open and takes the panel's height."""
+
+    def __init__(self, sid: str, title: str, page: "PlantSide"):
+        super().__init__(title)
+        self.sid = sid
+        self.page = page
+
+    def set_expanded(self, expanded: bool, ms: int = -1) -> None:
+        from .design import Motion
+        super().set_expanded(expanded, Motion.NORMAL if ms < 0 else ms)
+        if self.collapsible and expanded:
+            self.page._opened(self.sid)
+
+
+class PlantSide(QWidget):
+    """The right panel of the Plant phase (R277, decision 2c of study 22): one page with three sections in the order
+    of the work, Panels, Inverter, Storage. Panels shows the card of the selected sub-field (the model's Properties,
+    lent while the phase is open: the layout's fields where the modules are laid), Inverter the inverters and
+    their strings (PlantInspector), Storage the battery with «Configure». One section is open at a time and takes
+    the height left; the command used opens its own (a tool of the Panels, «Catalogue», «Configure», a string).
+    The section open says what a click on a module of the plan is about: its row and its sub-field with Panels,
+    as in the Modelling; its string with Inverter and Storage (the window, `_plant_clicks`)."""
+
+    SECTIONS = ("panels", "inverter", "storage")
+    sectionOpened = Signal(str)
+
+    def __init__(self, inverters: PlantInspector, actions: dict, project=None, parent=None):
+        super().__init__(parent)
+        self.setObjectName("plant-side")
+        self.project = project                          # the window's project now (a callable), for the storage
+        self.inverters = inverters
+        self.properties = None                          # the Properties lent (lend), None when at home
+        self.selection: tuple = ("", "")
+        self.chosen = -1
+        self.current = ""
+        box = QVBoxLayout(self)
+        box.setContentsMargins(0, 0, 0, 0)
+        box.setSpacing(Space.S)
+        self.box = box
+        self.sections: dict[str, PlantSection] = {}
+        for sid, title in (("panels", _("Panels")), ("inverter", _("Inverter")), ("storage", _("Storage"))):
+            section = PlantSection(sid, title, self)
+            inner = QVBoxLayout(section)
+            inner.setContentsMargins(0, 0, 0, 0)
+            self.sections[sid] = section
+            box.addWidget(section)
+        # Panels: the sub-field's card, or what to do when none is selected
+        panels = self.sections["panels"].layout()
+        self.panels_hint = QLabel(_("Select a sub-field on the plan to see its layout here, or draw one with "
+                                    "«Sub-field»."))
+        self.panels_hint.setWordWrap(True)
+        set_text(self.panels_hint, Text.SECONDARY)
+        panels.addWidget(self.panels_hint)
+        self.props_holder = QWidget()
+        holder = QVBoxLayout(self.props_holder)
+        holder.setContentsMargins(0, 0, 0, 0)
+        panels.addWidget(self.props_holder, 1)
+        self.props_holder.hide()
+        # Inverter: the inverters and their strings, as before
+        self.sections["inverter"].layout().addWidget(inverters, 1)
+        # Storage: the battery in a line and the command that configures it
+        storage = self.sections["storage"].layout()
+        self.storage_text = QLabel(_("No battery"))
+        self.storage_text.setWordWrap(True)
+        storage.addWidget(self.storage_text)
+        if "battery_catalog" in actions:
+            configure = QPushButton(shortcuts.plain(actions["battery_catalog"].text()))
+            configure.setToolTip(actions["battery_catalog"].toolTip())
+            configure.clicked.connect(actions["battery_catalog"].trigger)
+            storage.addWidget(configure, 0, Qt.AlignmentFlag.AlignLeft)
+        storage.addStretch(1)
+        # the command used opens its section: the groups of the Plant's bar say which (phases.py)
+        from .. import phases
+        where = {"modules": "panels", "inverter": "inverter", "storage": "storage", "strings": "inverter"}
+        self.command_section: dict[str, str] = {}
+        for group in phases.by_id("plant").groups:
+            for tool in group.tools:
+                self.command_section[tool.command] = where.get(group.id, "inverter")
+        for cid, sid in self.command_section.items():
+            if cid in actions:
+                actions[cid].triggered.connect(lambda _c=False, k=sid: self.open(k))
+        self.open("panels", ms=0)
+        inverters.side = self
+
+    def open(self, sid: str, ms: int = -1) -> None:
+        """Section `sid` open, the others closed; it takes the height left. The storage's line read again: after
+        «Configure», whose dialog has just closed, it says the battery chosen."""
+        if sid in self.sections:
+            self.sections[sid].set_expanded(True, ms)
+        if sid == "storage" and self.project is not None:
+            self.show_storage(self.project())
+
+    def show_storage(self, project) -> None:
+        text = storage_summary(getattr(project, "economics", None))
+        self.storage_text.setText(text)
+        self.storage_text.setToolTip(text)
+
+    def _opened(self, sid: str) -> None:
+        changed = sid != self.current
+        self.current = sid
+        for other, section in self.sections.items():
+            self.box.setStretch(self.box.indexOf(section), 1 if other == sid else 0)
+            if other != sid and section.expanded:
+                section.set_expanded(False)
+        if changed:
+            self.sectionOpened.emit(sid)
+
+    # the Properties, lent while the Plant is open (as the plan is to the Plant page)
+
+    def lend(self, properties) -> None:
+        if self.properties is properties:
+            return
+        self.properties = properties
+        self.props_holder.layout().addWidget(properties)
+        properties.show()
+        self._show_card()
+
+    def give_back(self):
+        """The Properties taken back by the inspector: returned to the caller, None when not lent."""
+        properties, self.properties = self.properties, None
+        if properties is not None:
+            self.props_holder.layout().removeWidget(properties)
+        self._show_card()
+        return properties
+
+    def _show_card(self) -> None:
+        card = self.properties is not None and self.selection[0] in ("subfield", "row")
+        self.props_holder.setVisible(card)
+        self.panels_hint.setVisible(not card)
+
+    def follow(self, project, selection: tuple, chosen: int) -> None:
+        """What the window shows changed: the sub-field's card in Panels, the storage's line. A sub-field selected
+        anew opens Panels, a string chosen anew opens Inverter (never at each refresh of the same selection)."""
+        selection = tuple(selection or ("", ""))
+        if selection != self.selection and selection[0] in ("subfield", "row"):
+            self.open("panels")
+        if chosen >= 0 and chosen != self.chosen:
+            self.open("inverter")
+        self.chosen = chosen
+        self.selection = selection
+        self._show_card()
+        self.show_storage(project)
 
 
 class InputsTable(QTreeWidget):

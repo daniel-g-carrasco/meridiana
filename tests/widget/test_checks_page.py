@@ -417,8 +417,8 @@ class ChecksPanel(unittest.TestCase):
         page.phase_button.click()
         self.assertEqual(self.shown(), ["a", "b", "c", "e"])             # the model: objects and the site
         self.assertIn("Only this phase.", page.summary.text())
-        page.set_phase("plant")                                          # the areas it declares: strings, connection
-        self.assertEqual(self.shown(), ["d", "e"])
+        page.set_phase("plant")                     # the areas it declares: layout (R277), strings, connection
+        self.assertEqual(self.shown(), ["a", "b", "c", "d", "e"])
         page.set_phase("production")
         self.assertEqual(self.shown(), ["d"])
         self.assertEqual([h.isHidden() for h in self.heads()], [True, True, True, False])

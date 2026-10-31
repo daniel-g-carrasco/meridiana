@@ -48,7 +48,7 @@ class OneHover(unittest.TestCase):
         t = theme_colors.derive("#5b4bb0", False).tokens
         bar = PhaseTabBar()
         self.addCleanup(bar.deleteLater)
-        for name in ("1 Modello", "2 Impianto", "3 Producibilità"):
+        for name in ("1 Modellazione", "2 Impianto", "3 Producibilità"):      # R277
             bar.addTab(name)
         bar.colours = _colours(t)
         bar.resize(bar.sizeHint())

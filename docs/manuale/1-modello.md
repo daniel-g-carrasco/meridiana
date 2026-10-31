@@ -1,6 +1,6 @@
-# 1. Modello
+# 1. Modellazione
 
-Il Modello è il disegno: il sito, gli edifici con le coperture, i sottocampi dove vanno i moduli, le esclusioni. Si disegna in pianta con gli strumenti della barra della fase e si controlla nella vista 3D. Le proprietà dell'oggetto selezionato stanno nel pannello di destra; il riquadro d'aiuto in fondo spiega il campo in cui sei. Passando fra oggetti con gli stessi campi, la pagina e il suo scorrimento restano fermi e cambiano solo i valori.
+La Modellazione è il disegno: il sito, gli edifici con le coperture, le pensiline, le esclusioni; i sottocampi e i moduli si posano poi nella fase Impianto. Si disegna in pianta con gli strumenti della barra della fase e si controlla nella vista 3D. Le proprietà dell'oggetto selezionato stanno nel pannello di destra; il riquadro d'aiuto in fondo spiega il campo in cui sei. Passando fra oggetti con gli stessi campi, la pagina e il suo scorrimento restano fermi e cambiano solo i valori.
 
 Gli strumenti hanno una lettera (predefinita, si cambia in File > Impostazioni > Tastiera): Seleziona V, Edificio B, Falda P, Sottocampo S, Esclusione X, Fila L, Sposta M (con Ruota dentro), Misura D, Rettangolo per tre clic R, Squadra gli angoli Q; F3 gli agganci e F8 l'orto, come in AutoCAD. Le lettere non agiscono mentre scrivi in un campo.
 

@@ -26,15 +26,18 @@ In **File > Nuovo**, nei dati facoltativi, scegli cliente e commessa. Il nome de
 
 ## Posa, pensiline e modello BIM
 
-Nella fase **Modello**, i comandi sono raggruppati in Modifica, Disegna, Posa e Precisione.
-**Est-ovest** dispone file contrapposte nel sottocampo selezionato, su superficie orizzontale. Se ci sono
-file manuali, prima scegli esplicitamente di riposare automaticamente. La proposta elettrica separa i diversi
-orientamenti e le inclinazioni; i collegamenti manuali incompatibili vengono segnalati.
+La fase **Modellazione** serve solo al modello: Modifica, Disegna (edificio, da modello, pensilina, falda, colmo,
+esclusione) e Precisione. I moduli si posano nella fase **Impianto**, nell'ordine pannelli, inverter, accumulo:
+il gruppo Pannelli ha Sottocampo, Fila, Est-ovest, Su pensilina, Posa e Svuota.
 
-**Pensilina** permette di impostare posti per fila, larghezza e profondità, quota minima del piano, pendenza
-e rotazione. Puoi creare una fila o due falde contrapposte e posarle con un clic. Ogni falda è un sottocampo
-con piano di posa ausiliario modificabile nelle Proprietà. I valori iniziali sono esempi: non comprendono
-travi, pilastri, sagome dei veicoli o verifiche strutturali.
+**Est-ovest** è uno strumento come **Fila**: due clic dentro un sottocampo (o la lunghezza scritta e Invio) posano
+coppie di moduli rivolte ai due lati lungo la linea, anche su una falda inclinata; il sottocampo diventa est-ovest
+nello stesso passo di annullamento. La proposta elettrica separa i due orientamenti.
+
+**Pensilina** disegna la struttura: posti per fila, una o due file, larghezza e profondità del posto, altezza
+libera, pendenza, rotazione e pilastri (a sbalzo su una fila, o su due file). Pilastri e travi compaiono nella
+vista 3D, nelle ombre, nella relazione e nell'IFC. I moduli si posano dopo, in Impianto, con **Su pensilina**.
+Le verifiche strutturali non sono comprese.
 
 Il **piano di posa ausiliario** può essere attivato anche su un sottocampo esistente: quota al centro, inclinazione
 e azimut sono indipendenti dai bordi del modello ricevuto. Disattivandolo restano memorizzati e torna valido

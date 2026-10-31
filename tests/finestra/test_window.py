@@ -1496,10 +1496,11 @@ class PlantPhase(PlantWindow):
         self.assertIs(self.win.plan.parentWidget(), self.win.plant_page.host)
         self.assertTrue(self.win.plan.isVisible())
         self.assertTrue(self.win.plan.wiring_on)                        # W always on in this phase
-        self.assertIs(self.win.inspector.currentWidget(), self.win.plant_inspector)
-        self.assertEqual(self.win.docks[1].windowTitle(), "Inverters")
-        self.assertEqual([b.property("tool") for b in self.win.bars["plant"].buttons().values()],
-                         ["inverter_catalog", "inverter_auto", "battery_catalog", "strings_auto",
+        self.assertIs(self.win.inspector.currentWidget(), self.win.plant_side)          # R277
+        self.assertEqual(self.win.docks[1].windowTitle(), "Plant")
+        self.assertEqual([b.property("tool") for b in self.win.bars["plant"].buttons().values()
+                          if b.property("tool") != "canopy_layout"],           # the canopy's task, when there
+                         ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty", "inverter_catalog", "inverter_auto", "battery_catalog", "strings_auto",
                           "strings_complete", "strings_manual", "strings_clear"])
         QTest.keyClick(self.win, Qt.Key.Key_PageUp, Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(self.win.phase(), "model")

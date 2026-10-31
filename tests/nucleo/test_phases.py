@@ -15,7 +15,7 @@ class ThePhases(unittest.TestCase):
         ps = phases.phases()
         self.assertEqual([p.number for p in ps], [1, 2, 3, 4, 5, 6])
         self.assertEqual([p.id for p in ps], ["model", "plant", "production", "consumption", "economics", "report"])
-        self.assertEqual([p.label for p in ps][:2], ["1 Model", "2 Plant"])
+        self.assertEqual([p.label for p in ps][:2], ["1 Modelling", "2 Plant"])
         self.assertEqual(phases.by_number(6).id, "report")
         self.assertEqual(phases.by_id("consumption").number, 4)
         self.assertEqual(phases.index_of("production"), 2)
@@ -24,8 +24,8 @@ class ThePhases(unittest.TestCase):
 
     def test_the_groups_are_those_of_the_design_without_the_sun_and_the_background(self):
         groups = {p.id: [g.title for g in p.groups] for p in phases.phases()}
-        self.assertEqual(groups["model"], ["Edit", "Draw", "Layout", "Precision"])
-        self.assertEqual(groups["plant"], ["Inverter", "Storage", "Strings"])
+        self.assertEqual(groups["model"], ["Edit", "Draw", "Obstacles", "Precision"])         # R277
+        self.assertEqual(groups["plant"], ["Panels", "Inverter", "Storage", "Strings"])
         self.assertEqual(groups["production"], ["Computation", "Comparison"])
         self.assertEqual(groups["consumption"], ["Data"])
         self.assertEqual(groups["economics"], ["Computation", "Comparison"])
@@ -35,8 +35,11 @@ class ThePhases(unittest.TestCase):
             self.assertEqual(len(commands), len(set(commands)), p.id)
             for g in p.groups:
                 self.assertNotIn(g.title, ("Sun", "Background"))            # they stay in the views (C5)
-                minimum = 1 if (p.id, g.id) in {("plant", "storage"), ("economics", "compute")} else 2
-                self.assertTrue(minimum <= len([t for t in g.tools if not t.planned]) <= 5, (p.id, g.id))
+                minimum = {("plant", "storage"): 1, ("economics", "compute"): 1, ("model", "obstacles"): 1}.get(
+                    (p.id, g.id), 2)                # the obstacles come with the 3D objects (study 22, question 10)
+                # the Panels of the Plant hold six: the layout of before and «On a canopy» (R277, R281)
+                most = 6 if (p.id, g.id) == ("plant", "modules") else 5
+                self.assertTrue(minimum <= len([t for t in g.tools if not t.planned]) <= most, (p.id, g.id))
         for pid in ("production", "economics", "report"):
             self.assertIn("new_variant", [t.command for t in phases.by_id(pid).tools()])
         self.assertNotIn("refill", [t.command for t in phases.by_id("model").tools()])
@@ -48,13 +51,16 @@ class ThePhases(unittest.TestCase):
             for t in p.tools(planned=True):
                 with self.subTest(p.id, command=t.command):
                     if t.planned:
-                        self.assertNotIn(t.command, known)      # when the task wires it, `planned` goes
-                        self.assertRegex(t.planned, r"^(1[67][a-g]|relazione)$")
+                        # a task or a request brings it; once its command exists the bar shows it by itself
+                        # (R277: «Su pensilina» with the canopy's task), and `planned` may go
+                        self.assertRegex(t.planned, r"^(1[67][a-g]|relazione|R\d+|oggetti-3d)$")
                     else:
                         self.assertIn(t.command, known)
-        model = phases.by_id("model")
-        layout = [t.command for g in model.groups if g.id == "layout" for t in g.tools]
-        self.assertEqual(layout, ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty"])
+        model, plant = phases.by_id("model"), phases.by_id("plant")
+        modules = [t.command for g in plant.groups if g.id == "modules" for t in g.tools]
+        self.assertEqual(modules, ["tool_subfield", "tool_row", "layout_east_west", "canopy_layout", "fill", "empty"])
+        self.assertEqual([t.command for t in plant.tools(planned=True) if t.planned], [])   # «On a canopy» is there (R281)
+        self.assertEqual([t.command for t in model.tools(planned=True) if t.planned], ["object_3d"])
         edit = [t.command for g in model.groups if g.id == "edit" for t in g.tools]
         self.assertEqual(edit, ["tool_select", "tool_move", "tool_rotate"])
         precision = [t.command for g in model.groups if g.id == "precision" for t in g.tools]
@@ -67,7 +73,8 @@ class ThePhases(unittest.TestCase):
                 for t in p.tools(planned=True):
                     self.assertNotIn("\n", t.label)
                     self.assertLess(len(t.label), 16, t.label)
-        self.assertEqual([t.command for t in phases.by_id("model").tools() if t.primary], ["fill"])
+        self.assertEqual([t.command for t in phases.by_id("model").tools() if t.primary], [])     # R277: drawing
+        self.assertEqual([t.command for t in phases.by_id("plant").tools() if t.primary], ["fill"])
         self.assertEqual([t.command for t in phases.by_id("production").tools() if t.primary], ["compute"])
 
     def test_every_phase_has_an_inspector_an_area_of_checks_and_three_questions(self):
@@ -90,12 +97,55 @@ class ThePhases(unittest.TestCase):
         before = i18n._translation
         self.addCleanup(lambda: setattr(i18n, "_translation", before))
         i18n.setup("it")
-        model = phases.by_id("model")
-        self.assertEqual(next(g for g in model.groups if g.id == "layout").title, "Posa")
+        model, plant = phases.by_id("model"), phases.by_id("plant")
+        self.assertEqual(model.title, "Modellazione")                                   # R277, decision 1
+        self.assertEqual([g.title for g in plant.groups][:3], ["Pannelli", "Inverter", "Accumulo"])
         self.assertEqual(checks.area_names()["layout"], "Posa")
-        self.assertEqual(model.questions[0], "Che ne pensi di questa posa?")
+        self.assertEqual(plant.questions[0], "Che ne pensi di questa posa?")
         self.assertEqual(i18n._("Orientation"), "Disposizione")
         self.assertEqual(i18n._("Restore the default layout"), "Ripristina la disposizione predefinita")
+
+    def test_r277_no_command_of_the_bars_is_lost_moving_the_layout_to_the_plant(self):
+        """Every command of the bars of before (HEAD 5b80772, written here as it was) is still on a bar, the
+        layout's in the Plant before the inverters; the Modelling has the model alone."""
+        before = {
+            "model": ["tool_select", "tool_move", "tool_rotate", "tool_building", "building_template", "carport",
+                      "tool_pitch", "tool_exclusion", "tool_subfield", "tool_row", "layout_east_west", "fill",
+                      "empty", "tool_measure", "square", "rectangle"],
+            "plant": ["inverter_catalog", "inverter_auto", "battery_catalog", "strings_auto", "strings_complete",
+                      "strings_manual", "strings_clear"],
+            "production": ["compute", "fetch_pvgis", "new_variant", "compare_variants"],
+            "consumption": ["consumption_base", "import_curve"],
+            "economics": ["compute", "new_variant", "compare_variants"],
+            "report": ["new_variant", "compare_variants", "export_report", "export_ifc", "export_csv",
+                       "save_revision", "copy_notes"]}
+        now = {p.id: [t.command for t in p.tools()] for p in phases.phases()}
+        lost = {c for cs in before.values() for c in cs} - {c for cs in now.values() for c in cs}
+        self.assertEqual(lost, set())
+        added = ["tool_ridge", "canopy_layout"]           # R275 and R281, new on the bars
+        self.assertEqual(sorted([c for cs in before.values() for c in cs] + added),
+                         sorted(c for cs in now.values() for c in cs))
+        layout = ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty"]
+        model = [c for c in before["model"] if c not in layout and c != "tool_exclusion"]
+        model.insert(model.index("tool_pitch") + 1, "tool_ridge")
+        model.insert(model.index("tool_ridge") + 1, "tool_exclusion")     # in the Obstacles group
+        self.assertEqual(now["model"], model)
+        self.assertEqual(now["plant"], layout[:3] + ["canopy_layout"] + layout[3:] + before["plant"])
+        for pid in ("production", "consumption", "economics", "report"):
+            self.assertEqual(now[pid], before[pid])
+
+    def test_r277_a_tool_of_the_plan_works_in_the_phase_whose_bar_has_it(self):
+        self.assertEqual(phases.home("tool_subfield", "model"), "plant")
+        self.assertEqual(phases.home("tool_row", "production"), "plant")
+        self.assertEqual(phases.home("layout_east_west", "model"), "plant")
+        self.assertEqual(phases.home("tool_building", "plant"), "model")
+        self.assertEqual(phases.home("tool_pitch", "report"), "model")
+        self.assertEqual(phases.home("tool_move", "plant"), "model")
+        for tool in ("tool_select", "tool_measure"):                # shared by the two phases of the plan
+            self.assertEqual(phases.home(tool, "plant"), "plant")
+            self.assertEqual(phases.home(tool, "model"), "model")
+            self.assertEqual(phases.home(tool, "economics"), "model")
+        self.assertEqual(phases.home("unknown", "plant"), "model")
 
     def test_next_and_previous_go_round(self):
         self.assertEqual(phases.next("model"), "plant")
