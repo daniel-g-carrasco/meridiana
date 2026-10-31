@@ -31,10 +31,10 @@ fissa non vengono descritti come MPPT indipendenti dell'inverter.
 
 ## Testo tecnico e relazione
 
-Prima del web è stato consultato l'indice locale MCM in
+Prima del web è stato consultato l'archivio locale dei modelli documentali
 `C:\Users\Grasso\Elettrico\reference\templates\06. Identità grafica\README.md`.
 La struttura documentale usa gerarchia, numeri e unità leggibili, font e identità di Meridiana, senza copiare
-cartigli o dati personali MCM.
+cartigli o dati di terzi.
 
 Fonti primarie:
 - [Qt, Supported HTML Subset](https://doc.qt.io/qt-6/richtext-html-subset.html): CSS effettivamente supportati, unità e `thead` ripetuto.
