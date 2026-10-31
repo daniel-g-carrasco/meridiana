@@ -488,6 +488,24 @@ def support_triangles(project, sf, colour=(0.30, 0.60, 0.65)) -> tuple[np.ndarra
     return _arrays(*acc)
 
 
+def prop_triangles(project, colours: dict | None = None, tint=None) -> list:
+    """R269: the 3D objects of the project where they stand, each as (positions, normals, colours) in Qt axes, with
+    props.py's palette (`colours` replaces some of its keys); `tint(prop, palette)` may give one its own palette (the
+    selection). An object a hand-edited file made impossible is left out."""
+    from . import props
+    out = []
+    for x in getattr(project, "props", []):
+        palette = {**props.DEFAULT_COLOURS, **(colours or {})}
+        if tint is not None:
+            palette = tint(x, palette)
+        try:
+            out.append(props.placed_mesh(x.kind, x.at, project.prop_base(x), x.rotation, x.height, x.width,
+                                         x.length, palette))
+        except ValueError:
+            continue
+    return out
+
+
 def project_scene(project, results: dict, colours: dict | None = None, sides=None
                   ) -> tuple[tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray, np.ndarray]:
     """The project's 3D scene with nothing selected, as the report draws it (ui/report_3d.py): the triangles of
@@ -509,10 +527,11 @@ def project_scene(project, results: dict, colours: dict | None = None, sides=Non
     for o in project.obstacle_prisms():
         colour = {"tree": c["tree"], "parapet": c["wall"]}.get(o["kind"], c["obstacle"])
         parts.append(prism_triangles(o["ring"], o["z0"], o["z1"], colour))
+    parts += prop_triangles(project, {"tree": c["tree"], "obstacle": c["obstacle"]})       # R269
     for sf in project.subfields:
         if sf.support is not None and sf.support.enabled:
             parts.append(support_triangles(project, sf))
-    tri = tuple(np.concatenate([p[i] for p in parts]) if parts else np.zeros((0, 3), np.float32) for i in range(3))
+    tri =tuple(np.concatenate([p[i] for p in parts]) if parts else np.zeros((0, 3), np.float32) for i in range(3))
     tables = []
     for sf in project.subfields:
         r = results.get(sf.id)

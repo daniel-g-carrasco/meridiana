@@ -369,6 +369,29 @@ class Writer:
                                                  "Altezza": self.value("IfcPositiveLengthMeasure",
                                                                        max(float(o["z1"] - o["z0"]), 1e-6))})
             by_container.setdefault(id(holder), (holder, []))[1].append(el)
+        from . import props
+        for x in self.p.props:
+            # R269: the 3D objects as proxies, their outline raised to their height (people stay out, as in the shadows)
+            if not x.casts_shadow():
+                continue
+            try:
+                ring, height = x.footprint(), x.measures()["height"]
+            except ValueError:
+                continue
+            z0 = self.p.prop_base(x)
+            cx, cy = float(x.at[0]), float(x.at[1])
+            local = [(q[0] - cx, q[1] - cy) for q in ring]
+            if mesh.signed_area(local) < 0:
+                local.reverse()
+            el = self.element("IfcBuildingElementProxy", self.p.prop_label(x), predefined="USERDEFINED",
+                              object_type=props.family(x.kind), identity=("prop", x.id))
+            el.Representation = self.f.createIfcProductDefinitionShape(None, None, [
+                self.body([self.extrusion(local, max(height, 1e-3))])])
+            holder = self.container(x.building)
+            self.place(el, (cx, cy, z0), relative=holder.ObjectPlacement)
+            self.pset(el, "Meridiana_Oggetto3D", {"Tipo": x.kind, "Id": x.id,
+                                                  "Altezza": self.value("IfcPositiveLengthMeasure", max(height, 1e-6))})
+            by_container.setdefault(id(holder), (holder, []))[1].append(el)
         for holder, els in by_container.values():
             self.contain(els, holder)
 

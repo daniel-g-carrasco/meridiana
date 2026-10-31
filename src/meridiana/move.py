@@ -10,6 +10,8 @@ What moves with what (study 16, B.7):
   pitch (or on the ground): one that would leave it is refused, with the reason;
 - an exclusion: its outline; one that leaves its building (or comes onto one) belongs to the building now under
   its middle, or to the ground (`host`);
+- a 3D object ("prop", R269): where it stands and its turn; it stands on the building now under it, or on the
+  ground; it moves and turns with the building it stands on;
 - a free pitch ("pitch", "<building>:<pitch id>"): its outline and the sub-fields on it; it stays on its building;
 - a row of modules ("row", "<sub-field>/<row id>", task 16c): within its sub-field, by manual.translate (the
   sub-field becomes by hand); it keeps the orientation of its sub-field, so a turn is refused with the reason.
@@ -31,7 +33,7 @@ from dataclasses import dataclass, field
 
 from .i18n import _
 
-KINDS = ("building", "subfield", "exclusion", "pitch", "row")
+KINDS = ("building", "subfield", "exclusion", "pitch", "row", "prop")
 DECIMALS = 4                    # 0,1 mm, as the outlines drawn and the copies (model.Project.duplicate)
 OUTSIDE_TOLERANCE = 0.01        # m2 a sub-field or a free pitch may go further out of its pitch or building
 NUDGE = {"": 0.10, "shift": 1.0, "ctrl": 0.01}      # the arrows: 10 cm, 1 m with Shift, 1 cm with Ctrl (PVsyst)
@@ -43,7 +45,8 @@ Point = tuple[float, float]
 # the objects
 
 def _things(project, kind: str) -> list:
-    return {"building": project.buildings, "subfield": project.subfields, "exclusion": project.exclusions}.get(kind, [])
+    return {"building": project.buildings, "subfield": project.subfields, "exclusion": project.exclusions,
+            "prop": project.props}.get(kind, [])
 
 
 def _free_pitch(project, oid: str):
@@ -85,6 +88,8 @@ def outline(project, kind: str, oid: str) -> list[Point] | None:
     thing = next((x for x in _things(project, kind) if x.id == oid), None)
     if thing is None:
         return None
+    if kind == "prop":                      # R269: the outline it covers on the plan
+        return [tuple(map(float, q)) for q in thing.footprint()]
     return [tuple(map(float, q)) for q in (thing.footprint if kind == "building" else thing.ring)]
 
 
@@ -131,6 +136,7 @@ def moving(project, kind: str, oid: str) -> list[list[Point]]:
         out += [[tuple(map(float, q)) for q in fp["ring"]] for fp in b.roof.free_pitches]
         out += [[tuple(map(float, q)) for q in x.ring] for x in (*project.subfields, *project.exclusions)
                 if x.building == oid]
+        out += [[tuple(map(float, q)) for q in x.footprint()] for x in project.props if x.building == oid]    # R269
     elif kind == "pitch":
         b, _fp, index = _free_pitch(project, oid)
         out += [[tuple(map(float, q)) for q in sf.ring] for sf in project.subfields
@@ -268,6 +274,10 @@ def _apply(p, kind: str, oid: str, f, degrees: float) -> None:
         for e in p.exclusions:
             if e.building == oid:
                 e.ring = moved(e.ring, f)
+        for x in p.props:                   # R269: the 3D objects on its roof
+            if x.building == oid:
+                x.at = moved([x.at], f)[0]
+                x.rotation = round((float(x.rotation) + degrees) % 360.0, DECIMALS)
         return
     if kind == "subfield":
         sf = next((s for s in p.subfields if s.id == oid), None)
@@ -286,6 +296,14 @@ def _apply(p, kind: str, oid: str, f, degrees: float) -> None:
         e.ring = moved(e.ring, f)
         b, _pitch = host(p, e.ring)
         e.building = b.id if b is not None else None
+        return
+    if kind == "prop":                      # R269
+        x = p.prop(oid)
+        if x is None:
+            raise ValueError(_("there is no such object to move"))
+        x.at = moved([x.at], f)[0]
+        x.rotation = round((float(x.rotation) + degrees) % 360.0, DECIMALS)
+        x.building = p.prop_host(x.at)
         return
     if kind == "pitch":
         found = _free_pitch(p, oid)

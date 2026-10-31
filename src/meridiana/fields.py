@@ -22,6 +22,8 @@ def pitch_mode_names() -> dict:
 def field_label(path: str, kind: str = "") -> str:
     if kind == "exclusion" and path == "height":
         return _("height")
+    if kind == "prop" and path in ("height", "width", "length", "rotation"):      # R269: a 3D object's measures
+        return {"height": _("height"), "width": _("width"), "length": _("length"), "rotation": _("rotation")}[path]
     return {
         "name": _("name"), "height": _("eave height"), "roof.type": _("roof"), "roof.tilt": _("slope"), "roof.free_pitches": _("free pitches"),
         "roof.eave_side": _("eave side"), "fire.subject": _("fire control"),

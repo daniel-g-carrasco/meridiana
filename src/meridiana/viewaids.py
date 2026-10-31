@@ -40,7 +40,14 @@ def _thing(project, kind: str, oid: str):
         return next((s for s in project.subfields if s.id == oid), None)
     if kind == "exclusion":
         return next((e for e in project.exclusions if e.id == oid), None)
+    if kind == "prop":                              # R269: a 3D object
+        return project.prop(oid)
     return None
+
+
+def _ring(thing, kind: str) -> list:
+    """The outline of a building, a sub-field, an exclusion or a 3D object (the plan's)."""
+    return thing.footprint if kind == "building" else thing.footprint() if kind == "prop" else thing.ring
 
 
 def height_at(project, kind: str, oid: str, x: float, y: float) -> float:
@@ -72,6 +79,8 @@ def height_at(project, kind: str, oid: str, x: float, y: float) -> float:
             z = b.height
     if kind == "exclusion":
         z += thing.obstacle_height()
+    if kind == "prop":
+        z = project.prop_base(thing) + thing.measures()["height"]
     return z
 
 
@@ -92,6 +101,8 @@ def under_text(project, kind: str, oid: str, key: str, x: float, y: float, kind_
         thing = _thing(project, kind, oid)
         if kind == "exclusion":
             name = (kind_names or {}).get(getattr(thing, "kind", ""), _("Exclusion")) + f" {oid}"
+        elif kind == "prop" and thing is not None:
+            name = project.prop_label(thing)
         else:
             name = getattr(thing, "name", oid)
     return f"{name}  ·  {where}"
@@ -102,7 +113,7 @@ def anchor(project, kind: str, oid: str) -> tuple[float, float, float] | None:
     thing = _thing(project, kind, oid)
     if thing is None:
         return None
-    ring = thing.footprint if kind == "building" else thing.ring
+    ring = _ring(thing, kind)
     if len(ring) < 3:
         return None
     p = Polygon([tuple(map(float, q)) for q in ring]).representative_point()
@@ -117,7 +128,7 @@ def measure(project, results: dict, kind: str, oid: str) -> dict:
     thing = _thing(project, kind, oid)
     if thing is None:
         return {}
-    ring = thing.footprint if kind == "building" else thing.ring
+    ring = _ring(thing, kind)
     pts = [tuple(map(float, p)) for p in ring]
     if len(pts) < 3:
         return {}
@@ -206,6 +217,9 @@ def outline(project, results: dict, kind: str, oid: str, key: str = ""):
         parts = [mesh.module_edges(m, along, across) for m in r.modules if m.rid == rid]
         return np.concatenate(parts) if parts else none
     thing = _thing(project, kind, oid)
+    if kind == "prop" and thing is not None:       # R269: the box it stands in
+        z0 = project.prop_base(thing)
+        return mesh.prism_edges(thing.footprint(), z0, z0 + thing.measures()["height"])
     if thing is None or len(thing.ring) < 3:
         return none
     ring = [(float(x), float(y)) for x, y in thing.ring]

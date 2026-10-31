@@ -20513,3 +20513,159 @@ msgstr[1] "{n} falde di pensilina modificate a mano non si sono potute leggere c
 #: src/meridiana/ui/properties.py
 msgid "Proposed"
 msgstr "Proposto"
+
+#: src/meridiana/model.py:523
+msgid "Broadleaf tree"
+msgstr "Latifoglia"
+
+#: src/meridiana/model.py:523
+msgid "Conifer"
+msgstr "Conifera"
+
+#: src/meridiana/model.py:523
+msgid "Shrub"
+msgstr "Arbusto"
+
+#: src/meridiana/model.py:523
+msgid "Hedge"
+msgstr "Siepe"
+
+#: src/meridiana/model.py:524
+msgid "Palm"
+msgstr "Palma"
+
+#: src/meridiana/model.py:525
+msgid "Dome skylight"
+msgstr "Lucernario a cupola"
+
+#: src/meridiana/model.py:525
+msgid "Antenna"
+msgstr "Antenna"
+
+#: src/meridiana/model.py:526
+msgid "Satellite dish"
+msgstr "Parabola"
+
+#: src/meridiana/model.py:526
+msgid "Tank"
+msgstr "Serbatoio"
+
+#: src/meridiana/model.py:526
+msgid "Stairwell"
+msgstr "Vano scala"
+
+#: src/meridiana/model.py:526
+msgid "Lift shaft"
+msgstr "Vano ascensore"
+
+#: src/meridiana/model.py:527
+msgid "Obstacle"
+msgstr "Ostacolo"
+
+#: src/meridiana/model.py:527
+msgid "Person"
+msgstr "Persona"
+
+#: src/meridiana/model.py:528
+msgid "Person walking"
+msgstr "Persona che cammina"
+
+#: src/meridiana/model.py:528
+msgid "Child"
+msgstr "Bambino"
+
+#: src/meridiana/model.py:528
+msgid "Worker"
+msgstr "Operaio"
+
+#: src/meridiana/model.py:528
+msgid "Car"
+msgstr "Auto"
+
+#: src/meridiana/model.py:529
+msgid "SUV"
+msgstr "SUV"
+
+#: src/meridiana/fields.py:26
+msgid "width"
+msgstr "larghezza"
+
+#: src/meridiana/fields.py:26
+msgid "length"
+msgstr "lunghezza"
+
+#: src/meridiana/fields.py:26
+msgid "rotation"
+msgstr "rotazione"
+
+#: src/meridiana/ui/properties.py:1157
+msgid "Crown diameter"
+msgstr "Diametro della chioma"
+
+#: src/meridiana/ui/properties.py:1161 src/meridiana/ui/properties.py:1168
+msgid "Length"
+msgstr "Lunghezza"
+
+#: src/meridiana/ui/properties.py:1168 src/meridiana/ui/properties.py:1169
+msgid "Width"
+msgstr "Larghezza"
+
+#: src/meridiana/ui/properties.py:1172
+msgid "Rotation"
+msgstr "Rotazione"
+
+#: src/meridiana/ui/properties.py:1175
+msgid "Use the default measures"
+msgstr "Usa le misure predefinite"
+
+#: src/meridiana/ui/properties.py:1180
+msgid "Measures: the defaults for this kind, indicative; measure them on the site."
+msgstr "Misure: quelle predefinite del tipo, indicative; da misurare sul posto."
+
+#: src/meridiana/ui/properties.py:1181
+msgid "It casts its shadow on the modules in the calculation."
+msgstr "Nel calcolo proietta la sua ombra sui moduli."
+
+#: src/meridiana/ui/properties.py:1182
+msgid "A person is drawn for scale: it casts no shadow in the calculation."
+msgstr "Una persona è disegnata per dare la scala: nel calcolo non fa ombra."
+
+#: src/meridiana/ui/window.py:898
+msgid "Place a tree, a roof obstacle, a person or a car with a click on the plan"
+msgstr "Metti un albero, un ostacolo del tetto, una persona o un'auto con un clic sulla pianta"
+
+#: src/meridiana/ui/window.py:2104
+msgid "Trees"
+msgstr "Alberi"
+
+#: src/meridiana/ui/window.py:2105
+msgid "Roof obstacles"
+msgstr "Ostacoli del tetto"
+
+#: src/meridiana/ui/window.py:2106
+msgid "People"
+msgstr "Persone"
+
+#: src/meridiana/ui/window.py:2106
+msgid "Cars"
+msgstr "Auto"
+
+#: src/meridiana/ui/window.py:2117
+msgid "{what}: click where it goes on the plan; Esc gives up"
+msgstr "{what}: fai clic sulla pianta dove va; Esc rinuncia"
+
+#: src/meridiana/ui/window.py:2126
+msgid "Place a 3D object"
+msgstr "Metti un oggetto 3D"
+
+#: src/meridiana/ui/window.py:2743
+msgid "Delete a 3D object"
+msgstr "Elimina un oggetto 3D"
+
+#: src/meridiana/ui/window.py:3370
+msgid "3D objects"
+msgstr "Oggetti 3D"
+
+#: src/meridiana/shortcuts.py:71
+msgid "3D object…"
+msgstr "Oggetto 3D…"

@@ -68,6 +68,7 @@ def commands() -> list[Command]:
         c("tool_ridge", _("Ridge"), ("C",), "draw"),                     # R275
         c("tool_subfield", _("Sub-field"), ("S",), "draw"),
         c("tool_exclusion", _("Exclusion"), ("X",), "draw"),
+        c("object_3d", _("3D object…"), ("O",), "draw"),                # R269: a tree, an obstacle, a person, a car
         # a row of modules drawn by hand (task 16c): L was free (design 2.2)
         c("tool_row", _("Row of modules"), ("L",), "draw"),
         # M moves (and R inside Move turns), D measures: study 16, B; Daniel, 23/10/2026 (config version 14 moves a

@@ -20,6 +20,22 @@ def obstacle_kind_names() -> dict:
             "column": _("column"), "beam": _("beam")}
 
 
+def prop_solids(project) -> list:
+    """R269: the shadows of the 3D objects, trees, roof obstacles and cars (props.shadow_solid's simple hulls, each
+    named as the tree shows it: «Conifer 2»); people cast none the calculation needs."""
+    from .. import props
+    out = []
+    for x in getattr(project, "props", []):
+        if not x.casts_shadow():
+            continue
+        try:
+            corners = props.placed_solids(x.kind, x.at, project.prop_base(x), x.rotation, x.height, x.width, x.length)
+        except ValueError:
+            continue                    # measures a hand-edited file made impossible: the check says nothing more
+        out += [nearshade.Solid(c, project.prop_label(x)) for c in corners]
+    return out
+
+
 def obstacles_of(project, sf, prisms: list | None = None) -> list:
     """What can cast a shadow on a sub-field's modules, as convex solids: the exclusions that rise above
     their roof or the ground, the parapets, the other buildings with their roofs; and the other pitches of its
@@ -35,6 +51,7 @@ def obstacles_of(project, sf, prisms: list | None = None) -> list:
         else:
             name = f"{names.get(o['kind'], o['kind'])} {o['id']}"
         out += nearshade.prism(o["ring"], o["z0"], o["z1"], name)
+    out += prop_solids(project)
     for b in project.buildings:
         if b.id == sf.building:
             own = b.pitch_index(sf.pitch)

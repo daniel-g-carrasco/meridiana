@@ -27,7 +27,7 @@ from . import atomic, layout, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 21
+FORMAT_VERSION = 22
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -478,6 +478,8 @@ def _to_21(data: dict, notes: list | None = None) -> dict:
 # 20 -> 21: a parking canopy is a structure, a building with `canopy` (R281): the canopies made as sub-fields on
 #           planes of their own are recognised and become one, their slopes on its pitches; the slopes changed by
 #           hand stay sub-fields; the designer is told both (_to_21)
+# 21 -> 22: the 3D objects of the surroundings (R269: trees, roof obstacles, people, cars), none before; an older
+#           Meridiana refuses the file rather than dropping them
 MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                     3: lambda data: {**data, "variants": [{"id": "v1", "name": "Base", "note": ""}], "variant": "v1"},
                     4: lambda data: data, 5: lambda data: {**data, "underlays": data.get("underlays", [])},
@@ -491,7 +493,7 @@ MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                         uuid.NAMESPACE_URL, "meridiana:legacy:" + (data.get("series_id") or
                         repr((data.get("created", ""), data.get("job_id", ""), data.get("name", ""))))))},
                     19: lambda data: data,  # optional explicit optimizer groups; absent keeps legacy order
-                    20: _to_21}
+                    20: _to_21, 21: lambda data: {**data, "props": data.get("props", [])}}
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
 ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
@@ -513,6 +515,18 @@ def exclusion_names() -> dict:
     return {"vent": _("Smoke vent (EFC)"), "opening": _("Opening"), "plant": _("Roof plant"),
             "skylight": _("Skylight"), "chimney": _("Chimney"), "tree": _("Tree"), "walkway": _("Walkway"),
             "other": _("Other")}
+
+
+def prop_names() -> dict:
+    """What each kind of 3D object is called (R269): the menu of the tool, the properties, the tree, the shadows."""
+    from .i18n import _
+    return {"broadleaf": _("Broadleaf tree"), "conifer": _("Conifer"), "shrub": _("Shrub"), "hedge": _("Hedge"),
+            "palm": _("Palm"), "chimney": _("Chimney"), "vent": _("Smoke vent (EFC)"), "skylight": _("Skylight"),
+            "dome_skylight": _("Dome skylight"), "plant": _("Roof plant"), "antenna": _("Antenna"),
+            "dish": _("Satellite dish"), "tank": _("Tank"), "stairwell": _("Stairwell"), "elevator": _("Lift shaft"),
+            "walkway": _("Walkway"), "opening": _("Opening"), "other": _("Obstacle"), "adult": _("Person"),
+            "walking": _("Person walking"), "child": _("Child"), "worker": _("Worker"), "compact": _("Car"),
+            "suv": _("SUV")}
 
 
 def _now() -> str:
@@ -767,6 +781,35 @@ class ExclusionItem:
 
     def obstacle_height(self) -> float:
         return float(self.height) if self.height is not None else OBSTACLE_HEIGHTS.get(self.kind, 0.0)
+
+
+@dataclass
+class Prop:
+    """A 3D object of the surroundings (R269, format 22): a tree, a roof obstacle, a person, a car, drawn by props.py.
+    It stands at `at` (the middle of its outline) on the roof of `building` or on the ground, turned by `rotation`
+    degrees anticlockwise on the plan. The measures are None for the kind's default (props.measures): `width` the
+    crown's diameter of a tree, else the side across; `length` a hedge's or a car's length, an obstacle's depth.
+    Shared by the variants, as the buildings: trees, obstacles and cars cast their shadows, people do not."""
+    id: str
+    kind: str = "broadleaf"
+    at: list = field(default_factory=lambda: [0.0, 0.0])
+    rotation: float = 0.0
+    height: float | None = None
+    width: float | None = None
+    length: float | None = None
+    building: str | None = None
+
+    def measures(self) -> dict:
+        from . import props
+        return props.measures(self.kind, self.height, self.width, self.length)
+
+    def footprint(self) -> list:
+        from . import props
+        return props.footprint(self.kind, self.at, self.rotation, self.height, self.width, self.length)
+
+    def casts_shadow(self) -> bool:
+        from . import props
+        return props.family(self.kind) != "person"
 
 
 @dataclass
@@ -1067,6 +1110,23 @@ def _check_project(data: dict) -> list[str]:
         if raw.get("height") is not None:
             _check_number(raw["height"], f"{path}.height", 0.0, HEIGHT_LIMIT)
         _check_number(raw.get("clearance", 0.0), f"{path}.clearance", 0.0, COORD_LIMIT)
+    from . import props as _props
+    for i, raw in enumerate(data.get("props") or []):          # R269, format 22
+        path = f"props[{i}]"
+        raw = _check_dict(raw, path)
+        _check_fields(Prop, raw, path, unknown)
+        if raw.get("kind", "broadleaf") not in _props.KINDS:
+            raise ValueError(f"{path}.kind: {raw.get('kind')!r} is not a kind of 3D object")
+        at = raw.get("at", [0.0, 0.0])
+        if at.__class__ is not list or len(at) != 2:
+            raise ValueError(f"{path}.at: {at!r} is not a point")
+        for k, value in enumerate(at):
+            _check_number(value, f"{path}.at[{k}]", -COORD_LIMIT, COORD_LIMIT)
+        _check_number(raw.get("rotation", 0.0), f"{path}.rotation", -3600.0, 3600.0)
+        for key in ("height", "width", "length"):
+            if raw.get(key) is not None:
+                if _check_number(raw[key], f"{path}.{key}", 0.0, HEIGHT_LIMIT) <= 0:
+                    raise ValueError(f"{path}.{key}: {raw[key]!r} is not above zero")
     for i, raw in enumerate(data.get("underlays") or []):
         path = f"underlays[{i}]"
         raw = _check_dict(raw, path)
@@ -1109,7 +1169,7 @@ def _check_project(data: dict) -> list[str]:
         raise ValueError("bim_id: expected a UUID") from None
     known = {"format", "version", "app_version", "name", "site", "climate", "sun_window", "buildings", "exclusions",
              "consumption", "rules", "network", "network_consent", "variants", "variant", "underlays", "report",
-             "resources", "reserved", "created", "modified", "job_id", "series_id", "bim_id"}
+             "resources", "reserved", "created", "modified", "job_id", "series_id", "bim_id", "props"}
     unknown.extend(k for k in data if k not in known)
     return unknown
 
@@ -1126,6 +1186,7 @@ class Project:
     buildings: list[Building] = field(default_factory=list)
     subfields: list[SubField] = field(default_factory=list)
     exclusions: list[ExclusionItem] = field(default_factory=list)
+    props: list[Prop] = field(default_factory=list)       # R269: the 3D objects of the surroundings (format 22)
     modules: dict = field(default_factory=lambda: {k: dict(v) for k, v in GENERIC_MODULES.items()})
     # the energy side, each a dict of what differs from the defaults (energy.system, energy.consumption,
     # energy.economics read them): losses, inverter, thermal cases; the consumption of the POD; the money
@@ -1181,7 +1242,7 @@ class Project:
     # ids
 
     def new_id(self, prefix: str) -> str:
-        used = {x.id for x in (*self.buildings, *self.subfields, *self.exclusions, *self.underlays)}
+        used = {x.id for x in (*self.buildings, *self.subfields, *self.exclusions, *self.underlays, *self.props)}
         n = 1
         while f"{prefix}{n}" in used:
             n += 1
@@ -1200,11 +1261,44 @@ class Project:
             out[e.id] = seen[e.kind]
         return out
 
+    # R269: the 3D objects of the surroundings
+
+    def prop(self, pid: str | None) -> Prop | None:
+        return next((x for x in self.props if x.id == pid), None)
+
+    def prop_label(self, item: Prop) -> str:
+        """«Broadleaf tree 2»: its kind and its number among those of its kind, in the order placed."""
+        at = next((i for i, x in enumerate(self.props) if x.id == item.id), None)
+        n = sum(1 for x in self.props[:at + 1] if x.kind == item.kind) if at is not None else 0
+        return f"{prop_names().get(item.kind, item.kind)} {n or item.id}"
+
+    def prop_base(self, item: Prop) -> float:
+        """The height it stands at: the roof of its building under its middle, the ground otherwise."""
+        b = self.building(item.building)
+        return float(roof_z(b, [(float(item.at[0]), float(item.at[1]))])[0]) if b is not None else 0.0
+
+    def prop_host(self, at) -> str | None:
+        """The building whose outline holds the point, or None (the ground). Not a canopy: a car or a person under
+        it stands on the ground, not on its roof."""
+        from shapely.geometry import Point, Polygon
+        here = Point(float(at[0]), float(at[1]))
+        for b in self.buildings:
+            if b.canopy is None and len(b.footprint) >= 3 and Polygon(b.footprint).buffer(1e-6).contains(here):
+                return b.id
+        return None
+
+    def _prop_exclusions(self, building: str | None) -> list:
+        """The roof obstacles among the 3D objects on a building (or on the ground) keep the modules away, as an
+        exclusion of their outline does: a chimney placed as a 3D object is not covered by modules."""
+        from . import props
+        return [x for x in self.props if x.building == building and props.family(x.kind) == "obstacle"]
+
     def duplicate(self, kind: str, oid: str, offset: tuple = (1.0, -1.0)) -> str:
         """A copy of a building, a sub-field or an exclusion, `offset` metres away (East, North), with an id of its
         own; a sub-field's copy has no modules laid until asked. The new id; ValueError for nothing to copy."""
         from .i18n import _
-        found = {"building": self.buildings, "subfield": self.subfields, "exclusion": self.exclusions}.get(kind, [])
+        found = {"building": self.buildings, "subfield": self.subfields, "exclusion": self.exclusions,
+                 "prop": self.props}.get(kind, [])
         thing = next((x for x in found if x.id == oid), None)
         if thing is None:
             raise ValueError(f"no {kind} {oid}")
@@ -1212,7 +1306,13 @@ class Project:
 
         def moved(ring):
             return [[round(float(x) + offset[0], 4), round(float(y) + offset[1], 4)] for x, y in ring]
-        copy = dataclasses.replace(thing, id=self.new_id({"building": "b", "subfield": "s", "exclusion": "e"}[kind]))
+        copy = dataclasses.replace(thing, id=self.new_id({"building": "b", "subfield": "s", "exclusion": "e",
+                                                          "prop": "o"}[kind]))
+        if kind == "prop":                      # R269: a point, not an outline; it stands on what is under it
+            copy.at = moved([thing.at])[0]
+            copy.building = self.prop_host(copy.at)
+            found.append(copy)
+            return copy.id
         attr = "footprint" if kind == "building" else "ring"
         setattr(copy, attr, moved(getattr(thing, attr)))
         if kind == "building":
@@ -1313,7 +1413,10 @@ class Project:
 
     def exclusions_of(self, sf: SubField) -> list[layout.Exclusion]:
         return [layout.Exclusion(ring=[tuple(p) for p in e.ring], kind=e.kind, clearance=e.clearance)
-                for e in self.exclusions if e.building == sf.building]
+                for e in self.exclusions if e.building == sf.building] + [
+            # R269: a roof obstacle placed as a 3D object keeps the modules off its outline too
+            layout.Exclusion(ring=x.footprint(), kind=x.kind if x.kind in EXCLUSION_KINDS else "other")
+            for x in self._prop_exclusions(sf.building)]
 
     def obstacle_prisms(self) -> list[dict]:
         """The exclusions that rise above their roof or the ground, and the parapets of the flat roofs, as
@@ -1386,9 +1489,14 @@ class Project:
                 "window": self.sun_window,
                 "host": [host.geometry_key(), host.fire.subject] if host is not None else None,
                 "exclusions": [[e.ring, e.kind, e.clearance] for e in self.exclusions if e.building == sf.building]}
+        own_props = self._prop_exclusions(sf.building)
+        if own_props:                           # R269: only when there are, so the keys of before stay as they were
+            data["props"] = [asdict(x) for x in own_props]
         if sf.layout_params().shade_free and not sf.manual:
             data["shade"] = {"buildings": [b.geometry_key() for b in self.buildings],
                              "obstacles": [[e.ring, e.kind, e.height, e.building] for e in self.exclusions]}
+            if self.props:                      # R269: their shadows
+                data["shade"]["props"] = [asdict(x) for x in self.props if x.casts_shadow()]
         return json.dumps(data, sort_keys=True, default=str)
 
     def layout_state(self, sf: SubField, keys: dict, results: dict) -> str:
@@ -1404,7 +1512,7 @@ class Project:
     # files
 
     def to_json(self) -> dict:
-        """The project as the file holds it (format 21): every variant with its design, the one in hand too;
+        """The project as the file holds it (format 22): every variant with its design, the one in hand too;
         the working copy of the fields above goes into its variant."""
         data = asdict(self)
         for k in DESIGN:
@@ -1479,6 +1587,7 @@ class Project:
             b.fire = build(Fire, raw.get("fire", {}))
             p.buildings.append(b)
         p.exclusions = [build(ExclusionItem, raw) for raw in data.get("exclusions", [])]
+        p.props = [build(Prop, raw) for raw in data.get("props") or [] if isinstance(raw, dict)]     # R269
         p.underlays = [build(Underlay, raw) for raw in data.get("underlays", []) if isinstance(raw, dict)
                        and raw.get("id")]
         if not any(v.get("id") == p.variant for v in p.variants):          # a file edited by hand

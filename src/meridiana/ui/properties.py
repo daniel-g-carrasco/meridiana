@@ -1116,3 +1116,68 @@ class Properties(QScrollArea):
                                    "fire-brigade rules apply (DCPREV 14030/2025, 3.3.5.1).")))
         box.addWidget(self._sides_group(len(e.ring), lambda: self._object().ring, "ring"))
         box.addStretch(1)
+
+    # a 3D object of the surroundings (R269)
+
+    def show_prop(self, x: model.Prop) -> None:
+        if self.kind != "prop" or self.oid != x.id:
+            self.drop_typing()
+        self.kind, self.oid = "prop", x.id
+        self.shown = {"object": x}
+        from .. import props
+        if not self._same(("prop", props.family(x.kind), x.kind == "hedge",
+                           all(v is None for v in (x.height, x.width, x.length)))):
+            self._build_prop(x)
+        self._refresh()
+
+    def _build_prop(self, x: model.Prop) -> None:
+        from .. import props
+        group = props.family(x.kind)
+        box = self._page(_("3D object"))
+        form = make_form()
+        kind = self._bind(combo(model.prop_names().items(), x.kind), lambda: self._object().kind)
+
+        def kind_chosen(_i):
+            chosen = kind.currentData()
+            change = {"kind": chosen}
+            if props.family(chosen) != props.family(self._object().kind):
+                change.update(height=None, width=None, length=None)     # a tree's crown is no car's width
+            self.edited.emit(self.kind, self.oid, change)
+        kind.currentIndexChanged.connect(kind_chosen)
+        form.addRow(_("Kind"), kind)
+
+        def measure(key):
+            return lambda: self._object().measures()[key]
+        height = self._bind(spin(0.05, 100, x.measures()["height"], " m", 2, 0.1), measure("height"))
+        height.valueChanged.connect(lambda v: self._emit("height", v))
+        form.addRow(_("Height"), height)
+        if group == "tree":
+            crown = self._bind(spin(0.05, 60, x.measures()["crown_diameter"], " m", 2, 0.1), measure("crown_diameter"))
+            crown.valueChanged.connect(lambda v: self._emit("width", v))
+            form.addRow(_("Crown diameter"), crown)
+            if x.kind == "hedge":
+                hedge = self._bind(spin(0.1, 200, x.measures()["length"], " m", 2, 0.5), measure("length"))
+                hedge.valueChanged.connect(lambda v: self._emit("length", v))
+                form.addRow(_("Length"), hedge)
+        elif group in ("obstacle", "car"):
+            width = self._bind(spin(0.05, 100, x.measures()["width"], " m", 2, 0.1), measure("width"))
+            width.valueChanged.connect(lambda v: self._emit("width", v))
+            long_ = self._bind(spin(0.05, 100, x.measures()["length" if group == "car" else "depth"], " m", 2, 0.1),
+                               measure("length" if group == "car" else "depth"))
+            long_.valueChanged.connect(lambda v: self._emit("length", v))
+            form.addRow(_("Length") if group == "car" else _("Width"), long_ if group == "car" else width)
+            form.addRow(_("Width") if group == "car" else _("Depth"), width if group == "car" else long_)
+        turn = self._bind(spin(-360, 360, float(x.rotation), " °", 1, 15), lambda: float(self._object().rotation))
+        turn.valueChanged.connect(lambda v: self._emit("rotation", v % 360.0))
+        form.addRow(_("Rotation"), turn)
+        box.addLayout(form)
+        if any(v is not None for v in (x.height, x.width, x.length)):
+            back = QPushButton(_("Use the default measures"))
+            back.clicked.connect(lambda: self.edited.emit(self.kind, self.oid,
+                                                          {"height": None, "width": None, "length": None}))
+            box.addWidget(back)
+        else:
+            box.addWidget(self._note(_("Measures: the defaults for this kind, indicative; measure them on the site.")))
+        box.addWidget(self._note(_("It casts its shadow on the modules in the calculation.") if group != "person" else
+                                 _("A person is drawn for scale: it casts no shadow in the calculation.")))
+        box.addStretch(1)

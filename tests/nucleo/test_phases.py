@@ -60,7 +60,7 @@ class ThePhases(unittest.TestCase):
         modules = [t.command for g in plant.groups if g.id == "modules" for t in g.tools]
         self.assertEqual(modules, ["tool_subfield", "tool_row", "layout_east_west", "canopy_layout", "fill", "empty"])
         self.assertEqual([t.command for t in plant.tools(planned=True) if t.planned], [])   # «On a canopy» is there (R281)
-        self.assertEqual([t.command for t in model.tools(planned=True) if t.planned], ["object_3d"])
+        self.assertEqual([t.command for t in model.tools(planned=True) if t.planned], [])    # R269: «3D object»
         edit = [t.command for g in model.groups if g.id == "edit" for t in g.tools]
         self.assertEqual(edit, ["tool_select", "tool_move", "tool_rotate"])
         precision = [t.command for g in model.groups if g.id == "precision" for t in g.tools]
@@ -122,13 +122,14 @@ class ThePhases(unittest.TestCase):
         now = {p.id: [t.command for t in p.tools()] for p in phases.phases()}
         lost = {c for cs in before.values() for c in cs} - {c for cs in now.values() for c in cs}
         self.assertEqual(lost, set())
-        added = ["tool_ridge", "canopy_layout"]           # R275 and R281, new on the bars
+        added = ["tool_ridge", "canopy_layout", "object_3d"]     # R275, R281 and R269, new on the bars
         self.assertEqual(sorted([c for cs in before.values() for c in cs] + added),
                          sorted(c for cs in now.values() for c in cs))
         layout = ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty"]
         model = [c for c in before["model"] if c not in layout and c != "tool_exclusion"]
         model.insert(model.index("tool_pitch") + 1, "tool_ridge")
         model.insert(model.index("tool_ridge") + 1, "tool_exclusion")     # in the Obstacles group
+        model.insert(model.index("tool_exclusion") + 1, "object_3d")      # R269, beside it
         self.assertEqual(now["model"], model)
         self.assertEqual(now["plant"], layout[:3] + ["canopy_layout"] + layout[3:] + before["plant"])
         for pid in ("production", "consumption", "economics", "report"):

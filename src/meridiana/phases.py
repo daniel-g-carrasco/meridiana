@@ -87,11 +87,10 @@ def phases() -> list[Phase]:
                 T("carport", _("Canopy")),
                 T("tool_pitch", icon="pitch"),
                 T("tool_ridge", icon="ridge"))),        # R275: the roof from its ridge
-            # the objects of the scene (trees, cars, people) once they are part of the program (study 22, 3.2 and
-            # question 10: on the bar only when they are there)
+            # the objects of the scene (trees, roof obstacles, cars, people: R269, study 22, 3.2 and question 10)
             Group("obstacles", _("Obstacles"), (
                 T("tool_exclusion", icon="exclusion"),  # an exclusion is an obstacle on the roof (a vent, a skylight)
-                T("object_3d", _("3D object"), planned="oggetti-3d"))),
+                T("object_3d", _("3D object"), icon="object_3d"))),
             Group("precision", _("Precision"), (
                 T("tool_measure", icon="measure"),
                 T("square", _("Square")),

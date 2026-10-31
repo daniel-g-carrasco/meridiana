@@ -518,3 +518,88 @@ def shadow_solid(kind, rotation=0.0, **dimensions):
                   _shadow_box(length * 0.55, width * 0.60, height * 0.52, height))
         return [_rotate_model(corners, rotation) for corners in solids]
     raise ValueError(f"unknown prop kind: {kind}")
+
+
+# R269: the props as objects of a project (model.Prop), placed on the site. A prop keeps its kind, where it stands,
+# its turn and up to three measures (None: the kind's default); these functions give its plan outline, its mesh in
+# the 3D scene and its shadow solids at its place.
+
+FAMILIES = {**{k: "tree" for k in TREE_KINDS}, **{k: "obstacle" for k in OBSTACLE_KINDS},
+            **{k: "person" for k in PERSON_KINDS}, **{k: "car" for k in CAR_KINDS}}
+KINDS = tuple(FAMILIES)
+ROUND = ("broadleaf", "conifer", "shrub", "palm")      # a round crown: an octagon on the plan
+
+
+def family(kind: str) -> str:
+    """"tree", "obstacle", "person" or "car"; ValueError for a kind that is none of them."""
+    if kind not in FAMILIES:
+        raise ValueError(f"unknown prop kind: {kind}")
+    return FAMILIES[kind]
+
+
+def measures(kind: str, height=None, width=None, length=None) -> dict:
+    """The keyword arguments of the kind's builder (and of shadow_solid), every one resolved: for a tree `width` is
+    the crown's diameter and `length` a hedge's length, the trunk the kind's share of the height; for an obstacle
+    `width` and `length` its sides (local East and North); for a car `length` along local East; a person keeps its
+    proportions with its height."""
+    group = family(kind)
+    if group == "tree":
+        h0, c0, t0, l0 = TREE_DEFAULTS[kind]
+        h = h0 if height is None else _positive(height, "height")
+        h, crown, trunk, long_ = _tree_dimensions(kind, h, width, t0 * h / h0, length)
+        out = {"height": h, "crown_diameter": crown, "trunk_height": trunk}
+        if kind == "hedge":
+            out["length"] = long_
+        return out
+    if group == "obstacle":
+        w, d, h = _obstacle_dimensions(kind, width, length, height)
+        return {"width": w, "depth": d, "height": h}
+    if group == "person":
+        w, d, h = _person_dimensions(kind, width, None, height)
+        return {"width": w, "depth": d, "height": h}
+    long_, w, h = _car_dimensions(kind, length, width, height)
+    return {"length": long_, "width": w, "height": h}
+
+
+def plan_size(kind: str, height=None, width=None, length=None) -> tuple[float, float]:
+    """The sides of the prop's outline on the plan before its turn: along local East, along local North."""
+    m = measures(kind, height, width, length)
+    group = family(kind)
+    if group == "tree":
+        return (m.get("length", m["crown_diameter"]), m["crown_diameter"])
+    if group == "car":
+        return m["length"], m["width"]
+    return m["width"], m["depth"]
+
+
+def footprint(kind: str, at, rotation: float = 0.0, height=None, width=None, length=None) -> list[tuple[float, float]]:
+    """The outline the prop covers on the plan, in the site's metres: an octagon for a round crown, else the turned
+    rectangle of its sides."""
+    a, b = plan_size(kind, height, width, length)
+    if kind in ROUND:
+        angle = np.arange(8) * math.tau / 8 + math.tau / 16
+        local = np.stack((a / 2 * np.cos(angle), a / 2 * np.sin(angle), np.zeros(8)), axis=1)
+    else:
+        local = np.array(((-a / 2, -b / 2, 0.0), (a / 2, -b / 2, 0.0), (a / 2, b / 2, 0.0), (-a / 2, b / 2, 0.0)))
+    turned = _rotate_model(local, float(rotation))
+    x, y = float(at[0]), float(at[1])
+    return [(round(float(p[0]) + x, 4), round(float(p[1]) + y, 4)) for p in turned]
+
+
+def placed_mesh(kind: str, at, z0: float = 0.0, rotation: float = 0.0, height=None, width=None, length=None,
+                colours=None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """The prop's triangles where it stands (positions, normals, colours), in the 3D view's axes (mesh.to_qt)."""
+    m = measures(kind, height, width, length)
+    builder = {"tree": tree, "obstacle": obstacle, "person": person, "car": car}[family(kind)]
+    pos, nor, col = builder(kind, rotation=float(rotation), colours=colours, **m)
+    pos = np.asarray(pos, dtype=np.float32) + np.asarray(mesh.to_qt(float(at[0]), float(at[1]), float(z0)),
+                                                         dtype=np.float32)
+    return pos, np.asarray(nor, dtype=np.float32), np.asarray(col, dtype=np.float32)
+
+
+def placed_solids(kind: str, at, z0: float = 0.0, rotation: float = 0.0, height=None, width=None,
+                  length=None) -> list[np.ndarray]:
+    """The prop's shadow solids where it stands (model axes, nearshade.Solid's corners)."""
+    m = measures(kind, height, width, length)
+    shift = np.array((float(at[0]), float(at[1]), float(z0)))
+    return [np.asarray(c, dtype=np.float64) + shift for c in shadow_solid(kind, float(rotation), **m)]

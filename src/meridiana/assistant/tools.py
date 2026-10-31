@@ -458,7 +458,14 @@ def _navigation_targets(host) -> list[dict]:
 
 def read_navigation(host, state: State) -> Outcome:
     from .navigation_help import snapshot
-    return Outcome(_json(snapshot(host)), _("Read your current navigation settings"))
+    data = snapshot(host)
+    # the commands as rows and their keys once (the bindings repeated them): written as dicts they passed the limit
+    # of an answer with the commands of 31/10/2026, and the model read a truncated part
+    data.pop("bindings", None)
+    if "commands" in data:
+        data["commands_columns"] = ["id", "label", "keys"]
+        data["commands"] = [[c["id"], c["label"], c["keys"]] for c in data["commands"]]
+    return Outcome(_json(data), _("Read your current navigation settings"))
 
 
 def list_navigation_targets(host, state: State) -> Outcome:

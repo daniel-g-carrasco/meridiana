@@ -88,6 +88,8 @@ def topics_of(before: dict, after: dict) -> set[str]:
             topics.add("project:text")
     if (before.get("exclusions") or []) != (after.get("exclusions") or []):
         topics.add("project:geometry")
+    if (before.get("props") or []) != (after.get("props") or []):      # R269: the 3D objects
+        topics.add("project:geometry")
     a, b = old.get("subfields") or [], new.get("subfields") or []
     if a != b:
         pairs = list(zip(a, b, strict=False))
@@ -342,9 +344,13 @@ class ProjectSession:
         p = self.project
         keys = self.layout_keys if layout_keys is None else layout_keys
         wired = {sf.id: [sf.params.get(k) for k in model.ELECTRICAL] for sf in p.subfields}
-        return json.dumps({"layouts": sorted(keys.items()), "energy": p.energy,
-                           "consumption": p.consumption, "economics": p.economics, "modules": p.modules,
-                           "site": dataclasses.asdict(p.site), "wired": wired}, sort_keys=True, default=str)
+        data = {"layouts": sorted(keys.items()), "energy": p.energy,
+                "consumption": p.consumption, "economics": p.economics, "modules": p.modules,
+                "site": dataclasses.asdict(p.site), "wired": wired}
+        shading = [dataclasses.asdict(x) for x in p.props if x.casts_shadow()]
+        if shading:                         # R269: a tree placed shades the year; only then, the keys of before stay
+            data["props"] = shading
+        return json.dumps(data, sort_keys=True, default=str)
 
     def energy_asked(self) -> int:
         """A new energy year is asked for: its generation; the inputs it is computed from are remembered."""

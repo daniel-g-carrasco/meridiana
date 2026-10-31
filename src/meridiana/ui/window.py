@@ -893,6 +893,10 @@ class MainWindow(QMainWindow):
         act(draw, "canopy_layout", self._canopy_layout,
             tip=_("The modules laid on a canopy: a sub-field on each slope, flush with its roof"),
             action=None if "canopy_layout" in known else QAction(_("On a canopy…"), self))
+        # R269: a 3D object of the surroundings, its kind from a short menu and then a click on the plan
+        act(draw, "object_3d", self._object_3d,
+            tip=_("Place a tree, a roof obstacle, a person or a car with a click on the plan"))
+        self.commands["object_3d"].setIcon(icons.icon("object_3d"))
         # east-west pairs laid straight along a line, as the Row tool does (R279): a tool of the group
         self.tool_actions["east_west"] = act(draw, "layout_east_west", self._east_west, True,
                                              _("Draw east-west pairs of modules in a sub-field: two clicks, along the "
@@ -2085,6 +2089,44 @@ class MainWindow(QMainWindow):
         self._select("building", ids[0])
         self.hint.setText(_("The canopy is its structure: lay the modules on it in Plant › On a canopy."))
 
+    def _object_3d(self) -> None:
+        """R269: the kind of 3D object from a menu by the pointer, then the click on the plan where it goes."""
+        from PySide6.QtGui import QCursor
+        chosen = self.prop_menu().exec(QCursor.pos())
+        if chosen is not None and chosen.data():
+            self.place_prop(chosen.data())
+
+    def prop_menu(self) -> QMenu:
+        """R269: the kinds of 3D object, in four sections: trees, roof obstacles, people, cars."""
+        from .. import props as shapes
+        names = model.prop_names()
+        menu = QMenu(self)
+        for title, kinds in ((_("Trees"), shapes.TREE_KINDS),
+                             (_("Roof obstacles"), tuple(k for k in shapes.OBSTACLE_KINDS if k != "opening")),
+                             (_("People"), shapes.PERSON_KINDS), (_("Cars"), shapes.CAR_KINDS)):
+            menu.addSection(title)
+            for k in kinds:
+                menu.addAction(names[k]).setData(k)
+        return menu
+
+    def place_prop(self, kind: str) -> None:
+        """R269: wait for the click on the plan where a 3D object of this kind goes."""
+        what = model.prop_names()[kind]         # KeyError for a kind that is not one
+        self._prop_kind = kind
+        self.show_phase("model")
+        self.plan.pick_points("prop", [_("{what}: click where it goes on the plan; Esc gives up").format(what=what)])
+
+    def _prop_placed(self, at) -> None:
+        """R269: the 3D object where the plan was clicked, with its kind's measures, as one step of the undo."""
+        kind, self._prop_kind = getattr(self, "_prop_kind", None), None
+        if kind is None:
+            return
+        pid = self.project.new_id("o")
+        where = [round(float(at[0]), 4), round(float(at[1]), 4)]
+        self.edit(_("Place a 3D object"), lambda p: p.props.append(
+            model.Prop(id=pid, kind=kind, at=list(where), building=p.prop_host(where))))
+        self._select("prop", pid)
+
     def _canopy_layout(self) -> None:
         """R281, «On a canopy» (study 22, decision 9): the canopy selected (or the one a selected sub-field lies on,
         else the first), four values, then the modules in one step."""
@@ -2137,6 +2179,9 @@ class MainWindow(QMainWindow):
             return
         if what == "carport" and points:
             self._carport_placed(tuple(map(float, points[0])))
+            return
+        if what == "prop" and points:               # R269
+            self._prop_placed(tuple(map(float, points[0])))
             return
         if len(points) < 2:
             return
@@ -2555,6 +2600,8 @@ class MainWindow(QMainWindow):
         ring = found[1]
         x = sum(float(q[0]) for q in ring) / len(ring)
         y = sum(float(q[1]) for q in ring) / len(ring)
+        if kind == "prop":                          # R269: where it stands
+            return mesh.to_qt(x, y, self.project.prop_base(self.project.prop(oid)))
         b = self.project.building(oid if kind == "building" else
                                   getattr(self.project_subfield(oid), "building", None) if kind == "subfield" else None)
         return mesh.to_qt(x, y, b.height if b is not None else 0.0)
@@ -2686,11 +2733,14 @@ class MainWindow(QMainWindow):
                 p.buildings = [b for b in p.buildings if b.id != oid]
                 p.subfields = [s for s in p.subfields if s.building != oid]
                 p.exclusions = [e for e in p.exclusions if e.building != oid]
+                p.props = [x for x in p.props if x.building != oid]      # R269: the 3D objects on its roof
             self.edit(_("Delete a building"), drop)
         elif kind == "subfield":
             self.edit(_("Delete a sub-field"), lambda p: setattr(p, "subfields", [s for s in p.subfields if s.id != oid]))
         elif kind == "exclusion":
             self.edit(_("Delete an exclusion"), lambda p: setattr(p, "exclusions", [e for e in p.exclusions if e.id != oid]))
+        elif kind == "prop":                        # R269
+            self.edit(_("Delete a 3D object"), lambda p: setattr(p, "props", [x for x in p.props if x.id != oid]))
         else:
             return
         self._select("site", "")
@@ -2919,7 +2969,8 @@ class MainWindow(QMainWindow):
                         p.sync_network()
                 return
             target = {"building": p.building(oid), "subfield": next((s for s in p.subfields if s.id == oid), None),
-                      "exclusion": next((e for e in p.exclusions if e.id == oid), None)}.get(kind)
+                      "exclusion": next((e for e in p.exclusions if e.id == oid), None),
+                      "prop": p.prop(oid)}.get(kind)          # R269
             if target is None:
                 return
             for path, value in changes.items():
@@ -3007,6 +3058,9 @@ class MainWindow(QMainWindow):
             building = self.project.building(bid)
             pitches = building.pitches() if building is not None else []
             return ("ring", pitches[int(index)].ring) if index.isdigit() and int(index) < len(pitches) else None
+        if kind == "prop":                          # R269: what it covers on the plan; no side of it is edited
+            x = self.project.prop(oid)
+            return ("", x.footprint()) if x is not None else None
         thing = (self.project_subfield(oid) if kind == "subfield" else
                  next((e for e in self.project.exclusions if e.id == oid), None) if kind == "exclusion" else None)
         return ("ring", thing.ring) if thing is not None else None
@@ -3171,6 +3225,15 @@ class MainWindow(QMainWindow):
             pos_all.append(pos)
             nor_all.append(nor)
             col_all.append(col)
+
+        def prop_tint(x, palette):                  # R269: the 3D object selected, tinted as the rest
+            if kind != "prop" or x.id != oid:
+                return palette
+            return {k: tinted(mesh.rgb(v) if isinstance(v, str) else v, 0.5) for k, v in palette.items()}
+        for pos, nor, col in mesh.prop_triangles(self.project, tint=prop_tint):     # R269: props.py's meshes
+            pos_all.append(pos)
+            nor_all.append(nor)
+            col_all.append(col)
         for sf in self.project.subfields:
             if sf.support is not None and sf.support.enabled:
                 pos, nor, col = mesh.support_triangles(self.project, sf)
@@ -3303,6 +3366,10 @@ class MainWindow(QMainWindow):
         for e in self.project.exclusions:
             it = item(es, f"{names.get(e.kind, e.kind)} {numbers[e.id]}", "exclusion", e.id, "exclusion")
             it.setToolTip(0, e.id)
+        if self.project.props:                      # R269: the 3D objects, after the exclusions
+            objects = group(_("3D objects"), "prop", len(self.project.props))
+            for x in self.project.props:
+                item(objects, self.project.prop_label(x), "prop", x.id, "object_3d").setToolTip(0, x.id)
         self.tree.expandAll()
         self._mark_tree()
         self._tree_select()
@@ -3338,6 +3405,8 @@ class MainWindow(QMainWindow):
                                      str(r) if isinstance(r, Exception) else "")
         elif kind == "exclusion" and any(e.id == oid for e in self.project.exclusions):
             self.props.show_exclusion(next(e for e in self.project.exclusions if e.id == oid))
+        elif kind == "prop" and self.project.prop(oid) is not None:          # R269
+            self.props.show_prop(self.project.prop(oid))
         else:
             self.props.show_site(self.project, not (self.project.buildings or self.project.subfields))
 
@@ -3695,7 +3764,7 @@ class MainWindow(QMainWindow):
         from .marks import MARK_ROLE
         items = self.checks_page.items
         marks = checks.tree_marks(items)
-        groups = ("building", "subfield", "exclusion")      # the root's children, in their order
+        groups = ("building", "subfield", "exclusion", "prop")      # the root's children, in their order (R269)
 
         def mark(it, key):
             m = marks.get(key)
@@ -3738,12 +3807,13 @@ class MainWindow(QMainWindow):
                 out.append((_("Take the modules out"), lambda: self._action("empty", "subfield", oid)))
         if kind == "building":                      # the roof whole, without drawing it (R64)
             out.append((_("A sub-field on each pitch"), lambda: self._subfields_on_pitches(oid)))
-        if kind in ("building", "subfield", "exclusion"):
+        if kind in ("building", "subfield", "exclusion", "prop"):       # R269: a 3D object, no rename nor corners
             out.append(None)
-            if kind != "exclusion":
+            if kind not in ("exclusion", "prop"):
                 out.append((_("Rename…"), lambda: self._rename(kind, oid)))
             out.append((_("Duplicate"), lambda: self._duplicate(kind, oid)))
-            out.append((_("Square the corners"), self._square))
+            if kind != "prop":
+                out.append((_("Square the corners"), self._square))
             out.append(None)
             out.append((_("Delete"), self._delete))
         return out

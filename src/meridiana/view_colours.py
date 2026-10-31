@@ -32,11 +32,11 @@ HOVER = "#ff8adb"               # what a click would select: the same, lighter
 # and a lighter violet their pitches, the blue of the sub-fields and of what is laid in them, a pink the exclusions:
 # none is a status colour (the traffic light's green, yellow, red stay for the checks) nor the modules' navy
 KIND = {"building": "#b48cff", "pitch": "#d2b4ff", "subfield": "#4fb4ff", "row": "#4fb4ff", "module": "#4fb4ff",
-        "modules": "#4fb4ff", "exclusion": "#ff5fa2"}
+        "modules": "#4fb4ff", "exclusion": "#ff5fa2", "prop": "#36c9c0"}       # R269: a teal the 3D objects
 KIND_HOVER = {"building": "#d6c2ff", "pitch": "#e6d6ff", "subfield": "#9bd4ff", "row": "#9bd4ff",
-              "module": "#9bd4ff", "modules": "#9bd4ff", "exclusion": "#ff9fc6"}
+              "module": "#9bd4ff", "modules": "#9bd4ff", "exclusion": "#ff9fc6", "prop": "#8be3dd"}
 KIND_UI = {"building": ("#7a4fd1", "#c4a6ff"), "pitch": ("#9b6be0", "#d2b4ff"),
-           "subfield": ("#1d6fd6", "#6db6ff"), "exclusion": ("#c2306f", "#ff7fb6")}
+           "subfield": ("#1d6fd6", "#6db6ff"), "exclusion": ("#c2306f", "#ff7fb6"), "prop": ("#0f7f78", "#5fd8cf")}
 
 
 def kind_colour(kind: str, hover: bool = False) -> str:
@@ -54,13 +54,13 @@ def kind_ink(kind: str, dark: bool) -> str:
 PHOTO = {"bg": "#2b2f33", "bld_stroke": "#fff4dc", "bld_fill": "#f2efe628", "pitch": "#ffa552",
          "sub_stroke": "#56b8ff", "sub_fill": "#5ab0ff23", "exclusion": "#ff5fa2", "module": "#192d5a",
          "module_line": "#c6cbd6", "guide": "#7fd4ff", "halo": "#0b0d10e0", "sel": SELECT, "hover": HOVER,
-         "draw": "#ffb000", "label_bg": "#14161ac8", "label_fg": "#f2efe6"}
+         "draw": "#ffb000", "label_bg": "#14161ac8", "label_fg": "#f2efe6", "prop": "#5fd8cf"}
 
 # without imagery: a light ground, the same outlines made dark enough for it, over a light halo
 PAPER = {"bg": "#f3f1ec", "bld_stroke": "#3a352d", "bld_fill": "#3a352d10", "pitch": "#c25a12",
          "sub_stroke": "#1d6fd6", "sub_fill": "#1d6fd614", "exclusion": "#c2306f", "module": "#1f3352",
          "module_line": "#c6cbd6", "guide": "#2e6fb0", "halo": "#ffffffe0", "sel": "#c814b4", "hover": "#cc4cc0",
-         "draw": "#b85c00", "label_bg": "#1e1c19e6", "label_fg": "#f8f7f4"}
+         "draw": "#b85c00", "label_bg": "#1e1c19e6", "label_fg": "#f8f7f4", "prop": "#0f7f78"}
 
 WORLD = {"ocean": "#263943", "land": ("#52665b", "#5c6858", "#4e6261"), "border": "#a0aa98",
          "graticule": "#78909c35", "label": "#f2efe6", "label_halo": "#14161ae0"}

@@ -43,7 +43,7 @@ TOOLS = ("select", "building", "pitch", "ridge", "subfield", "exclusion", "row",
 ROW_TOOLS = ("row", "east_west")   # a row drawn by a line: of the sub-field's modules, or of east-west pairs (R279)
 DRAWING = {"building", "pitch", "ridge", "subfield", "exclusion"}   # ridge: a line, not an outline (R275)
 PITCH_FIELDS = ("depth", "tilt", "ridge", "eave")   # the rows of the Pitch card a number typed goes to (R274)
-MOVABLE = ("building", "subfield", "exclusion", "row")   # what Move takes (task 16b; a row, task 16c)
+MOVABLE = ("building", "subfield", "exclusion", "row", "prop")   # what Move takes (task 16b; a row, task 16c)
 ARROWS = {Qt.Key.Key_Left: "left", Qt.Key.Key_Right: "right", Qt.Key.Key_Up: "up", Qt.Key.Key_Down: "down"}
 LEFT_WAIT_MS = 150             # how long a left press waits for the other button of a gesture (left + right)
 TILE_UPDATE_MS = 120
@@ -53,6 +53,7 @@ MIN_PLAN_SCALE = 0.00002          # at least 50 000 m/pixel; _minimum_scale fits
 STRING_DOT_MIN_MODULE_PX = 14.0   # below this, 8 px dots merge into the line when modules get small
 
 Z_TILES, Z_BUILDING, Z_PITCH, Z_SUBFIELD, Z_EXCLUSION, Z_MODULES, Z_SELECTION = 0, 10, 12, 20, 25, 30, 40
+Z_PROP = 32                     # R269: a tree's crown over the modules it shades, under the wiring and the selection
 Z_WIRING = 35
 Z_VEIL = 1                      # over the tiles (0 and 0.5), under everything drawn
 Z_UNDERLAY = 2                  # the images imported (underlay.py): over the veil, under the drawing
@@ -843,6 +844,20 @@ class PlanView(QGraphicsView):
         for e in project.exclusions:
             add("exclusion", e.id, e.ring, cosmetic(c["exclusion"], W["exclusion"]),
                 QBrush(qcolour(c["exclusion"]), Qt.BrushStyle.BDiagPattern), Z_EXCLUSION)
+        for x in getattr(project, "props", []):
+            # R269: a 3D object as the outline it covers, a light fill and a cross on its middle
+            try:
+                ring = x.footprint()
+            except ValueError:
+                continue
+            ink = c.get("prop", view_colours.KIND["prop"])
+            add("prop", x.id, ring, cosmetic(ink, W["exclusion"]), QBrush(qcolour(ink + "33")), Z_PROP)
+            cx, cy = float(x.at[0]), float(x.at[1])
+            arm = max(0.15, min(0.6, 0.25 * min(math.dist(ring[0], ring[1]), math.dist(ring[1], ring[2]))))
+            for (ax, ay), (bx, by) in (((cx - arm, cy), (cx + arm, cy)), ((cx, cy - arm), (cx, cy + arm))):
+                mark = scene.addLine(QLineF(to_scene(ax, ay), to_scene(bx, by)), cosmetic(ink, W["exclusion"]))
+                mark.setZValue(Z_PROP + 0.01)
+                self.items_by_kind.setdefault("prop_marks", []).append(mark)
         for sf in project.subfields:
             add("subfield", sf.id, sf.ring, cosmetic(c["sub_stroke"], W["subfield"], Qt.PenStyle.DashLine),
                 QBrush(qcolour(c["sub_fill"])), Z_SUBFIELD)
@@ -1433,7 +1448,7 @@ class PlanView(QGraphicsView):
                 self.items_by_kind["selection"].append(halo)
 
     def _pick(self, scene_pos: QPointF, pixels: float = 0.0):
-        order = {"exclusion": 0, "modules": 1, "subfield": 2, "pitch": 3, "building": 4}
+        order = {"prop": 0, "exclusion": 0, "modules": 1, "subfield": 2, "pitch": 3, "building": 4}     # R269
         # inside the outline, not inside the item's shape: with a dashed pen Qt's shape leaves out a band along the
         # edges (stroke and fill cancel out), and a click by the edge of a sub-field selected its building
         hits = [it for it in self.scene().items(scene_pos, Qt.ItemSelectionMode.IntersectsItemBoundingRect)
@@ -1446,8 +1461,8 @@ class PlanView(QGraphicsView):
                 i = _quad_at(quads, scene_pos.x(), scene_pos.y())
                 if i >= 0:
                     return "module", it.data(1), keys[i]
-            elif it.data(0) == "exclusion":
-                return "exclusion", it.data(1), ""
+            elif it.data(0) in ("exclusion", "prop"):
+                return it.data(0), it.data(1), ""
         if pixels > 0.0:
             reach = pixels * self.metres_per_pixel()
             best = (-1, math.inf)
@@ -1471,8 +1486,8 @@ class PlanView(QGraphicsView):
             target = ("subfield", oid.partition("/")[0])
         elif self.selected_module[0]:
             target = ("subfield", self.selected_module[0])
-        elif kind in ("subfield", "exclusion") and project is not None:
-            things = project.subfields if kind == "subfield" else project.exclusions
+        elif kind in ("subfield", "exclusion", "prop") and project is not None:
+            things = {"subfield": project.subfields, "exclusion": project.exclusions, "prop": project.props}[kind]
             thing = next((x for x in things if x.id == oid), None)
             target = ("building", thing.building) if thing is not None and thing.building else ("site", "")
         elif kind == "building":
