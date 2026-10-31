@@ -2997,7 +2997,10 @@ class MainWindow(QMainWindow):
         return (*where, path) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
 
     def _action(self, what: str, kind: str, oid: str) -> None:
-        if what.startswith("refused:"):
+        if what.startswith("light_side:"):          # R276: the field of a side lights it on the plan
+            n = what.partition(":")[2]
+            self.plan.highlight_side(kind, oid, int(n) if n else None)
+        elif what.startswith("refused:"):
             self.hint.setText(_("Not changed: {why}").format(why=what.partition(":")[2]))
         elif what in ("pick_eave", "pick_gable") and self.project.building(oid) is not None:
             self.show_phase("model")

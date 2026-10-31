@@ -8,7 +8,7 @@ import html
 import math
 from dataclasses import replace
 
-from PySide6.QtCore import QEvent, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QObject, Qt, QTimer, Signal
 from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, QGroupBox,
                                QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSpinBox, QVBoxLayout,
                                QWidget)
@@ -186,6 +186,24 @@ def put(w: QWidget, value, force: bool = False) -> None:
             w.setVisible(bool(value))
     finally:
         w.blockSignals(blocked)
+
+
+class SideLight(QObject):
+    """The pointer or the focus on the field of a side lights that side on the plan, and leaving it puts it out
+    (study 22, 3.6; R276): `light(side or None)`."""
+
+    def __init__(self, parent, light):
+        super().__init__(parent)
+        self.light = light
+
+    def eventFilter(self, obj, event) -> bool:
+        side = obj.property("side")
+        if side is not None:
+            if event.type() in (QEvent.Type.Enter, QEvent.Type.FocusIn):
+                self.light(int(side))
+            elif event.type() in (QEvent.Type.Leave, QEvent.Type.FocusOut):
+                self.light(None)
+        return False
 
 
 class Properties(QScrollArea):
@@ -785,13 +803,17 @@ class Properties(QScrollArea):
 
     def _sides_group(self, n: int, ring, path: str) -> QGroupBox:
         """The length of each side, to change after drawing: the side stretches as in CAD programs, what is
-        at its far end moving with it. A double click on a side's measure on the plan does the same. `ring`
-        gives the outline as it is now."""
+        at its far end moving with it. A click on a side's pill on the plan, or a double click on the side, does the
+        same; the field of a side lights it on the plan. `ring` gives the outline as it is now."""
         group = Group(_("Sides"))
         help_button(group, "sides")
         form = make_form(group)
+        light = SideLight(group, lambda side: self.action.emit("light_side:" + ("" if side is None else str(side)),
+                                                                self.kind, self.oid))
         for i in range(n):
             s = self._bind(spin(0.1, 10000, 1.0, " m", 2, 0.1), lambda i=i: sides.lengths(ring())[i])
+            s.setProperty("side", i)
+            s.installEventFilter(light)
 
             def send(v, i=i):
                 try:
