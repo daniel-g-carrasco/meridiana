@@ -171,7 +171,8 @@ class Dialogs(unittest.TestCase):
         d = self.shown(CanopyDialog())
         d.rows.setCurrentIndex(1)
         self.app.processEvents()
-        self.assertEqual(len(d.preview.faces), 2)                    # two planes, one per row
+        planes = [f for f in d.preview.faces if f.kind == "plane"]
+        self.assertEqual(len(planes), 2)                             # two planes, one per row (R281: and columns)
         self.assertAlmostEqual(d.preview.pill(2).value, 10.0)      # two rows of 5 m
         self.click_pill(d.preview, 2)
         d.preview.editor.setText("12")
@@ -189,7 +190,20 @@ class Dialogs(unittest.TestCase):
         QTest.keyClick(d.preview.editor, Qt.Key.Key_Escape)
         self.assertTrue(d.isVisible())
         d.fields['clearance'].setValue(3.5)                        # a field changed: the drawing follows
-        self.assertAlmostEqual(min(p[2] for f in d.preview.faces for p in f.points), 3.5)
+        self.assertAlmostEqual(min(p[2] for f in d.preview.faces if f.kind == "plane" for p in f.points), 3.5)
+
+    def test_a_plane_seen_from_under_is_drawn_before_the_columns_and_from_above_after(self):
+        # R281: the painter's order of Y's report, 3: the columns stand under the canopy's plane
+        from meridiana.ui.preview3d import Face, Preview3D, box
+        view = Preview3D()
+        self.addCleanup(view.deleteLater)
+        view.resize(300, 220)
+        steep = Face([(0, 0, 3), (4, 0, 3), (4, 4, 6), (0, 4, 6)], "plane")      # rising to the North, 37°
+        view.show_scene([steep, *box((2, 2), (0.3, 0.3, 3))])
+        for azimuth, elevation, plane_first in ((225, 30, False), (0, 15, True)):
+            view.turn(azimuth, elevation)
+            kinds = [face.kind for _l, _d, face, _n, _f in view.drawn()]
+            self.assertEqual(kinds.index("plane") < kinds.index("structure"), plane_first, azimuth)
 
     def test_pointing_a_field_lights_its_sides(self):
         from PySide6.QtCore import QEvent

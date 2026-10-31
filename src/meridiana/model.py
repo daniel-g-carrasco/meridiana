@@ -27,7 +27,7 @@ from . import atomic, layout, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 20
+FORMAT_VERSION = 21
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -322,7 +322,136 @@ def _reshaped(data: dict) -> list[str]:
     return out
 
 
-# 1 -> 2: exclusions have a height (None: the default of their kind), buildings a parapet; both cast shadows
+CANOPY_BAY = 2.5            # m, the width of a parking space the migration to 21 counts the spaces with
+_SAME = 1e-3                # m, how far two corners may be and still be one
+
+
+def _canopy_slope(raw) -> dict | None:
+    """A slope of a canopy as the dialog of a file before format 21 made it (canopies.fields up to 30/10/2026): a
+    sub-field on the ground on its own plane, over a rectangle, the plane going down square to one of its sides.
+    Its corners from the low side, counter-clockwise, with the tilt and the heights; None for anything else (a
+    slope changed by hand, which stays a sub-field)."""
+    try:
+        params, support = raw.get("params") or {}, raw.get("support")
+        if raw.get("building") is not None or params.get("mounting") != "canopy" or support.__class__ is not dict \
+                or support.get("enabled", True) is not True:
+            return None
+        pts = [(float(x), float(y)) for x, y in raw["ring"]]
+        tilt, azimuth = float(support.get("tilt", 0.0)), float(support.get("azimuth", 0.0))
+        z0, x0, y0 = (float(support.get(k, 0.0)) for k in ("z0", "x0", "y0"))
+    except (AttributeError, KeyError, TypeError, ValueError):
+        return None
+    if len(pts) != 4 or not all(math.isfinite(v) for v in (*sum(pts, ()), tilt, azimuth, z0, x0, y0)) \
+            or not 0.0 <= tilt < 89.0:
+        return None
+    sides = [(pts[(i + 1) % 4][0] - pts[i][0], pts[(i + 1) % 4][1] - pts[i][1]) for i in range(4)]
+    lengths = [math.hypot(*s) for s in sides]
+    if min(lengths) < 0.1 or any(abs(lengths[i] - lengths[i + 2]) > _SAME for i in (0, 1)) or any(
+            abs(sides[i][0] * sides[(i + 1) % 4][0] + sides[i][1] * sides[(i + 1) % 4][1]) > _SAME * lengths[i]
+            for i in range(4)):
+        return None
+    from . import geo
+    fx, fy = geo.facing_vector(azimuth)
+    slope = math.tan(math.radians(tilt))
+    zs = [z0 - ((x - x0) * fx + (y - y0) * fy) * slope for x, y in pts]
+    low = min(zs)
+    first = next((i for i in range(4) if abs(zs[i] - low) < _SAME and abs(zs[(i + 1) % 4] - low) < _SAME), None)
+    if first is None:
+        return None
+    pts = pts[first:] + pts[:first]
+    if sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(pts, pts[1:] + pts[:1], strict=True)) < 0:
+        pts = [pts[1], pts[0], pts[3], pts[2]]          # the same low side first, counter-clockwise
+    return {"ring": pts, "tilt": tilt, "low": low, "high": max(zs)}
+
+
+def _paired(a: dict, b: dict) -> bool:
+    """Two slopes of one canopy of two rows: the same tilt and heights, the high side of one the other's."""
+    return (abs(a["tilt"] - b["tilt"]) < 1e-6 and abs(a["low"] - b["low"]) < _SAME
+            and abs(a["high"] - b["high"]) < _SAME
+            and math.dist(a["ring"][2], b["ring"][3]) < _SAME and math.dist(a["ring"][3], b["ring"][2]) < _SAME)
+
+
+def _to_21(data: dict, notes: list | None = None) -> dict:
+    """20 -> 21: a parking canopy is a structure (R281, study 22, decision 8). Up to 20 the dialog made one or two
+    sub-fields, each on its own plane, and nothing held them; from 21 the canopy is a building with `canopy` (its
+    spaces and columns), its roof the plane of the slopes (mono, or gable with the ridge between two rows), the
+    height the one under the low edge. The slopes it recognises lie on its pitches from here (`building`, `pitch`,
+    no plane of their own: the same plane). The same canopy in two variants is one building. A slope changed by
+    hand (not a rectangle, its plane askew) stays a sub-field on its own plane; `notes` says both."""
+    from .i18n import _, ngettext
+    out = copy.deepcopy(data)
+    used = {str(x.get("id")) for key in ("buildings", "exclusions", "underlays") for x in out.get(key) or []
+            if x.__class__ is dict}
+    designs = [v["design"] for v in out.get("variants") or [] if v.__class__ is dict
+               and v.get("design").__class__ is dict]
+    for design in designs:
+        used |= {str(s.get("id")) for s in design.get("subfields") or [] if s.__class__ is dict}
+    buildings = out.setdefault("buildings", [])
+    made: dict = {}                             # the outline, rounded, -> the building's id
+    left = 0
+
+    def canopy_of(ring, low, tilt, rows) -> str:
+        key = (rows, round(low, 3), round(tilt, 4), tuple((round(x, 3), round(y, 3)) for x, y in ring))
+        if key in made:
+            return made[key]
+        n = 1
+        while f"b{n}" in used:
+            n += 1
+        bid = f"b{n}"
+        used.add(bid)
+        width = math.dist(ring[0], ring[1])
+        if tilt <= 0:
+            roof = {"type": "flat"}
+        elif rows == 1:
+            roof = {"type": "mono", "eave_side": 0, "tilt": tilt}
+        else:
+            roof = {"type": "gable", "tilt": tilt, "edges": ["eave", "gable", "eave", "gable"]}
+        buildings.append({"id": bid, "name": _("Canopy {n}").format(n=len(made) + 1),
+                          "footprint": [[round(x, 6), round(y, 6)] for x, y in ring], "height": low, "roof": roof,
+                          "canopy": {"bays": max(1, min(100, round(width / CANOPY_BAY))), "rows": rows,
+                                     "pillars": "cantilever", "columns": 0}})
+        made[key] = bid
+        return bid
+
+    for design in designs:
+        rows = [s for s in design.get("subfields") or [] if s.__class__ is dict]
+        slopes = {i: _canopy_slope(s) for i, s in enumerate(rows)}
+        left += sum(1 for i, s in enumerate(rows) if slopes[i] is None and s.get("building") is None
+                    and (s.get("params") or {}).get("mounting") == "canopy")
+        taken: set = set()
+        for i, a in slopes.items():
+            if a is None or i in taken:
+                continue
+            j = next((j for j, b in slopes.items() if j > i and b is not None and j not in taken and _paired(a, b)),
+                     None)
+            taken.add(i)
+            if j is None:
+                bid = canopy_of(a["ring"], a["low"], a["tilt"], 1)
+                rows[i].update(building=bid, pitch=0)
+            else:
+                taken.add(j)
+                b = slopes[j]
+                bid = canopy_of([a["ring"][0], a["ring"][1], b["ring"][0], b["ring"][1]], a["low"], a["tilt"], 2)
+                rows[i].update(building=bid, pitch=0)
+                rows[j].update(building=bid, pitch=2 if a["tilt"] > 0 else 0)
+            for k in (i, j):
+                if k is not None:
+                    rows[k].pop("support", None)
+    if notes is not None and made:
+        names = ", ".join(b["name"] for b in buildings if b["id"] in made.values())
+        notes.append(ngettext(
+            "{n} parking canopy of an earlier format is now a structure with its columns ({names}): check its "
+            "spaces and columns.", "{n} parking canopies of an earlier format are now structures with their columns "
+            "({names}): check their spaces and columns.", len(made)).format(n=len(made), names=names))
+    if notes is not None and left:
+        notes.append(ngettext(
+            "{n} canopy slope changed by hand could not be read as a structure: it stays a sub-field on its own "
+            "plane.", "{n} canopy slopes changed by hand could not be read as a structure: they stay sub-fields on "
+            "their own planes.", left).format(n=left))
+    return out
+
+
+# 1 -> 2:exclusions have a height (None: the default of their kind), buildings a parapet; both cast shadows
 # 2 -> 3: the project has its rules (connection level, minimum renewable capacity of the building), empty
 # 3 -> 4: variants; what there was becomes the first, "Base"
 # 4 -> 5: a gable roof may have its ridge parallel to a side the designer picked (None: the long side)
@@ -346,6 +475,9 @@ def _reshaped(data: dict) -> list[str]:
 # 15 -> 16: per-project consents for coordinates sent to map and weather services, none before
 # 16 -> 17: embedded report attachments, author profile and weather, empty for a project of before
 # 17 -> 18: job and project-series identity, empty until the project is linked to a local registry
+# 20 -> 21: a parking canopy is a structure, a building with `canopy` (R281): the canopies made as sub-fields on
+#           planes of their own are recognised and become one, their slopes on its pitches; the slopes changed by
+#           hand stay sub-fields; the designer is told both (_to_21)
 MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                     3: lambda data: {**data, "variants": [{"id": "v1", "name": "Base", "note": ""}], "variant": "v1"},
                     4: lambda data: data, 5: lambda data: {**data, "underlays": data.get("underlays", [])},
@@ -358,7 +490,8 @@ MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                     18: lambda data: {**data, "bim_id": data.get("bim_id") or str(uuid.uuid5(
                         uuid.NAMESPACE_URL, "meridiana:legacy:" + (data.get("series_id") or
                         repr((data.get("created", ""), data.get("job_id", ""), data.get("name", ""))))))},
-                    19: lambda data: data}  # optional explicit optimizer groups; absent keeps legacy order
+                    19: lambda data: data,  # optional explicit optimizer groups; absent keeps legacy order
+                    20: _to_21}
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
 ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
@@ -464,6 +597,27 @@ class Fire:
     roof_fire_resistant: bool = False
 
 
+PILLARS = ("cantilever", "two_rows")     # a canopy's columns: one line under its high edge, or one at each long edge
+
+
+@dataclass
+class Canopy:
+    """A parking canopy's structure (R281, study 22, 3.7; format 21). The building that holds it gives what it shares
+    with a building: its outline (a rectangle, the first side along the rows of spaces), the height under its low
+    edge (Building.height), its roof plane (one slope, "mono", or two opposed slopes meeting at a ridge, "gable");
+    this says how many spaces and rows it covers and how its columns stand. Its walls are none: columns and beams
+    of indicative sizes (canopies.structure), never a structural design."""
+    bays: int = 4                 # parking spaces along each row
+    rows: int = 1                 # 1: one row under one slope; 2: two rows under opposed slopes
+    pillars: str = "cantilever"   # PILLARS
+    columns: int = 0              # columns on each line; 0: one every two spaces, the two ends included
+
+
+class OpenRoof(list):
+    """The pitches of a roof that stands on columns, with no walls under it (a canopy): mesh draws no walls."""
+    open = True
+
+
 @dataclass
 class Building:
     id: str
@@ -473,13 +627,23 @@ class Building:
     roof: Roof = field(default_factory=Roof)
     fire: Fire = field(default_factory=Fire)
     parapet: float = 0.0          # height of the parapet above a flat roof, all round the outline
+    canopy: Canopy | None = None  # a parking canopy: its structure (format 21), the height the one under its low edge
+
+    def __post_init__(self):
+        if isinstance(self.canopy, dict):       # read from a file or a snapshot (R281)
+            names = {f.name for f in dataclasses.fields(Canopy)}
+            self.canopy = Canopy(**{k: v for k, v in self.canopy.items() if k in names})
 
     def geometry_key(self) -> str:
-        """Everything of the building that stands in space (outline, height, roof, parapet) as one string: the
-        name and the fire data are not in it. Equal keys, the same shape, the same shadows, the same pitches."""
+        """Everything of the building that stands in space (outline, height, roof, parapet, a canopy's structure)
+        as one string: the name and the fire data are not in it. Equal keys, the same shape, the same shadows, the
+        same pitches."""
         import json
-        return json.dumps({"footprint": self.footprint, "height": self.height, "roof": asdict(self.roof),
-                           "parapet": self.parapet}, sort_keys=True, default=str)
+        shape = {"footprint": self.footprint, "height": self.height, "roof": asdict(self.roof),
+                 "parapet": self.parapet}
+        if self.canopy is not None:             # R281: only when there is one, so the other keys stay as they were
+            shape["canopy"] = asdict(self.canopy)
+        return json.dumps(shape, sort_keys=True, default=str)
 
     def pitches(self) -> list[roofs.Pitch]:
         """The pitches of the roof, kept until the geometry changes (the key says): the views, the shadows and
@@ -495,6 +659,8 @@ class Building:
             return cached
         kinds = self._sides_kind()
         found, problem = self._pitches(kinds)
+        if self.canopy is not None:
+            found = OpenRoof(found)             # R281: a canopy's roof stands on its columns
         cached = (key, found, problem, kinds)
         self.__dict__["_pitches_cache"] = cached
         return cached
@@ -877,6 +1043,17 @@ def _check_project(data: dict) -> list[str]:
             if pitch.get("id", "").__class__ is not str:
                 raise ValueError(f"{path}.roof.free_pitches[{j}].id: {pitch.get('id')!r} is not text")
         _check_fields(Fire, _check_dict(raw.get("fire", {}), f"{path}.fire"), f"{path}.fire", unknown)
+        if raw.get("canopy") is not None:      # R281, format 21
+            canopy = _check_dict(raw["canopy"], f"{path}.canopy")
+            _check_fields(Canopy, canopy, f"{path}.canopy", unknown)
+            if not 1 <= canopy.get("bays", 1) <= 100:
+                raise ValueError(f"{path}.canopy.bays: {canopy['bays']!r} is not between 1 and 100")
+            if canopy.get("rows", 1) not in (1, 2):
+                raise ValueError(f"{path}.canopy.rows: {canopy['rows']!r} is not 1 or 2")
+            if canopy.get("pillars", "cantilever") not in PILLARS:
+                raise ValueError(f"{path}.canopy.pillars: {canopy['pillars']!r} is not one of {', '.join(PILLARS)}")
+            if not 0 <= canopy.get("columns", 0) <= 200:
+                raise ValueError(f"{path}.canopy.columns: {canopy['columns']!r} is not between 0 and 200")
         if raw["id"] in ids:
             raise ValueError(f"{path}.id: '{raw['id']}' is used twice")
         ids.add(raw["id"])
@@ -1041,6 +1218,7 @@ class Project:
         if kind == "building":
             copy.roof = _copy.deepcopy(thing.roof)
             copy.fire = _copy.deepcopy(thing.fire)
+            copy.canopy = _copy.deepcopy(thing.canopy)      # R281: its own structure, not the original's
             # the pitches drawn by hand are in the site's coordinates too: left behind, the copy's roof stood
             # on the original, with its shadows and the pitches its sub-fields lie on (review, 23/10/2026)
             for pitch in copy.roof.free_pitches:
@@ -1156,6 +1334,10 @@ class Project:
                 for quad in parapet_quads(b.footprint):
                     out.append({"ring": quad, "z0": b.height, "z1": b.height + b.parapet, "kind": "parapet",
                                 "id": b.id, "building": b.id})
+            if b.canopy is not None:
+                # R281: a canopy's columns and beams, upright boxes: drawn, shading and exported as the obstacles
+                from . import canopies
+                out.extend(canopies.structure(b))
         return out
 
     def fill_params(self, sf: SubField) -> layout.Params:
@@ -1222,7 +1404,7 @@ class Project:
     # files
 
     def to_json(self) -> dict:
-        """The project as the file holds it (format 20): every variant with its design, the one in hand too;
+        """The project as the file holds it (format 21): every variant with its design, the one in hand too;
         the working copy of the fields above goes into its variant."""
         data = asdict(self)
         for k in DESIGN:
@@ -1269,7 +1451,8 @@ class Project:
                     "{n} keys of modules taken out by hand or in strings by hand were not a row and a place: left "
                     "out.", lost).format(n=lost))
         while version < FORMAT_VERSION:
-            data = MIGRATIONS[version](data)
+            # R281: the migration to 21 tells the designer which canopies became structures
+            data = _to_21(data, notes) if version == 20 else MIGRATIONS[version](data)
             version += 1
         if "bim_id" not in data:
             data = MIGRATIONS[18](data)       # hand-authored files without the optional identity

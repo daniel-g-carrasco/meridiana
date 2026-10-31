@@ -247,6 +247,24 @@ class Preview3D(QWidget):
                 "wall": _mix(base, ink, 0.07), "wall2": _mix(base, ink, 0.16), "roof": _mix(base, accent, 0.22),
                 "under": _mix(base, accent, 0.10), "structure": _mix(base, ink, 0.45)}
 
+    def drawn(self) -> list:
+        """The faces in the order they are painted, (layer, depth, face, normal, facing) each: by layers, the far
+        first within each. The backs of walls and boxes are left out; a plane seen from under hides nothing under
+        it, so it goes before the columns and beams (R281), and over them when seen from above."""
+        _at, depth, d, _mid = self._projector()
+        order = {"structure": 0, "wall": 1, "roof": 2, "plane": 2}
+        out = []
+        for face in self.faces:
+            n = normal(face.points)
+            facing = _dot(n, d)
+            if face.kind in ("wall", "structure") and facing <= 1e-9:
+                continue                        # its back: hidden by the faces in front
+            layer = order.get(face.kind, 1)
+            if face.kind in ("roof", "plane") and (facing if n[2] >= 0 else -facing) < 0:
+                layer = -1
+            out.append((layer, sum(depth(p) for p in face.points) / len(face.points), face, n, facing))
+        return sorted(out, key=lambda item: (item[0], item[1]))
+
     def paintEvent(self, _event) -> None:
         c = self._colours()
         painter = QPainter(self)
@@ -260,16 +278,7 @@ class Preview3D(QWidget):
         for guide in self.guides:
             if guide.kind in ("ground", "dashed"):
                 self._polyline(painter, [at(p) for p in guide.points], QPen(c["muted"], 1, Qt.PenStyle.DashLine))
-        order = {"structure": 0, "wall": 1, "roof": 2, "plane": 2}
-        drawn = []
-        for face in self.faces:
-            n = normal(face.points)
-            facing = _dot(n, d)
-            if face.kind in ("wall", "structure") and facing <= 1e-9:
-                continue                        # its back: hidden by the faces in front
-            drawn.append((order.get(face.kind, 1), sum(depth(p) for p in face.points) / len(face.points), face, n,
-                          facing))
-        for _layer, _depth, face, n, facing in sorted(drawn, key=lambda item: (item[0], item[1])):
+        for _layer, _depth, face, n, facing in self.drawn():
             if face.kind in ("wall", "structure"):
                 length = math.hypot(n[0], n[1]) or 1.0
                 light = (n[0] * -0.6 + n[1] * -0.8) / length      # the faces turned South-West are the lighter

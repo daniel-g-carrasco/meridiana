@@ -45,7 +45,11 @@ OBSTACLES = {"parapet": ("IfcWall", "PARAPET", None),
              "tree": ("IfcGeographicElement", "USERDEFINED", "Albero"),
              "vent": ("IfcBuildingElementProxy", "USERDEFINED", "Evacuatore di fumo e calore"),
              "plant": ("IfcBuildingElementProxy", "USERDEFINED", "Impianto in copertura"),
-             "other": ("IfcBuildingElementProxy", "USERDEFINED", "Ostacolo")}
+             "other": ("IfcBuildingElementProxy", "USERDEFINED", "Ostacolo"),
+             # R281: a canopy's structure (canopies.structure), indicative sizes
+             "column": ("IfcColumn", "COLUMN", None),
+             "beam": ("IfcBeam", "BEAM", None)}
+CANOPY_SLAB = 0.05              # m, a canopy's roof sheet: it lies on the beams
 MODULE_THICKNESS = 0.035        # m, when the module's record does not say
 
 
@@ -266,7 +270,8 @@ class Writer:
 
         storey = self.storeys[b.id]
         walls = []
-        for i, (a, c) in enumerate(zip(ring, ring[1:] + ring[:1], strict=True)):
+        # R281: a canopy has no walls; its columns and beams are exported with the obstacles (IfcColumn, IfcBeam)
+        for i, (a, c) in enumerate(zip(ring, ring[1:] + ring[:1], strict=True) if b.canopy is None else ()):
             dx, dy = c[0] - a[0], c[1] - a[1]
             length = math.hypot(dx, dy)
             if length < 1e-6:
@@ -287,6 +292,9 @@ class Writer:
 
         roof = self.element("IfcRoof", f"{b.name}, copertura", predefined=ROOF_KINDS.get(b.roof.type, "FREEFORM"),
                             identity=("roof", b.id))
+        if b.canopy is not None:                # R281: what the canopy is, beside the roof's own data
+            self.pset(roof, "Meridiana_Pensilina", {"Posti": int(b.canopy.bays) * int(b.canopy.rows),
+                                                    "File": int(b.canopy.rows), "Pilastri": b.canopy.pillars})
         self.place(roof, relative=storey.ObjectPlacement)
         self.contain([roof], storey)
         slabs = []
@@ -309,7 +317,7 @@ class Writer:
             slab = self.element("IfcSlab", f"{b.name}, {pt.name or f'falda {k + 1}'}", predefined="ROOF",
                                 identity=("pitch", b.id, pitch_id))
             slab.Representation = self.f.createIfcProductDefinitionShape(None, None, [
-                self.body([self.extrusion(local, SLAB, down=True)])])
+                self.body([self.extrusion(local, SLAB if b.canopy is None else CANOPY_SLAB, down=True)])])
             self.place(slab, tuple(o), n, x, roof.ObjectPlacement)
             self.pset(slab, "Pset_SlabCommon", {"PitchAngle": self.value("IfcPlaneAngleMeasure", float(pt.tilt)),
                                                 "IsExternal": True})
@@ -340,7 +348,8 @@ class Writer:
             cls, pre, otype = OBSTACLES.get(o["kind"], OBSTACLES["other"])
             names[o["kind"]] = names.get(o["kind"], 0) + 1
             label = {"parapet": "Parapetto", "chimney": "Camino", "skylight": "Lucernario", "tree": "Albero",
-                     "vent": "Evacuatore", "plant": "Impianto"}.get(o["kind"], "Ostacolo")
+                     "vent": "Evacuatore", "plant": "Impianto", "column": "Pilastro",
+                     "beam": "Trave"}.get(o["kind"], "Ostacolo")       # R281: a canopy's columns and beams
             key = (o["kind"], o["id"])
             part = parts.get(key, 0)
             parts[key] = part + 1

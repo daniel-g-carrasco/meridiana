@@ -147,6 +147,10 @@ def building_triangles(footprint: list[Point], pitches, colours: dict | None = N
         for i0, i1, i2 in triangulate(ring):
             a, b, c = ((ring[i][0], ring[i][1], p.z(*ring[i])) for i in (i0, i1, i2))
             tri(a, b, c, colour, up)
+            if getattr(pitches, "open", False):
+                tri(a, c, b, colour, -up)           # R281: a canopy's roof is seen from under it too
+    if getattr(pitches, "open", False):
+        return _arrays(pos, nor, col)               # R281: no walls, it stands on its columns (obstacle_prisms)
 
     def roof_z(x, y):
         return _roof_z(pitches, x, y)
@@ -208,12 +212,13 @@ def building_edges(footprint: list[Point], pitches) -> np.ndarray:
     """The edges of a building: its foot, the corners up to the roof, the outline of each pitch (the eaves,
     the ridges, the hips)."""
     ring = [tuple(map(float, q)) for q in footprint]
-    parts = [ring_edges([(x, y, 0.0) for x, y in ring]),
-             np.array([[to_qt(x, y, 0.0), to_qt(x, y, _roof_z(pitches, x, y))] for x, y in ring],
-                      dtype=np.float64).reshape(-1, 2, 3)]
+    parts = [] if getattr(pitches, "open", False) else [      # R281: a canopy has no walls, only its roof
+        ring_edges([(x, y, 0.0) for x, y in ring]),
+        np.array([[to_qt(x, y, 0.0), to_qt(x, y, _roof_z(pitches, x, y))] for x, y in ring],
+                 dtype=np.float64).reshape(-1, 2, 3)]
     for p in pitches:
         parts.append(ring_edges([(float(x), float(y), p.z(float(x), float(y))) for x, y in p.ring]))
-    return np.concatenate(parts)
+    return np.concatenate(parts) if parts else np.zeros((0, 2, 3))
 
 
 def module_edges(m, along: float, across: float, thickness: float = 0.035) -> np.ndarray:

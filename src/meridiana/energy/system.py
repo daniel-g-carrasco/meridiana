@@ -16,7 +16,8 @@ from .simulate import MOUNTING_THERMAL, ArraySpec, Losses, lid_pct
 
 def obstacle_kind_names() -> dict:
     return {"vent": _("smoke vent"), "opening": _("opening"), "plant": _("roof plant"), "skylight": _("skylight"),
-            "chimney": _("chimney"), "tree": _("tree"), "walkway": _("walkway"), "other": _("obstacle")}
+            "chimney": _("chimney"), "tree": _("tree"), "walkway": _("walkway"), "other": _("obstacle"),
+            "column": _("column"), "beam": _("beam")}
 
 
 def obstacles_of(project, sf, prisms: list | None = None) -> list:
@@ -41,6 +42,10 @@ def obstacles_of(project, sf, prisms: list | None = None) -> list:
                 if i != (own if own is not None else 0) and pt.tilt > 0:
                     out += nearshade.under(pt.corners_3d(), b.height,
                                            _("{name}, {pitch}").format(name=b.name, pitch=pt.name))
+            continue
+        if b.canopy is not None:        # R281: a canopy is its roof on columns (the columns: obstacle_prisms)
+            for pt in b.pitches():
+                out += nearshade.under(pt.corners_3d(), b.height - 0.05, b.name)
             continue
         out += nearshade.prism(b.footprint, 0.0, b.height, b.name)
         for pt in b.pitches():

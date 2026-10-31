@@ -878,7 +878,11 @@ class MainWindow(QMainWindow):
             _("The corners of the selected outline within 13° of a right angle become right angles"))
         act(draw, "building_template", self._building_template, False,
             _("A rectangle, an L, a T, a U or a trapezoid with its measures, placed with a click on the plan"))
-        act(draw, "carport", self._carport, tip=_("Place a canopy with one or two parking rows"))
+        # R281: the canopy's structure only; «On a canopy» lays its modules (the bar of Plant shows the button)
+        act(draw, "carport", self._carport, tip=_("Place a canopy's structure: columns, beams and roof, no module"))
+        act(draw, "canopy_layout", self._canopy_layout,
+            tip=_("The modules laid on a canopy: a sub-field on each slope, flush with its roof"),
+            action=None if "canopy_layout" in known else QAction(_("On a canopy…"), self))
         # east-west pairs laid straight along a line, as the Row tool does (R279): a tool of the group
         self.tool_actions["east_west"] = act(draw, "layout_east_west", self._east_west, True,
                                              _("Draw east-west pairs of modules in a sub-field: two clicks, along the "
@@ -2040,10 +2044,37 @@ class MainWindow(QMainWindow):
         spec, self._carport_spec = getattr(self, "_carport_spec", None), None
         if spec is None:
             return
+        # R281: the canopy is its structure, a building with columns and beams; no module until «On a canopy»
         ids = []
-        self.edit(_("Parking canopy"), lambda p: ids.extend(canopies.add(p, spec, at)))
-        self._select("subfield", ids[0])
-        self.hint.setText(_("Each canopy slope has its own editable placement plane and module layout."))
+        self.edit(_("Parking canopy"), lambda p: ids.append(canopies.add(p, spec, at)))
+        self._select("building", ids[0])
+        self.hint.setText(_("The canopy is its structure: lay the modules on it in Plant › On a canopy."))
+
+    def _canopy_layout(self) -> None:
+        """R281, «On a canopy» (study 22, decision 9): the canopy selected (or the one a selected sub-field lies on,
+        else the first), four values, then the modules in one step."""
+        from .canopy_dialog import CanopyLayoutDialog
+        kind, oid = self.selection
+        sf = self.project_subfield(oid) if kind == "subfield" else None
+        chosen = oid if kind == "building" else (sf.building or "") if sf is not None else ""
+        dialog = CanopyLayoutDialog(self.project, chosen, self)
+        if dialog.exec():
+            self.lay_on_canopy(**dialog.values())
+
+    def lay_on_canopy(self, bid: str, portrait: bool = True, gap: float = 0.02, overhang: float = 0.0,
+                      edge: float = 0.1) -> list:
+        """R281: a sub-field on each slope of the canopy, filled, as one step that Ctrl+Z takes back whole."""
+        from .. import canopies
+        ids: list = []
+        try:
+            self.edit(_("Modules on a canopy"),
+                      lambda p: ids.extend(canopies.lay(p, bid, portrait, gap, overhang, edge)))
+        except ValueError as error:
+            self.hint.setText(_("Not changed: {why}").format(why=error))
+            return []
+        if ids:
+            self._select("subfield", ids[0])
+        return ids
 
     def _template_placed(self, at) -> None:
         pending, self._template = getattr(self, "_template", None), None
