@@ -19,7 +19,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
-from ..i18n import _
+from ..i18n import _, number
 from .components import InverterSpec, ModuleSpec
 from .dependencies import load_pvlib
 from .pedigree import Quantity, Record, Source, Step, computed
@@ -276,7 +276,8 @@ def plan(module: ModuleSpec, inverter: InverterSpec, n_series: int, strings_per_
             over = ns * module.imp > lim
             add(f"imp{k}", _("{name}: operating current within the input's maximum").format(name=name), True,
                 (_("{i} A of {lim} A: the inverter holds the current and loses a little power") if over else
-                 _("{i} A of {lim} A")).format(i=f"{ns * module.imp:.1f}", lim=f"{lim:.1f}"), "warn" if over else "ok")
+                 _("{i} A of {lim} A")).format(i=number(ns * module.imp, 1), lim=number(lim, 1)),
+                "warn" if over else "ok")
         for suffix, value, current in (("imp", inverter.connector_current_limit(k), module.imp),
                                         ("isc", inverter.connector_isc_limit(k), isc_max)):
             values = inverter.imax_per_input if suffix == "imp" else inverter.iscmax_per_input
@@ -286,19 +287,19 @@ def plan(module: ModuleSpec, inverter: InverterSpec, n_series: int, strings_per_
             if value is not None:
                 add(f"connector_{suffix}{k}", _("{name}: current of each physical input").format(name=name),
                     current <= value + 1e-9,
-                    _("{i} A of {lim} A").format(i=f"{current:.1f}", lim=f"{value:.1f}"))
+                    _("{i} A of {lim} A").format(i=number(current, 1), lim=number(value, 1)))
         if isc_limit is not None:
             lim = isc_limit
             add(f"isc{k}", _("{name}: short-circuit current within the input's maximum").format(name=name),
-                ns * isc_max <= lim, _("{i} A of {lim} A").format(i=f"{ns * isc_max:.1f}", lim=f"{lim:.1f}"))
+                ns * isc_max <= lim, _("{i} A of {lim} A").format(i=number(ns * isc_max, 1), lim=number(lim, 1)))
         if ns > 2:
             ocpr = i_mod_max_ocpr
             if ocpr:
                 need = 1.35 * ocpr < (ns - 1) * isc_max
                 detail = (_("protection needed: 1.35 x {o} A < ({n} - 1) x {i} A; rating between {a} A and {o} A").format(
-                    o=f"{ocpr:.0f}", n=ns, i=f"{isc_max:.2f}", a=f"{1.1 * isc_max:.1f}") if need else
+                    o=f"{ocpr:.0f}", n=ns, i=number(isc_max, 2), a=number(1.1 * isc_max, 1)) if need else
                     _("no protection needed: 1.35 x {o} A >= ({n} - 1) x {i} A").format(o=f"{ocpr:.0f}", n=ns,
-                                                                                    i=f"{isc_max:.2f}"))
+                                                                                    i=number(isc_max, 2)))
                 add(f"fuse{k}", _("{name}: protection of the strings (712.431.101)").format(name=name), True, detail)
                 if need and 1.1 * isc_max > ocpr:
                     add(f"fuserange{k}", _("{name}: a fuse rating exists").format(name=name), False,
@@ -380,7 +381,7 @@ def overload_check(name: str, loss_pct: float) -> Check:
     level = "ok" if loss_pct < OVERLOAD_WARN else ("warn" if loss_pct <= OVERLOAD_FAIL else "fail")
     return Check("overload", _("{name}: energy lost beyond the nominal power").format(name=name), level != "fail",
                  _("{pct} % of the year (program thresholds: a warning from {w} %, too much beyond {f} %, as "
-                   "PVsyst's red)").format(pct=f"{loss_pct:.1f}", w=f"{OVERLOAD_WARN:.0f}", f=f"{OVERLOAD_FAIL:.0f}"),
+                   "PVsyst's red)").format(pct=number(loss_pct, 1), w=f"{OVERLOAD_WARN:.0f}", f=f"{OVERLOAD_FAIL:.0f}"),
                  level)
 
 

@@ -36,7 +36,7 @@ import itertools
 from collections import defaultdict
 from dataclasses import dataclass, field
 
-from ..i18n import _, ngettext
+from ..i18n import _, ngettext, number
 from . import optimizers, stringing, system
 from .components import InverterSpec, ModuleSpec
 from .pedigree import Source
@@ -1819,13 +1819,13 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
             checks.append(stringing.Check(
                 "imp_total", _("{name}: total DC operating current").format(name=name), True,
                 _("{i} A across the MPPTs, total limit {limit} A; per-MPPT limits are checked separately.").format(
-                    i=f"{current:.1f}", limit=f"{u.spec.imax_total:.1f}"),
+                    i=number(current, 1), limit=number(u.spec.imax_total, 1)),
                 "warn" if current > u.spec.imax_total else "ok", u.spec.source.ref))
         if dc > 0:
             checks.append(stringing.Check("dcac", _("{name}: DC/AC ratio").format(name=name), True,
-                                          _("{dc} kWp on {ac} kW: {r}").format(dc=f"{dc / 1000:.2f}",
-                                                                              ac=f"{u.spec.pac / 1000:.1f}",
-                                                                              r=f"{dc / u.spec.pac:.2f}"), "info"))
+                                          _("{dc} kWp on {ac} kW: {r}").format(dc=number(dc / 1000, 2),
+                                                                              ac=number(u.spec.pac / 1000, 1),
+                                                                              r=number(dc / u.spec.pac, 2)), "info"))
             if p_dc_by_inverter is not None and u.number in p_dc_by_inverter:
                 import numpy as np
                 loss = stringing.overload_loss(np.asarray(p_dc_by_inverter[u.number], dtype=float), u.spec.pac, u.spec.eta)
