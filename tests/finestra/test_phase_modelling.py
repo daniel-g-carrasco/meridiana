@@ -27,8 +27,8 @@ class ModellingAndPlant(unittest.TestCase):
         win = self.win
         self.assertEqual(win.phase(), "model")
         self.assertNotIn("tool_subfield", win.bars["model"].buttons())
-        self.assertEqual(list(win.bars["plant"].buttons())[3:7],                  # R295; R306: Row holds East-west
-                         ["tool_subfield", "tool_row", "fill", "empty"])
+        self.assertEqual(list(win.bars["plant"].buttons())[3:6],                  # R295; R306: Sub-field holds the rows
+                         ["tool_subfield", "fill", "empty"])
         win.commands["tool_subfield"].trigger()                 # S in the Modelling
         self.assertEqual(win.phase(), "plant")
         self.assertIs(win.plan.parentWidget(), win.plant_page.host)
@@ -107,9 +107,9 @@ class ModellingAndPlant(unittest.TestCase):
         self.addCleanup(without.deleteLater)
         self.assertIsNone(without.button_of("canopy_layout"))
         self.addCleanup(bar.deleteLater)
-        self.assertEqual(list(bar.buttons())[3:7],                       # R295: Edit first; R306: Row holds the others
-                         ["tool_subfield", "tool_row", "fill", "empty"])
-        self.assertIs(bar.button_of("canopy_layout"), bar.buttons()["tool_row"])
+        self.assertEqual(list(bar.buttons())[3:6],                       # R295: Edit first; R306: Sub-field the rows
+                         ["tool_subfield", "fill", "empty"])
+        self.assertIs(bar.button_of("canopy_layout"), bar.buttons()["tool_subfield"])
         self.assertEqual(bar.groups[1].title.text(), "Panels")
         model = PhaseBar(phases.by_id("model"), self.win.commands)
         self.addCleanup(model.deleteLater)

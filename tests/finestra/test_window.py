@@ -1501,7 +1501,7 @@ class PlantPhase(PlantWindow):
         self.assertEqual([b.property("tool") for b in self.win.bars["plant"].buttons().values()
                           ],
                          ["tool_select", "tool_move", "tool_rotate",            # R295
-                          "tool_subfield", "tool_row", "fill", "empty", "inverter_catalog", "inverter_auto", "battery_catalog", "strings_auto",
+                          "tool_subfield", "fill", "empty", "inverter_catalog", "inverter_auto", "battery_catalog", "strings_auto",
                           "strings_complete", "strings_manual", "tool_erase_string"])
         QTest.keyClick(self.win, Qt.Key.Key_PageUp, Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(self.win.phase(), "model")

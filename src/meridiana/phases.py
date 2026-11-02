@@ -120,9 +120,10 @@ def phases() -> list[Phase]:
                 T("tool_move", _("Move"), icon="move"),
                 T("tool_rotate", _("Rotate"), icon="rotate"))),
             Group("modules", _("Panels"), (
-                T("tool_subfield", icon="subfield"),
-                # R306: three ways of drawing the rows by hand on one button
-                T("tool_row", _("Row"), icon="row", more=(T("layout_east_west", _("East-west")),
+                # R306: where the modules go, the area first, the rows by hand in its menu; with Edit beside them the
+                # bar has no room for four buttons here (the strip at its end leaves it at 1400 px)
+                T("tool_subfield", icon="subfield", more=(T("tool_row", _("Row"), icon="row"),
+                                                          T("layout_east_west", _("East-west")),
                                                           T("canopy_layout", _("Canopy"), icon="carport"))),
                 T("fill", _("Lay"), primary=True),
                 T("empty", _("Empty")))),
