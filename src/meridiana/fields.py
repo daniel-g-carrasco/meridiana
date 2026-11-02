@@ -26,6 +26,7 @@ def field_label(path: str, kind: str = "") -> str:
         return {"height": _("height"), "width": _("width"), "length": _("length"), "rotation": _("rotation")}[path]
     return {
         "name": _("name"), "height": _("eave height"), "roof.type": _("roof"), "roof.tilt": _("slope"), "roof.free_pitches": _("free pitches"),
+        "roof.joined": _("join of the pitches"),
         "roof.eave_side": _("eave side"), "fire.subject": _("fire control"),
         "fire.roof_fire_resistant": _("fire-resistant slab"), "module": _("module"),
         "params.mounting": _("mounting"), "params.portrait": _("orientation"), "params.stack": _("modules across"),

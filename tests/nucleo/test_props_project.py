@@ -24,7 +24,7 @@ class Data(unittest.TestCase):
         self.assertNotIn("props", data)
         p = model.Project.from_json(data)
         self.assertEqual(p.props, [])
-        self.assertEqual(model.FORMAT_VERSION, 22)
+        self.assertGreaterEqual(model.FORMAT_VERSION, 22)
         self.assertEqual(p.to_json()["props"], [])
         self.assertEqual(model.MIGRATIONS[21]({"a": 1}), {"a": 1, "props": []})
 

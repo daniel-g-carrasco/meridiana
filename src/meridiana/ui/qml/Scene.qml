@@ -397,6 +397,27 @@ Item {
         }
     }
 
+    // the corners of a roof with Move (R303): a mark of a few pixels on the screen wherever they stand, placed from
+    // Python (gizmo.py sums on the pixels, as the gizmo's handles); what takes a press is wider than the mark
+    Item {
+        objectName: "vertexMarks"
+        anchors.fill: parent
+        visible: backend.vertexMarks.length > 0
+        Repeater {
+            model: backend.vertexMarks
+            Rectangle {
+                required property var modelData
+                x: modelData.x - width / 2
+                y: modelData.y - height / 2
+                width: modelData.size
+                height: modelData.size
+                color: modelData.colour
+                border.color: backend.vertexEdge
+                border.width: 1
+            }
+        }
+    }
+
     // every button and the wheel go to the backend with what is under the pointer
     MouseArea {
         anchors.fill: parent

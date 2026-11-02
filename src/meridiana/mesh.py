@@ -343,11 +343,13 @@ def lathe(direction, profile, segments: int = 16, closed: bool = False,
     return pos.astype(np.float32), nor.astype(np.float32), col.astype(np.float32)
 
 
-GIZMO_SHAFT = (0.14, 0.76, 0.022)        # an arrow's shaft: from, to, radius (units of the arrow's length)
-GIZMO_HEAD = (0.76, 1.0, 0.065)          # its head: a cone from, to, radius at the base
-GIZMO_RING = (0.80, 0.022, 0.012)        # the ring: radius, half the width of its band, half its thickness
-GIZMO_PLANE = (0.26, 0.46)               # the square of the horizontal plane, between these along East and North
-GIZMO_HALO = 0.022                       # what the halo adds all round
+# R302 (Daniel, 02/11/2026: «troppo spessi, e forse un po' troppo grandi»): thin lines, about 2 pixels at gizmo.PIXELS;
+# what takes a press is wider than what is drawn (gizmo.TOLERANCE)
+GIZMO_SHAFT = (0.14, 0.80, 0.011)        # an arrow's shaft: from, to, radius (units of the arrow's length)
+GIZMO_HEAD = (0.80, 1.0, 0.040)          # its head: a cone from, to, radius at the base
+GIZMO_RING = (0.80, 0.011, 0.006)        # the ring: radius, half the width of its band, half its thickness
+GIZMO_PLANE = (0.26, 0.42)               # the square of the horizontal plane, between these along East and North
+GIZMO_HALO = 0.012                       # what the halo adds all round
 
 
 def arrow(direction, halo: float = 0.0, segments: int = 16) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

@@ -223,6 +223,28 @@ class FreePitchPage(unittest.TestCase):
         self.button("Pick on the plan")[0].click()
         self.assertEqual(self.actions[-1], "pick_free_eave:0")
 
+    def test_the_option_of_the_join_and_what_became_of_the_pitch(self):
+        from PySide6.QtWidgets import QCheckBox, QLabel
+        boxes = [w for w in self.props.widget().findChildren(QCheckBox) if "Pitches side by side" in w.toolTip()]
+        self.assertEqual(len(boxes), 1)
+        self.assertTrue(boxes[0].isChecked())
+        boxes[0].click()
+        self.assertEqual(self.edits[-1], {"roof.joined": False})
+        self.b.roof.joined = True
+        self.b.roof.free_pitches = [{"ring": [[0, 0], [16, 0], [16, 5], [0, 5]], "eave_side": 0, "eave": 6.0, "tilt": 10.0},
+                                    {"ring": [[16, 10], [0, 10], [0, 5], [16, 5]], "eave_side": 0, "eave": 6.0, "tilt": 30.0}]
+        self.props.show_building(self.b)
+        texts = [w.text() for w in self.props.widget().findChildren(QLabel)]
+        self.assertEqual(sum(t.startswith("Joined to the pitches beside it") for t in texts), 2)
+        self.b.roof.free_pitches[0]["z"] = [6.0, 6.0, 9.0, 6.0]
+        self.b.roof.free_pitches = list(self.b.roof.free_pitches)
+        self.props.show_building(self.b)
+        texts = [w.text() for w in self.props.widget().findChildren(QLabel)]
+        self.assertTrue(any(t.startswith("Corners off one plane") for t in texts), texts)
+        self.field_written = self.button("Swap eave and ridge")[0]
+        self.field_written.click()
+        self.assertNotIn("z", self.edits[-1]["roof.free_pitches"][0])
+
     def test_a_pitch_more_builds_the_page_again(self):
         built = self.props.rebuilds
         self.b.roof.free_pitches = self.b.roof.free_pitches + [{"ring": [[16, 10], [0, 10], [0, 5], [16, 5]],

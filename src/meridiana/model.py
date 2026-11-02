@@ -23,11 +23,11 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import atomic, layout, roofs, settings, skeleton, sun
+from . import atomic, layout, roof_join, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 22
+FORMAT_VERSION = 23
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -480,6 +480,27 @@ def _to_21(data: dict, notes: list | None = None) -> dict:
 #           hand stay sub-fields; the designer is told both (_to_21)
 # 21 -> 22: the 3D objects of the surroundings (R269: trees, roof obstacles, people, cars), none before; an older
 #           Meridiana refuses the file rather than dropping them
+def _to_23(data: dict, notes: list | None = None) -> dict:
+    """22 -> 23: free pitches side by side join into one roof by default (R304, Roof.joined). A roof drawn before keeps
+    the planes it was computed with until the designer asks otherwise: the numbers of a project do not change on
+    opening it; `notes` says which roofs could join."""
+    apart = []
+    for raw in data.get("buildings") or []:
+        roof = raw.get("roof") if isinstance(raw, dict) else None
+        if isinstance(roof, dict) and roof.get("type") == "free":
+            roof["joined"] = False
+            if len(roof.get("free_pitches") or []) > 1:
+                apart.append(str(raw.get("name") or raw.get("id")))
+    if apart and notes is not None:
+        from .i18n import ngettext
+        notes.append(ngettext(
+            "The pitches of {names} stay independent as they were drawn: to make them one roof, tick the option in its "
+            "properties.",
+            "The pitches of {names} stay independent as they were drawn: to make each one roof, tick the option in "
+            "the properties.", len(apart)).format(names=", ".join(apart)))
+    return data
+
+
 MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                     3: lambda data: {**data, "variants": [{"id": "v1", "name": "Base", "note": ""}], "variant": "v1"},
                     4: lambda data: data, 5: lambda data: {**data, "underlays": data.get("underlays", [])},
@@ -493,7 +514,7 @@ MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                         uuid.NAMESPACE_URL, "meridiana:legacy:" + (data.get("series_id") or
                         repr((data.get("created", ""), data.get("job_id", ""), data.get("name", ""))))))},
                     19: lambda data: data,  # optional explicit optimizer groups; absent keeps legacy order
-                    20: _to_21, 21: lambda data: {**data, "props": data.get("props", [])}}
+                    20: _to_21, 21: lambda data: {**data, "props": data.get("props", [])}, 22: _to_23}
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
 ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
@@ -602,6 +623,12 @@ class Roof:
     edges: list = field(default_factory=list)
     ridge_height: float | None = None   # gable and hip: m above the ground; given, the slope is worked out from it
     covering: str = ""            # what covers it (roofs.COVERINGS): what proposes the slope; "" not said
+    # free pitches (format 23, roof_join.py): side by side they make one roof; False, each stands on its own plane
+    joined: bool = True
+    # corners ([pitch, place in its ring]) made to coincide by the designer (R303): lists of two or more, one point
+    welds: list = field(default_factory=list)
+    # corners of pitches side by side parted by the designer (R303): their heights no longer go together
+    detached: list = field(default_factory=list)
 
 
 @dataclass
@@ -653,8 +680,14 @@ class Building:
         as one string: the name and the fire data are not in it. Equal keys, the same shape, the same shadows, the
         same pitches."""
         import json
-        shape = {"footprint": self.footprint, "height": self.height, "roof": asdict(self.roof),
-                 "parapet": self.parapet}
+        roof = asdict(self.roof)
+        # format 23: said only when they matter, so that the keys of the roofs of before stay as they were
+        if not (self.roof.type == "free" and self.roof.joined):
+            del roof["joined"]
+        for name in ("welds", "detached"):
+            if not roof[name]:
+                del roof[name]
+        shape = {"footprint": self.footprint, "height": self.height, "roof": roof, "parapet": self.parapet}
         if self.canopy is not None:             # R281: only when there is one, so the other keys stay as they were
             shape["canopy"] = asdict(self.canopy)
         return json.dumps(shape, sort_keys=True, default=str)
@@ -665,19 +698,30 @@ class Building:
         return self._roof()[1]
 
     def _roof(self) -> tuple:
-        """(key, pitches, problem, the kind of each side), kept until the geometry changes: the properties ask
-        for the sides at every refresh, and the default gables cost a skeleton."""
+        """(key, pitches, problem, the kind of each side, the free pitches resolved), kept until the geometry changes:
+        the properties ask for the sides at every refresh, and the default gables cost a skeleton."""
         key = self.geometry_key()
         cached = self.__dict__.get("_pitches_cache")
         if cached is not None and cached[0] == key:
             return cached
         kinds = self._sides_kind()
-        found, problem = self._pitches(kinds)
+        found, problem, solved = self._pitches(kinds)
         if self.canopy is not None:
             found = OpenRoof(found)             # R281: a canopy's roof stands on its columns
-        cached = (key, found, problem, kinds)
+        cached = (key, found, problem, kinds, solved)
         self.__dict__["_pitches_cache"] = cached
         return cached
+
+    def solved(self) -> roof_join.Resolved | None:
+        """The free pitches resolved (roof_join.resolve): the height of each corner, what was folded, what joining
+        moved; None on a roof of another type."""
+        return self._roof()[4]
+
+    def wall_top(self) -> float:
+        """Up to where the walls stand whole under the roof: the building's height, or the lowest corner of a roof
+        drawn by hand when one goes under it (the shadows' solid must not stand above the roof)."""
+        found = self.pitches() if self.roof.type == "free" else []
+        return min([self.height, *(z for p in found for _x, _y, z in p.corners_3d())])
 
     def roof_problem(self) -> tuple[str, list[int]]:
         """What the roof could not be as asked: ("", []) when it is; ("gables", sides) when those gable ends had
@@ -747,27 +791,22 @@ class Building:
             return found[index].side
         return index
 
-    def _pitches(self, kinds: list[str]) -> tuple[list[roofs.Pitch], tuple[str, list[int]]]:
+    def _pitches(self, kinds: list[str]) -> tuple[list[roofs.Pitch], tuple[str, list[int]], object]:
         r = self.roof
         fine = ("", [])
         if r.type == "flat":
-            return roofs.flat(self.footprint, self.height), fine
+            return roofs.flat(self.footprint, self.height), fine, None
         if r.type == "mono":
-            return roofs.mono(self.footprint, r.eave_side, self.height, r.tilt), fine
+            return roofs.mono(self.footprint, r.eave_side, self.height, r.tilt), fine, None
         if r.type in PITCHED:
             gables = {i for i, kind in enumerate(kinds) if kind == "gable"}
             try:
                 found, dropped = roofs.pitched(self.footprint, self.height, r.tilt, gables, r.ridge_height)
             except skeleton.SkeletonError:
-                return roofs.flat(self.footprint, self.height), ("outline", [])
-            return found, (("gables", sorted(dropped)) if dropped else fine)
-        from .i18n import _
-        out = []
-        for i, p in enumerate(r.free_pitches):
-            pitch = roofs.free(p["ring"], p["eave_side"], p["eave"], p["tilt"])
-            pitch.side, pitch.name = None, _("pitch {n}").format(n=i + 1)
-            out.append(pitch)
-        return out, fine
+                return roofs.flat(self.footprint, self.height), ("outline", []), None
+            return found, (("gables", sorted(dropped)) if dropped else fine), None
+        solved = roof_join.resolve(r.free_pitches, r.joined, r.detached, r.welds)
+        return solved.pitches, fine, solved
 
 
 @dataclass
@@ -1021,6 +1060,13 @@ def _check_rows(rows: list, path: str) -> None:
             raise ValueError(f"{where}.turned: {raw.get('turned')!r} is not a switch")
 
 
+def _check_corner(corner, where: str) -> None:
+    """A corner as a roof's welds and detached keep it: [pitch, place in its ring] (R303). One that no longer is there (a
+    roof drawn again) is left out where it is read: never a reason to refuse the file."""
+    if corner.__class__ is not list or len(corner) != 2 or any(c.__class__ is not int or c < 0 for c in corner):
+        raise ValueError(f"{where}: {corner!r} is not a corner of a free pitch")
+
+
 def _check_project(data: dict) -> list[str]:
     """ValueError with the path of the first thing that is not a project; the list of the keys the program
     does not know (kept out, said to the designer)."""
@@ -1085,6 +1131,21 @@ def _check_project(data: dict) -> list[str]:
             _check_ring(pitch.get("ring", []), f"{path}.roof.free_pitches[{j}].ring", 3)
             if pitch.get("id", "").__class__ is not str:
                 raise ValueError(f"{path}.roof.free_pitches[{j}].id: {pitch.get('id')!r} is not text")
+            if pitch.get("z") is not None:            # R303, format 23: a height for each corner
+                heights = pitch["z"]
+                if heights.__class__ is not list or len(heights) != len(pitch["ring"]):
+                    raise ValueError(f"{path}.roof.free_pitches[{j}].z: not one height for each corner")
+                for k, value in enumerate(heights):
+                    _check_number(value, f"{path}.roof.free_pitches[{j}].z[{k}]", 0.0, HEIGHT_LIMIT)
+        if roof.get("joined", True).__class__ is not bool:
+            raise ValueError(f"{path}.roof.joined: {roof.get('joined')!r} is not true or false")
+        for j, weld in enumerate(roof.get("welds", [])):
+            if weld.__class__ is not list or len(weld) < 2:
+                raise ValueError(f"{path}.roof.welds[{j}]: not two corners or more")
+            for corner in weld:
+                _check_corner(corner, f"{path}.roof.welds[{j}]")
+        for j, corner in enumerate(roof.get("detached", [])):
+            _check_corner(corner, f"{path}.roof.detached[{j}]")
         _check_fields(Fire, _check_dict(raw.get("fire", {}), f"{path}.fire"), f"{path}.fire", unknown)
         if raw.get("canopy") is not None:      # R281, format 21
             canopy = _check_dict(raw["canopy"], f"{path}.canopy")
@@ -1462,15 +1523,36 @@ class Project:
         rules become checks (checks.manual_items)."""
         p = self.fill_params(sf)
         blocked = self.exclusions_of(sf)
+        ring = self._ring_on_its_part(sf)
         if sf.manual:
-            return layout.compute([tuple(q) for q in sf.ring], self.surface_of(sf), self.module_of(sf), p,
+            return layout.compute(ring, self.surface_of(sf), self.module_of(sf), p,
                                   blocked, self.site.lat, self.site.lon, set(sf.removed), rows=sf.hand_rows())
         if p.shade_free:
             if shade is None:
                 raise ValueError("keeping out of the shadows needs the shadow function (energy.system.shadow_exclusions)")
             blocked = blocked + shade(self, sf, p.window)
-        return layout.compute([tuple(q) for q in sf.ring], self.surface_of(sf), self.module_of(sf), p,
+        return layout.compute(ring, self.surface_of(sf), self.module_of(sf), p,
                               blocked, self.site.lat, self.site.lon, set(sf.removed))
+
+    def _ring_on_its_part(self, sf: SubField) -> list[tuple]:
+        """The outline a sub-field is laid in: its own; on a free pitch folded out of plane (roof_join) the part of it
+        on the sub-field's part: a module lies on one plane, and it would stand off the roof past the fold."""
+        own = [tuple(q) for q in sf.ring]
+        b = self.building(sf.building)
+        if b is None or sf.support is not None and sf.support.enabled or b.roof.type != "free":
+            return own
+        pitches = b.pitches()
+        index = b.pitch_index(sf.pitch)
+        pitch = pitches[index] if index is not None else None
+        if pitch is None or pitch.whole is None:
+            return own
+        from shapely.geometry import Polygon
+        part = Polygon(own).buffer(0).intersection(Polygon(pitch.ring).buffer(0))
+        if part.is_empty:
+            return own
+        if part.geom_type != "Polygon":
+            part = max(getattr(part, "geoms", [part]), key=lambda g: g.area)
+        return [tuple(q) for q in part.exterior.coords[:-1]] if part.geom_type == "Polygon" else own
 
     def layout_key(self, sf: SubField) -> str:
         """Everything `fill` reads for this sub-field, as one string: equal keys, the same layout. The sub-field,
@@ -1512,7 +1594,7 @@ class Project:
     # files
 
     def to_json(self) -> dict:
-        """The project as the file holds it (format 22): every variant with its design, the one in hand too;
+        """The project as the file holds it (format 23): every variant with its design, the one in hand too;
         the working copy of the fields above goes into its variant."""
         data = asdict(self)
         for k in DESIGN:
@@ -1560,7 +1642,8 @@ class Project:
                     "out.", lost).format(n=lost))
         while version < FORMAT_VERSION:
             # R281: the migration to 21 tells the designer which canopies became structures
-            data = _to_21(data, notes) if version == 20 else MIGRATIONS[version](data)
+            data = (_to_21(data, notes) if version == 20 else _to_23(data, notes) if version == 22
+                    else MIGRATIONS[version](data))
             version += 1
         if "bim_id" not in data:
             data = MIGRATIONS[18](data)       # hand-authored files without the optional identity

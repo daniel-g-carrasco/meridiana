@@ -31,6 +31,7 @@ import math
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
+from . import roof_vertices
 from .i18n import _
 
 KINDS = ("building", "subfield", "exclusion", "pitch", "row", "prop")
@@ -312,6 +313,7 @@ def _apply(p, kind: str, oid: str, f, degrees: float) -> None:
         b, fp, index = found
         before = fp["ring"]
         fp["ring"] = moved(fp["ring"], f)
+        roof_vertices.forget_pitch_corners(b, index)      # R303: it no longer stands on what it was welded to
         shape = Polygon(b.footprint).buffer(0)
         if _outside(fp["ring"], shape) > _outside(before, shape) + OUTSIDE_TOLERANCE:
             raise ValueError(_("a free pitch stays on its building: this would take it out"))

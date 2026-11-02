@@ -25,14 +25,15 @@ import numpy as np
 
 from . import mesh
 
-PIXELS = 120.0                  # an arrow on the screen, whatever the distance (Qt Design Studio measures 100 px)
-TOLERANCE = 8.0                 # pixels from a handle that still take it (task 16b)
+PIXELS = 90.0                   # an arrow on the screen, whatever the distance (R302: it was 120, «troppo grandi»)
+TOLERANCE = 10.0                # pixels from a handle that still take it: well beyond its 2 drawn (task 16b, R302)
 EAST = np.array([1.0, 0.0, 0.0])
 NORTH = np.array([0.0, 0.0, -1.0])
 UP = np.array([0.0, 1.0, 0.0])
 AXES = {"x": EAST, "y": NORTH, "z": UP}
 HANDLES = ("x", "y", "z", "xy", "rz")
 ACTIVE = ("x", "y", "xy", "rz")         # what a press can take: not "z" (see above)
+VERTEX_TOLERANCE = 12.0         # pixels from a corner of the roof that still take it (R303): wider than its mark
 STEPS = {"snap": 0.10, "fine": 0.01, "free": 0.001}      # metres
 ANGLES = {"snap": 15.0, "fine": 1.0, "free": 0.1}        # degrees
 
@@ -196,6 +197,41 @@ class Drag:
     def offset(self) -> np.ndarray:
         """The value as a move in Qt axes, for the gizmo and the preview."""
         return EAST * self.value[0] + NORTH * self.value[1]
+
+
+def pick_points(cam, px: float, py: float, w: float, h: float, points, tolerance: float = VERTEX_TOLERANCE) -> list[int]:
+    """The places of the points (Qt axes) within `tolerance` pixels of the pixel, the nearest first: the corners of a roof
+    under the pointer (R303)."""
+    near = []
+    for i, p in enumerate(points):
+        at = cam.project(np.asarray(p, dtype=float), w, h)
+        if at is not None:
+            d = math.hypot(px - at[0], py - at[1])
+            if d <= tolerance:
+                near.append((d, i))
+    return [i for _d, i in sorted(near)]
+
+
+@dataclass
+class HeightDrag:
+    """A corner of the roof dragged up and down (R303), along the vertical through it, whatever the pointer does across
+    it: metres from where it was, in the steps of Move. Seen from straight above the vertical is a point and gives
+    nothing: the height is then written in the field."""
+    origin: np.ndarray
+    start: float
+    value: float = 0.0
+
+    @classmethod
+    def begin(cls, cam, px: float, py: float, w: float, h: float, origin) -> "HeightDrag | None":
+        c = np.asarray(origin, dtype=float)
+        t = along(cam, px, py, w, h, c, UP)
+        return None if t is None else cls(c, t)
+
+    def update(self, cam, px: float, py: float, w: float, h: float, mods: set = frozenset(), snaps: bool = True) -> float:
+        t = along(cam, px, py, w, h, self.origin, UP)
+        if t is not None:
+            self.value = stepped(t - self.start, step("move", mods, snaps))
+        return self.value
 
 
 def rotation(degrees: float) -> tuple[float, float, float, float]:

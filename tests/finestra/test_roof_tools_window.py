@@ -30,6 +30,79 @@ class RoofTools(unittest.TestCase):
     def roof(self):
         return self.win.project.building("b1").roof
 
+    def test_the_corners_of_the_roof_in_3d_each_gesture_one_step_of_the_undo(self):
+        """R303: with Move on a building its corners show; a height dragged or written, two corners made one and parted,
+        each is one step, and undo takes the roof back."""
+        win = self.win
+        backend, field = win.view3d.backend, win.view3d.vertex_field
+        win._select("building", "b1")
+        win._set_tool("move")
+        self.assertEqual(len(backend.vertices), 4)
+        self.assertEqual(self.roof().type, "flat")
+        steps = win.undo.count()
+        backend.vertexClicked.emit(2)
+        self.assertEqual(backend.vertex_on, 2)
+        self.assertTrue(field.isVisibleTo(win.view3d))
+        self.assertFalse(field.detach_button.isVisibleTo(field))
+        self.assertEqual(win.undo.count(), steps)                # taking a corner changes nothing
+        field.edit.setText("+2")
+        field.typed.emit(field.edit.text())
+        self.assertEqual(win.undo.count(), steps + 1)
+        self.assertEqual(self.roof().type, "free")
+        self.assertEqual(backend.vertex_on, 2)                   # still the one taken
+        self.assertAlmostEqual(win.vertex_handles[2].z, 8.0)
+        self.assertIn("off one plane", win.hint.text())
+        self.assertEqual(len(win.project.building("b1").pitches()), 2)
+        backend.vertexDragged.emit(2, -1.0)
+        self.assertEqual(win.undo.count(), steps + 2)
+        self.assertAlmostEqual(win.vertex_handles[2].z, 7.0)
+        backend.vertexClicked.emit(2)
+        field.typed.emit("abc")
+        self.assertEqual(win.undo.count(), steps + 2)            # what is not a number changes nothing, and says so
+        field.typed.emit("3,5")                                  # without a sign: the height itself
+        self.assertAlmostEqual(win.vertex_handles[2].z, 3.5)
+        backend.vertexClicked.emit(2)
+        field.typed.emit("-9")                                   # under the ground: refused, said
+        self.assertAlmostEqual(win.vertex_handles[2].z, 3.5)
+        self.assertIn("ground", win.hint.text())
+        win.undo.undo()
+        self.assertAlmostEqual(self.roof().free_pitches[0]["z"][2], 7.0)
+        for _i in range(2):
+            win.undo.undo()
+        self.assertEqual(self.roof().type, "flat")
+
+    def test_two_corners_made_one_and_parted_from_the_3d_view(self):
+        win = self.win
+        backend, field = win.view3d.backend, win.view3d.vertex_field
+
+        def draw(p):
+            r = p.building("b1").roof
+            r.type, r.joined = "free", False
+            r.free_pitches = [{"ring": [[0, 0], [8, 0], [8, 10], [0, 10]], "eave_side": 0, "eave": 6.0, "tilt": 0.0},
+                              {"ring": [[8.5, 0], [16, 0], [16, 10], [8.5, 10]], "eave_side": 0, "eave": 7.0, "tilt": 0.0}]
+        win.edit("Draw", draw)
+        win._select("building", "b1")
+        win._set_tool("move")
+        steps = win.undo.count()
+        backend.vertexClicked.emit(1)                            # [8, 0] of the first pitch
+        self.assertTrue(field.merge_button.isVisibleTo(field))
+        field.merge.emit()
+        self.assertTrue(win.vertex_merging)
+        backend.vertexClicked.emit(4)                            # [8.5, 0] of the second
+        self.assertEqual(win.undo.count(), steps + 1)
+        self.assertEqual(self.roof().welds, [[[0, 1], [1, 0]]])
+        self.assertEqual(self.roof().free_pitches[1]["ring"][0], [8.0, 0.0])
+        self.assertEqual(len(win.vertex_handles), 7)
+        at = next(i for i, h in enumerate(win.vertex_handles) if len(h.corners) == 2)
+        backend.vertexClicked.emit(at)
+        self.assertTrue(field.detach_button.isVisibleTo(field))
+        field.detach.emit()
+        self.assertEqual(win.undo.count(), steps + 2)
+        self.assertEqual(self.roof().welds, [])
+        self.assertEqual(len(win.vertex_handles), 8)
+        win.undo.undo()
+        self.assertEqual(self.roof().welds, [[[0, 1], [1, 0]]])
+
     def test_pitch_page_and_ridge_each_one_step_of_the_undo(self):
         win = self.win
         steps = win.undo.count()

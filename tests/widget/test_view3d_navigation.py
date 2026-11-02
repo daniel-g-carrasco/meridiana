@@ -634,6 +634,55 @@ class Gizmo(unittest.TestCase):
         b = self.backend
         return b.camera.project(np.asarray(point, dtype=float), *b.size)
 
+    def vertex_at(self, index):
+        return self.pixel(self.backend.vertices[index])
+
+    def test_a_corner_of_the_roof_taken_with_a_click_and_dragged_up(self):
+        """R303: a press that stays is a click, one that goes is a drag along the vertical; Esc takes it back; what stands
+        elsewhere goes on to the navigation and the gizmo."""
+        b = self.backend
+        b.set_vertices([(0.0, 3.0, 0.0), (6.0, 3.0, 0.0)])
+        self.assertEqual(len(b.vertexMarks), 2)
+        clicks, drags = [], []
+        b.vertexClicked.connect(clicks.append)
+        b.vertexDragged.connect(lambda i, m: drags.append((i, m)))
+        x, y = self.vertex_at(1)
+        b.press(1, 0, x + 3, y, False, 0.0, 0.0, 0.0, "", -1)
+        b.release(1, 0, x + 3, y)
+        self.assertEqual(clicks, [1])
+        self.assertEqual(drags, [])
+        b.set_vertex_on(1)
+        self.assertEqual(b.vertexMarks[1]["size"], 11)
+        tx, ty = self.pixel(b.vertices[1] + np.array([0.0, 1.0, 0.0]))
+        b.press(1, 0, x, y, False, 0.0, 0.0, 0.0, "", -1)
+        self.assertTrue(b.vertex_dragging())
+        b.move(0, tx, ty)
+        self.assertAlmostEqual(b.vertex_point(1)[1], 4.0, places=1)
+        b.release(1, 0, tx, ty)
+        self.assertEqual(len(drags), 1)
+        self.assertEqual(drags[0][0], 1)
+        self.assertAlmostEqual(drags[0][1], 1.0, places=1)
+        b.press(1, 0, x, y, False, 0.0, 0.0, 0.0, "", -1)
+        b.move(0, tx, ty)
+        self.assertTrue(b.cancel_vertex())
+        b.release(1, 0, tx, ty)
+        self.assertEqual(len(drags), 1)
+        b.set_vertices([])
+        self.assertEqual(b.vertexMarks, [])
+
+    def test_two_corners_on_one_point_a_click_passes_from_one_to_the_other(self):
+        b = self.backend
+        b.set_vertices([(0.0, 3.0, 0.0), (0.0, 3.0, 0.0)])
+        clicks = []
+        b.vertexClicked.connect(clicks.append)
+        x, y = self.vertex_at(0)
+        b.press(1, 0, x, y, False, 0.0, 0.0, 0.0, "", -1)
+        b.release(1, 0, x, y)
+        b.set_vertex_on(clicks[-1])
+        b.press(1, 0, x, y, False, 0.0, 0.0, 0.0, "", -1)
+        b.release(1, 0, x, y)
+        self.assertEqual(sorted(clicks), [0, 1])
+
     def ring_pixel(self, degrees):
         import math
 
