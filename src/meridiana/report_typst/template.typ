@@ -91,7 +91,7 @@
   let p = here().page()
   let chapters = query(<meridiana-chapter>).filter(m => {
     let at = m.location()
-    at.page() < p or (at.page() == p and at.position().y < 50mm)
+    at.page() < p or (at.page() == p and (at.position().y < 50mm or m.value.id.starts-with("attachment")))
   })
   let title = if p == 1 and D.cover != none { T.report } else { D.doc.head_title }
   let sub = D.doc.head_sub

@@ -86,8 +86,9 @@ class Context:
                 prefix = row
                 continue
             cells = [B.plain(c) for c in row]
-            what = f"{prefix}: {cells[0]}" if prefix else cells[0]
-            value = " · ".join(f"{names[i]} {c}" if i < len(names) else c for i, c in enumerate(cells) if i > 0 and c)
+            first = f"{names[0]}: {cells[0]}" if names and 0 in right else cells[0]     # a number names its column
+            what = f"{prefix}: {first}" if prefix else first
+            value = " · ".join(f"{names[i]}: {c}" if i < len(names) else c for i, c in enumerate(cells) if i > 0 and c)
             codes.append(reg.group(group).add(what, value, reg.words(where)))
         return [table(rows, head, right, widths, mark_row, codes, _("Source"))]
 
@@ -861,7 +862,7 @@ def register_chapter(ctx: Context) -> list:
     for g in ctx.register.groups:
         parts.append(sub([bold(g.code), "  ", g.title]))
         parts.append(table([(code, what, value, where) for code, what, value, where in g.rows],
-                           [_("Code"), _("What"), _("Value"), _("Where from")], widths=("10%", "32%", "26%", "32%")))
+                           [_("Code"), _("What"), _("Value"), _("Where from")], widths=("10%", "26%", "38%", "26%")))
     return parts
 
 
