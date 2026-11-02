@@ -21430,3 +21430,7 @@ msgstr "Scegli gli inverter in &automatico…"
 
 msgid "St&ring automatically…"
 msgstr "St&ringa in automatico…"
+
+#: src/meridiana/ui/dock_motion.py:860
+msgid "Alt: as tabs"
+msgstr "Alt: a linguette"

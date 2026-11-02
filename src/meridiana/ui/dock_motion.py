@@ -11,14 +11,16 @@ from dataclasses import dataclass, replace
 
 import shiboken6
 from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPoint, QRect, QRectF, Qt, QTimer, QVariantAnimation
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QColor, QGuiApplication, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (QApplication, QDockWidget, QMainWindow, QStatusBar, QTabBar, QToolBar, QWidget)
 
+from ..i18n import _
 from . import motion
 from .cards import EDGE, GAP, CardDock, arena, default_tokens
-from .design import Motion, Radius, Space
+from .design import Motion, Radius, Size, Space
 
 DIRECT = Qt.FindChildOption.FindDirectChildrenOnly
+INERTIA = Space.M       # a drop zone is left only once the pointer is this far inside the next one (R317)
 
 
 def cards(window: QMainWindow) -> list[QWidget]:
@@ -33,7 +35,7 @@ def _docked(widget: QWidget | None) -> bool:
 
 def _settle_layout(window: QMainWindow) -> None:
     """Resolve card margins synchronously, without dispatching unrelated application jobs."""
-    for _ in range(6):
+    for _turn in range(6):
         before = [widget.geometry() for widget in cards(window) if widget is not None]
         for dock in window.findChildren(CardDock, options=DIRECT):
             dock._fit_now()
@@ -51,6 +53,7 @@ class DockTarget:
     orientation: Qt.Orientation = Qt.Orientation.Horizontal
     before: bool = False
     tab: bool = False
+    extent: int = 0         # the card's height or width once there; 0: its own (R317: Size.PLACEHOLDER across)
 
 
 def apply_target(window: QMainWindow, source: QDockWidget, target: DockTarget) -> None:
@@ -73,7 +76,7 @@ def apply_target(window: QMainWindow, source: QDockWidget, target: DockTarget) -
                        Qt.Orientation.Horizontal if target.area in (Qt.DockWidgetArea.LeftDockWidgetArea,
                                                                    Qt.DockWidgetArea.RightDockWidgetArea)
                        else Qt.Orientation.Vertical)
-        extent = size.width() if orientation == Qt.Orientation.Horizontal else size.height()
+        extent = target.extent or (size.width() if orientation == Qt.Orientation.Horizontal else size.height())
         window.resizeDocks([source], [extent], orientation)
     _settle_layout(window)
     _show_tab_bars(window)
@@ -153,6 +156,7 @@ def cancel_drags(window: QMainWindow) -> None:
     for layer in window.findChildren(Reflow, options=DIRECT):
         layer.drag = None
         layer.hold_open = False
+        layer.lead.stop()
         layer.animation.stop()
         layer.hide()
         layer.deleteLater()
@@ -306,6 +310,10 @@ class Reflow(QWidget):
         self.animation.valueChanged.connect(self._step)
         self.animation.finished.connect(self._settled)
         self.hold_open = False
+        self.slot_first = False             # the slot drawn where it goes while the cards are still (R317)
+        self.lead = QTimer(self)            # the moment between the slot shown and the cards sliding
+        self.lead.setSingleShot(True)
+        self.lead.timeout.connect(self.animation.start)
         self.drag = None                    # the DockDrag holding this layer open, if any
         self.lift = None                    # the carried picture of the panel dragged, kept above this layer
         self.generation = 0
@@ -330,10 +338,19 @@ class Reflow(QWidget):
                                     zip(start.getRect(), end.getRect(), strict=True)))
         return result
 
+    def slot(self) -> QRect:
+        """Where the slot of the card carried is drawn now."""
+        if self.slot_first:
+            return self.card_rect(self.preview_rect)
+        return self.card_rect(self.rectangles().get(self.preview_source, self.preview_rect))
+
     def retarget(self, ends: dict[QWidget, QRect], *, edge: str = 'right', preview=None,
-                 hold: bool = False, ms: int = Motion.FAST) -> None:
+                 hold: bool = False, ms: int = Motion.FAST, lead: int = 0) -> None:
+        """The cards from where they are drawn now to `ends` in `ms`. With `lead` (R317), the slot of `preview`
+        shows at once where it goes and the cards start sliding `lead` ms later: first what will happen, then it."""
         self.starts = self.rectangles()
         self.animation.stop()
+        self.lead.stop()
         self.hold_open = hold
         self.preview_source = preview
         self.preview_rect = QRect(ends.get(preview, QRect()))
@@ -350,15 +367,20 @@ class Reflow(QWidget):
         self.show()
         self.raise_()
         if self.lift is not None:
-            if shiboken6.isValid(self.lift) and not self.lift.isHidden():
-                self.lift.raise_()          # the carried picture stays over the cards
-            else:
+            if not shiboken6.isValid(self.lift) or self.lift.isHidden():
                 self.lift = None
+            elif not self.lift.isWindow():
+                self.lift.raise_()          # the carried picture stays over the cards (a window is above them)
         self.ends = {widget: QRect(ends.get(widget, _collapsed(start, edge)))
                      for widget, start in self.starts.items()}
-        self.progress = 0.0
         self.animation.setDuration(0 if motion.reduced() else ms)
-        self.animation.start()
+        self.progress = 0.0                 # after: a new duration plays the old time's value out (0.66 if left)
+        self.slot_first = bool(lead) and preview is not None
+        if lead and not motion.reduced():
+            self.update()
+            self.lead.start(lead)
+        else:
+            self.animation.start()
 
     def _step(self, value) -> None:
         self.progress = float(value)
@@ -372,6 +394,7 @@ class Reflow(QWidget):
     def refresh_motion(self) -> None:
         if motion.reduced():
             self.animation.stop()
+            self.lead.stop()
             self._step(1.0)
             self._settled()
 
@@ -404,7 +427,7 @@ class Reflow(QWidget):
             p.drawPixmap(target.topLeft() - inner.topLeft(), picture)
             p.restore()
         if self.preview_source is not None and self.preview_rect.isValid():
-            r = QRectF(card_rect(positions.get(self.preview_source, self.preview_rect))).adjusted(1, 1, -1, -1)
+            r = QRectF(self.slot()).adjusted(1, 1, -1, -1)
             p.setRenderHint(QPainter.RenderHint.Antialiasing)
             accent = QColor(tokens['text2'])
             fill = QColor(accent)
@@ -418,21 +441,42 @@ class Reflow(QWidget):
                        self.preview_source.windowTitle())
 
 
+def floating_lifts() -> bool:
+    """Whether the carried card can be a little window of its own, placed by the program (R317): not on Wayland."""
+    return not QGuiApplication.platformName().startswith('wayland')
+
+
 class Lift(QWidget):
     """The card taken by the pointer (R312): its picture, carried from the point it was taken at, a little larger
     than it lay and a touch translucent (lifted; no shadow, the system draws none). Between two pointer moves only
     this widget moves: no style, no layout of the window is touched. At the end it flies into the slot it was
-    given, back to its size, and dissolves into the real card there; cancelled, it flies home the same way."""
+    given, back to its size, and dissolves into the real card there; cancelled, it flies home the same way.
+
+    A little window of its own, owned by the window (R317): a child of it was cut at its edge when the pointer
+    carried the card out. The kind of window Qt carries its own drag pictures in (a tooltip's: never active, no
+    frame, above the window, placed by the program): translucent, without a shadow, never under the mouse, so the
+    pointer stays the title's, held by its grab, and the window keeps the keyboard (Esc). On Wayland a program
+    cannot place a window of its own: there the picture stays a child of the window, kept inside it, the point it
+    was taken at sliding under the pointer at the edge."""
 
     SCALE = 1.03                            # carried: a little larger than it lay
     OPACITY = 0.94                          # carried: the floor shows a little through it
 
+    FLAGS = (Qt.WindowType.ToolTip | Qt.WindowType.FramelessWindowHint | Qt.WindowType.BypassWindowManagerHint |
+             Qt.WindowType.NoDropShadowWindowHint | Qt.WindowType.WindowDoesNotAcceptFocus |
+             Qt.WindowType.WindowTransparentForInput)
+
     def __init__(self, window: QMainWindow, dock: QDockWidget, grip: QPoint):
-        super().__init__(window)
+        own = floating_lifts()
+        super().__init__(window, self.FLAGS if own else Qt.WindowType.Widget)
         self.host = window
         self.setObjectName('dock-lift')
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
+        if own:
+            self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+            self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
+        else:
+            self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.picture = motion.picture(dock)
         self.inner = dock.card_rect() if isinstance(dock, CardDock) else dock.contentsRect()  # the card, in the picture
@@ -452,7 +496,8 @@ class Lift(QWidget):
         motion._RESPONSIVE.add(self)
         self._place()
         self.show()
-        self.raise_()
+        if not own:
+            self.raise_()
         self._tween(self.frame, self.SCALE, self.OPACITY, Motion.FAST)
 
     def follow(self, point: QPoint) -> None:
@@ -513,7 +558,14 @@ class Lift(QWidget):
     def _place(self) -> None:
         s = self.scale
         corner = self.frame.topLeft() + self.grip - QPoint(round(self.grip.x() * s), round(self.grip.y() * s))
-        self.setGeometry(corner.x(), corner.y(), round(self.frame.width() * s), round(self.frame.height() * s))
+        width, height = round(self.frame.width() * s), round(self.frame.height() * s)
+        if self.isWindow():
+            corner = self.host.mapToGlobal(corner)      # on the screen, wherever the pointer takes it
+        else:                                           # inside the window, whole: the grip slides at its edge
+            room = self.host.rect()
+            corner = QPoint(max(room.left(), min(corner.x(), room.right() + 1 - width)),
+                            max(room.top(), min(corner.y(), room.bottom() + 1 - height)))
+        self.setGeometry(corner.x(), corner.y(), width, height)
 
     def refresh_motion(self) -> None:
         if motion.reduced() and self.run is not None:
@@ -589,11 +641,12 @@ def reflow(window: QMainWindow, change: Callable, *, edge: str = 'right') -> Ref
     return layer
 
 
-def target_at(window: QMainWindow, source: QDockWidget, point: QPoint) -> DockTarget | None:
+def target_at(window: QMainWindow, source: QDockWidget, point: QPoint, *, tabs: bool = False) -> DockTarget | None:
     """Where a drop at `point` (the window's pixels) would put `source`: a band Space.XXL wide along the arena's
-    sides docks it at that side; a panel under the point takes it beside itself (its outer quarters) or as a tab
-    (its middle). The central widget is never a destination (R312): over it, outside the window's bands, there is
-    nothing to answer."""
+    sides docks it at that side; a panel under the point takes it beside itself, in the half of the point (the side
+    nearest it, the distances measured in the panel's width and height), or with `tabs` (Alt held, R317) as a tab
+    behind it wherever the point is on it: never a tab without Alt. Alt does not change the bands. The central
+    widget is never a destination (R312): over it, outside the window's bands, there is nothing to answer."""
     room = arena(window)
     if not room.contains(point):
         return None
@@ -603,21 +656,82 @@ def target_at(window: QMainWindow, source: QDockWidget, point: QPoint) -> DockTa
                  (room.bottom() - point.y(), Qt.DockWidgetArea.BottomDockWidgetArea))
     distance, area = min(distances, key=lambda pair: pair[0])
     if distance < Space.XXL and source.allowedAreas() & area:
-        return DockTarget(area)
+        return _band(window, source, area, point)
     for anchor in window.findChildren(QDockWidget, options=DIRECT):
         if anchor is source or anchor.isHidden() or anchor.isFloating() or not anchor.geometry().contains(point):
             continue
         area = window.dockWidgetArea(anchor)
         if not source.allowedAreas() & area:
             continue
+        if tabs:
+            return DockTarget(area, anchor, tab=True)
         r = anchor.geometry()
         x, y = (point.x() - r.left()) / r.width(), (point.y() - r.top()) / r.height()
-        distance, side = min((x, 'left'), (1 - x, 'right'), (y, 'top'), (1 - y, 'bottom'))
-        if distance > 0.25:
-            return DockTarget(area, anchor, tab=True)
-        return DockTarget(area, anchor, Qt.Orientation.Horizontal if side in ('left', 'right')
-                          else Qt.Orientation.Vertical, before=side in ('left', 'top'))
+        side = min((x, 'left'), (1 - x, 'right'), (y, 'top'), (1 - y, 'bottom'))[1]
+        return _beside(window, area, anchor, side)
     return None
+
+
+_OUTER = {Qt.DockWidgetArea.LeftDockWidgetArea: 'left', Qt.DockWidgetArea.RightDockWidgetArea: 'right',
+          Qt.DockWidgetArea.TopDockWidgetArea: 'top', Qt.DockWidgetArea.BottomDockWidgetArea: 'bottom'}
+_ACROSS = (Qt.DockWidgetArea.TopDockWidgetArea, Qt.DockWidgetArea.BottomDockWidgetArea)
+
+
+def _beside(window: QMainWindow, area: Qt.DockWidgetArea, anchor: QDockWidget, side: str) -> DockTarget:
+    """Beside `anchor` on `side`. Above or below a panel as wide as the window, the card lies across it: its slot
+    Size.PLACEHOLDER tall, not its own height (R317: a tall card dropped there pushed the central card far up)."""
+    horizontal = side in ('left', 'right')
+    r, room = anchor.geometry(), arena(window)
+    across = not horizontal and r.left() <= room.left() + EDGE and r.right() >= room.right() - EDGE
+    return DockTarget(area, anchor, Qt.Orientation.Horizontal if horizontal else Qt.Orientation.Vertical,
+                      before=side in ('left', 'top'), extent=Size.PLACEHOLDER if across else 0)
+
+
+def _band(window: QMainWindow, source: QDockWidget, area: Qt.DockWidgetArea, point: QPoint) -> DockTarget:
+    """The band along the window's side `area`. Where a panel docked at that side lies across the band at the
+    point, the band and that panel's outer side are one place: one target, beside that panel on its outer side, the
+    same the panel's own half gives a step inside (R317: the slot no longer hops between two answers for one
+    place). Where the band is empty, the side itself."""
+    along_x = area in (Qt.DockWidgetArea.TopDockWidgetArea, Qt.DockWidgetArea.BottomDockWidgetArea)
+    room = window.rect()
+    there = []
+    for dock in window.findChildren(QDockWidget, options=DIRECT):
+        r = dock.geometry()
+        if (dock is source or not _docked(dock) or window.dockWidgetArea(dock) != area or not room.intersects(r)
+                or not (r.left() <= point.x() <= r.right() if along_x else r.top() <= point.y() <= r.bottom())):
+            continue
+        reach = (abs(point.y() - r.center().y()) - r.height() / 2 if along_x
+                 else abs(point.x() - r.center().x()) - r.width() / 2)
+        there.append((reach, dock))
+    if not there:                       # across the window above or below: the named height (R317)
+        return DockTarget(area, extent=Size.PLACEHOLDER if area in _ACROSS else 0)
+    anchor = min(there, key=lambda pair: pair[0])[1]           # the one at the side, under or nearest the point
+    return _beside(window, area, anchor, _OUTER[area])
+
+
+def _settled(window: QMainWindow, source: QDockWidget, point: QPoint, tabs: bool,
+             here: DockTarget | None) -> DockTarget | None:
+    """The zone at `point` with inertia (R317): `here`, the zone the pointer was in, holds while it is less than
+    INERTIA away (the window's edge bounds the probes): the next one is taken only once the pointer is that far
+    inside it. Off the window, at once."""
+    wanted = target_at(window, source, point, tabs=tabs)
+    if wanted == here:
+        return here
+    room = arena(window)
+    if not room.contains(point):
+        return wanted
+    for dx, dy in ((INERTIA, 0), (-INERTIA, 0), (0, INERTIA), (0, -INERTIA)):
+        probe = QPoint(min(max(point.x() + dx, room.left()), room.right()),
+                       min(max(point.y() + dy, room.top()), room.bottom()))
+        if target_at(window, source, probe, tabs=tabs) == here:
+            return here
+    return wanted
+
+
+def _same_card(a: DockTarget | None, b: DockTarget | None) -> bool:
+    """Two zones beside the same panel: only the half differs (above or below it, left or right)."""
+    return (a is not None and b is not None and a.anchor is not None and a.anchor is b.anchor and a.area == b.area
+            and not a.tab and not b.tab)
 
 
 _CANCEL = (QEvent.Type.WindowDeactivate, QEvent.Type.Hide, QEvent.Type.DevicePixelRatioChange)
@@ -643,6 +757,10 @@ class DockDrag(QObject):
         self.pending = None                 # the zone under the pointer, waiting its dwell
         self.waiting = False
         self.last_point = None
+        self.local = None                   # the pointer in the window's pixels, at its last move
+        self.tabs = False                   # Alt held: a panel takes the card as a tab (R317)
+        self.status = None                  # the status bar saying what Alt does, while the drag lasts
+        self.said = ''
         self.dwell = QTimer(self)
         self.dwell.setSingleShot(True)
         self.dwell.timeout.connect(self._dwelt)
@@ -655,6 +773,14 @@ class DockDrag(QObject):
             return True
         if self.solver is not None and kind == QEvent.Type.KeyPress and event.key() == Qt.Key.Key_Escape:
             self.finish(cancel=True)
+            return True
+        if (self.solver is not None and kind in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease) and
+                event.key() == Qt.Key.Key_Alt):
+            # Alt is the drag's own while it lasts (R317): tabs, at once, the pointer still. Not the window's: the
+            # menus Alt shows and the page it pushes (AltMenus) see neither its press nor its release
+            if not event.isAutoRepeat():
+                self.tabs = kind == QEvent.Type.KeyPress
+                self._track()
             return True
         if self.solver is not None and kind in _CANCEL and obj is self.dock.parentWidget():
             # Deactivated, hidden or moved to another pixel ratio: the pictures and the measuring
@@ -683,21 +809,39 @@ class DockDrag(QObject):
                     return False
                 self._take(window)
             window = self.dock.parentWidget()
-            local = window.mapFromGlobal(point)
-            self.lift.follow(local)         # the only thing that moves with the pointer
-            wanted = target_at(window, self.dock, local)
-            if wanted == self.target:
-                self.waiting, self.pending = False, None
-                self.dwell.stop()
-            elif not self.waiting or wanted != self.pending:
-                self.waiting, self.pending = True, wanted
-                self.dwell.start(Motion.DWELL)
+            self.local = window.mapFromGlobal(point)
+            self.lift.follow(self.local)    # the only thing that moves with the pointer
+            # Alt read at every move, from the event and the application (held before the drag began); its press and
+            # release, seen below, set it either way. A key eaten here leaves the application's modifiers behind
+            if (event.modifiers() | QApplication.keyboardModifiers()) & Qt.KeyboardModifier.AltModifier:
+                self.tabs = True
+            self._track()
             return True
         if (kind == QEvent.Type.MouseButtonRelease and event.button() == Qt.MouseButton.LeftButton and
                 self.origin is not None):           # a QPoint at the screen's origin is false
             self.finish()
             return True
         return False
+
+    def _track(self) -> None:
+        """The zone under the pointer, with Alt as it is now and with inertia (R317). Another panel, a band, Alt
+        pressed or let go: answered after its dwell. The other half of the panel answered already: at once."""
+        if self.solver is None or self.local is None:
+            return
+        here = self.pending if self.waiting else self.target
+        wanted = _settled(self.dock.parentWidget(), self.dock, self.local, self.tabs, here)
+        if wanted == self.target:
+            self.waiting, self.pending = False, None
+            self.dwell.stop()
+        elif _same_card(wanted, self.target):
+            self.waiting, self.pending = False, None
+            self.dwell.stop()
+            self._answer(wanted)
+        elif self.waiting and _same_card(wanted, self.pending):
+            self.pending = wanted           # the same panel waited for: its dwell goes on
+        elif not self.waiting or wanted != self.pending:
+            self.waiting, self.pending = True, wanted
+            self.dwell.start(Motion.DWELL)
 
     def _take(self, window: QMainWindow) -> None:
         """The card lifted: the measuring window, the motion layer with the card's home slot, the picture."""
@@ -706,18 +850,28 @@ class DockDrag(QObject):
         self.layer.hold_open = True
         self.layer.drag = self
         self.lift = Lift(window, self.dock, self.origin)
+        self.tabs = bool(QApplication.keyboardModifiers() & Qt.KeyboardModifier.AltModifier)
         self.layer.lift = self.lift
         self.layer.retarget(_placed(window), preview=self.dock, hold=True)
         QApplication.instance().installEventFilter(self)
         self.title.grabMouse()
+        self.status = next((bar for bar in window.findChildren(QStatusBar, options=DIRECT) if bar.isVisible()), None)
+        if self.status is not None:
+            self.said = _("Alt: as tabs")
+            self.status.showMessage(self.said)
 
     def _dwelt(self) -> None:
         if self.solver is None or not self.waiting:
             return
-        self.target, self.pending, self.waiting = self.pending, None, False
+        zone, self.pending, self.waiting = self.pending, None, False
+        self._answer(zone)
+
+    def _answer(self, zone: DockTarget | None) -> None:
+        """The zone shown: the cards make room for its slot, or go back home without one."""
+        self.target = zone
         window = self.dock.parentWidget()
-        ends = self.solver.solve(self.target) if self.target is not None else _placed(window)
-        self.layer.retarget(ends, preview=self.dock, hold=True, ms=Motion.CAREFUL)
+        ends = self.solver.solve(zone) if zone is not None else _placed(window)
+        self.layer.retarget(ends, preview=self.dock, hold=True, ms=Motion.CAREFUL, lead=Motion.FAST)
 
     def finish(self, cancel: bool = False) -> None:
         origin, self.origin = self.origin, None
@@ -727,6 +881,9 @@ class DockDrag(QObject):
         self.waiting, self.pending = False, None
         QApplication.instance().removeEventFilter(self)
         self.title.releaseMouse()
+        if self.status is not None and shiboken6.isValid(self.status) and self.status.currentMessage() == self.said:
+            self.status.clearMessage()
+        self.status = None
         window, dock = self.dock.parentWidget(), self.dock
         layer, lift, target, solver = self.layer, self.lift, self.target, self.solver
         self.solver = self.layer = self.lift = self.target = None
