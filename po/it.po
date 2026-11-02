@@ -21472,3 +21472,23 @@ msgstr "Vai a un altro passaggio della visita"
 #: src/meridiana/ui/tour.py
 msgid "Leave the tour here: Help brings you back to this step"
 msgstr "Lascia la visita qui: da Aiuto torni a questo passaggio"
+
+#: src/meridiana/ui/panel_buttons.py:163
+msgid "Hide the {card}"
+msgstr "Nascondi i {card}"
+
+#: src/meridiana/ui/panel_buttons.py:163
+msgid "Show the {card}"
+msgstr "Mostra i {card}"
+
+#: src/meridiana/ui/panel_buttons.py:165
+msgid "Hide the {card} panel"
+msgstr "Nascondi il pannello {card}"
+
+#: src/meridiana/ui/panel_buttons.py:166
+msgid "Show the {card} panel"
+msgstr "Mostra il pannello {card}"
+
+#: src/meridiana/ui/panel_buttons.py:165
+msgid "Bring back the {card} panel"
+msgstr "Riporta davanti il pannello {card}"

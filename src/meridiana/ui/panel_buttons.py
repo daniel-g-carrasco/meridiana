@@ -63,20 +63,29 @@ class PanelButtons(QWidget):
 
     @staticmethod
     def covered(dock: QDockWidget) -> bool:
-        """Open but not seen: a tab behind another card."""
-        return not dock.isHidden() and dock.visibleRegion().isEmpty()
+        """Open but not seen: a tab behind another card. Asked before any layer is raised over the window (the
+        motion layer of a reflow empties every card's visible region: the left button then raised the Project
+        panel instead of hiding it, R323, 02/11/2026)."""
+        if dock.isHidden():
+            return False
+        window = dock.parentWidget()
+        if isinstance(window, QMainWindow) and not window.tabifiedDockWidgets(dock):
+            return False
+        return dock.visibleRegion().isEmpty()
 
     def _clicked(self, dock: QDockWidget) -> None:
         from .dock_motion import reflow
         window = dock.parentWidget()
+        covered = self.covered(dock)            # decided before the reflow's layer covers the cards
         if isinstance(window, QMainWindow):
             edge = {"panel-bottom": "bottom", "panel-right": "right", "panel-left": "left"}.get(
                 self.buttons[dock].property("icon_name"), "right")
-            reflow(window, lambda: self._clicked_now(dock), edge=edge)
+            reflow(window, lambda: self._clicked_now(dock, covered), edge=edge)
         else:
-            self._clicked_now(dock)
+            self._clicked_now(dock, covered)
 
-    def _clicked_now(self, dock: QDockWidget) -> None:
+    def _clicked_now(self, dock: QDockWidget, covered: bool | None = None) -> None:
+        covered = self.covered(dock) if covered is None else covered
         edge = self.buttons[dock].property("icon_name")
         if edge in ("panel-right", "panel-bottom"):
             collapsed = self.collapsed_edges.get(edge, [])
@@ -101,7 +110,7 @@ class PanelButtons(QWidget):
         if dock.isHidden():
             dock.show()
             dock.raise_()
-        elif self.covered(dock):
+        elif covered:
             dock.raise_()
         else:
             dock.hide()
@@ -148,8 +157,14 @@ class PanelButtons(QWidget):
         if group:
             title = {"panel-right": _("Right panels"),
                      "panel-bottom": _("Bottom panels")}[edge]
-        what = (_("Close {card}") if seen else _("Bring back {card}") if self.covered(dock)
-                else _("Open {card}")).format(card=title)
+        # what a click does, said as it is: the panel is hidden or shown, never closed (Daniel, 02/11/2026: «dice
+        # sta roba che non è vera»)
+        if group:
+            what = _("Hide the {card}") if seen else _("Show the {card}")
+        else:
+            what = _("Hide the {card} panel") if seen else (_("Bring back the {card} panel") if self.covered(dock)
+                                                           else _("Show the {card} panel"))
+        what = what.format(card=title.lower() if group else title)
         b.setToolTip(f"{what} ({keys})" if keys else what)
 
     def set_colours(self, t: dict) -> None:
