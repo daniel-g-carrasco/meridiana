@@ -35,7 +35,7 @@ class Symbols(unittest.TestCase):
     def test_the_symbols_say_what_daniel_listed(self):
         from meridiana.ui import symbols
         self.assertEqual(set(symbols.NAMES), {"check", "cross", "forbidden", "stop", "info", "warning", "error",
-                                              "trash", "back"})
+                                              "trash", "back", "update"})
         self.assertEqual(symbols.LEVEL, {"fail": "stop", "warn": "warning", "info": "info", "ok": "check"})
         for name in symbols.NAMES:
             for dark in (False, True):

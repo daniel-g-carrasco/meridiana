@@ -31,7 +31,7 @@ PORTAL = ("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop", "
 FONT_DIR = "inter"
 FONT_FILES = ("Inter-Regular.ttf", "Inter-SemiBold.ttf", "Inter-Bold.ttf")
 FONT_WEIGHTS = dict(zip(FONT_FILES, (400, 600, 700), strict=True))
-# The marks of the notes (⟳, ⋯) and the snaps' signs (∥ ⊥ ⇧) are not all in Inter, nor all in Segoe UI.
+# The marks of the notes (⋯) and the snaps' signs (∥ ⊥ ⇧) are not all in Inter, nor all in Segoe UI.
 # The first character Qt has to look for elsewhere costs it 1-2 s on Windows, whatever the font engine
 # (23/10/2026): at the start, with the checks' panel, or later, freezing the page that first shows one. So these
 # are drawn in a font that has them, where they appear; on Linux fontconfig finds them at once.

@@ -163,7 +163,7 @@ def html(name: str, size: int = IN_TEXT) -> str:
         _FILES[(name, dark)] = path
     if not path:
         return {"check": "✔", "cross": "✕", "warning": "⚠", "error": "✘", "stop": "✘", "info": "ℹ",
-                "back": "↶"}.get(name, "")
+                "back": "↶", "update": "⟳"}.get(name, "")
     return f'<img src="{path}" width="{size}" height="{size}" style="vertical-align: middle">'
 
 

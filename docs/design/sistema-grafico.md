@@ -409,7 +409,7 @@ I moduli generici, che non sanno niente di fotovoltaico:
 | `ui/day_picker.py` | il calendario dei campi data: un fondo solo, giorno scelto neutro, oggi in un anello | `design`, `icons` |
 | `ui/icons.py` | icone Lucide (ISC) e proprie, nel colore del tema | `paths` |
 | `ui/sections.py`, `ui/marks.py` | elenchi a sezioni con i segni | `design`, `symbols` |
-| `symbol_shapes.py`, `ui/symbols.py` | i nove simboli piatti (§4): le forme senza Qt, poi icona, disegno, segno e testo ricco | `theme_colors` (le forme); Qt Svg (il disegno) |
+| `symbol_shapes.py`, `ui/symbols.py` | i dieci simboli piatti (§4): le forme senza Qt, poi icona, disegno, segno e testo ricco | `theme_colors` (le forme); Qt Svg (il disegno) |
 | `ui/rows.py` | elenco a righe e griglia di campi al posto delle tabelle | `design` |
 | `ui/phasebar.py`, `ui/file_page.py` | riga delle fasi con la barra; pagina File | il contenuto viene dal programma (`phases.py`, i comandi) |
 | `ui/gallery.py` | la vetrina | tutti i precedenti |

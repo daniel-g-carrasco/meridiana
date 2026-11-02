@@ -1,4 +1,4 @@
-"""The shapes of the window's symbols, with no Qt (R330, the flat ones): the tracks of the nine symbols in a 16-unit
+"""The shapes of the window's symbols, with no Qt (R330, the flat ones): the tracks of the ten symbols in a 16-unit
 square, their tones, the checks' levels, and the SVG of one. `ui/symbols.py` draws them in the window with Qt's renderer;
 the report's Typst template (`report_typst/`) draws the same tracks, so a check has the same sign on the screen and on
 the paper. A change of geometry is made here, once.
@@ -38,6 +38,8 @@ SHAPES = {
     # the arrow of going back: its head to the left, its shaft turning down and back under it, 1.7 wide
     "back": ("neutral", DISC, "M3.3,6.6 L6.7,3.7 L6.7,5.75 L9,5.75 A3.35,3.35 0 0 1 9,12.45 L5.4,12.45 "
                               "L5.4,10.75 L9,10.75 A1.65,1.65 0 0 0 9,7.45 L6.7,7.45 L6.7,9.5 Z"),
+    # to do again: what is shown is the previous one, an arrow going round (R330, the «⟳» of a font before)
+    "update": ("neutral", DISC, "M12.06,11.41 A5.3,5.3 0 1 1 9.81,3.02 L10.39,1.42 L12.62,4.95 L8.65,6.21 L9.23,4.62 A3.6,3.6 0 1 0 10.76,10.31 Z"),
 }
 NAMES = tuple(SHAPES)
 LEVEL = {"fail": "stop", "warn": "warning", "info": "info", "ok": "check"}      # the checks' levels (checks.LEVELS)
