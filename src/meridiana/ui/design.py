@@ -239,6 +239,15 @@ def set_text(widget, style: TextStyle):
     return widget
 
 
+def free_text(label, style: TextStyle | None = None):
+    """A text that stands alone in a section whose layout has no margins (a section that holds cards and pages
+    of its own, the Plant's): its sides inset as the text of a control (R296), so that it never touches the frame.
+    Set on the label, not on the section: the groups inside a section keep their own margins. In `style` of the
+    catalogue when given. The label, for chaining."""
+    label.setContentsMargins(Space.M, Space.XS, Space.M, Space.XS)
+    return label if style is None else set_text(label, style)
+
+
 def set_text_all(root, style: TextStyle) -> None:
     """`root` and every widget inside it in a style of the catalogue (a bar of small words: the status bar). A
     font set on a widget does not reach its children under the global sheet."""

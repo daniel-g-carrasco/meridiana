@@ -28,7 +28,7 @@ from .properties import combo, make_form, spin
 from . import icons, marks, shared_tables
 from .help_box import help_button
 from .theme import mark, symbol_font
-from .design import Icon, Radius, Size, Space, Text, Type, font, set_text, strong
+from .design import Icon, Radius, Size, Space, Text, Type, font, free_text, set_text, strong
 from .style import Group
 from .sections import SectionDelegate
 
@@ -852,6 +852,8 @@ class PlantSection(Group):
         super().set_expanded(expanded, Motion.NORMAL if ms < 0 else ms)
         if self.collapsible and expanded:
             self.page._opened(self.sid)
+        elif self.collapsible:
+            self.page._restretch()                  # R296: a section closed keeps no height, the space goes below
 
 
 class PlantSide(QWidget):
@@ -886,12 +888,13 @@ class PlantSide(QWidget):
             inner.setContentsMargins(0, 0, 0, 0)
             self.sections[sid] = section
             box.addWidget(section)
+        box.addStretch(0)                               # the empty space of the panel when every section is closed
         # Panels: the sub-field's card, or what to do when none is selected
         panels = self.sections["panels"].layout()
         self.panels_hint = QLabel(_("Select a sub-field on the plan to see its layout here, or draw one with "
                                     "«Sub-field»."))
         self.panels_hint.setWordWrap(True)
-        set_text(self.panels_hint, Text.SECONDARY)
+        free_text(self.panels_hint, Text.SECONDARY)             # the section's layout has no margins (R296)
         panels.addWidget(self.panels_hint)
         self.props_holder = QWidget()
         holder = QVBoxLayout(self.props_holder)
@@ -904,12 +907,17 @@ class PlantSide(QWidget):
         storage = self.sections["storage"].layout()
         self.storage_text = QLabel(_("No battery"))
         self.storage_text.setWordWrap(True)
+        free_text(self.storage_text)
         storage.addWidget(self.storage_text)
         if "battery_catalog" in actions:
             configure = QPushButton(shortcuts.plain(actions["battery_catalog"].text()))
             configure.setToolTip(actions["battery_catalog"].toolTip())
             configure.clicked.connect(actions["battery_catalog"].trigger)
-            storage.addWidget(configure, 0, Qt.AlignmentFlag.AlignLeft)
+            row = QHBoxLayout()                         # off the frame as the text above it (R296)
+            row.setContentsMargins(Space.M, 0, Space.M, 0)
+            row.addWidget(configure)
+            row.addStretch(1)
+            storage.addLayout(row)
         storage.addStretch(1)
         # the command used opens its section: the groups of the Plant's bar say which (phases.py)
         from .. import phases
@@ -943,11 +951,18 @@ class PlantSide(QWidget):
         changed = sid != self.current
         self.current = sid
         for other, section in self.sections.items():
-            self.box.setStretch(self.box.indexOf(section), 1 if other == sid else 0)
             if other != sid and section.expanded:
                 section.set_expanded(False)
+        self._restretch()
         if changed:
             self.sectionOpened.emit(sid)
+
+    def _restretch(self) -> None:
+        """The height goes to the section that is open, to none when every one is closed: a closed section is as
+        tall as its header and the space under it stays empty, out of every frame (R296)."""
+        for section in self.sections.values():
+            self.box.setStretch(self.box.indexOf(section), 1 if section.expanded else 0)
+        self.box.setStretch(self.box.count() - 1, 0 if any(s.expanded for s in self.sections.values()) else 1)
 
     # the Properties, lent while the Plant is open (as the plan is to the Plant page)
 
