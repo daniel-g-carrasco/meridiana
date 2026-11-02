@@ -332,9 +332,14 @@ def preview_steps(project, energy: dict, width: int, out: list, profile: dict | 
     from PySide6.QtCore import QSize
     from PySide6.QtPdf import QPdfDocument
     build, result, attached = yield from _scaled(_build(project, energy, profile), IMAGES_SHARE)
+    from PySide6.QtCore import QBuffer, QByteArray, QIODevice
+    build.close()                                   # the PDF read from memory: no file left open (Windows locks it)
+    data = QBuffer()
+    data.setData(QByteArray(result.pdf))
+    data.open(QIODevice.OpenModeFlag.ReadOnly)
     pdf = QPdfDocument()
     try:
-        pdf.load(str(build.pdf_path))
+        pdf.load(data)
         pages = pdf.pageCount()
         after: dict = {}
         for k, a in enumerate(attached, 1):
@@ -360,7 +365,7 @@ def preview_steps(project, energy: dict, width: int, out: list, profile: dict | 
                 n += a.pages
     finally:
         pdf.close()
-        build.close()
+        data.close()
     return total
 
 

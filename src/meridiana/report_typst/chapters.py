@@ -868,10 +868,11 @@ def register_chapter(ctx: Context) -> list:
 # the chapters of «Compact»
 
 def overview(ctx: Context) -> list:
-    parts = _sheet(ctx)
+    """The sheet of the summary, closed by a 3D view; the other view and the plan at the whole width after it."""
+    parts = _sheet(ctx) + _sheet_picture(ctx)
     views = list(ctx.pictures)
-    for vid in views:
-        parts.append(view_block(ctx, vid))
+    if len(views) > 1:
+        parts.append(view_block(ctx, views[0]))
     parts.append(plan_block(ctx))
     return parts
 
