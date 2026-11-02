@@ -163,7 +163,7 @@ complessivo inserito dal progettista: non recupera l’energia FV tagliata dal c
 
 Da Aiuto o File > Aiuto puoi avviare la visita guidata e preparare una segnalazione. Meridio riconosce
 anche «Avvia la visita guidata» e «Segnala un bug» senza collegarsi a un modello. La visita può essere
-saltata, sospesa e ripresa; non modifica il progetto. La segnalazione mostra una bozza modificabile,
+saltata, sospesa e ripresa; non modifica il progetto. Per provarla senza passare dal menu: `meridiana --tour 5` la apre al quinto passo (il numero o il nome del passo), `meridiana --tour nuovo` simula il primo avvio; usano impostazioni temporanee e non toccano le tue. La segnalazione mostra una bozza modificabile,
 con dati di sistema facoltativi, contesto e righe diagnostiche scelti. L’anteprima oscura percorsi e
 credenziali riconosciuti: controllala sempre. Apri bozza su GitHub apre un modulo pubblico, senza
 inviare la segnalazione. Puoi invece copiare o salvare la bozza in un nuovo file.

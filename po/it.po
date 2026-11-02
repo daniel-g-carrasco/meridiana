@@ -18,6 +18,29 @@ msgstr ""
 msgid "usage: {command} [PROJECT]"
 msgstr "uso: {command} [PROGETTO]"
 
+#: src/meridiana/__main__.py:31
+msgid ""
+"  --tour [STEP|new]    start with the guided tour at STEP (its number or "
+"name; the first when omitted); «new» pretends it is the first start. Your "
+"own settings are never touched."
+msgstr ""
+"  --tour [PASSO|nuovo] avvia con la visita guidata al PASSO (il numero o il "
+"nome; il primo se manca); «nuovo» simula il primo avvio. Le tue "
+"impostazioni non vengono mai toccate."
+
+#: src/meridiana/__main__.py:33
+msgid "  --self-test [REPORT] check the program without a screen and write a report"
+msgstr "  --self-test [REPORT] controlla il programma senza schermo e scrive un rapporto"
+
+#: src/meridiana/__main__.py:34
+msgid "  --version, -V        print the version"
+msgstr "  --version, -V        scrive la versione"
+
+#: src/meridiana/tour.py:50
+#, python-brace-format
+msgid "--tour: there is no step «{step}»; the steps are 1 to {total}, or by name: {names}"
+msgstr "--tour: il passo «{step}» non esiste; i passi vanno da 1 a {total}, oppure per nome: {names}"
+
 #: src/meridiana/assistant/costs.py:29
 msgid "Claude Haiku 5.5, for the current questions"
 msgstr "Claude Haiku 5.5, per le domande correnti"

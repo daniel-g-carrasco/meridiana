@@ -85,10 +85,34 @@ def prepare_workspace(win, explicit: Path | None) -> bool:
     return first
 
 
+def isolate_for_tour(real, folder: Path, environ=os.environ):
+    """`--tour`: Meridiana's settings, state, data and cache in `folder`, so that the tour a person tests leaves
+    nothing in the real ones; the settings and the window's place are copied in first (the language, the theme and
+    the size are the person's own). Returns the Paths the run then uses."""
+    import shutil
+
+    from .paths import Paths
+    for var, sub in (("XDG_CONFIG_HOME", "config"), ("XDG_STATE_HOME", "state"), ("XDG_DATA_HOME", "data"),
+                     ("XDG_CACHE_HOME", "cache")):
+        environ[var] = str(folder / sub)
+    paths = Paths.from_env(environ)
+    for source, target in ((real.config_file, paths.config_file), (real.window_state_file, paths.window_state_file)):
+        if source.is_file():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
+    return paths
+
+
 def main(argv: list[str]) -> int:
     if "--kokoro-worker" in argv:
         from .assistant.kokoro_worker import main as voice_worker
         return voice_worker(argv[argv.index("--kokoro-worker") + 1:])
+    from . import tour
+    try:
+        argv, tour_request = tour.take_option(argv)         # before Qt: its value is not a project to open
+    except tour.TourOptionError as error:
+        print(error, file=sys.stderr)
+        return 2
     from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QApplication
 
@@ -109,6 +133,12 @@ def main(argv: list[str]) -> int:
     if icon is not None:                 # the title bars and the taskbar (on Wayland the desktop file's icon)
         app.setWindowIcon(QIcon(str(icon)))
     paths = Paths.from_env()
+    tour_folder = None
+    if tour_request is not None:         # a test of the tour: a folder of its own, no single instance
+        import tempfile
+        tour_folder = Path(tempfile.mkdtemp(prefix=f"{ENV_PREFIX.lower()}-tour-"))
+        paths = isolate_for_tour(paths, tour_folder)
+        os.environ[f"{ENV_PREFIX}_INSTANCE"] = "off"
     log.setup(paths.log_file)
     log.install_excepthook()             # the window takes over the telling once it exists
     # one window for every start: a Meridiana already running takes the project and comes to the front
@@ -129,6 +159,8 @@ def main(argv: list[str]) -> int:
     except OSError as error:
         log.complain("claim the recovery copies", error)
     cfg = config.load(paths.config_file)
+    if tour_request is not None and tour_request.new:
+        cfg.tour_status = "new"          # the first start, simulated: the offer comes by itself
     # the size of the text before any widget or font is made (R133)
     from .ui import design
     design.set_text_size(cfg.text_size)
@@ -151,6 +183,8 @@ def main(argv: list[str]) -> int:
         receiver.received.connect(win.open_handed_over)
         for files, token in handed:
             win.open_handed_over(files, token)
+    if tour_request is not None and not tour_request.new:
+        QTimer.singleShot(400, win, lambda: win.start_tour_at(tour_request.index))
     if show_tour and not handed:         # a project handed over meanwhile is the work in hand, not the tour
         QTimer.singleShot(1200, win, win._offer_tour)
 
@@ -164,6 +198,9 @@ def main(argv: list[str]) -> int:
         QTimer.singleShot(int(delay * 1000), take)
     code = app.exec()
     recovery.release(paths.state)
+    if tour_folder is not None:
+        import shutil
+        shutil.rmtree(tour_folder, ignore_errors=True)
     return code
 
 
