@@ -916,6 +916,8 @@ class PlantSide(QWidget):
         where = {"modules": "panels", "inverter": "inverter", "storage": "storage", "strings": "inverter"}
         self.command_section: dict[str, str] = {}
         for group in phases.by_id("plant").groups:
+            if group.id == "edit":                  # R295: Select, Move, Rotate leave open what is open
+                continue
             for tool in group.tools:
                 self.command_section[tool.command] = where.get(group.id, "inverter")
         for cid, sid in self.command_section.items():
