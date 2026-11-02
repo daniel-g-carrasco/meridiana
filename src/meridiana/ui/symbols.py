@@ -1,11 +1,11 @@
 """The symbols of the window (R138, Daniel 25/10/2026: «per l'applicativo Spola avevamo creato dei begli svg ... che
 vorrei utilizzare anche qua in Meridiana a livello globale»): Spola's check, forbidden, warning and error, and the
-cross, the stop and the info drawn in the same geometry (a 16-unit disc, strokes 1.7 wide). Drawn as Spola draws its
-status on Windows: the ground in a gradient, a little lighter at the top, the sign solid and light on it, the same
-for all of them (the warning's «!» is the error's, on the ochre of the warnings: a light sign does not read on the
-yellow), so that it reads on any ground, an orthophoto and the dark panels too, with no halo (the flat ones, the
-sign cut out, showed what lay under it: the comparison of 25/10/2026). SVG drawn by Qt's own renderer at the size and
-the density asked, never a character of a font (a missing glyph left a box in the place of the cross).
+cross, the stop and the info drawn in the same geometry (a 16-unit disc, strokes 1.7 wide). Flat (R330, Daniel
+02/11/2026: «come simboli usiamo quelli piatti»): the ground of one tone, the sign opaque on it, the same for all of
+them, so that it reads on any ground, an orthophoto and the dark panels too (the flat ones of 25/10/2026 were refused
+because their sign was cut out and showed what lay under it: this one is painted). The warning's triangle is as wide
+as the disc's diameter. SVG drawn by Qt's own renderer at the size and the density asked, never a character of a font
+(a missing glyph left a box in the place of the cross).
 
 What each one says (the same in the template, qtkit):
 - check: confirmed, passed;
@@ -35,8 +35,9 @@ from PySide6.QtSvg import QSvgRenderer
 from .. import theme_colors
 
 DISC = "M0.5,8 A7.5,7.5 0 1 1 15.5,8 A7.5,7.5 0 1 1 0.5,8 Z"
-TRIANGLE = ("M9.23,3.12 L14.25,12.22 A1.4,1.4 0 0 1 13.03,14.3 L2.97,14.3 A1.4,1.4 0 0 1 1.75,12.22 L6.77,3.12 "
-            "A1.4,1.4 0 0 1 9.23,3.12 Z")
+# as wide as the disc (R330: «in larghezza sia uguale al diametro del cerchio»), so a little over it above and below
+TRIANGLE = ("M9.31,2.801 L14.658,12.496 A1.491,1.491 0 0 1 13.358,14.711 L2.642,14.711 A1.491,1.491 0 0 1 1.342,12.496 "
+            "L6.69,2.801 A1.491,1.491 0 0 1 9.31,2.801 Z")
 # each symbol: its tone, its ground (the disc, the triangle, a ring) and its sign, drawn on the ground
 SHAPES = {
     "check": ("good", DISC, "M3.5,8.9 L6.93,12.34 L12.53,6.07 L11.27,4.93 L6.87,9.86 L4.7,7.7 Z"),       # Spola
@@ -65,8 +66,7 @@ LEVEL = {"fail": "stop", "warn": "warning", "info": "info", "ok": "check"}      
 TONES = {"good": theme_colors.STATUS["good"], "warning": theme_colors.WARNING_INK,
          "critical": theme_colors.STATUS["critical"], "info": "#2e4a6b", "neutral": "#77767b"}
 TONES_DARK = dict(TONES, info="#5b8fc9", neutral="#9a9996")       # on a dark ground the dark blue and the grey vanish
-LIGHT_SIGN = "#f3f1ea"                                              # Spola's sign, at 92 %, on every symbol
-LIFT = 0.12                                                         # the gradient's top: the tone, this much whiter
+LIGHT_SIGN = "#ffffff"                                              # the sign on every symbol, opaque
 
 _RENDERERS: dict = {}
 
@@ -79,23 +79,14 @@ def svg(name: str, dark: bool = False, fill: str | None = None) -> bytes:
     """The symbol as an SVG file of 16 x 16; with `fill`, its ground alone in that colour (a halo)."""
     _tone, ground, sign = SHAPES[name]
     head = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">'
-    if fill:
-        paint_, defs = fill, ""
-    else:
-        base = colour(name, dark)
-        top = theme_colors.mix(base, "#ffffff", LIFT)
-        paint_ = f"url(#g-{name})"
-        # in the symbol's units, the same for every path of it (each path's own box gave its own gradient)
-        defs = (f'<defs><linearGradient id="g-{name}" gradientUnits="userSpaceOnUse" x1="0" y1="0.5" x2="0" '
-                f'y2="15.5"><stop offset="0" stop-color="{top}"/><stop offset="1" stop-color="{base}"/>'
-                f'</linearGradient></defs>')
+    paint_ = fill or colour(name, dark)
     if name == "forbidden":
-        # the ring and its bar are the ground, in one gradient: the bar runs into the ring
+        # the ring and its bar are the ground, of one tone: the bar runs into the ring
         body = f'<path fill="{paint_}" fill-rule="evenodd" d="{ground}"/><path fill="{paint_}" d="{sign}"/>'
     else:
         body = f'<path fill="{paint_}" d="{ground}"/>' + (
-            "" if fill else f'<path fill="{LIGHT_SIGN}" fill-opacity="0.92" fill-rule="evenodd" d="{sign}"/>')
-    return (head + defs + body + "</svg>").encode()
+            "" if fill else f'<path fill="{LIGHT_SIGN}" fill-rule="evenodd" d="{sign}"/>')
+    return (head + body + "</svg>").encode()
 
 
 def renderer(name: str, dark: bool = False, fill: str | None = None) -> QSvgRenderer:

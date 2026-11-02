@@ -1,6 +1,6 @@
 """The window's symbols (ui/symbols.py, R138): Spola's check, forbidden, warning and error and the cross, the stop
-and the info in the same geometry, drawn as Spola draws its status on Windows (the ground in a gradient, the sign
-solid and light on it, dark on the warning's yellow); the marks of the checks made of them. PySide6 and a display
+and the info in the same geometry, flat (R330: the ground of one tone, the sign opaque and white on it); the marks of
+the checks made of them. PySide6 and a display
 (offscreen will do)."""
 
 import unittest
@@ -44,14 +44,24 @@ class Symbols(unittest.TestCase):
         with self.assertRaises(KeyError):
             symbols.icon("tick")
 
-    def test_the_sign_is_solid_and_light_on_a_ground_in_a_gradient(self):
+    def test_the_warning_is_as_wide_as_the_disc(self):
+        """R330 (Daniel, 02/11/2026): «in larghezza sia uguale al diametro del cerchio»."""
+        from meridiana.ui import symbols
+        disc, triangle = symbols._parse(symbols.DISC).boundingRect(), symbols._parse(symbols.TRIANGLE).boundingRect()
+        self.assertAlmostEqual(triangle.width(), disc.width(), delta=0.05)
+        self.assertAlmostEqual(triangle.center().x(), disc.center().x(), delta=0.01)
+        self.assertLessEqual(triangle.bottom(), disc.bottom())
+        self.assertGreaterEqual(triangle.top(), disc.top())
+
+    def test_the_sign_is_opaque_and_white_on_a_ground_of_one_tone(self):
         from meridiana import theme_colors
         from meridiana.ui import symbols
         stop = self.picture("stop")
         bar, above, below = self.colour(stop, 8, 8), self.colour(stop, 8, 3), self.colour(stop, 8, 13)
         self.assertGreater(bar.lightness(), 220)                           # the bar, light: not a hole
         self.assertEqual(bar.alpha(), 255)
-        self.assertGreater(above.lightness(), below.lightness())          # lighter at the top
+        self.assertEqual(above.name(), below.name())                      # one tone, top to bottom
+        self.assertEqual(bar.name(), "#ffffff")                           # nothing shows through the sign
         red = theme_colors.STATUS["critical"]
         self.assertLess(abs(below.red() - int(red[1:3], 16)), 24)
         warning = self.picture("warning")                                  # the error's «!», light like every sign
@@ -66,7 +76,7 @@ class Symbols(unittest.TestCase):
         self.assertEqual(self.colour(ring, 5.2, 10.8).alpha(), 0)
         self.assertGreater(self.colour(ring, 3.6, 3.6).alpha(), 250)       # the bar runs into the ring: no gap
         seam = [self.colour(ring, 3.2 + k * 0.1, 3.2 + k * 0.1) for k in range(10)]
-        self.assertLess(max(c.red() for c in seam) - min(c.red() for c in seam), 12)    # one gradient, no seam
+        self.assertLess(max(c.red() for c in seam) - min(c.red() for c in seam), 12)    # one tone, no seam
         self.assertNotEqual(symbols.colour("info", dark=True), symbols.colour("info"))
 
     def test_discard_is_a_bin_on_the_red_and_cancel_an_arrow_back_on_the_grey(self):

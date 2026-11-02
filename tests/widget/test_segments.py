@@ -101,6 +101,39 @@ class SegmentsTest(unittest.TestCase):
         QTest.keyClick(track, Qt.Key.Key_Right)
         self.assertEqual(track.current(), "giorno tipo")
 
+    def test_the_accent_ring_only_with_the_keyboard_on_it(self):
+        """Seen on the merged cards' tabs: the focus falls on a track when the widget that had it goes away (a panel
+        closed, a page changed), and the ring in the accent stayed on with nobody at the keys."""
+        from PySide6.QtGui import QFocusEvent, QKeyEvent
+        from PySide6.QtCore import QEvent
+        from meridiana.ui.segments import tokens
+        track = self.track()
+        accent = QColor(tokens()["accent"])
+
+        def ring():
+            track.repaint()
+            image = track.grab().toImage()
+            dpr = image.devicePixelRatio()
+            r = track.items[0].geometry()
+            return image.pixelColor(round(r.center().x() * dpr), round(r.top() * dpr)) == accent
+        self.assertFalse(ring())
+
+        def focus(reason):
+            self.app.sendEvent(track, QFocusEvent(QEvent.Type.FocusIn, reason))
+            seen = ring()
+            self.app.sendEvent(track, QFocusEvent(QEvent.Type.FocusOut, Qt.FocusReason.OtherFocusReason))
+            self.assertFalse(ring())
+            return seen
+        # Qt says «Tab» too when a widget hidden hands its focus on (hide_helper, focusNextPrevChild): no key, no ring
+        self.assertFalse(focus(Qt.FocusReason.TabFocusReason))
+        self.assertFalse(focus(Qt.FocusReason.OtherFocusReason))
+        for key in (Qt.Key.Key_Tab, Qt.Key.Key_Backtab):
+            self.app.sendEvent(track, QKeyEvent(QEvent.Type.KeyPress, key, Qt.KeyboardModifier.NoModifier))
+            self.assertTrue(focus(Qt.FocusReason.TabFocusReason if key == Qt.Key.Key_Tab
+                                  else Qt.FocusReason.BacktabFocusReason), key)
+            self.app.sendEvent(track, QKeyEvent(QEvent.Type.KeyRelease, key, Qt.KeyboardModifier.NoModifier))
+        self.assertFalse(focus(Qt.FocusReason.TabFocusReason))
+
     def test_each_segment_has_its_tooltip_and_is_cut_when_the_track_is_narrow(self):
         track = self.track()
         self.assertEqual(track.items[0].toolTip(), "Il grafico: Mesi")
