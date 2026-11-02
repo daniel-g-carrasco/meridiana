@@ -166,6 +166,9 @@ def hold(area: QWidget, ground: QColor | None = None) -> Veil | None:
     return Veil(area, before, ground)
 
 
+SLIDE_EASING = QEasingCurve.Type.OutCubic       # what slides to a choice: the tab of the phases, the segments' rectangle
+
+
 def after_work(context: QObject, run: Callable[[], None]) -> None:
     """`run()` once the window has done what a change asked of it: two turns of the event loop later, so after the
     work the change's slots left for the next turn too (the properties pad their fields there)."""

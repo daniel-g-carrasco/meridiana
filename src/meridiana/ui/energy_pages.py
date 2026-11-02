@@ -258,13 +258,15 @@ class FittedBox(QVBoxLayout):
 
 
 def chart_card(tabs: QTabWidget) -> QFrame:
-    """The charts of a page in a card of their own, their tabs as pills inside it (D2 and the drafts of the
-    phases, 24/10/2026)."""
+    """The charts of a page in a card of their own, their tabs as a track of segments inside it (D2 and the drafts of
+    the phases, 24/10/2026; R322)."""
+    from .segments import on_bar
+    on_bar(tabs.tabBar())
     card = QFrame()
     card.setObjectName("chart-card")
     box = QVBoxLayout(card)
-    # the pills centred in their band (R284): the bar keeps XS above and below each pill, the card adds XS
-    # above the bar and the pane's line stands XS under it, so a pill has M of air on both sides; under the
+    # the segments centred in their band (R284): the bar keeps XS above and below each, the card adds XS
+    # above the bar and the pane's line stands XS under it, so a segment has M of air on both sides; under the
     # line every tab's content starts M lower (R285: one rule for every tab, docs/design/sistema-grafico.md)
     # the pane's part in theme.py (#chart-card QTabWidget::pane): a sheet of the tabs' own doubled the time of
     # every change of theme, Qt polishing the charts under it apart from the rest (1.4 s instead of 0.7, 30/10/2026)

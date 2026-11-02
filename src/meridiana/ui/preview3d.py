@@ -374,7 +374,7 @@ class Preview3D(QWidget):
             on = pill.key in lit
             painter.setPen(QPen(c["accent"] if on else c["line"], design.Line.HAIR))
             painter.setBrush(c["base"])
-            painter.drawRoundedRect(rect, PILL_H / 2, PILL_H / 2)
+            painter.drawRoundedRect(rect, design.Radius.CONTROL, design.Radius.CONTROL)
             text_rect = QRectF(rect).adjusted(design.Space.M, 0, -design.Space.M, 0)
             if pill.number is not None:
                 disc = QRectF(rect.left() + 3, rect.top() + 3, PILL_H - 6, PILL_H - 6)

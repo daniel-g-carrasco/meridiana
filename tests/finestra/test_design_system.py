@@ -23,7 +23,7 @@ class Scales(unittest.TestCase):
 
     def test_the_scales_are_closed_and_the_sheet_keeps_to_them(self):
         from meridiana.ui import design
-        from meridiana.ui.design import Radius, Size, Space, Type
+        from meridiana.ui.design import Radius, Space, Type
         from meridiana.ui.theme import style_sheet
         self.assertEqual(Space.SCALE, (0, 2, 4, 6, 8, 12, 16, 24, 32))
         for name in ("XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"):
@@ -34,8 +34,9 @@ class Scales(unittest.TestCase):
         sizes = [Type.MICRO, Type.CAPTION, Type.SMALL, Type.BODY, Type.TITLE, Type.HEADING, Type.DISPLAY]
         self.assertEqual(sizes, sorted(sizes))
         self.assertEqual(design.padding(Space.XS, 8), "padding: 3px 7px;")  # 8 px from the outer edge
-        pills = {Radius.pill(Size.CHIP), Radius.pill(Size.CHIP) + Space.XXS, Radius.pill(18)}
-        allowed = {Radius.CARD, Radius.VIEW, Radius.CONTROL, Radius.INNER, Radius.MARK, 3} | pills
+        allowed = {Radius.CARD, Radius.VIEW, Radius.CONTROL, Radius.INNER, Radius.MARK, 3}
+        self.assertFalse(hasattr(Radius, "pill"))                          # nothing round at its ends (R322, R328)
+        self.assertEqual(design.Button.CHIP[1], Radius.CONTROL)
         for dark in (False, True):
             sheet = style_sheet(theme_colors.derive("#8b5a12", dark).tokens, dark)
             radii = {float(r) for r in re.findall(r"border-radius:\s*([0-9.]+)px", sheet)}
@@ -618,8 +619,8 @@ class InTheWindow(unittest.TestCase):
         self.assertIsNotNone(self.win.props.findChild(fades.Fades))
         self.assertEqual(self.win.props.viewportMargins().top(), fades.AIR)      # a panel keeps its AIR
 
-    def test_choosing_another_variant_keeps_the_pills_still(self):
-        """R101: the same pills, another one checked, the same widths: nothing made again, nothing jumps."""
+    def test_choosing_another_variant_keeps_the_segments_still(self):
+        """R101: the same segments, another one checked, the same widths: nothing made again, nothing jumps."""
         from meridiana.ui.variant_bar import VariantBar
         from PySide6.QtGui import QAction
         bar = VariantBar(QAction("+"), [])
@@ -628,15 +629,15 @@ class InTheWindow(unittest.TestCase):
         bar.set_variants(variants, "v1")
         bar.show()
         self.app.processEvents()
-        pills = list(bar.pills)
+        pills = list(bar.items)
         widths = [p.width() for p in pills]
         bar.set_variants(variants, "v2")
         self.app.processEvents()
-        self.assertEqual(bar.pills, pills)                                  # the same objects
+        self.assertEqual(bar.items, pills)                                  # the same objects
         self.assertEqual([p.isChecked() for p in pills], [False, True, False])
         self.assertEqual([p.width() for p in pills], widths)                # no heavier weight, no wider pill
         bar.set_variants(variants + [("v4", "Nuova")], "v4")               # another set: made again
-        self.assertEqual(len(bar.pills), 4)
+        self.assertEqual(len(bar.items), 4)
 
     def test_the_tab_of_the_phase_slides_to_the_new_one_and_meets_the_card_with_inverse_corners(self):
         """R83: the page and the tools change at once, the tab is held while the window works, then slides; R84:
@@ -713,19 +714,19 @@ class InTheWindow(unittest.TestCase):
         win.menu_bar_action.trigger()
         self.assertFalse(bar.isVisible())
 
-    def test_the_variants_are_pills_one_click_away(self):
+    def test_the_variants_are_segments_one_click_away(self):
         win = self.win
         bar = win.variant_bar
-        self.assertEqual([b.text() for b in bar.pills], ["Base"])
+        self.assertEqual([b.text() for b in bar.items], ["Base"])
         base = win.project.variant
         win.edit("a second variant", lambda p: p.add_variant("Senza batteria"))
         self.app.processEvents()
-        self.assertEqual([b.text() for b in bar.pills], ["Base", "Senza batteria"])
+        self.assertEqual([b.text() for b in bar.items], ["Base", "Senza batteria"])
         self.assertEqual(bar.currentText(), "Senza batteria")
-        bar.pills[0].click()                                                # back to the base
+        bar.items[0].click()                                                # back to the base
         self.assertEqual(win.project.variant, base)
         self.assertEqual(bar.currentText(), "Base")
-        self.assertTrue(bar.pills[0].isChecked())
+        self.assertTrue(bar.items[0].isChecked())
 
     def test_a_card_closed_or_covered_comes_back_from_its_button(self):
         win = self.win

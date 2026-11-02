@@ -33,7 +33,7 @@ import shiboken6
 from PySide6.QtCore import QRectF, Qt, QTimer
 from PySide6.QtGui import QColor, QFont, QFontMetricsF, QPalette
 from PySide6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel, QMenu, QMessageBox, QStackedWidget,
-                               QTableWidget, QTableWidgetItem, QToolButton, QVBoxLayout, QWidget)
+                               QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
 from ..i18n import _, number
 from .design import Size, Space, Type
@@ -207,15 +207,15 @@ class Chart(QWidget):
         self.name = title
         from .design import Text, set_text
         self.title = set_text(QLabel(title), Text.STRONG)
-        self.toggle = QToolButton()
-        self.toggle.setObjectName("filter")          # a chip of the global sheet (Button.CHIP)
-        self.toggle.setText(_("Table"))
-        self.toggle.setCheckable(True)
-        self.toggle.setToolTip(_("The same numbers as a table"))
+        from .segments import Segments
+        self.views = Segments()                      # the chart or its numbers: a choice between views (R322)
+        self.views.add(_("Chart"), "chart", _("The numbers drawn"))
+        self.toggle = self.views.add(_("Table"), "table", _("The same numbers as a table"))
+        self.views.set_current("chart")
         self.toggle.toggled.connect(self._toggled)
         head = QHBoxLayout()
         head.addWidget(self.title, 1)
-        head.addWidget(self.toggle)
+        head.addWidget(self.views)
         box = QVBoxLayout(self)
         box.setContentsMargins(0, 0, 0, 0)
         box.addLayout(head)

@@ -136,8 +136,8 @@ def style_sheet(t: dict, dark: bool = False) -> str:
     by ui/cards.py, the pages of the phases), the view's (the dialogs' lists). Every button and field 28 px high
     (Button.PUSH) with its text 8 px from its edge: buttons and fields tonal on the `field` veil, the fields' border
     at 3:1 under the pointer and the accent's when focused; under the pointer and pressed one layer of the text's
-    colour over what is at rest (R160, theme_colors.HOVER and PRESS), the shape the control's own; the chips,
-    pills and tabs 24 px (Button.CHIP), the tabs of every bar as the segments of the variants (R109, R121); groups
+    colour over what is at rest (R160, theme_colors.HOVER and PRESS), the shape the control's own; the tabs of every
+    bar 24 px, transparent on their track (ui/segments.py, R109, R121, R322), nothing round at its ends; groups
     with a frame and a filled header (C3, ui/style.py); tiles and strips full of the veil without a border; the
     little windows (menus, lists, popups, tooltips) rounded by the system where it can (ui/popups.py). The texts'
     colours by their style's tone (`tone`, design.set_text).
@@ -176,7 +176,6 @@ def style_sheet(t: dict, dark: bool = False) -> str:
     button = padding(S.XS, S.L)
     button_focus = padding(S.XS, S.L, Line.FOCUS)
     chip_inner = Button.CHIP[0] - 2                            # 22: a chip's inside, its border around
-    pill = Radius.pill(Size.CHIP)
     return f"""
 QMainWindow {{ background: {t['window']}; }}
 QTabBar {{ background: transparent; }}
@@ -245,11 +244,14 @@ QSplitter::handle {{ background: transparent; }}
 QSplitter::handle:horizontal {{ width: {S.M}px; }}
 QSplitter::handle:vertical {{ height: {S.M}px; }}
 QTabWidget > QTabBar {{ font-size: {Text.CONTROL.size}px; font-weight: {Text.CONTROL.weight}; }}
-QTabBar::tab {{ border: 1px solid transparent; border-radius: {pill:g}px; padding: 0 {S.L - 1}px;
-               min-height: {chip_inner}px; max-height: {chip_inner}px;   /* 24 px whole: Qt drops a radius over half the height */
-               margin: {S.XS}px {S.XXS}px {S.XS}px 0; color: {t['text2']}; background: {t['field']}; }}
-QTabBar::tab:hover:!selected {{ background: {field_hover}; color: {t['text']}; }}
-QTabBar::tab:selected {{ background: {t['panel']}; color: {t['text']}; border-color: {t['line']}; }}
+QTabBar::tab {{ border: 1px solid transparent; border-radius: {R.INNER}px; padding: 0 {S.L - 1}px;
+               min-height: {chip_inner}px; max-height: {chip_inner}px; margin: {S.XS}px 0;
+               color: {t['text2']}; background: transparent; }}   /* on the track of ui/segments.py, which draws the choice */
+QTabBar::tab:first {{ margin-left: {S.XXS}px; }}
+QTabBar::tab:last {{ margin-right: {S.XXS}px; }}
+QTabBar::tab:only-one {{ margin-left: {S.XXS}px; margin-right: {S.XXS}px; }}
+QTabBar::tab:hover:!selected {{ background: {hover}; color: {t['text']}; }}
+QTabBar::tab:selected {{ color: {t['text']}; }}
 QTabBar#phases {{ background: transparent; }}
 QStackedWidget#phase-bars, QWidget#phase-card {{ background: transparent; }}
 QStackedWidget#phase-bars QToolBar {{ padding: 0; spacing: {S.S}px; border: none; background: transparent; }}
@@ -274,17 +276,14 @@ QToolButton[popupMode="2"] {{ padding-right: {S.XL}px; }}
 QToolButton::menu-indicator {{ {drop} subcontrol-origin: padding; subcontrol-position: center right; right: {S.XS}px; }}
 QToolButton[grouped="true"]::menu-indicator {{ {drop} subcontrol-origin: padding; subcontrol-position: top right;
     top: {S.S}px; right: 0px; }}
-QToolButton#filter, QToolButton#count {{ border: 1px solid {t['line']}; border-radius: {pill:g}px;
+QToolButton#filter {{ border: 1px solid {t['line']}; border-radius: {Button.CHIP[1]}px;
     padding: 0 {S.L - 1}px; min-height: {chip_inner}px; max-height: {chip_inner}px; color: {t['text']};
     background: transparent; }}
-QToolButton#count {{ padding-left: {S.M - 1}px; }}
-QToolButton#filter:hover, QToolButton#count:hover {{ background: {hover}; }}
-QToolButton#filter:pressed, QToolButton#count:pressed {{ background: {press}; }}
-QToolButton#filter:checked, QToolButton#count:checked {{ background: {press}; color: {t['text']};
-    border-color: {press}; }}
+QToolButton#filter:hover {{ background: {hover}; }}
+QToolButton#filter:pressed {{ background: {press}; }}
+QToolButton#filter:checked {{ background: {press}; color: {t['text']}; border-color: {press}; }}
 QToolButton#filter[popupMode="2"] {{ padding-right: {S.XXL}px; }}
-QToolButton#count:disabled {{ color: {t['muted']}; }}
-QToolButton#row-help-button {{ padding: 0; border: 1px solid {t['line']}; border-radius: {Radius.pill(Size.CONTROL):g}px;
+QToolButton#row-help-button {{ padding: 0; border: 1px solid {t['line']}; border-radius: {R.CONTROL}px;
                            min-width: {Size.CONTROL - 2}px; max-width: {Size.CONTROL - 2}px;
                            min-height: {Size.CONTROL - 2}px; max-height: {Size.CONTROL - 2}px;
                            color: {t['muted']}; background: transparent; }}
@@ -343,7 +342,7 @@ QTableView QHeaderView::section {{ background: {t['field']}; color: {t['text2']}
                                   border-bottom: 1px solid {t['line_soft']}; padding: {S.XS}px {S.M}px; }}
 QTableView QTableCornerButton::section {{ background: {t['field']}; border: none; }}
 QLabel#state-done, QLabel#state-stale, QLabel#state-todo, QLabel#state-unavailable, QLabel#state-planned {{
-    border: 1px solid transparent; border-radius: {pill:g}px; padding: 0 {S.M}px; min-height: {chip_inner}px;
+    border: 1px solid transparent; border-radius: {R.CONTROL}px; padding: 0 {S.M}px; min-height: {chip_inner}px;
     max-height: {chip_inner}px; }}
 QLabel#state-done {{ background: {t['select_bg']}; color: {t['select_fg']}; }}
 QLabel#state-stale {{ background: transparent; color: {t['text']}; border-color: {t['field_line']}; }}
@@ -355,14 +354,10 @@ QToolButton#file-chip {{ background: transparent; color: {t['text']}; border: 1p
                         border-radius: {Button.PUSH[1]}px; padding: {S.XXS}px {S.L - 2}px {S.XXS}px {S.M}px; }}
 QToolButton#file-chip:hover {{ background: {hover}; }}
 QToolButton#file-chip:checked {{ background: {press}; color: {t['text']}; border-color: transparent; }}
-QFrame#variant-bar {{ background: {t['field']}; border: none; border-radius: {pill + S.XXS:g}px; }}
-QToolButton#variant-pill, QToolButton#variant-add, QToolButton#variant-more {{ border: 1px solid transparent;
-    border-radius: {pill:g}px; padding: 0 {S.L - 1}px; min-height: {chip_inner}px; max-height: {chip_inner}px;
-    color: {t['text2']}; background: transparent; }}
-QToolButton#variant-add, QToolButton#variant-more {{ padding: 0 {S.S - 1}px; }}
-QToolButton#variant-pill:hover, QToolButton#variant-add:hover, QToolButton#variant-more:hover {{
-    background: {hover}; color: {t['text']}; }}
-QToolButton#variant-pill:checked {{ background: {t['panel']}; color: {t['text']}; border-color: {t['line']}; }}
+QToolButton#variant-add, QToolButton#variant-more {{ border: 1px solid transparent; border-radius: {R.INNER}px;
+    padding: 0 {S.S - 1}px; min-height: {chip_inner}px; max-height: {chip_inner}px; color: {t['text2']};
+    background: transparent; }}
+QToolButton#variant-add:hover, QToolButton#variant-more:hover {{ background: {hover}; color: {t['text']}; }}
 QToolButton#variant-more::menu-indicator {{ image: none; width: 0; }}
 QFrame#row-line {{ background: {t['line_soft']}; border: none; }}
 QLabel#row-detail, QLabel#grid-row {{ color: {t['text2']}; }}
@@ -381,7 +376,7 @@ QLabel#recent-name {{ background: transparent; }}
 QLabel#fpage-title {{ color: {t['text']}; }}
 QLabel#fpage-lead, QLabel#ftile-text {{ color: {t['text2']}; }}
 QLabel#fpage-section {{ color: {t['muted']}; }}
-QLabel#ftile-format {{ color: {t['text2']}; border: 1px solid {t['line']}; border-radius: {Radius.pill(18):g}px;
+QLabel#ftile-format {{ color: {t['text2']}; border: 1px solid {t['line']}; border-radius: {R.CONTROL}px;
                        padding: 0 {S.S}px; }}
 QToolButton#help-button {{ padding: 0; border: 1px solid {t['line']}; border-radius: {Button.HELP[1]}px;
                            color: {t['muted']}; background: transparent; }}

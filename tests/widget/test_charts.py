@@ -164,7 +164,7 @@ class Forms(Base):
             for j, (_label, values) in enumerate(series, start=1):
                 v = values[i]
                 self.assertEqual(c.table.item(i, j).text(), number(v, 1 if abs(v) < 100 else 0, grouping=True))
-        c.toggle.setChecked(False)
+        c.views.set_current("chart")
         self.assertIs(c.stack.currentWidget(), c.canvas)
 
     def test_a_chart_hidden_is_drawn_when_it_is_first_shown(self):

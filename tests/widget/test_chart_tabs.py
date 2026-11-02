@@ -35,7 +35,7 @@ class ChartTabs(unittest.TestCase):
         for page in self.pages():
             tabs = page.findChild(QTabWidget)
             card, bar = tabs.parentWidget(), tabs.tabBar()
-            slot = bar.tabRect(0)                   # the pill with the bar's XS margins above and below it
+            slot = bar.tabRect(0)                   # the segment with the bar's XS margins above and below it
             top = bar.mapTo(card, slot.topLeft()).y() + Space.XS
             pane_line = tabs.widget(0).mapTo(card, QPoint(0, 0)).y() - Space.M - 1     # the line, M above the content
             above = top - 1                                         # the card's own line is 1 px
@@ -84,7 +84,7 @@ class ChartTabs(unittest.TestCase):
             title = getattr(page, chart).title
             line = title.fontMetrics().lineSpacing()
             self.assertLessEqual(title.minimumHeight(), line + 1, kind.__name__)
-            self.assertLessEqual(getattr(page, chart).stack.y(), getattr(page, chart).toggle.height() + 6, kind.__name__)
+            self.assertLessEqual(getattr(page, chart).stack.y(), getattr(page, chart).views.height() + 6, kind.__name__)
 
     def test_the_steps_of_the_losses_have_a_row_each_and_the_page_scrolls_for_them(self):
         """R313: 16 steps in 150 px, labels and values one over the other. Each row at least a line of text tall,

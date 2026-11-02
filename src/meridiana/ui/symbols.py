@@ -29,7 +29,7 @@ import tempfile
 from pathlib import Path
 
 from PySide6.QtCore import QByteArray, QRectF, QSize, Qt
-from PySide6.QtGui import QGuiApplication, QIcon, QIconEngine, QImage, QPainter, QPainterPath, QPixmap, QTransform
+from PySide6.QtGui import QColor, QGuiApplication, QIcon, QIconEngine, QImage, QPainter, QPainterPath, QPixmap, QTransform
 from PySide6.QtSvg import QSvgRenderer
 
 from .. import theme_colors
@@ -111,9 +111,16 @@ def dark_ground() -> bool:
     return app is not None and QGuiApplication.palette().window().color().lightnessF() < 0.5
 
 
-def paint(painter: QPainter, rect: QRectF, name: str, dark: bool | None = None) -> None:
-    """The symbol in `rect` (square), as it is on any ground: no halo (Daniel, 25/10/2026: «terribili»)."""
-    renderer(name, dark_ground() if dark is None else dark).render(painter, rect)
+def paint(painter: QPainter, rect: QRectF, name: str, dark: bool | None = None, off: bool = False) -> None:
+    """The symbol in `rect` (square), as it is on any ground: no halo (Daniel, 25/10/2026: «terribili»). `off`: in the
+    grey of the symbols, for a level with nothing in it (R328). The one drawing of a symbol: the signs of the views, of
+    the tree and of the counts all come through here, and a new look of them changes here."""
+    dark = dark_ground() if dark is None else dark
+    if off:
+        renderer(name, dark, fill=TONES_DARK["neutral"] if dark else TONES["neutral"]).render(painter, rect)
+        painter.fillPath(sign(name, rect), QColor(LIGHT_SIGN))
+        return
+    renderer(name, dark).render(painter, rect)
 
 
 def sign(name: str, rect: QRectF) -> QPainterPath:
