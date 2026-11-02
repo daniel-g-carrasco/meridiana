@@ -204,6 +204,65 @@ class Images(unittest.TestCase):
         self.chat._failed(self.chat.generation, providers.ProviderError("image", "image exceeds 5 MB maximum"))
         self.assertIn("refused the image", self.a.conversation.toPlainText())
 
+    def cloud(self):
+        import datetime as dt
+        from meridiana.assistant import privacy
+        self.cfg.assistant_provider = "claude"
+        self.cfg.assistant_consent = privacy.consent({}, "anthropic", dt.date.today())
+        self.chat.keys = SimpleNamespace(get=lambda key: "fake-key")
+        cloud = SimpleNamespace(cloud=True, model="claude-haiku-5-5", family="anthropic", cancel=lambda: None)
+        self.chat.make_cloud = lambda key: cloud
+        return cloud
+
+    def test_an_image_for_the_cloud_asks_each_time_and_says_a_picture_is_not_redacted(self):
+        self.cloud()
+        self.chat.add_image(picture(), "schermata.png")
+        self.ready()
+        with mock.patch.object(self.chat, "_start") as start:
+            self.a.ask("Cosa vedi?")
+            start.assert_not_called()                           # a consent given before is not enough
+        card = self.chat.consent_card
+        self.assertIsNotNone(card)
+        from PySide6.QtWidgets import QLabel
+        words = " ".join(label.text() for label in card.findChildren(QLabel))
+        self.assertIn("schermata.png", words)
+        self.assertIn("address", words)
+        self.assertIn("aliases", words)
+        with mock.patch.object(self.chat, "_round"):
+            card.buttons["allow"].click()
+        self.assertTrue(self.chat.conversation.messages[-1]["images"])
+        self.chat.job = None
+        self.a.answer("Una schermata.")                         # the turn over, as the model's answer ends it
+        with mock.patch.object(self.chat, "_start") as start:
+            self.a.ask("E adesso?")                             # the picture goes again: asked again
+            start.assert_not_called()
+        words = " ".join(label.text() for label in self.chat.consent_card.findChildren(QLabel))
+        self.assertIn("images attached earlier", words)
+        self.chat.consent_card.buttons["cancel"].click()
+
+    def test_a_reserved_project_keeps_the_picture_on_this_pc(self):
+        cloud = self.cloud()
+        self.host.project.reserved = True
+        local = SimpleNamespace(cloud=False, model="gemma4:12b", family="ollama", cancel=lambda: None)
+        self.chat.make_local = lambda: local
+        self.chat.add_image(picture(), "schermata.png")
+        self.ready()
+        with mock.patch.object(self.chat, "_round"):
+            self.a.ask("Cosa vedi?")
+        self.assertIs(self.chat.provider, local)
+        self.assertIsNot(self.chat.provider, cloud)
+
+    def test_the_window_keeps_only_the_thumbnail_and_the_name(self):
+        self.chat.add_image(picture(1200, 800), "vista.png")
+        self.ready()
+        self.chat.make_local = lambda: SimpleNamespace(cloud=False, model="llava", family="ollama",
+                                                       cancel=lambda: None)
+        with mock.patch.object(self.chat, "_round"):
+            self.a.ask("Guarda")
+        data = self.chat.conversation.messages[-1]["images"][0]["data"]
+        self.assertNotIn(data[:200], repr(self.a.messages) + repr(self.a.pictures))
+        self.assertEqual([caption.split(" · ")[0] for _url, caption in self.a.pictures["p1"]], ["vista.png"])
+
 
 if __name__ == "__main__":
     unittest.main()

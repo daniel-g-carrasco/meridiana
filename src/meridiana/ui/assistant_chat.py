@@ -734,10 +734,18 @@ class Chat(QObject):
                 _("Names and paths are replaced by aliases. Reserved projects stay on this PC."),
                 _("The provider's account terms govern billing, retention and data location. Review them before sending.")]
         self.widget.note("\n".join(f"- {line}" for line in lines), who="info")
+        documents, pictures = self.documents(), self.pictures()
         attached = [_escape(_("Attached document text also leaves this PC: {names}").format(
-            names=", ".join(a.name for a in self.attachments.values())))] if self.attachments else []
-        if self.has_attachment_turn and self.conversation.state.cloud:
+            names=", ".join(a.name for a in documents)))] if documents else []
+        if pictures:
+            attached.append(_escape(_("Attached images also leave this PC: {names}").format(
+                names=", ".join(p.name for p in pictures))))
+            attached.append(_escape(privacy.picture_warning()))
+        if "documents" in self.history and self.conversation.state.cloud:
             attached.append(_escape(_("This conversation includes previously attached document text, which will be sent again.")))
+        if "images" in self.history and self.conversation.state.cloud:
+            attached.append(_escape(_("This conversation includes images attached earlier, which will be sent "
+                                      "again.")))
         card = Card(_("Send this question to {provider}?").format(provider=setup.CLOUD[self.cloud_id()].name), attached,
                     [("local", _("Local model")), ("cancel", _("Not now")), ("allow", _("Allow and send"))])
         card.buttons["allow"].clicked.connect(self._consented)
