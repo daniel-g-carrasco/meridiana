@@ -9,6 +9,7 @@ Cosa c'è nella cartella:
 - `bozzetti.html`: i bozzetti con i gettoni veri del tema (`theme_colors.derive`, accento indigo come nelle foto di
   Daniel), chiaro e scuro affiancati, almeno tre proposte per ruolo con pro e contro. Si apre nel browser;
   `?only=a|b|c|l` mostra una sezione sola.
+- `bozzetti-2.html` (R328, dopo la risposta di Daniel: «volevo dei draft di ridisegno solo di quei fagioli, con simbolo ok, X, triangolo giallo»): cinque ridisegni delle pillole dei conteggi dei segni delle Verifiche, con zero, filtro acceso, chiaro e scuro; foto `foto/conteggi.png`; raccomandazione P5 (segmenti su una pista, segni di `symbols.py` al loro colore), ripiego P3 (raggio 6).
 - `foto/sezione-a.png`, `-b.png`, `-c.png` (Chrome headless, 1400 px), `sezione-l.png` la tabella del linguaggio.
 
 ## 1. Dove compaiono le pillole, e con quale ruolo

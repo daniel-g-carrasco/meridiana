@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fagioli: i conteggi dei segni</title>
+<style>
+/* Gettoni veri (theme_colors.derive, fondi «meridiana», accento indigo) e toni dei segni (ui/symbols.py TONES,
+   TONES_DARK). I bozzetti sono disegnati una volta e copiati nei due temi. */
+.light { --window:#f2f1ed; --panel:#f8f7f4; --field:#ebeae7; --field-line:#7e7a72; --line:#d9d5cc; --line-soft:#e8e5de;
+  --text:#1e1c19; --text2:#514c44; --muted:#6f685d; --accent:#5b4bb0; --hover:rgba(30,28,25,.08); --press:rgba(30,28,25,.16);
+  --good:#0ca30c; --warning:#b07a00; --critical:#d03b3b; --info:#2e4a6b; --neutral:#77767b; --onsign:#ffffff; }
+.dark { --window:#151515; --panel:#252525; --field:#1d1d1d; --field-line:#6f6f6f; --line:#404040; --line-soft:#333333;
+  --text:#ededed; --text2:#c4c4c4; --muted:#9b9b9b; --accent:#bfbbff; --hover:rgba(237,237,237,.08); --press:rgba(237,237,237,.16);
+  --good:#0ca30c; --warning:#b07a00; --critical:#d03b3b; --info:#5b8fc9; --neutral:#9a9996; --onsign:#ffffff; }
+html { background:#e6e3dc; }
+body { margin:0; font:13px/1.35 "Segoe UI", system-ui, sans-serif; color:#1e1c19; padding:20px 24px; }
+h1 { font-size:22px; font-weight:600; margin:0 0 4px; }
+h2 { font-size:14px; font-weight:600; margin:18px 0 4px; }
+h2 .from { font-weight:400; color:#6f685d; font-size:12px; margin-left:10px; }
+p.lead { margin:0 0 6px; color:#514c44; max-width:1150px; }
+.pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.frame { background:var(--panel); color:var(--text); padding:8px 10px; border-radius:8px; border:1px solid #cfcbc2; }
+.frame.dark { border-color:#111; }
+.note { margin:4px 0 0; font-size:12px; color:#514c44; max-width:1150px; }
+.note b { color:#1e1c19; }
+.reco { background:#fff; border-left:3px solid #1e1c19; padding:8px 12px; margin:14px 0 0; max-width:1150px; }
+.head { display:flex; align-items:center; gap:6px; height:32px; }
+.head .cap { color:var(--muted); font-size:11px; width:96px; flex:none; }
+.head .sp { flex:1; }
+.field { display:inline-flex; align-items:center; gap:8px; height:28px; padding:0 8px 0 10px; border-radius:6px; background:var(--field); }
+.field .arrow { font-size:9px; color:var(--muted); }
+.tb { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 8px; border-radius:6px; color:var(--text); }
+.tb.on { background:var(--press); }
+svg.s { width:16px; height:16px; flex:none; }
+svg.s.sm { width:12px; height:12px; }
+svg.s.xs { width:10px; height:10px; }
+.z { --critical:var(--neutral); --warning:var(--neutral); --info:var(--neutral); --good:var(--neutral); }  /* a count of zero: the sign goes grey */
+.n { font-size:11px; font-weight:600; }
+.z { color:var(--muted); }
+/* Oggi: pillola 24, fondo tono al 10 %, linea al 28 %, segno e numero nel colore del testo */
+.pill { display:inline-flex; align-items:center; gap:4px; height:22px; padding:0 9px 0 6px; border-radius:12px;
+  background:color-mix(in srgb, var(--tone) 10%, var(--window)); border:1px solid color-mix(in srgb, var(--tone) 28%, var(--window)); color:var(--text); }
+.dark .pill { background:color-mix(in srgb, var(--tone) 17%, var(--window)); border-color:color-mix(in srgb, var(--tone) 38%, var(--window)); }
+.pill.on { background:color-mix(in srgb, var(--tone) 19%, var(--window)); border-color:color-mix(in srgb, var(--tone) 65%, var(--window)); }
+.dark .pill.on { background:color-mix(in srgb, var(--tone) 26%, var(--window)); }
+.pill.z { opacity:.55; }
+.pill .sign { width:13px; height:13px; fill:var(--text); }
+.c { --tone:var(--critical); } .w { --tone:var(--warning); } .i { --tone:var(--info); } .o { --tone:var(--good); }
+/* P1: segno disegnato e numero in testo, nessun contenitore; acceso = strato press a raggio 6 */
+.p1 { display:inline-flex; align-items:center; gap:5px; height:24px; padding:0 7px 0 5px; border-radius:6px; color:var(--text); }
+.p1 .num { font-size:13px; }
+.p1.on { background:var(--press); }
+.p1.hv { background:var(--hover); }
+/* P2: segno piccolo e disco del livello col numero dentro (il disco del numero della fase); acceso = anello */
+.p2 { display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 4px; border-radius:6px; }
+.p2 .disc { width:20px; height:20px; border-radius:10px; background:var(--tone); color:var(--onsign); font-size:11px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; }
+.p2.z .disc { background:var(--line-soft); color:var(--muted); }
+.p2.on .disc { box-shadow:0 0 0 2px var(--panel), 0 0 0 4px var(--text); }
+.p2.hv { background:var(--hover); }
+/* P3: la pillola di oggi squadrata a raggio 6 (B1) */
+.p3 { display:inline-flex; align-items:center; gap:4px; height:22px; padding:0 8px 0 6px; border-radius:6px;
+  background:color-mix(in srgb, var(--tone) 10%, var(--window)); border:1px solid color-mix(in srgb, var(--tone) 28%, var(--window)); color:var(--text); }
+.dark .p3 { background:color-mix(in srgb, var(--tone) 17%, var(--window)); border-color:color-mix(in srgb, var(--tone) 38%, var(--window)); }
+.p3.on { background:color-mix(in srgb, var(--tone) 19%, var(--window)); border-color:color-mix(in srgb, var(--tone) 65%, var(--window)); }
+.dark .p3.on { background:color-mix(in srgb, var(--tone) 26%, var(--window)); }
+.p3.z { opacity:.55; }
+.p3 .sign { width:13px; height:13px; fill:var(--text); }
+/* P4: numero grande col segno in apice, nessun contenitore; acceso = filo di 2 px nel colore del testo */
+.p4 { display:inline-flex; align-items:flex-start; gap:1px; height:26px; padding:1px 6px 0; border-radius:6px 6px 0 0; color:var(--text); position:relative; }
+.p4 .num { font-size:15px; font-weight:600; line-height:22px; }
+.p4 svg { margin-top:1px; }
+.p4.on::after { content:""; position:absolute; left:4px; right:4px; bottom:0; height:2px; background:var(--text); border-radius:1px; }
+.p4.hv { background:var(--hover); }
+/* P5: segmenti su una pista (la barra delle varianti, B1): ogni segmento un filtro che resta premuto */
+.track { display:inline-flex; padding:2px; gap:0; background:var(--field); border-radius:8px; }
+.seg { display:inline-flex; align-items:center; gap:4px; height:22px; padding:0 8px 0 6px; border-radius:6px; border:1px solid transparent; color:var(--text); }
+.seg.on { background:var(--panel); border-color:var(--line); }
+.seg.hv { background:var(--hover); }
+.cap2 { font-size:11px; color:var(--muted); margin-top:2px; }
+.glance { display:flex; gap:24px; align-items:center; margin-top:6px; padding-top:6px; border-top:1px solid var(--line-soft); }
+.glance .lb { color:var(--muted); font-size:11px; width:96px; flex:none; }
+.langtable { border-collapse:collapse; margin-top:8px; background:#fff; font-size:12px; }
+.langtable th, .langtable td { border:1px solid #cfcbc2; padding:5px 8px; text-align:left; vertical-align:top; }
+.langtable th { background:#f2f1ed; }
+@media (max-width:900px) { .pair { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <!-- i segni veri di ui/symbols.py: disco o triangolo di 16 unita' nel tono, segno chiaro sopra -->
+  <symbol id="s-stop" viewBox="0 0 16 16"><path class="g" fill="var(--critical)" d="M0.5,8 A7.5,7.5 0 1 1 15.5,8 A7.5,7.5 0 1 1 0.5,8 Z"/><path fill="var(--onsign)" d="M3.6,7.15 L12.4,7.15 L12.4,8.85 L3.6,8.85 Z"/></symbol>
+  <symbol id="s-warning" viewBox="0 0 16 16"><path class="g" fill="var(--warning)" d="M9.23,3.12 L14.25,12.22 A1.4,1.4 0 0 1 13.03,14.3 L2.97,14.3 A1.4,1.4 0 0 1 1.75,12.22 L6.77,3.12 A1.4,1.4 0 0 1 9.23,3.12 Z"/><path fill="var(--onsign)" d="M7.15,5.4 L8.85,5.4 L8.85,9.9 L7.15,9.9 Z M6.95,12.05 A1.05,1.05 0 1 1 9.05,12.05 A1.05,1.05 0 1 1 6.95,12.05 Z"/></symbol>
+  <symbol id="s-info" viewBox="0 0 16 16"><path class="g" fill="var(--info)" d="M0.5,8 A7.5,7.5 0 1 1 15.5,8 A7.5,7.5 0 1 1 0.5,8 Z"/><path fill="var(--onsign)" d="M6.95,4.6 A1.05,1.05 0 1 1 9.05,4.6 A1.05,1.05 0 1 1 6.95,4.6 Z M7.15,6.8 L8.85,6.8 L8.85,12.4 L7.15,12.4 Z"/></symbol>
+  <symbol id="s-check" viewBox="0 0 16 16"><path class="g" fill="var(--good)" d="M0.5,8 A7.5,7.5 0 1 1 15.5,8 A7.5,7.5 0 1 1 0.5,8 Z"/><path fill="var(--onsign)" d="M3.5,8.9 L6.93,12.34 L12.53,6.07 L11.27,4.93 L6.87,9.86 L4.7,7.7 Z"/></symbol>
+  <!-- il segno solo (status_pill.layout usa symbols.sign: senza il fondo), nel colore del testo -->
+  <symbol id="k-stop" viewBox="0 0 16 16"><path d="M3.6,7.15 L12.4,7.15 L12.4,8.85 L3.6,8.85 Z"/></symbol>
+  <symbol id="k-warning" viewBox="0 0 16 16"><path d="M7.15,5.4 L8.85,5.4 L8.85,9.9 L7.15,9.9 Z M6.95,12.05 A1.05,1.05 0 1 1 9.05,12.05 A1.05,1.05 0 1 1 6.95,12.05 Z"/></symbol>
+  <symbol id="k-info" viewBox="0 0 16 16"><path d="M6.95,4.6 A1.05,1.05 0 1 1 9.05,4.6 A1.05,1.05 0 1 1 6.95,4.6 Z M7.15,6.8 L8.85,6.8 L8.85,12.4 L7.15,12.4 Z"/></symbol>
+  <symbol id="k-check" viewBox="0 0 16 16"><path d="M3.5,8.9 L6.93,12.34 L12.53,6.07 L11.27,4.93 L6.87,9.86 L4.7,7.7 Z"/></symbol>
+</svg>
+
+<h1>Studio 25, parte 2: le pillole dei conteggi dei segni</h1>
+<p class="lead">R328. Daniel: «volevo dei draft di ridisegno solo di quei fagioli, con simbolo ok, X, triangolo giallo, eccetera». Sono i quattro conteggi nella testata delle Verifiche (foto 40: «— 2», «! 4», «i 11», «✓ 0», <code>ui/status_pill.py</code>), gli stessi che l'albero mostra come segni (<code>ui/marks.py</code>). Ogni conteggio è anche un filtro che resta premuto (R130). Tutto a rettangolo arrotondato o a disco, mai a due semicerchi. Per ogni ridisegno: a riposo con 2 / 4 / 11 / 0, con il filtro degli avvisi acceso e il puntatore sulle informazioni, chiaro e scuro.</p>
+
+<div class="proposal" id="p0">
+  <h2>Oggi<span class="from">status_pill.paint: pillola 24, fondo tono 10 %, linea tono 28 %, segno e numero nel colore del testo (LABEL 11)</span></h2>
+  <div class="pair"><div class="mock">
+    <div class="head"><span class="cap">a riposo</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="pill c"><svg class="sign"><use href="#k-stop"/></svg><span class="n">2</span></span><span class="pill w"><svg class="sign"><use href="#k-warning"/></svg><span class="n">4</span></span><span class="pill i"><svg class="sign"><use href="#k-info"/></svg><span class="n">11</span></span><span class="pill o z"><svg class="sign"><use href="#k-check"/></svg><span class="n">0</span></span></div>
+    <div class="head"><span class="cap">avvisi acceso</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="pill c"><svg class="sign"><use href="#k-stop"/></svg><span class="n">2</span></span><span class="pill w on"><svg class="sign"><use href="#k-warning"/></svg><span class="n">4</span></span><span class="pill i"><svg class="sign"><use href="#k-info"/></svg><span class="n">11</span></span><span class="pill o z"><svg class="sign"><use href="#k-check"/></svg><span class="n">0</span></span></div>
+  </div></div>
+  <p class="note">Il segno è disegnato nel colore del testo, il livello si legge solo dalla tinta del fondo (10 %): in chiaro i quattro fondi sono quasi uguali, e il «—» rosso dell'albero qui è un trattino nero. Il contenitore a due semicerchi è il fagiolo.</p>
+</div>
+
+<div class="proposal" id="p1">
+  <h2>P1. Segno disegnato e numero in testo normale, nessun contenitore<span class="from">dai segni dell'albero (ui/marks.py, symbols.py) e dagli strumenti della barra della vista: acceso = strato press a raggio 6</span></h2>
+  <div class="pair"><div class="mock">
+    <div class="head"><span class="cap">a riposo</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="p1"><svg class="s"><use href="#s-stop"/></svg><span class="num">2</span></span><span class="p1"><svg class="s"><use href="#s-warning"/></svg><span class="num">4</span></span><span class="p1"><svg class="s"><use href="#s-info"/></svg><span class="num">11</span></span><span class="p1 z"><svg class="s"><use href="#s-check"/></svg><span class="num">0</span></span></div>
+    <div class="head"><span class="cap">avvisi acceso, hover</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="p1"><svg class="s"><use href="#s-stop"/></svg><span class="num">2</span></span><span class="p1 on"><svg class="s"><use href="#s-warning"/></svg><span class="num">4</span></span><span class="p1 hv"><svg class="s"><use href="#s-info"/></svg><span class="num">11</span></span><span class="p1 z"><svg class="s"><use href="#s-check"/></svg><span class="num">0</span></span></div>
+  </div></div>
+  <p class="note"><b>Pro:</b> gli stessi segni dell'albero e delle righe, al loro colore: il livello si legge dal segno, non da una tinta; niente contenitore a riposo; lo zero è un segno grigio col numero spento. Acceso e hover come ogni strumento (raggio 6). <b>Contro:</b> quattro dischi colorati in fila sono un semaforo nella testata; acceso si distingue dal solo grigio al 16 %.</p>
+</div>
+
+<div class="proposal" id="p2">
+  <h2>P2. Disco del livello col numero dentro, il segno piccolo davanti<span class="from">dal disco numerato delle fasi e degli inverter; acceso = anello di 2 px come i pulsanti della vista</span></h2>
+  <div class="pair"><div class="mock">
+    <div class="head"><span class="cap">a riposo</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="p2 c"><svg class="s sm"><use href="#s-stop"/></svg><span class="disc">2</span></span><span class="p2 w"><svg class="s sm"><use href="#s-warning"/></svg><span class="disc">4</span></span><span class="p2 i"><svg class="s sm"><use href="#s-info"/></svg><span class="disc">11</span></span><span class="p2 o z"><svg class="s sm"><use href="#s-check"/></svg><span class="disc">0</span></span></div>
+    <div class="head"><span class="cap">avvisi acceso, hover</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="p2 c"><svg class="s sm"><use href="#s-stop"/></svg><span class="disc">2</span></span><span class="p2 w on"><svg class="s sm"><use href="#s-warning"/></svg><span class="disc">4</span></span><span class="p2 i hv"><svg class="s sm"><use href="#s-info"/></svg><span class="disc">11</span></span><span class="p2 o z"><svg class="s sm"><use href="#s-check"/></svg><span class="disc">0</span></span></div>
+  </div></div>
+  <p class="note"><b>Pro:</b> il numero è la cosa grande e sta nel colore del livello, come il numero della fase in mano; lo zero è un disco grigio che non attira; l'anello dice «acceso» senza grigi. <b>Contro:</b> quattro dischi pieni di colore sono pesanti (R104 chiede misura, anche se qui il colore è semantico); con «11» il disco si allarga a 24 e non è più tondo; il segno piccolo a 12 px è ai limiti della leggibilità.</p>
+</div>
+
+<div class="proposal" id="p3">
+  <h2>P3. La pillola di oggi squadrata a raggio 6, col segno al suo colore<span class="from">dallo stile B1 scelto per i pulsanti e dalle etichette della pianta (riquadri a raggio 6)</span></h2>
+  <div class="pair"><div class="mock">
+    <div class="head"><span class="cap">a riposo</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="p3 c"><svg class="s sm"><use href="#s-stop"/></svg><span class="n">2</span></span><span class="p3 w"><svg class="s sm"><use href="#s-warning"/></svg><span class="n">4</span></span><span class="p3 i"><svg class="s sm"><use href="#s-info"/></svg><span class="n">11</span></span><span class="p3 o z"><svg class="s sm"><use href="#s-check"/></svg><span class="n">0</span></span></div>
+    <div class="head"><span class="cap">avvisi acceso</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="p3 c"><svg class="s sm"><use href="#s-stop"/></svg><span class="n">2</span></span><span class="p3 w on"><svg class="s sm"><use href="#s-warning"/></svg><span class="n">4</span></span><span class="p3 i"><svg class="s sm"><use href="#s-info"/></svg><span class="n">11</span></span><span class="p3 o z"><svg class="s sm"><use href="#s-check"/></svg><span class="n">0</span></span></div>
+  </div></div>
+  <p class="note"><b>Pro:</b> la stessa forma dei pulsanti B1 (24 px, raggio 6, bordo), si fa cambiando il raggio in <code>status_pill.paint</code> e disegnando il segno al suo colore; acceso = linea al 65 % del tono, già previsto; lo zero sbiadito come oggi. <b>Contro:</b> resta un gettone con fondo e bordo tinti, cioè la cosa di oggi con gli angoli diversi; con il segno colorato più la tinta il colore è detto due volte.</p>
+</div>
+
+<div class="proposal" id="p4">
+  <h2>P4. Numero grande col segno in apice, nessun contenitore<span class="from">dalle cifre dei riquadri dei risultati e dal conteggio delle sezioni («EDIFICI 2»); acceso = filo di 2 px nel colore del testo (le linguette B2)</span></h2>
+  <div class="pair"><div class="mock">
+    <div class="head"><span class="cap">a riposo</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="p4"><span class="num">2</span><svg class="s xs"><use href="#s-stop"/></svg></span><span class="p4"><span class="num">4</span><svg class="s xs"><use href="#s-warning"/></svg></span><span class="p4"><span class="num">11</span><svg class="s xs"><use href="#s-info"/></svg></span><span class="p4 z"><span class="num">0</span><svg class="s xs"><use href="#s-check"/></svg></span></div>
+    <div class="head"><span class="cap">avvisi acceso, hover</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="p4"><span class="num">2</span><svg class="s xs"><use href="#s-stop"/></svg></span><span class="p4 on"><span class="num">4</span><svg class="s xs"><use href="#s-warning"/></svg></span><span class="p4 hv"><span class="num">11</span><svg class="s xs"><use href="#s-info"/></svg></span><span class="p4 z"><span class="num">0</span><svg class="s xs"><use href="#s-check"/></svg></span></div>
+  </div></div>
+  <p class="note"><b>Pro:</b> il numero è ciò che si legge per primo, come nei riquadri; leggerissimo, nessun fondo; il filo sotto dice «filtro acceso» come una linguetta. <b>Contro:</b> il segno a 10 px è troppo piccolo per riconoscere il triangolo dal disco; i numeri a 15 px sono più grandi di tutto il resto della testata; a colpo d'occhio «2 4 11 0» senza i segni grandi si legge come una cifra sola.</p>
+</div>
+
+<div class="proposal" id="p5">
+  <h2>P5. Segmenti su una pista, ciascuno un filtro<span class="from">dalla barra delle varianti (R73) e da B1: la pista field a raggio 8, i segmenti a raggio 6, quello acceso rialzato in panel col filo</span></h2>
+  <div class="pair"><div class="mock">
+    <div class="head"><span class="cap">a riposo</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="track"><span class="seg"><svg class="s sm"><use href="#s-stop"/></svg><span class="n">2</span></span><span class="seg"><svg class="s sm"><use href="#s-warning"/></svg><span class="n">4</span></span><span class="seg"><svg class="s sm"><use href="#s-info"/></svg><span class="n">11</span></span><span class="seg z"><svg class="s sm"><use href="#s-check"/></svg><span class="n">0</span></span></span></div>
+    <div class="head"><span class="cap">avvisi acceso, hover</span><span class="field">Per livello <span class="arrow">▼</span></span><span class="sp"></span>
+      <span class="track"><span class="seg"><svg class="s sm"><use href="#s-stop"/></svg><span class="n">2</span></span><span class="seg on"><svg class="s sm"><use href="#s-warning"/></svg><span class="n">4</span></span><span class="seg hv"><svg class="s sm"><use href="#s-info"/></svg><span class="n">11</span></span><span class="seg z"><svg class="s sm"><use href="#s-check"/></svg><span class="n">0</span></span></span></div>
+  </div></div>
+  <p class="note"><b>Pro:</b> la pista dice che i quattro conteggi sono una cosa sola (i livelli) e che si clicca; acceso rialzato in <code>panel</code> col filo, come la variante in mano, nessun grigio ambiguo; più segmenti possono restare premuti (R130). Stessa forma dei pulsanti B1 e delle linguette C4 che Daniel ha scelto. <b>Contro:</b> è una pista in più accanto a «Per livello» e ai due filtri; lo zero resta un segmento che occupa posto (nascosto, la pista cambierebbe larghezza a ogni ricalcolo).</p>
+</div>
+
+<div class="proposal" id="p6">
+  <h2>A colpo d'occhio: i cinque in fila, con 2 / 4 / 11 / 0<span class="from">in chiaro e in scuro, alla larghezza di un pannello</span></h2>
+  <div class="pair"><div class="mock">
+    <div class="glance"><span class="lb">oggi</span><span class="pill c"><svg class="sign"><use href="#k-stop"/></svg><span class="n">2</span></span><span class="pill w"><svg class="sign"><use href="#k-warning"/></svg><span class="n">4</span></span><span class="pill i"><svg class="sign"><use href="#k-info"/></svg><span class="n">11</span></span><span class="pill o z"><svg class="sign"><use href="#k-check"/></svg><span class="n">0</span></span></div>
+    <div class="glance"><span class="lb">P1 segno e numero</span><span class="p1"><svg class="s"><use href="#s-stop"/></svg><span class="num">2</span></span><span class="p1"><svg class="s"><use href="#s-warning"/></svg><span class="num">4</span></span><span class="p1"><svg class="s"><use href="#s-info"/></svg><span class="num">11</span></span><span class="p1 z"><svg class="s"><use href="#s-check"/></svg><span class="num">0</span></span></div>
+    <div class="glance"><span class="lb">P2 disco</span><span class="p2 c"><svg class="s sm"><use href="#s-stop"/></svg><span class="disc">2</span></span><span class="p2 w"><svg class="s sm"><use href="#s-warning"/></svg><span class="disc">4</span></span><span class="p2 i"><svg class="s sm"><use href="#s-info"/></svg><span class="disc">11</span></span><span class="p2 o z"><svg class="s sm"><use href="#s-check"/></svg><span class="disc">0</span></span></div>
+    <div class="glance"><span class="lb">P3 raggio 6</span><span class="p3 c"><svg class="s sm"><use href="#s-stop"/></svg><span class="n">2</span></span><span class="p3 w"><svg class="s sm"><use href="#s-warning"/></svg><span class="n">4</span></span><span class="p3 i"><svg class="s sm"><use href="#s-info"/></svg><span class="n">11</span></span><span class="p3 o z"><svg class="s sm"><use href="#s-check"/></svg><span class="n">0</span></span></div>
+    <div class="glance"><span class="lb">P4 apice</span><span class="p4"><span class="num">2</span><svg class="s xs"><use href="#s-stop"/></svg></span><span class="p4"><span class="num">4</span><svg class="s xs"><use href="#s-warning"/></svg></span><span class="p4"><span class="num">11</span><svg class="s xs"><use href="#s-info"/></svg></span><span class="p4 z"><span class="num">0</span><svg class="s xs"><use href="#s-check"/></svg></span></div>
+    <div class="glance"><span class="lb">P5 pista</span><span class="track"><span class="seg"><svg class="s sm"><use href="#s-stop"/></svg><span class="n">2</span></span><span class="seg"><svg class="s sm"><use href="#s-warning"/></svg><span class="n">4</span></span><span class="seg"><svg class="s sm"><use href="#s-info"/></svg><span class="n">11</span></span><span class="seg z"><svg class="s sm"><use href="#s-check"/></svg><span class="n">0</span></span></span></div>
+  </div></div>
+</div>
+
+<div class="reco"><b>Raccomandazione: P5</b>, con i segni di P1 dentro (il segno disegnato di <code>symbols.py</code> al suo colore, 12 px, numero LABEL 11 nel colore del testo). È la forma che Daniel ha già scelto per i pulsanti (B1) e per le linguette (C4): una pista sola nella testata delle Verifiche, i quattro livelli come segmenti, acceso rialzato col filo, lo zero spento ma al suo posto. <b>Ripiego senza elementi nuovi: P3</b> (raggio 6 in <code>status_pill.paint</code>, segno al suo colore). Le altre pillole di stato con un segno: i segni dell'albero (<code>ui/marks.py</code>) restano segni soli, senza contenitore, come P1; le consegne della Relazione («fatto», «da aggiornare», «da fare») e il formato dei file passano a raggio 6 con lo stesso bordo, così nel programma non resta nessun fagiolo.</div>
+
+<table class="langtable">
+  <tr><th></th><th>Livello a colpo d'occhio</th><th>Zero</th><th>Filtro acceso</th><th>Coerenza con B1 / C4</th><th>Lavoro</th></tr>
+  <tr><td>P1</td><td>dal segno colorato</td><td>segno grigio, numero spento</td><td>strato press, raggio 6</td><td>come gli strumenti</td><td>piccolo</td></tr>
+  <tr><td>P2</td><td>dal disco pieno</td><td>disco grigio</td><td>anello</td><td>come i dischi delle fasi</td><td>medio</td></tr>
+  <tr><td>P3</td><td>segno più tinta (due volte)</td><td>sbiadito</td><td>linea al 65 %</td><td>stessa forma di B1</td><td>minimo: il raggio</td></tr>
+  <tr><td>P4</td><td>dal numero; il segno è troppo piccolo</td><td>numero spento</td><td>filo sotto</td><td>come le linguette B2, non scelte</td><td>medio</td></tr>
+  <tr><td>P5</td><td>dal segno colorato, i quattro in una pista</td><td>segmento spento</td><td>rialzato col filo</td><td>stessa forma di B1 e C4</td><td>medio (pista come variant_bar)</td></tr>
+</table>
+
+<script>
+document.querySelectorAll('.proposal').forEach(p => {
+  const pair = p.querySelector('.pair'), mock = pair.querySelector('.mock');
+  const html = mock.innerHTML; mock.remove();
+  for (const theme of ['light', 'dark']) { const f = document.createElement('div'); f.className = 'frame ' + theme; f.innerHTML = html; pair.appendChild(f); }
+});
+</script>
+</body>
+</html>
