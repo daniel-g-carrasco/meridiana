@@ -64,6 +64,10 @@ Un edificio porta con sé i suoi sottocampi, le esclusioni e le falde libere; un
 
 ### Prevenzione incendi
 
+Un impianto fotovoltaico non è di per sé un'attività soggetta ai controlli (DCPREV 14030/2025, par. 1.1 punto 1, p. 3): lo è l'edificio, se ospita una delle 80 attività dell'Allegato I del DPR 151/2011 (GU n. 221 del 22/09/2011, pp. 5-20; il testo in Meridiana è quello del 2011).
+
+Nel gruppo «Prevenzione incendi» delle proprietà dell'edificio scegli l'attività dall'elenco: scrivi il numero o qualche parola («49», «autorimesse») e l'elenco trova le righe. Sotto compaiono la soglia dell'attività e la pagina della Gazzetta. Nella «Categoria» ogni voce dice che cosa ricade in A, B o C per quell'attività, e le categorie che l'attività non ha sono spente: Meridiana non conosce addetti, kW o metri quadri dell'attività, quindi la scelta è tua; se la categoria è una sola, la prende da sé. Scegliere un'attività accende la casella «Attività soggetta a controllo»; «Nessuna attività soggetta» la spegne e toglie la categoria. In un progetto di prima del formato 24 la casella accesa resta valida e l'elenco dice «Soggetta, attività non specificata». L'attività e la categoria finiscono nelle note della relazione (regola N13).
+
 Per un'attività soggetta al controllo dei Vigili del Fuoco valgono le linee guida DCPREV 14030/2025 (regole N13 e N15 di `rules.py`). Per i moduli sopra la copertura (BAPV) Meridiana applica da sola, nella posa, i punti del paragrafo 3.3.5.1 (p. 13-16):
 
 - una fascia libera di almeno 1 m dal bordo della copertura;

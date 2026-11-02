@@ -17,6 +17,15 @@ software centres show.
 
 ## [Unreleased]
 
+### Fire prevention activities and Meridio's answers, 2026-11-02
+
+- Carry Annex I of DPR 151/2011 as data (the 80 activities, thresholds and categories, GU no. 221 of 22/09/2011).
+  Choose the activity in the building's properties, by number or words; project format 24, older files stay valid
+  with the activity not specified. Rule N13 cites the activity and its category.
+- Meridio quotes thresholds and laws only from the sources the program carries and says which document is missing,
+  answers first and then gives the grounds and the project data; the tool for the rules gives their whole text,
+  a new tool searches the activities.
+
 ### Electrical completion, 2026-10-29
 
 - Compute connected strings from sampled cell-cohort I/V curves, bypass sections and shared MPPT operating
