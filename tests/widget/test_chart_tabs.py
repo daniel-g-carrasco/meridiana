@@ -66,6 +66,52 @@ class ChartTabs(unittest.TestCase):
                     self.assertEqual(first.mapTo(card, QPoint(0, 0)).x(), content.mapTo(card, QPoint(0, 0)).x())
             self.assertEqual(set(tops.values()), {Space.XS + 1 + Space.M}, f"{type(page).__name__}: {tops}")
 
+    def test_a_long_title_laid_out_narrow_once_goes_back_to_one_line(self):
+        """R310: the tab open at the first layout («Mesi», «Bilancio») kept a title 96 px tall for good, centred in
+        a hole: pad_fields wraps the long labels and QLabel.heightForWidth never answers under the minimum it set."""
+        from meridiana.ui.energy_pages import ConsumptionPage, EconomicsPage
+        from meridiana.ui.style import pad_fields
+        for kind, chart in ((ConsumptionPage, "monthly"), (EconomicsPage, "prod_split")):
+            page = kind()
+            self.addCleanup(_setup.dispose, page)
+            self.addCleanup(page.hide)
+            pad_fields(page)
+            page.resize(330, 700)
+            page.show()
+            self.app.processEvents()
+            page.resize(1400, 800)
+            self.app.processEvents()
+            title = getattr(page, chart).title
+            line = title.fontMetrics().lineSpacing()
+            self.assertLessEqual(title.minimumHeight(), line + 1, kind.__name__)
+            self.assertLessEqual(getattr(page, chart).stack.y(), getattr(page, chart).toggle.height() + 6, kind.__name__)
+
+    def test_the_steps_of_the_losses_have_a_row_each_and_the_page_scrolls_for_them(self):
+        """R313: 16 steps in 150 px, labels and values one over the other. Each row at least a line of text tall,
+        the chart's minimum back when it says something else."""
+        from meridiana.ui.energy_pages import EnergyPage
+        page = EnergyPage()
+        self.addCleanup(_setup.dispose, page)
+        self.addCleanup(page.hide)
+        page.resize(1100, 500)
+        page.show()
+        tabs = page.losses_chart.parentWidget().parentWidget()
+        tabs.setCurrentWidget(page.losses_chart)
+        self.app.processEvents()
+        labels = [f"step {i}" for i in range(16)]
+        page.losses_chart.changes(labels, [(-1.0) ** i * (i + 1) * 0.5 for i in range(16)], "%")
+        _setup.turn_events(self.app, 100)
+        chart = page.losses_chart
+        self.assertGreaterEqual(chart.plot.height(), chart.plot.minimumHeight())
+        line = chart.fontMetrics().height()
+        row = chart.plot.view.height() / 16
+        self.assertGreaterEqual(row, line - 1, (chart.plot.height(), chart.plot.view.height()))
+        self.assertGreater(page.results.height(), page.centre.viewport().height())      # the page scrolls for them
+        chart.message("Nothing to show")
+        self.app.processEvents()
+        from meridiana.ui.design import Size
+        self.assertEqual(chart.plot.minimumHeight(), Size.CHART_MIN_HEIGHT)
+
     def test_the_stacked_tabs_keep_l_between_their_charts(self):
         from meridiana.ui.design import Space
         from meridiana.ui.energy_pages import EconomicsPage

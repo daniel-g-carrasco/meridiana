@@ -29,6 +29,7 @@ class EnergyResult:
     notes: list = field(default_factory=list)
     error_sim: str | None = None
     meteo_text: str | None = None
+    meteo_brief: tuple | None = None    # the same in two short lines, for the bar of the Production (R313)
     load: object = None             # consumption.Load
     context: object = None          # consumption.Context, once the production is known
     sim: object = None              # simulate.Result
@@ -79,6 +80,7 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
     out.load = consumption_model.build(wanted, ctx)
     if not (fetch or cached):
         out.meteo_text = _("Not fetched yet: PVGIS gives the typical year of the site for free, with the network.")
+        out.meteo_brief = (_("Not fetched yet."), "")
         out.error_sim = _("Fetch the weather of the site first (button above).")
         return out
     step(0, STEPS, _("the typical year"))
@@ -88,6 +90,9 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
                        "temperature {t} °C (from {tmin} to {tmax} °C).").format(
         source=m.source.label, date=m.fetched, ghi=number(s["ghi_kwh_m2"], 0, grouping=True),
         t=number(s["t_mean"], 1), tmin=number(s["t_min"], 1), tmax=number(s["t_max"], 1))
+    out.meteo_brief = (_("{source}, fetched {date}").format(source=m.source.label.split(",")[0], date=m.fetched),
+                       _("{ghi} kWh/m² a year, mean {t} °C").format(ghi=number(s["ghi_kwh_m2"], 0, grouping=True),
+                                                                    t=number(s["t_mean"], 1)))
     losses = system.losses_of(project)
     hor = None
     step(1, STEPS, _("the horizon"))

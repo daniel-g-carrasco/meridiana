@@ -397,7 +397,6 @@ class MainWindow(QMainWindow):
         for page in (self.energy_page, self.consumption_page, self.economics_page):
             page.edited.connect(self._energy_edited)
             page.computeRequested.connect(lambda: self._compute_energy(fetch=True))
-        self.energy_page.fetchRequested.connect(lambda: self._compute_energy(fetch=True, refresh=True))
         self.energy_page.inverterRequested.connect(self._choose_inverter)
         self.economics_page.batteryRequested.connect(self._choose_battery)
         self.consumption_page.importRequested.connect(self._import_curve)
@@ -1210,6 +1209,11 @@ class MainWindow(QMainWindow):
         holder_box = QHBoxLayout(self.plant_holder)
         holder_box.setContentsMargins(0, 0, Space.M, 0)
         self.bars["plant"].add_trailing(self.plant_holder)
+        # and the Production's weather at the right of its bar (R313)
+        self.meteo_holder = QWidget()
+        meteo_box = QHBoxLayout(self.meteo_holder)
+        meteo_box.setContentsMargins(Space.L, 0, Space.M, 0)
+        self.bars["production"].add_trailing(self.meteo_holder)
         self.bars_text: bool | None = None
         self._toolbar_style()
         self._fill_side_bar()
@@ -1318,6 +1322,7 @@ class MainWindow(QMainWindow):
         left = self.cfg.toolbar_place == "left"
         self.tabs.bars.setVisible(not left)
         self.plant_page.place_strip(None if left else self.plant_holder)
+        self.energy_page.place_meteo(None if left else self.meteo_holder)
         self.side_bar.setVisible(left and not self.clean_action.isChecked())
         self.bars_text = None
         self._fit_bars()
@@ -1898,6 +1903,9 @@ class MainWindow(QMainWindow):
             if dock.isFloating():
                 dock.setFloating(False)
         panels = (*self.docks, self.help_dock, self.checks_dock)
+        # the bars first: asked from the File page they are hidden, and showing them after took their height from the
+        # panels already placed (10 px of Help to Properties; hidden until R310 by a label's stuck minimum)
+        self._toolbar_style()
         for _twice in range(2):
             # twice: the cards fit their margins to where the first pass put them, and only then do their minimum
             # sizes let the second one give every panel its first size (a card carried its old edge's margins)
@@ -3695,7 +3703,7 @@ class MainWindow(QMainWindow):
             if before != self.project.climate:
                 self._title()                    # new project data: the normal save keeps them (R196)
         if out.get("meteo_text"):
-            self.energy_page.show_meteo(out["meteo_text"])
+            self.energy_page.show_meteo(out["meteo_text"], out.get("meteo_brief"))
         self.energy_page.show_results(out.get("sim"), out.get("pvgis"), out.get("error_sim", ""))
         self.energy_page.show_strings(out.get("strings") or {}, out.get("sim"))
         # the strings on the plan are the live plant's (_plant_done), which follows the year's "energy" topic
