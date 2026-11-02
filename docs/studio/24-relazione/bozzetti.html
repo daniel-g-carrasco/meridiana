@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Bozzetti relazione</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Caratteri che viaggiano col programma (data/fonts, OFL). Source Serif 4 e IBM Plex Mono (OFL) da aggiungere
+   per il bozzetto C; qui arrivano da Google Fonts, con Georgia e Consolas di riserva. */
+@font-face { font-family: Inter; src: url(../../../data/fonts/inter/Inter-Regular.ttf); font-weight: 400; }
+@font-face { font-family: Inter; src: url(../../../data/fonts/inter/Inter-SemiBold.ttf); font-weight: 600; }
+@font-face { font-family: Inter; src: url(../../../data/fonts/inter/Inter-Bold.ttf); font-weight: 700; }
+@font-face { font-family: Titillium; src: url(../../../data/fonts/titillium-web/TitilliumWeb-Regular.ttf); font-weight: 400; }
+@font-face { font-family: Titillium; src: url(../../../data/fonts/titillium-web/TitilliumWeb-SemiBold.ttf); font-weight: 600; }
+@font-face { font-family: Titillium; src: url(../../../data/fonts/titillium-web/TitilliumWeb-Bold.ttf); font-weight: 700; }
+
+:root { --bg: #e9e9e6; --ink: #1a1a1a; --mut: #6b6b6b; --rule: #cfcfcb; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 Inter, system-ui, sans-serif; }
+.wrap { padding: 24px 16px 48px; max-width: 2560px; margin: 0 auto; }
+.intro { max-width: 900px; margin-bottom: 28px; }
+.intro h1 { font-size: 26px; margin: 0 0 6px; }
+.intro p { margin: 4px 0; color: #333; }
+.set { margin-bottom: 44px; }
+.set > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-bottom: 12px; }
+.set > header h2 { margin: 0; font-size: 22px; }
+.set > header .tag { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--mut); }
+.set > header p { margin: 0; flex-basis: 100%; color: #333; max-width: 1100px; }
+.set > header p b { color: var(--ink); }
+.row { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; margin-top: 30px; }
+.page { width: 794px; height: 1123px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 12px 32px rgba(0,0,0,.10);
+        overflow: hidden; position: relative; flex: 0 0 auto; }
+img.page { object-fit: contain; }
+.pnum { position: absolute; right: 0; top: -22px; font-size: 11px; color: var(--mut); }
+.pw { position: relative; }
+.tab { font-variant-numeric: tabular-nums; }
+.r { text-align: right; }
+
+/* ---------- A: Registro ---------- */
+.A .page { font-family: Inter, sans-serif; font-size: 10.5px; line-height: 1.4; color: #15171a;
+           --acc: #1f3a5f; --soft: #eef1f5; padding: 56px 56px 60px 56px;
+           display: grid; grid-template-columns: 150px 1fr; column-gap: 26px; align-content: start; }
+.A .page .m { color: #5d6470; font-size: 9px; line-height: 1.35; padding-top: 3px; }
+.A .page .m b { color: #15171a; font-weight: 600; display: block; font-size: 9.5px; }
+.A .page .m .src { display: block; margin-top: 2px; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 8.5px; color: var(--acc); }
+.A .page .b { min-width: 0; }
+.A .hd { grid-column: 1 / -1; display: flex; justify-content: space-between; border-bottom: 1px solid #15171a;
+         padding-bottom: 6px; margin-bottom: 22px; font-size: 9px; color: #5d6470; }
+.A .hd b { color: #15171a; }
+.A .ft { position: absolute; left: 56px; right: 56px; bottom: 26px; display: flex; justify-content: space-between;
+         font-size: 8.5px; color: #5d6470; border-top: 1px solid var(--rule); padding-top: 6px; }
+.A h1 { font-size: 34px; line-height: 1.1; font-weight: 600; margin: 0 0 6px; letter-spacing: -.01em; }
+.A h2 { font-size: 17px; font-weight: 600; margin: 0 0 10px; }
+.A h3 { font-size: 11px; font-weight: 600; margin: 14px 0 6px; text-transform: uppercase; letter-spacing: .06em; color: var(--acc); }
+.A .sub { font-size: 15px; color: #5d6470; margin: 0 0 32px; }
+.A .kick { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--acc); font-weight: 600; margin-bottom: 10px; }
+.A table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.A th { text-align: left; font-weight: 600; font-size: 9px; color: #5d6470; border-bottom: 1px solid #15171a; padding: 4px 6px 5px 0; vertical-align: bottom; }
+.A td { padding: 4px 6px 4px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.A td.src, .A th.src { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 8.5px; color: var(--acc); white-space: nowrap; }
+.A tr.tot td { border-top: 1px solid #15171a; border-bottom: 0; font-weight: 600; }
+.A .key { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0 18px; margin: 0 0 8px; }
+.A .key div { border-top: 2px solid #15171a; padding-top: 8px; }
+.A .key .n { font-size: 24px; font-weight: 600; letter-spacing: -.01em; line-height: 1; }
+.A .key .n small { font-size: 11px; font-weight: 400; color: #5d6470; margin-left: 3px; }
+.A .key .l { font-size: 9px; color: #5d6470; margin-top: 4px; }
+.A .bars { margin: 6px 0 0; }
+.A .bar { display: grid; grid-template-columns: 170px 1fr 60px; align-items: center; gap: 8px; font-size: 9.5px; padding: 3px 0; border-bottom: 1px solid var(--rule); }
+.A .bar i { display: block; height: 9px; background: var(--acc); opacity: .85; }
+.A .bar i.g { background: #8a9bb3; }
+.A .bar .v { text-align: right; font-variant-numeric: tabular-nums; }
+.A .fig { border: 1px solid var(--rule); padding: 10px; background: #fff; }
+.A .cap { font-size: 9px; color: #5d6470; margin-top: 6px; }
+.A .toc { font-size: 10.5px; }
+.A .toc div { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--rule); padding: 5px 0; }
+.A .toc div span:last-child { font-variant-numeric: tabular-nums; }
+.A p { margin: 0 0 8px; }
+.A .cover-data { grid-column: 1 / -1; margin-top: auto; display: grid; grid-template-columns: 150px 1fr; column-gap: 26px; }
+
+/* ---------- B: Scheda ---------- */
+.B .page { font-family: Titillium, "Titillium Web", sans-serif; font-size: 11px; line-height: 1.35; color: #1b1f24;
+           --sun: #e8a317; --sun2: #fbefd2; --sea: #1c6e8c; --sea2: #dcebf1; --leaf: #2e8b57; --leaf2: #dff0e6;
+           --slate: #2b3440; --card: #f3f3f0; padding: 0; }
+.B .band { background: var(--slate); color: #fff; padding: 30px 44px 26px; }
+.B .band .top { display: flex; justify-content: space-between; font-size: 10px; color: #c8cfd8; text-transform: uppercase; letter-spacing: .1em; }
+.B .band h1 { font-size: 30px; font-weight: 700; margin: 14px 0 2px; line-height: 1.1; }
+.B .band .sub { font-size: 14px; color: #c8cfd8; }
+.B .body { padding: 22px 44px 60px; }
+.B .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.B .tile { background: var(--card); border-radius: 10px; padding: 12px 14px 10px; border-top: 5px solid var(--slate); }
+.B .tile.sun { border-color: var(--sun); } .B .tile.sea { border-color: var(--sea); } .B .tile.leaf { border-color: var(--leaf); }
+.B .tile .n { font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.B .tile .n small { font-size: 12px; font-weight: 600; color: #58616c; margin-left: 2px; }
+.B .tile .l { font-size: 10px; color: #58616c; margin-top: 5px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.B .tile .s { font-size: 9px; color: #7d8792; margin-top: 2px; }
+.B h2 { font-size: 15px; font-weight: 700; margin: 20px 0 8px; display: flex; align-items: center; gap: 8px; }
+.B h2::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--slate); }
+.B h2.sun::before { background: var(--sun); } .B h2.sea::before { background: var(--sea); } .B h2.leaf::before { background: var(--leaf); }
+.B .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.B .card { background: var(--card); border-radius: 10px; padding: 12px 14px; }
+.B .card h4 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #58616c; }
+.B table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+.B th { text-align: left; font-weight: 600; padding: 5px 6px; background: var(--slate); color: #fff; font-size: 9.5px; }
+.B th:first-child { border-radius: 6px 0 0 6px; } .B th:last-child { border-radius: 0 6px 6px 0; }
+.B td { padding: 4px 6px; border-bottom: 1px solid #e1e1dc; font-variant-numeric: tabular-nums; }
+.B tr.tot td { font-weight: 700; border-bottom: 0; background: #fff; border-radius: 6px; }
+.B .mon { display: flex; align-items: flex-end; gap: 6px; height: 130px; padding: 0 2px; border-bottom: 1px solid #c9c9c4; }
+.B .mon div { flex: 1; background: var(--sun); border-radius: 3px 3px 0 0; position: relative; }
+.B .mon div::after { content: attr(data-m); position: absolute; top: 100%; left: 0; right: 0; text-align: center; font-size: 8.5px; color: #58616c; margin-top: 3px; }
+.B .mon div::before { content: attr(data-v); position: absolute; bottom: 100%; left: -6px; right: -6px; text-align: center; font-size: 8px; color: #58616c; margin-bottom: 2px; font-variant-numeric: tabular-nums; }
+.B .wf { display: flex; align-items: flex-end; gap: 4px; height: 190px; border-bottom: 1px solid #c9c9c4; padding: 18px 0 0; }
+.B .wf div { flex: 1; position: relative; background: #d9534f; border-radius: 2px; }
+.B .wf div.tot { background: var(--sun); }
+.B .wf div.gain { background: var(--leaf); }
+.B .wf div::after { content: attr(data-l); position: absolute; top: 100%; left: -4px; right: -4px; text-align: center; font-size: 7.5px; line-height: 1.1; color: #58616c; margin-top: 4px; }
+.B .wf div::before { content: attr(data-v); position: absolute; bottom: 100%; left: -8px; right: -8px; text-align: center; font-size: 8px; font-weight: 600; margin-bottom: 2px; font-variant-numeric: tabular-nums; }
+.B .wf div.tot::before, .B .wf div.gain::before { color: #1b1f24; }
+.B .badge { display: inline-flex; align-items: center; gap: 8px; background: var(--leaf2); color: #1f5f3b; border-radius: 999px; padding: 6px 14px 6px 8px; font-weight: 600; font-size: 11px; }
+.B .badge b { background: var(--leaf); color: #fff; border-radius: 999px; width: 22px; height: 22px; display: inline-grid; place-items: center; font-size: 12px; }
+.B .ft { position: absolute; left: 44px; right: 44px; bottom: 20px; display: flex; justify-content: space-between; font-size: 9px; color: #7d8792; }
+.B .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; font-size: 9.5px; }
+.B .chips span { display: inline-flex; align-items: center; gap: 5px; background: var(--card); border-radius: 999px; padding: 3px 9px; }
+.B .chips i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.B .note { font-size: 9.5px; color: #58616c; margin-top: 6px; }
+.B .note b { color: #1b1f24; }
+.B p { margin: 0 0 6px; }
+.B .srcs { font-size: 8.5px; color: #7d8792; margin-top: 4px; }
+
+/* ---------- C: Dossier ---------- */
+.C .page { font-family: "Source Serif 4", Georgia, serif; font-size: 11px; line-height: 1.45; color: #1e1a17;
+           --rub: #8b2e1f; --paper: #faf8f4; --mono: "IBM Plex Mono", Consolas, monospace; background: #fff;
+           padding: 60px 54px 64px 54px; display: grid; grid-template-columns: 1fr 190px; column-gap: 28px; align-content: start; }
+.C .rh { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--rub); margin-bottom: 26px; font-family: Inter, sans-serif; }
+.C .ft { position: absolute; left: 54px; right: 54px; bottom: 28px; display: flex; justify-content: space-between; font-size: 9px; color: #7a716a; font-family: Inter, sans-serif; }
+.C h1 { font-size: 40px; font-weight: 400; line-height: 1.05; margin: 0 0 10px; letter-spacing: -.01em; }
+.C h1 em { font-style: italic; color: var(--rub); }
+.C h2 { font-size: 20px; font-weight: 400; margin: 0 0 14px; line-height: 1.15; }
+.C h2 .num { color: var(--rub); font-family: var(--mono); font-size: 11px; display: block; margin-bottom: 6px; letter-spacing: .1em; }
+.C h3 { font-size: 11px; font-weight: 600; margin: 16px 0 6px; font-family: Inter, sans-serif; text-transform: uppercase; letter-spacing: .08em; color: var(--rub); }
+.C p { margin: 0 0 9px; text-align: justify; hyphens: auto; }
+.C .lede { font-size: 14px; line-height: 1.4; text-align: left; color: #3a332e; }
+.C .side { font-family: Inter, sans-serif; font-size: 8.5px; line-height: 1.4; color: #5c544d; }
+.C .side p { text-align: left; hyphens: manual; margin: 0 0 10px; }
+.C .side b { color: #1e1a17; font-weight: 600; }
+.C .side .src { font-family: var(--mono); color: var(--rub); font-size: 8px; display: block; margin-top: 2px; }
+.C table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.C th { text-align: left; font-weight: 600; font-family: Inter, sans-serif; font-size: 8.5px; letter-spacing: .04em; text-transform: uppercase; color: #5c544d; padding: 0 6px 6px 0; border-bottom: 1px solid #1e1a17; vertical-align: bottom; }
+.C td { padding: 5px 6px 5px 0; border-bottom: 1px solid #e3ded6; vertical-align: top; }
+.C td.n, .C th.n { font-family: var(--mono); font-size: 9.5px; text-align: right; white-space: nowrap; }
+.C tr.tot td { border-bottom: 0; border-top: 1px solid #1e1a17; font-weight: 600; }
+.C .stat { border-top: 1px solid #1e1a17; padding: 8px 0 0; margin-bottom: 14px; }
+.C .stat .n { font-family: var(--mono); font-size: 22px; line-height: 1; color: #1e1a17; }
+.C .stat .n small { font-size: 10px; color: #7a716a; margin-left: 3px; font-family: Inter, sans-serif; }
+.C .stat .l { font-size: 8.5px; color: #5c544d; margin-top: 4px; font-family: Inter, sans-serif; }
+.C .wf { font-family: Inter, sans-serif; font-size: 9px; }
+.C .wf .r2 { display: grid; grid-template-columns: 150px 1fr 56px; gap: 10px; align-items: center; padding: 3px 0; border-bottom: 1px solid #e3ded6; }
+.C .wf i { display: block; height: 8px; background: var(--rub); }
+.C .wf i.g { background: #b7b0a7; }
+.C .wf .v { text-align: right; font-family: var(--mono); font-size: 9px; }
+.C .fig { position: relative; }
+.C .cap { font-family: Inter, sans-serif; font-size: 8.5px; color: #5c544d; margin-top: 6px; }
+.C .cap b { color: var(--rub); font-weight: 600; }
+.C .cover-plan { position: absolute; left: 54px; right: 54px; top: 330px; height: 430px; opacity: .55; pointer-events: none; }
+.C .cover-plan svg { width: 100%; height: 100%; }
+.C .cv { grid-column: 1 / -1; position: relative; z-index: 1; }
+.C .cv .meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 500px; font-family: Inter, sans-serif; font-size: 9.5px; }
+.C .cv .meta b { display: block; font-size: 8px; text-transform: uppercase; letter-spacing: .1em; color: var(--rub); margin-bottom: 3px; font-weight: 600; }
+.C .mon { display: flex; align-items: flex-end; gap: 5px; height: 110px; border-bottom: 1px solid #1e1a17; margin-top: 14px; }
+.C .mon div { flex: 1; background: #1e1a17; position: relative; }
+.C .mon div::after { content: attr(data-m); position: absolute; top: 100%; left: 0; right: 0; text-align: center; font-size: 8px; color: #5c544d; margin-top: 3px; font-family: Inter, sans-serif; }
+
+/* pianta condivisa: colori per bozzetto, letti dal simbolo come variabili ereditate */
+.plan { width: 100%; height: auto; display: block; }
+.A .page { --modc: #2c4a7a; }
+.B .page { --modc: #1c6e8c; }
+.C .page { --modc: #3a332e; --bldf: #fff; --bldk: #1e1a17; }
+.C .cover-plan { --plantext: transparent; --bldf: #e9e4dc; --bldk: #1e1a17; }
+@media (max-width: 860px) { .page { transform: scale(.45); transform-origin: top left; margin-bottom: -600px; } .row { gap: 0; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <pattern id="grid" width="6.804" height="13.7" patternUnits="userSpaceOnUse"><rect x=".5" y=".5" width="5.8" height="12.7" fill="none" stroke="#fff" stroke-width=".7"/></pattern>
+    <symbol id="plan" viewBox="-40 -40 800 350" style="font-family:Inter,sans-serif;font-size:11px">
+      <rect x="0" y="0" width="720" height="240" style="fill:var(--bldf,#f4f4f1);stroke:var(--bldk,#555);stroke-width:1.2"/>
+      <g style="fill:var(--modc,#2c4a7a)">
+        <rect x="47" y="14" width="626" height="13.7"/><rect x="47" y="41" width="626" height="13.7"/>
+        <rect x="47" y="68" width="626" height="13.7"/><rect x="47" y="95" width="626" height="13.7"/>
+        <rect x="47" y="122" width="626" height="13.7"/><rect x="47" y="149" width="626" height="13.7"/>
+        <rect x="47" y="176" width="626" height="13.7"/><rect x="47" y="203" width="626" height="13.7"/>
+      </g>
+      <g fill="url(#grid)">
+        <rect x="47" y="14" width="626" height="13.7"/><rect x="47" y="41" width="626" height="13.7"/>
+        <rect x="47" y="68" width="626" height="13.7"/><rect x="47" y="95" width="626" height="13.7"/>
+        <rect x="47" y="122" width="626" height="13.7"/><rect x="47" y="149" width="626" height="13.7"/>
+        <rect x="47" y="176" width="626" height="13.7"/><rect x="47" y="203" width="626" height="13.7"/>
+      </g>
+      <g style="fill:var(--plantext,#333)">
+        <rect x="690" y="100" width="12" height="12" style="fill:#fff;stroke:var(--plantext,#333)"/><text x="696" y="126" text-anchor="middle">INV 1</text>
+        <rect x="690" y="140" width="12" height="12" style="fill:#fff;stroke:var(--plantext,#333)"/><text x="696" y="166" text-anchor="middle">INV 2</text>
+        <line x1="0" y1="-16" x2="720" y2="-16" style="stroke:var(--plantext,#777);stroke-width:.8"/><text x="360" y="-22" text-anchor="middle">120,0 m</text>
+        <line x1="-14" y1="0" x2="-14" y2="240" style="stroke:var(--plantext,#777);stroke-width:.8"/><text x="-20" y="124" text-anchor="end">40,0 m</text>
+        <text x="0" y="266">Capannone C1, copertura piana: 8 file da 92 moduli in verticale, passo 4,50 m, inclinazione 30°, azimut 0° (sud)</text>
+        <g transform="translate(740,250)"><line x1="0" y1="0" x2="0" y2="-28" style="stroke:var(--plantext,#333);stroke-width:1"/><polygon points="-4,-22 0,-30 4,-22"/><text x="0" y="16" text-anchor="middle">N</text></g>
+        <line x1="0" y1="288" x2="60" y2="288" style="stroke:var(--plantext,#777);stroke-width:.8"/><line x1="0" y1="284" x2="0" y2="292" style="stroke:var(--plantext,#777)"/><line x1="60" y1="284" x2="60" y2="292" style="stroke:var(--plantext,#777)"/><text x="68" y="292">10 m</text>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+<div class="intro">
+  <h1>Relazione tecnica: tre impostazioni da zero</h1>
+  <p>Stesso impianto in tutte: 331,2 kWp, 736 moduli da 450 Wp, 2 inverter da 100 kW, 420.700 kWh/anno, 1.270 kWh/kWp, PR 78,1 %, Rho (MI). Dati illustrativi. Pagine a misura A4 (794 × 1123 px a 96 dpi). I caratteri sono quelli in <code>data/fonts</code> (Inter, Titillium Web, OFL); il bozzetto C aggiunge Source Serif 4 e IBM Plex Mono (OFL).</p>
+  <p>Ogni impostazione: prima pagina, pagina tabelle e perdite con grafico, pagina con la pianta. In fondo, una pagina di oggi per confronto.</p>
+</div>
+
+<!-- =================== A =================== -->
+<section class="set A" id="A">
+  <header>
+    <span class="tag">Bozzetto A</span><h2>Registro: la colonna delle fonti</h2>
+    <p><b>Pro:</b> la regola «ogni numero dice da dove viene» diventa la struttura stessa della pagina (colonna sinistra: etichette, fonti, note; destra: contenuto); sobrio, da ufficio tecnico, regge autorizzazioni e installatori. <b>Contro:</b> la colonna costa il 20 % della larghezza; il committente non tecnico trova i numeri di testa solo a fine copertina; monocromo, meno «vendibile».</p>
+  </header>
+  <div class="row">
+    <div class="pw"><span class="pnum">A1, copertina</span>
+    <div class="page">
+      <div class="hd"><span><b>RT-FV-01</b> · Rev. 0 · 02/11/2026</span><span>Relazione tecnica dell'impianto fotovoltaico</span></div>
+      <div class="m"><b>Committente</b>Logistica Esempio S.p.A.<br>Via dei Magazzini 12, Rho (MI)<br><br><b>Progettista</b>Studio Tecnico (profilo di firma)<br><br><b>Oggetto</b>Impianto fotovoltaico su copertura, connesso alla rete BT/MT, in regime di autoconsumo</div>
+      <div class="b">
+        <div class="kick">Relazione tecnica e di calcolo</div>
+        <h1>Impianto fotovoltaico<br>da 331,2 kWp<br>sul capannone C1, Rho</h1>
+        <p class="sub">Dimensionamento, producibilità, verifiche elettriche e analisi economica</p>
+        <div class="toc">
+          <div><span>1 Sintesi dei risultati</span><span>2</span></div>
+          <div><span>2 Sito e dati climatici</span><span>3</span></div>
+          <div><span>3 Coperture e posa</span><span>4</span></div>
+          <div><span>4 Impianto elettrico</span><span>6</span></div>
+          <div><span>5 Producibilità e perdite</span><span>9</span></div>
+          <div><span>6 Consumi e bilancio</span><span>12</span></div>
+          <div><span>7 Analisi economica</span><span>14</span></div>
+          <div><span>8 Verifiche e norme</span><span>16</span></div>
+          <div><span>9 Parametri e metodi di calcolo</span><span>19</span></div>
+          <div><span>Allegati: schede dei componenti, registro dei calcoli</span><span>23</span></div>
+        </div>
+      </div>
+      <div class="cover-data">
+        <div class="m"><b>Dati di testa</b>I quattro numeri che il resto del documento giustifica.<span class="src">registro R-001, R-040, R-041, R-044</span></div>
+        <div class="b">
+          <div class="key">
+            <div><div class="n">331,2<small>kWp</small></div><div class="l">Potenza di picco, 736 moduli × 450 Wp</div></div>
+            <div><div class="n">420.700<small>kWh/anno</small></div><div class="l">Energia nell'anno tipo (PVGIS-SARAH3)</div></div>
+            <div><div class="n">1.270<small>kWh/kWp</small></div><div class="l">Producibilità specifica</div></div>
+            <div><div class="n">78,1<small>%</small></div><div class="l">Indice di prestazione (PR)</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="ft"><span>Studio Tecnico · RT-FV-01 Rev. 0</span><span>Redatta con Meridiana 0.1.0 · pagina 1 di 26</span></div>
+    </div></div>
+
+    <div class="pw"><span class="pnum">A2, producibilità e perdite</span>
+    <div class="page">
+      <div class="hd"><span><b>RT-FV-01</b> · Rev. 0</span><span>5 Producibilità e perdite</span></div>
+      <div class="m"><b>Energia per mese</b>Anno tipo PVGIS-SARAH3 2005-2023, simulazione oraria pvlib 0.13 (modello di Sandia per i moduli, NREL per gli inverter).<span class="src">R-040 · R-042 · §9.2</span><br><br>La colonna PVGIS è il calcolo di PVGIS 5.3 sugli stessi dati, con perdite di sistema al 14 %: un confronto esterno, non un dato di progetto.<span class="src">R-043</span></div>
+      <div class="b">
+        <h2>5 Producibilità e perdite</h2>
+        <table class="tab">
+          <tr><th>Mese</th><th class="r">Irraggiamento<br>in piano, kWh/m²</th><th class="r">Energia<br>immessa, kWh</th><th class="r">PR, %</th><th class="r">PVGIS, kWh</th><th class="src">Fonte</th></tr>
+          <tr><td>Gennaio</td><td class="r">58</td><td class="r">15.900</td><td class="r">82,8</td><td class="r">15.100</td><td class="src">R-040.01</td></tr>
+          <tr><td>Febbraio</td><td class="r">84</td><td class="r">23.400</td><td class="r">84,1</td><td class="r">22.600</td><td class="src">R-040.02</td></tr>
+          <tr><td>Marzo</td><td class="r">137</td><td class="r">37.200</td><td class="r">82,0</td><td class="r">36.300</td><td class="src">R-040.03</td></tr>
+          <tr><td>Aprile</td><td class="r">166</td><td class="r">44.100</td><td class="r">80,2</td><td class="r">43.900</td><td class="src">R-040.04</td></tr>
+          <tr><td>Maggio</td><td class="r">199</td><td class="r">50.800</td><td class="r">77,1</td><td class="r">51.200</td><td class="src">R-040.05</td></tr>
+          <tr><td>Giugno</td><td class="r">217</td><td class="r">54.300</td><td class="r">75,6</td><td class="r">55.000</td><td class="src">R-040.06</td></tr>
+          <tr><td>Luglio</td><td class="r">230</td><td class="r">57.100</td><td class="r">75,0</td><td class="r">57.800</td><td class="src">R-040.07</td></tr>
+          <tr><td>Agosto</td><td class="r">202</td><td class="r">50.200</td><td class="r">75,0</td><td class="r">50.900</td><td class="src">R-040.08</td></tr>
+          <tr><td>Settembre</td><td class="r">151</td><td class="r">38.600</td><td class="r">77,2</td><td class="r">38.100</td><td class="src">R-040.09</td></tr>
+          <tr><td>Ottobre</td><td class="r">101</td><td class="r">26.900</td><td class="r">80,4</td><td class="r">26.000</td><td class="src">R-040.10</td></tr>
+          <tr><td>Novembre</td><td class="r">51</td><td class="r">13.700</td><td class="r">81,1</td><td class="r">13.000</td><td class="src">R-040.11</td></tr>
+          <tr><td>Dicembre</td><td class="r">30</td><td class="r">8.500</td><td class="r">85,5</td><td class="r">7.900</td><td class="src">R-040.12</td></tr>
+          <tr class="tot"><td>Anno</td><td class="r">1.626</td><td class="r">420.700</td><td class="r">78,1</td><td class="r">417.800</td><td class="src">R-040</td></tr>
+        </table>
+        <h3>Dal sole alla rete</h3>
+        <div class="bars">
+          <div class="bar"><span>Irraggiamento orizzontale</span><span><i class="g" style="width:100%"></i></span><span class="v">1.398 kWh/m²</span></div>
+          <div class="bar"><span>Guadagno per l'inclinazione (30°)</span><span><i class="g" style="width:16.3%"></i></span><span class="v">+16,3 %</span></div>
+          <div class="bar"><span>Ombreggiamento fra le file</span><span><i style="width:32%"></i></span><span class="v">-3,2 %</span></div>
+          <div class="bar"><span>Riflessione (IAM)</span><span><i style="width:26%"></i></span><span class="v">-2,6 %</span></div>
+          <div class="bar"><span>Sporcizia</span><span><i style="width:25%"></i></span><span class="v">-2,5 %</span></div>
+          <div class="bar"><span>Basso irraggiamento</span><span><i style="width:8%"></i></span><span class="v">-0,8 %</span></div>
+          <div class="bar"><span>Temperatura dei moduli</span><span><i style="width:75%"></i></span><span class="v">-7,5 %</span></div>
+          <div class="bar"><span>Mismatch e cablaggio DC</span><span><i style="width:21%"></i></span><span class="v">-2,1 %</span></div>
+          <div class="bar"><span>Inverter (rendimento e limitazione)</span><span><i style="width:41%"></i></span><span class="v">-4,1 %</span></div>
+          <div class="bar"><span>Cavi AC e disponibilità</span><span><i style="width:15%"></i></span><span class="v">-1,5 %</span></div>
+          <div class="bar"><span><b>Energia immessa in rete</b></span><span><i class="g" style="width:78.1%"></i></span><span class="v"><b>78,1 %</b></span></div>
+        </div>
+        <div class="cap">Figura 5.1. Ogni passo in percentuale del precedente; la scala delle barre è 10 % = 100 % della riga. Fonti: R-044.01 … R-044.10.</div>
+      </div>
+      <div class="ft"><span>Studio Tecnico · RT-FV-01 Rev. 0</span><span>pagina 9 di 26</span></div>
+    </div></div>
+
+    <div class="pw"><span class="pnum">A3, pianta</span>
+    <div class="page">
+      <div class="hd"><span><b>RT-FV-01</b> · Rev. 0</span><span>3 Coperture e posa</span></div>
+      <div class="m"><b>Figura 3.1</b>Pianta della copertura con le file dei moduli, gli inverter e il nord. Scala grafica.<span class="src">R-010 · modello 3D del progetto</span><br><br><b>Distanza fra le file</b>Passo 4,50 m, moduli in verticale inclinati di 30°: 2,52 m liberi dietro ogni fila; il sole sopra 24,3° non fa ombra sulla fila dietro (angolo limite al solstizio d'inverno a Rho: 21,0° a mezzogiorno).<span class="src">R-012 · CEI 82-25, § 8.2</span></div>
+      <div class="b">
+        <h2>3 Coperture e posa</h2>
+        <div class="fig"><svg class="plan"><use href="#plan"/></svg></div>
+        <div class="cap">Figura 3.1. Pianta dei moduli posati sul capannone C1; nord in alto, scala grafica.</div>
+        <h3>Sottocampi</h3>
+        <table class="tab">
+          <tr><th>Sottocampo</th><th>Su</th><th class="r">Area, m²</th><th class="r">Moduli</th><th class="r">kWp</th><th>Montaggio</th><th class="r">Azimut, °</th><th class="r">Inclin., °</th><th class="r">Passo, m</th><th class="src">Fonte</th></tr>
+          <tr><td>Sud</td><td>Capannone C1</td><td class="r">4.560</td><td class="r">736</td><td class="r">331,2</td><td>File inclinate, zavorrate</td><td class="r">0</td><td class="r">30</td><td class="r">4,50</td><td class="src">R-010</td></tr>
+          <tr class="tot"><td>Totale</td><td></td><td class="r">4.560</td><td class="r">736</td><td class="r">331,2</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </table>
+        <p style="margin-top:10px">Azimut da sud, positivo verso ovest (CEI 82-25); area come disegnata in pianta. Le file poggiano su zavorre prefabbricate senza forare il manto: il carico aggiuntivo, 18 kg/m² sull'impronta delle zavorre, va verificato dallo strutturista (fuori da questa relazione).</p>
+      </div>
+      <div class="ft"><span>Studio Tecnico · RT-FV-01 Rev. 0</span><span>pagina 4 di 26</span></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- =================== B =================== -->
+<section class="set B" id="B">
+  <header>
+    <span class="tag">Bozzetto B</span><h2>Scheda: i numeri grandi davanti</h2>
+    <p><b>Pro:</b> la prima pagina è una scheda che si legge in un minuto (committente, GSE, sportello unico); colore per tipo di dato (ambra energia, azzurro impianto, verde economia) costante in tutto il documento; Titillium Web è il carattere della PA italiana. <b>Contro:</b> più «brochure» che relazione d'ufficio tecnico; le fonti stanno in nota piccola sotto ogni blocco, meno in vista; il colore in stampa in bianco e nero perde il codice.</p>
+  </header>
+  <div class="row">
+    <div class="pw"><span class="pnum">B1, scheda di sintesi</span>
+    <div class="page">
+      <div class="band">
+        <div class="top"><span>Relazione tecnica · RT-FV-01 · Rev. 0</span><span>02/11/2026</span></div>
+        <h1>Impianto fotovoltaico da 331,2 kWp</h1>
+        <div class="sub">Logistica Esempio S.p.A. · Capannone C1, Rho (MI) · 45,5226° N, 9,0300° E</div>
+      </div>
+      <div class="body">
+        <div class="tiles">
+          <div class="tile sea"><div class="n">331,2<small>kWp</small></div><div class="l">Potenza di picco</div><div class="s">736 moduli × 450 Wp, 2 inverter × 100 kW</div></div>
+          <div class="tile sun"><div class="n">420.700<small>kWh</small></div><div class="l">Energia all'anno</div><div class="s">anno tipo PVGIS-SARAH3, 1.270 kWh/kWp</div></div>
+          <div class="tile sun"><div class="n">78,1<small>%</small></div><div class="l">Indice di prestazione</div><div class="s">dal sole alla rete, pagina 9</div></div>
+          <div class="tile leaf"><div class="n">4,9<small>anni</small></div><div class="l">Tempo di ritorno</div><div class="s">investimento 290.000 €, risparmio 58.400 €/anno</div></div>
+        </div>
+        <div class="two" style="margin-top:16px">
+          <div>
+            <h2 class="sun">Energia mese per mese</h2>
+            <div class="mon">
+              <div style="height:28%" data-m="G" data-v="15,9"></div><div style="height:41%" data-m="F" data-v="23,4"></div><div style="height:65%" data-m="M" data-v="37,2"></div><div style="height:77%" data-m="A" data-v="44,1"></div><div style="height:89%" data-m="M" data-v="50,8"></div><div style="height:95%" data-m="G" data-v="54,3"></div><div style="height:100%" data-m="L" data-v="57,1"></div><div style="height:88%" data-m="A" data-v="50,2"></div><div style="height:68%" data-m="S" data-v="38,6"></div><div style="height:47%" data-m="O" data-v="26,9"></div><div style="height:24%" data-m="N" data-v="13,7"></div><div style="height:15%" data-m="D" data-v="8,5"></div>
+            </div>
+            <div class="note" style="margin-top:18px">In migliaia di kWh. PVGIS, con le sue perdite standard, dà <b>417.800 kWh</b>: lo 0,7 % in meno.</div>
+            <div class="srcs">Fonte: registro R-040; confronto R-043.</div>
+          </div>
+          <div>
+            <h2 class="sea">Come è fatto</h2>
+            <div class="card">
+              <table>
+                <tr><td>Moduli</td><td class="r"><b>736</b> × Esempio Mono 450 Wp</td></tr>
+                <tr><td>Stringhe</td><td class="r"><b>32</b> da 23 moduli</td></tr>
+                <tr><td>Inverter</td><td class="r"><b>2</b> × Esempio 100K, 100 kW</td></tr>
+                <tr><td>Potenza AC</td><td class="r"><b>200</b> kW</td></tr>
+                <tr><td>Rapporto DC/AC</td><td class="r"><b>1,66</b></td></tr>
+                <tr><td>Posa</td><td class="r">file inclinate 30°, sud, passo 4,50 m</td></tr>
+                <tr><td>Connessione</td><td class="r">MT, cabina esistente</td></tr>
+              </table>
+            </div>
+            <div class="srcs">Fonte: R-010, R-020, R-021.</div>
+          </div>
+        </div>
+        <div class="two" style="margin-top:14px">
+          <div>
+            <h2 class="leaf">Quanto rende</h2>
+            <div class="card">
+              <table>
+                <tr><td>Consumo del sito</td><td class="r">790.000 kWh/anno</td></tr>
+                <tr><td>Autoconsumo</td><td class="r"><b>71 %</b> dell'energia prodotta</td></tr>
+                <tr><td>Autosufficienza</td><td class="r"><b>38 %</b> dei consumi</td></tr>
+                <tr><td>Risparmio, primo anno</td><td class="r">58.400 €</td></tr>
+                <tr><td>Vendita (RID), primo anno</td><td class="r">7.900 €</td></tr>
+                <tr><td>VAN a 25 anni</td><td class="r"><b>612.000 €</b></td></tr>
+              </table>
+            </div>
+            <div class="srcs">Fonte: R-050, R-060; prezzi e ipotesi in § 9.4.</div>
+          </div>
+          <div>
+            <h2>Verifiche</h2>
+            <div class="badge"><b>✓</b> 42 verifiche su 42 conformi</div>
+            <div class="note" style="margin-top:10px">Tensioni e correnti delle stringhe (CEI 64-8/7, 712), rapporto DC/AC, distanze fra le file (CEI 82-25), protezione d'interfaccia (CEI 0-16), carico delle zavorre <b>rimandato allo strutturista</b>.</div>
+            <div class="srcs">Dettaglio: § 8, pagina 16.</div>
+            <h2 style="margin-top:16px">Pianta</h2>
+            <svg class="plan" style="width:100%"><use href="#plan"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="ft"><span>Studio Tecnico (profilo di firma) · redatta con Meridiana 0.1.0</span><span>pagina 1 di 24</span></div>
+    </div></div>
+
+    <div class="pw"><span class="pnum">B2, producibilità e perdite</span>
+    <div class="page">
+      <div class="band" style="padding:18px 44px 16px"><div class="top"><span>5 · Producibilità e perdite</span><span>RT-FV-01 · Rev. 0</span></div></div>
+      <div class="body">
+        <h2 class="sun" style="margin-top:4px">Dal sole alla rete</h2>
+        <p>Ogni barra è una perdita in percentuale del passo precedente; le due ambra sono l'energia a monte e a valle, in kWh/kWp.</p>
+        <div class="wf">
+          <div class="tot" data-l="in piano dei moduli" data-v="1.626" style="height:100%"></div>
+          <div data-l="ombre" data-v="-3,2 %" style="height:21%"></div>
+          <div data-l="riflessione" data-v="-2,6 %" style="height:17%"></div>
+          <div data-l="sporcizia" data-v="-2,5 %" style="height:16%"></div>
+          <div data-l="basso irr." data-v="-0,8 %" style="height:5%"></div>
+          <div data-l="temperatura" data-v="-7,5 %" style="height:49%"></div>
+          <div data-l="mismatch, cavi DC" data-v="-2,1 %" style="height:14%"></div>
+          <div data-l="inverter" data-v="-4,1 %" style="height:27%"></div>
+          <div data-l="cavi AC, disp." data-v="-1,5 %" style="height:10%"></div>
+          <div class="tot" data-l="immessa in rete" data-v="1.270" style="height:78.1%"></div>
+        </div>
+        <div class="note" style="margin-top:24px">Figura 5.2. Scala delle perdite: 15 % = altezza piena. PR = 1.270 / 1.626 = <b>78,1 %</b>. Fonte: R-044.</div>
+        <div class="two" style="margin-top:18px">
+          <div>
+            <h2 class="sun">Energia per mese</h2>
+            <table>
+              <tr><th>Mese</th><th class="r">kWh/m²</th><th class="r">kWh</th><th class="r">PR, %</th></tr>
+              <tr><td>Gennaio</td><td class="r">58</td><td class="r">15.900</td><td class="r">82,8</td></tr>
+              <tr><td>Febbraio</td><td class="r">84</td><td class="r">23.400</td><td class="r">84,1</td></tr>
+              <tr><td>Marzo</td><td class="r">137</td><td class="r">37.200</td><td class="r">82,0</td></tr>
+              <tr><td>Aprile</td><td class="r">166</td><td class="r">44.100</td><td class="r">80,2</td></tr>
+              <tr><td>Maggio</td><td class="r">199</td><td class="r">50.800</td><td class="r">77,1</td></tr>
+              <tr><td>Giugno</td><td class="r">217</td><td class="r">54.300</td><td class="r">75,6</td></tr>
+              <tr><td>Luglio</td><td class="r">230</td><td class="r">57.100</td><td class="r">75,0</td></tr>
+              <tr><td>Agosto</td><td class="r">202</td><td class="r">50.200</td><td class="r">75,0</td></tr>
+              <tr><td>Settembre</td><td class="r">151</td><td class="r">38.600</td><td class="r">77,2</td></tr>
+              <tr><td>Ottobre</td><td class="r">101</td><td class="r">26.900</td><td class="r">80,4</td></tr>
+              <tr><td>Novembre</td><td class="r">51</td><td class="r">13.700</td><td class="r">81,1</td></tr>
+              <tr><td>Dicembre</td><td class="r">30</td><td class="r">8.500</td><td class="r">85,5</td></tr>
+              <tr class="tot"><td>Anno</td><td class="r">1.626</td><td class="r">420.700</td><td class="r">78,1</td></tr>
+            </table>
+            <div class="srcs">Fonte: R-040.01 … R-040.12.</div>
+          </div>
+          <div>
+            <h2 class="sea">Parametri usati</h2>
+            <div class="card">
+              <table>
+                <tr><td>Dati meteo</td><td class="r">PVGIS-SARAH3, anno tipo 2005-2023</td></tr>
+                <tr><td>Modello moduli</td><td class="r">Sandia (SAPM), pvlib 0.13</td></tr>
+                <tr><td>Temperatura celle</td><td class="r">Faiman, montaggio aperto</td></tr>
+                <tr><td>Albedo</td><td class="r">0,20</td></tr>
+                <tr><td>Sporcizia</td><td class="r">2,5 %, costante</td></tr>
+                <tr><td>Disponibilità</td><td class="r">99,5 %</td></tr>
+                <tr><td>Degrado</td><td class="r">0,45 %/anno dal 2° anno</td></tr>
+              </table>
+            </div>
+            <div class="srcs">Fonte: § 9.1-9.3; ogni valore ha il suo passo nel registro (allegato B).</div>
+            <h2 class="sun" style="margin-top:16px">Confronto con PVGIS</h2>
+            <div class="card">
+              <table>
+                <tr><td>Meridiana, pvlib</td><td class="r"><b>420.700</b> kWh</td></tr>
+                <tr><td>PVGIS 5.3, perdite 14 %</td><td class="r">417.800 kWh</td></tr>
+                <tr><td>Scarto</td><td class="r">+0,7 %</td></tr>
+              </table>
+            </div>
+            <div class="srcs">Fonte: R-043. PVGIS non vede le ombre fra le file.</div>
+          </div>
+        </div>
+      </div>
+      <div class="ft"><span>Studio Tecnico (profilo di firma)</span><span>pagina 9 di 24</span></div>
+    </div></div>
+
+    <div class="pw"><span class="pnum">B3, pianta</span>
+    <div class="page">
+      <div class="band" style="padding:18px 44px 16px"><div class="top"><span>3 · Coperture e posa</span><span>RT-FV-01 · Rev. 0</span></div></div>
+      <div class="body">
+        <h2 class="sea" style="margin-top:4px">Pianta dei moduli</h2>
+        <svg class="plan" style="width:100%;margin-top:6px"><use href="#plan"/></svg>
+        <div class="chips"><span><i style="background:#1c6e8c"></i>Moduli, 736</span><span><i style="background:#fff;border:1px solid #333"></i>Inverter</span><span><i style="background:#f4f4f1;border:1px solid #555"></i>Copertura C1, 4.800 m²</span><span>Scala grafica · nord in alto</span></div>
+        <div class="note">Figura 3.1. Fonte: modello 3D del progetto, R-010.</div>
+        <div class="two" style="margin-top:18px">
+          <div class="card">
+            <h4>Sottocampo Sud</h4>
+            <table>
+              <tr><td>Su</td><td class="r">Capannone C1, copertura piana</td></tr>
+              <tr><td>Area occupata</td><td class="r">4.560 m²</td></tr>
+              <tr><td>Moduli</td><td class="r"><b>736</b>, in verticale</td></tr>
+              <tr><td>Potenza</td><td class="r"><b>331,2</b> kWp</td></tr>
+              <tr><td>Montaggio</td><td class="r">file inclinate, zavorrate</td></tr>
+              <tr><td>Azimut / inclinazione</td><td class="r">0° (sud) / 30°</td></tr>
+              <tr><td>Passo delle file</td><td class="r">4,50 m</td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <h4>Distanze fra le file</h4>
+            <p>Con moduli di 2,278 m inclinati di 30° e passo 4,50 m restano <b>2,52 m</b> liberi dietro ogni fila.</p>
+            <p>Il sole sopra <b>24,3°</b> supera la fila davanti senza fare ombra; a Rho, al solstizio d'inverno, a mezzogiorno è a 21,0°: l'ombra fra le file c'è da metà novembre a fine gennaio, nelle prime e ultime ore. Costa il <b>3,2 %</b> dell'energia annua (pagina 9).</p>
+            <div class="srcs">Fonte: R-012; angolo limite CEI 82-25, § 8.2.</div>
+          </div>
+        </div>
+        <div class="note" style="margin-top:14px">Azimut da sud, positivo verso ovest (CEI 82-25); area come disegnata in pianta. Le zavorre pesano 18 kg/m² sull'impronta: verifica strutturale a cura dello strutturista, fuori da questa relazione.</div>
+      </div>
+      <div class="ft"><span>Studio Tecnico (profilo di firma)</span><span>pagina 4 di 24</span></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- =================== C =================== -->
+<section class="set C" id="C">
+  <header>
+    <span class="tag">Bozzetto C</span><h2>Dossier: testo a serif, numeri a macchina</h2>
+    <p><b>Pro:</b> si legge come un documento d'ingegneria firmato, non come l'uscita di un programma; colonna laterale per fonti e note, testo giustificato con sillabazione, numeri in carattere a spaziatura fissa (allineano da soli); la copertina usa la pianta stessa. <b>Contro:</b> due famiglie in più da portare nel programma (Source Serif 4, IBM Plex Mono, OFL, circa 1,2 MB); il serif a 10,5 pt chiede una stampa buona; meno adatto a schermo.</p>
+  </header>
+  <div class="row">
+    <div class="pw"><span class="pnum">C1, copertina</span>
+    <div class="page">
+      <div class="cover-plan"><svg class="plan"><use href="#plan"/></svg></div>
+      <div class="rh"><span>Relazione tecnica e di calcolo</span><span>RT-FV-01 · Rev. 0 · 02/11/2026</span></div>
+      <div class="cv">
+        <h1>Impianto fotovoltaico<br>da <em>331,2 kWp</em><br>sulla copertura del capannone C1 a Rho</h1>
+        <p class="lede">Dimensionamento dell'impianto, producibilità nell'anno tipo, verifiche elettriche secondo CEI 64-8/7 e CEI 82-25, bilancio con i consumi e analisi economica a 25 anni.</p>
+        <div class="meta">
+          <div><b>Committente</b>Logistica Esempio S.p.A.<br>Via dei Magazzini 12, Rho (MI)</div>
+          <div><b>Progettista</b>Studio Tecnico (profilo di firma)<br>ordine e numero dal profilo</div>
+          <div><b>Impianto</b>736 moduli × 450 Wp, 2 inverter × 100 kW<br>420.700 kWh/anno · 1.270 kWh/kWp · PR 78,1 %</div>
+        </div>
+      </div>
+      <div class="ft"><span>Redatta con Meridiana 0.1.0</span><span>26 pagine e 2 allegati</span></div>
+    </div></div>
+
+    <div class="pw"><span class="pnum">C2, producibilità e perdite</span>
+    <div class="page">
+      <div class="rh"><span>5 · Producibilità e perdite</span><span>RT-FV-01 · Rev. 0</span></div>
+      <div>
+        <h2><span class="num">CAPITOLO 5</span>Producibilità e perdite</h2>
+        <p>Nell'anno tipo l'impianto immette in rete <b>420.700 kWh</b>, 1.270 kWh per ogni kWp installato. Il calcolo è orario, su 8.760 ore dell'anno tipo PVGIS-SARAH3, e segue ogni kilowattora dall'irraggiamento sul piano dei moduli fino al punto di consegna: le perdite di ciascun passo sono nella cascata qui sotto e, una per una, nel registro dei calcoli in allegato.</p>
+        <table style="margin-top:8px">
+          <tr><th>Mese</th><th class="n">Irraggiamento<br>in piano, kWh/m²</th><th class="n">Energia<br>immessa, kWh</th><th class="n">PR, %</th><th class="n">PVGIS, kWh</th></tr>
+          <tr><td>Gennaio</td><td class="n">58</td><td class="n">15.900</td><td class="n">82,8</td><td class="n">15.100</td></tr>
+          <tr><td>Febbraio</td><td class="n">84</td><td class="n">23.400</td><td class="n">84,1</td><td class="n">22.600</td></tr>
+          <tr><td>Marzo</td><td class="n">137</td><td class="n">37.200</td><td class="n">82,0</td><td class="n">36.300</td></tr>
+          <tr><td>Aprile</td><td class="n">166</td><td class="n">44.100</td><td class="n">80,2</td><td class="n">43.900</td></tr>
+          <tr><td>Maggio</td><td class="n">199</td><td class="n">50.800</td><td class="n">77,1</td><td class="n">51.200</td></tr>
+          <tr><td>Giugno</td><td class="n">217</td><td class="n">54.300</td><td class="n">75,6</td><td class="n">55.000</td></tr>
+          <tr><td>Luglio</td><td class="n">230</td><td class="n">57.100</td><td class="n">75,0</td><td class="n">57.800</td></tr>
+          <tr><td>Agosto</td><td class="n">202</td><td class="n">50.200</td><td class="n">75,0</td><td class="n">50.900</td></tr>
+          <tr><td>Settembre</td><td class="n">151</td><td class="n">38.600</td><td class="n">77,2</td><td class="n">38.100</td></tr>
+          <tr><td>Ottobre</td><td class="n">101</td><td class="n">26.900</td><td class="n">80,4</td><td class="n">26.000</td></tr>
+          <tr><td>Novembre</td><td class="n">51</td><td class="n">13.700</td><td class="n">81,1</td><td class="n">13.000</td></tr>
+          <tr><td>Dicembre</td><td class="n">30</td><td class="n">8.500</td><td class="n">85,5</td><td class="n">7.900</td></tr>
+          <tr class="tot"><td>Anno</td><td class="n">1.626</td><td class="n">420.700</td><td class="n">78,1</td><td class="n">417.800</td></tr>
+        </table>
+        <div class="cap">Tabella 5.1. Energia immessa per mese, con l'indice di prestazione del mese e il calcolo di PVGIS 5.3 a confronto. Fonte: R-040, R-043.</div>
+        <h3>Dal sole alla rete</h3>
+        <div class="wf">
+          <div class="r2"><span>Irraggiamento orizzontale</span><span><i class="g" style="width:100%"></i></span><span class="v">1.398</span></div>
+          <div class="r2"><span>Inclinazione 30°, sud</span><span><i class="g" style="width:16.3%"></i></span><span class="v">+16,3 %</span></div>
+          <div class="r2"><span>Ombreggiamento fra le file</span><span><i style="width:32%"></i></span><span class="v">-3,2 %</span></div>
+          <div class="r2"><span>Riflessione (IAM)</span><span><i style="width:26%"></i></span><span class="v">-2,6 %</span></div>
+          <div class="r2"><span>Sporcizia</span><span><i style="width:25%"></i></span><span class="v">-2,5 %</span></div>
+          <div class="r2"><span>Basso irraggiamento</span><span><i style="width:8%"></i></span><span class="v">-0,8 %</span></div>
+          <div class="r2"><span>Temperatura dei moduli</span><span><i style="width:75%"></i></span><span class="v">-7,5 %</span></div>
+          <div class="r2"><span>Mismatch e cablaggio DC</span><span><i style="width:21%"></i></span><span class="v">-2,1 %</span></div>
+          <div class="r2"><span>Inverter</span><span><i style="width:41%"></i></span><span class="v">-4,1 %</span></div>
+          <div class="r2"><span>Cavi AC e disponibilità</span><span><i style="width:15%"></i></span><span class="v">-1,5 %</span></div>
+          <div class="r2"><span><b>Energia immessa, kWh/kWp</b></span><span><i class="g" style="width:78.1%"></i></span><span class="v"><b>1.270</b></span></div>
+        </div>
+        <div class="cap"><b>Figura 5.1.</b> Ogni passo in percentuale del precedente (barra piena = 10 %); le righe grigie sono energie in kWh/m² e kWh/kWp. Fonte: R-044.</div>
+      </div>
+      <div class="side">
+        <p><b>Anno tipo</b> PVGIS-SARAH3, 2005-2023, ore locali; temperatura e vento da ERA5.<span class="src">R-030 · § 9.1</span></p>
+        <p><b>Modelli</b> Sandia (SAPM) per i moduli, Faiman per la temperatura delle celle, NREL per gli inverter; pvlib 0.13.<span class="src">§ 9.2</span></p>
+        <p><b>PVGIS</b> è un controllo esterno sugli stessi dati meteo, con perdite di sistema fisse al 14 % e senza le ombre fra le file: lo scarto dello 0,7 % è nella norma.<span class="src">R-043</span></p>
+        <p><b>Indice di prestazione</b> PR = E / (P<sub>STC</sub> · H<sub>POA</sub>) = 420.700 / (331,2 · 1.626) = 78,1 %. D'inverno è più alto perché i moduli sono freddi.<span class="src">R-041</span></p>
+        <div class="stat"><div class="n">420.700<small>kWh/anno</small></div><div class="l">energia immessa in rete</div></div>
+        <div class="stat"><div class="n">1.270<small>kWh/kWp</small></div><div class="l">producibilità specifica</div></div>
+        <div class="stat"><div class="n">78,1<small>%</small></div><div class="l">indice di prestazione</div></div>
+      </div>
+      <div class="ft"><span>Impianto fotovoltaico da 331,2 kWp, Rho</span><span>pagina 9 di 26</span></div>
+    </div></div>
+
+    <div class="pw"><span class="pnum">C3, pianta</span>
+    <div class="page">
+      <div class="rh"><span>3 · Coperture e posa</span><span>RT-FV-01 · Rev. 0</span></div>
+      <div>
+        <h2><span class="num">CAPITOLO 3</span>Coperture e posa</h2>
+        <p>I 736 moduli stanno sulla copertura piana del capannone C1 in otto file di 92, montati in verticale su strutture zavorrate inclinate di 30° e rivolte a sud. Il passo di 4,50 m lascia 2,52 m liberi dietro ogni fila: il sole supera la fila davanti quando è sopra 24,3°, e a Rho al solstizio d'inverno a mezzogiorno è a 21,0°. L'ombra fra le file resta dunque alle ore basse dei mesi invernali e costa il 3,2 % dell'energia annua.</p>
+        <div class="fig"><svg class="plan"><use href="#plan"/></svg></div>
+        <div class="cap"><b>Figura 3.1.</b> Pianta dei moduli sulla copertura C1: file, inverter, nord e scala grafica. Fonte: modello 3D del progetto, R-010.</div>
+        <table style="margin-top:14px">
+          <tr><th>Sottocampo</th><th>Su</th><th class="n">Area, m²</th><th class="n">Moduli</th><th class="n">kWp</th><th>Montaggio</th><th class="n">Az., °</th><th class="n">Incl., °</th><th class="n">Passo, m</th></tr>
+          <tr><td>Sud</td><td>Capannone C1</td><td class="n">4.560</td><td class="n">736</td><td class="n">331,2</td><td>File inclinate, zavorrate</td><td class="n">0</td><td class="n">30</td><td class="n">4,50</td></tr>
+          <tr class="tot"><td>Totale</td><td></td><td class="n">4.560</td><td class="n">736</td><td class="n">331,2</td><td></td><td></td><td></td><td></td></tr>
+        </table>
+        <div class="cap">Tabella 3.1. Azimut da sud, positivo verso ovest (CEI 82-25); area come disegnata in pianta. Fonte: R-010.</div>
+      </div>
+      <div class="side">
+        <p><b>Capannone C1</b> 120 × 40 m, copertura piana in lamiera grecata coibentata; parapetto di 1,10 m sui quattro lati.<span class="src">rilievo del 14/10/2026 · R-001</span></p>
+        <p><b>Zavorre</b> 18 kg/m² sull'impronta, senza forare il manto. La verifica del carico sulla struttura è dello strutturista e non fa parte di questa relazione.<span class="src">R-013</span></p>
+        <p><b>Distanza fra le file</b> d = L · cos β + L · sin β / tan α<sub>lim</sub>, con L = 2,278 m, β = 30°, α<sub>lim</sub> = 24,3°: d = 4,50 m.<span class="src">R-012 · CEI 82-25, § 8.2</span></p>
+        <div class="stat"><div class="n">736</div><div class="l">moduli, 8 file da 92</div></div>
+        <div class="stat"><div class="n">4,50<small>m</small></div><div class="l">passo delle file</div></div>
+        <div class="stat"><div class="n">3,2<small>%</small></div><div class="l">energia persa per le ombre fra le file</div></div>
+      </div>
+      <div class="ft"><span>Impianto fotovoltaico da 331,2 kWp, Rho</span><span>pagina 4 di 26</span></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- =================== oggi =================== -->
+<section class="set" id="oggi">
+  <header><span class="tag">Per confronto</span><h2>Oggi (R291, 30/10/2026)</h2>
+    <p>Modello Completa, pagine 1, 3 e 12 del progetto di prova (57,6 kWp): copertina, Sintesi con la pianta, Economia con il grafico. Foto di V.</p></header>
+  <div class="row">
+    <div class="pw"><span class="pnum">oggi, copertina</span><img class="page" src="foto/oggi-completa-01.png" alt="Oggi: copertina"></div>
+    <div class="pw"><span class="pnum">oggi, Sintesi</span><img class="page" src="foto/oggi-completa-03.png" alt="Oggi: Sintesi"></div>
+    <div class="pw"><span class="pnum">oggi, Economia</span><img class="page" src="foto/oggi-completa-12.png" alt="Oggi: Economia"></div>
+  </div>
+</section>
+</div>
+<script>
+  // ?only=A|B|C|oggi shows one setting (for the screenshots).
+  const only = new URLSearchParams(location.search).get("only");
+  if (only) { document.querySelectorAll(".set").forEach(s => { if (s.id !== only) s.style.display = "none"; });
+              document.querySelector(".intro").style.display = "none"; }
+</script>
+</body>
+</html>
