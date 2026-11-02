@@ -31,7 +31,7 @@ from pathlib import Path
 import numpy as np
 import shiboken6
 from PySide6.QtCore import QRectF, Qt, QTimer
-from PySide6.QtGui import QColor, QFont, QFontMetricsF
+from PySide6.QtGui import QColor, QFont, QFontMetricsF, QPalette
 from PySide6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel, QMenu, QMessageBox, QStackedWidget,
                                QTableWidget, QTableWidgetItem, QToolButton, QVBoxLayout, QWidget)
 
@@ -196,9 +196,9 @@ class Chart(QWidget):
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         from .shared_tables import install
         install(self.table)
-        self.note = QLabel()            # the message, when there is nothing to draw
-        self.note.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.note.setWordWrap(True)
+        from .style import EmptyState
+        self.note = EmptyState()        # the message, when there is nothing to draw: every card's empty state (R321)
+        self.note.setAutoFillBackground(True)           # on the chart's own surface
         self.note.setMinimumHeight(Size.CHART_MIN_HEIGHT)
         self.stack = QStackedWidget()
         self.stack.addWidget(self.canvas)
@@ -611,13 +611,17 @@ class Chart(QWidget):
                                for i, xv in enumerate(xs)]))
 
     @when_shown
-    def message(self, text: str) -> None:
-        """Words instead of a chart, when there is nothing to draw (no pyqtgraph needed for them)."""
+    def message(self, text: str, action=None) -> None:
+        """Words instead of a chart, when there is nothing to draw (no pyqtgraph needed for them), and the command
+        that draws it when there is one (a QAction)."""
         c = CHROME[mode()]
         if self.plot is not None:
             self.plot.setMinimumHeight(Size.CHART_MIN_HEIGHT)   # the words do not need the rows of `changes`
         self.note.setText(text)
-        self.note.setStyleSheet(f"color: {c['ink2']}; background: {c['surface']}; padding: 12px;")
+        self.note.set_action(action)
+        ground = self.note.palette()
+        ground.setColor(QPalette.ColorRole.Window, QColor(c["surface"]))
+        self.note.setPalette(ground)
         self._hover = None
         self._show("message")
         self._set_table(Table([""], [[text]]))

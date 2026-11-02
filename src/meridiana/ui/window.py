@@ -44,7 +44,7 @@ from .undo import UndoBridge
 from .assistant import Assistant
 from .assistant_chat import Chat, WindowHost
 from .cards import CardDock, keep_gaps
-from .design import Icon, Space, Text, set_text_all
+from .design import Icon, Size, Space, Text, set_text_all
 from .sections import TAIL_ROLE, SectionDelegate, section
 from .catalog_dialog import CatalogDialog
 from .energy_pages import ConsumptionPage, EconomicsPage, EnergyPage
@@ -690,6 +690,10 @@ class MainWindow(QMainWindow):
                                                           max(300, min(380, round(width * 0.24)))],
                          Qt.Orientation.Horizontal)
         self.resizeDocks([self.checks_dock], [230], Qt.Orientation.Vertical)
+        # the first sizes across their side, for a panel found squeezed at the start (_settle_panel_sizes, R323)
+        self.panel_first = {self.docks[0]: max(240, min(320, round(width * 0.2))),
+                            self.docks[1]: max(300, min(380, round(width * 0.24))),
+                            self.help_dock: max(300, min(380, round(width * 0.24))), self.checks_dock: 230}
         self.factory_state = self.saveState()  # what «Restore the default layout» comes back to
         self.restored = self._restore_window()
         self._toolbar_style()                  # the side bar as the preferences say, not as the saved state had it
@@ -2099,9 +2103,26 @@ class MainWindow(QMainWindow):
         elif offer_undo:
             self.tell(_("The panels are back as at the first start."))
 
+    def _settle_panel_sizes(self) -> None:
+        """At the start: a panel docked and shown but squeezed across its side under `Size.PANEL_MIN` (open, and not
+        to be seen: a layout saved by another window or another version, R323) gets its first size back, said in
+        the log."""
+        for dock, first in self.panel_first.items():
+            if dock.isHidden() or dock.isFloating():
+                continue
+            area = self.dockWidgetArea(dock)
+            across = Qt.Orientation.Vertical if area in (Qt.DockWidgetArea.TopDockWidgetArea,
+                                                         Qt.DockWidgetArea.BottomDockWidgetArea) else Qt.Orientation.Horizontal
+            size = dock.height() if across == Qt.Orientation.Vertical else dock.width()
+            if size < Size.PANEL_MIN:
+                log.complain("window state", RuntimeError(f"panel {dock.objectName()} {size} px across: back to {first}"))
+                self.resizeDocks([dock], [first], across)
+
     def _check_panels(self) -> None:
-        """At the start: a saved layout that leaves open panels out of sight (R294) gives way to the default one."""
+        """At the start: a saved layout that leaves open panels out of sight (R294) gives way to the default one;
+        a panel squeezed to nothing gets its first size back (R323)."""
         from .dock_motion import lost_panels
+        self._settle_panel_sizes()
         if self.restored and lost_panels(self):
             log.complain("window state", RuntimeError("open panels out of sight: " +
                                                       ", ".join(dock.objectName() for dock in lost_panels(self))))
@@ -6212,6 +6233,10 @@ class MainWindow(QMainWindow):
             return False
         self.restoreState(state)
         self._settle_assistant_dock()
+        # the Project panel gone by itself in a phase without the drawing when the window closed (R323, Daniel
+        # 02/11/2026: «non mi appare all'inizio la barra di sinistra»): the window opens on Modelling, it is back
+        if "project" in (data.get("shown_by_phase") or []):
+            self.docks[0].show()
         self.split.restoreState(split)
         self._view_mode(data.get("view") if data.get("view") in self.view_actions else "both")
         places = data.get("assistant") if isinstance(data.get("assistant"), dict) else {}
@@ -6225,8 +6250,10 @@ class MainWindow(QMainWindow):
         split = self.split_home if self.split_home is not None else self.split.saveState()   # the plan at home
         places = dict(self.assistant.places)
         from .dock_motion import lost_panels
-        state = self.saveState()
-        if self.isVisible() and lost_panels(self):
+        # the layout as the designer arranged it, not the moment's: with «Only the drawing» on, the one before it
+        # (its panels were all saved hidden and came back hidden, R323)
+        state = self.before_clean if self.before_clean is not None else self.saveState()
+        if self.before_clean is None and self.isVisible() and lost_panels(self):
             # never a layout with open panels out of sight (R294): it came back at every start
             log.complain("window state", RuntimeError("not saved, open panels out of sight: " +
                                                       ", ".join(dock.objectName() for dock in lost_panels(self))))
@@ -6234,7 +6261,9 @@ class MainWindow(QMainWindow):
         data = {"geometry": bytes(self.saveGeometry().toBase64()).decode("ascii"),
                 "state": bytes(state.toBase64()).decode("ascii"),
                 "split": bytes(split.toBase64()).decode("ascii"), "view": mode,
-                "assistant": {tab: list(a) for tab, a in places.items()}}
+                "assistant": {tab: list(a) for tab, a in places.items()},
+                # the panels a phase put away by itself, saved hidden but open for the designer (R323)
+                "shown_by_phase": ["project"] if self.project_auto_hidden and self.project_was_visible else []}
         try:
             atomic.write_json(self.paths.window_state_file, data, keep_backup=False)
         except OSError as error:

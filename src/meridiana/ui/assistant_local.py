@@ -215,7 +215,7 @@ class LocalModels(Group):
                 found.machine = replace(found.machine, ram_gb=ram.value())
                 self._show_guide(found)
             apply.clicked.connect(use_ram)
-            self.guide_box.addWidget(apply)
+            self.guide_box.addWidget(apply, 0, Qt.AlignmentFlag.AlignLeft)
             self.guide.show()
             return
         have = any(rt.kind == "ollama" for rt in found.runtimes)
@@ -230,7 +230,7 @@ class LocalModels(Group):
         self.guide_box.addWidget(license_note)
         model_page = QPushButton(_("Read the model card and licence"))
         model_page.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://ollama.com/library/" + c.ollama)))
-        self.guide_box.addWidget(model_page)
+        self.guide_box.addWidget(model_page, 0, Qt.AlignmentFlag.AlignLeft)
         for n, step in enumerate(steps, 1):
             label = QLabel(f"{n}. {_escape(step.text)}")
             label.setWordWrap(True)
