@@ -66,6 +66,26 @@ class ChartTabs(unittest.TestCase):
                     self.assertEqual(first.mapTo(card, QPoint(0, 0)).x(), content.mapTo(card, QPoint(0, 0)).x())
             self.assertEqual(set(tops.values()), {Space.XS + 1 + Space.M}, f"{type(page).__name__}: {tops}")
 
+    def test_a_long_title_laid_out_narrow_once_goes_back_to_one_line(self):
+        """R310: the tab open at the first layout («Mesi», «Bilancio») kept a title 96 px tall for good, centred in
+        a hole: pad_fields wraps the long labels and QLabel.heightForWidth never answers under the minimum it set."""
+        from meridiana.ui.energy_pages import ConsumptionPage, EconomicsPage
+        from meridiana.ui.style import pad_fields
+        for kind, chart in ((ConsumptionPage, "monthly"), (EconomicsPage, "prod_split")):
+            page = kind()
+            self.addCleanup(_setup.dispose, page)
+            self.addCleanup(page.hide)
+            pad_fields(page)
+            page.resize(330, 700)
+            page.show()
+            self.app.processEvents()
+            page.resize(1400, 800)
+            self.app.processEvents()
+            title = getattr(page, chart).title
+            line = title.fontMetrics().lineSpacing()
+            self.assertLessEqual(title.minimumHeight(), line + 1, kind.__name__)
+            self.assertLessEqual(getattr(page, chart).stack.y(), getattr(page, chart).toggle.height() + 6, kind.__name__)
+
     def test_the_stacked_tabs_keep_l_between_their_charts(self):
         from meridiana.ui.design import Space
         from meridiana.ui.energy_pages import EconomicsPage

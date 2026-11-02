@@ -442,14 +442,25 @@ class _LabelGrowth(QObject):
         # cut to one line on Windows («Fetch the weather of the site first», 28/10/2026)
         set_text = label.setText
         label.setText = lambda text: (set_text(text), self.fit())[0]
+        self.floor = label.minimumHeight()          # what the label was given by its maker (a chart's note: 160)
         self.fit()
 
     def fit(self):
-        if self.label.width() > 0:
-            needed = self.label.heightForWidth(self.label.width())
-            if needed >= 0 and self.label.minimumHeight() != needed:
-                self.label.setMinimumHeight(needed)
-                self.label.updateGeometry()
+        label = self.label
+        if label.width() <= 0:
+            return
+        # QLabel.heightForWidth never answers less than the label's minimum: measured with the minimum on, a label
+        # once laid out narrow stayed that tall at any width, its row with a hole above and below (R310: why R285's
+        # chart titles came back, on the tab open when the window was first laid out)
+        before = label.minimumHeight()
+        if before != self.floor:
+            label.setMinimumHeight(self.floor)
+        needed = label.heightForWidth(label.width())
+        wanted = max(needed, self.floor) if needed >= 0 else before
+        if label.minimumHeight() != wanted:
+            label.setMinimumHeight(wanted)
+        if wanted != before:
+            label.updateGeometry()
 
     def eventFilter(self, _obj, event) -> bool:
         if event.type() in (QEvent.Type.Resize, QEvent.Type.FontChange, QEvent.Type.Show):
@@ -479,6 +490,8 @@ def pad_fields(root: QWidget) -> None:
     # a long label of a form in a card goes onto two lines rather than widen the column past its card
     from PySide6.QtWidgets import QLabel, QStackedWidget
     for label in root.findChildren(QLabel):
+        if label.property("sized_by_owner"):        # a result tile measures its own texts (energy_pages.Tiles)
+            continue
         if not label.wordWrap() and len(label.text()) > 28 and _in_scroll(label) and not label.pixmap():
             label.setWordWrap(True)
         if label.wordWrap():
