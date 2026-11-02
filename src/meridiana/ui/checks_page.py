@@ -13,7 +13,7 @@ apply can be copied for the technical report."""
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QRectF, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import (QActionGroup, QBrush, QColor, QFont, QFontMetrics, QGuiApplication, QPainter,
+from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetrics, QGuiApplication, QPainter,
                            QPainterPath, QPalette, QPen)
 from PySide6.QtWidgets import (QAbstractItemView, QFrame, QHBoxLayout, QHeaderView, QLabel, QMenu, QPushButton,
                                QSizePolicy, QStyle, QStyleOptionToolButton, QStyleOptionViewItem,
@@ -430,26 +430,20 @@ class ChecksPage(QWidget):
         self.notes_text = lambda: ""                # the window gives the text of the notes
         self.expand_pending = False
         box = QVBoxLayout(self)
-        head = QHBoxLayout()
-        # the view, from a menu in the head (study 17, F.5): the choice is kept in the settings
-        self.view_button = QToolButton()
-        self.view_button.setObjectName("filter")
-        self.view_button.setAutoRaise(True)
-        self.view_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        self.view_button.setToolTip(_("How the checks are grouped: by level, by object, by area, or what to look at "
-                                      "before delivering"))
-        self.view_menu = QMenu(self.view_button)
-        self.view_actions = QActionGroup(self.view_menu)
-        self.view_actions.setExclusive(True)
+        # the view, a track of its own on a row above the filters (R322, C4; the menu of study 17, F.5, before it): the
+        # choice is kept in the settings; narrow, its words are cut with their tooltip whole
+        from .segments import Segments
+        self.views = Segments()
+        tip = _("How the checks are grouped: by level, by object, by area, or what to look at before delivering")
         for key, name in view_names().items():
-            a = self.view_menu.addAction(name)
-            a.setCheckable(True)
-            a.setData(key)
-            a.setChecked(key == self.view)
-            self.view_actions.addAction(a)
-        self.view_actions.triggered.connect(lambda a: self.set_view(a.data()))
-        self.view_button.setMenu(self.view_menu)
-        head.addWidget(self.view_button)
+            self.views.add(name, key, tip)
+        self.views.set_current(self.view)
+        self.views.chosen.connect(self.set_view)
+        views_row = QHBoxLayout()
+        views_row.addWidget(self.views, 0)
+        views_row.addStretch(1)
+        box.addLayout(views_row)
+        head = QHBoxLayout()
         # the counts, each a link to its section (C9: the sections absorb the filters by level)
         self.summary = QLabel()
         # one line that never resizes the panel: wrapped, a new count made the card 18 px taller and the views
@@ -468,23 +462,16 @@ class ChecksPage(QWidget):
             head.addWidget(b)
             self.counts[lv] = b
         head.addSpacing(8)
-        # the two filters that are real questions (design 3.8): this phase, this object
-        self.phase_button = QToolButton()
-        self.phase_button.setObjectName("filter")
-        self.phase_button.setCheckable(True)
-        self.phase_button.setAutoRaise(True)
-        self.phase_button.setText(_("This phase"))
-        self.phase_button.setToolTip(_("Only the checks acted on in the phase shown, and those of every phase"))
+        # the two filters that are real questions (design 3.8), this phase and this object: a track not exclusive, each
+        # keeps its state and the two can stay on together, as before (R322, C4)
+        self.filters = Segments(exclusive=False)
+        self.phase_button = self.filters.add(_("This phase"), "phase",
+                                             _("Only the checks acted on in the phase shown, and those of every phase"))
         self.phase_button.toggled.connect(self._phase_toggled)
-        head.addWidget(self.phase_button)
-        self.object_button = QToolButton()
-        self.object_button.setObjectName("filter")
-        self.object_button.setCheckable(True)
-        self.object_button.setAutoRaise(True)
-        self.object_button.setText(_("This object"))
-        self.object_button.setToolTip(_("Only the checks of the object selected in the views or in the tree"))
+        self.object_button = self.filters.add(_("This object"), "object",
+                                              _("Only the checks of the object selected in the views or in the tree"))
         self.object_button.toggled.connect(self._object_toggled)
-        head.addWidget(self.object_button)
+        head.addWidget(self.filters)
         # the chips and the counts: pills of the global sheet (ui/theme.py, Button.CHIP)
         box.addLayout(head)
         # a fix asked for, said before it is kept (R126: «"correggi" dovrebbe presentare le correzioni proposte
@@ -607,9 +594,7 @@ class ChecksPage(QWidget):
         self.tree.viewport().update()
 
     def _view_texts(self) -> None:
-        self.view_button.setText(view_names()[self.view])
-        for a in self.view_actions.actions():
-            a.setChecked(a.data() == self.view)
+        self.views.set_current(self.view)
 
     def _fill(self) -> None:
         self.tree.blockSignals(True)

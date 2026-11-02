@@ -77,7 +77,7 @@ class ChecksPanel(unittest.TestCase):
         from meridiana.ui.sections import SECTION_ROLE
         page = self.page
         self.assertEqual(page.view, "level")
-        self.assertEqual(page.view_button.text(), "By level")
+        self.assertEqual(page.views.current(), "level")
         heads = self.heads()
         self.assertEqual([h.text(1) for h in heads], ["To fix", "To check", "To know", "Passed"])
         self.assertEqual([h.data(1, SECTION_ROLE) for h in heads], [1, 2, 1, 1])
@@ -95,8 +95,7 @@ class ChecksPanel(unittest.TestCase):
         page.tree.setCurrentItem(self.row_of("e"))
         heard = []
         page.viewChanged.connect(heard.append)
-        action = next(a for a in page.view_actions.actions() if a.data() == "object")
-        action.trigger()
+        next(b for b in page.views.items if b.property("data") == "object").click()
         self.assertEqual((page.view, heard), ("object", ["object"]))      # told, for the settings (the window)
         heads = self.heads()
         self.assertEqual([h.text(1) for h in heads], ["Sud", "Site: Prova", "Capannone"])  # the worst object first
@@ -111,8 +110,8 @@ class ChecksPanel(unittest.TestCase):
         page.set_view("area")
         self.assertEqual([h.text(1) for h in self.heads()], ["Layout", "Strings (CEI 64-8/7)", "Connection"])
         self.assertEqual(page.selected().text, "e")
-        self.assertEqual(page.view_button.text(), "By area")
-        self.assertEqual([a.isChecked() for a in page.view_actions.actions()], [False, False, True, False])
+        self.assertEqual(page.views.current(), "area")
+        self.assertEqual([b.isChecked() for b in page.views.items], [False, False, True, False])
 
     def test_ready_for_delivery_shows_what_to_look_at_before_the_report(self):
         from meridiana.ui.sections import SECTION_ROLE
@@ -438,6 +437,24 @@ class ChecksPanel(unittest.TestCase):
         page.set_phase("consumption")                      # nothing shown: nothing under the keyboard
         self.assertEqual(self.shown(), [])
         self.assertIsNone(page.selected())
+
+    def test_the_views_and_the_filters_are_tracks_on_two_rows(self):
+        """R322, C4: the views a track above, the filters a track that keeps both on; narrow, the words are cut."""
+        from meridiana.ui.checks_page import view_names
+        from meridiana.ui.segments import Segments
+        page = self.page
+        self.assertEqual([b.text() for b in page.views.items], list(view_names().values()))
+        self.assertIsInstance(page.filters, Segments)
+        self.assertFalse(page.filters.exclusive)
+        self.assertLess(page.views.y() + page.views.height(), page.filters.y() + 1)
+        page.phase_button.click()
+        page.object_button.setChecked(True)
+        self.assertTrue(page.phase_button.isChecked() and page.object_button.isChecked())
+        page.object_button.setChecked(False)
+        page.phase_button.click()
+        page.set_view("area")
+        self.assertEqual(page.views.current(), "area")
+        self.assertLess(page.views.minimumSizeHint().width(), page.views.sizeHint().width())
 
     def test_the_counts_are_filters_that_stay_pressed(self):
         """R130 (Daniel, 24/10/2026: «se ne seleziono uno non rimane schiacciato visibilmente»; 25/10: «non avevi
