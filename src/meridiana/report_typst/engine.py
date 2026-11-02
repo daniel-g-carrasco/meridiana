@@ -13,7 +13,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .. import log, paths
+from .. import log, paths, symbol_shapes
 from ..i18n import _
 
 TEMPLATE = Path(__file__).resolve().parent / "template.typ"
@@ -109,6 +109,8 @@ class Build:
     def compile(self, document: dict) -> Result:
         """The PDF of `document` (compose.py), its pages and where each attachment's separator fell."""
         typst = _typst()
+        # the marks of the results are the window's symbols (symbol_shapes.py, without Qt): their tracks go in the data
+        document = {**document, "marks": symbol_shapes.report_marks()}
         (self.root / "data.json").write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
         main = self.root / "main.typ"
         main.write_text(TEMPLATE.read_text(encoding="utf-8"), encoding="utf-8")

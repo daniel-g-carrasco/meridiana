@@ -285,6 +285,18 @@ class InputsGridAndChosenString(unittest.TestCase):
         panel.show_string(self.plant, -1)
         self.assertTrue(g.isHidden())
 
+    def test_the_state_of_the_string_chosen_is_the_windows_symbol_not_a_character(self):
+        """R330: the traffic light of the string and the marks of its rows are the flat symbols, a picture in the rich
+        text, never ✔ ⚠ ✘ in a font (the window's symbols are the only signs of a status)."""
+        from PySide6.QtWidgets import QLabel
+        g = self.panel.string_group
+        self.assertIn("<img", g.identity.text())
+        rows = [w for w in g.row_widgets if isinstance(w, QLabel)]
+        self.assertTrue(rows)
+        for label in [g.identity, *rows]:
+            self.assertFalse(set(label.text()) & set("✔⚠✘✕"), label.text())
+        self.assertTrue(any(w.text().startswith("<img") for w in rows))
+
     def test_the_view_menu_beside_the_help_swaps_the_cards_for_the_diagram_and_says_so(self):
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
