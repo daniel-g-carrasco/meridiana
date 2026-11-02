@@ -11,7 +11,7 @@ from dataclasses import dataclass, replace
 
 import shiboken6
 from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPoint, QRect, QRectF, Qt, QTimer, QVariantAnimation
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QColor, QGuiApplication, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (QApplication, QDockWidget, QMainWindow, QStatusBar, QTabBar, QToolBar, QWidget)
 
 from ..i18n import _
@@ -352,10 +352,10 @@ class Reflow(QWidget):
         self.show()
         self.raise_()
         if self.lift is not None:
-            if shiboken6.isValid(self.lift) and not self.lift.isHidden():
-                self.lift.raise_()          # the carried picture stays over the cards
-            else:
+            if not shiboken6.isValid(self.lift) or self.lift.isHidden():
                 self.lift = None
+            elif not self.lift.isWindow():
+                self.lift.raise_()          # the carried picture stays over the cards (a window is above them)
         self.ends = {widget: QRect(ends.get(widget, _collapsed(start, edge)))
                      for widget, start in self.starts.items()}
         self.progress = 0.0
@@ -420,21 +420,42 @@ class Reflow(QWidget):
                        self.preview_source.windowTitle())
 
 
+def floating_lifts() -> bool:
+    """Whether the carried card can be a little window of its own, placed by the program (R317): not on Wayland."""
+    return not QGuiApplication.platformName().startswith('wayland')
+
+
 class Lift(QWidget):
     """The card taken by the pointer (R312): its picture, carried from the point it was taken at, a little larger
     than it lay and a touch translucent (lifted; no shadow, the system draws none). Between two pointer moves only
     this widget moves: no style, no layout of the window is touched. At the end it flies into the slot it was
-    given, back to its size, and dissolves into the real card there; cancelled, it flies home the same way."""
+    given, back to its size, and dissolves into the real card there; cancelled, it flies home the same way.
+
+    A little window of its own, owned by the window (R317): a child of it was cut at its edge when the pointer
+    carried the card out. The kind of window Qt carries its own drag pictures in (a tooltip's: never active, no
+    frame, above the window, placed by the program): translucent, without a shadow, never under the mouse, so the
+    pointer stays the title's, held by its grab, and the window keeps the keyboard (Esc). On Wayland a program
+    cannot place a window of its own: there the picture stays a child of the window, kept inside it, the point it
+    was taken at sliding under the pointer at the edge."""
 
     SCALE = 1.03                            # carried: a little larger than it lay
     OPACITY = 0.94                          # carried: the floor shows a little through it
 
+    FLAGS = (Qt.WindowType.ToolTip | Qt.WindowType.FramelessWindowHint | Qt.WindowType.BypassWindowManagerHint |
+             Qt.WindowType.NoDropShadowWindowHint | Qt.WindowType.WindowDoesNotAcceptFocus |
+             Qt.WindowType.WindowTransparentForInput)
+
     def __init__(self, window: QMainWindow, dock: QDockWidget, grip: QPoint):
-        super().__init__(window)
+        own = floating_lifts()
+        super().__init__(window, self.FLAGS if own else Qt.WindowType.Widget)
         self.host = window
         self.setObjectName('dock-lift')
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
+        if own:
+            self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+            self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
+        else:
+            self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.picture = motion.picture(dock)
         self.inner = dock.card_rect() if isinstance(dock, CardDock) else dock.contentsRect()  # the card, in the picture
@@ -454,7 +475,8 @@ class Lift(QWidget):
         motion._RESPONSIVE.add(self)
         self._place()
         self.show()
-        self.raise_()
+        if not own:
+            self.raise_()
         self._tween(self.frame, self.SCALE, self.OPACITY, Motion.FAST)
 
     def follow(self, point: QPoint) -> None:
@@ -515,7 +537,14 @@ class Lift(QWidget):
     def _place(self) -> None:
         s = self.scale
         corner = self.frame.topLeft() + self.grip - QPoint(round(self.grip.x() * s), round(self.grip.y() * s))
-        self.setGeometry(corner.x(), corner.y(), round(self.frame.width() * s), round(self.frame.height() * s))
+        width, height = round(self.frame.width() * s), round(self.frame.height() * s)
+        if self.isWindow():
+            corner = self.host.mapToGlobal(corner)      # on the screen, wherever the pointer takes it
+        else:                                           # inside the window, whole: the grip slides at its edge
+            room = self.host.rect()
+            corner = QPoint(max(room.left(), min(corner.x(), room.right() + 1 - width)),
+                            max(room.top(), min(corner.y(), room.bottom() + 1 - height)))
+        self.setGeometry(corner.x(), corner.y(), width, height)
 
     def refresh_motion(self) -> None:
         if motion.reduced() and self.run is not None:

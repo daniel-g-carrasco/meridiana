@@ -121,7 +121,8 @@ class DockDragging(unittest.TestCase):
             QTest.mouseMove(title, title.mapFromGlobal(self.host.mapToGlobal(at)))
             # the grip stays under the pointer: the card's frame moved by exactly the pointer's travel
             self.assertEqual(lift.frame.topLeft(), lift.home.topLeft() + (at - taken))
-            self.assertTrue(lift.geometry().contains(at), (lift.geometry(), at))
+            pointer = self.host.mapToGlobal(at)
+            self.assertTrue(lift.geometry().contains(pointer), (lift.geometry(), pointer))   # a window: the screen's
             self.assertEqual(lift.width(), round(lift.frame.width() * lift.SCALE))
         self.assertEqual({d: d.geometry() for d in self.docks}, before)       # the live panels did not move
         self.assertEqual(bytes(self.host.saveState()), state)
@@ -143,6 +144,57 @@ class DockDragging(unittest.TestCase):
         self.assertEqual(image.pixelColor(0, 0).alpha(), 0)
         self.assertEqual(image.pixelColor(image.width() - 1, image.height() - 1).alpha(), 0)
         self.assertGreater(lift.width(), lift.frame.width())
+        QTest.keyClick(title, Qt.Key.Key_Escape)
+        QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
+        self.quiet()
+
+    def test_the_picture_is_a_little_window_of_its_own_and_is_not_cut_at_the_window_s_edge(self):
+        # R317: a child of the window, the card carried out of it was cut at its edge (Daniel's video). The kind
+        # of window Qt carries its own drag pictures in (QShapedPixmapWindow): a tooltip's, never active
+        source = self.docks[1]
+        drag, title = self.take(source)
+        lift = drag.lift
+        self.assertTrue(lift.isWindow())
+        flags = lift.windowFlags()
+        self.assertEqual(lift.windowType(), Qt.WindowType.ToolTip)
+        for flag in (Qt.WindowType.FramelessWindowHint, Qt.WindowType.WindowDoesNotAcceptFocus,
+                     Qt.WindowType.WindowTransparentForInput, Qt.WindowType.NoDropShadowWindowHint):
+            self.assertTrue(flags & flag, flag)
+        self.assertIs(QApplication.activeWindow(), self.host)                 # it took nothing from the window
+        for attribute in (Qt.WidgetAttribute.WA_TranslucentBackground, Qt.WidgetAttribute.WA_TransparentForMouseEvents,
+                          Qt.WidgetAttribute.WA_ShowWithoutActivating):
+            self.assertTrue(lift.testAttribute(attribute), attribute)
+        self.assertIs(lift.parentWidget(), self.host)                         # owned: above it, gone with it
+        self.assertTrue(_setup.wait_until(self.app, lambda: lift.run is None, 3))
+        outside = QPoint(self.host.width() + 120, 200)                        # past the right edge
+        self.move(title, outside)
+        window = QRect(self.host.mapToGlobal(QPoint(0, 0)), self.host.size())
+        self.assertGreater(lift.geometry().right(), window.right())          # whole, past the edge
+        self.assertTrue(lift.geometry().contains(self.host.mapToGlobal(outside)))
+        self.assertEqual((lift.width(), lift.height()),
+                         (round(lift.frame.width() * lift.SCALE), round(lift.frame.height() * lift.SCALE)))
+        self.assertIs(QWidget.mouseGrabber(), title)                          # the drag still holds the mouse
+        self.assertIsNone(drag.target)
+        QTest.keyClick(title, Qt.Key.Key_Escape)                              # the keyboard still the window's
+        self.assertIsNone(drag.solver)
+        QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
+        self.quiet()
+        self.all_in_sight()
+
+    def test_on_wayland_the_picture_stays_in_the_window_whole_its_grip_sliding(self):
+        from unittest import mock
+        from meridiana.ui import dock_motion
+        source = self.docks[1]
+        with mock.patch.object(dock_motion, "floating_lifts", lambda: False):
+            drag, title = self.take(source)
+        lift = drag.lift
+        self.assertFalse(lift.isWindow())
+        self.assertTrue(_setup.wait_until(self.app, lambda: lift.run is None, 3))
+        self.move(title, QPoint(self.host.width() + 120, 200))
+        self.assertTrue(self.host.rect().contains(lift.geometry()), lift.geometry())    # kept whole, inside
+        self.assertEqual(lift.geometry().right(), self.host.rect().right())
+        self.move(title, QPoint(-80, 300))
+        self.assertEqual(lift.geometry().left(), 0)
         QTest.keyClick(title, Qt.Key.Key_Escape)
         QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
         self.quiet()
