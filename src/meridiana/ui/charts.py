@@ -21,6 +21,7 @@ The PDF report draws its own figures with matplotlib (ui/report.py) from the sam
 from __future__ import annotations
 
 import functools
+import math
 import threading
 import time
 import weakref
@@ -30,12 +31,12 @@ from pathlib import Path
 import numpy as np
 import shiboken6
 from PySide6.QtCore import QRectF, Qt, QTimer
-from PySide6.QtGui import QColor, QFont
+from PySide6.QtGui import QColor, QFont, QFontMetricsF
 from PySide6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLabel, QMenu, QMessageBox, QStackedWidget,
                                QTableWidget, QTableWidgetItem, QToolButton, QVBoxLayout, QWidget)
 
 from ..i18n import _, number
-from .design import Size, Type
+from .design import Size, Space, Type
 
 LOADING_RETRY_MS = 30
 
@@ -288,6 +289,7 @@ class Chart(QWidget):
     def _begin(self):
         """The plot cleared for a new drawing, in the theme's colours: (plot, chrome, series colours, font)."""
         p = self._ensure_plot()
+        p.setMinimumHeight(Size.CHART_MIN_HEIGHT)       # a chart that needs more says so after it (`changes`)
         m = self._mode or mode()
         c, colours, font = CHROME[m], SERIES[m], self._font()
         p.reset(c, font)
@@ -463,6 +465,10 @@ class Chart(QWidget):
         p.getAxis("bottom").fmt = lambda x: f"{_fmt(x, 0)}{unit}"
         p.grid(x=True)
         p.fit(labels, font)
+        # every step on a row of its own, as tall as it takes for the labels and the values not to run into each
+        # other (R313: 16 steps in 150 px): the page around it scrolls when they do not fit in the card
+        row = math.ceil(QFontMetricsF(small).height()) + Space.S
+        p.setMinimumHeight(max(Size.CHART_MIN_HEIGHT, (n + 2) * row))       # the two: the axis and the margins
         box = self._mark(backend().hover_box(c["ink"]))
 
         def hover(_x, y):
@@ -608,6 +614,8 @@ class Chart(QWidget):
     def message(self, text: str) -> None:
         """Words instead of a chart, when there is nothing to draw (no pyqtgraph needed for them)."""
         c = CHROME[mode()]
+        if self.plot is not None:
+            self.plot.setMinimumHeight(Size.CHART_MIN_HEIGHT)   # the words do not need the rows of `changes`
         self.note.setText(text)
         self.note.setStyleSheet(f"color: {c['ink2']}; background: {c['surface']}; padding: 12px;")
         self._hover = None
