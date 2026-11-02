@@ -21434,3 +21434,11 @@ msgstr "St&ringa in automatico…"
 #: src/meridiana/ui/dock_motion.py:860
 msgid "Alt: as tabs"
 msgstr "Alt: a linguette"
+
+#: src/meridiana/ui/assistant_chat.py:956
+msgid "Waiting for {model}: {seconds} s. It reads the project and thinks before its first word. You can stop at any time. Speech synthesis starts after text arrives."
+msgstr "In attesa di {model}: {seconds} s. Legge il progetto e ragiona prima della prima parola. Puoi interrompere quando vuoi. La sintesi vocale inizia dopo l'arrivo del testo."
+
+#: src/meridiana/ui/assistant_chat.py:958
+msgid "the model"
+msgstr "il modello"

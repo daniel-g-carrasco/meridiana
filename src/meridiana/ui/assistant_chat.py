@@ -952,9 +952,15 @@ class Chat(QObject):
             self.progress_note = QLabel()
             self.progress_note.setWordWrap(True)
             self.widget.add_card(self.progress_note)
-        self.progress_note.setText(_("Waiting for the language model: {seconds} s. The first request may load its "
-                                     "weights and read the instructions. You can stop at any time. "
-                                     "Speech synthesis starts after text arrives.").format(seconds=elapsed))
+        if self.provider.cloud:             # nothing to load on this PC: the model is thinking before its first word
+            text = _("Waiting for {model}: {seconds} s. It reads the project and thinks before its first word. "
+                     "You can stop at any time. Speech synthesis starts after text arrives.")
+            text = text.format(model=getattr(self.provider, "model", "") or _("the model"), seconds=elapsed)
+        else:
+            text = _("Waiting for the language model: {seconds} s. The first request may load its "
+                     "weights and read the instructions. You can stop at any time. "
+                     "Speech synthesis starts after text arrives.").format(seconds=elapsed)
+        self.progress_note.setText(text)
 
     def _clear_progress(self):
         self.progress_timer.stop()
