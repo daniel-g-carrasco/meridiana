@@ -21,7 +21,6 @@ from .design import Space, Text, semibold, set_text
 from .help_box import HintLabel, help_button, register
 from .quantity_field import QuantityField
 from . import symbols
-from .theme import mark
 from .style import Group, SectionGate
 
 
@@ -1212,7 +1211,7 @@ class Properties(QScrollArea):
     def _state_note(self) -> str:
         state = self.shown.get("state")
         if state == "stale":
-            return mark("⟳") + " " + html.escape(
+            return symbols.html("update") + " " + html.escape(
                 _("To lay out again: the layout is on its way, the figures below are the previous ones."))
         if state == "error":
             return symbols.html("stop") + " " + html.escape(_("The layout failed: {why}").format(

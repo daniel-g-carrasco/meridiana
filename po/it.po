@@ -21740,3 +21740,8 @@ msgstr "{file} non è un'immagine che la relazione può mostrare: usa PNG, JPEG,
 #: src/meridiana/ui/report.py
 msgid "{file} looks like an image, but it is damaged or cannot be read."
 msgstr "{file} sembra un'immagine, ma è danneggiata o illeggibile."
+
+#: src/meridiana/shortcuts.py:67
+msgctxt "roof"
+msgid "Pitch"
+msgstr "Falda"

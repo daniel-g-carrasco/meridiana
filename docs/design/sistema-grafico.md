@@ -123,7 +123,7 @@ Le regole:
   di versione presi dal catalogo (`help_box.dress`).
 - **La prova** `test_every_text_of_the_window_is_a_style_of_the_catalogue` gira tutte le fasi e la pagina File e
   guarda ogni testo, anche quelli che la finestra disegna da sé (titoli delle schede, linguette delle fasi, sezioni,
-  segni); restano fuori solo i disegni (pianta e 3D) e il carattere dei segni (✔ ⚠ ✘).
+  segni); restano fuori solo i disegni (pianta e 3D); i segni di stato sono i simboli (§4), mai caratteri.
 
 
 ### Misure (`Size`, `Icon`, `Line`)
@@ -260,6 +260,63 @@ Regole:
 | Stato dei salvataggi | `ui/save_status.py` | piccolo arco durante la scrittura, poi «Salvato alle HH:MM» o «Salvato in automatico alle HH:MM» nella barra di stato; errori invariati (R195) |
 | Barra di scorrimento | `ui/scrollbars.py` (`ScrollStyle`) | un cursore di 6 px, raggio 3, `line` a riposo, `muted` sotto il puntatore, `text2` premuto; nessuna guida, nessuna freccia; niente se non c'è da scorrere |
 
+### I simboli (`ui/symbols.py`, R138, R330)
+
+Un solo disegno per «confermato, errore, avviso, informazione, blocco»: nessun carattere di un font (✔ ⚠ ✘ ℹ e simili
+non si usano più, una prova li cerca nei sorgenti), nessuna icona Lucide con quei significati. **Piatti** (R330, Daniel
+02/11/2026: «come simboli usiamo quelli piatti»): un fondo di una tinta sola (il disco, il triangolo, l'anello del
+divieto) e il segno **bianco opaco** sopra. Le geometrie stanno in `symbol_shapes.py`, senza Qt (16 unità, tratti di
+1,7): le leggono la finestra (`ui/symbols.py`, con il disegnatore SVG di Qt) e la relazione (`report_typst/`, che le
+passa a Typst nei dati e le disegna come immagini vettoriali).
+
+| Simbolo | Significato | Tinta | Dove |
+|---|---|---|---|
+| `check` | confermato, superato | `good` | Verifiche «Superate», stringa corretta, tasto «Tieni» |
+| `cross` | chiudi, no | `critical` | pulsanti «No», «Chiudi» delle finestre |
+| `forbidden` | operazione non permessa | `critical` | nessun uso oggi; riservato ai comandi non ammessi |
+| `stop` | blocco (le verifiche da correggere) | `critical` | livello «fail», stringa fuori finestra |
+| `info` | dettaglio (le verifiche da sapere, le note) | `info` | livello «info», note |
+| `warning` | possibile problema (da controllare) | `warning` | livello «warn», stringa da verificare |
+| `error` | il programma ha incontrato un errore | `critical` | finestre di errore |
+| `trash` | butta via | `critical` | «Scarta» di una finestra |
+| `back` | torna indietro, niente è cambiato | `neutral` | «Annulla» di una finestra, ritorno alla proposta degli ottimizzatori |
+
+**Regole d'uso**
+
+- **Il triangolo è largo quanto il disco** (R330: «in larghezza sia uguale al diametro del cerchio»): 15 unità di
+  larghezza, appena sopra e sotto il disco, perché a pari altezza il triangolo sembrava piccolo accanto ai cerchi. Lo
+  vincola `test_the_warning_is_as_wide_as_the_disc`.
+- **Il segno è dipinto, non ritagliato.** I piatti del 25/10/2026 furono rifiutati perché il segno era un buco nel
+  fondo e lasciava vedere quello che c'era sotto (l'ortofoto, la pianta, la scheda): su un fondo qualunque il segno
+  cambiava colore. Qui il fondo è pieno e il segno è un secondo tracciato bianco, opaco: lo stesso segno su ogni fondo.
+  Per questo il divieto è un anello e la sua sbarra della stessa tinta, fusi senza giunta.
+- **Una tinta per significato** (`theme_colors.STATUS` e `WARNING_INK`); sul fondo scuro il blu e il grigio si
+  schiariscono (`TONES_DARK`), perché quelli scuri sparirebbero. Il colore non è l'unico indizio: ogni livello ha una
+  forma sua (WCAG 1.4.1).
+- **Testi e `alt` non cambiano**: il simbolo sta accanto al testo, che continua a dire la stessa cosa; i nomi dei
+  livelli sono nei suggerimenti.
+- **Si disegna solo qui.** Pianta, 3D, albero, conteggi, schede delle stringhe, dialoghi (`scrollbars.py` mette i
+  simboli al posto delle icone standard di Qt) e relazione passano per le stesse forme; cambiare l'aspetto dei simboli
+  è cambiare `symbol_shapes.py` e `symbols.py` e basta.
+- **Mai la sfumatura**, mai un alone (R138).
+
+**Le forme**
+
+| Forma | Cosa dà | Quando |
+|---|---|---|
+| `symbols.icon(name)` | una `QIcon` (motore di icone) disegnata alla grandezza e alla densità chieste, chiara o scura secondo il fondo | pulsanti, voci d'albero, `setIcon` |
+| `symbols.paint(painter, rect, name, dark=None, off=False)` | il disegno unico: pianta, 3D, conteggi, schede; `off`: grigio, per un livello vuoto | tutto ciò che dipinge da sé |
+| `symbols.sign(name, rect)` | il solo segno come `QPainterPath`, per un fondo già nel colore del livello | caselle di spunta (`checkboxes.py`) |
+| `symbols.html(name, size=14)` | un `<img>` per il testo ricco (PNG a 1, 2 e 3 volte nella cartella temporanea: Qt sceglie da solo); il carattere solo se la cartella non si può scrivere | etichette, note, righe delle schede |
+| `symbol_shapes.report_marks()` | l'SVG di ogni livello con il segnaposto del colore, per Typst | solo la relazione (`template.typ`, `mark`) |
+
+Nella relazione il colore del livello è quello della tavolozza della carta (`colours.ok/warn/fail/info` in
+`template.typ`), non quello della finestra: cambia la tinta, non la forma.
+
+**Eccezioni giustificate**: i caratteri nel solo `html()` quando la cartella temporanea non si scrive (ultima
+risorsa); `⟳` (da ricalcolare) nelle note delle schede della posa, per cui non c'è un simbolo; `⋯`, `∥ ⊥ ⇧` delle guide
+non sono segni di stato. La prova `tests/nucleo/test_symbols_sources.py` tiene l'elenco (`ALLOWED`).
+
 ## 5. I comportamenti
 
 - **Fine morbida** (`ui/fades.py`): quando un elenco o una pagina continua oltre la scheda, l'ultimo pezzo sfuma nel
@@ -351,7 +408,8 @@ I moduli generici, che non sanno niente di fotovoltaico:
 | `ui/menubar.py`, `ui/panel_buttons.py`, `ui/segments.py`, `ui/variant_bar.py` | barra dei menu ad Alt, pulsanti delle schede, pista di segmenti, varianti | `design`, `icons`, `motion` |
 | `ui/day_picker.py` | il calendario dei campi data: un fondo solo, giorno scelto neutro, oggi in un anello | `design`, `icons` |
 | `ui/icons.py` | icone Lucide (ISC) e proprie, nel colore del tema | `paths` |
-| `ui/sections.py`, `ui/marks.py` | elenchi a sezioni con i segni | `design` |
+| `ui/sections.py`, `ui/marks.py` | elenchi a sezioni con i segni | `design`, `symbols` |
+| `symbol_shapes.py`, `ui/symbols.py` | i dieci simboli piatti (§4): le forme senza Qt, poi icona, disegno, segno e testo ricco | `theme_colors` (le forme); Qt Svg (il disegno) |
 | `ui/rows.py` | elenco a righe e griglia di campi al posto delle tabelle | `design` |
 | `ui/phasebar.py`, `ui/file_page.py` | riga delle fasi con la barra; pagina File | il contenuto viene dal programma (`phases.py`, i comandi) |
 | `ui/gallery.py` | la vetrina | tutti i precedenti |
