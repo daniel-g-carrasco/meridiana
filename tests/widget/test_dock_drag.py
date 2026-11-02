@@ -380,11 +380,13 @@ class DockDragging(unittest.TestCase):
 
     def test_a_band_over_a_panel_docked_there_is_that_panel_s_outer_side(self):
         from meridiana.ui.design import Space
+        from meridiana.ui.design import Size
         from meridiana.ui.dock_motion import DockTarget, target_at
         h = self.host.height()
         bottom, left = self.docks[2], self.docks[0]
         cases = ((self.docks[0], QPoint(500, h - 4), QPoint(500, h - Space.XXL - 4),
-                  DockTarget(Qt.DockWidgetArea.BottomDockWidgetArea, bottom, Qt.Orientation.Vertical)),
+                  DockTarget(Qt.DockWidgetArea.BottomDockWidgetArea, bottom, Qt.Orientation.Vertical,
+                             extent=Size.PLACEHOLDER)),
                  (self.docks[1], QPoint(4, 300), QPoint(Space.XXL + 4, 300),
                   DockTarget(Qt.DockWidgetArea.LeftDockWidgetArea, left, Qt.Orientation.Horizontal, before=True)))
         for source, band, inside, wanted in cases:
@@ -392,7 +394,7 @@ class DockDragging(unittest.TestCase):
             self.assertEqual(target_at(self.host, source, inside), wanted, inside)     # the same, a step inside
         # an empty band stays the band: nothing at the top, and the right holds only the card carried
         self.assertEqual(target_at(self.host, self.docks[0], QPoint(500, 4)),
-                         DockTarget(Qt.DockWidgetArea.TopDockWidgetArea))
+                         DockTarget(Qt.DockWidgetArea.TopDockWidgetArea, extent=Size.PLACEHOLDER))
         self.assertEqual(target_at(self.host, self.docks[1], QPoint(self.host.width() - 4, 300)),
                          DockTarget(Qt.DockWidgetArea.RightDockWidgetArea))
 
@@ -403,6 +405,8 @@ class DockDragging(unittest.TestCase):
         h = self.host.height()
         self.hover(title, QPoint(500, h - 4))
         shown, layer = drag.target, drag.layer
+        self.assertTrue(_setup.wait_until(self.app, lambda: not layer.lead.isActive() and
+                                          layer.animation.state() != QAbstractAnimation.State.Running, 3))
         retargets = []
         layer.animation.stateChanged.connect(lambda *a: retargets.append(a))
         for y in (h - Space.XXL - 4, h - 3, h - Space.XXL + 1, h - Space.XXL - 1, h - 6):
@@ -415,6 +419,60 @@ class DockDragging(unittest.TestCase):
         QTest.keyClick(title, Qt.Key.Key_Escape)
         QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
         self.quiet()
+
+    # first the slot, then the cards; a slot across the window as tall as named (R317)
+
+    def test_the_slot_shows_first_and_the_cards_slide_a_moment_later(self):
+        source, anchor = self.docks[0], self.docks[1]
+        drag, title = self.take(source)
+        r = anchor.geometry()
+        self.assertTrue(_setup.wait_until(                                    # the lift and the home slot settled
+            self.app, lambda: drag.layer.animation.state() != QAbstractAnimation.State.Running, 3))
+        self.move(title, QPoint(r.center().x(), r.bottom() - r.height() // 3))
+        self.assertTrue(drag.waiting)
+        drag.dwell.stop()
+        drag._dwelt()                                                         # the dwell over, this instant
+        layer = drag.layer
+        self.assertNotEqual(layer.animation.state(), QAbstractAnimation.State.Running)   # the cards not yet...
+        self.assertEqual(layer.progress, 0.0)
+        self.assertEqual(layer.slot(), layer.card_rect(layer.ends[source]))   # ...the slot already where it goes
+        _setup.turn_events(self.app, Motion.FAST // 2)
+        self.assertNotEqual(layer.animation.state(), QAbstractAnimation.State.Running)
+        self.assertTrue(_setup.wait_until(
+            self.app, lambda: layer.animation.state() == QAbstractAnimation.State.Running, 2))
+        self.assertEqual(layer.animation.duration(), Motion.CAREFUL)
+        self.assertEqual(layer.slot(), layer.card_rect(layer.ends[source]))   # it stays while they slide
+        QTest.keyClick(title, Qt.Key.Key_Escape)
+        QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
+        self.quiet()
+
+    def test_a_slot_across_the_window_has_the_named_height_not_the_card_s(self):
+        from meridiana.ui.cards import GAP
+        from meridiana.ui.design import Size
+        from meridiana.ui.dock_motion import target_at
+        h, w = self.host.height(), self.host.width()
+        source = self.docks[0]                                                # a tall card: 567 px
+        self.assertGreater(source.height(), 3 * Size.PLACEHOLDER)
+        across = {"top band": QPoint(w // 2, 4), "bottom band": QPoint(w // 2, h - 4),
+                  "over the bottom panel": QPoint(w // 2, self.docks[2].geometry().top() + 20)}
+        for name, at in across.items():
+            self.assertEqual(target_at(self.host, source, at).extent, Size.PLACEHOLDER, name)
+        r = self.docks[1].geometry()                                          # a column, not across: its own size
+        self.assertEqual(target_at(self.host, source, QPoint(r.center().x(), r.bottom() - 60)).extent, 0)
+        self.assertEqual(target_at(self.host, source, QPoint(4, h // 2)).extent, 0)
+        state = bytes(self.host.saveState())
+        for name, at in across.items():
+            with self.subTest(name):
+                self.host.restoreState(state)
+                self.settle()
+                drag, title = self.take(source)
+                self.hover(title, at)
+                slot = drag.layer.ends[source]
+                self.assertLessEqual(abs(slot.height() - Size.PLACEHOLDER), 2 * GAP, (name, slot))
+                QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
+                self.quiet()
+                self.all_in_sight()
+                self.assertLessEqual(abs(source.geometry().height() - slot.height()), 2, name)  # as shown
 
     # the release
 

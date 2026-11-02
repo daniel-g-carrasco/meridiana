@@ -150,6 +150,8 @@ class Size:
     SCROLLBAR = 10      # the scroll bar's room, always kept (R100); its thumb THUMB wide
     THUMB = 6
     CHART_MIN_HEIGHT = 160
+    PLACEHOLDER = 160   # a card dropped across the window (a band above or below it, above or below a panel as wide):
+                        # its slot this tall, not the card's own height, the central card not jumping (R317)
 
 
 class Button:

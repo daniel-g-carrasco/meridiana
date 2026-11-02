@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (QApplication, QDockWidget, QMainWindow, QStatusBa
 from ..i18n import _
 from . import motion
 from .cards import EDGE, GAP, CardDock, arena, default_tokens
-from .design import Motion, Radius, Space
+from .design import Motion, Radius, Size, Space
 
 DIRECT = Qt.FindChildOption.FindDirectChildrenOnly
 INERTIA = Space.M       # a drop zone is left only once the pointer is this far inside the next one (R317)
@@ -53,6 +53,7 @@ class DockTarget:
     orientation: Qt.Orientation = Qt.Orientation.Horizontal
     before: bool = False
     tab: bool = False
+    extent: int = 0         # the card's height or width once there; 0: its own (R317: Size.PLACEHOLDER across)
 
 
 def apply_target(window: QMainWindow, source: QDockWidget, target: DockTarget) -> None:
@@ -75,7 +76,7 @@ def apply_target(window: QMainWindow, source: QDockWidget, target: DockTarget) -
                        Qt.Orientation.Horizontal if target.area in (Qt.DockWidgetArea.LeftDockWidgetArea,
                                                                    Qt.DockWidgetArea.RightDockWidgetArea)
                        else Qt.Orientation.Vertical)
-        extent = size.width() if orientation == Qt.Orientation.Horizontal else size.height()
+        extent = target.extent or (size.width() if orientation == Qt.Orientation.Horizontal else size.height())
         window.resizeDocks([source], [extent], orientation)
     _settle_layout(window)
     _show_tab_bars(window)
@@ -155,6 +156,7 @@ def cancel_drags(window: QMainWindow) -> None:
     for layer in window.findChildren(Reflow, options=DIRECT):
         layer.drag = None
         layer.hold_open = False
+        layer.lead.stop()
         layer.animation.stop()
         layer.hide()
         layer.deleteLater()
@@ -308,6 +310,10 @@ class Reflow(QWidget):
         self.animation.valueChanged.connect(self._step)
         self.animation.finished.connect(self._settled)
         self.hold_open = False
+        self.slot_first = False             # the slot drawn where it goes while the cards are still (R317)
+        self.lead = QTimer(self)            # the moment between the slot shown and the cards sliding
+        self.lead.setSingleShot(True)
+        self.lead.timeout.connect(self.animation.start)
         self.drag = None                    # the DockDrag holding this layer open, if any
         self.lift = None                    # the carried picture of the panel dragged, kept above this layer
         self.generation = 0
@@ -332,10 +338,19 @@ class Reflow(QWidget):
                                     zip(start.getRect(), end.getRect(), strict=True)))
         return result
 
+    def slot(self) -> QRect:
+        """Where the slot of the card carried is drawn now."""
+        if self.slot_first:
+            return self.card_rect(self.preview_rect)
+        return self.card_rect(self.rectangles().get(self.preview_source, self.preview_rect))
+
     def retarget(self, ends: dict[QWidget, QRect], *, edge: str = 'right', preview=None,
-                 hold: bool = False, ms: int = Motion.FAST) -> None:
+                 hold: bool = False, ms: int = Motion.FAST, lead: int = 0) -> None:
+        """The cards from where they are drawn now to `ends` in `ms`. With `lead` (R317), the slot of `preview`
+        shows at once where it goes and the cards start sliding `lead` ms later: first what will happen, then it."""
         self.starts = self.rectangles()
         self.animation.stop()
+        self.lead.stop()
         self.hold_open = hold
         self.preview_source = preview
         self.preview_rect = QRect(ends.get(preview, QRect()))
@@ -358,9 +373,14 @@ class Reflow(QWidget):
                 self.lift.raise_()          # the carried picture stays over the cards (a window is above them)
         self.ends = {widget: QRect(ends.get(widget, _collapsed(start, edge)))
                      for widget, start in self.starts.items()}
-        self.progress = 0.0
         self.animation.setDuration(0 if motion.reduced() else ms)
-        self.animation.start()
+        self.progress = 0.0                 # after: a new duration plays the old time's value out (0.66 if left)
+        self.slot_first = bool(lead) and preview is not None
+        if lead and not motion.reduced():
+            self.update()
+            self.lead.start(lead)
+        else:
+            self.animation.start()
 
     def _step(self, value) -> None:
         self.progress = float(value)
@@ -374,6 +394,7 @@ class Reflow(QWidget):
     def refresh_motion(self) -> None:
         if motion.reduced():
             self.animation.stop()
+            self.lead.stop()
             self._step(1.0)
             self._settled()
 
@@ -406,7 +427,7 @@ class Reflow(QWidget):
             p.drawPixmap(target.topLeft() - inner.topLeft(), picture)
             p.restore()
         if self.preview_source is not None and self.preview_rect.isValid():
-            r = QRectF(card_rect(positions.get(self.preview_source, self.preview_rect))).adjusted(1, 1, -1, -1)
+            r = QRectF(self.slot()).adjusted(1, 1, -1, -1)
             p.setRenderHint(QPainter.RenderHint.Antialiasing)
             accent = QColor(tokens['text2'])
             fill = QColor(accent)
@@ -647,15 +668,23 @@ def target_at(window: QMainWindow, source: QDockWidget, point: QPoint, *, tabs: 
         r = anchor.geometry()
         x, y = (point.x() - r.left()) / r.width(), (point.y() - r.top()) / r.height()
         side = min((x, 'left'), (1 - x, 'right'), (y, 'top'), (1 - y, 'bottom'))[1]
-        return DockTarget(area, anchor, Qt.Orientation.Horizontal if side in ('left', 'right')
-                          else Qt.Orientation.Vertical, before=side in ('left', 'top'))
+        return _beside(window, area, anchor, side)
     return None
 
 
-_OUTER = {Qt.DockWidgetArea.LeftDockWidgetArea: (Qt.Orientation.Horizontal, True),
-          Qt.DockWidgetArea.RightDockWidgetArea: (Qt.Orientation.Horizontal, False),
-          Qt.DockWidgetArea.TopDockWidgetArea: (Qt.Orientation.Vertical, True),
-          Qt.DockWidgetArea.BottomDockWidgetArea: (Qt.Orientation.Vertical, False)}
+_OUTER = {Qt.DockWidgetArea.LeftDockWidgetArea: 'left', Qt.DockWidgetArea.RightDockWidgetArea: 'right',
+          Qt.DockWidgetArea.TopDockWidgetArea: 'top', Qt.DockWidgetArea.BottomDockWidgetArea: 'bottom'}
+_ACROSS = (Qt.DockWidgetArea.TopDockWidgetArea, Qt.DockWidgetArea.BottomDockWidgetArea)
+
+
+def _beside(window: QMainWindow, area: Qt.DockWidgetArea, anchor: QDockWidget, side: str) -> DockTarget:
+    """Beside `anchor` on `side`. Above or below a panel as wide as the window, the card lies across it: its slot
+    Size.PLACEHOLDER tall, not its own height (R317: a tall card dropped there pushed the central card far up)."""
+    horizontal = side in ('left', 'right')
+    r, room = anchor.geometry(), arena(window)
+    across = not horizontal and r.left() <= room.left() + EDGE and r.right() >= room.right() - EDGE
+    return DockTarget(area, anchor, Qt.Orientation.Horizontal if horizontal else Qt.Orientation.Vertical,
+                      before=side in ('left', 'top'), extent=Size.PLACEHOLDER if across else 0)
 
 
 def _band(window: QMainWindow, source: QDockWidget, area: Qt.DockWidgetArea, point: QPoint) -> DockTarget:
@@ -674,11 +703,10 @@ def _band(window: QMainWindow, source: QDockWidget, area: Qt.DockWidgetArea, poi
         reach = (abs(point.y() - r.center().y()) - r.height() / 2 if along_x
                  else abs(point.x() - r.center().x()) - r.width() / 2)
         there.append((reach, dock))
-    if not there:
-        return DockTarget(area)
+    if not there:                       # across the window above or below: the named height (R317)
+        return DockTarget(area, extent=Size.PLACEHOLDER if area in _ACROSS else 0)
     anchor = min(there, key=lambda pair: pair[0])[1]           # the one at the side, under or nearest the point
-    orientation, before = _OUTER[area]
-    return DockTarget(area, anchor, orientation, before=before)
+    return _beside(window, area, anchor, _OUTER[area])
 
 
 def _settled(window: QMainWindow, source: QDockWidget, point: QPoint, tabs: bool,
@@ -843,7 +871,7 @@ class DockDrag(QObject):
         self.target = zone
         window = self.dock.parentWidget()
         ends = self.solver.solve(zone) if zone is not None else _placed(window)
-        self.layer.retarget(ends, preview=self.dock, hold=True, ms=Motion.CAREFUL)
+        self.layer.retarget(ends, preview=self.dock, hold=True, ms=Motion.CAREFUL, lead=Motion.FAST)
 
     def finish(self, cancel: bool = False) -> None:
         origin, self.origin = self.origin, None
