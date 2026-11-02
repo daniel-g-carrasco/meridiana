@@ -123,7 +123,7 @@ def phases() -> list[Phase]:
                 T("tool_subfield", icon="subfield"),
                 # R306: three ways of drawing the rows by hand on one button
                 T("tool_row", _("Row"), icon="row", more=(T("layout_east_west", _("East-west")),
-                                                          T("canopy_layout", _("On canopy"), icon="carport"))),
+                                                          T("canopy_layout", _("Canopy"), icon="carport"))),
                 T("fill", _("Lay"), primary=True),
                 T("empty", _("Empty")))),
             Group("inverter", _("Inverter"), (
@@ -138,7 +138,7 @@ def phases() -> list[Phase]:
                 # question
                 T("tool_erase_string", _("Delete string"), icon="erase_string", more=(
                     T("tool_erase_inverter_strings", _("Inv. + strings"), icon="erase_inverter_strings"),
-                    T("tool_erase_inverter", _("Delete inverter"), icon="erase_inverter"),
+                    T("tool_erase_inverter", _("Delete inv."), icon="erase_inverter"),
                     T("strings_clear", _("Start again"))))))),
             "plant", ("layout", "strings", "connection"),
             (_("What do you think of this layout?"),

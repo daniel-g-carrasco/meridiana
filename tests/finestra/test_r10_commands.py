@@ -340,7 +340,7 @@ class StringsDeletedFromTheirModules(WindowCase):
         self.assertIs(bar.button_of("strings_clear"), button)
         self.assertIs(bar.buttons()["tool_erase_string"], button)
         win.commands["tool_erase_inverter"].trigger()
-        self.assertEqual(button.text(), "Delete inverter")
+        self.assertEqual(button.text(), "Delete inv.")
         self.assertTrue(button.isChecked())
 
 
@@ -548,6 +548,33 @@ class Sweeps(WindowCase):
         self.assertTrue(all(m in chosen for r in runs for m in r["modules"]))
         self.assertEqual(plan.swept, [])
         self.assertTrue(any("on the modules selected" in s for s in said), said)
+
+    def test_with_no_inverter_chosen_it_says_to_choose_one_and_a_string_touched_is_asked_about(self):
+        win, plan = self.win, self.plan
+        said = []
+        original = win.tell
+        win.tell = lambda text, *a: (said.append(text), original(text, *a))
+        self.in_plant()
+        sfid = win.project.subfields[0].id
+        keys = plan.module_corners[sfid][0]
+        plan.set_swept([(sfid, k) for k in keys[:30]])
+        win.strategy_actions["serpentine"].trigger()
+        self.assertTrue(wait_until(self.app, lambda: win.string_proposal_job is None, 60))
+        self.assertEqual(self.strings_of(), [], said)
+        self.assertTrue(any("choose an inverter" in s for s in said), said)
+        win._add_inverter(inverter_record(), "Add")
+        win._strings_put("One", [{"inverter": 1, "mppt": 1, "modules": [f"{sfid}/{k}" for k in keys[:20]]}])
+        self.assertTrue(wait_until(self.app, lambda: not win.plant_pending(), 60))
+        self.dialogs.clear()
+        plan.set_swept([(sfid, keys[0])])                       # no: nothing changes
+        from PySide6.QtWidgets import QMessageBox
+        from unittest import mock
+        with mock.patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.No) as asked:
+            win.strategy_actions["serpentine"].trigger()
+        self.assertEqual(asked.call_count, 1)
+        self.assertIn("19", asked.call_args[0][2])              # those of its modules left without a string
+        self.assertIsNone(win.string_proposal_job)
+        self.assertEqual(len(self.strings_of()), 1)
 
     def test_too_few_modules_say_how_many_a_string_wants_and_nothing_changes(self):
         win, plan = self.win, self.plan

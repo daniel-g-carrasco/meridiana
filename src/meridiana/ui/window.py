@@ -2790,7 +2790,7 @@ class MainWindow(QMainWindow):
             for kind, oid in things:
                 self._drop_thing(p, kind, oid)
         self.plan.selected_module = ("", "")
-        self.edit(ngettext("Delete an object", "Delete {n} objects", len(things)).format(n=len(things)), drop)
+        self.edit(ngettext("Delete {n} object", "Delete {n} objects", len(things)).format(n=len(things)), drop)
         self._select("site", "")
 
     def _delete_swept(self) -> None:
@@ -2806,7 +2806,7 @@ class MainWindow(QMainWindow):
             for change in changes:
                 change(p)
         self.plan.set_swept([])
-        self.edit(ngettext("Take a module out", "Take {n} modules out", len(swept)).format(n=len(swept)), drop)
+        self.edit(ngettext("Take out {n} module", "Take out {n} modules", len(swept)).format(n=len(swept)), drop)
         self.tell(ngettext("{n} module taken out of the layout (Ctrl+Z brings it back).",
                            "{n} modules taken out of the layout (Ctrl+Z brings them back).",
                            len(swept)).format(n=len(swept)))
@@ -4627,7 +4627,7 @@ class MainWindow(QMainWindow):
             log.complain("string proposal", result)
             self.tell(_("Meridiana could not propose the strings: {error}").format(error=result))
             return
-        if job.only is not None:
+        if getattr(job, "only", None) is not None:
             self._swept_proposal_done(job, result)
             return
         # a string whose only warning is a condition of its order (S1400: an inverter without DC fuses, R267) may be
@@ -4671,15 +4671,17 @@ class MainWindow(QMainWindow):
         what the selection could not make is said, with the reason, and when no string came nothing changes."""
         only = job.only
         n = len(only)
-        new = [s for s in result.strings if s.run < 0 or f"{s.modules[0][0]}/{s.modules[0][1]}" in only]
-        new = [s for s in new if s.modules and f"{s.modules[0][0]}/{s.modules[0][1]}" in only]
+        new = [s for s in result.strings if s.modules and f"{s.modules[0][0]}/{s.modules[0][1]}" in only]
         bad = [s.why for s in new if not plant_model.acceptable(s)]
         if bad or not result.search_complete:
             self.tell(_("No string was made of the modules selected: {why}").format(
                 why=result.search_reason or bad[0]))
             return
         if not new:
-            if result.shortest and n < result.shortest:
+            if not any(u.checkable or u.optimized for u in result.units):
+                self.tell(_("No string was made of the modules selected: choose an inverter from the catalogue first, "
+                            "the length of a string depends on it."))
+            elif result.shortest and n < result.shortest:
                 self.tell(ngettext("The {n} module selected is too few for a string: on these inverters a string wants "
                                    "at least {m} modules in series. Select more, or change the inverter.",
                                    "The {n} modules selected are too few for a string: on these inverters a string "
