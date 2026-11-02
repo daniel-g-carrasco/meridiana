@@ -9,7 +9,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 
-from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPoint, QRect, QRectF, Qt, QVariantAnimation
+import shiboken6
+from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPoint, QRect, QRectF, Qt, QTimer, QVariantAnimation
 from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (QApplication, QDockWidget, QMainWindow, QStatusBar, QTabBar, QToolBar, QWidget)
 
@@ -111,8 +112,40 @@ def lost_panels(window: QMainWindow) -> list[QDockWidget]:
     return lost
 
 
+def commit_target(window: QMainWindow, source: QDockWidget, target: DockTarget) -> None:
+    """The drop accepted on the live window. A drop that would leave an open panel out of sight (R294) is not
+    kept: the layout as it was before it comes back, and every panel stays one click away."""
+    before = window.saveState()
+    apply_target(window, source, target)
+    if lost_panels(window):
+        window.restoreState(before)
+        _settle_layout(window)
+        _show_tab_bars(window)
+
+
+def _placed(window: QMainWindow) -> dict[QWidget, QRect]:
+    """The cards where `window` has them now. A tab behind another one is parked by Qt off the window (at -1500,
+    -625 here): it is given the rectangle of the tab in front, under which it lies, rather than flying there and
+    back on every preview (R312); one whose front is not in sight is left out."""
+    room = window.rect()
+    result = {}
+    for widget in cards(window):
+        if not _docked(widget):
+            continue
+        rect = QRect(widget.geometry())
+        if isinstance(widget, QDockWidget) and not room.intersects(rect):
+            front = next((tab for tab in window.tabifiedDockWidgets(widget)
+                          if _docked(tab) and room.intersects(tab.geometry())), None)
+            if front is None:
+                continue
+            rect = QRect(front.geometry())
+        result[widget] = rect
+    return result
+
+
 def cancel_drags(window: QMainWindow) -> None:
-    """No drag of a panel, no preview and no motion layer left over the cards: before a layout is put back."""
+    """No drag of a panel, no preview, no motion layer and no carried picture left over the cards: before a layout
+    is put back."""
     for dock in window.findChildren(CardDock, options=DIRECT):
         drag = getattr(dock, 'drag_motion', None)
         if drag is not None and drag.solver is not None:
@@ -123,6 +156,10 @@ def cancel_drags(window: QMainWindow) -> None:
         layer.animation.stop()
         layer.hide()
         layer.deleteLater()
+    for lift in window.findChildren(Lift, options=DIRECT):
+        lift.animation.stop()
+        lift.hide()
+        lift.deleteLater()
 
 
 class _Measure(QWidget):
@@ -215,8 +252,8 @@ class LayoutPreview:
         copied = replace(target, anchor=self.copies.get(target.anchor))
         apply_target(self.shadow, source, copied)
         _settle_layout(self.shadow)
-        return {real: QRect(dummy.geometry()) for real, dummy in self.copies.items()
-                if not dummy.isHidden() and (not isinstance(dummy, QDockWidget) or not dummy.isFloating())}
+        placed = _placed(self.shadow)
+        return {real: placed[dummy] for real, dummy in self.copies.items() if dummy in placed}
 
     def close(self) -> None:
         # Out of the window's children at once: QMainWindow.restoreState looks its panels up by object name among
@@ -270,10 +307,19 @@ class Reflow(QWidget):
         self.animation.finished.connect(self._settled)
         self.hold_open = False
         self.drag = None                    # the DockDrag holding this layer open, if any
+        self.lift = None                    # the carried picture of the panel dragged, kept above this layer
         self.generation = 0
         motion._RESPONSIVE.add(self)
         self.show()
         self.raise_()
+
+    def card_rect(self, rect: QRect) -> QRect:
+        """The card drawn in a panel's rectangle: EDGE from the arena's sides, GAP from its top and bottom."""
+        room = self.geometry()
+        return rect.adjusted(EDGE if abs(rect.left() - room.left()) <= 2 else 0,
+                             GAP if abs(rect.top() - room.top()) <= 2 else 0,
+                             -EDGE if abs(rect.right() - room.right()) <= 2 else 0,
+                             -GAP if rect.bottom() >= room.bottom() - 2 else 0)
 
     def rectangles(self) -> dict[QWidget, QRect]:
         t = self.progress
@@ -285,7 +331,7 @@ class Reflow(QWidget):
         return result
 
     def retarget(self, ends: dict[QWidget, QRect], *, edge: str = 'right', preview=None,
-                 hold: bool = False) -> None:
+                 hold: bool = False, ms: int = Motion.FAST) -> None:
         self.starts = self.rectangles()
         self.animation.stop()
         self.hold_open = hold
@@ -296,15 +342,22 @@ class Reflow(QWidget):
         self.hide()
         for widget, end in ends.items():
             if widget not in self.pictures:
+                if widget.visibleRegion().isEmpty():
+                    continue                # a tab behind another: nothing of it to show
                 self.pictures[widget] = motion.picture(widget)
                 self.inners[widget] = widget.card_rect() if isinstance(widget, CardDock) else widget.contentsRect()
                 self.starts[widget] = _collapsed(end, edge)
         self.show()
         self.raise_()
+        if self.lift is not None:
+            if shiboken6.isValid(self.lift) and not self.lift.isHidden():
+                self.lift.raise_()          # the carried picture stays over the cards
+            else:
+                self.lift = None
         self.ends = {widget: QRect(ends.get(widget, _collapsed(start, edge)))
                      for widget, start in self.starts.items()}
         self.progress = 0.0
-        self.animation.setDuration(0 if motion.reduced() else Motion.FAST)
+        self.animation.setDuration(0 if motion.reduced() else ms)
         self.animation.start()
 
     def _step(self, value) -> None:
@@ -329,14 +382,7 @@ class Reflow(QWidget):
         tokens = theme.tokens if theme is not None else default_tokens()
         p.fillRect(self.geometry(), QColor(tokens['window']))
         positions = self.rectangles()
-
-        def card_rect(rect):
-            room = self.geometry()
-            return rect.adjusted(EDGE if abs(rect.left() - room.left()) <= 2 else 0,
-                                 GAP if abs(rect.top() - room.top()) <= 2 else 0,
-                                 -EDGE if abs(rect.right() - room.right()) <= 2 else 0,
-                                 -GAP if rect.bottom() >= room.bottom() - 2 else 0)
-
+        card_rect = self.card_rect
         for widget, rect in positions.items():
             if widget is self.preview_source or rect.width() <= 0 or rect.height() <= 0:
                 continue
@@ -372,6 +418,134 @@ class Reflow(QWidget):
                        self.preview_source.windowTitle())
 
 
+class Lift(QWidget):
+    """The card taken by the pointer (R312): its picture, carried from the point it was taken at, a little larger
+    than it lay and a touch translucent (lifted; no shadow, the system draws none). Between two pointer moves only
+    this widget moves: no style, no layout of the window is touched. At the end it flies into the slot it was
+    given, back to its size, and dissolves into the real card there; cancelled, it flies home the same way."""
+
+    SCALE = 1.03                            # carried: a little larger than it lay
+    OPACITY = 0.94                          # carried: the floor shows a little through it
+
+    def __init__(self, window: QMainWindow, dock: QDockWidget, grip: QPoint):
+        super().__init__(window)
+        self.host = window
+        self.setObjectName('dock-lift')
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.picture = motion.picture(dock)
+        self.inner = dock.card_rect() if isinstance(dock, CardDock) else dock.contentsRect()  # the card, in the picture
+        self.home = QRect(self.inner.translated(dock.pos()))       # the card in the window, where it was taken
+        self.frame = QRect(self.home)                               # the card now, at scale 1
+        self.grip = window.mapFromGlobal(grip) - self.home.topLeft()     # the point taken, in the card's pixels
+        self.scale = 1.0
+        self.opacity = 1.0
+        self.cached = None                  # the picture at the carried scale, made once the lift has settled
+        self.run = None                     # (frame from, frame to, scale from, to, opacity from, to, then)
+        self.animation = QVariantAnimation(self)
+        self.animation.setStartValue(0.0)
+        self.animation.setEndValue(1.0)
+        self.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self.animation.valueChanged.connect(lambda value: self._apply(float(value)))
+        self.animation.finished.connect(self._finished)
+        motion._RESPONSIVE.add(self)
+        self._place()
+        self.show()
+        self.raise_()
+        self._tween(self.frame, self.SCALE, self.OPACITY, Motion.FAST)
+
+    def follow(self, point: QPoint) -> None:
+        """The pointer at `point` (the window's pixels): the card keeps the point it was taken at under it."""
+        delta = point - self.grip - self.frame.topLeft()
+        if delta.isNull():
+            return
+        self.frame.translate(delta)
+        if self.run is not None:            # the rise goes on where the pointer is
+            self.run[0].translate(delta)
+            self.run[1].translate(delta)
+        self._place()
+
+    def fly(self, slot: QRect, then: Callable[[], None] | None = None) -> None:
+        """Into `slot` (the window's pixels), back to its size and whole; `then()` once there."""
+        self._tween(slot, 1.0, 1.0, Motion.CAREFUL, then)
+
+    def dissolve(self) -> None:
+        self._tween(self.frame, self.scale, 0.0, Motion.NORMAL, self._gone)
+
+    def _gone(self) -> None:
+        self.hide()
+        self.deleteLater()
+
+    def _tween(self, frame: QRect, scale: float, opacity: float, ms: int, then=None) -> None:
+        self.animation.stop()
+        self.run = [QRect(self.frame), QRect(frame), self.scale, scale, self.opacity, opacity, then]
+        if ms <= 0 or motion.reduced():
+            self._apply(1.0)
+            self._finished()
+            return
+        self.animation.setDuration(ms)
+        self.animation.start()
+
+    def _apply(self, t: float) -> None:
+        run = self.run
+        if run is None:
+            return
+        self.frame = QRect(*(round(a + (b - a) * t) for a, b in zip(run[0].getRect(), run[1].getRect(), strict=True)))
+        self.scale = run[2] + (run[3] - run[2]) * t
+        self.opacity = run[4] + (run[5] - run[4]) * t
+        self._place()
+        self.update()
+
+    def _finished(self) -> None:
+        run, self.run = self.run, None
+        if run is None:
+            return
+        if self.scale == self.SCALE and self.cached is None:
+            # the carried picture scaled once: every move then blits it (fluid on the 4K, no transform a frame)
+            self.cached = self.picture.scaled(self.picture.size() * self.SCALE, Qt.AspectRatioMode.IgnoreAspectRatio,
+                                              Qt.TransformationMode.SmoothTransformation)
+            self.cached.setDevicePixelRatio(self.picture.devicePixelRatio())
+            self.update()
+        if run[6] is not None:
+            run[6]()
+
+    def _place(self) -> None:
+        s = self.scale
+        corner = self.frame.topLeft() + self.grip - QPoint(round(self.grip.x() * s), round(self.grip.y() * s))
+        self.setGeometry(corner.x(), corner.y(), round(self.frame.width() * s), round(self.frame.height() * s))
+
+    def refresh_motion(self) -> None:
+        if motion.reduced() and self.run is not None:
+            self.animation.stop()
+            self._apply(1.0)
+            self._finished()
+
+    def paintEvent(self, event) -> None:
+        theme = getattr(self.host, 'theme', None)
+        tokens = theme.tokens if theme is not None else default_tokens()
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        p.setOpacity(self.opacity)
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5), Radius.CARD, Radius.CARD)
+        p.fillPath(path, QColor(tokens['panel']))
+        p.setPen(QPen(QColor(tokens['card_line']), 1.0))
+        p.drawPath(path)
+        p.setClipPath(path)
+        s = self.scale
+        # the content at its real size from the card's top left corner, clipped to what the card held: never
+        # stretched into a slot of another size, and never the floor grabbed around the card
+        content = QRect(1, 1, round(self.inner.width() * s) - 2, round(self.inner.height() * s) - 2)
+        p.setClipRect(content, Qt.ClipOperation.IntersectClip)
+        if self.cached is not None and s == self.SCALE:
+            p.drawPixmap(QPoint(-round(self.inner.x() * s), -round(self.inner.y() * s)), self.cached)
+        else:
+            p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+            p.scale(s, s)
+            p.drawPixmap(-self.inner.topLeft(), self.picture)
+
+
 def _covered(window: QMainWindow) -> bool:
     """A page over the cards (File, an entrance playing over it): the change happens under it and there is
     nothing to show; a layer raised over it would cut the page into the cards' pictures. A small overlay, such as
@@ -381,7 +555,7 @@ def _covered(window: QMainWindow) -> bool:
     siblings = [child for child in window.children() if isinstance(child, QWidget)]
     top = max((i for i, widget in enumerate(siblings) if widget in shown), default=-1)
     for widget in siblings[top + 1:]:
-        if isinstance(widget, Reflow) or widget.isWindow() or not widget.isVisible():
+        if isinstance(widget, (Reflow, Lift)) or widget.isWindow() or not widget.isVisible():
             continue
         over = widget.geometry().intersected(room)
         if over.width() * over.height() * 2 >= room.width() * room.height():
@@ -409,14 +583,17 @@ def reflow(window: QMainWindow, change: Callable, *, edge: str = 'right') -> Ref
     def settle():
         if layer.generation != generation:
             return
-        ends = {widget: QRect(widget.geometry()) for widget in cards(window) if _docked(widget)}
-        layer.retarget(ends, edge=edge)
+        layer.retarget(_placed(window), edge=edge)
 
     motion.after_work(layer, settle)
     return layer
 
 
 def target_at(window: QMainWindow, source: QDockWidget, point: QPoint) -> DockTarget | None:
+    """Where a drop at `point` (the window's pixels) would put `source`: a band Space.XXL wide along the arena's
+    sides docks it at that side; a panel under the point takes it beside itself (its outer quarters) or as a tab
+    (its middle). The central widget is never a destination (R312): over it, outside the window's bands, there is
+    nothing to answer."""
     room = arena(window)
     if not room.contains(point):
         return None
@@ -440,24 +617,20 @@ def target_at(window: QMainWindow, source: QDockWidget, point: QPoint) -> DockTa
             return DockTarget(area, anchor, tab=True)
         return DockTarget(area, anchor, Qt.Orientation.Horizontal if side in ('left', 'right')
                           else Qt.Orientation.Vertical, before=side in ('left', 'top'))
-    centre = window.centralWidget()
-    if centre is not None and centre.geometry().contains(point):
-        r = centre.geometry()
-        sides = ((point.x() - r.left(), Qt.DockWidgetArea.LeftDockWidgetArea),
-                 (r.right() - point.x(), Qt.DockWidgetArea.RightDockWidgetArea),
-                 (point.y() - r.top(), Qt.DockWidgetArea.TopDockWidgetArea),
-                 (r.bottom() - point.y(), Qt.DockWidgetArea.BottomDockWidgetArea))
-        distance, area = min(sides, key=lambda pair: pair[0])
-        if distance < Space.XXXL * 2 and source.allowedAreas() & area:
-            return DockTarget(area)
     return None
 
 
 _CANCEL = (QEvent.Type.WindowDeactivate, QEvent.Type.Hide, QEvent.Type.DevicePixelRatioChange)
 
 
+
+
 class DockDrag(QObject):
-    """Title dragging with an exact target and animated neighbouring card geometry."""
+    """Title dragging (R312). The card taken is carried by the pointer as a picture (Lift) while the live panels
+    stay as they are under the motion layer. A drop zone answers only after the pointer dwelt on it (Motion.DWELL):
+    then the panels in its way slide aside and the slot shows; left, they slide back. The drop goes where the slot
+    is shown, never where the pointer passed too briefly to be answered: released, the picture flies into the
+    slot and dissolves into the real card; Esc, or a release where there is no zone, flies it home."""
 
     def __init__(self, dock: QDockWidget, title: QWidget):
         super().__init__(title)
@@ -465,8 +638,14 @@ class DockDrag(QObject):
         self.origin = None
         self.solver = None
         self.layer = None
-        self.target = None
+        self.lift = None
+        self.target = None                  # the zone shown, where a release would go
+        self.pending = None                 # the zone under the pointer, waiting its dwell
+        self.waiting = False
         self.last_point = None
+        self.dwell = QTimer(self)
+        self.dwell.setSingleShot(True)
+        self.dwell.timeout.connect(self._dwelt)
         title.installEventFilter(self)
 
     def eventFilter(self, obj, event) -> bool:
@@ -485,8 +664,10 @@ class DockDrag(QObject):
         if obj is not self.title:
             return False
         if kind == QEvent.Type.MouseButtonPress and event.button() == Qt.MouseButton.LeftButton:
-            if self.dock.isFloating() or not self.dock.features() & QDockWidget.DockWidgetFeature.DockWidgetMovable:
-                return False
+            window = self.dock.parentWidget()
+            if (self.dock.isFloating() or not self.dock.features() & QDockWidget.DockWidgetFeature.DockWidgetMovable
+                    or (isinstance(window, QMainWindow) and window.centralWidget() is self.dock)):
+                return False                # the central card is never dragged (R312)
             self.origin = event.globalPosition().toPoint()
             event.accept()
             return True
@@ -500,18 +681,17 @@ class DockDrag(QObject):
                 if not isinstance(window, QMainWindow) or self.dock.isFloating():
                     self.origin = None
                     return False
-                self.solver = LayoutPreview(window, self.dock)
-                self.layer = Reflow(window)
-                self.layer.hold_open = True
-                self.layer.drag = self
-                QApplication.instance().installEventFilter(self)
-                self.title.grabMouse()
+                self._take(window)
             window = self.dock.parentWidget()
-            target = target_at(window, self.dock, window.mapFromGlobal(point))
-            if target != self.target:
-                self.target = target
-                ends = self.solver.solve(target) if target is not None else self.layer.starts
-                self.layer.retarget(ends, preview=self.dock if target is not None else None, hold=True)
+            local = window.mapFromGlobal(point)
+            self.lift.follow(local)         # the only thing that moves with the pointer
+            wanted = target_at(window, self.dock, local)
+            if wanted == self.target:
+                self.waiting, self.pending = False, None
+                self.dwell.stop()
+            elif not self.waiting or wanted != self.pending:
+                self.waiting, self.pending = True, wanted
+                self.dwell.start(Motion.DWELL)
             return True
         if (kind == QEvent.Type.MouseButtonRelease and event.button() == Qt.MouseButton.LeftButton and
                 self.origin is not None):           # a QPoint at the screen's origin is false
@@ -519,32 +699,75 @@ class DockDrag(QObject):
             return True
         return False
 
+    def _take(self, window: QMainWindow) -> None:
+        """The card lifted: the measuring window, the motion layer with the card's home slot, the picture."""
+        self.solver = LayoutPreview(window, self.dock)
+        self.layer = Reflow(window)
+        self.layer.hold_open = True
+        self.layer.drag = self
+        self.lift = Lift(window, self.dock, self.origin)
+        self.layer.lift = self.lift
+        self.layer.retarget(_placed(window), preview=self.dock, hold=True)
+        QApplication.instance().installEventFilter(self)
+        self.title.grabMouse()
+
+    def _dwelt(self) -> None:
+        if self.solver is None or not self.waiting:
+            return
+        self.target, self.pending, self.waiting = self.pending, None, False
+        window = self.dock.parentWidget()
+        ends = self.solver.solve(self.target) if self.target is not None else _placed(window)
+        self.layer.retarget(ends, preview=self.dock, hold=True, ms=Motion.CAREFUL)
+
     def finish(self, cancel: bool = False) -> None:
         origin, self.origin = self.origin, None
         if self.solver is None:
             return
+        self.dwell.stop()
+        self.waiting, self.pending = False, None
         QApplication.instance().removeEventFilter(self)
         self.title.releaseMouse()
-        window = self.dock.parentWidget()
-        self.layer.hold_open = False
-        self.layer.drag = None
-        self.layer.preview_source = None
-        if not cancel and self.target is not None:
-            # Finish from the visible preview rectangles to the committed layout.
-            reflow(window, lambda: apply_target(window, self.dock, self.target))
+        window, dock = self.dock.parentWidget(), self.dock
+        layer, lift, target, solver = self.layer, self.lift, self.target, self.solver
+        self.solver = self.layer = self.lift = self.target = None
+        layer.drag = None
+        if not cancel and target is not None:
+            slot = layer.card_rect(layer.ends.get(dock, layer.preview_rect))
+
+            def land():
+                # the layout changes only now, under the picture come to rest: the layer then goes from the slot
+                # to the committed layout (the same rectangles, solved on a copy) and the picture dissolves
+                if shiboken6.isValid(window) and shiboken6.isValid(layer):
+                    layer.hold_open = False
+                    reflow(window, lambda: commit_target(window, dock, target))
+                if shiboken6.isValid(lift):
+                    lift.dissolve()
+
+            lift.fly(slot, land)
         elif (not cancel and self.last_point is not None and
               not window.rect().contains(window.mapFromGlobal(self.last_point)) and
-              self.dock.features() & QDockWidget.DockWidgetFeature.DockWidgetFloatable):
-            offset = origin - self.dock.mapToGlobal(QPoint())
+              dock.features() & QDockWidget.DockWidgetFeature.DockWidgetFloatable):
+            offset = origin - dock.mapToGlobal(QPoint())
+            layer.hold_open = False
+            layer.preview_source = None
 
             def float_dock():
-                self.dock.setFloating(True)
-                self.dock.move(self.last_point - offset)
-                self.dock.show()
+                dock.setFloating(True)
+                dock.move(self.last_point - offset)
+                dock.show()
 
+            lift.dissolve()
             reflow(window, float_dock)
         else:
-            ends = {widget: QRect(widget.geometry()) for widget in cards(window) if _docked(widget)}
-            self.layer.retarget(ends)
-        self.solver.close()
-        self.solver = self.layer = self.target = None
+            resting = _placed(window)
+            layer.retarget(resting, preview=dock, hold=True, ms=Motion.CAREFUL)      # the cards back home
+
+            def home():
+                if shiboken6.isValid(layer):
+                    layer.hold_open = False
+                    layer.retarget(resting)         # the card's picture back in its slot, then the layer goes
+                if shiboken6.isValid(lift):
+                    lift.dissolve()
+
+            lift.fly(layer.card_rect(resting[dock]), home)
+        solver.close()

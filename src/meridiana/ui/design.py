@@ -185,6 +185,10 @@ class Motion:
     QUICK = 130         # Meridio's bubble goes (Daniel, 25/10/2026: «130 ms»; his slide is his own, 320, R155)
     NORMAL = 180        # a page changes, a section opens
     SLOW = 240          # something large moves (a panel slides), the 3D camera glides to a view
+    CAREFUL = 360       # a delicate movement: the cards making room for a panel carried over them, the panel
+                        # settling into its slot (R312: «un po' di lentezza nelle animazioni»)
+    DWELL = 280         # a wait, not a movement: a drop zone answers the panel carried over it only after it;
+                        # passing over the cards does not make them dance (R312). Kept with less motion
 
     @staticmethod
     def of(ms: int, reduced: bool) -> int:

@@ -430,6 +430,7 @@ class DockMotion(unittest.TestCase):
         QTest.mouseMove(title, title.mapFromGlobal(point))
         drag = source.drag_motion
         self.assertIsNotNone(drag.solver)
+        self.assertTrue(_setup.wait_until(self.app, lambda: not drag.waiting, 3))      # the zone's dwell (R312)
         target, preview = drag.target, dict(drag.layer.ends)
         QTest.mouseRelease(title, Qt.MouseButton.LeftButton, pos=title.mapFromGlobal(point))
         self.assertTrue(self._no_live_layer())
@@ -487,6 +488,7 @@ class DockMotion(unittest.TestCase):
         QTest.mousePress(title, Qt.MouseButton.LeftButton, pos=title.rect().center())
         for widget in (self.docks[0], anchor):                              # two targets, two measuring windows
             QTest.mouseMove(title, title.mapFromGlobal(widget.mapToGlobal(widget.rect().center())))
+            self.assertTrue(_setup.wait_until(self.app, lambda: not source.drag_motion.waiting, 3))
         QTest.mouseRelease(title, Qt.MouseButton.LeftButton,
                            pos=title.mapFromGlobal(anchor.mapToGlobal(anchor.rect().center())))
         self.host.restoreState(state)
