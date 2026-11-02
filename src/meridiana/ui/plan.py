@@ -1936,6 +1936,12 @@ class PlanView(QGraphicsView):
         self.pitch_card = {"field": "depth", "tilt": None, "ridge": None, "eave": None, "swapped": False}
         self.ridge_typed = None
 
+    def _roof_draft_open(self) -> bool:
+        """Something of a pitch or a ridge being drawn is in hand: points, a value written, a field changed."""
+        card = self.pitch_card or {}
+        return bool(getattr(self, "pitch_points", None)) or self.ridge_typed is not None or any(
+            card.get(k) is not None for k in ("tilt", "ridge", "eave")) or bool(card.get("swapped"))
+
     def _rect_now(self) -> bool:
         """Three clicks make a rectangle: R in the drawing tools; in the Pitch tool always, its eave and then its
         depth, unless R asked for its corners one by one (R274)."""
@@ -3333,9 +3339,12 @@ class PlanView(QGraphicsView):
             if key == Qt.Key.Key_Escape:
                 if self.typed:
                     self.typed = ""
-                else:
+                elif self.row_start is not None:
                     self.row_start = None
                     self.snapper.reset()
+                else:                       # nothing in hand: back to Select (Daniel, 02/11/2026)
+                    self.toolLeft.emit()
+                    return
                 self.viewport().update()
                 return
         if self.tool in DRAWING or self.tool == "measure":
@@ -3358,10 +3367,13 @@ class PlanView(QGraphicsView):
             if key == Qt.Key.Key_Escape:
                 if self.typed:
                     self.typed = ""
-                else:
+                elif self.chain or self.measure or self._roof_draft_open():
                     self.chain, self.measure = [], []
                     self.snapper.reset()
                     self._reset_roof_draft()
+                else:                       # nothing in hand: Esc leaves the tool, back to Select (Daniel, 02/11/2026)
+                    self.toolLeft.emit()
+                    return
                 self.viewport().update()
                 return
         if self.strings_mode and self.draft is None and key == Qt.Key.Key_Escape and self.chosen_string >= 0:
