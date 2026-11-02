@@ -68,6 +68,30 @@ class Annex(unittest.TestCase):
         self.assertIn(16, [a.number for a in vvf.search("infiammabilita solventi")])   # «infiammabilità»
         self.assertEqual(vvf.search(""), [])
         self.assertEqual(vvf.search("di e con"), [])
+        self.assertEqual(vvf.search("attività 71")[0].number, 71)
+        self.assertEqual(vvf.search("gruppo elettrogeno")[0].number, 49)      # the singular finds the plural
+        self.assertEqual(vvf.search("ufficio")[0].number, 71)
+        self.assertEqual({a.number for a in vvf.search("autorimessa")[:2]}, {59, 75})
+        self.assertIn(70, [a.number for a in vvf.search("deposito 10.000 m²")])
+        self.assertNotIn(10, [a.number for a in vvf.search("deposito 10.000 m²")[:1]])    # a measure is no number
+        self.assertEqual(vvf.search("10.000 m²"), [])
+        self.assertEqual(vvf.search("data center")[0].number, 64)
+
+    def test_the_index_has_every_activity_and_fits_one_answer_of_a_tool(self):
+        lines = vvf.index()
+        self.assertEqual(len(lines), 80)
+        self.assertTrue(lines[48].startswith("49. "))
+        self.assertLess(len("".join(lines)), 5000)
+
+    def test_a_choice_in_the_list_keeps_the_switch_and_the_category_coherent(self):
+        self.assertEqual(vvf.shown(False, 0), 0)
+        self.assertEqual(vvf.shown(True, 0), vvf.NOT_SPECIFIED)                 # a project before format 24
+        self.assertEqual(vvf.shown(True, 49), 49)
+        self.assertEqual(vvf.chosen(49, "B"), {"subject": True, "activity": 49, "category": "B"})
+        self.assertEqual(vvf.chosen(70, "A"), {"subject": True, "activity": 70, "category": ""})   # 70 has no A
+        self.assertEqual(vvf.chosen(57), {"subject": True, "activity": 57, "category": "C"})       # 57 has C alone
+        self.assertEqual(vvf.chosen(0, "B"), {"subject": False, "activity": 0, "category": ""})
+        self.assertEqual(vvf.chosen(vvf.NOT_SPECIFIED, "B"), {"subject": True, "activity": 0, "category": "B"})
 
     def test_as_dict_gives_the_categories_and_the_page(self):
         d = vvf.as_dict(vvf.activity(49))

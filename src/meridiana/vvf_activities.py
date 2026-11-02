@@ -500,30 +500,43 @@ def _haystack(a: Activity) -> str:
 
 
 _STOP = {"di", "del", "della", "dei", "delle", "e", "ed", "o", "il", "la", "le", "lo", "gli", "i", "un", "una", "per",
-         "con", "in", "a", "da", "al", "alla", "che", "the", "of", "and", "or", "for", "with"}
+         "con", "in", "a", "da", "al", "alla", "che", "the", "of", "and", "or", "for", "with", "attivita", "soggetta",
+         "soggette", "soggetto", "numero", "n", "non"}
 
 
-def search(query: str, limit: int = 8) -> list[Activity]:
-    """The activities that match `query`: a number gives that activity, words the ones whose text, label or
-    categories hold most of them (accents and case ignored; a word matches the start of a word of the text, so
-    «deposit» finds «depositi»)."""
-    query = str(query or "").strip()
-    found = activity(query) if query.isdigit() else None
-    if found is not None:
-        return [found]
-    words = [w for w in re.findall(r"\w+", _fold(query)) if w not in _STOP and (len(w) > 1 or w.isdigit())]
-    if not words:
-        return []
+def _stem(word: str) -> str:
+    """Enough of an Italian word to find its plural and its singular: «deposito» and «depositi», «ufficio» and
+    «uffici», «autorimessa» and «autorimesse»."""
+    if len(word) > 6 and word.endswith("io"):
+        return word[:-2]
+    return word[:-1] if len(word) > 4 else word
+
+
+def search(query: str) -> list[Activity]:
+    """The activities that match `query`, the best first: a number from 1 to 80 written on its own gives that
+    activity first; the words give the activities whose label, text or categories hold most of them, the label
+    counting double (accents and case ignored; each word matches the start of a word of the text, with its ending
+    left out). Measures such as «10.000 m²» say nothing about what the activity is: they are not searched."""
+    folded = _fold(query or "").strip()
+    numbers = {int(n) for n in re.findall(r"(?<![\w.,])\d{1,2}(?![\w.,]|\s*(?:m|m2|m3|kw|kg|mq)\b)", folded)}
+    measures = re.sub(r"\d[\d.,]*\s*(?:m[²³23]?|kw|kg|mq)?(?!\w)", " ", folded)
+    words = [_stem(w) for w in re.findall(r"[^\W\d_]+", measures) if w not in _STOP and len(w) > 1]
     scored = []
     for a in ACTIVITIES:
-        hay = _haystack(a)
-        score = sum(1 for w in words if re.search(r"(?<!\w)" + re.escape(w), hay))
-        if str(a.number) in words:
-            score += 2
+        hay, label = _haystack(a), _fold(a.short)
+        score = sum(1 + bool(re.search(r"(?<!\w)" + re.escape(w), label)) for w in words
+                    if re.search(r"(?<!\w)" + re.escape(w), hay))
+        if a.number in numbers:
+            score += 100
         if score:
             scored.append((-score, a.number, a))
     scored.sort()
-    return [a for _s, _n, a in scored[:limit]]
+    return [a for _s, _n, a in scored]
+
+
+def index() -> list[str]:
+    """The whole list, one short line per activity: what a reader goes through to find the right word."""
+    return [a.label() for a in ACTIVITIES]
 
 
 NOT_SPECIFIED = -1              # subject to control, the activity not chosen (the projects before format 24)
@@ -554,4 +567,4 @@ def as_dict(a: Activity) -> dict:
     """An activity for a reader that is not Python (Meridio's tool): number, texts and categories, its page."""
     return {"number": a.number, "label": a.short, "text": a.text, "threshold": a.threshold or "tutte (nessuna soglia)",
             "categories": {c: a.category_text(c) for c in a.categories()},
-            "source": f"{SOURCE}, p. {a.page}"}
+            "source": f"DPR 151/2011, Allegato I, GU n. 221 del 22/09/2011, p. {a.page}"}
