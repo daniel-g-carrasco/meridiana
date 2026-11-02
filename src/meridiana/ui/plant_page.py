@@ -30,7 +30,7 @@ from .properties import combo, make_form, spin
 from . import icons, marks
 from .help_box import help_button
 from .theme import mark, symbol_font
-from .design import Button, Icon, Line, Radius, Size, Space, Text, Type, font, free_text, set_text, strong
+from .design import Button, Icon, Layout, Line, Radius, Size, Space, Text, Type, font, free_text, set_text, strong
 from .style import Group
 from .sections import SectionDelegate
 
@@ -219,7 +219,8 @@ class PlantPage(QWidget):
         super().__init__(parent)
         self.actions = actions
         box = QVBoxLayout(self)
-        box.setContentsMargins(Space.S, Space.S, Space.S, Space.S)     # the plan off the card's line (R77)
+        pad = Layout.PAD + Line.HAIR                # the plan as far from the card as in the Modelling (QSplitter: padding and line)
+        box.setContentsMargins(pad, pad, pad, pad)
         box.setSpacing(Space.S)
         self.page_box = box
         # the strip of the strings: in the bar of the phase, at the right of its tools (R70), or on top of the page
