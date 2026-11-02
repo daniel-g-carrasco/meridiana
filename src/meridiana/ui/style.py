@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPointF, QRect, QRectF, QSize, Qt, QTimer, QVariantAnimation, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QGroupBox, QMenu, QProxyStyle, QStyle, QStyleFactory, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (QGroupBox, QHBoxLayout, QMenu, QProxyStyle, QStyle, QStyleFactory, QVBoxLayout,
+                               QWidget)
 
 from .. import theme_colors
 from .checkboxes import CheckboxStyle
@@ -148,6 +149,62 @@ def _watch_fields(owner) -> None:
         return False
 
     events().on((QEvent.Type.Polish,), owner, polished)
+
+
+class EmptyState(QWidget):
+    """What a card says while it has nothing to show (R321, Daniel 02/11/2026: the report's «Calcola la producibilità
+    per vedere la relazione...» stood half way down a blank card, against its left edge): the words in the middle
+    of the card, in the catalogue's secondary text, in a column no wider than reading asks (`Size.READING`), the
+    card's margins around them, and below them the command that fills the card when there is one («Calcola»).
+    One for every empty card: the report's preview and every chart (`charts.Chart.message`). `text()` and
+    `setText()` as a label's."""
+
+    def __init__(self, text: str = "", parent=None):
+        from PySide6.QtWidgets import QLabel, QPushButton, QSizePolicy
+        from .design import Size, Text, set_text
+        super().__init__(parent)
+        self.setObjectName("empty-state")
+        box = QVBoxLayout(self)
+        box.setContentsMargins(Space.XL, Space.L, Space.XL, Space.L)
+        box.setSpacing(Space.M)
+        box.addStretch(1)
+        self.words = set_text(QLabel(text), Text.SECONDARY)
+        self.words.setObjectName("empty-state-text")
+        self.words.setWordWrap(True)
+        self.words.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.words.setMaximumWidth(Size.READING)
+        # as wide as the card lets it, up to the reading width, between two stretches (an alignment flag instead
+        # makes a wrapped label take Qt's guess of its width: a narrow column of three lines)
+        self.words.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        row = QHBoxLayout()
+        row.addStretch(1)
+        row.addWidget(self.words, 100)
+        row.addStretch(1)
+        box.addLayout(row)
+        self.button = QPushButton()
+        self.button.hide()
+        self.button.clicked.connect(self._run)
+        box.addWidget(self.button, 0, Qt.AlignmentFlag.AlignHCenter)
+        box.addStretch(1)
+        self._action = None
+
+    def text(self) -> str:
+        return self.words.text()
+
+    def setText(self, text: str) -> None:
+        self.words.setText(text)
+
+    def set_action(self, action=None, text: str = "") -> None:
+        """The command below the words (a QAction: its words without the accelerator, or `text`); none hides it."""
+        self._action = action
+        if action is not None:
+            from .. import shortcuts
+            self.button.setText(text or shortcuts.plain(action.text()))
+        self.button.setVisible(action is not None)
+
+    def _run(self) -> None:
+        if self._action is not None and self._action.isEnabled():
+            self._action.trigger()
 
 
 _FOLDED: dict[str, bool] = {}   # the groups closed in this session, by kind (their help id, else their title)

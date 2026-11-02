@@ -184,10 +184,12 @@ class ReportPage(QWidget):
         box.addWidget(self.status)
         self.preview = Preview()
         box.addWidget(self.preview, 1)
-        self.empty = _note(_("Compute the production to see the report: its chapters are made of the results."))
-        self.empty.setContentsMargins(Space.XL, Space.L, Space.XL, 0)
-        self.empty.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        box.addWidget(self.empty)
+        # the empty state of every card (ui/style.EmptyState, R321): in the middle, with the command that fills it
+        from .style import EmptyState
+        self.empty = EmptyState(_("Compute the production to see the report: its chapters are made of the results."))
+        if actions.get("compute") is not None:
+            self.empty.set_action(actions["compute"])
+        box.addWidget(self.empty, 1)
         self.set_ready(False)
 
     def set_ready(self, ready: bool) -> None:
