@@ -745,7 +745,8 @@ class Assistant(QFrame):
         self.stop_action.setToolTip(_("Stop the answer"))
         self.stop_action.triggered.connect(self.stop)
         self.stop_action.setVisible(False)
-        attach_row = QHBoxLayout()
+        self.attach_row = QWidget(self.chat_content)        # «Attach…» and «Show Meridio what I see»
+        attach_row = QHBoxLayout(self.attach_row)
         attach_row.setContentsMargins(0, 0, 0, 0)
         attach_row.setSpacing(Space.S)
         self.attach_button = QPushButton(_("Attach…"))
@@ -765,7 +766,7 @@ class Assistant(QFrame):
         self.view_button.clicked.connect(self.viewRequested)
         self.view_button.hide()                             # shown when a window is behind him (Chat)
         attach_row.addWidget(self.view_button)
-        inside.addLayout(attach_row)
+        inside.addWidget(self.attach_row)
         inside.addWidget(self.field)
         self.field.setAcceptDrops(True)
         self.conversation.setAcceptDrops(True)
