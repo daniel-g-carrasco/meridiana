@@ -34,31 +34,11 @@
 #let shown-page(p) = p + attachments-before(p)
 #let total-pages() = counter(page).final().first() + D.attachments.map(a => a.pages).sum(default: 0)
 
-// the marks of the results, drawn: no font is asked for them
+// the marks of the results, drawn: no font is asked for them. The same flat symbols as the window's (R330): the
+// tracks come from data.json (meridiana/symbol_shapes.py), the colour is the report's own, the sign white on it
 #let mark(level, size: 8.2pt) = {
-  let c = colours.at(level, default: colours.info)
-  let s = size
-  let w = (paint: white, thickness: s * 0.14, cap: "round", join: "round")
-  box(width: s, height: s, baseline: 12%, {
-    if level == "warn" {
-      place(polygon(fill: c, stroke: (paint: c, thickness: s * 0.1, join: "round"),
-        (s * 0.5, s * 0.06), (s * 0.97, s * 0.92), (s * 0.03, s * 0.92)))
-      place(line(start: (s * 0.5, s * 0.36), end: (s * 0.5, s * 0.62), stroke: w))
-      place(dx: s * 0.5 - s * 0.05, dy: s * 0.72, circle(radius: s * 0.05, fill: white))
-    } else {
-      place(circle(radius: s * 0.5, fill: c))
-      if level == "ok" {
-        place(curve(stroke: w, curve.move((s * 0.27, s * 0.52)), curve.line((s * 0.44, s * 0.68)),
-          curve.line((s * 0.73, s * 0.34))))
-      } else if level == "fail" {
-        place(line(start: (s * 0.32, s * 0.32), end: (s * 0.68, s * 0.68), stroke: w))
-        place(line(start: (s * 0.68, s * 0.32), end: (s * 0.32, s * 0.68), stroke: w))
-      } else {
-        place(line(start: (s * 0.5, s * 0.44), end: (s * 0.5, s * 0.74), stroke: w))
-        place(dx: s * 0.5 - s * 0.05, dy: s * 0.22, circle(radius: s * 0.05, fill: white))
-      }
-    }
-  })
+  let svg = D.marks.at(level, default: D.marks.info).replace("@fill@", colours.at(level, default: colours.info).to-hex())
+  box(width: size, height: size, baseline: 12%, image(bytes(svg), format: "svg", width: size))
 }
 
 // an image no wider than the room it has

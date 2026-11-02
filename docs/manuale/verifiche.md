@@ -4,6 +4,10 @@ Le Verifiche raccolgono ciò che chiede attenzione, da ogni parte del progetto: 
 
 Ogni voce è una frase breve con il suo segno e la sua fonte; la freccia apre il dettaglio (perché, e che cosa fare). Un clic mostra nelle viste l'oggetto di cui parla, con il resto attenuato; un doppio clic porta all'oggetto o alla pagina. Per livello è la vista predefinita; dal menu nella testa si raggruppano per oggetto, per area o «Pronto per la consegna». I filtri «Questa fase» e «Questo oggetto» tengono solo le voci della fase aperta o dell'oggetto selezionato.
 
+## I segni
+
+Ogni livello ha il suo simbolo, lo stesso nel pannello, nell'albero del progetto, sopra la pianta e il 3D, accanto alle stringhe e nella relazione PDF: un cerchio rosso con la sbarra bianca per ciò che è da correggere, un triangolo giallo con il punto esclamativo per ciò che è da controllare, un cerchio blu con la «i» per ciò che è da sapere, un cerchio verde con la spunta per ciò che è superato. Sono piatti, di una tinta sola con il segno bianco sopra, e si leggono su qualunque fondo: la pianta, l'ortofoto, il tema scuro. Non sono mai caratteri di un font; il colore non è l'unico indizio, perché ogni livello ha anche una forma diversa.
+
 ## Da correggere
 
 Qualcosa che la norma o la posa non ammette: il progetto non va consegnato così. Esempi: una posa che non si calcola, una stringa oltre la tensione massima dell'inverter, una connessione monofase sopra 6 kW. «Correggi» fa la modifica proposta (Ctrl+. sulla voce in mano), e Annulla la toglie.

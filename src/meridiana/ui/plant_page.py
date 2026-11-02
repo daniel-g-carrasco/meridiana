@@ -27,14 +27,20 @@ from ..energy import system
 from ..i18n import _, ngettext, number
 from .cards import default_tokens
 from .properties import combo, make_form, spin
-from . import icons, marks
+from . import icons, marks, symbols
 from .help_box import help_button
-from .theme import mark, symbol_font
+from .theme import symbol_font
 from .design import Button, Icon, Layout, Line, Radius, Size, Space, Text, Type, font, free_text, set_text, strong
 from .style import Group
 from .sections import SectionDelegate
 
-MARKS = {"ok": "✔", "check": "⚠", "fail": "✘"}
+# a string's state in the window's symbols (ui/symbols.py): passed, to be checked, to fix
+STATE_SYMBOL = {"ok": "check", "check": "warning", "fail": "stop"}
+
+
+def state_sign(state: str) -> str:
+    """The symbol of a string's state for rich text; nothing for a state that has none."""
+    return symbols.html(STATE_SYMBOL[state]) if state in STATE_SYMBOL else ""
 
 
 def summary(plant) -> str:
@@ -122,7 +128,6 @@ class DraftCard(QFrame):
             self.text, self.symbol_name = "", ""
             self.hide()
             return
-        from . import symbols
         self.symbol_name = {"ok": "check", "short": "warning", "many": "stop"}.get(state, "")
         self.colour = QColor(colour) if colour else QColor()
         self.title.setText(title)
@@ -831,7 +836,7 @@ class InverterList(QWidget):
 
     def _optimizer_row(self, i: int, e: dict) -> QVBoxLayout:
         """The power optimizers of an inverter at a fixed string voltage (task 22): which, how many modules on each,
-        «Optimizers…» to choose them in the catalogue, ✕ to go back to the ones Meridiana proposes."""
+        «Optimizers…» to choose them in the catalogue, the «back» symbol to go back to the ones Meridiana proposes."""
         box = QVBoxLayout()
         box.setSpacing(Space.XXS)
         label = QLabel("")
@@ -858,8 +863,7 @@ class InverterList(QWidget):
             per.setEnabled(per.count() > 1)
             line.addWidget(per)
             back = QToolButton()
-            back.setText("✕")
-            back.setFont(symbol_font(back.font()))
+            back.setIcon(symbols.icon("back"))          # going back to the proposal: the window's «back», no character
             back.setAutoRaise(True)
             back.setToolTip(_("Back to the optimizers Meridiana proposes for the module"))
             back.clicked.connect(lambda _c=False, k=i: self.optimizerCleared.emit(k))
@@ -1495,8 +1499,7 @@ class ChosenString(Group):
         unit = plant.unit(s.inverter)
         where = (f"{plant_model.unit_label(unit)} {unit.name} · {input_name(unit, s.mppt)}" if unit is not None
                  else _("Without an input"))
-        light = f"<span style='color: {states.get(s.state, '')};'>{mark(MARKS.get(s.state, ''))}</span>"
-        self.identity.setText(f"{strong(esc(s.label))} · {esc(where)} {light}")
+        self.identity.setText(f"{strong(esc(s.label))} · {esc(where)} {state_sign(s.state)}")
         power = sum(m[2] for m in s.modules if len(m) > 2 and isinstance(m[2], (int, float))) if s.modules else 0.0
         detail = ngettext("{n} module in series", "{n} modules in series", len(s.modules)).format(n=len(s.modules))
         if power:
@@ -1526,8 +1529,7 @@ class ChosenString(Group):
             row.setTextFormat(Qt.TextFormat.RichText)
             row.setWordWrap(True)
             set_text(row, Text.SECONDARY)
-            sign = (f"<span style='color: {states.get(levels[level], '')};'>{mark(MARKS[levels[level]])}</span> "
-                    if level in levels else "")
+            sign = state_sign(level) + " " if level in levels else ""
             row.setText(sign + esc(text))
             self.rows_box.addWidget(row)
             self.row_widgets.append(row)
@@ -1594,8 +1596,7 @@ class ChosenStrip(QWidget):
                 bar.set(*found[key], states)
         level, remark = worst_row(rows)
         modules = ngettext("{n} module", "{n} modules", len(s.modules)).format(n=len(s.modules))
-        sign = (f"<span style='color: {states.get(level, '')};'>{mark(MARKS[level])}</span> "
-                if level in MARKS else "")
+        sign = state_sign(level) + " " if level in STATE_SYMBOL else ""
         self.remark.setText(f"{html.escape(modules, quote=False)} · {sign}{html.escape(remark, quote=False)}"
                             if remark else html.escape(modules, quote=False))
         self.figures = " · ".join(f"{label} {text}" for _key, label, text, _lo, _hi, _st in bars)

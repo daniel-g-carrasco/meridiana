@@ -24,6 +24,32 @@ from . import motion
 from .design import Line, Motion, Radius, Size, Space
 
 TRACK_AIR = Space.XXS       # the track around the segments
+_TAB = {"down": False, "watched": False}      # the Tab key held, as the application's one filter saw it
+
+
+def _watch_tab() -> None:
+    """Tell the Tab key from a focus handed on: see `by_keys`. On the key events alone (ui/app_events, R120)."""
+    if _TAB["watched"]:
+        return
+    from PySide6.QtWidgets import QApplication
+
+    from .app_events import events
+
+    def key(_obj, event) -> bool:
+        if event.key() in (Qt.Key.Key_Tab, Qt.Key.Key_Backtab):
+            _TAB["down"] = event.type() == QEvent.Type.KeyPress
+        return False
+    _TAB["watched"] = True
+    app = QApplication.instance()
+    events().on((QEvent.Type.KeyPress, QEvent.Type.KeyRelease), app, key)
+    app.destroyed.connect(lambda: _TAB.update(down=False, watched=False))
+
+
+def by_keys(event) -> bool:
+    """The focus reached with the keys: only then its ring shows, in the accent. Qt says «Tab» as well when a widget
+    hidden hands its focus on (a panel closed, a page changed): the ring stayed on the merged cards' tabs with nobody at
+    the keys, so the key itself is asked."""
+    return _TAB["down"] and event.reason() in (Qt.FocusReason.TabFocusReason, Qt.FocusReason.BacktabFocusReason)
 
 
 def tokens() -> dict:
@@ -92,7 +118,7 @@ class Slide(QObject):
         r = self.target()
         if r is None or self.source is None:
             return r
-        if self.animation.state() != QVariantAnimation.State.Running:
+        if self.animation.state() == QVariantAnimation.State.Stopped:
             return QRectF(self.source)
         t, a = float(self.animation.currentValue()), self.source
         return QRectF(a.left() + (r.left() - a.left()) * t, r.top(), a.width() + (r.width() - a.width()) * t, r.height())
@@ -119,6 +145,16 @@ class Segment(QToolButton):
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        self.keyboard = False       # the focus reached with the keys: its ring shows
+        _watch_tab()
+
+    def focusInEvent(self, event) -> None:
+        self.keyboard = by_keys(event)
+        super().focusInEvent(event)
+
+    def focusOutEvent(self, event) -> None:
+        self.keyboard = False
+        super().focusOutEvent(event)
 
     def sizeHint(self) -> QSize:
         return QSize(QFontMetrics(self.font()).horizontalAdvance(self.text()) + 2 * self.PAD + 2, Size.CHIP)
@@ -141,7 +177,7 @@ class Segment(QToolButton):
             p.setPen(Qt.PenStyle.NoPen)
             p.setBrush(QColor(theme_colors.qt_hex(t["press" if self.isDown() else "hover"])))
             p.drawRoundedRect(box, Radius.INNER, Radius.INNER)
-        if self.hasFocus():
+        if self.keyboard:
             p.setRenderHint(QPainter.RenderHint.Antialiasing)
             p.setPen(QPen(QColor(t["accent"]), Line.FOCUS))
             p.setBrush(Qt.BrushStyle.NoBrush)
@@ -176,6 +212,8 @@ class Segments(QFrame):
         self.items: list[Segment] = []
         self.slide = Slide(self, self.selection)
         self.moved = False                          # exclusive: the choice changed since the last click said
+        self.keyboard = False                       # the focus reached with the keys: its ring shows
+        _watch_tab()
         self.fading: Segment | None = None          # not exclusive: the segment whose rectangle comes or goes
         self.fade = QVariantAnimation(self)
         self.fade.setStartValue(0.0)
@@ -245,6 +283,16 @@ class Segments(QFrame):
         self.fading = None
         self.update()
 
+    def focusInEvent(self, event) -> None:
+        self.keyboard = by_keys(event)
+        super().focusInEvent(event)
+        self.update()
+
+    def focusOutEvent(self, event) -> None:
+        self.keyboard = False
+        super().focusOutEvent(event)
+        self.update()
+
     def keyPressEvent(self, event) -> None:
         step = {Qt.Key.Key_Left: -1, Qt.Key.Key_Right: 1}.get(event.key())
         ready = [b for b in self.items if b.isEnabled() and not b.isHidden()]
@@ -262,7 +310,7 @@ class Segments(QFrame):
         p = QPainter(self)
         paint_track(p, QRectF(self.rect()), t)
         if self.exclusive:
-            self.slide.paint(p, t, self.hasFocus())
+            self.slide.paint(p, t, self.keyboard)
             return
         for b in self.items:
             on = b.isChecked()
@@ -282,6 +330,8 @@ class BarTrack(QObject):
         super().__init__(bar)
         self.bar = bar
         self.slide = Slide(bar, self.selection)
+        self.keyboard = False           # the focus reached with the keys: its ring shows
+        _watch_tab()
         bar.setDrawBase(False)
         bar.currentChanged.connect(lambda _i: self.slide.move())
         bar.installEventFilter(self)
@@ -307,13 +357,17 @@ class BarTrack(QObject):
                                                     -TRACK_AIR if i == shown[-1] else 0, -Space.XS)
 
     def eventFilter(self, obj, event) -> bool:
-        if obj is self.bar and event.type() == QEvent.Type.Paint:
+        if obj is self.bar and event.type() == QEvent.Type.FocusIn:
+            self.keyboard = by_keys(event)
+        elif obj is self.bar and event.type() == QEvent.Type.FocusOut:
+            self.keyboard = False
+        elif obj is self.bar and event.type() == QEvent.Type.Paint:
             track = self.track()
             if track is not None:
                 t = tokens()
                 p = QPainter(self.bar)
                 paint_track(p, track, t)
-                self.slide.paint(p, t, self.bar.hasFocus())
+                self.slide.paint(p, t, self.keyboard)
                 p.end()
         return False                    # the bar then paints its tabs, transparent, over them
 
