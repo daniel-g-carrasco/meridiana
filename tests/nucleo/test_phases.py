@@ -25,7 +25,7 @@ class ThePhases(unittest.TestCase):
     def test_the_groups_are_those_of_the_design_without_the_sun_and_the_background(self):
         groups = {p.id: [g.title for g in p.groups] for p in phases.phases()}
         self.assertEqual(groups["model"], ["Edit", "Draw", "Obstacles", "Precision"])         # R277
-        self.assertEqual(groups["plant"], ["Panels", "Inverter", "Storage", "Strings"])
+        self.assertEqual(groups["plant"], ["Edit", "Panels", "Inverter", "Storage", "Strings"])     # R295
         self.assertEqual(groups["production"], ["Computation", "Comparison"])
         self.assertEqual(groups["consumption"], ["Data"])
         self.assertEqual(groups["economics"], ["Computation", "Comparison"])
@@ -123,6 +123,7 @@ class ThePhases(unittest.TestCase):
         lost = {c for cs in before.values() for c in cs} - {c for cs in now.values() for c in cs}
         self.assertEqual(lost, set())
         added = ["tool_ridge", "canopy_layout", "object_3d"]     # R275, R281 and R269, new on the bars
+        added += ["tool_select", "tool_move", "tool_rotate"]     # R295: Edit in the Plant as well
         self.assertEqual(sorted([c for cs in before.values() for c in cs] + added),
                          sorted(c for cs in now.values() for c in cs))
         layout = ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty"]
@@ -131,7 +132,7 @@ class ThePhases(unittest.TestCase):
         model.insert(model.index("tool_ridge") + 1, "tool_exclusion")     # in the Obstacles group
         model.insert(model.index("tool_exclusion") + 1, "object_3d")      # R269, beside it
         self.assertEqual(now["model"], model)
-        self.assertEqual(now["plant"], layout[:3] + ["canopy_layout"] + layout[3:] + before["plant"])
+        self.assertEqual(now["plant"], added[-3:] + layout[:3] + ["canopy_layout"] + layout[3:] + before["plant"])
         for pid in ("production", "consumption", "economics", "report"):
             self.assertEqual(now[pid], before[pid])
 
@@ -141,7 +142,10 @@ class ThePhases(unittest.TestCase):
         self.assertEqual(phases.home("layout_east_west", "model"), "plant")
         self.assertEqual(phases.home("tool_building", "plant"), "model")
         self.assertEqual(phases.home("tool_pitch", "report"), "model")
-        self.assertEqual(phases.home("tool_move", "plant"), "model")
+        for tool in ("tool_move", "tool_rotate"):               # R295: they work on what moves in the Plant
+            self.assertEqual(phases.home(tool, "plant"), "plant")
+            self.assertEqual(phases.home(tool, "model"), "model")
+            self.assertEqual(phases.home(tool, "report"), "model")
         for tool in ("tool_select", "tool_measure"):                # shared by the two phases of the plan
             self.assertEqual(phases.home(tool, "plant"), "plant")
             self.assertEqual(phases.home(tool, "model"), "model")

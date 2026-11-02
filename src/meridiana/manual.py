@@ -289,6 +289,16 @@ def explode(project, sfid: str, rid: str | None = None, result=None) -> Callable
     rows = _hand(project, sfid, result)
     if rid is not None:
         _row(rows, rid)
+    out, made = _exploded(project, sf, rows, rid)
+
+    def change(q):
+        _store(_subfield(q, sfid), out)
+        return made
+    return change
+
+
+def _exploded(project, sf, rows: list[layout.Row], rid: str | None) -> tuple[list[layout.Row], list[str]]:
+    """The rows with those to explode (`rid`, or all) made rows of one place each, and the ids of the new ones."""
     f, size, _p = frame(project, sf, rows)
     halves = 2 if size.east_west else 1
     out: list[layout.Row] = []
@@ -307,11 +317,7 @@ def explode(project, sfid: str, rid: str | None = None, result=None) -> Callable
             number += 1
             out.append(one)
             made.append(one.id)
-
-    def change(q):
-        _store(_subfield(q, sfid), out)
-        return made
-    return change
+    return out, made
 
 
 def turn(project, sfid: str, rid: str, result=None) -> Callable:
@@ -357,6 +363,32 @@ def translate(project, sfid: str, rid: str, dx: float, dy: float, result=None) -
 
     def change(q):
         _store(_subfield(q, sfid), [new if r.id == rid else r for r in rows])
+    return change
+
+
+def _with_key(rows: list[layout.Row], key: str) -> layout.Row | None:
+    """The row one of whose places holds the module `key`."""
+    return next((r for r in rows for slot in range(max(len(r.keys), 2 * r.count)) if r.slot_key(slot) == key), None)
+
+
+def move_module(project, sfid: str, key: str, dx: float, dy: float, result=None) -> Callable:
+    """Move one module `dx` m East and `dy` m North, within its sub-field (R295): its row is exploded where it was and
+    the module's place, a row of one now, moves. The keys stay, so the strings follow; on a place shared with another
+    module (a pair facing east and west) the place moves whole. One that would leave the sub-field is refused."""
+    sf = _subfield(project, sfid)
+    rows = _hand(project, sfid, result)
+    home = _with_key(rows, key)
+    if home is None:
+        raise ValueError(_("this module is not on a row of its sub-field"))
+    alone = _exploded(project, sf, rows, home.id)[0] if home.count > 1 else rows
+    row = _with_key(alone, key)
+    new = layout.Row(row.id, round(row.x + float(dx), DECIMALS), round(row.y + float(dy), DECIMALS), row.azimuth,
+                     list(row.places), list(row.keys), row.turned)
+    if _outside(project, sf, [new]) > _outside(project, sf, [row]) + OUTSIDE_TOLERANCE:
+        raise ValueError(_("a module stays in its sub-field: this would take it out"))
+
+    def change(q):
+        _store(_subfield(q, sfid), [new if r.id == row.id else r for r in alone])
     return change
 
 

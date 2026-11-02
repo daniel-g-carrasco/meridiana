@@ -101,7 +101,13 @@ def phases() -> list[Phase]:
              _("Are the heights consistent with the photo?"))),
         # the work in the order Daniel asked for (R277): the modules, then the inverters, then the storage; the
         # strings close, they need both
+        # Select, Move and Rotate as in the Modelling (R295): here they work on what moves in the Plant, the sub-fields,
+        # the rows and the modules, and they do not change phase
         Phase("plant", 2, _("Plant"), (
+            Group("edit", _("Edit"), (
+                T("tool_select", icon="select"),
+                T("tool_move", _("Move"), icon="move"),
+                T("tool_rotate", _("Rotate"), icon="rotate"))),
             Group("modules", _("Panels"), (
                 T("tool_subfield", icon="subfield"),
                 T("tool_row", _("Row"), icon="row"),
@@ -183,9 +189,9 @@ def by_id(pid: str) -> Phase:
 
 
 # the plan's tools that work wherever the plan is (the Modelling and the Plant, which borrows it): choosing what to
-# edit and measuring never take the designer to another phase (R277)
+# edit, moving it, turning it and measuring never take the designer to another phase (R277, R295)
 PLAN_PHASES = ("model", "plant")
-SHARED_TOOLS = ("tool_select", "tool_measure")
+SHARED_TOOLS = ("tool_select", "tool_move", "tool_rotate", "tool_measure")
 
 
 def home(command: str, current: str) -> str:

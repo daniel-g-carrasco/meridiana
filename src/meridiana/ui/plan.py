@@ -44,6 +44,7 @@ ROW_TOOLS = ("row", "east_west")   # a row drawn by a line: of the sub-field's m
 DRAWING = {"building", "pitch", "ridge", "subfield", "exclusion"}   # ridge: a line, not an outline (R275)
 PITCH_FIELDS = ("depth", "tilt", "ridge", "eave")   # the rows of the Pitch card a number typed goes to (R274)
 MOVABLE = ("building", "subfield", "exclusion", "row", "prop")   # what Move takes (task 16b; a row, task 16c)
+PLANT_MOVABLE = ("subfield", "row", "module")                    # what it takes in the Plant (R295)
 ARROWS = {Qt.Key.Key_Left: "left", Qt.Key.Key_Right: "right", Qt.Key.Key_Up: "up", Qt.Key.Key_Down: "down"}
 LEFT_WAIT_MS = 150             # how long a left press waits for the other button of a gesture (left + right)
 TILE_UPDATE_MS = 120
@@ -520,6 +521,7 @@ class PlanView(QGraphicsView):
         self.ortho = False                 # F8: square to the first side (East and North before it)
         self.rings: dict = {}              # (kind, id) -> the outline drawn, for the sides' measures
         self.edge_pick = None              # (purpose, kind, id, ring) while a side is being picked
+        self.plant_phase = False           # the plan lent to the Plant (set_plant_phase)
         self.point_pick = None             # (purpose, how many, the points so far, the hints) while points are
         self.edge_hover: int | None = None
         # the sides of the selected outline (R276, study 22 3.6): the pill under the pointer, the side lit from the
@@ -1436,6 +1438,9 @@ class PlanView(QGraphicsView):
             if ring:
                 self.rings[(kind, oid)] = ring              # Move takes it as any outline
                 poly = polygon(ring)
+        if key and poly is not None:
+            # Move takes a module on its own in the Plant (R295)
+            self.rings[("module", f"{sf}/{key}")] = [from_scene(q) for q in poly]
         if poly is not None:
             mod = view_colours.kind_colour("module")
             fill = qcolour(mod)
@@ -2044,15 +2049,31 @@ class PlanView(QGraphicsView):
     # Move and Rotate (task 16b, study 16 B): the plan collects the points and the keys, move.Gesture does the sums,
     # the window applies the change as one step
 
+    def set_plant_phase(self, on: bool) -> None:
+        """The plan lent to the Plant (R295): Move and Rotate work on what moves there, the sub-fields, the rows and the
+        modules; a building or an exclusion selected earlier stays where it is."""
+        self.plant_phase = bool(on)
+        self._drop_gesture()
+        self._restyle_selection()
+        if self.tool == "move":
+            self.hint.emit(self._move_hint())
+
+    def _move_thing(self) -> tuple[str, str]:
+        """What Move works on: the selection, or in the Plant the module selected on its own."""
+        if self.plant_phase and self.selected_module[1] and self.selection == ("subfield", self.selected_module[0]):
+            return ("module", "/".join(self.selected_module))
+        return self.selection
+
     def _movable(self) -> bool:
-        kind, oid = self.selection
-        return self.tool == "move" and kind in MOVABLE and (kind, oid) in self.rings
+        kind, oid = self._move_thing()
+        return (self.tool == "move" and kind in (PLANT_MOVABLE if self.plant_phase else MOVABLE)
+                and (kind, oid) in self.rings)
 
     def _gesture(self) -> move.Gesture | None:
         """The gesture on the selection, made when it is first needed."""
         if not self._movable():
             return None
-        kind, oid = self.selection
+        kind, oid = self._move_thing()
         if self.gesture is None or (self.gesture.kind, self.gesture.oid) != (kind, oid):
             project = self.drawn[0] if self.drawn is not None else None
             self.gesture = move.Gesture(kind, oid, self._middle())
@@ -2093,6 +2114,11 @@ class PlanView(QGraphicsView):
 
     def _move_hint(self) -> str:
         if not self._movable():
+            if self.plant_phase and self.rotate_next:
+                return _("Rotate: click a module to turn its sub-field.")
+            if self.plant_phase:
+                return _("Move: click a module to take its row, with Shift the module alone, or the empty part of a "
+                         "sub-field to take the sub-field.")
             return hints()["move"]
         g = self.gesture
         if g is not None and g.mode == "rotate":
@@ -2146,7 +2172,10 @@ class PlanView(QGraphicsView):
         self.move_mods = mods
         scene_pos = self.mapToScene(position.toPoint())
         if not self._movable():
-            kind, oid, _key = self._pick(scene_pos, PICK_PX)
+            kind, oid, key = self._pick(scene_pos, PICK_PX)
+            if self.plant_phase:
+                self._plant_move_pick(kind, oid, key, mods)
+                return
             if kind == "module":
                 kind = "subfield"
             elif kind == "pitch":
@@ -2172,6 +2201,28 @@ class PlanView(QGraphicsView):
             self.viewport().update()
             return
         self._apply_gesture(mods)
+
+    def _plant_move_pick(self, kind: str, oid: str, key: str, mods: set) -> None:
+        """A click in Move in the Plant with nothing to move yet (R295): a module takes its row, with Shift itself; with
+        Rotate its sub-field, the one thing that turns here; a sub-field where there is no module takes itself."""
+        rid = self.rid_of(oid, key) if kind == "module" else ""
+        if kind == "module" and "shift" in mods and not self.rotate_next:
+            self.selected_module = (oid, key)
+            self.selection = ("subfield", oid)
+            self._restyle_selection()
+            self.moduleClicked.emit(oid, key)
+            self.hint.emit(self._move_hint())
+            return
+        if kind == "module":
+            kind, oid = ("row", f"{oid}/{rid}") if rid and not self.rotate_next else ("subfield", oid)
+        if kind not in PLANT_MOVABLE:
+            self.hint.emit(self._move_hint())
+            return
+        self.selected_module = ("", "")
+        self.selection = (kind, oid)
+        self._restyle_selection()
+        self.picked.emit(kind, oid)
+        self.hint.emit(self._move_hint())
 
     def _transform_now(self) -> dict | None:
         """What the gesture would do with the pointer where it is: the move or the turn, as the window takes it."""
@@ -2255,7 +2306,7 @@ class PlanView(QGraphicsView):
             return False
         if key in ARROWS:
             dx, dy = move.nudge(ARROWS[key], mods)
-            kind, oid = self.selection
+            kind, oid = self._move_thing()
             self.transformRequested.emit(kind, oid, {"mode": "move", "dx": dx, "dy": dy, "copy": False,
                                                      "nudge": True})
             return True
@@ -2293,16 +2344,17 @@ class PlanView(QGraphicsView):
         of its northernmost side) one that turns it."""
         if not self._movable():
             return {}
-        ring = self.rings[self.selection]
+        ring = self.rings[self._move_thing()]
         sides_ = list(zip(ring, ring[1:] + ring[:1], strict=True))
         a, b = max(sides_, key=lambda s: (s[0][1] + s[1][1], -(s[0][0] + s[1][0])))
         return {"move": self._middle(), "rotate": ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)}
 
     def _middle(self) -> tuple[float, float]:
         """The middle of the selection (move.centre), or of its corners when the project drawn is not at hand."""
-        ring = self.rings[self.selection]
+        thing = self._move_thing()
+        ring = self.rings[thing]
         project = self.drawn[0] if self.drawn is not None else None
-        found = move.centre(project, *self.selection) if project is not None else None
+        found = move.centre(project, *thing) if project is not None and thing[0] != "module" else None
         return found or (sum(q[0] for q in ring) / len(ring), sum(q[1] for q in ring) / len(ring))
 
     def _grip_at(self, position: QPointF) -> str | None:

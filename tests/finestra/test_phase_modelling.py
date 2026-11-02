@@ -27,7 +27,7 @@ class ModellingAndPlant(unittest.TestCase):
         win = self.win
         self.assertEqual(win.phase(), "model")
         self.assertNotIn("tool_subfield", win.bars["model"].buttons())
-        self.assertEqual([c for c in win.bars["plant"].buttons() if c != "canopy_layout"][:5],   # R281 in between
+        self.assertEqual([c for c in win.bars["plant"].buttons() if c != "canopy_layout"][3:8],   # R295, R281
                          ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty"])
         win.commands["tool_subfield"].trigger()                 # S in the Modelling
         self.assertEqual(win.phase(), "plant")
@@ -107,9 +107,9 @@ class ModellingAndPlant(unittest.TestCase):
         self.addCleanup(without.deleteLater)
         self.assertNotIn("canopy_layout", without.buttons())
         self.addCleanup(bar.deleteLater)
-        self.assertEqual(list(bar.buttons())[:6],
+        self.assertEqual(list(bar.buttons())[3:9],                       # R295: Edit first
                          ["tool_subfield", "tool_row", "layout_east_west", "canopy_layout", "fill", "empty"])
-        self.assertEqual(bar.groups[0].title.text(), "Panels")
+        self.assertEqual(bar.groups[1].title.text(), "Panels")
         model = PhaseBar(phases.by_id("model"), self.win.commands)
         self.addCleanup(model.deleteLater)
         # Obstacles: the exclusions now, the 3D objects when they come

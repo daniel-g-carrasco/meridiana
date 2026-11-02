@@ -1728,6 +1728,15 @@ class MainWindow(QMainWindow):
         """Move and Rotate (task 16b), from the plan or from the 3D view, as one step (move.py): a copy is selected;
         a move refused says why and leaves the project as it was. The arrows of the keyboard join in one step."""
         p = self.project
+        if kind == "module":                       # a module on its own, in the Plant (R295)
+            sfid, _sep, key = oid.partition("/")
+            if what.get("copy") or what["mode"] == "rotate":
+                why = _("a module is added with its row, and on its own it turns with a double click")
+                self.hint.setText(_("Not moved: {why}").format(why=why))
+                return
+            self._row_edit(_("Move"), lambda r: manual.move_module(p, sfid, key, what["dx"], what["dy"], r), sfid,
+                           ("nudge", kind, oid) if what.get("nudge") else None, said=_("Not moved: {why}"))
+            return
         if kind == "row":                          # a row moves within its sub-field (task 16c, manual.py)
             sfid, _sep, rid = oid.partition("/")
             if what.get("copy"):
@@ -3487,6 +3496,7 @@ class MainWindow(QMainWindow):
             self.tool_actions["select"].setChecked(True)
             self.plan.set_tool("select")
         self.plant_page.lend(self.plan)
+        self.plan.set_plant_phase(True)
         self.plan.show_wiring(True)
         self._plant_clicks()
         if self.plant_state is None:
@@ -3498,6 +3508,7 @@ class MainWindow(QMainWindow):
             return
         self._end_draft()
         self.plan.set_strings_mode(False)
+        self.plan.set_plant_phase(False)
         if phases.home(self._tool_command(self.plan.tool), "model") != "model":     # R277: Sub-field, Row,
             self.tool_actions["select"].setChecked(True)                            # East-west stay in the Plant
             self.plan.set_tool("select")
