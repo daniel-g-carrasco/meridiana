@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fagioli: bozzetti</title>
+<style>
+/* Gettoni veri del tema (src/meridiana/theme_colors.py, derive(): fondi «meridiana», accento indigo come nelle foto
+   di Daniel). Chiaro e scuro affiancati: ogni bozzetto e' disegnato una volta e copiato nei due temi. */
+.light {
+  --window:#f2f1ed; --panel:#f8f7f4; --view:#ffffff; --card:#ffffff; --field:#ebeae7; --field-line:#7e7a72;
+  --line:#d9d5cc; --line-soft:#e8e5de; --text:#1e1c19; --text2:#514c44; --muted:#6f685d;
+  --accent:#5b4bb0; --hover:rgba(30,28,25,.08); --press:rgba(30,28,25,.16); --select-bg:#e2e1ef;
+  --good:#0ca30c; --warning:#b07a00; --critical:#d03b3b;
+}
+.dark {
+  --window:#151515; --panel:#252525; --view:#1c1c1c; --card:#252525; --field:#1d1d1d; --field-line:#6f6f6f;
+  --line:#404040; --line-soft:#333333; --text:#ededed; --text2:#c4c4c4; --muted:#9b9b9b;
+  --accent:#bfbbff; --hover:rgba(237,237,237,.08); --press:rgba(237,237,237,.16); --select-bg:#3c3c46;
+  --good:#5fd35f; --warning:#fab219; --critical:#ff716a;
+}
+html { background:#e6e3dc; }
+body { margin:0; font:13px/1.35 "Segoe UI", system-ui, sans-serif; color:#1e1c19; padding:24px; }
+h1 { font-size:22px; font-weight:600; margin:0 0 4px; }
+h2 { font-size:18px; font-weight:600; margin:32px 0 8px; }
+h3 { font-size:14px; font-weight:600; margin:0; }
+p.lead { margin:0 0 8px; color:#514c44; max-width:1100px; }
+.proposal { margin:16px 0 24px; }
+.proposal .head { display:flex; gap:12px; align-items:baseline; margin-bottom:6px; }
+.proposal .from { color:#6f685d; font-size:12px; }
+.pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.frame { background:var(--window); color:var(--text); padding:12px; border-radius:8px; border:1px solid #cfcbc2; }
+.frame.dark { border-color:#111; }
+.note { margin:6px 0 0; font-size:12px; color:#514c44; max-width:1100px; }
+.note b { color:#1e1c19; }
+.reco { background:#fff; border-left:3px solid #1e1c19; padding:8px 12px; margin:12px 0 0; max-width:1100px; }
+
+/* Pezzi di Meridiana: scheda, pagina, riga delle fasi, barra della fase (ui/theme.py, ui/phasebar.py) */
+.card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px; }
+.chart-card { background:transparent; border:1px solid var(--line-soft); border-radius:8px; padding:4px 8px 8px; }
+.phases { display:flex; align-items:flex-end; gap:0; height:36px; padding:0 8px; }
+.phase { padding:0 12px; height:28px; line-height:28px; color:var(--text2); border-radius:6px; display:flex; gap:8px; align-items:center; }
+.phase .n { width:16px; height:16px; border-radius:8px; background:var(--field); color:var(--muted); font-size:11px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; }
+.phase.on { color:var(--text); font-weight:600; background:var(--panel); border:1px solid var(--line); border-bottom:none; border-radius:8px 8px 0 0; height:35px; line-height:35px; margin-bottom:-1px; }
+.phase.on .n { background:var(--accent); color:var(--window); }
+.phasecard { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 8px 4px; }
+.toolrow { display:flex; align-items:flex-start; gap:6px; }
+.group { display:flex; flex-direction:column; align-items:center; padding:0 4px; }
+.group .tools { display:flex; gap:2px; }
+.group .gt { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+.tool { display:flex; flex-direction:column; align-items:center; gap:2px; padding:3px 6px 2px; border-radius:6px; min-width:44px; color:var(--text); }
+.tool svg { width:24px; height:24px; }
+.tool span { font-size:12px; color:var(--text2); white-space:nowrap; }
+.tool.hover { background:var(--hover); }
+.tool.on { background:var(--press); }
+.tool.hover span, .tool.on span { color:var(--text); }
+.tool.primary svg { stroke-width:2; }
+.sep { width:1px; background:var(--line-soft); align-self:stretch; margin:4px 2px; }
+svg.i { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.tool svg { stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+
+/* Pulsanti: PUSH 28/6 velo field; strumento 28/6 trasparente; pillola 24/12 */
+.push { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 12px; border-radius:6px; background:var(--field); color:var(--text); font-weight:600; border:1px solid transparent; }
+.push.quiet { background:transparent; font-weight:400; }
+.push.primary { border-color:var(--field-line); }
+.push.focus { border:2px solid var(--accent); padding:0 11px; }
+.tb { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 8px; border-radius:6px; background:transparent; color:var(--text); border:1px solid transparent; }
+.tb.on { background:var(--press); }
+.tb.hover { background:var(--hover); }
+.tb .chk { width:14px; display:inline-block; text-align:center; }
+.pill { display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 11px; border-radius:12px; background:var(--field); color:var(--text2); border:1px solid transparent; }
+.pill.on { background:var(--panel); color:var(--text); border-color:var(--line); }
+.pill.bordered { background:transparent; color:var(--text); border-color:var(--line); }
+.pill.bordered.on { background:var(--press); border-color:transparent; }
+.count { display:inline-flex; align-items:center; gap:5px; height:22px; padding:0 9px 0 7px; border-radius:12px; border:1px solid var(--line); font-size:11px; font-weight:600; color:var(--text2); }
+.count .m { font-size:11px; }
+.count.c .m { color:var(--critical); } .count.w .m { color:var(--warning); } .count.g .m { color:var(--good); }
+.count.on { background:var(--press); border-color:transparent; }
+.field { display:inline-flex; align-items:center; gap:8px; height:28px; padding:0 8px 0 10px; border-radius:6px; background:var(--field); color:var(--text); }
+.field .arrow { font-size:9px; color:var(--muted); }
+.lbl { color:var(--text2); }
+.row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.row.sb { justify-content:space-between; }
+.title { font-size:14px; font-weight:600; }
+.desc { color:var(--text2); }
+.muted { color:var(--muted); }
+.small { font-size:12px; }
+
+/* Segmenti su una pista (ui/variant_bar.py): pista field raggio 14, segmenti; qui raggio 6, non piu' pillola */
+.track { display:inline-flex; gap:0; padding:2px; background:var(--field); border-radius:8px; }
+.seg { height:22px; line-height:22px; padding:0 11px; border-radius:6px; color:var(--text2); border:1px solid transparent; }
+.seg.on { background:var(--panel); color:var(--text); border-color:var(--line); }
+.track.round { border-radius:14px; } .track.round .seg { border-radius:12px; }
+
+/* Linguette sottolineate: testo control, la scelta col filo di 2 px nel colore del testo sul filo della fascia */
+.tabs { display:flex; align-items:flex-end; gap:4px; border-bottom:1px solid var(--line-soft); }
+.tab { padding:6px 10px 7px; color:var(--text2); position:relative; border-radius:6px 6px 0 0; }
+.tab.hover { background:var(--hover); color:var(--text); }
+.tab.on { color:var(--text); font-weight:600; }
+.tab.on::after { content:""; position:absolute; left:8px; right:8px; bottom:-1px; height:2px; background:var(--text); border-radius:1px; }
+.tabs .spacer { flex:1; }
+.tabs .tb { margin-bottom:3px; }
+
+/* Linguette a scheda come le fasi (R84) */
+.tabs2 { display:flex; align-items:flex-end; gap:2px; border-bottom:1px solid var(--line); padding:0 8px; }
+.tab2 { padding:5px 12px; color:var(--text2); border:1px solid transparent; border-bottom:none; border-radius:8px 8px 0 0; margin-bottom:-1px; }
+.tab2.on { color:var(--text); background:var(--view); border-color:var(--line); }
+.pane { background:var(--view); border:1px solid var(--line); border-top:none; border-radius:0 0 6px 6px; padding:8px; }
+
+/* Il grafico finto e la testata della scheda dei grafici */
+.chart { height:76px; margin-top:8px; display:flex; align-items:flex-end; gap:6px; padding:0 4px; border-bottom:1px solid var(--line-soft); }
+.chart i { display:block; flex:1; background:#2f6fd0; border-radius:2px 2px 0 0; }
+.chart i.b { background:#2f6fd0; }
+.ctitle { font-weight:600; margin-top:8px; }
+.tiles { display:flex; gap:8px; margin-bottom:8px; }
+.tile { flex:1; background:var(--field); border-radius:8px; padding:8px 10px; }
+.tile .k { color:var(--text2); } .tile .v { font-size:18px; font-weight:600; } .tile .u { color:var(--text2); font-size:12px; }
+
+/* Caselle di spunta (ui/checkboxes.py): 14 px, raggio 2 */
+.cb { display:inline-flex; align-items:center; gap:6px; height:28px; color:var(--text); }
+.cb .box { width:14px; height:14px; border-radius:3px; border:1px solid var(--field-line); display:inline-flex; align-items:center; justify-content:center; font-size:11px; }
+.cb.on .box { background:var(--text); color:var(--window); border-color:var(--text); }
+
+.checks { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px; }
+.checks .list { margin-top:8px; border-top:1px solid var(--line-soft); padding-top:6px; }
+.checks .sec { font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text2); margin:4px 0; }
+.checks .sec b { color:var(--muted); font-weight:600; margin-left:8px; }
+.checks .it { padding:4px 8px; border-radius:4px; display:flex; gap:8px; }
+.checks .it .m { width:14px; text-align:center; }
+.checks .it.hover { background:var(--hover); }
+.langtable { border-collapse:collapse; margin-top:8px; background:#fff; }
+.langtable th, .langtable td { border:1px solid #cfcbc2; padding:6px 10px; text-align:left; vertical-align:top; }
+.langtable th { background:#f2f1ed; }
+@media (max-width:900px) { .pair { grid-template-columns:1fr; } body { padding:16px; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5"/><path d="M9 14h6M9 17h4"/></symbol>
+  <symbol id="i-compare" viewBox="0 0 24 24"><rect x="3" y="5" width="7" height="14" rx="1.5"/><rect x="14" y="5" width="7" height="14" rx="1.5"/><path d="M6.5 9v6M17.5 9v6"/></symbol>
+  <symbol id="i-rev" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4"/><rect x="8" y="14" width="8" height="6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
+  <symbol id="i-new" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/><path d="M14 11v6M11 14h6"/></symbol>
+  <symbol id="i-dxf" viewBox="0 0 24 24"><path d="M4 18L10 6l4 8 2-4 4 8z"/></symbol>
+  <symbol id="i-ifc" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></symbol>
+  <symbol id="i-csv" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 10h16M4 15h16M10 5v14"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 10h16M4 14.5h16M9.5 5v14"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></symbol>
+  <symbol id="i-phase" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+  <symbol id="i-object" viewBox="0 0 24 24"><path d="M4 9l8-5 8 5-8 5z"/><path d="M4 9v6l8 5 8-5V9"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M4 7l8-3 8 3-8 3z"/><path d="M4 12l8 3 8-3M4 17l8 3 8-3"/></symbol>
+</svg>
+
+<h1>Studio 25: i «fagioli»</h1>
+<p class="lead">Fable FB, 02/11/2026, ramo <code>r10-fagioli</code>, R322. Daniel: «continuano a non piacermi questi fagioli. Proponimi dei draft, ispirati ad altri elementi simili che ci sono in Meridiana». Tre ruoli, almeno tre proposte per ruolo, chiaro e scuro con i gettoni veri del tema (accento indigo, come nelle foto). Il perché e il censimento stanno nel <code>README.md</code> accanto.</p>
+
+<!-- ============================================================ (a) ============================================================ -->
+<h2 id="a-h">(a) Le azioni della barra di pagina della Relazione</h2>
+<p class="lead">Oggi: quattro pulsanti PUSH (28 px, raggio 6, velo <code>field</code>) in cima alla pagina, testi lunghi con i puntini; la stessa fase ha già in alto, nella sua barra, «Confronta», «Relazione», «Revisione», «Copia le note» (<code>phases.py</code>, fase 6). Le quattro azioni esistono due volte.</p>
+
+<div class="proposal" id="a0">
+  <div class="head"><h3>Oggi</h3><span class="from">ui/report_page.py, QPushButton; «Esporta» ha l'anello del fuoco</span></div>
+  <div class="pair"><div class="mock">
+    <div class="card">
+      <div class="row"><span class="push focus">Esporta la relazione (PDF)…</span><span class="push">Confronta le varianti…</span><span class="push">Salva come nuova revisione</span><span class="push">Copia le note per la relazione</span></div>
+      <p class="desc" style="margin:40px 0 24px">Calcola la producibilità per vedere la relazione: i suoi capitoli sono fatti dei risultati.</p>
+    </div>
+  </div></div>
+</div>
+
+<div class="proposal" id="a1">
+  <div class="head"><h3>A1. Come la barra delle fasi: icona sopra, parola sotto, gruppi con il titolino</h3><span class="from">da ui/phasebar.py (ToolGroup, Text.GROUP 10 px)</span></div>
+  <div class="pair"><div class="mock">
+    <div class="card" style="padding:4px 8px 8px">
+      <div class="toolrow">
+        <div class="group"><div class="tools">
+          <div class="tool primary"><svg><use href="#i-pdf"/></svg><span>Esporta PDF</span></div>
+          <div class="tool"><svg><use href="#i-copy"/></svg><span>Copia note</span></div>
+        </div><div class="gt">Relazione</div></div>
+        <div class="sep"></div>
+        <div class="group"><div class="tools">
+          <div class="tool"><svg><use href="#i-compare"/></svg><span>Confronta</span></div>
+        </div><div class="gt">Varianti</div></div>
+        <div class="sep"></div>
+        <div class="group"><div class="tools">
+          <div class="tool"><svg><use href="#i-rev"/></svg><span>Nuova revisione</span></div>
+        </div><div class="gt">File</div></div>
+      </div>
+      <p class="desc" style="margin:24px 0 16px">Calcola la producibilità per vedere la relazione: i suoi capitoli sono fatti dei risultati.</p>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> lo stesso linguaggio delle azioni di fase, parole corte, niente puntini, nessun fondo grigio. <b>Contro:</b> due file di strumenti una sotto l'altra (la barra della fase in alto fa già queste cose): si raddoppia proprio ciò che stona.</p>
+</div>
+
+<div class="proposal" id="a2">
+  <div class="head"><h3>A2. Tutto nella barra della fase: la pagina resta al contenuto</h3><span class="from">da phases.py (fase 6 ha già Confronto ed Esporta) e dalle intestazioni delle schede (ui/cards.py)</span></div>
+  <div class="pair"><div class="mock">
+    <div class="phases"><span class="phase">File</span><span class="phase"><span class="n">1</span>Modellazione</span><span class="phase"><span class="n">5</span>Bilancio ed economia</span><span class="phase on"><span class="n">6</span>Relazione</span></div>
+    <div class="phasecard">
+      <div class="toolrow">
+        <div class="group"><div class="tools">
+          <div class="tool"><svg><use href="#i-new"/></svg><span>Nuova variante</span></div>
+          <div class="tool"><svg><use href="#i-compare"/></svg><span>Confronta</span></div>
+        </div><div class="gt">Confronto</div></div>
+        <div class="sep"></div>
+        <div class="group"><div class="tools">
+          <div class="tool primary"><svg><use href="#i-pdf"/></svg><span>Relazione</span></div>
+          <div class="tool"><svg><use href="#i-dxf"/></svg><span>DXF</span></div>
+          <div class="tool"><svg><use href="#i-ifc"/></svg><span>IFC4</span></div>
+          <div class="tool"><svg><use href="#i-csv"/></svg><span>CSV</span></div>
+          <div class="tool"><svg><use href="#i-rev"/></svg><span>Revisione</span></div>
+          <div class="tool"><svg><use href="#i-copy"/></svg><span>Copia le note</span></div>
+        </div><div class="gt">Esporta</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:8px">
+      <div class="row sb"><span class="title">Relazione tecnica</span><span class="desc small">anteprima · 12 pagine · aggiornata alle 16:42</span></div>
+      <p class="desc" style="margin:24px 0 16px">Calcola la producibilità per vedere la relazione: i suoi capitoli sono fatti dei risultati.</p>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> nessun doppione, un solo posto per le azioni in tutto il programma (la barra della fase), la pagina parte dal titolo come una scheda. <b>Contro:</b> chi cerca «Esporta» nella pagina deve alzare lo sguardo di 60 px; la «Relazione» in barra è anche il nome della fase (si può chiamarla «PDF»).</p>
+</div>
+
+<div class="proposal" id="a3">
+  <div class="head"><h3>A3. Intestazione di scheda: titolo a sinistra, l'unica azione primaria e «…» a destra</h3><span class="from">da ui/cards.py (titolo con i piccoli controlli a destra) e dalla pagina File</span></div>
+  <div class="pair"><div class="mock">
+    <div class="card">
+      <div class="row sb">
+        <div><span class="title">Relazione tecnica</span> <span class="desc small" style="margin-left:8px">anteprima · 12 pagine · aggiornata alle 16:42</span></div>
+        <div class="row"><span class="push primary"><svg class="i"><use href="#i-pdf"/></svg>Esporta PDF</span><span class="tb"><svg class="i"><use href="#i-more"/></svg></span></div>
+      </div>
+      <p class="desc" style="margin:24px 0 16px">Calcola la producibilità per vedere la relazione: i suoi capitoli sono fatti dei risultati.</p>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> una sola azione in vista, quella che conta; le altre tre (Confronta le varianti, Salva come nuova revisione, Copia le note) nel menu «…» e comunque nella barra della fase. <b>Contro:</b> tre azioni nascoste dietro un menu; il primario resta un rettangolo grigio (R158: niente pieni d'accento), distinto solo dal bordo.</p>
+</div>
+
+<div class="proposal" id="a4">
+  <div class="head"><h3>A4. Cambio minimo: parole corte, primario col bordo, gli altri senza velo</h3><span class="from">da Button.PUSH e dagli strumenti trasparenti della barra della vista</span></div>
+  <div class="pair"><div class="mock">
+    <div class="card">
+      <div class="row"><span class="push primary">Esporta PDF</span><span class="push quiet">Confronta varianti</span><span class="push quiet">Nuova revisione</span><span class="push quiet">Copia note</span></div>
+      <p class="desc" style="margin:40px 0 24px">Calcola la producibilità per vedere la relazione: i suoi capitoli sono fatti dei risultati.</p>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> si fa in un'ora, i puntini spariscono (la finestra di dialogo c'è lo stesso, lo dice il suggerimento). <b>Contro:</b> resta una fila di pulsanti doppi rispetto alla barra; è un ritocco, non una scelta.</p>
+</div>
+
+<div class="reco"><b>Raccomandazione (a): A2</b>, con la riga del titolo di A3 come testa della pagina (titolo, anteprima, pagine, ora) e senza ripetere le azioni; se Daniel vuole un'azione in pagina, al più la sola «Esporta PDF» di A3. La barra della fase è già il posto delle azioni in tutte le altre fasi.</div>
+
+<!-- ============================================================ (b) ============================================================ -->
+<h2 id="b-h">(b) La scelta tra le viste dei grafici</h2>
+<p class="lead">Oggi: pillole di 24 px su velo <code>field</code>, la scelta sul fondo della scheda col suo filo; «Tabella» pillola col bordo a destra. In Producibilità 4 voci, in Consumi 6 («Mesi, Giorno tipo, Anno, Settimana, Durata, Come è calcolato»). Le stesse pillole scelgono fra le schede accorpate (R109) e fra le varianti (R73).</p>
+
+<div class="proposal" id="b0">
+  <div class="head"><h3>Oggi</h3><span class="from">ui/energy_pages.chart_card, QTabBar::tab a pillola</span></div>
+  <div class="pair"><div class="mock">
+    <div class="chart-card">
+      <div class="row" style="padding:4px 0"><span class="pill on">Mesi</span><span class="pill">Giorno tipo</span><span class="pill">Anno</span><span class="pill">Settimana</span><span class="pill">Durata</span><span class="pill">Come è calcolato</span></div>
+      <div style="border-top:1px solid var(--line-soft)"></div>
+      <div class="row sb"><span class="ctitle">Consumi mese per mese, per fascia</span><span class="pill bordered" style="margin-top:8px">Tabella</span></div>
+      <div class="chart"><i style="height:62%"></i><i style="height:60%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:64%"></i><i style="height:68%"></i><i style="height:74%"></i><i style="height:34%"></i><i style="height:68%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:58%"></i></div>
+    </div>
+  </div></div>
+</div>
+
+<div class="proposal" id="b1">
+  <div class="head"><h3>B1. Segmenti su una pista, a raggio 6</h3><span class="from">da ui/variant_bar.py (R73): la pista <code>field</code>, la scelta rialzata in <code>panel</code> col filo</span></div>
+  <div class="pair"><div class="mock">
+    <div class="chart-card">
+      <div class="row sb" style="padding:4px 0">
+        <span class="track"><span class="seg on">Mesi</span><span class="seg">Giorno tipo</span><span class="seg">Anno</span><span class="seg">Settimana</span><span class="seg">Durata</span><span class="seg">Come è calcolato</span></span>
+        <span class="tb"><svg class="i"><use href="#i-table"/></svg>Tabella</span>
+      </div>
+      <div style="border-top:1px solid var(--line-soft)"></div>
+      <div class="ctitle">Consumi mese per mese, per fascia</div>
+      <div class="chart"><i style="height:62%"></i><i style="height:60%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:64%"></i><i style="height:68%"></i><i style="height:74%"></i><i style="height:34%"></i><i style="height:68%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:58%"></i></div>
+      <div class="row" style="margin-top:12px; gap:16px"><span class="muted small">Le varianti con la stessa forma:</span><span class="track"><span class="seg on">Base</span><span class="seg">Est-ovest</span><span class="seg">Con accumulo</span><span class="seg" style="padding:0 7px">+</span></span></div>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> esiste già (le varianti), dice «uno fra N» perché le voci stanno nella stessa pista; a raggio 6 non è più un fagiolo e la stessa forma vale per le varianti. <b>Contro:</b> con sei voci la pista è larga 500 px e in una scheda stretta non va a capo; è ancora un blocco di bottoni, e «Tabella» va spostato fuori per non sembrare una settima voce.</p>
+</div>
+
+<div class="proposal" id="b2">
+  <div class="head"><h3>B2. Linguette sottolineate: solo testo, la scelta col filo nel colore del testo</h3><span class="from">dalla riga delle fasi (la scelta unita al foglio sotto) e dal filo <code>line_soft</code> che la scheda dei grafici ha già</span></div>
+  <div class="pair"><div class="mock">
+    <div class="chart-card" style="padding-top:0">
+      <div class="tabs"><span class="tab on">Mesi</span><span class="tab">Giorno tipo</span><span class="tab hover">Anno</span><span class="tab">Settimana</span><span class="tab">Durata</span><span class="tab">Come è calcolato</span><span class="spacer"></span><span class="tb"><svg class="i"><use href="#i-table"/></svg>Tabella</span></div>
+      <div class="ctitle">Consumi mese per mese, per fascia</div>
+      <div class="chart"><i style="height:62%"></i><i style="height:60%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:64%"></i><i style="height:68%"></i><i style="height:74%"></i><i style="height:34%"></i><i style="height:68%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:58%"></i></div>
+      <div style="margin-top:12px"><span class="muted small">Le schede accorpate (R109) con la stessa forma:</span>
+        <div class="tabs" style="margin-top:4px"><span class="tab on">Proprietà</span><span class="tab">Verifiche</span><span class="tab">Aiuto</span></div></div>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> niente fondo, niente forma da premere: una vista non è un comando; i testi lunghi non diventano salsicce; sotto il puntatore lo strato 8 % a raggio 6 come tutto il resto; il filo scorre fra le linguette come la linguetta delle fasi (240 ms). Un solo linguaggio per «scegli tra viste»: grafici, schede accorpate, e volendo «Per livello / Per oggetto» delle Verifiche. <b>Contro:</b> è una QTabBar da disegnare (una classe nuova in <code>ui/</code>, da portare nel modello); le varianti restano a parte, perché scelgono un documento, non una vista.</p>
+</div>
+
+<div class="proposal" id="b3">
+  <div class="head"><h3>B3. Elenco a tendina accanto al titolo</h3><span class="from">dai campi a elenco (velo <code>field</code>, raggio 6, 28 px)</span></div>
+  <div class="pair"><div class="mock">
+    <div class="chart-card" style="padding-top:8px">
+      <div class="row sb"><div class="row"><span class="field">Mesi <span class="arrow">▼</span></span><span class="ctitle" style="margin:0">Consumi mese per mese, per fascia</span></div><span class="tb"><svg class="i"><use href="#i-table"/></svg>Tabella</span></div>
+      <div class="chart"><i style="height:62%"></i><i style="height:60%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:64%"></i><i style="height:68%"></i><i style="height:74%"></i><i style="height:34%"></i><i style="height:68%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:58%"></i></div>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> compatto, sta in ogni larghezza, un solo elemento in più accanto al titolo. <b>Contro:</b> nasconde le alternative (chi non apre la tendina non sa che c'è «Durata»), un clic in più per ogni vista; una tendina dice «un valore», non «una vista».</p>
+</div>
+
+<div class="proposal" id="b4">
+  <div class="head"><h3>B4. Linguette a scheda come la riga delle fasi</h3><span class="from">da ui/phasebar.py (R84: la scelta unita al pannello)</span></div>
+  <div class="pair"><div class="mock">
+    <div class="chart-card" style="padding:8px 8px 8px">
+      <div class="tabs2"><span class="tab2 on">Mesi</span><span class="tab2">Giorno tipo</span><span class="tab2">Anno</span><span class="tab2">Settimana</span><span class="tab2">Durata</span><span class="tab2">Come è calcolato</span></div>
+      <div class="pane">
+        <div class="row sb"><span class="ctitle" style="margin:0">Consumi mese per mese, per fascia</span><span class="tb"><svg class="i"><use href="#i-table"/></svg>Tabella</span></div>
+        <div class="chart"><i style="height:62%"></i><i style="height:60%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:64%"></i><i style="height:68%"></i><i style="height:74%"></i><i style="height:34%"></i><i style="height:68%"></i><i style="height:70%"></i><i style="height:66%"></i><i style="height:58%"></i></div>
+      </div>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> identico alle fasi, nessuna forma nuova. <b>Contro:</b> cromo pesante dentro una scheda che sta già in una scheda (tre cornici una nell'altra); le fasi devono restare l'unica cosa disegnata così, altrimenti la riga delle fasi perde il suo rango.</p>
+</div>
+
+<div class="reco"><b>Raccomandazione (b): B2</b> per tutte le scelte fra viste dentro una scheda (grafici di Producibilità, Consumi, Bilancio ed economia; schede accorpate R109), con «Tabella» come strumento a icona e parola a destra; la barra delle varianti resta a segmenti ma a raggio 6 (B1), perché sceglie un documento. Se Daniel non vuole elementi nuovi: B1 ovunque.</div>
+
+<!-- ============================================================ (c) ============================================================ -->
+<h2 id="c-h">(c) I filtri del pannello Verifiche</h2>
+<p class="lead">Oggi la testata ha: «Per livello ▾» (pillola col bordo che apre un menu: per livello, per oggetto, per area, da consegnare), il riassunto, i tre conteggi a pillola col segno (restano: dicono uno stato), «Questa fase» e «Questo oggetto» (pillole col bordo, accese in <code>press</code>). Tre ruoli con la stessa forma: una scelta di vista, tre stati, due filtri sì/no.</p>
+
+<div class="proposal" id="c0">
+  <div class="head"><h3>Oggi</h3><span class="from">ui/checks_page.py, QToolButton#filter e #count</span></div>
+  <div class="pair"><div class="mock">
+    <div class="checks">
+      <div class="row"><span class="pill bordered">Per livello <span class="arrow muted" style="font-size:9px">▼</span></span><span class="count c"><span class="m">✕</span>2</span><span class="count w"><span class="m">▲</span>5</span><span class="count g"><span class="m">✓</span>31</span><span style="width:8px"></span><span class="pill bordered on">Questa fase</span><span class="pill bordered">Questo oggetto</span></div>
+      <div class="list"><div class="sec">Critiche <b>2</b></div><div class="it"><span class="m" style="color:var(--critical)">✕</span>Stringa S3: Voc a -10 °C supera la tensione massima dell'inverter</div><div class="sec">Avvisi <b>5</b></div><div class="it hover"><span class="m" style="color:var(--warning)">▲</span>Falda B: ombra del camino dalle 15 in dicembre</div></div>
+    </div>
+  </div></div>
+</div>
+
+<div class="proposal" id="c1">
+  <div class="head"><h3>C1. Tendina per la vista, caselle di spunta per i filtri</h3><span class="from">dai campi a elenco e da ui/checkboxes.py</span></div>
+  <div class="pair"><div class="mock">
+    <div class="checks">
+      <div class="row"><span class="field">Per livello <span class="arrow">▼</span></span><span class="count c"><span class="m">✕</span>2</span><span class="count w"><span class="m">▲</span>5</span><span class="count g"><span class="m">✓</span>31</span><span style="width:8px"></span><span class="cb on"><span class="box">✓</span>Questa fase</span><span class="cb"><span class="box"></span>Questo oggetto</span></div>
+      <div class="list"><div class="sec">Critiche <b>2</b></div><div class="it"><span class="m" style="color:var(--critical)">✕</span>Stringa S3: Voc a -10 °C supera la tensione massima dell'inverter</div><div class="sec">Avvisi <b>5</b></div><div class="it hover"><span class="m" style="color:var(--warning)">▲</span>Falda B: ombra del camino dalle 15 in dicembre</div></div>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> ogni ruolo ha la sua forma: tendina = scelta di vista, spunta = filtro acceso o spento, pillola = stato; lo stato si legge senza colore. <b>Contro:</b> 30 px più larga di oggi; le caselle di spunta nella testata di un pannello sono un'eccezione nel programma (stanno nei gruppi delle Proprietà).</p>
+</div>
+
+<div class="proposal" id="c2">
+  <div class="head"><h3>C2. Strumenti come la barra della vista: icona e parola, acceso in <code>press</code></h3><span class="from">da ui/viewbar.py e ui/phasebar.py (Button.TOOL 28, raggio 6, trasparente)</span></div>
+  <div class="pair"><div class="mock">
+    <div class="checks">
+      <div class="row"><span class="tb"><svg class="i"><use href="#i-layers"/></svg>Per livello <span class="arrow muted" style="font-size:9px">▼</span></span><span class="count c"><span class="m">✕</span>2</span><span class="count w"><span class="m">▲</span>5</span><span class="count g"><span class="m">✓</span>31</span><span style="width:8px"></span><span class="tb on"><svg class="i"><use href="#i-phase"/></svg>Questa fase</span><span class="tb"><svg class="i"><use href="#i-object"/></svg>Questo oggetto</span></div>
+      <div class="list"><div class="sec">Critiche <b>2</b></div><div class="it"><span class="m" style="color:var(--critical)">✕</span>Stringa S3: Voc a -10 °C supera la tensione massima dell'inverter</div><div class="sec">Avvisi <b>5</b></div><div class="it hover"><span class="m" style="color:var(--warning)">▲</span>Falda B: ombra del camino dalle 15 in dicembre</div></div>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> la stessa cosa degli strumenti accesi della barra della vista e della barra delle fasi (acceso = <code>press</code>), nessun bordo, nessun fagiolo. <b>Contro:</b> acceso e spento affidati a un grigio al 16 %: nel tema chiaro un filtro acceso si vede poco, e serve un'icona per ogni filtro.</p>
+</div>
+
+<div class="proposal" id="c3">
+  <div class="head"><h3>C3. Interruttori con la spunta: strumento a raggio 6, acceso in <code>press</code> con «✓» davanti</h3><span class="from">da Button.TOOL e dalle voci spuntate dei menu; «Per livello» come in C1</span></div>
+  <div class="pair"><div class="mock">
+    <div class="checks">
+      <div class="row"><span class="field">Per livello <span class="arrow">▼</span></span><span class="count c"><span class="m">✕</span>2</span><span class="count w"><span class="m">▲</span>5</span><span class="count g"><span class="m">✓</span>31</span><span style="width:8px"></span><span class="tb on"><span class="chk">✓</span>Questa fase</span><span class="tb"><span class="chk"></span>Questo oggetto</span></div>
+      <div class="list"><div class="sec">Critiche <b>2</b></div><div class="it"><span class="m" style="color:var(--critical)">✕</span>Stringa S3: Voc a -10 °C supera la tensione massima dell'inverter</div><div class="sec">Avvisi <b>5</b></div><div class="it hover"><span class="m" style="color:var(--warning)">▲</span>Falda B: ombra del camino dalle 15 in dicembre</div></div>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> come C2 ma lo stato si legge anche in chiaro grazie alla spunta; niente icone da inventare; lo spazio della spunta è riservato, la parola non salta. <b>Contro:</b> uno spazio vuoto di 14 px davanti ai filtri spenti; è un ibrido fra pulsante e casella di spunta.</p>
+</div>
+
+<div class="proposal" id="c4">
+  <div class="head"><h3>C4. Le viste come linguette sottolineate (B2) su una riga sopra, i filtri come C3</h3><span class="from">da B2 e C3: un solo linguaggio per «scegli tra viste»</span></div>
+  <div class="pair"><div class="mock">
+    <div class="checks">
+      <div class="tabs" style="margin:-4px -4px 6px"><span class="tab on">Per livello</span><span class="tab">Per oggetto</span><span class="tab">Per area</span><span class="tab">Da consegnare</span></div>
+      <div class="row"><span class="count c"><span class="m">✕</span>2</span><span class="count w"><span class="m">▲</span>5</span><span class="count g"><span class="m">✓</span>31</span><span style="width:8px"></span><span class="tb on"><span class="chk">✓</span>Questa fase</span><span class="tb"><span class="chk"></span>Questo oggetto</span></div>
+      <div class="list"><div class="sec">Critiche <b>2</b></div><div class="it"><span class="m" style="color:var(--critical)">✕</span>Stringa S3: Voc a -10 °C supera la tensione massima dell'inverter</div><div class="sec">Avvisi <b>5</b></div><div class="it hover"><span class="m" style="color:var(--warning)">▲</span>Falda B: ombra del camino dalle 15 in dicembre</div></div>
+    </div>
+  </div></div>
+  <p class="note"><b>Pro:</b> la vista delle Verifiche si sceglie come quella dei grafici, le alternative sono in vista. <b>Contro:</b> una riga in più in un pannello già alto; quattro parole lunghe non stanno in 300 px (il pannello stretto) e andrebbero a scorrere.</p>
+</div>
+
+<div class="reco"><b>Raccomandazione (c): C3</b>: «Per livello» come tendina (è una scelta di vista in poco spazio), «Questa fase» e «Questo oggetto» come interruttori a raggio 6 con la spunta, i conteggi a pillola invariati. C4 solo se il pannello Verifiche ha sempre la larghezza di una scheda intera.</div>
+
+<h2 id="l-h">Il linguaggio che ne esce</h2>
+<p class="lead" id="l-p">Una forma per ruolo, in tutto il programma. La pillola resta solo per ciò che dice uno stato.</p>
+<table class="langtable" id="l-t">
+  <tr><th>Ruolo</th><th>Forma</th><th>Dove c'è già</th><th>Dove arriva</th></tr>
+  <tr><td>Azione (un comando)</td><td>strumento 28, raggio 6, icona e parola, gruppi col titolino; nelle finestre di dialogo il PUSH col velo</td><td>barra della fase, barra della vista, barra di stato</td><td>la Relazione perde la fila di pulsanti (A2)</td></tr>
+  <tr><td>Scelta fra viste</td><td>linguette sottolineate, solo testo, filo nel colore del testo (B2); tendina dove lo spazio manca</td><td>la riga delle fasi (la sua forma a scheda resta sua)</td><td>grafici, schede accorpate, «Per livello» delle Verifiche</td></tr>
+  <tr><td>Filtro sì/no</td><td>interruttore 28, raggio 6, acceso in <code>press</code> con la spunta (C3)</td><td>strumenti accesi della barra della vista</td><td>«Questa fase», «Questo oggetto»</td></tr>
+  <tr><td>Quale documento in mano</td><td>segmenti su una pista, raggio 6 (B1)</td><td>barra delle varianti (R73)</td><td>stessa barra, con gli angoli a 6</td></tr>
+  <tr><td>Stato</td><td>pillola 24 con segno o parola</td><td>conteggi delle Verifiche, segni dell'albero, stati delle consegne, formato dei file</td><td>invariati</td></tr>
+</table>
+
+<script>
+// Ogni bozzetto una volta sola: copiato nei due temi.
+document.querySelectorAll('.proposal').forEach(p => {
+  const pair = p.querySelector('.pair'), mock = pair.querySelector('.mock');
+  const html = mock.innerHTML; mock.remove();
+  for (const theme of ['light', 'dark']) {
+    const f = document.createElement('div'); f.className = 'frame ' + theme; f.innerHTML = html; pair.appendChild(f);
+  }
+});
+const only = new URLSearchParams(location.search).get('only');
+if (only) document.querySelectorAll('h2, .proposal, .reco, .lead, .langtable, h1').forEach(e => {
+  if (!(e.id && e.id.startsWith(only))) e.style.display = 'none';
+});
+</script>
+</body>
+</html>
