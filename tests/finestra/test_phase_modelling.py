@@ -27,8 +27,8 @@ class ModellingAndPlant(unittest.TestCase):
         win = self.win
         self.assertEqual(win.phase(), "model")
         self.assertNotIn("tool_subfield", win.bars["model"].buttons())
-        self.assertEqual([c for c in win.bars["plant"].buttons() if c != "canopy_layout"][:5],   # R281 in between
-                         ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty"])
+        self.assertEqual(list(win.bars["plant"].buttons())[3:6],                  # R295; R306: Sub-field holds the rows
+                         ["tool_subfield", "fill", "empty"])
         win.commands["tool_subfield"].trigger()                 # S in the Modelling
         self.assertEqual(win.phase(), "plant")
         self.assertIs(win.plan.parentWidget(), win.plant_page.host)
@@ -105,11 +105,12 @@ class ModellingAndPlant(unittest.TestCase):
         bar = PhaseBar(phases.by_id("plant"), {**self.win.commands, "canopy_layout": action})
         without = PhaseBar(phases.by_id("plant"), {k: a for k, a in self.win.commands.items() if k != "canopy_layout"})
         self.addCleanup(without.deleteLater)
-        self.assertNotIn("canopy_layout", without.buttons())
+        self.assertIsNone(without.button_of("canopy_layout"))
         self.addCleanup(bar.deleteLater)
-        self.assertEqual(list(bar.buttons())[:6],
-                         ["tool_subfield", "tool_row", "layout_east_west", "canopy_layout", "fill", "empty"])
-        self.assertEqual(bar.groups[0].title.text(), "Panels")
+        self.assertEqual(list(bar.buttons())[3:6],                       # R295: Edit first; R306: Sub-field the rows
+                         ["tool_subfield", "fill", "empty"])
+        self.assertIs(bar.button_of("canopy_layout"), bar.buttons()["tool_subfield"])
+        self.assertEqual(bar.groups[1].title.text(), "Panels")
         model = PhaseBar(phases.by_id("model"), self.win.commands)
         self.addCleanup(model.deleteLater)
         # Obstacles: the exclusions now, the 3D objects when they come

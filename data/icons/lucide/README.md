@@ -18,3 +18,5 @@ For the sun's bar and the month of a day field (25/10/2026), downloaded on 25/10
 For the report's attachments (R61), downloaded on 25/10/2026 from the same place: `arrow-up`, `arrow-down`, `x`.
 For the strings of the Plant phase made only when asked (R114, «Complete the strings»), downloaded on 25/10/2026 from the
 same place: `list-plus`. `refresh-cw` («Redo the strings automatically») is no longer used by the window since then.
+For deleting strings and inverters from their modules (R299), downloaded on 02/11/2026 from the same place: `trash`,
+`zap-off`.

@@ -146,7 +146,7 @@ class TemplateDialog(QDialog):
         box.addLayout(turn_form)
         self.ring: list | None = None           # the outline drawn, None when the measures make none
         self.preview = Preview3D(self, number=number, parse=parse_measure)
-        self.preview.hint = _("Drag to turn · click a side to write its length")
+        self.preview.hint = _("Drag to turn · click a side to write its length · N is North once on the plan")
         self.preview.setMinimumSize(300, 240)
         self.preview.edited.connect(self._side_written)
         box.addWidget(self.preview, 1)

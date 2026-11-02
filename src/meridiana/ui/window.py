@@ -52,7 +52,7 @@ from .inspector import Inspector
 from .marks import icon as mark_icon
 from .report_page import ReportPage, ReportSide
 from .phasebar import LOW_WINDOW, PhaseBar, Phases
-from .plan import MOVABLE, PlanView, from_scene
+from .plan import EDGE_KINDS, MOVABLE, PlanView, from_scene
 from .plant_page import PlantInspector, PlantPage, PlantSide, input_name, install_reference  # R277: PlantSide
 from .properties import Properties, field_label
 from .checks_page import ChecksPage
@@ -578,6 +578,7 @@ class MainWindow(QMainWindow):
         self.plan.markClicked.connect(self._mark_clicked)
         self.plan.pointsPicked.connect(self._points_picked)
         self.plan.stringPicked.connect(self._string_picked)
+        self.plan.eraseClicked.connect(self._erase_clicked)
         self.plan.stringRedraw.connect(self._string_redraw_at)
         self.plan.stringEscape.connect(lambda: self._choose_string(-1))
         self.plan.stringMenu.connect(self._string_menu)
@@ -1108,7 +1109,8 @@ class MainWindow(QMainWindow):
         auto = act(compute, "strings_auto", None,
                    tip=_("Meridiana's strings in place of those there are, once (asked first, one undo step), with the "
                          "strategy chosen in its menu: back and forth, a row per string, U on two rows, a row per MPPT. "
-                         "Nothing changes them afterwards"))
+                         "Nothing changes them afterwards. With modules selected on the plan (drag over them with "
+                         "Select), strings of those alone"))
         auto.setMenu(self.strategy_menu)
         act(compute, "strings_complete", self._strings_complete,
             tip=_("Meridiana's strings for the modules in no string only, on the inputs without strings first: yours "
@@ -1120,6 +1122,18 @@ class MainWindow(QMainWindow):
                                           "it up"))
         act(compute, "strings_clear", self._strings_clear,
             tip=_("Every string deleted, after a question: the modules stay laid, in no string (one undo step)"))
+        # R299: tools of the plan: the pointer over a module lights what a click deletes (one undo step for each click)
+        for tool, tip in (("erase_string", _("Pass over a module to light its string, click to delete the string: the "
+                                             "modules stay laid. Esc leaves")),
+                          ("erase_inverter_strings", _("Pass over a module to light all the strings of its inverter, "
+                                                       "click to delete the inverter and those strings. Esc leaves")),
+                          ("erase_inverter", _("Pass over a module to light the strings of its inverter, click to "
+                                               "delete the inverter: the strings stay, on no inverter, until you give "
+                                               "them another. Esc leaves"))):
+            a = act(compute, "tool_" + tool, lambda _c=False, t=tool: self._set_tool(t), True, tip)
+            a.setIcon(icons.icon(tool))
+            self.tool_actions["select"].actionGroup().addAction(a)
+            self.tool_actions[tool] = a
         compute.addSeparator()
         act(compute, "import_curve", self._import_curve_file,
             tip=_("A measured load curve (CSV, 15 minutes or hourly) as the consumption"))
@@ -1744,6 +1758,15 @@ class MainWindow(QMainWindow):
         """Move and Rotate (task 16b), from the plan or from the 3D view, as one step (move.py): a copy is selected;
         a move refused says why and leaves the project as it was. The arrows of the keyboard join in one step."""
         p = self.project
+        if kind == "module":                       # a module on its own, in the Plant (R295)
+            sfid, _sep, key = oid.partition("/")
+            if what.get("copy") or what["mode"] == "rotate":
+                why = _("a module is added with its row, and on its own it turns with a double click")
+                self.hint.setText(_("Not moved: {why}").format(why=why))
+                return
+            self._row_edit(_("Move"), lambda r: manual.move_module(p, sfid, key, what["dx"], what["dy"], r), sfid,
+                           ("nudge", kind, oid) if what.get("nudge") else None, said=_("Not moved: {why}"))
+            return
         if kind == "row":                          # a row moves within its sub-field (task 16c, manual.py)
             sfid, _sep, rid = oid.partition("/")
             if what.get("copy"):
@@ -2384,11 +2407,16 @@ class MainWindow(QMainWindow):
         backend.touch_zoom(float(np.log(factor) / np.log(1.0 / camera.ZOOM_STEP)), w / 2, h / 2)
 
     def _align_view(self) -> None:
+        """Align the view to a side: of the outline selected, or of any when none is. A drawing tool in hand stays as
+        it was: its clicks draw, so nothing could be selected first, and the command said so and did nothing (R301)."""
         kind, oid = self.selection
         found = self._outline(kind, oid)
         if found is None:
-            self.tell(_("Select a building, a roof pitch, a sub-field or an exclusion, then align the view to one "
-                        "of its sides."))
+            if any(k in EDGE_KINDS for k, _o in self.plan.rings):
+                self.plan.pick_any_edge("align")
+            else:
+                self.tell(_("Draw a building, a roof pitch, a sub-field or an exclusion, then align the view to one "
+                            "of its sides."))
             return
         self.plan.pick_edge("align", kind, oid, found[1])
 
@@ -2826,6 +2854,12 @@ class MainWindow(QMainWindow):
         being drawn on a building, it deleted the building with its sub-fields (review, 23/10/2026). In the Plant
         phase, while the clicks are about the strings, it deletes the string chosen and nothing else (R115); with
         the Panels or a tool of theirs, as in the Modelling (R277)."""
+        if self.plan.swept:                         # R300: what was selected together, one step
+            self._delete_swept()
+            return
+        if self.plan.swept_things:
+            self._delete_things(list(self.plan.swept_things))
+            return
         if self.phase() == "plant" and (self.plan.strings_mode or self.plan.draft is not None):    # R277
             if self.plan.draft is not None:
                 self.hint.setText(_("While a string is drawn, Backspace takes back the last module and Esc gives the "
@@ -2856,22 +2890,54 @@ class MainWindow(QMainWindow):
             self._row_edit(_("Take the row away"), lambda r: manual.remove(self.project, sfid, rid, r), sfid)
             self._select("subfield", sfid)
             return
-        if kind == "building":
-            def drop(p):
-                p.buildings = [b for b in p.buildings if b.id != oid]
-                p.subfields = [s for s in p.subfields if s.building != oid]
-                p.exclusions = [e for e in p.exclusions if e.building != oid]
-                p.props = [x for x in p.props if x.building != oid]      # R269: the 3D objects on its roof
-            self.edit(_("Delete a building"), drop)
-        elif kind == "subfield":
-            self.edit(_("Delete a sub-field"), lambda p: setattr(p, "subfields", [s for s in p.subfields if s.id != oid]))
-        elif kind == "exclusion":
-            self.edit(_("Delete an exclusion"), lambda p: setattr(p, "exclusions", [e for e in p.exclusions if e.id != oid]))
-        elif kind == "prop":                        # R269
-            self.edit(_("Delete a 3D object"), lambda p: setattr(p, "props", [x for x in p.props if x.id != oid]))
-        else:
+        titles = {"building": _("Delete a building"), "subfield": _("Delete a sub-field"),
+                  "exclusion": _("Delete an exclusion"), "prop": _("Delete a 3D object")}       # R269
+        if kind not in titles:
             return
+        self.edit(titles[kind], lambda p: self._drop_thing(p, kind, oid))
         self._select("site", "")
+
+    @staticmethod
+    def _drop_thing(p, kind: str, oid: str) -> None:
+        """An object out of the project, with what stands on it."""
+        if kind == "building":
+            p.buildings = [b for b in p.buildings if b.id != oid]
+            p.subfields = [s for s in p.subfields if s.building != oid]
+            p.exclusions = [e for e in p.exclusions if e.building != oid]
+            p.props = [x for x in p.props if x.building != oid]      # R269: the 3D objects on its roof
+        elif kind == "subfield":
+            p.subfields = [s for s in p.subfields if s.id != oid]
+        elif kind == "exclusion":
+            p.exclusions = [e for e in p.exclusions if e.id != oid]
+        elif kind == "prop":
+            p.props = [x for x in p.props if x.id != oid]
+
+    def _delete_things(self, things: list) -> None:
+        """Del on the objects a sweep selected in the Modelling (R300), one undo step."""
+        def drop(p):
+            for kind, oid in things:
+                self._drop_thing(p, kind, oid)
+        self.plan.selected_module = ("", "")
+        self.edit(ngettext("Delete {n} object", "Delete {n} objects", len(things)).format(n=len(things)), drop)
+        self._select("site", "")
+
+    def _delete_swept(self) -> None:
+        """Del on the modules a sweep selected in the Plant (R300): taken out of the layout as Del takes one, one undo
+        step; those in a string leave it, the checks say so."""
+        swept = list(self.plan.swept)
+        by: dict = {}
+        for sfid, key in swept:
+            by.setdefault(sfid, []).append(key)
+        changes = [manual.delete_modules(self.project, sfid, keys, self.results.get(sfid)) for sfid, keys in by.items()]
+
+        def drop(p):
+            for change in changes:
+                change(p)
+        self.plan.set_swept([])
+        self.edit(ngettext("Take out {n} module", "Take out {n} modules", len(swept)).format(n=len(swept)), drop)
+        self.tell(ngettext("{n} module taken out of the layout (Ctrl+Z brings it back).",
+                           "{n} modules taken out of the layout (Ctrl+Z brings them back).",
+                           len(swept)).format(n=len(swept)))
 
     # the layout by hand (task 16c): the gestures on the rows; manual.py makes the changes, the session applies them
 
@@ -3616,6 +3682,7 @@ class MainWindow(QMainWindow):
             self.tool_actions["select"].setChecked(True)
             self.plan.set_tool("select")
         self.plant_page.lend(self.plan)
+        self.plan.set_plant_phase(True)
         self.plan.show_wiring(True)
         self._plant_clicks()
         if self.plant_state is None:
@@ -3627,6 +3694,7 @@ class MainWindow(QMainWindow):
             return
         self._end_draft()
         self.plan.set_strings_mode(False)
+        self.plan.set_plant_phase(False)
         if phases.home(self._tool_command(self.plan.tool), "model") != "model":     # R277: Sub-field, Row,
             self.tool_actions["select"].setChecked(True)                            # East-west stay in the Plant
             self.plan.set_tool("select")
@@ -4645,7 +4713,7 @@ class MainWindow(QMainWindow):
         if self.stringing_action.isChecked() != drawing:
             self.stringing_action.setChecked(drawing)
 
-    def _start_string_proposal(self, strategy: str = "", keep: list | None = None) -> None:
+    def _start_string_proposal(self, strategy: str = "", keep: list | None = None, only: set | None = None) -> None:
         """Search outside the GUI, keeping the current wiring until a verified proposal is returned."""
         if self.string_proposal_job is not None:
             return
@@ -4659,7 +4727,7 @@ class MainWindow(QMainWindow):
         from .sizing_job import StringProposalJob
         year = self._year_conditions()
         job = StringProposalJob(self.snapshot(), good, strategy, keep, year[0] if year else None,
-                                self._state_key(), self.session.layout_keys)
+                                self._state_key(), self.session.layout_keys, only)
         job.signals.done.connect(self._string_proposal_done)
         self.string_proposal_job = job
         self.string_proposal_progress.begin(_("Assigning strings to the available inputs…"))
@@ -4687,6 +4755,9 @@ class MainWindow(QMainWindow):
         if isinstance(result, Exception):
             log.complain("string proposal", result)
             self.tell(_("Meridiana could not propose the strings: {error}").format(error=result))
+            return
+        if getattr(job, "only", None) is not None:
+            self._swept_proposal_done(job, result)
             return
         # a string whose only warning is a condition of its order (S1400: an inverter without DC fuses, R267) may be
         # proposed, as the automatic sizing proposes it; said with the strings assigned
@@ -4724,13 +4795,89 @@ class MainWindow(QMainWindow):
         else:
             self.tell(message)
 
+    def _swept_proposal_done(self, job, result) -> None:
+        """The strings proposed on the modules selected on the plan (R300): they go in beside those kept, one undo step;
+        what the selection could not make is said, with the reason, and when no string came nothing changes."""
+        only = job.only
+        n = len(only)
+        new = [s for s in result.strings if s.modules and f"{s.modules[0][0]}/{s.modules[0][1]}" in only]
+        bad = [s.why for s in new if not plant_model.acceptable(s)]
+        if bad or not result.search_complete:
+            self.tell(_("No string was made of the modules selected: {why}").format(
+                why=result.search_reason or bad[0]))
+            return
+        if not new:
+            if not any(u.checkable or u.optimized for u in result.units):
+                self.tell(_("No string was made of the modules selected: choose an inverter from the catalogue first, "
+                            "the length of a string depends on it."))
+            elif result.shortest and n < result.shortest:
+                self.tell(ngettext("The {n} module selected is too few for a string: on these inverters a string wants "
+                                   "at least {m} modules in series. Select more, or change the inverter.",
+                                   "The {n} modules selected are too few for a string: on these inverters a string "
+                                   "wants at least {m} modules in series. Select more, or change the inverter.",
+                                   n).format(n=n, m=result.shortest))
+            elif result.notes:
+                self.tell(_("No string was made of the modules selected: {why}").format(why=result.notes[0]))
+            else:
+                self.tell(_("No string was made of the modules selected: the inputs of the inverters have no room for "
+                            "another one, or the modules selected do not fit in a string together."))
+            return
+        strategy = plant_model.strategy_names().get(job.strategy, job.strategy)
+        self.chosen_string = -1
+        self.plan.set_swept([])
+        self._strings_put(_("Propose the strings on the modules selected"), plant_model.runs_of(result),
+                          {"strategy": job.strategy} if job.strategy else None,
+                          entries=getattr(result, "entries", None))
+        placed = sum(len(s.modules) for s in new)
+        said = ngettext("{k} string on the modules selected", "{k} strings on the modules selected",
+                        len(new)).format(k=len(new))
+        if strategy:
+            said += f" ({strategy.lower()})"
+        said += "."
+        if placed < n:
+            said += " " + ngettext("{m} module selected stays in no string: too few, or no room, for another one.",
+                                   "{m} modules selected stay in no string: too few, or no room, for another one.",
+                                   n - placed).format(m=n - placed)
+        self.tell(said + " " + _("Undo restores the previous wiring."))
+
+    def _strings_on_swept(self, strategy: str, keep_others: bool) -> None:
+        """«Propose» or «Complete» with modules selected on the plan (R300): strings of those modules alone. A string
+        one of them is in goes (asked first): its other modules stay in no string; the other strings stay as they are."""
+        only = {f"{sfid}/{key}" for sfid, key in self.plan.swept}
+        runs = self._runs()
+        hit = [r for r in runs if only & set(r["modules"])]
+        kept = [r for r in runs if not only & set(r["modules"])]
+        if keep_others:                             # «Complete»: the modules in no string, among those selected
+            only -= {m for r in runs for m in r["modules"]}
+            kept = runs
+            hit = []
+            if not only:
+                self.tell(_("The modules selected are all in a string already: nothing to complete."))
+                return
+        if hit:
+            freed = sum(1 for r in hit for m in r["modules"] if m not in only)
+            answer = QMessageBox.question(
+                self, _("Propose the strings"),
+                ngettext("A string the modules selected are in is replaced ({m} of its modules not selected stay in no "
+                         "string). Undo brings it back. Go on?",
+                         "{n} strings the modules selected are in are replaced ({m} of their modules not selected stay "
+                         "in no string). Undo brings them back. Go on?", len(hit)).format(n=len(hit), m=freed),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if answer != QMessageBox.StandardButton.Yes:
+                return
+        self._start_string_proposal(strategy, keep=kept, only=only)
+
     def _strings_propose(self, strategy: str = "") -> None:
         """«Propose the strings» (R114): Meridiana's strings in place of those there are, once, with `strategy` (the
-        one chosen when ""): asked first when there are strings, one undo step; nothing changes them afterwards."""
+        one chosen when ""): asked first when there are strings, one undo step; nothing changes them afterwards. With
+        modules selected on the plan, strings of those alone (R300)."""
         self._end_draft()
         s = (self.project.energy or {}).get("strings") or {}
         strategy = strategy if strategy in plant_model.strategy_names() else (s.get("strategy") or "serpentine")
         name = plant_model.strategy_names()[strategy]
+        if self.plan.swept:
+            self._strings_on_swept(strategy, keep_others=False)
+            return
         runs = self._runs()
         if runs:
             answer = QMessageBox.question(
@@ -4749,6 +4896,9 @@ class MainWindow(QMainWindow):
         """«Complete the strings»: Meridiana's strings for the modules in no string only, on the inputs without strings
         first, then on those that take more; the designer's strings stay as they are (one undo step)."""
         self._end_draft()
+        if self.plan.swept:
+            self._strings_on_swept("", keep_others=True)
+            return
         runs = self._runs()
         self._start_string_proposal(keep=runs)
 
@@ -4773,6 +4923,54 @@ class MainWindow(QMainWindow):
                            "start again. Undo restores the previous wiring.",
                            "Plant > Strings: all {n} strings cleared; the modules stay laid. Use Draw or Propose to "
                            "start again. Undo restores the previous wiring.", len(runs)).format(n=len(runs)))
+
+    def _erase_clicked(self, tool: str, sfid: str, key: str) -> None:
+        """A click with a tool that deletes (R299), one undo step: the string of the module; its inverter with all its
+        strings; its inverter alone. An inverter deleted alone leaves its strings where they are, on no inverter: the
+        checks say so until they get another one, and the message says it now (plant.remove_unit)."""
+        runs = self._runs()
+        ref = f"{sfid}/{key}"
+        index = next((i for i, r in enumerate(runs) if ref in r["modules"]), -1)
+        if index < 0:
+            self.hint.setText(_("This module is in no string: there is nothing to delete here."))
+            return
+        if tool == "erase_string":
+            self._delete_string(index)
+            return
+        unit = runs[index].get("inverter", 0)
+        if not unit:
+            self.hint.setText(_("The string of this module is on no inverter: «Delete a string» takes it away."))
+            return
+        strings = tool == "erase_inverter_strings"
+        n = sum(1 for r in runs if r.get("inverter", 0) == unit)
+        entries, after = plant_model.remove_unit(self.project.energy, runs, unit, strings)
+        if entries is None and not strings:
+            self.hint.setText(_("This is the inverter Meridiana sizes by itself: there is none in the list to delete."))
+            return
+
+        def put(p):
+            if entries is not None:
+                p.energy.pop("inverter", None)
+                p.energy.pop("inverter_count", None)
+                if entries:
+                    p.energy["inverters"] = entries
+                else:
+                    p.energy.pop("inverters", None)
+            p.energy["strings"] = plant_model.touched(p.energy.get("strings"), after)
+        self.chosen_string = -1
+        self.edit(_("Delete inverter {n} and its strings").format(n=unit) if strings else
+                  _("Delete inverter {n}").format(n=unit), put)
+        self._show_chosen(-1)
+        if strings:
+            self.tell(ngettext("Inverter {u} and its string deleted: the modules stay laid, in no string (Ctrl+Z brings "
+                               "them back).",
+                               "Inverter {u} and its {n} strings deleted: the modules stay laid, in no string (Ctrl+Z "
+                               "brings them back).", n).format(u=unit, n=n))
+        else:
+            self.tell(ngettext("Inverter {u} deleted: its string stays on the roof, on no inverter, and the checks say "
+                               "so. Give it another inverter in the Strings list, or Ctrl+Z.",
+                               "Inverter {u} deleted: its {n} strings stay on the roof, on no inverter, and the checks "
+                               "say so. Give them another inverter in the Strings list, or Ctrl+Z.", n).format(u=unit, n=n))
 
     def _delete_string(self, index: int) -> None:
         """Del with a string chosen (R115): that string deleted, its modules in no string (one undo step)."""

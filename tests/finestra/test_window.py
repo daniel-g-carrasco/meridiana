@@ -1499,9 +1499,10 @@ class PlantPhase(PlantWindow):
         self.assertIs(self.win.inspector.currentWidget(), self.win.plant_side)          # R277
         self.assertEqual(self.win.docks[1].windowTitle(), "Plant")
         self.assertEqual([b.property("tool") for b in self.win.bars["plant"].buttons().values()
-                          if b.property("tool") != "canopy_layout"],           # the canopy's task, when there
-                         ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty", "inverter_catalog", "inverter_auto", "battery_catalog", "strings_auto",
-                          "strings_complete", "strings_manual", "strings_clear"])
+                          ],
+                         ["tool_select", "tool_move", "tool_rotate",            # R295
+                          "tool_subfield", "fill", "empty", "inverter_catalog", "inverter_auto", "battery_catalog", "strings_auto",
+                          "strings_complete", "strings_manual", "tool_erase_string"])
         QTest.keyClick(self.win, Qt.Key.Key_PageUp, Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(self.win.phase(), "model")
         self.assertEqual(self.win.split.indexOf(self.win.plan), 0)     # back beside the 3D view

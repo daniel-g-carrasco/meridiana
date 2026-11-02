@@ -28,6 +28,7 @@ HIT = 6.0               # a side is clicked within this many pixels of its drawi
 DRAG = 4.0              # a press that moves more than this turns the view instead of clicking
 PILL_H = design.Button.SMALL[0]
 EDITOR_W = 96
+HINT_FLAGS = int(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap)
 
 
 @dataclass
@@ -213,8 +214,18 @@ class Preview3D(QWidget):
         scale = max(1.0, min(room.width() / 2 - 3.2 * PILL_H, room.height() / 2 - 1.4 * PILL_H)) / radius
         return centre, scale, room.center()
 
+    def hint_rect(self) -> QRectF:
+        """Where the text under the drawing goes: as many lines as the width of the preview asks for, its words never
+        cut (R305: «non si leggono le scritte sotto»). Empty without a text."""
+        if not self.hint:
+            return QRectF()
+        font = design.text_font(design.Text.CAPTION, self.font())
+        width = max(1.0, self.width() - 2.0 * design.Space.M)
+        high = QFontMetricsF(font).boundingRect(QRectF(0, 0, width, 1000.0), HINT_FLAGS, self.hint).height()
+        return QRectF(design.Space.M, self.height() - high - design.Space.XS, width, high)
+
     def _room(self) -> QRectF:
-        bottom = design.Space.XL if self.hint else 0
+        bottom = self.hint_rect().height() + design.Space.S if self.hint else 0
         return QRectF(0, 0, self.width(), self.height() - bottom)
 
     def project(self, point) -> QPointF:
@@ -299,8 +310,7 @@ class Preview3D(QWidget):
         if self.hint:
             painter.setFont(design.text_font(design.Text.CAPTION, self.font()))
             painter.setPen(c["muted"])
-            painter.drawText(QRectF(0, self.height() - design.Space.XL - design.Space.XS, self.width(),
-                                    design.Space.XL), Qt.AlignmentFlag.AlignCenter, self.hint)
+            painter.drawText(self.hint_rect(), HINT_FLAGS, self.hint)
         painter.end()
 
     @staticmethod
@@ -380,7 +390,9 @@ class Preview3D(QWidget):
             painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, pill.text)
 
     def _draw_north(self, painter, c) -> None:
-        """A small arrow towards North in the top right corner: the view turns, North stays known."""
+        """A small arrow towards North in the top right corner: the shape goes on the plan as it stands here, with
+        its turn, and North is what says which way it will lie there (the plan has North up), whichever way the
+        preview was dragged. Kept for that (R305), and the dialogs' text says so."""
         if not self.faces and not self.guides:
             return
         _d, r, u = self._axes()
@@ -433,7 +445,9 @@ class Preview3D(QWidget):
             if self._dragging or math.hypot(moved.x(), moved.y()) > DRAG:
                 self._dragging = True
                 az, el = self._view_at_press
-                self.turn(az - moved.x() * 0.5, el + moved.y() * 0.4)
+                # as in the 3D view (camera.orbit): the model follows the pointer, dragged right it turns right,
+                # dragged down it shows more from above; R305: the azimuth went the other way
+                self.turn(az + moved.x() * 0.5, el + moved.y() * 0.4)
                 return
         key = self.key_at(pos)
         pill = self.pill(key) if key is not None else None

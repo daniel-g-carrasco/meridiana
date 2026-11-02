@@ -22,9 +22,9 @@ from __future__ import annotations
 
 import math
 
-from PySide6.QtCore import QEasingCurve, QEvent, QPointF, QRectF, QSize, Qt, QVariantAnimation, Signal
+from PySide6.QtCore import QEasingCurve, QEvent, QPointF, QRect, QRectF, QSize, Qt, QVariantAnimation, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QFontMetricsF, QPainter, QPainterPath, QPen, QPixmap
-from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QSizePolicy, QStackedWidget, QTabBar, QToolBar,
+from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QMenu, QSizePolicy, QStackedWidget, QTabBar, QToolBar,
                                QToolButton, QVBoxLayout, QWidget)
 
 from .. import phases, theme_colors
@@ -212,6 +212,68 @@ class ToolButton(QToolButton):
         self._own()
 
 
+class ToolMenuButton(ToolButton):
+    """A button shared by a few commands, as AutoCAD's flyouts (R306; Daniel, 02/11/2026: «edificio [...] con i modelli,
+    la falda con il colmo»): a click runs the last one used, shown on the button; its arrow, or the button held down,
+    opens the menu of all of them with their names, keys and tooltips, and they are the window's actions, so a key
+    that runs one of them brings it on the button too. A command gone disabled gives way to one that works: a disabled
+    button would not open its menu either. The button keeps the width of its longest word: the bar does not move at a
+    change. Qt's delayed popup holds the long press (SH_ToolButton_PopupDelay)."""
+
+    ARROW = Space.L + Space.XXS                 # the arrow's strip at the right of the button, pixels
+
+    def __init__(self, family: list, parent=None):
+        """`family`: (command id, the word under the icon, its QAction), the one shown at first first."""
+        first, label, action = family[0]
+        super().__init__(action, label, parent=parent)
+        self.setProperty("grouped", True)
+        self.family = {cid: (word, a) for cid, word, a in family}
+        self.command = first
+        self.commands = QMenu(self)
+        self.commands.setToolTipsVisible(True)
+        for cid, _word, a in family:
+            self.commands.addAction(a)
+            a.triggered.connect(lambda _c=False, k=cid: self.use(k))
+            a.changed.connect(self._still_usable)
+        self.setMenu(self.commands)
+        self.setPopupMode(QToolButton.ToolButtonPopupMode.DelayedPopup)
+
+    def use(self, command: str) -> None:
+        """`command` on the button from now on: the next click runs it."""
+        if command == self.command:
+            return
+        self.command = command
+        self.label, action = self.family[command]
+        self.setProperty("tool", command)
+        self.setDefaultAction(action)
+        self._own()
+
+    def _still_usable(self) -> None:
+        action = self.family[self.command][1]
+        if not action.isEnabled():
+            usable = next((cid for cid, (_w, a) in self.family.items() if a.isEnabled()), None)
+            if usable is not None:
+                self.use(usable)
+
+    def arrow_rect(self) -> QRect:
+        """Where a press opens the menu at once: the strip of the arrow, beside the icon."""
+        return QRect(self.width() - self.ARROW, 0, self.ARROW, self.height() - QFontMetrics(self.font()).height())
+
+    def mousePressEvent(self, event) -> None:
+        if event.button() == Qt.MouseButton.LeftButton and self.arrow_rect().contains(event.position().toPoint()):
+            self.showMenu()
+            return
+        super().mousePressEvent(event)
+
+    def sizeHint(self) -> QSize:
+        hint = super().sizeHint()
+        if self.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonIconOnly:
+            return hint
+        metrics = QFontMetrics(self.font())
+        widest = max(metrics.horizontalAdvance(word) for word, _a in self.family.values())
+        return QSize(max(hint.width(), hint.width() - metrics.horizontalAdvance(self.text()) + widest), hint.height())
+
+
 class ToolGroup(QWidget):
     """A group of the bar: its buttons in a row and its title under them."""
 
@@ -219,6 +281,7 @@ class ToolGroup(QWidget):
         super().__init__(parent)
         self.group = group
         self.buttons: dict = {}                                 # command id -> its button
+        self.shared: dict = {}                                  # the command of a button's menu -> the button (R306)
         self.primary: ToolButton | None = None
         box = QVBoxLayout(self)
         box.setContentsMargins(4, 0, 4, 0)
@@ -227,10 +290,14 @@ class ToolGroup(QWidget):
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(2)
         for tool in tools:
-            if actions[tool.command].icon().isNull() and tool.icon:
-                # a command that came without an icon takes the one its tool was designed with (R277: «On canopy»)
-                actions[tool.command].setIcon(icons.icon(tool.icon))
-            b = ToolButton(actions[tool.command], tool.label or _plain(actions[tool.command].text()))
+            family = [t for t in tool.family() if t.command in actions]
+            for t in family:
+                if actions[t.command].icon().isNull() and t.icon:
+                    # a command that came without an icon takes the one its tool was designed with (R277: «On canopy»)
+                    actions[t.command].setIcon(icons.icon(t.icon))
+            words = [(t.command, t.label or _plain(actions[t.command].text()), actions[t.command]) for t in family]
+            b = (ToolMenuButton(words) if len(words) > 1 else
+                 ToolButton(actions[tool.command], tool.label or _plain(actions[tool.command].text())))
             b.setProperty("tool", tool.command)
             b.setFont(text_font(Text.SECONDARY, b.font()))
             if tool.primary:
@@ -239,6 +306,7 @@ class ToolGroup(QWidget):
                 self.primary_icon = tool.icon or tool.command
             row.addWidget(b)
             self.buttons[tool.command] = b
+            self.shared.update({t.command: b for t in family})
         box.addLayout(row)
         box.addSpacing(GROUP_GAP)
         self.title = QLabel(group.title)
@@ -332,11 +400,15 @@ class PhaseBar(QToolBar):
             g.set_colours(t)
 
     def buttons(self) -> dict:
-        """command id -> its button, over the groups."""
+        """command id -> its button, over the groups: the buttons there are, each under the command it first shows."""
         out: dict = {}
         for g in self.groups:
             out.update(g.buttons)
         return out
+
+    def button_of(self, command: str) -> ToolButton | None:
+        """The button that holds `command`, shown on it or in its menu (R306)."""
+        return next((g.shared[command] for g in self.groups if command in g.shared), None)
 
     def primary(self) -> ToolButton | None:
         return next((g.primary for g in self.groups if g.primary is not None), None)

@@ -32,8 +32,9 @@ class SizingJob(QRunnable):
 
 
 class StringProposalJob(QRunnable):
-    def __init__(self, snapshot, results, strategy, keep, t_cell_max, state, layout_keys):
+    def __init__(self, snapshot, results, strategy, keep, t_cell_max, state, layout_keys, only=None):
         super().__init__()
+        self.only = only                    # R300: the modules selected on the plan, when it is about them
         self.snapshot, self.results, self.strategy = snapshot, results, strategy
         self.keep, self.t_cell_max, self.state = keep, t_cell_max, state
         self.layout_keys = dict(layout_keys)
@@ -50,7 +51,7 @@ class StringProposalJob(QRunnable):
             project = model.Project.from_json(self.snapshot, check=False)
             budget = stringing.SearchBudget(limit=100000, cancelled=lambda: self.interrupted)
             result = plant.proposal(project, self.results, strategy=self.strategy, keep=self.keep,
-                                    t_cell_max_year=self.t_cell_max, search=budget)
+                                    t_cell_max_year=self.t_cell_max, search=budget, only=self.only)
         except Exception as error:
             result = error
         tell(self.signals.done, (self, result))

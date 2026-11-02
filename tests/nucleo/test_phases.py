@@ -25,13 +25,13 @@ class ThePhases(unittest.TestCase):
     def test_the_groups_are_those_of_the_design_without_the_sun_and_the_background(self):
         groups = {p.id: [g.title for g in p.groups] for p in phases.phases()}
         self.assertEqual(groups["model"], ["Edit", "Draw", "Obstacles", "Precision"])         # R277
-        self.assertEqual(groups["plant"], ["Panels", "Inverter", "Storage", "Strings"])
+        self.assertEqual(groups["plant"], ["Edit", "Panels", "Inverter", "Storage", "Strings"])     # R295
         self.assertEqual(groups["production"], ["Computation", "Comparison"])
         self.assertEqual(groups["consumption"], ["Data"])
         self.assertEqual(groups["economics"], ["Computation", "Comparison"])
         self.assertEqual(groups["report"], ["Comparison", "Export"])
         for p in phases.phases():
-            commands = [t.command for t in p.tools()]
+            commands = [t.command for t in p.tools(every=True)]
             self.assertEqual(len(commands), len(set(commands)), p.id)
             for g in p.groups:
                 self.assertNotIn(g.title, ("Sun", "Background"))            # they stay in the views (C5)
@@ -43,7 +43,7 @@ class ThePhases(unittest.TestCase):
         for pid in ("production", "economics", "report"):
             self.assertIn("new_variant", [t.command for t in phases.by_id(pid).tools()])
         self.assertNotIn("refill", [t.command for t in phases.by_id("model").tools()])
-        self.assertIn("strings_clear", [t.command for t in phases.by_id("plant").tools()])
+        self.assertIn("strings_clear", [t.command for t in phases.by_id("plant").tools(every=True)])
 
     def test_every_command_cited_exists_unless_a_later_task_brings_it(self):
         known = {c.id for c in shortcuts.commands()}
@@ -57,7 +57,7 @@ class ThePhases(unittest.TestCase):
                     else:
                         self.assertIn(t.command, known)
         model, plant = phases.by_id("model"), phases.by_id("plant")
-        modules = [t.command for g in plant.groups if g.id == "modules" for t in g.tools]
+        modules = [t.command for g in plant.groups if g.id == "modules" for t in g.every()]
         self.assertEqual(modules, ["tool_subfield", "tool_row", "layout_east_west", "canopy_layout", "fill", "empty"])
         self.assertEqual([t.command for t in plant.tools(planned=True) if t.planned], [])   # «On a canopy» is there (R281)
         self.assertEqual([t.command for t in model.tools(planned=True) if t.planned], [])    # R269: «3D object»
@@ -119,10 +119,12 @@ class ThePhases(unittest.TestCase):
             "economics": ["compute", "new_variant", "compare_variants"],
             "report": ["new_variant", "compare_variants", "export_report", "export_ifc", "export_csv",
                        "save_revision", "copy_notes"]}
-        now = {p.id: [t.command for t in p.tools()] for p in phases.phases()}
+        now = {p.id: [t.command for t in p.tools(every=True)] for p in phases.phases()}     # R306: their menus too
         lost = {c for cs in before.values() for c in cs} - {c for cs in now.values() for c in cs}
         self.assertEqual(lost, set())
         added = ["tool_ridge", "canopy_layout", "object_3d"]     # R275, R281 and R269, new on the bars
+        erase = ["tool_erase_string", "tool_erase_inverter_strings", "tool_erase_inverter"]      # R299
+        added += erase + ["tool_select", "tool_move", "tool_rotate"]     # R295: Edit in the Plant as well
         self.assertEqual(sorted([c for cs in before.values() for c in cs] + added),
                          sorted(c for cs in now.values() for c in cs))
         layout = ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty"]
@@ -131,7 +133,8 @@ class ThePhases(unittest.TestCase):
         model.insert(model.index("tool_ridge") + 1, "tool_exclusion")     # in the Obstacles group
         model.insert(model.index("tool_exclusion") + 1, "object_3d")      # R269, beside it
         self.assertEqual(now["model"], model)
-        self.assertEqual(now["plant"], layout[:3] + ["canopy_layout"] + layout[3:] + before["plant"])
+        self.assertEqual(now["plant"], added[-3:] + layout[:3] + ["canopy_layout"] + layout[3:] + before["plant"][:-1]
+                         + erase + before["plant"][-1:])
         for pid in ("production", "consumption", "economics", "report"):
             self.assertEqual(now[pid], before[pid])
 
@@ -141,7 +144,10 @@ class ThePhases(unittest.TestCase):
         self.assertEqual(phases.home("layout_east_west", "model"), "plant")
         self.assertEqual(phases.home("tool_building", "plant"), "model")
         self.assertEqual(phases.home("tool_pitch", "report"), "model")
-        self.assertEqual(phases.home("tool_move", "plant"), "model")
+        for tool in ("tool_move", "tool_rotate"):               # R295: they work on what moves in the Plant
+            self.assertEqual(phases.home(tool, "plant"), "plant")
+            self.assertEqual(phases.home(tool, "model"), "model")
+            self.assertEqual(phases.home(tool, "report"), "model")
         for tool in ("tool_select", "tool_measure"):                # shared by the two phases of the plan
             self.assertEqual(phases.home(tool, "plant"), "plant")
             self.assertEqual(phases.home(tool, "model"), "model")

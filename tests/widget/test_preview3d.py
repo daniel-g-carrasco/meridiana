@@ -7,6 +7,7 @@ import math
 import unittest
 
 import _setup
+import numpy as np
 
 setUpModule = _setup.keep_global_state
 
@@ -15,6 +16,56 @@ class Projection(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.app = _setup.qt_or_skip()
+
+    def test_r305_a_drag_turns_the_preview_the_way_the_3d_view_turns(self):
+        """The same drag on the preview and on the camera of the 3D view (camera.orbit): the point of view moves
+        round the same way, up and down too (Daniel: «il trascinamento con il mouse va al contrario»)."""
+        from PySide6.QtCore import QEvent, QPoint, QPointF, Qt
+        from PySide6.QtGui import QMouseEvent
+        from PySide6.QtTest import QTest
+
+        from meridiana import camera
+
+        def bearing(c):                             # Qt Quick's axes: x East, z South
+            return math.degrees(math.atan2(c.position[0] - c.target[0], -(c.position[2] - c.target[2])))
+
+        for dx, dy in ((60, 0), (-60, 0), (0, 40), (0, -40)):
+            view = camera.Camera(position=np.array([-10.0, 8.0, 10.0]), rotation=camera.look(45.0, -30.0))
+            before = bearing(view), view.elevation()
+            view.orbit(dx, dy, view.target)
+            turned, lowered = bearing(view) - before[0], view.elevation() - before[1]
+            p = self.preview()
+            start = (p.azimuth, p.elevation)
+            QTest.mousePress(p, Qt.MouseButton.LeftButton, pos=QPoint(200, 40))
+            here = QPointF(200 + dx, 40 + dy)
+            self.app.sendEvent(p, QMouseEvent(QEvent.Type.MouseMove, here, here, Qt.MouseButton.NoButton,
+                                              Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier))
+            QTest.mouseRelease(p, Qt.MouseButton.LeftButton, pos=here.toPoint())
+            self.assertEqual(math.copysign(1, p.azimuth - start[0]) if dx else 0,
+                             math.copysign(1, turned) if dx else 0, (dx, dy))
+            # the camera's elevation is that of where it looks: lower is more from above, the preview's higher
+            self.assertEqual(math.copysign(1, p.elevation - start[1]) if dy else 0,
+                             math.copysign(1, -lowered) if dy else 0, (dx, dy))
+
+    def test_r305_the_text_under_the_drawing_goes_to_a_new_line_and_is_never_cut(self):
+        from PySide6.QtGui import QFontMetricsF
+
+        from meridiana.ui import design
+        from meridiana.ui.preview3d import HINT_FLAGS
+        p = self.preview()
+        p.hint = "Trascina per girare · clic su un lato per scriverne la lunghezza · N è il nord una volta in pianta"
+        font = design.text_font(design.Text.CAPTION, p.font())
+        lines = []
+        for width in (260, 330, 900):
+            p.resize(width, 300)
+            box = p.hint_rect()
+            needed = QFontMetricsF(font).boundingRect(box, HINT_FLAGS, p.hint)
+            self.assertLessEqual(needed.width(), box.width() + 0.5, width)
+            self.assertLessEqual(needed.height(), box.height() + 0.5, width)
+            self.assertLessEqual(box.bottom(), p.height())
+            self.assertLessEqual(p._room().bottom(), box.top())         # the drawing stays above the text
+            lines.append(box.height())
+        self.assertGreater(lines[0], lines[2])
 
     def preview(self):
         from meridiana.ui.preview3d import Preview3D, prism
@@ -241,9 +292,11 @@ class Themes(unittest.TestCase):
                 self.assertLess(abs(corner.lightness() - base.lightness()), 6, theme)    # the view's ground
                 dark = base.lightness() < 128
                 self.assertEqual(dark, theme == "dark")
-                # something is drawn: the faces differ from the ground
-                centre = image.pixelColor(image.width() // 2, image.height() // 2)
-                self.assertNotEqual(centre.rgb(), base.rgb(), f"{theme} {type(dialog).__name__}")
+                # something is drawn: down the middle of the drawing the faces differ from the ground (at one point
+                # a canopy may have the air under its roof)
+                column = [image.pixelColor(image.width() // 2, y).rgb()
+                          for y in range(image.height() // 4, image.height() * 3 // 4)]
+                self.assertTrue(any(c != base.rgb() for c in column), f"{theme} {type(dialog).__name__}")
                 dialog.close()
 
 
