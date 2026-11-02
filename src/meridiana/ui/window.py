@@ -1088,8 +1088,9 @@ class MainWindow(QMainWindow):
         act(compute, "inverter_catalog", self._choose_inverter,
             tip=_("An inverter from the catalogue added to the plant of the variant in hand"))
         act(compute, "inverter_auto", self._size_inverters,
-            tip=_("Models of different powers of one brand, with every module in a valid string: fewer inverters, "
-                  "then fewer models, then the DC/AC ratio closest to the one requested"))
+            tip=_("Meridiana chooses the inverters of one brand for the modules laid: fewer inverters, then fewer "
+                  "models, then the DC/AC ratio closest to the one wanted; every module in a valid string. They "
+                  "replace the inverters in the list (one undo step)"))
         # the strings (task 16d; R114-R116): the designer's; Meridiana proposes them only when asked, with one of
         # PVsyst's strategies, or completes them for the modules left out; drawn by hand; all deleted
         self.strategy_menu = QMenu(_("Strategy"), self)
@@ -1106,12 +1107,14 @@ class MainWindow(QMainWindow):
         self.strategy_actions["serpentine"].setChecked(True)
         # a menu of the strategies and nothing else: a button whose own click proposed and whose arrow chose
         # was a click that did one thing or the other (a tool button of Qt runs its action instead of the menu)
-        auto = act(compute, "strings_auto", None,
-                   tip=_("Meridiana's strings in place of those there are, once (asked first, one undo step), with the "
-                         "strategy chosen in its menu: back and forth, a row per string, U on two rows, a row per MPPT. "
-                         "Nothing changes them afterwards. With modules selected on the plan (drag over them with "
-                         "Select), strings of those alone"))
-        auto.setMenu(self.strategy_menu)
+        # R308 (study 23, M3): one command with its options in a little window hung at the panel's edge: on what
+        # (the plant, the modules selected, one inverter), replace or add, the path, the modules in series, the
+        # DC/AC ratio wanted; the strategies' actions stay, for the keyboard and the tests
+        act(compute, "strings_auto", lambda: self._stringing_popup(0),
+            tip=_("Meridiana's strings, with the options in a little window: on the whole plant, on the modules "
+                  "selected on the plan or on one inverter; in place of the strings there are (asked first) or for "
+                  "the modules in no string only; the path, the modules in series, the DC/AC ratio wanted. One undo "
+                  "step; nothing changes them afterwards"))
         act(compute, "strings_complete", self._strings_complete,
             tip=_("Meridiana's strings for the modules in no string only, on the inputs without strings first: yours "
                   "stay as they are"))
@@ -1199,14 +1202,22 @@ class MainWindow(QMainWindow):
         until the report's task) and the bar of each phase, from phases.py with the window's actions; then the look
         the preferences ask for."""
         self.plant_page = PlantPage(self.commands)
-        self.plant_inspector = PlantInspector(self.commands)
+        self.plant_inspector = PlantInspector(self.commands, view=self.cfg.strings_view)
         # R277: the Plant's right panel, Panels (the selected sub-field's card), Inverter (the inspector above),
         # Storage, in the order of the work
         self.plant_side = PlantSide(self.plant_inspector, self.commands, lambda: self.project)
         self.inspector.add_plant(self.plant_side)
         self.plant_side.sectionOpened.connect(lambda _sid: self._plant_clicks())     # R277: what a click is about
-        self.plant_inspector.countChanged.connect(self._inverter_count)
-        self.plant_inspector.removed.connect(self._inverter_removed)
+        # R297: the inverters one by one: renamed, moved (the strings renumbered), their datasheet, stringed, emptied,
+        # taken out
+        self.plant_inspector.removed.connect(self._unit_removed)
+        self.plant_inspector.renamed.connect(self._unit_renamed)
+        self.plant_inspector.moved.connect(self._unit_moved)
+        self.plant_inspector.datasheetAsked.connect(self._unit_datasheet)
+        self.plant_inspector.stringAsked.connect(self._stringing_popup)
+        self.plant_inspector.emptied.connect(self._unit_emptied)
+        self.plant_inspector.stringDeleteAsked.connect(self._delete_string)
+        self.plant_inspector.viewChanged.connect(self._strings_view_chosen)
         self.plant_inspector.edited.connect(lambda path, value: self._energy_edited("energy", path, value))
         self.plant_inspector.assigned.connect(self._assign_subfield)
         self.plant_inspector.stringChosen.connect(lambda i: self._choose_string(i, show=True))
@@ -4643,6 +4654,140 @@ class MainWindow(QMainWindow):
     def _inverter_removed(self, entry: int) -> None:
         self._entries_edit(_("Take an inverter out"), lambda entries: entries.pop(entry))
 
+    # R297: the inverters one by one (study 23, I-A and A2): the file keeps entries of a model with a count, so an
+    # inverter named or moved on its own splits its entry first (plant.split_entries); the strings follow
+
+    def _units_put(self, text: str, entries: list, mapping: dict | None = None, runs: list | None = None) -> None:
+        """The list of the inverters `entries` as one undo step, the strings renumbered by `mapping` (before ->
+        after) or replaced by `runs`."""
+        def put(p):
+            p.energy.pop("inverter", None)
+            p.energy.pop("inverter_count", None)
+            p.energy["inverters"] = entries
+            s = p.energy.get("strings") if (p.energy.get("strings") or {}).__class__ is dict else {}
+            s = dict(s or {})
+            if runs is not None:
+                p.energy["strings"] = plant_model.touched(s, runs)
+            elif mapping and s.get("runs"):
+                p.energy["strings"] = {**s, "runs": plant_model.renumber_runs(s["runs"], mapping)}
+        self.edit(text, put)
+
+    def _unit_renamed(self, unit: int, name: str) -> None:
+        """An inverter named (F2, a double click, its menu): a label, the strings keep their numbers."""
+        entries = plant_model.rename_unit(self.project.energy, unit, name)
+        if entries is not None:
+            self._units_put(_("Rename inverter {n}").format(n=unit), entries)
+
+    def _unit_moved(self, unit: int, position: int) -> None:
+        """An inverter moved to `position` (from 0): the strings of the inverters moved take their new numbers
+        (1.3.2 -> 2.3.2), said in the status bar (R308)."""
+        entries, mapping = plant_model.move_unit(self.project.energy, unit, position)
+        if entries is None:
+            return
+        self._units_put(_("Move inverter {a} to place {b}").format(a=unit, b=position + 1), entries, mapping)
+        changed = sorted((a, b) for a, b in mapping.items() if a != b)
+        words = ", ".join(_("{a}.x.y → {b}.x.y").format(a=a, b=b) for a, b in changed)
+        self.tell(_("Inverter {a} → {b}: the strings are renumbered, {words} (Ctrl+Z brings the order back).").format(
+            a=unit, b=mapping.get(unit, unit), words=words))
+
+    def _unit_datasheet(self, unit: int) -> None:
+        """The datasheet of an inverter from the catalogue, in a little window that stays (study 23)."""
+        from .plant_page import DatasheetSheet
+        plant = self.plant_state
+        u = plant.unit(unit) if plant is not None else None
+        entries = system.inverter_entries(self.project.energy)
+        if u is None or not 0 <= u.entry < len(entries):
+            self.tell(_("The inverters are being checked: a moment."))
+            return
+        self.datasheet_sheet = DatasheetSheet(u, entries[u.entry]["record"], self)
+        self.datasheet_sheet.show()
+
+    def _unit_emptied(self, unit: int) -> None:
+        """«Empty its strings»: the strings of inverter `unit` deleted, their modules in no string (one undo step)."""
+        runs = self._runs()
+        mine = [r for r in runs if r.get("inverter") == unit]
+        if not mine:
+            self.tell(_("Inverter {n} has no string.").format(n=unit))
+            return
+        self.chosen_string = -1
+        self._strings_put(_("Empty the strings of inverter {n}").format(n=unit),
+                          [r for r in runs if r.get("inverter") != unit])
+        self.tell(ngettext("Inverter {n}: its string is deleted, its modules stay laid (Ctrl+Z brings it back).",
+                           "Inverter {n}: its {k} strings are deleted, their modules stay laid (Ctrl+Z brings them "
+                           "back).", len(mine)).format(n=unit, k=len(mine)))
+
+    def _unit_removed(self, unit: int) -> None:
+        """«Take out of the plant»: inverter `unit` out of the list; its strings stay on the roof, on no inverter (R118,
+        R299), the numbers of the inverters after it go down by one."""
+        entries, runs = plant_model.remove_unit(self.project.energy, self._runs(), unit, strings=False)
+        if entries is None:
+            return
+        self._units_put(_("Take inverter {n} out").format(n=unit), entries, runs=runs)
+
+    def _strings_view_chosen(self, view: str) -> None:
+        """The view of the Strings (cards or diagram) remembered in the preferences (R298)."""
+        self.cfg.strings_view = view
+        self._save_config()
+
+    # R308 (study 23, M3): «String automatically…» with its options in a little window hung at the panel's edge
+
+    def _stringing_popup(self, unit: int = 0) -> None:
+        """The little window of the automatic stringing, for the whole plant (`unit` 0), or for one inverter from
+        its menu; not modal: the plan can still be clicked to choose the modules."""
+        from .plant_page import StringingPopup
+        if self.phase() != "plant":
+            self.show_phase("plant")
+        self._end_draft()
+        popup = getattr(self, "stringing_popup", None)
+        if popup is None:
+            popup = self.stringing_popup = StringingPopup(self)
+            popup.asked.connect(self._strings_asked)
+        e = self.project.energy or {}
+        s = e.get("strings") if (e.get("strings") or {}).__class__ is dict else {}
+        popup.prepare(self.plant_state, len(self.plan.swept), unit, s or {}, float(e.get("dc_ac_ratio") or 1.1))
+        popup.hang_at(self.plant_side if self.plant_side.isVisible() else None)
+        popup.show()
+        popup.raise_()
+        popup.activateWindow()
+
+    def _strings_asked(self, options: dict) -> None:
+        """The options of the little window carried out: the path and the modules in series kept for the next time,
+        the DC/AC ratio wanted written down; then Meridiana's proposal on what was asked. For one inverter the
+        strings of the other inverters are kept; the modules it takes are those in no string and its own."""
+        e = self.project.energy or {}
+        s = dict(e.get("strings") if (e.get("strings") or {}).__class__ is dict else {})
+        extra = {}
+        if options.get("strategy") and options["strategy"] != s.get("strategy"):
+            extra["strings.strategy"] = options["strategy"]
+        if (options.get("n_series") or None) != (s.get("n_series") or None):
+            extra["strings.n_series"] = options.get("n_series")
+        if abs(float(options.get("dc_ac") or 1.1) - float(e.get("dc_ac_ratio") or 1.1)) >= 1e-9:
+            extra["dc_ac_ratio"] = float(options["dc_ac"])
+        for path, value in extra.items():
+            self._energy_edited("energy", path, value)
+        strategy = options.get("strategy") or ""
+        scope, unit, replace = options.get("scope", "all"), int(options.get("unit") or 0), options.get("replace", True)
+        if scope == "swept" and self.plan.swept:
+            self._strings_on_swept(strategy, keep_others=not replace)
+        elif scope == "unit" and unit:
+            runs = self._runs()
+            others = [r for r in runs if r.get("inverter") != unit]
+            mine = [r for r in runs if r.get("inverter") == unit]
+            if replace and mine:
+                answer = QMessageBox.question(
+                    self, _("String automatically"),
+                    ngettext("The string of inverter {n} is replaced by Meridiana's proposal. Undo brings it back. "
+                             "Go on?", "The {k} strings of inverter {n} are replaced by Meridiana's proposal. Undo "
+                             "brings them back. Go on?", len(mine)).format(n=unit, k=len(mine)),
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                if answer != QMessageBox.StandardButton.Yes:
+                    return
+            self._start_string_proposal(strategy, keep=others if replace else runs)
+        elif replace:
+            self._strings_propose(strategy)
+        else:
+            self._strings_complete()
+
     def _assign_subfield(self, sfid: str, inverter: int, mppt: int) -> None:
         """The inverter and the input a sub-field's strings go to (0: automatic)."""
         def put(p):
@@ -4996,6 +5141,8 @@ class MainWindow(QMainWindow):
         self.plant_inspector.show_string(self.plant_state, index)
         self.plant_inspector.list.choose(index)
         plant = self.plant_state
+        # R298: the string chosen, compressed, in the right zone of the bar while it is chosen (study 23, C3)
+        self.plant_page.show_chosen(plant, index, self.plant_inspector.states)
         if plant is not None and 0 <= index < len(plant.strings):
             st = plant.strings[index]
             self.plant_page.show_string(f"{st.label}: {plant_model.voltages(st)}")

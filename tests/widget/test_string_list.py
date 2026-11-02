@@ -170,7 +170,7 @@ class WorkingInverter(unittest.TestCase):
         from meridiana.ui.plant_page import PlantInspector
         from meridiana.ui.style import pad_fields
         self.actions = {key: QAction(key) for key in
-                        ("inverter_catalog", "inverter_auto", "strings_auto", "strings_complete", "strings_clear")}
+                        ("inverter_catalog", "inverter_auto", "strings_auto", "strings_manual", "strings_clear")}
         self.panel = PlantInspector(self.actions)
         self.addCleanup(self.panel.deleteLater)
         self.project = model.Project(name="Prova")
@@ -190,33 +190,16 @@ class WorkingInverter(unittest.TestCase):
         self.assertEqual(set(self.panel.list.rows), {0})
         self.assertEqual(self.panel.working_inverter.currentData(), 1)
         self.assertEqual([self.panel.working_inverter.itemData(i) for i in range(3)], [1, 2, 3])
-        self.assertTrue(self.panel.inverters_group.isHidden())
-        self.panel.manage_inverters.click()
-        self.assertFalse(self.panel.inverters_group.isHidden())
-        self.assertEqual(self.panel.entry_rows[0][1].value(), 3)
+        self.assertEqual(sorted(self.panel.units.cards), [1, 2, 3])          # R297: one card per inverter
+        self.assertTrue(self.panel.units.cards[1].current)
+        self.assertFalse(self.panel.units.cards[2].current)
 
-    def test_overview_shows_all_installed_units_before_the_working_selector(self):
-        label = self.panel.overview
-        lines = label.text().splitlines()
-        # «active» as the year counts it (R245/R246): two of the three units have a string, the third is idle
-        self.assertEqual(lines[0], "2 of 3 inverters with strings · 40.0 kW AC")
-        self.assertIn("Inverter 1", lines[1])
-        self.assertIn("AC-20K", lines[1])
-        self.assertTrue(lines[1].endswith("1 string on 1 input"))
-        self.assertTrue(lines[3].startswith("Inverter 3") and lines[3].endswith("no strings"))
-        self.assertLess(label.mapTo(self.panel.widget(), label.rect().topLeft()).y(),
-                        self.panel.working_inverter.mapTo(self.panel.widget(), label.rect().topLeft()).y())
+    def test_the_first_line_of_the_inverter_group_counts_the_inverters_whatever_the_workspace(self):
+        self.assertEqual(self.panel.totals.text(), "3 inverters · 60.0 kW AC · 10.8 kWp · DC/AC 0.18")
         self.panel.working_inverter.setCurrentIndex(2)
-        self.assertEqual(label.text().splitlines()[0], lines[0])       # the whole plant, whatever the workspace
-
-    def test_overview_names_the_first_units_and_counts_the_rest(self):
-        from meridiana.ui.plant_page import active_overview
-        text = active_overview(self.plant, limit=1)
-        self.assertEqual(len(text.splitlines()), 3)
-        self.assertEqual(text.splitlines()[-1], "and 2 more")
-        self.assertEqual(len(self.panel.overview.toolTip().splitlines()), 4)     # every unit in the tooltip
-        self.panel.show_plant(self.project, None)                              # on its way: what was chosen
-        self.assertIn("3 inverters", self.panel.overview.text())
+        self.assertEqual(self.panel.totals.text(), "3 inverters · 60.0 kW AC · 10.8 kWp · DC/AC 0.18")
+        self.panel.show_plant(self.project, None)                              # on its way
+        self.assertIn("being checked", self.panel.totals.text())
 
     def test_choosing_a_workspace_keeps_global_string_indices_and_the_new_string_target(self):
         changes, targets, choices = [], [], []
@@ -271,10 +254,10 @@ class WorkingInverter(unittest.TestCase):
     def test_automatic_commands_still_use_the_original_plant_actions(self):
         calls = []
         self.panel.working_inverter.setCurrentIndex(1)
-        for key in ("strings_auto", "strings_complete", "strings_clear"):
+        for key in ("strings_auto", "strings_manual", "strings_clear"):
             self.actions[key].triggered.connect(lambda _checked=False, k=key: calls.append(k))
             self.panel.string_buttons[key].click()
-        self.assertEqual(calls, ["strings_auto", "strings_complete", "strings_clear"])
+        self.assertEqual(calls, ["strings_auto", "strings_manual", "strings_clear"])
 
     def test_narrow_inspector_keeps_the_workspace_and_manage_button_inside_the_viewport(self):
         self.panel.resize(240, 800)

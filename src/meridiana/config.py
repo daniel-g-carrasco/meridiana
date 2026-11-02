@@ -221,6 +221,7 @@ class Config:
     toolbar: str = "text"                # the bar of the phase: "text" under the icons (hidden by itself in a low
     #                                      window), or "icons" alone (study 17, B4; design C1)
     toolbar_place: str = "top"           # "top" under the row of the phases, or "left" on the side, icons alone
+    strings_view: str = "cards"          # the Strings of the Plant (R298): "cards" (the inputs as cards) or "diagram"
     navigation: str = "autocad"          # the mouse's style (navigation.STYLES): AutoCAD's hands until Daniel says
     orbit: str = "turntable"             # "turntable" (the vertical stays) or "arcball"
     pivot: str = "cursor"                # the orbit's centre: "cursor", "selection", "centre" (of the view)

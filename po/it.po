@@ -8574,11 +8574,6 @@ msgstr "&Ripeti"
 msgid "&Delete"
 msgstr "&Elimina"
 
-#: src/meridiana/shortcuts.py:67
-msgctxt "roof"
-msgid "Pitch"
-msgstr "Falda"
-
 #: src/meridiana/shortcuts.py:71
 msgid "Row of modules"
 msgstr "Fila di moduli"
@@ -12532,33 +12527,17 @@ msgstr ""
 msgid "Click: North up again (N)"
 msgstr "Clic: di nuovo il nord in alto (N)"
 
-#: src/meridiana/ui/plan_overlays.py:100 src/meridiana/ui/plan_overlays.py:116
-msgid "N"
-msgstr "N"
-
 #: src/meridiana/ui/plan_overlays.py:100
 msgid "NE"
 msgstr "NE"
-
-#: src/meridiana/ui/plan_overlays.py:100
-msgid "E"
-msgstr "E"
 
 #: src/meridiana/ui/plan_overlays.py:100
 msgid "SE"
 msgstr "SE"
 
 #: src/meridiana/ui/plan_overlays.py:100
-msgid "S"
-msgstr "S"
-
-#: src/meridiana/ui/plan_overlays.py:100
 msgid "SW"
 msgstr "SO"
-
-#: src/meridiana/ui/plan_overlays.py:100
-msgid "W"
-msgstr "O"
 
 #: src/meridiana/ui/plan_overlays.py:100
 msgid "NW"
@@ -18006,7 +17985,6 @@ msgstr "Invia messaggio"
 msgid "A .mer file with the project and its resources."
 msgstr "Un file .mer con il progetto e le sue risorse."
 
-
 msgid "Online map tiles"
 msgstr "Tasselli cartografici online"
 
@@ -18028,562 +18006,422 @@ msgstr "Energia nominale dei moduli collegati al rendimento STC"
 msgid "connected modules"
 msgstr "moduli collegati"
 
-
 msgid "Save and revisions"
 msgstr "Salva e revisioni"
-
 
 msgid "Back to File"
 msgstr "Torna a File"
 
-
 msgid "Keep the current project, create a copy or preserve a revision."
 msgstr "Salva il progetto, crea una copia o conserva una revisione."
-
 
 msgid "Update the current project file."
 msgstr "Aggiorna il file del progetto corrente."
 
-
 msgid "Choose another name or location for the project."
 msgstr "Scegli un altro nome o una posizione per il progetto."
-
 
 msgid "Keep this version in a new numbered file next to the project."
 msgstr "Conserva questa versione in un nuovo file numerato accanto al progetto."
 
-
 msgid "Arrangement"
 msgstr "Disposizione"
-
 
 msgid "Auxiliary support plane"
 msgstr "Piano di posa ausiliario"
 
-
 msgid "Canopy"
 msgstr "Pensilina"
-
 
 msgid "Canopy row {n}"
 msgstr "Pensilina, fila {n}"
 
-
 msgid "Click the first corner of the canopy; Esc gives up"
 msgstr "Indica il primo angolo della pensilina; Esc annulla"
-
 
 msgid "Client presentation"
 msgstr "Presentazione al cliente"
 
-
 msgid "Creates placement surfaces and modules. Dimensions are editable examples; columns, beams, vehicle clearance and structural checks are not modelled."
 msgstr "Crea superfici di posa e moduli. Le dimensioni sono esempi modificabili; pilastri, travi, sagome di transito e verifiche strutturali non sono modellati."
-
 
 msgid "Depth per row"
 msgstr "Profondità di ogni fila"
 
-
 msgid "Different orientations or tilts in the same string"
 msgstr "Orientamenti o inclinazioni diversi nella stessa stringa"
-
 
 msgid "Each canopy slope has its own editable placement plane and module layout."
 msgstr "Ogni falda della pensilina ha il proprio piano di posa modificabile e la propria disposizione dei moduli."
 
-
 msgid "East-west"
 msgstr "Est-ovest"
-
 
 msgid "East-west layout"
 msgstr "Posa est-ovest"
 
-
 msgid "East-west rows need a horizontal placement surface. Select a flat roof or ground area."
 msgstr "Le file est-ovest richiedono una superficie di posa orizzontale. Seleziona una copertura piana o un'area a terra."
-
 
 msgid "Electrical design review"
 msgstr "Revisione del progetto elettrico"
 
-
 msgid "Elevation at area centre"
 msgstr "Quota al centro dell'area"
-
 
 msgid "Enable the independent placement plane to edit it."
 msgstr "Attiva il piano di posa indipendente per modificarlo."
 
-
 msgid "Energy and assumptions"
 msgstr "Energia e ipotesi di calcolo"
-
 
 msgid "Enter the manufacturer's short-circuit current limit for this MPPT to verify it."
 msgstr "Inserisci il limite di corrente di cortocircuito del costruttore per verificare questo MPPT."
 
-
 msgid "Fixed-voltage DC bus"
 msgstr "Bus DC a tensione fissa"
-
 
 msgid "Independent placement area from {file}, IFC {source}: normal ({nx}, {ny}, {nz}), tilt {tilt}°, azimuth {azimuth}°, local elevation {z} m. Enabled, with no modules; building and pitch retained as references."
 msgstr "Area di posa indipendente da {file}, IFC {source}: normale ({nx}, {ny}, {nz}), inclinazione {tilt}°, azimut {azimuth}°, quota locale {z} m. Attiva, senza moduli; edificio e falda conservati come riferimenti."
 
-
 msgid "Inverter search cancelled; no choice has been applied."
 msgstr "Ricerca inverter annullata; nessuna scelta applicata."
-
 
 msgid "Inverter search incomplete: the limit of {n} combinations was reached. Narrow the catalogue selection and try again."
 msgstr "Ricerca inverter incompleta: raggiunto il limite di {n} combinazioni. Restringi la selezione del catalogo e riprova."
 
-
 msgid "MPPT count not specified"
 msgstr "Numero di MPPT non specificato"
-
 
 msgid "MPPT {k}"
 msgstr "MPPT {k}"
 
-
 msgid "Minimum height of placement plane"
 msgstr "Quota minima del piano di posa"
-
 
 msgid "Modules on the same optimizer: type, orientation and tilt"
 msgstr "Moduli sullo stesso ottimizzatore: tipo, orientamento e inclinazione"
 
-
 msgid "No complete string proposal was found within the voltage, current and input limits. The assignment is heuristic; review the module count, the brand or the string layout."
 msgstr "Non è stata trovata una proposta completa entro i limiti di tensione, corrente e ingressi. L'assegnazione è euristica: rivedi il numero di moduli, la marca o la disposizione delle stringhe."
-
 
 msgid "No production"
 msgstr "Nessuna produzione"
 
-
 msgid "One row, single slope"
 msgstr "Una fila, falda singola"
-
 
 msgid "Opposed rows are laid. Their orientations stay separate when strings are proposed."
 msgstr "Posate le file contrapposte. La proposta di stringatura mantiene separati i loro orientamenti."
 
-
 msgid "Optimizer positions {positions}: modules on one optimizer must have the same type, orientation and tilt. Pairs follow the order of modules in the string."
 msgstr "Ottimizzatori nelle posizioni {positions}: i moduli sullo stesso ottimizzatore devono avere uguali tipo, orientamento e inclinazione. Le coppie seguono l'ordine dei moduli nella stringa."
-
 
 msgid "Parking canopy"
 msgstr "Pensilina per parcheggio"
 
-
 msgid "Parking canopy…"
 msgstr "Pensilina per parcheggio…"
-
 
 msgid "Physical input count not specified"
 msgstr "Numero di ingressi fisici non specificato"
 
-
 msgid "Place a canopy with one or two parking rows"
 msgstr "Posa una pensilina con una o due file di parcheggi"
-
 
 msgid "Plane azimuth (from South, + West)"
 msgstr "Azimut del piano (da Sud, + Ovest)"
 
-
 msgid "Plane tilt"
 msgstr "Inclinazione del piano"
-
 
 msgid "Quantity"
 msgstr "Grandezza"
 
-
 msgid "Results, monthly energy, costs and checks for discussing the project with the client."
 msgstr "Risultati, energia mensile, costi e verifiche per discutere il progetto con il cliente."
-
 
 msgid "Save as…"
 msgstr "Salva con nome…"
 
-
 msgid "Shared inverter DC current limit: {a} A"
 msgstr "Limite complessivo di corrente DC dell'inverter: {a} A"
-
 
 msgid "Site, layout, inverters, strings, checks and component data for a technical review."
 msgstr "Sito, posa, inverter, stringhe, verifiche e dati dei componenti per una revisione tecnica."
 
-
 msgid "SolarEdge allows a string across several roof planes, but it can lose additional energy. This model does not calculate the optimizers' voltage limits hour by hour."
 msgstr "SolarEdge consente una stringa su più falde, ma possono verificarsi perdite aggiuntive. Questo modello non calcola ora per ora i limiti di tensione degli ottimizzatori."
-
 
 msgid "Spaces per row"
 msgstr "Posti per fila"
 
-
 msgid "Symbol"
 msgstr "Simbolo"
-
 
 msgid "The building and pitch remain as references; the received model is unchanged."
 msgstr "Edificio e falda restano come riferimenti; il modello ricevuto non viene modificato."
 
-
 msgid "The inverter's total current is not a per-MPPT limit. Enter the manufacturer's per-MPPT data to verify this input."
 msgstr "La corrente totale dell'inverter non è un limite per MPPT. Inserisci i dati del costruttore per MPPT per verificare questo ingresso."
-
 
 msgid "The modules use separate parallel input connectors: their powers add, their voltages do not. The datasheet's short-circuit current limit applies to each physical input."
 msgstr "I moduli usano connettori di ingresso paralleli separati: le potenze si sommano, le tensioni no. Il limite di corrente di cortocircuito della scheda tecnica vale per ciascun ingresso fisico."
 
-
 msgid "This sub-field has manual rows. Choose Lay again automatically before changing its layout."
 msgstr "Questo sottocampo contiene file manuali. Scegli Riposa automaticamente prima di cambiarne la disposizione."
-
 
 msgid "Two rows, opposed slopes"
 msgstr "Due file, falde contrapposte"
 
-
 msgid "Use an independent placement plane"
 msgstr "Usa un piano di posa indipendente"
-
 
 msgid "Use opposed module rows in the selected sub-field"
 msgstr "Usa file di moduli contrapposte nel sottocampo selezionato"
 
-
 msgid "Value and unit"
 msgstr "Valore e unità"
-
 
 msgid "Weather, production, consumption, economics and calculation methods, with checks."
 msgstr "Meteo, produzione, consumi, economia e metodi di calcolo, con verifiche."
 
-
 msgid "Width per space"
 msgstr "Larghezza di ogni posto"
-
 
 msgid "{a} A total DC current; the per-MPPT limits are not given."
 msgstr "Corrente DC totale {a} A; limiti per MPPT non dichiarati."
 
-
 msgid "{i} A across the MPPTs, total limit {limit} A; per-MPPT limits are checked separately."
 msgstr "Totale sui MPPT: {i} A, limite complessivo {limit} A; i limiti per MPPT sono verificati separatamente."
-
 
 msgid "{name}\n{kw} kW AC · {topology} · {strings}"
 msgstr "{name}\n{kw} kW AC · {topology} · {strings}"
 
-
 msgid "{name}: more strings than physical inputs"
 msgstr "{name}: più stringhe che ingressi fisici"
-
 
 msgid "{name}: operating-current limit is unknown"
 msgstr "{name}: limite di corrente operativa non noto"
 
-
 msgid "{name}: short-circuit current limit is unknown"
 msgstr "{name}: limite di corrente di cortocircuito non noto"
-
 
 msgid "{name}: total DC operating current"
 msgstr "{name}: corrente operativa DC totale"
 
-
 msgid "{n} MPPT"
 msgstr "{n} MPPT"
-
 
 msgid "{n} Synergy units"
 msgstr "{n} unità Synergy"
 
-
 msgid "{n} independent MPPTs"
 msgstr "{n} MPPT indipendenti"
-
 
 msgid "{n} physical DC input pairs; their MPPT mapping is not given."
 msgstr "{n} coppie di ingressi fisici DC; associazione ai MPPT non dichiarata."
 
-
 msgid "{n} physical inputs share this MPPT"
 msgstr "{n} ingressi fisici condividono questo MPPT"
-
 
 msgid "{n} spaces · {width:g} × {depth:g} m footprint"
 msgstr "{n} posti · ingombro {width:g} × {depth:g} m"
 
-
 msgid "{n} strings on {m} connector pairs: an external parallel connection must be designed; the inputs share this MPPT."
 msgstr "{n} stringhe su {m} coppie di connettori: occorre progettare un parallelo esterno; gli ingressi condividono questo MPPT."
-
 
 msgid "Bypass layout comes from the module file when available; otherwise three bypass diodes and the cell layout inferred from the cell count are assumptions to verify against the manufacturer's diagram."
 msgstr "Lo schema dei bypass proviene dal file del modulo quando disponibile; altrimenti tre diodi e la disposizione ricavata dal numero di celle sono ipotesi da verificare sullo schema del costruttore."
 
-
 msgid "Electrical shading uses the Martinez-Moreno estimate from shaded area and affected bypass blocks. It does not solve cell, bypass-diode, string or MPPT current-voltage curves. Shade affects the common current of a series string; it does not switch off the modules that follow the shaded module. Agreement with a reference implementation is not validation against measurements."
 msgstr "L'effetto elettrico delle ombre usa la stima Martinez-Moreno, dall'area in ombra e dai blocchi bypass interessati. Non risolve le curve corrente-tensione di celle, diodi, stringhe o MPPT. L'ombra influenza la corrente comune della stringa, non spegne i moduli successivi a quello ombreggiato. La concordanza con un'implementazione di riferimento non costituisce validazione su misure."
-
 
 msgid "Inverters: one efficiency curve for the whole system, clipped at the nominal AC power of the connected inverters together; no clipping per MPPT input or per inverter, no start thresholds, no efficiency profile of the OND file."
 msgstr "Inverter: una curva di rendimento per l'impianto, limitata alla potenza AC nominale complessiva degli inverter collegati. Non sono simulati il taglio di potenza per singolo inverter o MPPT, le soglie di avvio e il profilo di rendimento del file OND."
 
-
 msgid "Irradiance-level loss is an estimate based on one-diode parameters fitted to a few datasheet points, unless parameters are available in the module's PVsyst file."
 msgstr "La perdita al variare dell'irraggiamento è stimata con parametri a un diodo adattati a pochi punti della scheda tecnica, salvo parametri disponibili nel file PVsyst del modulo."
-
 
 msgid "Optimizers: string and module compatibility checks use the supported SolarEdge tables; annual energy uses a fixed conversion efficiency. Hourly input-current clipping, output-voltage limits and minimum unshaded optimizer count are not simulated. Two modules on one optimizer do not have two independent MPPTs. Other optimizer architectures and optional branch-cable wiring are not modeled."
 msgstr "Ottimizzatori: le verifiche di compatibilità di moduli e stringhe usano le tabelle SolarEdge supportate; l'energia annua usa un rendimento di conversione fisso. Non sono simulati ora per ora la limitazione della corrente di ingresso, i limiti di tensione in uscita e il numero minimo di ottimizzatori non ombreggiati. Due moduli su un ottimizzatore non hanno due MPPT indipendenti. Altre architetture e cablaggi opzionali con derivazioni non sono modellati."
 
-
 msgid "Add the model"
 msgstr "Aggiungi il modello"
-
 
 msgid "From {file}: independent placement areas added. Ctrl+Z takes them away."
 msgstr "Da {file}: aggiunte aree di posa indipendenti. Ctrl+Z le annulla."
 
-
 msgid "Searching inverter and string combinations…"
 msgstr "Ricerca delle combinazioni di inverter e stringhe…"
-
 
 msgid "The project changed during the search. Run sizing again; no old proposal was applied."
 msgstr "Il progetto è cambiato durante la ricerca. Ripeti il dimensionamento; la proposta precedente non è stata applicata."
 
-
 msgid "Inverter search failed: {why}"
 msgstr "Ricerca inverter non riuscita: {why}"
-
 
 msgid "Wait for the current module layout before sizing the inverters."
 msgstr "Attendi che la posa dei moduli sia aggiornata prima di dimensionare gli inverter."
 
-
 msgid "Modules on each optimizer"
 msgstr "Moduli su ciascun ottimizzatore"
-
 
 msgid "Check a module to connect it to the same optimizer as the previous module. Modules on one optimizer share its MPPT and must have the same type, orientation and tilt."
 msgstr "Spunta un modulo per collegarlo allo stesso ottimizzatore del precedente. I moduli su un ottimizzatore condividono il suo MPPT e devono avere lo stesso tipo, orientamento e inclinazione."
 
-
 msgid "Join to previous module"
 msgstr "Unisci al modulo precedente"
-
 
 msgid "Optimizer"
 msgstr "Ottimizzatore"
 
-
 msgid "One module each"
 msgstr "Un modulo ciascuno"
-
 
 msgid "Pairs in string order"
 msgstr "Coppie in ordine di stringa"
 
-
 msgid "{n} optimizers for {m} modules"
 msgstr "{n} ottimizzatori per {m} moduli"
-
 
 msgid "An optimizer cannot take more than {n} modules."
 msgstr "Un ottimizzatore non può ricevere più di {n} moduli."
 
-
 msgid "Assigning strings to the available inputs…"
 msgstr "Assegnazione delle stringhe agli ingressi disponibili…"
-
 
 msgid "Wait for the current module layout before proposing strings."
 msgstr "Attendi che la posa dei moduli sia aggiornata prima di proporre le stringhe."
 
-
 msgid "String search cancelled; the existing strings have been kept."
 msgstr "Ricerca delle stringhe annullata; le stringhe esistenti sono state mantenute."
-
 
 msgid "The project changed during string search. No old proposal was applied."
 msgstr "Il progetto è cambiato durante la ricerca delle stringhe. La proposta precedente non è stata applicata."
 
-
 msgid "No new strings were needed; the existing strings have been kept."
 msgstr "Non servono nuove stringhe; quelle esistenti sono state mantenute."
-
 
 msgid "No string was found for the current modules and inverter inputs."
 msgstr "Non è stata trovata una stringa per i moduli e gli ingressi inverter attuali."
 
-
 msgid "Modules on each optimizer…"
 msgstr "Moduli su ciascun ottimizzatore…"
-
 
 msgid "Change modules on each optimizer"
 msgstr "Modifica i moduli su ciascun ottimizzatore"
 
-
 msgid "String assignment completed: {n} strings. Undo restores the previous wiring."
 msgstr "Assegnazione completata: {n} stringhe. Annulla ripristina i collegamenti precedenti."
-
 
 msgid "No complete string proposal was applied: {why}"
 msgstr "Non è stata applicata una proposta completa di stringatura: {why}"
 
-
 msgid "the selected inverters cannot accommodate all modules under these constraints"
 msgstr "gli inverter selezionati non possono ricevere tutti i moduli con questi vincoli"
-
 
 msgid "Maximum modules on each optimizer. Its model determines series or parallel wiring; edit individual groups from the string menu."
 msgstr "Numero massimo di moduli su ciascun ottimizzatore. Il modello determina il collegamento in serie o parallelo; modifica i singoli gruppi dal menu della stringa."
 
-
 msgid "{n} strings: {a} A"
 msgstr "{n} stringhe: {a} A"
-
 
 msgid "Invalid optimizer grouping: {why}"
 msgstr "Raggruppamento degli ottimizzatori non valido: {why}"
 
-
 msgid "String assignment cancelled; no complete choice has been applied."
 msgstr "Assegnazione delle stringhe annullata; nessuna scelta completa applicata."
-
 
 msgid "String assignment incomplete: the search limit was reached."
 msgstr "Assegnazione delle stringhe incompleta: raggiunto il limite della ricerca."
 
-
 msgid "{name}: current of each physical input"
 msgstr "{name}: corrente di ciascun ingresso fisico"
-
 
 msgid "Module {n}"
 msgstr "Modulo {n}"
 
-
 msgid "A shared inverter DC-current limit curtails its MPPT powers proportionally; optimal redistribution between trackers is not simulated."
 msgstr "Un limite comune di corrente CC dell'inverter riduce proporzionalmente le potenze dei suoi MPPT; la redistribuzione ottimale tra inseguitori non è simulata."
-
 
 msgid "AC energy, kWh"
 msgstr "Energia CA, kWh"
 
-
 msgid "AC rating, kW"
 msgstr "Potenza CA, kW"
-
 
 msgid "Cell cohorts, bypass diodes and the connected electrical network"
 msgstr "Gruppi di celle, diodi di bypass e rete elettrica collegata"
 
-
 msgid "Clipping, kWh"
 msgstr "Limitazione, kWh"
-
 
 msgid "DC energy, kWh"
 msgstr "Energia CC, kWh"
 
-
 msgid "Each inverter is calculated separately, including its power limit. AC energy includes wiring losses and unavailability; the hourly register keeps the individual results."
 msgstr "Ogni inverter è calcolato separatamente, incluso il suo limite di potenza. L'energia CA include le perdite nei cavi e l'indisponibilità; il registro orario conserva i singoli risultati."
-
 
 msgid "Electrical production uses sampled cell-cohort I/V curves, bypass sections and common string/MPPT operating points. Cell layout is inferred from module dimensions and cell count unless documented; bypass forward drop is assumed to be 0.5 V. Reverse breakdown, hot spots and inverter tracking dynamics are not simulated."
 msgstr "La produzione elettrica usa curve I/V campionate di gruppi di celle, sezioni bypass e punti di lavoro comuni di stringa/MPPT. In assenza di documentazione, la disposizione delle celle è dedotta dalle dimensioni e dal loro numero; la caduta diretta del bypass è assunta pari a 0,5 V. Non sono simulate valanga inversa, punti caldi e dinamica di inseguimento dell'inverter."
 
-
 msgid "Electrical shading reconstructs sampled current-voltage curves of differently illuminated cell groups, bypass sections, series strings and parallel MPPT inputs. Cell positions and internal connections are inferred when the manufacturer does not provide them. Bypass voltage drop and shade discretisation are modelling assumptions; reverse breakdown and hot spots are not simulated. A shaded module affects the common string current, not only the modules after it. Numerical reference tests are not field measurements."
 msgstr "Le ombre elettriche ricostruiscono curve corrente-tensione campionate di gruppi di celle con illuminazione diversa, sezioni bypass, stringhe in serie e ingressi MPPT in parallelo. Posizioni delle celle e collegamenti interni sono dedotti quando il produttore non li fornisce. Caduta dei bypass e discretizzazione delle ombre sono ipotesi di modello; valanga inversa e punti caldi non sono simulati. Un modulo ombreggiato agisce sulla corrente comune della stringa, non soltanto sui moduli successivi. I confronti numerici non sono misure di campo."
-
 
 msgid "Hourly energy of this physical inverter; AC includes its clipping, wiring and unavailability. No unused capacity of another inverter compensates its clipping."
 msgstr "Energia oraria di questo inverter fisico; la CA include la sua limitazione di potenza, i cavi e l'indisponibilità. La capacità inutilizzata di un altro inverter non compensa la sua limitazione."
 
-
 msgid "Individually converted inverters"
 msgstr "Inverter convertiti separatamente"
-
 
 msgid "Inverters: each connected unit is calculated separately with its nominal power, efficiency and input constraints. The conversion curve is PVWatts calibrated to the catalogued efficiency, not the full OND efficiency map; firmware, start-up hysteresis and dynamic MPPT tracking are not simulated."
 msgstr "Inverter: ogni unità collegata è calcolata separatamente con potenza nominale, rendimento e vincoli degli ingressi. La curva di conversione è PVWatts calibrata al rendimento di catalogo, non la mappa completa di rendimento OND; firmware, isteresi di avvio e inseguimento MPPT dinamico non sono simulati."
 
-
 msgid "No complete string proposal was found within the voltage, current and input limits. The search exhausted the supplied catalogue and the selected geometry constraints."
 msgstr "Non è stata trovata una stringatura completa entro i limiti di tensione, corrente e ingressi. La ricerca ha esaurito il catalogo fornito e i vincoli geometrici selezionati."
-
 
 msgid "No laid modules are available for string assignment."
 msgstr "Non ci sono moduli posati per l'assegnazione delle stringhe."
 
-
 msgid "Optimizers: supported SolarEdge systems use the actual module groups, input operating window, current and output-voltage limits hour by hour when these are documented. Conversion efficiency remains fixed. Two modules on one optimizer share its MPPT. Missing limits are reported; other optimizer architectures, optional branch cables and proprietary firmware are not inferred."
 msgstr "Ottimizzatori: i sistemi SolarEdge supportati usano i gruppi reali di moduli, la finestra di lavoro in ingresso e i limiti di corrente e tensione in uscita ora per ora, quando documentati. Il rendimento di conversione resta fisso. Due moduli su un ottimizzatore condividono il suo MPPT. I limiti mancanti sono segnalati; altre architetture, derivazioni opzionali e firmware proprietari non sono dedotti."
-
 
 msgid "Production by inverter"
 msgstr "Produzione per inverter"
 
-
 msgid "Row shadows and obstacle shadows overlap statistically at cell level; their exact joint shadow geometry is not available in the row approximation."
 msgstr "Le ombre delle file e degli ostacoli si sovrappongono statisticamente a livello di cella; la loro geometria congiunta esatta non è disponibile nell'approssimazione delle file."
-
 
 msgid "The PVWatts efficiency curve and nominal AC clipping are applied separately to each connected inverter, then summed; spare capacity on another inverter cannot absorb its clipping."
 msgstr "La curva di rendimento PVWatts e la limitazione alla potenza nominale CA si applicano separatamente a ogni inverter collegato, poi si sommano; la capacità libera di un altro inverter non può assorbire la potenza tagliata."
 
-
 msgid "The actual connected modules are recombined by series current and parallel voltage, with a global maximum over the sampled curves. Cell-shadow cohorts preserve concentrated and distributed shade separately. Tracker voltage/current windows constrain the operating point. Each inverter has its own efficiency, clipping and AC wiring loss. The unconnected modules contribute zero. Cell diagrams are inferred where absent; reverse circulating currents, cell avalanche and hot spots are not calculated."
 msgstr "I moduli realmente collegati sono ricomposti a corrente comune in serie e tensione comune in parallelo, cercando il massimo globale sulle curve campionate. I gruppi di celle mantengono distinta l'ombra concentrata da quella distribuita. Le finestre di tensione/corrente degli inseguitori limitano il punto di lavoro. Ogni inverter ha il proprio rendimento, la propria limitazione e le proprie perdite CA. I moduli scollegati contribuiscono zero. Gli schemi delle celle sono dedotti se assenti; correnti inverse di circolazione, valanga e punti caldi non sono calcolati."
-
 
 msgid "The obstacles of the scene (exclusions with a height, parapets, the other buildings) cast their shadows along the sun's rays on the plane of the modules, row by row. The shaded share of the modules' area is computed for the sun's positions every 5° of azimuth and 4° of elevation along its path, then read hour by hour; the diffuse light loses the share of the sky the obstacles hide, weighted as for the horizon (every 10° and 8°). This step records the irradiance loss. The connected electrical network separately evaluates cell irradiance, bypass sections and the common string/MPPT operating point."
 msgstr "Gli ostacoli della scena (esclusioni con altezza, parapetti, altri edifici) proiettano le ombre lungo i raggi solari sul piano dei moduli, fila per fila. La quota di superficie ombreggiata è calcolata lungo il percorso solare ogni 5° di azimut e 4° di elevazione, poi letta ora per ora; la luce diffusa perde la porzione di cielo nascosta dagli ostacoli, pesata come per l'orizzonte (ogni 10° e 8°). Questo passaggio registra la perdita di irraggiamento. La rete elettrica collegata valuta separatamente irraggiamento delle celle, sezioni bypass e punto di lavoro comune di stringa/MPPT."
 
-
 msgid "This tracker has no physical input count in the supplied list."
 msgstr "Per questo inseguitore manca il numero degli ingressi fisici nell'elenco fornito."
-
 
 msgid "This tracker has no physical input rating in the supplied list."
 msgstr "Per questo inseguitore manca il limite degli ingressi fisici nell'elenco fornito."
 
-
 msgid "{name}: cell geometry is unavailable; obstacle shading uses the mean irradiance of each bypass block and may overestimate output for localized shadows."
 msgstr "{name}: geometria delle celle non disponibile; le ombre degli ostacoli usano l'irraggiamento medio di ciascun blocco bypass e possono sovrastimare la produzione con ombre localizzate."
-
 
 msgid "{name}: hourly limits unavailable: {fields}; those limits are not enforced."
 msgstr "{name}: limiti orari non disponibili: {fields}; questi limiti non sono applicati."
 
-
 msgid "{name}: no valid single-diode parameters; a three-point datasheet I/V approximation is used and cell mismatch is not resolved."
 msgstr "{name}: parametri a un diodo non validi; viene usata una curva I/V a tre punti di targa senza risolvere la disuniformità tra celle."
-
 
 msgid "{name}: optimizer or fixed-voltage data are missing; this inverter's electrical production is not calculated and contributes zero."
 msgstr "{name}: dati dell'ottimizzatore o della tensione fissa mancanti; la produzione elettrica di questo inverter non è calcolata e contribuisce zero."
 
-
 msgid "{name}: physical input count is unknown"
 msgstr "{name}: numero di ingressi fisici sconosciuto"
-
 
 msgid "{name}: physical input current is unknown"
 msgstr "{name}: corrente degli ingressi fisici sconosciuta"
@@ -21233,3 +21071,411 @@ msgstr "Apri prende anche un progetto PVsyst; gli altri import stanno nella fase
 #: src/meridiana/ui/phasebar.py:444
 msgid "New, open, save, export, catalogues, settings and help"
 msgstr "Nuovo, apri, salva, esporta, cataloghi, impostazioni e aiuto"
+#: src/meridiana/ui/plant_page.py (R297, R298, R307, R308: study 23)
+msgid "No inverter chosen: Meridiana sizes one by itself for the checks."
+msgstr "Nessun inverter scelto: Meridiana ne dimensiona uno da sé per le verifiche."
+
+#, python-brace-format
+msgid "{kw} kW AC"
+msgstr "{kw} kW AC"
+
+#, python-brace-format
+msgid "{kwp} kWp"
+msgstr "{kwp} kWp"
+
+#, python-brace-format
+msgid "DC/AC {r}"
+msgstr "DC/AC {r}"
+
+#, python-brace-format
+msgid "{model} · {kw} kW · strings at {v} V, with power optimizers"
+msgstr "{model} · {kw} kW · stringhe a {v} V, con ottimizzatori di potenza"
+
+#, python-brace-format
+msgid "{model} · {kw} kW · {n} MPPT"
+msgstr "{model} · {kw} kW · {n} MPPT"
+
+#, python-brace-format
+msgid "{u} / {lim} V"
+msgstr "{u} / {lim} V"
+
+#, python-brace-format
+msgid "{hot}-{cold} V"
+msgstr "{hot}-{cold} V"
+
+#, python-brace-format
+msgid "{a} / {b} A"
+msgstr "{a} / {b} A"
+
+msgid ""
+"Drag to change the order of the inverters (Alt+Up and Alt+Down too). The "
+"number is the inverter's place: the strings are named after it."
+msgstr ""
+"Trascina per cambiare l'ordine degli inverter (anche Alt+Su e Alt+Giù). Il "
+"numero è la posizione dell'inverter: le stringhe prendono il nome da lui."
+
+msgid "The inverter's name: F2 or a double click to change it"
+msgstr "Il nome dell'inverter: F2 o doppio clic per cambiarlo"
+
+msgid "Name of the inverter"
+msgstr "Nome dell'inverter"
+
+msgid "Rename, move, datasheet, string, empty, take out"
+msgstr "Rinomina, sposta, scheda tecnica, stringa, svuota, togli"
+
+#, python-brace-format
+msgid "Inverter {n}, {name}: {what}; {strings}"
+msgstr "Inverter {n}, {name}: {what}; {strings}"
+
+msgid "Move up"
+msgstr "Sposta su"
+
+msgid "Move down"
+msgstr "Sposta giù"
+
+msgid "Datasheet…"
+msgstr "Scheda tecnica…"
+
+msgid "String this inverter…"
+msgstr "Stringa questo inverter…"
+
+msgid "Empty its strings"
+msgstr "Svuota le sue stringhe"
+
+msgid "Take out of the plant"
+msgstr "Togli dall'impianto"
+
+msgid "Strings whose inverter is gone: give them another from their menu, or Undo"
+msgstr "Stringhe il cui inverter non c'è più: dagliene un altro dal loro menu, oppure Annulla"
+
+msgid "Draw a string on this input"
+msgstr "Disegna una stringa su questo ingresso"
+
+msgid "Inputs as cards"
+msgstr "Ingressi a schede"
+
+msgid "Single-line diagram in miniature"
+msgstr "Unifilare in miniatura"
+
+msgid "Redraw"
+msgstr "Ridisegna"
+
+msgid "Draw this string again on the plan, from its modules"
+msgstr "Disegna di nuovo questa stringa in pianta, a partire dai suoi moduli"
+
+msgid "Move to…"
+msgstr "Sposta su…"
+
+msgid "The string's menu: the inputs it can go to, and the rest"
+msgstr "Il menu della stringa: gli ingressi su cui può andare, e il resto"
+
+msgid "This string deleted: its modules stay laid, in no string (Ctrl+Z brings it back)"
+msgstr "Questa stringa eliminata: i suoi moduli restano posati, senza stringa (Ctrl+Z la riporta)"
+
+#, python-brace-format
+msgid "{n} module in series"
+msgid_plural "{n} modules in series"
+msgstr[0] "{n} modulo in serie"
+msgstr[1] "{n} moduli in serie"
+
+#, python-brace-format
+msgid "Datasheet of inverter {n}"
+msgstr "Scheda tecnica dell'inverter {n}"
+
+#, python-brace-format
+msgid "{label} · {name} · from the catalogue"
+msgstr "{label} · {name} · dal catalogo"
+
+msgid "String automatically"
+msgstr "Stringa in automatico"
+
+msgid ""
+"Meridiana lays strings on the inputs of the inverters, valid for their "
+"voltage window and their currents. The modules can also be chosen on the "
+"plan while this window is open."
+msgstr ""
+"Meridiana posa le stringhe sugli ingressi degli inverter, valide per la loro "
+"finestra di tensione e le loro correnti. I moduli si scelgono anche in "
+"pianta mentre questa finestrella è aperta."
+
+msgid "The modules Meridiana works on"
+msgstr "I moduli su cui lavora Meridiana"
+
+msgid "On what"
+msgstr "Su cosa"
+
+msgid "replace the strings there are"
+msgstr "sostituisci le stringhe che ci sono"
+
+msgid "add strings for the modules in no string only"
+msgstr "aggiungi stringhe solo per i moduli senza stringa"
+
+msgid ""
+"Replace: the strings on those modules go, after a question. Add: yours stay "
+"as they are"
+msgstr ""
+"Sostituisci: le stringhe su quei moduli vanno via, dopo una domanda. "
+"Aggiungi: le tue restano come sono"
+
+msgid "Strings there are"
+msgstr "Stringhe che ci sono"
+
+msgid "How the strings run along the modules"
+msgstr "Come le stringhe corrono lungo i moduli"
+
+msgid "Path of the strings"
+msgstr "Percorso delle stringhe"
+
+msgid ""
+"The modules in series of each string; «suggested»: Meridiana chooses from "
+"the voltage window"
+msgstr ""
+"I moduli in serie di ogni stringa; «suggerito»: Meridiana sceglie dalla "
+"finestra di tensione"
+
+msgid "The modules' power over the inverter's AC power"
+msgstr "La potenza dei moduli sulla potenza AC dell'inverter"
+
+msgid "DC/AC ratio wanted"
+msgstr "Rapporto DC/AC voluto"
+
+msgid ""
+"The modules' power (kWp) over the inverters' AC power. «Choose "
+"automatically» picks the size closest to it; the energy the inverters cut "
+"shows once the production is computed. Your choice: no judgement here."
+msgstr ""
+"La potenza dei moduli (kWp) sulla potenza AC degli inverter. «Scegli in "
+"automatico» prende la taglia più vicina; l'energia che gli inverter "
+"tagliano si vede dopo il calcolo della produzione. La scelta è tua: qui "
+"nessun giudizio."
+
+msgid "the whole plant"
+msgstr "tutto l'impianto"
+
+#, python-brace-format
+msgid "{n} module selected on the plan"
+msgid_plural "{n} modules selected on the plan"
+msgstr[0] "{n} modulo selezionato in pianta"
+msgstr[1] "{n} moduli selezionati in pianta"
+
+#, python-brace-format
+msgid "{label} · {name}"
+msgstr "{label} · {name}"
+
+msgid ""
+"The modules' power over the inverters' AC power: «Choose automatically» "
+"picks the size closest to it. The energy cut shows on the scale once the "
+"year is computed"
+msgstr ""
+"La potenza dei moduli sulla potenza AC degli inverter: «Scegli in "
+"automatico» prende la taglia più vicina. L'energia tagliata si vede sulla "
+"scala dopo il calcolo dell'anno"
+
+msgid "How the strings are shown: the inputs as cards, or a single-line diagram"
+msgstr "Come sono mostrate le stringhe: gli ingressi a schede, oppure un unifilare"
+
+msgid "Inverter shown"
+msgstr "Inverter mostrato"
+
+msgid "The inverter whose inputs and strings are shown (a click on its card does the same)"
+msgstr "L'inverter di cui si vedono ingressi e stringhe (un clic sulla sua scheda fa lo stesso)"
+
+msgid "Conditions of the checks"
+msgstr "Condizioni delle verifiche"
+
+msgid ""
+"Where «String automatically» sends the strings of this sub-field; the "
+"strings of now do not change"
+msgstr ""
+"Dove «Stringa in automatico» manda le stringhe di questo sottocampo; le "
+"stringhe di adesso non cambiano"
+
+#, python-brace-format
+msgid "{name}: {kw} kW AC"
+msgstr "{name}: {kw} kW AC"
+
+#: src/meridiana/ui/window.py
+msgid ""
+"Meridiana chooses the inverters of one brand for the modules laid: fewer "
+"inverters, then fewer models, then the DC/AC ratio closest to the one "
+"wanted; every module in a valid string. They replace the inverters in the "
+"list (one undo step)"
+msgstr ""
+"Meridiana sceglie gli inverter di una marca per i moduli posati: il minor "
+"numero di inverter, poi il minor numero di modelli, poi il rapporto DC/AC "
+"più vicino a quello voluto; ogni modulo in una stringa valida. Sostituiscono "
+"gli inverter in elenco (un passo di Annulla)"
+
+msgid ""
+"Meridiana's strings, with the options in a little window: on the whole "
+"plant, on the modules selected on the plan or on one inverter; in place of "
+"the strings there are (asked first) or for the modules in no string only; "
+"the path, the modules in series, the DC/AC ratio wanted. One undo step; "
+"nothing changes them afterwards"
+msgstr ""
+"Le stringhe di Meridiana, con le opzioni in una finestrella: su tutto "
+"l'impianto, sui moduli selezionati in pianta o su un inverter; al posto "
+"delle stringhe che ci sono (chiede prima) o solo per i moduli senza "
+"stringa; il percorso, i moduli in serie, il rapporto DC/AC voluto. Un passo "
+"di Annulla; dopo nulla le cambia"
+
+#, python-brace-format
+msgid "Rename inverter {n}"
+msgstr "Rinomina l'inverter {n}"
+
+#, python-brace-format
+msgid "Move inverter {a} to place {b}"
+msgstr "Sposta l'inverter {a} al posto {b}"
+
+#, python-brace-format
+msgid "{a}.x.y → {b}.x.y"
+msgstr "{a}.x.y → {b}.x.y"
+
+#, python-brace-format
+msgid ""
+"Inverter {a} → {b}: the strings are renumbered, {words} (Ctrl+Z brings the "
+"order back)."
+msgstr ""
+"Inverter {a} → {b}: le stringhe sono rinumerate, {words} (Ctrl+Z riporta "
+"l'ordine di prima)."
+
+msgid "The inverters are being checked: a moment."
+msgstr "Gli inverter sono in verifica: un attimo."
+
+#, python-brace-format
+msgid "Inverter {n} has no string."
+msgstr "L'inverter {n} non ha stringhe."
+
+#, python-brace-format
+msgid "Empty the strings of inverter {n}"
+msgstr "Svuota le stringhe dell'inverter {n}"
+
+#, python-brace-format
+msgid ""
+"Inverter {n}: its string is deleted, its modules stay laid (Ctrl+Z brings "
+"it back)."
+msgid_plural ""
+"Inverter {n}: its {k} strings are deleted, their modules stay laid (Ctrl+Z "
+"brings them back)."
+msgstr[0] ""
+"Inverter {n}: la sua stringa è cancellata, i moduli restano posati (Ctrl+Z "
+"la riporta)."
+msgstr[1] ""
+"Inverter {n}: le sue {k} stringhe sono cancellate, i moduli restano posati "
+"(Ctrl+Z le riporta)."
+
+#, python-brace-format
+msgid "Take inverter {n} out"
+msgstr "Togli l'inverter {n}"
+
+#, python-brace-format
+msgid ""
+"The string of inverter {n} is replaced by Meridiana's proposal. Undo brings "
+"it back. Go on?"
+msgid_plural ""
+"The {k} strings of inverter {n} are replaced by Meridiana's proposal. Undo "
+"brings them back. Go on?"
+msgstr[0] ""
+"La stringa dell'inverter {n} è sostituita dalla proposta di Meridiana. "
+"Annulla la riporta. Procedo?"
+msgstr[1] ""
+"Le {k} stringhe dell'inverter {n} sono sostituite dalla proposta di "
+"Meridiana. Annulla le riporta. Procedo?"
+
+#: src/meridiana/help.py
+msgid "The inverters of the plant one by one: name, model, strings, DC/AC; their menu."
+msgstr "Gli inverter dell'impianto uno per uno: nome, modello, stringhe, DC/AC; il loro menu."
+
+msgid ""
+"The first line: how many inverters, their AC power, the modules' power, the "
+"DC/AC ratio. Then a card for each inverter: the disc with its number is the "
+"handle, drag it (or Alt+Up, Alt+Down) to change the order; the number is "
+"the inverter's place and names its strings (1.3.2 is inverter 1), so moving "
+"an inverter renumbers them. F2 or a double click renames it, a name only. "
+"The menu «⋯»: rename, move, datasheet, string this inverter, empty its "
+"strings, take it out of the plant (its strings stay on the roof, on no "
+"inverter). A click on a card shows its strings below. «Catalogue…» adds an "
+"inverter; «Choose automatically…» lets Meridiana choose them for the "
+"modules laid. The DC/AC ratio wanted is yours: the scale shows the energy "
+"cut once the year is computed."
+msgstr ""
+"La prima riga: quanti inverter, la loro potenza AC, la potenza dei moduli, "
+"il rapporto DC/AC. Poi una scheda per ogni inverter: il disco con il numero "
+"è la maniglia, trascinalo (o Alt+Su, Alt+Giù) per cambiare l'ordine; il "
+"numero è la posizione dell'inverter e dà il nome alle sue stringhe (1.3.2 è "
+"l'inverter 1), quindi spostare un inverter le rinumera. F2 o doppio clic lo "
+"rinomina, solo il nome. Il menu «⋯»: rinomina, sposta, scheda tecnica, "
+"stringa questo inverter, svuota le sue stringhe, toglilo dall'impianto (le "
+"sue stringhe restano sul tetto, senza inverter). Un clic su una scheda "
+"mostra le sue stringhe sotto. «Catalogo…» aggiunge un inverter; «Scegli in "
+"automatico…» lascia che Meridiana li scelga per i moduli posati. Il "
+"rapporto DC/AC voluto è tuo: la scala mostra l'energia tagliata dopo il "
+"calcolo dell'anno."
+
+msgid "The inputs of the inverter shown with their strings; the view from the menu beside."
+msgstr "Gli ingressi dell'inverter mostrato con le loro stringhe; la vista dal menu accanto."
+
+msgid ""
+"The strings of the whole plant on the first line; then the inverter shown "
+"and its inputs, as cards (each input with its mark and its strings, «+» to "
+"draw one on it) or as a single-line diagram in miniature (each string a bar "
+"as long as its modules), from the menu at the left of the «?». A click on a "
+"string chooses it, on the plan too; a double click draws it again; the "
+"right button has the rest. The commands: «String automatically…» with its "
+"options, «Draw a string», «Delete all the strings»."
+msgstr ""
+"Le stringhe di tutto l'impianto sulla prima riga; poi l'inverter mostrato e "
+"i suoi ingressi, a schede (ogni ingresso con il suo segno e le sue "
+"stringhe, «+» per disegnarne una) oppure come unifilare in miniatura (ogni "
+"stringa una barra lunga quanti i suoi moduli), dal menu a sinistra del "
+"«?». Un clic su una stringa la sceglie, anche in pianta; un doppio clic la "
+"ridisegna; il tasto destro ha il resto. I comandi: «Stringa in "
+"automatico…» con le sue opzioni, «Disegna una stringa», «Cancella tutte le "
+"stringhe»."
+
+msgid "The temperatures every check of the strings is made at."
+msgstr "Le temperature a cui è fatta ogni verifica delle stringhe."
+
+msgid ""
+"The lowest temperature of the site sets the open-circuit voltage on the "
+"coldest morning, checked against the inverter's and the modules' maximum; "
+"the MPP voltage is checked at the hottest and the coldest cell, PVsyst's "
+"design conditions until the production is computed, then the typical "
+"year's."
+msgstr ""
+"La temperatura minima del sito fissa la tensione a vuoto della mattina più "
+"fredda, verificata contro il massimo dell'inverter e dei moduli; la "
+"tensione MPP è verificata alla cella più calda e a quella più fredda, "
+"condizioni di progetto PVsyst finché la produzione non è calcolata, poi "
+"quelle dell'anno tipo."
+
+msgid "The string chosen on the plan or in the list: path, figures as bars, checks."
+msgstr "La stringa scelta in pianta o nell'elenco: percorso, numeri come barre, verifiche."
+
+msgid ""
+"Where it goes (inverter and input) and its modules; the open-circuit "
+"voltage at the lowest temperature against the maximum, the MPP voltage at "
+"the hottest and coldest cell against the MPPT window, the current against "
+"the input's, each as a bar as long as its limit; then each check with its "
+"mark and its clause. «Redraw», «Move to…» and «Delete» act on this string."
+msgstr ""
+"Dove va (inverter e ingresso) e i suoi moduli; la tensione a vuoto alla "
+"temperatura minima contro il massimo, la tensione MPP alla cella più calda e "
+"più fredda contro la finestra MPPT, la corrente contro quella "
+"dell'ingresso, ciascuna come barra lunga quanto il suo limite; poi ogni "
+"verifica con il segno e l'articolo. «Ridisegna», «Sposta su…» ed «Elimina» "
+"agiscono su questa stringa."
+
+#: src/meridiana/phases.py
+msgid "Choose auto."
+msgstr "Scegli in autom."
+
+msgid "Clear all"
+msgstr "Cancella tutte"
+
+#: src/meridiana/shortcuts.py
+msgid "Choose the inverters &automatically…"
+msgstr "Scegli gli inverter in &automatico…"
+
+msgid "St&ring automatically…"
+msgstr "St&ringa in automatico…"

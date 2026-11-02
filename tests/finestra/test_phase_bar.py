@@ -147,18 +147,20 @@ class PhaseRow(unittest.TestCase):
         win.undo.undo()
         self.assertTrue(win.project.subfields[0].filled)
 
-    def test_propose_is_a_menu_opened_by_one_click_and_sizing_says_what_it_did(self):
-        """R141 on Linux: the menu itself is not the automatic proposal; the sizing command answers in the bar."""
+    def test_string_automatically_opens_its_window_at_the_panel_and_sizing_says_what_it_did(self):
+        """R308: the button opens the little window of the options, not modal; R141 on Linux: the sizing command
+        answers in the bar."""
         win = self.win
         win.show_phase("plant")
         button = win.bars["plant"].buttons()["strings_auto"]
         button.click()
-        menu = win.strategy_menu
-        self.addCleanup(menu.close)
-        self.assertTrue(menu.isVisible())
-        self.assertIs(menu.parentWidget(), win)
+        popup = win.stringing_popup
+        self.addCleanup(popup.close)
+        self.assertTrue(popup.isVisible())
+        self.assertFalse(popup.isModal())
+        self.assertEqual(popup.scope.currentData(), ("all", 0))
         self.assertEqual(win.project.energy.get("strings", {}).get("runs"), None)
-        menu.close()
+        popup.close()
         rec = inverter_record(model="AC-10K", ac_power_nominal_w=10000)
         win.project.energy["inverters"] = [{"record": rec, "count": 1, "name": ""}]
         # the sizing asks the brand first (R141): answered here, a dialog left open waited for ever offscreen
