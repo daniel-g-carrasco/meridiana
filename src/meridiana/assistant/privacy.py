@@ -8,6 +8,8 @@ else:
   and put back in what the model writes (`Redactor`); reserved rows are filtered before the project tools answer,
   and questions about reserved material stay local; the coordinates are rounded to 0.01 degree (about 1 km) by the
   tools themselves, for every model: none needs them closer;
+- images (R320) leave only when attached, after a consent each time, and are not redacted: the card says that a
+  screenshot can show the address and the names (`picture_warning`);
 - from the cloud back to the local model, yes (it is more private); from the local model to the cloud, never by
   itself.
 No Qt."""
@@ -148,4 +150,12 @@ def what_leaves(family: str, model: str) -> list[str]:
         _("Anthropic does not train its models on what the API receives and deletes it within 30 days (its "
           "commercial terms, read on 22/10/2026). The servers may be outside the EU."),
         _("A project marked reserved never leaves the PC: its questions go to the local model."),
+        _("Images leave only when you attach them, after asking you each time: aliases cannot reach inside a "
+          "picture."),
     ]
+
+
+def picture_warning() -> str:
+    """What the consent card says when images would leave (R320): a picture is not redacted."""
+    return _("A screenshot can show the site's address, the project's and the client's names, a map: the aliases "
+             "do not reach inside a picture. Remove what should not leave, or use the local model.")

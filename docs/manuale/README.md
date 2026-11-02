@@ -149,6 +149,13 @@ un messaggio successivo reinvia documenti già nella conversazione. Progetti ris
 Quando la conversazione contiene documenti, gli strumenti che agiscono sul progetto sono disattivati:
 avvia una nuova conversazione per usarli di nuovo. Una scheda proposta resta una bozza da rivedere.
 
+Meridio vede anche le immagini (PNG, JPEG, WebP, GIF): «Allega…», trascinale nella chat o incollale con Ctrl+V
+nel campo; il pulsante con l’immagine accanto ad «Allega…» gli mostra la vista della fase così come la vedi,
+senza il fumetto e le finestre. Prima dell’invio l’immagine è ridotta sul PC (lato maggiore 1568 px, senza
+metadati, al massimo 5 MB) e il cloud chiede il consenso ogni volta: una schermata può mostrare indirizzo e nomi,
+che gli alias non coprono. Con un modello locale servono modelli con la vista (Gemma 4, Qwen VL, LLaVA): se il
+modello non vede, Meridio lo dice.
+
 Le finestre di catalogo consentono di aggiungere prodotti personali, copiarne uno da correggere e
 confrontare da due a quattro righe. Ogni scheda personale richiede dati essenziali e fonte; la revisione
 umana non eredita una precedente attestazione di verifica dei valori. I campi tecnici aggiuntivi sono

@@ -436,7 +436,9 @@ class Privacy(unittest.TestCase):
         self.assertEqual(privacy.allowed(p, "anthropic", given), "")
         p.reserved = True
         self.assertEqual(privacy.allowed(p, "anthropic", given), "reserved")
-        self.assertEqual(len(privacy.what_leaves("anthropic", "claude-haiku-5-5")), 4)
+        lines = privacy.what_leaves("anthropic", "claude-haiku-5-5")
+        self.assertEqual(len(lines), 5)                     # the fifth since R320: images, never redacted
+        self.assertIn("picture", lines[-1])
 
 
 class Costs(unittest.TestCase):
