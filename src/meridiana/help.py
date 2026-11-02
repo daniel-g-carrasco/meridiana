@@ -208,12 +208,10 @@ def texts() -> dict[str, Help]:
             manual="2-impianto.md#il-pannello-di-destra"),
         "plant.strings": h(
             _("Strings"), _("This inverter's inputs with their strings; the view from the menu beside."),
-            _("The strings of the whole plant on the first line; then the inverter shown and its inputs, as cards "
-              "(each input with its mark and its strings, «+» to draw one on it) or as a single-line diagram in "
-              "miniature (each string a bar as long as its modules), from the menu at the left of the «?». A click "
-              "on a string chooses it, on the plan too; a double click draws it again; the right button has the "
-              "rest. The commands: «String automatically…» with its options, «Draw a string», «Delete all the "
-              "strings»."),
+            _("The whole plant's strings on the first line; then the inverter shown and its inputs, as cards (each "
+              "with its mark and strings, «+» draws one) or as a single-line diagram in miniature (a bar per "
+              "string), from the menu left of the «?». A click chooses a string, on the plan too; a double click "
+              "redraws it; the right button has the rest."),
             ("CEI 64-8/7:2024",), "2-impianto.md#le-stringhe-sono-tue"),
         "plant.conditions": h(
             _("Conditions of the checks"), _("The temperatures every check of the strings is made at."),
