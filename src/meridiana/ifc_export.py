@@ -312,7 +312,8 @@ class Writer:
             local = [(float((q - o) @ x), float((q - o) @ y)) for q in pts3]
             if mesh.signed_area(local) < 0:
                 local.reverse()
-            pitch_id = (b.roof.free_pitches[k].get("id", k) if b.roof.type == "free" else
+            pitch_id = (b.roof.free_pitches[k].get("id", k) if b.roof.type == "free" and k < len(b.roof.free_pitches)
+                        else
                         pt.side if pt.side is not None else k)
             slab = self.element("IfcSlab", f"{b.name}, {pt.name or f'falda {k + 1}'}", predefined="ROOF",
                                 identity=("pitch", b.id, pitch_id))

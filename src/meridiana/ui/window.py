@@ -3045,6 +3045,7 @@ class MainWindow(QMainWindow):
             pitches = [dict(f) for f in b.roof.free_pitches]
             if index < len(pitches):
                 pitches[index]["eave_side"] = side
+                pitches[index].pop("z", None)         # R303: its numbers again, no more the heights of its corners
                 self._edited("building", oid, {"roof.free_pitches": pitches})
                 self.hint.setText(_("Side {n} picked.").format(n=side + 1))
         elif purpose == "gable":

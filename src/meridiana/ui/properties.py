@@ -706,6 +706,12 @@ class Properties(QScrollArea):
             problem.setTextFormat(Qt.TextFormat.RichText)
             form.addRow(self._bind(problem, self._roof_note))
         if b.roof.type == "free":
+            join = self._bind(QCheckBox(_("Join the pitches into one roof")), lambda: self._object().roof.joined)
+            join.setToolTip(_("Pitches side by side meet on the line between them: the ridge or the valley is worked "
+                              "out and the heights follow. Untick it for pitches that stay separate, each on its "
+                              "own plane"))
+            join.toggled.connect(lambda on: self._emit("roof.joined", on))
+            form.addRow(WrappedCheck(join))
             for i in range(len(b.roof.free_pitches)):
                 self._free_pitch_rows(form, i)
         if b.roof.type == "flat":
@@ -725,7 +731,26 @@ class Properties(QScrollArea):
         pitches = [dict(f) for f in self._object().roof.free_pitches]
         if i < len(pitches):
             pitches[i].update(changes)
+            pitches[i].pop("z", None)               # R303: its numbers again, no more the heights of its corners
             self._emit("roof.free_pitches", pitches)
+
+    def _free_result(self, i: int) -> str:
+        """What the pitch has become when it is not what its fields say: joined to the others (R304), or made by the
+        heights of its corners (R303), folded when they are off one plane."""
+        b = self._object()
+        solved = b.solved()
+        if solved is None or i >= len(solved.heights):
+            return ""
+        if any(f.pitch == i for f in solved.folds):
+            parts = sum(1 for p in solved.pitches if p.whole == i)
+            return _("Corners off one plane: folded into {n} pitches, each corner at its height.").format(n=parts)
+        heights = solved.heights[i]
+        values = {"t": number(solved.pitches[i].tilt, 1), "low": number(min(heights)), "high": number(max(heights))}
+        if b.roof.free_pitches[i].get("z") is not None:
+            return _("By the heights of its corners: slope {t} °, from {low} to {high} m.").format(**values)
+        if i in solved.moved:
+            return _("Joined to the pitches beside it: slope {t} °, from {low} to {high} m.").format(**values)
+        return ""
 
     def _free_pitch_rows(self, form: QFormLayout, i: int) -> None:
         """The fields of a free pitch (R274, study 22, 3.4): its eave side, also clicked on the plan, the eave
@@ -736,6 +761,7 @@ class Properties(QScrollArea):
         side = whole(1, n)
         self._bind(side, lambda: self._free_pitch(i)["eave_side"] % n + 1)
         side.valueChanged.connect(lambda v: self._free_send(i, eave_side=v - 1))
+        form.addRow(self._bind(self._note(), lambda: self._free_result(i)))
         form.addRow(_("Eave on side"), self._with_pick(side, f"free_eave:{i}",
                                                        _("Click on the plan the side the pitch goes down to")))
         eave = self._bind(spin(0, 1000, 0.0, " m", 2, 0.1), lambda: self._free_pitch(i)["eave"])

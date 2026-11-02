@@ -36,6 +36,12 @@ def prop_solids(project) -> list:
     return out
 
 
+def _stands_up(pitch, building) -> bool:
+    """A pitch that can cast a shadow: sloped, or flat above the building's height (a flat part joined to the top of a
+    slope stands up as high, R304)."""
+    return pitch.tilt > 0 or pitch.z0 > building.height + 1e-6
+
+
 def obstacles_of(project, sf, prisms: list | None = None) -> list:
     """What can cast a shadow on a sub-field's modules, as convex solids: the exclusions that rise above
     their roof or the ground, the parapets, the other buildings with their roofs; and the other pitches of its
@@ -56,18 +62,18 @@ def obstacles_of(project, sf, prisms: list | None = None) -> list:
         if b.id == sf.building:
             own = b.pitch_index(sf.pitch)
             for i, pt in enumerate(b.pitches()):
-                if i != (own if own is not None else 0) and pt.tilt > 0:
-                    out += nearshade.under(pt.corners_3d(), b.height,
+                if i != (own if own is not None else 0) and _stands_up(pt, b):
+                    out += nearshade.under(pt.corners_3d(), b.wall_top(),
                                            _("{name}, {pitch}").format(name=b.name, pitch=pt.name))
             continue
         if b.canopy is not None:        # R281: a canopy is its roof on columns (the columns: obstacle_prisms)
             for pt in b.pitches():
                 out += nearshade.under(pt.corners_3d(), b.height - 0.05, b.name)
             continue
-        out += nearshade.prism(b.footprint, 0.0, b.height, b.name)
+        out += nearshade.prism(b.footprint, 0.0, b.wall_top(), b.name)
         for pt in b.pitches():
-            if pt.tilt > 0:
-                out += nearshade.under(pt.corners_3d(), b.height, b.name)
+            if _stands_up(pt, b):
+                out += nearshade.under(pt.corners_3d(), b.wall_top(), b.name)
     return out
 
 

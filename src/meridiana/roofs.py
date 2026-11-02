@@ -57,6 +57,7 @@ class Pitch:
     y0: float
     side: int | None = None       # the side of the outline the pitch goes down to (its eave), if it has one
     name: str = ""
+    whole: int | None = None      # a part of a free pitch folded out of plane (roof_join): the place of that pitch
 
     def z(self, x: float, y: float) -> float:
         if self.tilt == 0:

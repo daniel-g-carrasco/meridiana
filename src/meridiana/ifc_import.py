@@ -275,7 +275,8 @@ def _roof(footprint: list, pitches: list[_Pitch], notes: dict) -> tuple[float, m
         a = p.ring[side]
         free.append({"id": f"p{k + 1}", "ring": p.ring, "eave_side": side, "eave": round(p.z(*a), 3),
                      "tilt": round(p.tilt, 2)})
-    return min(f["eave"] for f in free), model.Roof(type="free", free_pitches=free)
+    # joined=False: the planes the model has, measured, stay as they are (R304 joins what is drawn by hand)
+    return min(f["eave"] for f in free), model.Roof(type="free", free_pitches=free, joined=False)
 
 
 def _near(ring, point, tol: float = 0.05) -> bool:
