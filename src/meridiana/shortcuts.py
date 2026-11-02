@@ -123,10 +123,11 @@ def commands() -> list[Command]:
         c("compute", _("&Compute"), ("F5",), "compute"),
         c("fetch_pvgis", _("Fetch the weather from &PVGIS"), (), "compute"),
         c("inverter_catalog", _("Add an &inverter from the catalogue…"), (), "compute"),
-        c("inverter_auto", _("Si&ze the inverter by itself"), (), "compute"),
-        # the strings of the Plant phase (task 16d; R114-R116): proposed by Meridiana only when asked, completed for
-        # the modules left out, drawn by hand on the plan, all deleted
-        c("strings_auto", _("P&ropose the strings"), (), "compute"),
+        c("inverter_auto", _("Choose the inverters &automatically…"), (), "compute"),      # R307
+        # the strings of the Plant phase (task 16d; R114-R116): proposed by Meridiana only when asked (R308: one
+        # command with its options, «String automatically…»), completed for the modules left out (in its options; the
+        # command stays for the checks' fixes), drawn by hand on the plan, all deleted
+        c("strings_auto", _("St&ring automatically…"), (), "compute"),
         c("strings_complete", _("Co&mplete the strings"), (), "compute"),
         c("strings_manual", _("&Draw a string"), (), "compute"),
         c("strings_clear", _("Delete all the stri&ngs"), (), "compute"),

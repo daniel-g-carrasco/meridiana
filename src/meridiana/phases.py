@@ -129,18 +129,20 @@ def phases() -> list[Phase]:
                 T("empty", _("Empty")))),
             Group("inverter", _("Inverter"), (
                 T("inverter_catalog", _("Catalogue")),
-                T("inverter_auto", _("Size it")))),
+                T("inverter_auto", _("Choose auto."), icon="inverter_auto"))),       # R307: «Scegli in automatico…»
             Group("storage", _("Storage"), (T("battery_catalog", _("Configure")),)),
             Group("strings", _("Strings"), (
-                T("strings_auto", _("Propose")),
-                T("strings_complete", _("Complete")),
+                # R308: «Propose» and «Complete» are one command with its options (study 23, M3); «Complete» stays
+                # in its menu for the checks' fixes
+                T("strings_auto", _("Automatic"), icon="strings_auto", more=(
+                    T("strings_complete", _("Complete"), icon="strings_complete"),)),
                 T("strings_manual", _("Draw")),
-                # R299, R306: what is deleted, from the modules on the plan; «Start again» deletes them all, after a
+                # R299, R306: what is deleted, from the modules on the plan; «Clear all» deletes them all, after a
                 # question
                 T("tool_erase_string", _("Delete string"), icon="erase_string", more=(
                     T("tool_erase_inverter_strings", _("Inv. + strings"), icon="erase_inverter_strings"),
                     T("tool_erase_inverter", _("Delete inv."), icon="erase_inverter"),
-                    T("strings_clear", _("Start again"))))))),
+                    T("strings_clear", _("Clear all"))))))),
             "plant", ("layout", "strings", "connection"),
             (_("What do you think of this layout?"),
              _("Are the distances from the edges right for the fire brigade?"),
