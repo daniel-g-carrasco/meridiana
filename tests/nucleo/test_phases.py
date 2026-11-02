@@ -99,7 +99,7 @@ class ThePhases(unittest.TestCase):
         i18n.setup("it")
         model, plant = phases.by_id("model"), phases.by_id("plant")
         self.assertEqual(model.title, "Modellazione")                                   # R277, decision 1
-        self.assertEqual([g.title for g in plant.groups][:3], ["Pannelli", "Inverter", "Accumulo"])
+        self.assertEqual([g.title for g in plant.groups][:4], ["Modifica", "Pannelli", "Inverter", "Accumulo"])     # R295
         self.assertEqual(checks.area_names()["layout"], "Posa")
         self.assertEqual(plant.questions[0], "Che ne pensi di questa posa?")
         self.assertEqual(i18n._("Orientation"), "Disposizione")

@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 
 import _setup  # noqa: F401
-from test_gizmo import H, W, cam
+from nucleo.test_gizmo import H, W, cam
 
 from meridiana import gizmo, mesh, model, move, roof_join, roof_vertices as rv
 
