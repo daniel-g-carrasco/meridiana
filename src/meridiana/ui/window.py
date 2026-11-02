@@ -742,6 +742,8 @@ class MainWindow(QMainWindow):
         if not self.bars_before_file:
             self.tabs.bars.show()
         self._settle_layouts()
+        if self.phase() == "report":                # what the Settings changed meanwhile (R329)
+            self._show_inspector()
 
     def _settle_layouts(self) -> None:
         """The layouts the bar's going or coming asked for, done now and not on the loop's next turns: the header
@@ -871,6 +873,10 @@ class MainWindow(QMainWindow):
                   "string, for the architect or the BIM coordinator"))
         act(file, "copy_notes", lambda: self.checks_page._copy(),
             tip=_("The paragraphs of the rules that apply, with their sources, to paste into the technical report"))
+        act(file, "report_logo", self._report_logo,
+            tip=_("The logo of the report: an image file, put in the profile that signs this project"))
+        act(file, "report_profile", self._designer_profile,
+            tip=_("Who signs the report, with the logo and the contacts: Settings > Report, on the profile in use"))
         file.addSeparator()
         act(file, "preferences", lambda: self._preferences())
         file.addSeparator()
@@ -1171,7 +1177,7 @@ class MainWindow(QMainWindow):
         for cid in ("compute", "fetch_pvgis", "inverter_catalog", "inverter_auto", "import_curve", "consumption_base",
                     "battery_catalog", "copy_notes", "export_report", "export_csv", "save_revision", "compare_variants",
                     "new_variant", "strings_auto", "strings_complete", "strings_manual", "strings_clear", "import_ifc",
-                    "export_ifc", "carport", "layout_east_west"):
+                    "export_ifc", "carport", "layout_east_west", "report_logo", "report_profile"):
             self.commands[cid].setIcon(icons.icon(cid))
         # «Variant» in the right corner of the row of the phases (design 2.1): it is of every phase
         corner = QWidget()
@@ -1246,7 +1252,9 @@ class MainWindow(QMainWindow):
         self.report_page = ReportPage(self.commands)
         self.report_side = ReportSide()
         self.report_side.changed.connect(self._report_edited)
-        self.report_side.profilesAsked.connect(lambda: self._preferences("report"))
+        self.report_side.profilesAsked.connect(self._designer_profile)
+        self.report_side.offer.answered.connect(self._report_offer_answered)
+        self.report_offer: tuple[str, str] | None = None        # (profile, project's file): offered and not answered
         self.inspector.deliverables.set_top(self.report_side)
         self.tabs.add_phase(phases.by_id("plant"), self.plant_page)
         self.tabs.add_phase(phases.by_id("report"), self.report_page)
@@ -1544,19 +1552,24 @@ class MainWindow(QMainWindow):
 
     def _report_profiles(self, profiles: list, default: str) -> None:
         """The authors of the reports as the preferences wrote them; a logo chosen there is copied into the data
-        folder (the file chosen may move or go), the copy's name kept."""
-        import shutil
-        import uuid
+        folder (the file chosen may move or go), the copy's name kept: named by its bytes, as the page goes on giving the
+        path chosen and each save made another copy. A new logo in a profile the project does not use is said (R331)."""
+        import hashlib
         folder = self.paths.data / "logos"
+        had = {(p.get("name"), p.get("logo")) for p in self.cfg.report_profiles}
+        fresh = ""
         kept = []
         for p in profiles:
             logo = p.get("logo") or ""
             if logo and Path(logo).is_absolute() and Path(logo).parent != folder:
                 try:
                     folder.mkdir(parents=True, exist_ok=True)
-                    copy = folder / f"{uuid.uuid4().hex[:12]}{Path(logo).suffix.lower()}"
-                    shutil.copyfile(logo, copy)
+                    data = Path(logo).read_bytes()
+                    copy = folder / f"{Path(logo).stem}-{hashlib.sha256(data).hexdigest()[:12]}{Path(logo).suffix.lower()}"
+                    copy.write_bytes(data)
                     p = {**p, "logo": copy.name}
+                    if (p["name"], copy.name) not in had:
+                        fresh = p["name"]
                 except OSError as error:
                     self.tell(_("The logo could not be copied: {error}").format(error=error))
                     p = {**p, "logo": ""}
@@ -1564,20 +1577,112 @@ class MainWindow(QMainWindow):
                 p = {**p, "logo": Path(logo).name}
             kept.append(p)
         self.cfg.report_profiles, self.cfg.report_profile = kept, default
-        if self.phase() == "report":
+        if fresh:
+            self._offer_report_profile(fresh)
+        self._show_report_offer()
+        if self.phase() == "report" and not self.file_page.isVisible():     # or when the File page closes (R329)
             self._show_inspector()
 
+    def _report_signature(self) -> dict:
+        from .. import reports
+        return reports.signature(self.project, self.cfg.report_profiles, self.cfg.report_profile)
+
     def _report_profile(self) -> dict | None:
-        """The profile the project's report is signed with, its logo as a path."""
-        from .. import portability, reports
-        embedded = (self.project.resources or {}).get("report_profile")
-        chosen = reports.settings(self.project)["profile"]
-        if embedded and (chosen is None or chosen == embedded.get("name")):
+        """The profile the project's report is signed with, its logo as a path: the one written in the Settings, the
+        copy in the project's file for a profile this PC does not have."""
+        from .. import portability
+        signed = self._report_signature()
+        p = signed["profile"]
+        if p is None and signed["source"] == "embedded":
             return portability.profile(self.project, self.paths.cache)
-        p = reports.profile_for(self.project, self.cfg.report_profiles, self.cfg.report_profile)
         if p and p.get("logo"):
             p = {**p, "logo": str(self.paths.data / "logos" / p["logo"])}
         return p
+
+    def _offer_report_profile(self, name: str) -> None:
+        """A logo went into the profile `name`: said when this project is signed by another, and the choice offered;
+        the signature stays as it is until the designer answers (R331)."""
+        if self._report_signature()["name"] != name:
+            self.report_offer = (name, str(self.path))
+            self.tell(self._report_offer_text())
+
+    def _report_offer_text(self) -> str:
+        """The line of the offer, "" when there is nothing to offer: answered, of another project, or signed by it."""
+        from .. import reports
+        offer = self.report_offer
+        if (offer is None or offer[1] != str(self.path) or self._report_signature()["name"] == offer[0]
+                or not reports.profile_for_name(self.cfg.report_profiles, offer[0])):
+            return ""
+        return _("The logo is in the profile «{name}», which this project does not use.").format(name=offer[0])
+
+    def _show_report_offer(self) -> None:
+        text = self._report_offer_text()
+        self.report_side.offer.show_text(text)
+        if self.file_page._settings is not None:
+            self.file_page.settings.report.offer.show_text(text)
+
+    def _report_offer_answered(self, use: bool) -> None:
+        offer, self.report_offer = self.report_offer, None
+        if use and offer is not None:
+            self._report_edited("profile", offer[0])
+        self._show_report_offer()
+
+    def _report_logo(self) -> None:
+        """«Logo…» in the Report's bar (R331): an image file, put in the profile that signs this project."""
+        from . import report
+        name, _f = QFileDialog.getOpenFileName(self, _("Logo of the report"), self.cfg.last_folder or str(Path.home()),
+                                               report.logo_filter())
+        if name:
+            self._put_report_logo(Path(name))
+
+    def _put_report_logo(self, file: Path) -> None:
+        """The logo goes in the profile in use, else in the default; with no profile at all a new one is made, the
+        default, and opened afterwards; with several and none to tell them apart the designer chooses first."""
+        from .. import reports
+        from . import report, spotlight
+        problem = report.logo_problem(file)
+        if problem:
+            self.tell(problem)
+            QMessageBox.warning(self, _("Logo of the report"), problem)
+            return
+        profiles = [p for p in (reports.clean_profile(x) for x in self.cfg.report_profiles) if p]
+        default = self.cfg.report_profile
+        signed = self._report_signature()
+        target = signed["name"] if signed["profile"] else reports.default_profile(profiles, default)
+        made = not profiles
+        if made:
+            target = default = _("My profile")
+            profiles = [{k: "" for k in reports.PROFILE_KEYS} | {"name": target}]
+        elif not target:
+            self.show_phase("report")
+            self.tell(_("Several profiles and none signs this project: choose one in «Signed by», then the logo."))
+            if self.report_side.profile.isVisible():
+                spotlight.reveal(self.report_side.profile)
+            return
+        for p in profiles:
+            if p["name"] == target:
+                p["logo"] = str(file)
+        self._report_profiles(profiles, default)
+        self._save_config()
+        self.file_page.settings_changed_elsewhere()
+        if self._report_offer_text() == "":
+            self.tell(_("The logo is in the profile «{name}»: the report shows it.").format(name=target))
+        if self.phase() == "report":                # the pages with the logo now, not after the usual pause
+            self.preview_soon.stop()
+            self._preview_report()
+        if made:
+            self._designer_profile()
+
+    def _designer_profile(self) -> None:
+        """«Profile…» in the Report's bar and panel (R331): Settings > Report on the profile in use; Back returns here
+        (R289)."""
+        from .. import reports
+        signed = self._report_signature()
+        name = signed["name"] if signed["profile"] else reports.default_profile(self.cfg.report_profiles,
+                                                                                self.cfg.report_profile)
+        self._preferences("report")
+        if name:
+            self.file_page.settings.report.select_profile(name)
 
     def _report_edited(self, key: str, value) -> None:
         """A choice of the Report phase: an edit of the project, undoable (its report is shared by the variants)."""
@@ -1597,8 +1702,9 @@ class MainWindow(QMainWindow):
 
     def _preview_report(self) -> None:
         """The pages of the report, made a step at a time (report.preview_steps) while the Report phase is open:
-        those shown stay until the new ones are ready; a preview half made for an older project is dropped."""
-        if self.phase() != "report":
+        those shown stay until the new ones are ready; a preview half made for an older project is dropped. Not under
+        the File page: nobody sees it, and a compilation holds the keys typed in the Settings (R329)."""
+        if self.phase() != "report" or self.file_page.isVisible():
             return
         ready = bool(self.energy) and self.energy.get("sim") is not None
         if not ready:
@@ -3795,6 +3901,7 @@ class MainWindow(QMainWindow):
             self.report_side.show_settings(self.project, _with_notes(data) if ready else data,
                                            self.cfg.report_profiles, self.cfg.report_profile,
                                            str(self.path.parent) if self.path else self.cfg.last_folder)
+            self._show_report_offer()
             self.report_page.set_ready(ready or bool(self.report_page.preview.images))
             if ready:
                 self.preview_soon.start()
@@ -6322,6 +6429,7 @@ class MainWindow(QMainWindow):
             self.tell(_("The window layout could not be saved: {error}").format(error=error))
 
     def closeEvent(self, event) -> None:
+        self.file_page.flush_settings()
         if self._keep_or_discard():
             self._cancel_report()
             self.preview_soon.stop()

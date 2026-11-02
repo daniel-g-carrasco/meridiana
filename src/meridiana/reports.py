@@ -201,6 +201,7 @@ def plan(project, data: dict) -> list[Chapter]:
 # the author's profile (Preferences > Report): what the cover, the header and the footer say
 PROFILE_KEYS = ("name", "signer", "register", "firm", "address", "phone", "email", "web", "logo", "accent")
 ACCENT = "#1c6e8c"               # the report's accent when the profile gives none (study 24, sketch V1)
+NOBODY = "<nobody>"              # Config.report_profile when «Nobody» was chosen in the Settings; "" is no choice made
 
 
 def profile_labels() -> dict[str, str]:
@@ -216,14 +217,57 @@ def clean_profile(raw) -> dict | None:
     return {k: str(raw.get(k) or "").strip() for k in PROFILE_KEYS}
 
 
+def _by_name(profiles: list) -> dict:
+    return {p["name"]: p for p in (clean_profile(x) for x in profiles) if p}
+
+
+def default_profile(profiles: list, default: str = "") -> str:
+    """The name of the profile for the projects that choose none: the one the Settings name; when they name none, the
+    only one there is (R331: a logo put in the only profile did not reach the report, the default was still «Nobody»);
+    "" when «Nobody» was chosen there (`NOBODY`) or there are several and none is named."""
+    names = _by_name(profiles)
+    if default == NOBODY:
+        return ""
+    if default in names:
+        return default
+    return next(iter(names)) if len(names) == 1 else ""
+
+
+def profile_for_name(profiles: list, name: str) -> dict | None:
+    return _by_name(profiles).get(name)
+
+
 def profile_for(project, profiles: list, default: str = "") -> dict | None:
-    """The profile the project's report is signed with: its own choice, or the preferences' default; "" chosen
-    means none."""
+    """The profile the project's report is signed with: its own choice, or the default (`default_profile`); ""
+    chosen means none."""
     chosen = settings(project)["profile"]
-    name = default if chosen is None else chosen
-    if not name:
-        return None
-    return next((p for p in (clean_profile(x) for x in profiles) if p and p["name"] == name), None)
+    return _by_name(profiles).get(default_profile(profiles, default) if chosen is None else chosen)
+
+
+def signature(project, profiles: list, default: str = "") -> dict:
+    """Who signs the project's report and why (R331), for the window and its panel: {"name", "source", "profile"}.
+    `source`: "project" its own choice, "default" the Settings' or the only profile, "embedded" the one saved in the
+    project's file, "nobody" chosen as none, "missing" a choice that names no profile, "none" nothing to sign with.
+    `profile` is this PC's profile of that name: what is written in the Settings wins over the copy in the file, or a
+    logo put in the profile would never reach a project saved before; None with "embedded" means the file's copy (a
+    project received, portability.profile)."""
+    chosen = settings(project)["profile"]
+    local = _by_name(profiles)
+    embedded = clean_profile((getattr(project, "resources", None) or {}).get("report_profile"))
+    kept = embedded["name"] if embedded else ""
+
+    def answer(name: str, source: str) -> dict:
+        return {"name": name, "source": source, "profile": local.get(name)}
+    if chosen == "":
+        return answer("", "nobody")
+    if chosen is not None:
+        if chosen in local:
+            return answer(chosen, "project")
+        return answer(chosen, "embedded" if chosen == kept else "missing")
+    if kept:
+        return answer(kept, "embedded")
+    name = default_profile(profiles, default)
+    return answer(name, "default") if name else answer("", "none")
 
 
 def accent_of(profile: dict | None) -> str:

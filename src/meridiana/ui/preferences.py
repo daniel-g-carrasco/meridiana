@@ -8,7 +8,7 @@ import html
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QSignalBlocker, Qt, QTimer, Signal
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QInputDialog, QLabel,
                                QLineEdit, QPushButton, QScrollArea, QTabWidget, QVBoxLayout, QWidget)
 
@@ -17,6 +17,10 @@ from ..i18n import _
 from .appearance import Appearance
 from .design import strong
 from .shortcuts_dialog import ShortcutsEditor
+
+# what is typed in a field of the Settings is applied and saved after this pause, or on leaving the field (R329): a
+# key that saved the settings and drew the Report's panel took 40-60 ms, more on a large project
+TYPING_PAUSE_MS = 400
 
 
 def orbit_names() -> dict:
@@ -476,6 +480,9 @@ class ReportPage(QWidget):
         self.drop_logo.clicked.connect(lambda: self._set_logo(""))
         logo.addWidget(self.drop_logo)
         form.addRow(labels["logo"], logo)
+        from .report_page import ProfileOffer
+        self.offer = ProfileOffer()
+        form.addRow(self.offer)
         self.form = QWidget()
         self.form.setLayout(form)
         box.addWidget(self.form)
@@ -484,22 +491,34 @@ class ReportPage(QWidget):
         default.addRow(_("For the projects that choose none"), self.default)
         box.addLayout(default)
         box.addStretch(1)
+        self.nobody_asked = cfg.report_profile == reports.NOBODY     # «Nobody» chosen, not only nothing chosen (R331)
         self._fill(0 if self.profiles else -1)
-        self.default.setCurrentIndex(max(0, self.default.findData(cfg.report_profile)))
+        self.default.setCurrentIndex(max(0, self.default.findData(
+            reports.default_profile(self.profiles, cfg.report_profile))))
+        self.default.currentIndexChanged.connect(self._default_chosen)
+
+    def _default_chosen(self, _index: int) -> None:
+        from .. import reports
+        self.nobody_asked = self.default.currentData() == reports.NOBODY
 
     def _fill(self, index: int) -> None:
+        from .. import reports
         self.loading = True
+        blocked = QSignalBlocker(self.default)     # refilling it is no choice of the designer's
         try:
             self.chooser.clear()
             for p in self.profiles:
                 self.chooser.addItem(p["name"])
-            keep = self.default.currentData() if self.default.count() else None
+            keep = self.default.currentData() if self.default.count() else ""
             self.default.clear()
-            self.default.addItem(_("Nobody"), "")
-            for p in self.profiles:
-                self.default.addItem(p["name"], p["name"])
-            if keep is not None:
-                self.default.setCurrentIndex(max(0, self.default.findData(keep)))
+            self.default.addItem(_("Nobody"), reports.NOBODY)
+            names = [p["name"] for p in self.profiles]
+            for name in names:
+                self.default.addItem(name, name)
+            # the first profile made, or the one left, is the default unless «Nobody» was chosen (R331)
+            wanted = keep if keep in names else reports.default_profile(
+                self.profiles, reports.NOBODY if self.nobody_asked else "")
+            self.default.setCurrentIndex(max(0, self.default.findData(wanted)))
             self.current = index
             self.chooser.setCurrentIndex(index)
             self.form.setEnabled(index >= 0)
@@ -509,7 +528,14 @@ class ReportPage(QWidget):
                 edit.setText(p.get(key, ""))
             self._show_logo(p.get("logo", ""))
         finally:
+            blocked.unblock()
             self.loading = False
+
+    def select_profile(self, name: str) -> None:
+        """The profile `name` shown in the page, for who comes from the Report phase (R331)."""
+        index = next((i for i, p in enumerate(self.profiles) if p["name"] == name), -1)
+        if index >= 0 and index != self.current:
+            self._fill(index)
 
     def _show_logo(self, path: str) -> None:
         self.logo.setText(Path(path).name if path else _("none"))
@@ -537,6 +563,8 @@ class ReportPage(QWidget):
             p[key] = self.fields[key].text().strip()
 
     def _add(self) -> None:
+        if not self.profiles:
+            self.nobody_asked = False              # the first one made is the default (R331)
         names = {p["name"] for p in self.profiles}
         name, n = _("Profile"), 1
         while name in names:
@@ -557,11 +585,17 @@ class ReportPage(QWidget):
         self.changed.emit()
 
     def _choose_logo(self) -> None:
-        from PySide6.QtWidgets import QFileDialog
-        name, _f = QFileDialog.getOpenFileName(self, _("Logo of the report"), str(Path.home()),
-                                               _("Images (*.png *.jpg *.jpeg)"))
-        if name:
-            self._set_logo(name)
+        from PySide6.QtWidgets import QFileDialog, QMessageBox
+
+        from .report import logo_filter, logo_problem
+        name, _f = QFileDialog.getOpenFileName(self, _("Logo of the report"), str(Path.home()), logo_filter())
+        if not name:
+            return
+        problem = logo_problem(Path(name))
+        if problem:
+            QMessageBox.warning(self, _("Logo of the report"), problem)
+            return
+        self._set_logo(name)
 
     def _set_logo(self, path: str) -> None:
         if self.current >= 0:
@@ -571,8 +605,12 @@ class ReportPage(QWidget):
 
     def choice(self) -> tuple[list, str]:
         """The profiles as written (a logo chosen now is still where it was: the window keeps a copy) and the one
-        for the projects that choose none."""
-        return [dict(p) for p in self.profiles], self.default.currentData() or ""
+        for the projects that choose none: "" when «Nobody» stands there only because nothing was chosen."""
+        from .. import reports
+        default = self.default.currentData() or reports.NOBODY
+        if default == reports.NOBODY and not self.nobody_asked:
+            default = ""
+        return [dict(p) for p in self.profiles], default
 
 
 class Preferences(QWidget):
@@ -580,6 +618,7 @@ class Preferences(QWidget):
     section can restore its defaults with a confirmation drawn here, never in a modal dialog."""
 
     changed = Signal(str)
+    profileOffer = Signal(bool)                 # the answer to «use this profile for this project» (R331)
 
     SECTIONS = {
         "appearance": ("theme", "accent", "backgrounds", "text_size", "toolbar", "toolbar_place"),
@@ -604,6 +643,11 @@ class Preferences(QWidget):
         self.host = parent
         self.loading = False
         self.history: list[tuple[dict, dict]] = []
+        self.typing = ""                           # the section with keys not yet applied (R329)
+        self.typing_timer = QTimer(self)
+        self.typing_timer.setSingleShot(True)
+        self.typing_timer.setInterval(TYPING_PAUSE_MS)
+        self.typing_timer.timeout.connect(self.flush_typing)
         box = QVBoxLayout(self)
         box.setContentsMargins(0, 0, 0, 0)
         row = QHBoxLayout()
@@ -636,6 +680,7 @@ class Preferences(QWidget):
         self.show_page(page)
 
     def _populate(self) -> None:
+        self.flush_typing()                        # the fields are about to go: what they hold is applied first
         current = self.current_section() if self.pages.count() else ""
         self.loading = True
         try:
@@ -734,23 +779,48 @@ class Preferences(QWidget):
         for widget in (self.meridio.voice, self.meridio.withdraw):
             widget.toggled.connect(lambda _on: self._edited("assistant"))
         for widget in (self.meridio.url, self.meridio.model, self.meridio.kokoro_dir, self.meridio.kokoro_python):
-            widget.textEdited.connect(lambda _t: self._edited("assistant"))
+            self._typed_in(widget, "assistant")
         for widget in (self.meridio.api, self.meridio.destination, self.meridio.voice_engine, self.meridio.voice_name):
             widget.currentIndexChanged.connect(lambda _i: self._edited("assistant"))
         self.report.default.currentIndexChanged.connect(lambda _i: self._edited("report"))
         for edit in self.report.fields.values():
-            edit.textEdited.connect(lambda _t: self._edited("report"))
+            self._typed_in(edit, "report")
         self.report.changed.connect(lambda: self._edited("report"))
+        self.report.offer.answered.connect(self.profileOffer.emit)
         self.maps.changed.connect(lambda: self._edited("maps"))
         self.maps.default.currentIndexChanged.connect(lambda _i: self._edited("maps"))
         for widget in (self.maps.name, self.maps.url, self.maps.attribution, self.maps.licence, self.maps.licence_url):
-            widget.textEdited.connect(lambda _t: self._edited("maps"))
+            self._typed_in(widget, "maps")
         for widget in (self.maps.kind, self.maps.imagery, self.maps.layer):
             widget.currentIndexChanged.connect(lambda _i: self._edited("maps") if not self.maps.loading else None)
         self.maps.max_zoom.valueChanged.connect(lambda _v: self._edited("maps") if not self.maps.loading else None)
         for widget in (self.privacy.geocoding, self.privacy.pvgis, self.privacy.tiles, self.privacy.updates,
                        self.privacy.auto_updates):
             widget.toggled.connect(lambda _on: self._edited("privacy"))
+
+    def _typed_in(self, edit, section: str) -> None:
+        edit.textEdited.connect(lambda _t: self._key(section))
+        edit.editingFinished.connect(self.flush_typing)
+
+    def _key(self, section: str) -> None:
+        """A key in a field: its page has kept the text already; the rest, which is heavy, waits for a pause (R329)."""
+        if self.loading:
+            return
+        if self.typing and self.typing != section:
+            self.flush_typing()
+        self.typing = section
+        self.typing_timer.start()
+
+    def flush_typing(self) -> None:
+        """What was typed applied and saved now: after a pause, on leaving the field or the page, on closing."""
+        self.typing_timer.stop()
+        section, self.typing = self.typing, ""
+        if section:
+            self._edited(section)
+
+    def hideEvent(self, event) -> None:
+        self.flush_typing()
+        super().hideEvent(event)
 
     def _snapshot(self) -> tuple[dict, dict]:
         data = self._copy(self.cfg.to_json())
@@ -769,6 +839,11 @@ class Preferences(QWidget):
     def _edited(self, section: str) -> None:
         if self.loading:
             return
+        if self.typing == section:                 # this edit takes what was typed with it: one step of undo
+            self.typing_timer.stop()
+            self.typing = ""
+        else:
+            self.flush_typing()
         self.history.append(self._snapshot())
         del self.history[:-30]
         self.undo.setEnabled(True)
@@ -788,6 +863,7 @@ class Preferences(QWidget):
                 "privacy": self.privacy}
 
     def undo_last(self) -> None:
+        self.flush_typing()                        # what was just typed is the last change
         if not self.history:
             return
         self._restore(self.history.pop())
@@ -801,6 +877,7 @@ class Preferences(QWidget):
         self.confirmation.show()
 
     def restore_defaults(self) -> None:
+        self.flush_typing()
         section = self.current_section()
         self.history.append(self._snapshot())
         del self.history[:-30]
@@ -817,6 +894,7 @@ class Preferences(QWidget):
         self.changed.emit(section)
 
     def show_page(self, name: str) -> None:
+        self.flush_typing()
         widget = self._widgets().get(name)
         if widget is not None:
             if widget is not self.pages.currentWidget():

@@ -122,6 +122,28 @@ def _pictures(project, data: dict) -> dict:
             for vid, (_bearing, _elevation, caption) in report_3d.views().items()}
 
 
+def logo_filter() -> str:
+    """The file dialog's filter for a logo: the formats Typst reads (report_typst.engine.image_format)."""
+    return _("Images (*.png *.jpg *.jpeg *.gif *.webp *.svg)")
+
+
+def logo_problem(path: Path) -> str:
+    """Why this file cannot be the report's logo, said for the designer; "" when it can (R331)."""
+    try:
+        data = Path(path).read_bytes()
+    except OSError as error:
+        return _("The logo could not be read: {error}").format(error=error)
+    ext = image_format(data)
+    if ext is None:
+        return _("{file} is not an image the report can show: use PNG, JPEG, GIF, WebP or SVG.").format(
+            file=Path(path).name)
+    with Build() as build:
+        build.add(f"logo.{ext}", data)
+        if not build.usable_image(f"logo.{ext}"):
+            return _("{file} looks like an image, but it is damaged or cannot be read.").format(file=Path(path).name)
+    return ""
+
+
 def _logo(build: Build, profile: dict | None) -> str | None:
     """The profile's logo copied into the report's folder, if it is an image Typst reads; None otherwise (said in the
     log: the header closes up without it)."""

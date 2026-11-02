@@ -182,6 +182,9 @@ def phases() -> list[Phase]:
             Group("compare", _("Comparison"), (
                 T("new_variant", _("New variant"), icon="copy-plus"),
                 T("compare_variants", _("Compare")))),
+            Group("signature", _("Signature"), (         # R331: the logo and the profile from the phase itself
+                T("report_logo", _("Logo"), icon="image"),
+                T("report_profile", _("Profile"), icon="user"))),
             Group("export", _("Export"), (
                 T("export_report", _("Report")),
                 T("export_dxf", _("DXF"), planned="relazione"),

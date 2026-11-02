@@ -34,6 +34,33 @@ def _note(text: str) -> QLabel:
     return label
 
 
+class ProfileOffer(QWidget):
+    """One line and two buttons, in the Report phase and in Settings > Report: a logo went into a profile this project
+    does not use (R331). The signature stays as it is until the designer says so."""
+
+    answered = Signal(bool)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        box = QVBoxLayout(self)
+        box.setContentsMargins(0, 0, 0, 0)
+        box.setSpacing(Space.XS)
+        self.line = _note("")
+        box.addWidget(self.line)
+        # one under the other: side by side they held the Report's panel wider than the dock, its right edge cut
+        self.use = QPushButton(_("Use it for this project"))
+        self.use.clicked.connect(lambda: self.answered.emit(True))
+        box.addWidget(self.use, 0, Qt.AlignmentFlag.AlignLeft)
+        self.later = QPushButton(_("Not now"))
+        self.later.clicked.connect(lambda: self.answered.emit(False))
+        box.addWidget(self.later, 0, Qt.AlignmentFlag.AlignLeft)
+        self.hide()
+
+    def show_text(self, text: str) -> None:
+        self.line.setText(text)
+        self.setVisible(bool(text))
+
+
 class Preview(QScrollArea):
     """The pages one under the other, as wide as the room allows (PAGE_WIDTH_MAX at most), each on its thin edge."""
 
@@ -178,11 +205,13 @@ class ReportSide(QWidget):
         self.profile.setMinimumContentsLength(8)
         self.profile.currentIndexChanged.connect(lambda _i: self._send("profile", self.profile.currentData()))
         signer.addWidget(self.profile, 1)
-        manage = QPushButton(_("Profiles…"))
-        manage.setToolTip(_("Settings > Report: who signs the reports, with the logo and the contacts"))
-        manage.clicked.connect(self.profilesAsked.emit)
-        signer.addWidget(manage)
+        self.manage = QPushButton(_("Profiles…"))
+        self.manage.setToolTip(_("Settings > Report: who signs the reports, with the logo and the contacts"))
+        self.manage.clicked.connect(self.profilesAsked.emit)
+        signer.addWidget(self.manage)
         form.addRow(_("Signed by"), signer)
+        self.offer = ProfileOffer()
+        form.addRow(self.offer)
         self.client = QLineEdit()
         self.client.setPlaceholderText(_("as the cover will say it"))
         self.client.editingFinished.connect(lambda: self._send("client", self.client.text().strip()))
@@ -239,12 +268,21 @@ class ReportSide(QWidget):
             self.template_note.setText(reports.templates()[s["template"]].note)
             self.profile.clear()
             names = [p["name"] for p in (reports.clean_profile(x) for x in profiles) if p]
-            self.profile.addItem(_("Default: {name}").format(name=default or _("nobody")), None)
-            self.profile.setItemData(0, _("The profile Settings > Report gives the projects that choose none"),
-                                     Qt.ItemDataRole.ToolTipRole)
+            signed = reports.signature(project, profiles, default)
+            if s["profile"] is None and signed["source"] == "embedded":      # what the report signs now, not another
+                self.profile.addItem(_("As saved: {name}").format(name=signed["name"]), None)
+                self.profile.setItemData(0, _("The profile saved in the project's file, as no other was chosen"),
+                                         Qt.ItemDataRole.ToolTipRole)
+            else:
+                self.profile.addItem(_("Default: {name}").format(
+                    name=reports.default_profile(profiles, default) or _("nobody")), None)
+                self.profile.setItemData(0, _("The profile Settings > Report gives the projects that choose none"),
+                                         Qt.ItemDataRole.ToolTipRole)
             self.profile.addItem(_("Nobody: only the project and the date"), "")
             for name in names:
                 self.profile.addItem(name, name)
+            if s["profile"] and s["profile"] not in names:                   # renamed, removed, or of another PC
+                self.profile.addItem(_("{name} (not in the Settings)").format(name=s["profile"]), s["profile"])
             self.profile.setCurrentIndex(max(0, self.profile.findData(s["profile"])) if s["profile"] is not None
                                          else 0)
             if not self.client.hasFocus():
