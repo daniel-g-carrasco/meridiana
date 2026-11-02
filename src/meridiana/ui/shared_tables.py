@@ -66,8 +66,9 @@ def focus_table(view: QTreeView | QTableView) -> None:
     view.setFocus(Qt.FocusReason.OtherFocusReason)
 
 
-def table_sheet(palette: QPalette, compact: bool = False) -> str:
-    """Local rules only; the application's global typography stays in Python."""
+def _sheet(palette: QPalette, compact: bool, scoped: bool) -> str:
+    """The rules of a data table. `scoped`: for the application's sheet, each one under the views that carry the
+    property `ptable` (and `pcompact` for the compact rows); otherwise the rules for a sheet of the view itself."""
     from .theme import arrows
 
     ground, text, line, selected = (_role(palette, name)
@@ -80,34 +81,59 @@ def table_sheet(palette: QPalette, compact: bool = False) -> str:
             selection = candidate
             break
     inner = max(0, Radius.CONTROL - 1)
+    views = ('QTreeView[ptable="true"]', 'QTableView[ptable="true"]') if scoped else ("QTreeView", "QTableView")
+
+    def own(*suffixes: str) -> str:
+        return ", ".join(v + s for v in views for s in suffixes)
+
+    def below(*selectors: str) -> str:
+        return ", ".join((v + " " if scoped else "") + s for v in (views if scoped else ("",)) for s in selectors)
+    separator = separator_colour(palette)
     sheet = (
-        "QHeaderView { background: transparent; border: none; }"
-        f"QHeaderView::section {{ background: {ground}; color: {text}; border: none;"
-        f" border-right: 1px solid {separator_colour(palette)};"
-        f" border-bottom: 1px solid {separator_colour(palette)}; }}"
-        f"QHeaderView::section:first {{ border-top-left-radius: {inner}px; }}"
-        f"QHeaderView::section:only-one {{ border-top-left-radius: {inner}px;"
+        f"{below('QHeaderView')} {{ background: transparent; border: none; }}"
+        f"{below('QHeaderView::section')} {{ background: {ground}; color: {text}; border: none;"
+        f" border-right: 1px solid {separator};"
+        f" border-bottom: 1px solid {separator}; }}"
+        f"{below('QHeaderView::section:first')} {{ border-top-left-radius: {inner}px; }}"
+        f"{below('QHeaderView::section:only-one')} {{ border-top-left-radius: {inner}px;"
         " border-top-right-radius: 0; }"
-        f"QWidget#table-gutter-header {{ background: {ground}; border: none;"
-        f" border-top-right-radius: {inner}px; border-bottom: 1px solid {separator_colour(palette)}; }}"
-        "QHeaderView::section:last, QHeaderView::section:only-one { border-right: none; }"
-        f"QHeaderView::section:hover {{ background: {_role(palette, 'Midlight')}; }}"
-        f"QTreeView, QTableView {{ background: {_role(palette, 'Base')};"
+        f"{below('QWidget#table-gutter-header')} {{ background: {ground}; border: none;"
+        f" border-top-right-radius: {inner}px; border-bottom: 1px solid {separator}; }}"
+        f"{below('QHeaderView::section:last', 'QHeaderView::section:only-one')} {{ border-right: none; }}"
+        f"{below('QHeaderView::section:hover')} {{ background: {_role(palette, 'Midlight')}; }}"
+        f"{own('')} {{ background: {_role(palette, 'Base')};"
         f" alternate-background-color: {band_colour(palette)}; outline: 0; }}"
-        f"QTreeView::item, QTableView::item {{ border-right: 1px solid {line}; }}"
-        f"QTreeView::item:hover:!selected, QTableView::item:hover:!selected {{ background: {hover}; }}"
-        f"QTreeView::item:selected, QTableView::item:selected {{ background: {selection}; color: {text}; }}"
+        f"{own('::item')} {{ border-right: 1px solid {line}; }}"
+        f"{own('::item:hover:!selected')} {{ background: {hover}; }}"
+        f"{own('::item:selected')} {{ background: {selection}; color: {text}; }}"
     )
     assets = arrows(_role(palette, "PlaceholderText"))
     if assets:
         sheet += (
-            f"QHeaderView::up-arrow {{ image: url({assets['up']}); width: 8px; height: 6px; right: {Space.S}px; }}"
-            f"QHeaderView::down-arrow {{ image: url({assets['down']}); width: 8px; height: 6px; right: {Space.S}px; }}"
+            f"{below('QHeaderView::up-arrow')} {{ image: url({assets['up']}); width: 8px; height: 6px;"
+            f" right: {Space.S}px; }}"
+            f"{below('QHeaderView::down-arrow')} {{ image: url({assets['down']}); width: 8px; height: 6px;"
+            f" right: {Space.S}px; }}"
         )
-    if compact:
-        sheet += (f"QTreeView::item, QTableView::item {{ padding: {Space.XXS // 2}px 0;"
+    if compact or scoped:
+        compact_views = ('QTreeView[ptable="true"][pcompact="true"]', 'QTableView[ptable="true"][pcompact="true"]'
+                         ) if scoped else views
+        sheet += (", ".join(v + "::item" for v in compact_views) + f" {{ padding: {Space.XXS // 2}px 0;"
                   f" min-height: {Text.SECONDARY.size + Space.XS}px; }}")
     return sheet
+
+
+def table_sheet(palette: QPalette, compact: bool = False) -> str:
+    """Local rules only, for a view that has a sheet of its own already; the application's global typography stays
+    in Python."""
+    return _sheet(palette, compact, False)
+
+
+def application_rules(palette: QPalette) -> str:
+    """The same rules for the application's sheet (Theme.apply), under the views marked with the property `ptable`:
+    a sheet on each of the tables made a change of theme cost about 65 ms of each (19 in the window, 1.2 s: study 13,
+    the house rule of no local sheet where the theme will do, 02/11/2026)."""
+    return _sheet(palette, False, True)
 
 
 class TableFrame(QWidget):
@@ -246,6 +272,7 @@ class TableStyle(QObject):
         self.view = view
         self.compact = compact
         self._original_sheet = view.styleSheet()
+        self.in_theme = not self._original_sheet    # a view with a sheet of its own keeps its own table rules
         self._normal_height = None
         self._normal_minimum = None
         if isinstance(view, QTableView):
@@ -281,9 +308,21 @@ class TableStyle(QObject):
         self.view = None
 
     def refresh(self) -> None:
-        sheet = self._original_sheet + table_sheet(QApplication.palette(), self.compact)
-        if self.view.styleSheet() != sheet:
-            self.view.setStyleSheet(sheet)
+        if self.in_theme:
+            changed = False
+            for name, on in (("ptable", True), ("pcompact", self.compact)):
+                wanted = "true" if on else ""
+                if self.view.property(name) != wanted:
+                    self.view.setProperty(name, wanted)
+                    changed = True
+            if changed:                 # the rules of the headers and the gutter are chosen through the view
+                for widget in (self.view, *self.view.findChildren(QWidget)):
+                    widget.style().unpolish(widget)
+                    widget.style().polish(widget)
+        else:
+            sheet = self._original_sheet + table_sheet(QApplication.palette(), self.compact)
+            if self.view.styleSheet() != sheet:
+                self.view.setStyleSheet(sheet)
         font = tabular_font(self.view.font())
         font.setPixelSize(Text.SECONDARY.size if self.compact else Text.BODY.size)
         if self.view.font() != font:
@@ -312,7 +351,7 @@ class TableStyle(QObject):
 
     def eventFilter(self, watched, event) -> bool:
         kind = event.type()
-        if kind == QEvent.Type.PaletteChange and watched is self.view:
+        if kind == QEvent.Type.PaletteChange and watched is self.view and not self.in_theme:
             wanted = self._original_sheet + table_sheet(QApplication.palette(), self.compact)
             if self.view.styleSheet() != wanted:
                 QTimer.singleShot(0, self.view, self.refresh)
