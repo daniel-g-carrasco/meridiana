@@ -14,11 +14,13 @@ as Office's ribbon). `hold` and `Veil.play` are the two halves, for a caller tha
 tab of the phase, ui/phasebar.py). `push(area, change, drop)`: what was there moves down (or up) by `drop` pixels
 to where it goes, a strip at the bottom staying (the menu bar that Alt adds above the phases, R164).
 `enter(area, change, kind)`: an opaque page appears over the held picture with a fade, a little slide or a sheet
-opening from the left (R178); the veil hides itself at the last frame and with less motion nothing plays."""
+opening from the left (R178); the veil hides itself at the last frame and with less motion nothing plays.
+`TypeOut`: text that comes little by little, as an answer in a chat (R319); with less motion it is whole at once."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
+import time
 import weakref
 
 from PySide6.QtCore import QEasingCurve, QObject, QPoint, QPointF, QRect, QRectF, Qt, QTimer, QVariantAnimation, Signal
@@ -353,6 +355,64 @@ def leave(area: QWidget, change: Callable[[], None], ms: int = Motion.FAST) -> E
 
     after_work(entrance, play)
     return entrance
+
+
+class TypeOut(QObject):
+    """Text that comes little by little, as an answer streams in a chat (R319). It counts characters, the owner
+    draws them: `shown(n)` says that the first `n` characters of the plain text are to be seen (always the whole
+    count last, once). Every Motion.TYPING_MS it has moved on by Motion.TYPING_CHARS characters at least (more when
+    the text is long: none takes over Motion.TYPING_MAX_MS), by the clock, so that a slow frame never makes it late;
+    a step ends at the end of the word it is in. With less motion `start` shows everything at once; `finish` does
+    the same, for a click."""
+    shown = Signal(int)
+
+    def __init__(self, parent: QObject | None = None):
+        super().__init__(parent)
+        self.total = 0
+        self.count = 0
+        self._step = Motion.TYPING_CHARS
+        self._text = ""
+        self._began = 0.0
+        self.timer = QTimer(self, interval=Motion.TYPING_MS)
+        self.timer.timeout.connect(self._tick)
+
+    @property
+    def running(self) -> bool:
+        return self.timer.isActive()
+
+    def start(self, text: str, reduced: bool = False) -> None:
+        """Begin the text `text` (plain: only its length and its word ends matter)."""
+        self.timer.stop()
+        self._text, self.total, self.count = text, len(text), 0
+        frames = max(1, Motion.TYPING_MAX_MS // Motion.TYPING_MS)
+        self._step = max(Motion.TYPING_CHARS, -(-self.total // frames))
+        if reduced or self.total == 0:
+            self.finish()
+            return
+        self._began = time.monotonic()
+        self.shown.emit(0)
+        self.timer.start()
+
+    def finish(self) -> None:
+        """All of it, now."""
+        self.timer.stop()
+        self.count = self.total
+        self.shown.emit(self.total)
+
+    def stop(self) -> None:
+        """No more steps; what is shown stays."""
+        self.timer.stop()
+
+    def _tick(self) -> None:
+        # by the clock, not by the ticks: a slow frame shows more characters, never makes the text late
+        due = int((time.monotonic() - self._began) * 1000 / Motion.TYPING_MS) * self._step
+        self.count = min(self.total, max(self.count + 1, due))
+        while self.count < self.total and not self._text[self.count - 1].isspace() and not self._text[self.count].isspace():
+            self.count += 1                                 # to the end of the word it is in
+        if self.count >= self.total:
+            self.finish()
+        else:
+            self.shown.emit(self.count)
 
 
 class Collapse(QObject):

@@ -24,7 +24,7 @@ msgid ""
 "name; the first when omitted); «new» pretends it is the first start. Your "
 "own settings are never touched."
 msgstr ""
-"  --tour [PASSO|nuovo] avvia con la visita guidata al PASSO (il numero o il "
+"  --tour [PASSAGGIO|nuovo] avvia con la visita guidata al PASSAGGIO (il numero o il "
 "nome; il primo se manca); «nuovo» simula il primo avvio. Le tue "
 "impostazioni non vengono mai toccate."
 
@@ -39,7 +39,7 @@ msgstr "  --version, -V        scrive la versione"
 #: src/meridiana/tour.py:50
 #, python-brace-format
 msgid "--tour: there is no step «{step}»; the steps are 1 to {total}, or by name: {names}"
-msgstr "--tour: il passo «{step}» non esiste; i passi vanno da 1 a {total}, oppure per nome: {names}"
+msgstr "--tour: il passaggio «{step}» non esiste; i passaggi vanno da 1 a {total}, oppure per nome: {names}"
 
 #: src/meridiana/assistant/costs.py:29
 msgid "Claude Haiku 5.5, for the current questions"
@@ -21453,3 +21453,11 @@ msgstr "Scegli gli inverter in &automatico…"
 
 msgid "St&ring automatically…"
 msgstr "St&ringa in automatico…"
+
+#: src/meridiana/ui/tour.py
+msgid "Jump to another step of the tour"
+msgstr "Vai a un altro passaggio della visita"
+
+#: src/meridiana/ui/tour.py
+msgid "Leave the tour here: Help brings you back to this step"
+msgstr "Lascia la visita qui: da Aiuto torni a questo passaggio"
