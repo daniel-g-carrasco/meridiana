@@ -30,11 +30,11 @@ class OneHover(unittest.TestCase):
             sheet = style_sheet(t, dark)
             hover = theme_colors.qt_hex(t["hover"])
             for rule in ("QToolButton:hover", "QToolButton#file-chip:hover", "QMenu::item:selected",
-                         "QToolButton#filter:hover, QToolButton#count:hover"):
+                         "QToolButton#filter:hover"):
                 line = next(x for x in sheet.splitlines() if x.startswith(rule + " ") or x.startswith(rule + " {"))
                 self.assertIn(hover, line, rule)
             self.assertIn(f"QPushButton:hover {{ background: {field_hover}; }}", sheet)
-            self.assertIn(f"QTabBar::tab:hover:!selected {{ background: {field_hover};", sheet)
+            self.assertIn(f"QTabBar::tab:hover:!selected {{ background: {hover};", sheet)     # on a track (R322)
             # «File» has no ground at rest, as the phases beside it
             self.assertIn("QToolButton#file-chip { background: transparent;", sheet)
 

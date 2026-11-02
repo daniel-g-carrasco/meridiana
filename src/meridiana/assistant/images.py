@@ -19,10 +19,12 @@ import math
 from dataclasses import dataclass
 from pathlib import Path
 
-from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRect, Qt
-from PySide6.QtGui import QColor, QImage, QImageReader, QPainter
+from typing import TYPE_CHECKING
 
 from ..i18n import _, number
+
+if TYPE_CHECKING:                       # QtGui only where a picture is made: the core loads without Qt
+    from PySide6.QtGui import QImage
 
 SUFFIXES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
             ".gif": "image/gif"}
@@ -90,6 +92,7 @@ def from_file(path, *, max_file: int = MAX_FILE) -> Picture:
         raise ValueError(_("The image cannot be read.")) from error
     if size > max_file:
         raise ValueError(_("The image exceeds the file size limit ({size}).").format(size=size_text(max_file)))
+    from PySide6.QtGui import QImageReader
     reader = QImageReader(str(path))
     reader.setAutoTransform(True)               # a photo turned as the camera held it
     reader.setDecideFormatFromContent(True)     # a PNG named .jpg is still read
@@ -129,6 +132,8 @@ def prepare(image: QImage, name: str, *, captured: bool = False, max_side: int =
 def _redrawn(image: QImage, side: int) -> QImage:
     """`image` painted into a new one whose longest side is `side`: no text chunks, no EXIF, no colour space, one
     pixel per device pixel."""
+    from PySide6.QtCore import QRect, Qt
+    from PySide6.QtGui import QImage, QPainter
     w, h = image.width(), image.height()
     scale = min(1.0, side / max(w, h))
     tw, th = max(1, round(w * scale)), max(1, round(h * scale))
@@ -144,6 +149,7 @@ def _redrawn(image: QImage, side: int) -> QImage:
 
 
 def _encode(image: QImage, kind: str, quality: int = -1) -> bytes:
+    from PySide6.QtCore import QBuffer, QByteArray, QIODevice
     data = QByteArray()
     buffer = QBuffer(data)
     buffer.open(QIODevice.OpenModeFlag.WriteOnly)
@@ -155,6 +161,7 @@ def _encode(image: QImage, kind: str, quality: int = -1) -> bytes:
 
 def _opaque(image: QImage) -> QImage:
     """On white, for JPEG, which has no transparency."""
+    from PySide6.QtGui import QColor, QImage, QPainter
     out = QImage(image.size(), QImage.Format.Format_RGB32)
     out.fill(QColor("white"))
     p = QPainter(out)

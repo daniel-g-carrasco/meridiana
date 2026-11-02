@@ -93,7 +93,8 @@ def show_activity(c: QComboBox, value: int) -> None:
         if i != c.currentIndex():
             c.setCurrentIndex(i)
         line.setCursorPosition(0)
-        c.setToolTip(c.itemText(i))
+        # an activity's label is cut by the panel's width, and the tip reads it whole; the two short ones need none
+        c.setToolTip(c.itemText(i) if i > 1 else "")
     finally:
         c.blockSignals(blocked)
 

@@ -146,13 +146,14 @@ class RowOnTheTurnedPlan(unittest.TestCase):
         win._set_tool("row")
         plan.snaps_on = False
         clicks = [plan.mapFromScene(to_scene(*q)) for q in ((10.0, 8.0), (30.0, 20.0))]
+        # read now: the work a click starts may frame the plan again (with pvlib loaded the window strings on its own)
+        start, end = (from_scene(plan.mapToScene(q)) for q in clicks)
         for point in clicks:
             for kind in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonRelease):
                 held = Qt.MouseButton.LeftButton if kind == QEvent.Type.MouseButtonPress else Qt.MouseButton.NoButton
                 QApplication.sendEvent(plan.viewport(), QMouseEvent(
                     kind, QPointF(point), QPointF(plan.viewport().mapToGlobal(point)), Qt.MouseButton.LeftButton,
                     held, Qt.KeyboardModifier.NoModifier))
-        start, end = (from_scene(plan.mapToScene(q)) for q in clicks)
         sf = win.project.subfields[0]
         self.assertTrue(sf.manual)
         r = win.project.fill(sf)
