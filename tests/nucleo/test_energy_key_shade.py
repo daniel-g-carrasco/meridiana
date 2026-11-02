@@ -24,6 +24,22 @@ class ShadeInTheKey(unittest.TestCase):
         b.height += 2.0
         self.assertNotEqual(raised, session.energy_key())
 
+    def test_walls_stopping_under_the_building_height_change_the_key(self):
+        """A roof drawn by hand with a corner under the height: the shadows' solid stops there (R303), and a year
+        computed before that is told apart; a roof that stays at its height keeps the key of before."""
+        from meridiana import roofs
+        from meridiana.session import ProjectSession as Session
+        session = Session(capannone())
+        b = session.project.buildings[0]
+        ring = [tuple(q) for q in b.footprint]
+        b.roof.type = "free"
+        b.roof.free_pitches = [{**roofs.free_spec(ring, False, b.height, 10.0), "ring": ring}]
+        self.assertEqual(b.wall_top(), b.height)
+        self.assertNotIn('"walls"', session.energy_key())
+        b.roof.free_pitches = [{**roofs.free_spec(ring, False, b.height - 1.0, 10.0), "ring": ring}]
+        self.assertLess(b.wall_top(), b.height)
+        self.assertIn('"walls"', session.energy_key())
+
 
 if __name__ == "__main__":
     unittest.main()

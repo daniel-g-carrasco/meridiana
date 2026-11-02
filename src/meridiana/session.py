@@ -352,6 +352,10 @@ class ProjectSession:
                 # made taller left the year computed as good (found 31/10/2026)
                 "shade": {"buildings": [b.geometry_key() for b in p.buildings],
                           "obstacles": [[e.ring, e.kind, e.height, e.building] for e in p.exclusions]}}
+        # R303: the walls of a roof drawn by hand stop at its lowest corner; only then, the keys of before stay
+        walls = {b.id: b.wall_top() for b in p.buildings if b.wall_top() != b.height}
+        if walls:
+            data["shade"]["walls"] = walls
         shading = [dataclasses.asdict(x) for x in p.props if x.casts_shadow()]
         if shading:                         # R269: a tree placed shades the year; only then, the keys of before stay
             data["props"] = shading

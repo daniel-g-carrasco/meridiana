@@ -1878,6 +1878,7 @@ class MainWindow(QMainWindow):
         b = self.project.building(bid) if kind != "exclusion" else None
         before = b.solved() if b is not None else None
         was_free = b is None or b.roof.type == "free"
+        had_parapet = b is not None and b.roof.type == "flat" and b.parapet > 0
         try:
             self.edit(text, lambda p: change(p, bid))
         except ValueError as error:
@@ -1888,6 +1889,8 @@ class MainWindow(QMainWindow):
         told = [said] if said else []
         if not was_free:
             told.append(_("The roof is drawn by hand from here on: each face is a pitch."))
+            if had_parapet:
+                told.append(_("Its parapet no longer counts for the shadows: undo brings it back."))
         for f in roof_vertices.fold_news(before, b.solved() if b is not None else None):
             told.append(_("Pitch {n}: its corners are off one plane, so it is folded along a line, into pitches that "
                           "lie on planes. Each corner keeps its height, and modules are laid on each part.").format(

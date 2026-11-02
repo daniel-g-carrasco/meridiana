@@ -125,6 +125,22 @@ class WhatMovesWithWhat(unittest.TestCase):
         self.assertEqual(move.moving(p, "subfield", "nothing"), [])
 
 
+class FreePitchFromThePlan(unittest.TestCase):
+    def test_a_pitch_is_found_by_its_place_in_the_roof_as_the_plan_names_it(self):
+        """The plan calls a pitch "<building>:<place>", and one drawn by hand has no id (found 02/11/2026)."""
+        from meridiana import roofs
+        ring = [(0.0, 0.0), (20.0, 0.0), (20.0, 10.0), (0.0, 10.0)]
+        second = [(0.0, 10.0), (20.0, 10.0), (20.0, 20.0), (0.0, 20.0)]
+        b = model.Building(id="b1", name="B", footprint=ring[:2] + [(20.0, 20.0), (0.0, 20.0)], height=6.0)
+        b.roof.type = "free"
+        b.roof.joined = False
+        b.roof.free_pitches = [{**roofs.free_spec(q, False, 6.0, 15.0), "ring": q} for q in (ring, second)]
+        project = model.Project(buildings=[b])
+        self.assertEqual(move.outline(project, "pitch", "b1:0"), ring)
+        self.assertEqual(move.outline(project, "pitch", "b1:1"), second)
+        self.assertIsNone(move.outline(project, "pitch", "b1:7"))
+
+
 class Refused(unittest.TestCase):
     def test_a_sub_field_that_would_leave_its_pitch_is_refused_with_the_reason_and_the_project_stays(self):
         s = session.ProjectSession(project())
