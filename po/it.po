@@ -21383,8 +21383,8 @@ msgstr[1] ""
 "Meridiana. Annulla le riporta. Procedo?"
 
 #: src/meridiana/help.py
-msgid "The inverters of the plant one by one: name, model, strings, DC/AC; their menu."
-msgstr "Gli inverter dell'impianto uno per uno: nome, modello, stringhe, DC/AC; il loro menu."
+msgid "Each inverter of the plant: name, model, strings, DC/AC, and its menu."
+msgstr "Ogni inverter dell'impianto: nome, modello, stringhe, DC/AC e il suo menu."
 
 msgid ""
 "The first line: how many inverters, their AC power, the modules' power, the "
@@ -21412,8 +21412,8 @@ msgstr ""
 "rapporto DC/AC voluto è tuo: la scala mostra l'energia tagliata dopo il "
 "calcolo dell'anno."
 
-msgid "The inputs of the inverter shown with their strings; the view from the menu beside."
-msgstr "Gli ingressi dell'inverter mostrato con le loro stringhe; la vista dal menu accanto."
+msgid "The inputs of this inverter with their strings; the view from the menu beside."
+msgstr "Gli ingressi di questo inverter con le loro stringhe; la vista dal menu accanto."
 
 msgid ""
 "The strings of the whole plant on the first line; then the inverter shown "
@@ -21449,8 +21449,8 @@ msgstr ""
 "condizioni di progetto PVsyst finché la produzione non è calcolata, poi "
 "quelle dell'anno tipo."
 
-msgid "The string chosen on the plan or in the list: path, figures as bars, checks."
-msgstr "La stringa scelta in pianta o nell'elenco: percorso, numeri come barre, verifiche."
+msgid "The string chosen on the plan or in the list: path, bars, checks."
+msgstr "La stringa scelta in pianta o nell'elenco: percorso, barre, verifiche."
 
 msgid ""
 "Where it goes (inverter and input) and its modules; the open-circuit "

@@ -200,7 +200,7 @@ def texts() -> dict[str, Help]:
             ("N15",), "1-modello.md#le-esclusioni"),
         # the plant (R287: every group of the right panel has its «?»)
         "plant.inverters": h(
-            _("Inverter"), _("The inverters of the plant one by one: name, model, strings, DC/AC; their menu."),
+            _("Inverter"), _("Each inverter of the plant: name, model, strings, DC/AC, and its menu."),
             _("The first line: how many inverters, their AC power, the modules' power, the DC/AC ratio. Then a card "
               "for each inverter: the disc with its number is the handle, drag it (or Alt+Up, Alt+Down) to change the "
               "order; the number is the inverter's place and names its strings (1.3.2 is inverter 1), so moving an "
@@ -211,7 +211,7 @@ def texts() -> dict[str, Help]:
               "yours: the scale shows the energy cut once the year is computed."),
             manual="2-impianto.md#il-pannello-di-destra"),
         "plant.strings": h(
-            _("Strings"), _("The inputs of the inverter shown with their strings; the view from the menu beside."),
+            _("Strings"), _("The inputs of this inverter with their strings; the view from the menu beside."),
             _("The strings of the whole plant on the first line; then the inverter shown and its inputs, as cards "
               "(each input with its mark and its strings, «+» to draw one on it) or as a single-line diagram in "
               "miniature (each string a bar as long as its modules), from the menu at the left of the «?». A click "
@@ -226,7 +226,7 @@ def texts() -> dict[str, Help]:
               "coldest cell, PVsyst's design conditions until the production is computed, then the typical year's."),
             manual="2-impianto.md#le-stringhe-sono-tue"),
         "plant.string": h(
-            _("String chosen"), _("The string chosen on the plan or in the list: path, figures as bars, checks."),
+            _("String chosen"), _("The string chosen on the plan or in the list: path, bars, checks."),
             _("Where it goes (inverter and input) and its modules; the open-circuit voltage at the lowest "
               "temperature against the maximum, the MPP voltage at the hottest and coldest cell against the MPPT "
               "window, the current against the input's, each as a bar as long as its limit; then each check with "
