@@ -407,3 +407,4 @@ le righe R242-R265 sopra non sono state promosse a completate senza revisione fi
 | R311 | «nella relazione non vedo cambiamenti. Li avevi fatti?» | da fare (02/11/2026) |
 | R312 | Trascinamento delle schede: scheda agganciata al cursore, segnaposto e animazione delle schede che si spostano, si posa solo al rilascio e in modo fluido; la scheda centrale non si sposta e non si occupa; attese e animazioni più lente. Fable | da fare (02/11/2026) |
 | R313 | Perdite: il grafico si legge male (etichette sovrapposte); la parte di PVGIS in basso va nella barra degli strumenti in alto a destra, come i dati in Impianto | da fare (02/11/2026) |
+| R314 | Relazione, dopo R291 e R311: «secondo me si notano poco. Non è la riscrittura e riformattazione estetica che mi aspettavo. Sembra quella di prima ma leggermente diversa». Fable, con bozzetti | da fare (02/11/2026) |
