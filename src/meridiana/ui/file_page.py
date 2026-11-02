@@ -242,10 +242,20 @@ class FilePage(QFrame):
             w = self.host
             self._settings = Preferences(w.cfg, w.bindings, w.theme, w)
             self._settings.changed.connect(w._apply_preferences)
+            self._settings.profileOffer.connect(w._report_offer_answered)
             self._settings.setMaximumWidth(860)
             self._settings_section.box.addWidget(self._settings, 1, Qt.AlignmentFlag.AlignLeft)
             self._settings_read = True              # reading them is what making them does
         return self._settings
+
+    def settings_changed_elsewhere(self) -> None:
+        """The configuration changed without the Settings (the Report's Logo command, R331): read it again."""
+        if self._settings is None:
+            return
+        if self.isVisible():
+            self._settings._populate()
+        else:
+            self._settings_read = False
 
     def flush_settings(self) -> None:
         """What was just typed in the Settings applied and saved (R329), for a window that is closing."""

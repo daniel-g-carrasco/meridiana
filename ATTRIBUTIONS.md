@@ -53,7 +53,7 @@ Setup are build tools and are not distributed.
 |---|---|---|
 | Inter (Regular, SemiBold, Bold), by Rasmus Andersson and the Inter Project Authors: the text's font since 25/10/2026 | SIL Open Font License 1.1 | `data/fonts/inter/OFL.txt` |
 | Titillium Web (Regular, SemiBold, Bold), by the Accademia di Belle Arti di Urbino: the text's font until 25/10/2026, kept for a return | SIL Open Font License 1.1 | `data/fonts/titillium-web/OFL.txt` |
-| Lucide icons (the 72 SVG files in `data/icons/lucide`), copyright (c) Lucide Icons and Contributors; some derive from Feather, copyright (c) Cole Bemis, MIT | ISC (MIT for the Feather ones) | `data/icons/lucide/LICENSE` |
+| Lucide icons (the 76 SVG files in `data/icons/lucide`), copyright (c) Lucide Icons and Contributors; some derive from Feather, copyright (c) Cole Bemis, MIT | ISC (MIT for the Feather ones) | `data/icons/lucide/LICENSE` |
 | The CEC lists of PV modules and inverters, as NREL publishes them with the System Advisor Model (SAM), copyright (c) Alliance for Energy Innovation, LLC (modules: list 2026.7.3 of 23 June 2026, rebuilt with `tools/update_cec.py` from `CEC Modules.csv`) | BSD-3-Clause: the notice must go with every distribution | `src/meridiana/catalog/data/LICENSE-NREL-SAM.txt` |
 | The curated catalogue (modules, inverters, microinverters, optimizers, batteries) | Technical data read from the manufacturers' datasheets, each record with the datasheet's address and the date it was read; the manufacturers' names and models are theirs | `src/meridiana/catalog/data/*_curated.json` |
 | The application icon (`data/icons/hicolor`) | A placeholder drawn by the author for the template Meridiana started from, to be replaced by the program's own icon | `data/icons/hicolor/` |

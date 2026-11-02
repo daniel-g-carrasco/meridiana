@@ -57,6 +57,8 @@ def commands() -> list[Command]:
         c("export_csv", _("Export the &hourly series (CSV)…"), (), "file"),
         c("export_ifc", _("Export the model as IF&C4…"), (), "file"),
         c("copy_notes", _("Copy the notes for the &report"), (), "file"),
+        c("report_logo", _("&Logo…"), (), "file"),
+        c("report_profile", _("The designer's &profile…"), (), "file"),
         c("preferences", _("&Settings…"), ("Ctrl+,",), "file"),
         c("quit", _("&Quit"), ("Ctrl+Q",), "file"),
         c("undo", _("&Undo"), ("Ctrl+Z",), "edit"),

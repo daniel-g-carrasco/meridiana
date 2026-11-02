@@ -26,7 +26,7 @@ NAMES = {"ridge": "house", "undo": "undo-2", "redo": "redo-2", "select": "mouse-
          "compare_variants": "git-compare", "new_variant": "copy-plus",
          "import_curve": "file-input", "consumption_base": "sliders-horizontal",
          "battery_catalog": "battery-charging", "export_report": "file-text", "save_revision": "copy-plus",
-         "export_csv": "rows-3",
+         "export_csv": "rows-3", "report_logo": "image", "report_profile": "user",
          "copy_notes": "clipboard-copy",
          # the strings of the Plant phase (task 16d)
          "strings_auto": "spline", "strings_complete": "list-plus", "strings_manual": "route", "strings_clear": "eraser",
