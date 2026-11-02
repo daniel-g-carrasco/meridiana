@@ -30,6 +30,37 @@ class PhaseRow(unittest.TestCase):
         _setup.window(self, capannone(), config.Config(background="none", theme="light"), size=(1400, TALL_WINDOW))
         self.sid = self.win.project.subfields[0].id
 
+    def test_the_weather_of_the_production_stands_at_the_right_of_its_bar_as_the_plants_strip(self):
+        """R313: the strip under the charts goes in the bar, a short sentence, the whole one in the tooltip, the two
+        choices of shading still at work; on the page again when the bar is on the left side."""
+        from PySide6.QtCore import QPoint
+        win = self.win
+        page, bar = win.energy_page, win.bars["production"]
+        win.show_phase("production")
+        self.app.processEvents()
+        strip = page.meteo_strip
+        self.assertTrue(strip.isVisible())
+        self.assertTrue(bar.isAncestorOf(strip))
+        self.assertFalse(page.results.isAncestorOf(strip))
+        left = strip.mapTo(bar, QPoint(0, 0))
+        self.assertGreater(left.x(), bar.width() // 2)                    # at the right of the tools
+        self.assertLessEqual(left.y() + strip.height(), bar.height())     # within the bar's height
+        self.assertTrue(page.use_horizon.isVisible() and page.use_near.isVisible())
+        whole = "PVGIS 5.3, typical year, fetched 2026-11-02. Global horizontal irradiation 1,515 kWh/m²."
+        page.show_meteo(whole, ("PVGIS 5.3, fetched 2026-11-02", "1,515 kWh/m² a year"))
+        self.assertEqual(page.meteo_label.text(), "PVGIS 5.3, fetched 2026-11-02")
+        self.assertEqual((page.meteo_label.toolTip(), page.meteo_figures.toolTip()), (whole, whole))
+        self.assertIn("fetch_pvgis", bar.buttons())                       # what fetches it, beside it
+        before = win.project.energy.get("losses", {}).get("use_near")
+        page.use_near.setChecked(not page.use_near.isChecked())           # the choice reaches the project
+        self.assertNotEqual(win.project.energy.get("losses", {}).get("use_near"), before)
+        win._toolbar_style(place="left")
+        self.app.processEvents()
+        self.assertTrue(page.results.isAncestorOf(strip))
+        win._toolbar_style(place="top")
+        self.app.processEvents()
+        self.assertTrue(bar.isAncestorOf(strip))
+
     def test_six_phases_the_keys_that_go_round_and_the_bar_of_each_with_its_groups_and_one_accent_button(self):
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest

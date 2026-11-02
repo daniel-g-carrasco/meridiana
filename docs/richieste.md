@@ -402,8 +402,8 @@ le righe R242-R265 sopra non sono state promosse a completate senza revisione fi
 | R306 | Comandi della barra raggruppati «un po' come succede in autocad»: edificio con i modelli, falda con il colmo | da fare (02/11/2026) |
 | R307 | «dimensiona l'inverter sarà più un scegli gli inverter in automatico o qualcosa del genere». Fable | da fare (02/11/2026) |
 | R308 | «Proponi» integrato con le opzioni della sottoscheda e con testi scritti meglio; la sottoscheda inverter serve alla stringatura automatica del singolo inverter, con il rapporto DC/AC (110-130 %) e dicendo meglio cosa fa. Fable | da fare (02/11/2026) |
-| R309 | Producibilità: risultati impaginati male (schermata 4) | da fare (02/11/2026) |
-| R310 | Consumi: riquadri dei risultati di misure incongruenti; il titolo «Consumi mese per mese, per fascia» impaginato male, «non l'avevi corretto» | da fare (02/11/2026) |
+| R309 | Producibilità: risultati impaginati male (schermata 4) | fatta il 02/11: griglia unica `Tiles` (colonne e altezze uguali, unità sulla linea di base della cifra); via il fumetto che ripeteva l'etichetta |
+| R310 | Consumi: riquadri dei risultati di misure incongruenti; il titolo «Consumi mese per mese, per fascia» impaginato male, «non l'avevi corretto» | fatta il 02/11: stessa griglia; il titolo stava in un buco perché `_LabelGrowth` non faceva più rimpicciolire un'etichetta a capo (il motivo per cui R285 non reggeva sulla prima sottoscheda) |
 | R311 | «nella relazione non vedo cambiamenti. Li avevi fatti?» | da fare (02/11/2026) |
 | R312 | Trascinamento delle schede: scheda agganciata al cursore, segnaposto e animazione delle schede che si spostano, si posa solo al rilascio e in modo fluido; la scheda centrale non si sposta e non si occupa; attese e animazioni più lente. Fable | da fare (02/11/2026) |
-| R313 | Perdite: il grafico si legge male (etichette sovrapposte); la parte di PVGIS in basso va nella barra degli strumenti in alto a destra, come i dati in Impianto | da fare (02/11/2026) |
+| R313 | Perdite: il grafico si legge male (etichette sovrapposte); la parte di PVGIS in basso va nella barra degli strumenti in alto a destra, come i dati in Impianto | fatta il 02/11: una riga per passo, la pagina scorre se serve; dati e spunte nella barra a destra, frase intera nel suggerimento, «Scarica» è il «Da PVGIS» della stessa barra |

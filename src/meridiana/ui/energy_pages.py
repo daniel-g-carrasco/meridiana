@@ -16,7 +16,7 @@ from ..energy.economics import Settings
 from ..energy.simulate import Losses, thermal_names
 from ..i18n import _, ngettext, number
 from .charts import Chart
-from .design import Size, Space
+from .design import Size, Space, Text, set_text
 from .help_box import help_button, register
 from .pedigree import PedigreeView
 from . import waiting
@@ -96,7 +96,6 @@ class Tile(QFrame):
         self.setProperty("key", key)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.changed = None                     # the grid it stands in, told when its texts change
-        from .design import Text, set_text
         self.label = set_text(QLabel(label), Text.SECONDARY)            # the label of a result
         self.label.setWordWrap(True)
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -275,24 +274,6 @@ class FittedBox(QVBoxLayout):
         return False
 
 
-class FittedFlow(QWidget):
-    """A wrapping command row that reserves its actual height inside the fitted result pages."""
-
-    def __init__(self, widgets):
-        super().__init__()
-        from .report_page import Flow
-        flow = Flow(self, spacing=Space.L)
-        flow.setContentsMargins(0, 0, 0, 0)
-        for widget in widgets:
-            flow.addWidget(widget)
-
-    def resizeEvent(self, event) -> None:
-        super().resizeEvent(event)
-        height = self.layout().heightForWidth(self.width())
-        if height != self.minimumHeight():
-            self.setMinimumHeight(height)
-
-
 def chart_card(tabs: QTabWidget) -> QFrame:
     """The charts of a page in a card of their own, their tabs as pills inside it (D2 and the drafts of the
     phases, 24/10/2026)."""
@@ -418,34 +399,46 @@ class Page(QWidget):
 # production
 
 class EnergyPage(Page):
-    fetchRequested = Signal()
     inverterRequested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         f = self.form_box
-        # the weather of the site, a strip under the charts (the drafts of the phases): what it is, its two
-        # choices of shading and the button that fetches it again
-        self.meteo_strip = QFrame()
-        self.meteo_strip.setObjectName("strip")
-        strip = QVBoxLayout(self.meteo_strip)
-        strip.setContentsMargins(12, 6, 8, 6)
-        strip.setSpacing(4)
-        self.meteo_label = QLabel(_("Not fetched yet."))
-        self.meteo_label.setWordWrap(True)
-        fetch = QPushButton(_("Fetch from PVGIS"))
-        fetch.setToolTip(_("Fetch the typical year and the horizon from PVGIS"))
-        fetch.clicked.connect(self.fetchRequested.emit)
+        # the weather of the site and its two choices of shading: in the bar of the phase, at the right of its tools,
+        # as the Plant's strip (R70, R313: «me la metti in barra strumenti in alto, sulla destra»), or under the
+        # charts when the bar is on the left side (`place_meteo`). Fetching it is the bar's «From PVGIS».
+        self.meteo_strip = QWidget()
+        self.meteo_strip.setObjectName("meteo-strip")
+        strip = QHBoxLayout(self.meteo_strip)
+        strip.setContentsMargins(0, 0, 0, 0)
+        strip.setSpacing(Space.L)
+        self.meteo_label = set_text(ElidedLabel(_("Not fetched yet.")), Text.BODY)
+        self.meteo_figures = set_text(ElidedLabel(""), Text.SECONDARY)
+        texts = QWidget()
+        texts_box = QVBoxLayout(texts)
+        texts_box.setContentsMargins(0, 0, 0, 0)
+        texts_box.setSpacing(0)
+        texts_box.addStretch(1)
+        texts_box.addWidget(self.meteo_label)
+        texts_box.addWidget(self.meteo_figures)
+        texts_box.addStretch(1)
+        # at most 44 characters of the bar: asking for its words whole, a strip goes into the bar's overflow menu
+        texts.setMaximumWidth(44 * self.meteo_figures.fontMetrics().averageCharWidth())
+        strip.addWidget(texts, 1)
         self.use_horizon = QCheckBox(_("Shading of the far horizon"))
         self.use_horizon.toggled.connect(lambda v: self.send("energy", "losses.use_horizon", v))
         self.use_near = QCheckBox(_("Shading of the obstacles of the scene"))
         self.use_near.setToolTip(_("Exclusions with a height, parapets and the other buildings cast their shadows "
                                    "on the modules"))
         self.use_near.toggled.connect(lambda v: self.send("energy", "losses.use_near", v))
-        strip.addWidget(self.meteo_label)
-        # The old unbroken row forced the whole results pane to 880 px, cutting off the calculated plant
-        # context in narrow windows. Reuse the report commands' flow, with the fetch action first.
-        strip.addWidget(FittedFlow((fetch, self.use_horizon, self.use_near)))
+        choices = QVBoxLayout()
+        choices.setContentsMargins(0, 0, 0, 0)
+        choices.setSpacing(0)
+        choices.addStretch(1)
+        choices.addWidget(self.use_horizon)
+        choices.addWidget(self.use_near)
+        choices.addStretch(1)
+        strip.addLayout(choices)
 
         arrays = Group(_("Arrays (the modules laid, by orientation)"))
         af = QVBoxLayout(arrays)
@@ -629,8 +622,20 @@ class EnergyPage(Page):
         if sim is not None:
             self.pedigree.show_records([sim.record, plan.record])
 
-    def show_meteo(self, text: str) -> None:
-        self.meteo_label.setText(text)
+    def show_meteo(self, text: str, brief: tuple | None = None) -> None:
+        """The weather in two short lines (`brief`) with the whole sentence in their tooltip."""
+        first, second = brief or (text, "")
+        for label, line in ((self.meteo_label, first), (self.meteo_figures, second)):
+            label.tip = text
+            label.setText(line)
+
+    def place_meteo(self, holder: QWidget | None) -> None:
+        """The strip of the weather in `holder` (a place in the bar of the phase), under the charts when None."""
+        if holder is not None:
+            holder.layout().addWidget(self.meteo_strip)
+        else:
+            self.results_box.addWidget(self.meteo_strip)
+        self.meteo_strip.show()
 
     def show_results(self, sim, pvgis, error: str = "") -> None:
         if error or sim is None:
