@@ -51,7 +51,9 @@ def _things(project, kind: str) -> list:
 
 
 def _free_pitch(project, oid: str):
-    """(building, its free pitch as a dict, its place among the free pitches) for "<building>:<pitch id>"."""
+    """(building, its free pitch as a dict, its place among the free pitches) for "<building>:<pitch id>", or for
+    "<building>:<place in pitches()>", which is what the plan's items say (R303: found 02/11/2026, a pitch drawn by
+    hand has no id, and a pitch picked on the plan could not be moved)."""
     bid, _sep, pid = oid.partition(":")
     b = project.building(bid)
     if b is None:
@@ -59,6 +61,15 @@ def _free_pitch(project, oid: str):
     for i, fp in enumerate(b.roof.free_pitches):
         if str(fp.get("id")) == pid:
             return b, fp, i
+    if not pid.isdigit() or b.roof.type != "free":
+        return None
+    place, whole = -1, None
+    for i, solved in enumerate(b.pitches()):    # the parts of a folded pitch all stand for that one pitch
+        if solved.whole is None or solved.whole != whole:
+            place += 1
+        whole = solved.whole
+        if i == int(pid):
+            return (b, b.roof.free_pitches[place], place) if place < len(b.roof.free_pitches) else None
     return None
 
 
