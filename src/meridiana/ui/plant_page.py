@@ -2608,6 +2608,36 @@ def install_reference(page, go) -> InverterReference:
     return ref
 
 
+class LazyReference:
+    """`install_reference` for a page that is made later (ui/lazy_page.LazyPage): the reference is put in when the
+    page is made, and what it was told before (`show_energy`) is told to it then; any other attribute asks for it."""
+
+    def __init__(self, page, go):
+        self._real = None
+        self._energy = None
+        self._told = False
+        self._page = page
+
+        def made(real) -> None:
+            self._real = install_reference(real, go)
+            if self._told:
+                self._real.show_energy(self._energy)
+        page.when_built(made)
+
+    def show_energy(self, energy: dict | None) -> None:
+        if self._real is not None:
+            self._real.show_energy(energy)
+        else:
+            self._energy, self._told = energy, True
+
+    def __getattr__(self, name: str):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        if self._real is None:
+            self._page.real()                       # made now: the hook has put the reference in
+        return getattr(self._real, name)
+
+
 def optimized_takes(unit, slot) -> str:
     """What an input of an inverter with optimizers takes: the strings' optimizers and power by SolarEdge's table."""
     ch = unit.choice
