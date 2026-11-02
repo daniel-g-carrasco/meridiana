@@ -526,6 +526,30 @@ def search(query: str, limit: int = 8) -> list[Activity]:
     return [a for _s, _n, a in scored[:limit]]
 
 
+NOT_SPECIFIED = -1              # subject to control, the activity not chosen (the projects before format 24)
+
+
+def shown(subject: bool, number: int) -> int:
+    """What the list of the building's activity shows: the activity, NOT_SPECIFIED, or 0 for none subject."""
+    if activity(number) is not None:
+        return int(number)
+    return NOT_SPECIFIED if subject else 0
+
+
+def chosen(value: int, category: str = "") -> dict:
+    """The building's fire fields after a choice in that list (Fire.subject, activity, category): an activity turns
+    the switch on and keeps the category when the activity has it, or takes the only one it has; none turns it off
+    and clears the category; NOT_SPECIFIED keeps the switch on and the category as they are."""
+    a = activity(value)
+    if a is not None:
+        cats = a.categories()
+        return {"subject": True, "activity": a.number,
+                "category": category if category in cats else (cats[0] if len(cats) == 1 else "")}
+    if value == NOT_SPECIFIED:
+        return {"subject": True, "activity": 0, "category": category}
+    return {"subject": False, "activity": 0, "category": ""}
+
+
 def as_dict(a: Activity) -> dict:
     """An activity for a reader that is not Python (Meridio's tool): number, texts and categories, its page."""
     return {"number": a.number, "label": a.short, "text": a.text, "threshold": a.threshold or "tutte (nessuna soglia)",

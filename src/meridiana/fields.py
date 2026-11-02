@@ -28,6 +28,7 @@ def field_label(path: str, kind: str = "") -> str:
         "name": _("name"), "height": _("eave height"), "roof.type": _("roof"), "roof.tilt": _("slope"), "roof.free_pitches": _("free pitches"),
         "roof.joined": _("join of the pitches"),
         "roof.eave_side": _("eave side"), "fire.subject": _("fire control"),
+        "fire.activity": _("activity subject to fire control"), "fire.category": _("fire control category"),
         "fire.roof_fire_resistant": _("fire-resistant slab"), "module": _("module"),
         "params.mounting": _("mounting"), "params.portrait": _("orientation"), "params.stack": _("modules across"),
         "params.tilt": _("tilt"), "params.azimuth": _("azimuth"), "params.gap": _("gap between modules"),

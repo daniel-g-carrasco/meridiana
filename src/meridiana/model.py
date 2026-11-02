@@ -27,7 +27,7 @@ from . import atomic, layout, roof_join, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 23
+FORMAT_VERSION = 24
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -480,6 +480,8 @@ def _to_21(data: dict, notes: list | None = None) -> dict:
 #           hand stay sub-fields; the designer is told both (_to_21)
 # 21 -> 22: the 3D objects of the surroundings (R269: trees, roof obstacles, people, cars), none before; an older
 #           Meridiana refuses the file rather than dropping them
+# 23 -> 24: the activity of Annex I of DPR 151/2011 a building hosts (R327, Fire.activity); a building subject to
+#           control before it keeps the switch on with the activity not specified, its category as it was
 def _to_23(data: dict, notes: list | None = None) -> dict:
     """22 -> 23: free pitches side by side join into one roof by default (R304, Roof.joined). A roof drawn before keeps
     the planes it was computed with until the designer asks otherwise: the numbers of a project do not change on
@@ -514,7 +516,8 @@ MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                         uuid.NAMESPACE_URL, "meridiana:legacy:" + (data.get("series_id") or
                         repr((data.get("created", ""), data.get("job_id", ""), data.get("name", ""))))))},
                     19: lambda data: data,  # optional explicit optimizer groups; absent keeps legacy order
-                    20: _to_21, 21: lambda data: {**data, "props": data.get("props", [])}, 22: _to_23}
+                    20: _to_21, 21: lambda data: {**data, "props": data.get("props", [])}, 22: _to_23,
+                    23: lambda data: data}  # the activity of DPR 151/2011 (R327): absent, none chosen
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
 ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
@@ -636,6 +639,9 @@ class Fire:
     subject: bool = False         # activity subject to fire-brigade control (DPR 151/2011)
     category: str = ""            # A, B, C
     roof_fire_resistant: bool = False
+    # the activity of Annex I of DPR 151/2011 (vvf_activities, R327, format 24): 1-80; 0 none chosen, which with
+    # `subject` on is "activity not specified" (the files before 24)
+    activity: int = 0
 
 
 PILLARS = ("cantilever", "two_rows")     # a canopy's columns: one line under its high edge, or one at each long edge
@@ -1146,7 +1152,10 @@ def _check_project(data: dict) -> list[str]:
                 _check_corner(corner, f"{path}.roof.welds[{j}]")
         for j, corner in enumerate(roof.get("detached", [])):
             _check_corner(corner, f"{path}.roof.detached[{j}]")
-        _check_fields(Fire, _check_dict(raw.get("fire", {}), f"{path}.fire"), f"{path}.fire", unknown)
+        fire = _check_dict(raw.get("fire", {}), f"{path}.fire")
+        _check_fields(Fire, fire, f"{path}.fire", unknown)
+        if not 0 <= fire.get("activity", 0) <= 80:          # R327: the numbers of Annex I of DPR 151/2011
+            raise ValueError(f"{path}.fire.activity: {fire['activity']!r} is not between 0 and 80")
         if raw.get("canopy") is not None:      # R281, format 21
             canopy = _check_dict(raw["canopy"], f"{path}.canopy")
             _check_fields(Canopy, canopy, f"{path}.canopy", unknown)

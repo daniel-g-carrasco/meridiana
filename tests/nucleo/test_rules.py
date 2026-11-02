@@ -218,6 +218,30 @@ class Project(unittest.TestCase):
         self.assertIn("P = k × S = 50.0 kW", text)
         self.assertIn("Source: CEI 64-8/7:2024-07", text)
 
+    def test_the_fire_notes_name_the_activity_of_dpr_151_or_say_it_is_not_specified(self):
+        # R327: a building subject to control from a file before format 24 has no activity; one chosen is cited
+        p = self.project()
+        results = {sf.id: p.fill(sf) for sf in p.subfields}
+        inverter = SimpleNamespace(pac_total=40000.0, count=1, phases=3)
+        f = rules.facts(p, results, None, inverter)
+        self.assertEqual(f.fire_activities, [("Capannone", 0, "")])
+        text = rules.notes_text(f)
+        self.assertIn("Building Capannone: the activity of Annex I of DPR 151/2011 is not specified in its "
+                      "properties; the category is not stated.", text)
+        self.assertIn("Source: DPR 151/2011 Annex I (GU no. 221 of 22/09/2011); DCPREV 14030", text)
+        p.buildings[0].fire.activity, p.buildings[0].fire.category = 70, "B"
+        f = rules.facts(p, results, None, inverter)
+        n13 = next(paragraphs for _t, chapter in rules.notes(f) for r, paragraphs in chapter if r.id == "N13")
+        self.assertIn("Building Capannone: activity no. 70 of Annex I of DPR 151/2011 (Locali adibiti a depositi "
+                      "(merci e materiali combustibili)), category B.", n13)
+        for number in range(1, 81):                         # the report's paragraphs stay short with every label
+            p.buildings[0].fire.activity = number
+            for line in rules._n13_activities(rules.facts(p, results, None, inverter)):
+                self.assertLessEqual(len(line), 300, number)
+        p.buildings[0].fire.activity = 70
+        p.buildings[1].fire.activity = 71                   # a building without modules is not counted
+        self.assertEqual(rules.facts(p, results, None, inverter).fire_activities, [("Capannone", 70, "B")])
+
 
 if __name__ == "__main__":
     unittest.main()
