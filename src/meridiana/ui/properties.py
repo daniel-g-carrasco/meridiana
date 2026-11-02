@@ -17,7 +17,7 @@ from .. import layout, model, roofs, rules, sides
 from .. import vvf_activities as vvf
 from ..fields import field_label as field_label, mounting_names, pitch_mode_names
 from ..i18n import _, ngettext, number, pgettext
-from .design import Text, semibold, set_text
+from .design import Space, Text, semibold, set_text
 from .help_box import HintLabel, help_button, register
 from .quantity_field import QuantityField
 from . import symbols
@@ -57,10 +57,46 @@ def activity_combo() -> QComboBox:
     c.completer().setFilterMode(Qt.MatchFlag.MatchContains)
     c.completer().setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
     c.completer().setCompletionMode(c.completer().CompletionMode.PopupCompletion)
-    c.lineEdit().setPlaceholderText(_("Number or words of the activity"))
-    # words typed and left without a choice: the field goes back to the activity chosen
-    c.lineEdit().editingFinished.connect(lambda: c.setEditText(c.itemText(c.currentIndex())))
+    # the rows are read whole: the pop-up of what is found, as the list's own, is as wide as the longest label
+    # (the panel is narrower; a pop-up too near the screen's edge is moved back by Qt)
+    wide = max(c.fontMetrics().horizontalAdvance(c.itemText(i)) for i in range(c.count())) + 2 * Space.XL
+    c.completer().popup().setMinimumWidth(wide)
+    c.view().setMinimumWidth(wide)
+    line = c.lineEdit()
+    line.setPlaceholderText(_("Number or words of the activity"))
+    line.installEventFilter(_SelectOnFocus(line))
+
+    def settled():        # words typed and left without a choice: the field goes back to the activity chosen
+        c.setEditText(c.itemText(c.currentIndex()))
+        line.setCursorPosition(0)
+    line.editingFinished.connect(settled)
     return c
+
+
+class _SelectOnFocus(QObject):
+    """A click or Tab into the field selects its text: what is typed next searches, instead of adding to the name."""
+
+    def eventFilter(self, obj, event) -> bool:
+        if event.type() == QEvent.Type.FocusIn:
+            QTimer.singleShot(0, obj.selectAll)
+        return False
+
+
+def show_activity(c: QComboBox, value: int) -> None:
+    """The list on the activity `value`, its text from the start (a line edit keeps its end in view, and the
+    number and the first words are what tells an activity); words being typed are left alone."""
+    line = c.lineEdit()
+    if line.hasFocus() and line.isModified():
+        return
+    blocked = c.blockSignals(True)
+    try:
+        i = max(0, c.findData(value))
+        if i != c.currentIndex():
+            c.setCurrentIndex(i)
+        line.setCursorPosition(0)
+        c.setToolTip(c.itemText(i))
+    finally:
+        c.blockSignals(blocked)
 
 
 def show_category(c: QComboBox, value) -> None:
@@ -88,12 +124,16 @@ def show_category(c: QComboBox, value) -> None:
 
 
 def activity_note(fire) -> str:
-    """Under the lists: above what the activity is subject, with the page of the GU; or what is missing."""
+    """Under the lists, whole, what they show cut: the activity, above what it is subject, what falls in the
+    category chosen, the page of the GU; or what is missing."""
     a = vvf.activity(fire.activity)
     if a is not None:
-        return _("Annex I no. {n}, threshold: {threshold}. Source: DPR 151/2011, GU no. 221 of 22/09/2011, "
-                 "p. {page}.").format(n=a.number, threshold=a.threshold or _("none, every one is subject"),
-                                      page=a.page)
+        note = _("{label}. Threshold: {threshold}.").format(label=a.label(),
+                                                            threshold=a.threshold or _("none, every one is subject"))
+        if a.category_text(fire.category):
+            note += " " + _("Category {category}: {text}.").format(category=fire.category,
+                                                                   text=a.category_text(fire.category).rstrip("."))
+        return note + " " + _("Source: DPR 151/2011 Annex I, GU no. 221 of 22/09/2011, p. {page}.").format(page=a.page)
     if fire.subject:
         return _("Choose the activity of Annex I: the category and the report notes follow from it.")
     return ""
@@ -683,7 +723,7 @@ class Properties(QScrollArea):
                 self.edited.emit(self.kind, self.oid, changes)
 
         activity = self._bind(activity_combo(), lambda: vvf.shown(self._object().fire.subject,
-                                                                  self._object().fire.activity))
+                                                                  self._object().fire.activity), show_activity)
         activity.setObjectName("fireActivity")
         activity.activated.connect(lambda _i: send(vvf.chosen(activity.currentData(),
                                                               self._object().fire.category)))

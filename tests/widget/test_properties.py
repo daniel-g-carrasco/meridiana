@@ -128,9 +128,24 @@ class PanelAlone(unittest.TestCase):
         b.fire.activity = 49
         props.show_building(b)
         self.assertEqual(activity.currentData(), 49)
+        self.assertEqual(activity.lineEdit().cursorPosition(), 0)   # its start in view: the number and the first words
         self.assertEqual(category.itemText(category.findData("A")), "A: fino a 350 kW")
         notes = [n.text() for n in props.widget().findChildren(QLabel) if n.isVisibleTo(props.widget())]
-        self.assertTrue(any("di potenza complessiva superiore a 25 kW" in n and "p. 14" in n for n in notes), notes)
+        self.assertTrue(any(n.startswith("49. Gruppi elettrogeni") and "di potenza complessiva superiore a 25 kW" in n
+                            and "p. 14" in n for n in notes), notes)
+        b.fire.category = "A"                                       # what the list shows cut, the note says whole
+        props.show_building(b)
+        notes = [n.text() for n in props.widget().findChildren(QLabel) if n.isVisibleTo(props.widget())]
+        self.assertTrue(any("Category A: fino a 350 kW." in n for n in notes), notes)
+        b.fire.category = "B"
+        props.show_building(b)
+        # words typed and left without a choice: the field goes back to the activity, and they are not an edit
+        self.sent.clear()
+        activity.setFocus()
+        activity.lineEdit().setText("parole a caso")
+        activity.lineEdit().editingFinished.emit()
+        self.assertEqual(activity.currentText(), activity.itemText(activity.findData(49)))
+        self.assertEqual(self.sent, [])
         # an activity with only B and C: A is greyed out
         self.sent.clear()
         activity.setCurrentIndex(activity.findData(70))
