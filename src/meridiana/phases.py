@@ -137,7 +137,7 @@ def phases() -> list[Phase]:
                 # R299, R306: what is deleted, from the modules on the plan; «Start again» deletes them all, after a
                 # question
                 T("tool_erase_string", _("Delete string"), icon="erase_string", more=(
-                    T("tool_erase_inverter_strings", _("Inverter + strings"), icon="erase_inverter_strings"),
+                    T("tool_erase_inverter_strings", _("Inv. + strings"), icon="erase_inverter_strings"),
                     T("tool_erase_inverter", _("Delete inverter"), icon="erase_inverter"),
                     T("strings_clear", _("Start again"))))))),
             "plant", ("layout", "strings", "connection"),
