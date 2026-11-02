@@ -20669,3 +20669,363 @@ msgstr "Oggetti 3D"
 #: src/meridiana/shortcuts.py:71
 msgid "3D object…"
 msgstr "Oggetto 3D…"
+
+#: src/meridiana/ui/energy_pages.py:657
+msgid "Meridiana {d}% against PVGIS"
+msgstr "Meridiana {d}% rispetto a PVGIS"
+
+#: src/meridiana/energy/pipeline.py:93
+msgid "{source}, fetched {date}"
+msgstr "{source}, scaricato il {date}"
+
+#: src/meridiana/energy/pipeline.py:94
+msgid "{ghi} kWh/m² a year, mean {t} °C"
+msgstr "{ghi} kWh/m² all'anno, media {t} °C"
+
+#: src/meridiana/ui/view3d.py:1017
+msgid "12.5: height above the ground. +5 or -10: up or down by that much."
+msgstr "12,5: quota da terra. +5 o -10: su o giù di tanto."
+
+#: src/meridiana/ui/view3d.py:1001
+msgid "A number is the height above the ground; with a sign (+5, -10) it moves the corner up or down by that much"
+msgstr "Un numero è la quota da terra; col segno (+5, -10) sposta il vertice su o giù di tanto"
+
+#: src/meridiana/ui/properties.py:750
+msgid "By the heights of its corners: slope {t} °, from {low} to {high} m."
+msgstr "Dalle quote dei suoi vertici: pendenza {t} °, da {low} a {high} m."
+
+#: src/meridiana/ui/view3d.py:1007
+msgid "Click another corner: it comes here, in plan and in height, and they stay one point"
+msgstr "Clicca un altro vertice: viene qui, in pianta e in quota, e restano un punto solo"
+
+#: src/meridiana/ui/window.py:1893
+msgid "Click the corner to bring here (Esc: none)."
+msgstr "Clicca il vertice da portare qui (Esc: nessuno)."
+
+#: src/meridiana/ui/window.py:1841
+msgid "Corner"
+msgstr "Vertice"
+
+#: src/meridiana/ui/window.py:1842
+msgid "Corner of pitch {n}"
+msgstr "Vertice della falda {n}"
+
+#: src/meridiana/ui/properties.py:746
+msgid "Corners off one plane: folded into {n} pitches, each corner at its height."
+msgstr "Vertici fuori piano: piegata in {n} falde, ogni vertice alla sua quota."
+
+#: src/meridiana/ui/window.py:1860
+msgid "Drag the corner up or down, or write its height."
+msgstr "Trascina il vertice su o giù, o scrivi la quota."
+
+#: src/meridiana/ui/window.py:1887
+msgid "Height of a corner"
+msgstr "Quota di un vertice"
+
+#: src/meridiana/ui/window.py:1885
+msgid "Height of the obstacle"
+msgstr "Altezza dell'ostacolo"
+
+#: src/meridiana/ui/properties.py:709
+msgid "Join the pitches into one roof"
+msgstr "Unisci le falde in un solo tetto"
+
+#: src/meridiana/ui/properties.py:752
+msgid "Joined to the pitches beside it: slope {t} °, from {low} to {high} m."
+msgstr "Unita alle falde accanto: pendenza {t} °, da {low} a {high} m."
+
+#: src/meridiana/ui/window.py:1853
+msgid "Make corners one"
+msgstr "Fai coincidere i vertici"
+
+#: src/meridiana/ui/view3d.py:1006
+msgid "Make one with..."
+msgstr "Fai coincidere con..."
+
+#: src/meridiana/ui/view3d.py:1011
+msgid "Part"
+msgstr "Stacca"
+
+#: src/meridiana/ui/window.py:1898
+msgid "Part corners"
+msgstr "Stacca i vertici"
+
+#: src/meridiana/ui/window.py:1920
+msgid "Pitch {n}: its corners are off one plane, so it is folded along a line, into pitches that lie on planes. Each corner keeps its height, and modules are laid on each part."
+msgstr "Falda {n}: i vertici sono fuori piano, quindi è piegata lungo una linea in falde piane. Ogni vertice tiene la sua quota e i moduli si posano su ciascuna parte."
+
+#: src/meridiana/ui/properties.py:710
+msgid "Pitches side by side meet on the line between them: the ridge or the valley is worked out and the heights follow. Untick it for pitches that stay separate, each on its own plane"
+msgstr "Le falde affiancate si incontrano sulla linea tra loro: colmo o compluvio vengono calcolati e le quote seguono. Togli la spunta per falde che restano separate, ciascuna sul suo piano"
+
+#: src/meridiana/ui/window.py:1899
+msgid "The corners are independent now: click again on the point to pass from one to the other."
+msgstr "Ora i vertici sono indipendenti: clicca ancora sul punto per passare dall'uno all'altro."
+
+#: src/meridiana/ui/window.py:1854
+msgid "The corners are one point now: they stay so until you part them."
+msgstr "Ora i vertici sono un punto solo: restano così finché non li stacchi."
+
+#: src/meridiana/ui/view3d.py:1012
+msgid "The corners on this point go back to being independent: they stay where they are, each with its own height"
+msgstr "I vertici in questo punto tornano indipendenti: restano dove sono, ciascuno con la sua quota"
+
+#: src/meridiana/ui/window.py:1918
+msgid "The roof is drawn by hand from here on: each face is a pitch."
+msgstr "Da qui in poi il tetto è fatto a mano: ogni faccia è una falda."
+
+#: src/meridiana/ui/window.py:1841
+msgid "Top of the obstacle"
+msgstr "Sommità dell'ostacolo"
+
+#: src/meridiana/roof_vertices.py:167
+msgid "a canopy's roof follows its structure: change it in its properties"
+msgstr "il tetto di una pensilina segue la sua struttura: cambialo nelle sue proprietà"
+
+#: src/meridiana/roof_vertices.py:228
+msgid "a corner stands between the ground and {limit} m"
+msgstr "un vertice sta tra il suolo e {limit} m"
+
+#: src/meridiana/roof_vertices.py:252
+msgid "choose another corner"
+msgstr "scegli un altro vertice"
+
+#: src/meridiana/fields.py:29
+msgid "join of the pitches"
+msgstr "unione delle falde"
+
+#: src/meridiana/roof_vertices.py:267
+msgid "pitch {n} would cross itself: these corners cannot be one point"
+msgstr "la falda {n} si incrocerebbe: questi vertici non possono essere un punto solo"
+
+#: src/meridiana/roof_join.py:365
+msgid "pitch {n}, part {m}"
+msgstr "falda {n}, parte {m}"
+
+#: src/meridiana/roof_vertices.py:222
+msgid "there is no such corner"
+msgstr "questo vertice non esiste"
+
+#: src/meridiana/roof_vertices.py:147 src/meridiana/roof_vertices.py:231 src/meridiana/roof_vertices.py:245 src/meridiana/roof_vertices.py:280
+msgid "there is no such object"
+msgstr "questo oggetto non esiste"
+
+#: src/meridiana/roof_vertices.py:284
+msgid "this corner is on its own already"
+msgstr "questo vertice è già da solo"
+
+#: src/meridiana/roof_vertices.py:254
+msgid "two corners of one pitch cannot be one point"
+msgstr "due vertici della stessa falda non possono essere un punto solo"
+
+#: src/meridiana/ui/window.py:1875
+msgid "write a height, or +5 or -10 to move it by that much"
+msgstr "scrivi una quota, oppure +5 o -10 per spostarlo di tanto"
+
+#: src/meridiana/phases.py:140
+msgid "Delete string"
+msgstr "Elimina stringa"
+
+#: src/meridiana/phases.py:141
+msgid "Inv. + strings"
+msgstr "Inv. + stringhe"
+
+#: src/meridiana/phases.py:142
+msgid "Delete inv."
+msgstr "Elimina inv."
+
+#: src/meridiana/shortcuts.py:134
+msgid "Delete a string"
+msgstr "Elimina una stringa"
+
+#: src/meridiana/shortcuts.py:135
+msgid "Delete an inverter and its strings"
+msgstr "Elimina un inverter e le sue stringhe"
+
+#: src/meridiana/shortcuts.py:136
+msgid "Delete an inverter"
+msgstr "Elimina un inverter"
+
+#: src/meridiana/manual.py:382
+msgid "this module is not on a row of its sub-field"
+msgstr "questo modulo non è su una fila del suo sottocampo"
+
+#: src/meridiana/manual.py:388
+msgid "a module stays in its sub-field: this would take it out"
+msgstr "un modulo resta nel suo sottocampo: così ne uscirebbe"
+
+#: src/meridiana/ui/plan.py:214
+msgid "Click the smallest object; a second click on the same row selects the row. Esc goes to the container; Delete removes the selection. Drag to the right for what is all inside the rectangle, to the left for what it touches; hold still, then drag, for a free shape."
+msgstr "Clic sull'oggetto più piccolo; un secondo clic sulla stessa fila seleziona la fila. Esc passa al contenitore; Canc elimina la selezione. Trascina a destra per ciò che è tutto dentro il riquadro, a sinistra per ciò che tocca; tieni fermo e poi trascina per una forma libera."
+
+#: src/meridiana/ui/plan.py:238
+msgid "Delete a string: pass over a module to light its whole string, click to delete it (the modules stay laid). One Ctrl+Z for each click, Esc leaves."
+msgstr "Elimina una stringa: passa su un modulo per illuminare tutta la stringa, clic per eliminarla (i moduli restano posati). Un Ctrl+Z per ogni clic, Esc per uscire."
+
+#: src/meridiana/ui/plan.py:240
+msgid "Delete an inverter and its strings: pass over a module to light all the strings of its inverter, click to delete them all. One Ctrl+Z for each click, Esc leaves."
+msgstr "Elimina un inverter e le sue stringhe: passa su un modulo per illuminare tutte le stringhe del suo inverter, clic per eliminare tutto. Un Ctrl+Z per ogni clic, Esc per uscire."
+
+#: src/meridiana/ui/plan.py:242
+msgid "Delete an inverter: pass over a module to light the strings of its inverter, click to delete the inverter; the strings stay, on no inverter. One Ctrl+Z for each click, Esc leaves."
+msgstr "Elimina un inverter: passa su un modulo per illuminare le stringhe del suo inverter, clic per eliminare l'inverter; le stringhe restano, su nessun inverter. Un Ctrl+Z per ogni clic, Esc per uscire."
+
+#: src/meridiana/ui/plan.py:1644
+msgid "Click a side of any outline on the plan; Esc leaves it as it is."
+msgstr "Clic su un lato di un contorno qualsiasi in pianta; Esc lascia tutto com'è."
+
+#: src/meridiana/ui/plan.py:1084
+msgid "In no string"
+msgstr "In nessuna stringa"
+
+#: src/meridiana/ui/plan.py:2278
+msgid "Rotate: click a module to turn its sub-field."
+msgstr "Ruota: clic su un modulo per ruotare il suo sottocampo."
+
+#: src/meridiana/ui/plan.py:2280
+msgid "Move: click a module to take its row, with Shift the module alone, or the empty part of a sub-field to take the sub-field."
+msgstr "Sposta: clic su un modulo per prendere la sua fila, con Maiusc il modulo da solo, oppure sulla parte vuota di un sottocampo per prendere il sottocampo."
+
+#: src/meridiana/ui/window.py:4828
+msgid "Propose the strings on the modules selected"
+msgstr "Proponi le stringhe sui moduli selezionati"
+
+#: src/meridiana/ui/window.py:1110
+msgid "Meridiana's strings in place of those there are, once (asked first, one undo step), with the strategy chosen in its menu: back and forth, a row per string, U on two rows, a row per MPPT. Nothing changes them afterwards. With modules selected on the plan (drag over them with Select), strings of those alone"
+msgstr "Le stringhe di Meridiana al posto di quelle che ci sono, una volta (chiede prima, un passo di annulla), con la strategia scelta nel suo menu: avanti e indietro, una fila per stringa, a U su due file, una fila per MPPT. Poi nulla le cambia. Con moduli selezionati in pianta (trascina su di essi con Seleziona), stringhe solo di quelli"
+
+#: src/meridiana/ui/window.py:1126
+msgid "Pass over a module to light its string, click to delete the string: the modules stay laid. Esc leaves"
+msgstr "Passa su un modulo per illuminare la sua stringa, clic per eliminarla: i moduli restano posati. Esc per uscire"
+
+#: src/meridiana/ui/window.py:1128
+msgid "Pass over a module to light all the strings of its inverter, click to delete the inverter and those strings. Esc leaves"
+msgstr "Passa su un modulo per illuminare tutte le stringhe del suo inverter, clic per eliminare l'inverter e quelle stringhe. Esc per uscire"
+
+#: src/meridiana/ui/window.py:1130
+msgid "Pass over a module to light the strings of its inverter, click to delete the inverter: the strings stay, on no inverter, until you give them another. Esc leaves"
+msgstr "Passa su un modulo per illuminare le stringhe del suo inverter, clic per eliminare l'inverter: le stringhe restano, su nessun inverter, finché non gliene dai un altro. Esc per uscire"
+
+#: src/meridiana/ui/window.py:1764
+msgid "a module is added with its row, and on its own it turns with a double click"
+msgstr "un modulo si aggiunge con la sua fila, e da solo si gira con un doppio clic"
+
+#: src/meridiana/ui/window.py:4841
+msgid "Undo restores the previous wiring."
+msgstr "Annulla riporta i collegamenti di prima."
+
+#: src/meridiana/ui/window.py:4935
+msgid "This module is in no string: there is nothing to delete here."
+msgstr "Questo modulo non è in nessuna stringa: qui non c'è nulla da eliminare."
+
+#: src/meridiana/ui/window.py:4942
+msgid "The string of this module is on no inverter: «Delete a string» takes it away."
+msgstr "La stringa di questo modulo non è su nessun inverter: la toglie «Elimina una stringa»."
+
+#: src/meridiana/ui/window.py:4948
+msgid "This is the inverter Meridiana sizes by itself: there is none in the list to delete."
+msgstr "Questo è l'inverter che Meridiana dimensiona da sola: in lista non ce n'è nessuno da eliminare."
+
+#: src/meridiana/ui/window.py:2418
+msgid "Draw a building, a roof pitch, a sub-field or an exclusion, then align the view to one of its sides."
+msgstr "Disegna un edificio, una falda, un sottocampo o un'esclusione, poi allinea la vista a uno dei suoi lati."
+
+#: src/meridiana/ui/window.py:4811
+msgid "No string was made of the modules selected: choose an inverter from the catalogue first, the length of a string depends on it."
+msgstr "Nessuna stringa con i moduli selezionati: prima scegli un inverter dal catalogo, la lunghezza di una stringa dipende da lui."
+
+#: src/meridiana/ui/window.py:4855
+msgid "The modules selected are all in a string already: nothing to complete."
+msgstr "I moduli selezionati sono già tutti in una stringa: nulla da completare."
+
+#: src/meridiana/ui/window.py:4806 src/meridiana/ui/window.py:4820
+msgid "No string was made of the modules selected: {why}"
+msgstr "Nessuna stringa con i moduli selezionati: {why}"
+
+#: src/meridiana/ui/window.py:4961
+msgid "Delete inverter {n} and its strings"
+msgstr "Elimina l'inverter {n} e le sue stringhe"
+
+#: src/meridiana/ui/window.py:4962
+msgid "Delete inverter {n}"
+msgstr "Elimina l'inverter {n}"
+
+#: src/meridiana/ui/window.py:4822
+msgid "No string was made of the modules selected: the inputs of the inverters have no room for another one, or the modules selected do not fit in a string together."
+msgstr "Nessuna stringa con i moduli selezionati: gli ingressi degli inverter non hanno posto per un'altra, oppure i moduli selezionati non stanno insieme in una stringa."
+
+#: src/meridiana/ui/canopy_dialog.py:73 src/meridiana/ui/template_dialog.py:149
+msgid "Drag to turn · click a side to write its length · N is North once on the plan"
+msgstr "Trascina per girare · clic su un lato per scriverne la lunghezza · N è il nord una volta in pianta"
+
+#: src/meridiana/model.py:496
+msgid "The pitches of {names} stay independent as they were drawn: to make them one roof, tick the option in its properties."
+msgid_plural "The pitches of {names} stay independent as they were drawn: to make each one roof, tick the option in the properties."
+msgstr[0] "Le falde di {names} restano indipendenti come disegnate: per farne un solo tetto, spunta l'opzione nelle sue proprietà."
+msgstr[1] "Le falde di {names} restano indipendenti come disegnate: per fare di ciascuno un solo tetto, spunta l'opzione nelle proprietà."
+
+#: src/meridiana/ui/plan.py:3001
+msgid "{n} module selected: Propose or Complete make strings of it alone, Del takes it out of the layout, Esc lets it go. A sweep adds, with Shift it takes out."
+msgid_plural "{n} modules selected: Propose or Complete make strings of them alone, Del takes them out of the layout, Esc lets them go. A sweep adds, with Shift it takes out."
+msgstr[0] "[0] {n} modulo selezionato: Proponi o Completa fanno stringhe solo con esso, Canc lo toglie dalla posa, Esc lo lascia. Un riquadro aggiunge, con Maiusc toglie."
+msgstr[1] "[1] {n} moduli selezionati: Proponi o Completa fanno stringhe solo con questi, Canc li toglie dalla posa, Esc li lascia. Un riquadro aggiunge, con Maiusc toglie."
+
+#: src/meridiana/ui/plan.py:3059
+msgid "{n} object selected: Del deletes it, Esc lets it go."
+msgid_plural "{n} objects selected: Del deletes them, Esc lets them go."
+msgstr[0] "[0] {n} oggetto selezionato: Canc lo elimina, Esc lo lascia."
+msgstr[1] "[1] {n} oggetti selezionati: Canc li elimina, Esc li lascia."
+
+#: src/meridiana/ui/window.py:4832
+msgid "{k} string on the modules selected"
+msgid_plural "{k} strings on the modules selected"
+msgstr[0] "[0] {k} stringa sui moduli selezionati"
+msgstr[1] "[1] {k} stringhe sui moduli selezionati"
+
+#: src/meridiana/ui/window.py:2921
+msgid "Delete {n} object"
+msgid_plural "Delete {n} objects"
+msgstr[0] "[0] Elimina {n} oggetto"
+msgstr[1] "[1] Elimina {n} oggetti"
+
+#: src/meridiana/ui/window.py:2937
+msgid "Take out {n} module"
+msgid_plural "Take out {n} modules"
+msgstr[0] "[0] Togli {n} modulo"
+msgstr[1] "[1] Togli {n} moduli"
+
+#: src/meridiana/ui/window.py:2938
+msgid "{n} module taken out of the layout (Ctrl+Z brings it back)."
+msgid_plural "{n} modules taken out of the layout (Ctrl+Z brings them back)."
+msgstr[0] "[0] {n} modulo tolto dalla posa (Ctrl+Z lo riporta)."
+msgstr[1] "[1] {n} moduli tolti dalla posa (Ctrl+Z li riporta)."
+
+#: src/meridiana/ui/window.py:4838
+msgid "{m} module selected stays in no string: too few, or no room, for another one."
+msgid_plural "{m} modules selected stay in no string: too few, or no room, for another one."
+msgstr[0] "[0] {m} modulo selezionato resta senza stringa: troppo pochi, o nessun posto, per un'altra."
+msgstr[1] "[1] {m} moduli selezionati restano senza stringa: troppo pochi, o nessun posto, per un'altra."
+
+#: src/meridiana/ui/window.py:4861
+msgid "A string the modules selected are in is replaced ({m} of its modules not selected stay in no string). Undo brings it back. Go on?"
+msgid_plural "{n} strings the modules selected are in are replaced ({m} of their modules not selected stay in no string). Undo brings them back. Go on?"
+msgstr[0] "[0] Una stringa in cui sono i moduli selezionati viene sostituita ({m} suoi moduli non selezionati restano senza stringa). Annulla la riporta. Procedo?"
+msgstr[1] "[1] {n} stringhe in cui sono i moduli selezionati vengono sostituite ({m} loro moduli non selezionati restano senza stringa). Annulla le riporta. Procedo?"
+
+#: src/meridiana/ui/window.py:4965
+msgid "Inverter {u} and its string deleted: the modules stay laid, in no string (Ctrl+Z brings them back)."
+msgid_plural "Inverter {u} and its {n} strings deleted: the modules stay laid, in no string (Ctrl+Z brings them back)."
+msgstr[0] "[0] Inverter {u} e la sua stringa eliminati: i moduli restano posati, senza stringa (Ctrl+Z li riporta)."
+msgstr[1] "[1] Inverter {u} e le sue {n} stringhe eliminati: i moduli restano posati, senza stringa (Ctrl+Z li riporta)."
+
+#: src/meridiana/ui/window.py:4970
+msgid "Inverter {u} deleted: its string stays on the roof, on no inverter, and the checks say so. Give it another inverter in the Strings list, or Ctrl+Z."
+msgid_plural "Inverter {u} deleted: its {n} strings stay on the roof, on no inverter, and the checks say so. Give them another inverter in the Strings list, or Ctrl+Z."
+msgstr[0] "[0] Inverter {u} eliminato: la sua stringa resta sul tetto, su nessun inverter, e le verifiche lo segnalano. Dalle un altro inverter nell'elenco delle stringhe, oppure Ctrl+Z."
+msgstr[1] "[1] Inverter {u} eliminato: le sue {n} stringhe restano sul tetto, su nessun inverter, e le verifiche lo segnalano. Dai loro un altro inverter nell'elenco delle stringhe, oppure Ctrl+Z."
+
+#: src/meridiana/ui/window.py:4814
+msgid "The {n} module selected is too few for a string: on these inverters a string wants at least {m} modules in series. Select more, or change the inverter."
+msgid_plural "The {n} modules selected are too few for a string: on these inverters a string wants at least {m} modules in series. Select more, or change the inverter."
+msgstr[0] "[0] {n} modulo selezionato è troppo poco per una stringa: su questi inverter una stringa vuole almeno {m} moduli in serie. Selezionane altri, o cambia inverter."
+msgstr[1] "[1] I {n} moduli selezionati sono troppo pochi per una stringa: su questi inverter una stringa vuole almeno {m} moduli in serie. Selezionane altri, o cambia inverter."
