@@ -26,6 +26,8 @@ dependencies = [
     "scipy>=1.15",
     "matplotlib>=3.9",
     "pyqtgraph>=0.14",
+    "pypdf>=6.0",
+    "typst==0.15.0",
 ]
 
 [project.optional-dependencies]
