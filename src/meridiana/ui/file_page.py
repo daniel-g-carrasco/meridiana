@@ -221,11 +221,34 @@ class FilePage(QFrame):
         self.entrance = None
         self.exit = None                            # the veil of the page leaving (motion.leave), until it has played
         self.entrance_kind = "slide"
+        self._settings = None                   # the Settings' pages, made when first wanted (`settings`)
         self._settings_read = False             # the settings read before an entrance (show_section)
         self.entrance_duration = Motion.NORMAL
         self._build()
         self.hide()
         window.installEventFilter(self)
+
+    @property
+    def settings(self):
+        """The Settings' pages, made the first time they are wanted: they are 630 of the window's 2900 widgets, and
+        every widget costs 0.4 ms at each change of theme, shown or not (02/11/2026). Made, they are read."""
+        if self._settings is None:
+            from .preferences import Preferences
+            w = self.host
+            self._settings = Preferences(w.cfg, w.bindings, w.theme, w)
+            self._settings.changed.connect(w._apply_preferences)
+            self._settings.setMaximumWidth(860)
+            self._settings_section.box.addWidget(self._settings, 1, Qt.AlignmentFlag.AlignLeft)
+            self._settings_read = True              # reading them is what making them does
+        return self._settings
+
+    def _read_settings(self) -> None:
+        """The settings read now (the site of the project, the maps): made, when they were not, or read again."""
+        if self._settings is None:
+            _ = self.settings                # made, and read as it is made
+        else:
+            self._settings._populate()
+        self._settings_read = True
 
     def set_colours(self, t: dict) -> None:
         self.colours = (t["window"], t["panel"], t["card_line"])
@@ -432,14 +455,11 @@ class FilePage(QFrame):
         self.sections["catalogues"] = cats
 
         # Settings: the former dialog's pages, applied immediately and undoable while this page stays alive.
-        from .preferences import Preferences
+        # (the page itself, 630 widgets, is made the first time it is wanted: see `settings`)
         settings = Section(_("Settings"), _("Every choice applies and is saved at once. Undo the last change or "
                                              "restore the defaults of one section."))
-        self.settings = Preferences(w.cfg, w.bindings, w.theme, w)
-        self.settings.changed.connect(w._apply_preferences)
         settings.box.addSpacing(Space.XL)
-        self.settings.setMaximumWidth(860)
-        settings.box.addWidget(self.settings, 1, Qt.AlignmentFlag.AlignLeft)
+        self._settings_section = settings
         self.sections["preferences"] = settings
 
         # Help
@@ -474,8 +494,7 @@ class FilePage(QFrame):
             # they are read ahead now, once File has come in (_read_settings_ahead)
             entering = self.body.currentWidget() is not self.sections["preferences"]
             if section == "preferences" and entering and not self._settings_read:
-                self.settings._populate()
-                self._settings_read = True
+                self._read_settings()
             motion.enter(self, lambda: self._select_section(key, retrace), self.entrance_kind, Motion.FAST)
         else:
             self._select_section(key, retrace)
@@ -507,7 +526,7 @@ class FilePage(QFrame):
             self.registry_page.refresh()
         elif section == "preferences":
             if self.body.currentWidget() is not self.sections["preferences"] and not self._settings_read:
-                self.settings._populate()          # read the site on entering, not on every category change
+                self._read_settings()              # read the site on entering, not on every category change
             self._settings_read = False
             self.settings.show_page(page)
             page = self.settings.current_section()
@@ -600,8 +619,7 @@ class FilePage(QFrame):
         0.3-0.6 s that held the click before its entrance."""
         shown = self.body.currentWidget() is self.sections["preferences"]
         if self.isVisible() and not self._settings_read and not shown:
-            self.settings._populate()
-            self._settings_read = True
+            self._read_settings()
 
     def _left(self) -> None:
         self.exit = None

@@ -48,6 +48,33 @@ class SettingsEntrance(unittest.TestCase):
         win.open_file_page("open")
         self.assertFalse(page._settings_read)
 
+    def test_the_settings_pages_are_made_when_first_wanted_and_read_once(self):
+        """They are 630 of the window's 2900 widgets and each costs 0.4 ms at every change of theme, shown or not."""
+        self.app = _setup.qt_or_skip()
+        _setup.window(self, capannone())
+        from PySide6.QtWidgets import QWidget
+
+        from meridiana.ui.preferences import Preferences
+        win = self.win
+        page = win.file_page
+        self.assertIsNone(page._settings)                      # not made with the window
+        self.assertEqual(page.sections["preferences"].findChildren(Preferences), [])
+        self.assertLess(len(win.findChildren(QWidget)), 2600)
+        from unittest import mock
+        with mock.patch.object(Preferences, "_populate", autospec=True,
+                               side_effect=Preferences._populate) as populated:
+            settings = page.settings                           # made, and read as it is made
+            self.assertEqual(populated.call_count, 1)
+            self.assertIs(page.settings, settings)
+            self.assertEqual(populated.call_count, 1)
+        self.assertEqual(page.sections["preferences"].findChildren(Preferences), [settings])
+        self.assertTrue(page._settings_read)
+        win.open_file_page("preferences:privacy")              # straight to a page of them: made once, shown
+        _setup.turn_events(self.app, 700)
+        self.assertIs(page.settings, settings)
+        self.assertEqual(settings.current_section(), "privacy")
+        self.assertIs(page.body.currentWidget(), page.sections["preferences"])
+
 
 if __name__ == "__main__":
     unittest.main()
