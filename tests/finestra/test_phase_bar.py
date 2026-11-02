@@ -281,13 +281,19 @@ class ReportAndPlant(unittest.TestCase):
         self.sid = self.win.project.subfields[0].id
 
     def test_the_report_phase_with_its_buttons_and_deliverables_and_the_plant_phase_with_its_inspector(self):
-        from PySide6.QtWidgets import QFileDialog, QPushButton
+        from PySide6.QtWidgets import QFileDialog, QMenu, QPushButton
         win = self.win
-        # the Report phase: the buttons of today, the Deliverables inspector, the report not yet possible
+        # the Report phase: no row of commands in the page (R322, A2), the Deliverables inspector, the report not yet
+        # possible
         win.show_phase("report")
         page = win.report_page
-        self.assertEqual(list(page.buttons), ["export_report", "compare_variants", "save_revision", "copy_notes"])
-        self.assertEqual(page.buttons["save_revision"].text(), "Save as a new revision")
+        self.assertEqual(page.findChildren(QPushButton), [page.empty.button])
+        self.assertEqual(page.title.text(), "Technical report")
+        bar = win.tabs.bars.currentWidget()
+        menus = {a for m in win.menuBar().findChildren(QMenu) for a in m.actions()}
+        for cid in ("compare_variants", "export_report", "save_revision", "copy_notes"):     # what the row did
+            self.assertIsNotNone(bar.button_of(cid), cid)
+            self.assertIn(win.commands[cid], menus, cid)
         self.assertIs(win.inspector.currentWidget(), win.inspector.deliverables)
         self.assertEqual(win.docks[1].windowTitle(), "Deliverables")
         states = win.inspector.deliverables.states
@@ -300,7 +306,7 @@ class ReportAndPlant(unittest.TestCase):
         self.assertEqual(len(buttons), 3)                                         # the report's and the series', greyed; the IFC's
         self.assertEqual(sorted(b.isEnabled() for b in buttons), [False, False, True])
         with mock.patch.object(win, "_export_report") as export:
-            page.buttons["export_report"].click()
+            bar.button_of("export_report").click()
         export.assert_called_once()
         # with the year: to do, done once exported, to make again when the project changes, done again undone
         win.energy = {}

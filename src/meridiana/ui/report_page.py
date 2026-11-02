@@ -1,5 +1,5 @@
-"""The Report phase (R61, docs/compiti/19r-relazione.md): in the middle the commands of the phase and the preview of
-the pages as they will come out; on the right, above the deliverables, what the designer chooses for the report
+"""The Report phase (R61, docs/compiti/19r-relazione.md): in the middle the preview of the pages as they will come out, under its
+title (the commands are in the phase's bar, R322); on the right, above the deliverables, what the designer chooses for the report
 (`ReportSide`): the template, the author's profile, the client and the revision, whether the site's address is
 written, whether the register of the calculations goes beside the PDF, the chapters of the template, each with its
 box, greyed with the reason when its data are not there, and the attachments (PDF files after the last chapter:
@@ -12,13 +12,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QPoint, QRect, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QFormLayout, QFrame, QGridLayout, QHBoxLayout,
-                               QLabel, QLayout, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QToolButton,
+                               QLabel, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QToolButton,
                                QVBoxLayout, QWidget)
 
-from .. import reports, shortcuts
+from .. import reports
 from ..i18n import _, ngettext
 from . import icons
 from .design import Icon, Space, Text, set_text
@@ -32,65 +32,6 @@ def _note(text: str) -> QLabel:
     label.setWordWrap(True)
     label.setObjectName("muted")
     return label
-
-
-class Flow(QLayout):
-    """Widgets in a row that goes on the next line when the room ends: the commands of the phase in a narrow window
-    (a column of niri) instead of a minimum width that keeps the window from narrowing."""
-
-    def __init__(self, parent=None, spacing: int = Space.M):
-        super().__init__(parent)
-        self.items: list = []
-        self.setSpacing(spacing)
-
-    def addItem(self, item) -> None:
-        self.items.append(item)
-
-    def count(self) -> int:
-        return len(self.items)
-
-    def itemAt(self, index: int):
-        return self.items[index] if 0 <= index < len(self.items) else None
-
-    def takeAt(self, index: int):
-        return self.items.pop(index) if 0 <= index < len(self.items) else None
-
-    def expandingDirections(self):
-        return Qt.Orientation(0)
-
-    def hasHeightForWidth(self) -> bool:
-        return True
-
-    def heightForWidth(self, width: int) -> int:
-        return self._place(QRect(0, 0, width, 0), False)
-
-    def setGeometry(self, rect: QRect) -> None:
-        super().setGeometry(rect)
-        self._place(rect, True)
-
-    def sizeHint(self) -> QSize:
-        return self.minimumSize()
-
-    def minimumSize(self) -> QSize:
-        size = QSize()
-        for item in self.items:
-            size = size.expandedTo(item.minimumSize())
-        m = self.contentsMargins()
-        return size + QSize(m.left() + m.right(), m.top() + m.bottom())
-
-    def _place(self, rect: QRect, move: bool) -> int:
-        m = self.contentsMargins()
-        area = rect.adjusted(m.left(), m.top(), -m.right(), -m.bottom())
-        x, y, line = area.x(), area.y(), 0
-        for item in self.items:
-            hint = item.sizeHint()
-            if x + hint.width() > area.right() + 1 and line > 0:
-                x, y, line = area.x(), y + line + self.spacing(), 0
-            if move:
-                item.setGeometry(QRect(QPoint(x, y), hint))
-            x += hint.width() + self.spacing()
-            line = max(line, hint.height())
-        return y + line - rect.y() + m.bottom()
 
 
 class Preview(QScrollArea):
@@ -154,34 +95,25 @@ class Preview(QScrollArea):
 
 
 class ReportPage(QWidget):
-    """Phase 6: the commands of today in a row, what the preview is doing, the pages."""
+    """Phase 6: the title and what the preview is doing, the pages. The commands are in the phase's bar (phases.py) and
+    in the menu, and only there: a row of the same four here was the first thing on the page (R322, A2)."""
 
     def __init__(self, actions: dict, parent=None):
         super().__init__(parent)
-        self.buttons: dict = {}
         box = QVBoxLayout(self)
         box.setContentsMargins(0, 0, 0, 0)
         box.setSpacing(0)
-        head = QWidget()
-        row = Flow(head)
-        row.setContentsMargins(Space.XL, Space.L, Space.XL, Space.S)
-        for cid, why in (("export_report", _("The technical report as a PDF, as the preview shows it")),
-                         ("compare_variants", _("Every variant computed and compared, the best of each row in bold")),
-                         ("save_revision", _("A new file with the suffix _R01, _R02...; the previous one stays")),
-                         ("copy_notes", _("The paragraphs of the rules that apply, with their sources"))):
-            b = QPushButton(shortcuts.plain(actions[cid].text()))
-            b.clicked.connect(actions[cid].trigger)
-            b.setToolTip(why)
-            if cid == "export_report":
-                b.setProperty("primary", True)
-            self.buttons[cid] = b
-            row.addWidget(b)
-        box.addWidget(head)
+        head = QHBoxLayout()
+        head.setContentsMargins(Space.XL, Space.L, Space.XL, Space.S)
+        head.setSpacing(Space.L)
+        self.title = set_text(QLabel(_("Technical report")), Text.TITLE)
+        head.addWidget(self.title)
+        head.addStretch(1)
         self.status = QLabel("")
         self.status.setObjectName("muted")
-        self.status.setContentsMargins(Space.XL, 0, Space.XL, 0)
         set_text(self.status, Text.SECONDARY)
-        box.addWidget(self.status)
+        head.addWidget(self.status)
+        box.addLayout(head)
         self.preview = Preview()
         box.addWidget(self.preview, 1)
         # the empty state of every card (ui/style.EmptyState, R321): in the middle, with the command that fills it
