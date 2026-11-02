@@ -201,17 +201,13 @@ def texts() -> dict[str, Help]:
         # the plant (R287: every group of the right panel has its «?»)
         "plant.inverters": h(
             _("Inverter"), _("Each inverter of the plant: name, model, strings, DC/AC, and its menu."),
-            _("The first line: how many inverters, their AC power, the modules' power, the DC/AC ratio. Then a card "
-              "for each inverter: the disc with its number is the handle, drag it (or Alt+Up, Alt+Down) to change the "
-              "order; the number is the inverter's place and names its strings (1.3.2 is inverter 1), so moving an "
-              "inverter renumbers them. F2 or a double click renames it, a name only. The menu «⋯»: rename, move, "
-              "datasheet, string this inverter, empty its strings, take it out of the plant (its strings stay on the "
-              "roof, on no inverter). A click on a card shows its strings below. «Catalogue…» adds an inverter; "
-              "«Choose automatically…» lets Meridiana choose them for the modules laid. The DC/AC ratio wanted is "
-              "yours: the scale shows the energy cut once the year is computed."),
+            _("One card for each inverter. The disc with its number is the handle: drag it, or Alt+Up and "
+              "Alt+Down, to change the order; the number names its strings (1.3.2 is inverter 1), so moving one "
+              "renumbers them. F2 renames. The menu «⋯»: rename, move, datasheet, string, empty, take out. «Choose "
+              "automatically…» picks them for the modules laid."),
             manual="2-impianto.md#il-pannello-di-destra"),
         "plant.strings": h(
-            _("Strings"), _("The inputs of this inverter with their strings; the view from the menu beside."),
+            _("Strings"), _("This inverter's inputs with their strings; the view from the menu beside."),
             _("The strings of the whole plant on the first line; then the inverter shown and its inputs, as cards "
               "(each input with its mark and its strings, «+» to draw one on it) or as a single-line diagram in "
               "miniature (each string a bar as long as its modules), from the menu at the left of the «?». A click "
@@ -227,10 +223,10 @@ def texts() -> dict[str, Help]:
             manual="2-impianto.md#le-stringhe-sono-tue"),
         "plant.string": h(
             _("String chosen"), _("The string chosen on the plan or in the list: path, bars, checks."),
-            _("Where it goes (inverter and input) and its modules; the open-circuit voltage at the lowest "
-              "temperature against the maximum, the MPP voltage at the hottest and coldest cell against the MPPT "
-              "window, the current against the input's, each as a bar as long as its limit; then each check with "
-              "its mark and its clause. «Redraw», «Move to…» and «Delete» act on this string."),
+            _("Where it goes (inverter and input) and its modules; the open-circuit voltage in the cold against "
+              "the maximum, the MPP voltage at the hottest and coldest cell against the MPPT window, the current "
+              "against the input's, each a bar as long as its limit; then every check with its article. Redraw it, "
+              "move it up to another input, or delete it."),
             manual="2-impianto.md#il-pannello-di-destra"),
         "plant.subfield": h(
             _("Sub-field selected"), _("Where «Propose the strings» sends the strings of this sub-field."),
