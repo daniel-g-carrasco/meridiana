@@ -24,6 +24,8 @@ I tre comandi stanno anche nel menu Aiuto: un tasto F non è mai l'unica via (su
 
 In **File > Nuovo**, nei dati facoltativi, scegli cliente e commessa. Il nome del cliente va nella relazione; una commessa riservata ferma ricerca online e tessere già quando la scegli. Al salvataggio Meridiana collega il file alla commessa e scrive nel progetto gli id della serie, dal formato 18: salvare R02 e riaprire R01 conserva lo stesso collegamento.
 
+**File > Apri** apre un progetto Meridiana (.mer) o un progetto PVsyst (.PRJ, anche con Ctrl+I): il progetto PVsyst e le sue varianti diventano un progetto nuovo, e Meridiana dice prima che cosa ha approssimato o non ha trovato. Gli altri file si importano dove servono: il modello IFC in Modellazione (tendina del pulsante Edificio, «Da IFC»), i moduli (.PAN) e gli inverter (.OND) di PVsyst dai rispettivi cataloghi in Impianto («Importa da PVsyst…»), anno tipo e orizzonte di PVGIS in Producibilità, la curva di carico in Consumi, un'immagine sotto il disegno dal menu Sfondo della barra della pianta.
+
 ## Posa, pensiline e modello BIM
 
 La fase **Modellazione** serve solo al modello: Modifica, Disegna (edificio, da modello, pensilina, falda, colmo,

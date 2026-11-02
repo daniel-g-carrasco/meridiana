@@ -10,7 +10,7 @@ L'Impianto è la fase degli inverter e delle stringhe: ciò che collega i moduli
 
 Tutto l'impianto si gestisce dal pannello di destra della fase; sopra la pianta non c'è niente.
 
-- **Inverter**: l'elenco (quanti di ciascuno, dal catalogo o dai file .OND di PVsyst, con la ✕ per toglierne uno), «Aggiungi un inverter dal catalogo…», «Dimensiona l'inverter da solo», il rapporto CC/CA; per un inverter SolarEdge gli ottimizzatori.
+- **Inverter**: l'elenco (quanti di ciascuno, dal catalogo o dai file .OND di PVsyst con «Importa da PVsyst…» nel catalogo, con la ✕ per toglierne uno), «Aggiungi un inverter dal catalogo…», «Dimensiona l'inverter da solo», il rapporto CC/CA; per un inverter SolarEdge gli ottimizzatori.
 - **Stringhe**: per ogni inverter e ingresso le sue stringhe, ognuna con il suo colore sulla pianta, i moduli e lo stato (segno e parola); un ingresso senza stringhe lo dice. Una riga scelta sceglie la stringa sulla pianta e la inquadra; **Canc** la elimina; il **doppio clic** la ridisegna; il tasto destro apre il suo menu (inverti il verso, ridisegna, sposta su un altro ingresso, elimina). Il **+** a destra di un ingresso disegna una stringa nuova su quell'ingresso. Sotto l'elenco: «Proponi le stringhe», «Completa le stringhe», «Elimina tutte le stringhe».
 - **Proposta e verifiche**: la strategia e i moduli in serie che userà la prossima proposta (non cambiano le stringhe di adesso), la temperatura minima del sito e le condizioni delle verifiche.
 - **Stringa scelta**: le verifiche della stringa scelta, con le fonti delle temperature.
