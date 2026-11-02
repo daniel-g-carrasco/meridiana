@@ -107,6 +107,54 @@ con sillabazione, e sullo schermo (anteprima) rende meno. Decide Daniel.
 4. **Grafici**: rifarli nello stile del documento (barre piene, niente assi e griglia, didascalia numerata, fonte)
    invece del matplotlib di oggi; con Typst si disegnano in Typst stesso (nessuna immagine). Propongo di sì.
 
+## 6. Secondo giro: tre vie di mezzo fra B e C (`bozzetti-2.html`)
+
+Daniel (02/11): via di mezzo B-C, senza la barra blu in alto, header e footer completi con il posto per il logo,
+contenitori e grafici arrotondati, pianta ampia come in C, rendering 3D grande in copertina «come SolarEdge».
+Foto: `foto/bozzetto2-V1.png`, `-V2.png`, `-V3.png` (4 pagine ciascuna: copertina, sintesi, perdite, pianta).
+Solo Inter e Titillium Web (in `data/fonts`), niente Google Fonts. Logo finto e neutro (tetto con tre moduli).
+
+| | V1 Cornice | V2 Filetto | V3 Lavagna |
+|---|---|---|---|
+| Copertina | rendering in cornice arrotondata, titolo e 4 riquadri sotto | rendering a tutta larghezza che sfuma nel bianco, titolo e meta a due colonne | rendering a tutta pagina, pannello scuro in basso con i 4 numeri |
+| Header | logo a sinistra, titolo e committente al centro, codice/rev/data a destra, filetto azzurro | riga di meta in alto, titolo del capitolo sotto un filetto rosso, logo a destra | pillola col codice, titolo del capitolo, logo a destra |
+| Footer | tre colonne su filetto: progettista, codice/rev/data, pagina n di N | progettista e committente al centro, codice a sinistra, pagina a destra | fascia grigio chiaro a tre colonne |
+| Contenitori | pieni grigio chiaro, bordo colorato in alto | solo il bordo (stampa in bianco e nero) | bordo colorato a sinistra |
+| Carattere | Titillium | Inter | Titillium |
+| In Typst | sì, tutto (griglie, riquadri arrotondati con `box(radius:)`, testatine con `page(header:)`, immagine) | sì, tutto | sì; il pannello scuro è un `rect` con `fill` sopra l'immagine (`place`) |
+| In QTextDocument | riquadri sì (tabelle con sfondo, **senza angoli arrotondati**: `border-radius` non c'è), header e footer sì (QPainter come oggi), barre dei grafici come immagini; copertina sì con QPainter | come V1; i bordi a filo sì | copertina sì con QPainter; i riquadri con il bordo colorato a sinistra sì (`border-left` su `td`), angoli no |
+
+Il limite di QTextDocument per questi disegni è uno: niente angoli arrotondati né `break-inside`; i grafici
+arrotondati vanno disegnati come immagini (matplotlib con `FancyBboxPatch`, o QPainter). Tutto il resto si fa.
+
+### Il rendering 3D: che cosa dà il programma oggi
+
+Le immagini `foto/render-base-south_east.png` e `-south_west.png` sono **foto vere del programma, non ritoccate**:
+`ui/report_3d.py` (la scena della relazione `ReportScene.qml`, `QQuickRenderControl` senza finestra, GPU vera) su un
+progetto di prova simile ai bozzetti (capannone 120 × 40 m, file a 30°, palazzina uffici accanto; 693 moduli posati
+dall'automatismo), 2200 × 1440 px, 2 viste in 0,85-1,0 s. Script: `prove/FR-render-3d.py` (nessuna finestra aperta,
+nessun file di Daniel toccato).
+
+Oggi la scena ha: camera assonometrica (ortografica), MSAA «VeryHigh», un sole con ombre morbide (PCF8, mappa
+«VeryHigh») più tre luci di cielo, sfondo e terreno bianchi, edifici neutri con gli spigoli disegnati, moduli blu
+navy. È un **disegno tecnico pulito**, non un rendering: niente prospettiva, niente cielo, materiali piatti, molto
+bianco intorno. Provata l'**ambient occlusion** (`aoStrength` 70 e 100, `aoDistance` 5 e 400 su una copia del QML,
+senza toccare il programma): immagine **identica al byte**, sia con distanza piccola sia grande; con la camera
+ortografica a `clipNear -20000 / clipFar 20000` il buffer di profondità non lascia all'AO nulla da fare (dedotto;
+non indagato oltre per il budget).
+
+Per un rendering «figo» alla SolarEdge servirebbero, in ordine di resa per lavoro:
+1. una **camera prospettica** per la copertina (la `PerspectiveCamera` c'è già nella vista della finestra, `Scene.qml`),
+   da un punto di vista basso a 3/4: mezza giornata;
+2. **cielo e terreno**: `SceneEnvironment` con `lightProbe` (HDRI libero, es. Poly Haven CC0, 1-2 MB) per riflessi e
+   luce d'ambiente, un terreno con texture leggera o un gradiente: una giornata;
+3. **materiali**: vetro dei moduli con `metalness`/`roughness` bassi e cornice in alluminio, pareti con una tinta,
+   spigoli meno marcati: mezza giornata;
+4. **post-produzione**: `ExtendedSceneEnvironment` (Qt Quick 3D Helpers) con tonemapping, bloom leggero, vignetta,
+   depth of field; costa poco in codice ma va provato sulla GPU di Daniel e sul laptop: mezza giornata;
+5. il ritaglio automatico del bianco intorno (già fatto per i bordi: `_on_white`), così l'immagine riempie la cornice.
+Il tutto resta dentro Qt Quick 3D, senza dipendenze nuove, e si rende in meno di un secondo.
+
 Limiti di questo studio: i bozzetti sono HTML, non l'uscita del programma; le pagine di impianto elettrico, verifiche
 e metodi non sono disegnate (seguono le regole di A2/C2: tabelle con fonte, righe di gruppo); i caratteri di C arrivano
 da Google Fonts nel browser (senza rete si vedono Georgia e Consolas). Edge non è più sul PC (resta solo la cartella
