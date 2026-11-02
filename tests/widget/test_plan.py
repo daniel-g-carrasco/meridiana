@@ -920,9 +920,12 @@ class PlanNavigation(unittest.TestCase):
         self.picked.clear()
         plan.set_selection("site", "")
         self.app.processEvents()
-        send(QMouseEvent.Type.MouseButtonPress, L, on_it(), L)  # held still: it acts after a moment
-        self.assertTrue(_setup.wait_until(self.app, lambda: self.picked == [("subfield", sid)], 1))
+        # held still: a click at its release; it selected after a moment until R300, when a drag from there is a lasso
+        send(QMouseEvent.Type.MouseButtonPress, L, on_it(), L)
+        self.assertTrue(_setup.wait_until(self.app, lambda: plan.sweep_press is not None, 1))
+        self.assertEqual(self.picked, [])
         send(QMouseEvent.Type.MouseButtonRelease, L, on_it(), NONE)
+        self.assertEqual(self.picked, [("subfield", sid)])
 
     def test_a_touchpad_tap_takes_a_module_within_six_logical_pixels(self):
         from PySide6.QtCore import Qt
