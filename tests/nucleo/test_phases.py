@@ -122,13 +122,14 @@ class ThePhases(unittest.TestCase):
         now = {p.id: [t.command for t in p.tools(every=True)] for p in phases.phases()}     # R306: their menus too
         lost = {c for cs in before.values() for c in cs} - {c for cs in now.values() for c in cs}
         self.assertEqual(lost, set())
-        added = ["tool_ridge", "canopy_layout", "object_3d"]     # R275, R281 and R269, new on the bars
+        added = ["tool_ridge", "canopy_layout", "object_3d", "import_ifc"]     # R275, R281, R269, R315: new on the bars
         erase = ["tool_erase_string", "tool_erase_inverter_strings", "tool_erase_inverter"]      # R299
         added += erase + ["tool_select", "tool_move", "tool_rotate"]     # R295: Edit in the Plant as well
         self.assertEqual(sorted([c for cs in before.values() for c in cs] + added),
                          sorted(c for cs in now.values() for c in cs))
         layout = ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty"]
         model = [c for c in before["model"] if c not in layout and c != "tool_exclusion"]
+        model.insert(model.index("building_template") + 1, "import_ifc")      # R315: in Building's menu
         model.insert(model.index("tool_pitch") + 1, "tool_ridge")
         model.insert(model.index("tool_ridge") + 1, "tool_exclusion")     # in the Obstacles group
         model.insert(model.index("tool_exclusion") + 1, "object_3d")      # R269, beside it

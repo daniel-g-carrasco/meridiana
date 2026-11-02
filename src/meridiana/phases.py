@@ -94,8 +94,9 @@ def phases() -> list[Phase]:
                 T("tool_move", _("Move"), icon="move"),
                 T("tool_rotate", _("Rotate"), icon="rotate"))),
             Group("draw", _("Draw"), (
-                # R306: «edificio [...] con i modelli, la falda con il colmo»
-                T("tool_building", icon="building", more=(T("building_template", _("Template")),)),
+                # R306: «edificio [...] con i modelli, la falda con il colmo»; R315: the buildings of an IFC model
+                T("tool_building", icon="building", more=(T("building_template", _("Template")),
+                                                          T("import_ifc", _("From IFC")))),
                 T("carport", _("Canopy")),
                 T("tool_pitch", icon="pitch", more=(T("tool_ridge", icon="ridge"),)))),     # R275: the roof from its ridge
             # the objects of the scene (trees, roof obstacles, cars, people: R269, study 22, 3.2 and question 10)
