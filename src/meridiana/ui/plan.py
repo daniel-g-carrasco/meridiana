@@ -45,6 +45,7 @@ DRAWING = {"building", "pitch", "ridge", "subfield", "exclusion"}   # ridge: a l
 PITCH_FIELDS = ("depth", "tilt", "ridge", "eave")   # the rows of the Pitch card a number typed goes to (R274)
 MOVABLE = ("building", "subfield", "exclusion", "row", "prop")   # what Move takes (task 16b; a row, task 16c)
 PLANT_MOVABLE = ("subfield", "row", "module")                    # what it takes in the Plant (R295)
+EDGE_KINDS = ("exclusion", "subfield", "pitch", "building")      # whose sides a pick of any side finds, smallest first
 ARROWS = {Qt.Key.Key_Left: "left", Qt.Key.Key_Right: "right", Qt.Key.Key_Up: "up", Qt.Key.Key_Down: "down"}
 LEFT_WAIT_MS = 150             # how long a left press waits for the other button of a gesture (left + right)
 TILE_UPDATE_MS = 120
@@ -521,6 +522,8 @@ class PlanView(QGraphicsView):
         self.ortho = False                 # F8: square to the first side (East and North before it)
         self.rings: dict = {}              # (kind, id) -> the outline drawn, for the sides' measures
         self.edge_pick = None              # (purpose, kind, id, ring) while a side is being picked
+        self.edge_any = False              # the side of any outline (pick_any_edge)
+        self.pick_clicked = False          # the click that ended a pick, until the next press
         self.plant_phase = False           # the plan lent to the Plant (set_plant_phase)
         self.point_pick = None             # (purpose, how many, the points so far, the hints) while points are
         self.edge_hover: int | None = None
@@ -1517,6 +1520,38 @@ class PlanView(QGraphicsView):
         self.hint.emit(_("Click the side on the plan; Esc leaves it as it is."))
         self.viewport().update()
 
+    def pick_any_edge(self, purpose: str) -> None:
+        """Wait for a click on a side of any outline drawn (R301): with a drawing tool in hand nothing can be selected
+        first, a click would draw, and «select an outline first» was a command that did not work. Esc gives up."""
+        self.edge_pick = (purpose, "", "", [])
+        self.edge_any = True
+        self.edge_hover = None
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.hint.emit(_("Click a side of any outline on the plan; Esc leaves it as it is."))
+        self.viewport().update()
+
+    def _edge_at(self, view_pos) -> None:
+        """The side under the pointer while one is being picked: of the outline asked for, or of any (pick_any_edge)."""
+        purpose, kind, oid, ring = self.edge_pick
+        if self.edge_any:
+            kind, oid, ring, hover = "", "", [], None
+            for wanted in EDGE_KINDS:
+                for (k, o), r in self.rings.items():
+                    hover = self._side_near(r, view_pos) if k == wanted and len(r) >= 3 else None
+                    if hover is not None:
+                        kind, oid, ring = k, o, [tuple(map(float, p)) for p in r]
+                        break
+                if hover is not None:
+                    break
+            changed = hover != self.edge_hover or (kind, oid) != self.edge_pick[1:3]
+            self.edge_pick = (purpose, kind, oid, ring)
+        else:
+            hover = self._side_near(ring, view_pos)
+            changed = hover != self.edge_hover
+        if changed:
+            self.edge_hover = hover
+            self.viewport().update()
+
     def pick_points(self, purpose: str, hints: list[str]) -> None:
         """Wait for as many clicks on the plan as `hints` (each said before its click): two points of an image to
         put it in scale, where to move it from and to. Esc gives up; the views still pan and zoom meanwhile."""
@@ -1532,6 +1567,7 @@ class PlanView(QGraphicsView):
 
     def _end_pick(self) -> None:
         self.edge_pick = None
+        self.edge_any = False
         self.edge_hover = None
         self.setCursor(Qt.CursorShape.ArrowCursor if self.tool == "select" else Qt.CursorShape.CrossCursor)
         self.viewport().update()
@@ -2565,6 +2601,7 @@ class PlanView(QGraphicsView):
 
     def mousePressEvent(self, event):
         self.setFocus()
+        self.pick_clicked = False
         if (self.strings_mode and self.edge_pick is None and self.point_pick is None and self.left_wait is None
                 and not self.navigator.held and self._string_press(event)):
             return
@@ -2624,10 +2661,13 @@ class PlanView(QGraphicsView):
                 self.hint.emit("")
             return
         if self.edge_pick is not None:
+            if qbutton == Qt.MouseButton.LeftButton:
+                self._edge_at(position.toPoint())        # a pen or a finger presses without hovering first
             if qbutton == Qt.MouseButton.LeftButton and self.edge_hover is not None:
                 purpose, kind, oid, _ring = self.edge_pick
                 side = self.edge_hover
                 self._end_pick()
+                self.pick_clicked = True                 # the second click of a double one draws nothing (R301)
                 self.edgePicked.emit(purpose, kind, oid, side)
             elif qbutton == Qt.MouseButton.RightButton:
                 self._end_pick()
@@ -2727,6 +2767,9 @@ class PlanView(QGraphicsView):
 
     def mouseDoubleClickEvent(self, event):
         self._left_now()
+        if self.pick_clicked or self.edge_pick is not None or self.point_pick is not None:
+            self.pick_clicked = False                    # R301: it belongs to the pick, not to the tool underneath
+            return
         if self.strings_mode and event.button() == Qt.MouseButton.LeftButton and not self.space:
             # the Plant phase: a double click closes the string being drawn, or draws again the string of the module
             if self.draft is not None:
@@ -2774,7 +2817,7 @@ class PlanView(QGraphicsView):
             self.space_last = QPointF(event.position())
             self.translate_view(d.x(), d.y())
             return
-        if self.draft is not None:
+        if self.draft is not None and self.edge_pick is None:
             # a string being drawn: the line follows the pointer; with the left button held from a module, each module
             # the pointer passes the middle of is taken, as Sunny Design connects them
             self.draft_pointer = self.mapToScene(event.position().toPoint())
@@ -2811,10 +2854,7 @@ class PlanView(QGraphicsView):
             self.viewport().update()
             return
         if self.edge_pick is not None:
-            hover = self._side_near(self.edge_pick[3], event.position().toPoint())
-            if hover != self.edge_hover:
-                self.edge_hover = hover
-                self.viewport().update()
+            self._edge_at(event.position().toPoint())
             return
         self.ctrl = _ctrl(event.modifiers())
         self.move_mods = self._mods(event.modifiers())
@@ -2892,6 +2932,16 @@ class PlanView(QGraphicsView):
     def keyPressEvent(self, event):
         key = event.key()
         text = event.text()
+        # a side or a point asked by a command of the view: Esc gives that up and leaves the tool as it was (R301), it
+        # went to the tool first and threw away the outline being drawn, or left Move
+        if key == Qt.Key.Key_Escape and self.edge_pick is not None:
+            self._end_pick()
+            self.hint.emit(self._move_hint() if self.tool == "move" else hints()[self.tool])
+            return
+        if key == Qt.Key.Key_Escape and self.point_pick is not None:
+            self._end_point_pick()
+            self.hint.emit(self._move_hint() if self.tool == "move" else hints()[self.tool])
+            return
         if self.tool == "move" and self._move_key(event):
             return
         if self.draft is not None and key in (Qt.Key.Key_Backspace, Qt.Key.Key_Return, Qt.Key.Key_Enter,
@@ -2968,14 +3018,6 @@ class PlanView(QGraphicsView):
                 return
         if self.strings_mode and self.draft is None and key == Qt.Key.Key_Escape and self.chosen_string >= 0:
             self.stringEscape.emit()
-            return
-        if key == Qt.Key.Key_Escape and self.edge_pick is not None:
-            self._end_pick()
-            self.hint.emit("")
-            return
-        if key == Qt.Key.Key_Escape and self.point_pick is not None:
-            self._end_point_pick()
-            self.hint.emit("")
             return
         if key == Qt.Key.Key_Escape and self.tool == "select" and self.selection_back():
             return

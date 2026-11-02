@@ -52,7 +52,7 @@ from .inspector import Inspector
 from .marks import icon as mark_icon
 from .report_page import ReportPage, ReportSide
 from .phasebar import LOW_WINDOW, PhaseBar, Phases
-from .plan import MOVABLE, PlanView, from_scene
+from .plan import EDGE_KINDS, MOVABLE, PlanView, from_scene
 from .plant_page import PlantInspector, PlantPage, PlantSide, input_name, install_reference  # R277: PlantSide
 from .properties import Properties, field_label
 from .checks_page import ChecksPage
@@ -2265,11 +2265,16 @@ class MainWindow(QMainWindow):
         backend.touch_zoom(float(np.log(factor) / np.log(1.0 / camera.ZOOM_STEP)), w / 2, h / 2)
 
     def _align_view(self) -> None:
+        """Align the view to a side: of the outline selected, or of any when none is. A drawing tool in hand stays as
+        it was: its clicks draw, so nothing could be selected first, and the command said so and did nothing (R301)."""
         kind, oid = self.selection
         found = self._outline(kind, oid)
         if found is None:
-            self.tell(_("Select a building, a roof pitch, a sub-field or an exclusion, then align the view to one "
-                        "of its sides."))
+            if any(k in EDGE_KINDS for k, _o in self.plan.rings):
+                self.plan.pick_any_edge("align")
+            else:
+                self.tell(_("Draw a building, a roof pitch, a sub-field or an exclusion, then align the view to one "
+                            "of its sides."))
             return
         self.plan.pick_edge("align", kind, oid, found[1])
 

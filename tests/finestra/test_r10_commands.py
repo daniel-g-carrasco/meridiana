@@ -117,5 +117,110 @@ class EditInThePlant(WindowCase):
         self.assertEqual(self.plan._gesture().mode, "rotate")
 
 
+class ViewCommandsDuringATool(WindowCase):
+    """R301: «se si selezionano alcuni tasti / funzioni di controllo, tipo l'allinea ad un lato, mentre si è selezionata
+    una delle funzioni di modellazione, non la lascia utilizzare». Why: with a drawing tool in hand nothing can be
+    selected (a click draws), and Align wanted an outline selected first; then Esc went to the tool, and with a string
+    being drawn the sides did not light."""
+
+    TOOLS = ("tool_building", "tool_pitch", "tool_ridge", "tool_exclusion", "tool_measure", "tool_move", "tool_rotate")
+    COMMANDS = ("view_align", "view_north", "zoom_in", "zoom_out", "fit", "view_plan", "view_3d", "view_both", "snaps",
+                "ortho", "strings")
+
+    def side_middle(self):
+        ring = self.win.project.buildings[0].footprint
+        (ax, ay), (bx, by) = ring[1], ring[2]
+        return (ax + bx) / 2, (ay + by) / 2
+
+    def test_every_command_of_the_views_leaves_every_tool_as_it_was_even_with_a_drawing_begun(self):
+        win, plan = self.win, self.plan
+        for cid in self.TOOLS:
+            for command in self.COMMANDS:
+                win._set_tool("select")
+                win._select("site", "")
+                win.commands[cid].trigger()
+                tool = plan.tool
+                if tool in ("building", "exclusion", "pitch"):
+                    self.click(-50.0, -50.0)
+                chain = list(plan.chain)
+                win.commands[command].trigger()
+                self.assertEqual(plan.tool, tool, (cid, command))
+                self.assertEqual(plan.chain, chain, (cid, command))
+                self.assertTrue(win.commands[cid].isChecked(), (cid, command))
+                self.assertEqual(win.phase(), "model", (cid, command))
+                plan._end_pick()
+                win._view_mode("both")
+
+    def test_align_with_a_drawing_begun_and_nothing_selected_takes_a_side_of_any_outline(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        win, plan = self.win, self.plan
+        win._select("site", "")
+        win.commands["tool_building"].trigger()
+        self.click(-50.0, -50.0)
+        self.assertEqual(len(plan.chain), 1)
+        button = plan.viewbar.buttons[win.commands["view_align"]]
+        QTest.mouseClick(button, Qt.MouseButton.LeftButton)     # the button itself, on the bar in the view
+        self.assertIsNotNone(plan.edge_pick)
+        x, y = self.side_middle()
+        self.click(x, y)
+        self.assertIsNone(plan.edge_pick)
+        self.assertAlmostEqual(abs(plan.view_rotation()) % 90.0, 0.0)
+        self.assertAlmostEqual(abs(plan.view_rotation()), 90.0)
+        self.assertEqual(plan.tool, "building")                 # the tool and its corner as they were
+        self.assertEqual(len(plan.chain), 1)
+        self.assertEqual(plan.cursor().shape(), Qt.CursorShape.CrossCursor)
+        self.click(-40.0, -50.0)                                # and it goes on drawing
+        self.assertEqual(len(plan.chain), 2)
+
+    def test_esc_gives_up_the_side_and_nothing_else(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        win, plan = self.win, self.plan
+        for cid, tool in (("tool_building", "building"), ("tool_move", "move")):
+            win._select("building", win.project.buildings[0].id)
+            win.commands[cid].trigger()
+            if tool == "building":
+                self.click(-50.0, -50.0)
+            chain = list(plan.chain)
+            win.commands["view_align"].trigger()
+            self.assertIsNotNone(plan.edge_pick)
+            QTest.keyClick(plan, Qt.Key.Key_Escape)
+            self.assertIsNone(plan.edge_pick)
+            self.assertEqual((plan.tool, plan.chain), (tool, chain))
+            plan.cancel_outline()
+
+    def test_a_double_click_on_the_side_closes_no_outline(self):
+        from PySide6.QtCore import QEvent, Qt
+        win, plan = self.win, self.plan
+        win._select("building", win.project.buildings[0].id)
+        win.commands["tool_building"].trigger()
+        for x, y in ((-50.0, -50.0), (-40.0, -50.0), (-40.0, -40.0)):
+            self.click(x, y)
+        win.commands["view_align"].trigger()
+        x, y = self.side_middle()
+        self.click(x, y)
+        pos = self.scene_point(x, y)
+        left = Qt.MouseButton.LeftButton
+        self.send(QEvent.Type.MouseButtonDblClick, pos, left, left)
+        self.assertEqual(len(plan.chain), 3)
+
+    def test_with_a_string_being_drawn_the_side_lights_and_the_click_aligns(self):
+        win, plan = self.win, self.plan
+        win.show_phase("plant")
+        win._select("subfield", win.project.subfields[0].id)
+        sfid, key, _centre = self.module_centre()
+        plan.set_strings_mode(True)
+        plan.start_draft([(sfid, key)])
+        ring = win.project.subfields[0].ring
+        (ax, ay), (bx, by) = ring[0], ring[1]
+        win.commands["view_align"].trigger()
+        self.hover((ax + bx) / 2, (ay + by) / 2)
+        self.assertEqual(plan.edge_hover, 0)
+        self.click((ax + bx) / 2, (ay + by) / 2)
+        self.assertIsNone(plan.edge_pick)
+        self.assertEqual(plan.draft, [(sfid, key)])             # the string goes on
+
+
 if __name__ == "__main__":
     unittest.main()
