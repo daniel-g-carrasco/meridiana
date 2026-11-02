@@ -118,17 +118,31 @@ class ThemeOfTheWindow(unittest.TestCase):
         sizes.setCurrentIndex(sizes.findData("medium"))
         self.assertEqual({w: QFontInfo(w.font()).pixelSize() for w in before}, before)
 
-    def sheet_again(self, widgets) -> float:
-        """Seconds to take the application's sheet off and put it on again and to polish `widgets`: what a change of
-        theme costs."""
+    def sheet_again(self) -> float:
+        """Seconds to take the application's sheet off and put it on again and to polish the window's widgets: what a
+        change of theme costs."""
+        import gc
         import time
+
+        from PySide6.QtCore import QCoreApplication, QEvent
+        # the sheet goes on every widget of the process: the windows of the tests before this one, not yet gone,
+        # would be paid here too
+        for _ in range(2):
+            gc.collect()
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        from PySide6.QtWidgets import QWidget
+        widgets = self.win.findChildren(QWidget)
         sheet = self.app.styleSheet()
-        t0 = time.perf_counter()
-        self.app.setStyleSheet("")
-        self.app.setStyleSheet(sheet)
-        for w in widgets:
-            w.ensurePolished()
-        return time.perf_counter() - t0
+        took = []
+        for _ in range(5):              # the best of five: the first goes over widgets never polished, and the
+            t0 = time.perf_counter()    # machine's other work adds to any one
+            self.app.setStyleSheet("")
+            self.app.setStyleSheet(sheet)
+            for w in widgets:
+                w.ensurePolished()
+            took.append(time.perf_counter() - t0)
+        self.took = f"{len(widgets)} widgets, every turn: " + " ".join(f"{t:.2f}" for t in took)
+        return min(took)
 
     def test_the_sheet_goes_on_the_whole_window_quickly_and_it_draws_in_both_themes_with_the_screenshots_kept(self):
         """Two limits for a change of theme, because the cost is the number of widgets, not the rules. Measured on
@@ -148,7 +162,7 @@ class ThemeOfTheWindow(unittest.TestCase):
         self.assertIsNone(win.file_page._settings)
         widgets = win.findChildren(QWidget)
         self.assertGreater(len(widgets), 500)
-        self.assertLess(self.sheet_again(widgets), 1.0)
+        self.assertLess(self.sheet_again(), 1.0, self.took)
         f = self.paths.state / "p.meridiana"
         f.parent.mkdir(parents=True, exist_ok=True)
         capannone().save(f)
@@ -196,7 +210,7 @@ class ThemeOfTheWindow(unittest.TestCase):
         self.assertTrue(all(page.is_built() for page in (win.energy_page, win.consumption_page, win.economics_page)))
         widgets = win.findChildren(QWidget)
         self.assertGreater(len(widgets), 2500)
-        self.assertLess(self.sheet_again(widgets), 2.0)
+        self.assertLess(self.sheet_again(), 2.0, self.took)
 
 
 if __name__ == "__main__":

@@ -84,6 +84,12 @@ class LazyPage(QWidget):
             self._calls.clear()
             for hook in self._hooks:
                 hook(page)
+            # shown at once, after what was told it (the charts note what to draw and draw it as they show): a layout
+            # shows what is added to it only a turn of the events later
+            if self.isVisible():
+                page.show()
+            if self.side_slot.isVisible():
+                page.side.show()
             self.built.emit()
         return self._real
 
