@@ -82,6 +82,9 @@ class PanelLayout(unittest.TestCase):
         self.assertEqual(lost_panels(self.win), [])
         bar = next(b for b in self.win.findChildren(QTabBar, options=DIRECT) if b.count() == 2)
         self.assertTrue(bar.isVisible())
+        from meridiana.ui.segments import BarTrack
+        self.assertIsNotNone(bar.findChild(BarTrack))                         # a track of segments (R322)
+        self.assertEqual(bar.objectName(), "dock-tabs")
         self.win._save_window()
         self.assertEqual(self.saved_state(), bytes(self.win.saveState()))     # a good layout is saved as it is
 

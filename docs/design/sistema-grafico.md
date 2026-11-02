@@ -40,7 +40,7 @@ Regole:
 
 | Nome | px | Uso tipico |
 |---|---|---|
-| XXS | 2 | fra pulsanti di una barra, fra pillole |
+| XXS | 2 | fra pulsanti di una barra, la pista intorno ai segmenti |
 | XS | 4 | dentro un controllo, sopra e sotto il testo |
 | S | 6 | dentro una scheda, intorno al contenuto (`Layout.PAD`) |
 | M | 8 | fra due schede (`Layout.GAP`), testo di un controllo dal bordo (`Line.TEXT_INSET`), fra le righe di un modulo |
@@ -58,7 +58,6 @@ Regole:
 | 6 (`CONTROL`) | pulsante, campo, elenco, gruppo, tabella, pulsante strumento, barra della vista, etichette sopra la pianta |
 | 4 (`INNER`) | quello che sta dentro un controllo o una riga: voce di menu, selezione dentro una scheda, pulsantino su una riga, misure accanto al cursore, suggerimenti (Windows li arrotonda a 4) |
 | 2 (`MARK`) | campioni di colore, tacche delle legende |
-| metà altezza | pillola: gettoni, conteggi, stati, varianti |
 
 ### Testo: il catalogo degli stili (`Text`)
 
@@ -91,14 +90,14 @@ testo ricco diventa semigrassetto (`design.strong`, `design.semibold`, il foglio
 | `strong` | 13 | semigrassetto | `text` | titolo di un gruppo, nome in una riga, soggetto dell'aiuto, titoli dentro un pannello (risultati, consegne, relazione) e di un grafico, parola di un pulsante (anche «File»), nome della fase in mano, ciò che spicca dentro una frase |
 | `body` | 13 | normale | `text` | il testo: campi, etichette, elenchi (albero del progetto, Verifiche, tabelle), menu, suggerimenti, aiuto, conversazione con Meridio, voci della pagina File |
 | `description` | 13 | normale | `text2` | una frase che spiega sotto un titolo: guida della pagina File, testo dei riquadri File, unità accanto alla cifra |
-| `control` | 13 | normale | `text` | linguette (fasi, grafici e schede accorpate), pillole delle varianti, gettoni e conteggi delle Verifiche, pulsanti strumento con la parola accanto, stati delle consegne |
+| `control` | 13 | normale | `text` | linguette (fasi, grafici e schede accorpate), segmenti delle piste (varianti, viste e filtri delle Verifiche), pulsanti strumento con la parola accanto, stati delle consegne |
 | `secondary` | 12 | normale | `text2` | note sotto i campi, barra di stato, parole sotto gli strumenti, etichetta e dettaglio dei riquadri, titoli degli assi, tasti della pagina File, scala e fonte sulla pianta |
 | `caption` | 11 | normale | `muted` | tacche dei grafici, formati dei riquadri File, costo della conversazione |
 | `group` | 10 | normale | `muted` | in maiuscolo con spaziatura del 4 %: i nomi dei gruppi della barra della fase, 4 px sotto i comandi (R159: «più leggeri, piccoli, e distanziati») |
 | `label` | 11 | semigrassetto | `muted` | in maiuscolo con spaziatura del 4 %: intestazioni delle sezioni (albero, Verifiche, pagina File), numeri nei dischi delle fasi e nei segni, facce del cubo, «N» della pianta, «Domande pronte» di Meridio |
 
 Perché queste differenze:
-- **13 il testo e i comandi**: linguette, pillole e pulsanti hanno la grandezza del testo (le linguette a 15
+- **13 il testo e i comandi**: linguette, segmenti e pulsanti hanno la grandezza del testo (le linguette a 15
   sembravano troppo grandi); si distinguono per la forma, non per il carattere.
 - **14 semigrassetto solo i titoli delle schede**, il primo livello; **13 semigrassetto** (`strong`) il secondo:
   gruppi, righe, titoli dentro un pannello, la parola dei pulsanti.
@@ -131,7 +130,7 @@ Le regole:
 
 - **Controlli**: alti 28 px (`Size.CONTROL`) tutti, pulsanti e campi (numeri, elenchi, date compresi), testo a 8 px
   dal bordo, bordo compreso. Prima i pulsanti erano 25, i campi 27, i numeri e le date 30.
-- **Pillole**: alte 24 px (`Size.CHIP`); gettoni, conteggi, stati, varianti e linguette.
+- **Segmenti**: alti 24 px (`Size.CHIP`) su una pista di 28 (2 px intorno, `ui/segments.py`); anche gli stati delle consegne sono alti 24. Nessuna forma ha gli estremi tondi (R322, R328, Daniel 02/11/2026: «tutti i tasti devono essere portati su questo stile di rettangolo con angoli arrotondati, anziché su quello di rettangoli con due cerchi alle estremità»).
 - **Barre di scorrimento**: 10 px di posto, il cursore largo 6 (`Size.SCROLLBAR`, `Size.THUMB`).
 - **Linguette e righe**: linguette delle fasi 36 px (`Size.TAB`); voci di un elenco di posti, come la pagina File,
   34 px (`Size.NAV`).
@@ -146,7 +145,7 @@ Daniel, 25/10/2026 (R121): «deve includere tutti i tasti». Sei tipi, ciascuno 
 |---|---|---|---|---|
 | `PUSH` pulsante | 28 | 6 | `strong` | i comandi («Calcola», «Esporta…», «OK»); velo `field`; nessuno pieno di accento (R158), nemmeno il `primary`; `destructive` col testo rosso; spento senza velo |
 | `TOOL` strumento | 28, o icona 24 e parola | 6 | `secondary` sotto l'icona, `control` accanto | barra della fase, barra della vista, barra del sole, pulsanti della barra di stato |
-| `CHIP` pillola | 24 | 12 | `control` | gettoni e conteggi delle Verifiche, «Tabella» dei grafici, pillole delle varianti, linguette dei grafici e delle schede accorpate, stati delle consegne |
+| `CHIP` | 24 | 6 | `control` | un pulsantino con la parola: i passi del tour. Le scelte fra viste non sono pulsanti: sono segmenti su una pista (`ui/segments.py`) |
 | `SMALL` piccolo | 20 | 4 | `control` | croce delle schede, puntina e «Sgancia» dell'aiuto, «Correggi» sulle righe delle Verifiche |
 | `HELP` «?» | 16 | 8 | `label` | il «?» di un gruppo o di un riquadro |
 | `NAV` voce | 34 | 6 | `body` | le voci della pagina File |
@@ -161,13 +160,13 @@ caratteristiche di delta colore». Una regola sola, in tutti e due i temi:
 
 - **colore**: il colore di riposo del controllo con sopra il colore del testo all'**8 %** sotto il puntatore e al
   **16 %** premuto o acceso (`theme_colors.HOVER`, `PRESS`; gettoni `hover` e `press`). Dove il controllo non ha
-  un fondo suo (strumenti, pillole, voci di menu, righe, fasi, «File») lo strato si usa trasparente; dove ce l'ha
-  (pulsanti e linguette sul velo `field`, pulsanti dei riquadri sul `panel`) lo si calcola sopra
+  un fondo suo (strumenti, segmenti, voci di menu, righe, fasi, «File») lo strato si usa trasparente; dove ce l'ha
+  (pulsanti sul velo `field`, pulsanti dei riquadri sul `panel`) lo si calcola sopra
   (`theme_colors.state`). Nel tema scuro lo strato schiarisce, nel chiaro scurisce: non più il nero sul velo scuro;
 - **forma**: quella del controllo, mai un'altra: 28 px e raggio 6 per pulsanti, strumenti, «File» e fasi; 24 px a
-  pillola per pillole e linguette dei grafici; la voce di un menu col raggio 4; la riga di un elenco tutta la sua
+  4 per segmenti e linguette dei grafici; la voce di un menu col raggio 4; la riga di un elenco tutta la sua
   forma (la scheda di una verifica, la pillola di 4 px delle sezioni);
-- **testo**: non cambia peso; i nomi spenti (fasi, linguette, pillole delle varianti) passano al colore del testo.
+- **testo**: non cambia peso; i nomi spenti (fasi, linguette, segmenti) passano al colore del testo.
 
 ### Movimento (`Motion`)
 
@@ -201,7 +200,7 @@ I principali:
 | `text`, `text2`, `muted` | testo, secondario, spento |
 | `accent`, `accent_fg`, `accent_hover`, `accent_soft` | il colore scelto: la fase in mano e il fuoco, nessun pulsante pieno (R158) |
 | `hover`, `press` | lo strato del testo all'8 % e al 16 %: sotto il puntatore, premuto o acceso (R160) |
-| `select_bg`, `select_fg` | selezione in un elenco: un grigio che pende verso la tinta dell'accento (lo strumento acceso e la pillola scelta hanno `press`, R158) |
+| `select_bg`, `select_fg` | selezione in un elenco: un grigio che pende verso la tinta dell'accento (lo strumento acceso ha `press`, R158; il segmento scelto è rialzato in `panel` col filo) |
 | `danger`, stati `good`/`warning`/`critical` | errori e semaforo: sempre con un segno o una parola, mai solo col colore |
 
 Regole:
@@ -212,7 +211,7 @@ Regole:
   (R158: «i pulsanti già evidenziati con il colore di accento non devono esistere, né negli strumenti né altrove
   ... sono brutti») nessun pulsante ne è pieno: né il `primary`, né lo strumento primario della barra, né «File»
   con la sua pagina aperta. Tolto, neutro, anche da: selezione (`select_bg`, ora con croma 0,018 al massimo: era la tinta pallida
-  dell'accento), strumenti accesi, linguette e pillole scelte, voce scelta della pagina File, riquadro chiave dei
+  dell'accento), strumenti accesi, linguette e segmenti scelti, voce scelta della pagina File, riquadro chiave dei
   risultati (era in `accent_soft`), «Correggi» sulle righe delle Verifiche (era pieno di accento), stato «da
   aggiornare» delle consegne (ora un contorno), passaggio sulla barra della vista e sul cubo, arco dell'attesa,
   collegamenti dell'aiuto (ora nel colore del testo, sottolineati). La prova
@@ -232,19 +231,19 @@ Regole:
 | Pagina della fase | foglio di stile (`#phase-pages`) | come una scheda |
 | Pulsante | foglio di stile, `Button.PUSH` | velo `field`, raggio 6, 28 px, stile `strong`; nessuno pieno di accento (R158); `destructive` col testo rosso; sotto il puntatore lo strato `hover` sopra il velo (R160) |
 | Pulsante strumento | `ui/phasebar.py`, foglio di stile, `Button.TOOL` | trasparente, raggio 6; `hover` sotto il puntatore, acceso e premuto in `press` (R158, R160) |
-| Pillola e linguetta | foglio di stile, `Button.CHIP` | 24 px, estremi tondi, stile `control`; le linguette di ogni barra (grafici e schede accorpate) come le pillole delle schede accorpate: fondo `field`, quella scelta sul fondo della scheda col suo filo |
+| Pista di segmenti | `ui/segments.py`: `Segments` (pulsanti), `on_bar` (una `QTabBar`: grafici, schede accorpate) | ogni scelta fra viste (R322, B1): pista `field` di 28 px e raggio 6, segmenti di 24 e raggio 4, testo `control` (tagliato coi puntini se manca lo spazio, il suggerimento lo dice intero); la scelta è un rettangolo in `panel` col filo `line` che **scorre** al segmento nuovo come la linguetta delle fasi (`OutCubic`, `Motion.FAST`, dopo il lavoro del cambio, subito con «riduci animazioni»); frecce sinistra e destra; con la tastiera sopra il filo è d'accento. Non esclusiva (`exclusive=False`: conteggi e filtri delle Verifiche, più d'uno acceso insieme): ogni acceso ha il suo rettangolo, che compare e scompare in dissolvenza |
 | Campo (testo, numero, elenco, data) | foglio di stile, `ui/style.pad_fields` | velo `field` senza bordo; bordo `field_line` al passaggio, 2 px di accento col fuoco; frecce piccole e spente; numeri allineati a sinistra |
 | Gruppo | `ui/style.py` (`Group`) | cornice `line`, raggio 6, intestazione piena in `line_soft` per tutta la larghezza, «?» sulla riga del titolo; **richiudibile** (R287, riga sotto) |
 | Gruppo richiudibile | `ui/style.py` (`Group`, `_Fold`) | ogni gruppo si chiude e si riapre con un clic sulla sua intestazione (R287, Daniel 30/10/2026: «tutte le sottosezioni nella barra di destra devono poter essere collassate ... con un'animazione armonizzata»). Il segno è un chevron di 10 px nel colore `muted`, col tratto delle icone (1,7 px), prima del titolo: punta in basso aperto, a destra chiuso, e ruota con il movimento; il «?» resta al suo posto a destra. Sotto il puntatore l'intestazione prende lo strato `hover` (8 % del testo su `line_soft`) e il puntatore a mano. Il corpo (i campi, nel layout che il chiamante dà al gruppo come sempre: il gruppo lo sposta in un widget suo) si apre e si chiude in altezza in `Motion.NORMAL` (180 ms, OutCubic): mentre si muove il suo layout è fermo, così i campi vengono tagliati dal bordo del corpo e non schiacciati; aprendosi il corpo è prima disposto alla sua altezza intera e poi scoperto da zero. Chiuso, il gruppo è alto quanto l'intestazione più la linea della cornice: niente buchi, e Tab non entra nei campi nascosti (il corpo è nascosto). Con «meno movimento» si apre e si chiude subito. Lo stato è ricordato per tipo di gruppo (il suo id d'aiuto, altrimenti il titolo) per la sessione: la stessa pagina rifatta, o lo stesso gruppo di un altro oggetto, torna com'era stata lasciata. Un gruppo che non deve chiudersi si chiede con `collapsible=False`. I gruppi delle finestre di dialogo seguono la stessa regola |
 | Tabella degli ingressi | `ui/plant_page.py` (`InputsTable`) | nel gruppo Stringhe, un ingresso (MPPT) per riga (R286): stringhe su quante ne prende, moduli in serie, Voc alla temperatura minima su quella massima, Umpp alla cella più calda e più fredda (la finestra MPPT nel suggerimento), Isc su quella dell'ingresso, lo stato come segno (parola e motivi nel suggerimento). Trattamento condiviso delle tabelle (`shared_tables.install`, compatta, senza velature), alta quanto le righe, nessuna barra sua; in un pannello stretto spariscono per prime Isc, poi Umpp, poi Voc, mai oltre il bordo del gruppo. La «stringa scelta» è in tre blocchi con titoli `label` (Identità e percorso, Elettrico, Verifiche), M (8) fra i blocchi e XS (4) fra titolo e testo, una grandezza per riga, le condizioni in `secondary` in fondo |
 | Riquadro di un risultato | `ui/energy_pages.Tile`, `Tiles` | velo `field` senza bordo, raggio 8; etichetta `secondary`, cifra `display`, unità `description` sulla stessa linea di base della cifra, dettaglio `secondary`; il riquadro chiave è il primo, senza tinta (R104). Una griglia sola per Producibilità, Consumi, Bilancio ed economia (R309, R310): colonne uguali, tutti alti quanto il più esigente a quella larghezza, almeno due righe di dettaglio; etichetta e dettaglio vanno a capo, la cifra resta sulla sua riga; nessun suggerimento che ripeta l'etichetta |
 | Striscia | foglio di stile (`#strip`) | come un riquadro, su una riga |
-| Scheda dei grafici e sue sottoschede | `ui/energy_pages.chart_card`, `tab_stack` | una regola per tutte le sottoschede (R284, R285, Daniel 30/10/2026): le pillole stanno al centro della loro fascia, con M (8) d'aria sopra e sotto (XS della scheda + XS della barra sopra; XS della barra + XS fra barra e filo sotto), la fascia alta 40; sotto il filo il contenuto di ogni sottoscheda, un grafico solo o una pila, parte a M (8), senza margini propri ai lati (li dà la scheda, 8) e in basso (8 della scheda); in una pila i grafici distano L (12), come le parti dei risultati. Prima: 10 sopra e 4 sotto le pillole; «Bilancio», «Dimensioni» e «Accumulo» coi margini di Qt (11) intorno ai grafici, gli altri a 0 dal filo |
+| Scheda dei grafici e sue sottoschede | `ui/energy_pages.chart_card`, `tab_stack` | una regola per tutte le sottoschede (R284, R285, Daniel 30/10/2026): i segmenti stanno al centro della loro fascia, con M (8) d'aria sopra e sotto (XS della scheda + XS della barra sopra; XS della barra + XS fra barra e filo sotto), la fascia alta 40; sotto il filo il contenuto di ogni sottoscheda, un grafico solo o una pila, parte a M (8), senza margini propri ai lati (li dà la scheda, 8) e in basso (8 della scheda); in una pila i grafici distano L (12), come le parti dei risultati. Prima: 10 sopra e 4 sotto i segmenti; «Bilancio», «Dimensioni» e «Accumulo» coi margini di Qt (11) intorno ai grafici, gli altri a 0 dal filo |
 | Riga delle basi del calcolo | `ui/energy_pages.Page.show_basis` | la prima riga dei risultati, prima dei riquadri, in Producibilità, Consumi e Bilancio ed economia (R246, R292): inverter, moduli e batterie davvero nel calcolo, su una riga, a capo solo se la scheda è stretta, il dettaglio nel suggerimento |
 | Pillola di stato | foglio di stile (`#state-*`) | 24 px, estremi tondi |
-| Gettone e conteggio | `ui/checks_page.py` | pillola con bordo, segno a sinistra |
-| Selettore a segmenti | `ui/variant_bar.py` | pillole su una pista `field`, la scelta rialzata in `panel` con la linea; «+» per aggiungere; tasto destro per il resto |
-| Elenco a sezioni | `ui/sections.py`, `ui/marks.py` | intestazioni maiuscole 11 px con il conteggio, non selezionabili; segni come pillole a destra |
+| Conteggio di un livello | `ui/checks_page.CountChip`, `ui/status_pill.py` | segmento di una pista non esclusiva (R328, P5): segno 12 px col suo colore (`symbols.paint`, l'unico disegno dei segni) a sinistra, numero `label` nel colore del testo a destra; lo zero col segno grigio e il numero `muted`, al suo posto |
+| Varianti | `ui/variant_bar.py` | la pista di segmenti (R73, R322); «+» e «…» sulla stessa pista; tasto destro per il resto |
+| Elenco a sezioni | `ui/sections.py`, `ui/marks.py` | intestazioni maiuscole 11 px con il conteggio, non selezionabili; a destra il segno e il numero, senza contenitore (R328) |
 | Schede delle Verifiche | `ui/checks_page.ChecksTree` | le voci di una sezione in una scheda, niente selezione; sotto il puntatore la voce intera col suo dettaglio prende lo strato `hover` (R153, R160); il segno tiene il suo colore anche sulla riga scelta |
 | Vista | `ui/cards.round_corners` | a 6 px dal bordo della sua scheda, quattro angoli a raggio 6 disegnati (non a maschera), 6 px fra due viste |
 | Barra della vista | `ui/viewbar.py` | soli simboli, nome e tasto nel suggerimento; raggio 6, pulsanti raggio 4; quando la barra larga mostra le parole, «Allinea a un lato» resta un'eccezione a sola icona (R183); «Nord in alto» non ha pulsante, restano N, bussola e menu del clic destro |
@@ -289,7 +288,7 @@ Regole:
   subito presente; si chiude subito. Le alternative fotografate sono il foglio che si scopre da sinistra e la sola
   dissolvenza, alla stessa durata.
 - **Cambio di fase** (`ui/phasebar.Phases._changed`, come la barra multifunzione di Office): la pagina e gli
-  strumenti della barra cambiano subito; scorre soltanto la linguetta scelta, fino alla nuova fase (110 ms, R97). Gli
+  strumenti della barra cambiano subito; scorre soltanto la linguetta scelta, fino alla nuova fase (110 ms, R97), con la stessa curva del rettangolo delle piste. Gli
   strumenti che entravano scorrendo sfarfallavano (Daniel, 24/10/2026): niente movimento dentro una barra piena di
   controlli.
 - **Cambio di argomento** (`ui/motion.crossfade`): l'argomento delle Proprietà sfuma nel successivo in 180 ms; lo
@@ -349,7 +348,7 @@ I moduli generici, che non sanno niente di fotovoltaico:
 | `ui/style.py` | gruppi, menu senza sottolineature, testo dei campi | `design` |
 | `ui/cards.py` | schede dei pannelli, distanze, angoli delle viste | `design`, `theme_colors` |
 | `ui/popups.py`, `ui/fades.py`, `ui/motion.py`, `ui/separators.py` | i comportamenti del §5 | `design` |
-| `ui/menubar.py`, `ui/panel_buttons.py`, `ui/variant_bar.py` | barra dei menu ad Alt, pulsanti delle schede, selettore a segmenti | `design`, `icons` |
+| `ui/menubar.py`, `ui/panel_buttons.py`, `ui/segments.py`, `ui/variant_bar.py` | barra dei menu ad Alt, pulsanti delle schede, pista di segmenti, varianti | `design`, `icons`, `motion` |
 | `ui/day_picker.py` | il calendario dei campi data: un fondo solo, giorno scelto neutro, oggi in un anello | `design`, `icons` |
 | `ui/icons.py` | icone Lucide (ISC) e proprie, nel colore del tema | `paths` |
 | `ui/sections.py`, `ui/marks.py` | elenchi a sezioni con i segni | `design` |
@@ -369,7 +368,7 @@ Passi per un programma nuovo:
 
 Il modello a sé esiste dal 24/10/2026: `%USERPROFILE%\dev\qt-app-template`, pacchetto `qtkit`, con la galleria e
 una finestra d'esempio. Il 25/10/2026 (R122) vi sono stati portati il catalogo dei testi, i tipi di tasti, le barre
-di scorrimento, il calendario, i campi data e il cursore, le pillole delle schede accorpate e la minore presenza
+di scorrimento, il calendario, i campi data e il cursore, la pista delle schede accorpate e la minore presenza
 dell'accento; la provenienza commit per commit è nel suo `docs/da-dove-viene.md`.
 
 ## 8. La carta: la relazione e i documenti stampati
