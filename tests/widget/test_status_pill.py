@@ -1,8 +1,8 @@
-"""Shared quiet status pills use the same geometry in delegates and filter buttons."""
+"""A level's sign and count (R328): the same geometry in the tree's rows and on the Checks' track, no container."""
 import unittest
 
 import _setup
-from PySide6.QtCore import QPoint, QRectF, Qt
+from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QImage, QPainter
 
 setUpModule = _setup.keep_global_state
@@ -25,60 +25,64 @@ class StatusPills(unittest.TestCase):
         from meridiana.ui import status_pill
         from meridiana.ui.design import Text, text_font
         font = text_font(Text.LABEL)
-        for level in ("fail", "warn", "info", "ok"):
-            for text in ("0", "1", "12", "999"):
-                size = status_pill.size_hint(text, font, 20)
-                parts = status_pill.layout(QRectF(0, 0, size.width(), 20), level, text, font)
-                self.assertEqual(parts.symbol_box.left(), 6)
-                self.assertAlmostEqual(parts.number.boundingRect().right(), size.width() - 10)
-                self.assertEqual(parts.symbol_box.width(), 13)
-                self.assertAlmostEqual(parts.symbol.boundingRect().center().x(), parts.symbol_box.center().x())
-                self.assertAlmostEqual(parts.symbol.boundingRect().center().y(), 10)
-                self.assertAlmostEqual(parts.number.boundingRect().center().y(), 10)
-                self.assertGreaterEqual(parts.number.boundingRect().left() - parts.symbol_box.right(), 4)
+        for text in ("0", "1", "12", "999"):
+            size = status_pill.size_hint(text, font, 20)
+            parts = status_pill.layout(QRectF(0, 0, size.width(), 20), text, font)
+            self.assertEqual(parts.symbol_box.left(), 6)
+            self.assertAlmostEqual(parts.number.boundingRect().right(), size.width() - 8)
+            self.assertEqual(parts.symbol_box.width(), 12)
+            self.assertAlmostEqual(parts.symbol_box.center().y(), 10)
+            self.assertAlmostEqual(parts.number.boundingRect().center().y(), 10)
+            self.assertGreaterEqual(parts.number.boundingRect().left() - parts.symbol_box.right(), 4)
 
-    def test_pills_use_soft_status_backgrounds_with_readable_ink_and_a_quieter_zero(self):
+    def picture(self, level, text, ink, off=False):
         from meridiana.ui import status_pill
+        from meridiana.ui.design import Text, text_font
+        image = QImage(60, 20, QImage.Format.Format_ARGB32_Premultiplied)
+        image.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(image)
+        status_pill.paint(painter, QRectF(0, 0, 60, 20), level, text, text_font(Text.LABEL), ink, off)
+        painter.end()
+        return image
+
+    def test_no_container_the_sign_in_its_colour_and_a_zero_grey(self):
+        """R328, P5: nothing drawn round them, in both themes; the number in the ink given; the sign's hue is the
+        level's, and a count of nought has it grey."""
         for mode in ("light", "dark"):
             theme = self.look(mode)
-            palette = self.app.palette()
-            for level in ("fail", "warn", "info", "ok"):
-                ground, ink, line = status_pill.colours(level, palette)
-                zero_ground, zero_ink, _ = status_pill.colours(level, palette, zero=True)
-                text = QColor(theme.tokens["text"])
-                self.assertEqual(ink, text)
-                self.assertGreater(abs(ground.lightness() - ink.lightness()), 80)
-                self.assertNotEqual(ground, line)
-                self.assertNotEqual(ground, zero_ground)
-                self.assertLess(abs(zero_ink.lightness() - zero_ground.lightness()),
-                                abs(ink.lightness() - ground.lightness()))
+            ink = QColor(theme.tokens["text"])
+            for level, red_more in (("fail", True), ("ok", False)):
+                image = self.picture(level, "12", ink)
+                self.assertEqual(image.pixelColor(0, 0).alpha(), 0)          # no ground, no line
+                self.assertEqual(image.pixelColor(30, 10).alpha(), 0)        # between the sign and the number
+                sign = image.pixelColor(8, 10)
+                self.assertEqual(sign.red() > sign.green(), red_more, level)
+                grey = self.picture(level, "0", QColor(theme.tokens["muted"]), off=True).pixelColor(8, 10)
+                self.assertLess(abs(grey.red() - grey.green()), 12, level)
 
     def test_checked_filter_keeps_a_visible_state_after_the_pointer_leaves(self):
         from meridiana.ui.checks_page import CountChip
         self.look("light")
         chip = CountChip("warn")
         self.addCleanup(_setup.dispose, chip)
+        from meridiana.ui.segments import Segments, tokens
+        track = Segments(exclusive=False)
+        self.addCleanup(_setup.dispose, track)
         chip.setText("12")
-        chip.resize(chip.sizeHint())
+        track.add("12", "warn", segment=chip)
+        track.show()
+        self.app.processEvents()
+
         def picture():
-            image = QImage(chip.size(), QImage.Format.Format_ARGB32_Premultiplied)
-            image.fill(Qt.GlobalColor.transparent)
-            painter = QPainter(image)
-            chip.render(painter, QPoint())
-            painter.end()
-            return image
+            track.repaint()
+            self.app.processEvents()
+            return track.grab().toImage()
         before = picture()
         chip.setChecked(True)
-        self.assertNotEqual(before, picture())
+        self.assertTrue(_setup.wait_until(self.app, lambda: track.fading is None, 1))
+        after = picture()
+        self.assertNotEqual(before, after)
+        dpr, r = after.devicePixelRatio(), chip.geometry()
+        self.assertEqual(after.pixelColor(round((r.left() + 3) * dpr), round(r.center().y() * dpr)),
+                         QColor(tokens()["panel"]))
 
-    def test_transparent_button_palettes_still_choose_the_real_light_surface(self):
-        from PySide6.QtGui import QPalette
-        from meridiana.ui import status_pill
-        self.look("light")
-        palette = QPalette(self.app.palette())
-        for role in (QPalette.ColorRole.Window, QPalette.ColorRole.Base):
-            palette.setColor(role, QColor(0, 0, 0, 0))
-        for alpha in (0, 255):
-            palette.setColor(QPalette.ColorRole.Base, QColor(0, 0, 0, alpha))
-            ground, ink, _ = status_pill.colours("info", palette)
-            self.assertGreater(ground.lightness() - ink.lightness(), 100)

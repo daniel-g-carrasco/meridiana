@@ -173,24 +173,18 @@ def gallery(theme) -> QMainWindow:
     for s in states:
         s.setFont(text_font(Text.CONTROL))
     cb.addWidget(row(*states))
-    # the chips: filters and counts (Button.CHIP), as the Checks' head
-    from .marks import icon as mark_icon
-    chips = []
-    for text, checked in (("Per livello", False), ("Questa fase", True), ("Questo oggetto", False)):
-        c = QToolButton()
-        c.setObjectName("filter")
-        c.setText(text)
-        c.setCheckable(True)
-        c.setChecked(checked)
-        chips.append(c)
+    # the filters and the counts, as the Checks' head: tracks not exclusive (R322, R328)
+    from .checks_page import CountChip
+    from .segments import Segments
+    filters = Segments(exclusive=False)
+    for text, checked in (("Questa fase", True), ("Questo oggetto", False)):
+        filters.add(text).setChecked(checked)
+    counts = Segments(exclusive=False)
     for level, n in (("fail", 0), ("warn", 1), ("info", 12)):
-        c = QToolButton()
-        c.setObjectName("count")
-        c.setIcon(mark_icon(level))
+        c = CountChip(level)
         c.setText(str(n))
-        c.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        chips.append(c)
-    cb.addWidget(row(*chips, spacing=Space.XS))
+        counts.add(str(n), level, segment=c)
+    cb.addWidget(row(counts, filters, spacing=Space.L))
     # the tabs and the segments: one track (R109, R121, R322)
     from .segments import on_bar
     tabs = QTabBar()

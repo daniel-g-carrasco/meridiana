@@ -9,7 +9,7 @@ In the tree it is as tall as the text of the row, with its number beside it in t
 from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
-from PySide6.QtGui import QColor, QFont, QIcon, QIconEngine, QPainter, QPainterPath, QPixmap
+from PySide6.QtGui import QColor, QFont, QIcon, QIconEngine, QPainter, QPainterPath, QPalette, QPixmap
 from PySide6.QtWidgets import QGraphicsItem, QStyledItemDelegate, QWidget
 
 from .. import theme_colors
@@ -84,7 +84,6 @@ class MarkDelegate(QStyledItemDelegate):
     Section headers place it below their air; the row's selection remains across the columns."""
 
     GAP = 4
-    INSET = 4           # inside the pill, around the mark and the number
     EDGE = 10           # from the row's right end: inside the selection's pill, off its edge
 
     @classmethod
@@ -120,7 +119,7 @@ class MarkDelegate(QStyledItemDelegate):
         size = status_pill.size_hint(text, font, Button.SMALL[0])
         pill = QRectF(r.right() - self.EDGE - size.width(), r.center().y() - size.height() / 2,
                       size.width(), size.height())
-        status_pill.paint(painter, pill, level, text, font, option.palette)
+        status_pill.paint(painter, pill, level, text, font, option.palette.color(QPalette.ColorRole.WindowText))
 
     def sizeHint(self, option, index) -> QSize:
         mark = index.data(MARK_ROLE)

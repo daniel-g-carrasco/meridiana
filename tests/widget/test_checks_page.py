@@ -448,9 +448,9 @@ class ChecksPanel(unittest.TestCase):
         self.assertFalse(page.filters.exclusive)
         self.assertLess(page.views.y() + page.views.height(), page.filters.y() + 1)
         page.phase_button.click()
-        page.object_button.setChecked(True)
+        page.show_subset(("subfield", self.sid), "Sud")
         self.assertTrue(page.phase_button.isChecked() and page.object_button.isChecked())
-        page.object_button.setChecked(False)
+        page.show_subset(None)
         page.phase_button.click()
         page.set_view("area")
         self.assertEqual(page.views.current(), "area")
@@ -478,7 +478,6 @@ class ChecksPanel(unittest.TestCase):
     def test_the_counts_have_their_mark_left_and_their_number_right_all_as_wide(self):
         """R130, R51 (24/10/2026: «uno deve stare a destra e l'altro a sinistra»): the same room on both sides, the
         same width for the four, the number at the right edge."""
-        from PySide6.QtGui import QColor
         page = self.page
         widths = {b.sizeHint().width() for b in page.counts.values()}
         self.assertEqual(len(widths), 1)
@@ -487,11 +486,8 @@ class ChecksPanel(unittest.TestCase):
         b.setText("12")
         b.setEnabled(True)
         self.app.processEvents()
-        image = b.grab().toImage()
-        ground = QColor(image.pixel(image.width() // 2, 1))
-        ink = [x for x in range(image.width()) if any(QColor(image.pixel(x, y)) != ground and
-                                                      QColor(image.pixel(x, y)).alpha() == 255 and
-                                                      abs(QColor(image.pixel(x, y)).lightness() - ground.lightness()) > 60
+        image = b.grab().toImage()              # the segment draws no ground of its own: the track's is under it
+        ink = [x for x in range(image.width()) if any(image.pixelColor(x, y).alpha() > 200
                                                       for y in range(4, image.height() - 4))]
         left, right = ink[0], image.width() - 1 - ink[-1]
         self.assertLessEqual(abs(left - right), 3 * b.devicePixelRatioF() + 2, (left, right))
@@ -517,6 +513,8 @@ class ChecksPanel(unittest.TestCase):
         self.assertEqual({lv: b.text() for lv, b in page.counts.items()}, {"fail": "1", "warn": "2", "info": "1", "ok": "1"})
         self.assertTrue(page.counts["warn"].toolTip().startswith("2 to check: a click shows only these"))
         self.assertFalse(page.counts["fail"].icon().isNull())
+        self.assertIs(page.counts["fail"].parentWidget(), page.levels_track)     # one track (R328, P5)
+        self.assertFalse(page.levels_track.exclusive)
         page.counts["ok"].click()
         passed = self.heads()[3]
         self.assertTrue(passed.isExpanded())                             # closed by default, opened

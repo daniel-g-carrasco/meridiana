@@ -176,7 +176,6 @@ def style_sheet(t: dict, dark: bool = False) -> str:
     button = padding(S.XS, S.L)
     button_focus = padding(S.XS, S.L, Line.FOCUS)
     chip_inner = Button.CHIP[0] - 2                            # 22: a chip's inside, its border around
-    pill = Radius.pill(Size.CHIP)
     return f"""
 QMainWindow {{ background: {t['window']}; }}
 QTabBar {{ background: transparent; }}
@@ -277,16 +276,13 @@ QToolButton[popupMode="2"] {{ padding-right: {S.XL}px; }}
 QToolButton::menu-indicator {{ {drop} subcontrol-origin: padding; subcontrol-position: center right; right: {S.XS}px; }}
 QToolButton[grouped="true"]::menu-indicator {{ {drop} subcontrol-origin: padding; subcontrol-position: top right;
     top: {S.S}px; right: 0px; }}
-QToolButton#filter, QToolButton#count {{ border: 1px solid {t['line']}; border-radius: {pill:g}px;
+QToolButton#filter {{ border: 1px solid {t['line']}; border-radius: {Button.CHIP[1]}px;
     padding: 0 {S.L - 1}px; min-height: {chip_inner}px; max-height: {chip_inner}px; color: {t['text']};
     background: transparent; }}
-QToolButton#count {{ padding-left: {S.M - 1}px; }}
-QToolButton#filter:hover, QToolButton#count:hover {{ background: {hover}; }}
-QToolButton#filter:pressed, QToolButton#count:pressed {{ background: {press}; }}
-QToolButton#filter:checked, QToolButton#count:checked {{ background: {press}; color: {t['text']};
-    border-color: {press}; }}
+QToolButton#filter:hover {{ background: {hover}; }}
+QToolButton#filter:pressed {{ background: {press}; }}
+QToolButton#filter:checked {{ background: {press}; color: {t['text']}; border-color: {press}; }}
 QToolButton#filter[popupMode="2"] {{ padding-right: {S.XXL}px; }}
-QToolButton#count:disabled {{ color: {t['muted']}; }}
 QToolButton#row-help-button {{ padding: 0; border: 1px solid {t['line']}; border-radius: {Radius.pill(Size.CONTROL):g}px;
                            min-width: {Size.CONTROL - 2}px; max-width: {Size.CONTROL - 2}px;
                            min-height: {Size.CONTROL - 2}px; max-height: {Size.CONTROL - 2}px;
@@ -346,7 +342,7 @@ QTableView QHeaderView::section {{ background: {t['field']}; color: {t['text2']}
                                   border-bottom: 1px solid {t['line_soft']}; padding: {S.XS}px {S.M}px; }}
 QTableView QTableCornerButton::section {{ background: {t['field']}; border: none; }}
 QLabel#state-done, QLabel#state-stale, QLabel#state-todo, QLabel#state-unavailable, QLabel#state-planned {{
-    border: 1px solid transparent; border-radius: {pill:g}px; padding: 0 {S.M}px; min-height: {chip_inner}px;
+    border: 1px solid transparent; border-radius: {R.CONTROL}px; padding: 0 {S.M}px; min-height: {chip_inner}px;
     max-height: {chip_inner}px; }}
 QLabel#state-done {{ background: {t['select_bg']}; color: {t['select_fg']}; }}
 QLabel#state-stale {{ background: transparent; color: {t['text']}; border-color: {t['field_line']}; }}
@@ -380,7 +376,7 @@ QLabel#recent-name {{ background: transparent; }}
 QLabel#fpage-title {{ color: {t['text']}; }}
 QLabel#fpage-lead, QLabel#ftile-text {{ color: {t['text2']}; }}
 QLabel#fpage-section {{ color: {t['muted']}; }}
-QLabel#ftile-format {{ color: {t['text2']}; border: 1px solid {t['line']}; border-radius: {Radius.pill(18):g}px;
+QLabel#ftile-format {{ color: {t['text2']}; border: 1px solid {t['line']}; border-radius: {R.CONTROL}px;
                        padding: 0 {S.S}px; }}
 QToolButton#help-button {{ padding: 0; border: 1px solid {t['line']}; border-radius: {Button.HELP[1]}px;
                            color: {t['muted']}; background: transparent; }}

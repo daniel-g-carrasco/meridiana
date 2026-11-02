@@ -16,7 +16,7 @@ from PySide6.QtCore import QRect, QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetrics, QGuiApplication, QPainter,
                            QPainterPath, QPalette, QPen)
 from PySide6.QtWidgets import (QAbstractItemView, QFrame, QHBoxLayout, QHeaderView, QLabel, QMenu, QPushButton,
-                               QSizePolicy, QStyle, QStyleOptionToolButton, QStyleOptionViewItem,
+                               QSizePolicy, QStyle, QStyleOptionViewItem,
                                QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from .. import checks, theme_colors
@@ -25,6 +25,7 @@ from . import icons, symbols
 from .cards import default_tokens
 from .design import Radius, Space
 from .sections import SectionDelegate, is_section, section
+from .segments import Segment, Segments
 
 # the status colours of the charts' palette (critical, warning, good), on the mark only: the mark and the words
 # carry the meaning, the colour helps; what is only worth knowing keeps the colour of the text
@@ -367,17 +368,15 @@ class ChecksTree(QTreeWidget):
         painter.restore()
 
 
-class CountChip(QToolButton):
-    """The head's level filter: the same quiet status pill as the tree, at the 24 px interactive size.
-    Its state stays visible while its level is selected; two digit slots keep the four filters equal."""
+class CountChip(Segment):
+    """A level on the track of the head (R328, P5): its sign and its count as in the tree, raised while its level is
+    kept; a count of nought grey, but in its place; two digit slots keep the four as wide."""
 
     def __init__(self, level: str):
         super().__init__()
         from .marks import icon as mark_icon
         self.level = level
-        self.setObjectName("count")
-        self.setCheckable(True)
-        self.setAutoRaise(True)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setIcon(mark_icon(level))
 
     def sizeHint(self) -> QSize:
@@ -388,16 +387,12 @@ class CountChip(QToolButton):
     def minimumSizeHint(self) -> QSize:
         return self.sizeHint()
 
-    def paintEvent(self, event) -> None:
+    def paint_face(self, p, box, t) -> None:
         from . import status_pill
         from .design import Text, text_font
-        p = QPainter(self)
-        opt = QStyleOptionToolButton()
-        self.initStyleOption(opt)
-        status_pill.paint(p, QRectF(self.rect()), self.level, self.text(), text_font(Text.LABEL, self.font()),
-                          opt.palette, checked=self.isChecked(), hovered=bool(opt.state & QStyle.StateFlag.State_MouseOver),
-                          focused=bool(opt.state & QStyle.StateFlag.State_HasFocus), pressed=self.isDown(),
-                          enabled=self.isEnabled())
+        off = self.text() == "0"
+        status_pill.paint(p, box, self.level, self.text(), text_font(Text.LABEL, self.font()),
+                          QColor(t["muted"] if off else t["text"]), off=off)
 
 
 class ChecksPage(QWidget):
@@ -432,7 +427,6 @@ class ChecksPage(QWidget):
         box = QVBoxLayout(self)
         # the view, a track of its own on a row above the filters (R322, C4; the menu of study 17, F.5, before it): the
         # choice is kept in the settings; narrow, its words are cut with their tooltip whole
-        from .segments import Segments
         self.views = Segments()
         tip = _("How the checks are grouped: by level, by object, by area, or what to look at before delivering")
         for key, name in view_names().items():
@@ -454,13 +448,16 @@ class ChecksPage(QWidget):
         self.summary.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
         self.summary.linkActivated.connect(self.go_to)
         head.addWidget(self.summary, 1)
-        # the counts as pills, each with its mark and its number, each a filter that stays pressed (R130)
+        # the counts on a track, each with its sign and its number, each a filter that stays pressed (R130, R328): more
+        # than one can be on, so it is a track not exclusive
         self.counts: dict = {}
+        self.levels_track = Segments(exclusive=False)
         for lv in checks.LEVELS:
             b = CountChip(lv)
+            self.levels_track.add("", lv, segment=b)
             b.toggled.connect(lambda on, lv=lv: self._level_toggled(lv, on))
-            head.addWidget(b)
             self.counts[lv] = b
+        head.insertWidget(0, self.levels_track)
         head.addSpacing(8)
         # the two filters that are real questions (design 3.8), this phase and this object: a track not exclusive, each
         # keeps its state and the two can stay on together, as before (R322, C4)
@@ -472,7 +469,6 @@ class ChecksPage(QWidget):
                                               _("Only the checks of the object selected in the views or in the tree"))
         self.object_button.toggled.connect(self._object_toggled)
         head.addWidget(self.filters)
-        # the chips and the counts: pills of the global sheet (ui/theme.py, Button.CHIP)
         box.addLayout(head)
         # a fix asked for, said before it is kept (R126: «"correggi" dovrebbe presentare le correzioni proposte
         # prima di applicarle all'istante»): an edit is made as a preview with the views on it, Keep or Take back;

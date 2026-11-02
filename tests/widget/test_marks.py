@@ -30,12 +30,11 @@ class Sharp(unittest.TestCase):
 
     def test_in_the_tree_the_mark_is_as_tall_as_the_text_and_the_number_beside_it(self):
         from PySide6.QtCore import Qt
-        from PySide6.QtGui import QFontMetrics
+        from PySide6.QtGui import QColor, QFontMetrics
         from PySide6.QtWidgets import QStyleOptionViewItem, QTreeWidget, QTreeWidgetItem
 
         from meridiana.ui.marks import MARK_ROLE, MarkDelegate
         from meridiana.ui.design import Text, text_font
-        from meridiana.ui import status_pill
         tree = QTreeWidget()
         self.addCleanup(tree.deleteLater)
         tree.setColumnCount(2)
@@ -49,7 +48,7 @@ class Sharp(unittest.TestCase):
         text = QFontMetrics(tree.font()).height()
         small, big = (delegate.sizeHint(option, tree.indexFromItem(it, 1)) for it in (one, many))
         self.assertGreaterEqual(small.height(), text)
-        # a pill with the number always written («✘ 1», study 17, T2): wider by the second digit
+        # a sign with the number always written («✘ 1», study 17, T2): wider by the second digit
         metrics = QFontMetrics(text_font(Text.LABEL, tree.font()))
         self.assertGreaterEqual(big.width() - small.width(), metrics.horizontalAdvance("12") - metrics.horizontalAdvance("1"))
         self.assertGreater(small.width(), text + metrics.horizontalAdvance("1"))
@@ -62,11 +61,12 @@ class Sharp(unittest.TestCase):
         dpr = shot.devicePixelRatio()                        # on a real screen the grab is in device pixels
         row = shot.copy(round(tree.header().sectionPosition(1) * dpr), round(rect.y() * dpr),
                         round(tree.header().sectionSize(1) * dpr), round(rect.height() * dpr))
-        ground = status_pill.colours("warn", tree.palette())[0]
-        tinted = sum(1 for x in range(row.width()) for y in range(row.height())
-                     if row.pixelColor(x, y) == ground)
-        self.assertGreater(tinted, 0.25 * text * text / 2 * dpr * dpr)
-        self.assertGreaterEqual(small.height(), 24, "The 20 px pill has air above and below")
+        ground = tree.viewport().palette().color(tree.viewport().backgroundRole())
+        amber = sum(1 for x in range(row.width()) for y in range(row.height())
+                    if row.pixelColor(x, y).red() > row.pixelColor(x, y).blue() + 80)
+        self.assertGreater(amber, 20 * dpr * dpr)                # the sign, in its colour, no container (R328)
+        self.assertNotEqual(ground, QColor())
+        self.assertGreaterEqual(small.height(), 24, "The 20 px row of a mark has air above and below")
         # the mark has a role of its own: the index the Checks keep in UserRole stays beside it, and the text too
         many.setData(1, Qt.ItemDataRole.UserRole, 7)
         self.assertEqual((many.data(1, Qt.ItemDataRole.UserRole), many.data(1, MARK_ROLE)), (7, ("warn", 12)))
