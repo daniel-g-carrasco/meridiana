@@ -1387,6 +1387,35 @@ def renumber(runs: list[dict], before: list, after: list, moved: dict) -> list[d
     return out
 
 
+def remove_unit(energy: dict | None, runs: list[dict], unit: int, strings: bool) -> tuple[list[dict] | None, list[dict]]:
+    """The list of the inverters and the strings without inverter `unit` (R299): (the entries as format 8 writes them,
+    the strings). The one of an entry of more goes by one, those after it take the number before. Its strings go with it
+    with `strings`; without, they stay where they are on the roof, on no inverter (0: the checks say so, as for an
+    inverter taken out of the list, R118) and their modules stay in them: the designer gives them another inverter, or
+    Undo. With no inverter chosen (Meridiana's, sized by itself) there is none to take out: entries None."""
+    keys = unit_keys(energy)
+    entries = None
+    if 0 < unit <= len(keys):
+        entries = system.inverter_entries(energy)
+        where = keys[unit - 1][0]
+        if entries[where]["count"] > 1:
+            entries[where]["count"] -= 1
+        else:
+            entries.pop(where)
+    out = []
+    for r in runs:
+        r = dict(r, modules=list(r.get("modules") or []))
+        inv = r.get("inverter", 0)
+        if inv == unit:
+            if strings:
+                continue
+            r["inverter"], r["mppt"] = 0, 0
+        elif entries is not None and inv.__class__ is int and inv > unit:
+            r["inverter"] = inv - 1
+        out.append(r)
+    return entries, out
+
+
 def delete_run(runs: list[dict], index: int) -> list[dict]:
     """The strings without string `index`: its modules in no string."""
     return [dict(r, modules=list(r.get("modules") or [])) for i, r in enumerate(runs) if i != index]

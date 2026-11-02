@@ -130,6 +130,10 @@ def commands() -> list[Command]:
         c("strings_complete", _("Co&mplete the strings"), (), "compute"),
         c("strings_manual", _("&Draw a string"), (), "compute"),
         c("strings_clear", _("Delete all the stri&ngs"), (), "compute"),
+        # chosen on the plan from their modules (R299): tools of the plan, a click deletes, Esc leaves
+        c("tool_erase_string", _("Delete a string"), (), "compute"),
+        c("tool_erase_inverter_strings", _("Delete an inverter and its strings"), (), "compute"),
+        c("tool_erase_inverter", _("Delete an inverter"), (), "compute"),
         c("import_curve", _("Import a load c&urve…"), (), "compute"),
         c("consumption_base", _("&Base of the consumption"), (), "compute"),
         c("battery_catalog", _("Configure s&torage…"), (), "compute"),

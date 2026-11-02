@@ -1502,7 +1502,7 @@ class PlantPhase(PlantWindow):
                           ],
                          ["tool_select", "tool_move", "tool_rotate",            # R295
                           "tool_subfield", "tool_row", "fill", "empty", "inverter_catalog", "inverter_auto", "battery_catalog", "strings_auto",
-                          "strings_complete", "strings_manual", "strings_clear"])
+                          "strings_complete", "strings_manual", "tool_erase_string"])
         QTest.keyClick(self.win, Qt.Key.Key_PageUp, Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(self.win.phase(), "model")
         self.assertEqual(self.win.split.indexOf(self.win.plan), 0)     # back beside the 3D view

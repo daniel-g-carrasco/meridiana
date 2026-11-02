@@ -30,6 +30,8 @@ NAMES = {"ridge": "house", "undo": "undo-2", "redo": "redo-2", "select": "mouse-
          "copy_notes": "clipboard-copy",
          # the strings of the Plant phase (task 16d)
          "strings_auto": "spline", "strings_complete": "list-plus", "strings_manual": "route", "strings_clear": "eraser",
+         # deleted from their modules on the plan (R299)
+         "erase_string": "square-x", "erase_inverter_strings": "trash-2", "erase_inverter": "zap-off",
          # the building templates (task 16a)
          "building_template": "shapes",
          # Move and Rotate (task 16b)

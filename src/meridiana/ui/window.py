@@ -579,6 +579,7 @@ class MainWindow(QMainWindow):
         self.plan.markClicked.connect(self._mark_clicked)
         self.plan.pointsPicked.connect(self._points_picked)
         self.plan.stringPicked.connect(self._string_picked)
+        self.plan.eraseClicked.connect(self._erase_clicked)
         self.plan.stringRedraw.connect(self._string_redraw_at)
         self.plan.stringEscape.connect(lambda: self._choose_string(-1))
         self.plan.stringMenu.connect(self._string_menu)
@@ -1110,6 +1111,18 @@ class MainWindow(QMainWindow):
                                           "it up"))
         act(compute, "strings_clear", self._strings_clear,
             tip=_("Every string deleted, after a question: the modules stay laid, in no string (one undo step)"))
+        # R299: tools of the plan: the pointer over a module lights what a click deletes (one undo step for each click)
+        for tool, tip in (("erase_string", _("Pass over a module to light its string, click to delete the string: the "
+                                             "modules stay laid. Esc leaves")),
+                          ("erase_inverter_strings", _("Pass over a module to light all the strings of its inverter, "
+                                                       "click to delete the inverter and those strings. Esc leaves")),
+                          ("erase_inverter", _("Pass over a module to light the strings of its inverter, click to "
+                                               "delete the inverter: the strings stay, on no inverter, until you give "
+                                               "them another. Esc leaves"))):
+            a = act(compute, "tool_" + tool, lambda _c=False, t=tool: self._set_tool(t), True, tip)
+            a.setIcon(icons.icon(tool))
+            self.tool_actions["select"].actionGroup().addAction(a)
+            self.tool_actions[tool] = a
         compute.addSeparator()
         act(compute, "import_curve", self._import_curve_file,
             tip=_("A measured load curve (CSV, 15 minutes or hourly) as the consumption"))
@@ -4660,6 +4673,54 @@ class MainWindow(QMainWindow):
                            "start again. Undo restores the previous wiring.",
                            "Plant > Strings: all {n} strings cleared; the modules stay laid. Use Draw or Propose to "
                            "start again. Undo restores the previous wiring.", len(runs)).format(n=len(runs)))
+
+    def _erase_clicked(self, tool: str, sfid: str, key: str) -> None:
+        """A click with a tool that deletes (R299), one undo step: the string of the module; its inverter with all its
+        strings; its inverter alone. An inverter deleted alone leaves its strings where they are, on no inverter: the
+        checks say so until they get another one, and the message says it now (plant.remove_unit)."""
+        runs = self._runs()
+        ref = f"{sfid}/{key}"
+        index = next((i for i, r in enumerate(runs) if ref in r["modules"]), -1)
+        if index < 0:
+            self.hint.setText(_("This module is in no string: there is nothing to delete here."))
+            return
+        if tool == "erase_string":
+            self._delete_string(index)
+            return
+        unit = runs[index].get("inverter", 0)
+        if not unit:
+            self.hint.setText(_("The string of this module is on no inverter: «Delete a string» takes it away."))
+            return
+        strings = tool == "erase_inverter_strings"
+        n = sum(1 for r in runs if r.get("inverter", 0) == unit)
+        entries, after = plant_model.remove_unit(self.project.energy, runs, unit, strings)
+        if entries is None and not strings:
+            self.hint.setText(_("This is the inverter Meridiana sizes by itself: there is none in the list to delete."))
+            return
+
+        def put(p):
+            if entries is not None:
+                p.energy.pop("inverter", None)
+                p.energy.pop("inverter_count", None)
+                if entries:
+                    p.energy["inverters"] = entries
+                else:
+                    p.energy.pop("inverters", None)
+            p.energy["strings"] = plant_model.touched(p.energy.get("strings"), after)
+        self.chosen_string = -1
+        self.edit(_("Delete inverter {n} and its strings").format(n=unit) if strings else
+                  _("Delete inverter {n}").format(n=unit), put)
+        self._show_chosen(-1)
+        if strings:
+            self.tell(ngettext("Inverter {u} and its string deleted: the modules stay laid, in no string (Ctrl+Z brings "
+                               "them back).",
+                               "Inverter {u} and its {n} strings deleted: the modules stay laid, in no string (Ctrl+Z "
+                               "brings them back).", n).format(u=unit, n=n))
+        else:
+            self.tell(ngettext("Inverter {u} deleted: its string stays on the roof, on no inverter, and the checks say "
+                               "so. Give it another inverter in the Strings list, or Ctrl+Z.",
+                               "Inverter {u} deleted: its {n} strings stay on the roof, on no inverter, and the checks "
+                               "say so. Give them another inverter in the Strings list, or Ctrl+Z.", n).format(u=unit, n=n))
 
     def _delete_string(self, index: int) -> None:
         """Del with a string chosen (R115): that string deleted, its modules in no string (one undo step)."""

@@ -45,6 +45,7 @@ DRAWING = {"building", "pitch", "ridge", "subfield", "exclusion"}   # ridge: a l
 PITCH_FIELDS = ("depth", "tilt", "ridge", "eave")   # the rows of the Pitch card a number typed goes to (R274)
 MOVABLE = ("building", "subfield", "exclusion", "row", "prop")   # what Move takes (task 16b; a row, task 16c)
 PLANT_MOVABLE = ("subfield", "row", "module")                    # what it takes in the Plant (R295)
+ERASE_TOOLS = ("erase_string", "erase_inverter_strings", "erase_inverter")      # R299: from their modules on the plan
 EDGE_KINDS = ("exclusion", "subfield", "pitch", "building")      # whose sides a pick of any side finds, smallest first
 ARROWS = {Qt.Key.Key_Left: "left", Qt.Key.Key_Right: "right", Qt.Key.Key_Up: "up", Qt.Key.Key_Down: "down"}
 LEFT_WAIT_MS = 150             # how long a left press waits for the other button of a gesture (left + right)
@@ -57,6 +58,7 @@ STRING_DOT_MIN_MODULE_PX = 14.0   # below this, 8 px dots merge into the line wh
 Z_TILES, Z_BUILDING, Z_PITCH, Z_SUBFIELD, Z_EXCLUSION, Z_MODULES, Z_SELECTION = 0, 10, 12, 20, 25, 30, 40
 Z_PROP = 32                     # R269: a tree's crown over the modules it shades, under the wiring and the selection
 Z_WIRING = 35
+LIGHT_ALPHA = 150               # what is lit as one (R299, R300): enough to tell it from the modules beside it
 Z_VEIL = 1                      # over the tiles (0 and 0.5), under everything drawn
 Z_UNDERLAY = 2                  # the images imported (underlay.py): over the veil, under the drawing
 # the inputs of an inverter, told apart on the dark blue of the modules: light hues, each with a dark halo
@@ -230,6 +232,13 @@ def hints() -> dict:
                        "east-west. Esc cancels."),
         "move": _("Move: click what to move (a building, a sub-field, an exclusion)."),
         "measure": _("Measure: click two points; the distance stays on screen until the next click."),
+        "erase_string": _("Delete a string: pass over a module to light its whole string, click to delete it (the "
+                          "modules stay laid). One Ctrl+Z for each click, Esc leaves."),
+        "erase_inverter_strings": _("Delete an inverter and its strings: pass over a module to light all the strings of "
+                                    "its inverter, click to delete them all. One Ctrl+Z for each click, Esc leaves."),
+        "erase_inverter": _("Delete an inverter: pass over a module to light the strings of its inverter, click to "
+                            "delete the inverter; the strings stay, on no inverter. One Ctrl+Z for each click, Esc "
+                            "leaves."),
     }
 
 
@@ -437,6 +446,7 @@ class PlanView(QGraphicsView):
     # a free pitch drawn (R274): its ring and what its card says, {"swapped", "tilt", "ridge", "eave"} (None: the
     # building's own); a ridge drawn (R275): its points and the ridge height typed, or None
     pitchDrawn = Signal(list, dict)
+    eraseClicked = Signal(str, str, str)                   # R299: the tool, the sub-field and the key of the module
     ridgeDrawn = Signal(list, object)
 
     def __init__(self, cache_dir, parent=None):
@@ -523,6 +533,9 @@ class PlanView(QGraphicsView):
         self.rings: dict = {}              # (kind, id) -> the outline drawn, for the sides' measures
         self.edge_pick = None              # (purpose, kind, id, ring) while a side is being picked
         self.edge_any = False              # the side of any outline (pick_any_edge)
+        self.erase_at = None               # R299: the module under the pointer with a tool that deletes
+        self.erase_item = None
+        self.erase_lit: list = []
         self.pick_clicked = False          # the click that ended a pick, until the next press
         self.plant_phase = False           # the plan lent to the Plant (set_plant_phase)
         self.point_pick = None             # (purpose, how many, the points so far, the hints) while points are
@@ -793,6 +806,9 @@ class PlanView(QGraphicsView):
             scene.removeItem(self.hover_item)
         self.hover_item, self.hovered = None, ("", "", "")
         c = self.colours
+        if self.erase_item is not None:             # R299: lit again with the new wiring, the modules may have changed
+            scene.removeItem(self.erase_item)
+            self.erase_item = None
         for kind, items in self.items_by_kind.items():
             if kind not in ("modules", "groups"):
                 for it in items:
@@ -976,6 +992,68 @@ class PlanView(QGraphicsView):
         self.wiring = wiring
         self._draw_wiring()
         self._draw_draft()
+        self._erase_light()                     # what a click would delete, after the last one
+
+    # deleting strings and inverters from their modules (R299): the pointer lights what a click deletes
+
+    def _erase_modules(self) -> list[tuple[str, str]]:
+        """The modules a click would be about: of the string under the pointer, or of all those of its inverter."""
+        if self.erase_at is None or self.tool not in ERASE_TOOLS:
+            return []
+        i = self.owner(*self.erase_at)
+        if i < 0:
+            return []
+        strings = self.wiring.strings
+        inverter = strings[i].inverter
+        chosen = [strings[i]] if self.tool == "erase_string" or not inverter else \
+            [s for s in strings if s.inverter == inverter]
+        return [(sf, key) for s in chosen for sf, key, _c in s.modules]
+
+    def _module_light(self, modules: list, colour) -> QGraphicsItem | None:
+        """`modules` lit as one item, over the modules and the strings' lines: filled in `colour`, each with its outline
+        over a halo, so that they read on the photo and on the light ground; none without modules."""
+        self._router()
+        order = [self.module_index[m] for m in modules if m in self.module_index]
+        if not order:
+            return None
+        path = QPainterPath()
+        for q in self.router.quads[order].tolist():
+            path.moveTo(q[0][0], q[0][1])
+            path.lineTo(q[1][0], q[1][1])
+            path.lineTo(q[2][0], q[2][1])
+            path.lineTo(q[3][0], q[3][1])
+            path.closeSubpath()
+        W = view_colours.WIDTHS
+        fill = qcolour(colour)
+        fill.setAlpha(LIGHT_ALPHA)
+        scene = self.scene()
+        halo = scene.addPath(path, cosmetic(self.colours["halo"], W["select_module"] + W["select_halo"]))
+        ink = scene.addPath(path, cosmetic(colour, W["select_module"]), QBrush(fill))
+        group = scene.createItemGroup([halo, ink])
+        group.setZValue(Z_SELECTION + 0.2)
+        return group
+
+    def _erase_light(self) -> None:
+        if self.erase_item is not None:
+            self.scene().removeItem(self.erase_item)
+            self.erase_item = None
+        modules = self._erase_modules()
+        if modules:
+            self.erase_item = self._module_light(modules, view_colours.kind_colour("exclusion"))
+        self.erase_lit = modules
+        self.viewport().update()
+
+    def _erase_hover(self, scene_pos: QPointF) -> None:
+        kind, sfid, key = self._pick(scene_pos)
+        hit = (sfid, key) if kind == "module" else None
+        if hit != self.erase_at:
+            self.erase_at = hit
+            self._erase_light()
+        if hit is None:
+            self.cursorInfo.emit("")
+            return
+        i = self.owner(*hit)
+        self.cursorInfo.emit(self.wiring.strings[i].label if i >= 0 else _("In no string"))
 
     # the strings in the Plant phase (R114-R117): a click chooses one, a string is drawn module by module
 
@@ -1705,6 +1783,8 @@ class PlanView(QGraphicsView):
         self._drop_gesture()
         self.rotate_next = False
         self._reset_roof_draft()
+        self.erase_at = None
+        self._erase_light()
         self.setCursor(Qt.CursorShape.ArrowCursor if tool == "select" else Qt.CursorShape.CrossCursor)
         # selecting, only what changes is drawn again (the outline under the pointer); drawing, the guides follow
         # the pointer over the whole view
@@ -2678,6 +2758,13 @@ class PlanView(QGraphicsView):
         if self.tool == "move":
             self._move_press(position, modifiers)
             return
+        if self.tool in ERASE_TOOLS:
+            hit = self._module_at(position)
+            if hit is not None:
+                self.eraseClicked.emit(self.tool, *hit)
+            else:
+                self.hint.emit(hints()[self.tool])
+            return
         if self.tool == "select":
             pill = self._pill_at(position)
             if pill is not None:                    # a click on a side's pill: its length, written there (R276)
@@ -2944,6 +3031,9 @@ class PlanView(QGraphicsView):
             return
         if self.tool == "move" and self._move_key(event):
             return
+        if self.tool in ERASE_TOOLS and key == Qt.Key.Key_Escape:
+            self.toolLeft.emit()
+            return
         if self.draft is not None and key in (Qt.Key.Key_Backspace, Qt.Key.Key_Return, Qt.Key.Key_Enter,
                                               Qt.Key.Key_Escape):
             # a string being drawn (R114): Backspace takes back the last module, Enter closes it, Esc gives it up
@@ -3059,6 +3149,9 @@ class PlanView(QGraphicsView):
         cursor = from_scene(scene_pos)
         if self.tool == "move":
             self._move_cursor(scene_pos)
+            return
+        if self.tool in ERASE_TOOLS:
+            self._erase_hover(scene_pos)
             return
         if self.tool == "select":
             # nothing on the plan follows the pointer while selecting but the outline of what is under it: only

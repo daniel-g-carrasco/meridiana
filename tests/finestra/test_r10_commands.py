@@ -6,7 +6,8 @@ pointer stays where it is). PySide6 and a display (offscreen will do)."""
 import unittest
 
 import _setup
-from _fixtures import capannone
+from _fixtures import capannone, inverter_record
+from _setup import wait_until
 
 from meridiana import config
 
@@ -220,6 +221,127 @@ class ViewCommandsDuringATool(WindowCase):
         self.click((ax + bx) / 2, (ay + by) / 2)
         self.assertIsNone(plan.edge_pick)
         self.assertEqual(plan.draft, [(sfid, key)])             # the string goes on
+
+
+class StringsDeletedFromTheirModules(WindowCase):
+    """R299: «elimina stringa [...] (durante selezione evidenzia tutti i moduli della stringa in modo decente), e magari un
+    elimina inverter + stringhe [...] e un elimina inverter»."""
+
+    def setUp(self):
+        super().setUp()
+        win = self.win
+        win._add_inverter(inverter_record(), "Add")
+        win._inverter_count(0, 3)
+        keys = self.plan.module_corners[win.project.subfields[0].id][0]
+        sfid = win.project.subfields[0].id
+        self.parts = [keys[0:10], keys[10:20], keys[20:30], keys[30:40]]
+        self.sfid = sfid
+        # inverter 1: two strings; inverter 2: one; inverter 3: one
+        where = [(1, 1), (1, 2), (2, 1), (3, 1)]
+        win._strings_put("Strings", [{"inverter": u, "mppt": m, "modules": [f"{sfid}/{k}" for k in part]}
+                                     for (u, m), part in zip(where, self.parts, strict=True)])
+        win.show_phase("plant")
+        self.wired()
+
+    def wired(self):
+        win = self.win
+        expected = len(win.project.energy["strings"]["runs"])
+        self.assertTrue(wait_until(self.app, lambda: not win.plant_pending() and win.plant_state is not None
+                                   and len(win.plan.wiring.strings) == expected, 60))
+
+    def centre_of(self, key):
+        from PySide6.QtCore import QPointF
+
+        from meridiana.ui.plan import from_scene
+        keys, quads = self.plan.module_corners[self.sfid]
+        c = quads[keys.index(key)].mean(axis=0)
+        return from_scene(QPointF(float(c[0]), float(c[1])))
+
+    def test_delete_string_lights_the_whole_string_and_a_click_deletes_it_with_one_undo_esc_leaves(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        win, plan = self.win, self.plan
+        win.commands["tool_erase_string"].trigger()
+        self.assertEqual(win.phase(), "plant")
+        self.assertEqual(plan.tool, "erase_string")
+        self.assertFalse(plan.strings_mode)
+        x, y = self.centre_of(self.parts[1][3])
+        self.hover(x, y)
+        self.assertEqual(sorted(k for _s, k in plan.erase_lit), sorted(self.parts[1]))
+        self.assertIsNotNone(plan.erase_item)
+        self.hover(*self.centre_of(self.parts[0][0]))           # another string: the light moves
+        self.assertEqual(sorted(k for _s, k in plan.erase_lit), sorted(self.parts[0]))
+        self.hover(x, y)
+        self.click(x, y)
+        runs = win.project.energy["strings"]["runs"]
+        self.assertEqual(len(runs), 3)
+        self.assertNotIn(f"{self.sfid}/{self.parts[1][0]}", [m for r in runs for m in r["modules"]])
+        self.assertEqual(len(win.project.subfields[0].removed), 0)      # the modules stay laid
+        self.wired()
+        self.assertEqual(plan.erase_lit, [])                    # what it lit is gone, the tool stays
+        self.assertEqual(plan.tool, "erase_string")
+        win.commands["undo"].trigger()                          # one undo for the click
+        self.assertEqual(len(win.project.energy["strings"]["runs"]), 4)
+        self.wired()
+        QTest.keyClick(plan, Qt.Key.Key_Escape)
+        self.assertEqual(plan.tool, "select")
+        self.assertTrue(win.tool_actions["select"].isChecked())
+
+    def test_a_module_in_no_string_lights_nothing_and_says_so(self):
+        win, plan = self.win, self.plan
+        keys = plan.module_corners[self.sfid][0]
+        win.commands["tool_erase_string"].trigger()
+        x, y = self.centre_of(keys[-1])
+        self.hover(x, y)
+        self.assertEqual(plan.erase_lit, [])
+        self.click(x, y)
+        self.assertEqual(len(win.project.energy["strings"]["runs"]), 4)
+        self.assertIn("no string", win.hint.text())
+
+    def test_inverter_and_strings_goes_with_all_its_strings_and_the_next_inverters_move_up(self):
+        win, plan = self.win, self.plan
+        win.commands["tool_erase_inverter_strings"].trigger()
+        x, y = self.centre_of(self.parts[0][0])
+        self.hover(x, y)
+        self.assertEqual(sorted(k for _s, k in plan.erase_lit), sorted(self.parts[0] + self.parts[1]))
+        self.click(x, y)
+        energy = win.project.energy
+        self.assertEqual(energy["inverters"][0]["count"], 2)
+        self.assertEqual([(r["inverter"], len(r["modules"])) for r in energy["strings"]["runs"]], [(1, 10), (2, 10)])
+        win.commands["undo"].trigger()
+        self.assertEqual(win.project.energy["inverters"][0]["count"], 3)
+        self.assertEqual(len(win.project.energy["strings"]["runs"]), 4)
+
+    def test_inverter_alone_leaves_its_strings_on_no_inverter_and_says_so(self):
+        win = self.win
+        said = []
+        original = win.tell
+        win.tell = lambda text, *a: (said.append(text), original(text, *a))
+        win.commands["tool_erase_inverter"].trigger()
+        x, y = self.centre_of(self.parts[2][0])
+        self.hover(x, y)
+        self.assertEqual(sorted(k for _s, k in self.plan.erase_lit), sorted(self.parts[2]))
+        self.click(x, y)
+        energy = win.project.energy
+        self.assertEqual(energy["inverters"][0]["count"], 2)
+        self.assertEqual([r["inverter"] for r in energy["strings"]["runs"]], [1, 1, 0, 2])
+        self.assertEqual(len(energy["strings"]["runs"][2]["modules"]), 10)
+        self.assertTrue(any("on no inverter" in s for s in said), said)
+        self.wired()
+        self.assertEqual(sum(1 for s in self.plan.wiring.strings if not s.inverter), 1)
+        self.click(x, y)                                        # now on none: nothing to delete, it says why
+        self.assertEqual(win.project.energy["inverters"][0]["count"], 2)
+        self.assertIn("no inverter", win.hint.text())
+
+    def test_the_commands_are_in_the_menu_of_one_button_with_start_again(self):
+        win = self.win
+        bar = win.bars["plant"]
+        button = bar.button_of("tool_erase_inverter")
+        self.assertIs(bar.button_of("strings_clear"), button)
+        self.assertIs(bar.buttons()["tool_erase_string"], button)
+        win.commands["tool_erase_inverter"].trigger()
+        self.assertEqual(button.text(), "Delete inverter")
+        self.assertTrue(button.isChecked())
 
 
 class ButtonsWithAMenu(WindowCase):

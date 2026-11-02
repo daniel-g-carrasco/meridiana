@@ -123,7 +123,8 @@ class ThePhases(unittest.TestCase):
         lost = {c for cs in before.values() for c in cs} - {c for cs in now.values() for c in cs}
         self.assertEqual(lost, set())
         added = ["tool_ridge", "canopy_layout", "object_3d"]     # R275, R281 and R269, new on the bars
-        added += ["tool_select", "tool_move", "tool_rotate"]     # R295: Edit in the Plant as well
+        erase = ["tool_erase_string", "tool_erase_inverter_strings", "tool_erase_inverter"]      # R299
+        added += erase + ["tool_select", "tool_move", "tool_rotate"]     # R295: Edit in the Plant as well
         self.assertEqual(sorted([c for cs in before.values() for c in cs] + added),
                          sorted(c for cs in now.values() for c in cs))
         layout = ["tool_subfield", "tool_row", "layout_east_west", "fill", "empty"]
@@ -132,7 +133,8 @@ class ThePhases(unittest.TestCase):
         model.insert(model.index("tool_ridge") + 1, "tool_exclusion")     # in the Obstacles group
         model.insert(model.index("tool_exclusion") + 1, "object_3d")      # R269, beside it
         self.assertEqual(now["model"], model)
-        self.assertEqual(now["plant"], added[-3:] + layout[:3] + ["canopy_layout"] + layout[3:] + before["plant"])
+        self.assertEqual(now["plant"], added[-3:] + layout[:3] + ["canopy_layout"] + layout[3:] + before["plant"][:-1]
+                         + erase + before["plant"][-1:])
         for pid in ("production", "consumption", "economics", "report"):
             self.assertEqual(now[pid], before[pid])
 
