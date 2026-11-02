@@ -7,6 +7,7 @@ The local model costs nothing but the electricity (study 14, 3.4: 15-25 W for a 
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from ..i18n import _, number
@@ -21,6 +22,38 @@ PRICES = {
     "claude-sonnet-5-5": (2.00, 10.00, 0.10, 2.50),
 }
 LONG = {"claude-haiku-5-5": (100_000, (0.50, 2.50, 0.05, 0.625))}
+
+
+# a picture costs about its pixels / 750 input tokens on Claude (R320): 4784 tokens at the 2576 px of the newer
+# models (claude-api skill, model-migration, «High-resolution vision»); Meridio sends at most 1568 px a side, so a
+# picture is at most about 3300 tokens, and is sent again with every question of the conversation
+PIXELS_PER_TOKEN = 750
+
+
+def image_tokens(width: int, height: int) -> int:
+    """The input tokens of a picture `width` × `height` pixels, estimated as Claude counts them."""
+    return math.ceil(max(0, width) * max(0, height) / PIXELS_PER_TOKEN)
+
+
+def pictures_tokens(pictures) -> int:
+    """The estimated tokens of pictures (anything with width and height, or dicts with them)."""
+    def size(p):
+        return (p["width"], p["height"]) if isinstance(p, dict) else (p.width, p.height)
+    return sum(image_tokens(*size(p)) for p in pictures)
+
+
+def input_usd(model: str, tokens: int) -> float | None:
+    """What `tokens` input tokens cost at the full price; None for a model without a price here."""
+    return usd(model, Usage(input=tokens))
+
+
+def pictures_line(pictures, model: str) -> str:
+    """«Images: about 3.300 tokens, about 0,03 dollar cents each time they are sent.»"""
+    tokens = pictures_tokens(pictures)
+    cost = input_usd(model, tokens)
+    words = money(cost) if cost is not None else _("price unknown")
+    return _("Images: about {tokens} tokens, about {cost} each time they are sent (again with every question of "
+             "this conversation).").format(tokens=number(tokens, 0, grouping=True), cost=words)
 
 
 def models() -> dict:
@@ -54,8 +87,14 @@ class Bill:
     usage: Usage = Usage()
     dollars: float = 0.0
     priced: bool = True         # every cloud answer had a price
+    estimated: bool = False     # an answer without the provider's count: its pictures estimated here (R320)
 
-    def add(self, model: str, usage: Usage, cloud: bool) -> None:
+    def add(self, model: str, usage: Usage, cloud: bool, estimate: int = 0) -> None:
+        """One answer's tokens; `estimate` the input tokens to count when the provider told none (the pictures
+        sent, image_tokens): never fewer than they are."""
+        if usage.total == 0 and estimate > 0:
+            usage = Usage(input=estimate)
+            self.estimated = True
         self.usage = self.usage + usage
         if not cloud:
             return
@@ -79,4 +118,7 @@ def line(bill: Bill, cloud: bool) -> str:
     if not cloud and bill.dollars == 0:
         return _("Local, no cost · {tokens}").format(tokens=tokens)
     cost = money(bill.dollars) if bill.priced else _("price unknown")
-    return _("{tokens} · about {cost} (prices of {date})").format(tokens=tokens, cost=cost, date=PRICES_DATE)
+    text = _("{tokens} · about {cost} (prices of {date})").format(tokens=tokens, cost=cost, date=PRICES_DATE)
+    if bill.estimated:
+        text += " · " + _("images estimated")
+    return text

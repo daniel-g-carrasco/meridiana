@@ -82,7 +82,9 @@ class Conversation:
         if r.done.raw is not None:
             turn["raw"] = {provider.family: r.done.raw}
         self.messages.append(turn)
-        self.bill.add(r.done.model or provider.model, r.usage, provider.cloud)
+        pictures = [i for m in self.messages if m["role"] == "user" for i in m.get("images") or []]
+        self.bill.add(r.done.model or provider.model, r.usage, provider.cloud,
+                      estimate=costs.pictures_tokens(pictures))
 
     def add_result(self, call: ToolCall, outcome: tools.Outcome) -> None:
         self.messages.append({"role": "tool", "id": call.id, "name": call.name, "content": outcome.content,

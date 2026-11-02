@@ -472,7 +472,9 @@ class Chat(QObject):
         """The picture ready: its thumbnail, name and size, what happens to it."""
         self.attachments[token] = item
         lines = [_escape(item.caption()),
-                 _escape(_("Ready locally. Sent only with your next message; cloud use asks again."))]
+                 _escape(_("Ready locally. Sent only with your next message; cloud use asks again.")),
+                 _escape(_("About {n} tokens for a cloud model, sent again with every question.").format(
+                     n=costs.image_tokens(item.width, item.height)))]
         if not item.captured:
             lines.append(_escape(_("Project tools stay off while images from outside Meridiana are in this "
                                    "conversation. Start a new conversation to use them.")))
@@ -760,6 +762,7 @@ class Chat(QObject):
             attached.append(_escape(_("Attached images also leave this PC: {names}").format(
                 names=", ".join(p.name for p in pictures))))
             attached.append(_escape(privacy.picture_warning()))
+            attached.append(_escape(costs.pictures_line(pictures, settings["model"])))
         if "documents" in self.history and self.conversation.state.cloud:
             attached.append(_escape(_("This conversation includes previously attached document text, which will be sent again.")))
         if "images" in self.history and self.conversation.state.cloud:

@@ -228,6 +228,7 @@ class Images(unittest.TestCase):
         self.assertIn("schermata.png", words)
         self.assertIn("address", words)
         self.assertIn("aliases", words)
+        self.assertIn("Images: about 86 tokens", words)          # 320 × 200 / 750 (costs.image_tokens)
         with mock.patch.object(self.chat, "_round"):
             card.buttons["allow"].click()
         self.assertTrue(self.chat.conversation.messages[-1]["images"])
