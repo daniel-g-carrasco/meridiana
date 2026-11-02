@@ -29,7 +29,7 @@ from pathlib import Path
 
 from . import SLUG
 
-CONFIG_VERSION = 24
+CONFIG_VERSION = 25
 
 
 def _v1_to_v2(data: dict) -> dict:
@@ -209,7 +209,7 @@ MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: 
                                                  15: _v15_to_v16, 16: _v16_to_v17, 17: _v17_to_v18,
                                                  18: _v18_to_v19, 19: _v19_to_v20,
                                                  20: _v20_to_v21, 21: _v21_to_v22, 22: _v22_to_v23,
-                                                 23: _v23_to_v24}
+                                                 23: _v23_to_v24, 24: _v24_to_v25}
 
 
 @dataclass
