@@ -732,10 +732,10 @@ class InTheWindow(unittest.TestCase):
         win = self.win
         project = win.docks[0]
         button = win.panel_buttons.buttons[project]
-        self.assertIn("Close", button.toolTip())
+        self.assertIn("Hide", button.toolTip())
         project.close()
         self.app.processEvents()
-        self.assertIn("Open", button.toolTip())
+        self.assertIn("Show", button.toolTip())
         button.click()
         self.assertTrue(project.isVisible())
         button.click()                                                      # on screen: the button closes it
