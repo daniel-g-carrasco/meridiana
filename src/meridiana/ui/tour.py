@@ -4,12 +4,15 @@ Meridio conducts it in his bubble (R264). At every step he and the bubble keep o
 spotlight) and, when they can, off the content around it: the nearest free place among his corners and sides,
 reached with his own slide (R293). His words are laid out as a short title, a paragraph, two or three points and
 the key to try, with «step n of m» above (R293)."""
-from PySide6.QtCore import QPoint, QRect, QSize, QTimer, Qt
-from PySide6.QtWidgets import QSizePolicy
+import time
+
+from PySide6.QtCore import QEvent, QPoint, QRect, QSize, QTimer, Qt
+from PySide6.QtGui import QAction, QActionGroup
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QMenu, QScrollArea, QSizePolicy, QToolButton
 
 from .. import assistant as core, tour
 from ..i18n import _
-from . import navigation_targets, spotlight
+from . import fades, motion, navigation_targets, spotlight
 from .design import Space, Text, Type, set_text
 from .guide_card import GuideCard
 
@@ -17,23 +20,54 @@ TOUR_BUBBLE = (340, 560)        # the bubble while the tour runs: room for a who
 CLEAR_MARGIN = Space.M          # between him or the bubble and what the step points at
 CLEAR_POLL_MS = 60              # how often he looks for the spotlight of the step
 CLEAR_POLLS = 20                # and for how long (a spotlight may follow another, the views' after the phase's)
+FIT_POLL_MS = 50                # the bubble waits for its own opening before it is measured, polled so often...
+FIT_WAIT_S = 6.0                # ...and for so long at most (by the clock: a busy window runs few polls)
 
 
 def _escape(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def step_html(item: tour.Step, muted: str, extra: str = "") -> str:
-    """The body of a step: the text, its points as a list, the key to try in the semibold weight."""
-    parts = [f"<p>{_escape(item.text)}</p>"]
-    if item.points:
-        rows = "".join(f"<li>{_escape(point)}</li>" for point in item.points)
-        parts.append(f'<ul style="margin-left: 0px; -qt-list-indent: 1;">{rows}</ul>')
-    if item.hint:
+def step_pieces(item: tour.Step, extra: str = "") -> list[str]:
+    """The words of a step in the order they are laid out: the text, the points, the key, what is added."""
+    return [piece for piece in (item.text, *item.points, item.hint, extra) if piece]
+
+
+def step_plain(item: tour.Step, extra: str = "") -> str:
+    """The words of a step as plain text, a line between pieces: what TypeOut counts (R319)."""
+    return "\n".join(step_pieces(item, extra))
+
+
+def step_html(item: tour.Step, muted: str, extra: str = "", chars: int | None = None) -> str:
+    """The body of a step: the text, its points as a list, the key to try in the semibold weight. With `chars` only
+    the first characters of `step_plain` (a text that is coming, R319): the layout stays, what is not there yet
+    is left out."""
+    left = [chars]
+
+    def cut(piece: str) -> str | None:
+        if left[0] is None:
+            return piece
+        if left[0] <= 0:
+            return None                                     # not there yet: no paragraph, no point
+        out = piece[:left[0]]
+        left[0] -= len(piece) + 1
+        return out
+
+    parts = []
+    text = cut(item.text)
+    if text is not None:
+        parts.append(f"<p>{_escape(text)}</p>")
+    rows = [c for c in (cut(point) for point in item.points) if c is not None]
+    if rows:
+        parts.append('<ul style="margin-left: 0px; -qt-list-indent: 1;">'
+                     + "".join(f"<li>{_escape(point)}</li>" for point in rows) + "</ul>")
+    hint = cut(item.hint) if item.hint else None
+    if hint is not None:
         parts.append(f'<p><span style="color: {muted};">{_escape(_("Try:"))}</span> '
-                     f'<span style="font-weight: {Type.SEMIBOLD};">{_escape(item.hint)}</span></p>')
-    if extra:
-        parts.append(f'<p><span style="color: {muted};">{_escape(extra)}</span></p>')
+                     f'<span style="font-weight: {Type.SEMIBOLD};">{_escape(hint)}</span></p>')
+    note = cut(extra) if extra else None
+    if note is not None:
+        parts.append(f'<p><span style="color: {muted};">{_escape(note)}</span></p>')
     return "".join(parts)
 
 
@@ -60,7 +94,33 @@ class TourDialog(GuideCard):
         self.layout().setSpacing(Space.S)
         self.progress.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         # both wrap: their height follows the bubble's width (height for width), the stretch below takes the rest
-        self.layout().insertStretch(3, 1)
+        self._build_top_row()
+        # the text scrolls when the area cannot hold it whole (never cut); its height follows the bubble's width
+        # (height for width) and the bubble is measured on a copy of the whole text (`measure`), so that the text
+        # coming little by little (R319) never moves the bubble
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        # a bar only when the text cannot be shown whole (`_fit_bubble`): one that came while the bubble was still
+        # small narrowed the text, which then needed the bar for good
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
+        self.scroll.setMinimumHeight(Space.XXL * 2)
+        fades.attach(self.scroll)               # the plain variant: the soft edge, no air above and below
+        self.layout().replaceWidget(self.description, self.scroll)
+        self.scroll.setWidget(self.description)
+        self.description.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.measure = QLabel(self)
+        self.measure.setWordWrap(True)
+        self.measure.setTextFormat(Qt.TextFormat.RichText)
+        self.measure.hide()
+        self.typing = motion.TypeOut(self)
+        self.typing.shown.connect(self._typed)
+        self.typed_item: tour.Step | None = None
+        self.typed_extra = ""
+        self.fit_until = 0.0
+        self.description.installEventFilter(self)
         avatar.panel.layout().insertWidget(1, self, 1)
         avatar.chat_content.hide()
         # the bubble sized for a whole step, the designer's size put back at the end
@@ -89,27 +149,79 @@ class TourDialog(GuideCard):
         if invitation:
             self.progress.setText(_("Welcome"))
             self.heading.setText(_("Let Meridio show you around"))
-            self.description.setText(step_html(tour.Step(
+            self._say(tour.Step(
                 "welcome", "", _("I am Meridio, the small sun of this program. In thirteen short stops I show you "
                                  "the phases, the tools and the settings, and what each one is for. Stop whenever "
                                  "you like and pick up again from Help, or by asking me. Your project stays as it "
                                  "is."), (),
                 (_("About three minutes, at your pace."), _("Previous and Next move between the stops."),
-                 _("Pause tour keeps your place for next time."))), avatar.colours["muted"]))
+                 _("Pause tour keeps your place for next time."))))
+            self.skip.setText(_("Later"))
+            self.fit_until = time.monotonic() + FIT_WAIT_S
+            QTimer.singleShot(0, self, self._fit_bubble)
             self.previous.hide()
             self.next.setText(_("Start tour"))
         else:
             self.present()
+
+    def _build_top_row(self) -> None:
+        """Above the text: «step n of m», a button with the list of the steps, and «Pause tour» as a quiet button of
+        text on the right (it was the third of the row below, cut at the sides when the row did not fit, R318)."""
+        self.steps_button = QToolButton()
+        self.steps_button.setObjectName("filter")
+        self.steps_button.setAutoRaise(True)
+        self.steps_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.steps_button.setToolTip(_("Jump to another step of the tour"))
+        self.steps_menu = QMenu(self.steps_button)
+        self.steps_group = QActionGroup(self.steps_menu)
+        self.steps_group.setExclusive(True)
+        self.steps_actions: list[QAction] = []
+        for number, item in enumerate(tour.steps(), 1):
+            action = self.steps_menu.addAction(f"{number}. {item.title}")
+            action.setCheckable(True)
+            self.steps_group.addAction(action)
+            self.steps_actions.append(action)
+        self.steps_group.triggered.connect(lambda action: self.go_to(self.steps_actions.index(action)))
+        self.steps_button.setMenu(self.steps_menu)
+        self.steps_button.hide()
+        old = self.skip
+        self.buttons.removeWidget(old)
+        old.hide()
+        old.setParent(None)
+        old.deleteLater()
+        self.skip = QToolButton()
+        self.skip.setObjectName("file-chip")
+        self.skip.setText(_("Pause tour"))
+        self.skip.setToolTip(_("Leave the tour here: Help brings you back to this step"))
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        self.layout().removeWidget(self.progress)
+        row.addWidget(self.progress)
+        row.addWidget(self.steps_button)
+        row.addStretch(1)
+        row.addWidget(self.skip)
+        self.layout().insertLayout(0, row)
+        self.top_row = row
+
+    def go_to(self, index: int) -> None:
+        """The tour at another step, by the way «Next» goes: Meridio moves and the window gets ready as always."""
+        self.invitation = False
+        self.index = max(0, min(len(self.items) - 1, index))
+        self.present()
 
     def present(self):
         item = self.items[self.index]
         self.host.cfg.tour_status = "active"
         self.host.cfg.tour_step = self.index
         self.host._save_config()
-        self.progress.setText(_("Step {current} of {total}").format(current=self.index+1, total=len(self.items)))
+        step = _("Step {current} of {total}").format(current=self.index+1, total=len(self.items))
+        self.progress.setText(step)
+        self.progress.hide()
+        self.steps_button.setText(step)
+        self.steps_button.show()
+        self.steps_actions[self.index].setChecked(True)
         self.heading.setText(item.title)
-        muted = self.host.assistant.colours["muted"]
-        self.description.setText(step_html(item, muted))
+        extra = ""
         self.previous.show()
         self.previous.setEnabled(self.index > 0)
         self.next.setText(_("Start") if self.index == len(self.items)-1 else _("Next"))
@@ -119,7 +231,8 @@ class TourDialog(GuideCard):
         try:
             self._show_target(item.target)
         except (ValueError, AttributeError):
-            self.description.setText(step_html(item, muted, _("This area is not available in the current workspace.")))
+            extra = _("This area is not available in the current workspace.")
+        self._say(item, extra)
         avatar = self.host.assistant
         if not avatar.docked:                   # docked by hand during the tour, the character stays away
             avatar.show()
@@ -127,20 +240,103 @@ class TourDialog(GuideCard):
             avatar.bubble.raise_()
         self.clear_polls = 0
         self.clear_timer.start()
+        self.fit_until = time.monotonic() + FIT_WAIT_S
         QTimer.singleShot(0, self, self._fit_bubble)
 
-    def _fit_bubble(self) -> None:
-        """The bubble as tall as the step needs, up to TOUR_BUBBLE: at a fixed 560 px a short step left half of it
-        empty (31/10/2026). Its width stays, so the text wraps as it was measured."""
+    # the words, coming as an answer streams in a chat (R319)
+
+    def _say(self, item: tour.Step, extra: str = "") -> None:
+        """The words of a step: measured whole at once (the bubble does not move while they come), then shown
+        little by little, or whole with less motion."""
         avatar = self.host.assistant
-        if avatar.docked or not self.isVisible() or self.width() < 2:
+        self.typed_item, self.typed_extra = item, extra
+        self.measure.ensurePolished()           # hidden, it has not the sheet's font yet: it would measure short
+        self.measure.setText(step_html(item, avatar.colours["muted"], extra))
+        reduced = motion.reduced() or not avatar.moving()
+        self.typing.start(step_plain(item, extra), reduced)
+
+    def _typed(self, chars: int) -> None:
+        if self.typed_item is None:
+            return
+        muted = self.host.assistant.colours["muted"]
+        whole = chars >= self.typing.total
+        self.description.setText(step_html(self.typed_item, muted, self.typed_extra, None if whole else chars))
+
+    def _complete_text(self) -> bool:
+        """A click while the words are coming: all of them now. True when there was something to complete."""
+        if not self.typing.running:
+            return False
+        self.typing.finish()
+        return True
+
+    def eventFilter(self, watched, event):
+        if watched is self.description and event.type() == QEvent.Type.MouseButtonPress:
+            self._complete_text()
+        return super().eventFilter(watched, event)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if event.size().width() != event.oldSize().width():
+            QTimer.singleShot(0, self, self._fit_bubble)    # the text wraps again at the new width: measured again
+
+    def _stack_height(self, layout, width: int) -> int:
+        """What a vertical layout of boxes and widgets needs at `width`, the text taken from `measure`."""
+        margins = layout.contentsMargins()
+        inner = width - margins.left() - margins.right()
+        total, count = margins.top() + margins.bottom(), 0
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            widget = item.widget()
+            if widget is not None and widget.isHidden():
+                continue
+            if item.spacerItem() is not None:
+                continue
+            if widget is self.scroll:
+                # at the width the text has when it needs no scroll bar (with one it wraps more: the cap, then)
+                height = self.measure.heightForWidth(max(1, inner)) + 2 * self.scroll.frameWidth()
+            elif item.layout() is not None:
+                inside = item.layout()
+                height = inside.heightForWidth(inner) if inside.hasHeightForWidth() else inside.sizeHint().height()
+            elif item.hasHeightForWidth():
+                height = item.heightForWidth(inner)
+            else:
+                height = item.sizeHint().height()
+            total += height + (layout.spacing() if count else 0)
+            count += 1
+        return total
+
+    def _fit_bubble(self) -> None:
+        """The bubble as tall as the step needs, never taller than its area (then the text scrolls), and wide enough
+        for the buttons. Measured when it can be: after the bubble has opened (waited for, a poll at a time) and
+        again at every new width of the card, from the width the text really has (the bubble kept the 560 px of
+        the start when it was measured while it opened, and cut the text when the measure was of another width)."""
+        avatar = self.host.assistant
+        if avatar.docked or self.finished_once or self.typed_item is None:
+            return
+        if avatar.bubble_animation is not None or not self.isVisible() or self.width() < 2:
+            if time.monotonic() < self.fit_until:
+                QTimer.singleShot(FIT_POLL_MS, self, self._fit_bubble)
             return
         box = self.layout()
-        need = box.heightForWidth(self.width()) if box.hasHeightForWidth() else box.sizeHint().height()
-        height = avatar.bubble_dims[1]
-        wanted = max(core.BUBBLE_MIN[1], min(TOUR_BUBBLE[1], height - (self.height() - need) + Space.S))
+        width, height = avatar.bubble_dims
+        lacking = box.minimumSize().width() - self.width()
+        if lacking > 0:                         # a card too narrow for its buttons: the bubble widens, nothing is cut
+            avatar.set_bubble_size(width + lacking, height)
+            return
+        # the bubble around the card: the margins of its frame and of its panel, the head with his name
+        panel = avatar.panel.layout()
+        around = avatar.bubble.box.contentsMargins()
+        edges = panel.contentsMargins()
+        chrome = around.top() + around.bottom() + edges.top() + edges.bottom()
+        chrome += max(avatar.head.height(), avatar.head.sizeHint().height()) + panel.spacing()
+        _top, _width, available = avatar.free()
+        wanted = self._stack_height(box, self.width()) + chrome
+        limit = available - 2 * core.MARGIN
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded if wanted > limit
+                                               else Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        wanted = max(core.BUBBLE_MIN[1], min(wanted, limit))
         if abs(wanted - height) > 2:
-            avatar.set_bubble_size(TOUR_BUBBLE[0], wanted)
+            avatar.set_bubble_size(width, wanted)
 
     def _show_target(self, target):
         win = self.host
@@ -235,6 +431,8 @@ class TourDialog(GuideCard):
         return min(good, key=lambda c: (c - now).manhattanLength())
 
     def advance(self):
+        if self._complete_text():
+            return                              # the words still coming: the first click gives them whole
         if self.invitation:
             self.invitation = False
         elif self.index == len(self.items)-1:
@@ -252,6 +450,8 @@ class TourDialog(GuideCard):
         self.present()
 
     def back(self):
+        if self._complete_text():
+            return
         self.index = max(0, self.index-1)
         self.present()
 
@@ -270,6 +470,7 @@ class TourDialog(GuideCard):
             return
         self.finished_once = True
         self.clear_timer.stop()
+        self.typing.stop()
         avatar = self.host.assistant
         avatar.openedChanged.disconnect(self._panel_changed)
         avatar.setProperty("guidedTourActive", False)

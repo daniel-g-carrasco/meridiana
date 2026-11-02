@@ -50,6 +50,8 @@ class SupportFlow(unittest.TestCase):
         win._start_tour()
         self.assertEqual(win.tour_dialog.index, 3)
         win.tour_dialog.index = len(tour.steps())-1
+        win.tour_dialog.present()
+        win.tour_dialog.typing.finish()         # the words still coming: the first click only completes them (R319)
         win.tour_dialog.advance()
         self.assertEqual(win.cfg.tour_status, "done")
         self.assertTrue(win.file_page.sections["new"].isVisible())
@@ -219,6 +221,7 @@ class SupportFlow(unittest.TestCase):
         self.assertTrue(win.file_page.isVisible())
         self.assertTrue(win.file_page.sections["new"].isVisible())
         self.assertEqual(dialog.next.text(), "Start")
+        dialog.typing.finish()                  # the words still coming: the first click only completes them (R319)
         dialog.next.click()
         self.app.processEvents()
         self.assertEqual(win.cfg.tour_status, "done")

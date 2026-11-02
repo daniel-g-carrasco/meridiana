@@ -191,6 +191,9 @@ class Motion:
                         # settling into its slot (R312: «un po' di lentezza nelle animazioni»)
     DWELL = 280         # a wait, not a movement: a drop zone answers the panel carried over it only after it;
                         # passing over the cards does not make them dance (R312). Kept with less motion
+    TYPING_MS = 24      # text that comes as in a chat (motion.TypeOut): one step every so many ms...
+    TYPING_CHARS = 4    # ...of at least so many characters (more when the text is long: it takes TYPING_MAX_MS at most)
+    TYPING_MAX_MS = 1800
 
     @staticmethod
     def of(ms: int, reduced: bool) -> int:

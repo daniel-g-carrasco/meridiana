@@ -26,6 +26,7 @@ class GuideCard(QDialog):
         for label in (self.progress, self.heading, self.description):
             box.addWidget(label)
         row = QHBoxLayout()
+        self.buttons = row                      # the row of buttons, for a consumer that moves one of them
         self.previous = QPushButton(_("Previous"))
         self.next = QPushButton(_("Next"))
         self.skip = QPushButton(_("Later"))

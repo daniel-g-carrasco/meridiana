@@ -113,6 +113,10 @@ Optional parts, imported only when used: `ifcopenshell` for the IFC4 export and 
 `meridiana --self-test [REPORT]` checks the program without a screen and without touching your settings: it lays
 out and computes a sample project offscreen, writes a report and exits with 0 when every check passed.
 
+`meridiana --tour [STEP|new]` opens the guided tour already running, at a step given by its number or its name
+(`--tour 5`, `--tour plant`), or pretends it is the first start (`--tour new`); it works on a temporary copy of your
+settings, so nothing of yours changes.
+
 ## What leaves the computer
 
 Nothing about you, and never your project files. A few services receive only what they need to answer, each with

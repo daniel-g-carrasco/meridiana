@@ -1,7 +1,8 @@
 """Entry point: `meridiana --version` and `--help` answer from the command
 line, `--self-test [REPORT]` checks the program offscreen (ui/selftest.py,
-the packages' smoke test), anything else starts the app (a file given on
-the command line is opened in the window)."""
+the packages' smoke test), `--tour [STEP|new]` opens the guided tour at a step
+(app.py, tour.py), anything else starts the app (a file given on the command
+line is opened in the window)."""
 
 import os
 import sys
@@ -26,7 +27,12 @@ def main() -> int:
         return 0
     if len(sys.argv) > 1 and sys.argv[1] in ("--help", "-h"):
         from .i18n import _
-        print(_("usage: {command} [PROJECT]").format(command=__package__.replace("_", "-")))
+        command = __package__.replace("_", "-")
+        print(_("usage: {command} [PROJECT]").format(command=command))
+        print(_("  --tour [STEP|new]    start with the guided tour at STEP (its number or name; the first when "
+                "omitted); «new» pretends it is the first start. Your own settings are never touched."))
+        print(_("  --self-test [REPORT] check the program without a screen and write a report"))
+        print(_("  --version, -V        print the version"))
         return 0
     if len(sys.argv) > 1 and sys.argv[1] == "--self-test":
         from .ui.selftest import main as self_test

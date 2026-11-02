@@ -6105,6 +6105,12 @@ class MainWindow(QMainWindow):
         dialog.finished.connect(lambda _result: self._support_closed("tour_dialog"))
         dialog.show()
 
+    def start_tour_at(self, index: int) -> None:
+        """The tour open at a step (0-based), as if it had been paused there: `meridiana --tour STEP`."""
+        self.cfg.tour_status = "paused"
+        self.cfg.tour_step = index
+        self._start_tour()
+
     def _assistant_command(self, text: str) -> bool:
         from ..tour import local_command
         command = local_command(text)

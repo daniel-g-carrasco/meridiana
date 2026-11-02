@@ -141,6 +141,74 @@ def steps() -> tuple[Step, ...]:
     )
 
 
+class TourOptionError(ValueError):
+    """`--tour` asked for a step that does not exist: the message is for the command line."""
+
+
+@dataclass(frozen=True)
+class TourRequest:
+    """What `--tour [STEP|new]` asks for: the tour opened at a step (`index`, 0-based), or the first start
+    simulated (`new`: the invitation after a moment). Either way in a folder of settings of its own."""
+    new: bool = False
+    index: int = 0
+
+
+NEW_WORDS = ("new", "nuovo")
+
+
+def resolve_step(spec: str) -> int:
+    """The 0-based index of the step a person names: its number (1-based) or its id, any case."""
+    items = steps()
+    word = spec.strip().casefold()
+    if word.isdigit():
+        number = int(word)
+        if 1 <= number <= len(items):
+            return number - 1
+    else:
+        for index, item in enumerate(items):
+            if item.id.casefold() == word:
+                return index
+    raise TourOptionError(_("--tour: there is no step «{step}»; the steps are 1 to {total}, or by name: {names}")
+                          .format(step=spec, total=len(items), names=", ".join(item.id for item in items)))
+
+
+def _is_step(word: str) -> bool:
+    try:
+        resolve_step(word)
+    except TourOptionError:
+        return word.casefold() in NEW_WORDS
+    return True
+
+
+def take_option(argv: list[str]) -> tuple[list[str], TourRequest | None]:
+    """`--tour [STEP|new]` (also `--tour=STEP`) taken out of the arguments: what is left, and what it asked for.
+    The word after `--tour` is its value unless it is an option or a file that exists (a project to open); a
+    value that is not a step is an error, never taken for a project."""
+    import os
+    rest: list[str] = argv[:1]
+    request = None
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
+        if arg != "--tour" and not arg.startswith("--tour="):
+            rest.append(arg)
+            i += 1
+            continue
+        spec = arg[len("--tour="):] if arg.startswith("--tour=") else None
+        nxt = argv[i + 1] if i + 1 < len(argv) else None
+        if spec is None and nxt is not None and not nxt.startswith("-") and (_is_step(nxt) or not os.path.exists(nxt)):
+            spec = nxt
+            i += 1
+        i += 1
+        if spec is None or spec == "":
+            request = TourRequest()
+        elif spec.casefold() in NEW_WORDS:
+            request = TourRequest(new=True)
+        else:
+            request = TourRequest(index=resolve_step(spec))
+    return rest, request
+
+
 def local_command(text: str) -> str:
     text = unicodedata.normalize("NFKD", text.casefold())
     text = "".join(c for c in text if not unicodedata.combining(c))
