@@ -894,6 +894,7 @@ class PlantSide(QWidget):
         self.panels_hint = QLabel(_("Select a sub-field on the plan to see its layout here, or draw one with "
                                     "«Sub-field»."))
         self.panels_hint.setWordWrap(True)
+        self.panels_hint.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         free_text(self.panels_hint, Text.SECONDARY)             # the section's layout has no margins (R296)
         panels.addWidget(self.panels_hint)
         self.props_holder = QWidget()
