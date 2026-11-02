@@ -70,7 +70,7 @@ class CanopyDialog(QDialog):
         side.addStretch(1)
         self.ring: list | None = None           # the footprint at the origin, as the preview draws it
         self.preview = Preview3D(self, number=number, parse=parse_measure)
-        self.preview.hint = _("Drag to turn · click a side to write its length")
+        self.preview.hint = _("Drag to turn · click a side to write its length · N is North once on the plan")
         self.preview.setMinimumSize(320, 280)
         self.preview.turn(225, 18)          # low enough to see the columns under the roof
         self.preview.edited.connect(self._pill_written)
