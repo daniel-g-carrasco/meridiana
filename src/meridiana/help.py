@@ -199,47 +199,38 @@ def texts() -> dict[str, Help]:
               "themselves where the fire-brigade rules apply (DCPREV 14030/2025, 3.3.5.1)."),
             ("N15",), "1-modello.md#le-esclusioni"),
         # the plant (R287: every group of the right panel has its «?»)
-        "plant.overview": h(
-            _("Active inverters"), _("The inverters the year counts: installed, with strings on their inputs."),
-            _("An inverter counts in the production when it is installed (chosen, not sized by itself) and has a "
-              "string on one of its inputs. The first line says how many of the chosen inverters work and their AC "
-              "power together; then one line per unit with its strings and inputs. An inverter without strings "
-              "stays idle."),
-            manual="2-impianto.md#il-pannello-di-destra"),
-        "plant.working": h(
-            _("Working inverter"), _("The inverter whose inputs and strings the panel shows."),
-            _("Choose the physical inverter to work on: the table of its inputs and the list of its strings follow "
-              "it, and a string chosen on the plan brings its inverter here. «Propose», «Complete» and «Clear» act "
-              "on the whole plant, whatever inverter is shown. Under the name: AC power, MPPT or Synergy units, "
-              "strings."),
-            manual="2-impianto.md#il-pannello-di-destra"),
         "plant.inverters": h(
-            _("All inverters"), _("The plant's models, how many of each, their optimizers, the DC/AC ratio."),
-            _("Every inverter model of the plant with its count; «✕» takes one out. From the catalogue, or sized by "
-              "Meridiana from the DC/AC ratio when none is chosen. For SolarEdge inverters, the power optimizers of "
-              "each model with one or two modules each. The scale shows the energy the inverters cut above their "
-              "nominal power, once the year is computed."),
+            _("Inverter"), _("The inverters of the plant one by one: name, model, strings, DC/AC; their menu."),
+            _("The first line: how many inverters, their AC power, the modules' power, the DC/AC ratio. Then a card "
+              "for each inverter: the disc with its number is the handle, drag it (or Alt+Up, Alt+Down) to change the "
+              "order; the number is the inverter's place and names its strings (1.3.2 is inverter 1), so moving an "
+              "inverter renumbers them. F2 or a double click renames it, a name only. The menu «⋯»: rename, move, "
+              "datasheet, string this inverter, empty its strings, take it out of the plant (its strings stay on the "
+              "roof, on no inverter). A click on a card shows its strings below. «Catalogue…» adds an inverter; "
+              "«Choose automatically…» lets Meridiana choose them for the modules laid. The DC/AC ratio wanted is "
+              "yours: the scale shows the energy cut once the year is computed."),
             manual="2-impianto.md#il-pannello-di-destra"),
         "plant.strings": h(
-            _("Strings"), _("The inputs of the working inverter with their strings, and the commands."),
-            _("One row per input (MPPT): its strings, the modules in series, the open-circuit voltage at the lowest "
-              "temperature, the MPP voltage at the hottest and the coldest cell, the short-circuit current, each "
-              "against the inverter's limit. Under it, each string with its colour and state. «+» draws a string "
-              "on an input."),
+            _("Strings"), _("The inputs of the inverter shown with their strings; the view from the menu beside."),
+            _("The strings of the whole plant on the first line; then the inverter shown and its inputs, as cards "
+              "(each input with its mark and its strings, «+» to draw one on it) or as a single-line diagram in "
+              "miniature (each string a bar as long as its modules), from the menu at the left of the «?». A click "
+              "on a string chooses it, on the plan too; a double click draws it again; the right button has the "
+              "rest. The commands: «String automatically…» with its options, «Draw a string», «Delete all the "
+              "strings»."),
             ("CEI 64-8/7:2024",), "2-impianto.md#le-stringhe-sono-tue"),
-        "plant.proposal": h(
-            _("Proposal and checks"), _("How the next proposal runs, and the temperatures the checks use."),
-            _("The strategy is how «Propose the strings» walks the modules; the modules in series can be given or "
-              "left to Meridiana. The lowest temperature of the site sets the open-circuit voltage on the coldest "
-              "morning, checked against the inverter's and the modules' maximum; the MPP voltage is checked at the "
-              "hottest and the coldest cell."),
+        "plant.conditions": h(
+            _("Conditions of the checks"), _("The temperatures every check of the strings is made at."),
+            _("The lowest temperature of the site sets the open-circuit voltage on the coldest morning, checked "
+              "against the inverter's and the modules' maximum; the MPP voltage is checked at the hottest and the "
+              "coldest cell, PVsyst's design conditions until the production is computed, then the typical year's."),
             manual="2-impianto.md#le-stringhe-sono-tue"),
         "plant.string": h(
-            _("String chosen"), _("The string chosen on the plan or in the list: path, figures and checks."),
-            _("Where it goes (inverter and input) and its modules; the modules against what the input takes, the "
-              "open-circuit voltage at the lowest temperature against the maximum, the MPP voltage at the hottest "
-              "and coldest cell against the MPPT window, the current against the input's; then each check with its "
-              "mark and its conditions."),
+            _("String chosen"), _("The string chosen on the plan or in the list: path, figures as bars, checks."),
+            _("Where it goes (inverter and input) and its modules; the open-circuit voltage at the lowest "
+              "temperature against the maximum, the MPP voltage at the hottest and coldest cell against the MPPT "
+              "window, the current against the input's, each as a bar as long as its limit; then each check with "
+              "its mark and its clause. «Redraw», «Move to…» and «Delete» act on this string."),
             manual="2-impianto.md#il-pannello-di-destra"),
         "plant.subfield": h(
             _("Sub-field selected"), _("Where «Propose the strings» sends the strings of this sub-field."),

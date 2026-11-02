@@ -194,18 +194,18 @@ class EveryGroupHasItsHelp(unittest.TestCase):
 
         from meridiana.ui.plant_page import PlantInspector
         actions = {key: QAction(key) for key in
-                   ("inverter_catalog", "inverter_auto", "strings_auto", "strings_complete", "strings_clear")}
+                   ("inverter_catalog", "inverter_auto", "strings_auto", "strings_manual", "strings_clear")}
         panel = PlantInspector(actions)
         self.addCleanup(_setup.dispose, panel)
         self.assertEqual(self.groups_without_help(panel), [])
         from meridiana.ui.help_box import HelpButton
         self.assertEqual(sorted(b.hid for b in panel.findChildren(HelpButton)),
-                         ["plant.inverters", "plant.overview", "plant.proposal", "plant.string", "plant.strings",
-                          "plant.subfield", "plant.working"])
+                         ["plant.conditions", "plant.inverters", "plant.string", "plant.strings", "plant.subfield"])
 
 
-class InputsTable(unittest.TestCase):
-    """One row per input of the working inverter, with the figures of the plan of each input (R286)."""
+class InputsGridAndChosenString(unittest.TestCase):
+    """The inputs of the inverter shown as cards in two columns (R298, study 23, B), the string chosen as a group at
+    the top of the column with its bars and its rows parted by lines, the view menu beside the «?»."""
 
     @classmethod
     def setUpClass(cls):
@@ -217,7 +217,7 @@ class InputsTable(unittest.TestCase):
 
         from meridiana.ui.plant_page import PlantInspector
         actions = {key: QAction(key) for key in
-                   ("inverter_catalog", "inverter_auto", "strings_auto", "strings_complete", "strings_clear")}
+                   ("inverter_catalog", "inverter_auto", "strings_auto", "strings_manual", "strings_clear")}
         self.panel = PlantInspector(actions)
         self.addCleanup(_setup.dispose, self.panel)
         self.project, self.plant = plant_of([
@@ -231,50 +231,85 @@ class InputsTable(unittest.TestCase):
         for _ in range(3):
             self.app.processEvents()
 
-    def test_one_row_per_input_with_the_figures_of_its_plan(self):
-        from meridiana.i18n import number
-        table = self.panel.inputs
-        self.assertEqual(table.topLevelItemCount(), 2)
-        self.assertEqual(sorted(table.rows), [(1, 1), (1, 2)])
-        first, second = table.rows[(1, 1)], table.rows[(1, 2)]
+    def test_one_card_per_input_with_its_strings_its_mark_and_its_plus(self):
+        grid = self.panel.list
+        self.assertEqual(self.panel.view, "cards")
+        self.assertEqual(sorted(grid.input_heads), [(1, 1), (1, 2)])
+        first, second = grid.input_heads[(1, 1)], grid.input_heads[(1, 2)]
         slot1, slot2 = self.plant.inputs[(1, 1)], self.plant.inputs[(1, 2)]
-        self.assertEqual(first.text(0), "MPPT 1")
-        self.assertEqual(first.text(1), f"2/{slot1.allowed}")
-        self.assertEqual(first.text(2), "8")
-        self.assertEqual(second.text(1), f"1/{slot2.allowed}")
-        self.assertEqual(second.text(2), "5")
-        plan = slot1.plan
-        self.assertEqual(first.text(3), f"{number(plan.uoc_max, 0)}/{number(plan.v_limit, 0)}")
-        self.assertEqual(first.text(4), f"{number(plan.vmp_hot, 0)}-{number(plan.vmp_cold, 0)}")
-        self.assertRegex(first.text(5), r"^\d+([.,]\d+)?/\d+([.,]\d+)?$")           # Isc of the input's limit
-        self.assertEqual(first.data(6, 0x0100), slot1.level)                           # UserRole: the state
-        self.assertEqual(second.data(6, 0x0100), slot2.level)
+        self.assertIn("MPPT 1", first.title.text())
+        self.assertEqual(sorted(grid.rows), [0, 1, 2])
+        self.assertEqual(grid.rows[0].count.text(), "8")
+        self.assertEqual(grid.rows[2].count.text(), "5")
         self.assertEqual(slot2.level, "fail")                                          # 5 modules: under the window
-        self.assertFalse(second.icon(6).isNull())
-        self.assertIn("out of limit", second.toolTip(6))
-        # as tall as its header and rows, no scroll bar of its own, inside the group's width
-        self.assertGreaterEqual(table.height(), table.header().height() + 2 * table.visualItemRect(first).height())
-        self.assertLessEqual(table.header().length(), table.viewport().width())
+        self.assertIn("out of limit", second.toolTip())
+        self.assertEqual(first.add.isVisibleTo(first), len(slot1.strings) < slot1.allowed)   # «+» where it takes more
+        self.assertTrue(grid.rows[0].selected)                                         # chosen=0
+        self.assertFalse(grid.rows[1].selected)
+        self.assertGreater(second.x(), first.x())                                      # two columns
+        self.assertEqual(second.y(), first.y())
+        self.assertLessEqual(self.panel.widget().width(), self.panel.viewport().width())
+        chosen, targets = [], []
+        self.panel.stringChosen.connect(chosen.append)
+        grid.newString.connect(lambda *a: targets.append(a))
+        grid.rows[1].clicked.emit(1)
+        self.assertEqual(chosen, [1])
+        self.assertTrue(grid.rows[1].selected)
+        if second.add.isVisibleTo(second):
+            second.add.click()
+            self.assertEqual(targets, [(1, 2)])
 
-    def test_the_string_chosen_is_in_three_blocks(self):
+    def test_the_string_chosen_is_a_group_at_the_top_with_bars_and_rows_parted_by_lines(self):
+        from PySide6.QtWidgets import QFrame, QLabel
+
+        from meridiana.i18n import number
         panel = self.panel
-        self.assertFalse(panel.string_group.isHidden())
-        self.assertIn("1.1.1", panel.string_identity.text())
-        self.assertIn("MPPT 1", panel.string_identity.text())
-        self.assertIn("8 modules", panel.string_identity.text())
-        electrical = panel.string_blocks["electrical"].text()
-        self.assertIn("Uoc", electrical)
-        self.assertIn("Umpp", electrical)
-        self.assertGreaterEqual(electrical.count("<br>"), 2, "one figure per line")
-        self.assertNotIn("Uoc", panel.string_checks.text().split("<br>")[0].split(":")[0])
+        g = panel.string_group
+        self.assertFalse(g.isHidden())
+        self.assertIn("1.1.1", g.identity.text())
+        self.assertIn("MPPT 1", g.identity.text())
+        self.assertIn("8 modules", g.detail.text())
+        plan = self.plant.inputs[(1, 1)].plan
+        self.assertEqual(g.bars["uoc"].text, f"{number(plan.uoc_max, 0)} / {number(plan.v_limit, 0)} V")
+        self.assertTrue(g.bars["umpp"].isVisibleTo(g))
+        labels = [w for w in g.row_widgets if isinstance(w, QLabel)]
+        lines = [w for w in g.row_widgets if isinstance(w, QFrame) and not isinstance(w, QLabel)]
+        self.assertGreaterEqual(len(labels), 3)
+        self.assertEqual(len(lines), len(labels) - 1)                                  # a thin line between rows
+        self.assertTrue(any("Uoc" in w.text() for w in labels))
+        self.assertLess(g.y(), panel.inverters_group.y())                              # at the top of the column
+        asked = []
+        g.deleteAsked.connect(asked.append)
+        g.delete.click()
+        self.assertEqual(asked, [0])
+        panel.show_string(self.plant, -1)
+        self.assertTrue(g.isHidden())
 
-    def test_a_narrow_panel_drops_the_rightmost_figures_instead_of_running_past_the_edge(self):
-        table = self.panel.inputs
-        self.panel.resize(240, 1100)
-        for _ in range(3):
-            self.app.processEvents()
-        header = table.header()
-        self.assertLessEqual(header.length(), table.viewport().width())
-        self.assertTrue(header.isSectionHidden(5))
-        self.assertFalse(header.isSectionHidden(0))
-        self.assertFalse(header.isSectionHidden(6))
+    def test_the_view_menu_beside_the_help_swaps_the_cards_for_the_diagram_and_says_so(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+
+        from meridiana.ui.help_box import HelpButton
+        panel = self.panel
+        said = []
+        panel.viewChanged.connect(said.append)
+        panel.view_actions["diagram"].trigger()
+        self.assertEqual(said, ["diagram"])
+        self.assertEqual(panel.view, "diagram")
+        d = panel.list.front()
+        self.assertEqual(sorted(d.rows), [0, 1, 2])
+        self.assertEqual(d.current(), 0)
+        chosen = []
+        panel.stringChosen.connect(chosen.append)
+        QTest.mouseClick(d, Qt.MouseButton.LeftButton, pos=d.rows[1].center().toPoint())
+        self.assertEqual(chosen, [1])
+        q = panel.strings_group.findChildren(HelpButton)[0]
+        self.assertLess(panel.view_button.x() + panel.view_button.width(), q.x())      # at the left of the «?»
+        self.assertLessEqual(abs(panel.view_button.geometry().center().y() - q.geometry().center().y()), 4)
+        panel.set_view("cards")
+        self.assertEqual(panel.view, "cards")
+        self.assertEqual(panel.list.current(), 1)                                      # the choice carried over
+
+
+if __name__ == "__main__":
+    unittest.main()

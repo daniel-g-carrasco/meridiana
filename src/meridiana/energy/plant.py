@@ -1427,6 +1427,68 @@ def remove_unit(energy: dict | None, runs: list[dict], unit: int, strings: bool)
     return entries, out
 
 
+def split_entries(energy: dict | None, unit: int) -> tuple[list[dict], int]:
+    """The list of the inverters with the entry of unit `unit` split into entries of one each (R297: an inverter is
+    named and ordered one by one, the file keeps entries of a model with a count): (the entries, the index of the
+    unit's own entry; -1 when there is no such unit). The units keep their numbers: a split keeps the order."""
+    keys = unit_keys(energy)
+    entries = system.inverter_entries(energy)
+    if not 0 < unit <= len(keys):
+        return entries, -1
+    where, k = keys[unit - 1]
+    item = entries[where]
+    if item["count"] <= 1:
+        return entries, where
+    parts = [dict(item, count=1) for _n in range(item["count"])]
+    return entries[:where] + parts + entries[where + 1:], where + k
+
+
+def rename_unit(energy: dict | None, unit: int, name: str) -> list[dict] | None:
+    """The entries with unit `unit` called `name` (R297); None when there is no such unit. The strings keep their
+    names: a name is a label, the number is the place."""
+    entries, at = split_entries(energy, unit)
+    if at < 0:
+        return None
+    entries[at] = dict(entries[at], name=str(name).strip())
+    return entries
+
+
+def move_unit(energy: dict | None, unit: int, position: int) -> tuple[list[dict] | None, dict]:
+    """The entries with unit `unit` moved to `position` (from 0) among the units, and the map of every unit's number
+    before -> after (R297, R308: the number of a string is its inverter's place, so the strings of the inverters moved
+    are renumbered, `renumber_runs`). (None, {}) when there is no such unit or nothing moves."""
+    entries, at = split_entries(energy, unit)
+    if at < 0:
+        return None, {}
+    # every entry one unit, so that a position among the units is a position among the entries
+    singles: list[dict] = []
+    for item in entries:
+        if InverterSpec.from_record(item["record"], count=1).pac <= 0:
+            continue
+        singles += [dict(item, count=1) for _n in range(item["count"])]
+    order = list(range(len(singles)))
+    position = max(0, min(int(position), len(singles) - 1))
+    if position == unit - 1:
+        return None, {}
+    order.pop(unit - 1)
+    order.insert(position, unit - 1)
+    mapping = {old + 1: new + 1 for new, old in enumerate(order)}
+    return [singles[old] for old in order], mapping
+
+
+def renumber_runs(runs: list[dict], mapping: dict) -> list[dict]:
+    """The strings with their inverters' numbers changed by `mapping` (before -> after); a string on an inverter
+    the map does not name stays as it is."""
+    out = []
+    for r in runs:
+        r = dict(r, modules=list(r.get("modules") or []))
+        inv = r.get("inverter", 0)
+        if inv.__class__ is int and inv in mapping:
+            r["inverter"] = mapping[inv]
+        out.append(r)
+    return out
+
+
 def delete_run(runs: list[dict], index: int) -> list[dict]:
     """The strings without string `index`: its modules in no string."""
     return [dict(r, modules=list(r.get("modules") or [])) for i, r in enumerate(runs) if i != index]

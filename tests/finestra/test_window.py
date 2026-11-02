@@ -1528,8 +1528,8 @@ class PlantPhase(PlantWindow):
         plant = self.plant(lambda p: len(p.units) == 1 and p.units[0].checkable)
         self.assertEqual(plant.strings, [])                              # no string by itself (R118)
         self.assertTrue(plant.left)
-        self.assertEqual(len(self.win.plant_inspector.entry_rows), 1)
-        self.win.plant_inspector.entry_rows[0][1].setValue(3)           # how many: three alike
+        self.assertEqual(sorted(self.win.plant_inspector.units.cards), [1])     # R297: one card per inverter
+        self.win._inverter_count(0, 3)                                    # how many: three alike (the catalogue's)
         self.assertEqual(self.win.project.energy["inverters"][0]["count"], 3)
         self.assertIn("3 x", self.win.inverter_reference.label.text())
         plant = self.plant(lambda p: len(p.units) == 3)
