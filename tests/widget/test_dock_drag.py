@@ -44,7 +44,16 @@ class DockDragging(unittest.TestCase):
         self.settle()
 
     def tearDown(self):
+        if QApplication.keyboardModifiers() & Qt.KeyboardModifier.AltModifier:
+            QTest.keyRelease(self.host, Qt.Key.Key_Alt)
         motion.set_reduced(False)
+
+    def alt(self, down: bool):
+        """Alt pressed (`down`) or let go, at the window, as the keyboard sends it."""
+        if down:
+            QTest.keyPress(self.host, Qt.Key.Key_Alt, Qt.KeyboardModifier.AltModifier)
+        else:
+            QTest.keyRelease(self.host, Qt.Key.Key_Alt)
 
     def settle(self):
         self.assertTrue(_setup.wait_settled(self.app, lambda: [(d.geometry(), d.minimumSize()) for d in self.docks]))
@@ -154,11 +163,14 @@ class DockDragging(unittest.TestCase):
         _setup.turn_events(self.app, Motion.DWELL // 3)
         self.assertIsNone(drag.target)                                        # a pass over it: nothing dances
         self.assertTrue(_setup.wait_until(self.app, lambda: drag.target is not None, 3))
-        self.assertTrue(drag.target.tab)
+        self.assertFalse(drag.target.tab)                                     # never a tab without Alt (R317)
         layer = drag.layer
         self.assertIs(layer.preview_source, source)
         self.assertEqual(layer.animation.duration(), Motion.CAREFUL)          # the slow movement
         self.assertNotEqual(layer.preview_rect, drag.lift.home)              # the slot is the zone's
+        self.alt(True)
+        self.hover(title, at)
+        self.assertTrue(drag.target.tab)
         # a tab target: the slot takes the anchor's place and the anchor lies under it, where it is (Qt parks the
         # tab behind at -1500, -625: its picture must not fly there and back)
         self.assertEqual(layer.preview_rect, layer.ends[anchor])
@@ -185,6 +197,91 @@ class DockDragging(unittest.TestCase):
         QTest.keyClick(title, Qt.Key.Key_Escape)
         QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
         self.quiet()
+
+    # tabs only with Alt (R317)
+
+    def grid(self, dock):
+        """Points over `dock` away from the window's bands: its quarters and its middle alike."""
+        from meridiana.ui.design import Space
+        r = dock.geometry().intersected(self.host.rect()).adjusted(Space.XXL + 2, Space.XXL + 2,
+                                                                   -Space.XXL - 2, -Space.XXL - 2)
+        return [QPoint(r.left() + r.width() * i // 6, r.top() + r.height() * j // 6)
+                for i in range(1, 6) for j in range(1, 6)]
+
+    def test_without_alt_a_panel_splits_in_halves_never_a_tab(self):
+        from meridiana.ui.dock_motion import target_at
+        source, anchor = self.docks[0], self.docks[1]
+        for at in self.grid(anchor):
+            target = target_at(self.host, source, at)
+            self.assertIs(target.anchor, anchor, at)
+            self.assertFalse(target.tab, at)
+        # the half nearest the point, on the dominant axis of its normalized distances
+        r = anchor.geometry()
+        cases = ((QPoint(r.center().x(), r.top() + r.height() // 3), Qt.Orientation.Vertical, True),
+                 (QPoint(r.center().x(), r.bottom() - r.height() // 3), Qt.Orientation.Vertical, False),
+                 (QPoint(r.left() + r.width() // 3, r.center().y()), Qt.Orientation.Horizontal, True))
+        for at, orientation, before in cases:
+            target = target_at(self.host, source, at)
+            self.assertEqual((target.orientation, target.before), (orientation, before), at)
+
+    def test_with_alt_the_whole_panel_is_a_tab_and_the_bands_do_not_change(self):
+        from meridiana.ui.dock_motion import target_at
+        source, anchor = self.docks[0], self.docks[1]
+        for at in self.grid(anchor) + [QPoint(anchor.geometry().left() + 4, anchor.geometry().center().y())]:
+            target = target_at(self.host, source, at, tabs=True)
+            self.assertEqual((target.anchor, target.tab), (anchor, True), at)
+        for at in (QPoint(4, 300), QPoint(500, 4), QPoint(500, self.host.height() - 4)):
+            self.assertEqual(target_at(self.host, source, at, tabs=True), target_at(self.host, source, at), at)
+
+    def test_alt_pressed_or_let_go_mid_drag_changes_the_zone_after_its_dwell(self):
+        source, anchor = self.docks[0], self.docks[1]
+        drag, title = self.take(source)
+        at = anchor.geometry().center()
+        self.hover(title, at)
+        self.assertFalse(drag.target.tab)
+        self.alt(True)                                                        # the pointer still
+        self.assertTrue(drag.waiting)
+        self.assertTrue(drag.pending.tab)
+        self.assertFalse(drag.target.tab)                                     # not yet: the dwell
+        self.assertTrue(_setup.wait_until(self.app, lambda: not drag.waiting, 3))
+        self.assertTrue(drag.target.tab)
+        self.alt(False)
+        self.assertTrue(drag.waiting)
+        self.assertTrue(_setup.wait_until(self.app, lambda: not drag.waiting, 3))
+        self.assertFalse(drag.target.tab)
+        QTest.keyClick(title, Qt.Key.Key_Escape)
+        QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
+        self.quiet()
+
+    def test_alt_during_a_drag_does_not_show_the_menus_and_the_status_bar_says_it(self):
+        from PySide6.QtWidgets import QMenuBar, QVBoxLayout
+        from meridiana.i18n import _
+        from meridiana.ui.menubar import AltMenus
+        status = self.host.statusBar()
+        status.show()
+        bar = QMenuBar()
+        bar.addMenu("&File").addAction("Open")
+        holder = QWidget()
+        home = QVBoxLayout(holder)
+        menus = AltMenus(self.host, bar, home)
+        menus.set_always(False)
+        self.settle()
+        source = self.docks[0]
+        drag, title = self.take(source)
+        self.assertEqual(status.currentMessage(), _("Alt: as tabs"))
+        self.alt(True)
+        self.alt(False)                                                       # Alt alone: the menus' key, not now
+        self.app.processEvents()
+        self.assertFalse(menus.shown)
+        self.assertFalse(menus.alone)
+        QTest.keyClick(title, Qt.Key.Key_Escape)
+        QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
+        self.quiet()
+        self.assertEqual(status.currentMessage(), "")
+        self.alt(True)                                                        # after the drag: the menus' again
+        self.assertTrue(menus.alone)                                          # (a release would show them)
+        menus.alone = False
+        self.alt(False)
 
     # the release
 
@@ -319,9 +416,12 @@ class DockDragging(unittest.TestCase):
                 source = self.docks[index]
                 anchor = self.docks[(index + 1) % 3]
                 drag, title = self.take(source)
+                self.alt(name == "tab")
                 self.hover(title, where(anchor))
                 self.assertIsNotNone(drag.target, name)
+                self.assertEqual(drag.target.tab, name == "tab", name)
                 QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
+                self.alt(False)
                 self.quiet()
                 self.all_in_sight()
                 state = self.host.saveState()
@@ -364,6 +464,7 @@ class DockDragging(unittest.TestCase):
         lift = drag.lift
         self.assertIsNotNone(lift)
         self.assertIsNone(lift.run)                                           # no rise played
+        self.alt(True)
         self.hover(title, anchor.geometry().center())                         # the dwell is kept
         self.assertTrue(drag.target.tab)
         QTest.mouseRelease(title, Qt.MouseButton.LeftButton)

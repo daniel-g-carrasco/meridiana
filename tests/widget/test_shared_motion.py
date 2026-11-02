@@ -420,19 +420,24 @@ class DockMotion(unittest.TestCase):
         QTest.keyClick(title, Qt.Key.Key_Escape)                            # outside a drag the shortcut is free
         self.assertEqual(fired, [True])
 
-    def _drop(self, source, at):
-        """A drag of `source` by its title to `at` (window coordinates): the preview's rectangles, then the drop."""
+    def _drop(self, source, at, tabs=False):
+        """A drag of `source` by its title to `at` (window coordinates), with Alt held if `tabs` (R317): the preview's
+        rectangles, then the drop."""
         from PySide6.QtTest import QTest
         title = source.title_bar
         QTest.mousePress(title, Qt.MouseButton.LeftButton, pos=title.rect().center())
         point = self.host.mapToGlobal(at)
         QTest.mouseMove(title, title.mapFromGlobal(point) - title.rect().center() / 4)
+        if tabs:                            # held once the drag has begun: the drag's key, not the menus'
+            QTest.keyPress(self.host, Qt.Key.Key_Alt, Qt.KeyboardModifier.AltModifier)
         QTest.mouseMove(title, title.mapFromGlobal(point))
         drag = source.drag_motion
         self.assertIsNotNone(drag.solver)
         self.assertTrue(_setup.wait_until(self.app, lambda: not drag.waiting, 3))      # the zone's dwell (R312)
         target, preview = drag.target, dict(drag.layer.ends)
         QTest.mouseRelease(title, Qt.MouseButton.LeftButton, pos=title.mapFromGlobal(point))
+        if tabs:
+            QTest.keyRelease(self.host, Qt.Key.Key_Alt)
         self.assertTrue(self._no_live_layer())
         _setup.turn_events(self.app, 150)
         return target, preview
@@ -450,7 +455,7 @@ class DockMotion(unittest.TestCase):
         from PySide6.QtWidgets import QTabBar
         from meridiana.ui.dock_motion import lost_panels
         source, anchor = self.docks[2], self.docks[1]
-        target, preview = self._drop(source, anchor.geometry().center())
+        target, preview = self._drop(source, anchor.geometry().center(), tabs=True)
         self.assertTrue(target.tab)
         self.assertEqual(self.host.tabifiedDockWidgets(source), [anchor])
         bars = [bar for bar in self.host.findChildren(QTabBar) if bar.isVisible() and bar.count() == 2]
@@ -488,9 +493,12 @@ class DockMotion(unittest.TestCase):
         QTest.mousePress(title, Qt.MouseButton.LeftButton, pos=title.rect().center())
         for widget in (self.docks[0], anchor):                              # two targets, two measuring windows
             QTest.mouseMove(title, title.mapFromGlobal(widget.mapToGlobal(widget.rect().center())))
+            QTest.keyPress(self.host, Qt.Key.Key_Alt, Qt.KeyboardModifier.AltModifier)   # tabs (R317)
             self.assertTrue(_setup.wait_until(self.app, lambda: not source.drag_motion.waiting, 3))
+        self.assertTrue(source.drag_motion.target.tab)
         QTest.mouseRelease(title, Qt.MouseButton.LeftButton,
                            pos=title.mapFromGlobal(anchor.mapToGlobal(anchor.rect().center())))
+        QTest.keyRelease(self.host, Qt.Key.Key_Alt)
         self.host.restoreState(state)
         direct = self.host.findChildren(QDockWidget, options=Qt.FindChildOption.FindDirectChildrenOnly)
         self.assertEqual(sorted(d.objectName() for d in direct), ['panel_0', 'panel_1', 'panel_2'])

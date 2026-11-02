@@ -14,6 +14,7 @@ from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPoint, QRect, QRectF,
 from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (QApplication, QDockWidget, QMainWindow, QStatusBar, QTabBar, QToolBar, QWidget)
 
+from ..i18n import _
 from . import motion
 from .cards import EDGE, GAP, CardDock, arena, default_tokens
 from .design import Motion, Radius, Space
@@ -33,7 +34,7 @@ def _docked(widget: QWidget | None) -> bool:
 
 def _settle_layout(window: QMainWindow) -> None:
     """Resolve card margins synchronously, without dispatching unrelated application jobs."""
-    for _ in range(6):
+    for _turn in range(6):
         before = [widget.geometry() for widget in cards(window) if widget is not None]
         for dock in window.findChildren(CardDock, options=DIRECT):
             dock._fit_now()
@@ -589,11 +590,12 @@ def reflow(window: QMainWindow, change: Callable, *, edge: str = 'right') -> Ref
     return layer
 
 
-def target_at(window: QMainWindow, source: QDockWidget, point: QPoint) -> DockTarget | None:
+def target_at(window: QMainWindow, source: QDockWidget, point: QPoint, *, tabs: bool = False) -> DockTarget | None:
     """Where a drop at `point` (the window's pixels) would put `source`: a band Space.XXL wide along the arena's
-    sides docks it at that side; a panel under the point takes it beside itself (its outer quarters) or as a tab
-    (its middle). The central widget is never a destination (R312): over it, outside the window's bands, there is
-    nothing to answer."""
+    sides docks it at that side; a panel under the point takes it beside itself, in the half of the point (the side
+    nearest it, the distances measured in the panel's width and height), or with `tabs` (Alt held, R317) as a tab
+    behind it wherever the point is on it: never a tab without Alt. Alt does not change the bands. The central
+    widget is never a destination (R312): over it, outside the window's bands, there is nothing to answer."""
     room = arena(window)
     if not room.contains(point):
         return None
@@ -610,11 +612,11 @@ def target_at(window: QMainWindow, source: QDockWidget, point: QPoint) -> DockTa
         area = window.dockWidgetArea(anchor)
         if not source.allowedAreas() & area:
             continue
+        if tabs:
+            return DockTarget(area, anchor, tab=True)
         r = anchor.geometry()
         x, y = (point.x() - r.left()) / r.width(), (point.y() - r.top()) / r.height()
-        distance, side = min((x, 'left'), (1 - x, 'right'), (y, 'top'), (1 - y, 'bottom'))
-        if distance > 0.25:
-            return DockTarget(area, anchor, tab=True)
+        side = min((x, 'left'), (1 - x, 'right'), (y, 'top'), (1 - y, 'bottom'))[1]
         return DockTarget(area, anchor, Qt.Orientation.Horizontal if side in ('left', 'right')
                           else Qt.Orientation.Vertical, before=side in ('left', 'top'))
     return None
@@ -643,6 +645,10 @@ class DockDrag(QObject):
         self.pending = None                 # the zone under the pointer, waiting its dwell
         self.waiting = False
         self.last_point = None
+        self.local = None                   # the pointer in the window's pixels, at its last move
+        self.tabs = False                   # Alt held: a panel takes the card as a tab (R317)
+        self.status = None                  # the status bar saying what Alt does, while the drag lasts
+        self.said = ''
         self.dwell = QTimer(self)
         self.dwell.setSingleShot(True)
         self.dwell.timeout.connect(self._dwelt)
@@ -655,6 +661,14 @@ class DockDrag(QObject):
             return True
         if self.solver is not None and kind == QEvent.Type.KeyPress and event.key() == Qt.Key.Key_Escape:
             self.finish(cancel=True)
+            return True
+        if (self.solver is not None and kind in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease) and
+                event.key() == Qt.Key.Key_Alt):
+            # Alt is the drag's own while it lasts (R317): tabs, at once, the pointer still. Not the window's: the
+            # menus Alt shows and the page it pushes (AltMenus) see neither its press nor its release
+            if not event.isAutoRepeat():
+                self.tabs = kind == QEvent.Type.KeyPress
+                self._track()
             return True
         if self.solver is not None and kind in _CANCEL and obj is self.dock.parentWidget():
             # Deactivated, hidden or moved to another pixel ratio: the pictures and the measuring
@@ -683,21 +697,31 @@ class DockDrag(QObject):
                     return False
                 self._take(window)
             window = self.dock.parentWidget()
-            local = window.mapFromGlobal(point)
-            self.lift.follow(local)         # the only thing that moves with the pointer
-            wanted = target_at(window, self.dock, local)
-            if wanted == self.target:
-                self.waiting, self.pending = False, None
-                self.dwell.stop()
-            elif not self.waiting or wanted != self.pending:
-                self.waiting, self.pending = True, wanted
-                self.dwell.start(Motion.DWELL)
+            self.local = window.mapFromGlobal(point)
+            self.lift.follow(self.local)    # the only thing that moves with the pointer
+            # Alt read at every move, from the event and the application (held before the drag began); its press and
+            # release, seen below, set it either way. A key eaten here leaves the application's modifiers behind
+            if (event.modifiers() | QApplication.keyboardModifiers()) & Qt.KeyboardModifier.AltModifier:
+                self.tabs = True
+            self._track()
             return True
         if (kind == QEvent.Type.MouseButtonRelease and event.button() == Qt.MouseButton.LeftButton and
                 self.origin is not None):           # a QPoint at the screen's origin is false
             self.finish()
             return True
         return False
+
+    def _track(self) -> None:
+        """The zone under the pointer, with Alt as it is now: answered after its dwell."""
+        if self.solver is None or self.local is None:
+            return
+        wanted = target_at(self.dock.parentWidget(), self.dock, self.local, tabs=self.tabs)
+        if wanted == self.target:
+            self.waiting, self.pending = False, None
+            self.dwell.stop()
+        elif not self.waiting or wanted != self.pending:
+            self.waiting, self.pending = True, wanted
+            self.dwell.start(Motion.DWELL)
 
     def _take(self, window: QMainWindow) -> None:
         """The card lifted: the measuring window, the motion layer with the card's home slot, the picture."""
@@ -706,10 +730,15 @@ class DockDrag(QObject):
         self.layer.hold_open = True
         self.layer.drag = self
         self.lift = Lift(window, self.dock, self.origin)
+        self.tabs = bool(QApplication.keyboardModifiers() & Qt.KeyboardModifier.AltModifier)
         self.layer.lift = self.lift
         self.layer.retarget(_placed(window), preview=self.dock, hold=True)
         QApplication.instance().installEventFilter(self)
         self.title.grabMouse()
+        self.status = next((bar for bar in window.findChildren(QStatusBar, options=DIRECT) if bar.isVisible()), None)
+        if self.status is not None:
+            self.said = _("Alt: as tabs")
+            self.status.showMessage(self.said)
 
     def _dwelt(self) -> None:
         if self.solver is None or not self.waiting:
@@ -727,6 +756,9 @@ class DockDrag(QObject):
         self.waiting, self.pending = False, None
         QApplication.instance().removeEventFilter(self)
         self.title.releaseMouse()
+        if self.status is not None and shiboken6.isValid(self.status) and self.status.currentMessage() == self.said:
+            self.status.clearMessage()
+        self.status = None
         window, dock = self.dock.parentWidget(), self.dock
         layer, lift, target, solver = self.layer, self.lift, self.target, self.solver
         self.solver = self.layer = self.lift = self.target = None

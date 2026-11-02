@@ -66,10 +66,13 @@ class PanelLayout(unittest.TestCase):
         at = anchor.mapToGlobal(anchor.rect().center())
         QTest.mousePress(title, Qt.MouseButton.LeftButton, pos=title.rect().center())
         QTest.mouseMove(title, title.mapFromGlobal(at - QPoint(12, 12)))
+        QTest.keyPress(self.win, Qt.Key.Key_Alt, Qt.KeyboardModifier.AltModifier)     # a tab only with Alt (R317)
         QTest.mouseMove(title, title.mapFromGlobal(at))
         self.assertTrue(_setup.wait_until(self.app, lambda: not source.drag_motion.waiting, 3))   # the dwell (R312)
         self.assertTrue(source.drag_motion.target.tab)
         QTest.mouseRelease(title, Qt.MouseButton.LeftButton, pos=title.mapFromGlobal(at))
+        QTest.keyRelease(self.win, Qt.Key.Key_Alt)
+        self.assertFalse(self.win.alt_menus.shown)                                    # Alt was the drag's
         from meridiana.ui.dock_motion import Lift
         self.assertTrue(_setup.wait_until(self.app, lambda: not any(                # the flight and the landing
             lift.isVisible() for lift in self.win.findChildren(Lift, options=DIRECT)), 5))
