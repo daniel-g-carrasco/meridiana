@@ -283,6 +283,46 @@ class DockDragging(unittest.TestCase):
         menus.alone = False
         self.alt(False)
 
+    # one target where a band of the window and a panel's side are the same place (R317)
+
+    def test_a_band_over_a_panel_docked_there_is_that_panel_s_outer_side(self):
+        from meridiana.ui.design import Space
+        from meridiana.ui.dock_motion import DockTarget, target_at
+        h = self.host.height()
+        bottom, left = self.docks[2], self.docks[0]
+        cases = ((self.docks[0], QPoint(500, h - 4), QPoint(500, h - Space.XXL - 4),
+                  DockTarget(Qt.DockWidgetArea.BottomDockWidgetArea, bottom, Qt.Orientation.Vertical)),
+                 (self.docks[1], QPoint(4, 300), QPoint(Space.XXL + 4, 300),
+                  DockTarget(Qt.DockWidgetArea.LeftDockWidgetArea, left, Qt.Orientation.Horizontal, before=True)))
+        for source, band, inside, wanted in cases:
+            self.assertEqual(target_at(self.host, source, band), wanted, band)
+            self.assertEqual(target_at(self.host, source, inside), wanted, inside)     # the same, a step inside
+        # an empty band stays the band: nothing at the top, and the right holds only the card carried
+        self.assertEqual(target_at(self.host, self.docks[0], QPoint(500, 4)),
+                         DockTarget(Qt.DockWidgetArea.TopDockWidgetArea))
+        self.assertEqual(target_at(self.host, self.docks[1], QPoint(self.host.width() - 4, 300)),
+                         DockTarget(Qt.DockWidgetArea.RightDockWidgetArea))
+
+    def test_crossing_from_the_band_to_the_panel_s_side_does_not_move_the_slot(self):
+        from meridiana.ui.design import Space
+        source = self.docks[0]
+        drag, title = self.take(source)
+        h = self.host.height()
+        self.hover(title, QPoint(500, h - 4))
+        shown, layer = drag.target, drag.layer
+        retargets = []
+        layer.animation.stateChanged.connect(lambda *a: retargets.append(a))
+        for y in (h - Space.XXL - 4, h - 3, h - Space.XXL + 1, h - Space.XXL - 1, h - 6):
+            QTest.mouseMove(title, title.mapFromGlobal(self.host.mapToGlobal(QPoint(500, y))))
+            self.assertIs(drag.target, shown, y)
+            self.assertFalse(drag.waiting, y)                                 # nothing waits, nothing slides
+        _setup.turn_events(self.app, Motion.DWELL + Motion.CAREFUL)
+        self.assertEqual([state for state in retargets
+                          if state[0] == QAbstractAnimation.State.Running], [])
+        QTest.keyClick(title, Qt.Key.Key_Escape)
+        QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
+        self.quiet()
+
     # the release
 
     def test_released_the_picture_flies_into_the_slot_and_the_layout_changes_only_then(self):

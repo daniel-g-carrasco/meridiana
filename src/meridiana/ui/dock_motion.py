@@ -605,7 +605,7 @@ def target_at(window: QMainWindow, source: QDockWidget, point: QPoint, *, tabs: 
                  (room.bottom() - point.y(), Qt.DockWidgetArea.BottomDockWidgetArea))
     distance, area = min(distances, key=lambda pair: pair[0])
     if distance < Space.XXL and source.allowedAreas() & area:
-        return DockTarget(area)
+        return _band(window, source, area, point)
     for anchor in window.findChildren(QDockWidget, options=DIRECT):
         if anchor is source or anchor.isHidden() or anchor.isFloating() or not anchor.geometry().contains(point):
             continue
@@ -620,6 +620,35 @@ def target_at(window: QMainWindow, source: QDockWidget, point: QPoint, *, tabs: 
         return DockTarget(area, anchor, Qt.Orientation.Horizontal if side in ('left', 'right')
                           else Qt.Orientation.Vertical, before=side in ('left', 'top'))
     return None
+
+
+_OUTER = {Qt.DockWidgetArea.LeftDockWidgetArea: (Qt.Orientation.Horizontal, True),
+          Qt.DockWidgetArea.RightDockWidgetArea: (Qt.Orientation.Horizontal, False),
+          Qt.DockWidgetArea.TopDockWidgetArea: (Qt.Orientation.Vertical, True),
+          Qt.DockWidgetArea.BottomDockWidgetArea: (Qt.Orientation.Vertical, False)}
+
+
+def _band(window: QMainWindow, source: QDockWidget, area: Qt.DockWidgetArea, point: QPoint) -> DockTarget:
+    """The band along the window's side `area`. Where a panel docked at that side lies across the band at the
+    point, the band and that panel's outer side are one place: one target, beside that panel on its outer side, the
+    same the panel's own half gives a step inside (R317: the slot no longer hops between two answers for one
+    place). Where the band is empty, the side itself."""
+    along_x = area in (Qt.DockWidgetArea.TopDockWidgetArea, Qt.DockWidgetArea.BottomDockWidgetArea)
+    room = window.rect()
+    there = []
+    for dock in window.findChildren(QDockWidget, options=DIRECT):
+        r = dock.geometry()
+        if (dock is source or not _docked(dock) or window.dockWidgetArea(dock) != area or not room.intersects(r)
+                or not (r.left() <= point.x() <= r.right() if along_x else r.top() <= point.y() <= r.bottom())):
+            continue
+        reach = (abs(point.y() - r.center().y()) - r.height() / 2 if along_x
+                 else abs(point.x() - r.center().x()) - r.width() / 2)
+        there.append((reach, dock))
+    if not there:
+        return DockTarget(area)
+    anchor = min(there, key=lambda pair: pair[0])[1]           # the one at the side, under or nearest the point
+    orientation, before = _OUTER[area]
+    return DockTarget(area, anchor, orientation, before=before)
 
 
 _CANCEL = (QEvent.Type.WindowDeactivate, QEvent.Type.Hide, QEvent.Type.DevicePixelRatioChange)
