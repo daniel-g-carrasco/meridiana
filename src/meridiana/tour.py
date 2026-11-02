@@ -29,7 +29,7 @@ def steps() -> tuple[Step, ...]:
              ("file",),
              (_("New: a site, a name and the first roof in a few minutes."),
               _("Save and revisions: a revision is a new file next to the previous one, never over it."),
-              _("Import and Export: PVsyst, IFC and the hourly CSV.")),
+              _("Open takes a PVsyst project too; the other imports stand in the phase that uses them.")),
              _("Ctrl+N new project, Ctrl+O open")),
         Step("model", _("Model the buildings and the roofs"),
              _("This is where the place takes shape. Draw the footprint of the buildings and give them roofs, add "

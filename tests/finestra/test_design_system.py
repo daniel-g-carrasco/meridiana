@@ -525,7 +525,7 @@ class InTheWindow(unittest.TestCase):
         self.assertFalse(win.tabs.bars.isVisible())                         # the bar of the phase under it
         self.assertIsNone(win.tabs.header.tab_now())                        # no phase marked as open (R99)
         self.assertTrue(win.tabs.tab_bar.file_open)
-        for key in ("open", "import", "export", "catalogues", "help"):
+        for key in ("open", "export", "catalogues", "help"):
             page.show_section(key)
             self.assertIs(page.body.currentWidget(), page.sections[key])
             self.assertTrue(page.items[key].isChecked())

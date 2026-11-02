@@ -340,6 +340,18 @@ class CatalogDialog(QDialog):
         self.revise_product.clicked.connect(lambda: self._new_personal(self.chosen()) if self.chosen() else None)
         box.addWidget(self.revise_product)
         box.addWidget(self.new_product)
+        # R315 (Daniel, 02/11/2026): a PVsyst file of a module or an inverter is imported from its catalogue, no
+        # longer from File; the window reads it, says what it read and asks before using it (_import_pvsyst)
+        self.import_pvsyst = None
+        pvsyst = {"modules": ("module", _("A PVsyst module file (.PAN): what is read is shown before it is used.")),
+                  "inverters": ("inverter", _("A PVsyst inverter file (.OND): what is read is shown before it is "
+                                              "used."))}
+        if kind in pvsyst and hasattr(parent, "_import_pvsyst"):
+            which, tip = pvsyst[kind]
+            self.import_pvsyst = QPushButton(_("Import from PVsyst…"))
+            self.import_pvsyst.setToolTip(tip)
+            self.import_pvsyst.clicked.connect(lambda: self._import_from_pvsyst(which))
+            box.addWidget(self.import_pvsyst)
         box.addWidget(buttons)
         self.timer = QTimer(self, singleShot=True, interval=SEARCH_PAUSE_MS)
         self.timer.timeout.connect(self._search)
@@ -399,6 +411,13 @@ class CatalogDialog(QDialog):
                          "".join("<td>" + html.escape(value) + "</td>" for value in cells) + "</tr>")
         self.detail.setHtml("<table>" + header + "".join(lines) + "</table>")
         self.detail.verticalScrollBar().setValue(0)
+
+    def _import_from_pvsyst(self, which: str) -> None:
+        """The catalogue closes and the window asks for the file: the module or the inverter read goes to the
+        project, not to this list."""
+        host = self.parent()
+        self.reject()
+        QTimer.singleShot(0, host, lambda: host._import_pvsyst(which))
 
     def _new_personal(self, record=None):
         from .catalog_editor import review_record

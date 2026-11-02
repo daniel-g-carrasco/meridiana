@@ -3,10 +3,10 @@ its own over the window, as Office's and Revit's File (the target, docs/studio/1
 menu bar is hidden and Alt shows it (ui/menubar.py); the page is reached from the «File» button at the left of
 the phases' row, and Esc or «Back to the project» closes it.
 
-On the left the list: Back, New, Open, Save, Save as, Save a revision, Import, Export, Catalogues, Settings with its
-seven sections, Help and manual, Quit. The commands start at once (the page closes first); Open, Import, Export,
-Catalogues, Settings and Help open their section on the right. Every button starts one of the window's commands or
-shows one of these places."""
+On the left the list: Back, New, Open, Save, Save as, Save a revision, Export, Catalogues, Settings with its seven
+sections, Help and manual, Quit. The commands start at once (the page closes first); Open, Export, Catalogues,
+Settings and Help open their section on the right (R315: no Import, every import stands where it is used). Every
+button starts one of the window's commands or shows one of these places."""
 
 from __future__ import annotations
 
@@ -44,8 +44,13 @@ class TileIcon(QLabel):
             self._refresh()
 
 
+DESCRIPTION_LINES = 2       # the room a tile keeps for what it does, filled or not (R315)
+
+
 class Tile(QFrame):
-    """A thing to do: its icon, its name, what it does, the formats it takes, its button."""
+    """A thing to do: its icon, its name, what it does, the formats it takes, its button. R315 (Daniel, 02/11/2026:
+    «non hanno dimensioni armonizzate e congruenti»): the description keeps the room of two lines, a tile takes the
+    height of its row and the formats and the button stand at its foot, so the tiles of a row match."""
 
     def __init__(self, icon: str, name: str, what: str, formats: tuple, button: str, slot: Callable):
         super().__init__()
@@ -61,10 +66,12 @@ class Tile(QFrame):
         title.setObjectName("ftile-name")
         title.setFont(text_font(Text.TITLE))
         grid.addWidget(title, 0, 1)
-        text = QLabel(what)
+        self.text = text = QLabel(what)
         text.setObjectName("ftile-text")
         text.setWordWrap(True)
         text.setFont(text_font(Text.DESCRIPTION))
+        text.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        text.setMinimumHeight(DESCRIPTION_LINES * text.fontMetrics().lineSpacing())
         grid.addWidget(text, 1, 1)
         foot = QHBoxLayout()
         foot.setSpacing(Space.S)
@@ -78,9 +85,23 @@ class Tile(QFrame):
         self.button.clicked.connect(slot)
         foot.addWidget(self.button)
         grid.setRowMinimumHeight(2, Space.XS)
+        grid.setRowStretch(2, 1)                    # what a taller neighbour adds goes here: the foot stays down
         grid.addLayout(foot, 3, 1)
         grid.setColumnStretch(1, 1)
-        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        # the height of its row (Preferred, not Maximum: a shorter tile stood centred in a taller row)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+
+
+def row_sizes(count: int, columns: int) -> list[int]:
+    """How many tiles each row of a group holds (R315): as few rows as `columns` allows, the tiles shared out evenly
+    and the fuller rows first, so that no tile stands alone under a full row (4 in 3 columns: 2 + 2; 7: 3 + 2 + 2).
+    Only where one column is all there is, or two for three tiles, does a row hold one."""
+    if count <= 0:
+        return []
+    columns = max(1, columns)
+    rows = -(-count // columns)
+    base, extra = divmod(count, rows)
+    return [base + 1] * extra + [base] * (rows - extra)
 
 
 class Section(QScrollArea):
@@ -124,16 +145,25 @@ class Section(QScrollArea):
         self._reflow()
 
     def _reflow(self) -> None:
-        columns = max(1, min(3, (self.viewport().width() - 2 * Layout.PAGE[0]) // 280))
+        """At most three tiles a row, as many as fit at 280 px; every column of the page as wide (a short row does
+        not stretch its tiles), the rows shared out by row_sizes."""
+        available = self.viewport().width() - 2 * Layout.PAGE[0]
+        columns = max(1, min(3, (available + Layout.GAP) // (280 + Layout.GAP)))
         for index, (grid, tiles, previous) in enumerate(self._groups):
             if columns == previous:
                 continue
-            while grid.count():
-                grid.takeAt(0)
+            # removeWidget, not takeAt: the item taken out stayed alive, still the tile's own item for Qt, and the
+            # new one never heard of a change of the tile (updateGeometry): it kept a height measured before the
+            # sheet polished the tile, and Help's rows stood a line taller than their tiles (R315)
+            for tile in tiles:
+                grid.removeWidget(tile)
             for col in range(3):
                 grid.setColumnStretch(col, int(col < columns))
-            for i, tile in enumerate(tiles):
-                grid.addWidget(tile, i // columns, i % columns)
+            at = 0
+            for row, size in enumerate(row_sizes(len(tiles), columns)):
+                for col in range(size):
+                    grid.addWidget(tiles[at], row, col)
+                    at += 1
             self._groups[index] = (grid, tiles, columns)
 
     def resizeEvent(self, event) -> None:
@@ -298,7 +328,6 @@ class FilePage(QFrame):
         self._item("save", "save", _("Save and revisions"))
         self._item("registry", "library", _("Clients and jobs"))
         self._rule()
-        self._item("import", "download", _("Import"))
         self._item("export", "upload", _("Export"))
         self._rule()
         self._item("catalogues", "library", _("Catalogues"))
@@ -326,9 +355,26 @@ class FilePage(QFrame):
         self.sections["registry"] = self.registry_page
 
         # Open: the file, and the projects opened last
+        # R315 (Daniel, 02/11/2026): no Import page; a PVsyst project is one more way to open, every other import
+        # stands where it is used, and a line here says where
         opening = Section(_("Open"), _("A Meridiana project from a file, or one of the last ones."))
-        opening.group(_("Project"), [Tile("folder-open", _("A project"), _("A .mer file with the project and its resources."),
-                                          (".mer",), _("Choose the file…"), self._command("open"))])
+        opening.group(_("Project"), [
+            Tile("folder-open", _("A project"), _("A .mer file with the project and its resources."),
+                 (".mer",), _("Choose the file…"), self._command("open")),
+            Tile("file-input", _("PVsyst project"), _("The project and the variants next to it, opened as a new "
+                                                      "project: Meridiana says what it approximated."), (".PRJ",),
+                 _("Choose the file…"), self._command("import_pvsyst"))])
+        from .. import phases
+        title = {p.id: p.title for p in phases.phases()}
+        self.elsewhere = QLabel(_("The other imports stand where they are used: the IFC model in {model}, the PVsyst "
+                                  "modules and inverters in the catalogues of {plant}, PVGIS in {production}, the load "
+                                  "curve in {consumption}.").format(**title))
+        self.elsewhere.setObjectName("fpage-lead")
+        self.elsewhere.setWordWrap(True)
+        self.elsewhere.setMaximumWidth(760)
+        self.elsewhere.setFont(text_font(Text.SECONDARY))
+        opening.box.addSpacing(Space.M)
+        opening.box.addWidget(self.elsewhere)
         self.recent_box = QVBoxLayout()
         self.recent_box.setSpacing(0)
         sec = QLabel(_("Opened recently").upper())
@@ -350,33 +396,6 @@ class FilePage(QFrame):
                  ("_R01", "_R02"), _("Save a revision"), self._command("save_revision"))])
         saving.finish()
         self.sections["save"] = saving
-
-        # Import: what comes from other programs or from a file
-        imports = Section(_("Import"), _("What comes from other programs or from a file. Meridiana reads it, tells "
-                                         "you what it took and what it approximated, and you can undo it."))
-        imports.group(_("Project"), [
-            Tile("folder-open", _("PVsyst project"), _("The project and the variants next to it, as a new project: "
-                                                       "Meridiana says what it approximated."), (".PRJ",),
-                 _("Choose the file…"), self._command("import_pvsyst")),
-            Tile("building", _("IFC model"), _("The buildings of an architect's model: outlines, roof planes, heights "
-                                               "and what stands on the roofs."), (".ifc", ".ifczip"), _("Choose the file…"),
-                 self._command("import_ifc")),
-            Tile("image", _("Image under the drawing"), _("A site plan or an aerial photo, to scale on the plan."),
-                 ("PNG", "JPEG", "PDF"), _("Choose the file…"), self._then(lambda: w._import_image())),
-            Tile("cloud-download", _("Typical year and horizon"), _("From the European service PVGIS for the "
-                                                                   "project's site; then they stay in the cache."),
-                 ("PVGIS",), _("Fetch"), self._command("fetch_pvgis"))])
-        imports.group(_("Catalogues and consumption"), [
-            Tile("subfield", _("Module from PVsyst"), _("Into the modules' catalogue, with the parameters of the "
-                                                        "one-diode model."), (".PAN",), _("Choose the file…"),
-                 self._then(lambda: w._import_pvsyst("module"))),
-            Tile("zap", _("Inverter from PVsyst"), _("Into the inverters' catalogue, with its efficiency curve."),
-                 (".OND",), _("Choose the file…"), self._then(lambda: w._import_pvsyst("inverter"))),
-            Tile("file-input", _("Load curve"), _("The consumption measured every 15 minutes or every hour, in "
-                                                  "place of the profile."), ("CSV",), _("Choose the file…"),
-                 self._command("import_curve"))])
-        imports.finish()
-        self.sections["import"] = imports
 
         # Export: what goes out of the project
         exports = Section(_("Export"), _("What leaves the project for the client, the authorities or a colleague."))

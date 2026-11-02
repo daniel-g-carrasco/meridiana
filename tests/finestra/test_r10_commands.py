@@ -628,6 +628,17 @@ class ButtonsWithAMenu(WindowCase):
         self.assertIn(QKeySequence("B"), win.commands["tool_building"].shortcuts())
         self.assertIn("(B)", building.toolTip())
 
+    def test_r315_building_reads_an_ifc_model_from_its_menu(self):
+        """R315 (Daniel, 02/11/2026): the IFC model is imported where buildings are made, «From IFC» in Building's
+        menu after the templates, the window's own command (no key of its own)."""
+        win = self.win
+        building = win.bars["model"].button_of("tool_building")
+        self.assertIs(win.bars["model"].button_of("import_ifc"), building)
+        self.assertEqual(list(building.family), ["tool_building", "building_template", "import_ifc"])
+        self.assertEqual(building.family["import_ifc"][0], "From IFC")
+        self.assertIs(building.family["import_ifc"][1], win.commands["import_ifc"])
+        self.assertIn(win.commands["import_ifc"], building.commands.actions())
+
     def test_the_arrow_and_the_long_press_open_the_menu_and_the_click_runs_the_one_on_the_button(self):
         from PySide6.QtCore import QPoint, Qt
         from PySide6.QtTest import QTest

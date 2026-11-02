@@ -21,17 +21,53 @@ class Organization(unittest.TestCase):
         page.items['preferences'].click()
         self.app.processEvents()
         self.assertTrue(page.items['preferences:navigation'].isVisible())
-        self.assertFalse(page.items['import'].isVisible())
+        self.assertFalse(page.items['export'].isVisible())
         page.items['preferences:navigation'].click()
         self.app.processEvents()
         self.assertIs(page.settings.pages.currentWidget(), page.settings.navigation)
         self.assertLessEqual(page.settings.width(), 860)
         page.items['settings_back'].click()
         self.app.processEvents()
-        self.assertTrue(page.items['import'].isVisible())
+        self.assertTrue(page.items['export'].isVisible())
         page.items['save'].click()
         self.assertIs(page.body.currentWidget(), page.sections['save'])
         self.assertTrue(page.isVisible())
+
+    def test_r315_no_import_page_and_a_pvsyst_project_is_opened_from_open(self):
+        """R315 (Daniel, 02/11/2026): the Import page is gone; a PVsyst project is one more way to open, with its
+        Ctrl+I, and a quiet line in Open says where the other imports are."""
+        from unittest import mock
+
+        from PySide6.QtGui import QKeySequence
+        from PySide6.QtWidgets import QLabel
+
+        from meridiana.ui.file_page import Tile
+        self.app = _setup.qt_or_skip()
+        _setup.window(self, capannone())
+        from meridiana.ui import motion
+        motion.set_reduced(True)
+        self.win.resize(1700, 1000)
+        win, page = self.win, self.win.file_page
+        self.assertNotIn('import', page.items)
+        self.assertNotIn('import', page.sections)
+        win.open_file_page('open')
+        self.app.processEvents()
+        tiles = page.sections['open'].findChildren(Tile)
+        names = [t.findChild(QLabel, "ftile-name").text() for t in tiles]
+        self.assertEqual(names, ["A project", "PVsyst project"])
+        prj = tiles[1]
+        self.assertEqual([c.text() for c in prj.findChildren(QLabel, "ftile-format")], [".PRJ"])
+        self.assertEqual(tiles[0].y(), prj.y())                                # one row, as tall
+        self.assertEqual(tiles[0].height(), prj.height())
+        self.assertIn(QKeySequence("Ctrl+I"), win.commands["import_pvsyst"].shortcuts())    # the key stays
+        line = page.elsewhere.text()
+        for where in ("IFC", "Modelling", "Plant", "PVGIS", "Production", "Consumption"):
+            self.assertIn(where, line)
+        with mock.patch.object(win, "_import_pvsyst_project") as started:
+            prj.button.click()
+            self.app.processEvents()
+        started.assert_called_once()
+        self.assertFalse(page.isVisible())                                    # the page closes, then the file
 
     def test_settings_opened_from_elsewhere_go_back_to_the_project_with_a_button_and_a_key(self):
         """R289 (Daniel, 30/10/2026): the Settings opened without passing by File (Meridio's «Settings…», their
@@ -51,7 +87,7 @@ class Organization(unittest.TestCase):
         self.assertIs(page.body.currentWidget(), page.sections['preferences'])
         self.assertTrue(page.items['back'].isVisible())        # «Back to the project», in the settings' list too
         self.assertTrue(page.items['settings_back'].isVisible())
-        self.assertFalse(page.items['import'].isVisible())
+        self.assertFalse(page.items['export'].isVisible())
         QTest.keyClick(page, Qt.Key.Key_Left, Qt.KeyboardModifier.AltModifier)
         self.app.processEvents()
         self.assertFalse(page.isVisible())                     # opened there: one step back is the project
@@ -64,7 +100,7 @@ class Organization(unittest.TestCase):
         self.app.processEvents()
         self.assertTrue(page.isVisible())
         self.assertIs(page.body.currentWidget(), page.sections['open'])
-        self.assertTrue(page.items['import'].isVisible())
+        self.assertTrue(page.items['export'].isVisible())
         page.items['preferences'].click()
         self.app.processEvents()
         page.items['back'].click()
