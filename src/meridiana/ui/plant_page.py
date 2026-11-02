@@ -918,7 +918,7 @@ class PlantSide(QWidget):
         for group in phases.by_id("plant").groups:
             if group.id == "edit":                  # R295: Select, Move, Rotate leave open what is open
                 continue
-            for tool in group.tools:
+            for tool in group.every():
                 self.command_section[tool.command] = where.get(group.id, "inverter")
         for cid, sid in self.command_section.items():
             if cid in actions:

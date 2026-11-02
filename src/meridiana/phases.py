@@ -29,19 +29,30 @@ from .i18n import _
 class Tool:
     """A button of the bar: the command it starts, the word under its icon (one line: a long name is shortened
     here and stays whole in the tooltip), the icon (ui/icons.NAMES; the command's id when empty), whether it is
-    the one button full of accent of the phase, and the task that brings it when it is not there yet."""
+    the one button full of accent of the phase, and the task that brings it when it is not there yet. `more` are the
+    commands that share the button, in a menu (R306, as AutoCAD's flyouts): the button runs the last one used, its
+    arrow or a long press opens the others, each with its name and key."""
     command: str
     label: str = ""
     icon: str = ""
     primary: bool = False
     planned: str = ""
+    more: tuple = ()
+
+    def family(self) -> tuple:
+        """The tool and those that share its button."""
+        return (self, *self.more)
 
 
 @dataclass(frozen=True)
 class Group:
     id: str
     title: str
-    tools: tuple
+    tools: tuple                    # the buttons of the group: a button's other commands are in Tool.more
+
+    def every(self) -> list[Tool]:
+        """Every tool of the group, those in the menus of its buttons too."""
+        return [f for t in self.tools for f in t.family()]
 
 
 @dataclass(frozen=True)
@@ -60,13 +71,14 @@ class Phase:
         """As the row of the phases writes it: «1 Modellazione»."""
         return f"{self.number} {self.title}"
 
-    def tools(self, planned: bool = False) -> list[Tool]:
-        """The tools of the bar in their order; `planned` includes those a later task brings."""
-        return [t for g in self.groups for t in g.tools if planned or not t.planned]
+    def tools(self, planned: bool = False, every: bool = False) -> list[Tool]:
+        """The buttons of the bar in their order; `planned` includes those a later task brings, `every` the commands
+        in the buttons' menus (R306)."""
+        return [t for g in self.groups for t in (g.every() if every else g.tools) if planned or not t.planned]
 
     def commands(self) -> list[str]:
-        """Every command the bar cites, planned ones included."""
-        return [t.command for t in self.tools(planned=True)]
+        """Every command the bar cites, planned ones and those in the buttons' menus included."""
+        return [t.command for t in self.tools(planned=True, every=True)]
 
 
 INSPECTORS = ("properties", "plant", "results", "deliverables")
@@ -82,11 +94,10 @@ def phases() -> list[Phase]:
                 T("tool_move", _("Move"), icon="move"),
                 T("tool_rotate", _("Rotate"), icon="rotate"))),
             Group("draw", _("Draw"), (
-                T("tool_building", icon="building"),
-                T("building_template", _("Template")),
+                # R306: «edificio [...] con i modelli, la falda con il colmo»
+                T("tool_building", icon="building", more=(T("building_template", _("Template")),)),
                 T("carport", _("Canopy")),
-                T("tool_pitch", icon="pitch"),
-                T("tool_ridge", icon="ridge"))),        # R275: the roof from its ridge
+                T("tool_pitch", icon="pitch", more=(T("tool_ridge", icon="ridge"),)))),     # R275: the roof from its ridge
             # the objects of the scene (trees, roof obstacles, cars, people: R269, study 22, 3.2 and question 10)
             Group("obstacles", _("Obstacles"), (
                 T("tool_exclusion", icon="exclusion"),  # an exclusion is an obstacle on the roof (a vent, a skylight)
@@ -110,9 +121,9 @@ def phases() -> list[Phase]:
                 T("tool_rotate", _("Rotate"), icon="rotate"))),
             Group("modules", _("Panels"), (
                 T("tool_subfield", icon="subfield"),
-                T("tool_row", _("Row"), icon="row"),
-                T("layout_east_west", _("East-west")),
-                T("canopy_layout", _("On canopy"), icon="carport"),
+                # R306: three ways of drawing the rows by hand on one button
+                T("tool_row", _("Row"), icon="row", more=(T("layout_east_west", _("East-west")),
+                                                          T("canopy_layout", _("On canopy"), icon="carport"))),
                 T("fill", _("Lay"), primary=True),
                 T("empty", _("Empty")))),
             Group("inverter", _("Inverter"), (

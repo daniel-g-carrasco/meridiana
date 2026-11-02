@@ -272,6 +272,8 @@ QToolButton:checked {{ background: {press}; color: {t['text']}; border-color: tr
 QToolButton:focus {{ border-color: {t['accent']}; }}
 QToolButton[popupMode="2"] {{ padding-right: {S.XL}px; }}
 QToolButton::menu-indicator {{ {drop} subcontrol-origin: padding; subcontrol-position: center right; right: {S.XS}px; }}
+QToolButton[grouped="true"]::menu-indicator {{ {drop} subcontrol-origin: padding; subcontrol-position: top right;
+    top: {S.S}px; right: 0px; }}
 QToolButton#filter, QToolButton#count {{ border: 1px solid {t['line']}; border-radius: {pill:g}px;
     padding: 0 {S.L - 1}px; min-height: {chip_inner}px; max-height: {chip_inner}px; color: {t['text']};
     background: transparent; }}

@@ -31,7 +31,7 @@ class ThePhases(unittest.TestCase):
         self.assertEqual(groups["economics"], ["Computation", "Comparison"])
         self.assertEqual(groups["report"], ["Comparison", "Export"])
         for p in phases.phases():
-            commands = [t.command for t in p.tools()]
+            commands = [t.command for t in p.tools(every=True)]
             self.assertEqual(len(commands), len(set(commands)), p.id)
             for g in p.groups:
                 self.assertNotIn(g.title, ("Sun", "Background"))            # they stay in the views (C5)
@@ -43,7 +43,7 @@ class ThePhases(unittest.TestCase):
         for pid in ("production", "economics", "report"):
             self.assertIn("new_variant", [t.command for t in phases.by_id(pid).tools()])
         self.assertNotIn("refill", [t.command for t in phases.by_id("model").tools()])
-        self.assertIn("strings_clear", [t.command for t in phases.by_id("plant").tools()])
+        self.assertIn("strings_clear", [t.command for t in phases.by_id("plant").tools(every=True)])
 
     def test_every_command_cited_exists_unless_a_later_task_brings_it(self):
         known = {c.id for c in shortcuts.commands()}
@@ -57,7 +57,7 @@ class ThePhases(unittest.TestCase):
                     else:
                         self.assertIn(t.command, known)
         model, plant = phases.by_id("model"), phases.by_id("plant")
-        modules = [t.command for g in plant.groups if g.id == "modules" for t in g.tools]
+        modules = [t.command for g in plant.groups if g.id == "modules" for t in g.every()]
         self.assertEqual(modules, ["tool_subfield", "tool_row", "layout_east_west", "canopy_layout", "fill", "empty"])
         self.assertEqual([t.command for t in plant.tools(planned=True) if t.planned], [])   # «On a canopy» is there (R281)
         self.assertEqual([t.command for t in model.tools(planned=True) if t.planned], [])    # R269: «3D object»
@@ -119,7 +119,7 @@ class ThePhases(unittest.TestCase):
             "economics": ["compute", "new_variant", "compare_variants"],
             "report": ["new_variant", "compare_variants", "export_report", "export_ifc", "export_csv",
                        "save_revision", "copy_notes"]}
-        now = {p.id: [t.command for t in p.tools()] for p in phases.phases()}
+        now = {p.id: [t.command for t in p.tools(every=True)] for p in phases.phases()}     # R306: their menus too
         lost = {c for cs in before.values() for c in cs} - {c for cs in now.values() for c in cs}
         self.assertEqual(lost, set())
         added = ["tool_ridge", "canopy_layout", "object_3d"]     # R275, R281 and R269, new on the bars

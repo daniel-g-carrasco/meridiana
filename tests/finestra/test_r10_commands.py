@@ -222,5 +222,99 @@ class ViewCommandsDuringATool(WindowCase):
         self.assertEqual(plan.draft, [(sfid, key)])             # the string goes on
 
 
+class ButtonsWithAMenu(WindowCase):
+    """R306: «molti dei comandi negli strumenti sopra possono essere raggruppati, un po' come succede in autocad»."""
+
+    def menu_of(self, button, trigger, after=50):
+        """What the menu of `button` shows when `trigger` opens it (the menu runs its own loop): its words, and it is
+        closed again."""
+        from PySide6.QtCore import QTimer
+        seen = []
+
+        def look():
+            if button.commands.isVisible():
+                seen.append([a.text() for a in button.commands.actions()])
+                button.commands.grab().save(self.photo) if getattr(self, "photo", "") else None
+            button.commands.close()
+        QTimer.singleShot(after, look)
+        trigger()
+        self.app.processEvents()
+        return seen
+
+    def test_building_holds_the_templates_and_pitch_the_ridge_with_their_keys(self):
+        from PySide6.QtGui import QKeySequence
+        from meridiana.ui.phasebar import ToolMenuButton
+        win = self.win
+        bar = win.bars["model"]
+        self.assertEqual(list(bar.buttons()), ["tool_select", "tool_move", "tool_rotate", "tool_building", "carport",
+                                               "tool_pitch", "tool_exclusion", "object_3d", "tool_measure", "square",
+                                               "rectangle"])
+        building, pitch = bar.button_of("tool_building"), bar.button_of("tool_ridge")
+        self.assertIsInstance(building, ToolMenuButton)
+        self.assertIs(bar.button_of("building_template"), building)
+        self.assertIs(pitch, bar.buttons()["tool_pitch"])
+        self.assertIn(QKeySequence("C"), win.commands["tool_ridge"].shortcuts())      # the keys are as they were
+        self.assertIn(QKeySequence("B"), win.commands["tool_building"].shortcuts())
+        self.assertIn("(B)", building.toolTip())
+
+    def test_the_arrow_and_the_long_press_open_the_menu_and_the_click_runs_the_one_on_the_button(self):
+        from PySide6.QtCore import QPoint, Qt
+        from PySide6.QtTest import QTest
+        win = self.win
+        bar = win.bars["model"]
+        win.show_phase("model")
+        self.app.processEvents()
+        button = bar.button_of("tool_pitch")
+        self.assertIs(button.defaultAction(), win.commands["tool_pitch"])
+        words = [win.commands["tool_pitch"].text(), win.commands["tool_ridge"].text()]
+        arrow = button.arrow_rect().center()
+        self.assertEqual(self.menu_of(button, lambda: QTest.mouseClick(button, Qt.MouseButton.LeftButton, pos=arrow)),
+                         [words])
+        self.assertNotEqual(win.plan.tool, "pitch")             # the arrow only opens the menu
+        # held down over the icon: the menu after Qt's delay
+        middle = QPoint(button.width() // 2 - button.ARROW, button.height() // 2)
+        delay = button.style().styleHint(button.style().StyleHint.SH_ToolButton_PopupDelay)
+        self.assertEqual(self.menu_of(button, lambda: (QTest.mousePress(button, Qt.MouseButton.LeftButton, pos=middle),
+                                                       QTest.qWait(delay + 300)), after=delay + 100),
+                         [words])
+        QTest.mouseRelease(button, Qt.MouseButton.LeftButton, pos=middle)
+        self.assertNotEqual(win.plan.tool, "pitch")
+        # a click on the button: the command on it
+        QTest.mouseClick(button, Qt.MouseButton.LeftButton, pos=middle)
+        self.assertEqual(win.plan.tool, "pitch")
+        self.assertTrue(button.isChecked())
+        # the other one, from the menu or with its key, comes on the button with its word and its tooltip
+        width = button.width()
+        win.commands["tool_ridge"].trigger()
+        self.assertEqual(win.plan.tool, "ridge")
+        self.assertIs(button.defaultAction(), win.commands["tool_ridge"])
+        self.assertEqual(button.text(), "Ridge")
+        self.assertEqual(button.property("tool"), "tool_ridge")
+        self.assertEqual(button.toolTip(), win.commands["tool_ridge"].toolTip())
+        self.assertEqual(button.width(), width)                 # the bar does not move
+        self.assertTrue(button.isChecked())
+        win._set_tool("select")
+        self.assertFalse(button.isChecked())
+        QTest.mouseClick(button, Qt.MouseButton.LeftButton, pos=middle)
+        self.assertEqual(win.plan.tool, "ridge")                # the last one used
+
+    def test_a_command_gone_disabled_gives_way_so_that_the_button_still_opens(self):
+        win = self.win
+        button = win.bars["model"].button_of("tool_building")
+        win.commands["building_template"].setEnabled(True)
+        button.use("building_template")
+        win.commands["building_template"].setEnabled(False)
+        self.assertIs(button.defaultAction(), win.commands["tool_building"])
+        self.assertTrue(button.isEnabled())
+        win.commands["building_template"].setEnabled(True)
+
+    def test_the_section_of_the_plant_follows_the_commands_in_the_menus_too(self):
+        win = self.win
+        win.show_phase("plant")
+        win.plant_side.open("inverter", ms=0)
+        win.commands["layout_east_west"].trigger()
+        self.assertEqual(win.plant_side.current, "panels")
+
+
 if __name__ == "__main__":
     unittest.main()
