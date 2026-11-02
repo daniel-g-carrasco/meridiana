@@ -96,6 +96,86 @@ class PanelAlone(unittest.TestCase):
         for _ in range(n):
             self.app.processEvents()
 
+    def test_the_activity_of_dpr_151_is_chosen_from_a_list_and_the_switch_follows(self):
+        # R327: the activity of Annex I by number or words, the category it allows, the switch kept coherent
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        from PySide6.QtWidgets import QCheckBox, QComboBox, QLabel
+
+        from meridiana import vvf_activities as vvf
+        p, props = self.p, self.props
+        b = p.buildings[0]
+        b.fire.subject, b.fire.category, b.fire.activity = True, "B", 0          # a project before format 24
+        props.show_building(b)
+        activity = props.widget().findChild(QComboBox, "fireActivity")
+        category = props.widget().findChild(QComboBox, "fireCategory")
+        self.assertEqual(activity.count(), 82)
+        self.assertEqual(activity.currentData(), vvf.NOT_SPECIFIED)
+        self.assertEqual(category.currentData(), "B")
+        notes = [n.text() for n in props.widget().findChildren(QLabel) if n.isVisibleTo(props.widget())]
+        self.assertTrue(any("Choose the activity of Annex I" in n for n in notes), notes)
+        # typed words find the activity anywhere in its label, and the choice is one edit
+        activity.setFocus()
+        activity.lineEdit().selectAll()
+        QTest.keyClicks(activity.lineEdit(), "elettrogeni")
+        popup = activity.completer().popup()
+        self.assertTrue(popup.isVisible())
+        self.assertEqual(activity.completer().completionCount(), 1)
+        popup.setCurrentIndex(activity.completer().completionModel().index(0, 0))
+        QTest.keyClick(popup, Qt.Key.Key_Return)
+        self.assertEqual(self.sent, [("building", b.id, {"fire.activity": 49})])
+        # the window applies it; the category B stays, as 49 has one
+        b.fire.activity = 49
+        props.show_building(b)
+        self.assertEqual(activity.currentData(), 49)
+        self.assertEqual(activity.lineEdit().cursorPosition(), 0)   # its start in view: the number and the first words
+        self.assertEqual(category.itemText(category.findData("A")), "A: fino a 350 kW")
+        notes = [n.text() for n in props.widget().findChildren(QLabel) if n.isVisibleTo(props.widget())]
+        self.assertTrue(any(n.startswith("49. Gruppi elettrogeni") and "di potenza complessiva superiore a 25 kW" in n
+                            and "p. 14" in n for n in notes), notes)
+        b.fire.category = "A"                                       # what the list shows cut, the note says whole
+        props.show_building(b)
+        notes = [n.text() for n in props.widget().findChildren(QLabel) if n.isVisibleTo(props.widget())]
+        self.assertTrue(any("Category A: fino a 350 kW." in n for n in notes), notes)
+        b.fire.category = "B"
+        props.show_building(b)
+        # words typed and left without a choice: the field goes back to the activity, and they are not an edit
+        self.sent.clear()
+        activity.setFocus()
+        activity.lineEdit().setText("parole a caso")
+        activity.lineEdit().editingFinished.emit()
+        self.assertEqual(activity.currentText(), activity.itemText(activity.findData(49)))
+        self.assertEqual(self.sent, [])
+        # an activity with only B and C: A is greyed out
+        self.sent.clear()
+        activity.setCurrentIndex(activity.findData(70))
+        activity.activated.emit(activity.currentIndex())
+        self.assertEqual(self.sent, [("building", b.id, {"fire.activity": 70})])
+        b.fire.activity = 70
+        props.show_building(b)
+        self.assertFalse(category.model().item(category.findData("A")).isEnabled())
+        self.assertTrue(category.model().item(category.findData("C")).isEnabled())
+        # none subject: the switch goes off and the category is cleared
+        self.sent.clear()
+        activity.setCurrentIndex(activity.findData(0))
+        activity.activated.emit(activity.currentIndex())
+        self.assertEqual(self.sent, [("building", b.id, {"fire.subject": False, "fire.category": "",
+                                                         "fire.activity": 0})])
+        # an activity with one category takes it and turns the switch on
+        b.fire.subject, b.fire.category, b.fire.activity = False, "", 0
+        props.show_building(b)
+        self.sent.clear()
+        activity.setCurrentIndex(activity.findData(57))
+        activity.activated.emit(activity.currentIndex())
+        self.assertEqual(self.sent, [("building", b.id, {"fire.subject": True, "fire.category": "C",
+                                                         "fire.activity": 57})])
+        b.fire.subject, b.fire.category, b.fire.activity = True, "C", 57
+        props.show_building(b)
+        switch = next(c for c in props.widget().findChildren(QCheckBox)
+                      if c.accessibleName() == "Activity subject to control (DPR 151/2011)")
+        self.assertTrue(switch.isChecked())
+        self.assertEqual((activity.currentText(), category.currentText()), ("57. Cementifici", "C: tutti"))
+
     def test_the_sun_window_belongs_to_the_subfield_and_can_be_used_by_all(self):
         from PySide6.QtWidgets import QGroupBox
         p, props = self.p, self.props

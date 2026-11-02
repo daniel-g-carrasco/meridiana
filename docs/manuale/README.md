@@ -91,6 +91,7 @@ Nella pagina del registro, **Collega cartella** aggiunge una cartella esistente 
 ## Meridio, l'assistente
 
 - **Ctrl+L**, o un clic sul personaggio, apre la conversazione. Meridio legge il progetto (verifiche, risultati, regole, il manuale) e risponde con le fonti; se una cifra viene da un valore di serie o da una stima lo dice; non cambia niente da solo: propone, e la proposta si applica con un clic e si annulla con Ctrl+Z.
+- **Da dove prende norme e soglie**: solo dalle fonti che il programma porta con sé, cioè le regole e le verifiche con le loro fonti, le 80 attività dell'Allegato I del DPR 151/2011, questo manuale e i documenti che gli alleghi. Risponde prima alla domanda, poi dice su che cosa si fonda e quali dati del progetto ha letto; se la risposta dipende da un dato che non ha, dice che cosa succede in ogni caso e chiede quel dato. Se nessuna fonte ha la risposta lo dice e nomina il documento che la darebbe: una cifra a memoria non la scrive.
 - **Le domande pronte** sotto la conversazione seguono quello che vi siete appena detti e lo stato del progetto: se Meridio chiude con «Vuoi che te lo proponga?» la prima è «Sì, proponimelo»; se l'anno non è calcolato, «Che cosa manca per calcolare l'anno?». Si mandano con un clic o con 1, 2, 3 nel campo vuoto.
 - **Dove pensa**: con il modello locale del PC (di serie: niente esce dal PC) o con Claude, se lo scegli, con la tua chiave e il tuo consenso; un progetto segnato riservato resta sempre sul PC.
 

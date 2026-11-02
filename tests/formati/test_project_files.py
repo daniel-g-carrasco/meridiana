@@ -351,6 +351,24 @@ class Formats(unittest.TestCase):
         sf.params["tilt"] = 22.0
         self.assertNotEqual(p.layout_key(sf), key)
 
+    def test_the_twenty_fourth_format_keeps_the_activity_and_the_older_ones_leave_it_not_specified(self):
+        # R327: a building subject to control before format 24 stays subject, its category as it was, with the
+        # activity of DPR 151/2011 not specified (0); the 24th file keeps the activity chosen (70, depots)
+        folder = _setup.FORMATS
+        old, _notice = model.Project.load(folder / "progetto-v23.meridiana")
+        self.assertEqual((old.buildings[0].fire.subject, old.buildings[0].fire.category,
+                          old.buildings[0].fire.activity), (True, "B", 0))
+        new, _notice = model.Project.load(folder / "progetto-v24.meridiana")
+        self.assertEqual((new.buildings[0].fire.subject, new.buildings[0].fire.category,
+                          new.buildings[0].fire.activity), (True, "B", 70))
+        self.assertEqual(model.Project.from_json(new.to_json()).buildings[0].fire.activity, 70)
+        for wrong in (81, -1, "70", 7.0):
+            data = new.to_json()
+            data["buildings"][0]["fire"]["activity"] = wrong
+            with self.subTest(activity=wrong), self.assertRaises(ValueError) as caught:
+                model.Project.from_json(data)
+            self.assertIn("buildings[0].fire.activity", str(caught.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

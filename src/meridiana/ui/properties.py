@@ -14,9 +14,10 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QCheckBox, QCombo
                                QWidget)
 
 from .. import layout, model, roofs, rules, sides
+from .. import vvf_activities as vvf
 from ..fields import field_label as field_label, mounting_names, pitch_mode_names
 from ..i18n import _, ngettext, number, pgettext
-from .design import Text, semibold, set_text
+from .design import Space, Text, semibold, set_text
 from .help_box import HintLabel, help_button, register
 from .quantity_field import QuantityField
 from . import symbols
@@ -44,6 +45,98 @@ def combo(items, current) -> QComboBox:
         c.setItemData(c.count() - 1, label, Qt.ItemDataRole.ToolTipRole)
     c.setCurrentIndex(max(0, c.findData(current)))
     return c
+
+
+def activity_combo() -> QComboBox:
+    """The activities of Annex I of DPR 151/2011 (R327): none, subject but not specified, then the 80 by number;
+    typed words or a number find them anywhere in the label, as the makers of the catalogue."""
+    c = combo([(0, _("No activity subject to control")), (vvf.NOT_SPECIFIED, _("Subject, activity not specified")),
+               *[(a.number, a.label()) for a in vvf.ACTIVITIES]], 0)
+    c.setEditable(True)
+    c.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+    c.completer().setFilterMode(Qt.MatchFlag.MatchContains)
+    c.completer().setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+    c.completer().setCompletionMode(c.completer().CompletionMode.PopupCompletion)
+    # the rows are read whole: the pop-up of what is found, as the list's own, is as wide as the longest label
+    # (the panel is narrower; a pop-up too near the screen's edge is moved back by Qt)
+    wide = max(c.fontMetrics().horizontalAdvance(c.itemText(i)) for i in range(c.count())) + 2 * Space.XL
+    c.completer().popup().setMinimumWidth(wide)
+    c.view().setMinimumWidth(wide)
+    line = c.lineEdit()
+    line.setPlaceholderText(_("Number or words of the activity"))
+    line.installEventFilter(_SelectOnFocus(line))
+
+    def settled():        # words typed and left without a choice: the field goes back to the activity chosen
+        c.setEditText(c.itemText(c.currentIndex()))
+        line.setCursorPosition(0)
+    line.editingFinished.connect(settled)
+    return c
+
+
+class _SelectOnFocus(QObject):
+    """A click or Tab into the field selects its text: what is typed next searches, instead of adding to the name."""
+
+    def eventFilter(self, obj, event) -> bool:
+        if event.type() == QEvent.Type.FocusIn:
+            QTimer.singleShot(0, obj.selectAll)
+        return False
+
+
+def show_activity(c: QComboBox, value: int) -> None:
+    """The list on the activity `value`, its text from the start (a line edit keeps its end in view, and the
+    number and the first words are what tells an activity); words being typed are left alone."""
+    line = c.lineEdit()
+    if line.hasFocus() and line.isModified():
+        return
+    blocked = c.blockSignals(True)
+    try:
+        i = max(0, c.findData(value))
+        if i != c.currentIndex():
+            c.setCurrentIndex(i)
+        line.setCursorPosition(0)
+        c.setToolTip(c.itemText(i))
+    finally:
+        c.blockSignals(blocked)
+
+
+def show_category(c: QComboBox, value) -> None:
+    """The category list for (activity, category): each category with what falls in it for that activity, the
+    ones the activity does not have greyed out; any category while no activity is chosen."""
+    number, current = value
+    a = vvf.activity(number)
+    blocked = c.blockSignals(True)
+    try:
+        model_ = c.model()
+        for i in range(1, c.count()):
+            cat = c.itemData(i)
+            text = a.category_text(cat) if a is not None else ""
+            label = f"{cat}: {text}" if text else cat
+            c.setItemText(i, label)
+            c.setItemData(i, label, Qt.ItemDataRole.ToolTipRole)
+            item = model_.item(i)
+            if item is not None:
+                item.setEnabled(a is None or bool(text))
+        i = max(0, c.findData(current))
+        if i != c.currentIndex():
+            c.setCurrentIndex(i)
+    finally:
+        c.blockSignals(blocked)
+
+
+def activity_note(fire) -> str:
+    """Under the lists, whole, what they show cut: the activity, above what it is subject, what falls in the
+    category chosen, the page of the GU; or what is missing."""
+    a = vvf.activity(fire.activity)
+    if a is not None:
+        note = _("{label}. Threshold: {threshold}.").format(label=a.label(),
+                                                            threshold=a.threshold or _("none, every one is subject"))
+        if a.category_text(fire.category):
+            note += " " + _("Category {category}: {text}.").format(category=fire.category,
+                                                                   text=a.category_text(fire.category).rstrip("."))
+        return note + " " + _("Source: DPR 151/2011 Annex I, GU no. 221 of 22/09/2011, p. {page}.").format(page=a.page)
+    if fire.subject:
+        return _("Choose the activity of Annex I: the category and the report notes follow from it.")
+    return ""
 
 
 def make_form(parent=None) -> QFormLayout:
@@ -612,20 +705,46 @@ class Properties(QScrollArea):
         box.addWidget(self._roof_group(b))
         box.addWidget(self._sides_group(len(b.footprint), lambda: self._object().footprint, "footprint"))
 
+        box.addWidget(self._fire_group())
+        box.addStretch(1)
+
+    def _fire_group(self) -> QGroupBox:
+        """The fire brigade (R327): the activity of Annex I of DPR 151/2011 the building hosts, chosen in a list
+        that can be searched by number or words, the category that follows from it, and the switch of the
+        control, which a chosen activity turns on; the fire-resistant slab."""
         fire = Group(_("Fire brigade"))
         help_button(fire, "building.fire")
         fform = make_form(fire)
+
+        def send(fields: dict) -> None:
+            now = self._object().fire
+            changes = {f"fire.{k}": v for k, v in fields.items() if getattr(now, k) != v}
+            if changes:
+                self.edited.emit(self.kind, self.oid, changes)
+
+        activity = self._bind(activity_combo(), lambda: vvf.shown(self._object().fire.subject,
+                                                                  self._object().fire.activity), show_activity)
+        activity.setObjectName("fireActivity")
+        activity.activated.connect(lambda _i: send(vvf.chosen(activity.currentData(),
+                                                              self._object().fire.category)))
+        fform.addRow(_("Activity (DPR 151/2011)"), activity)
+        category = self._bind(combo([("", _("not stated"))] + [(c, c) for c in vvf.CATEGORIES], ""),
+                              lambda: (self._object().fire.activity, self._object().fire.category), show_category)
+        category.setObjectName("fireCategory")
+        category.activated.connect(lambda _i: send({"category": category.currentData(),
+                                                    **({"subject": True} if category.currentData() else {})}))
+        fform.addRow(_("Category"), category)
+        fform.addRow(self._bind(self._note(), lambda: activity_note(self._object().fire)))
         subject = self._bind(QCheckBox(_("Activity subject to control (DPR 151/2011)")),
                              lambda: self._object().fire.subject)
-        subject.toggled.connect(lambda v: self._emit("fire.subject", v))
+        subject.toggled.connect(lambda v: send({"subject": True} if v else vvf.chosen(0)))
         fform.addRow(WrappedCheck(subject))
         rei = self._bind(QCheckBox(_("Fire-resistant roof slab")), lambda: self._object().fire.roof_fire_resistant)
         rei.toggled.connect(lambda v: self._emit("fire.roof_fire_resistant", v))
         fform.addRow(rei)
         fform.addRow(self._note(_("For an activity subject to control, the sub-fields keep 1 m from the edge, groups "
                                   "of at most 20 m and 2 m corridors (DCPREV 14030/2025, 3.3.5.1).")))
-        box.addWidget(fire)
-        box.addStretch(1)
+        return fire
 
     def _roof_group(self, b: model.Building) -> QGroupBox:
         """The roof (task 16a; style C3 of the design, 3.6): its type, what covers it with the slope it proposes,

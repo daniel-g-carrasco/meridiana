@@ -124,11 +124,12 @@ def texts() -> dict[str, Help]:
               "pantiles 30 %: ANDIL manual 2025, p. 7); a ridge height written sets it instead."),
             manual="1-modello.md#tetto"),
         "building.fire": h(
-            _("Fire brigade"), _("The fire-brigade rules for the modules on this building's roof."),
-            _("For an activity subject to fire-brigade control, the sub-fields on this building keep 1 m from the "
-              "roof edge and from vents and plant, in groups of at most 20 m with 2 m corridors: Meridiana applies "
-              "them by itself. On a fire-resistant slab the rule spares the 1 m from the walls below."),
-            ("N15",), "1-modello.md#prevenzione-incendi"),
+            _("Fire brigade"), _("The activity of DPR 151/2011 here, and the rules for the modules."),
+            _("A plant is not an activity itself: the building is, if it hosts one of Annex I of DPR 151/2011 "
+              "(DCPREV 14030/2025, 1.1). Choose it here, by number or words: threshold and categories follow. For an "
+              "activity subject to control, the sub-fields keep 1 m from the edge and from vents and plant, in "
+              "groups of at most 20 m with 2 m corridors."),
+            ("N13", "N15"), "1-modello.md#prevenzione-incendi"),
         "sides": h(
             _("Sides"), _("The length of each side: change it and the side stretches, as in CAD."),
             _("Each side of the outline with its length. A new length moves the far end of the side, and what "

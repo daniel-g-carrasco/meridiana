@@ -385,6 +385,28 @@ class Window(Journeys):
         e = next(x for x in self.win.project.exclusions if x.id == eid)
         self.assertEqual(e.obstacle_height(), model.OBSTACLE_HEIGHTS["chimney"])
 
+    def the_activity_of_dpr_151_is_one_step_of_the_undo_and_the_list_shows_it(self):
+        # R327: the shed is not subject: choosing the activity turns the switch on, and the undo takes both back
+        from PySide6.QtWidgets import QComboBox
+        win = self.win
+        bid = win.project.buildings[0].id
+        win._select("building", bid)
+        self.app.processEvents()
+        activity = win.props.widget().findChild(QComboBox, "fireActivity")
+        self.assertEqual(win.project.buildings[0].fire.activity, 0)
+        activity.setCurrentIndex(activity.findData(70))
+        steps = win.session.undo.count()
+        activity.activated.emit(activity.currentIndex())
+        fire = win.project.buildings[0].fire
+        self.assertEqual((fire.subject, fire.activity, fire.category), (True, 70, ""))
+        self.assertEqual(win.session.undo.count(), steps + 1)
+        win.undo.undo()
+        fire = win.project.buildings[0].fire
+        self.assertEqual((fire.subject, fire.activity, fire.category), (False, 0, ""))
+        self.app.processEvents()
+        self.assertEqual(win.props.widget().findChild(QComboBox, "fireActivity").currentText(),
+                         "No activity subject to control")
+
     def a_value_typed_in_the_properties_does_not_pull_the_field_away(self):
         import shiboken6
         from PySide6.QtCore import Qt
@@ -999,6 +1021,8 @@ class Window(Journeys):
         self.a_length_in_the_properties_takes_units_and_a_calculation()
         self.again()
         self.the_name_field_shows_the_name_the_project_kept()
+        self.again()
+        self.the_activity_of_dpr_151_is_one_step_of_the_undo_and_the_list_shows_it()
 
     def test_an_undo_an_edit_from_elsewhere_or_a_result_leave_the_fields_as_the_project_wants(self):
         self.the_page_is_built_again_only_for_another_object_or_other_fields()
