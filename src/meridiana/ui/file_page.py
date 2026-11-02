@@ -201,9 +201,14 @@ class FilePage(QFrame):
         self.nav_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.nav_scroll.setWidgetResizable(True)
         self.nav_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.nav_scroll.setFixedWidth(NAV_WIDTH + 8)
         self.nav_scroll.setWidget(self.nav)
         row.addWidget(self.nav_scroll)
+        # the list and the room the style keeps for the bar beside it, as the style measures it (ui/scrollbars: the
+        # bar and a form's PAD, 16 px): 8 by hand cut the list's right side by 8 px (02/11/2026)
+        from PySide6.QtWidgets import QStyle
+        room = self.nav_scroll.style().pixelMetric(QStyle.PixelMetric.PM_ScrollBarExtent, None,
+                                                   self.nav_scroll.verticalScrollBar())
+        self.nav_scroll.setFixedWidth(NAV_WIDTH + room)
         self.body = QStackedWidget()
         row.addWidget(self.body, 1)
         self.nav_scopes: list[tuple[QWidget, bool]] = []
