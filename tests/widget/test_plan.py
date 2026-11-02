@@ -125,6 +125,23 @@ class Drawing(PlanCase):
         QTest.keyClick(self.view, Qt.Key.Key_Escape)
         self.assertEqual(self.view.chain, [])
 
+    def test_escape_with_nothing_in_hand_leaves_the_tool(self):
+        """Esc once gives up the outline and keeps the tool; Esc again, with nothing in hand, asks for Select
+        (Daniel, 02/11/2026: «se premo su esc dovrebbe tornare su seleziona, quando sto modellando»)."""
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        left = []
+        self.view.toolLeft.connect(lambda: left.append(1))
+        for tool in ("building", "subfield", "row", "measure"):
+            self.view.set_tool(tool)
+            self.click(0, 0)
+            QTest.keyClick(self.view, Qt.Key.Key_Escape)
+            self.assertEqual(self.view.tool, tool)
+            self.assertEqual(left, [], tool)
+            QTest.keyClick(self.view, Qt.Key.Key_Escape)
+            self.assertEqual(left, [1], tool)
+            left.clear()
+
     def test_a_rectangle_by_three_clicks(self):
         drawn = []
         self.view.polygonDrawn.connect(lambda tool, ring: drawn.append(ring))

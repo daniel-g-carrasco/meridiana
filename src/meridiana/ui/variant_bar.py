@@ -1,65 +1,62 @@
 """The variants in the corner of the phases' row (R73; Daniel, 24/10/2026: «il tasto + Variante fa schifo. Mi aspetto
-che in quest'area sia possibile passare da una variante ad un'altra con facilità»): a segmented control, each variant
-a pill on a track, the one in hand raised in the panels' colour; a click on another and the window works on it; «+»
-makes a new one from the one in hand; the right button opens rename, delete and compare. With more than MAX_PILLS
-variants the one in hand and the first others stay as pills and the rest are in «…».
-
-The measures are the design system's (ui/design.py): pills CHIP high with round ends, the track 2 px around them."""
+che in quest'area sia possibile passare da una variante ad un'altra con facilità»): the segments of every choice between
+views (ui/segments.py, R322), each variant a segment on the track, the one in hand raised in the panels' colour and
+sliding to the next; a click on another and the window works on it; «+» makes a new one from the one in hand; the right
+button opens rename, delete and compare. With more than MAX_SHOWN variants the one in hand and the first others stay as
+segments and the rest are in «…»."""
 
 from __future__ import annotations
 
-from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QButtonGroup, QFrame, QHBoxLayout, QMenu, QToolButton
+from PySide6.QtWidgets import QMenu, QToolButton
 
 from ..i18n import _
 from . import icons
-from .design import Icon, Space
+from .design import Icon
+from .segments import Segments
 
-MAX_PILLS = 4
+MAX_SHOWN = 4
 
 
-class VariantBar(QFrame):
-    chosen = Signal(str)                    # the id of the variant clicked
+class VariantBar(Segments):
+    """`chosen`: the id of the variant clicked, another than the one in hand."""
 
     def __init__(self, new_action: QAction, menu_actions: list, parent=None):
-        super().__init__(parent)
+        super().__init__(True, parent)
         self.setObjectName("variant-bar")
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setToolTip(_("The variants of the project: each keeps its own sub-fields, modules, inverter, losses and "
                           "economics. Click one to work on it, + to make a copy of the one in hand; the right button "
                           "renames, deletes and compares."))
         self.menu_actions = menu_actions
-        self.row = QHBoxLayout(self)
-        self.row.setContentsMargins(Space.XXS, Space.XXS, Space.XXS, Space.XXS)
-        self.row.setSpacing(Space.XXS)
-        self.group = QButtonGroup(self)
-        self.group.setExclusive(True)
-        self.pills: list[QToolButton] = []
         self.more = QToolButton()
         self.more.setObjectName("variant-more")
         self.more.setText("…")
         self.more.setToolTip(_("The other variants"))
         self.more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.more.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.add = QToolButton()
-        self.add.setObjectName("variant-add")
-        self.add.setIcon(icons.icon("plus"))
-        self.add.setIconSize(QSize(Icon.CONTROL - 2, Icon.CONTROL - 2))
-        self.add.setToolTip(_("A new variant, a copy of the one in hand, to change without losing it (another "
-                              "module, another tilt, a battery) and compare the two"))
-        self.add.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.add.clicked.connect(new_action.trigger)
+        self.more.setVisible(False)
+        self.plus = QToolButton()
+        self.plus.setObjectName("variant-add")
+        self.plus.setIcon(icons.icon("plus"))
+        self.plus.setIconSize(QSize(Icon.CONTROL - 2, Icon.CONTROL - 2))
+        self.plus.setToolTip(_("A new variant, a copy of the one in hand, to change without losing it (another "
+                               "module, another tilt, a battery) and compare the two"))
+        self.plus.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.plus.clicked.connect(new_action.trigger)
+        self.row.addWidget(self.more)
+        self.row.addWidget(self.plus)
         self.variants: list[tuple[str, str]] = []
-        self.current = ""
+        self.current_id = ""
+        self.rest: list = []
 
     def _split(self, variants: list, current: str) -> tuple[list, list]:
-        """The pills shown (the one in hand always among them) and the rest, behind «…»."""
+        """The segments shown (the one in hand always among them) and the rest, behind «…»."""
         shown, rest = list(variants), []
-        if len(shown) > MAX_PILLS:
+        if len(shown) > MAX_SHOWN:
             keep = [v for v in shown if v[0] == current]
             others = [v for v in shown if v[0] != current]
-            keep = others[:MAX_PILLS - 1] + keep
+            keep = others[:MAX_SHOWN - 1] + keep
             order = {v[0]: i for i, v in enumerate(variants)}
             shown = sorted(keep, key=lambda v: order[v[0]])
             rest = [v for v in variants if v not in shown]
@@ -70,16 +67,14 @@ class VariantBar(QFrame):
                 else _("The variant in hand: {name}").format(name=name))
 
     def set_variants(self, variants: list, current: str) -> None:
-        """`variants`: (id, name) in their order; `current` the id of the one in hand. The same pills stay when only
-        the one in hand changes (R101: they were made again at every change, and the row jumped)."""
+        """`variants`: (id, name) in their order; `current` the id of the one in hand. The same segments stay when
+        only the one in hand changes (R101: they were made again at every change, and the row jumped)."""
         shown, rest = self._split(list(variants), current)
-        if self.pills and [(b.property("vid"), b.text()) for b in self.pills] == shown \
-                and getattr(self, "rest", None) == rest:
-            self.variants, self.current = list(variants), current
-            for b in self.pills:
-                vid = b.property("vid")
-                b.setChecked(vid == current)
-                b.setToolTip(self._tip(vid, b.text(), current))
+        if self.items and [(b.property("data"), b.text()) for b in self.items] == shown and self.rest == rest:
+            self.variants, self.current_id = list(variants), current
+            self.set_current(current)
+            for b in self.items:
+                b.setToolTip(self._tip(b.property("data"), b.text(), current))
             return
         self.setUpdatesEnabled(False)
         try:
@@ -88,46 +83,24 @@ class VariantBar(QFrame):
             self.setUpdatesEnabled(True)
 
     def _build(self, variants: list, current: str, shown: list, rest: list) -> None:
-        self.variants, self.current, self.rest = variants, current, rest
-        for b in self.pills:
-            self.group.removeButton(b)
-            self.row.removeWidget(b)
-            b.deleteLater()
-        self.pills = []
-        self.row.removeWidget(self.more)
-        self.row.removeWidget(self.add)
+        self.variants, self.current_id, self.rest = variants, current, rest
+        self.clear()
         for vid, name in shown:
-            b = QToolButton()
-            b.setObjectName("variant-pill")
-            b.setText(name)
-            b.setCheckable(True)
-            b.setChecked(vid == current)
-            b.setProperty("vid", vid)
-            b.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-            b.setToolTip(self._tip(vid, name, current))
-            b.clicked.connect(lambda _c=False, v=vid: self._clicked(v))
-            self.group.addButton(b)
-            self.row.addWidget(b)
-            self.pills.append(b)
+            self.add(name, vid, self._tip(vid, name, current))
+        self.set_current(current)
         menu = QMenu(self.more)
         for vid, name in rest:
             a = menu.addAction(name)
-            a.triggered.connect(lambda _c=False, v=vid: self._clicked(v))
+            a.triggered.connect(lambda _c=False, v=vid: self.chosen.emit(v))
         self.more.setMenu(menu)
         self.more.setVisible(bool(rest))
-        self.row.addWidget(self.more)
-        self.row.addWidget(self.add)
         self.adjustSize()
-
-    def _clicked(self, vid: str) -> None:
-        if vid != self.current:                     # the one in hand stays checked (the group is exclusive)
-            self.chosen.emit(vid)
 
     def count(self) -> int:
         return len(self.variants)
 
     def currentText(self) -> str:                   # noqa: N802 (as a QComboBox, for the window's tests)
-        return next((n for v, n in self.variants if v == self.current), "")
+        return next((n for v, n in self.variants if v == self.current_id), "")
 
     def contextMenuEvent(self, event) -> None:
         menu = QMenu(self)

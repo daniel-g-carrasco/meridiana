@@ -180,7 +180,7 @@ class MeridioPage(QWidget):
         self.destination.setCurrentIndex(max(0, self.destination.findData(setup.canonical(cfg.assistant_provider))))
         inside.addWidget(self.destination)
         self.configure = QPushButton(_("Configure a local or cloud model…"))
-        inside.addWidget(self.configure)
+        inside.addWidget(self.configure, 0, Qt.AlignmentFlag.AlignLeft)    # a command as wide as its words
         self.setup = AssistantSetup(self.setup_cfg)
         self.setup.hide()
         self.setup.configured.connect(self._setup_configured)
@@ -708,6 +708,11 @@ class Preferences(QWidget):
             self.privacy = PrivacyPage(cfg, self)
             self.pages.addTab(self.privacy, _("Privacy"))
             self._connect()
+            # the pages are made again on every visit, after the window's pad_fields: the rules of a form in a card
+            # here too, or a long list or label held the page wider than File (Daniel, 02/11/2026)
+            from .style import pad_fields
+            for index in range(self.pages.count()):
+                pad_fields(self.pages.widget(index))
         finally:
             self.loading = False
         self.show_page(current)

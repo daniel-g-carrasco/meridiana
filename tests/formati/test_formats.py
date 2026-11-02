@@ -49,6 +49,7 @@ BROUGHT = {
     22: {"auto_install_updates", "pending_update", "tour_status", "tour_step"},
     23: {"assistant_cloud_profiles"},
     24: {"inverter_brand_favourites"},
+    25: {"strings_view"},
 }
 
 

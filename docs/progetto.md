@@ -95,6 +95,7 @@ Regole: il nucleo non importa `session` né `ui`; `session` non importa Qt; `mod
 | `checks.py` | Le verifiche raccolte da ogni parte del progetto, con fonte, livello, oggetto e correzione; i segni per le viste. |
 | `report_typst/` | La relazione senza Qt (R314, studio 24, bozzetto V1 «Cornice»): i capitoli come dati JSON (`chapters.py`, `compose.py`, `blocks.py`), il registro dei calcoli con i codici R-0n0.nn (`register.py`), pianta in SVG, tappeto delle ore e formule (`figures.py`), l'aspetto in `template.typ`, la compilazione con Typst (pacchetto `typst`, Apache-2.0) in una cartella temporanea che è tutto ciò che Typst può leggere, con i caratteri del programma e nessun carattere di sistema (`engine.py`). |
 | `rules.py` | Le regole che si applicano all'impianto (connessione, obblighi, DM 37/08), come note per la relazione. |
+| `vvf_activities.py` | L'Allegato I del DPR 151/2011 come dati (R327): le 80 attività con testo, soglia e categorie A, B, C dalla GU n. 221 del 22/09/2011, la ricerca per numero o parole, la scelta coerente con l'interruttore dell'edificio. |
 | `compare.py` | Le varianti a confronto: le cifre di ognuna dalla stessa catena, la migliore per riga. |
 | `help.py` | Gli aiuti accanto alle cose (studio 17, E; compito 17d): per ogni gruppo, campo e riquadro di risultato che ne ha bisogno, per ogni fase e livello delle verifiche, titolo, frase breve, testo, fonte (regola di `rules.py` o riferimento già in `checks.py`), àncora del manuale `docs/manuale` e passo di «Come è calcolato»; le àncore dei titoli come le fa GitHub. |
 | `quantity.py` | Valori scritti nei campi con unità e calcoli («2 m + 30 cm»), senza `eval`. |
@@ -338,6 +339,7 @@ Compito 18f del 25/10/2026, dal rapporto `studio/18-prove/H-pacchetti.md`. Le mi
 | 28/10/2026 | Revisione indipendente di R150: allegati preservati al risalvataggio, orizzonte del vecchio sito scartato, serie e commessa nel formato 18, consenso legato a id, percorso e commessa, riservato subito offline, avvio con registro danneggiato, import rigoroso ed errori dei manifesti isolati e ritentati | [V] nuove prove rosse poi verdi per ogni caso, compresa R02 con riapertura di R01, campi malformati e volumi che falliscono scrittura o cancellazione |
 
 | 29/10/2026 | Integrazione Windows R150 e R151 con revisione indipendente: registro, progetti autonomi, indice, ricerca e attività di Meridio; compatibilità dei due formati 17 nel 18 | Correzioni e prove documentate in `docs/revisioni/integrazione-9-10-windows-20261029.md` |
+| 02/11/2026 | R327, risposte di Meridio che rispondono: `vvf_activities.py` (Allegato I del DPR 151/2011, trascritto dal PDF dell'archivio e controllato sulle immagini delle pagine), scelta dell'attività nelle proprietà dell'edificio, formato 24, N13 cita attività e categoria, persona con «solo dalle fonti che il programma porta con sé» e «prima la risposta», `read_rules` a testo intero con `rule_id`, nuovo strumento `vvf_activities`. [V] prove con il provider finto; nessuna prova con un modello vero. |
 
 ## 29/10/2026, popup delle selectbox
 

@@ -9,7 +9,7 @@ why it ended. Three adapters:
   without it).
 
 The conversation is kept in one shape for all (`Conversation.messages`), turned into each wire format here:
-    {"role": "user", "content": text}
+    {"role": "user", "content": text, "images": [{"media_type", "data": base64, ...}]}     (images optional)
     {"role": "assistant", "content": text, "calls": [{"id", "name", "arguments": dict}], "raw": {family: ...}}
     {"role": "tool", "id": the call's id, "name": the tool, "content": JSON text, "error": bool}
 `raw` keeps a provider's own answer to give back unchanged on the next round (Claude's thinking blocks must be
@@ -20,8 +20,12 @@ looked at between two pieces, and `cancel` closes the connection from the window
 has not yet written its first word stops at once. Errors are ProviderError with a kind the window can say in
 words: "offline" (nothing answers: the local server is not running, or there is no network), "auth" (the key is
 missing or refused), "limit" (rate or spending limit), "model" (the model is not there), "server" (the service
-failed), "bad" (an answer that is not what the protocol says) and "tools" (the model does not call
-tools). No Qt."""
+failed), "bad" (an answer that is not what the protocol says), "tools" (the model does not call
+tools), "vision" (the model does not see images) and "image" (the service refused an image).
+
+Images (R320) go as each API takes them: Claude's `image` blocks with a base64 source (anthropic's
+ImageBlockParam and Base64ImageSourceParam, read in the SDK installed, 2.3.0), OpenAI's `image_url` parts with a
+`data:` URL, Ollama's `images` list of base64 strings. Whether a model sees them: `sees_images`. No Qt."""
 
 from __future__ import annotations
 
@@ -102,6 +106,73 @@ class Provider:
         self.stop.set()
 
 
+# images (R320)
+
+# local models known to see images (a name containing one of these, lower case), and known not to: Gemma 3 and 4
+# from 4B up, Qwen's VL models, LLaVA and its family, Llama 3.2 Vision, MiniCPM-V, Moondream, Granite Vision,
+# Mistral Small 3.1+, Pixtral, InternVL and any «vision» or «-vl» model; a model in neither list is tried
+VISION_MODELS = ("gemma3", "gemma-3", "gemma4", "gemma-4", "qwen2.5vl", "qwen2.5-vl", "qwen2-vl", "qwen3-vl",
+                 "qwen3vl", "qwen-vl", "llava", "bakllava", "llama3.2-vision", "llama-3.2-vision", "llama4",
+                 "minicpm-v", "moondream", "granite3.2-vision", "mistral-small3.1", "mistral-small3.2",
+                 "mistral-small-3.1", "mistral-small-3.2", "pixtral", "internvl", "vision", "-vl", "_vl")
+SMALL_TEXT = ("gemma3:1b", "gemma-3-1b", "gemma3:270m", "gemma-3-270m")     # Gemma 3's smallest see nothing
+TEXT_MODELS = ("gpt-oss", "qwen3:", "qwen3-", "qwen2.5:", "qwen2.5-coder",
+               "qwen3-coder", "deepseek-r1", "deepseek-v3", "llama3.1", "llama3.3", "llama3:", "llama-3.1",
+               "llama-3.3", "phi3", "phi4", "mistral-nemo", "mistral:", "codellama", "smollm", "lfm2", "nemotron")
+# what a server says when the model has no eyes: llama-server without its projector (mmproj), an API that takes
+# only text parts, Ollama with a text model
+_BLIND = re.compile(r"mmproj|multimodal|no vision|vision (?:is )?not|does not have vision|without vision|"
+                    r"not support\w* image|image\w* (?:input )?(?:is )?not supported|does not support image|"
+                    r"unknown variant `?image_url|expected `?text`?|cannot (?:read|see|process) image|"
+                    r"no image support|images? (?:are|is) not (?:supported|allowed)", re.IGNORECASE)
+
+
+def has_images(messages: list[dict]) -> bool:
+    return any(m.get("images") for m in messages if m.get("role") == "user")
+
+
+def sees_images(provider) -> bool | None:
+    """Whether a provider's model sees images: True (Claude, a vision model known), False (a local model known to
+    be text only: said before anything is sent), None (not known, or a cloud model: tried, and a refusal said in
+    words)."""
+    if getattr(provider, "family", "") == "anthropic":
+        return True
+    model = (getattr(provider, "model", "") or "").lower()
+    if not model:
+        return None
+    if any(name in model for name in SMALL_TEXT):
+        return False
+    if any(name in model for name in VISION_MODELS):
+        return True
+    if not getattr(provider, "cloud", False) and any(name in model for name in TEXT_MODELS):
+        return False
+    return None
+
+
+def _image_error(text: str) -> ProviderError | None:
+    """A refusal of a request with images, in the kinds the window says: "vision" when the model has no eyes,
+    "image" when the image itself was refused (too large, a format the service does not take)."""
+    if _BLIND.search(text or ""):
+        return ProviderError("vision", text)
+    if "image" in (text or "").lower():
+        return ProviderError("image", text)
+    return None
+
+
+def _refused(status: int, text: str, messages: list[dict]) -> ProviderError | None:
+    """An HTTP refusal of a request that carried images, when it is about them; None for the others (a key, a
+    model missing, a limit: said as always)."""
+    if not has_images(messages) or status in (401, 403, 404, 429):
+        return None
+    if status >= 500:
+        return ProviderError("vision", text) if _BLIND.search(text or "") else None
+    return _image_error(text)
+
+
+def _data_url(image: dict) -> str:
+    return f"data:{image['media_type']};base64,{image['data']}"
+
+
 # OpenAI-compatible servers
 
 def sse_data(lines) -> Iterator[str]:
@@ -134,7 +205,12 @@ def openai_messages(system: str, messages: list[dict]) -> list[dict]:
     for m in messages:
         role = m["role"]
         if role == "user":
-            out.append({"role": "user", "content": m["content"]})
+            if m.get("images"):
+                parts = [{"type": "text", "text": m["content"]}]
+                parts += [{"type": "image_url", "image_url": {"url": _data_url(i)}} for i in m["images"]]
+                out.append({"role": "user", "content": parts})
+            else:
+                out.append({"role": "user", "content": m["content"]})
         elif role == "assistant":
             raw = (m.get("raw") or {}).get("openai")
             if isinstance(raw, dict):
@@ -246,7 +322,8 @@ class OpenAICompatible(Provider):
                 yield Done("stopped")
                 return
             if response.status_code != 200:
-                raise _http_error(response.status_code, _body_text(response))
+                text = _body_text(response)
+                raise _refused(response.status_code, text, messages) or _http_error(response.status_code, text)
             yield from self._read(response)
         except (requests.RequestException, AttributeError, ValueError, OSError) as error:
             if self.stop.is_set():          # the connection closed under the reader by Stop
@@ -361,7 +438,10 @@ def ollama_messages(system: str, messages: list[dict]) -> list[dict]:
     for m in messages:
         role = m["role"]
         if role == "user":
-            out.append({"role": "user", "content": m["content"]})
+            turn = {"role": "user", "content": m["content"]}
+            if m.get("images"):
+                turn["images"] = [i["data"] for i in m["images"]]
+            out.append(turn)
         elif role == "assistant":
             turn = {"role": "assistant", "content": m.get("content") or ""}
             calls = m.get("calls") or []
@@ -407,6 +487,7 @@ class Ollama(OpenAICompatible):
     context: int = OLLAMA_CONTEXT
     family: str = "ollama"
     think: object = "ask"       # "ask": read from /api/show the first time; then False, "low"... or None (not sent)
+    capabilities: list | None = None    # what /api/show says the model can do ("vision"...), when it was read
 
     def _think(self, http) -> object:
         import requests
@@ -416,7 +497,10 @@ class Ollama(OpenAICompatible):
                 r = http.post(self.base_url.rstrip("/") + "/api/show", json={"model": self.model},
                               timeout=(LOCAL_CONNECT_S, 10.0))
                 if r.status_code == 200:
-                    self.think = ollama_think(r.json(), self.model)
+                    show = r.json()
+                    self.think = ollama_think(show, self.model)
+                    caps = show.get("capabilities") if isinstance(show, dict) else None
+                    self.capabilities = caps if isinstance(caps, list) else None
             except (requests.RequestException, ValueError, OSError):
                 self.think = None           # the question goes without `think`: the server's default
         return self.think
@@ -432,6 +516,8 @@ class Ollama(OpenAICompatible):
         if self.session is None:
             http.trust_env = False
         think = self._think(http)
+        if has_images(messages) and self.capabilities is not None and "vision" not in self.capabilities:
+            raise ProviderError("vision", f"{self.model}: capabilities {self.capabilities}")
         body = {"model": self.model, "messages": ollama_messages(system, messages), "stream": True,
                 "options": {"num_ctx": self.context, "num_predict": self.max_tokens}, "keep_alive": OLLAMA_KEEP}
         if tools:
@@ -460,7 +546,7 @@ class Ollama(OpenAICompatible):
                     text = _body_text(response)
                     if response.status_code == 400 and "does not support tools" in text:
                         raise ProviderError("tools", text)
-                    raise _http_error(response.status_code, text)
+                    raise _refused(response.status_code, text, messages) or _http_error(response.status_code, text)
                 yield from self._read_lines(response)
                 return
             except (requests.RequestException, AttributeError, ValueError, OSError) as error:
@@ -554,7 +640,13 @@ def anthropic_messages(messages: list[dict]) -> list[dict]:
             continue
         flush()
         if role == "user":
-            out.append({"role": "user", "content": m["content"]})
+            if m.get("images"):
+                # the pictures first, then the words about them (the order Claude's documentation advises)
+                blocks = [{"type": "image", "source": {"type": "base64", "media_type": i["media_type"],
+                                                       "data": i["data"]}} for i in m["images"]]
+                out.append({"role": "user", "content": [*blocks, {"type": "text", "text": m["content"]}]})
+            else:
+                out.append({"role": "user", "content": m["content"]})
         elif role == "assistant":
             raw = (m.get("raw") or {}).get("anthropic")
             if raw is not None:
@@ -651,7 +743,10 @@ class Anthropic(Provider):
             if self.stop.is_set():
                 yield Done("stopped")
                 return
-            raise _anthropic_error(error) from error
+            failure = _anthropic_error(error)
+            if failure.kind == "bad" and has_images(messages):
+                failure = _image_error(failure.detail) or failure
+            raise failure from error
         finally:
             self._stream = None
         content = list(final.content or [])

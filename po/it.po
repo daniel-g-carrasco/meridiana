@@ -5300,20 +5300,22 @@ msgid "Fire brigade"
 msgstr "Prevenzione incendi"
 
 #: src/meridiana/help.py:120
-msgid "The fire-brigade rules for the modules on this building's roof."
-msgstr "Le regole dei Vigili del Fuoco per i moduli su questa copertura."
+msgid "The activity of DPR 151/2011 here, and the rules for the modules."
+msgstr "L'attività del DPR 151/2011 dell'edificio e le regole per i moduli."
 
 #: src/meridiana/help.py:121
 msgid ""
-"For an activity subject to fire-brigade control, the sub-fields on this "
-"building keep 1 m from the roof edge and from vents and plant, in groups of "
-"at most 20 m with 2 m corridors: Meridiana applies them by itself. On a fire-"
-"resistant slab the rule spares the 1 m from the walls below."
+"A plant is not an activity itself: the building is, if it hosts one of Annex "
+"I of DPR 151/2011 (DCPREV 14030/2025, 1.1). Choose it here, by number or "
+"words: threshold and categories follow. For an activity subject to control, "
+"the sub-fields keep 1 m from the edge and from vents and plant, in groups of "
+"at most 20 m with 2 m corridors."
 msgstr ""
-"Per un'attività soggetta al controllo dei Vigili del Fuoco, i sottocampi "
-"tengono 1 m dal bordo e da evacuatori e impianti, in gruppi di al massimo 20 "
-"m con corridoi di 2 m: Meridiana li applica da sola. Sul solaio resistente "
-"al fuoco la regola non chiede 1 m dalle pareti sotto."
+"L'impianto non è un'attività di per sé: lo è l'edificio, se ne ospita una "
+"dell'Allegato I del DPR 151/2011 (DCPREV 14030/2025, 1.1). Sceglila qui, per "
+"numero o parole: soglia e categorie seguono. Con attività soggetta, i "
+"sottocampi tengono 1 m dal bordo e da evacuatori e impianti, in gruppi di al "
+"massimo 20 m con corridoi di 2 m."
 
 #: src/meridiana/help.py:126 src/meridiana/ui/properties.py:712
 msgid "Sides"
@@ -8001,11 +8003,13 @@ msgstr ""
 
 #: src/meridiana/rules.py:378
 msgid ""
-"DCPREV 14030 of 01/09/2025 sect. 1.2, 2.2, 2.3, 3.2.1, 3.3.5.2-3.3.5.4, ch. "
-"5; Fire Prevention Code S.10.6.1-S.10.6.2"
+"DPR 151/2011 Annex I (GU no. 221 of 22/09/2011); DCPREV 14030 of 01/09/2025 "
+"sect. 1.2, 2.2, 2.3, 3.2.1, 3.3.5.2-3.3.5.4, ch. 5; Fire Prevention Code "
+"S.10.6.1-S.10.6.2"
 msgstr ""
-"DCPREV 14030 del 01/09/2025 par. 1.2, 2.2, 2.3, 3.2.1, 3.3.5.2-3.3.5.4, cap. "
-"5; Codice di prevenzione incendi S.10.6.1-S.10.6.2"
+"DPR 151/2011 Allegato I (GU n. 221 del 22/09/2011); DCPREV 14030 del "
+"01/09/2025 par. 1.2, 2.2, 2.3, 3.2.1, 3.3.5.2-3.3.5.4, cap. 5; Codice di "
+"prevenzione incendi S.10.6.1-S.10.6.2"
 
 #: src/meridiana/rules.py:381
 msgid ""
@@ -10172,6 +10176,12 @@ msgstr ""
 "provati per la California Energy Commission."
 
 #: src/meridiana/ui/charts.py:209
+msgid "Chart"
+msgstr "Grafico"
+
+msgid "The numbers drawn"
+msgstr "I numeri disegnati"
+
 msgid "Table"
 msgstr "Tabella"
 
@@ -21472,3 +21482,193 @@ msgstr "Vai a un altro passaggio della visita"
 #: src/meridiana/ui/tour.py
 msgid "Leave the tour here: Help brings you back to this step"
 msgstr "Lascia la visita qui: da Aiuto torni a questo passaggio"
+
+#: src/meridiana/ui/panel_buttons.py:163
+msgid "Hide the {card}"
+msgstr "Nascondi i {card}"
+
+#: src/meridiana/ui/panel_buttons.py:163
+msgid "Show the {card}"
+msgstr "Mostra i {card}"
+
+#: src/meridiana/ui/panel_buttons.py:165
+msgid "Hide the {card} panel"
+msgstr "Nascondi il pannello {card}"
+
+#: src/meridiana/ui/panel_buttons.py:166
+msgid "Show the {card} panel"
+msgstr "Mostra il pannello {card}"
+
+#: src/meridiana/ui/panel_buttons.py:165
+msgid "Bring back the {card} panel"
+msgstr "Riporta davanti il pannello {card}"
+# R320: images for Meridio
+
+msgid "{n} MB"
+msgstr "{n} MB"
+
+msgid "Choose a PNG, JPEG, WebP or GIF image."
+msgstr "Scegli un'immagine PNG, JPEG, WebP o GIF."
+
+msgid "The image is empty."
+msgstr "L'immagine è vuota."
+
+msgid "The image cannot be prepared."
+msgstr "Non riesco a preparare l'immagine."
+
+msgid "{name} · {width} × {height} px · {size}"
+msgstr "{name} · {width} × {height} px · {size}"
+
+msgid "{n} kB"
+msgstr "{n} kB"
+
+msgid "The image cannot be read."
+msgstr "Non riesco a leggere l'immagine."
+
+msgid "The image cannot be made small enough to send."
+msgstr "Non riesco a rendere l'immagine abbastanza leggera da inviarla."
+
+msgid "The image exceeds the file size limit ({size})."
+msgstr "L'immagine supera il limite di dimensione del file ({size})."
+
+msgid "The image is too large to read: {width} × {height} px."
+msgstr "L'immagine è troppo grande da leggere: {width} × {height} px."
+
+msgid "The image cannot be read: {why}"
+msgstr "Non riesco a leggere l'immagine: {why}"
+
+msgid "Images: about {tokens} tokens, about {cost} each time they are sent (again with every question of this conversation)."
+msgstr "Immagini: circa {tokens} token, circa {cost} a ogni invio (di nuovo a ogni domanda di questa conversazione)."
+
+msgid "images estimated"
+msgstr "immagini stimate"
+
+msgid "A screenshot can show the site's address, the project's and the client's names, a map: the aliases do not reach inside a picture. Remove what should not leave, or use the local model."
+msgstr "Una schermata può mostrare l'indirizzo del sito, i nomi del progetto e del cliente, una mappa: gli alias non arrivano dentro un'immagine. Togli ciò che non deve uscire, oppure usa il modello locale."
+
+msgid "Images leave only when you attach them, after asking you each time: aliases cannot reach inside a picture."
+msgstr "Le immagini escono solo quando le alleghi, dopo averti chiesto ogni volta: gli alias non arrivano dentro un'immagine."
+
+msgid "Attach…"
+msgstr "Allega…"
+
+msgid "PDF, text or images (PNG, JPEG, WebP, GIF), read on this PC first and sent only with your message. Images can also be pasted (Ctrl+V) or dropped here."
+msgstr "PDF, testo o immagini (PNG, JPEG, WebP, GIF), letti prima su questo PC e inviati solo con il tuo messaggio. Le immagini si possono anche incollare (Ctrl+V) o trascinare qui."
+
+msgid "Pasted image"
+msgstr "Immagine incollata"
+
+msgid "Show {name} what I see"
+msgstr "Mostra a {name} quello che vedo"
+
+msgid "Show {name} what I see: a picture of this phase's view (plan, 3D, chart or results), attached to your next message. {name} and the dialogs are not in it."
+msgstr "Mostra a {name} quello che vedo: un'immagine della vista di questa fase (pianta, 3D, grafico o risultati), allegata al prossimo messaggio. {name} e le finestre di dialogo non ci sono."
+
+msgid "Dropped image"
+msgstr "Immagine trascinata"
+
+msgid "Attach documents or images"
+msgstr "Allega documenti o immagini"
+
+msgid "Documents and images (*.pdf *.txt *.md *.csv *.png *.jpg *.jpeg *.webp *.gif)"
+msgstr "Documenti e immagini (*.pdf *.txt *.md *.csv *.png *.jpg *.jpeg *.webp *.gif)"
+
+msgid "Image"
+msgstr "Immagine"
+
+msgid "No view to show in this phase."
+msgstr "Nessuna vista da mostrare in questa fase."
+
+msgid "The model {model} does not see images, so it cannot answer about them. Choose a model with vision (Gemma 4, Qwen VL, LLaVA, an Ollama «vision» model or a cloud model), or remove the images."
+msgstr "Il modello {model} non vede le immagini, quindi non può rispondere su di esse. Scegli un modello con la vista (Gemma 4, Qwen VL, LLaVA, un modello «vision» di Ollama o un modello cloud), oppure togli le immagini."
+
+msgid "View: {phase}"
+msgstr "Vista: {phase}"
+
+msgid "Prepared on this PC: longest side {side} px, metadata removed, at most 5 MB. The original is not changed."
+msgstr "Preparata su questo PC: lato maggiore {side} px, metadati tolti, al massimo 5 MB. L'originale non cambia."
+
+msgid "Project tools stay off while images from outside Meridiana are in this conversation. Start a new conversation to use them."
+msgstr "Gli strumenti del progetto restano spenti finché in questa conversazione ci sono immagini da fuori Meridiana. Inizia una nuova conversazione per usarli."
+
+msgid "Attached image: {name}"
+msgstr "Immagine allegata: {name}"
+
+msgid "This conversation includes images attached earlier, which will be sent again."
+msgstr "Questa conversazione contiene immagini allegate prima, che verranno inviate di nuovo."
+
+msgid "The model's server refused the image: {detail}"
+msgstr "Il server del modello ha rifiutato l'immagine: {detail}"
+
+msgid "in use"
+msgstr "in uso"
+
+msgid "About {n} tokens for a cloud model, sent again with every question."
+msgstr "Circa {n} token per un modello cloud, inviati di nuovo a ogni domanda."
+
+msgid "Attached images also leave this PC: {names}"
+msgstr "Anche le immagini allegate escono da questo PC: {names}"
+
+#: src/meridiana/ui/properties.py
+msgid "No activity subject to control"
+msgstr "Nessuna attività soggetta"
+
+#: src/meridiana/ui/properties.py
+msgid "Subject, activity not specified"
+msgstr "Soggetta, attività non specificata"
+
+#: src/meridiana/ui/properties.py
+msgid "Number or words of the activity"
+msgstr "Numero o parole dell'attività"
+
+#: src/meridiana/ui/properties.py
+msgid "{label}. Threshold: {threshold}."
+msgstr "{label}. Soglia: {threshold}."
+
+#: src/meridiana/ui/properties.py
+msgid "Category {category}: {text}."
+msgstr "Categoria {category}: {text}."
+
+#: src/meridiana/ui/properties.py
+msgid "Source: DPR 151/2011 Annex I, GU no. 221 of 22/09/2011, p. {page}."
+msgstr "Fonte: DPR 151/2011 Allegato I, GU n. 221 del 22/09/2011, p. {page}."
+
+#: src/meridiana/ui/properties.py
+msgid "none, every one is subject"
+msgstr "nessuna, ogni attività è soggetta"
+
+#: src/meridiana/ui/properties.py
+msgid "Choose the activity of Annex I: the category and the report notes follow from it."
+msgstr "Scegli l'attività dell'Allegato I: la categoria e le note della relazione dipendono da lì."
+
+#: src/meridiana/ui/properties.py
+msgid "Activity (DPR 151/2011)"
+msgstr "Attività (DPR 151/2011)"
+
+#: src/meridiana/ui/properties.py
+msgid "Category"
+msgstr "Categoria"
+
+#: src/meridiana/fields.py
+msgid "activity subject to fire control"
+msgstr "attività soggetta a controllo"
+
+#: src/meridiana/fields.py
+msgid "fire control category"
+msgstr "categoria di prevenzione incendi"
+
+#: src/meridiana/rules.py
+msgid "Building {name}: the activity of Annex I of DPR 151/2011 is not specified in its properties; the category is {category}."
+msgstr "Edificio {name}: l'attività dell'Allegato I del DPR 151/2011 non è specificata nelle proprietà; la categoria è {category}."
+
+#: src/meridiana/rules.py
+msgid "Building {name}: activity no. {n} of Annex I of DPR 151/2011 ({label}), category {category}."
+msgstr "Edificio {name}: attività n. {n} dell'Allegato I del DPR 151/2011 ({label}), categoria {category}."
+
+#: src/meridiana/assistant/tools.py
+msgid "Read a rule"
+msgstr "Ho letto una regola"
+
+#: src/meridiana/assistant/tools.py
+msgid "Read the activities subject to fire prevention controls"
+msgstr "Ho letto le attività soggette ai controlli di prevenzione incendi"

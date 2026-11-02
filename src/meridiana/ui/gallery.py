@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QD
                                QTabBar, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from . import design
-from .design import Layout, Radius, Size, Space, Text, set_text, text_font
+from .design import Layout, Radius, Space, Text, set_text, text_font
 
 TOKENS = ("window", "panel", "card", "view", "field", "line", "line_soft", "text", "text2", "muted", "accent",
           "accent_soft", "accent_fg", "select_bg", "select_fg", "danger", "tooltip_bg")
@@ -93,10 +93,10 @@ class Boxes(QWidget):
         x = 0
         for name, r in ((f"card {Radius.CARD}", Radius.CARD), (f"view {Radius.VIEW}", Radius.VIEW),
                         (f"control {Radius.CONTROL}", Radius.CONTROL), (f"inner {Radius.INNER}", Radius.INNER),
-                        (f"mark {Radius.MARK}", Radius.MARK), ("pill", Size.CHIP / 2)):
+                        (f"mark {Radius.MARK}", Radius.MARK)):
             p.setPen(QColor(self.t["line"]))
             p.setBrush(QColor(self.t["field"]))
-            p.drawRoundedRect(x, 84, 64 if name != "pill" else 80, Size.CHIP if name == "pill" else 40, r, r)
+            p.drawRoundedRect(x, 84, 64, 40, r, r)
             p.setPen(QColor(self.t["text2"]))
             p.drawText(x, 144, name)
             x += 96
@@ -173,27 +173,22 @@ def gallery(theme) -> QMainWindow:
     for s in states:
         s.setFont(text_font(Text.CONTROL))
     cb.addWidget(row(*states))
-    # the chips: filters and counts (Button.CHIP), as the Checks' head
-    from .marks import icon as mark_icon
-    chips = []
-    for text, checked in (("Per livello", False), ("Questa fase", True), ("Questo oggetto", False)):
-        c = QToolButton()
-        c.setObjectName("filter")
-        c.setText(text)
-        c.setCheckable(True)
-        c.setChecked(checked)
-        chips.append(c)
+    # the filters and the counts, as the Checks' head: tracks not exclusive (R322, R328)
+    from .checks_page import CountChip
+    from .segments import Segments
+    filters = Segments(exclusive=False)
+    for text, checked in (("Questa fase", True), ("Questo oggetto", False)):
+        filters.add(text).setChecked(checked)
+    counts = Segments(exclusive=False)
     for level, n in (("fail", 0), ("warn", 1), ("info", 12)):
-        c = QToolButton()
-        c.setObjectName("count")
-        c.setIcon(mark_icon(level))
+        c = CountChip(level)
         c.setText(str(n))
-        c.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        chips.append(c)
-    cb.addWidget(row(*chips, spacing=Space.XS))
-    # the tabs and the segmented control: one look (R109, R121)
+        counts.add(str(n), level, segment=c)
+    cb.addWidget(row(counts, filters, spacing=Space.L))
+    # the tabs and the segments: one track (R109, R121, R322)
+    from .segments import on_bar
     tabs = QTabBar()
-    tabs.setDrawBase(False)
+    on_bar(tabs)
     for text in ("Mesi", "Perdite", "Giorno tipo", "Come è calcolato"):
         tabs.addTab(text)
     from .variant_bar import VariantBar

@@ -175,11 +175,9 @@ class Tree(unittest.TestCase):
         dpr = shot.devicePixelRatio()
         row = shot.copy(round(tree.header().sectionPosition(1) * dpr), round(rect.y() * dpr),
                         round(tree.header().sectionSize(1) * dpr), round(rect.height() * dpr))
-        from meridiana.ui import status_pill
-        ground, ink, _ = status_pill.colours("fail", tree.palette())
-        tinted = sum(1 for x in range(row.width()) for y in range(row.height()) if row.pixelColor(x, y) == ground)
-        self.assertGreater(tinted, 20 * dpr * dpr)
-        self.assertGreater(abs(ground.lightness() - ink.lightness()), 80)
+        red = sum(1 for x in range(row.width()) for y in range(row.height())
+                  if row.pixelColor(x, y).red() > row.pixelColor(x, y).green() + 80)
+        self.assertGreater(red, 20 * dpr * dpr)                  # the sign, in its colour (R328)
         # a click on a header does not move the selection; a click on the object does; the views lead the tree
         win._select("subfield", self.sid)
         win._tree_clicked(heads[0], 0)

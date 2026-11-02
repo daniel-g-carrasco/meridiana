@@ -29,7 +29,7 @@ from pathlib import Path
 
 from . import SLUG
 
-CONFIG_VERSION = 24
+CONFIG_VERSION = 25
 
 
 def _v1_to_v2(data: dict) -> dict:
@@ -201,6 +201,11 @@ def _v23_to_v24(data: dict) -> dict:
     return {**data, "inverter_brand_favourites": data.get("inverter_brand_favourites", [])}
 
 
+def _v24_to_v25(data: dict) -> dict:
+    """Version 25 has the view of the Plant's Strings (R298): the inputs as cards, or the single-line diagram."""
+    return {**data, "strings_view": data.get("strings_view", "cards")}
+
+
 # from one format version to the next, in order: {from_version: step}
 MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5,
                                                  5: _v5_to_v6, 6: _v6_to_v7, 7: _v7_to_v8, 8: _v8_to_v9,
@@ -209,7 +214,7 @@ MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: 
                                                  15: _v15_to_v16, 16: _v16_to_v17, 17: _v17_to_v18,
                                                  18: _v18_to_v19, 19: _v19_to_v20,
                                                  20: _v20_to_v21, 21: _v21_to_v22, 22: _v22_to_v23,
-                                                 23: _v23_to_v24}
+                                                 23: _v23_to_v24, 24: _v24_to_v25}
 
 
 @dataclass

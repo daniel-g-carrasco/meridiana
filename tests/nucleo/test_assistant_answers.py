@@ -161,6 +161,121 @@ class DanielConversation(unittest.TestCase):
         self.assertEqual(summary["orientation_name"], "Portrait")
 
 
+class FireQuestion(unittest.TestCase):
+    """R327: «come faccio a sapere se questo impianto è soggetto?» The answer comes from what the program carries
+    (Annex I of DPR 151/2011, the guidelines DCPREV 14030/2025 sect. 1.1 and 1.2), with numbers and thresholds."""
+
+    ANSWER = ("Un impianto FV non è un'attività soggetta di per sé: lo è l'edificio se ospita un'attività "
+              "dell'Allegato I del DPR 151/2011 (DCPREV 14030/2025, par. 1.1 punto 1, p. 3). Per un capannone di "
+              "10.000 m² le più comuni sono: **70** locali adibiti a depositi di superficie lorda superiore a 1000 m² "
+              "con merci combustibili oltre 5.000 kg, categoria B fino a 3.000 m², C oltre 3.000 m²; **71** aziende "
+              "ed uffici con oltre 300 persone presenti, categoria A fino a 500 persone, B fino a 800, C oltre 800 "
+              "persone. Dal progetto: Capannone è segnato soggetto, categoria B, senza attività. Dimmi che cosa si fa "
+              "nell'edificio e ti dico se rientra e in quale categoria.")
+
+    def test_meridio_reads_the_annex_and_every_figure_of_his_answer_comes_from_the_tools(self):
+        import re
+
+        host = problems_host()
+        client = FakeAnthropic([[("tool", "vvf_activities", {"query": "depositi"}),
+                                 ("tool", "vvf_activities", {"query": "71"})], [("text", self.ANSWER)]])
+        conv = conversation.Conversation()
+        last = conversation.answer(conv, providers.Anthropic(model="claude-haiku-5-5", client=client),
+                                   context.system(lang="it"),
+                                   "Come faccio a sapere se questo impianto è soggetto?", host)
+        self.assertEqual(last.text, self.ANSWER)
+        answers = [json.loads(m["content"]) for m in conv.messages if m["role"] == "tool"]
+        self.assertEqual([m["name"] for m in conv.messages if m["role"] == "tool"], ["vvf_activities"] * 2)
+        depots = answers[0]
+        self.assertIn("non rientrano fra le attività soggette", depots["pv_plants"])
+        self.assertIn("par. 1.1 punto 1 (p. 3)", depots["pv_plants"])
+        self.assertIn("GU Serie generale n. 221 del 22/09/2011", depots["source"])
+        self.assertEqual(depots["buildings"], [{"name": "Capannone", "subject": True, "activity": "not specified",
+                                                "category": "B"}])
+        self.assertIn("70. Locali adibiti a depositi (merci e materiali combustibili)",
+                      [*depots["also"], *(f"{a['number']}. {a['label']}" for a in depots["activities"])])
+        offices = answers[1]["activities"][0]
+        self.assertEqual(offices["threshold"], "con oltre 300 persone presenti")
+        self.assertEqual(offices["categories"]["C"], "oltre 800 persone")
+        self.assertTrue(offices["source"].endswith("p. 18"))
+        # the depots' row itself, as a query for its number gives it
+        depot = json.loads(tools.run("vvf_activities", {"query": "70"}, host, tools.State()).content)["activities"][0]
+        self.assertIn("superiore a 1000 m²", depot["threshold"])
+        self.assertEqual(depot["categories"], {"B": "fino a 3.000 m²", "C": "oltre 3.000 m²"})
+        # no figure in the answer that the tools did not give (the 10.000 m² is the designer's own)
+        given = conv.messages[2]["content"] + conv.messages[3]["content"] + json.dumps(depot, ensure_ascii=False)
+        for figure in set(re.findall(r"\d[\d.,]*\d|\d", self.ANSWER)) - {"10.000"}:
+            self.assertIn(figure, given, figure)
+
+    def test_the_answers_fit_the_budget_of_the_local_model_whatever_is_asked(self):
+        host = problems_host()
+        for query in ("", "depositi", "stabilimenti impianti", "49", "zzzz", "energia nucleare"):
+            with self.subTest(query=query):
+                content = tools.run("vvf_activities", {"query": query}, host, tools.State()).content
+                self.assertLessEqual(len(content), tools.RESULT_LIMIT)
+                out = json.loads(content)
+                self.assertNotIn("truncated", out)
+        whole = json.loads(tools.run("vvf_activities", {}, host, tools.State()).content)
+        self.assertEqual(len(whole["index"]), 80)
+        none = json.loads(tools.run("vvf_activities", {"query": "zzzz"}, host, tools.State()).content)
+        self.assertIn("message", none)
+        self.assertEqual(len(none["index"]), 80)
+
+    def test_the_summary_says_the_activity_of_each_building(self):
+        host = problems_host()
+        out = json.loads(tools.run("project_summary", {}, host, tools.State()).content)
+        self.assertEqual((out["buildings"][0]["fire_activity"], out["buildings"][0]["fire_category"]),
+                         ("not specified", "B"))
+        host.project.buildings[0].fire.activity = 70
+        out = json.loads(tools.run("project_summary", {}, host, tools.State()).content)
+        self.assertEqual(out["buildings"][0]["fire_activity"],
+                         "70. Locali adibiti a depositi (merci e materiali combustibili)")
+
+    def test_he_can_propose_the_activity_and_the_switch_goes_with_it(self):
+        host = problems_host()
+        b = host.project.buildings[0]
+        b.fire.subject = False
+        state = tools.State()
+        made = tools.run("propose_edit", {"kind": "building", "id": b.id, "changes": {"fire.activity": 70, "fire.category": "B"},
+                                          "reason": "deposito oltre 1000 m²"}, host, state)
+        self.assertFalse(made.error, made.content)
+        self.assertEqual((b.fire.subject, b.fire.activity), (False, 0))         # proposed, not applied
+        trial = copy.deepcopy(host.project)
+        made.proposal.change(trial)
+        fire = trial.buildings[0].fire
+        self.assertEqual((fire.subject, fire.activity, fire.category), (True, 70, "B"))
+        wrong = tools.run("propose_edit", {"kind": "building", "id": b.id, "changes": {"fire.activity": 90},
+                                           "reason": "x"}, host, tools.State())
+        self.assertTrue(wrong.error)
+        self.assertIn("fire.activity", wrong.content)
+
+    def test_the_rules_are_read_whole_with_their_source_and_one_that_does_not_apply_by_its_id(self):
+        host = problems_host()
+        out = json.loads(tools.run("read_rules", {}, host, tools.State()).content)
+        self.assertNotIn("truncated", out)
+        self.assertEqual(out["facts"]["fire_activities"], [{"building": "Capannone", "activity": "not specified",
+                                                            "category": "B"}])
+        ids = {r["id"] for r in out["rules"]} | {r["id"] for r in out["more"]}
+        self.assertIn("N13", ids)
+        self.assertNotIn("N14", ids)
+        self.assertIn("N14", [r["id"] for r in out["others_not_applying"]])
+        for r in out["more"]:
+            self.assertTrue(r["source"])
+            self.assertEqual(r["text"], "read it with rule_id")
+        for r in out["rules"]:
+            self.assertTrue(r["paragraphs"] and r["source"])
+        n13 = json.loads(tools.run("read_rules", {"rule_id": "n13"}, host, tools.State()).content)
+        self.assertTrue(n13["applies"])
+        self.assertIn("Building Capannone: the activity of Annex I", " ".join(n13["paragraphs"]))
+        self.assertIn("DPR 151/2011 Annex I", n13["source"])
+        n14 = json.loads(tools.run("read_rules", {"rule_id": "N14"}, host, tools.State()).content)
+        self.assertFalse(n14["applies"])
+        self.assertIn("DCPREV 14030/2025 sect. 1.2", n14["source"])
+        wrong = tools.run("read_rules", {"rule_id": "N99"}, host, tools.State())
+        self.assertTrue(wrong.error)
+        self.assertIn("N13", json.loads(wrong.content)["rules"])
+
+
 class Providers(unittest.TestCase):
     def test_server_sent_events_are_read_with_comments_and_lines_and_end_at_done(self):
         lines = [": keep-alive", "data: {\"a\":", "data: 1}", "", "event: x", "data: two", "", "data: [DONE]", "",
@@ -436,7 +551,9 @@ class Privacy(unittest.TestCase):
         self.assertEqual(privacy.allowed(p, "anthropic", given), "")
         p.reserved = True
         self.assertEqual(privacy.allowed(p, "anthropic", given), "reserved")
-        self.assertEqual(len(privacy.what_leaves("anthropic", "claude-haiku-5-5")), 4)
+        lines = privacy.what_leaves("anthropic", "claude-haiku-5-5")
+        self.assertEqual(len(lines), 5)                     # the fifth since R320: images, never redacted
+        self.assertIn("picture", lines[-1])
 
 
 class Costs(unittest.TestCase):

@@ -262,6 +262,8 @@ def tool_topics(calls: list[dict]) -> list[str]:
                 out.append("assumptions")
         elif name == "read_rules":
             out.append("rules")
+        elif name == "vvf_activities":
+            out.append("fire")
         elif name == "search_manual":
             out.append("howto")
         elif name == "go_to":

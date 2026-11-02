@@ -124,7 +124,7 @@ class HelpButton(ControlHelpButton):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setToolTip(h.short)
         self.setAccessibleName(_("Help: {title}").format(title=h.title))
-        set_text(self, Text.LABEL)                  # a round button of the global sheet (Button.HELP)
+        set_text(self, Text.LABEL)                  # a small button of the global sheet (Button.HELP)
         register(self, hid)
         self.clicked.connect(lambda: request(self.hid, self))
 

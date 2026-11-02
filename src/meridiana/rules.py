@@ -76,6 +76,8 @@ class Facts:
     level: str = "BT"
     level_auto: bool = True
     fire: bool | None = None             # an activity subject to fire-brigade control; None: no building
+    # the buildings subject to control: (name, activity of Annex I of DPR 151/2011 or 0 not specified, category)
+    fire_activities: list = field(default_factory=list)
     installs: set = field(default_factory=set)      # "BAPV", "BIPV", "canopy", "ground"
     storage: bool = False
     uoc_max: float | None = None         # V, the strings' highest open-circuit voltage
@@ -127,6 +129,7 @@ def facts(project, results: dict | None = None, energy: dict | None = None, inve
     buildings = roofs or ([] if project.subfields else list(project.buildings))
     if buildings:
         f.fire = any(b.fire.subject for b in buildings)
+        f.fire_activities = [(b.name, b.fire.activity, b.fire.category) for b in buildings if b.fire.subject]
     for sf in project.subfields:
         mounting = sf.layout_params().mounting
         if sf.building is None or mounting == "ground":
@@ -248,6 +251,23 @@ def _n02(f: Facts) -> list[str]:
               "37/2008, art. 5 par. 2: ") + why, _n02_tail()]
 
 
+def _n13_activities(f: Facts) -> list[str]:
+    """The activity of Annex I of DPR 151/2011 each building subject to control hosts (R327), with its category,
+    or that it is not specified."""
+    from . import vvf_activities
+    out = []
+    for name, number_, category in f.fire_activities:
+        a = vvf_activities.activity(number_)
+        if a is None:
+            out.append(_("Building {name}: the activity of Annex I of DPR 151/2011 is not specified in its properties; "
+                         "the category is {category}.").format(name=name, category=category or _("not stated")))
+        else:
+            out.append(_("Building {name}: activity no. {n} of Annex I of DPR 151/2011 ({label}), category "
+                         "{category}.").format(name=name, n=a.number, label=a.short,
+                                               category=category or _("not stated")))
+    return out
+
+
 def _n02_tail() -> str:
     return _("The design includes at least diagrams, layouts and a technical report (art. 5 par. 4). On completion the "
              "installer issues the declaration of conformity (art. 7); if the system is part of a building permit, the "
@@ -362,6 +382,7 @@ RULES: list[Rule] = [
         _("The system serves premises subject to fire prevention controls: the fire brigade guidelines DCPREV 14030 of "
           "01/09/2025 apply to PV systems with DC voltage up to 1500 V on buildings, pergolas, shelters and canopies of "
           "such premises or interfering with them."),
+        *_n13_activities(f),
         _("The installation changes the fire safety conditions and may increase the risk (sect. 2.2): it must be "
           "assessed and, where needed, the fire prevention file updated. Where the Fire Prevention Code (DM "
           "03/08/2015) applies, its additional requirements of S.10.6, in particular S.10.6.1 and S.10.6.2, are "
@@ -375,8 +396,8 @@ RULES: list[Rule] = [
           "Volt)', i.e. 'WARNING: PV SYSTEM LIVE DURING DAYLIGHT HOURS (… V)' (3.3.5.4)."),
         _("The system is built to good practice per CEI 64-8 and guide CEI 82-25 (sect. 2.3). Maintenance is recorded "
           "in the fire safety register, with checks every two years and periodic thermography (ch. 5).")],
-        lambda: _("DCPREV 14030 of 01/09/2025 sect. 1.2, 2.2, 2.3, 3.2.1, 3.3.5.2-3.3.5.4, ch. 5; Fire Prevention Code "
-                  "S.10.6.1-S.10.6.2")),
+        lambda: _("DPR 151/2011 Annex I (GU no. 221 of 22/09/2011); DCPREV 14030 of 01/09/2025 sect. 1.2, 2.2, 2.3, "
+                  "3.2.1, 3.3.5.2-3.3.5.4, ch. 5; Fire Prevention Code S.10.6.1-S.10.6.2")),
     Rule("N14", 3, lambda f: f.fire is False, lambda f: [
         _("The premises are not subject to fire prevention controls: the fire brigade guidelines DCPREV 14030/2025 "
           "remain a useful reference for design, installation, operation and maintenance (sect. 1.2); good practice "

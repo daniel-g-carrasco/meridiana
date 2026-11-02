@@ -305,7 +305,12 @@ class SideEditor(QWidget):
     entered = Signal(float)
     left = Signal()
     refused = Signal(str)
-    FIELD_WIDTH = 64            # room for «10000,00»
+    ROOM = "0,00"               # the least room of the field; it grows with what is typed, the unit right after it
+
+    # In the pill's own measures (R324, Daniel 02/11/2026: the field «non è impaginata bene, è tutta spostata in alto
+    # storta»: a box of 28 px in the controls' font over a pill of 16 in the small one, the number lifted, the unit off
+    # its line): the pill's height, font, disc and margins as PlanView._side_pills draws them, the disc where the
+    # pill's was, the number where its length was, the unit on the number's baseline.
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -315,8 +320,9 @@ class SideEditor(QWidget):
         self.unit = _("{length} m").format(length="").strip()      # the unit as the pills write it
         self.field = QLineEdit(self)
         self.field.setFrame(False)
-        self.field.setFont(design.text_font(design.Text.CONTROL, self.font()))
-        self.field.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self.field.setTextMargins(0, 0, 0, 0)
+        self.field.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.field.textChanged.connect(lambda _t: self._fit())
         self.field.installEventFilter(self)
         self.set_colours(self.colours)
         self.hide()
@@ -324,29 +330,43 @@ class SideEditor(QWidget):
     def set_colours(self, colours: dict) -> None:
         self.colours = colours
         self.field.setStyleSheet(
-            "QLineEdit {{ background: transparent; border: none; padding: 0; margin: 0; color: {fg}; "
+            "QLineEdit {{ background: transparent; border: none; padding: 0; margin: 0; min-height: 0; color: {fg}; "
             "selection-background-color: {sel}; selection-color: {bg}; }}".format(
                 fg=colours["label_fg"][:7], sel=colours["sel"][:7], bg=colours["label_bg"][:7]))
         self.update()
 
-    def disc(self) -> float:
-        return design.Size.CONTROL - 2 * design.Space.XS
-
-    def open_at(self, side: int, text: str, centre: QPointF) -> None:
-        """The field for side `side` (0-based) with `text` selected, its middle at `centre` (the parent's pixels)."""
-        self.side = side
-        fm = QFontMetrics(self.field.font())
-        h = design.Size.CONTROL
-        unit_w = fm.horizontalAdvance(self.unit)
-        w = design.Space.XS + self.disc() + design.Space.XS + self.FIELD_WIDTH + design.Space.XS + unit_w + design.Space.M
-        self.resize(int(w), h)
-        self.field.setGeometry(int(design.Space.XS + self.disc() + design.Space.XS), 0, self.FIELD_WIDTH, h)
+    def pill_font(self):
+        """The font of the pills' lengths (PlanView._side_pills)."""
         parent = self.parentWidget()
-        x = min(max(0.0, centre.x() - w / 2), max(0.0, parent.width() - w)) if parent is not None else centre.x() - w / 2
-        y = min(max(0.0, centre.y() - h / 2), max(0.0, parent.height() - h)) if parent is not None else centre.y() - h / 2
+        return design.font(design.Type.SMALL, design.Type.REGULAR, (parent or self).font())
+
+    def pill_height(self) -> int:
+        """A pill's height: the small font's line and XXS above and below (PlanView._side_pills)."""
+        return QFontMetrics(self.pill_font()).height() + 2 * design.Space.XXS
+
+    def disc(self) -> float:
+        return self.height() - 2 * design.Space.XXS          # the pill's disc
+
+    def open_at(self, side: int, text: str, centre: QPointF, pill: QRectF | None = None) -> None:
+        """The field for side `side` (0-based) with `text` selected, over the side's `pill` (the parent's pixels: its
+        disc and its height kept), or with its middle at `centre` for a side too short for a pill."""
+        self.side = side
+        font = self.pill_font()
+        self.field.setFont(font)
+        h = round(pill.height()) if pill is not None else self.pill_height()
+        self.resize(self.width(), h)                          # disc() follows the height
+        self.field.setText(text)
+        w = self._fit()
+        parent = self.parentWidget()
+        if pill is not None:
+            x, y = pill.left(), pill.top()                    # the disc where the pill's disc was
+        else:
+            x, y = centre.x() - w / 2, centre.y() - h / 2
+        if parent is not None:
+            x = min(max(0.0, x), max(0.0, parent.width() - w))
+            y = min(max(0.0, y), max(0.0, parent.height() - h))
         self.move(int(round(x)), int(round(y)))
         self.setToolTip(_("Length of side {n}").format(n=side + 1))
-        self.field.setText(text)
         self.show()
         self.raise_()
         self.field.setFocus(Qt.FocusReason.OtherFocusReason)
@@ -400,14 +420,31 @@ class SideEditor(QWidget):
         p.setBrush(QBrush(fill))
         inset = design.Line.FOCUS / 2
         p.drawRoundedRect(QRectF(inset, inset, self.width() - 2 * inset, h - 2 * inset),
-                          design.Radius.pill(h), design.Radius.pill(h))
-        draw_disc(p, QPointF(design.Space.XS + self.disc() / 2, h / 2), self.disc(), str(self.side + 1),
+                          design.Radius.CONTROL, design.Radius.CONTROL)
+        draw_disc(p, QPointF(design.Space.XXS + self.disc() / 2, h / 2), self.disc(), str(self.side + 1),
                   qcolour(self.colours["label_fg"]), fill, self.font())
         p.setPen(qcolour(self.colours["label_fg"]))
         p.setFont(self.field.font())
         x = self.field.geometry().right() + 1 + design.Space.XS
-        p.drawText(QRectF(x, 0, self.width() - x, h), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, self.unit)
+        p.drawText(QPointF(x, self.baseline()), self.unit)        # on the number's own line
         p.end()
+
+    def _fit(self) -> float:
+        """The field as wide as its text (at least ROOM) where the pill's length began, the unit right after it, as
+        the pill writes «8,00 m»; the width, which grows to the right."""
+        fm = QFontMetrics(self.field.font())
+        x0 = design.Space.XXS + self.disc() + design.Space.XS
+        field_w = max(fm.horizontalAdvance(self.field.text()), fm.horizontalAdvance(self.ROOM)) + design.Space.XXS
+        w = x0 + field_w + design.Space.XS + fm.horizontalAdvance(self.unit) + design.Space.S
+        self.field.setGeometry(int(round(x0)), 0, field_w, self.height())
+        self.resize(int(math.ceil(w)), self.height())
+        self.update()
+        return w
+
+    def baseline(self) -> float:
+        """Where the field writes its text, in this widget's pixels: its cursor's top and the font's ascent."""
+        cursor = self.field.cursorRect()
+        return self.field.y() + cursor.top() + (cursor.height() - QFontMetrics(self.field.font()).height()) / 2             + QFontMetrics(self.field.font()).ascent()
 
 
 def draw_disc(painter: QPainter, centre: QPointF, diameter: float, text: str, fill: QColor, ink: QColor, base) -> None:
@@ -1777,8 +1814,9 @@ class PlanView(QGraphicsView):
             centre = box.center()
         self.editing_side = side
         self.side_editor.set_colours(self.colours)
-        self.side_editor.open_at(side, number(sides.lengths(ring)[side]),
-                                 QPointF(self.viewport().mapTo(self, centre.toPoint())))
+        offset = QPointF(self.viewport().mapTo(self, QPoint(0, 0)))
+        self.side_editor.open_at(side, number(sides.lengths(ring)[side]), centre + offset,
+                                 box.translated(offset) if box is not None else None)
         self.sideClicked.emit(self.selection[0], self.selection[1], side)
         self.hint.emit(_("Length of side {n}: Enter applies it, Esc leaves it as it is.").format(n=side + 1))
         self.viewport().update()
@@ -1935,6 +1973,12 @@ class PlanView(QGraphicsView):
     def _reset_roof_draft(self) -> None:
         self.pitch_card = {"field": "depth", "tilt": None, "ridge": None, "eave": None, "swapped": False}
         self.ridge_typed = None
+
+    def _roof_draft_open(self) -> bool:
+        """Something of a pitch or a ridge being drawn is in hand: points, a value written, a field changed."""
+        card = self.pitch_card or {}
+        return bool(getattr(self, "pitch_points", None)) or self.ridge_typed is not None or any(
+            card.get(k) is not None for k in ("tilt", "ridge", "eave")) or bool(card.get("swapped"))
 
     def _rect_now(self) -> bool:
         """Three clicks make a rectangle: R in the drawing tools; in the Pitch tool always, its eave and then its
@@ -3333,9 +3377,12 @@ class PlanView(QGraphicsView):
             if key == Qt.Key.Key_Escape:
                 if self.typed:
                     self.typed = ""
-                else:
+                elif self.row_start is not None:
                     self.row_start = None
                     self.snapper.reset()
+                else:                       # nothing in hand: back to Select (Daniel, 02/11/2026)
+                    self.toolLeft.emit()
+                    return
                 self.viewport().update()
                 return
         if self.tool in DRAWING or self.tool == "measure":
@@ -3358,10 +3405,13 @@ class PlanView(QGraphicsView):
             if key == Qt.Key.Key_Escape:
                 if self.typed:
                     self.typed = ""
-                else:
+                elif self.chain or self.measure or self._roof_draft_open():
                     self.chain, self.measure = [], []
                     self.snapper.reset()
                     self._reset_roof_draft()
+                else:                       # nothing in hand: Esc leaves the tool, back to Select (Daniel, 02/11/2026)
+                    self.toolLeft.emit()
+                    return
                 self.viewport().update()
                 return
         if self.strings_mode and self.draft is None and key == Qt.Key.Key_Escape and self.chosen_string >= 0:
@@ -3620,7 +3670,7 @@ class PlanView(QGraphicsView):
             ink = sel if i == lit else fg
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(bg)
-            painter.drawRoundedRect(box, design.Radius.pill(box.height()), design.Radius.pill(box.height()))
+            painter.drawRoundedRect(box, design.Radius.CONTROL, design.Radius.CONTROL)
             disc = box.height() - 2 * design.Space.XXS
             draw_disc(painter, QPointF(box.left() + design.Space.XXS + disc / 2, box.center().y()), disc, str(i + 1),
                       ink, bg, self.font())

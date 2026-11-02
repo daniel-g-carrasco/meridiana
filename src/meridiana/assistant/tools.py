@@ -3,7 +3,8 @@ call, each with its name, its description and the JSON schema of its arguments, 
 from the project as it is now.
 
 Reading, without asking: `read_checks`, `project_summary`, `read_selection`, `read_results`, `read_pedigree`,
-`read_rules`, `search_manual`, `search_projects`, `project_revisions`, `similar_projects` and `list_tasks`; `go_to`
+`read_rules`, `vvf_activities`, `search_manual`, `search_projects`, `project_revisions`, `similar_projects` and
+`list_tasks`; `go_to`
 only moves the window. Proposing, never applying: `propose_fix` offers the fix a check already has (the way to prefer: in the
 trial of study 14, 4.4, a model free to write the fields invented one), `propose_edit` a change of the fields the
 Properties panel and the energy pages have, checked with the rules of the project file; a wrong field goes back to
@@ -39,6 +40,7 @@ from dataclasses import dataclass, field
 
 from .. import checks as checks_module
 from .. import layout, model, project_index, settings
+from .. import vvf_activities as vvf
 from ..fields import field_label, field_value, mounting_names, pitch_mode_names
 from ..i18n import _, number
 
@@ -126,9 +128,22 @@ SPECS = {
     },
     "read_rules": {
         "description": "Read the rules that apply to the project (connection, interface protection, minimum "
-                       "renewable power, fire brigade, who may design...) with their sources, and the facts they "
-                       "were judged on.",
-        "parameters": _schema(),
+                       "renewable power, fire brigade, who may design...) with their whole text and their sources, "
+                       "and the facts they were judged on. It also lists the rules that do not apply now. With "
+                       "rule_id, the whole text and the source of that rule, whether it applies or not.",
+        "parameters": _schema({"rule_id": {"type": "string", "description": "a rule's id from the list, e.g. N13"}}),
+    },
+    "vvf_activities": {
+        "description": "Search Annex I of DPR 151/2011, the 80 activities subject to fire prevention controls, by "
+                       "number or by words of the law (depositi, uffici, autorimesse, gruppi, calore...). Each "
+                       "activity comes with its number, the law's text, the threshold above which it is subject and "
+                       "what falls in categories A, B and C, with the page of the Gazzetta Ufficiale. An empty query "
+                       "gives the list of all 80, to find the right word. The answer also carries the buildings of "
+                       "the project with their activity, what the law says about the categories and about PV plants. "
+                       "Use it whenever the designer asks whether something is subject to fire controls, or in which "
+                       "category.",
+        "parameters": _schema({"query": {"type": "string", "description": "a number from 1 to 80, or a few words in "
+                                                                          "Italian; empty for the whole list"}}),
     },
     "propose_fix": {
         "description": "Propose to the designer the fix a check already has (its id from read_checks). The "
@@ -196,8 +211,8 @@ SPECS = {
     },
 }
 STEP_1 = ("read_checks", "project_summary", "go_to", "search_manual", "list_navigation_targets", "read_navigation")
-STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "propose_fix", "propose_edit",
-          "propose_undo")
+STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "vvf_activities", "propose_fix",
+          "propose_edit", "propose_undo")
 STEP_3 = ("search_projects", "project_revisions", "similar_projects", "prepare_open_project", "list_tasks",
           "prepare_task", "prepare_bug_report", "start_guided_tour", "propose_catalog_record")
 
@@ -374,6 +389,12 @@ def _laid(host, sf) -> int:
     return int(getattr(result, "count", 0))
 
 
+def _activity_name(fire) -> str:
+    """The activity of Annex I of DPR 151/2011 of a building, as the Properties panel lists it."""
+    a = vvf.activity(fire.activity)
+    return a.label() if a is not None else ("not specified" if fire.subject else "none")
+
+
 def project_summary(host, state: State) -> Outcome:
     p = host.project
     subfields = []
@@ -398,7 +419,8 @@ def project_summary(host, state: State) -> Outcome:
                           "laid": sf.filled, "by_hand": sf.manual})
     buildings = [{"id": b.id, "name": b.name, "height_m": b.height, "roof": b.roof.type,
                   "slope": round(b.slope(), 1) if hasattr(b, "slope") else b.roof.tilt,
-                  "fire_brigade": b.fire.subject} for b in p.buildings]
+                  "fire_brigade": b.fire.subject, "fire_activity": _activity_name(b.fire),
+                  "fire_category": b.fire.category} for b in p.buildings]
     inverters = [{"name": e.get("name") or e.get("record", {}).get("model", ""), "count": e.get("count", 1),
                   "ac_kw": round(float(e.get("record", {}).get("ac_power_nominal_w") or 0) / 1000.0, 2),
                   **({"optimizer": e["optimizer"].get("model", ""), "modules_on_each": e.get("per_optimizer", 1)}
@@ -558,7 +580,8 @@ def read_selection(host, state: State) -> Outcome:
         from shapely.geometry import Polygon
         shape = Polygon(b.footprint)
         out.update({"height_m": b.height, "parapet_m": b.parapet, "roof": dataclasses.asdict(b.roof) | {
-            "free_pitches": len(b.roof.free_pitches)}, "fire": dataclasses.asdict(b.fire),
+            "free_pitches": len(b.roof.free_pitches)},
+            "fire": dataclasses.asdict(b.fire) | {"activity_name": _activity_name(b.fire)},
             "area_m2": round(shape.area, 1), "perimeter_m": round(shape.length, 1),
             "subfields": [s.name for s in p.subfields if s.building == b.id],
             "exclusions": [object_name(p, "exclusion", e.id) for e in p.exclusions if e.building == b.id]})
@@ -723,17 +746,77 @@ def read_pedigree(host, state: State, calculation: str, step: str = "") -> Outco
     return Outcome(_json({"calculation": calculation, "steps": steps}), said)
 
 
-def read_rules(host, state: State) -> Outcome:
+def read_rules(host, state: State, rule_id: str = "") -> Outcome:
+    """The rules with their whole text and source: every one that applies while the answer has room (the local
+    model's budget, RESULT_LIMIT), the rest by id and title, each readable alone with `rule_id`, also one that
+    does not apply now (R327: a text cut in the middle left Meridio nothing to quote)."""
     from .. import rules
     f = host.rules_facts()
     if f is None:
         return _error("the rules could not be read: the plant could not be read")
-    applying = [{"rule": rules.title(r, f), "source": r.source(), "level": r.level, "paragraphs": r.paragraphs(f)}
-                for r in rules.applying(f)]
+    if rule_id:
+        rule = next((r for r in rules.RULES if r.id == rule_id.strip().upper()), None)
+        if rule is None:
+            return _error(f"no rule {rule_id!r}", rules=[r.id for r in rules.RULES])
+        return Outcome(_json({"id": rule.id, "rule": rules.title(rule, f), "applies": rule.applies(f),
+                              "level": rule.level, "source": rule.source(), "paragraphs": rule.paragraphs(f)}),
+                       _("Read a rule"))
     facts = {"p_dc_kw": round(f.p_dc_kw, 2), "p_ac_kw": round(f.p_ac_kw, 2), "p_nominal_kw": round(f.p_nominal_kw, 2),
              "connection": f.level, "fire_brigade": f.fire, "obligation": f.obligation or "not stated",
-             "storage": f.storage, "uoc_max_v": f.uoc_max, "region": f.region}
-    return Outcome(_json({"facts": facts, "rules": applying}), _("Read the rules that apply"))
+             "storage": f.storage, "uoc_max_v": f.uoc_max, "region": f.region,
+             "fire_activities": [{"building": name,
+                                  "activity": _activity_name(model.Fire(subject=True, activity=number_)),
+                                  "category": category or "not stated"}
+                                 for name, number_, category in f.fire_activities]}
+    applying = rules.applying(f)
+    others = [{"id": r.id, "rule": rules.title(r, f)} for r in rules.RULES if r not in applying]
+    out = {"facts": facts, "rules": [], "more": [], "others_not_applying": others}
+    # what the rules left out take, each with its title and source, is set aside before the whole texts
+    room = RESULT_LIMIT - len(_json(out))
+    for r in applying:
+        room -= len(_json(_rule_in_short(rules, r, f)))
+    for r in applying:
+        whole = {"id": r.id, "rule": rules.title(r, f), "source": r.source(), "level": r.level,
+                 "paragraphs": r.paragraphs(f)}
+        more = len(_json(whole)) - len(_json(_rule_in_short(rules, r, f)))
+        if more <= room:
+            out["rules"].append(whole)
+            room -= more
+        else:
+            out["more"].append(_rule_in_short(rules, r, f))
+    return Outcome(_json(out), _("Read the rules that apply"))
+
+
+def _rule_in_short(rules, r, f) -> dict:
+    return {"id": r.id, "rule": rules.title(r, f), "source": r.source(), "level": r.level,
+            "text": "read it with rule_id"}
+
+
+def vvf_activities(host, state: State, query: str = "") -> Outcome:
+    """Annex I of DPR 151/2011 (R327): what Meridio can quote about what is subject to fire controls, with the
+    project's buildings beside it. The best six whole, while the answer has room, the others by their label."""
+    found = vvf.search(query)
+    buildings = [{"name": b.name, "subject": b.fire.subject, "activity": _activity_name(b.fire),
+                  "category": b.fire.category or "not stated"} for b in host.project.buildings]
+    out = {"query": query, "source": vvf.SOURCE, "procedure": vvf.PROCEDURE, "pv_plants": vvf.PV_NOT_AN_ACTIVITY,
+           "buildings": buildings}
+    said = _("Read the activities subject to fire prevention controls")
+    if not found:
+        out["index"] = vvf.index()
+        if str(query or "").strip():
+            out["message"] = "no activity matches: the law's own words are in this list"
+        return Outcome(_json(out), said)
+    out["activities"], out["also"] = [], []
+    room = RESULT_LIMIT - len(_json(out)) - sum(len(a.label()) + 4 for a in found)
+    for a in found:
+        whole = vvf.as_dict(a)
+        size = len(_json(whole))
+        if size <= room and len(out["activities"]) < 6:
+            out["activities"].append(whole)
+            room -= size
+        else:
+            out["also"].append(a.label())
+    return Outcome(_json(out), said)
 
 
 # proposing
@@ -809,6 +892,7 @@ NUMBER, WHOLE, SWITCH, TEXT = "number", "whole", "switch", "text"
 EDITABLE = {
     "building": {"name": TEXT, "height": NUMBER, "parapet": NUMBER, "roof.type": model.ROOF_TYPES,
                  "roof.tilt": NUMBER, "roof.ridge_height": NUMBER, "fire.subject": SWITCH,
+                 "fire.activity": WHOLE, "fire.category": ("", *vvf.CATEGORIES),
                  "fire.roof_fire_resistant": SWITCH},
     "subfield": {"name": TEXT, "params.mounting": tuple(sorted(layout.MOUNTINGS)), "params.portrait": SWITCH,
                  "params.stack": WHOLE, "params.tilt": NUMBER, "params.azimuth": NUMBER, "params.gap": NUMBER,
@@ -954,6 +1038,8 @@ def check_edit(project, kind: str, oid: str, changes) -> dict:
     if wrong:
         raise ValueError(f"fields not allowed: {', '.join(wrong)}")
     typed = {path: _typed(path, allowed[path], value) for path, value in changes.items()}
+    if kind == "building" and typed.get("fire.activity"):
+        typed["fire.subject"] = True            # R327: an activity chosen turns the switch on, as in the Properties
     trial = copy.deepcopy(project)
     apply_edit(trial, kind, oid, typed)
     model.Project.from_json(trial.to_json(), check=True)
@@ -1168,7 +1254,8 @@ TOOLS = {"read_checks": read_checks, "project_summary": project_summary, "go_to"
          "propose_catalog_record": propose_catalog_record,
          "list_navigation_targets": list_navigation_targets, "read_navigation": read_navigation,
          "search_manual": search_manual, "read_selection": read_selection, "read_results": read_results,
-         "read_pedigree": read_pedigree, "read_rules": read_rules, "propose_fix": propose_fix,
+         "read_pedigree": read_pedigree, "read_rules": read_rules, "vvf_activities": vvf_activities,
+         "propose_fix": propose_fix,
          "propose_edit": propose_edit, "propose_undo": propose_undo, "search_projects": search_projects,
          "project_revisions": project_revisions, "similar_projects": similar_projects,
          "prepare_open_project": prepare_open_project, "list_tasks": list_tasks, "prepare_task": prepare_task}

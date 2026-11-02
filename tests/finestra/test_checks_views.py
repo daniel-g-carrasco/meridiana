@@ -136,7 +136,7 @@ class ChecksOnTheViews(unittest.TestCase):
     def test_the_view_chosen_the_counts_of_the_status_bar_ctrl_dot_and_the_phase_reach_the_panel(self):
         win, page = self.win, self.win.checks_page
         # the view chosen in the panel is kept in the settings
-        next(a for a in page.view_actions.actions() if a.data() == "object").trigger()
+        next(b for b in page.views.items if b.property("data") == "object").click()
         self.assertEqual(self.cfg.checks_view, "object")
         self.assertEqual(config.load(self.paths.config_file).checks_view, "object")
         page.set_view("level")

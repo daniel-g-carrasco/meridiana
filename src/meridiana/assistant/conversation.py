@@ -57,10 +57,21 @@ class Conversation:
     def clear(self) -> None:
         self.__init__()
 
-    def ask(self, text: str) -> None:
+    def ask(self, text: str, images: list[dict] | None = None) -> None:
+        """A question; `images` the pictures that go with it (images.Picture.wire: name, media_type, base64 data,
+        width, height), kept in memory with the question as a document's text is, sent again with each question
+        of this conversation, never written anywhere (R320)."""
         self.close_open_calls()
-        self.messages.append({"role": "user", "content": text})
+        message = {"role": "user", "content": text}
+        if images:
+            message["images"] = list(images)
+        self.messages.append(message)
         self.rounds = 0
+
+    def drop_images(self) -> None:
+        """The pictures out of the conversation (a model that does not see them): the questions stay."""
+        for m in self.messages:
+            m.pop("images", None)
 
     def add_round(self, r: Round, provider: Provider) -> None:
         """The model's answer of one round, with the calls it asked for and its own content to give back."""
@@ -71,7 +82,9 @@ class Conversation:
         if r.done.raw is not None:
             turn["raw"] = {provider.family: r.done.raw}
         self.messages.append(turn)
-        self.bill.add(r.done.model or provider.model, r.usage, provider.cloud)
+        pictures = [i for m in self.messages if m["role"] == "user" for i in m.get("images") or []]
+        self.bill.add(r.done.model or provider.model, r.usage, provider.cloud,
+                      estimate=costs.pictures_tokens(pictures))
 
     def add_result(self, call: ToolCall, outcome: tools.Outcome) -> None:
         self.messages.append({"role": "tool", "id": call.id, "name": call.name, "content": outcome.content,
