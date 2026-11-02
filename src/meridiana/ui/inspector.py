@@ -112,7 +112,7 @@ class DeliverablesInspector(QScrollArea):
             head.addWidget(title, 1)
             state = QLabel(names.get(d.state, d.state))
             state.setObjectName(f"state-{d.state}")
-            state.setFont(text_font(Text.CONTROL))          # a pill: a control's word (Button.CHIP)
+            state.setFont(text_font(Text.CONTROL))          # a state's label: a control's word
             head.addWidget(state)
             inside.addLayout(head)
             note = QLabel(d.note)

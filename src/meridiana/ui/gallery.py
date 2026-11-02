@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit, QD
                                QTabBar, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from . import design
-from .design import Layout, Radius, Size, Space, Text, set_text, text_font
+from .design import Layout, Radius, Space, Text, set_text, text_font
 
 TOKENS = ("window", "panel", "card", "view", "field", "line", "line_soft", "text", "text2", "muted", "accent",
           "accent_soft", "accent_fg", "select_bg", "select_fg", "danger", "tooltip_bg")
@@ -93,10 +93,10 @@ class Boxes(QWidget):
         x = 0
         for name, r in ((f"card {Radius.CARD}", Radius.CARD), (f"view {Radius.VIEW}", Radius.VIEW),
                         (f"control {Radius.CONTROL}", Radius.CONTROL), (f"inner {Radius.INNER}", Radius.INNER),
-                        (f"mark {Radius.MARK}", Radius.MARK), ("pill", Size.CHIP / 2)):
+                        (f"mark {Radius.MARK}", Radius.MARK)):
             p.setPen(QColor(self.t["line"]))
             p.setBrush(QColor(self.t["field"]))
-            p.drawRoundedRect(x, 84, 64 if name != "pill" else 80, Size.CHIP if name == "pill" else 40, r, r)
+            p.drawRoundedRect(x, 84, 64, 40, r, r)
             p.setPen(QColor(self.t["text2"]))
             p.drawText(x, 144, name)
             x += 96

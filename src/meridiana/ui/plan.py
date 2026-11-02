@@ -420,7 +420,7 @@ class SideEditor(QWidget):
         p.setBrush(QBrush(fill))
         inset = design.Line.FOCUS / 2
         p.drawRoundedRect(QRectF(inset, inset, self.width() - 2 * inset, h - 2 * inset),
-                          design.Radius.pill(h), design.Radius.pill(h))
+                          design.Radius.CONTROL, design.Radius.CONTROL)
         draw_disc(p, QPointF(design.Space.XXS + self.disc() / 2, h / 2), self.disc(), str(self.side + 1),
                   qcolour(self.colours["label_fg"]), fill, self.font())
         p.setPen(qcolour(self.colours["label_fg"]))
@@ -3670,7 +3670,7 @@ class PlanView(QGraphicsView):
             ink = sel if i == lit else fg
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(bg)
-            painter.drawRoundedRect(box, design.Radius.pill(box.height()), design.Radius.pill(box.height()))
+            painter.drawRoundedRect(box, design.Radius.CONTROL, design.Radius.CONTROL)
             disc = box.height() - 2 * design.Space.XXS
             draw_disc(painter, QPointF(box.left() + design.Space.XXS + disc / 2, box.center().y()), disc, str(i + 1),
                       ink, bg, self.font())

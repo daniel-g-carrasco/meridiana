@@ -23,7 +23,7 @@ class Scales(unittest.TestCase):
 
     def test_the_scales_are_closed_and_the_sheet_keeps_to_them(self):
         from meridiana.ui import design
-        from meridiana.ui.design import Radius, Size, Space, Type
+        from meridiana.ui.design import Radius, Space, Type
         from meridiana.ui.theme import style_sheet
         self.assertEqual(Space.SCALE, (0, 2, 4, 6, 8, 12, 16, 24, 32))
         for name in ("XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"):
@@ -34,8 +34,9 @@ class Scales(unittest.TestCase):
         sizes = [Type.MICRO, Type.CAPTION, Type.SMALL, Type.BODY, Type.TITLE, Type.HEADING, Type.DISPLAY]
         self.assertEqual(sizes, sorted(sizes))
         self.assertEqual(design.padding(Space.XS, 8), "padding: 3px 7px;")  # 8 px from the outer edge
-        pills = {Radius.pill(Size.CHIP), Radius.pill(Size.CHIP) + Space.XXS, Radius.pill(18)}
-        allowed = {Radius.CARD, Radius.VIEW, Radius.CONTROL, Radius.INNER, Radius.MARK, 3} | pills
+        allowed = {Radius.CARD, Radius.VIEW, Radius.CONTROL, Radius.INNER, Radius.MARK, 3}
+        self.assertFalse(hasattr(Radius, "pill"))                          # nothing round at its ends (R322, R328)
+        self.assertEqual(design.Button.CHIP[1], Radius.CONTROL)
         for dark in (False, True):
             sheet = style_sheet(theme_colors.derive("#8b5a12", dark).tokens, dark)
             radii = {float(r) for r in re.findall(r"border-radius:\s*([0-9.]+)px", sheet)}

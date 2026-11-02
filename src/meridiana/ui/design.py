@@ -7,8 +7,10 @@ the gallery (ui/gallery.py) read them here. The colours are not here: they are t
 The rules, in docs/design/sistema-grafico.md with the reasons:
 - spacing on a scale of 2, 4, 6, 8, 12, 16, 24, 32: nothing in between;
 - four radii by depth: 8 a card, a tile, a little window; 6 a view inside its card and a control
-  (button, field, list, group, table, tool button); 4 what stands inside a control or a row (a menu's item, a
-  selection inside a card, a small button on a row); a pill is round at its ends (half its height);
+  (button, field, list, group, table, tool button, a track of segments); 4 what stands inside a control or a row (a
+  menu's item, a selection inside a card, a small button on a row, a segment); no shape round at its ends, no «pill»
+  (R322, R328, Daniel 02/11/2026: «tutti i tasti devono essere portati su questo stile di rettangolo con angoli
+  arrotondati, anziché su quello di rettangoli con due cerchi alle estremità»);
 - one line of 1 px per depth, 2 px for the focus;
 - the text in a closed catalogue of named styles (`Text`, R121 of 25/10/2026): six sizes (11, 12, 13 the text
   since R123, 14, 18, 22) and two weights, each style with its colour's token; nothing else in the window;
@@ -42,14 +44,9 @@ class Space:
 class Radius:
     CARD = 8            # a card, a tile, a page, a little window (menu, popup, tooltip's frame)
     VIEW = 6            # a view (plan, 3D) 6 px inside its card (R77): a control's corners
-    CONTROL = 6         # a button, a field, a list, a group, a table, a tool button, a chip
+    CONTROL = 6         # a button, a field, a list, a group, a table, a tool button, a track, a state, a label
     INNER = 4           # inside a control or a row: a menu's item, the selection in a card, a row's small button
     MARK = 2            # a swatch, a tick of a legend
-
-    @staticmethod
-    def pill(height: float) -> float:
-        """A pill's ends: half its height."""
-        return height / 2
 
 
 class Type:
@@ -63,7 +60,7 @@ class Type:
     HEADING = 18        # a heading inside a page or a dialog
     DISPLAY = 22        # a page's title, the figure of a result
     SCALE = (TINY, CAPTION, SMALL, BODY, TITLE, HEADING, DISPLAY)
-    CONTROL = BODY      # the word of a button, a tab, a pill: the text's size (the tabs were 15, R121)
+    CONTROL = BODY      # the word of a button, a tab, a segment: the text's size (the tabs were 15, R121)
     REGULAR, SEMIBOLD = 400, 600
     BOLD = SEMIBOLD     # one weight for what stands out: a bold asked for is the semibold (R121)
     LETTER_SPACING = 4  # percent, for the labels in capitals
@@ -96,7 +93,7 @@ class Text:
     STRONG = TextStyle("strong", Type.BODY, Type.SEMIBOLD)                   # a group, a row's name, a button
     BODY = TextStyle("body", Type.BODY, Type.REGULAR)                        # the text, fields, lists, menus
     DESCRIPTION = TextStyle("description", Type.BODY, Type.REGULAR, "text2")  # a sentence that explains
-    CONTROL = TextStyle("control", Type.CONTROL, Type.REGULAR)               # a tab, a pill, a chip
+    CONTROL = TextStyle("control", Type.CONTROL, Type.REGULAR)               # a tab, a segment, a state
     SECONDARY = TextStyle("secondary", Type.SMALL, Type.REGULAR, "text2")    # notes, status bar, tools, axes
     CAPTION = TextStyle("caption", Type.CAPTION, Type.REGULAR, "muted")      # ticks, formats, sources
     LABEL = TextStyle("label", Type.CAPTION, Type.SEMIBOLD, "muted", True)   # sections, counts
@@ -144,7 +141,7 @@ def text_size() -> str:
 class Size:
     CONTROL = 28        # a button, a field, a list closed, a tool button with its icon alone
     COMPACT = 22        # the drop-down part of a list, a swatch's row
-    CHIP = 24           # a chip, a count, a state's pill, a tab, a segment
+    CHIP = 24           # a segment (a tab, a view, a count), a state's label, a filter
     TAB = 36            # a tab of the phases
     NAV = 34            # an item of a list of places (the File page)
     SCROLLBAR = 10      # the scroll bar's room, always kept (R100); its thumb THUMB wide
@@ -164,10 +161,11 @@ class Button:
     §4)."""
     PUSH = (Size.CONTROL, Radius.CONTROL)   # a command («Calcola», «Esporta…»), primary (accent) or destructive
     TOOL = (Size.CONTROL, Radius.CONTROL)   # a tool with its icon alone; with its word under it, as tall as both
-    CHIP = (Size.CHIP, Size.CHIP // 2)      # a filter, a count, a pill of a segmented control, a tab
+    CHIP = (Size.CHIP, Radius.CONTROL)      # a small button with its word: the tour's steps (a choice between views is
+                                            # a track of segments, ui/segments.py)
     SMALL = (20, Radius.INNER)              # on a title: the card's cross, the help's pin (a row's fix and eye are
                                             # CHIP tall, R124)
-    HELP = (16, 8)                          # the «?» of a group or a tile
+    HELP = (16, Radius.INNER)               # the «?» of a group or a tile
     NAV = (Size.NAV, Radius.CONTROL)        # an item of a list of places (the File page)
 
 

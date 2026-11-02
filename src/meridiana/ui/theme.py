@@ -136,8 +136,8 @@ def style_sheet(t: dict, dark: bool = False) -> str:
     by ui/cards.py, the pages of the phases), the view's (the dialogs' lists). Every button and field 28 px high
     (Button.PUSH) with its text 8 px from its edge: buttons and fields tonal on the `field` veil, the fields' border
     at 3:1 under the pointer and the accent's when focused; under the pointer and pressed one layer of the text's
-    colour over what is at rest (R160, theme_colors.HOVER and PRESS), the shape the control's own; the chips,
-    pills and tabs 24 px (Button.CHIP), the tabs of every bar as the segments of the variants (R109, R121); groups
+    colour over what is at rest (R160, theme_colors.HOVER and PRESS), the shape the control's own; the tabs of every
+    bar 24 px, transparent on their track (ui/segments.py, R109, R121, R322), nothing round at its ends; groups
     with a frame and a filled header (C3, ui/style.py); tiles and strips full of the veil without a border; the
     little windows (menus, lists, popups, tooltips) rounded by the system where it can (ui/popups.py). The texts'
     colours by their style's tone (`tone`, design.set_text).
@@ -283,7 +283,7 @@ QToolButton#filter:hover {{ background: {hover}; }}
 QToolButton#filter:pressed {{ background: {press}; }}
 QToolButton#filter:checked {{ background: {press}; color: {t['text']}; border-color: {press}; }}
 QToolButton#filter[popupMode="2"] {{ padding-right: {S.XXL}px; }}
-QToolButton#row-help-button {{ padding: 0; border: 1px solid {t['line']}; border-radius: {Radius.pill(Size.CONTROL):g}px;
+QToolButton#row-help-button {{ padding: 0; border: 1px solid {t['line']}; border-radius: {R.CONTROL}px;
                            min-width: {Size.CONTROL - 2}px; max-width: {Size.CONTROL - 2}px;
                            min-height: {Size.CONTROL - 2}px; max-height: {Size.CONTROL - 2}px;
                            color: {t['muted']}; background: transparent; }}
