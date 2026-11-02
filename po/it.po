@@ -21029,3 +21029,175 @@ msgid "The {n} module selected is too few for a string: on these inverters a str
 msgid_plural "The {n} modules selected are too few for a string: on these inverters a string wants at least {m} modules in series. Select more, or change the inverter."
 msgstr[0] "[0] {n} modulo selezionato è troppo poco per una stringa: su questi inverter una stringa vuole almeno {m} moduli in serie. Selezionane altri, o cambia inverter."
 msgstr[1] "[1] I {n} moduli selezionati sono troppo pochi per una stringa: su questi inverter una stringa vuole almeno {m} moduli in serie. Selezionane altri, o cambia inverter."
+
+#: src/meridiana/report_typst/chapters.py:357 src/meridiana/report_typst/chapters.py:952
+msgid "Project's data"
+msgstr "Dati del progetto"
+
+#: src/meridiana/report_typst/chapters.py:460
+msgid "horizontal"
+msgstr "orizzontale"
+
+#: src/meridiana/report_typst/chapters.py:460
+msgid "on the plane"
+msgstr "sul piano"
+
+#: src/meridiana/report_typst/chapters.py:460
+msgid "horizon"
+msgstr "orizzonte"
+
+#: src/meridiana/report_typst/chapters.py:460
+msgid "rows, obstacles"
+msgstr "file, ostacoli"
+
+#: src/meridiana/report_typst/chapters.py:461
+msgid "reflection"
+msgstr "riflessione"
+
+#: src/meridiana/report_typst/chapters.py:461
+msgid "soiling"
+msgstr "sporcizia"
+
+#: src/meridiana/report_typst/chapters.py:461
+msgid "at STC"
+msgstr "a STC"
+
+#: src/meridiana/report_typst/chapters.py:462
+msgid "low light"
+msgstr "basso irraggiamento"
+
+#: src/meridiana/report_typst/chapters.py:462
+msgid "temperature"
+msgstr "temperatura"
+
+#: src/meridiana/report_typst/chapters.py:462
+msgid "quality"
+msgstr "qualità"
+
+#: src/meridiana/report_typst/chapters.py:463
+msgid "shade, strings"
+msgstr "ombre, stringhe"
+
+#: src/meridiana/report_typst/chapters.py:463
+msgid "DC cables"
+msgstr "cavi DC"
+
+#: src/meridiana/report_typst/chapters.py:464
+msgid "AC cables"
+msgstr "cavi AC"
+
+#: src/meridiana/report_typst/chapters.py:465
+msgid "unavailable"
+msgstr "indisponibilità"
+
+#: src/meridiana/report_typst/chapters.py:503
+msgid "delivered"
+msgstr "immessa"
+
+#: src/meridiana/report_typst/chapters.py:317
+msgid "Energy month by month"
+msgstr "Energia mese per mese"
+
+#: src/meridiana/report_typst/chapters.py:322
+msgid "How it is made"
+msgstr "Com'è fatto"
+
+#: src/meridiana/report_typst/chapters.py:326
+msgid "What it yields"
+msgstr "Quanto rende"
+
+#: src/meridiana/report_typst/chapters.py:245
+msgid "Plan of the modules"
+msgstr "Pianta dei moduli"
+
+#: src/meridiana/report_typst/chapters.py:407 src/meridiana/report_typst/chapters.py:918
+msgid "the layout of the project"
+msgstr "la posa del progetto"
+
+#: src/meridiana/report_typst/chapters.py:1047
+msgid "SolarEdge's tables"
+msgstr "le tabelle di SolarEdge"
+
+#: src/meridiana/report_typst/chapters.py:1152
+msgid "the stringing of the project"
+msgstr "le stringhe del progetto"
+
+#: src/meridiana/report_typst/chapters.py:214
+msgid "from the sun to the grid"
+msgstr "dal sole alla rete"
+
+#: src/meridiana/report_typst/chapters.py:283
+msgid "{ok} met, {warn} to look at, {fail} not met"
+msgstr "{ok} rispettate, {warn} da guardare, {fail} non rispettate"
+
+#: src/meridiana/report_typst/chapters.py:319 src/meridiana/report_typst/chapters.py:545 src/meridiana/report_typst/chapters.py:893
+msgid "In MWh."
+msgstr "In MWh."
+
+#: src/meridiana/report_typst/chapters.py:107 src/meridiana/report_typst/chapters.py:117 src/meridiana/report_typst/chapters.py:80
+msgid "Source: {what}."
+msgstr "Fonte: {what}."
+
+#: src/meridiana/report_typst/chapters.py:222
+msgid "for each kWp installed"
+msgstr "per ogni kWp installato"
+
+#: src/meridiana/report_typst/chapters.py:239
+msgid "Modules, {n}"
+msgstr "Moduli, {n}"
+
+#: src/meridiana/report_typst/chapters.py:865
+msgid "Code"
+msgstr "Codice"
+
+#: src/meridiana/report_typst/chapters.py:865
+msgid "Where from"
+msgstr "Da dove viene"
+
+#: src/meridiana/report_typst/chapters.py:297
+msgid "and {n} more."
+msgstr "e altre {n}."
+
+#: src/meridiana/report_typst/chapters.py:300
+msgid "Every check, with its source: chapter {n}."
+msgstr "Ogni verifica, con la sua fonte: capitolo {n}."
+
+#: src/meridiana/report_typst/chapters.py:218
+msgid "investment {c} €, saving {s} € in the first year"
+msgstr "investimento {c} €, risparmio {s} € il primo anno"
+
+#: src/meridiana/report_typst/chapters.py:518
+msgid "A red or green bar at full height is {p} %; the amber ones are the energy, in the unit written on them."
+msgstr "Una barra rossa o verde a tutta altezza vale {p} %; quelle ambra sono l'energia, nell'unità scritta sopra."
+
+#: src/meridiana/report_typst/compose.py:149
+msgid "Attachment"
+msgstr "Allegato"
+
+#: src/meridiana/report_typst/engine.py:40
+msgid "The typst library is missing: install the program's requirements"
+msgstr "Manca la libreria typst: installa i requisiti del programma"
+
+#: src/meridiana/ui/report.py:165
+msgid "laying out the pages"
+msgstr "impaginazione delle pagine"
+
+#: src/meridiana/reports.py:209
+msgid "Accent colour"
+msgstr "Colore d'accento"
+
+#: src/meridiana/ui/preferences.py:461
+msgid "#1c6e8c, the blue of the report when empty"
+msgstr "#1c6e8c, il blu della relazione se vuoto"
+
+#: src/meridiana/reports.py:73
+msgid "Every number of the report with its code, what it is and where it comes from"
+msgstr "Ogni numero della relazione con il suo codice, che cos'è e da dove viene"
+
+#: src/meridiana/reports.py:91
+msgid "Cover, contents and the chapters from the summary to the register of the calculations: the technical report."
+msgstr "Copertina, indice e i capitoli dalla sintesi al registro dei calcoli: la relazione tecnica."
+
+#: src/meridiana/report_typst/chapters.py:860
+msgid "Every number of the report is here: its code is in the Source column of the tables and on the cards. The values hour by hour are in the CSV file of the register."
+msgstr "Qui c'è ogni numero della relazione: il suo codice è nella colonna Fonte delle tabelle e sulle schede. I valori ora per ora sono nel file CSV del registro."
