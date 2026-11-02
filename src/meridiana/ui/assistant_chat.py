@@ -775,6 +775,11 @@ class Chat(QObject):
         if provider.cloud and (getattr(self.host.project, "reserved", False) or privacy.requires_local(text)):
             provider = self.make_local()
             self.widget.note(_("Reserved project or question: documents stay with the local model."))
+        if self.pictures() and providers.sees_images(provider) is False:
+            # a model known to be blind to images: said now, the pictures kept for another model (R320)
+            self.widget.answer(self.blind(provider), who="note")
+            self.widget.field.setText(text)
+            return
         self.last_question = text
         self._drop_survey()
         kind, oid = (self.host.selection() + ("",))[:2]
@@ -898,6 +903,8 @@ class Chat(QObject):
             return
         self.conversation.close_open_calls()
         self.voice.stop()
+        if error.kind == "vision":                  # not sent again: the next question would fail the same way
+            self.conversation.drop_images()
         self.widget.answer(self.said(error), who="note")
         if error.kind in ("offline", "model", "tools") and (self.provider is None or not self.provider.cloud):
             self.local_answered = False
@@ -926,7 +933,17 @@ class Chat(QObject):
             return _("The server does not have the model {model}. I look for one on this PC…").format(model=model)
         if error.kind == "missing":
             return _("The library for Claude is not installed (anthropic): the local model still answers.")
+        if error.kind == "vision":
+            return self.blind(self.provider)
+        if error.kind == "image":
+            return _("The model's server refused the image: {detail}").format(detail=error.detail or error.kind)
         return _("The model's server failed: {detail}").format(detail=error.detail or error.kind)
+
+    def blind(self, provider) -> str:
+        """A model that does not see images, said with what to do (R320)."""
+        return _("The model {model} does not see images, so it cannot answer about them. Choose a model with "
+                 "vision (Gemma 4, Qwen VL, LLaVA, an Ollama «vision» model or a cloud model), or remove the "
+                 "images.").format(model=getattr(provider, "model", "") or _("in use"))
 
     def stop(self) -> None:
         """Stop: the turn dropped now, the connection shut, the voice silent."""

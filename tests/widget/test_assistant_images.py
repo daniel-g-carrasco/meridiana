@@ -175,6 +175,35 @@ class Images(unittest.TestCase):
         self.assertNotIn("pictures", [who for who, _t in self.a.messages])
         self.assertFalse(self.chat.history)
 
+    def test_a_local_model_known_without_vision_is_said_and_the_pictures_wait(self):
+        self.chat.add_image(picture(), "tetto.png")
+        self.ready()
+        blind = SimpleNamespace(cloud=False, model="gpt-oss:20b", family="openai", cancel=lambda: None)
+        self.chat.make_local = lambda: blind
+        with mock.patch.object(self.chat, "_round") as rounds:
+            self.a.ask("Cosa vedi?")
+            rounds.assert_not_called()
+        self.assertIn("does not see images", self.a.conversation.toPlainText())
+        self.assertIn("gpt-oss:20b", self.a.conversation.toPlainText())
+        self.assertEqual(len(self.chat.attachments), 1)        # kept for another model
+        self.assertEqual(self.a.field.text(), "Cosa vedi?")
+        self.assertEqual(self.chat.conversation.messages, [])
+
+    def test_a_refusal_for_lack_of_vision_is_said_and_the_pictures_are_not_sent_again(self):
+        from meridiana.assistant import providers
+        self.chat.add_image(picture(), "tetto.png")
+        self.ready()
+        unknown = SimpleNamespace(cloud=False, model="my-model", family="openai", cancel=lambda: None)
+        self.chat.make_local = lambda: unknown
+        with mock.patch.object(self.chat, "_round"):
+            self.a.ask("Cosa vedi?")
+        self.assertTrue(providers.has_images(self.chat.conversation.messages))
+        self.chat._failed(self.chat.generation, providers.ProviderError("vision", "mmproj missing"))
+        self.assertFalse(providers.has_images(self.chat.conversation.messages))
+        self.assertIn("does not see images", self.a.conversation.toPlainText())
+        self.chat._failed(self.chat.generation, providers.ProviderError("image", "image exceeds 5 MB maximum"))
+        self.assertIn("refused the image", self.a.conversation.toPlainText())
+
 
 if __name__ == "__main__":
     unittest.main()
