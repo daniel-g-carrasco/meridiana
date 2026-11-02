@@ -21472,3 +21472,110 @@ msgstr "Vai a un altro passaggio della visita"
 #: src/meridiana/ui/tour.py
 msgid "Leave the tour here: Help brings you back to this step"
 msgstr "Lascia la visita qui: da Aiuto torni a questo passaggio"
+
+# R320: images for Meridio
+
+msgid "{n} MB"
+msgstr "{n} MB"
+
+msgid "Choose a PNG, JPEG, WebP or GIF image."
+msgstr "Scegli un'immagine PNG, JPEG, WebP o GIF."
+
+msgid "The image is empty."
+msgstr "L'immagine è vuota."
+
+msgid "The image cannot be prepared."
+msgstr "Non riesco a preparare l'immagine."
+
+msgid "{name} · {width} × {height} px · {size}"
+msgstr "{name} · {width} × {height} px · {size}"
+
+msgid "{n} kB"
+msgstr "{n} kB"
+
+msgid "The image cannot be read."
+msgstr "Non riesco a leggere l'immagine."
+
+msgid "The image cannot be made small enough to send."
+msgstr "Non riesco a rendere l'immagine abbastanza leggera da inviarla."
+
+msgid "The image exceeds the file size limit ({size})."
+msgstr "L'immagine supera il limite di dimensione del file ({size})."
+
+msgid "The image is too large to read: {width} × {height} px."
+msgstr "L'immagine è troppo grande da leggere: {width} × {height} px."
+
+msgid "The image cannot be read: {why}"
+msgstr "Non riesco a leggere l'immagine: {why}"
+
+msgid "Images: about {tokens} tokens, about {cost} each time they are sent (again with every question of this conversation)."
+msgstr "Immagini: circa {tokens} token, circa {cost} a ogni invio (di nuovo a ogni domanda di questa conversazione)."
+
+msgid "images estimated"
+msgstr "immagini stimate"
+
+msgid "A screenshot can show the site's address, the project's and the client's names, a map: the aliases do not reach inside a picture. Remove what should not leave, or use the local model."
+msgstr "Una schermata può mostrare l'indirizzo del sito, i nomi del progetto e del cliente, una mappa: gli alias non arrivano dentro un'immagine. Togli ciò che non deve uscire, oppure usa il modello locale."
+
+msgid "Images leave only when you attach them, after asking you each time: aliases cannot reach inside a picture."
+msgstr "Le immagini escono solo quando le alleghi, dopo averti chiesto ogni volta: gli alias non arrivano dentro un'immagine."
+
+msgid "Attach…"
+msgstr "Allega…"
+
+msgid "PDF, text or images (PNG, JPEG, WebP, GIF), read on this PC first and sent only with your message. Images can also be pasted (Ctrl+V) or dropped here."
+msgstr "PDF, testo o immagini (PNG, JPEG, WebP, GIF), letti prima su questo PC e inviati solo con il tuo messaggio. Le immagini si possono anche incollare (Ctrl+V) o trascinare qui."
+
+msgid "Pasted image"
+msgstr "Immagine incollata"
+
+msgid "Show {name} what I see"
+msgstr "Mostra a {name} quello che vedo"
+
+msgid "Show {name} what I see: a picture of this phase's view (plan, 3D, chart or results), attached to your next message. {name} and the dialogs are not in it."
+msgstr "Mostra a {name} quello che vedo: un'immagine della vista di questa fase (pianta, 3D, grafico o risultati), allegata al prossimo messaggio. {name} e le finestre di dialogo non ci sono."
+
+msgid "Dropped image"
+msgstr "Immagine trascinata"
+
+msgid "Attach documents or images"
+msgstr "Allega documenti o immagini"
+
+msgid "Documents and images (*.pdf *.txt *.md *.csv *.png *.jpg *.jpeg *.webp *.gif)"
+msgstr "Documenti e immagini (*.pdf *.txt *.md *.csv *.png *.jpg *.jpeg *.webp *.gif)"
+
+msgid "Image"
+msgstr "Immagine"
+
+msgid "No view to show in this phase."
+msgstr "Nessuna vista da mostrare in questa fase."
+
+msgid "The model {model} does not see images, so it cannot answer about them. Choose a model with vision (Gemma 4, Qwen VL, LLaVA, an Ollama «vision» model or a cloud model), or remove the images."
+msgstr "Il modello {model} non vede le immagini, quindi non può rispondere su di esse. Scegli un modello con la vista (Gemma 4, Qwen VL, LLaVA, un modello «vision» di Ollama o un modello cloud), oppure togli le immagini."
+
+msgid "View: {phase}"
+msgstr "Vista: {phase}"
+
+msgid "Prepared on this PC: longest side {side} px, metadata removed, at most 5 MB. The original is not changed."
+msgstr "Preparata su questo PC: lato maggiore {side} px, metadati tolti, al massimo 5 MB. L'originale non cambia."
+
+msgid "Project tools stay off while images from outside Meridiana are in this conversation. Start a new conversation to use them."
+msgstr "Gli strumenti del progetto restano spenti finché in questa conversazione ci sono immagini da fuori Meridiana. Inizia una nuova conversazione per usarli."
+
+msgid "Attached image: {name}"
+msgstr "Immagine allegata: {name}"
+
+msgid "This conversation includes images attached earlier, which will be sent again."
+msgstr "Questa conversazione contiene immagini allegate prima, che verranno inviate di nuovo."
+
+msgid "The model's server refused the image: {detail}"
+msgstr "Il server del modello ha rifiutato l'immagine: {detail}"
+
+msgid "in use"
+msgstr "in uso"
+
+msgid "About {n} tokens for a cloud model, sent again with every question."
+msgstr "Circa {n} token per un modello cloud, inviati di nuovo a ogni domanda."
+
+msgid "Attached images also leave this PC: {names}"
+msgstr "Anche le immagini allegate escono da questo PC: {names}"
