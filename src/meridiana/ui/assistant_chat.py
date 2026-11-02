@@ -190,6 +190,15 @@ class WindowHost:
         except KeyError:
             return self.phase()
 
+    def view_image(self) -> QImage:
+        """The phase's view as the designer sees it (R320): the page of the phase (the plan, the 3D view as the
+        picture it paints, ui/quick_image.py, a chart, the results), grabbed as it is drawn. Meridio and his bubble
+        are children of the window, not of the page, and the dialogs are windows of their own: neither is in it."""
+        page = self.win.tabs.pages.currentWidget()
+        if page is None or not page.isVisible():
+            return QImage()
+        return page.grab().toImage()
+
     def rules_facts(self):
         return self.win._rules_facts()
 
@@ -325,6 +334,8 @@ class Chat(QObject):
         widget.attachmentRequested.connect(self.choose_attachments)
         widget.filesDropped.connect(self.add_attachments)
         widget.imageGiven.connect(self.add_image)
+        widget.viewRequested.connect(self.show_view)
+        widget.view_button.setVisible(hasattr(host, "view_image"))
         widget.asked.connect(self.ask)
         widget.stopped.connect(self.stop)
         widget.openedChanged.connect(self._opened)
@@ -377,6 +388,14 @@ class Chat(QObject):
             self.widget.note(_("At most four attachments per message."))
             return False
         return True
+
+    def show_view(self) -> None:
+        """«Show Meridio what I see»: the phase's view attached as a picture, named after the phase (R320)."""
+        image = self.host.view_image() if hasattr(self.host, "view_image") else QImage()
+        if image.isNull():
+            self.widget.note(_("No view to show in this phase."))
+            return
+        self.add_image(image, _("View: {phase}").format(phase=self.host.phase_title()), captured=True)
 
     def _reading(self, name: str, picture: bool, read) -> None:
         """A card «Reading» while `read` runs on the pool; its answer comes to _attachment_read."""
