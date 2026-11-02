@@ -26,7 +26,7 @@ class Typing(unittest.TestCase):
         cls.app = _setup.qt_or_skip()
 
     def setUp(self):
-        _setup.window(self, capannone(), config.Config(background="none", theme="light"), size=(1400, 900))
+        _setup.window(self, capannone(), config.Config(background="none", network_pvgis=False, theme="light"), size=(1400, 900))
         self.win.show_phase("report")
         self.app.processEvents()
         self.win._preferences("report")
@@ -121,8 +121,9 @@ class Typing(unittest.TestCase):
     def test_the_report_is_not_made_while_the_file_page_covers_it(self):
         """Its pages are not in sight, and a page of Typst holds the keys for as long as it takes: made on closing."""
         win = self.win
-        win.energy = {"sim": object()}                                     # as ready
-        with mock.patch("meridiana.ui.report.preview_steps") as steps:
+        self.assertTrue(win.file_page.isVisible())
+        with mock.patch.object(type(win), "energy", {"sim": object()}), \
+                mock.patch("meridiana.ui.report.preview_steps") as steps:      # as ready
             win._preview_report()
             steps.assert_not_called()
 
@@ -137,7 +138,7 @@ class Properties(unittest.TestCase):
     def test_a_key_in_the_properties_costs_little(self):
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
-        _setup.window(self, capannone(), config.Config(background="none", theme="light"), size=(1400, 900))
+        _setup.window(self, capannone(), config.Config(background="none", network_pvgis=False, theme="light"), size=(1400, 900))
         win = self.win
         win._navigate(("site",))
         self.app.processEvents()
