@@ -1810,12 +1810,10 @@ class MainWindow(QMainWindow):
         if not 0 <= at < len(self.vertex_handles):
             return
         handle = self.vertex_handles[at]
-        kind, oid = self.selection
-        b = self.project.building(roof_vertices.owner_of(kind, oid)) if not handle.obstacle else None
         title = _("Top of the obstacle") if handle.obstacle else _("Corner") if len(handle.corners) > 1 else \
             _("Corner of pitch {n}").format(n=handle.corners[0][0] + 1)
         self.view3d.vertex_field.open(title, handle.z, not handle.obstacle,
-                                      roof_vertices.can_detach(b, handle.corners), text)
+                                      roof_vertices.can_detach(handle.corners), text)
         self.view3d.place_vertex_field()
 
     def _vertex_clicked(self, at: int) -> None:
@@ -2649,7 +2647,7 @@ class MainWindow(QMainWindow):
             bb = p.building(b.id)
             if bb.roof.type != "free":
                 bb.roof.type = "free"
-                bb.roof.free_pitches = []
+                bb.roof.free_pitches, bb.roof.welds, bb.roof.detached = [], [], []
             bb.roof.free_pitches.append(pitch)
         self.edit(_("Draw a pitch"), add)
         self._select("building", b.id)
@@ -2677,7 +2675,7 @@ class MainWindow(QMainWindow):
         def apply(p):
             r = p.building(b.id).roof
             r.type, r.edges, r.ridge_height, r.tilt, r.covering = found.kind, found.edges, ridge, tilt, covering
-            r.free_pitches = []
+            r.free_pitches, r.welds, r.detached = [], [], []
         self.edit(_("Draw a ridge"), apply)
         self._select("building", b.id)
         said = [_("Roof from the ridge: {kind}.").format(kind=_("gable") if found.kind == "gable" else _("hip"))]

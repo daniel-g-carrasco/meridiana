@@ -301,7 +301,7 @@ class Format(unittest.TestCase):
         self.assertEqual(again.buildings[0].roof.welds, [[[0, 2], [1, 1]]])
         self.assertEqual(again.buildings[0].roof.detached, [[0, 3]])
         self.assertEqual(again.buildings[0].roof.free_pitches[0]["z"], [6.0, 6.0, 8.0, 8.0])
-        for key, bad in (("welds", [[[9, 0], [0, 0]]]), ("welds", [[[0, 0]]]), ("detached", [[0, 99]]), ("joined", 1)):
+        for key, bad in (("welds", [["a", 0], [0, 0]]), ("welds", [[[0, 0]]]), ("detached", [[0, -1]]), ("joined", 1)):
             broken = copy.deepcopy(data)
             broken["buildings"][0]["roof"][key] = bad
             with self.assertRaises(ValueError, msg=key):

@@ -248,6 +248,8 @@ def weld(project, bid: str, corner_a, corner_b) -> None:
     if one == two and len(one) > 1 and any(sorted(map(list, one)) == sorted(map(list, w)) for w in b.roof.welds):
         return
     together = sorted(set(one) | set(two))
+    if len(together) < 2:
+        raise ValueError(_("choose another corner"))
     if len({i for i, _j in together}) < len(together):
         raise ValueError(_("two corners of one pitch cannot be one point"))
     touched = sorted({i for i, _j in together})
@@ -276,7 +278,8 @@ def detach(project, bid: str, corner) -> None:
     b = project.building(bid)
     if b is None:
         raise ValueError(_("there is no such object"))
-    group = _group_of(b, corner) if b.roof.type == "free" else []
+    to_manual(project, b)
+    group = _group_of(b, corner)
     if len(group) < 2:
         raise ValueError(_("this corner is on its own already"))
     _freeze(b, sorted({i for i, _j in group}))
@@ -285,8 +288,8 @@ def detach(project, bid: str, corner) -> None:
     b.roof.detached = sorted([list(c) for c in members] + [c for c in b.roof.detached if tuple(c) not in members])
 
 
-def can_detach(b, corners) -> bool:
-    return b is not None and b.roof.type == "free" and len(corners) > 1
+def can_detach(corners) -> bool:
+    return len(corners) > 1
 
 
 def forget_pitch_corners(b, index: int) -> None:

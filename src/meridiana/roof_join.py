@@ -295,9 +295,11 @@ def _usable_heights(raw: dict, ring) -> list[float] | None:
     return [float(v) for v in z] if isinstance(z, list) and len(z) == len(ring) else None
 
 
-def resolve(free_pitches, joined: bool = True, detached=()) -> Resolved:
+def resolve(free_pitches, joined: bool = True, detached=(), welds=()) -> Resolved:
     """The free pitches of a roof as pitches: joined when asked, each folded when its corners are off one plane. See
-    the top of this module. `detached`: the corners ((pitch, place)) of pitches side by side that were parted."""
+    the top of this module. `detached`: the corners ((pitch, place)) of pitches side by side that were parted; `welds`:
+    the lists of corners made one point, one height whatever else changes (a slope written on one of the pitches):
+    the height of a pitch by its corners if there is one among them, else their mean."""
     rings = [[(float(q[0]), float(q[1])) for q in f["ring"]] for f in free_pitches]
     base = [roofs.free(r, f["eave_side"], f["eave"], f["tilt"]) for r, f in zip(rings, free_pitches, strict=True)]
     frozen = [_usable_heights(f, r) for r, f in zip(rings, free_pitches, strict=True)]
@@ -328,6 +330,16 @@ def resolve(free_pitches, joined: bool = True, detached=()) -> Resolved:
                     if math.dist(corner, point) <= TOUCH and abs(heights[k][j] - z) > PLANAR:
                         heights[k][j] = z
                         exact[k] = True
+    for weld in welds:
+        members = [(int(i), int(j)) for i, j in weld if 0 <= i < len(rings) and 0 <= j < len(rings[i])]
+        if len(members) < 2:
+            continue
+        held_z = [heights[i][j] for i, j in members if frozen[i] is not None]
+        z = held_z[0] if held_z else sum(heights[i][j] for i, j in members) / len(members)
+        for i, j in members:
+            if abs(heights[i][j] - z) > PLANAR:
+                heights[i][j] = z
+                exact[i] = True
     out: list[roofs.Pitch] = []
     extra: list[roofs.Pitch] = []
     folds: list[Fold] = []

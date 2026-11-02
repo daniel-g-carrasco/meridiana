@@ -805,7 +805,7 @@ class Building:
             except skeleton.SkeletonError:
                 return roofs.flat(self.footprint, self.height), ("outline", []), None
             return found, (("gables", sorted(dropped)) if dropped else fine), None
-        solved = roof_join.resolve(r.free_pitches, r.joined, r.detached)
+        solved = roof_join.resolve(r.free_pitches, r.joined, r.detached, r.welds)
         return solved.pitches, fine, solved
 
 
@@ -1060,11 +1060,10 @@ def _check_rows(rows: list, path: str) -> None:
             raise ValueError(f"{where}.turned: {raw.get('turned')!r} is not a switch")
 
 
-def _check_corner(corner, roof: dict, where: str) -> None:
-    """A corner of a free pitch as a roof's welds and detached keep it: [pitch, place in its ring] (R303)."""
-    free = roof.get("free_pitches", [])
-    good = corner.__class__ is list and len(corner) == 2 and all(c.__class__ is int for c in corner)
-    if not good or not 0 <= corner[0] < len(free) or not 0 <= corner[1] < len(free[corner[0]]["ring"]):
+def _check_corner(corner, where: str) -> None:
+    """A corner as a roof's welds and detached keep it: [pitch, place in its ring] (R303). One that no longer is there (a
+    roof drawn again) is left out where it is read: never a reason to refuse the file."""
+    if corner.__class__ is not list or len(corner) != 2 or any(c.__class__ is not int or c < 0 for c in corner):
         raise ValueError(f"{where}: {corner!r} is not a corner of a free pitch")
 
 
@@ -1144,9 +1143,9 @@ def _check_project(data: dict) -> list[str]:
             if weld.__class__ is not list or len(weld) < 2:
                 raise ValueError(f"{path}.roof.welds[{j}]: not two corners or more")
             for corner in weld:
-                _check_corner(corner, roof, f"{path}.roof.welds[{j}]")
+                _check_corner(corner, f"{path}.roof.welds[{j}]")
         for j, corner in enumerate(roof.get("detached", [])):
-            _check_corner(corner, roof, f"{path}.roof.detached[{j}]")
+            _check_corner(corner, f"{path}.roof.detached[{j}]")
         _check_fields(Fire, _check_dict(raw.get("fire", {}), f"{path}.fire"), f"{path}.fire", unknown)
         if raw.get("canopy") is not None:      # R281, format 21
             canopy = _check_dict(raw["canopy"], f"{path}.canopy")

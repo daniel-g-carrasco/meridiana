@@ -212,6 +212,38 @@ class OnePoint(unittest.TestCase):
         self.assertEqual(len(rv.handles(b)), 6)
         self.assertEqual(b.roof.detached, [])
 
+    def test_a_corner_with_itself_is_refused_and_a_ridge_end_of_a_gable_can_be_parted(self):
+        p = self.two_apart()
+        with self.assertRaises(ValueError):
+            rv.weld(p, "b1", (0, 1), (0, 1))
+        self.assertEqual(p.buildings[0].roof.welds, [])
+        gable = project(model.Roof(type="gable", tilt=20.0))
+        b = gable.buildings[0]
+        top = next(h for h in rv.handles(b) if h.z > 6.1)
+        self.assertTrue(rv.can_detach(top.corners))
+        rv.detach(gable, "b1", top.corners[0])
+        self.assertEqual(b.roof.type, "free")
+        self.assertEqual(len(b.roof.detached), 2)
+
+    def test_a_slope_written_on_a_welded_pitch_leaves_the_corner_one_point(self):
+        p = self.two_apart()
+        b = p.buildings[0]
+        rv.weld(p, "b1", (0, 1), (1, 0))
+        b.roof.free_pitches[1].pop("z")                      # what the properties do when a slope is written
+        b.roof.free_pitches[1]["tilt"] = 10.0
+        self.assertEqual(len(corner_at(b, 10, 0).corners), 2)
+        self.assertAlmostEqual(b.solved().heights[1][0], b.solved().heights[0][1])
+
+    def test_corners_gone_with_a_roof_drawn_again_do_not_stop_the_file_or_the_roof(self):
+        p = self.two_apart()
+        b = p.buildings[0]
+        rv.weld(p, "b1", (0, 1), (1, 0))
+        b.roof.free_pitches = b.roof.free_pitches[:1]
+        b.roof.detached = [[7, 0]]
+        again = model.Project.from_json(json.loads(json.dumps(p.to_json())))
+        self.assertEqual(len(again.buildings[0].pitches()), 1)
+        self.assertEqual(len(rv.handles(again.buildings[0])), 4)
+
     def test_two_corners_of_one_pitch_are_refused(self):
         p = self.two_apart()
         with self.assertRaises(ValueError):

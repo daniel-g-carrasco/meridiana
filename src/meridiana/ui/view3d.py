@@ -1032,7 +1032,10 @@ class VertexField(QFrame):
             self.edit.selectAll()
 
     def show_value(self, height: float) -> None:
-        """A drag going on: the height it has reached."""
+        """A drag going on: the height it has reached, nothing else to press."""
+        self.title.setText(_("Height"))
+        self.merge_button.hide()
+        self.detach_button.hide()
         self.edit.setReadOnly(True)
         self.edit.setText(number(height, 2))
         self.show()
