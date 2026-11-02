@@ -20,6 +20,7 @@ from .cards import EDGE, GAP, CardDock, arena, default_tokens
 from .design import Motion, Radius, Space
 
 DIRECT = Qt.FindChildOption.FindDirectChildrenOnly
+INERTIA = Space.M       # a drop zone is left only once the pointer is this far inside the next one (R317)
 
 
 def cards(window: QMainWindow) -> list[QWidget]:
@@ -651,6 +652,31 @@ def _band(window: QMainWindow, source: QDockWidget, area: Qt.DockWidgetArea, poi
     return DockTarget(area, anchor, orientation, before=before)
 
 
+def _settled(window: QMainWindow, source: QDockWidget, point: QPoint, tabs: bool,
+             here: DockTarget | None) -> DockTarget | None:
+    """The zone at `point` with inertia (R317): `here`, the zone the pointer was in, holds while it is less than
+    INERTIA away (the window's edge bounds the probes): the next one is taken only once the pointer is that far
+    inside it. Off the window, at once."""
+    wanted = target_at(window, source, point, tabs=tabs)
+    if wanted == here:
+        return here
+    room = arena(window)
+    if not room.contains(point):
+        return wanted
+    for dx, dy in ((INERTIA, 0), (-INERTIA, 0), (0, INERTIA), (0, -INERTIA)):
+        probe = QPoint(min(max(point.x() + dx, room.left()), room.right()),
+                       min(max(point.y() + dy, room.top()), room.bottom()))
+        if target_at(window, source, probe, tabs=tabs) == here:
+            return here
+    return wanted
+
+
+def _same_card(a: DockTarget | None, b: DockTarget | None) -> bool:
+    """Two zones beside the same panel: only the half differs (above or below it, left or right)."""
+    return (a is not None and b is not None and a.anchor is not None and a.anchor is b.anchor and a.area == b.area
+            and not a.tab and not b.tab)
+
+
 _CANCEL = (QEvent.Type.WindowDeactivate, QEvent.Type.Hide, QEvent.Type.DevicePixelRatioChange)
 
 
@@ -741,13 +767,21 @@ class DockDrag(QObject):
         return False
 
     def _track(self) -> None:
-        """The zone under the pointer, with Alt as it is now: answered after its dwell."""
+        """The zone under the pointer, with Alt as it is now and with inertia (R317). Another panel, a band, Alt
+        pressed or let go: answered after its dwell. The other half of the panel answered already: at once."""
         if self.solver is None or self.local is None:
             return
-        wanted = target_at(self.dock.parentWidget(), self.dock, self.local, tabs=self.tabs)
+        here = self.pending if self.waiting else self.target
+        wanted = _settled(self.dock.parentWidget(), self.dock, self.local, self.tabs, here)
         if wanted == self.target:
             self.waiting, self.pending = False, None
             self.dwell.stop()
+        elif _same_card(wanted, self.target):
+            self.waiting, self.pending = False, None
+            self.dwell.stop()
+            self._answer(wanted)
+        elif self.waiting and _same_card(wanted, self.pending):
+            self.pending = wanted           # the same panel waited for: its dwell goes on
         elif not self.waiting or wanted != self.pending:
             self.waiting, self.pending = True, wanted
             self.dwell.start(Motion.DWELL)
@@ -772,9 +806,14 @@ class DockDrag(QObject):
     def _dwelt(self) -> None:
         if self.solver is None or not self.waiting:
             return
-        self.target, self.pending, self.waiting = self.pending, None, False
+        zone, self.pending, self.waiting = self.pending, None, False
+        self._answer(zone)
+
+    def _answer(self, zone: DockTarget | None) -> None:
+        """The zone shown: the cards make room for its slot, or go back home without one."""
+        self.target = zone
         window = self.dock.parentWidget()
-        ends = self.solver.solve(self.target) if self.target is not None else _placed(window)
+        ends = self.solver.solve(zone) if zone is not None else _placed(window)
         self.layer.retarget(ends, preview=self.dock, hold=True, ms=Motion.CAREFUL)
 
     def finish(self, cancel: bool = False) -> None:

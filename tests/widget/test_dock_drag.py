@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QWidget
 
 from meridiana.ui import motion
 from meridiana.ui.cards import CardDock
-from meridiana.ui.design import Motion
+from meridiana.ui.design import Motion, Space
 
 setUpModule = _setup.keep_global_state
 DIRECT = Qt.FindChildOption.FindDirectChildrenOnly
@@ -180,6 +180,47 @@ class DockDragging(unittest.TestCase):
         self.assertIsNone(drag.target)
         self.assertEqual(layer.ends[anchor], home)
         self.assertEqual(layer.preview_rect, source.geometry())
+        QTest.keyClick(title, Qt.Key.Key_Escape)
+        QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
+        self.quiet()
+
+    def move(self, title, at):
+        QTest.mouseMove(title, title.mapFromGlobal(self.host.mapToGlobal(at)))
+
+    def test_a_zone_is_left_only_once_the_pointer_is_well_inside_the_next(self):
+        from meridiana.ui.dock_motion import INERTIA
+        self.assertEqual(INERTIA, Space.M)
+        source, anchor = self.docks[0], self.docks[1]
+        drag, title = self.take(source)
+        y = anchor.geometry().center().y()
+        edge = anchor.geometry().left()
+        self.hover(title, QPoint(edge - 40, y))                               # over the centre: no zone
+        self.assertIsNone(drag.target)
+        self.move(title, QPoint(edge + INERTIA // 2, y))                      # on the panel, by less than INERTIA
+        self.assertFalse(drag.waiting)
+        self.assertIsNone(drag.pending)
+        self.move(title, QPoint(edge + INERTIA + 2, y))                       # well inside: its dwell begins
+        self.assertTrue(drag.waiting)
+        self.assertIs(drag.pending.anchor, anchor)
+        QTest.keyClick(title, Qt.Key.Key_Escape)
+        QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
+        self.quiet()
+
+    def test_within_one_panel_the_half_changes_at_once_another_panel_waits(self):
+        source, anchor = self.docks[0], self.docks[1]
+        drag, title = self.take(source)
+        r = anchor.geometry()
+        self.hover(title, QPoint(r.center().x(), r.top() + r.height() // 3))
+        self.assertTrue(drag.target.before)                                   # above it
+        above = QRect(drag.layer.preview_rect)
+        self.move(title, QPoint(r.center().x(), r.bottom() - r.height() // 3))
+        self.assertFalse(drag.waiting)                                        # the same panel: no dwell...
+        self.assertIs(drag.target.anchor, anchor)
+        self.assertFalse(drag.target.before)                                  # ...below it, at once
+        self.assertNotEqual(drag.layer.preview_rect, above)
+        self.move(title, self.docks[2].geometry().center())                   # another panel: its dwell
+        self.assertTrue(drag.waiting)
+        self.assertIs(drag.target.anchor, anchor)
         QTest.keyClick(title, Qt.Key.Key_Escape)
         QTest.mouseRelease(title, Qt.MouseButton.LeftButton)
         self.quiet()
