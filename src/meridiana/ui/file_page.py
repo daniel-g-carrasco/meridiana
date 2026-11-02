@@ -247,6 +247,11 @@ class FilePage(QFrame):
             self._settings_read = True              # reading them is what making them does
         return self._settings
 
+    def flush_settings(self) -> None:
+        """What was just typed in the Settings applied and saved (R329), for a window that is closing."""
+        if self._settings is not None:
+            self._settings.flush_typing()
+
     def _read_settings(self) -> None:
         """The settings read now (the site of the project, the maps): made, when they were not, or read again."""
         if self._settings is None:

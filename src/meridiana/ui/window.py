@@ -732,6 +732,8 @@ class MainWindow(QMainWindow):
         if not self.bars_before_file:
             self.tabs.bars.show()
         self._settle_layouts()
+        if self.phase() == "report":                # what the Settings changed meanwhile (R329)
+            self._show_inspector()
 
     def _settle_layouts(self) -> None:
         """The layouts the bar's going or coming asked for, done now and not on the loop's next turns: the header
@@ -1540,7 +1542,7 @@ class MainWindow(QMainWindow):
                 p = {**p, "logo": Path(logo).name}
             kept.append(p)
         self.cfg.report_profiles, self.cfg.report_profile = kept, default
-        if self.phase() == "report":
+        if self.phase() == "report" and not self.file_page.isVisible():     # or when the File page closes (R329)
             self._show_inspector()
 
     def _report_profile(self) -> dict | None:
@@ -1573,8 +1575,9 @@ class MainWindow(QMainWindow):
 
     def _preview_report(self) -> None:
         """The pages of the report, made a step at a time (report.preview_steps) while the Report phase is open:
-        those shown stay until the new ones are ready; a preview half made for an older project is dropped."""
-        if self.phase() != "report":
+        those shown stay until the new ones are ready; a preview half made for an older project is dropped. Not under
+        the File page: nobody sees it, and a compilation holds the keys typed in the Settings (R329)."""
+        if self.phase() != "report" or self.file_page.isVisible():
             return
         ready = bool(self.energy) and self.energy.get("sim") is not None
         if not ready:
@@ -6272,6 +6275,7 @@ class MainWindow(QMainWindow):
             self.tell(_("The window layout could not be saved: {error}").format(error=error))
 
     def closeEvent(self, event) -> None:
+        self.file_page.flush_settings()
         if self._keep_or_discard():
             self._cancel_report()
             self.preview_soon.stop()
