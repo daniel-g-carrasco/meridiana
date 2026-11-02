@@ -33,8 +33,9 @@ class IfcInTheWindow(unittest.TestCase):
         self.assertIn(self.win.commands["export_ifc"].text(), texts)
         from PySide6.QtWidgets import QLabel
         page = self.win.file_page
-        words = [w.text() for w in page.sections["import"].findChildren(QLabel)]
-        self.assertIn("IFC model", words)
+        self.assertNotIn("import", page.sections)                     # R315: the IFC model is read in Modelling
+        building = self.win.bars["model"].button_of("import_ifc")
+        self.assertIs(building, self.win.bars["model"].button_of("tool_building"))
         words = [w.text() for w in page.sections["export"].findChildren(QLabel)]
         self.assertIn("IFC4 model", words)
 
