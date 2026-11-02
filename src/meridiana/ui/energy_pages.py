@@ -6,7 +6,7 @@ window's energy job returned and report the designer's edits as (section, path, 
 from __future__ import annotations
 
 import numpy as np
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QRect, Qt, Signal
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout,
                                QLabel, QLineEdit, QPushButton, QRadioButton, QScrollArea, QStackedWidget,
                                QTabWidget, QVBoxLayout, QWidget)
@@ -46,16 +46,26 @@ def split_unit(value: str) -> tuple[str, str]:
 
 
 class ElidedLabel(QLabel):
-    """A tile's label: cut with «…» when the tile is narrow (five to a row in the middle card), whole in its
-    tooltip; it never makes the tile wider."""
+    """A label on one line: cut with «…» when the room is short, whole in its tooltip unless the owner gives a
+    tooltip of its own (`tip`); it never makes its row wider."""
 
     def __init__(self, text: str = "", parent=None):
         super().__init__(text, parent)
-        self.setToolTip(text)
+        self.setProperty("sized_by_owner", True)        # ui/style.pad_fields leaves it on its line
+        self.tip = ""
+        self._tip()
 
     def setText(self, text: str) -> None:
         super().setText(text)
-        self.setToolTip(text)
+        self._tip()
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._tip()
+
+    def _tip(self) -> None:
+        cut = self.fontMetrics().horizontalAdvance(self.text()) > self.contentsRect().width()
+        self.setToolTip(self.tip or (self.text() if cut else ""))
 
     def minimumSizeHint(self):
         hint = super().minimumSizeHint()
@@ -73,75 +83,146 @@ class ElidedLabel(QLabel):
 
 class Tile(QFrame):
     """A headline number as a card without a border (study 17, R2, Daniel's choice of 23/10/2026): the label, the
-    number with its unit beside it, a line of detail (the source), in the catalogue's styles (R121). The `key` tile,
-    the number that counts on the page, comes first; no longer in the accent's tint (R104: «lo vorrei un po' meno
-    presente il colore di accento»)."""
+    number with its unit on the same baseline, a line of detail (the source), in the catalogue's styles (R121). The
+    `key` tile, the number that counts on the page, comes first; no longer in the accent's tint (R104: «lo vorrei un
+    po' meno presente il colore di accento»). The label and the detail wrap, the label in the room the grid keeps
+    for the labels of all its tiles (`Tiles`), the detail under the number: what is long never moves a number
+    (R309, R310). No tooltip that repeats the label: «Potenza» over the word Potenza says nothing (R309)."""
+    DETAIL_LINES = 2                            # what every tile keeps for its detail, in every phase
 
     def __init__(self, label: str, key: bool = False):
         super().__init__()
         self.setObjectName("tile")
         self.setProperty("key", key)
         self.setFrameShape(QFrame.Shape.NoFrame)
+        self.changed = None                     # the grid it stands in, told when its texts change
         from .design import Text, set_text
-        self.label = set_text(ElidedLabel(label), Text.SECONDARY)       # the label of a result
+        self.label = set_text(QLabel(label), Text.SECONDARY)            # the label of a result
+        self.label.setWordWrap(True)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.label.setProperty("sized_by_owner", True)                  # Tiles measures it, not ui/style.pad_fields
         self.value = set_text(QLabel("–"), Text.DISPLAY)                # the figure of a result
         self.unit = set_text(QLabel(""), Text.DESCRIPTION)
         self.unit.hide()
         self.detail = set_text(QLabel(""), Text.SECONDARY)
         self.detail.setWordWrap(True)
+        self.detail.setProperty("sized_by_owner", True)                 # Tiles measures it, not ui/style.pad_fields
         box = QVBoxLayout(self)
         box.setContentsMargins(Space.L, Space.M, Space.L, Space.M)
         box.setSpacing(Space.XXS)
         box.addWidget(self.label)
         number = QHBoxLayout()
         number.setSpacing(Space.XS)
-        number.addWidget(self.value)
-        number.addWidget(self.unit, 0, Qt.AlignmentFlag.AlignBottom)
+        number.addWidget(self.value, 0, Qt.AlignmentFlag.AlignTop)
+        number.addWidget(self.unit, 0, Qt.AlignmentFlag.AlignTop)
         number.addStretch(1)
         box.addLayout(number)
         box.addWidget(self.detail)
+        box.addStretch(1)
+        self._on_baseline()
 
-    def set(self, value: str, detail: str = "") -> None:
+    def _on_baseline(self) -> None:
+        """The unit's letters stand on the line of the number's (a layout aligns boxes, not text; two labels aligned
+        at the bottom or centred had the unit under the number or up in the air, R309)."""
+        drop = max(0, self.value.fontMetrics().ascent() - self.unit.fontMetrics().ascent())
+        self.unit.setContentsMargins(0, drop, 0, 0)
+
+    def set(self, value: str, detail: str = "", more: str = "") -> None:
+        """The number with its unit, the detail under it and `more`: the rest of what there is to say about it, in
+        the detail's tooltip (a sentence of three lines made every tile of the row taller, R309)."""
         number, unit = split_unit(value)
         self.value.setText(number)
         self.unit.setText(unit)
         self.unit.setVisible(bool(unit))
         self.detail.setText(detail)
+        self.detail.setToolTip(more)
+        if self.changed is not None:
+            self.changed()
 
     def text(self) -> str:
         """What the tile says, number and unit together (as `set` was given it)."""
         return f"{self.value.text()} {self.unit.text()}".strip()
 
+    def number_width(self) -> int:
+        """The width under which its number would be cut."""
+        m = self.layout().contentsMargins()
+        unit = self.unit.sizeHint().width() + Space.XS if self.unit.text() else 0
+        return m.left() + self.value.sizeHint().width() + unit + m.right()
+
+    def _wrapped(self, label: QLabel, width: int) -> int:
+        """The height of `label`'s text at the tile's `width`, measured on its text: a label's own heightForWidth
+        never answers under its minimum (ui/style._LabelGrowth), and the label is fixed here."""
+        m, inner = self.layout().contentsMargins(), label.contentsMargins()
+        room = max(1, width - m.left() - m.right() - inner.left() - inner.right())
+        return label.fontMetrics().boundingRect(QRect(0, 0, room, 100000), Qt.TextFlag.TextWordWrap,
+                                                label.text()).height()
+
+    def label_height(self, width: int) -> int:
+        return self._wrapped(self.label, width)
+
+    def height_for(self, width: int, label: int) -> int:
+        """The height it needs at `width` with `label` pixels for the label: its detail on as many lines as it
+        wraps, DETAIL_LINES at least."""
+        m = self.layout().contentsMargins()
+        detail = max(self._wrapped(self.detail, width), self.DETAIL_LINES * self.detail.fontMetrics().lineSpacing())
+        return m.top() + label + Space.XXS + self.value.sizeHint().height() + Space.XXS + detail + m.bottom()
+
 
 class Tiles(QWidget):
-    """The headline numbers in rows that follow the width: as many to a row as fit, at least one; the first is
-    the key one unless `key` says another (none with -1)."""
+    """The results of a phase, the one grid of Production, Consumption, Balance and economics: columns of the same
+    width, as many as fit (at most `columns`), every tile as tall as the tallest needs at that width, so the
+    numbers stand on one line across a row and from one row to the next (R309, R310). The first is the key one
+    unless `key` says another (none with -1). Its height is worked out here: a grid left to itself gave each row
+    the height its longest sentence suggested, and each column the width of its longest text."""
     TILE = 165                                  # logical pixels a tile wants (five in the middle card of 1600 px)
 
     def __init__(self, labels: list[str], columns: int = 5, key: int = 0):
         super().__init__()
         self.grid = QGridLayout(self)
         self.grid.setContentsMargins(0, 0, 0, 0)
-        self.grid.setSpacing(8)
+        self.grid.setSpacing(Space.M)
         self.most = columns
         self.columns = 0
         self.tiles = [Tile(label, key=i == key) for i, label in enumerate(labels)]
         for t in self.tiles:
             t.setMinimumWidth(120)
+            t.changed = self._fit
         self._place(columns)
+        self._fit()
 
     def _place(self, columns: int) -> None:
         if columns == self.columns:
             return
+        for c in range(max(columns, self.columns)):
+            self.grid.setColumnStretch(c, 1 if c < columns else 0)
         self.columns = columns
         for t in self.tiles:
             self.grid.removeWidget(t)
         for i, t in enumerate(self.tiles):
             self.grid.addWidget(t, i // columns, i % columns)
 
+    def _fit(self) -> None:
+        gap = self.grid.spacing()
+        wanted = max(self.TILE, *(t.number_width() for t in self.tiles))
+        self._place(max(1, min(self.most, (self.width() + gap) // (wanted + gap))))
+        width = (self.width() - gap * (self.columns - 1)) // self.columns
+        label = max(t.label_height(width) for t in self.tiles)
+        height = max(t.height_for(width, label) for t in self.tiles)
+        rows = (len(self.tiles) + self.columns - 1) // self.columns
+        for t in self.tiles:
+            t.label.setFixedHeight(label)
+            t.setFixedHeight(height)
+        self.setFixedHeight(rows * height + (rows - 1) * gap)
+
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
-        self._place(max(1, min(self.most, self.width() // self.TILE)))
+        self._fit()
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        for t in self.tiles:
+            t._on_baseline()                    # the text size may have changed while it was hidden
+        self._fit()
 
     def minimumSizeHint(self):
         hint = super().minimumSizeHint()
@@ -568,6 +649,7 @@ class EnergyPage(Page):
         if pvgis is not None:
             diff = 100.0 * (sim.energy_kwh / pvgis.yearly_kwh - 1.0) if pvgis.yearly_kwh else 0.0
             t[4].set(f"{number(pvgis.yearly_kwh, 0, grouping=True)} kWh",
+                     _("Meridiana {d}% against PVGIS").format(d=number(diff, 1, sign=True)),
                      _("Meridiana {d}%. PVGIS: crystSi2025 technology, average of the years 2005-2023 (SARAH3); "
                        "Meridiana: typical year").format(
                          d=number(diff, 1, sign=True)))
