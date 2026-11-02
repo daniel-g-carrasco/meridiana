@@ -246,6 +246,8 @@ class HelpInTheWindow(unittest.TestCase):
         known = helps.texts()
         seen = set()
         p = self.win.project
+        for page in (self.win.energy_page, self.win.consumption_page, self.win.economics_page):
+            page.real()                                  # made when their phase is first shown: here, all of them
         for where in ("site", "building", "subfield tilted", "subfield flush", "exclusion"):
             {"site": lambda: self.win._select("site", ""),
              "building": lambda: self.win._select("building", p.buildings[0].id),

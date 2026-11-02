@@ -48,12 +48,13 @@ from .design import Icon, Size, Space, Text, set_text_all
 from .sections import TAIL_ROLE, SectionDelegate, section
 from .catalog_dialog import CatalogDialog
 from .energy_pages import ConsumptionPage, EconomicsPage, EnergyPage
+from .lazy_page import LazyConsumptionPage, LazyEconomicsPage, LazyEnergyPage
 from .inspector import Inspector
 from .marks import icon as mark_icon
 from .report_page import ReportPage, ReportSide
 from .phasebar import LOW_WINDOW, PhaseBar, Phases
 from .plan import EDGE_KINDS, MOVABLE, PlanView, from_scene
-from .plant_page import PlantInspector, PlantPage, PlantSide, input_name, install_reference  # R277: PlantSide
+from .plant_page import PlantInspector, PlantPage, PlantSide, input_name, LazyReference  # R277: PlantSide
 from .properties import Properties, field_label
 from .checks_page import ChecksPage
 from .sunbar import SunBar
@@ -124,6 +125,12 @@ PVGIS_STEPS = (0, 1, 3)         # pipeline's steps that ask PVGIS when the year 
 RELAYOUT_PAUSE_MS = 150
 PREVIEW_REPORT_MS = 700
 WARM_UP_MS = 1500
+# the results pages, made one at a time while the window rests after the start (_rest_build): the first after
+# REST_BUILD_MS, each only when the designer has not touched the window for REST_STILL_MS, the next REST_NEXT_MS
+# later; None: not at all (the tests: tests/_setup.window)
+REST_BUILD_MS: int | None = 4000
+REST_STILL_MS = 1500
+REST_NEXT_MS = 1000
 
 
 class ClimateSignals(QObject):
@@ -340,9 +347,12 @@ class MainWindow(QMainWindow):
         self.split.setHandleWidth(Space.S)          # the card between the two views, each rounded (24/10/2026)
         self.split.addWidget(self.plan)
         self.split.addWidget(self.view3d_box)
-        self.energy_page = EnergyPage()
-        self.consumption_page = ConsumptionPage()
-        self.economics_page = EconomicsPage()
+        # made when their phase is first shown (ui/lazy_page.py): what is told them before is kept for them
+        self.energy_page = LazyEnergyPage(EnergyPage)
+        self.consumption_page = LazyConsumptionPage(ConsumptionPage)
+        self.economics_page = LazyEconomicsPage(EconomicsPage)
+        for page in (self.energy_page, self.consumption_page, self.economics_page):
+            page.when_built(self._fade_page)
         # the row of the phases (phases.py; study 17, B4): the pages of today at their places, the Plant and the
         # Report after the actions (_build_phases), the bar of each phase under the row
         self.tabs = Phases()
@@ -453,7 +463,7 @@ class MainWindow(QMainWindow):
         self.inspector.results.variantChosen.connect(self._switch_variant)
         for pid, page in (("production", self.energy_page), ("consumption", self.consumption_page),
                           ("economics", self.economics_page)):
-            self.inspector.add_side(pid, page.side)
+            self.inspector.add_side(pid, page.side_slot)
         right.setWidget(self.inspector)
         right.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable | QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, right)
@@ -1232,7 +1242,7 @@ class MainWindow(QMainWindow):
         self.plant_inspector.optimizerAsked.connect(self._choose_optimizer)
         self.plant_inspector.optimizerCleared.connect(self._clear_optimizer)
         self.plant_inspector.perChosen.connect(self._optimizer_per)
-        self.inverter_reference = install_reference(self.energy_page, lambda: self.show_phase("plant"))
+        self.inverter_reference = LazyReference(self.energy_page, lambda: self.show_phase("plant"))
         self.report_page = ReportPage(self.commands)
         self.report_side = ReportSide()
         self.report_side.changed.connect(self._report_edited)
@@ -1302,7 +1312,6 @@ class MainWindow(QMainWindow):
             self._show_tree()                       # the icons in the kinds' colours of this theme (R67)
         from .cards import set_corner_colour
         set_corner_colour(t["panel"])               # the views' rounded corners on their card
-        pages = (self.energy_page, self.consumption_page, self.economics_page)
         for area in (self.tree, getattr(self.help_box.view, "scroll", None)):
             fades.attach(area)
         # the checks as the Properties (Daniel, 30/10/2026: «quell'effetto lì»): the rows stop short of the card's lines
@@ -1311,8 +1320,11 @@ class MainWindow(QMainWindow):
         fades.attach(self.checks_page.tree, air=True, page_list=True)
         # the pages and the panels: what scrolls stops short of the card's lines (R177)
         for area in (self.props, self.inspector.results, self.inspector.deliverables,
-                     getattr(self, "plant_inspector", None), *[a for p in pages for a in (p.side, p.centre)]):
+                     getattr(self, "plant_inspector", None)):
             fades.attach(area, air=True)
+        for page in (self.energy_page, self.consumption_page, self.economics_page):
+            if page.is_built():                         # the others, as they are made (below, at the start)
+                self._fade_page(page.real())
         self.assistant_button.setIcon(self.assistant.icon())
         # the strings (task 16d): a tint for each from the colour chosen, the traffic light in the colours of the
         # states, the same on the plan, in the list of the inspector and in the legend
@@ -1327,6 +1339,18 @@ class MainWindow(QMainWindow):
             self.plant_inspector.states = light
             self.plant_inspector.clip_scale.set_colours(t, light)
             self.plant_inspector.colours = list(self.plan.string_colours)
+
+    def _fade_page(self, page) -> None:
+        """What the window did once to the pages made with it (the start of __init__), for one made later: the text
+        of the fields off the edge, the data tables, what scrolls stops short of the card's lines (R177)."""
+        from . import fades
+        from .shared_tables import install_data_tables
+        from .style import pad_fields
+        for part in (page, page.side):                  # the form is in the inspector's slot, not under the page
+            pad_fields(part)
+            install_data_tables(part, excluded=("project-tree", "checks-tree"))
+        for area in (page.side, page.centre):
+            fades.attach(area, air=True)
 
     def apply_shortcuts(self, keys: dict) -> None:
         """The keys of each command (id -> list of keys as Qt writes them), shown in the tooltips too."""
@@ -6182,6 +6206,32 @@ class MainWindow(QMainWindow):
         self.plan.fit()
         self._show_3d()
         QTimer.singleShot(WARM_UP_MS, self, self._warm_up)
+        self._start_rest_build()
+
+    def _start_rest_build(self) -> None:
+        """The results pages made, one at a time, while the window rests: a change of phase is made tens of times
+        and a page made at its first arrival cost 0.4-0.6 s more than one made before (02/11/2026); the pages are
+        most of the window's widgets, so they wait for the start to be over (the change of theme, which pays each
+        widget, is the one who sees them)."""
+        if REST_BUILD_MS is None:
+            return
+        from .lazy_page import InputClock
+        self.input_clock = InputClock(self)
+        QApplication.instance().installEventFilter(self.input_clock)
+        QTimer.singleShot(REST_BUILD_MS, self, self._rest_build)
+
+    def _rest_build(self) -> None:
+        pending = [p for p in (self.energy_page, self.consumption_page, self.economics_page) if not p.is_built()]
+        if not pending:
+            QApplication.instance().removeEventFilter(self.input_clock)
+            return
+        # still: the window untouched for a while, the pointer not held down, a project not being laid out
+        if (self.isVisible() and self.input_clock.still_for() >= REST_STILL_MS / 1000.0
+                and QApplication.mouseButtons() == Qt.MouseButton.NoButton and not self.file_page.isVisible()):
+            pending[0].real()
+            QTimer.singleShot(REST_NEXT_MS, self, self._rest_build)
+        else:
+            QTimer.singleShot(max(250, REST_STILL_MS // 3), self, self._rest_build)
 
     def _warm_up(self) -> None:
         """What the first change of phase would otherwise wait for (R83), done while the window rests after the start:

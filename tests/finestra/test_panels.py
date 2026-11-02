@@ -64,7 +64,8 @@ class Panels(unittest.TestCase):
         dock = win.docks[1]
         self.assertIs(win.inspector.currentWidget(), win.props)
         win.show_phase("production")                       # what is typed in the phase (the drafts, 24/10/2026)
-        self.assertIs(win.inspector.currentWidget(), win.energy_page.side)
+        self.assertIs(win.inspector.currentWidget(), win.energy_page.side_slot)     # its form, in its slot
+        self.assertIs(win.energy_page.side.parentWidget(), win.energy_page.side_slot)
         self.assertEqual(dock.windowTitle(), "Data")
         self.assertEqual(win.inspector.results.variant.count(), len(win.project.variants))
         win.show_phase("model")

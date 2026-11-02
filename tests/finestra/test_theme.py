@@ -118,24 +118,56 @@ class ThemeOfTheWindow(unittest.TestCase):
         sizes.setCurrentIndex(sizes.findData("medium"))
         self.assertEqual({w: QFontInfo(w.font()).pixelSize() for w in before}, before)
 
-    def test_the_sheet_goes_on_the_whole_window_quickly_and_it_draws_in_both_themes_with_the_screenshots_kept(self):
-        """A grab() of the window with the Properties and the Production page, light and dark, without errors;
-        the images in build/schermate-17a (git ignores build/) for a look on the PC."""
+    def sheet_again(self) -> float:
+        """Seconds to take the application's sheet off and put it on again and to polish the window's widgets: what a
+        change of theme costs."""
+        import gc
         import time
 
+        from PySide6.QtCore import QCoreApplication, QEvent
+        # the sheet goes on every widget of the process: the windows of the tests before this one, not yet gone,
+        # would be paid here too
+        for _ in range(2):
+            gc.collect()
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        from PySide6.QtWidgets import QWidget
+        widgets = self.win.findChildren(QWidget)
+        sheet = self.app.styleSheet()
+        took = []
+        for _ in range(5):              # the best of five: the first goes over widgets never polished, and the
+            t0 = time.perf_counter()    # machine's other work adds to any one
+            self.app.setStyleSheet("")
+            self.app.setStyleSheet(sheet)
+            for w in widgets:
+                w.ensurePolished()
+            took.append(time.perf_counter() - t0)
+        self.took = f"{len(widgets)} widgets, every turn: " + " ".join(f"{t:.2f}" for t in took)
+        return min(took)
+
+    def test_the_sheet_goes_on_the_whole_window_quickly_and_it_draws_in_both_themes_with_the_screenshots_kept(self):
+        """Two limits for a change of theme, because the cost is the number of widgets, not the rules. Measured on
+        02/11/2026 (Windows, offscreen): the sheet has 177 rules and 17,600 characters; one application costs 0.19 ms
+        for each widget with any sheet and only 23 % more (0.05 ms) for these rules, so cutting rules gains little
+        and a regression shows as widgets. The window as it starts, no page made that was not wanted (the Settings,
+        the three results pages with their forms: 1,100 widgets, made when first shown, ui/lazy_page.py), has about
+        1,200 widgets and is what the designer sees first: 1 s (measured 0.5-0.7 s), the test below. The same
+        window with everything made, File > Settings and the six phases visited, has about 3,000 widgets, and a
+        change of theme then costs about 1.5-2 s (measured 1.3-2.2 s, best of five, on 02/11/2026, the spread being
+        the machine's other work): `test_the_sheet_on_a_window_with_every_page_made` allows 3 s, the measure plus
+        half of it, and that is not hidden: it is what the pages cost once they are made, which the program does
+        at rest a few seconds after the start (MainWindow._rest_build), so that a change of phase costs what it
+        always did and the change of theme, which happens almost never, pays for it. A widget too many shows in
+        either test.
+        A grab() of the window with the Properties and the Production page, light and dark, without errors;
+        the images in build/schermate-17a (git ignores build/) for a look on the PC."""
         from PySide6.QtWidgets import QWidget
         win = self.win
-        # the proof measured 16-37 ms for 108 widgets (study 17, A.5); the window has about 1,100: a blank sheet and
-        # then this one again cost 87 ms on Daniel's PC offscreen (23/10/2026), a generous bound here
+        # the window as it starts: no lazy page made yet, what the designer sees first (limit 1 s, see below)
+        self.assertFalse(any(page.is_built() for page in (win.energy_page, win.consumption_page, win.economics_page)))
+        self.assertIsNone(win.file_page._settings)
         widgets = win.findChildren(QWidget)
         self.assertGreater(len(widgets), 500)
-        sheet = self.app.styleSheet()
-        t0 = time.perf_counter()
-        self.app.setStyleSheet("")
-        self.app.setStyleSheet(sheet)
-        for w in widgets:
-            w.ensurePolished()
-        self.assertLess(time.perf_counter() - t0, 1.0)
+        self.assertLess(self.sheet_again(), 1.0, self.took)
         f = self.paths.state / "p.meridiana"
         f.parent.mkdir(parents=True, exist_ok=True)
         capannone().save(f)
@@ -168,6 +200,22 @@ class ThemeOfTheWindow(unittest.TestCase):
                 self.assertEqual(inside, t["card"] if theme == "dark" else t["panel"], f"{theme} {page}: the card")
                 self.assertTrue(image.save(str(folder / f"test-{theme}-{page}.png")))
         win._appearance("light", "bronze", "meridiana")
+
+
+    def test_the_sheet_on_a_window_with_every_page_made(self):
+        """The same, with the Settings and the six phases made (see the first test: 3 s against its 1 s)."""
+        from PySide6.QtWidgets import QWidget
+        win = self.win
+        win.open_file_page("preferences")
+        _setup.turn_events(self.app, 200)
+        win.file_page.close_page()
+        for pid in ("model", "plant", "production", "consumption", "economics", "report"):
+            win.show_phase(pid)
+            _setup.turn_events(self.app, 30)
+        self.assertTrue(all(page.is_built() for page in (win.energy_page, win.consumption_page, win.economics_page)))
+        widgets = win.findChildren(QWidget)
+        self.assertGreater(len(widgets), 2500)
+        self.assertLess(self.sheet_again(), 3.0, self.took)
 
 
 if __name__ == "__main__":
