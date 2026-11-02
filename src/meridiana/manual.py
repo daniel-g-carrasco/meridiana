@@ -412,6 +412,26 @@ def delete_module(project, sfid: str, key: str, result=None) -> Callable:
     return change
 
 
+def delete_modules(project, sfid: str, keys: list[str], result=None) -> Callable:
+    """Delete on many modules of a sub-field, as one change: as delete_module for each."""
+    sf = _subfield(project, sfid)
+    wanted = set(keys)
+    gone: dict[str, layout.Row] = {}
+    if sf.manual:
+        f, size, _p = frame(project, sf, sf.hand_rows())
+        if size.stack == 1 and not size.east_west:
+            gone = {r.id: r for r in sf.hand_rows() if r.count == 1 and r.slot_key(0) in wanted}
+    alone = {r.slot_key(0) for r in gone.values()}
+
+    def change(p):
+        target = _subfield(p, sfid)
+        if gone:
+            _store(target, [r for r in target.hand_rows() if r.id not in gone])
+        target.removed = [k for k in target.removed if k not in alone]
+        target.removed += [k for k in keys if k not in alone and k not in target.removed]
+    return change
+
+
 def relayout(project, sfid: str) -> Callable:
     """«Lay again automatically»: the rows by hand go, and the modules taken out by hand with them; the generator
     lays the sub-field again from its parameters."""

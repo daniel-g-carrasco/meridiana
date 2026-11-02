@@ -204,6 +204,8 @@ class Plant:
     search_reason: str = ""
     search_nodes: int = 0
     entries: list | None = None                        # None preserves hardware; a list explicitly replaces it
+    shortest: int = 0                                  # proposal on chosen modules: the fewest in series that make a
+                                                       # string on these inverters; 0 when it cannot be said (R300)
 
     def string_of(self, sfid: str, key: str) -> int:
         """The index of the string a module is in, -1 when in none."""
@@ -1295,12 +1297,14 @@ def runs_of(plant: Plant) -> list[dict]:
 
 
 def proposal(project, results: dict | None = None, groups: list | None = None, strategy: str = "",
-             keep: list[dict] | None = None, t_cell_max_year: float | None = None, search=None) -> Plant:
+             keep: list[dict] | None = None, t_cell_max_year: float | None = None, search=None,
+             only: set | None = None) -> Plant:
     """Meridiana's strings as the file keeps them, made once when the designer asks («Propose the strings», PVsyst's
     «Auto Attribution»): every module laid in strings by `strategy` (the project's when ""), on the inputs as `build`
     spread them when the proposal was live. With `keep` (the designer's strings, «Complete») those stay as they are,
     first in the list, and only the modules in none of them are proposed: on the inputs that have no string first,
-    then on those that take more; what does not fit stays out, and the checks say so."""
+    then on those that take more; what does not fit stays out, and the checks say so. With `only` (R300, "<sub-field>/
+    <key>" of the modules selected on the plan) the strings are made of those modules alone."""
     import dataclasses
     if groups is None:
         groups = groups_of(project, results or {})
@@ -1336,7 +1340,14 @@ def proposal(project, results: dict | None = None, groups: list | None = None, s
         groups = [dataclasses.replace(g, placed=[pm for pm in g.placed if f"{g.sfid}/{pm.key}" not in taken])
                   for g in groups]
         groups = [g for g in groups if g.placed]
+    if only is not None:
+        groups = [dataclasses.replace(g, placed=[pm for pm in g.placed if f"{g.sfid}/{pm.key}" in only]) for g in groups]
+        groups = [g for g in groups if g.placed]
     out = Plant(units=units, strategy=s.get("strategy") or "serpentine")
+    if only is not None and groups and not any(u.optimized for u in units):
+        ranges = [stringing.series_range(g.module, u.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+                  for g in groups for u in units if u.checkable]
+        out.shortest = min((lo for lo, hi in ranges if hi), default=0)
     _runs(all_groups, kept, out)
     out.left = []
     if groups:

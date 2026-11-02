@@ -344,6 +344,228 @@ class StringsDeletedFromTheirModules(WindowCase):
         self.assertTrue(button.isChecked())
 
 
+class Sweeps(WindowCase):
+    """R300: «selezionare moduli con il classico quadrato di autocad [...] Sempre su autocad se tieni premuto sul click
+    sinistro fa una sorta di selezione informe»."""
+
+    def press(self, x, y, mods=None):
+        from PySide6.QtCore import QEvent, Qt
+        pos = self.scene_point(x, y)
+        left = Qt.MouseButton.LeftButton
+        self.send(QEvent.Type.MouseButtonPress, pos, left, left, mods)
+
+    def drag_to(self, x, y):
+        from PySide6.QtCore import QEvent, Qt
+        self.send(QEvent.Type.MouseMove, self.scene_point(x, y), buttons=Qt.MouseButton.LeftButton)
+
+    def release(self, x, y, mods=None):
+        from PySide6.QtCore import QEvent, Qt
+        self.send(QEvent.Type.MouseButtonRelease, self.scene_point(x, y), Qt.MouseButton.LeftButton,
+                  Qt.MouseButton.NoButton, mods)
+
+    def sweep(self, start, *through, mods=None, hold=False):
+        from PySide6.QtTest import QTest
+
+        from meridiana import sweep
+        self.press(*start, mods)
+        if hold:
+            QTest.qWait(sweep.HOLD_MS + 30)
+        for p in through:
+            self.drag_to(*p)
+        self.release(*through[-1], mods)
+
+    def module_box(self, index):
+        """A module's corners in metres: west, south, east, north."""
+        from PySide6.QtCore import QPointF
+
+        from meridiana.ui.plan import from_scene
+        sfid = self.win.project.subfields[0].id
+        q = self.plan.module_corners[sfid][1][index]
+        pts = [from_scene(QPointF(float(a), float(b))) for a, b in q]
+        xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+        return min(xs), min(ys), max(xs), max(ys)
+
+    def in_plant(self):
+        self.win.show_phase("plant")
+        self.win.plant_side.open("panels", ms=0)
+        self.win.commands["tool_select"].trigger()
+        self.app.processEvents()
+
+    def test_left_to_right_takes_what_is_all_inside_right_to_left_what_it_touches_too(self):
+        plan = self.plan
+        self.in_plant()
+        w, s, e, n = self.module_box(0)
+        dx, dy = e - w, n - s
+        # from inside the module to well beyond it: it is cut by the rectangle's left side
+        self.sweep((w + dx / 2, s - dy), (e + 0.2, n + dy))
+        window = set(plan.swept)
+        self.assertNotIn(self.module_centre(index=0)[:2], window)
+        plan.set_swept([])
+        self.sweep((e + 0.2, s - dy), (w + dx / 2, n + dy))     # the same rectangle the other way
+        self.assertIn(self.module_centre(index=0)[:2], set(plan.swept))
+        self.assertLessEqual(window, set(plan.swept))
+        plan.set_swept([])
+        self.sweep((w - dx / 3, s - dy / 3), (e + dx / 3, n + dy / 3))  # all inside
+        self.assertIn(self.module_centre(index=0)[:2], set(plan.swept))
+
+    def test_the_rectangle_is_drawn_blue_and_whole_or_green_and_dashed_only_while_dragging(self):
+        from meridiana import sweep
+        plan = self.plan
+        self.in_plant()
+        w, s, e, n = self.module_box(0)
+        self.press(w, s)
+        self.assertFalse(plan.sweeping())
+        self.drag_to(e + 2, n + 2)
+        self.assertTrue(plan.sweeping())
+        self.assertEqual(plan.sweep_kind, sweep.WINDOW)
+        self.assertFalse(plan.sweep_lasso)
+        self.drag_to(w - 2, n + 2)                              # the rectangle turns back: a crossing
+        self.assertEqual(plan.sweep_kind, sweep.CROSSING)
+        self.release(w - 2, n + 2)
+        self.assertFalse(plan.sweeping())
+
+    def test_held_still_then_dragged_is_a_lasso_with_the_way_of_its_first_stretch(self):
+        from meridiana import sweep
+        plan = self.plan
+        self.in_plant()
+        w, s, e, n = self.module_box(0)
+        dx, dy = e - w, n - s
+        loop = ((e + dx, s - dy), (e + dx, n + dy), (w - dx, n + dy), (w - dx, s - dy))
+        self.press(w - dx, s - dy)
+        from PySide6.QtTest import QTest
+        QTest.qWait(sweep.HOLD_MS + 30)
+        for p in loop:
+            self.drag_to(*p)
+        self.assertTrue(plan.sweep_lasso)
+        self.assertEqual(plan.sweep_kind, sweep.WINDOW)         # it went right first, and comes back left
+        self.assertEqual(len(plan.sweep_points), 5)
+        self.release(*loop[-1])
+        self.assertIn(self.module_centre(index=0)[:2], set(plan.swept))
+        # the other way: a crossing that only touches the module
+        plan.set_swept([])
+        self.press(e + dx / 2, n - dy / 2)
+        QTest.qWait(sweep.HOLD_MS + 30)
+        self.drag_to(e - dx / 2, n - dy / 2)
+        self.assertEqual(plan.sweep_kind, sweep.CROSSING)
+        self.drag_to(e - dx / 2, n + dy)
+        self.drag_to(e + dx / 2, n + dy)
+        self.release(e + dx / 2, n + dy)
+        self.assertIn(self.module_centre(index=0)[:2], set(plan.swept))
+
+    def test_a_sweep_adds_shift_takes_out_a_click_toggles_esc_lets_go(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        plan = self.plan
+        self.in_plant()
+        a = self.module_centre(index=0)
+        b = self.module_centre(index=1)
+        self.click(*a[2], Qt.KeyboardModifier.ControlModifier)
+        self.assertEqual(plan.swept, [a[:2]])
+        self.click(*b[2])                                       # with some selected a click adds
+        self.assertEqual(plan.swept, [a[:2], b[:2]])
+        self.click(*a[2])
+        self.assertEqual(plan.swept, [b[:2]])
+        self.assertIsNotNone(plan.swept_item)
+        QTest.keyClick(plan, Qt.Key.Key_Escape)
+        self.assertEqual(plan.swept, [])
+        self.assertIsNone(plan.swept_item)
+        win = self.win
+        self.assertTrue(win.phase() == "plant")
+
+    def test_a_click_without_moving_is_the_click_of_before_and_a_corner_still_drags_in_the_modelling(self):
+        win, plan = self.win, self.plan
+        self.in_plant()
+        sfid, key, (x, y) = self.module_centre()
+        self.click(x, y)
+        self.assertEqual(plan.selected_module, (sfid, key))
+        self.assertEqual(plan.swept, [])
+        win.show_phase("model")
+        bid = win.project.buildings[0].id
+        win._select("building", bid)
+        moved = []
+        plan.vertexMoved.connect(lambda *a: moved.append(a))
+        cx, cy = win.project.buildings[0].footprint[0]
+        self.press(cx, cy)
+        self.drag_to(cx - 2, cy - 2)
+        self.assertIsNotNone(plan.dragging)
+        self.assertIsNone(plan.sweep_press)
+        self.release(cx - 2, cy - 2)
+        self.assertEqual(len(moved), 1)
+        self.assertFalse(plan.sweeping())
+
+    def test_in_the_modelling_a_sweep_takes_the_objects_del_deletes_them_in_one_step(self):
+        from meridiana import model
+        win, plan = self.win, self.plan
+        win.edit("A second one", lambda p: p.buildings.append(
+            model.Building(id="b2", name="Second", footprint=[[100.0, 0.0], [120.0, 0.0], [120.0, 20.0], [100.0, 20.0]],
+                           height=4.0, roof=model.Roof(type="flat"))))
+        win.commands["fit"].trigger()
+        self.app.processEvents()
+        self.assertEqual(plan.tool, "select")
+        self.sweep((95.0, -5.0), (125.0, 25.0))                 # one, all inside: the selection a click gives
+        self.assertEqual(win.selection, ("building", "b2"))
+        self.assertEqual(plan.swept_things, [])
+        win._select("site", "")
+        self.sweep((125.0, 10.0), (5.0, 12.0))                  # a crossing over both
+        self.assertEqual({k for k in plan.swept_things if k[0] == "building"},
+                         {("building", win.project.buildings[0].id), ("building", "b2")})
+        self.assertEqual(len(plan.items_by_kind["swept"]), 2 * len(plan.swept_things))
+        n = len(win.project.buildings)
+        win._delete_key()
+        self.assertEqual(len(win.project.buildings), n - 2)
+        win.commands["undo"].trigger()
+        self.assertEqual(len(win.project.buildings), n)
+
+    def test_del_takes_the_modules_selected_out_in_one_step(self):
+        win, plan = self.win, self.plan
+        self.in_plant()
+        a, b = self.module_centre(index=0), self.module_centre(index=1)
+        plan.set_swept([a[:2], b[:2]])
+        win._delete_key()
+        self.assertEqual(sorted(win.project.subfields[0].removed), sorted([a[1], b[1]]))
+        self.assertEqual(plan.swept, [])
+        win.commands["undo"].trigger()
+        self.assertEqual(win.project.subfields[0].removed, [])
+
+    def strings_of(self):
+        return (self.win.project.energy.get("strings") or {}).get("runs") or []
+
+    def test_propose_on_the_modules_selected_makes_strings_of_those_alone_and_says_what_is_left(self):
+        win, plan = self.win, self.plan
+        said = []
+        original = win.tell
+        win.tell = lambda text, *a: (said.append(text), original(text, *a))
+        win._add_inverter(inverter_record(), "Add")
+        self.in_plant()
+        sfid = win.project.subfields[0].id
+        keys = plan.module_corners[sfid][0]
+        plan.set_swept([(sfid, k) for k in keys[:40]])
+        win.strategy_actions["serpentine"].trigger()
+        self.assertTrue(wait_until(self.app, lambda: win.string_proposal_job is None, 60))
+        runs = self.strings_of()
+        self.assertTrue(runs, said)
+        chosen = {f"{sfid}/{k}" for k in keys[:40]}
+        self.assertTrue(all(m in chosen for r in runs for m in r["modules"]))
+        self.assertEqual(plan.swept, [])
+        self.assertTrue(any("on the modules selected" in s for s in said), said)
+
+    def test_too_few_modules_say_how_many_a_string_wants_and_nothing_changes(self):
+        win, plan = self.win, self.plan
+        said = []
+        original = win.tell
+        win.tell = lambda text, *a: (said.append(text), original(text, *a))
+        win._add_inverter(inverter_record(), "Add")
+        self.in_plant()
+        sfid = win.project.subfields[0].id
+        keys = plan.module_corners[sfid][0]
+        plan.set_swept([(sfid, keys[0]), (sfid, keys[1])])
+        win.strategy_actions["serpentine"].trigger()
+        self.assertTrue(wait_until(self.app, lambda: win.string_proposal_job is None, 60))
+        self.assertEqual(self.strings_of(), [])
+        self.assertEqual(len(plan.swept), 2)                    # the selection stays, to add to it
+        self.assertTrue(any("too few" in s and "at least" in s for s in said), said)
+
+
 class ButtonsWithAMenu(WindowCase):
     """R306: «molti dei comandi negli strumenti sopra possono essere raggruppati, un po' come succede in autocad»."""
 

@@ -30,7 +30,7 @@ from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetrics, QPainter, QPaint
                            QTransform)
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QGraphicsScene, QGraphicsView, QLineEdit, QWidget
 
-from .. import geo, move, navigation, roofs, sides, theme_colors, tiles, view_colours, viewaids
+from .. import geo, move, navigation, roofs, sides, sweep, theme_colors, tiles, view_colours, viewaids
 from . import plan_overlays, waiting, world_map
 from ..i18n import _, ngettext, number, pgettext
 from .cards import round_corners
@@ -45,6 +45,7 @@ DRAWING = {"building", "pitch", "ridge", "subfield", "exclusion"}   # ridge: a l
 PITCH_FIELDS = ("depth", "tilt", "ridge", "eave")   # the rows of the Pitch card a number typed goes to (R274)
 MOVABLE = ("building", "subfield", "exclusion", "row", "prop")   # what Move takes (task 16b; a row, task 16c)
 PLANT_MOVABLE = ("subfield", "row", "module")                    # what it takes in the Plant (R295)
+SWEPT_KINDS = ("building", "exclusion", "prop")                  # what a sweep takes in the Modelling (R300)
 ERASE_TOOLS = ("erase_string", "erase_inverter_strings", "erase_inverter")      # R299: from their modules on the plan
 EDGE_KINDS = ("exclusion", "subfield", "pitch", "building")      # whose sides a pick of any side finds, smallest first
 ARROWS = {Qt.Key.Key_Left: "left", Qt.Key.Key_Right: "right", Qt.Key.Key_Up: "up", Qt.Key.Key_Down: "down"}
@@ -58,6 +59,7 @@ STRING_DOT_MIN_MODULE_PX = 14.0   # below this, 8 px dots merge into the line wh
 Z_TILES, Z_BUILDING, Z_PITCH, Z_SUBFIELD, Z_EXCLUSION, Z_MODULES, Z_SELECTION = 0, 10, 12, 20, 25, 30, 40
 Z_PROP = 32                     # R269: a tree's crown over the modules it shades, under the wiring and the selection
 Z_WIRING = 35
+SWEEP_ALPHA = 56                # the ground of the sweep's rectangle or lasso: what is under it still reads
 LIGHT_ALPHA = 150               # what is lit as one (R299, R300): enough to tell it from the modules beside it
 Z_VEIL = 1                      # over the tiles (0 and 0.5), under everything drawn
 Z_UNDERLAY = 2                  # the images imported (underlay.py): over the veil, under the drawing
@@ -210,7 +212,8 @@ class ChipItem(QGraphicsItem):
 def hints() -> dict:
     return {
         "select": _("Click the smallest object; a second click on the same row selects the row. Esc goes to the "
-                    "container; Delete removes the selection."),
+                    "container; Delete removes the selection. Drag to the right for what is all inside the rectangle, "
+                    "to the left for what it touches; hold still, then drag, for a free shape."),
         "building": _("Building: click the corners of its outline. Enter or a double click closes it, Backspace "
                       "takes the last corner back, Esc cancels. Ctrl draws without guides; type a number for the "
                       "length of the side."),
@@ -447,6 +450,7 @@ class PlanView(QGraphicsView):
     # building's own); a ridge drawn (R275): its points and the ridge height typed, or None
     pitchDrawn = Signal(list, dict)
     eraseClicked = Signal(str, str, str)                   # R299: the tool, the sub-field and the key of the module
+    sweptChanged = Signal(int)                             # R300: how many modules or objects are selected together
     ridgeDrawn = Signal(list, object)
 
     def __init__(self, cache_dir, parent=None):
@@ -533,6 +537,16 @@ class PlanView(QGraphicsView):
         self.rings: dict = {}              # (kind, id) -> the outline drawn, for the sides' measures
         self.edge_pick = None              # (purpose, kind, id, ring) while a side is being picked
         self.edge_any = False              # the side of any outline (pick_any_edge)
+        # the sweep (R300): a left press with Select, until it is a click or a drag; the view's pixels of the drag
+        self.sweep_press = None            # (where, modifiers, the click it is if it does not move, when)
+        self.sweep_points: list = []
+        self.sweep_kind = ""
+        self.sweep_lasso = False
+        self.sweep_item = None             # what the drag would select, lit
+        self.swept: list = []              # (sub-field, key) selected together, in the Plant
+        self.swept_item = None
+        self.swept_things: list = []       # (kind, id) selected together, in the Modelling
+        self.press_ms = 0.0
         self.erase_at = None               # R299: the module under the pointer with a tool that deletes
         self.erase_item = None
         self.erase_lit: list = []
@@ -809,6 +823,12 @@ class PlanView(QGraphicsView):
         if self.erase_item is not None:             # R299: lit again with the new wiring, the modules may have changed
             scene.removeItem(self.erase_item)
             self.erase_item = None
+        if self.swept_item is not None:             # R300: lit again below, on the modules there still are
+            scene.removeItem(self.swept_item)
+            self.swept_item = None
+        if self.sweep_item is not None:
+            scene.removeItem(self.sweep_item)
+            self.sweep_item = None
         for kind, items in self.items_by_kind.items():
             if kind not in ("modules", "groups"):
                 for it in items:
@@ -899,6 +919,14 @@ class PlanView(QGraphicsView):
         self.module_items = drawn
         self.module_corners = {sfid: (e["keys"], e["corners"]) for sfid, e in drawn.items()}
         self.module_rows = {sfid: e["rids"] for sfid, e in drawn.items()}
+        if self.swept:
+            self._router()
+            self.swept = [m for m in self.swept if m in self.module_index]
+            self.swept_item = self._module_light(self.swept, view_colours.kind_colour("module"))
+        if self.swept_things:
+            self.swept_things = [t for t in self.swept_things if t in self.rings]
+            self.items_by_kind.pop("swept", None)
+            self._set_swept_things(self.swept_things)
         self.items_by_kind["modules"] = [e["items"][0] for e in drawn.values()]
         self.items_by_kind["groups"] = [it for e in drawn.values() for it in e["items"][1:]]
         self.snapper.set_references(segments)
@@ -1098,6 +1126,8 @@ class PlanView(QGraphicsView):
     def start_draft(self, modules: list, index: int = -1, where: str = "") -> None:
         """A string drawn from now: `modules` its first ones, (sub-field, key) in order (those of string `index`
         when it is drawn again, hidden meanwhile); `where` its inverter and input, for the words."""
+        if self.swept:
+            self.set_swept([])
         self.draft = [tuple(m) for m in modules]
         self.draft_index = index
         self.draft_where = where
@@ -1203,12 +1233,18 @@ class PlanView(QGraphicsView):
         if hit is None:
             return False
         if button == Qt.MouseButton.LeftButton and not self.space:
-            self.stringPicked.emit(*hit)
+            # at the release, if it stays a click: a drag from a module is a sweep (R300)
+            mods = event.modifiers()
+            self._sweep_wait(event.position(), mods, lambda: self._string_click(hit, mods))
             return True
         if button == Qt.MouseButton.RightButton:
             self.stringMenu.emit(list(hit), event.globalPosition().toPoint())
             return True
         return False
+
+    def _string_click(self, hit: tuple, modifiers) -> None:
+        if not self._swept_click(hit, modifiers):
+            self.stringPicked.emit(*hit)
 
     def show_wiring(self, on: bool) -> None:
         self.wiring_on = on
@@ -1785,6 +1821,10 @@ class PlanView(QGraphicsView):
         self._reset_roof_draft()
         self.erase_at = None
         self._erase_light()
+        self._sweep_cancel()
+        if self.swept:
+            self.set_swept([])                  # a sweep is about Select
+        self._clear_swept_things()
         self.setCursor(Qt.CursorShape.ArrowCursor if tool == "select" else Qt.CursorShape.CrossCursor)
         # selecting, only what changes is drawn again (the outline under the pointer); drawing, the guides follow
         # the pointer over the whole view
@@ -2170,6 +2210,10 @@ class PlanView(QGraphicsView):
         modules; a building or an exclusion selected earlier stays where it is."""
         self.plant_phase = bool(on)
         self._drop_gesture()
+        self._sweep_cancel()
+        if self.swept:
+            self.set_swept([])
+        self._clear_swept_things()
         self._restyle_selection()
         if self.tool == "move":
             self.hint.emit(self._move_hint())
@@ -2682,6 +2726,9 @@ class PlanView(QGraphicsView):
     def mousePressEvent(self, event):
         self.setFocus()
         self.pick_clicked = False
+        self.press_ms = time.monotonic() * 1000.0
+        if event.button() != Qt.MouseButton.LeftButton:
+            self._sweep_cancel()                # the right or the middle button comes: a pan or a menu, no sweep
         if (self.strings_mode and self.edge_pick is None and self.point_pick is None and self.left_wait is None
                 and not self.navigator.held and self._string_press(event)):
             return
@@ -2786,27 +2833,8 @@ class PlanView(QGraphicsView):
                     self.setCursor(Qt.CursorShape.SizeHorCursor)
                     self.hint.emit(_("Drag the end of the row: it takes or gives back places, one module at a time."))
                     return
-            kind, oid, key = self._pick(scene_pos, PICK_PX)
-            rid = self.rid_of(oid, key) if kind == "module" else ""
-            # a click on the row selected goes back to the module (below)
-            if kind == "module" and rid and self.selection == ("subfield", oid) and \
-                    self.selected_module[0] == oid and self.rid_of(*self.selected_module) == rid:
-                # a second click on the same row: the row (the levels of selection of Draft and SketchUp, 16c)
-                self.selected_module = ("", "")
-                self.selection = ("row", f"{oid}/{rid}")
-                self._restyle_selection()
-                self.picked.emit("row", f"{oid}/{rid}")
-                return
-            if kind == "module":
-                self.selected_module = (oid, key)
-                self.selection = ("subfield", oid)
-                self._restyle_selection()
-                self.moduleClicked.emit(oid, key)
-            else:
-                self.selected_module = ("", "")
-                self.selection = (kind, oid)
-                self._restyle_selection()
-                self.picked.emit(kind, oid)
+            # at the release, if it stays a click: a drag is a sweep (R300)
+            self._sweep_wait(position, modifiers, lambda: self._select_click(scene_pos, modifiers))
             return
         # the guides of the place pressed, not of the last place the pointer rested on (a pen or a finger
         # presses without hovering first)
@@ -2851,6 +2879,205 @@ class PlanView(QGraphicsView):
             if not self.chain or math.dist(p, self.chain[-1]) > 1e-6:
                 self.chain.append(p)
             self._update_cursor(position.toPoint())
+
+    def _select_click(self, scene_pos: QPointF, modifiers) -> None:
+        """A click with Select: the smallest object there; a second one on the same row, the row."""
+        kind, oid, key = self._pick(scene_pos, PICK_PX)
+        if self._swept_click((oid, key) if kind == "module" else None, modifiers):
+            return
+        self._clear_swept_things()
+        rid = self.rid_of(oid, key) if kind == "module" else ""
+        # a click on the row selected goes back to the module (below)
+        if kind == "module" and rid and self.selection == ("subfield", oid) and \
+                self.selected_module[0] == oid and self.rid_of(*self.selected_module) == rid:
+            # a second click on the same row: the row (the levels of selection of Draft and SketchUp, 16c)
+            self.selected_module = ("", "")
+            self.selection = ("row", f"{oid}/{rid}")
+            self._restyle_selection()
+            self.picked.emit("row", f"{oid}/{rid}")
+            return
+        if kind == "module":
+            self.selected_module = (oid, key)
+            self.selection = ("subfield", oid)
+            self._restyle_selection()
+            self.moduleClicked.emit(oid, key)
+        else:
+            self.selected_module = ("", "")
+            self.selection = (kind, oid)
+            self._restyle_selection()
+            self.picked.emit(kind, oid)
+
+    # the sweep (R300; sweep.py): a click stays a click, a drag selects as AutoCAD does
+
+    def _sweep_wait(self, position: QPointF, modifiers, click) -> None:
+        """A left press with Select: `click` at its release if it does not move."""
+        self.sweep_press = (QPointF(position), modifiers, click, self.press_ms)
+        self.sweep_points = []
+
+    def sweeping(self) -> bool:
+        return bool(self.sweep_points)
+
+    def _sweep_cancel(self) -> None:
+        had = self.sweeping()
+        self.sweep_press, self.sweep_points = None, []
+        self._sweep_light([])
+        if had:
+            self.viewport().update()
+
+    def _sweep_moved(self, position: QPointF) -> None:
+        start = self.sweep_press[0]
+        if not self.sweep_points:
+            if (position - start).manhattanLength() <= navigation.CLICK_PX:
+                return
+            self.sweep_lasso = time.monotonic() * 1000.0 - self.sweep_press[3] >= sweep.HOLD_MS
+            self.sweep_kind = sweep.kind_of(start.x(), position.x())
+            self.sweep_points = [QPointF(start)]
+            self._hover("", "", "")
+            self.setCursor(Qt.CursorShape.CrossCursor)
+        if self.sweep_lasso:
+            self.sweep_points.append(QPointF(position))
+        else:
+            self.sweep_kind = sweep.kind_of(start.x(), position.x())
+            self.sweep_points = [QPointF(start), QPointF(position)]
+        if self.plant_phase:
+            self._sweep_light(self._swept_modules())
+        self.viewport().update()
+
+    def _sweep_outline(self) -> list[QPointF]:
+        """The sweep's outline in the view's pixels: the lasso as it was drawn, the corners of the rectangle."""
+        pts = self.sweep_points
+        if self.sweep_lasso or len(pts) < 2:
+            return pts
+        a, b = pts
+        return [a, QPointF(b.x(), a.y()), b, QPointF(a.x(), b.y())]
+
+    def _sweep_ring(self) -> list[tuple[float, float]]:
+        return [(q.x(), q.y()) for q in (self.mapToScene(p.toPoint()) for p in self._sweep_outline())]
+
+    def _swept_modules(self) -> list[tuple[str, str]]:
+        ring = self._sweep_ring()
+        out = []
+        for sfid, (keys, quads) in self.module_corners.items():
+            if quads is not None and len(quads):
+                out += [(sfid, keys[i]) for i in np.flatnonzero(sweep.chosen_quads(quads, ring, self.sweep_kind)).tolist()]
+        return out
+
+    def _sweep_light(self, modules: list) -> None:
+        if self.sweep_item is not None:
+            self.scene().removeItem(self.sweep_item)
+            self.sweep_item = None
+        if modules:
+            self.sweep_item = self._module_light(modules, view_colours.kind_colour("module", hover=True))
+
+    def _sweep_release(self, modifiers) -> None:
+        start, _mods, click, _when = self.sweep_press
+        if not self.sweeping():
+            self.sweep_press = None
+            click()
+            return
+        shift = bool(modifiers & Qt.KeyboardModifier.ShiftModifier)
+        if self.plant_phase:
+            modules = self._swept_modules()
+            if shift:                           # AutoCAD: Shift takes out of the selection; alone a sweep adds to it
+                out = set(modules)
+                self.set_swept([m for m in self.swept if m not in out])
+            else:
+                self.set_swept(self.swept + [m for m in modules if m not in set(self.swept)])
+        else:
+            self._sweep_things(shift)
+        self._sweep_cancel()
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+
+    def set_swept(self, modules: list) -> None:
+        """The modules selected together in the Plant: lit as one, the commands that take them say what they do."""
+        self.swept = list(modules)
+        if self.swept_item is not None:
+            self.scene().removeItem(self.swept_item)
+            self.swept_item = None
+        if self.swept:
+            self.swept_item = self._module_light(self.swept, view_colours.kind_colour("module"))
+            self.selected_module = ("", "")
+            self._restyle_selection()
+            self.hint.emit(ngettext("{n} module selected: Propose or Complete make strings of it alone, Del takes it "
+                                    "out of the layout, Esc lets it go. A sweep adds, with Shift it takes out.",
+                                    "{n} modules selected: Propose or Complete make strings of them alone, Del takes "
+                                    "them out of the layout, Esc lets them go. A sweep adds, with Shift it takes out.",
+                                    len(self.swept)).format(n=len(self.swept)))
+        self.sweptChanged.emit(len(self.swept))
+        self.viewport().update()
+
+    def _swept_click(self, hit: tuple | None, modifiers) -> bool:
+        """A click with modules selected together, or with Ctrl or Shift on a module: it adds that module or takes it
+        out; on nothing it lets them go. False: it is an ordinary click."""
+        held = bool(modifiers & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier))
+        if not self.plant_phase or not (self.swept or (held and hit is not None)):
+            return False
+        if hit is None:
+            self.set_swept([])
+        elif hit in self.swept:
+            self.set_swept([m for m in self.swept if m != hit])
+        else:
+            self.set_swept([*self.swept, hit])
+        return True
+
+    def _sweep_things(self, shift: bool) -> None:
+        """A sweep in the Modelling: the buildings, the exclusions and the 3D objects it takes; one is the selection as
+        a click gives it, more are selected together, for Del."""
+        ring = [from_scene(p) for p in (self.mapToScene(q.toPoint()) for q in self._sweep_outline())]
+        things = [key for key in self.rings if key[0] in SWEPT_KINDS]
+        taken = [t for t, on in zip(things, sweep.chosen_rings([self.rings[t] for t in things], ring, self.sweep_kind),
+                                    strict=True) if on]
+        if shift:
+            taken = [t for t in self.swept_things if t not in taken]
+        else:
+            taken = self.swept_things + [t for t in taken if t not in self.swept_things]
+        if len(taken) == 1:
+            self._clear_swept_things()
+            self.selected_module = ("", "")
+            self.selection = taken[0]
+            self._restyle_selection()
+            self.picked.emit(*taken[0])
+            return
+        self._set_swept_things(taken)
+
+    def _set_swept_things(self, things: list) -> None:
+        self.swept_things = list(things)
+        for it in self.items_by_kind.get("swept", []):
+            self.scene().removeItem(it)
+        self.items_by_kind["swept"] = []
+        W = view_colours.WIDTHS
+        for kind, oid in self.swept_things:
+            colour = view_colours.kind_colour(kind)
+            fill = qcolour(colour)
+            fill.setAlpha(SWEEP_ALPHA)
+            for pen, brush, z in ((cosmetic(self.colours["halo"], W["select"] + W["select_halo"]), QBrush(fill), 0.0),
+                                  (cosmetic(colour, W["select"]), QBrush(Qt.BrushStyle.NoBrush), 0.1)):
+                item = self.scene().addPolygon(polygon(self.rings[(kind, oid)]), pen, brush)
+                item.setZValue(Z_SELECTION + z)
+                self.items_by_kind["swept"].append(item)
+        if self.swept_things:
+            self.hint.emit(ngettext("{n} object selected: Del deletes it, Esc lets it go.",
+                                    "{n} objects selected: Del deletes them, Esc lets them go.",
+                                    len(self.swept_things)).format(n=len(self.swept_things)))
+        self.sweptChanged.emit(len(self.swept_things))
+
+    def _clear_swept_things(self) -> None:
+        if self.swept_things:
+            self._set_swept_things([])
+
+    def _draw_sweep(self, painter: QPainter) -> None:
+        """The sweep in the view's pixels: a window full and with a whole line, a crossing dashed, as AutoCAD draws them
+        (blue and green, from the plan's colours)."""
+        window = self.sweep_kind == sweep.WINDOW
+        colour = qcolour(self.colours["sweep_window" if window else "sweep_crossing"])
+        fill = QColor(colour)
+        fill.setAlpha(SWEEP_ALPHA)
+        painter.save()
+        painter.resetTransform()
+        painter.setPen(QPen(colour, design.Line.FOCUS, Qt.PenStyle.SolidLine if window else Qt.PenStyle.DashLine))
+        painter.setBrush(QBrush(fill))
+        painter.drawPolygon(QPolygonF(self._sweep_outline()))
+        painter.restore()
 
     def mouseDoubleClickEvent(self, event):
         self._left_now()
@@ -2918,6 +3145,11 @@ class PlanView(QGraphicsView):
         if self.left_wait is not None and \
                 (event.position() - self.left_wait[0]).manhattanLength() > navigation.CLICK_PX:
             self._left_now()                        # a drag of the left button: a corner dragged, a vertex drawn
+        if self.sweep_press is not None:
+            if event.buttons() & Qt.MouseButton.LeftButton:
+                self._sweep_moved(event.position())
+                return
+            self._sweep_cancel()                    # its release went elsewhere
         if self.navigator.held:
             self._navigate(self.navigator.move(event.position().x(), event.position().y(),
                                                self._mods(event.modifiers())))
@@ -2954,6 +3186,9 @@ class PlanView(QGraphicsView):
         button = self._button(event.button())
         if button == "left":
             self._left_now()
+        if self.sweep_press is not None and event.button() == Qt.MouseButton.LeftButton:
+            self._sweep_release(event.modifiers())
+            return
         if button in self.navigator.held:
             self._navigate(self.navigator.release(button, self._mods(event.modifiers()), event.position().x(),
                                                   event.position().y()))
@@ -3019,6 +3254,17 @@ class PlanView(QGraphicsView):
     def keyPressEvent(self, event):
         key = event.key()
         text = event.text()
+        if key == Qt.Key.Key_Escape and self.sweeping():
+            self._sweep_cancel()
+            return
+        if key == Qt.Key.Key_Escape and self.swept:
+            self.set_swept([])
+            self.hint.emit(hints()["select"])
+            return
+        if key == Qt.Key.Key_Escape and self.swept_things:
+            self._clear_swept_things()
+            self.hint.emit(hints()["select"])
+            return
         # a side or a point asked by a command of the view: Esc gives that up and leaves the tool as it was (R301), it
         # went to the tool first and threw away the outline being drawn, or left Move
         if key == Qt.Key.Key_Escape and self.edge_pick is not None:
@@ -3142,6 +3388,7 @@ class PlanView(QGraphicsView):
     def focusOutEvent(self, event) -> None:
         if self.space:
             self._release_space()
+        self._sweep_cancel()
         super().focusOutEvent(event)
 
     def _update_cursor(self, view_pos) -> None:
@@ -3316,6 +3563,8 @@ class PlanView(QGraphicsView):
         painter.restore()
         self._draw_sides(painter)
         self._draw_labels(painter)
+        if self.sweeping():
+            self._draw_sweep(painter)
 
     def _draw_row(self, painter: QPainter, draw: QColor, halo: QPen) -> None:
         """The row being drawn: the line from its start, and its modules where they would go, red when they go
