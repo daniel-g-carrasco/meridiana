@@ -32,8 +32,9 @@ import math
 import time
 
 from PySide6.QtCore import (QByteArray, QEasingCurve, QEvent, QParallelAnimationGroup, QPoint, QPointF,
-                            QPropertyAnimation, QRect, QRectF, QSize, Qt, QTimer, Signal)
-from PySide6.QtGui import QColor, QCursor, QIcon, QPainter, QPainterPath, QPen, QPixmap
+                            QPropertyAnimation, QRect, QRectF, QSize, Qt, QTimer, QUrl, Signal)
+from PySide6.QtGui import (QColor, QCursor, QIcon, QImage, QKeySequence, QPainter, QPainterPath, QPen, QPixmap,
+                           QTextDocument)
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QLayout, QLineEdit,
                                QPushButton, QScrollArea, QSizePolicy, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
@@ -545,6 +546,8 @@ class Assistant(QFrame):
     bubbleResized = Signal(int, int)                        # the bubble's size, to remember
     attachmentRequested = Signal()
     filesDropped = Signal(list)
+    imageGiven = Signal(QImage, str)                        # a picture pasted (Ctrl+V) or dropped, with its name
+    viewRequested = Signal()                                # «Show Meridio what I see» (R320)
     asked = Signal(str)                                     # a question, to the conversation (ui/assistant_chat.py)
     stopped = Signal()                                      # «Stop»: the turn dropped
 
@@ -742,10 +745,27 @@ class Assistant(QFrame):
         self.stop_action.setToolTip(_("Stop the answer"))
         self.stop_action.triggered.connect(self.stop)
         self.stop_action.setVisible(False)
-        self.attach_button = QPushButton(_("Attach PDF or text…"))
-        self.attach_button.setToolTip(_("Read locally first. Documents are sent only with your message."))
+        attach_row = QHBoxLayout()
+        attach_row.setContentsMargins(0, 0, 0, 0)
+        attach_row.setSpacing(Space.S)
+        self.attach_button = QPushButton(_("Attach…"))
+        self.attach_button.setToolTip(_("PDF, text or images (PNG, JPEG, WebP, GIF), read on this PC first and "
+                                        "sent only with your message. Images can also be pasted (Ctrl+V) or "
+                                        "dropped here."))
         self.attach_button.clicked.connect(self.attachmentRequested)
-        inside.addWidget(self.attach_button)
+        attach_row.addWidget(self.attach_button, 1)
+        self.view_button = QToolButton()                    # R320: a picture of the phase, as the designer sees it
+        self.view_button.setIcon(icons.icon("image"))
+        self.view_button.setIconSize(QSize(Icon.CONTROL, Icon.CONTROL))
+        self.view_button.setAutoRaise(True)
+        self.view_button.setText(_("Show {name} what I see").format(name=assistant.NAME))
+        self.view_button.setToolTip(_("Show {name} what I see: a picture of this phase's view (plan, 3D, chart or "
+                                      "results), attached to your next message. {name} and the dialogs are not "
+                                      "in it.").format(name=assistant.NAME))
+        self.view_button.clicked.connect(self.viewRequested)
+        self.view_button.hide()                             # shown when a window is behind him (Chat)
+        attach_row.addWidget(self.view_button)
+        inside.addLayout(attach_row)
         inside.addWidget(self.field)
         self.field.setAcceptDrops(True)
         self.conversation.setAcceptDrops(True)
@@ -754,6 +774,9 @@ class Assistant(QFrame):
         self.panel.setAcceptDrops(True)
         self.document_drop_targets = (self.field, self.conversation, self.conversation.viewport(), self.panel)
         self.messages: list[tuple[str, str]] = []           # (who, text): "you", "assistant" or "note"
+        # the thumbnails shown under a question ("pictures", key in messages): (url, caption) by key; the images
+        # themselves are resources of the conversation's document
+        self.pictures: dict[str, list[tuple[str, str]]] = {}
         # the filters last, when every widget they look at exists
         for w in (self.face, self.small, self.head, self.bubble, self.panel, self.conversation, self.field, area):
             w.installEventFilter(self)
@@ -1265,7 +1288,15 @@ class Assistant(QFrame):
                 if event.type() == QEvent.Type.Drop:
                     self.filesDropped.emit([url.toLocalFile() for url in mime.urls()])
                 return True
+            if mime.hasImage():                             # a picture dragged from a browser or a viewer
+                event.acceptProposedAction()
+                if event.type() == QEvent.Type.Drop:
+                    self._give_image(mime.imageData(), _("Dropped image"))
+                return True
         kind = event.type()
+        if watched is self.field and kind == QEvent.Type.KeyPress and event.matches(QKeySequence.StandardKey.Paste):
+            if self._paste():
+                return True
         if watched is self.area or any(watched is w for w in self.followed):
             # a move too: the page moves when the bar of the phase changes height or the gaps settle (task 17b)
             if kind in (QEvent.Type.Resize, QEvent.Type.Show, QEvent.Type.Hide, QEvent.Type.Move) and self.drag is None:
@@ -1323,6 +1354,27 @@ class Assistant(QFrame):
                 self.toggle()
             return True
         return False
+
+    def _paste(self) -> bool:
+        """Ctrl+V in the field: a picture on the clipboard (and no text: cells copied from a spreadsheet bring
+        both, and are text) becomes an attachment, image files copied in the file manager too; otherwise the
+        field pastes its text as always."""
+        mime = QApplication.clipboard().mimeData()
+        if mime is None:
+            return False
+        if mime.hasUrls() and mime.urls() and all(url.isLocalFile() for url in mime.urls()) and not mime.hasImage():
+            self.filesDropped.emit([url.toLocalFile() for url in mime.urls()])
+            return True
+        if mime.hasImage() and not mime.text().strip():
+            return self._give_image(mime.imageData(), _("Pasted image"))
+        return False
+
+    def _give_image(self, data, name: str) -> bool:
+        image = data if isinstance(data, QImage) else QImage(data) if data is not None else QImage()
+        if image.isNull():
+            return False
+        self.imageGiven.emit(image, name)
+        return True
 
     def dropped(self) -> None:
         """Dragged: this is his place from now on, in every phase (R155)."""
@@ -1543,7 +1595,33 @@ class Assistant(QFrame):
     def clear(self) -> None:
         """A new conversation."""
         self.messages, self.live, self.told, self.heard = [], "", 0, 0
+        self.pictures = {}
         self.finish()
+
+    def show_pictures(self, items: list[tuple[QImage, str]]) -> None:
+        """The thumbnails of the pictures sent with the question just asked, under it, with their names and
+        sizes (R320). Only the thumbnails are kept here: the pictures sent are the conversation's."""
+        if not items:
+            return
+        key = f"p{len(self.pictures) + 1}"
+        shown = []
+        for n, (thumb, caption) in enumerate(items):
+            url = f"meridio-picture://{key}/{n}"
+            self.conversation.document().addResource(QTextDocument.ResourceType.ImageResource, QUrl(url), thumb)
+            shown.append((url, caption))
+        self.pictures[key] = shown
+        at = max((i for i, (who, _t) in enumerate(self.messages) if who == "you"), default=len(self.messages) - 1)
+        self.messages.insert(at + 1, ("pictures", key))
+        self._show_messages()
+
+    def _pictures_html(self, key: str) -> str:
+        muted = self.colours["muted"]
+        rows = []
+        for url, caption in self.pictures.get(key, []):
+            safe = caption.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            rows.append(f'<p style="margin:{Space.XS}px 0 0 0"><img src="{url}"><br>'
+                        f'<span style="color:{muted};font-size:{Type.SMALL}px">{safe}</span></p>')
+        return "".join(rows)
 
     # what the conversation shows besides the words
 
@@ -1633,7 +1711,7 @@ class Assistant(QFrame):
         elif self.told < self._speech() and not self.speak_timer.isActive():
             self.speak_timer.start()
         budget, cut = self.told, False
-        for who, text in shown:
+        for index, (who, text) in enumerate(shown):
             if cut:
                 break
             if who == "assistant":
@@ -1654,7 +1732,14 @@ class Assistant(QFrame):
                 mark = "› " if who == "tool" else ""
                 rows.append(f'<p><span style="color:{muted};{size}"><i>{mark}{safe}</i></span></p>')
                 continue
+            if who == "pictures":                           # shown with the question before it
+                if index == 0 or shown[index - 1][0] != "you":
+                    rows.append(message_html(_("You"), self._pictures_html(text), outgoing=True,
+                                             colours=self.colours))
+                continue
             body = "<p>" + text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") + "</p>"
+            if index + 1 < len(shown) and shown[index + 1][0] == "pictures":
+                body += self._pictures_html(shown[index + 1][1])
             name = _("You")
             rows.append(message_html(name, body, outgoing=True, colours=self.colours))
         if not rows and self.empty:                         # an empty conversation: his greeting, attenuated
