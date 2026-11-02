@@ -1502,7 +1502,7 @@ class PlantPhase(PlantWindow):
                           ],
                          ["tool_select", "tool_move", "tool_rotate",            # R295
                           "tool_subfield", "fill", "empty", "inverter_catalog", "inverter_auto", "battery_catalog", "strings_auto",
-                          "strings_complete", "strings_manual", "tool_erase_string"])
+                          "strings_manual", "tool_erase_string"])                 # R308: «Complete» in the menu of «Auto»
         QTest.keyClick(self.win, Qt.Key.Key_PageUp, Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(self.win.phase(), "model")
         self.assertEqual(self.win.split.indexOf(self.win.plan), 0)     # back beside the 3D view
@@ -1754,9 +1754,8 @@ class Stringing(PlantWindow):
         add.click()
         self.assertIsNotNone(self.win.plan.draft)
         self.assertTrue(self.win.stringing_action.isChecked())
-        from meridiana.ui.sections import ACTIVE_ROLE
-        head = lst.input_heads[(1, 2)]
-        self.assertTrue(head.data(0, ACTIVE_ROLE))
+        self.assertTrue(lst.input_heads[(1, 2)].active)                      # the input's card, outlined (R298)
+        self.assertFalse(lst.input_heads[(1, 1)].active)
         # the string being drawn in the strip's corner, nothing over the plan (R181, Daniel 26/10/2026: «la pillola
         # che compare è troppo invasiva, andrebbe portata in un angolo tipo dove c'è la legenda»)
         card = self.win.plant_page.draft_card
@@ -1794,7 +1793,7 @@ class Stringing(PlantWindow):
         self.assertIsNone(self.win.plan.draft)
         self.assertFalse(card.isVisibleTo(self.win))
         self.assertTrue(self.win.plant_page.texts.isVisibleTo(self.win))       # the summary back
-        self.assertFalse(head.data(0, ACTIVE_ROLE))
+        self.assertFalse(lst.input_heads[(1, 2)].active)
         self.assertNotIn("Inverter 1 · Acme AC-20K · Input 2", self.win.plant_page.inv_label.text())
         self.assertEqual(self.win.undo.count(), steps)
         self.assertFalse(self.win.stringing_action.isChecked())
@@ -1803,7 +1802,7 @@ class Stringing(PlantWindow):
             self.click(at(i))
         self.key(Qt.Key.Key_Return)                                          # closed: one step
         self.assertFalse(card.isVisibleTo(self.win))
-        self.assertFalse(lst.input_heads[(1, 2)].data(0, ACTIVE_ROLE))
+        self.assertFalse(lst.input_heads[(1, 2)].active)
         self.assertEqual(self.runs(), [[keys[i] for i in (0, 1, 3, 4, 5)]])
         self.assertEqual(self.win.undo.count(), steps + 1)
         plant = self.plant(lambda p: len(p.strings) == 1)
@@ -1867,12 +1866,21 @@ class Stringing(PlantWindow):
         self.assertEqual(len(lst.rows), len(plant.strings))
         self.win.plan.fit()
         last = len(plant.strings) - 1
-        lst.setCurrentItem(lst.rows[last])                                   # chosen in the list (R115)
+        self.assertEqual((lst.current(), self.win.plant_page.state()), (-1, "summary"))
+        self.assertFalse(self.win.plant_inspector.string_group.isVisibleTo(self.win))
+        QTest.mouseClick(lst.rows[last], Qt.MouseButton.LeftButton, pos=QPoint(8, 8))    # chosen in the cards (R115)
         self.assertEqual((self.win.chosen_string, self.win.plan.chosen_string), (last, last))
+        self.assertEqual(lst.current(), last)
+        self.assertTrue(lst.rows[last].selected)
+        self.assertEqual([i for i, row in lst.rows.items() if row.selected], [last])
+        self.assertEqual(self.win.plant_page.state(), "chosen")             # the group on top and the strip say it
         view = self.win.plan.mapToScene(self.win.plan.viewport().rect()).boundingRect()
         self.assertTrue(view.contains(self.win.plan.string_rect(last)))
-        self.assertIn(plant.strings[last].label, self.win.plant_inspector.string_identity.text())
         name = plant.strings[last].label
+        group = self.win.plant_inspector.string_group
+        self.assertTrue(group.isVisibleTo(self.win))
+        self.assertIn(name, group.identity.text())
+        self.assertIn(name, self.win.plant_page.chosen_strip.text)
         _setup.keyboard_or_skip(self, lst)
         QTest.keyClick(lst, Qt.Key.Key_Delete)                               # Del: that string, one step
         self.assertEqual(self.win.undo.undoText(), f"Delete string {name}")
@@ -1885,8 +1893,13 @@ class Stringing(PlantWindow):
         self.click(self.win.plan.mapFromScene(QPointF(first[2][0], -first[2][1])))
         self.assertEqual(self.win.chosen_string, 0)
         self.assertEqual(lst.current(), 0)
+        self.assertEqual([i for i, row in lst.rows.items() if row.selected], [0])
         self.key(Qt.Key.Key_Escape)                                          # let go
         self.assertEqual(self.win.chosen_string, -1)
+        self.assertEqual(lst.current(), -1)
+        self.assertEqual([i for i, row in lst.rows.items() if row.selected], [])
+        self.assertFalse(group.isVisibleTo(self.win))
+        self.assertEqual(self.win.plant_page.state(), "summary")
         self.win._string_list_menu(0, QPoint(0, 0))                          # its menu: move, reverse, draw, delete
         menu = self.win.context_menu
         self.addCleanup(menu.close)
@@ -2166,8 +2179,8 @@ class Optimizers(PlantWindow):
         self.assertFalse(plant.units[0].choice.suggested)  # accepted proposal persists its physical hardware
         self.assertEqual(self.win.project.energy["inverters"][0]["optimizer"]["model"], proposed_model)
         inspector = self.win.plant_inspector
-        self.assertIn(proposed_model, inspector.optimizer_labels[0].text())
-        self.assertIn("750 V", " ".join(w.text() for w in inspector.findChildren(type(inspector.describe))))
+        self.assertIn(proposed_model, inspector.units.optimizer_labels[0].text())
+        self.assertIn("strings at 750 V", inspector.units.cards[1].what.text())   # the inverter's card says it (R297)
         fake = mock.MagicMock()
         fake.return_value.exec.return_value = QDialog.DialogCode.Accepted
         fake.return_value.chosen.return_value = s500
@@ -2180,14 +2193,15 @@ class Optimizers(PlantWindow):
         self.assertEqual((entry["optimizer"]["model"], entry["per_optimizer"]), ("S500", 1))
         plant = self.plant(lambda p: p.units[0].choice is not None and not p.units[0].choice.suggested)
         self.assertEqual(plant.units[0].choice.optimizer.model, "S500")
-        self.assertIn("S500", inspector.optimizer_labels[0].text())
+        self.assertIn("S500", inspector.units.optimizer_labels[0].text())
         self.win._choose_string(0)
         strip = self.win.plant_page.strings_label.text()
         self.assertIn("optimizers", strip)
         self.assertIn("kW", strip)
         self.assertNotIn("Umpp", strip)
         lst = inspector.list                                                       # «Strings»: one DC bus
-        self.assertIn("STRINGS", " ".join(lst.topLevelItem(i).text(0).upper() for i in range(lst.topLevelItemCount())))
+        from meridiana.ui.design import strong
+        self.assertEqual([card.title.text() for card in lst.input_heads.values()], [strong("Strings")])
         strings = [i for i in self.win.checks_page.items if i.area == "strings"]
         self.assertTrue(strings)
         self.assertTrue(all("SolarEdge" in i.source or "CEI" not in i.source for i in strings))
