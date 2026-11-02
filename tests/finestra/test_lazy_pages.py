@@ -2,6 +2,7 @@
 is there when they are: the year computed, the status, the basis, the form's values, the reference to the Plant in
 Production. PySide6 and a display (offscreen will do)."""
 
+import time
 import unittest
 
 import _setup
@@ -69,6 +70,38 @@ class LazyPages(unittest.TestCase):
         self.assertFalse(win.consumption_page.is_built())
         self.assertIsNotNone(win.consumption_page.mode)               # asked: made
         self.assertEqual([p.is_built() for p in self.pages], [False, True, False])
+    def test_at_rest_after_the_start_they_are_made_one_at_a_time_and_a_touch_puts_the_next_off(self):
+        from unittest import mock
+
+        from meridiana.ui import window as window_module
+        win = self.win
+        self.assertIsNone(window_module.REST_BUILD_MS)                  # not in the tests, unless asked
+        self.assertFalse(hasattr(win, "input_clock"))
+        with mock.patch.object(window_module, "REST_BUILD_MS", 40),                 mock.patch.object(window_module, "REST_STILL_MS", 300),                 mock.patch.object(window_module, "REST_NEXT_MS", 100):
+            win._start_rest_build()
+            clock = win.input_clock
+            end = time.monotonic() + 0.6
+            while time.monotonic() < end:                        # touched all the time: none is made
+                clock.touch()
+                _setup.turn_events(self.app, 20)
+            self.assertEqual([p.is_built() for p in self.pages], [False, False, False])
+            order = []
+            end = time.monotonic() + 8
+            while time.monotonic() < end and not all(p.is_built() for p in self.pages):
+                _setup.turn_events(self.app, 20)
+                made = tuple(p.is_built() for p in self.pages)
+                if not order or order[-1] != made:
+                    order.append(made)
+            # one more each time, Production first
+            self.assertEqual(order[-4:], [(False, False, False), (True, False, False), (True, True, False),
+                                          (True, True, True)][-len(order[-4:]):])
+            self.assertTrue(all(p.is_built() for p in self.pages))
+        # a page made at rest answers a visit at once and is as one made by it
+        win.show_phase("economics")
+        _setup.turn_events(self.app, 100)
+        self.assertEqual(win.tabs.phase_id(), "economics")
+        self.assertTrue(win.economics_page.isVisible())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,10 +13,11 @@ connected here, and the real page's signals are passed on to them."""
 
 from __future__ import annotations
 
+import time
 from collections import OrderedDict
 from collections.abc import Callable
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QEvent, QObject, Signal
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 # the calls the window makes of a page that only set what it shows: the last of each is what the page will show
@@ -149,3 +150,27 @@ class LazyEconomicsPage(LazyPage):
 
     def _own_signals(self) -> tuple:
         return ("batteryRequested",)
+
+
+class InputClock(QObject):
+    """When the designer last touched the window (a click, a key, the wheel, a move of the pointer), for what is done
+    only while it rests: the pages made after the start, one at a time (MainWindow._rest_build)."""
+
+    TOUCH = (QEvent.Type.MouseButtonPress, QEvent.Type.MouseMove, QEvent.Type.KeyPress, QEvent.Type.Wheel,
+             QEvent.Type.TouchBegin)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.last = time.monotonic()
+
+    def touch(self) -> None:
+        self.last = time.monotonic()
+
+    def still_for(self) -> float:
+        """Seconds since the last touch."""
+        return time.monotonic() - self.last
+
+    def eventFilter(self, obj, event) -> bool:
+        if event.type() in self.TOUCH:
+            self.last = time.monotonic()
+        return False

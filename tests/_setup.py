@@ -288,6 +288,12 @@ def window(test, project=None, cfg=None, size=(1200, 800), answers=None, cache=N
         from _fixtures import write_cache
         write_cache(cache, test.paths.cache)
     test.cfg = cfg if cfg is not None else config_module.Config(background="none", network_pvgis=False)
+    from meridiana.ui import window as window_module
+    # the results pages are made when their phase is first shown, not at rest after the start (a test that wants
+    # that calls win._start_rest_build() with the constants of ui/window.py patched)
+    rest = mock.patch.object(window_module, "REST_BUILD_MS", None)
+    rest.start()
+    test.addCleanup(rest.stop)
     win = MainWindow(test.paths, test.cfg)
     test.addCleanup(dispose, win)                  # cleanups run last first: the window goes before the patches
     if not pause:

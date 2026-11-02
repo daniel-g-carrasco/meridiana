@@ -125,6 +125,12 @@ PVGIS_STEPS = (0, 1, 3)         # pipeline's steps that ask PVGIS when the year 
 RELAYOUT_PAUSE_MS = 150
 PREVIEW_REPORT_MS = 700
 WARM_UP_MS = 1500
+# the results pages, made one at a time while the window rests after the start (_rest_build): the first after
+# REST_BUILD_MS, each only when the designer has not touched the window for REST_STILL_MS, the next REST_NEXT_MS
+# later; None: not at all (the tests: tests/_setup.window)
+REST_BUILD_MS: int | None = 4000
+REST_STILL_MS = 1500
+REST_NEXT_MS = 1000
 
 
 class ClimateSignals(QObject):
@@ -6200,6 +6206,32 @@ class MainWindow(QMainWindow):
         self.plan.fit()
         self._show_3d()
         QTimer.singleShot(WARM_UP_MS, self, self._warm_up)
+        self._start_rest_build()
+
+    def _start_rest_build(self) -> None:
+        """The results pages made, one at a time, while the window rests: a change of phase is made tens of times
+        and a page made at its first arrival cost 0.4-0.6 s more than one made before (02/11/2026); the pages are
+        most of the window's widgets, so they wait for the start to be over (the change of theme, which pays each
+        widget, is the one who sees them)."""
+        if REST_BUILD_MS is None:
+            return
+        from .lazy_page import InputClock
+        self.input_clock = InputClock(self)
+        QApplication.instance().installEventFilter(self.input_clock)
+        QTimer.singleShot(REST_BUILD_MS, self, self._rest_build)
+
+    def _rest_build(self) -> None:
+        pending = [p for p in (self.energy_page, self.consumption_page, self.economics_page) if not p.is_built()]
+        if not pending:
+            QApplication.instance().removeEventFilter(self.input_clock)
+            return
+        # still: the window untouched for a while, the pointer not held down, a project not being laid out
+        if (self.isVisible() and self.input_clock.still_for() >= REST_STILL_MS / 1000.0
+                and QApplication.mouseButtons() == Qt.MouseButton.NoButton and not self.file_page.isVisible()):
+            pending[0].real()
+            QTimer.singleShot(REST_NEXT_MS, self, self._rest_build)
+        else:
+            QTimer.singleShot(max(250, REST_STILL_MS // 3), self, self._rest_build)
 
     def _warm_up(self) -> None:
         """What the first change of phase would otherwise wait for (R83), done while the window rests after the start:
