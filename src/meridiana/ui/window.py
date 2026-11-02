@@ -30,7 +30,7 @@ from shapely.geometry import Polygon
 
 from .. import assistant as assistant_core
 from .. import (atomic, camera, catalog, checks, config, jobs, log, manual, mesh, model, move, phases, project_index,
-               recovery, registry, rules, shortcuts, sides, roofs, squaring, templates, theme_colors, tiles, underlay,
+               recovery, registry, roof_vertices, rules, shortcuts, sides, roofs, squaring, templates, theme_colors, tiles, underlay,
                view_colours, viewaids)
 from ..energy import consumption as consumption_model
 from ..energy import meteo, pipeline, system
@@ -608,6 +608,17 @@ class MainWindow(QMainWindow):
         self.view3d.hoverPicked.connect(self._hover_3d)
         # Move in the 3D view (task 16b): the gizmo dragged, the values typed next to it, the arrows, Esc
         self.view3d.backend.gizmoDone.connect(self._gizmo_done)
+        # R303: the corners of a roof in the 3D view, with Move
+        self.vertex_taken = None                    # the corner taken ([pitch, place]), which stays through the edits
+        self.vertex_merging = False                 # the next corner clicked comes onto the one taken
+        self.vertex_handles: list = []
+        self.view3d.backend.vertexClicked.connect(self._vertex_clicked)
+        self.view3d.backend.vertexDragged.connect(self._vertex_dragged)
+        self.view3d.vertex_field.typed.connect(self._vertex_typed)
+        self.view3d.vertex_field.merge.connect(self._vertex_merge_asked)
+        self.view3d.vertex_field.detach.connect(self._vertex_detach)
+        self.view3d.vertexLeft.connect(self._vertex_left)
+        self.view3d.vertexAsked.connect(self._vertex_open)
         self.view3d.gizmoTyped.connect(self._gizmo_typed)
         self.view3d.nudged.connect(self._gizmo_nudged)
         self.view3d.escaped.connect(self._escape_3d)
@@ -1762,6 +1773,7 @@ class MainWindow(QMainWindow):
         """The gizmo of Move in the 3D view (task 16b): with Move active and something to move selected, on its middle
         at its roof (move.centre, move.height), with the outline of what moves with it for the preview; else none
         (study 16, B8: only with the tool, so that it does not hide the small modules)."""
+        self._show_vertices()
         kind, oid = self.selection
         backend = self.view3d.backend
         centre = move.centre(self.project, kind, oid) if self.plan.tool == "move" and kind in MOVABLE else None
@@ -1775,6 +1787,116 @@ class MainWindow(QMainWindow):
                       (("subfield", self.project.subfields), ("exclusion", self.project.exclusions))
                       for x in items if x.building == oid]
         self.view3d.set_preview(np.concatenate(parts) if parts else np.zeros((0, 2, 3)))
+
+    # the corners of a roof in the 3D view (R303): the sums are in roof_vertices.py, one gesture one step of the undo
+
+    def _show_vertices(self) -> None:
+        kind, oid = self.selection
+        backend = self.view3d.backend
+        found = roof_vertices.handles_of(self.project, kind, oid) if self.plan.tool == "move" else []
+        self.vertex_handles = found
+        at = next((i for i, h in enumerate(found) if self.vertex_taken in h.corners), -1)
+        if at < 0:
+            self.vertex_taken, self.vertex_merging = None, False
+            self.view3d.vertex_field.hide()
+        backend.set_vertices([mesh.to_qt(h.x, h.y, h.z) for h in found], at)
+        self.view3d.place_vertex_field()
+
+    def _vertex_left(self) -> None:
+        self.vertex_taken, self.vertex_merging = None, False
+
+    def _vertex_open(self, text: str = "") -> None:
+        at = self.view3d.backend.vertex_on
+        if not 0 <= at < len(self.vertex_handles):
+            return
+        handle = self.vertex_handles[at]
+        kind, oid = self.selection
+        b = self.project.building(roof_vertices.owner_of(kind, oid)) if not handle.obstacle else None
+        title = _("Top of the obstacle") if handle.obstacle else _("Corner") if len(handle.corners) > 1 else \
+            _("Corner of pitch {n}").format(n=handle.corners[0][0] + 1)
+        self.view3d.vertex_field.open(title, handle.z, not handle.obstacle,
+                                      roof_vertices.can_detach(b, handle.corners), text)
+        self.view3d.place_vertex_field()
+
+    def _vertex_clicked(self, at: int) -> None:
+        if not 0 <= at < len(self.vertex_handles):
+            return
+        handle = self.vertex_handles[at]
+        if self.vertex_merging and self.vertex_taken is not None:
+            self.vertex_merging = False
+            self._vertex_change(_("Make corners one"), lambda p, bid: roof_vertices.weld(
+                p, bid, self.vertex_taken, handle.corners[0]), _("The corners are one point now: they stay so until "
+                                                                 "you part them."))
+            return
+        self.vertex_taken = handle.corners[0]
+        self.view3d.backend.set_vertex_on(at)
+        self._vertex_open()
+        self.hint.setText(_("Drag the corner up or down, or write its height."))
+
+    def _vertex_dragged(self, at: int, metres: float) -> None:
+        if not 0 <= at < len(self.vertex_handles):
+            return
+        self.vertex_taken = self.vertex_handles[at].corners[0]
+        self.view3d.vertex_field.hide()
+        self._vertex_height(self.vertex_handles[at], self.vertex_handles[at].z + metres)
+
+    def _vertex_typed(self, text: str) -> None:
+        at = self.view3d.backend.vertex_on
+        if not 0 <= at < len(self.vertex_handles):
+            return
+        written = roof_vertices.parse_height(text)
+        if written is None:
+            self.hint.setText(_("Not changed: {why}").format(why=_("write a height, or +5 or -10 to move it by that much")))
+            return
+        handle = self.vertex_handles[at]
+        self.view3d.vertex_field.hide()
+        self.view3d.setFocus()
+        self._vertex_height(handle, roof_vertices.height_written(handle.z, written))
+
+    def _vertex_height(self, handle, z: float) -> None:
+        if handle.obstacle:
+            _kind, oid = self.selection
+            self._vertex_change(_("Height of the obstacle"), lambda p, _bid: roof_vertices.set_obstacle_height(p, oid, z))
+            return
+        self._vertex_change(_("Height of a corner"), lambda p, bid: roof_vertices.set_height(p, bid, handle.corners[0], z))
+
+    def _vertex_merge_asked(self) -> None:
+        self.vertex_merging = True
+        self.view3d.vertex_field.hide()
+        self.view3d.setFocus()
+        self.hint.setText(_("Click the corner to bring here (Esc: none)."))
+
+    def _vertex_detach(self) -> None:
+        taken = self.vertex_taken
+        self.view3d.vertex_field.hide()
+        self._vertex_change(_("Part corners"), lambda p, bid: roof_vertices.detach(p, bid, taken),
+                            _("The corners are independent now: click again on the point to pass from one to the other."))
+
+    def _vertex_change(self, text: str, change, said: str = "") -> None:
+        """A change of the corners of the selection's roof as one step of the undo, and what it did to the pitches:
+        a roof that became drawn by hand, a pitch off one plane and how it was folded (R303)."""
+        kind, oid = self.selection
+        bid = roof_vertices.owner_of(kind, oid)
+        b = self.project.building(bid) if kind != "exclusion" else None
+        before = b.solved() if b is not None else None
+        was_free = b is None or b.roof.type == "free"
+        try:
+            self.edit(text, lambda p: change(p, bid))
+        except ValueError as error:
+            self.hint.setText(_("Not changed: {why}").format(why=error))
+            self._show_vertices()
+            return
+        b = self.project.building(bid) if kind != "exclusion" else None
+        told = [said] if said else []
+        if not was_free:
+            told.append(_("The roof is drawn by hand from here on: each face is a pitch."))
+        for f in roof_vertices.fold_news(before, b.solved() if b is not None else None):
+            told.append(_("Pitch {n}: its corners are off one plane, so it is folded along a line, into pitches that "
+                          "lie on planes. Each corner keeps its height, and modules are laid on each part.").format(
+                              n=f.pitch + 1))
+        if told:
+            self.hint.setText(" ".join(told))
+        self._show_vertices()
 
     def _gizmo_done(self, east: float, north: float, degrees: float, copy: bool) -> None:
         """A handle of the gizmo released: the move along it, or the turn about the middle (Ctrl held: a copy)."""

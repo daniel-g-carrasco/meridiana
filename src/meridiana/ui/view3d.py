@@ -28,11 +28,12 @@ from PySide6.QtCore import Property, QByteArray, QEvent, QObject, Qt, QTimer, QU
 from PySide6.QtGui import QGuiApplication, QQuaternion, QVector3D
 from PySide6.QtQml import QmlElement, QQmlComponent
 from PySide6.QtQuick3D import QQuick3DGeometry, QQuick3DInstancing
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
 
 from .. import camera, gizmo, mesh, move, navigation, view_colours
 from ..i18n import _, number
 from .cards import round_corners
+from .design import Space, Text, set_text
 from .quick_image import QuickImage
 
 
@@ -136,6 +137,10 @@ class Backend(QObject):
     gizmoBegan = Signal()                                  # a handle pressed: the preview's outline is made now
     gizmoMoving = Signal(str, float, float, float)         # the handle dragged and its value: East, North, degrees
     gizmoDone = Signal(float, float, float, bool)          # released: East, North (m), degrees, Ctrl held (a copy)
+    vertexChanged = Signal()                               # the corners of a roof (R303): where, which one, a drag
+    vertexClicked = Signal(int)                            # a corner taken without moving it
+    vertexMoving = Signal(int, float)                      # dragged: which one, metres from where it was
+    vertexDragged = Signal(int, float)                     # released after a drag: which one, metres
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -193,6 +198,13 @@ class Backend(QObject):
         self.gizmo_last = "x"                              # the last handle taken: the field typed opens on it
         self._gizmo: gizmo.Drag | None = None
         self.cameraChanged.connect(self.gizmoChanged)      # its size follows the camera
+        # the corners of a roof with Move (R303): where they stand (Qt axes), the one taken, the one under the pointer,
+        # the drag going on: (its place, gizmo.HeightDrag, the pixel of the press, whether it has left it)
+        self.vertices: list[np.ndarray] = []
+        self.vertex_on = -1
+        self.vertex_hot = -1
+        self._vertex = None
+        self.cameraChanged.connect(self.vertexChanged)     # the marks follow the camera
 
     @Property(str, notify=changed)
     def skyTop(self):
@@ -453,6 +465,112 @@ class Backend(QObject):
             self.gizmoDone.emit(east, north, degrees, "ctrl" in modifiers(mods))
         return True
 
+    # the corners of a roof with Move (R303)
+
+    def set_vertices(self, points, selected: int = -1) -> None:
+        """The corners shown (Qt axes), and the one taken; a drag going on ends without doing anything."""
+        self.vertices = [np.asarray(p, dtype=float) for p in points]
+        self.vertex_on = selected if 0 <= selected < len(self.vertices) else -1
+        self.vertex_hot = -1
+        self._vertex = None
+        self.vertexChanged.emit()
+
+    def set_vertex_on(self, index: int) -> None:
+        self.vertex_on = index if 0 <= index < len(self.vertices) else -1
+        self.vertexChanged.emit()
+
+    def vertex_dragging(self) -> bool:
+        return self._vertex is not None
+
+    def cancel_vertex(self) -> bool:
+        """Esc during a drag: the corner back where it was, nothing done. Whether there was one."""
+        if self._vertex is None:
+            return False
+        self._vertex = None
+        self.vertexChanged.emit()
+        return True
+
+    def vertex_point(self, index: int) -> np.ndarray | None:
+        """Where the corner stands now, with the drag going on."""
+        if not 0 <= index < len(self.vertices):
+            return None
+        point = self.vertices[index]
+        if self._vertex is not None and self._vertex[0] == index:
+            point = point + gizmo.UP * self._vertex[1].value
+        return point
+
+    @Property("QVariantList", notify=vertexChanged)
+    def vertexMarks(self):
+        w, h = self.size
+        d3, mark = view_colours.D3, view_colours.VERTEX_MARK
+        out = []
+        for i in range(len(self.vertices)):
+            at = self.camera.project(self.vertex_point(i), w, h)
+            if at is None:
+                continue
+            state = "on" if i == self.vertex_on else "hot" if i == self.vertex_hot else "idle"
+            colour = {"on": d3["vertex_on"], "hot": d3["vertex_hot"], "idle": d3["vertex"]}[state]
+            out.append({"x": float(at[0]), "y": float(at[1]), "size": mark[state], "colour": colour})
+        return out
+
+    @Property(str, constant=True)
+    def vertexEdge(self):
+        return view_colours.D3["vertex_edge"]
+
+    def _vertex_press(self, button: int, x: float, y: float) -> bool:
+        """A left press on a corner begins its drag; a press that does not leave its pixel takes it (at the release)."""
+        if BUTTONS.get(button) != "left" or not self.vertices or self.navigator.held:
+            return False
+        w, h = self.size
+        near = gizmo.pick_points(self.camera, x, y, w, h, self.vertices)
+        if not near:
+            return False
+        # two corners on one point (parted, or of pitches apart): a click on the one taken passes to the next
+        first = self.vertices[near[0]]
+        stack = [i for i in near if np.linalg.norm(self.vertices[i] - first) < 1e-3]
+        index = stack[(stack.index(self.vertex_on) + 1) % len(stack)] if self.vertex_on in stack else near[0]
+        drag = gizmo.HeightDrag.begin(self.camera, x, y, w, h, self.vertices[index])
+        if drag is None:                                    # from straight above: it can still be taken
+            drag = gizmo.HeightDrag(self.vertices[index], 0.0)
+            self._vertex = (index, drag, (x, y), None)
+        else:
+            self._vertex = (index, drag, (x, y), False)
+        return True
+
+    def _vertex_move(self, mods: int, x: float, y: float) -> bool:
+        w, h = self.size
+        if self._vertex is not None:
+            index, drag, at, left = self._vertex
+            if left is None:                                # the vertical seen as a point: no drag
+                return True
+            if not left and max(abs(x - at[0]), abs(y - at[1])) < VERTEX_CLICK:
+                return True
+            self._vertex = (index, drag, at, True)
+            self.vertexMoving.emit(index, drag.update(self.camera, x, y, w, h, modifiers(mods), self.gizmo_snaps))
+            self.vertexChanged.emit()
+            return True
+        if self.vertices and not self.navigator.held:
+            near = gizmo.pick_points(self.camera, x, y, w, h, self.vertices)
+            hot = near[0] if near else -1
+            if hot != self.vertex_hot:
+                self.vertex_hot = hot
+                self.vertexChanged.emit()
+        return False
+
+    def _vertex_release(self, button: int, mods: int, x: float, y: float) -> bool:
+        if self._vertex is None or BUTTONS.get(button) != "left":
+            return False
+        index, drag, _at, left = self._vertex
+        w, h = self.size
+        value = drag.update(self.camera, x, y, w, h, modifiers(mods), self.gizmo_snaps) if left else 0.0
+        self._vertex = None
+        self.vertexChanged.emit()
+        if left and abs(value) > 1e-9:
+            self.vertexDragged.emit(index, value)
+        elif not left:
+            self.vertexClicked.emit(index)
+        return True
+
     def go(self, target: camera.Camera, animate: bool = True) -> None:
         """To another camera, in ANIMATION_MS with an ease-out, at once when the system asks for less motion."""
         self._animation.stop()
@@ -557,20 +675,20 @@ class Backend(QObject):
 
     @Slot(int, int, float, float, bool, float, float, float, str, int)
     def press(self, button, mods, x, y, hit, hx, hy, hz, name, index) -> None:
-        if self._gizmo_press(button, mods, x, y):
+        if self._vertex_press(button, x, y) or self._gizmo_press(button, mods, x, y):
             return
         self._press = (self._hit(hit, hx, hy, hz), name, index)
         self._do(self.navigator.press(BUTTONS.get(button, ""), self._mods_held(mods), x, y))
 
     @Slot(int, float, float)
     def move(self, mods, x, y) -> None:
-        if self._gizmo_move(mods, x, y):
+        if self._vertex_move(mods, x, y) or self._gizmo_move(mods, x, y):
             return
         self._do(self.navigator.move(x, y, self._mods_held(mods)))
 
     @Slot(int, int, float, float)
     def release(self, button, mods, x, y) -> None:
-        if self._gizmo_release(button, mods, x, y):
+        if self._vertex_release(button, mods, x, y) or self._gizmo_release(button, mods, x, y):
             return
         self._do(self.navigator.release(BUTTONS.get(button, ""), self._mods_held(mods), x, y))
 
@@ -854,6 +972,86 @@ class GizmoField(QFrame):
         return False
 
 
+VERTEX_CLICK = 3                        # pixels a press may wander and still be a click, not a drag
+
+
+class VertexField(QFrame):
+    """The field of a corner of a roof (R303): its height, written or followed during a drag, and the commands that make
+    it one point with another corner and part it again. Enter applies what is written, Esc closes."""
+    typed = Signal(str)
+    merge = Signal()
+    detach = Signal()
+    closed = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("gizmoField")                # the card of the field of Move
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
+        box = QVBoxLayout(self)
+        box.setContentsMargins(Space.M, Space.S, Space.M, Space.S)
+        box.setSpacing(Space.XS)
+        row = QHBoxLayout()
+        row.setSpacing(Space.S)
+        self.title = QLabel()
+        row.addWidget(self.title)
+        self.edit = QLineEdit()
+        self.edit.setObjectName("vertexHeight")
+        self.edit.setFixedWidth(72)
+        self.edit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.edit.setToolTip(_("A number is the height above the ground; with a sign (+5, -10) it moves the corner up "
+                               "or down by that much"))
+        self.edit.installEventFilter(self)
+        row.addWidget(self.edit)
+        row.addWidget(QLabel("m"))
+        self.merge_button = QPushButton(_("Make one with..."))
+        self.merge_button.setToolTip(_("Click another corner: it comes here, in plan and in height, and they stay one "
+                                       "point"))
+        self.merge_button.clicked.connect(self.merge)
+        row.addWidget(self.merge_button)
+        self.detach_button = QPushButton(_("Part"))
+        self.detach_button.setToolTip(_("The corners on this point go back to being independent: they stay where they "
+                                        "are, each with its own height"))
+        self.detach_button.clicked.connect(self.detach)
+        row.addWidget(self.detach_button)
+        box.addLayout(row)
+        self.note = QLabel(_("12.5: height above the ground. +5 or -10: up or down by that much."))
+        set_text(self.note, Text.SECONDARY)
+        box.addWidget(self.note)
+        self.hide()
+
+    def open(self, title: str, height: float, can_merge: bool, can_detach: bool, text: str = "") -> None:
+        self.title.setText(title)
+        self.merge_button.setVisible(can_merge)
+        self.detach_button.setVisible(can_detach)
+        self.edit.setReadOnly(False)
+        self.edit.setText(text or number(height, 2))
+        self.show()
+        self.raise_()
+        self.edit.setFocus()
+        if not text:
+            self.edit.selectAll()
+
+    def show_value(self, height: float) -> None:
+        """A drag going on: the height it has reached."""
+        self.edit.setReadOnly(True)
+        self.edit.setText(number(height, 2))
+        self.show()
+        self.raise_()
+
+    def eventFilter(self, obj, event) -> bool:
+        if event.type() != QEvent.Type.KeyPress or self.edit.isReadOnly():
+            return False
+        key = event.key()
+        if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self.typed.emit(self.edit.text())
+            return True
+        if key == Qt.Key.Key_Escape:
+            self.hide()
+            self.closed.emit()
+            return True
+        return False
+
+
 ARROWS = {Qt.Key.Key_Left: "left", Qt.Key.Key_Right: "right", Qt.Key.Key_Up: "up", Qt.Key.Key_Down: "down"}
 
 
@@ -868,6 +1066,8 @@ class View3D(QuickImage):
     gizmoTyped = Signal(object, object, object)
     nudged = Signal(float, float)
     escaped = Signal()
+    vertexLeft = Signal()               # R303: Esc let the corner go
+    vertexAsked = Signal(str)           # R303: a number typed with a corner taken: its field, with that text
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -900,6 +1100,10 @@ class View3D(QuickImage):
         self.field = GizmoField(self)
         self.field.typed.connect(self.gizmoTyped)
         self.field.closed.connect(lambda: self.setFocus())
+        self.vertex_field = VertexField(self)
+        self.vertex_field.closed.connect(lambda: self.setFocus())
+        self.backend.vertexMoving.connect(self._vertex_moving)
+        self.backend.cameraChanged.connect(self.place_vertex_field)
         self.backend.gizmoBegan.connect(self._draw_preview)
         self.backend.gizmoMoving.connect(self._dragging)
         self.backend.gizmoChanged.connect(self._gizmo_changed)
@@ -1007,8 +1211,28 @@ class View3D(QuickImage):
         y = int(min(max(4, at[1] + 28), self.height() - self.field.height() - 4))
         self.field.move(x, y)
 
+    def _vertex_moving(self, index: int, metres: float) -> None:
+        point = self.backend.vertex_point(index)
+        if point is not None:
+            self.vertex_field.show_value(float(point[1]))
+            self.place_vertex_field()
+
+    def place_vertex_field(self) -> None:
+        """Next to the corner taken, inside the view."""
+        b = self.backend
+        index = b.vertex_on if b._vertex is None else b._vertex[0]
+        point = b.vertex_point(index)
+        if point is None or not self.vertex_field.isVisible():
+            return
+        self.vertex_field.adjustSize()
+        w, h = b.size
+        at = b.camera.project(point, w, h) or (w / 2, h / 2)
+        x = int(min(max(4, at[0] + 16), self.width() - self.vertex_field.width() - 4))
+        y = int(min(max(4, at[1] + 16), self.height() - self.vertex_field.height() - 4))
+        self.vertex_field.move(x, y)
+
     def keyPressEvent(self, event) -> None:
-        if self._gizmo_key(event):
+        if self._vertex_key(event) or self._gizmo_key(event):
             return
         if event.key() == Qt.Key.Key_Escape:
             self.escaped.emit()
@@ -1032,6 +1256,23 @@ class View3D(QuickImage):
             self.backend.set_space(False)
             self.unsetCursor()
         super().focusOutEvent(event)
+
+    def _vertex_key(self, event) -> bool:
+        """With a corner taken: a number or a sign opens its field with it, Esc ends a drag or lets the corner go."""
+        b = self.backend
+        if b.vertex_on < 0 and b._vertex is None:
+            return False
+        key, text = event.key(), event.text()
+        if key == Qt.Key.Key_Escape:
+            if not b.cancel_vertex():
+                b.set_vertex_on(-1)
+            self.vertex_field.hide()
+            self.vertexLeft.emit()
+            return True
+        if b.vertex_on >= 0 and text and all(c.isdigit() or c in ",.-+" for c in text) and not b.vertex_dragging():
+            self.vertexAsked.emit(text)
+            return True
+        return False
 
     def _gizmo_key(self, event) -> bool:
         """The keys of Move in the 3D view: a number opens the field on the last handle taken, the arrows nudge

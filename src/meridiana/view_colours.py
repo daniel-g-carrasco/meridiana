@@ -72,7 +72,12 @@ D3 = {"sky_top": "#a9c9e3", "sky_bottom": "#e4edf3", "ground": "#9fae93", "selec
       # the gizmo of Move and Rotate (task 16b): East red, North green, up and the turn about it blue, as every
       # program has them (study 16, B3), the handle under the pointer in yellow, over a dark halo
       "gizmo_x": "#ff5a52", "gizmo_y": "#5ad66e", "gizmo_z": "#5b8cff", "gizmo_hot": "#ffd84a",
-      "gizmo_halo": "#0b0d10"}
+      "gizmo_halo": "#0b0d10",
+      # the corners of a roof with Move (R303): white, the one under the pointer as a hot handle, the one taken as the
+      # selection; a dark edge, on any colour of roof
+      "vertex": "#ffffff", "vertex_hot": "#ffd84a", "vertex_on": SELECT, "vertex_edge": "#0b0d10"}
+# their marks, in pixels: what takes a press is wider (gizmo.VERTEX_TOLERANCE)
+VERTEX_MARK = {"idle": 7, "hot": 9, "on": 11}
 
 # the 3D pictures of the report (ui/report_3d.py): the same scene on paper, light and neutral, the modules in the
 # plan's navy so that they stand out, the edges of the buildings drawn as thin lines, as an axonometric drawing has
