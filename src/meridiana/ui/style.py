@@ -137,12 +137,14 @@ def _watch_fields(owner) -> None:
     templates, the site) stood with its text on the edge. One handler on the application's filter (ui/app_events),
     alive with the style."""
     from PySide6.QtCore import QEvent
-    from PySide6.QtWidgets import QAbstractSpinBox
+    from PySide6.QtWidgets import QAbstractSpinBox, QCheckBox, QRadioButton
     from .app_events import events
 
     def polished(obj, _event) -> bool:
         if isinstance(obj, QAbstractSpinBox):
             pad_fields(obj)
+        elif isinstance(obj, (QCheckBox, QRadioButton)) and len(obj.text()) > LONG_TEXT:
+            wrap_check(obj)                         # a long checkbox made later (the Settings, a dialog) as well
         return False
 
     events().on((QEvent.Type.Polish,), owner, polished)
@@ -447,7 +449,10 @@ class _LabelGrowth(QObject):
 
     def fit(self):
         label = self.label
-        if label.width() <= 0:
+        # a label not shown has no width of its own yet (Qt's 100 or 640 px, or its last one): measured there, a
+        # page in a stack not shown kept a minimum taller than its text, and the stack took it (the Settings, whose
+        # pages are made at every visit, stood 2188 px tall, 02/11/2026); it is measured again when shown
+        if label.width() <= 0 or not label.isVisible():
             return
         # QLabel.heightForWidth never answers less than the label's minimum: measured with the minimum on, a label
         # once laid out narrow stayed that tall at any width, its row with a hole above and below (R310: why R285's
@@ -474,6 +479,100 @@ def grow_label(label) -> None:
         label._meridiana_growth = _LabelGrowth(label)
 
 
+LONG_TEXT = 28      # characters: a label or a checkbox longer than this goes onto more lines rather than widen its card
+
+
+class _CheckWrap(QObject):
+    """A checkbox or radio button whose text goes onto more lines when its card is narrow, as a wrapped label
+    (Daniel, 02/11/2026: the Settings' «Meridio animato: i raggi girano, ...» kept the Assistant page 51 px wider
+    than its scroll area at a window of 1000 px; the Consumption's «Mese per mese e per fascia (bollette)» its
+    column 37 px wider than the card, cut). Qt's never wrap and their minimum width is the whole text. The button
+    keeps its text, name and key; its sizes, picture and click area are answered here: the square or the dot at the
+    first line, the lines beside it, the whole text clickable. One line is as tall as every control."""
+
+    FLAGS = Qt.TextFlag.TextWordWrap | Qt.TextFlag.TextShowMnemonic
+
+    def __init__(self, box):
+        from PySide6.QtWidgets import QRadioButton
+        super().__init__(box)
+        self.box = box
+        radio = isinstance(box, QRadioButton)
+        self.control = QStyle.ControlElement.CE_RadioButton if radio else QStyle.ControlElement.CE_CheckBox
+        self.contents = (QStyle.SubElement.SE_RadioButtonContents if radio else
+                         QStyle.SubElement.SE_CheckBoxContents)
+        box.minimumSizeHint = self.minimum
+        box.hasHeightForWidth = lambda: True
+        box.heightForWidth = self.height_for
+        box.paintEvent = self.paint
+        box.hitButton = self.hit
+        policy = box.sizePolicy()
+        policy.setHorizontalPolicy(policy.Policy.Preferred)         # Qt's Minimum never goes under the whole text
+        policy.setVerticalPolicy(policy.Policy.Minimum)             # Fixed would hold it at one line
+        policy.setHeightForWidth(True)
+        box.setSizePolicy(policy)
+        box.updateGeometry()
+
+    def _option(self, height: int):
+        from PySide6.QtWidgets import QStyleOptionButton
+        from .design import Size
+        opt = QStyleOptionButton()
+        self.box.initStyleOption(opt)
+        opt.rect = QRect(0, 0, self.box.width(), min(height, Size.CONTROL))
+        return opt
+
+    def _indent(self) -> int:
+        opt = self._option(self.box.height())
+        return self.box.style().subElementRect(self.contents, opt, self.box).left()
+
+    def _pad(self) -> int:
+        from .design import Size
+        return max(0, (Size.CONTROL - QFontMetrics(self.box.font()).height()) // 2)
+
+    def minimum(self) -> QSize:
+        """As narrow as its longest word, as a wrapped label; one line tall."""
+        from .design import Size
+        metrics = QFontMetrics(self.box.font())
+        word = max((metrics.horizontalAdvance(w) for w in self.box.text().replace("&", "").split()), default=0)
+        return QSize(self._indent() + word, Size.CONTROL)
+
+    def height_for(self, width: int) -> int:
+        from .design import Size
+        room = max(1, width - self._indent())
+        lines = QFontMetrics(self.box.font()).boundingRect(QRect(0, 0, room, 100000), int(self.FLAGS),
+                                                            self.box.text())
+        return max(Size.CONTROL, lines.height() + 2 * self._pad())
+
+    def hit(self, pos) -> bool:
+        """The square or dot and the box of the text, as Qt's own: not the empty width beyond the text."""
+        from .design import Size
+        box, left, pad = self.box, self._indent(), self._pad()
+        lines = QFontMetrics(box.font()).boundingRect(QRect(left, pad, box.width() - left, box.height() - 2 * pad),
+                                                      int(self.FLAGS), box.text())
+        return (QRect(0, 0, left, min(box.height(), Size.CONTROL)).contains(pos)
+                or lines.adjusted(0, -pad, 0, pad).contains(pos))
+
+    def paint(self, _event) -> None:
+        from PySide6.QtGui import QPalette
+        box = self.box
+        opt = self._option(box.height())
+        text, opt.text = opt.text, ""
+        painter = QPainter(box)
+        style = box.style()
+        style.drawControl(self.control, opt, painter, box)          # the square or the dot, and its focus ring
+        left = self._indent()
+        pad = self._pad()
+        style.drawItemText(painter, QRect(left, pad, box.width() - left, box.height() - 2 * pad),
+                           int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop) | int(self.FLAGS),
+                           opt.palette, box.isEnabled(), text, QPalette.ColorRole.WindowText)
+        painter.end()
+
+
+def wrap_check(box) -> None:
+    """Let a long checkbox or radio button go onto more lines rather than widen its card (`_CheckWrap`); once per checkbox."""
+    if not hasattr(box, "_meridiana_wrap") and not box.property("sized_by_owner"):
+        box._meridiana_wrap = _CheckWrap(box)
+
+
 def pad_fields(root: QWidget) -> None:
     """The text of the number and date fields under `root` off their left edge: a style sheet's padding does not
     reach the line edit inside a QAbstractSpinBox, whose text stood at 2 px from the edge (Daniel, 24/10/2026)."""
@@ -487,12 +586,16 @@ def pad_fields(root: QWidget) -> None:
         edit = f.findChild(QLineEdit)
         if edit is not None and edit.textMargins().left() != FIELD_TEXT:
             edit.setTextMargins(FIELD_TEXT, 0, 2, 0)
-    # a long label of a form in a card goes onto two lines rather than widen the column past its card
-    from PySide6.QtWidgets import QLabel, QStackedWidget
+    # a long label or checkbox of a form in a card goes onto two lines rather than widen the column past its card
+    from PySide6.QtWidgets import QCheckBox, QLabel, QRadioButton, QStackedWidget
+    for check in (root.findChildren(QCheckBox) + root.findChildren(QRadioButton)
+                  + ([root] if isinstance(root, (QCheckBox, QRadioButton)) else [])):
+        if len(check.text()) > LONG_TEXT:
+            wrap_check(check)
     for label in root.findChildren(QLabel):
         if label.property("sized_by_owner"):        # a result tile measures its own texts (energy_pages.Tiles)
             continue
-        if not label.wordWrap() and len(label.text()) > 28 and _in_scroll(label) and not label.pixmap():
+        if not label.wordWrap() and len(label.text()) > LONG_TEXT and _in_scroll(label) and not label.pixmap():
             label.setWordWrap(True)
         if label.wordWrap():
             grow_label(label)
