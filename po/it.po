@@ -21672,3 +21672,71 @@ msgstr "Ho letto una regola"
 #: src/meridiana/assistant/tools.py
 msgid "Read the activities subject to fire prevention controls"
 msgstr "Ho letto le attività soggette ai controlli di prevenzione incendi"
+
+#: src/meridiana/phases.py
+msgid "Signature"
+msgstr "Firma"
+
+#: src/meridiana/shortcuts.py
+msgid "&Logo…"
+msgstr "&Logo…"
+
+#: src/meridiana/shortcuts.py
+msgid "The designer's &profile…"
+msgstr "Profilo del &progettista…"
+
+#: src/meridiana/ui/window.py
+msgid "The logo of the report: an image file, put in the profile that signs this project"
+msgstr "Il logo della relazione: un file immagine, messo nel profilo che firma questo progetto"
+
+#: src/meridiana/ui/window.py
+msgid "Who signs the report, with the logo and the contacts: Settings > Report, on the profile in use"
+msgstr "Chi firma la relazione, con il logo e i contatti: Impostazioni > Relazione, sul profilo in uso"
+
+#: src/meridiana/ui/window.py
+msgid "The logo is in the profile «{name}», which this project does not use."
+msgstr "Il logo è nel profilo «{name}», che questo progetto non usa."
+
+#: src/meridiana/ui/window.py
+msgid "The logo is in the profile «{name}»: the report shows it."
+msgstr "Il logo è nel profilo «{name}»: la relazione lo mostra."
+
+#: src/meridiana/ui/window.py
+msgid "Several profiles and none signs this project: choose one in «Signed by», then the logo."
+msgstr "Ci sono più profili e nessuno firma questo progetto: scegline uno in «Firma», poi il logo."
+
+#: src/meridiana/ui/window.py
+msgid "My profile"
+msgstr "Il mio profilo"
+
+#: src/meridiana/ui/report_page.py
+msgid "Use it for this project"
+msgstr "Usalo per questo progetto"
+
+#: src/meridiana/ui/report_page.py
+msgid "As saved: {name}"
+msgstr "Come salvato: {name}"
+
+#: src/meridiana/ui/report_page.py
+msgid "The profile saved in the project's file, as no other was chosen"
+msgstr "Il profilo salvato nel file del progetto, perché non ne è stato scelto un altro"
+
+#: src/meridiana/ui/report_page.py
+msgid "{name} (not in the Settings)"
+msgstr "{name} (non nelle Impostazioni)"
+
+#: src/meridiana/ui/report.py
+msgid "Images (*.png *.jpg *.jpeg *.gif *.webp *.svg)"
+msgstr "Immagini (*.png *.jpg *.jpeg *.gif *.webp *.svg)"
+
+#: src/meridiana/ui/report.py
+msgid "The logo could not be read: {error}"
+msgstr "Non riesco a leggere il logo: {error}"
+
+#: src/meridiana/ui/report.py
+msgid "{file} is not an image the report can show: use PNG, JPEG, GIF, WebP or SVG."
+msgstr "{file} non è un'immagine che la relazione può mostrare: usa PNG, JPEG, GIF, WebP o SVG."
+
+#: src/meridiana/ui/report.py
+msgid "{file} looks like an image, but it is damaged or cannot be read."
+msgstr "{file} sembra un'immagine, ma è danneggiata o illeggibile."
