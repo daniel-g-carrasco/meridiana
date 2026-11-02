@@ -25,8 +25,8 @@ import numpy as np
 
 from . import mesh
 
-PIXELS = 120.0                  # an arrow on the screen, whatever the distance (Qt Design Studio measures 100 px)
-TOLERANCE = 8.0                 # pixels from a handle that still take it (task 16b)
+PIXELS = 90.0                   # an arrow on the screen, whatever the distance (R302: it was 120, «troppo grandi»)
+TOLERANCE = 10.0                # pixels from a handle that still take it: well beyond its 2 drawn (task 16b, R302)
 EAST = np.array([1.0, 0.0, 0.0])
 NORTH = np.array([0.0, 0.0, -1.0])
 UP = np.array([0.0, 1.0, 0.0])

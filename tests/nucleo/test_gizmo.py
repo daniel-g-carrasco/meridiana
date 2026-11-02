@@ -27,6 +27,26 @@ def pixel(c, point):
     return c.project(np.asarray(point, dtype=float), W, H)
 
 
+class Thin(unittest.TestCase):
+    """R302: thin on the screen, and still easy to take: the area of the press wider than the drawing."""
+
+    def test_the_lines_are_thin_and_the_press_takes_more_than_is_drawn(self):
+        shaft, ring = mesh.GIZMO_SHAFT[2] * 2 * gizmo.PIXELS, mesh.GIZMO_RING[1] * 2 * gizmo.PIXELS
+        self.assertLessEqual(max(shaft, ring), 2.5)
+        self.assertLess(gizmo.PIXELS, 100.0)
+        self.assertGreaterEqual(gizmo.TOLERANCE, 3 * max(shaft, ring))
+
+    def test_a_press_well_off_the_thin_line_takes_the_arrow(self):
+        c = cam()
+        size = gizmo.length(c, (0, 0, 0), H)
+        a = c.project(gizmo.EAST * 0.5 * size, W, H)
+        b = c.project(gizmo.EAST * 0.6 * size, W, H)
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        n = math.hypot(dx, dy)
+        px, py = a[0] - dy / n * (gizmo.TOLERANCE - 1), a[1] + dx / n * (gizmo.TOLERANCE - 1)
+        self.assertEqual(gizmo.pick(c, px, py, W, H, (0, 0, 0), size), "x")
+
+
 class Handles(unittest.TestCase):
     def test_an_arrow_is_as_long_on_the_screen_wherever_the_gizmo_stands(self):
         c = cam()
