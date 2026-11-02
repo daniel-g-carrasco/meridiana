@@ -30,6 +30,9 @@ from ..i18n import _
 
 QML_FILE = Path(__file__).resolve().parent / "qml" / "ReportScene.qml"
 SIZE = (1100, 720)               # pixels of a picture: about 8 cm wide in the report, some 340 dpi
+PRINT_SIZE = (2200, 1440)        # the report's pictures since R314: the whole width of the page, some 320 dpi
+TRIM_WHITE = 250                 # a pixel lighter than this in every channel is the paper around the scene
+TRIM_PAD = 0.03                  # of the scene's size, white kept around it once trimmed
 ELEVATION = -30.0                # how far the views look down
 MARGIN = 0.05                    # of the picture's width and height, free around the scene
 EDGE_PX = 1.4                    # the width of the buildings' edges, pixels
@@ -201,7 +204,7 @@ def render(project, results: dict, size: tuple[int, int] = SIZE) -> dict[str, by
     for vid, (bearing, elevation, _caption) in views().items():
         cam = camera.axonometric(points, bearing, elevation, w / h, MARGIN)
         magnification = h / (2 * cam.half_height())          # pixels a metre
-        edges.set_mesh(*mesh.ribbons(segs, EDGE_PX / magnification, paper["edge"]))
+        edges.set_mesh(*mesh.ribbons(segs, EDGE_PX * w / SIZE[0] / magnification, paper["edge"]))
         root.setProperty("magnification", magnification)
         root.setProperty("cameraPosition", QVector3D(*map(float, cam.position)))
         root.setProperty("cameraRotation", QQuaternion(*map(float, cam.rotation)))
@@ -216,6 +219,26 @@ def render(project, results: dict, size: tuple[int, int] = SIZE) -> dict[str, by
 
 
 def picture(project, results: dict, vid: str, size: tuple[int, int] = SIZE) -> bytes:
-    """One view as PNG bytes (b"" when it cannot be made): the report's steps ask for each image apart; the first
-    renders them all, the others find them made."""
-    return render(project, results, size).get(vid, b"")
+    """One view as PNG bytes (b"" when it cannot be made), the white around the scene trimmed so it fills its frame
+    in the report (study 24: «la cornice del rendering lascia bianco intorno»): the report's steps ask for each image
+    apart; the first renders them all, the others find them made."""
+    png = render(project, results, size).get(vid, b"")
+    return trimmed(png) if png else png
+
+
+def trimmed(png: bytes) -> bytes:
+    """A picture cut to the scene and a thin margin of white: the rows and the columns that are all paper taken off."""
+    image = QImage.fromData(png).convertToFormat(QImage.Format.Format_RGB32)
+    if image.isNull():
+        return png
+    w, h = image.width(), image.height()
+    pixels = np.frombuffer(image.constBits(), dtype=np.uint8, count=image.sizeInBytes()).reshape(h, image.bytesPerLine())
+    rgb = pixels[:, :w * 4].reshape(h, w, 4)[:, :, :3]
+    ink = (rgb < TRIM_WHITE).any(axis=2)
+    rows, cols = np.flatnonzero(ink.any(axis=1)), np.flatnonzero(ink.any(axis=0))
+    if not len(rows) or not len(cols):
+        return png
+    pad = round(TRIM_PAD * max(rows[-1] - rows[0], cols[-1] - cols[0]))
+    top, bottom = max(0, rows[0] - pad), min(h - 1, rows[-1] + pad)
+    left, right = max(0, cols[0] - pad), min(w - 1, cols[-1] + pad)
+    return _png(image.copy(int(left), int(top), int(right - left + 1), int(bottom - top + 1)))

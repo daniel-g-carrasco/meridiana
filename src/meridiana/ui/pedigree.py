@@ -12,16 +12,11 @@ from PySide6.QtCore import QUrl
 from PySide6.QtGui import QImage, QTextDocument
 from PySide6.QtWidgets import QApplication, QTextBrowser
 
-from ..energy.pedigree import Record
+from ..energy.pedigree import Record, kind_names, limits
 from ..i18n import _
 from .charts import CHROME, mode
 from .design import strong
 from .theme import marked
-
-
-def kind_names() -> dict:
-    return {"input": _("designer"), "default": _("default"), "data": _("data"), "norm": _("standard"),
-            "model": _("model"), "computed": _("computed")}
 
 
 @functools.lru_cache(maxsize=1024)
@@ -39,42 +34,6 @@ def formula_png(tex: str, color: str, dpi: float, size: float = 13.0) -> bytes:
     with matplotlib.rc_context({"savefig.transparent": True}):
         math_to_image(f"${tex}$", buf, prop=FontProperties(size=size), dpi=dpi, format="png", color=color)
     return buf.getvalue()
-
-
-def limits() -> list[str]:
-    """What the energy model leaves out or only estimates, as the report and the page must say it (study
-    18: B-calcoli section 7, B-pvsyst section 8)."""
-    return [
-        _("Bifacial modules: the light on the rear face is not computed (the bifaciality factor of the module is "
-          "read and not used); a bifacial module counts as its front face."),
-        _("Spectral correction: none (PVGIS counts about +1% for crystalline silicon in the Po valley)."),
-        _("Degradation over the years and P50/P90: the production is the first year's (LID included); the yearly "
-          "degradation acts in the economics only; no probability of exceedance (PVGIS gives the year-to-year "
-          "spread of the irradiation)."),
-        _("Snow: none. Soiling: one share for the whole year, not month by month."),
-        _("MV transformer, MV lines, auxiliaries and the inverters' night consumption: none (1.5-2% on ground-mounted "
-          "plants with an MV connection)."),
-        _("Cables: shares at STC and at the nominal AC power, not lengths, sections and resistivity; no check of the "
-          "voltage drop here."),
-        _("Inverters: each connected unit is calculated separately with its nominal power, efficiency and input "
-          "constraints. The conversion curve is PVWatts calibrated to the catalogued efficiency, not the full "
-          "OND efficiency map; firmware, start-up hysteresis and dynamic MPPT tracking are not simulated."),
-        _("Trackers: none, the modules are fixed."),
-        _("Weather: the PVGIS typical year only; no Meteonorm, no measured years, no weather file of PVsyst."),
-        _("Irradiance-level loss is an estimate based on one-diode parameters fitted to a few datasheet points, "
-          "unless parameters are available in the module's PVsyst file."),
-        _("Electrical shading reconstructs sampled current-voltage curves of differently illuminated cell groups, "
-          "bypass sections, series strings and parallel MPPT inputs. Cell positions and internal connections are "
-          "inferred when the manufacturer does not provide them. Bypass voltage drop and shade discretisation "
-          "are modelling assumptions; reverse breakdown and hot spots are not simulated. A shaded module affects "
-          "the common string current, not only the modules after it. Numerical reference tests are not field measurements."),
-        _("Bypass layout comes from the module file when available; otherwise three bypass diodes and the cell "
-          "layout inferred from the cell count are assumptions to verify against the manufacturer's diagram."),
-        _("Optimizers: supported SolarEdge systems use the actual module groups, input operating window, "
-          "current and output-voltage limits hour by hour when these are documented. Conversion efficiency "
-          "remains fixed. Two modules on one optimizer share its MPPT. Missing limits are reported; other "
-          "optimizer architectures, optional branch cables and proprietary firmware are not inferred."),
-    ]
 
 
 def limits_html() -> str:

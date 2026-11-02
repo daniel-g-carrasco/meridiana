@@ -131,3 +131,21 @@ def write_csv(path: Path, table, lines: list[str]) -> None:
     finally:
         if part.exists():
             part.unlink()
+
+
+def year_carpet(hourly, months: list[str]):
+    """The year as a carpet (R63): 24 rows of hours, a column for each day; the hour the clock repeats in autumn
+    averaged, the one it skips in spring between its neighbours; the days' names and the months' starts for the
+    axis."""
+    import numpy as np
+    import pandas as pd
+    idx = hourly.index
+    table = pd.DataFrame({"v": hourly.to_numpy(), "d": idx.dayofyear, "h": idx.hour}).pivot_table(
+        index="h", columns="d", values="v", aggfunc="mean").reindex(range(24))
+    days = list(table.columns)
+    dates = pd.Timestamp(year=int(idx[0].year), month=1, day=1) + pd.to_timedelta(np.asarray(days) - 1, unit="D")
+    cols = [f"{d.day} {months[d.month - 1]}" for d in dates]
+    ticks = [(j, months[d.month - 1]) for j, d in enumerate(dates) if d.day == 1]
+    # the hour the clock skips in spring, between the two beside it (it came out as nought)
+    table = table.interpolate(axis=0, limit_direction="both")
+    return table.fillna(0.0).to_numpy(), cols, ticks
