@@ -22,6 +22,7 @@ every distribution (source, installer, Flatpak: the packages are being rebuilt f
 | matplotlib | 3.11.2 | the matplotlib licence (PSF-style, BSD-compatible) |
 | pyqtgraph | 0.14.0 | MIT |
 | pypdf (the report's attachments, merged into its PDF) | 6.21.2 | BSD-3-Clause |
+| typst, the Python binding of the Typst compiler (the report's layout, R314) | 0.15.0 | Apache-2.0 |
 | pandas | 3.0.6 | BSD-3-Clause |
 | requests | 2.34.2 | Apache-2.0 |
 | anthropic (Claude's SDK, for Meridio in the cloud: optional, imported only when used) | 2.3.0 | Apache-2.0 |

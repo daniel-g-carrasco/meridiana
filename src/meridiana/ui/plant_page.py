@@ -21,6 +21,7 @@ from PySide6.QtWidgets import QStyle, QStyleOptionViewItem
 from .. import shortcuts, theme_colors
 from ..energy import optimizers
 from ..energy import plant as plant_model
+from ..energy.plant import input_name  # noqa: F401  (the window imports it from here)
 from ..energy import system
 from ..i18n import _, ngettext, number
 from .cards import default_tokens
@@ -1464,14 +1465,6 @@ def install_reference(page, go) -> InverterReference:
     for w in (old, strings):
         w.hide()
     return ref
-
-
-def input_name(unit, k: int) -> str:
-    """An input as the Plant names it: «Input 2» of an inverter with MPPT, «Synergy unit 2» of a SolarEdge inverter
-    with Synergy units, «Strings» of a SolarEdge inverter with one DC bus (task 22)."""
-    if not unit.optimized:
-        return _("MPPT {k}").format(k=k)
-    return _("Synergy unit {k}").format(k=k) if unit.inputs > 1 else _("Strings")
 
 
 def optimized_takes(unit, slot) -> str:

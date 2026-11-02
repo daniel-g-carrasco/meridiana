@@ -69,6 +69,8 @@ def chapters() -> dict[str, Chapter]:
         Chapter("annexes", _("Component data"), ("sim",),
                 _("The data of the modules and of the inverters used")),      # «Annexes» until R291: the PDF
                                                                               # attachments are the attachments
+        Chapter("register", _("Register of the calculations"), ("sim",),
+                _("Every number of the report with its code, what it is and where it comes from")),
         Chapter("overview", _("System overview and results"), ("sim",),
                 _("The headline numbers, the layout in 3D and the plan of the modules")),
         Chapter("monthly", _("Estimated monthly energy"), ("sim",),
@@ -86,9 +88,10 @@ def chapters() -> dict[str, Chapter]:
 def templates() -> dict[str, Template]:
     items = [
         Template("complete", _("Complete"),
-                 _("Cover, contents and ten chapters, from the summary to the annexes: the technical report."),
+                 _("Cover, contents and the chapters from the summary to the register of the calculations: the "
+                   "technical report."),
                  ("summary", "site", "layout", "plant", "production", "consumption", "economics", "checks",
-                  "methods", "annexes"), True),
+                  "methods", "annexes", "register"), True),
         Template("compact", _("Compact"),
                  _("The essentials in a few pages, as the inverters' design programs write them: results, "
                    "energy month by month, modules, strings, parameters."),
@@ -98,10 +101,10 @@ def templates() -> dict[str, Template]:
                  ("overview", "monthly", "economics", "checks"), False),
         Template("electrical", _("Electrical design review"),
                  _("Site, layout, inverters, strings, checks and component data for a technical review."),
-                 ("site", "layout", "plant", "checks", "annexes"), True),
+                 ("site", "layout", "plant", "checks", "annexes", "register"), True),
         Template("energy", _("Energy and assumptions"),
                  _("Weather, production, consumption, economics and calculation methods, with checks."),
-                 ("site", "production", "consumption", "economics", "checks", "methods"), True),
+                 ("site", "production", "consumption", "economics", "checks", "methods", "register"), True),
     ]
     return {t.id: t for t in items}
 
@@ -196,13 +199,14 @@ def plan(project, data: dict) -> list[Chapter]:
 
 
 # the author's profile (Preferences > Report): what the cover, the header and the footer say
-PROFILE_KEYS = ("name", "signer", "register", "firm", "address", "phone", "email", "web", "logo")
+PROFILE_KEYS = ("name", "signer", "register", "firm", "address", "phone", "email", "web", "logo", "accent")
+ACCENT = "#1c6e8c"               # the report's accent when the profile gives none (study 24, sketch V1)
 
 
 def profile_labels() -> dict[str, str]:
     return {"name": _("Profile"), "signer": _("Name and title"), "register": _("Professional register"),
             "firm": _("Firm"), "address": _("Address"), "phone": _("Phone"), "email": _("E-mail"),
-            "web": _("Website"), "logo": _("Logo")}
+            "web": _("Website"), "logo": _("Logo"), "accent": _("Accent colour")}
 
 
 def clean_profile(raw) -> dict | None:
@@ -220,3 +224,11 @@ def profile_for(project, profiles: list, default: str = "") -> dict | None:
     if not name:
         return None
     return next((p for p in (clean_profile(x) for x in profiles) if p and p["name"] == name), None)
+
+
+def accent_of(profile: dict | None) -> str:
+    """The report's accent: the profile's colour when it is one («#1c6e8c» or «1c6e8c»), else the blue of the
+    sketch."""
+    import re
+    raw = str((profile or {}).get("accent") or "").strip().lstrip("#")
+    return f"#{raw.lower()}" if re.fullmatch(r"[0-9a-fA-F]{6}", raw) else ACCENT

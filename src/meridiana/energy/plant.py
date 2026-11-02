@@ -2006,3 +2006,11 @@ def _optimized_unit_checks(unit: Unit, out: Plant, modules: dict, dc_w: float) -
                                         [_string_power(x, modules) for x in valid], counts, 0.0, ch.rules)
     found += optimizers.unit_checks(name, unit.fixed, ch.optimizer, ch.per, [], [], dc_w, ch.rules)
     return found
+
+
+def input_name(unit, k: int) -> str:
+    """An input as the Plant names it: «Input 2» of an inverter with MPPT, «Synergy unit 2» of a SolarEdge inverter
+    with Synergy units, «Strings» of a SolarEdge inverter with one DC bus (task 22)."""
+    if not unit.optimized:
+        return _("MPPT {k}").format(k=k)
+    return _("Synergy unit {k}").format(k=k) if unit.inputs > 1 else _("Strings")

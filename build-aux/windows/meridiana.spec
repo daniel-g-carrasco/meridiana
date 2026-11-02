@@ -10,7 +10,8 @@
 #
 # What goes in: the program; Qt Quick 3D and the QML modules the 3D scene imports; QtPdf, QtSvg, QtMultimedia and
 # QtTextToSpeech (Meridio's voices: the system's through SAPI or WinRT); Qt's own translations in Italian and
-# English; matplotlib for the formulas and the report (Agg only), pvlib with the tables its functions read at run
+# English; Typst (the typst wheel) for the report's layout, its template beside its module; matplotlib for the
+# formulas (Agg only), pvlib with the tables its functions read at run
 # time, scipy, shapely, pyqtgraph, requests, anthropic and keyring; Meridiana's catalogues (share/locale), icons and
 # fonts (share/), the manual (share/manuale), the 3D scene and the product catalogue (next to their modules), and
 # Kokoro's worker and runtime. Model weights are not shipped or downloaded by the build.
@@ -50,6 +51,7 @@ datas = [
     (str(ROOT / 'locale'), 'share/locale'),
     (str(SRC / 'ui' / 'qml'), 'meridiana/ui/qml'),              # view3d.QML_FILE, next to its module
     (str(SRC / 'catalog' / 'data'), 'meridiana/catalog/data'),  # catalog.DATA
+    (str(SRC / 'report_typst' / 'template.typ'), 'meridiana/report_typst'),   # the report's look (R314)
     (str(SRC / 'assistant' / 'kokoro_worker.py'), 'meridiana/assistant'),
 ]
 # pvlib's tables read at run time (the Linke turbidity of the Ineichen sky, the altitude of a place, the reference
@@ -75,7 +77,8 @@ a = Analysis(
     # pyqtgraph comes with its data and its Qt templates through hook-pyqtgraph of pyinstaller-hooks-contrib;
     # keyring finds its Windows backend by entry point (hook-keyring)
     # IfcOpenShell's api.run resolves these export operations by name at run time.
-    hiddenimports=[*voice_imports, 'keyring.backends.Windows', 'ifcopenshell.geom',
+    # typst: the report's layout, a compiled module (typst._typst) imported only when a report is made
+    hiddenimports=[*voice_imports, 'keyring.backends.Windows', 'ifcopenshell.geom', 'typst', 'typst._typst',
                    *collect_submodules('ifcopenshell.express.rules'),
                    *['ifcopenshell.api.' + family for family in
                      ('project', 'root', 'unit', 'context', 'georeference', 'aggregate')]],

@@ -148,6 +148,14 @@ def files(report: Report) -> None:
     from .view3d import QML_FILE
     report.check("3D scene file", QML_FILE.is_file(), str(QML_FILE), t)
     t = time.perf_counter()
+    from ..report_typst import engine
+    try:
+        good, what = engine.self_check()
+    except RuntimeError as error:                   # Typst's own errors
+        good, what = False, f"{type(error).__name__}: {error}"
+    report.check("report engine (Typst, the program's fonts)", good and engine.TEMPLATE.is_file(),
+                 f"{what}; {engine.TEMPLATE}", t)
+    t = time.perf_counter()
     from ..assistant import speech
     worker = speech.worker_script()
     report.check("voice worker script", worker.is_file() and worker.suffix == ".py", str(worker), t)
@@ -166,7 +174,7 @@ def files(report: Report) -> None:
     report.add("PASS" if authorities else ("FAIL" if sys.platform == "win32" else "INFO"), "TLS authorities",
                f"{authorities} in the system's store", t)
     for module in ("matplotlib.backends.backend_agg", "pyqtgraph", "scipy.optimize", "shapely", "requests",
-                   "pypdf", "ifcopenshell.geom"):
+                   "pypdf", "typst", "ifcopenshell.geom"):
         t = time.perf_counter()
         try:
             __import__(module)

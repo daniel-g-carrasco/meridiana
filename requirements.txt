@@ -26,6 +26,9 @@ pyqtgraph>=0.14
 # their pages into the report. A datasheet encrypted with AES against changes is drawn by QtPdf instead: pypdf
 # reads those only with the cryptography package, which Meridiana does not require.
 pypdf>=6.0
+# The report's layout (R314, study 24): Typst through its Python binding (Apache-2.0), one wheel of about 30 MB with no
+# library of the system (abi3: Windows x64, Linux x86_64 and aarch64). The report's look is report_typst/template.typ.
+typst==0.15.0
 # Meridio's cloud model and its key (task 14): Claude's official SDK (Apache-2.0) and the system's keyring (MIT).
 # Both are imported only when used: without them the program starts and Meridio answers with the local model only.
 anthropic>=2.3

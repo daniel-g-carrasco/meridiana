@@ -457,8 +457,9 @@ class ReportPage(QWidget):
         labels = reports.profile_labels()
         self.fields: dict[str, QLineEdit] = {}
         hints = {"name": _("as you will choose it, for example «Studio»"), "signer": _("for example Ing. Name Surname"),
-                 "register": _("register, province and number"), "web": "www…"}
-        for key in ("name", "signer", "register", "firm", "address", "phone", "email", "web"):
+                 "register": _("register, province and number"), "web": "www…",
+                 "accent": _("#1c6e8c, the blue of the report when empty")}
+        for key in ("name", "signer", "register", "firm", "address", "phone", "email", "web", "accent"):
             edit = QLineEdit()
             edit.setPlaceholderText(hints.get(key, ""))
             edit.textEdited.connect(lambda _t, key=key: self._typed(key))
@@ -542,7 +543,7 @@ class ReportPage(QWidget):
             n += 1
             name = f"{_('Profile')} {n}"
         self.profiles.append({k: "" for k in ("signer", "register", "firm", "address", "phone", "email", "web",
-                                              "logo")} | {"name": name})
+                                              "logo", "accent")} | {"name": name})
         self._fill(len(self.profiles) - 1)
         self.fields["name"].setFocus()
         self.fields["name"].selectAll()

@@ -1,14 +1,18 @@
-"""The report (ui/report.py, ui/report_chapters.py, reports.py) of a whole project, without the window: an inverter
-from the list, the strings it proposes on the modules, the consumption, the economics, the checks and the notes of
-the rules; the chapters of each template there and in their order, the contents with their pages, a chapter left
-out when it is turned off or has no data; the author's profile only where it is chosen; what the model leaves
-out; the values still at their default; the PDF and the preview; the attachments after the last chapter, in the
-contents and in the PDF where the contents say, a missing or protected one; the register of the calculations
-beside the PDF; the 3D pictures in the Summary and in the Overview. The year is computed once for the class from
-the synthetic weather of _energy, with no network. Qt for the PDF (offscreen will do: there Qt writes the text as
-outlines, so the pages are told apart by their sizes, not by their words)."""
+"""The report (report_typst/, ui/report.py, reports.py) of a whole project, without the window: an inverter from the list,
+the strings it proposes on the modules, the consumption, the economics, the checks and the notes of the rules; the
+chapters of each template there and in their order, the contents with their pages, a chapter left out when it is
+turned off or has no data; the author's profile only where it is chosen; what the model leaves out; the values still
+at their default; the register of the calculations with a code for every number; the PDF and the preview drawn from
+it; the attachments after the last chapter, in the contents and in the PDF where the contents say, a missing or
+protected one; the register beside the PDF; the 3D pictures on the cover, in the summary and in the layout. The year
+is computed once for the class from the synthetic weather of _energy, with no network. The document is data (JSON) for
+Typst: what it says is read there; the PDF is read back with pypdf."""
 
+import io
+import json
+import re
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -44,6 +48,11 @@ def sizes_mm(path: Path) -> list[tuple[int, int]]:
             for pg in PdfReader(str(path)).pages]
 
 
+def texts(path: Path) -> list[str]:
+    from pypdf import PdfReader
+    return [pg.extract_text() or "" for pg in PdfReader(str(path)).pages]
+
+
 def project() -> model.Project:
     p = model.Project(name="Prova")
     p.site = model.Site(lat=45.5226, lon=9.0300, address="Rho (MI)")
@@ -60,14 +69,34 @@ def project() -> model.Project:
     return p
 
 
+def blocks_of(doc: dict, kind: str) -> list[dict]:
+    """Every block of `kind` in the document, inside the columns, the floats and the separators too."""
+    out = []
+
+    def walk(items):
+        for b in items:
+            if not isinstance(b, dict):
+                continue
+            if b.get("k") == kind:
+                out.append(b)
+            for key in ("left", "right", "items"):
+                if isinstance(b.get(key), list):
+                    walk(b[key])
+    walk(doc["body"])
+    return out
+
+
 class Report(unittest.TestCase):
     PROFILE = {"name": "Prova", "signer": "Firmatario di prova", "register": "Albo di prova", "firm": "Studio di prova",
-               "address": "", "phone": "", "email": "", "web": "", "logo": ""}
+               "address": "", "phone": "", "email": "", "web": "", "logo": "", "accent": ""}
 
     @classmethod
     def setUpClass(cls):
         from _fixtures import clear_sky_meteo, write_cache
         cls.app = _setup.qt_or_skip()
+        from meridiana.report_typst import engine
+        if not engine.available():
+            raise unittest.SkipTest("the typst package is not installed")
         cls.cache = Path(tempfile.mkdtemp())
         write_cache(clear_sky_meteo(45.5226, 9.03), cls.cache)
         cls.p = project()
@@ -85,201 +114,194 @@ class Report(unittest.TestCase):
     def setUp(self):
         self.p.report = {}
 
-    def html(self, energy=None, profile=None):
-        from meridiana.ui.report import build_html
-        images = []
-        text = build_html(self.p, energy or self.energy, lambda name, png, ratio=1.0: images.append(name) or name,
-                          profile)
-        return text, images
+    def composed(self, energy=None, profile=None, **kw):
+        from meridiana.report_typst import compose
+        made = compose(self.p, energy or self.energy, profile=profile, **kw)
+        return made, json.dumps(made.document, ensure_ascii=False)
+
+    def chapters(self, made) -> list[str]:
+        return [b["title"] for b in made.document["body"] if b.get("k") == "chapter"]
 
     def test_every_chapter_of_the_complete_template_is_there_in_its_order_with_the_contents(self):
         from meridiana import reports
-        text, _images = self.html()
+        made, text = self.composed()
         titles = [reports.chapters()[c].title for c in reports.templates()["complete"].chapters]
-        order = ["<h2 style='page-break-before: always'>Contents</h2>"]
-        order += [f"<h2 style='page-break-before: always'>{n}. {t}</h2>" for n, t in enumerate(titles, 1)]
-        where = [text.find(h) for h in order]
-        self.assertNotIn(-1, where, [h for h, w in zip(order, where, strict=True) if w < 0])
-        self.assertEqual(where, sorted(where))
-        for h in ("<h3>Strings (CEI 64-8/7)</h3>", "<td align='left'>Inverter 1: Acme AC-20K</td>",
-                  "<td align='left'>Inverter 2: Acme AC-20K</td>", "<h4>Checks of the strings</h4>",
-                  "<h4>Checks of the inverters</h4>", "<h4>The strings on the modules</h4>",
-                  "<h3>Notes for the technical report</h3>", "<h3>Values still at their default</h3>"):
+        self.assertEqual(self.chapters(made), [f"{n}. {t}" for n, t in enumerate(titles, 1)])
+        self.assertEqual(made.document["toc"], "cover")                  # the contents on the cover, its pages Typst's
+        self.assertIsNotNone(made.document["cover"])
+        for h in ("Strings (CEI 64-8/7)", "Inverter 1: Acme AC-20K", "Inverter 2: Acme AC-20K", "Checks of the strings",
+                  "Checks of the inverters", "The strings on the modules", "Notes for the technical report",
+                  "Values still at their default", "Register of the calculations"):
             self.assertIn(h, text)
-        for n, t in enumerate(titles, 1):                                  # the contents list them all
-            self.assertIn(f"<td class='toc'>{n}. {t}</td>", text)
+        breaks = [b["id"] for b in made.document["body"] if b.get("k") == "chapter" and b["break"]]
+        self.assertEqual(breaks, ["summary"])                            # the rest flows: no page two thirds empty
 
     def test_the_compact_template_writes_its_five_chapters_without_contents_with_the_author_when_chosen(self):
         from meridiana import reports
         self.p.report = {"template": "compact"}
-        text, images = self.html(profile=self.PROFILE)
+        made, text = self.composed(profile=self.PROFILE)
         titles = [reports.chapters()[c].title for c in reports.templates()["compact"].chapters]
-        where = [text.find(f"<h2>{n}. {t}</h2>") for n, t in enumerate(titles, 1)]
-        self.assertNotIn(-1, where)
-        self.assertEqual(where, sorted(where))
-        self.assertNotIn("Contents", text)
-        self.assertIn("<h1>Prova</h1>", text)
+        self.assertEqual(self.chapters(made), [f"{n}. {t}" for n, t in enumerate(titles, 1)])
+        self.assertEqual(made.document["toc"], "none")
+        self.assertIsNone(made.document["cover"])
+        self.assertEqual(made.document["head"]["title"], "Prova")
         for value in ("Studio di prova", "Firmatario di prova", "Albo di prova"):
             self.assertIn(value, text)
-        for name in ("plan", "plan_strings", "monthly"):
-            self.assertIn(name, images)
-        bare, _images = self.html()                                         # no profile: none of it
+        for name in ("plan.svg", "plan_strings.svg"):
+            self.assertIn(name, made.makers)
+        self.assertTrue(blocks_of(made.document, "bars"))                # the energy month by month, drawn by Typst
+        self.assertNotIn("R-0", text)                                    # no register in this template: no codes
+        self.assertIn("Source: ", text)                                  # but the sources in words
+        bare, text = self.composed()                                     # no profile: none of it
         for value in ("Studio di prova", "Firmatario di prova", "Albo di prova", "Designer"):
-            self.assertNotIn(value, bare)
+            self.assertNotIn(value, text)
 
     def test_a_chapter_turned_off_or_without_its_data_is_left_out(self):
         self.p.report = {"off": ["economics", "annexes"]}
-        text, _images = self.html()
-        self.assertNotIn(". Economics</", text)
-        self.assertNotIn(". Component data</", text)
-        self.assertIn("7. Checks and standards", text)                     # the numbers follow what is written
+        made, _text = self.composed()
+        chapters = self.chapters(made)
+        self.assertNotIn("Economics", " ".join(chapters))
+        self.assertNotIn("Component data", " ".join(chapters))
+        self.assertIn("7. Checks and standards", chapters)              # the numbers follow what is written
         bare = {k: v for k, v in self.energy.items() if k not in ("plant", "rules_facts", "checks", "load", "econ")}
         self.p.report = {}
-        text, _images = self.html(bare)
+        made, text = self.composed(bare)
         for h in ("Electrical system", "Strings (CEI 64-8/7)", "Notes for the technical report", "Checks and standards",
                   "Consumption and balance"):
             self.assertNotIn(h, text)
-        self.assertIn("4. Energy yield", text)
+        self.assertIn("4. Energy yield", self.chapters(made))
 
     def test_the_strings_are_listed_by_inverter_and_input_with_their_checks_and_modules(self):
         from meridiana.ui.report import _keys_text
         plant = self.energy["plant"]
         self.assertEqual(len(plant.units), 2)
         self.assertTrue(plant.strings)
-        text, _images = self.html()
+        made, text = self.composed()
         self.assertIn(f"{len(plant.strings)} strings on ", text)
         self.assertIn("proposed by Meridiana", text)
         self.assertIn("Checked at the hottest cell of the typical year", text)     # the year is there: its cells
+        rows = [r for t in blocks_of(made.document, "table") for r in t["rows"] if isinstance(r, list)]
         for s in plant.strings:
-            self.assertIn(f"<td align='left'>{s.label}</td><td align='left'>Sud</td><td align='right'>{len(s.modules)}"
-                          "</td>", text)
-            self.assertIn(_keys_text([k for _sf, k, _c in s.modules]), text)
+            keys = _keys_text([k for _sf, k, _c in s.modules])
+            self.assertIn([s.label, "Sud", str(len(s.modules)), {"m": keys}], [r[:4] for r in rows])
         self.assertIn("Modules in series within the range the input takes", text)   # the checks of each input
         self.assertIn("modules in series", text)
-        # their marks the window's symbols, pictures of the report (R138: they were the characters ✔ ⚠ ✘ ℹ)
-        self.assertIn("symbol-check", _images)
-        self.assertIn("<img src='symbol-check'", text)
-        self.assertNotIn("✔", text)
-        from meridiana.ui import report_chapters
-        self.assertIsNone(report_chapters._IMAGE[0])                                # no report left behind
-        self.assertTrue(report_chapters._symbol_png("check").startswith(b"\x89PNG"))
+        # their marks drawn by the template (R138 wanted the window's symbols, not the characters ✔ ⚠ ✘ ℹ)
+        self.assertIn('{"mark": "ok"}', text)
+        for character in "✔⚠✘ℹ":
+            self.assertNotIn(character, text)
         self.assertEqual(_keys_text(["0:0", "0:1", "0:2", "1:2", "1:1", "1:0", "3:5"]), "0:0-2, 1:2-0, 3:5")
         self.assertEqual(_keys_text(["0:0", "0:2", "0:3:1"]), "0:0, 0:2, 0:3:1")
 
-    # the look of the report (R291, 30/10/2026): one hierarchy of headings, the units in the headers, nothing twice
-
-    def test_the_headings_are_one_hierarchy_and_the_plan_is_drawn_once(self):
-        """Chapters are the only h2 (the records of the methods come in a level down); the plan is in the summary
-        and not again in the layout; the strings' checks are written once for each kind of string."""
-        from meridiana import reports
-        text, images = self.html()
-        chapters = reports.plan(self.p, self.energy)
-        self.assertEqual(text.count("<h2"), 1 + len(chapters))                # the contents, then the chapters
-        self.assertEqual([c.id for c in chapters], ["summary", "site", "layout", "plant", "production",
-                                                    "consumption", "economics", "checks", "methods", "annexes"])
-        self.assertEqual(images.count("plan"), 1)
-        self.assertEqual(images.count("plan_strings"), 1)
-        self.assertIn("<h3>What the model does not include</h3>", text)       # was an h2 inside chapter 9
+    def test_the_plan_is_drawn_once_wide_and_the_checks_of_a_kind_of_string_once(self):
+        """The plan in the layout at the whole width, not again in the summary; the strings' checks written once for
+        each kind of string; the figures numbered by chapter."""
+        made, text = self.composed()
+        self.assertEqual([n for n in made.makers if n.startswith("plan")], ["plan.svg", "plan_strings.svg"])
+        figures = blocks_of(made.document, "figure")
+        plan = next(f for f in figures if f["image"] == "plan.svg")
+        self.assertTrue(plan["tint"])
+        self.assertGreaterEqual(plan["max_h"], 170)                       # «ampia, come in C»
+        floats = blocks_of(made.document, "float")
+        self.assertTrue(any(f["items"][-1].get("image") == "plan.svg" for f in floats))   # never a half empty page
+        self.assertIn("What the model does not include", text)
         self.assertIn("Strings of 25 modules in series, on the inputs 1.1, 1.2, 2.1, 2.2.", text)
         self.assertEqual(text.count("Modules in series within the range the input takes"), 1)
-        self.assertEqual(text.count("Figure 1. "), 1)                          # the figures numbered through
-        self.assertIn("Figure 2. ", text)
-        self.p.report = {"off": ["summary"]}
-        _text, images = self.html()
-        self.assertEqual(images.count("plan"), 1)                              # without the summary, the layout's
+        self.assertIn('"Figure 3.1."', text)                              # by chapter, as the sketch has them
+        self.p.report = {"off": ["layout"]}
+        made, _text = self.composed()
+        self.assertEqual([n for n in made.makers if n.startswith("plan")], ["plan.svg", "plan_strings.svg"])
 
     def test_the_numbers_of_a_table_are_bare_with_the_unit_in_the_header(self):
-        """A right-aligned cell holds a number (or a dash, or «free»): «0°», «66,3 %» and «46.613 €» carried their
-        unit in every row; the checks of the chapter are grouped by area in group rows."""
-        import re
+        """A right-aligned cell holds a number (or a dash, or «free»); the checks of the chapter are grouped by area in
+        group rows."""
         from meridiana import i18n
+        from meridiana.report_typst.blocks import plain
         for template in ("complete", "compact"):
             self.p.report = {"template": template}
-            text, _images = self.html()
-            mine = [t for t in text.split("<table") if t.startswith(" class='grid' width='100%' cellspacing='0' "
-                                                                   "cellpadding='0'")]       # report_chapters.table
-            cells = [c for t in mine for c in re.findall(r"<td align='right'>(.*?)</td>", t)]
+            made, text = self.composed()
+            cells = []
+            for t in blocks_of(made.document, "table"):
+                if t["head"] and i18n._("Value and unit") in t["head"]:
+                    continue                        # the steps of the methods: a value with its unit, as the window
+                for row in t["rows"]:
+                    if isinstance(row, list):
+                        cells += [plain(row[i]) for i in t["right"]]
             self.assertGreater(len(cells), 20)
             for cell in cells:
-                plain = re.sub(r"<[^>]+>", "", cell).replace("&#x27;", "'")
-                self.assertRegex(plain, rf"^(-?[\d.,]+|–|{i18n._('free')})$", cell)
+                self.assertRegex(cell, rf"^(-?[\d.,]+|–|{i18n._('free')})$", template)
             for head in ("Azimuth, °", "Tilt, °"):
-                self.assertIn(f">{head}</th>", text)
+                self.assertIn(f'"{head}"', text)
         self.p.report = {}
-        text, _images = self.html()
+        made, text = self.composed()
         self.assertIn("PR, %", text)
-        self.assertIn("<td class='group' colspan='3'>Rules and report notes</td>", text)
-        self.assertEqual(text.count("Rules and report notes"), 1)              # once as a group, not on every row
+        self.assertEqual(text.count('{"group": "Rules and report notes"}'), 1)      # once, as a group
 
-    def test_no_table_is_wider_than_the_page_and_the_tables_cells_are_a_point_smaller(self):
-        from PySide6.QtGui import QTextTable
-        from meridiana.ui import report
-        for template in ("complete", "compact"):
-            self.p.report = {"template": template}
-            steps = report._document(self.p, self.energy, self.PROFILE)
-            while True:
-                try:
-                    next(steps)
-                except StopIteration as done:
-                    doc, page, margin, _chrome = done.value
-                    break
-            layout = doc.documentLayout()
-
-            def walk(frame, found):
-                for child in frame.childFrames():
-                    if isinstance(child, QTextTable):
-                        found.append(child)
-                    walk(child, found)
-                return found
-            tables = walk(doc.rootFrame(), [])
-            self.assertGreater(len(tables), 5)
-            for t in tables:
-                with self.subTest(template=template, table=t.firstCursorPosition().block().text()[:30]):
-                    self.assertLessEqual(layout.frameBoundingRect(t).width(), page.width() - 2 * margin + 2)
-            grid = next(t for t in tables if t.format().headerRowCount() == 1)
-            size = grid.cellAt(1, 0).firstCursorPosition().charFormat().fontPointSize()
-            self.assertAlmostEqual(size, 9.5, places=1)
+    def test_every_table_is_ruled_and_every_number_has_a_line_in_the_register(self):
+        """The codes in the tables and on the cards are lines of the register's chapter (study 24: «R-040.07» leads
+        to one line); the steps of the calculations keep their codes in the methods."""
+        made, text = self.composed()
+        register = next(b for b in made.document["body"] if b.get("id") == "register")
+        self.assertTrue(register)
+        index = made.document["body"].index(register)
+        listed = set()
+        for t in blocks_of({"body": made.document["body"][index:]}, "table"):
+            listed |= {r[0] for r in t["rows"] if isinstance(r, list)}
+        used = set()
+        for t in blocks_of({"body": made.document["body"][:index]}, "table"):
+            if t["source"]:
+                used |= {r[-1] for r in t["rows"] if isinstance(r, list)}
+        for f in blocks_of({"body": made.document["body"][:index]}, "facts"):
+            used |= {r[2] for r in f["rows"] if len(r) > 2 and r[2]}
+        self.assertGreater(len(used), 50)
+        self.assertLessEqual(used, listed)
+        self.assertTrue(all(re.fullmatch(r"R-\d{3}\.\d{2}", c) for c in used), sorted(used)[:5])
+        self.assertIn("R-010.01", text)                                   # the first step, «Position of the sun»
 
     def test_the_checks_and_the_notes_of_the_rules_carry_their_sources(self):
-        text, _images = self.html()
+        _made, text = self.composed()
+        text = json.loads(json.dumps(text))
         self.assertIn("4. Minimum renewable capacity obligation", text)            # obligation "new" (D.Lgs. 199/2021)
         self.assertIn("N24", text)                                                  # the rule's id beside its source
         notes = rules.notes(self.energy["rules_facts"])
         for _title, chosen in notes:
             for r, _paragraphs in chosen:
-                self.assertIn(r.source(), text.replace("&#x27;", "'"))
+                self.assertIn(json.dumps(r.source(), ensure_ascii=False)[1:-1], text)
         for it in self.energy["checks"]:
             if it.source:
-                self.assertIn(it.source, text.replace("&#x27;", "'"))
+                self.assertIn(json.dumps(it.source, ensure_ascii=False)[1:-1], text)
 
     def test_the_report_says_what_the_model_leaves_out_and_draws_its_charts_plans_and_formulas(self):
-        text, images = self.html()
-        for name in ("monthly", "chain", "plan", "plan_strings", "balance", "carpet", "cash"):
-            self.assertIn(name, images)
-        self.assertTrue(any(n.startswith("f_") for n in images))          # the formulas, drawn
-        self.assertIn("What the model does not include", text)
+        made, text = self.composed()
+        for kind in ("bars", "waterfall", "balance", "cash", "carpet"):
+            self.assertTrue(blocks_of(made.document, kind), kind)
+        for name in ("plan.svg", "plan_strings.svg", "carpet.png"):
+            self.assertIn(name, made.makers)
+        self.assertTrue(any(n.startswith("f_") and n.endswith(".svg") for n in made.makers))   # the formulas
         self.assertIn("Bifacial modules", text)
         self.assertLess(text.index("9. Parameters and methods"), text.index("What the model does not include"))
         self.assertLess(text.index("What the model does not include"), text.index("Values still at their default"))
+        # every step of the chain in the waterfall, the poa written on its total
+        chain = [s for s in self.energy["sim"].chain]
+        items = blocks_of(made.document, "waterfall")[0]["items"]
+        self.assertEqual(len(items), len(chain) + 1)                     # and the energy delivered at the end
+        self.assertTrue(items[1]["extra"].startswith("+"))
 
     def test_before_the_year_the_strings_are_said_checked_at_pvsyst_design_conditions(self):
-        """The plant as the Plant phase has it before the year is computed (it was a window test, Stringing)."""
         from meridiana.energy import plant as plants
         from meridiana.ui.report import _keys_text
         early = plants.build(self.p, self.results)
         self.assertFalse(early.year)
         self.assertTrue(early.strings)
-        text, _images = self.html({"plant": early, "results": self.results})
+        made, text = self.composed({"plant": early, "results": self.results})
         self.assertIn("Electrical system", text)
         self.assertIn("Inverter 1: Acme AC-20K", text)
-        self.assertIn("PVsyst&#x27;s design conditions", text)                # the conditions, said
+        self.assertIn("PVsyst's design conditions", text)                    # the conditions, said
         self.assertIn("The strings on the modules", text)
-        for s in early.strings:
-            self.assertIn(f"<td align='left'>{s.label}</td>", text)
         first = _keys_text([k for _sf, k, _c in early.strings[0].modules])
         self.assertRegex(first, r":\d+-\d+")                               # the modules, a row by its ends
         self.assertIn(first, text)
-        self.assertIn("Modules in series within the range the input takes", text)     # the checks of each input
+        self.assertIn("Modules in series within the range the input takes", text)
         self.assertNotIn("Energy yield", text)                             # no year, no chapter of the year
 
     def test_the_optimizers_of_a_solaredge_inverter_with_their_checks_and_sources(self):
@@ -289,46 +311,112 @@ class Report(unittest.TestCase):
 
         from meridiana import catalog
         from meridiana.energy import plant as plants
+        from meridiana.report_typst import compose
         p = copy.deepcopy(self.p)
         se = next(r for r in catalog.search("inverters", manufacturer="SolarEdge", limit=None) if r["model"] == "SE50K")
         p.energy["inverters"] = [{"record": se, "count": 1, "name": ""}]
         early = plants.build(p, self.results)
         self.assertTrue(early.optimized and early.strings)
-        from meridiana.ui.report import build_html
 
-        def html(project):
-            return build_html(project, {**self.energy, "plant": early}, lambda name, png, ratio=1.0: name, None)
-        text = html(p)
-        self.assertIn("Power optimizers SolarEdge S1000, 2 modules on each", text)
-        self.assertIn("DS-000105-IT", text)                                   # SolarEdge's table, cited
-        self.assertIn("Synergy unit 2", text)
-        self.assertIn("Optimizers in the string within SolarEdge&#x27;s range", text)
+        def text(project):
+            return json.dumps(compose(project, {**self.energy, "plant": early}).document, ensure_ascii=False)
+        found = text(p)
+        self.assertIn("Power optimizers SolarEdge S1000, 2 modules on each", found)
+        self.assertIn("DS-000105-IT", found)                                   # SolarEdge's table, cited
+        self.assertIn("Synergy unit 2", found)
+        self.assertIn("Optimizers in the string within SolarEdge's range", found)
         self.assertTrue(all(s.state == "ok" for s in early.strings), [s.why for s in early.strings])
-        self.assertIn("Power optimizer: SolarEdge S1000", text)              # the annex
+        self.assertIn("Power optimizer: SolarEdge S1000", found)              # the annex
         p.report = {"template": "compact"}
-        self.assertIn("Power optimizers SolarEdge S1000", html(p))
+        self.assertIn("Power optimizers SolarEdge S1000", text(p))
+
+    def export(self, profile=None) -> Path:
+        from meridiana.ui import report
+        path = Path(tempfile.mkdtemp()) / "relazione.pdf"
+        report.export_pdf(self.p, self.energy, path, profile)
+        return path
 
     def test_the_contents_say_the_pages_the_chapters_fall_on(self):
         from meridiana import reports
         from meridiana.ui import report
-        steps = report._document(self.p, self.energy, None)
-        while True:
-            try:
-                next(steps)
-            except StopIteration as done:
-                doc, page, _margin, chrome = done.value
-                break
+        path = self.export()
+        pages = texts(path)
         chosen = reports.plan(self.p, report._with_notes(self.energy))
-        pages = report._chapter_pages(doc, page, chosen)
-        self.assertEqual(list(pages), [c.id for c in chosen])
-        self.assertGreaterEqual(min(pages.values()), 3)                    # the cover, the contents, then the chapters
-        self.assertEqual(list(pages.values()), sorted(pages.values()))
-        plain = doc.toPlainText()
+        found = {}
         for n, c in enumerate(chosen, 1):
-            self.assertRegex(plain, rf"{n}\. {c.title}\s*{pages[c.id]}\b")
-        self.assertEqual(chrome["left"], "")                                # no profile: nobody in the header
-        self.assertNotIn("Designer", [a for a, _b in chrome["cover"]["rows"]])
-        self.assertEqual(chrome["cover"]["firm"], [])
+            m = re.search(rf"{n}\. {re.escape(c.title)}\s*(\d+)", pages[0])
+            self.assertIsNotNone(m, c.title)
+            found[c.id] = int(m.group(1))
+        self.assertEqual(found["summary"], 2)                              # the cover, then the summary
+        self.assertEqual(list(found.values()), sorted(found.values()))
+        for n, c in enumerate(chosen, 1):
+            page = pages[found[c.id] - 1]
+            self.assertIn(f"{n}. {c.title}", page, c.id)                   # the heading on the page the contents say
+        for i, t in enumerate(pages):
+            self.assertIn(f"page {i + 1} of {len(pages)}", t)
+        self.assertNotIn("Designer", pages[0])                             # no profile: nobody on the cover
+
+    def test_the_users_texts_go_into_the_pdf_as_they_are(self):
+        import copy
+        strange = r'Studio #1 $5 *a* _b_ \c [d] @e <f> #read("../x")'
+        p = copy.deepcopy(self.p)
+        p.name = strange
+        p.report = {"client": strange, "revision": strange}
+        p.subfields[0].name = strange
+        from meridiana.ui import report
+        path = Path(tempfile.mkdtemp()) / "strano.pdf"
+        profile = {**self.PROFILE, "firm": strange, "signer": strange}
+        report.export_pdf(p, self.energy, path, profile)
+        flat = "".join("".join(t.split()) for t in texts(path))
+        self.assertGreater(flat.count("".join(strange.split())), 10)       # cover, headers, footers, tables
+
+    def test_the_logo_is_in_the_corner_of_the_header_and_a_broken_one_is_left_out(self):
+        from pypdf import PdfReader
+        from PySide6.QtGui import QColor, QImage
+        folder = Path(tempfile.mkdtemp())
+        image = QImage(120, 40, QImage.Format.Format_RGB32)
+        image.fill(QColor("#2b3440"))
+        logo = folder / "logo.png"
+        image.save(str(logo))
+        broken = folder / "rotto.png"
+        broken.write_bytes(b"\x89PNG\r\n\x1a\nnot really")
+        self.p.report = {"template": "compact", "off": ["electrical"]}
+
+        def logos(path):
+            out = []
+            for page in PdfReader(str(path)).pages:
+                xo = page["/Resources"].get("/XObject") or {}
+                out.append(sum(1 for k in xo if xo[k].get_object()["/Subtype"] == "/Image"
+                               and xo[k].get_object()["/Width"] == 120))
+            return out
+        with_logo = self.export({**self.PROFILE, "logo": str(logo)})
+        self.assertTrue(all(n == 1 for n in logos(with_logo)), logos(with_logo))
+        for profile in ({**self.PROFILE, "logo": str(broken)}, {**self.PROFILE, "logo": str(folder / "gone.png")}):
+            path = self.export(profile)
+            self.assertTrue(all(n == 0 for n in logos(path)))
+            self.assertIn("Studio di prova", texts(path)[0])                 # the report made all the same
+
+    def test_the_accent_comes_from_the_profile_and_is_blue_by_default(self):
+        from meridiana import reports
+        made, _text = self.composed(profile={**self.PROFILE, "accent": "#A0522D"})
+        self.assertEqual(made.document["accent"], "#a0522d")
+        made, _text = self.composed(profile={**self.PROFILE, "accent": "not a colour"})
+        self.assertEqual(made.document["accent"], reports.ACCENT)
+        self.assertEqual(reports.ACCENT, "#1c6e8c")
+
+    def test_in_italian_the_numbers_have_the_decimal_comma(self):
+        if not (Path(_setup.ROOT) / "locale" / "it" / "LC_MESSAGES" / "meridiana.mo").exists():
+            self.skipTest("the catalogues are not compiled (tools/compile_po.py)")
+        from meridiana import i18n
+        before = i18n._translation
+        self.addCleanup(lambda: setattr(i18n, "_translation", before))
+        i18n.setup("it")
+        made, text = self.composed()
+        self.assertEqual(made.document["lang"], "it")
+        sim = self.energy["sim"]
+        self.assertIn(i18n.number(100 * sim.pr, 1), text)
+        self.assertIn(",", i18n.number(100 * sim.pr, 1))
+        self.assertIn("1. Sintesi", self.chapters(made))
 
     # the attachments
 
@@ -353,34 +441,23 @@ class Report(unittest.TestCase):
         self.assertEqual([(a.title, a.pages, bool(a.problem)) for a in read],
                          [("Modulo di prova", 2, False), ("Manca", 0, True), ("Scheda inverter", 3, False)])
         self.assertIn("not found", read[1].problem)
-        path = Path(tempfile.mkdtemp()) / "relazione.pdf"
-        report.export_pdf(self.p, self.energy, path)
+        path = self.export()
         sizes = sizes_mm(path)
         a4 = (210, 297)
         first = sizes.index((148, 210))
         self.assertEqual(sizes[first:first + 2], [(148, 210)] * 2)
         self.assertEqual(sizes[first + 2:], [a4, (200, 100), (200, 100), (200, 100)])   # the second, behind its page
-        self.assertEqual(sizes[:first], [a4] * first)                    # the report before: cover to annexes
-        self.assertEqual(len(sizes), first + 6)
+        self.assertEqual(sizes[:first], [a4] * first)                    # the report before: cover to register
+        pages = texts(path)
         # the contents say the pages of the PDF: the page before each attachment
-        steps = report._document(self.p, self.energy, None)
-        while True:
-            try:
-                next(steps)
-            except StopIteration as done:
-                doc, _page, _margin, chrome = done.value
-                break
-        plain = doc.toPlainText()
-        self.assertRegex(plain, rf"Attachment 1: Modulo di prova\s*{first}\b")       # the separator before page `first`
-        self.assertRegex(plain, rf"Attachment 2: Scheda inverter\s*{first + 3}\b")
-        self.assertNotIn("Manca", plain)                                               # left out, not listed
-        pages = doc.pageCount()
-        self.assertEqual(report._numbers(chrome, pages - 1, pages), (len(sizes) - 3, len(sizes)))   # its footer
-        self.assertEqual(report._numbers(chrome, 1, pages), (2, len(sizes)))
+        self.assertRegex(pages[0], rf"Attachment 1: Modulo di prova\s*{first}\b")
+        self.assertRegex(pages[0], rf"Attachment 2: Scheda inverter\s*{first + 3}\b")
+        self.assertNotIn("Manca", pages[0])                                             # left out, not listed
+        self.assertIn(f"page {first} of {len(sizes)}", pages[first - 1])                # the separator's footer
+        self.assertIn(f"page {first + 3} of {len(sizes)}", pages[first + 2])             # counted past the first
         # the compact template: no contents, the attachments at the end all the same
         self.p.report = {"template": "compact", "attachments": items}
-        report.export_pdf(self.p, self.energy, path)
-        sizes = sizes_mm(path)
+        sizes = sizes_mm(self.export())
         self.assertEqual(sizes[-7:], [a4, (148, 210), (148, 210), a4, (200, 100), (200, 100), (200, 100)])
 
     def test_the_preview_shows_the_attachments_pages_the_first_few_and_says_how_many_more(self):
@@ -429,7 +506,6 @@ class Report(unittest.TestCase):
         p = model.Project(name="Percorsi")
         p.report = {"attachments": [{"path": str(sheet), "title": "Modulo"}, {"path": 7}]}
         p.save(folder / "progetto.meridiana")
-        import json
         kept = json.loads((folder / "progetto.meridiana").read_text(encoding="utf-8"))["report"]["attachments"]
         self.assertEqual(kept[0], {"path": "schede/modulo.pdf", "title": "Modulo"})
         again, _notice = model.Project.load(folder / "progetto.meridiana")
@@ -501,26 +577,25 @@ class Report(unittest.TestCase):
         self.assertAlmostEqual(float(italian.iloc[:, 6].sum()), self.energy["sim"].energy_kwh, delta=0.5)
 
     def test_how_it_is_computed_is_the_chapter_of_the_methods_alone_with_its_formulas(self):
-        from meridiana.ui import report
-        images = []
-        text, chosen = report._compose(self.p, self.energy, lambda name, make, ratio=1.0: images.append(name) or name,
-                                       only="methods")
-        self.assertEqual([c.id for c in chosen], ["methods"])
-        self.assertIn("REGISTER OF THE CALCULATIONS", text)
-        self.assertIn("<h2>Parameters and methods</h2>", text)
+        made, text = self.composed(only="methods")
+        self.assertEqual([c.id for c in made.chosen], ["methods"])
+        self.assertEqual(made.document["head"]["kicker"], "REGISTER OF THE CALCULATIONS")
+        self.assertIn('"Parameters and methods"', text)
         self.assertIn("What the model does not include", text)
-        self.assertTrue(images and all(n.startswith("f_") for n in images))       # the formulas, nothing else
+        self.assertTrue(made.makers and all(n.startswith("f_") for n in made.makers))   # the formulas, nothing else
+        body = json.dumps(made.document["body"], ensure_ascii=False)
         for other in ("Contents", "1. Summary", "Attachment 1"):
-            self.assertNotIn(other, text)
+            self.assertNotIn(other, body)
+        self.assertIsNone(made.document["cover"])
 
     # the 3D pictures
 
-    def test_the_3d_pictures_are_in_the_summary_and_in_the_overview_when_qt_quick_3d_can_draw_them(self):
+    def test_the_3d_pictures_are_on_the_cover_in_the_summary_and_in_the_layout_when_qt_quick_3d_can_draw_them(self):
         from PySide6.QtCore import QBuffer, QByteArray, QIODevice
         from PySide6.QtGui import QColor, QImage
 
-        from meridiana.ui import report_3d
-        image = QImage(110, 72, QImage.Format.Format_RGB32)
+        from meridiana.ui import report, report_3d
+        image = QImage(220, 144, QImage.Format.Format_RGB32)
         image.fill(QColor("#2f4f7f"))
         data = QByteArray()
         buffer = QBuffer(data)
@@ -529,40 +604,74 @@ class Report(unittest.TestCase):
         png = bytes(data.data())
         asked = []
         with mock.patch.object(report_3d, "available", return_value=True), \
-                mock.patch.object(report_3d, "picture", side_effect=lambda p, r, vid: asked.append(vid) or png):
-            text, images = self.html()
-            self.assertEqual([n for n in images if n.startswith("view_")], ["view_south_east", "view_south_west"])
-            summary = text[text.index("1. Summary</h2>"):text.index("2. Site and climate data</h2>")]
-            self.assertIn("From the south-east", summary)
-            self.assertIn("From the south-west", summary)
-            self.assertLess(summary.index("view_south_east"), summary.index("'plan'"))    # before the plan
+                mock.patch.object(report_3d, "picture", side_effect=lambda p, r, vid, size=None: asked.append(vid) or png):
+            pictures = report._pictures(self.p, self.energy)
+            made, text = self.composed(pictures=pictures)
+            self.assertEqual(made.document["cover"]["image"], "view_south_east.png")
+            fill = blocks_of(made.document, "fill_figure")
+            self.assertEqual([f["image"] for f in fill], ["view_south_west.png"])      # the summary's, the page's rest
+            self.assertIn("From the south-west", text)
+            views = [f for f in blocks_of(made.document, "figure") if f["image"].startswith("view_")]
+            self.assertEqual([f["image"] for f in views], ["view_south_east.png"])     # the layout's, whole width
             self.p.report = {"template": "compact"}
-            text, images = self.html()
-            overview = text[text.index("1. System overview and results</h2>"):text.index("2. Estimated monthly")]
-            self.assertIn("view_south_west", overview)
-        self.assertEqual(asked, ["south_east", "south_west"] * 2)
+            made, text = self.composed(pictures=pictures)
+            views = [f["image"] for f in blocks_of(made.document, "figure") if f["image"].startswith("view_")]
+            self.assertEqual(views, ["view_south_east.png"])
+            self.assertEqual([f["image"] for f in blocks_of(made.document, "fill_figure")], ["view_south_west.png"])
+            self.p.report = {"template": "compact", "off": ["electrical"]}
+            self.export()
+        self.assertEqual(sorted(asked), ["south_east", "south_west"])                    # each made once for the PDF
         with mock.patch.object(report_3d, "available", return_value=False):          # the software renderer
-            text, images = self.html()
-        self.assertFalse([n for n in images if n.startswith("view_")])
+            self.assertEqual(report._pictures(self.p, self.energy), {})
+            self.p.report = {}
+            made, text = self.composed(pictures={})
+        self.assertFalse([n for n in made.makers if n.startswith("view_")])
         self.assertNotIn("From the south-east", text)
+        self.assertEqual(made.document["cover"]["image"], "plan.svg")                  # the cover not left empty
 
-    def test_the_pdf_is_written_whole_and_the_preview_has_its_pages(self):
+    def test_the_white_around_a_3d_picture_is_trimmed(self):
+        from PySide6.QtCore import QBuffer, QByteArray, QIODevice
+        from PySide6.QtGui import QColor, QImage
+
+        from meridiana.ui import report_3d
+        image = QImage(400, 300, QImage.Format.Format_RGB32)
+        image.fill(QColor("white"))
+        for x in range(100, 300):
+            for y in range(120, 180):
+                image.setPixelColor(x, y, QColor("#2f4f7f"))
+        data = QByteArray()
+        buffer = QBuffer(data)
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        image.save(buffer, "PNG")
+        cut = QImage.fromData(report_3d.trimmed(bytes(data.data())))
+        self.assertEqual((cut.width(), cut.height()), (212, 72))         # the scene and 3 % of it around
+
+    def test_the_pdf_is_written_whole_quickly_and_the_preview_has_its_pages(self):
         from meridiana.ui.report import export_pdf, preview_steps
         for template in ("complete", "compact"):
             with self.subTest(template=template):
                 self.p.report = {"template": template}
                 path = Path(tempfile.mkdtemp()) / "relazione.pdf"
+                export_pdf(self.p, self.energy, path, self.PROFILE)            # the formulas drawn once
+                t = time.perf_counter()
                 export_pdf(self.p, self.energy, path, self.PROFILE)
+                took = time.perf_counter() - t
+                self.assertLess(took, 6.0)                                     # some 0,5-1,5 s here, offscreen
                 data = path.read_bytes()
                 self.assertTrue(data.startswith(b"%PDF"))
                 self.assertIn(b"%%EOF", data[-1024:])
                 self.assertGreater(len(data), 20000)
+                self.assertFalse(path.with_name(path.name + ".part").exists())
                 pages: list = []
                 for _f, _w in preview_steps(self.p, self.energy, 400, pages, self.PROFILE):
                     pass
-                self.assertGreater(len(pages), 2 if template == "complete" else 1)
+                self.assertEqual(len(pages), len(sizes_mm(path)))
                 self.assertEqual(pages[0].width(), 400)
                 self.assertAlmostEqual(pages[0].height() / pages[0].width(), 297 / 210, delta=0.01)   # A4
+                from pypdf import PdfReader
+                info = PdfReader(io.BytesIO(data)).metadata
+                self.assertTrue(str(info.get("/Creator", "")).startswith("Meridiana"))
+                self.assertEqual(info.get("/Author"), "Firmatario di prova")
 
 
 class Settings(unittest.TestCase):
@@ -591,10 +700,13 @@ class Settings(unittest.TestCase):
         p.report = {"profile": "gone"}
         self.assertIsNone(reports.profile_for(p, profiles, "B"))
         self.assertEqual(set(reports.clean_profile({"name": "A", "other": 1})), set(reports.PROFILE_KEYS))
+        # a profile written before the accent (R314) reads with it empty: the blue of the report
+        old = reports.clean_profile({"name": "A", "logo": "x.png"})
+        self.assertEqual((old["accent"], reports.accent_of(old)), ("", reports.ACCENT))
 
     def test_every_chapter_of_every_template_has_a_writer(self):
         from meridiana import reports
-        from meridiana.ui.report_chapters import BUILDERS
+        from meridiana.report_typst.chapters import BUILDERS
         for t in reports.templates().values():
             for c in t.chapters:
                 self.assertIn(c, reports.chapters())
@@ -602,19 +714,24 @@ class Settings(unittest.TestCase):
 
 
 class Formulas(unittest.TestCase):
-    """The formulas of the pages and of the report, drawn by matplotlib's mathtext (ui/pedigree.formula_png)."""
+    """The formulas of the pages and of the report, drawn by matplotlib's mathtext (ui/pedigree.formula_png, and as
+    SVG for the report: report_typst/figures.formula_svg)."""
 
     @classmethod
     def setUpClass(cls):
         cls.app = _setup.qt_or_skip()
 
     def test_a_formula_is_drawn_once(self):
+        from meridiana.report_typst.figures import formula_svg
         from meridiana.ui.pedigree import formula_png
         formula_png.cache_clear()
         first = formula_png(r"E = P \cdot t", "#000000", 100.0, 13.0)
         again = formula_png(r"E = P \cdot t", "#000000", 100.0, 13.0)
         self.assertIs(first, again)
         self.assertEqual(formula_png.cache_info().hits, 1)
+        svg = formula_svg(r"E = P \cdot t", 12.0)
+        self.assertIs(svg, formula_svg(r"E = P \cdot t", 12.0))
+        self.assertIn(b"<svg", svg[:400])
 
 
 if __name__ == "__main__":

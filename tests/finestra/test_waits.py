@@ -241,12 +241,12 @@ class Bars(WindowWithAYear):
 
         from PySide6.QtWidgets import QFileDialog
 
-        from meridiana.ui import report_chapters
+        from meridiana.report_typst import figures
         self.compute()
         bar = self.win.report_progress
         first = self.file.with_name("relazione.pdf")
         with mock.patch.object(QFileDialog, "getSaveFileName", return_value=(str(first), "")), \
-                mock.patch.object(report_chapters, "figure_png", slowed(report_chapters.figure_png, 0.3)):
+                mock.patch.object(figures, "plan_svg", slowed(figures.plan_svg, 0.6)):
             self.win.commands["export_report"].trigger()
             self.assertIsNotNone(self.win.report_run)               # going on: no modal window
             seen = self.watch(bar, lambda: "report" in self.win.exports, 120)
@@ -255,14 +255,13 @@ class Bars(WindowWithAYear):
         self.assertTrue(bar.isHidden())
         texts = [t for _v, t in seen]
         self.assertTrue(any("charts and formulas" in t for t in texts), texts)
-        pages = [t for t in texts if "page" in t]
-        self.assertTrue(pages and pages[-1].startswith("Report: page") and "of" in pages[-1], texts)
+        self.assertTrue(any(t.startswith("Report: laying out the pages") for t in texts), texts)   # then Typst
         values = [v for v, _t in seen]
         self.assertEqual(values, sorted(values))                    # only forwards
         # a second one, stopped half way: nothing written, the first one stays the report made
         second = self.file.with_name("seconda.pdf")
         with mock.patch.object(QFileDialog, "getSaveFileName", return_value=(str(second), "")), \
-                mock.patch.object(report_chapters, "figure_png", slowed(report_chapters.figure_png, 0.3)):
+                mock.patch.object(figures, "plan_svg", slowed(figures.plan_svg, 0.6)):
             self.win.commands["export_report"].trigger()
             self.watch(bar, lambda: not bar.isHidden())
             bar.cancel.click()
@@ -278,7 +277,7 @@ class Bars(WindowWithAYear):
 
         from PySide6.QtWidgets import QFileDialog
 
-        from meridiana.ui import report_chapters
+        from meridiana.report_typst import figures
         self.compute()
         win = self.win
         target = self.file.with_name("chiusura.pdf")
@@ -296,7 +295,7 @@ class Bars(WindowWithAYear):
         win.preview_soon.start()
         try:
             with mock.patch.object(QFileDialog, "getSaveFileName", return_value=(str(target), "")), \
-                    mock.patch.object(report_chapters, "figure_png", slowed(report_chapters.figure_png, 0.3)):
+                    mock.patch.object(figures, "plan_svg", slowed(figures.plan_svg, 0.6)):
                 win.commands["export_report"].trigger()
                 self.assertTrue(self.wait_until(self.app, part.exists, 120), "the partial report was not started")
                 self.assertTrue(win.close())
