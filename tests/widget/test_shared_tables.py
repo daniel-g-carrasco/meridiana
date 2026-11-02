@@ -52,12 +52,18 @@ class SharedTables(unittest.TestCase):
     def test_existing_tables_follow_light_and_dark_palette(self):
         theme = _setup.meridiana_look("light")
         controller, = shared_tables.install_data_tables(self.root, excluded=("project-tree", "checks-tree"))
-        before = self.table.styleSheet()
+        # the rules are in the application's sheet, under the views marked `ptable`: no sheet on the table itself
+        # (19 of them cost 1.2 s of each change of theme)
+        self.assertEqual(self.table.styleSheet(), "")
+        self.assertEqual(self.table.property("ptable"), "true")
+        before = self.app.styleSheet()
+        self.assertIn(shared_tables.band_colour(self.app.palette()), before)
         _setup.meridiana_look("dark")
         self.app.processEvents()
         self.app.processEvents()
-        self.assertNotEqual(before, self.table.styleSheet())
-        self.assertIn(shared_tables.band_colour(self.app.palette()), self.table.styleSheet())
+        self.assertNotEqual(before, self.app.styleSheet())
+        self.assertIn(shared_tables.band_colour(self.app.palette()), self.app.styleSheet())
+        self.assertEqual(self.table.styleSheet(), "")
         self.assertIs(self.table.findChild(shared_tables.TableStyle), controller)
         theme.apply()
         # _setup owns cached themes: deleting one leaves later modules a dead C++ wrapper.

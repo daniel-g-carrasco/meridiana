@@ -187,7 +187,9 @@ class TheTheme(unittest.TestCase):
             self.assertEqual(hexes(sheet) - allowed, set(), "a colour written by hand" if dark else "light")
             self.assertIn(t["field_line"], sheet)
             self.assertIn(t["field"], sheet)
-        self.assertEqual(self.app.styleSheet(), style_sheet(self.theme.tokens, False))      # the one applied
+        from meridiana.ui.shared_tables import application_rules
+        self.assertEqual(self.app.styleSheet(), style_sheet(self.theme.tokens, False) + application_rules(
+            self.app.palette()))                                                           # the one applied
 
     def test_one_primary_button_per_page_and_the_fields_with_the_numbers_to_the_left(self):
         from PySide6.QtWidgets import QAbstractSpinBox, QPushButton

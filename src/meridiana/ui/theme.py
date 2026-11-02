@@ -564,7 +564,8 @@ class Theme(QObject):
         pal = qpalette(theme_colors.palette(self.tokens, dark))
         if pal != self.app.palette():
             self.app.setPalette(pal)
-        sheet = style_sheet(self.tokens, dark)
+        from .shared_tables import application_rules
+        sheet = style_sheet(self.tokens, dark) + application_rules(pal)
         if sheet != self.app.styleSheet():
             self.app.setStyleSheet(sheet)
         # again: the first style sheet sets a style (QStyleSheetStyle), and with it the platform's fonts

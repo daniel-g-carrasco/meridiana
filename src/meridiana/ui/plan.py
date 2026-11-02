@@ -28,7 +28,8 @@ import numpy as np
 from PySide6.QtCore import QEvent, QLineF, QPoint, QPointF, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetrics, QPainter, QPainterPath, QPen, QPolygonF,
                            QTransform)
-from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QGraphicsScene, QGraphicsView, QLineEdit, QWidget
+from PySide6.QtWidgets import (QGraphicsEllipseItem, QGraphicsItem, QGraphicsItemGroup, QGraphicsScene, QGraphicsView,
+                               QLineEdit, QWidget)
 
 from .. import geo, move, navigation, roofs, sides, sweep, theme_colors, tiles, view_colours, viewaids
 from . import plan_overlays, waiting, world_map
@@ -77,6 +78,17 @@ def from_scene(p: QPointF) -> tuple[float, float]:
 
 def polygon(ring) -> QPolygonF:
     return QPolygonF([to_scene(float(x), float(y)) for x, y in ring])
+
+
+def group_items(scene: QGraphicsScene, items: list) -> QGraphicsItemGroup:
+    """`items` grouped in the scene. A group of our own, not QGraphicsScene.createItemGroup: the wrapper of a group
+    that C++ made is not told when the scene deletes it, and a new object (a QAction) born at its address is then
+    handed that old QGraphicsItemGroup (a test of the menu failed after the windows of other tests, 02/11/2026)."""
+    group = QGraphicsItemGroup()
+    scene.addItem(group)
+    for item in items:
+        group.addToGroup(item)
+    return group
 
 
 def _quad_at(quads, x: float, y: float) -> int:
@@ -1057,7 +1069,7 @@ class PlanView(QGraphicsView):
         scene = self.scene()
         halo = scene.addPath(path, cosmetic(self.colours["halo"], W["select_module"] + W["select_halo"]))
         ink = scene.addPath(path, cosmetic(colour, W["select_module"]), QBrush(fill))
-        group = scene.createItemGroup([halo, ink])
+        group = group_items(scene, [halo, ink])
         group.setZValue(Z_SELECTION + 0.2)
         return group
 
@@ -1864,7 +1876,7 @@ class PlanView(QGraphicsView):
             ridge_pen = cosmetic(light, W["hover"] + 2)
             for (ax, ay), (bx, by) in self.ridges.get(oid.split(":")[0], []):
                 items.append(self.scene().addLine(QLineF(ax, -ay, bx, -by), ridge_pen))
-        self.hover_item = self.scene().createItemGroup(items)
+        self.hover_item = group_items(self.scene(), items)
         self.hover_item.setZValue(Z_SELECTION - 1)
 
     def metres_per_pixel(self) -> float:
