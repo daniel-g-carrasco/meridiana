@@ -191,9 +191,10 @@ def gallery(theme) -> QMainWindow:
         c.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         chips.append(c)
     cb.addWidget(row(*chips, spacing=Space.XS))
-    # the tabs and the segmented control: one look (R109, R121)
+    # the tabs and the segments: one track (R109, R121, R322)
+    from .segments import on_bar
     tabs = QTabBar()
-    tabs.setDrawBase(False)
+    on_bar(tabs)
     for text in ("Mesi", "Perdite", "Giorno tipo", "Come è calcolato"):
         tabs.addTab(text)
     from .variant_bar import VariantBar

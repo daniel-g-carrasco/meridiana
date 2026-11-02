@@ -756,13 +756,14 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(0, self, self._dock_tabs)
 
     def _dock_tabs(self) -> None:
-        """The tab bars of the panels put together (R109): the variants' segmented control, no base line under the
-        cards."""
+        """The tab bars of the panels put together (R109): a track of segments (ui/segments.py, R322), no base line
+        under the cards."""
+        from .segments import on_bar
         self._dock_tabs_pending = False
         for bar in self.findChildren(QTabBar, options=Qt.FindChildOption.FindDirectChildrenOnly):
             if bar.objectName() != "dock-tabs":
                 bar.setObjectName("dock-tabs")
-                bar.setDrawBase(False)
+                on_bar(bar)
                 bar.setExpanding(False)
                 bar.setElideMode(Qt.TextElideMode.ElideRight)
                 bar.style().unpolish(bar)

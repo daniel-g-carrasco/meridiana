@@ -245,11 +245,14 @@ QSplitter::handle {{ background: transparent; }}
 QSplitter::handle:horizontal {{ width: {S.M}px; }}
 QSplitter::handle:vertical {{ height: {S.M}px; }}
 QTabWidget > QTabBar {{ font-size: {Text.CONTROL.size}px; font-weight: {Text.CONTROL.weight}; }}
-QTabBar::tab {{ border: 1px solid transparent; border-radius: {pill:g}px; padding: 0 {S.L - 1}px;
-               min-height: {chip_inner}px; max-height: {chip_inner}px;   /* 24 px whole: Qt drops a radius over half the height */
-               margin: {S.XS}px {S.XXS}px {S.XS}px 0; color: {t['text2']}; background: {t['field']}; }}
-QTabBar::tab:hover:!selected {{ background: {field_hover}; color: {t['text']}; }}
-QTabBar::tab:selected {{ background: {t['panel']}; color: {t['text']}; border-color: {t['line']}; }}
+QTabBar::tab {{ border: 1px solid transparent; border-radius: {R.INNER}px; padding: 0 {S.L - 1}px;
+               min-height: {chip_inner}px; max-height: {chip_inner}px; margin: {S.XS}px 0;
+               color: {t['text2']}; background: transparent; }}   /* on the track of ui/segments.py, which draws the choice */
+QTabBar::tab:first {{ margin-left: {S.XXS}px; }}
+QTabBar::tab:last {{ margin-right: {S.XXS}px; }}
+QTabBar::tab:only-one {{ margin-left: {S.XXS}px; margin-right: {S.XXS}px; }}
+QTabBar::tab:hover:!selected {{ background: {hover}; color: {t['text']}; }}
+QTabBar::tab:selected {{ color: {t['text']}; }}
 QTabBar#phases {{ background: transparent; }}
 QStackedWidget#phase-bars, QWidget#phase-card {{ background: transparent; }}
 QStackedWidget#phase-bars QToolBar {{ padding: 0; spacing: {S.S}px; border: none; background: transparent; }}
@@ -355,14 +358,10 @@ QToolButton#file-chip {{ background: transparent; color: {t['text']}; border: 1p
                         border-radius: {Button.PUSH[1]}px; padding: {S.XXS}px {S.L - 2}px {S.XXS}px {S.M}px; }}
 QToolButton#file-chip:hover {{ background: {hover}; }}
 QToolButton#file-chip:checked {{ background: {press}; color: {t['text']}; border-color: transparent; }}
-QFrame#variant-bar {{ background: {t['field']}; border: none; border-radius: {pill + S.XXS:g}px; }}
-QToolButton#variant-pill, QToolButton#variant-add, QToolButton#variant-more {{ border: 1px solid transparent;
-    border-radius: {pill:g}px; padding: 0 {S.L - 1}px; min-height: {chip_inner}px; max-height: {chip_inner}px;
-    color: {t['text2']}; background: transparent; }}
-QToolButton#variant-add, QToolButton#variant-more {{ padding: 0 {S.S - 1}px; }}
-QToolButton#variant-pill:hover, QToolButton#variant-add:hover, QToolButton#variant-more:hover {{
-    background: {hover}; color: {t['text']}; }}
-QToolButton#variant-pill:checked {{ background: {t['panel']}; color: {t['text']}; border-color: {t['line']}; }}
+QToolButton#variant-add, QToolButton#variant-more {{ border: 1px solid transparent; border-radius: {R.INNER}px;
+    padding: 0 {S.S - 1}px; min-height: {chip_inner}px; max-height: {chip_inner}px; color: {t['text2']};
+    background: transparent; }}
+QToolButton#variant-add:hover, QToolButton#variant-more:hover {{ background: {hover}; color: {t['text']}; }}
 QToolButton#variant-more::menu-indicator {{ image: none; width: 0; }}
 QFrame#row-line {{ background: {t['line_soft']}; border: none; }}
 QLabel#row-detail, QLabel#grid-row {{ color: {t['text2']}; }}

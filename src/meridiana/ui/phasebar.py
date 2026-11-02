@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import math
 
-from PySide6.QtCore import QEasingCurve, QEvent, QPointF, QRect, QRectF, QSize, Qt, QVariantAnimation, Signal
+from PySide6.QtCore import QEvent, QPointF, QRect, QRectF, QSize, Qt, QVariantAnimation, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QFontMetricsF, QPainter, QPainterPath, QPen, QPixmap
 from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QMenu, QSizePolicy, QStackedWidget, QTabBar, QToolBar,
                                QToolButton, QVBoxLayout, QWidget)
@@ -32,6 +32,7 @@ from ..i18n import _
 from . import icons
 from .cards import EDGE, RADIUS, default_tokens
 from .design import Button, Icon, Motion, Radius, Size, Space, Text, set_text, text_font
+from .motion import SLIDE_EASING
 from .waiting import STALE_MARK
 
 TALL = 72                   # the bar with the words under the icons (design 5.3): what the bar must not exceed;
@@ -465,7 +466,7 @@ class PhaseHeader(QWidget):
         self.slide = QVariantAnimation(self)
         self.slide.setStartValue(0.0)
         self.slide.setEndValue(1.0)
-        self.slide.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self.slide.setEasingCurve(SLIDE_EASING)
         self.slide.valueChanged.connect(lambda _v: self._slide_step())
         self.slide.finished.connect(self._landed)
         self.slide_from: QRectF | None = None
