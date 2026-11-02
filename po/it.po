@@ -21201,3 +21201,35 @@ msgstr "Copertina, indice e i capitoli dalla sintesi al registro dei calcoli: la
 #: src/meridiana/report_typst/chapters.py:860
 msgid "Every number of the report is here: its code is in the Source column of the tables and on the cards. The values hour by hour are in the CSV file of the register."
 msgstr "Qui c'è ogni numero della relazione: il suo codice è nella colonna Fonte delle tabelle e sulle schede. I valori ora per ora sono nel file CSV del registro."
+
+#: src/meridiana/ui/file_page.py:364
+msgid "The project and the variants next to it, opened as a new project: Meridiana says what it approximated."
+msgstr "Il progetto e le varianti accanto, aperti come progetto nuovo: Meridiana dice cosa ha approssimato."
+
+#: src/meridiana/ui/file_page.py:369
+msgid "The other imports stand where they are used: the IFC model in {model}, the PVsyst modules and inverters in the catalogues of {plant}, PVGIS in {production}, the load curve in {consumption}."
+msgstr "Gli altri import stanno dove si usano: il modello IFC in {model}, moduli e inverter di PVsyst nei cataloghi di {plant}, PVGIS in {production}, la curva di carico in {consumption}."
+
+#: src/meridiana/phases.py:99
+msgid "From IFC"
+msgstr "Da IFC"
+
+#: src/meridiana/ui/catalog_dialog.py:351
+msgid "Import from PVsyst…"
+msgstr "Importa da PVsyst…"
+
+#: src/meridiana/ui/catalog_dialog.py:346
+msgid "A PVsyst module file (.PAN): what is read is shown before it is used."
+msgstr "Un file di modulo PVsyst (.PAN): ciò che viene letto si vede prima di usarlo."
+
+#: src/meridiana/ui/catalog_dialog.py:347
+msgid "A PVsyst inverter file (.OND): what is read is shown before it is used."
+msgstr "Un file di inverter PVsyst (.OND): ciò che viene letto si vede prima di usarlo."
+
+#: src/meridiana/tour.py:32
+msgid "Open takes a PVsyst project too; the other imports stand in the phase that uses them."
+msgstr "Apri prende anche un progetto PVsyst; gli altri import stanno nella fase che li usa."
+
+#: src/meridiana/ui/phasebar.py:444
+msgid "New, open, save, export, catalogues, settings and help"
+msgstr "Nuovo, apri, salva, esporta, cataloghi, impostazioni e aiuto"
