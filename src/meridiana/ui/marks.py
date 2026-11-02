@@ -12,10 +12,6 @@ from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QIcon, QIconEngine, QPainter, QPainterPath, QPalette, QPixmap
 from PySide6.QtWidgets import QGraphicsItem, QStyledItemDelegate, QWidget
 
-from .. import theme_colors
-
-FILL = {"fail": theme_colors.STATUS["critical"], "warn": theme_colors.STATUS["warning"], "info": "#2e4a6b",
-        "ok": theme_colors.STATUS["good"]}
 SIZE = 18.0
 
 
