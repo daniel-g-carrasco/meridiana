@@ -21029,3 +21029,412 @@ msgid "The {n} module selected is too few for a string: on these inverters a str
 msgid_plural "The {n} modules selected are too few for a string: on these inverters a string wants at least {m} modules in series. Select more, or change the inverter."
 msgstr[0] "[0] {n} modulo selezionato è troppo poco per una stringa: su questi inverter una stringa vuole almeno {m} moduli in serie. Selezionane altri, o cambia inverter."
 msgstr[1] "[1] I {n} moduli selezionati sono troppo pochi per una stringa: su questi inverter una stringa vuole almeno {m} moduli in serie. Selezionane altri, o cambia inverter."
+
+#: src/meridiana/ui/plant_page.py (R297, R298, R307, R308: study 23)
+msgid "No inverter chosen: Meridiana sizes one by itself for the checks."
+msgstr "Nessun inverter scelto: Meridiana ne dimensiona uno da sé per le verifiche."
+
+#, python-brace-format
+msgid "{kw} kW AC"
+msgstr "{kw} kW AC"
+
+#, python-brace-format
+msgid "{kwp} kWp"
+msgstr "{kwp} kWp"
+
+#, python-brace-format
+msgid "DC/AC {r}"
+msgstr "DC/AC {r}"
+
+#, python-brace-format
+msgid "{model} · {kw} kW · strings at {v} V, with power optimizers"
+msgstr "{model} · {kw} kW · stringhe a {v} V, con ottimizzatori di potenza"
+
+#, python-brace-format
+msgid "{model} · {kw} kW · {n} MPPT"
+msgstr "{model} · {kw} kW · {n} MPPT"
+
+#, python-brace-format
+msgid "{u} / {lim} V"
+msgstr "{u} / {lim} V"
+
+#, python-brace-format
+msgid "{hot}-{cold} V"
+msgstr "{hot}-{cold} V"
+
+#, python-brace-format
+msgid "{a} / {b} A"
+msgstr "{a} / {b} A"
+
+msgid ""
+"Drag to change the order of the inverters (Alt+Up and Alt+Down too). The "
+"number is the inverter's place: the strings are named after it."
+msgstr ""
+"Trascina per cambiare l'ordine degli inverter (anche Alt+Su e Alt+Giù). Il "
+"numero è la posizione dell'inverter: le stringhe prendono il nome da lui."
+
+msgid "The inverter's name: F2 or a double click to change it"
+msgstr "Il nome dell'inverter: F2 o doppio clic per cambiarlo"
+
+msgid "Name of the inverter"
+msgstr "Nome dell'inverter"
+
+msgid "Rename, move, datasheet, string, empty, take out"
+msgstr "Rinomina, sposta, scheda tecnica, stringa, svuota, togli"
+
+#, python-brace-format
+msgid "Inverter {n}, {name}: {what}; {strings}"
+msgstr "Inverter {n}, {name}: {what}; {strings}"
+
+msgid "Move up"
+msgstr "Sposta su"
+
+msgid "Move down"
+msgstr "Sposta giù"
+
+msgid "Datasheet…"
+msgstr "Scheda tecnica…"
+
+msgid "String this inverter…"
+msgstr "Stringa questo inverter…"
+
+msgid "Empty its strings"
+msgstr "Svuota le sue stringhe"
+
+msgid "Take out of the plant"
+msgstr "Togli dall'impianto"
+
+msgid "Strings whose inverter is gone: give them another from their menu, or Undo"
+msgstr "Stringhe il cui inverter non c'è più: dagliene un altro dal loro menu, oppure Annulla"
+
+msgid "Draw a string on this input"
+msgstr "Disegna una stringa su questo ingresso"
+
+msgid "Inputs as cards"
+msgstr "Ingressi a schede"
+
+msgid "Single-line diagram in miniature"
+msgstr "Unifilare in miniatura"
+
+msgid "Redraw"
+msgstr "Ridisegna"
+
+msgid "Draw this string again on the plan, from its modules"
+msgstr "Disegna di nuovo questa stringa in pianta, a partire dai suoi moduli"
+
+msgid "Move to…"
+msgstr "Sposta su…"
+
+msgid "The string's menu: the inputs it can go to, and the rest"
+msgstr "Il menu della stringa: gli ingressi su cui può andare, e il resto"
+
+msgid "This string deleted: its modules stay laid, in no string (Ctrl+Z brings it back)"
+msgstr "Questa stringa eliminata: i suoi moduli restano posati, senza stringa (Ctrl+Z la riporta)"
+
+#, python-brace-format
+msgid "{n} module in series"
+msgid_plural "{n} modules in series"
+msgstr[0] "{n} modulo in serie"
+msgstr[1] "{n} moduli in serie"
+
+#, python-brace-format
+msgid "Datasheet of inverter {n}"
+msgstr "Scheda tecnica dell'inverter {n}"
+
+#, python-brace-format
+msgid "{label} · {name} · from the catalogue"
+msgstr "{label} · {name} · dal catalogo"
+
+msgid "String automatically"
+msgstr "Stringa in automatico"
+
+msgid ""
+"Meridiana lays strings on the inputs of the inverters, valid for their "
+"voltage window and their currents. The modules can also be chosen on the "
+"plan while this window is open."
+msgstr ""
+"Meridiana posa le stringhe sugli ingressi degli inverter, valide per la loro "
+"finestra di tensione e le loro correnti. I moduli si scelgono anche in "
+"pianta mentre questa finestrella è aperta."
+
+msgid "The modules Meridiana works on"
+msgstr "I moduli su cui lavora Meridiana"
+
+msgid "On what"
+msgstr "Su cosa"
+
+msgid "replace the strings there are"
+msgstr "sostituisci le stringhe che ci sono"
+
+msgid "add strings for the modules in no string only"
+msgstr "aggiungi stringhe solo per i moduli senza stringa"
+
+msgid ""
+"Replace: the strings on those modules go, after a question. Add: yours stay "
+"as they are"
+msgstr ""
+"Sostituisci: le stringhe su quei moduli vanno via, dopo una domanda. "
+"Aggiungi: le tue restano come sono"
+
+msgid "Strings there are"
+msgstr "Stringhe che ci sono"
+
+msgid "How the strings run along the modules"
+msgstr "Come le stringhe corrono lungo i moduli"
+
+msgid "Path of the strings"
+msgstr "Percorso delle stringhe"
+
+msgid ""
+"The modules in series of each string; «suggested»: Meridiana chooses from "
+"the voltage window"
+msgstr ""
+"I moduli in serie di ogni stringa; «suggerito»: Meridiana sceglie dalla "
+"finestra di tensione"
+
+msgid "The modules' power over the inverter's AC power"
+msgstr "La potenza dei moduli sulla potenza AC dell'inverter"
+
+msgid "DC/AC ratio wanted"
+msgstr "Rapporto DC/AC voluto"
+
+msgid ""
+"The modules' power (kWp) over the inverters' AC power. «Choose "
+"automatically» picks the size closest to it; the energy the inverters cut "
+"shows once the production is computed. Your choice: no judgement here."
+msgstr ""
+"La potenza dei moduli (kWp) sulla potenza AC degli inverter. «Scegli in "
+"automatico» prende la taglia più vicina; l'energia che gli inverter "
+"tagliano si vede dopo il calcolo della produzione. La scelta è tua: qui "
+"nessun giudizio."
+
+msgid "the whole plant"
+msgstr "tutto l'impianto"
+
+#, python-brace-format
+msgid "{n} module selected on the plan"
+msgid_plural "{n} modules selected on the plan"
+msgstr[0] "{n} modulo selezionato in pianta"
+msgstr[1] "{n} moduli selezionati in pianta"
+
+#, python-brace-format
+msgid "{label} · {name}"
+msgstr "{label} · {name}"
+
+msgid ""
+"The modules' power over the inverters' AC power: «Choose automatically» "
+"picks the size closest to it. The energy cut shows on the scale once the "
+"year is computed"
+msgstr ""
+"La potenza dei moduli sulla potenza AC degli inverter: «Scegli in "
+"automatico» prende la taglia più vicina. L'energia tagliata si vede sulla "
+"scala dopo il calcolo dell'anno"
+
+msgid "How the strings are shown: the inputs as cards, or a single-line diagram"
+msgstr "Come sono mostrate le stringhe: gli ingressi a schede, oppure un unifilare"
+
+msgid "Inverter shown"
+msgstr "Inverter mostrato"
+
+msgid "The inverter whose inputs and strings are shown (a click on its card does the same)"
+msgstr "L'inverter di cui si vedono ingressi e stringhe (un clic sulla sua scheda fa lo stesso)"
+
+msgid "Conditions of the checks"
+msgstr "Condizioni delle verifiche"
+
+msgid ""
+"Where «String automatically» sends the strings of this sub-field; the "
+"strings of now do not change"
+msgstr ""
+"Dove «Stringa in automatico» manda le stringhe di questo sottocampo; le "
+"stringhe di adesso non cambiano"
+
+#, python-brace-format
+msgid "{name}: {kw} kW AC"
+msgstr "{name}: {kw} kW AC"
+
+#: src/meridiana/ui/window.py
+msgid ""
+"Meridiana chooses the inverters of one brand for the modules laid: fewer "
+"inverters, then fewer models, then the DC/AC ratio closest to the one "
+"wanted; every module in a valid string. They replace the inverters in the "
+"list (one undo step)"
+msgstr ""
+"Meridiana sceglie gli inverter di una marca per i moduli posati: il minor "
+"numero di inverter, poi il minor numero di modelli, poi il rapporto DC/AC "
+"più vicino a quello voluto; ogni modulo in una stringa valida. Sostituiscono "
+"gli inverter in elenco (un passo di Annulla)"
+
+msgid ""
+"Meridiana's strings, with the options in a little window: on the whole "
+"plant, on the modules selected on the plan or on one inverter; in place of "
+"the strings there are (asked first) or for the modules in no string only; "
+"the path, the modules in series, the DC/AC ratio wanted. One undo step; "
+"nothing changes them afterwards"
+msgstr ""
+"Le stringhe di Meridiana, con le opzioni in una finestrella: su tutto "
+"l'impianto, sui moduli selezionati in pianta o su un inverter; al posto "
+"delle stringhe che ci sono (chiede prima) o solo per i moduli senza "
+"stringa; il percorso, i moduli in serie, il rapporto DC/AC voluto. Un passo "
+"di Annulla; dopo nulla le cambia"
+
+#, python-brace-format
+msgid "Rename inverter {n}"
+msgstr "Rinomina l'inverter {n}"
+
+#, python-brace-format
+msgid "Move inverter {a} to place {b}"
+msgstr "Sposta l'inverter {a} al posto {b}"
+
+#, python-brace-format
+msgid "{a}.x.y → {b}.x.y"
+msgstr "{a}.x.y → {b}.x.y"
+
+#, python-brace-format
+msgid ""
+"Inverter {a} → {b}: the strings are renumbered, {words} (Ctrl+Z brings the "
+"order back)."
+msgstr ""
+"Inverter {a} → {b}: le stringhe sono rinumerate, {words} (Ctrl+Z riporta "
+"l'ordine di prima)."
+
+msgid "The inverters are being checked: a moment."
+msgstr "Gli inverter sono in verifica: un attimo."
+
+#, python-brace-format
+msgid "Inverter {n} has no string."
+msgstr "L'inverter {n} non ha stringhe."
+
+#, python-brace-format
+msgid "Empty the strings of inverter {n}"
+msgstr "Svuota le stringhe dell'inverter {n}"
+
+#, python-brace-format
+msgid ""
+"Inverter {n}: its string is deleted, its modules stay laid (Ctrl+Z brings "
+"it back)."
+msgid_plural ""
+"Inverter {n}: its {k} strings are deleted, their modules stay laid (Ctrl+Z "
+"brings them back)."
+msgstr[0] ""
+"Inverter {n}: la sua stringa è cancellata, i moduli restano posati (Ctrl+Z "
+"la riporta)."
+msgstr[1] ""
+"Inverter {n}: le sue {k} stringhe sono cancellate, i moduli restano posati "
+"(Ctrl+Z le riporta)."
+
+#, python-brace-format
+msgid "Take inverter {n} out"
+msgstr "Togli l'inverter {n}"
+
+#, python-brace-format
+msgid ""
+"The string of inverter {n} is replaced by Meridiana's proposal. Undo brings "
+"it back. Go on?"
+msgid_plural ""
+"The {k} strings of inverter {n} are replaced by Meridiana's proposal. Undo "
+"brings them back. Go on?"
+msgstr[0] ""
+"La stringa dell'inverter {n} è sostituita dalla proposta di Meridiana. "
+"Annulla la riporta. Procedo?"
+msgstr[1] ""
+"Le {k} stringhe dell'inverter {n} sono sostituite dalla proposta di "
+"Meridiana. Annulla le riporta. Procedo?"
+
+#: src/meridiana/help.py
+msgid "The inverters of the plant one by one: name, model, strings, DC/AC; their menu."
+msgstr "Gli inverter dell'impianto uno per uno: nome, modello, stringhe, DC/AC; il loro menu."
+
+msgid ""
+"The first line: how many inverters, their AC power, the modules' power, the "
+"DC/AC ratio. Then a card for each inverter: the disc with its number is the "
+"handle, drag it (or Alt+Up, Alt+Down) to change the order; the number is "
+"the inverter's place and names its strings (1.3.2 is inverter 1), so moving "
+"an inverter renumbers them. F2 or a double click renames it, a name only. "
+"The menu «⋯»: rename, move, datasheet, string this inverter, empty its "
+"strings, take it out of the plant (its strings stay on the roof, on no "
+"inverter). A click on a card shows its strings below. «Catalogue…» adds an "
+"inverter; «Choose automatically…» lets Meridiana choose them for the "
+"modules laid. The DC/AC ratio wanted is yours: the scale shows the energy "
+"cut once the year is computed."
+msgstr ""
+"La prima riga: quanti inverter, la loro potenza AC, la potenza dei moduli, "
+"il rapporto DC/AC. Poi una scheda per ogni inverter: il disco con il numero "
+"è la maniglia, trascinalo (o Alt+Su, Alt+Giù) per cambiare l'ordine; il "
+"numero è la posizione dell'inverter e dà il nome alle sue stringhe (1.3.2 è "
+"l'inverter 1), quindi spostare un inverter le rinumera. F2 o doppio clic lo "
+"rinomina, solo il nome. Il menu «⋯»: rinomina, sposta, scheda tecnica, "
+"stringa questo inverter, svuota le sue stringhe, toglilo dall'impianto (le "
+"sue stringhe restano sul tetto, senza inverter). Un clic su una scheda "
+"mostra le sue stringhe sotto. «Catalogo…» aggiunge un inverter; «Scegli in "
+"automatico…» lascia che Meridiana li scelga per i moduli posati. Il "
+"rapporto DC/AC voluto è tuo: la scala mostra l'energia tagliata dopo il "
+"calcolo dell'anno."
+
+msgid "The inputs of the inverter shown with their strings; the view from the menu beside."
+msgstr "Gli ingressi dell'inverter mostrato con le loro stringhe; la vista dal menu accanto."
+
+msgid ""
+"The strings of the whole plant on the first line; then the inverter shown "
+"and its inputs, as cards (each input with its mark and its strings, «+» to "
+"draw one on it) or as a single-line diagram in miniature (each string a bar "
+"as long as its modules), from the menu at the left of the «?». A click on a "
+"string chooses it, on the plan too; a double click draws it again; the "
+"right button has the rest. The commands: «String automatically…» with its "
+"options, «Draw a string», «Delete all the strings»."
+msgstr ""
+"Le stringhe di tutto l'impianto sulla prima riga; poi l'inverter mostrato e "
+"i suoi ingressi, a schede (ogni ingresso con il suo segno e le sue "
+"stringhe, «+» per disegnarne una) oppure come unifilare in miniatura (ogni "
+"stringa una barra lunga quanti i suoi moduli), dal menu a sinistra del "
+"«?». Un clic su una stringa la sceglie, anche in pianta; un doppio clic la "
+"ridisegna; il tasto destro ha il resto. I comandi: «Stringa in "
+"automatico…» con le sue opzioni, «Disegna una stringa», «Cancella tutte le "
+"stringhe»."
+
+msgid "The temperatures every check of the strings is made at."
+msgstr "Le temperature a cui è fatta ogni verifica delle stringhe."
+
+msgid ""
+"The lowest temperature of the site sets the open-circuit voltage on the "
+"coldest morning, checked against the inverter's and the modules' maximum; "
+"the MPP voltage is checked at the hottest and the coldest cell, PVsyst's "
+"design conditions until the production is computed, then the typical "
+"year's."
+msgstr ""
+"La temperatura minima del sito fissa la tensione a vuoto della mattina più "
+"fredda, verificata contro il massimo dell'inverter e dei moduli; la "
+"tensione MPP è verificata alla cella più calda e a quella più fredda, "
+"condizioni di progetto PVsyst finché la produzione non è calcolata, poi "
+"quelle dell'anno tipo."
+
+msgid "The string chosen on the plan or in the list: path, figures as bars, checks."
+msgstr "La stringa scelta in pianta o nell'elenco: percorso, numeri come barre, verifiche."
+
+msgid ""
+"Where it goes (inverter and input) and its modules; the open-circuit "
+"voltage at the lowest temperature against the maximum, the MPP voltage at "
+"the hottest and coldest cell against the MPPT window, the current against "
+"the input's, each as a bar as long as its limit; then each check with its "
+"mark and its clause. «Redraw», «Move to…» and «Delete» act on this string."
+msgstr ""
+"Dove va (inverter e ingresso) e i suoi moduli; la tensione a vuoto alla "
+"temperatura minima contro il massimo, la tensione MPP alla cella più calda e "
+"più fredda contro la finestra MPPT, la corrente contro quella "
+"dell'ingresso, ciascuna come barra lunga quanto il suo limite; poi ogni "
+"verifica con il segno e l'articolo. «Ridisegna», «Sposta su…» ed «Elimina» "
+"agiscono su questa stringa."
+
+#: src/meridiana/phases.py
+msgid "Choose auto."
+msgstr "Scegli in autom."
+
+msgid "Clear all"
+msgstr "Cancella tutte"
+
+#: src/meridiana/shortcuts.py
+msgid "Choose the inverters &automatically…"
+msgstr "Scegli gli inverter in &automatico…"
+
+msgid "St&ring automatically…"
+msgstr "St&ringa in automatico…"
