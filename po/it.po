@@ -21672,3 +21672,8 @@ msgstr "Ho letto una regola"
 #: src/meridiana/assistant/tools.py
 msgid "Read the activities subject to fire prevention controls"
 msgstr "Ho letto le attività soggette ai controlli di prevenzione incendi"
+
+#: src/meridiana/shortcuts.py:67
+msgctxt "roof"
+msgid "Pitch"
+msgstr "Falda"
