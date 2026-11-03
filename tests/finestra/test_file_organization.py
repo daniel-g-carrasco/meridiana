@@ -69,6 +69,33 @@ class Organization(unittest.TestCase):
         started.assert_called_once()
         self.assertFalse(page.isVisible())                                    # the page closes, then the file
 
+    def test_the_open_bubble_goes_with_meridio_and_is_not_in_the_picture_of_the_entrance(self):
+        """R347, R370: left there, it showed over the page for a moment, «quella finestrella», each time File opened."""
+        from unittest import mock
+
+        from meridiana.ui import motion
+        self.app = _setup.qt_or_skip()
+        _setup.window(self, capannone())
+        win = self.win
+        win.show()
+        a = win.assistant
+        a.show()
+        if not a.opened:
+            a.toggle()
+        _setup.turn_events(self.app, 500)
+        self.assertTrue(a.bubble.isVisible())
+        seen = []
+        real = motion.enter
+        def spy(area, change, *rest, **more):
+            seen.append((a.isVisible(), a.bubble.isVisible()))
+            return real(area, change, *rest, **more)
+        with mock.patch.object(motion, "enter", spy):
+            win.open_file_page()
+        self.assertEqual(seen, [(False, False)])
+        win.file_page.close_page()
+        self.assertTrue(_setup.wait_until(self.app, lambda: a.isVisible() and a.bubble.isVisible(), 5))
+        self.assertTrue(a.opened)
+
     def test_settings_opened_from_elsewhere_go_back_to_the_project_with_a_button_and_a_key(self):
         """R289 (Daniel, 30/10/2026): the Settings opened without passing by File (Meridio's «Settings…», their
         key) show «Back to the project», and Alt+Left (the Back key) steps back: out of the page when it was

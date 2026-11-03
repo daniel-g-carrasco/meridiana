@@ -648,8 +648,12 @@ class FilePage(QFrame):
         assistant = getattr(self.host, "assistant", None)
         touring = assistant is not None and bool(assistant.property("guidedTourActive"))
         if assistant is not None and assistant.isVisible() and assistant.parentWidget() is self.host and not touring:
-            assistant.hide()
-            self.hidden_with_me = [assistant]
+            # his bubble too: left there, it was in the picture of the entrance, a little window over the page for a
+            # moment each time File opened with it open (R347)
+            bubble = getattr(assistant, "bubble", None)
+            self.hidden_with_me = [assistant] + ([bubble] if bubble is not None and bubble.isVisible() else [])
+            for widget in self.hidden_with_me:
+                widget.hide()
         from . import motion
 
         def present():
