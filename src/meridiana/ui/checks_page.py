@@ -26,6 +26,7 @@ from .cards import default_tokens
 from .design import Radius, Space
 from .sections import SectionDelegate, is_section, section
 from .segments import Segment, Segments
+from .title_tools import TitleTools
 
 # the status colours of the charts' palette (critical, warning, good), on the mark only: the mark and the words
 # carry the meaning, the colour helps; what is only worth knowing keeps the colour of the text
@@ -369,15 +370,17 @@ class ChecksTree(QTreeWidget):
 
 
 class CountChip(Segment):
-    """A level on the track of the head (R328, P5): its sign and its count as in the tree, raised while its level is
-    kept; a count of nought grey, but in its place; two digit slots keep the four as wide."""
+    """A level's count in the head (R328, R335, P3): its sign and its number in a pill of its own, the level's tone on
+    the ground and the line, radius 6; the pill of a filter that is on has the stronger ground and line, a count of
+    nought is faded, in its place; two digit slots keep the four as wide. It is a segment for what a button does (the
+    filter that stays pressed, the keys, the tooltip) and draws itself (ui/status_pill.paint_pill)."""
 
     def __init__(self, level: str):
         super().__init__()
         from .marks import icon as mark_icon
         self.level = level
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        self.setIcon(mark_icon(level))
+        self.setIcon(mark_icon(level))          # the accessible picture of the count; the pill draws its own
 
     def sizeHint(self) -> QSize:
         from . import status_pill
@@ -387,12 +390,32 @@ class CountChip(Segment):
     def minimumSizeHint(self) -> QSize:
         return self.sizeHint()
 
-    def paint_face(self, p, box, t) -> None:
+    def paintEvent(self, event) -> None:
         from . import status_pill
         from .design import Text, text_font
-        off = self.text() == "0"
-        status_pill.paint(p, box, self.level, self.text(), text_font(Text.LABEL, self.font()),
-                          QColor(t["muted"] if off else t["text"]), off=off)
+        from .segments import tokens
+        p = QPainter(self)
+        status_pill.paint_pill(p, QRectF(self.rect()), self.level, self.text(), text_font(Text.LABEL, self.font()),
+                               tokens(), on=self.isChecked(), off=self.text() == "0",
+                               hover=self.isEnabled() and not self.isChecked() and (self.underMouse() or self.isDown()),
+                               ring=self.keyboard)
+
+
+class CountRow(QWidget):
+    """The counts side by side, each a pill of its own (R335): not a track, a row of separate pills."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("counts")
+        self.row = QHBoxLayout(self)
+        self.row.setContentsMargins(0, 0, 0, 0)
+        self.row.setSpacing(Space.S)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
+    def add(self, chip: CountChip) -> CountChip:
+        chip.setFocusPolicy(Qt.FocusPolicy.TabFocus)        # each its own state: Tab and the space bar
+        self.row.addWidget(chip)
+        return chip
 
 
 class ChecksPage(QWidget):
@@ -425,40 +448,28 @@ class ChecksPage(QWidget):
         self.notes_text = lambda: ""                # the window gives the text of the notes
         self.expand_pending = False
         box = QVBoxLayout(self)
-        # the view, a track of its own on a row above the filters (R322, C4; the menu of study 17, F.5, before it): the
-        # choice is kept in the settings; narrow, its words are cut with their tooltip whole
+        # the controls of the head on one row (R345): the views, the counts, «This phase» and «This object» at the right,
+        # «Copy the notes» as a symbol; in the title's line of the card when the window gives it (`dock_in`), else as
+        # the page's first row. Narrow, they go to the rows under, each whole (ui/title_tools.py)
+        self.tools = TitleTools()
+        # the views, a track: the choice is kept in the settings; narrow, its words are cut with their tooltip whole
         self.views = Segments()
         tip = _("How the checks are grouped: by level, by object, by area, or what to look at before delivering")
         for key, name in view_names().items():
             self.views.add(name, key, tip)
         self.views.set_current(self.view)
         self.views.chosen.connect(self.set_view)
-        views_row = QHBoxLayout()
-        views_row.addWidget(self.views, 0)
-        views_row.addStretch(1)
-        box.addLayout(views_row)
-        head = QHBoxLayout()
-        # the counts, each a link to its section (C9: the sections absorb the filters by level)
-        self.summary = QLabel()
-        # one line that never resizes the panel: wrapped, a new count made the card 18 px taller and the views
-        # jumped (test_viewbar caught it); cut when narrow, the counts are in the status bar too
-        self.summary.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-        self.summary.setMinimumWidth(1)
-        self.summary.setTextFormat(Qt.TextFormat.RichText)
-        self.summary.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
-        self.summary.linkActivated.connect(self.go_to)
-        head.addWidget(self.summary, 1)
-        # the counts on a track, each with its sign and its number, each a filter that stays pressed (R130, R328): more
-        # than one can be on, so it is a track not exclusive
+        self.tools.add(self.views)
+        # the counts, each a pill with its sign and its number and each a filter that stays pressed (R130, R335): more
+        # than one can be on; the sections of the list are the same levels, a count leads to its section
         self.counts: dict = {}
-        self.levels_track = Segments(exclusive=False)
+        self.levels_row = CountRow()
         for lv in checks.LEVELS:
             b = CountChip(lv)
-            self.levels_track.add("", lv, segment=b)
+            self.levels_row.add(b)
             b.toggled.connect(lambda on, lv=lv: self._level_toggled(lv, on))
             self.counts[lv] = b
-        head.insertWidget(0, self.levels_track)
-        head.addSpacing(8)
+        self.tools.add(self.levels_row)
         # the two filters that are real questions (design 3.8), this phase and this object: a track not exclusive, each
         # keeps its state and the two can stay on together, as before (R322, C4)
         self.filters = Segments(exclusive=False)
@@ -468,8 +479,28 @@ class ChecksPage(QWidget):
         self.object_button = self.filters.add(_("This object"), "object",
                                               _("Only the checks of the object selected in the views or in the tree"))
         self.object_button.toggled.connect(self._object_toggled)
-        head.addWidget(self.filters)
-        box.addLayout(head)
+        self.tools.add(self.filters, "end")
+        # the notes for the report, a symbol beside the card's cross: the command is also in File > Copy the notes
+        # (window.py, copy_notes), so its words are the tooltip and the accessible name
+        from .design import Button
+        self.copy_button = QToolButton()
+        self.copy_button.setObjectName("title-tool")
+        self.copy_button.setIcon(icons.icon("copy_notes"))
+        self.copy_button.setFixedSize(Button.SMALL[0], Button.SMALL[0])
+        self.copy_button.setAutoRaise(True)
+        copy_text = _("Copy the notes for the report")
+        self.copy_button.setToolTip(copy_text + "\n" + _("The paragraphs of the rules that apply, with their sources, "
+                                                         "to paste into the technical report"))
+        self.copy_button.setAccessibleName(copy_text)
+        self.copy_button.clicked.connect(self._copy)
+        self.tools.add(self.copy_button, "tail")
+        box.addWidget(self.tools)
+        # what the filters keep, a line that is there only when it has something to say
+        self.summary = QLabel()
+        self.summary.setWordWrap(True)
+        self.summary.setTextFormat(Qt.TextFormat.PlainText)
+        self.summary.hide()
+        box.addWidget(self.summary)
         # a fix asked for, said before it is kept (R126: «"correggi" dovrebbe presentare le correzioni proposte
         # prima di applicarle all'istante»): an edit is made as a preview with the views on it, Keep or Take back;
         # what is not an edit waits for Apply
@@ -515,24 +546,13 @@ class ChecksPage(QWidget):
         self.tree.itemExpanded.connect(lambda it: self._remember(it, True))
         self.tree.itemCollapsed.connect(lambda it: self._remember(it, False))
         box.addWidget(self.tree, 1)
-        # below, what is about the whole list: «Fix» and «Ask Meridio» are on each row and in its menu (R125: no row
-        # is in hand to act on from here)
-        row = QHBoxLayout()
-        row.addStretch(1)
-        self.copy_button = QPushButton(_("Copy the notes for the report"))
-        self.copy_button.setToolTip(_("The paragraphs of the rules that apply, with their sources, to paste into the "
-                                      "technical report"))
-        self.copy_button.clicked.connect(self._copy)
-        row.addWidget(self.copy_button)
-        box.addLayout(row)
-        # the list's bar against the card's right line as in the other cards; the rows above and below keep the
-        # margin, in line with the list's content (R182, Daniel 26/10/2026: «la barra di scorrimento ... è
-        # posizionata diversamente in queste due schede ... mi piace di più la versione più attaccata al bordo
-        # destro della scheda»)
+        # the list's bar against the card's right line as in the other cards; the rows above keep the margin, in line
+        # with the list's content (R182, Daniel 26/10/2026: «la barra di scorrimento ... è posizionata diversamente in
+        # queste due schede ... mi piace di più la versione più attaccata al bordo destro della scheda»)
         m = box.contentsMargins()
         box.setContentsMargins(m.left(), m.top(), 0, m.bottom())
-        for line in (head, row):
-            line.setContentsMargins(0, 0, m.right(), 0)
+        self.tools.setContentsMargins(0, 0, m.right(), 0)
+        self.summary.setContentsMargins(0, 0, m.right(), 0)
         self._view_texts()
         self._summary()
 
@@ -767,7 +787,7 @@ class ChecksPage(QWidget):
             self.object_button.blockSignals(True)
             self.object_button.setChecked(False)
             self.object_button.blockSignals(False)
-            self.summary.setText(_("Select an object in the views or in the tree first."))
+            self._say(_("Select an object in the views or in the tree first."))
 
     def _subset_of(self, key: tuple) -> None:
         mark = checks.tree_marks(self.items, checks.LEVELS).get(tuple(key))
@@ -814,6 +834,19 @@ class ChecksPage(QWidget):
         self._summary()
         self._keep_current_shown()
 
+    def _say(self, text: str) -> None:
+        """The line under the head: what the filters keep, or what a command answers; hidden when it is empty, so the
+        list has its room (R345)."""
+        self.summary.setText(text)
+        self.summary.setVisible(bool(text))
+
+    def dock_in(self, title) -> None:
+        """Put the head's controls on the title's line of the card that holds the page (`title`, a ui/cards.CardTitle):
+        the rows they stood in give their room to the list (R345)."""
+        self.layout().removeWidget(self.tools)
+        self.tools.setContentsMargins(0, 0, 0, 0)
+        title.set_tools(self.tools)
+
     def _summary(self) -> None:
         """How many of each level, each count a link to its section; what the filters keep."""
         n = checks.counts(self.items)
@@ -831,7 +864,7 @@ class ChecksPage(QWidget):
             text += " " + _("Only this phase.")
         if self.subset is not None:
             text += " " + _("Only the checks of {name}: {n}.").format(name=self.subset_name, n=len(self.subset))
-        self.summary.setText(text.strip())
+        self._say(text.strip())
 
     def go_to(self, level: str) -> None:
         """A count clicked, in the head or in the status bar: the section of that level, open, with its first
@@ -935,8 +968,8 @@ class ChecksPage(QWidget):
         if it is not None and it.fix:
             self.fix.emit(it)
             return True
-        self.summary.setText(_("This check has no fix: its detail says what to do.") if it is not None else
-                             _("No check under the keyboard: go to one with the arrows first."))
+        self._say(_("This check has no fix: its detail says what to do.") if it is not None else
+                  _("No check under the keyboard: go to one with the arrows first."))
         return False
 
     def _fix_row(self, n: int) -> None:
@@ -1011,4 +1044,4 @@ class ChecksPage(QWidget):
         text = self.notes_text()
         if text.strip():
             QGuiApplication.clipboard().setText(text)
-            self.summary.setText(_("The notes for the report are in the clipboard: paste them into the document."))
+            self._say(_("The notes for the report are in the clipboard: paste them into the document."))

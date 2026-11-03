@@ -173,17 +173,18 @@ def gallery(theme) -> QMainWindow:
     for s in states:
         s.setFont(text_font(Text.CONTROL))
     cb.addWidget(row(*states))
-    # the filters and the counts, as the Checks' head: tracks not exclusive (R322, R328)
-    from .checks_page import CountChip
+    # the filters, a track not exclusive, and the counts, pills of their own, as the Checks' head (R322, R335)
+    from .checks_page import CountChip, CountRow
     from .segments import Segments
     filters = Segments(exclusive=False)
     for text, checked in (("Questa fase", True), ("Questo oggetto", False)):
         filters.add(text).setChecked(checked)
-    counts = Segments(exclusive=False)
-    for level, n in (("fail", 0), ("warn", 1), ("info", 12)):
+    counts = CountRow()
+    for level, n, on in (("fail", 0, False), ("warn", 1, True), ("info", 12, False)):
         c = CountChip(level)
         c.setText(str(n))
-        counts.add(str(n), level, segment=c)
+        c.setChecked(on)
+        counts.add(c)
     cb.addWidget(row(counts, filters, spacing=Space.L))
     # the tabs and the segments: one track (R109, R121, R322)
     from .segments import on_bar
