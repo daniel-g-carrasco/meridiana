@@ -364,7 +364,8 @@ class FilePage(QFrame):
     def _build(self) -> None:
         w = self.host
         back = self._item("back", "arrow-left", _("Back to the project"), "Esc", self.close_page)
-        back.setToolTip(_("Esc closes the page; Alt+Left goes back one step"))
+        # not a tooltip (R347): the key is on the item, and the page opens with this item near the pointer
+        back.setAccessibleDescription(_("Esc closes the page; Alt+Left goes back one step"))
         self._rule()
         self._item("new", "file-plus", _("New"), self._keys("new"), self._command("new"))
         self._item("open", "folder-open", _("Open"), self._keys("open"))

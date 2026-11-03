@@ -134,6 +134,28 @@ class SharedMotion(unittest.TestCase):
         self.app.processEvents()
         return host, area
 
+    def test_an_entrance_never_shows_the_two_pages_mixed(self):
+        # R347 (Daniel, 03/11/2026: «una finestrella in sovraimpressione»): the old page goes to the ground, then the new
+        # one comes from it. Red and blue stand for the pages: no frame may hold both.
+        from PySide6.QtGui import QColor, QPixmap
+        host, area = self._overlay()
+        red, blue, grey = QPixmap(220, 160), QPixmap(220, 160), QColor("#808080")
+        red.fill(QColor("#ff0000"))
+        blue.fill(QColor("#0000ff"))
+        entrance = motion.Entrance(area, red, "fade")
+        self.addCleanup(entrance.cancel)
+        entrance.after, entrance.ground = blue, grey
+        for k in range(21):
+            entrance.t = k / 20
+            c = entrance.grab().toImage().pixelColor(110, 80)
+            self.assertFalse(c.red() > grey.red() and c.blue() > grey.blue(), (entrance.t, c.name()))
+        entrance.t = 0.0
+        self.assertEqual(entrance.grab().toImage().pixelColor(110, 80).name(), "#ff0000")
+        entrance.t = 1.0
+        self.assertEqual(entrance.grab().toImage().pixelColor(110, 80).name(), "#0000ff")
+        entrance.t = motion.Entrance.OUT
+        self.assertEqual(entrance.grab().toImage().pixelColor(110, 80).name(), "#808080")
+
     def test_entering_again_while_leaving_keeps_one_veil(self):
         # qt-app-template caught two pictures on screen when File opened again during its short exit (R252).
         import shiboken6

@@ -211,7 +211,11 @@ def slide(area: QWidget, change: Callable[[], None], direction: int, ms: int = M
 class Entrance(QWidget):
     """An opaque area entering over what was there before. Two pictures are enough: no opacity effect, no mask and
     no layout work at the frames. `slide` fades and comes a little from the left, `sheet` opens from that side and
-    `fade` only dissolves. The choices share their duration and their reduced-motion path."""
+    `fade` only dissolves. The choices share their duration and their reduced-motion path. The two pictures are never
+    mixed (R347, Daniel 03/11/2026: «una finestrella in sovraimpressione»): the old one goes to the page's ground, then
+    the new one comes from it; on a machine that draws few frames a mix of two pages was all one saw."""
+
+    OUT = 0.3                                       # the part of the movement the old picture takes to go
 
     finished = Signal()
 
@@ -223,6 +227,7 @@ class Entrance(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
         self.area, self.before, self.kind = area, before, kind
         self.after: QPixmap | None = None
+        self.ground = QColor()
         self.t = 0.0
         self.done = False
         self.animation = QVariantAnimation(self)
@@ -247,6 +252,7 @@ class Entrance(QWidget):
         except RuntimeError:
             self._finish()
             return
+        self.ground = _ground_of(self.after)
         self.raise_()
         self.animation.setDuration(ms)
         self.animation.start()
@@ -276,22 +282,30 @@ class Entrance(QWidget):
 
     def paintEvent(self, event) -> None:
         p = QPainter(self)
-        if self.kind == "leave" and self.after is not None:
-            p.drawPixmap(0, 0, self.after)
-            p.setOpacity(1.0 - self.t)
-            p.drawPixmap(QPointF(-Space.L * self.t, 0), self.before)
-            return
-        p.drawPixmap(0, 0, self.before)
         if self.after is None:
+            p.drawPixmap(0, 0, self.before)
             return
         t = self.t
         if self.kind == "sheet":
+            p.drawPixmap(0, 0, self.before)
             p.setClipRect(QRect(0, 0, round(self.width() * t), self.height()))
             p.drawPixmap(0, 0, self.after)
             return
-        p.setOpacity(t)
+        p.fillRect(self.rect(), self.ground)
+        if t < self.OUT:
+            p.setOpacity(1.0 - t / self.OUT)
+            dx = -Space.L * t if self.kind == "leave" else 0.0
+            p.drawPixmap(QPointF(dx, 0), self.before)
+            return
+        p.setOpacity((t - self.OUT) / (1.0 - self.OUT))
         dx = Space.XL * (1.0 - t) if self.kind == "slide" else 0.0
         p.drawPixmap(QPointF(dx, 0), self.after)
+
+
+def _ground_of(page: QPixmap) -> QColor:
+    """The colour a page lies on: its bottom middle, where no page puts anything."""
+    ratio = page.devicePixelRatio()
+    return page.toImage().pixelColor(int(page.width() / 2), int(page.height() - 3 * ratio))
 
 
 def enter(area: QWidget, change: Callable[[], None], kind: str = "slide", ms: int = Motion.NORMAL) -> Entrance | None:
@@ -351,6 +365,7 @@ def leave(area: QWidget, change: Callable[[], None], ms: int = Motion.FAST) -> E
             return
         entrance.hide()
         entrance.after = picture(area)
+        entrance.ground = _ground_of(entrance.before)
         entrance.show()
         entrance.raise_()
         entrance.animation.setDuration(ms)
