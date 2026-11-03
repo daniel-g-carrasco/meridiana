@@ -206,15 +206,19 @@ class PhaseRow(unittest.TestCase):
         win.toolbar_text_action.trigger()
         self.assertEqual(cfg.toolbar, "text")
         self.assertEqual(button.toolButtonStyle(), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-        # a low window gets the icons alone by itself, the preference untouched; forced, a tall one too
+        # a low window gets the words beside the icons by itself (R334), the preference untouched; with no room for
+        # them the icons alone; the icons forced, a tall one too
         win.resize(1400, LOW_WINDOW_HEIGHT)
-        self.app.processEvents()
-        self.assertEqual(button.toolButtonStyle(), Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.assertTrue(_setup.wait_until(self.app, lambda: button.toolButtonStyle() ==
+                                          Qt.ToolButtonStyle.ToolButtonTextBesideIcon))
         self.assertEqual(cfg.toolbar, "text")
         self.assertTrue(win.toolbar_text_action.isChecked())
+        win.resize(1000, LOW_WINDOW_HEIGHT)
+        self.assertTrue(_setup.wait_until(self.app, lambda: button.toolButtonStyle() ==
+                                          Qt.ToolButtonStyle.ToolButtonIconOnly))
         win.resize(1400, TALL_WINDOW)
-        self.app.processEvents()
-        self.assertEqual(button.toolButtonStyle(), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        self.assertTrue(_setup.wait_until(self.app, lambda: button.toolButtonStyle() ==
+                                          Qt.ToolButtonStyle.ToolButtonTextUnderIcon))
         win._toolbar_style("icons")
         self.assertEqual(button.toolButtonStyle(), Qt.ToolButtonStyle.ToolButtonIconOnly)
         win._toolbar_style("text")

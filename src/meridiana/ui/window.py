@@ -15,7 +15,7 @@ import sqlite3
 import tempfile
 import time
 import uuid
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 
 import numpy as np
@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (QApplication, QDialog, QDockWidget, QFileDialog, 
                                QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWhatsThis, QWidget)
 from shapely.geometry import Polygon
 
+from .. import arrangement
 from .. import assistant as assistant_core
 from .. import (atomic, camera, catalog, checks, config, jobs, log, manual, mesh, model, move, phases, project_index,
                recovery, registry, roof_vertices, rules, shortcuts, sides, roofs, squaring, templates, theme_colors, tiles, underlay,
@@ -44,7 +45,7 @@ from .undo import UndoBridge
 from .assistant import Assistant
 from .assistant_chat import Chat, WindowHost
 from .cards import CardDock, keep_gaps
-from .design import Icon, Size, Space, Text, set_text_all
+from .design import Bar, Icon, Size, Space, Text, set_text_all
 from .sections import TAIL_ROLE, SectionDelegate, section
 from .catalog_dialog import CatalogDialog
 from .energy_pages import ConsumptionPage, EconomicsPage, EnergyPage
@@ -52,7 +53,7 @@ from .lazy_page import LazyConsumptionPage, LazyEconomicsPage, LazyEnergyPage
 from .inspector import Inspector
 from .marks import icon as mark_icon
 from .report_page import ReportPage, ReportSide
-from .phasebar import LOW_WINDOW, PhaseBar, Phases
+from .phasebar import BAR_SIDES, LOW_WINDOW, PhaseBar, Phases
 from .plan import EDGE_KINDS, MOVABLE, PlanView, from_scene
 from .plant_page import PlantInspector, PlantPage, PlantSide, input_name, LazyReference  # R277: PlantSide
 from .properties import Properties, field_label
@@ -68,8 +69,9 @@ from .waiting import STALE_MARK
 SUFFIX = ".mer"
 WALL_REACH = 0.5                # metres: a click on a building's side in 3D takes it (R175)
 # below this width (logical pixels: a column of niri, half a laptop screen) the panels share one side
-NARROW = 1000
 LAYOUT_UNDO_S = 15             # seconds: the default layout asked again within them brings back the one before (R294)
+ARRANGE_PAUSE_MS = 150         # a change of arrangement waits for the resize to rest (study 27, principle 4)
+ARRANGE_UNDO_S = 15            # seconds: how long a change the program made offers its Undo
 # the topics that never change the energy year (session.energy_key): no need to ask whether it is still good
 NO_YEAR = {"project:text", "project:privacy", "project:rules", "project:underlays", "project:report"}
 
@@ -514,6 +516,17 @@ class MainWindow(QMainWindow):
             label.setMinimumWidth(1)
             label.setContentsMargins(Space.S, 0, Space.S, 0)
             label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        # what undoes a change of arrangement the program made, beside what it says about it (R334)
+        self.arrange_undo_button = QToolButton()
+        self.arrange_undo_button.setObjectName("arrange-undo")
+        self.arrange_undo_button.setAutoRaise(True)
+        self.arrange_undo_button.setText(_("Undo"))
+        self.arrange_undo_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        self.arrange_undo_button.hide()
+        self.arrange_undo_button.clicked.connect(lambda _c=False: self._undo_arrangement())
+        # another message in the meantime (a layout just done) does not leave the Undo without its sentence
+        self.statusBar().messageChanged.connect(self._keep_arrange_said)
+        self.statusBar().addPermanentWidget(self.arrange_undo_button)
         self.statusBar().addPermanentWidget(self.busy)
         from .save_status import SaveStatus
         self.save_status = SaveStatus()
@@ -692,6 +705,11 @@ class MainWindow(QMainWindow):
         self.feedback_dialog = None
         self.narrow: bool | None = None
         self.auto_plan = False                 # "both" turned into "plan" by a narrow window
+        self.arrange_timer = QTimer(self, singleShot=True, interval=ARRANGE_PAUSE_MS)
+        self.arrange_timer.timeout.connect(self._arrange)
+        self.arrange_undo = None               # (the layout before, the arrangement before, the fields changed) R334
+        self.arrange_undo_timer = QTimer(self, singleShot=True, interval=ARRANGE_UNDO_S * 1000)
+        self.arrange_undo_timer.timeout.connect(self._drop_arrange_undo)
         self.before_clean = None               # the layout before «Only the drawing»
         self.layout_undo = None                # (the layout before «Restore the default layout», until when) R294
         # the first widths and heights of the target (docs/studio/19-grafica): tree 320, properties 380, checks 230
@@ -707,6 +725,7 @@ class MainWindow(QMainWindow):
                             self.help_dock: max(300, min(380, round(width * 0.24))), self.checks_dock: 230}
         self.factory_state = self.saveState()  # what «Restore the default layout» comes back to
         self.restored = self._restore_window()
+        self.keep_saved = self.restored        # the first arrangement leaves the panels as the designer left them
         self._toolbar_style()                  # the side bar as the preferences say, not as the saved state had it
         if not self.restored:
             # first start: most of the screen, as a drawing program wants
@@ -743,6 +762,7 @@ class MainWindow(QMainWindow):
         if not self.bars_before_file:
             self.tabs.bars.show()
         self._settle_layouts()
+        self._arrange_soon()                        # a resize meanwhile was left for now
         if self.phase() == "report":                # what the Settings changed meanwhile (R329)
             self._show_inspector()
 
@@ -989,8 +1009,9 @@ class MainWindow(QMainWindow):
         # the words under the icons of the bar of the phase (design C1): on by default, off by choice or by itself
         # in a low window (design 5.3)
         self.toolbar_text_action = act(view, "toolbar_text", lambda on: self._toolbar_style("text" if on else "icons"),
-                                       True, _("The words under the icons of the bar of the phase; in a window lower "
-                                               "than {px} px the icons stay alone").format(px=LOW_WINDOW))
+                                       True, _("The words of the bar of the phase; in a window lower than {px} px "
+                                               "they go beside the icons, and with no room for them the icons stay "
+                                               "alone").format(px=LOW_WINDOW))
         self.menu_bar_action = act(view, "menu_bar", self._menu_bar_always, True,
                                    _("The menus always above the phases; off, Alt shows them and they go again"))
         view.addSeparator()
@@ -1274,7 +1295,14 @@ class MainWindow(QMainWindow):
         meteo_box = QHBoxLayout(self.meteo_holder)
         meteo_box.setContentsMargins(Space.L, 0, Space.M, 0)
         self.bars["production"].add_trailing(self.meteo_holder)
-        self.bars_text: bool | None = None
+        self.bars_mode: str | None = None       # the mode of the bars as last set
+        self.bar_needs: dict | None = None      # how wide each bar is in each mode (asked once per size of the text)
+        self.arranged: arrangement.Arrangement | None = None    # what the window last did for its size (R334)
+        self.shape_pins: dict = {}              # shape -> what the user chose for it
+        self.shape_memory: dict = {}            # shape -> the layout left in it
+        self.auto_checks = True                 # False keeps the Checks panel as it is, whatever the height (tests)
+        self.trailing_at: dict = {}             # phase -> what stands at its bar's end, in the bar or not
+        self.meteo_room = 0
         self._toolbar_style()
         self._fill_side_bar()
 
@@ -1395,21 +1423,76 @@ class MainWindow(QMainWindow):
         self.toolbar_text_action.setChecked(text)
         left = self.cfg.toolbar_place == "left"
         self.tabs.bars.setVisible(not left)
-        self.plant_page.place_strip(None if left else self.plant_holder)
-        self.energy_page.place_meteo(None if left else self.meteo_holder)
+        if left:
+            self.plant_page.place_strip(None)
+            self.energy_page.place_meteo(None)
+        else:
+            self.plant_page.place_strip(self.plant_holder)
+            self.energy_page.place_meteo(self.meteo_holder)
+            self.bars["plant"].show_trailing(True)
+            self.bars["production"].show_trailing(True)
         self.side_bar.setVisible(left and not self.clean_action.isChecked())
-        self.bars_text = None
+        if style is not None:
+            for pins in self.shape_pins.values():
+                pins.pop("bar", None)               # the preference asked now wins over an Undo of before
+        self.bars_mode = None
+        self.trailing_at.clear()
         self._fit_bars()
 
+    def _choices(self, shape: str | None = None, previous=None) -> arrangement.Choices:
+        """What arrangement.arrangement needs of the window, measured now."""
+        if self.bar_needs is None:
+            self.bar_needs = {mode: {pid: bar.width_in(mode) for pid, bar in self.bars.items()}
+                              for mode in (Bar.UNDER, Bar.BESIDE, Bar.ICONS)}
+        first = getattr(self, "panel_first", {})
+
+        def column(dock, least: int) -> int:
+            if dock.isHidden() and not (dock is self.docks[0] and self.project_auto_hidden):
+                return 0                            # closed by the user: a phase that hides it does not count
+            return dock.width() if dock.isVisible() else first.get(dock, least)
+        previous = previous if previous is not None else self.arranged
+        shape = shape or (previous.shape if previous is not None else arrangement.shape_of(self.width(), self.height()))
+        pins = dict(self.shape_pins.get(shape, {}))
+        if not self.auto_checks:
+            pins["checks_open"] = not self.checks_dock.isHidden()
+        end = Bar.LINE + 2 * Bar.GROUP_AIR + Space.L + Space.M
+        # the weather's strip as last seen in its place: an empty holder must not say that it would fit (and to and fro)
+        self.meteo_room = max(self.meteo_room, self.meteo_holder.minimumSizeHint().width())
+        header = self.tabs.header
+        row = (2 * Space.L + header.file_button.sizeHint().width() + Space.L + self.tabs.tab_bar.full_width()
+               + self.variant_bar.sizeHint().width())
+        return arrangement.Choices(
+            toolbar=self.cfg.toolbar, needs=self.bar_needs, bar_sides=BAR_SIDES,
+            # with its line and the holder's margins
+            trailing={"plant": self.plant_page.strip.minimumSizeHint().width() + end,
+                      "production": self.meteo_room + end},
+            row_needs=row, columns=(column(self.docks[0], 240), column(self.docks[1], 300)), pins=pins,
+            previous=previous)
+
     def _fit_bars(self) -> None:
-        """The words under the icons when they are wanted and the window is tall enough (design 5.3)."""
+        """The bars, the row of the phases and what stands at a bar's end, for the size of the window (R334): at once,
+        they move no panel. A preference, a new size of the text or a change of phase asks for them."""
         if not hasattr(self, "bars"):
             return
-        text = self.cfg.toolbar == "text" and self.height() >= LOW_WINDOW
-        if text == self.bars_text:
-            return
-        self.bars_text = text
-        self.tabs.set_text(text)
+        new = arrangement.arrangement(self.width(), self.height(), self.phase(), self._choices())
+        self._apply_bars(new)
+        if self.arranged is not None:
+            self.arranged = replace(self.arranged, bar=new.bar, row=new.row, trailing_in_bar=new.trailing_in_bar)
+
+    def _apply_bars(self, new) -> None:
+        if new.bar != self.bars_mode:
+            self.bars_mode = new.bar
+            self.tabs.set_mode(new.bar)
+        self.tabs.tab_bar.set_compact(new.row == "numbers")
+        pid = self.phase()
+        left = self.cfg.toolbar_place == "left"
+        if not left and pid in ("plant", "production") and self.trailing_at.get(pid) != new.trailing_in_bar:
+            self.trailing_at[pid] = new.trailing_in_bar
+            self.bars[pid].show_trailing(new.trailing_in_bar)
+            if pid == "plant":
+                self.plant_page.place_strip(self.plant_holder if new.trailing_in_bar else None)
+            else:
+                self.energy_page.place_meteo(self.meteo_holder if new.trailing_in_bar else None)
 
     def _fill_side_bar(self) -> None:
         """The actions of the phase open in the side bar, the groups as separators."""
@@ -1546,7 +1629,7 @@ class MainWindow(QMainWindow):
         self.cfg.text_size = size
         if change_text_size(size):
             self._theme_changed()
-            self.bars_text = None                   # the phase bars measured again for the new words (R179)
+            self.bars_mode = self.bar_needs = None  # the phase bars measured again for the new words (R179)
             self._fit_bars()
             if getattr(self, "project", None) is not None:
                 self.plan.show_project(self.project, self.session.good_results(), force=True)
@@ -2174,6 +2257,7 @@ class MainWindow(QMainWindow):
             self.before_clean = None
             self._settle_assistant_dock()
             self._toolbar_style()                   # the bar of the phase back where the preferences put it
+            self._arrange_soon()                    # a resize meanwhile was left for now
 
     def _default_layout(self, *, offer_undo: bool = True) -> None:
         """Panels, bars and views as at the first start: the way back from any arrangement, a broken one included
@@ -2185,6 +2269,8 @@ class MainWindow(QMainWindow):
         if offer_undo and undo is not None and time.monotonic() < undo[1]:
             self.restoreState(undo[0])
             _show_tab_bars(self)
+            self.arranged, self.keep_saved = None, True
+            self._arrange(said=False)
             self._save_window()
             self.tell(_("The panels are back as they were before."))
             return
@@ -2224,6 +2310,12 @@ class MainWindow(QMainWindow):
         self._view_mode("both")
         width = self.split.width()
         self.split.setSizes([int(width * 0.55), int(width * 0.45)])
+        # the way back from any arrangement: what was chosen per shape forgotten, as at the first start (R334)
+        self.shape_pins.clear()
+        self.shape_memory.clear()
+        self.arranged, self.keep_saved = None, False
+        self._drop_arrange_undo()
+        self._arrange(said=False)
         if self.isVisible():
             self._save_window()
         action = self.commands.get("default_layout")
@@ -3818,6 +3910,8 @@ class MainWindow(QMainWindow):
         self.checks_page.set_phase(pid)             # what «This phase» keeps in the Checks panel
         self.assistant.set_tab(pid)
         self._phase_panels(pid)
+        if hasattr(self, "bars"):
+            self._fit_bars()                        # what stands at the end of this phase's bar
 
     def _phase_panels(self, pid: str) -> None:
         """Project only where there is a drawing; when it returns, the two side panels get the same width."""
@@ -3871,6 +3965,8 @@ class MainWindow(QMainWindow):
         if self.split_home is not None:
             self.split.restoreState(self.split_home)
         self.split_home = None
+        if self.arranged is not None:
+            self._apply_views(self.arranged)        # a state kept may be from before a change of shape
         self.plant_page.returned()
         self.plan.setVisible(self.current_view in ("plan", "both"))
         self.plan.show_wiring(self.commands["strings"].isChecked())
@@ -6352,33 +6448,191 @@ class MainWindow(QMainWindow):
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
-        self._adapt()
-        self._fit_bars()
+        self._arrange_soon()
 
-    def _adapt(self) -> None:
-        """A narrow window (below NARROW) works as one column: the two panels share the right side as
-        tabs and the view shows the plan; a wide one puts them back. It happens when the width crosses
-        the line, so what the designer arranges in between stays. A tiling compositor decides the size
-        after the window is shown, so this follows the resizes rather than the first show."""
-        narrow = self.width() < NARROW
-        if narrow == self.narrow:
-            return
-        first, self.narrow = self.narrow is None, narrow
-        if first and self.restored:
-            return                                  # the panels as the designer left them
+    # how the window arranges itself for its size (R334, study 27): arrangement.py decides, here it is carried out
+
+    def _arrange_soon(self) -> None:
+        """Not during a resize: once it rests (a window dragged across a threshold changes once, at the end); the first
+        time at once, a tiling compositor decides the size right after the window is shown."""
+        if self.arranged is None:
+            self._arrange()
+        else:
+            self.arrange_timer.start()
+
+    def _layout_now(self) -> dict:
+        """The panels, the split and the view as they are, to come back to."""
+        project = self.docks[0]
+        return {"state": bytes(self.saveState().toBase64()).decode("ascii"),
+                "split": bytes((self.split_home if self.split_home is not None else self.split.saveState()).toBase64()).decode("ascii"),
+                "view": next((k for k, a in self.view_actions.items() if a.isChecked()), "both"),
+                "project": self.project_was_visible if self.project_auto_hidden else not project.isHidden()}
+
+    def _put_layout(self, layout: dict) -> None:
+        """Back to `_layout_now`: a state that leaves open panels out of sight gives way to the default one
+        (_check_panels, R294). The Project panel as the phase wants it."""
+        self.restoreState(QByteArray.fromBase64(layout["state"].encode("ascii")))
+        split = QByteArray.fromBase64(layout["split"].encode("ascii"))
+        if self.split_home is not None:
+            self.split_home = split
+        else:
+            self.split.restoreState(split)
+        self._view_mode(layout["view"] if layout["view"] in self.view_actions else "both")
+        self.project_was_visible = bool(layout["project"])
+        self.project_auto_hidden = False
+        project = self.docks[0]
+        if self.phase() in ("model", "plant"):
+            project.setVisible(self.project_was_visible)
+        else:
+            self.project_auto_hidden = self.project_was_visible
+            project.hide()
+        self._settle_assistant_dock()
+        QTimer.singleShot(0, self, self._check_panels)
+
+    def _on_screen(self, like: arrangement.Arrangement) -> arrangement.Arrangement:
+        """What the window shows now, as an arrangement: the panels, the Checks and the views as they are."""
         left, right = self.docks
-        if narrow:
-            self.tabifyDockWidget(right, left)
-            right.raise_()
-            if self.view_actions["both"].isChecked():
+        return replace(like, panels="together" if left in self.tabifiedDockWidgets(right) else "apart",
+                       checks_open=not self.checks_dock.isHidden(),
+                       views="one" if self.auto_plan else
+                       "stacked" if self.split.orientation() == Qt.Orientation.Vertical else "side",
+                       bar=self.bars_mode or like.bar)
+
+    def _hand_choices(self, was: arrangement.Arrangement) -> None:
+        """What the user changed since the last arrangement is what the user wants for that shape: who opened the Checks
+        finds them open (R334), who asked for both views keeps them."""
+        pins = self.shape_pins.setdefault(was.shape, {})
+        if self.checks_dock.isHidden() == was.checks_open:
+            pins["checks_open"] = not self.checks_dock.isHidden()
+        if was.views == "one" and self.current_view == "both":
+            pins["views"] = "stacked" if self.split.orientation() == Qt.Orientation.Vertical else "side"
+
+    def _arrange(self, said: bool = True) -> None:
+        """What the window should be for its size, carried out where it differs from what it is, and said with its Undo
+        when the program moved something (Daniel: nothing changes by surprise). Left for later with the drawing alone
+        or the File page over the window."""
+        if not hasattr(self, "bars") or self.before_clean is not None or self.file_page.isVisible():
+            return
+        w, h = self.width(), self.height()
+        was = self.arranged
+        first = was is None
+        if was is not None:
+            self._hand_choices(was)
+        shape = arrangement.shape_of(w, h, was.shape if was is not None else None)
+        before = self._layout_now()
+        remembered = False
+        if was is not None and shape != was.shape:
+            self.shape_memory[was.shape] = {"layout": before, "arranged": asdict(was)}
+            memory = self.shape_memory.get(shape)
+            known = arrangement.from_dict(memory["arranged"]) if memory else None
+            if known is not None:                   # a monitor turned back: what was left on it
+                self._put_layout(memory["layout"])
+                was, remembered = known, True
+        new = arrangement.arrangement(w, h, self.phase(), self._choices(shape, was))
+        now = replace(self._on_screen(new), bar=new.bar) if first else was     # at the start no bar had a mode yet
+        if first and self.keep_saved:
+            # the panels as the designer left them (saved with the window): only what this shape never saw is decided
+            kept = {}
+            if new.panels != now.panels:
+                kept["panels"] = now.panels
+            if shape in self.shape_pins or shape in self.shape_memory:
+                if new.checks_open != now.checks_open:
+                    kept["checks_open"] = now.checks_open
+            if new.views == "one" and self.current_view == "both":
+                kept["views"] = "stacked" if h >= w else "side"
+            self.shape_pins.setdefault(shape, {}).update(kept)
+            new = replace(new, **kept)
+        self.keep_saved = False
+        fields = arrangement.changes(now, new)
+        moved = {"panels", "checks_open", "views"}.intersection(fields)
+
+        def carry_out() -> None:
+            self._apply_bars(new)
+            left, right = self.docks
+            if now.panels != new.panels:
+                if new.panels == "together":
+                    self.tabifyDockWidget(right, left)
+                    right.raise_()
+                else:
+                    self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left)
+            if now.checks_open != new.checks_open:
+                self.checks_dock.setVisible(new.checks_open)
+            self.arranged = new
+            self.narrow = new.panels == "together"
+            self._apply_views(new)
+        from . import motion
+        if moved and not first and said:
+            motion.crossfade(self, carry_out)
+        else:
+            carry_out()
+        if said and (remembered or fields):
+            self._say_arranged(now if not remembered else self.arranged, new, fields, remembered, before)
+
+    def _apply_views(self, new: arrangement.Arrangement) -> None:
+        """The plan and the 3D as `new` wants them: one above the other, side by side, or one at a time (the view chosen
+        by the user is never changed: only «both» becomes one, and comes back)."""
+        orientation = Qt.Orientation.Vertical if new.views == "stacked" else Qt.Orientation.Horizontal
+        if self.split.orientation() != orientation:
+            self.split.setOrientation(orientation)
+            if self.split_home is None:
+                self._even_split()
+        if new.views == "one":
+            if self.current_view == "both":
                 self._view_mode("plan")
                 self.auto_plan = True
+        elif self.auto_plan:
+            self._view_mode("both")
+            self._even_split()
+
+    def _even_split(self) -> None:
+        if self.split.orientation() == Qt.Orientation.Vertical:
+            self.split.setSizes([self.split.height() // 2, self.split.height() // 2])
         else:
-            self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left)
-            if self.auto_plan:
-                self._view_mode("both")
-                width = self.split.width()
-                self.split.setSizes([int(width * 0.55), int(width * 0.45)])
+            self.split.setSizes([int(self.split.width() * 0.55), int(self.split.width() * 0.45)])
+
+    def _say_arranged(self, was, new, fields: tuple, remembered: bool, before: dict) -> None:
+        """A line in the status bar with what changed, and its Undo for a few seconds."""
+        what = {"checks_open": _("Checks closed, the count stays in the status bar") if not new.checks_open
+                else _("Checks open again"),
+                "views": {"side": _("plan and 3D side by side"), "stacked": _("plan and 3D one above the other"),
+                          "one": _("one view at a time")}[new.views],
+                "panels": _("the side panels together") if new.panels == "together" else _("the side panels apart"),
+                "bar": {Bar.UNDER: _("the words under the icons"), Bar.BESIDE: _("the words beside the icons"),
+                        Bar.ICONS: _("the icons alone")}[new.bar]}
+        if remembered:
+            text = _("The arrangement you left for this shape of the window is back.")
+        else:
+            text = _("The window changed shape: {what}.").format(what=", ".join(what[f] for f in fields))
+        self.tell(text, ARRANGE_UNDO_S)
+        self.arrange_said = text
+        self.arrange_undo = (before, was, fields)
+        self.arrange_undo_button.setToolTip(text)
+        self.arrange_undo_button.show()
+        self.arrange_undo_timer.start()
+
+    def _keep_arrange_said(self, text: str) -> None:
+        if not text and getattr(self, "arrange_undo", None) is not None:
+            self.statusBar().showMessage(self.arrange_said, max(1, self.arrange_undo_timer.remainingTime()))
+
+    def _drop_arrange_undo(self) -> None:
+        self.arrange_undo = None
+        self.arrange_undo_button.hide()
+        self.arrange_undo_timer.stop()
+
+    def _undo_arrangement(self) -> None:
+        """Back to what was before the program's change, and for this shape of the window it stays so: the fields changed
+        are pinned, «Restore the default layout» forgets them."""
+        if self.arrange_undo is None:
+            return
+        layout, was, fields = self.arrange_undo
+        self._drop_arrange_undo()
+        pins = self.shape_pins.get(self.arranged.shape, {})
+        self.shape_pins[self.arranged.shape] = arrangement.pinned(pins, was, fields)
+        self._put_layout(layout)
+        self.arranged = replace(was, shape=self.arranged.shape)
+        self.auto_plan = was.views == "one"
+        self._arrange(said=False)
+        self.tell(_("Back as it was: this shape of the window stays so until «Restore the default layout»."))
 
     def _restore_window(self) -> bool:
         """Size, panels, the split between plan and 3D and the view mode as the designer left them; False
@@ -6398,11 +6652,34 @@ class MainWindow(QMainWindow):
             self.docks[0].show()
         self.split.restoreState(split)
         self._view_mode(data.get("view") if data.get("view") in self.view_actions else "both")
+        self._read_shapes(data.get("shapes"))
         places = data.get("assistant") if isinstance(data.get("assistant"), dict) else {}
         self.assistant.places = {tab: a for tab in assistant_core.TABS
                                  if (a := assistant_core.valid_anchor(places.get(tab))) is not None}
         self.assistant.reposition()
         return True
+
+    def _read_shapes(self, saved) -> None:
+        """What was chosen and left per shape of the window, as `_save_window` wrote it; what cannot be read is left out."""
+        if not isinstance(saved, dict):
+            return
+        for shape in arrangement.SHAPES:
+            entry = saved.get(shape)
+            if not isinstance(entry, dict):
+                continue
+            self.shape_pins[shape] = arrangement.clean_pins(entry.get("pins"))
+            layout = entry.get("layout")
+            if (isinstance(layout, dict) and all(isinstance(layout.get(k), str) for k in ("state", "split", "view"))
+                    and arrangement.from_dict(entry.get("arranged")) is not None):
+                self.shape_memory[shape] = {"layout": layout, "arranged": entry["arranged"]}
+
+    def _written_shapes(self) -> dict:
+        """The window's state per shape: the one in use as it is now."""
+        memory = dict(self.shape_memory)
+        if self.arranged is not None and self.before_clean is None:
+            memory[self.arranged.shape] = {"layout": self._layout_now(), "arranged": asdict(self.arranged)}
+        return {shape: {"pins": self.shape_pins.get(shape, {}), **memory.get(shape, {})}
+                for shape in arrangement.SHAPES if shape in memory or self.shape_pins.get(shape)}
 
     def _save_window(self) -> None:
         mode = next((k for k, a in self.view_actions.items() if a.isChecked()), "both")
@@ -6422,7 +6699,8 @@ class MainWindow(QMainWindow):
                 "split": bytes(split.toBase64()).decode("ascii"), "view": mode,
                 "assistant": {tab: list(a) for tab, a in places.items()},
                 # the panels a phase put away by itself, saved hidden but open for the designer (R323)
-                "shown_by_phase": ["project"] if self.project_auto_hidden and self.project_was_visible else []}
+                "shown_by_phase": ["project"] if self.project_auto_hidden and self.project_was_visible else [],
+                "shapes": self._written_shapes()}
         try:
             atomic.write_json(self.paths.window_state_file, data, keep_backup=False)
         except OSError as error:

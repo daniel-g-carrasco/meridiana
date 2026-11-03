@@ -42,7 +42,7 @@ def one(name: str, w: int, h: int, locale: str) -> dict:
     out["minimum_hint"] = win.minimumSizeHint().toTuple()
     out["got"] = win.size().toTuple()
     out["narrow"] = win.narrow
-    out["bars_text"] = win.bars_text
+    out["bars_text"] = win.bars_mode != "icons"
     for pid in phases.ids():
         i = win.tabs.index_of_phase(pid)
         win.tabs.setCurrentIndex(i)

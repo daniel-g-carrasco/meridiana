@@ -253,7 +253,8 @@ def dispose(window) -> None:
     QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
 
 
-def window(test, project=None, cfg=None, size=(1200, 800), answers=None, cache=None, paths=None, pause=False):
+def window(test, project=None, cfg=None, size=(1200, 800), answers=None, cache=None, paths=None, pause=False,
+           auto_checks=False):
     """The MainWindow of a test, the one way the tests of finestra/ make it (study 18, D 7.1): its folders in a new
     temporary place (or `paths`), `cfg` (no background by default: no network), `project` saved to `test.file` and
     opened, shown at `size`, its layouts waited for; a weather year written in the cache when `cache` is a Meteo.
@@ -264,7 +265,9 @@ def window(test, project=None, cfg=None, size=(1200, 800), answers=None, cache=N
     the window waits to gather what is typed (MainWindow.relayout_timer): every layout of every test waited for
     them, about 10 s of the suite (task 18e). `pause` keeps the window's pause, for a test that measures what an
     edit asks for (finestra/test_speed.py). The pause of the year (energy_timer, 500 ms) stays: a year started by
-    itself would land in the middle of the tests that compute one."""
+    itself would land in the middle of the tests that compute one. The window's own pause before it arranges itself for
+    a new size (arrange_timer) is skipped too, and the Checks panel stays where the test leaves it at any height,
+    unless `auto_checks` (finestra/test_arrange.py: a window of the tests is mostly lower than 900 px)."""
     import tempfile
     from unittest import mock
 
@@ -298,6 +301,8 @@ def window(test, project=None, cfg=None, size=(1200, 800), answers=None, cache=N
     test.addCleanup(dispose, win)                  # cleanups run last first: the window goes before the patches
     if not pause:
         win.relayout_timer.setInterval(0)
+    win.arrange_timer.setInterval(0)
+    win.auto_checks = auto_checks
     # Meridio's local model is not running here: said at once, without the two seconds Windows takes to refuse a
     # connection to a closed port (finestra/test_assistant_chat.py puts a fake server in its place)
     from _fakes import nothing_local, offline
