@@ -438,15 +438,23 @@ class ChecksPanel(unittest.TestCase):
         self.assertEqual(self.shown(), [])
         self.assertIsNone(page.selected())
 
-    def test_the_views_and_the_filters_are_tracks_on_two_rows(self):
-        """R322, C4: the views a track above, the filters a track that keeps both on; narrow, the words are cut."""
+    def test_the_views_and_the_filters_are_tracks_in_one_row_of_the_head(self):
+        """R322, C4, R345: the views a track, the filters a track that keeps both on, the counts and the notes' symbol
+        between: in the order of the head, on one row where it fits; narrow, the words are cut."""
         from meridiana.ui.checks_page import view_names
         from meridiana.ui.segments import Segments
         page = self.page
         self.assertEqual([b.text() for b in page.views.items], list(view_names().values()))
         self.assertIsInstance(page.filters, Segments)
         self.assertFalse(page.filters.exclusive)
-        self.assertLess(page.views.y() + page.views.height(), page.filters.y() + 1)
+        page.resize(1500, 400)
+        page.show()
+        self.app.processEvents()
+        order = [page.views, page.levels_row, page.filters, page.copy_button]
+        self.assertTrue(all(w.parentWidget() is page.tools for w in order))
+        self.assertEqual({w.y() + w.height() // 2 for w in order[:3]}, {page.views.y() + page.views.height() // 2})
+        self.assertEqual([w.x() for w in order], sorted(w.x() for w in order))     # the order of the head
+        self.assertGreaterEqual(page.copy_button.x(), page.filters.x() + page.filters.width())
         page.phase_button.click()
         page.show_subset(("subfield", self.sid), "Sud")
         self.assertTrue(page.phase_button.isChecked() and page.object_button.isChecked())
@@ -455,6 +463,50 @@ class ChecksPanel(unittest.TestCase):
         page.set_view("area")
         self.assertEqual(page.views.current(), "area")
         self.assertLess(page.views.minimumSizeHint().width(), page.views.sizeHint().width())
+
+    def test_the_head_wraps_narrow_without_cutting_or_overlapping(self):
+        """R345: where the row does not hold the controls they go to the rows under, each whole; never past the edge,
+        never one on another."""
+        page = self.page
+        page.show()
+        for width in (1500, 1100, 900, 700, 500, 400, 320):
+            page.resize(width, 400)
+            self.app.processEvents()
+            boxes = [w.geometry() for w in (page.views, page.levels_row, page.filters, page.copy_button)]
+            for box in boxes:
+                self.assertGreaterEqual(box.left(), 0, width)
+                self.assertLessEqual(box.right(), page.tools.width(), width)
+            for i, one in enumerate(boxes):
+                for other in boxes[i + 1:]:
+                    self.assertFalse(one.intersects(other), (width, one, other))
+            self.assertEqual(page.levels_row.width(), page.levels_row.sizeHint().width(), width)     # the pills whole
+            self.assertEqual(page.filters.width(), page.filters.sizeHint().width(), width)
+        page.resize(1500, 400)
+        self.app.processEvents()
+        one_row = page.tools.height()
+        page.resize(700, 400)
+        self.app.processEvents()
+        self.assertGreater(page.tools.height(), one_row)
+
+    def test_the_notes_for_the_report_are_a_symbol_and_still_work(self):
+        """R345: «copia per la relazione» as a symbol beside the cross, its words the tooltip and the accessible name;
+        it is a tab stop, and the clipboard has the notes."""
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QGuiApplication
+        from PySide6.QtWidgets import QToolButton
+        page = self.page
+        b = page.copy_button
+        self.assertIsInstance(b, QToolButton)
+        self.assertTrue(b.text() == "" and not b.icon().isNull())
+        self.assertEqual(b.accessibleName(), "Copy the notes for the report")
+        self.assertTrue(b.toolTip().startswith("Copy the notes for the report"))
+        self.assertTrue(b.focusPolicy() & Qt.FocusPolicy.TabFocus)
+        page.notes_text = lambda: "The notes."
+        b.click()
+        self.assertEqual(QGuiApplication.clipboard().text(), "The notes.")
+        self.assertFalse(page.summary.isHidden())              # said, in the line under the head
+        page._summary()
+        self.assertTrue(page.summary.isHidden())               # and gone when there is nothing to say
 
     def test_the_counts_are_filters_that_stay_pressed(self):
         """R130 (Daniel, 24/10/2026: «se ne seleziono uno non rimane schiacciato visibilmente»; 25/10: «non avevi
@@ -486,11 +538,17 @@ class ChecksPanel(unittest.TestCase):
         b.setText("12")
         b.setEnabled(True)
         self.app.processEvents()
-        image = b.grab().toImage()              # the segment draws no ground of its own: the track's is under it
-        ink = [x for x in range(image.width()) if any(image.pixelColor(x, y).alpha() > 200
-                                                      for y in range(4, image.height() - 4))]
-        left, right = ink[0], image.width() - 1 - ink[-1]
-        self.assertLessEqual(abs(left - right), 3 * b.devicePixelRatioF() + 2, (left, right))
+        image = b.grab().toImage()              # the pill: its ground tinted, the line round it (R335)
+        d = b.devicePixelRatioF()
+        inside = round(3 * d)                   # between the line and the sign
+        ground = image.pixelColor(inside, image.height() // 2)
+
+        def far(c):
+            return max(abs(c.red() - ground.red()), abs(c.green() - ground.green()), abs(c.blue() - ground.blue())) > 40
+        ink = [x for x in range(inside, image.width() - inside)
+               if any(far(image.pixelColor(x, y)) for y in range(round(5 * d), image.height() - round(5 * d)))]
+        left, right = ink[0] - inside, image.width() - 1 - inside - ink[-1]
+        self.assertLessEqual(abs(left - right), 3 * d + 2, (left, right))
 
     # ----- the counts lead to the section
 
@@ -513,8 +571,7 @@ class ChecksPanel(unittest.TestCase):
         self.assertEqual({lv: b.text() for lv, b in page.counts.items()}, {"fail": "1", "warn": "2", "info": "1", "ok": "1"})
         self.assertTrue(page.counts["warn"].toolTip().startswith("2 to check: a click shows only these"))
         self.assertFalse(page.counts["fail"].icon().isNull())
-        self.assertIs(page.counts["fail"].parentWidget(), page.levels_track)     # one track (R328, P5)
-        self.assertFalse(page.levels_track.exclusive)
+        self.assertIs(page.counts["fail"].parentWidget(), page.levels_row)       # pills of their own, no track (R335)
         page.counts["ok"].click()
         passed = self.heads()[3]
         self.assertTrue(passed.isExpanded())                             # closed by default, opened

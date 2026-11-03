@@ -381,7 +381,7 @@ QLabel#ftile-format {{ color: {t['text2']}; border: 1px solid {t['line']}; borde
 QToolButton#help-button {{ padding: 0; border: 1px solid {t['line']}; border-radius: {Button.HELP[1]}px;
                            color: {t['muted']}; background: transparent; }}
 QToolButton#help-button:hover {{ color: {t['text']}; border-color: {t['text']}; }}
-QToolButton#help-pin, QToolButton#help-detach {{ border-radius: {Button.SMALL[1]}px; padding: 0; }}
+QToolButton#help-pin, QToolButton#help-detach, QToolButton#title-tool {{ border-radius: {Button.SMALL[1]}px; padding: 0; }}
 QToolButton#help-pin:checked {{ background: {press}; border-color: transparent; }}
 """
 

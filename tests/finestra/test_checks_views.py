@@ -180,6 +180,41 @@ class ChecksOnTheViews(unittest.TestCase):
         win._show_marks()
         self.assertFalse(fail.isVisibleTo(win) or warn.isVisibleTo(win))
 
+    def test_the_head_is_on_the_title_line_and_the_list_has_the_room(self):
+        """R345 (Daniel, 03/11/2026, photo 53): the views, the counts, the filters and the notes' symbol on the card's
+        title line, between the title and the cross, wrapped under it when the card is narrow, none on another; the
+        notes also in the File menu; the list starts right under the head."""
+        from PySide6.QtCore import QPoint, QRect
+        win, page, dock = self.win, self.win.checks_page, self.win.checks_dock
+        title = dock.title_bar
+        self.assertIs(title.tools, page.tools)
+        self.assertIs(page.tools.parentWidget(), dock)
+        self.assertIn("copy_notes", win.commands)                  # the command where it was, in the menu
+
+        def box(w):
+            return QRect(w.mapTo(dock, QPoint(0, 0)), w.size())
+
+        for width in (2200, 1500, 1100, 800, 600):
+            win.resize(width, 900)
+            self.app.processEvents()
+            self.app.processEvents()
+            parts = [page.views, page.levels_row, page.filters, page.copy_button, title.close_button]
+            boxes = [box(w) for w in parts]
+            for i, one in enumerate(boxes):
+                self.assertTrue(dock.rect().contains(one), (width, parts[i]))
+                for other in boxes[i + 1:]:
+                    self.assertFalse(one.intersects(other), (width, one, other))
+            first = min(boxes[:3], key=lambda r: (r.top(), r.left()))        # the title's words are before the first
+            if first.top() < box(page.copy_button).bottom():
+                self.assertGreaterEqual(first.left(), title.dock.card_rect().left() + 12 + title.title_width())
+            tree = box(page.tree)
+            self.assertTrue(all(r.bottom() < tree.top() for r in boxes), width)
+            self.assertLess(tree.top(), 60 if width >= 1500 else 140, width)         # not the 110 of two rows and a gap
+        win.resize(2200, 900)
+        self.app.processEvents()
+        middles = [box(w).center().y() for w in (page.views, page.copy_button, title.close_button)]
+        self.assertLessEqual(max(middles) - min(middles), 1, middles)           # one line: the cross, the symbol, the track
+
     def test_the_window_gives_the_panel_the_defaults_and_the_names(self):
         from _fixtures import write_cache
         page = self.win.checks_page

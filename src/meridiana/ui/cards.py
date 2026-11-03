@@ -31,6 +31,7 @@ RADIUS = Radius.CARD
 PAD = Layout.PAD        # inside the card, around the content
 TITLE_X = Layout.TITLE_X
 TITLE_PAD = (Space.M + 1, Space.XS + 1)    # above and below the title: its 14 px line centred on 34
+TITLE_TOP = Space.S                         # least above a title's line made taller by the controls on it
 VIEW_RADIUS = Radius.VIEW
 
 
@@ -222,11 +223,14 @@ class CardTitle(QWidget):
         t = default_tokens()
         self.colours = {"text": t["text"], "header": t["header"]}
         self.measured = ("", 0)            # the font's key and its line's height: asked thousands of times (R120)
+        self.worded = (None, 0)            # the same for the title's words' width
+        self.tools = None                  # the controls on the title's line (set_tools)
+        self.asked = 0                     # the height the layout was last told
         # the dock's child, not the bar's: QDockWidget lays the title bar at x 0 as wide as the content, and the
         # cross of a card against the window's left side fell out of it (2 px of 18 showed; qt-app-template)
         self.close_button = CloseButton(dock)
         self.close_button.clicked.connect(dock.close_animated)
-        dock.windowTitleChanged.connect(lambda _t: self.update())
+        dock.windowTitleChanged.connect(lambda _t: (self.place(), self.update()))
         dock.featuresChanged.connect(self._features)
         self._features(dock.features())
 
@@ -251,9 +255,63 @@ class CardTitle(QWidget):
             self.measured = (key, QFontMetrics(self.title_font()).height())
         return self.measured[1]
 
+    # ----- the controls on the title's line (R345; ui/title_tools.py)
+
+    def set_tools(self, tools) -> None:
+        """Put `tools` (a TitleTools) on the title's line, after the title's words and before the cross; wrapped to the
+        rows under it when the card is narrow, all of the title bar's height. Like the cross, the dock's child: the
+        title bar may be narrower than the card."""
+        self.tools = tools
+        tools.setParent(self.dock)
+        tools.changed.connect(self.place)
+        tools.show()
+        self.updateGeometry()
+        self.place()
+
+    def title_width(self) -> int:
+        """How far the title's words reach, for the controls to start after them."""
+        key = (self.font().key(), self.dock.windowTitle())
+        if key != self.worded[0]:
+            from PySide6.QtGui import QFontMetrics
+            self.worded = (key, QFontMetrics(self.title_font()).horizontalAdvance(self.dock.windowTitle()))
+        return self.worded[1]
+
+    def tools_room(self) -> tuple[int, int, int]:
+        """The controls' room, in the dock's pixels: its left edge, its width and the first row's start (the title's
+        words and a gap)."""
+        card = self.dock.card_rect() if not self.dock.isFloating() else self.geometry()
+        left = card.left() + TITLE_X
+        right = self.close_x(card) - Space.S if self.close_button.isVisibleTo(self.dock) else card.right() - TITLE_X
+        return left, max(0, right - left), self.title_width() + Space.L
+
+    def close_x(self, card) -> int:
+        return card.right() - TITLE_X + 4 - self.close_button.width() + 1
+
+    def row_height(self) -> int:
+        """The title's first row: its line, or the taller of what stands on it."""
+        tools = self.tools
+        if tools is None or tools.isHidden():
+            return self.line_height()
+        _left, width, indent = self.tools_room()
+        return tools.first_row(width, indent, max(self.line_height(), self.close_button.height()))
+
+    def body_height(self) -> int:
+        """The title's rows, from the top of the first to the bottom of the last."""
+        tools = self.tools
+        if tools is None or tools.isHidden():
+            return self.line_height()
+        _left, width, indent = self.tools_room()
+        return tools.height_for(width, indent, max(self.line_height(), self.close_button.height()))
+
+    def top_pad(self) -> int:
+        """Above the first row: the line's, a little more when the row is taller (the track's 28 px would stand 3 px from
+        the card's edge), so that the words keep the line the other cards' titles have, give or take the difference."""
+        row = self.row_height()
+        return max(TITLE_PAD[0] - (row - self.line_height()) // 2, TITLE_TOP) if row > self.line_height() else TITLE_PAD[0]
+
     def sizeHint(self) -> QSize:
         above = max(0, self.dock.card_rect().top() - self.y()) if not self.dock.isFloating() else 0
-        return QSize(60, above + TITLE_PAD[0] + self.line_height() + TITLE_PAD[1])
+        return QSize(60, above + self.top_pad() + self.body_height() + TITLE_PAD[1])
 
     def minimumSizeHint(self) -> QSize:
         return self.sizeHint()
@@ -263,12 +321,24 @@ class CardTitle(QWidget):
         self.place()
 
     def place(self) -> None:
-        """The cross TITLE_X from the card's right edge, on the title's line, in the dock's pixels."""
+        """The cross TITLE_X from the card's right edge, on the title's line, and the controls from the title's words to
+        the cross, in the dock's pixels."""
         card = self.dock.card_rect() if not self.dock.isFloating() else self.geometry()
         b = self.close_button
-        mid = card.top() + TITLE_PAD[0] + self.line_height() // 2
-        b.move(card.right() - TITLE_X + 4 - b.width() + 1, mid - b.height() // 2)
+        top = card.top() + self.top_pad()
+        mid = top + self.row_height() // 2
+        b.move(self.close_x(card), mid - b.height() // 2)
         b.raise_()
+        tools = self.tools
+        if tools is not None:
+            left, width, indent = self.tools_room()
+            tools.indent, tools.first = indent, max(self.line_height(), b.height())
+            tools.setGeometry(left, top, width, self.body_height())
+            tools.raise_()
+            tools.relayout()
+        if self.asked != self.sizeHint().height():          # a title's words or a width that make a row more or less
+            self.asked = self.sizeHint().height()
+            self.updateGeometry()
 
     def paintEvent(self, event) -> None:
         p = QPainter(self)
@@ -277,8 +347,8 @@ class CardTitle(QWidget):
         card = self.card_box()
         p.setFont(self.title_font())
         p.setPen(QColor(self.colours["text"]))
-        r = QRect(card.left() + TITLE_X, card.top() + TITLE_PAD[0],
-                  max(0, card.width() - 2 * TITLE_X - self.close_button.width()), self.line_height())
+        r = QRect(card.left() + TITLE_X, card.top() + self.top_pad(),
+                  max(0, card.width() - 2 * TITLE_X - self.close_button.width()), self.row_height())
         p.drawText(r, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, self.dock.windowTitle())
 
 

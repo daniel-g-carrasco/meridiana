@@ -484,6 +484,7 @@ class MainWindow(QMainWindow):
         self.checks_dock = CardDock(_("Checks"), self)
         self.checks_dock.setObjectName("checks")
         self.checks_dock.setWidget(self.checks_page)
+        self.checks_page.dock_in(self.checks_dock.title_bar)       # its controls on the card's title line (R345)
         self.checks_dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable |
                                      QDockWidget.DockWidgetFeature.DockWidgetClosable)
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.checks_dock)
