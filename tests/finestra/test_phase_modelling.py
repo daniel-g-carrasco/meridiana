@@ -90,7 +90,7 @@ class ModellingAndPlant(unittest.TestCase):
         side.open("storage", ms=0)
         self.assertEqual(side.storage_text.text(), "2 × Acme B10\nDC: hybrid inverter")
         win._select("site", "")
-        self.assertTrue(side.panels_hint.isVisibleTo(side))
+        self.assertTrue(side.hint_fit.isVisibleTo(side.sections["panels"].body()))      # Panels itself is closed here
         # back to the Modelling: the Properties at home again
         win.show_phase("model")
         self.assertIsNone(side.properties)

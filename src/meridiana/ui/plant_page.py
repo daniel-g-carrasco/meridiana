@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import html
 
-from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRect, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFontMetrics, QIcon, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QSpinBox, QStackedWidget,
@@ -164,11 +164,34 @@ class ClipScale(QWidget):
         t = default_tokens()
         self.colours = {"text": t["text"], "muted": t["muted"], "good": "#1baf7a", "warning": "#eda100",
                         "critical": theme_colors.STATUS["critical"]}
-        self.setFixedHeight(self.fontMetrics().lineSpacing() + 18)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        policy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        policy.setHeightForWidth(True)                  # its words go onto two lines in a narrow panel (R341)
+        self.setSizePolicy(policy)
+
+    def head(self) -> str:
+        if self.loss is not None:
+            return _("DC/AC {r} · energy cut {pct} %").format(r=number(self.ratio, 2), pct=number(self.loss, 1))
+        return _("DC/AC {r} · energy cut: after the computation").format(r=number(self.ratio, 2))
+
+    def _text_height(self, width: int) -> int:
+        return self.fontMetrics().boundingRect(QRect(0, 0, max(1, width), 100000), int(Qt.TextFlag.TextWordWrap),
+                                               self.head()).height()
+
+    def hasHeightForWidth(self) -> bool:
+        return True
+
+    def heightForWidth(self, width: int) -> int:
+        return self._text_height(width) + 18
+
+    def sizeHint(self) -> QSize:
+        return QSize(self.fontMetrics().horizontalAdvance(self.head()), self.fontMetrics().lineSpacing() + 18)
+
+    def minimumSizeHint(self) -> QSize:
+        return QSize(0, self.fontMetrics().lineSpacing() + 18)
 
     def set(self, ratio: float, loss: float | None) -> None:
         self.ratio, self.loss = ratio, loss
+        self.updateGeometry()
         if loss is None:
             self.setToolTip(_("The energy the inverter cuts shows once the production is computed"))
         else:
@@ -187,14 +210,12 @@ class ClipScale(QWidget):
         from PySide6.QtGui import QColor, QPainter, QPainterPath
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        fm = self.fontMetrics()
-        head = (_("DC/AC {r} · energy cut {pct} %").format(r=number(self.ratio, 2), pct=number(self.loss, 1))
-                if self.loss is not None else _("DC/AC {r} · energy cut: after the computation").format(
-                    r=number(self.ratio, 2)))
+        high = self._text_height(self.width())
         p.setPen(QColor(self.colours["text"]))
-        p.drawText(QRectF(0, 0, self.width(), fm.lineSpacing()),
-                   Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, head)
-        y = fm.lineSpacing() + 6
+        p.drawText(QRectF(0, 0, self.width(), high),
+                   int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter) | int(Qt.TextFlag.TextWordWrap),
+                   self.head())
+        y = high + 6
         track_w = self.width() - 2.0
         start = 0.0
         for end, key in self.ZONES:
