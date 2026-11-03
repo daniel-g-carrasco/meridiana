@@ -59,6 +59,17 @@ class ChecksPanel(unittest.TestCase):
         page = self.page
         return [page.tree.topLevelItem(g) for g in range(page.tree.topLevelItemCount())]
 
+    def test_the_list_starts_right_under_the_head(self):
+        """R345: «occupare meno spazio e darne di più al contenuto»: no margin over the list, no air over its first
+        header; the others keep theirs, which separates the groups."""
+        tree = self.page.tree
+        first, second = tree.topLevelItem(0), tree.topLevelItem(1)
+        self.assertEqual(self.page.layout().contentsMargins().top(), 0)
+        self.assertLess(tree.visualItemRect(first).height(), tree.visualItemRect(second).height())
+        delegate = tree.itemDelegate()
+        self.assertEqual(delegate.air_above(tree.indexFromItem(first)), 0)
+        self.assertEqual(delegate.air_above(tree.indexFromItem(second)), delegate.air)
+
     def test_collapsing_every_group_keeps_the_header_text_clear_of_the_symbol(self):
         tree = self.page.tree
         tree.expandAll()

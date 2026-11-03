@@ -97,6 +97,9 @@ class SectionDelegate(QStyledItemDelegate):
         self.pills = pills              # the project's tree: the rows' pills, the count apart (T2)
         self.air = air                  # above a header
 
+    def air_above(self, index) -> int:
+        return self.air
+
     def paint(self, painter, option, index) -> None:
         count = index.siblingAtColumn(0).data(SECTION_ROLE)
         if count is None:
@@ -120,7 +123,7 @@ class SectionDelegate(QStyledItemDelegate):
         style = opt.widget.style() if opt.widget is not None else None
         if style is not None:
             style.drawControl(QStyle.ControlElement.CE_ItemViewItem, opt, painter, opt.widget)
-        rect = QRect(option.rect).adjusted(0, self.air, 0, 0)
+        rect = QRect(option.rect).adjusted(0, self.air_above(index), 0, 0)
         if index.column() != self.column:
             low = QStyleOptionViewItem(option)
             low.rect = rect
@@ -170,7 +173,7 @@ class SectionDelegate(QStyledItemDelegate):
         size = super().sizeHint(option, index)
         if index.siblingAtColumn(0).data(SECTION_ROLE) is not None:
             height = QFontMetrics(header_font(option.font)).height() + 6
-            size.setHeight(max(size.height(), height) + self.air)
+            size.setHeight(max(size.height(), height) + self.air_above(index))
             if index.column() == 0 and self.column != 0 and not self.pills and option.widget is not None:
                 # paint() aligns the header icon with its children's icons by this extra indent.
                 # Reserve it even when collapsed children no longer contribute a size hint.

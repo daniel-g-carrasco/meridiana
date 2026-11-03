@@ -72,6 +72,10 @@ class ChecksDelegate(SectionDelegate):
     """The sections' delegate, and the detail of an item as a row of wrapped text that spans the columns (the
     detail that matters does not go in a tooltip: NN/g, study 17, F.5)."""
 
+    def air_above(self, index) -> int:
+        """No air over the first header: the list starts under the head (R345: «dargli più spazio»)."""
+        return 0 if index.row() == 0 and not index.parent().isValid() else self.air
+
     def _text_left(self, index) -> int:
         """Where the item's text starts in the viewport (its column, its padding, the style's margin): the detail
         stands under it, the mark's column before."""
@@ -118,7 +122,7 @@ class ChecksDelegate(SectionDelegate):
         """The counts by level of a header: each its symbol and its number, muted, on the header's line (below
         the air above it); the levels' names are in the tooltip (R138: they were the characters ✘ ⚠ ℹ ✔)."""
         r = option.rect
-        middle = (r.top() + self.air + r.bottom() + 1) / 2
+        middle = (r.top() + self.air_above(option.index) + r.bottom() + 1) / 2
         x = float(r.left() + PAD)
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -129,7 +133,7 @@ class ChecksDelegate(SectionDelegate):
             symbols.paint(painter, QRectF(x, middle - COUNT_SYMBOL / 2, COUNT_SYMBOL, COUNT_SYMBOL), name)
             x += COUNT_SYMBOL + COUNT_GAP[0]
             text = str(n)
-            painter.drawText(QRectF(x, r.top() + self.air, metrics.horizontalAdvance(text) + 2, r.height() - self.air),
+            painter.drawText(QRectF(x, r.top() + self.air_above(option.index), metrics.horizontalAdvance(text) + 2, r.height() - self.air),
                              Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, text)
             x += metrics.horizontalAdvance(text) + COUNT_GAP[1]
         painter.restore()
@@ -550,7 +554,7 @@ class ChecksPage(QWidget):
         # with the list's content (R182, Daniel 26/10/2026: «la barra di scorrimento ... è posizionata diversamente in
         # queste due schede ... mi piace di più la versione più attaccata al bordo destro della scheda»)
         m = box.contentsMargins()
-        box.setContentsMargins(m.left(), m.top(), 0, m.bottom())
+        box.setContentsMargins(m.left(), 0, 0, m.bottom())      # the list right under the head (R345)
         self.tools.setContentsMargins(0, 0, m.right(), 0)
         self.summary.setContentsMargins(0, 0, m.right(), 0)
         self._view_texts()
