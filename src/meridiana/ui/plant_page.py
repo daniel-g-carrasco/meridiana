@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import html
 
-from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRect, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFontMetrics, QIcon, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QSpinBox, QStackedWidget,
@@ -29,7 +29,6 @@ from .cards import default_tokens
 from .properties import combo, make_form, spin
 from . import icons, marks, symbols
 from .help_box import help_button
-from .theme import symbol_font
 from .design import Button, Icon, Layout, Line, Radius, Size, Space, Text, Type, font, set_text, strong
 from .style import FitArea, Group, wrap_button
 from .sections import SectionDelegate
@@ -152,11 +151,16 @@ class DraftCard(QFrame):
 
 
 class ClipScale(QWidget):
-    """The DC/AC ratio on its scale (R62): a band from 0 to 6 % of the year's energy cut by the inverter, green under
-    1 %, yellow to 3 %, red beyond, a mark where the plant is, the ratio and the share written above it."""
+    """The plant's DC/AC ratio and the energy the inverter cuts (R62; R353, draft C of study 28): a line each, then the
+    energy on a track from 0 to 6 % of the year, the span filled in the state's colour, green under 1 %, yellow to 3 %,
+    red beyond, a tick at each threshold. The bar of Uoc, Umpp and I (MarginBar), one shape for a figure against its
+    limit. The span starts at the track's edge, so nothing leaves the widget at 0 % or past the end, where the old mark
+    was cut (Daniel, 03/11/2026). Before the computation no track: a pale band read as a figure."""
 
-    ZONES = ((1.0, "good"), (3.0, "warning"), (6.0, "critical"))
     END = 6.0
+    GOOD, WARNING = 1.0, 3.0
+    TRACK = 6
+    TICK_OUT = 2                                        # how far a tick stands over and under the track
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -164,34 +168,26 @@ class ClipScale(QWidget):
         t = default_tokens()
         self.colours = {"text": t["text"], "muted": t["muted"], "good": "#1baf7a", "warning": "#eda100",
                         "critical": theme_colors.STATUS["critical"]}
-        policy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        policy.setHeightForWidth(True)                  # its words go onto two lines in a narrow panel (R341)
-        self.setSizePolicy(policy)
+        self.setFont(font(Type.SMALL))
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setFixedHeight(self._height())
 
-    def head(self) -> str:
-        if self.loss is not None:
-            return _("DC/AC {r} · energy cut {pct} %").format(r=number(self.ratio, 2), pct=number(self.loss, 1))
-        return _("DC/AC {r} · energy cut: after the computation").format(r=number(self.ratio, 2))
+    def _lines(self) -> int:
+        return 2 * self.fontMetrics().lineSpacing()
 
-    def _text_height(self, width: int) -> int:
-        return self.fontMetrics().boundingRect(QRect(0, 0, max(1, width), 100000), int(Qt.TextFlag.TextWordWrap),
-                                               self.head()).height()
+    def _height(self) -> int:
+        bar = Space.XS + 2 * self.TICK_OUT + self.TRACK if self.loss is not None else 0
+        return self._lines() + bar
 
-    def hasHeightForWidth(self) -> bool:
-        return True
-
-    def heightForWidth(self, width: int) -> int:
-        return self._text_height(width) + 18
-
-    def sizeHint(self) -> QSize:
-        return QSize(self.fontMetrics().horizontalAdvance(self.head()), self.fontMetrics().lineSpacing() + 18)
-
-    def minimumSizeHint(self) -> QSize:
-        return QSize(0, self.fontMetrics().lineSpacing() + 18)
+    def state(self) -> str:
+        """The colour's key for the energy cut: the same thresholds as the checks."""
+        if self.loss is None or self.loss < self.GOOD:
+            return "good"
+        return "warning" if self.loss <= self.WARNING else "critical"
 
     def set(self, ratio: float, loss: float | None) -> None:
         self.ratio, self.loss = ratio, loss
-        self.updateGeometry()
+        self.setFixedHeight(self._height())
         if loss is None:
             self.setToolTip(_("The energy the inverter cuts shows once the production is computed"))
         else:
@@ -205,37 +201,48 @@ class ClipScale(QWidget):
                         "critical": states.get("fail", theme_colors.STATUS["critical"])}
         self.update()
 
+    def _line(self, p: QPainter, y: int, label: str, value: str, ink: str, strong: bool = False) -> None:
+        fm = self.fontMetrics()
+        high = fm.lineSpacing()
+        if strong:
+            p.setFont(font(Type.SMALL, Type.SEMIBOLD))
+        room = p.fontMetrics().horizontalAdvance(value) + Space.S
+        p.setPen(QColor(ink))
+        p.drawText(QRectF(self.width() - room, y, room, high),
+                   Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, value)
+        p.setFont(self.font())
+        p.setPen(QColor(self.colours["muted"]))
+        p.drawText(QRectF(0, y, max(0, self.width() - room), high),
+                   Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                   fm.elidedText(label, Qt.TextElideMode.ElideRight, max(0, self.width() - room)))
+
     def paintEvent(self, event) -> None:
-        from PySide6.QtCore import QPointF, QRectF
-        from PySide6.QtGui import QColor, QPainter, QPainterPath
+        from PySide6.QtGui import QPainterPath
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        high = self._text_height(self.width())
-        p.setPen(QColor(self.colours["text"]))
-        p.drawText(QRectF(0, 0, self.width(), high),
-                   int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter) | int(Qt.TextFlag.TextWordWrap),
-                   self.head())
-        y = high + 6
-        track_w = self.width() - 2.0
-        start = 0.0
-        for end, key in self.ZONES:
-            c = QColor(self.colours[key])
-            c.setAlphaF(0.75 if self.loss is not None else 0.3)
-            seg = QRectF(1 + track_w * start / self.END, y, track_w * (end - start) / self.END, 6)
-            path = QPainterPath()
-            path.addRoundedRect(seg, 3, 3)
-            p.fillPath(path, c)
-            start = end
-        if self.loss is not None:
-            x = 1 + track_w * min(self.loss, self.END) / self.END
-            mark = QPainterPath(QPointF(x, y - 1))
-            mark.lineTo(x - 5, y - 7)
-            mark.lineTo(x + 5, y - 7)
-            mark.closeSubpath()
-            p.setPen(Qt.PenStyle.NoPen)
-            p.setBrush(QColor(self.colours["text"]))
-            p.drawPath(mark)
-            p.drawRoundedRect(QRectF(x - 1.5, y - 1, 3, 8), 1, 1)
+        high = self.fontMetrics().lineSpacing()
+        self._line(p, 0, _("DC/AC now"), number(self.ratio, 2), self.colours["text"])
+        if self.loss is None:
+            self._line(p, high, _("Energy cut"), _("after the computation"), self.colours["muted"])
+            return
+        self._line(p, high, _("Energy cut"), _("{pct} %").format(pct=number(self.loss, 1)), self.colours["text"], True)
+        track = QRectF(0, self._lines() + Space.XS + self.TICK_OUT, self.width(), self.TRACK)
+        radius = self.TRACK / 2
+        ground = QPainterPath()
+        ground.addRoundedRect(track, radius, radius)
+        line = self.palette().color(QPalette.ColorRole.Mid)
+        line.setAlphaF(0.35)
+        p.fillPath(ground, line)
+        if self.loss > 0:
+            width = max(float(self.TRACK), track.width() * min(self.loss, self.END) / self.END)
+            span = QPainterPath()
+            span.addRoundedRect(QRectF(track.left(), track.top(), width, track.height()), radius, radius)
+            p.fillPath(span, QColor(self.colours[self.state()]))
+        tick = QColor(self.colours["text"])
+        tick.setAlphaF(0.6)
+        for limit in (self.GOOD, self.WARNING):
+            x = round(track.width() * limit / self.END)
+            p.fillRect(QRectF(x, track.top() - self.TICK_OUT, Line.HAIR, track.height() + 2 * self.TICK_OUT), tick)
 
 
 class PlantPage(QWidget):
@@ -652,8 +659,8 @@ class InverterCard(QFrame):
         self.note.hide()
         box.addLayout(column, 1)
         self.more = QToolButton()
-        self.more.setText("⋯")
-        self.more.setFont(symbol_font(self.more.font()))
+        self.more.setIcon(icons.icon("ellipsis"))      # an icon: the character «⋯» came out as a dash on some fonts
+        self.more.setAccessibleName(_("Inverter's menu"))
         self.more.setAutoRaise(True)
         self.more.setToolTip(_("Rename, move, datasheet, string, empty, take out"))
         self.more.clicked.connect(lambda: self.menuAsked.emit(

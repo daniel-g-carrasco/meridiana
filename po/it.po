@@ -12614,16 +12614,6 @@ msgstr ""
 "Energia tagliata oltre la potenza nominale dell'inverter: verde sotto l'1 %, "
 "giallo fino al 3 %, rosso oltre (le stesse soglie delle verifiche)"
 
-#: src/meridiana/ui/plant_page.py:154
-#, python-brace-format
-msgid "DC/AC {r} · energy cut {pct} %"
-msgstr "DC/AC {r} · energia tagliata {pct} %"
-
-#: src/meridiana/ui/plant_page.py:155
-#, python-brace-format
-msgid "DC/AC {r} · energy cut: after the computation"
-msgstr "DC/AC {r} · energia tagliata: dopo il calcolo"
-
 #: src/meridiana/ui/plant_page.py:224
 msgid "The plan comes here when the phase is open."
 msgstr "La pianta viene qui quando la fase è aperta."
@@ -21745,3 +21735,18 @@ msgstr "{file} sembra un'immagine, ma è danneggiata o illeggibile."
 msgctxt "roof"
 msgid "Pitch"
 msgstr "Falda"
+
+msgid "DC/AC now"
+msgstr "DC/AC attuale"
+
+msgid "Energy cut"
+msgstr "Energia tagliata"
+
+msgid "after the computation"
+msgstr "dopo il calcolo"
+
+msgid "{pct} %"
+msgstr "{pct} %"
+
+msgid "Inverter's menu"
+msgstr "Menu dell'inverter"
