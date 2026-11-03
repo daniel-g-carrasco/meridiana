@@ -363,6 +363,10 @@ class TourDialog(GuideCard):
             self._show_meridio()
             win.assistant.open_panel()
             widget = win.assistant
+        elif target[0] == "settings":
+            # the list of the sections, which is what the step speaks of: their column (R346) left no room for the bubble
+            win._preferences(target[1])
+            widget = win.file_page.nav_scroll
         else:
             navigation_targets.show(win, target)
             return
