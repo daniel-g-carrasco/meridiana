@@ -29,7 +29,7 @@ from PySide6.QtWidgets import (QApplication, QDialog, QDockWidget, QFileDialog, 
 from shapely.geometry import Polygon
 
 from .. import assistant as assistant_core
-from .. import (atomic, camera, catalog, checks, config, jobs, log, manual, mesh, model, move, phases, project_index,
+from .. import (atomic, camera, catalog, checks, config, gizmo, jobs, log, manual, mesh, model, move, phases, project_index,
                recovery, registry, roof_vertices, rules, shortcuts, sides, roofs, squaring, templates, theme_colors, tiles, underlay,
                view_colours, viewaids)
 from ..energy import consumption as consumption_model
@@ -621,13 +621,17 @@ class MainWindow(QMainWindow):
         self.view3d.backend.gizmoDone.connect(self._gizmo_done)
         # R303: the corners of a roof in the 3D view, with Move
         self.vertex_taken = None                    # the corner taken ([pitch, place]), which stays through the edits
+        self.vertex_chosen: list = []               # those chosen together, the one taken among them (R356)
+        self.vertex_owner = ""                      # the building or the obstacle they are of
         self.vertex_merging = False                 # the next corner clicked comes onto the one taken
+        self.vertex_hint_before = None              # what the status bar said before a corner came under the pointer
         self.vertex_handles: list = []
         self.view3d.backend.vertexClicked.connect(self._vertex_clicked)
         self.view3d.backend.vertexDragged.connect(self._vertex_dragged)
+        self.view3d.backend.vertexToggled.connect(self._vertex_toggled)
+        self.view3d.backend.vertexSwept.connect(self._vertex_swept)
+        self.view3d.backend.vertexHot.connect(self._vertex_hot)
         self.view3d.vertex_field.typed.connect(self._vertex_typed)
-        self.view3d.vertex_field.merge.connect(self._vertex_merge_asked)
-        self.view3d.vertex_field.detach.connect(self._vertex_detach)
         self.view3d.vertexLeft.connect(self._vertex_left)
         self.view3d.vertexAsked.connect(self._vertex_open)
         self.view3d.gizmoTyped.connect(self._gizmo_typed)
@@ -1965,30 +1969,58 @@ class MainWindow(QMainWindow):
 
     # the corners of a roof in the 3D view (R303): the sums are in roof_vertices.py, one gesture one step of the undo
 
+    def _vertices_shown(self, kind: str) -> bool:
+        """Where the corners are (R355): with Move, on what it moves; with Select in the Modelling, on a building chosen,
+        without having to take Move."""
+        if self.plan.tool == "move":
+            return True
+        return self.plan.tool == "select" and self.phase() == "model" and kind in ("building", "pitch")
+
     def _show_vertices(self) -> None:
         kind, oid = self.selection
         backend = self.view3d.backend
-        found = roof_vertices.handles_of(self.project, kind, oid) if self.plan.tool == "move" else []
+        found = roof_vertices.handles_of(self.project, kind, oid) if self._vertices_shown(kind) else []
         self.vertex_handles = found
+        owner = roof_vertices.owner_of(kind, oid)
+        if owner != self.vertex_owner:              # a corner is a place in a roof: of this roof, not of another one
+            self.vertex_owner = owner
+            self.vertex_taken, self.vertex_chosen = None, []
         at = next((i for i, h in enumerate(found) if self.vertex_taken in h.corners), -1)
         if at < 0:
             self.vertex_taken, self.vertex_merging = None, False
+            self.vertex_chosen = []
             self.view3d.vertex_field.hide()
-        backend.set_vertices([mesh.to_qt(h.x, h.y, h.z) for h in found], at)
+        chosen = [i for i, h in enumerate(found) if any(c in h.corners for c in self.vertex_chosen)]
+        backend.vertex_reach = gizmo.VERTEX_TOLERANCE if self.plan.tool == "move" else gizmo.VERTEX_TOLERANCE_SELECT
+        backend.set_vertices([mesh.to_qt(h.x, h.y, h.z) for h in found], at, chosen)
         self.view3d.place_vertex_field()
 
     def _vertex_left(self) -> None:
         self.vertex_taken, self.vertex_merging = None, False
+        self.vertex_chosen = []
+        self.view3d.backend.set_vertex_on(-1)
+
+    def _vertices_in_hand(self) -> list:
+        """The handles chosen, the one taken first."""
+        backend = self.view3d.backend
+        at = backend.vertex_on
+        others = sorted(i for i in backend.vertices_on if i != at)
+        return [self.vertex_handles[i] for i in ([at] if at >= 0 else []) + others if i < len(self.vertex_handles)]
+
+    def _vertex_choose(self, at: int, chosen=None) -> None:
+        """The corner `at` taken, and with it those of `chosen` (places among the handles); it alone when none is said."""
+        places = [at] if chosen is None else sorted(set(chosen) | ({at} if at >= 0 else set()))
+        self.vertex_taken = self.vertex_handles[at].corners[0] if at >= 0 else None
+        self.vertex_chosen = [self.vertex_handles[i].corners[0] for i in places if i >= 0]
+        self.view3d.backend.set_vertex_on(at, places)
 
     def _vertex_open(self, text: str = "") -> None:
-        at = self.view3d.backend.vertex_on
-        if not 0 <= at < len(self.vertex_handles):
+        """The field of what is in hand, with what was begun if any."""
+        hand = self._vertices_in_hand()
+        if not hand:
             return
-        handle = self.vertex_handles[at]
-        title = _("Top of the obstacle") if handle.obstacle else _("Corner") if len(handle.corners) > 1 else \
-            _("Corner of pitch {n}").format(n=handle.corners[0][0] + 1)
-        self.view3d.vertex_field.open(title, handle.z, not handle.obstacle,
-                                      roof_vertices.can_detach(handle.corners), text)
+        same = max(h.z for h in hand) - min(h.z for h in hand) < 1e-6
+        self.view3d.vertex_field.open(len(hand), hand[0].z if same else None, text)
         self.view3d.place_vertex_field()
 
     def _vertex_clicked(self, at: int) -> None:
@@ -2001,37 +2033,87 @@ class MainWindow(QMainWindow):
                 p, bid, self.vertex_taken, handle.corners[0]), _("The corners are one point now: they stay so until "
                                                                  "you part them."))
             return
-        self.vertex_taken = handle.corners[0]
-        self.view3d.backend.set_vertex_on(at)
+        self._vertex_choose(at)
         self._vertex_open()
         self.hint.setText(_("Drag the corner up or down, or write its height."))
+
+    def _vertex_toggled(self, at: int) -> None:
+        """A click with Ctrl or Shift on a corner: one more among those chosen, or one less (R356)."""
+        if not 0 <= at < len(self.vertex_handles):
+            return
+        if self.vertex_merging:
+            self._vertex_clicked(at)
+            return
+        chosen = set(self.view3d.backend.vertices_on) ^ {at}
+        self._vertex_take(chosen, at if at in chosen else None)
+
+    def _vertex_swept(self, inside: list, remove: bool) -> None:
+        """The box drawn over the corners: they join those chosen, or leave them (R356)."""
+        backend = self.view3d.backend
+        chosen = set(backend.vertices_on) - set(inside) if remove else set(backend.vertices_on) | set(inside)
+        self._vertex_take(chosen, None)
+
+    def _vertex_take(self, chosen: set, at: int | None) -> None:
+        """Those chosen now: the last one taken in front, its field open on them; none, none."""
+        backend = self.view3d.backend
+        if at is None:
+            at = backend.vertex_on if backend.vertex_on in chosen else (min(chosen) if chosen else -1)
+        self._vertex_choose(at, chosen)
+        if chosen:
+            self._vertex_open()
+            self.hint.setText(ngettext("{n} corner chosen.", "{n} corners chosen: they go together.",
+                                       len(chosen)).format(n=len(chosen)))
+        else:
+            self.view3d.vertex_field.hide()
+            self.view3d.setFocus()
+
+    def _vertex_hot(self, at: int) -> None:
+        """The status bar says what a corner under the pointer does, and goes back to what it said (R354)."""
+        if at >= 0:
+            if self.vertex_hint_before is None:
+                self.vertex_hint_before = self.hint.text()
+            self.hint.setText(_("Corner: drag it up or down, click to write its height. Ctrl or Shift: more than one. "
+                                "Right button: what else it can do."))
+        elif self.vertex_hint_before is not None:
+            self.hint.setText(self.vertex_hint_before)
+            self.vertex_hint_before = None
 
     def _vertex_dragged(self, at: int, metres: float) -> None:
         if not 0 <= at < len(self.vertex_handles):
             return
+        if at in self.view3d.backend.vertices_on:
+            hand = self._vertices_in_hand()                  # those chosen go together (R356)
+        else:
+            hand = [self.vertex_handles[at]]
+            self.vertex_chosen = [hand[0].corners[0]]
         self.vertex_taken = self.vertex_handles[at].corners[0]
         self.view3d.vertex_field.hide()
-        self._vertex_height(self.vertex_handles[at], self.vertex_handles[at].z + metres)
+        self._vertex_heights([(h, h.z + metres) for h in hand])
 
     def _vertex_typed(self, text: str) -> None:
-        at = self.view3d.backend.vertex_on
-        if not 0 <= at < len(self.vertex_handles):
+        hand = self._vertices_in_hand()
+        if not hand:
             return
+        field = self.view3d.vertex_field
         written = roof_vertices.parse_height(text)
         if written is None:
             self.hint.setText(_("Not changed: {why}").format(why=_("write a height, or +5 or -10 to move it by that much")))
             return
-        handle = self.vertex_handles[at]
-        self.view3d.vertex_field.hide()
+        field.hide()
         self.view3d.setFocus()
-        self._vertex_height(handle, roof_vertices.height_written(handle.z, written))
+        if text == field.opened or (written[1] and written[0] == 0.0):
+            return                                           # Enter on what it showed: nothing to do, no step of the undo
+        self._vertex_heights([(h, roof_vertices.height_written(h.z, written)) for h in hand])
 
-    def _vertex_height(self, handle, z: float) -> None:
-        if handle.obstacle:
+    def _vertex_heights(self, moves: list) -> None:
+        """The heights of those in hand, (handle, z) each, as one step of the undo. An obstacle's top is one height."""
+        if moves[0][0].obstacle:
+            z = moves[0][1]
             _kind, oid = self.selection
             self._vertex_change(_("Height of the obstacle"), lambda p, _bid: roof_vertices.set_obstacle_height(p, oid, z))
             return
-        self._vertex_change(_("Height of a corner"), lambda p, bid: roof_vertices.set_height(p, bid, handle.corners[0], z))
+        self._vertex_change(_("Height of a corner"), lambda p, bid: roof_vertices.set_heights(
+            p, bid, [(h.corners[0], z) for h, z in moves]))
 
     def _vertex_merge_asked(self) -> None:
         self.vertex_merging = True
@@ -2045,6 +2127,51 @@ class MainWindow(QMainWindow):
         self._vertex_change(_("Part corners"), lambda p, bid: roof_vertices.detach(p, bid, taken),
                             _("The corners are independent now: click again on the point to pass from one to the other."))
 
+    def _vertex_make_pitched(self) -> None:
+        """A flat roof that is really to slope, asked for (R357): its corners go each their own way from here on."""
+        self.view3d.vertex_field.hide()
+        self._vertex_change(_("Make it pitched"), lambda p, bid: roof_vertices.to_manual(p, p.building(bid)))
+
+    def _vertex_unfold(self) -> None:
+        taken = self.vertex_taken
+        self.view3d.vertex_field.hide()
+        self._vertex_change(_("Back on one plane"), lambda p, bid: roof_vertices.unfold(p, bid, taken))
+
+    def _vertex_all(self) -> None:
+        at = self.view3d.backend.vertex_on
+        self._vertex_take(set(range(len(self.vertex_handles))), at if at >= 0 else 0)
+
+    def _vertex_menu(self, at: int, where) -> None:
+        """What a corner can do beyond its height written or dragged (R354): on the right button, the field stays small."""
+        from PySide6.QtWidgets import QMenu
+        if at not in self.view3d.backend.vertices_on:
+            self._vertex_choose(at)
+        hand = self._vertices_in_hand()
+        handle = self.vertex_handles[at]
+        kind, oid = self.selection
+        b = self.project.building(roof_vertices.owner_of(kind, oid)) if not handle.obstacle else None
+        menu = QMenu(self)
+        entries = [(_("Height above the ground…"), self._vertex_open), (_("Raise or lower by…"), lambda: self._vertex_open("+"))]
+        if b is not None:
+            entries.append(None)
+            if roof_vertices.stays_flat(b):
+                entries.append((_("Make it pitched"), self._vertex_make_pitched))
+            else:
+                if len(hand) == 1:
+                    entries.append((_("Make one with..."), self._vertex_merge_asked))
+                if roof_vertices.can_detach(handle.corners):
+                    entries.append((_("Part"), self._vertex_detach))
+                if roof_vertices.folded(b, handle.corners[0]):
+                    entries.append((_("Back on one plane"), self._vertex_unfold))
+            entries.append((_("Choose all the corners"), self._vertex_all))
+        for entry in entries:
+            if entry is None:
+                menu.addSeparator()
+            else:
+                menu.addAction(entry[0]).triggered.connect(lambda _c=False, f=entry[1]: f())
+        self.context_menu = menu                    # kept, for the tests
+        menu.popup(where)
+
     def _vertex_change(self, text: str, change, said: str = "") -> None:
         """A change of the corners of the selection's roof as one step of the undo, and what it did to the pitches:
         a roof that became drawn by hand, a pitch off one plane and how it was folded (R303)."""
@@ -2054,6 +2181,7 @@ class MainWindow(QMainWindow):
         before = b.solved() if b is not None else None
         was_free = b is None or b.roof.type == "free"
         had_parapet = b is not None and b.roof.type == "flat" and b.parapet > 0
+        height_was = b.height if b is not None else 0.0
         try:
             self.edit(text, lambda p: change(p, bid))
         except ValueError as error:
@@ -2062,7 +2190,9 @@ class MainWindow(QMainWindow):
             return
         b = self.project.building(bid) if kind != "exclusion" else None
         told = [said] if said else []
-        if not was_free:
+        if b is not None and b.roof.type == "flat" and b.height != height_was:
+            told.append(_("A flat roof goes up and down whole: the building is {z} m high now.").format(z=number(b.height, 2)))
+        if not was_free and b is not None and b.roof.type == "free":
             told.append(_("The roof is drawn by hand from here on: each face is a pitch."))
             if had_parapet:
                 told.append(_("Its parapet no longer counts for the shadows: undo brings it back."))
@@ -3816,6 +3946,7 @@ class MainWindow(QMainWindow):
             self._fill_side_bar()
             self.phase_actions[pid].setChecked(True)
         self.checks_page.set_phase(pid)             # what «This phase» keeps in the Checks panel
+        self._show_vertices()                       # with Select they are of the Modelling (R355)
         self.assistant.set_tab(pid)
         self._phase_panels(pid)
 
@@ -4272,6 +4403,10 @@ class MainWindow(QMainWindow):
         from PySide6.QtCore import QPoint
 
         from .plan import to_scene
+        at = self.view3d.backend.vertex_at(x, y)
+        if at >= 0:
+            self._vertex_menu(at, self.view3d.mapToGlobal(QPoint(int(x), int(y))))
+            return
         hit, name, index = self.view3d.backend._press or (None, "", -1)
         if name == "modules" and 0 <= index < len(self.module_index):
             sfid, key = self.module_index[index]

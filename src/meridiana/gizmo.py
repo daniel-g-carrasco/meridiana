@@ -34,6 +34,8 @@ AXES = {"x": EAST, "y": NORTH, "z": UP}
 HANDLES = ("x", "y", "z", "xy", "rz")
 ACTIVE = ("x", "y", "xy", "rz")         # what a press can take: not "z" (see above)
 VERTEX_TOLERANCE = 12.0         # pixels from a corner of the roof that still take it (R303): wider than its mark
+# with Select (R355) the marks stand among what a click selects: little more than the mark itself, not to take its clicks
+VERTEX_TOLERANCE_SELECT = 7.0
 STEPS = {"snap": 0.10, "fine": 0.01, "free": 0.001}      # metres
 ANGLES = {"snap": 15.0, "fine": 1.0, "free": 0.1}        # degrees
 

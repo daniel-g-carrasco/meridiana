@@ -7,9 +7,11 @@ unless parted; corners made to coincide (Roof.welds) go together on any roof and
 new model of the roof, until they are parted. Parting them (Roof.detached) leaves them where they are, each free to go
 its own way; two handles then stand on one point, and a click on them passes from one to the other.
 
-A roof of another type (flat, mono-pitch, gable, hip) becomes a roof drawn by hand at the first corner moved
-(to_manual): its faces become free pitches, the same planes in the same places, the sub-fields following; undo takes it
-back. A canopy has no corners to move: its roof is its structure's (canopies.py).
+A flat roof stays flat (R357): a corner moved takes the whole roof up or down, which is the building's height, and what
+stands on it follows; who wants it sloped asks for it (to_manual, "Make it pitched" in the corner's menu). A roof of
+another type (mono-pitch, gable, hip) becomes a roof drawn by hand at the first corner moved (to_manual): its faces become
+free pitches, the same planes in the same places, the sub-fields following; undo takes it back. A canopy has no corners
+to move: its roof is its structure's (canopies.py).
 
 A height moved takes the pitches of that corner to the heights of their corners ("z", roof_join.py); those off one plane
 are folded there, along a diagonal. The obstacles (an exclusion with a height) stay prisms: a corner dragged moves
@@ -222,13 +224,22 @@ def _group_of(b, corner) -> list[tuple[int, int]]:
     raise ValueError(_("there is no such corner"))
 
 
+def stays_flat(b) -> bool:
+    """A corner of this roof moves the whole roof: its height is the building's (R357)."""
+    return b.roof.type == "flat" and b.canopy is None
+
+
 def set_height(project, bid: str, corner, z: float) -> None:
-    """The corner, and those that go with it, at height `z`. ValueError, said for the designer, under the ground."""
+    """The corner, and those that go with it, at height `z`; on a flat roof the whole roof, which stays flat (R357).
+    ValueError, said for the designer, under the ground."""
     if not GROUND <= z <= LIMIT:
         raise ValueError(_("a corner stands between the ground and {limit} m").format(limit=int(LIMIT)))
     b = project.building(bid)
     if b is None:
         raise ValueError(_("there is no such object"))
+    if stays_flat(b):
+        b.height = round(float(z), 3)
+        return
     to_manual(project, b)
     group = _group_of(b, corner)
     touched = sorted({i for i, _j in group})
@@ -236,6 +247,33 @@ def set_height(project, bid: str, corner, z: float) -> None:
     for i, j in group:
         b.roof.free_pitches[i]["z"][j] = round(float(z), 3)
     _settle(b, touched)
+
+
+def set_heights(project, bid: str, moves) -> None:
+    """Several corners, (corner, z) each, as one change (R356). The first refused refuses them all: session.edit puts the
+    project back."""
+    for corner, z in moves:
+        set_height(project, bid, corner, z)
+
+
+def folded(b, corner) -> bool:
+    """Whether a pitch of this corner is folded (roof_join.Fold): its heights keep it off one plane."""
+    solved = b.solved() if b.roof.type == "free" else None
+    if solved is None:
+        return False
+    pitches = {i for i, _j in _group_of(b, corner)}
+    return any(f.pitch in pitches for f in solved.folds)
+
+
+def unfold(project, bid: str, corner) -> None:
+    """The folded pitches of this corner back on one plane, the slope and the eave they had settled on (R354): corners
+    no more written one by one."""
+    b = project.building(bid)
+    if b is None or b.roof.type != "free":
+        raise ValueError(_("there is no such object"))
+    bent = {f.pitch for f in b.solved().folds}
+    for i in sorted({i for i, _j in _group_of(b, corner)} & bent):
+        b.roof.free_pitches[i].pop("z", None)
 
 
 def weld(project, bid: str, corner_a, corner_b) -> None:

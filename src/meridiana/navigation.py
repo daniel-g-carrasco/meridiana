@@ -217,6 +217,10 @@ class Navigator:
                 return kind
         return ""
 
+    def drags(self, buttons, mods) -> bool:
+        """Whether these buttons and keys are a gesture of the style: what is free can be used for something else."""
+        return bool(self._match(buttons, mods))
+
     def _switch(self, x: float, y: float) -> list[Action]:
         """The buttons or the modifiers changed while dragging: end one gesture, maybe begin another."""
         out = []

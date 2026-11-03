@@ -96,6 +96,21 @@ Item {
             }
         }
 
+        // the dark edge of the selection's ribbons (R360): a wider tube seen only from inside, so that it stands behind
+        // the ribbon and shows just beside it, a line of two tones as the plan's on a light roof and on a dark one
+        Model {
+            objectName: "outlineHalo"
+            pickable: false
+            castsShadows: false
+            receivesShadows: false
+            geometry: OutlineGeometry { objectName: "outlineHaloGeometry" }
+            materials: PrincipledMaterial {
+                vertexColorsEnabled: true
+                lighting: PrincipledMaterial.NoLighting
+                cullMode: Material.FrontFaceCulling
+            }
+        }
+
         // the outline of the selection and of what is under the pointer: ribbons of their own tint, unlit
         Model {
             objectName: "outline"
@@ -411,9 +426,49 @@ Item {
                 y: modelData.y - height / 2
                 width: modelData.size
                 height: modelData.size
+                radius: modelData.size / 2      // round, as the plan's grips and marks (R354)
                 color: modelData.colour
                 border.color: backend.vertexEdge
                 border.width: 1
+            }
+        }
+    }
+
+    // the box that chooses several corners (R356), as the plan's sweep: a window's line, a plus or a minus by the pointer
+    Item {
+        objectName: "vertexBox"
+        anchors.fill: parent
+        visible: backend.vertexBox.on === true
+        Rectangle {
+            x: backend.vertexBox.x || 0
+            y: backend.vertexBox.y || 0
+            width: backend.vertexBox.w || 0
+            height: backend.vertexBox.h || 0
+            color: backend.vertexBox.fill || "transparent"
+            border.color: backend.vertexBox.line || "transparent"
+            border.width: backend.vertexBox.pen || 0
+        }
+        Rectangle {
+            x: backend.vertexBox.signX || 0
+            y: backend.vertexBox.signY || 0
+            width: backend.vertexBox.side || 0
+            height: width
+            radius: backend.vertexBox.radius || 0
+            color: backend.vertexBox.ground || "transparent"
+            Rectangle {
+                anchors.centerIn: parent
+                width: backend.vertexBox.arm || 0
+                height: backend.vertexBox.pen || 0
+                radius: height / 2
+                color: backend.vertexBox.sign || "transparent"
+            }
+            Rectangle {
+                anchors.centerIn: parent
+                visible: backend.vertexBox.remove !== true
+                width: backend.vertexBox.pen || 0
+                height: backend.vertexBox.arm || 0
+                radius: width / 2
+                color: backend.vertexBox.sign || "transparent"
             }
         }
     }
