@@ -2,8 +2,8 @@
 import re
 from pathlib import Path
 
-DL = Path(r"C:\Users\Grasso\AppData\Local\Temp\claude\c--Users-Grasso-Elettrico\ac24d128-fcc4-4bd8-9c13-8ce732bbae55\scratchpad\font\dl")
-PO = Path(r"C:\Users\Grasso\dev\meridiana-wt-r10-font\po\it.po")
+DL = Path(r"scratchpad\font\dl")
+PO = Path(r"meridiana\po\it.po")
 
 # id: (label, [files], {axis: value} or {}, extra QFont options)
 # "axes" are applied with QFont.setVariableAxis; "ls" is a letter spacing in px (QFont.AbsoluteSpacing)

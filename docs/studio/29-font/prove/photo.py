@@ -12,7 +12,7 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(r"C:\Users\Grasso\AppData\Local\Temp\claude\c--Users-Grasso-Elettrico\ac24d128-fcc4-4bd8-9c13-8ce732bbae55\scratchpad\fontscripts")))
+sys.path.insert(0, str(Path(r"scratchpad\fontscripts")))
 import fontset  # noqa: E402
 
 variant, scale, themename, outdir, locale = sys.argv[1], int(sys.argv[2]), sys.argv[3], Path(sys.argv[4]), sys.argv[5]
