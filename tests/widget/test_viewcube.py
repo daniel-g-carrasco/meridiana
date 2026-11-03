@@ -41,6 +41,59 @@ class Cube(unittest.TestCase):
             self.assertTrue(0 < right <= 12 and 0 < top <= 12, (size, right, top))
             self.assertTrue(v.rect().contains(self.cube.geometry()))      # whole inside the view
 
+    def test_the_cube_stays_its_size_and_what_is_round_it_takes_less(self):
+        """R359, measured: 150 x 150 px of widget before, 137 x 137 drawn; the cube itself 64 across."""
+        import numpy as np
+
+        from meridiana import navicube
+        from meridiana.ui import viewcube
+        self.assertEqual(viewcube.CUBE, 64)
+        self.cube.fit_view(1600, 900)
+        self.assertLessEqual(self.cube.width() * self.cube.height(), 0.6 * 150 * 150)
+        cells = navicube.faces(self.b.camera, viewcube.CUBE)
+        reach = max(float(np.hypot(x, y)) for _p, poly, _d in cells for x, y in poly)
+        self.assertLess(reach, self.cube.width() / 2)        # the cube whole inside it
+        for name, poly in self.cube.arrows().items():        # each arrow inside and small, with a wider place to click
+            box = poly.boundingRect()
+            self.assertTrue(self.cube.rect().toRectF().contains(box), name)
+            self.assertEqual(self.cube.at(box.center()), ("arrow", name))
+
+    def test_a_small_view_takes_the_compact_cube_with_home_in_its_menu(self):
+        from PySide6.QtGui import QResizeEvent
+
+        from meridiana.ui import viewcube
+        self.assertTrue(viewcube.compact_for(500, 400))
+        self.assertFalse(viewcube.compact_for(1000, 600))
+        self.view.resize(500, 400)
+        self.view.resizeEvent(QResizeEvent(self.view.size(), self.view.size()))
+        cube = self.cube
+        self.assertTrue(cube.compact)
+        self.assertEqual((cube.width(), cube.height()), (viewcube.COMPACT_SIZE, viewcube.COMPACT_SIZE))
+        self.assertEqual(cube.at(cube.centre())[0], "part")
+        self.assertEqual(cube.at(cube.menu_rect().center()), ("menu",))
+        self.assertNotEqual(cube.at(cube.home_rect().center()), ("home",))
+        cube.grab()
+        words = [a.text() for a in cube.menu().actions()]
+        self.assertIn("Go to Home", words)
+        self.assertTrue(self.view.rect().contains(cube.geometry()))
+        self.view.resize(1000, 700)
+        self.view.resizeEvent(QResizeEvent(self.view.size(), self.view.size()))
+        self.assertFalse(cube.compact)
+        self.assertNotIn("Go to Home", [a.text() for a in cube.menu().actions()])
+        cube.grab()
+
+    def test_a_press_on_its_empty_corners_is_the_views(self):
+        from PySide6.QtCore import QEvent, QPoint, QPointF, Qt
+        from PySide6.QtGui import QMouseEvent
+        cube = self.cube
+        cube.fit_view(1600, 900)
+        empty = QPointF(cube.width() - 1.0, 1.0)
+        self.assertIsNone(cube.at(empty))
+        event = QMouseEvent(QEvent.Type.MouseButtonPress, empty, QPointF(cube.mapToGlobal(QPoint(0, 0))),
+                            Qt.MouseButton.LeftButton, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier)
+        cube.mousePressEvent(event)
+        self.assertFalse(event.isAccepted())
+
     def test_a_frame_of_the_cube_computes_its_faces_once_and_none_when_nothing_changed(self):
         """R120: the 3D view under it paints every frame; the cube is drawn again only when the view turned."""
         from unittest import mock
