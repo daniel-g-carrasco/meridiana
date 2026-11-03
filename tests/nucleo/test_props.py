@@ -131,6 +131,23 @@ class Trees(MeshChecks):
             with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
                 props.tree("broadleaf", **dimensions)
 
+    def test_the_pine_crown_is_one_connected_mass(self):
+        shape = props.tree("pine")
+        green = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS["tree"]), axis=1)
+        _vertices, inverse = np.unique(shape[0][green].reshape(-1, 3), axis=0, return_inverse=True)
+        parent = list(range(int(inverse.max()) + 1))
+
+        def root(index):
+            while parent[index] != index:
+                parent[index] = parent[parent[index]]
+                index = parent[index]
+            return index
+
+        for face in inverse.reshape(-1, 3):
+            for other in face[1:]:
+                parent[root(int(other))] = root(int(face[0]))
+        self.assertEqual(len({root(i) for i in range(len(parent))}), 1)
+
 
 class Obstacles(MeshChecks):
     CASES = (
@@ -268,6 +285,28 @@ class Cars(MeshChecks):
         for dimensions in ({"length": 0.0}, {"width": -1.0}, {"height": 0.0}):
             with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
                 props.car("compact", **dimensions)
+
+    def test_compact_and_suv_have_different_silhouettes(self):
+        normalized = []
+        for kind in ("compact", "suv"):
+            length, width, height = props.CAR_DEFAULTS[kind]
+            pos = props.car(kind)[0].astype(np.float64)
+            normalized.append(pos / np.array((length, height, width)))
+        difference = float(np.max(np.abs(normalized[0] - normalized[1])))
+        self.assertGreater(difference, 0.03)
+
+    def test_car_windows_use_dark_glass(self):
+        self.assertIn("car_glass", props.DEFAULT_COLOURS)
+        self.assertLess(max(props.DEFAULT_COLOURS["car_glass"]), 0.25)
+        shape = props.car("compact")
+        glass = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS["car_glass"]), axis=1)
+        self.assertTrue(glass.any())
+
+    def test_the_bright_wheel_rims_are_on_the_visible_outer_faces(self):
+        width = props.CAR_DEFAULTS["compact"][1]
+        pos, _nor, col = props.car("compact")
+        metal = np.all(np.isclose(col, props.DEFAULT_COLOURS["metal"]), axis=1)
+        self.assertTrue(np.any(np.abs(pos[metal, 2]) > width * 0.499))
 
 
 class Palettes(unittest.TestCase):
