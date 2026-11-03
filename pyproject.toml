@@ -49,6 +49,7 @@ where = ["src"]
 
 [tool.ruff]
 target-version = "py312"
+extend-exclude = ["docs/studio"]        # the scripts of a study: run once, kept as they were
 
 [tool.ruff.lint]
 # the same as the command in CLAUDE.md: pyflakes, syntax errors, bugbear
