@@ -16,6 +16,8 @@ from _fakes import FakeAnthropic, FakeServer, recorded, text_answer, tool_answer
 from _fixtures import capannone_rho
 from _setup import wait_until
 
+from PySide6.QtWidgets import QLabel
+
 from meridiana import assistant, config
 
 setUpModule = _setup.keep_global_state          # what the module changes of the process, put back after it
@@ -234,7 +236,7 @@ class Chat(unittest.TestCase):
         self.assertTrue(wait_until(self.app, lambda: self.chat.survey_card is not None, 10))
         card = self.chat.survey_card
         self.assertEqual(card.title(), "On this PC: Ollama")
-        self.assertIn("qwen3.6:35b-a3b on Ollama: tried with Meridio", card.findChildren(type(self.a.cost))[0].text())
+        self.assertIn("qwen3.6:35b-a3b on Ollama: tried with Meridio", card.findChildren(QLabel)[0].text())
         card.buttons["use"].click()
         cfg = self.cfg
         self.assertEqual((cfg.assistant_local_url, cfg.assistant_local_model, cfg.assistant_local_runtime),
@@ -334,14 +336,14 @@ class Chat(unittest.TestCase):
         self.assertEqual(self.win.project.subfields[0].params["tilt"], 20.0)
         [card] = self.chat.cards.values()
         self.assertEqual(card.title(), "Proposal: Undo")
-        self.assertIn("Change tilt", card.findChildren(type(self.a.cost))[0].text())
+        self.assertIn("Change tilt", card.findChildren(QLabel)[0].text())
         card.buttons["apply"].click()
         self.assertEqual(self.win.project.subfields[0].params["tilt"], 15.0)
         self.a.ask("E ripeti?")
         self.assertTrue(self.idle())
         [card] = self.chat.cards.values()
         self.assertEqual(card.title(), "Proposal: Redo")
-        self.assertIn("Change tilt", card.findChildren(type(self.a.cost))[0].text())
+        self.assertIn("Change tilt", card.findChildren(QLabel)[0].text())
         card.buttons["apply"].click()
         self.assertEqual(self.win.project.subfields[0].params["tilt"], 20.0)
         self.assertFalse(self.chat.cards)
@@ -430,7 +432,13 @@ class Character(unittest.TestCase):
     def test_a_change_is_proposed_at_once_not_after_asking_permission(self):
         from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
-        self.window(assistant_introduced=True)
+        # a tall window: the questions stay under the cards only with room for both (R362)
+        _setup.window(self, project=capannone_rho(), size=(1200, 1100),
+                      cfg=config.Config(background="none", theme="light", assistant_introduced=True,
+                                        assistant_height=900))
+        self.a = self.win.assistant
+        self.a.reduced_motion = True
+        self.chat = self.win.assistant_chat
         before = [q.text() for q in self.a.questions]
         self.assertEqual(len([t for t in before if t]), 3)
         server = self.serve([

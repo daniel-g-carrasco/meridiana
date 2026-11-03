@@ -156,6 +156,13 @@ class Size:
                         # (an empty state, R321)
     PLACEHOLDER = 160   # a card dropped across the window (a band above or below it, above or below a panel as wide):
                         # its slot this tall, not the card's own height, the central card not jumping (R317)
+    # Meridio's bubble (R363, measured on photos)
+    BUBBLE_MIN_WIDTH = 280      # about 30 characters of his words in the conversation: less, and they wrap at each word
+    BUBBLE_MIN_HEIGHT = 240     # the head, the status, 6 lines of conversation and the field, in the low arrangement
+    BUBBLE_NARROW = 300         # a panel narrower than this: where he thinks as its icon alone
+    BUBBLE_LOW = 300            # a panel lower than this: no name (it is on him), «Attach» in a menu at the head
+    BUBBLE_STATUS = 18          # the status line (the phase, the dots, the cost): this tall, even empty
+    BUBBLE_READING = 64         # the conversation keeps this much (3 lines) before the suggestions give way
 
 
 class Button:

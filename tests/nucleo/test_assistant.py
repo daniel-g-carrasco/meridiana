@@ -321,5 +321,53 @@ class SpeechBubble(unittest.TestCase):
         self.assertEqual(assistant.bubble_size((320, 400), (200, 150)), (200, 150))   # a tiny area: the area
 
 
+class BubbleResized(unittest.TestCase):
+    """The grip's drag as a plain function (R361): assistant.resized, assistant.tail_place."""
+
+    AREA = (0, 0, 1000, 800)
+    SMALL, LARGE = assistant.BUBBLE_MIN, (900, 700)
+    HIM = (500, 500, assistant.SIZE, assistant.SIZE)            # his middle: 523, 523
+
+    def drag(self, rect, corner, delta, tail="right"):
+        return assistant.resized(rect, corner, delta, self.AREA, self.SMALL, self.LARGE, self.HIM, tail)
+
+    def test_the_opposite_corner_does_not_move_even_over_the_maximum(self):
+        rect = (150, 200, 346, 346)
+        for corner, delta in (("top-left", (-30, -20)), ("top-left", (-5000, -5000))):
+            x, y, w, h = self.drag(rect, corner, delta)
+            self.assertEqual((x + w, y + h), (150 + 346, 200 + 346))
+        self.assertEqual(self.drag(rect, "top-left", (-30, -20)), (120, 180, 376, 366))
+        x, y, w, h = self.drag(rect, "top-left", (-5000, -5000))
+        self.assertEqual((x, y), (0, 0))                        # the area comes first here, then the maximum
+        x, y, w, h = self.drag((600, 100, 300, 300), "bottom-right", (5000, 5000), "left")
+        self.assertEqual((x, y, x + w, y + h), (600, 100, 1000, 800))
+
+    def test_never_under_the_minimum(self):
+        him = (110, 50, assistant.SIZE, assistant.SIZE)
+        out = assistant.resized((100, 100, 400, 500), "bottom-right", (-900, -900), self.AREA, self.SMALL, self.LARGE,
+                                him, "top")
+        self.assertEqual(out, (100, 100, *self.SMALL))
+
+    def test_getting_smaller_the_side_with_the_tail_still_reaches_him(self):
+        margin = assistant.BUBBLE_RADIUS + assistant.TAIL_HALF + assistant.TAIL_CLEAR
+        x, y, w, h = self.drag((150, 200, 346, 500), "bottom-left", (0, -900))      # the bottom comes up
+        self.assertEqual(y + h, int(523 + margin + 0.5))
+        x, y, w, h = self.drag((150, 300, 346, 500), "top-left", (0, 900))          # the top comes down
+        self.assertEqual(y, int(523 - margin))
+        x, y, w, h = self.drag((400, 550, 500, 300), "bottom-right", (-900, 0), "top")
+        self.assertEqual(x + w, max(400 + self.SMALL[0], int(523 + margin + 0.5)))
+
+    def test_it_never_grows_to_reach_him(self):
+        # a place where the side does not reach him (a window that changed): the grip does as it is told
+        self.assertEqual(self.drag((10, 10, 300, 300), "bottom-left", (-5, 5)), (5, 10, 305, 305))
+
+    def test_the_tail_stays_on_the_straight_part_of_its_side(self):
+        margin = assistant.BUBBLE_RADIUS + assistant.TAIL_HALF + assistant.TAIL_CLEAR
+        self.assertEqual(assistant.tail_place(0, 400), margin)
+        self.assertEqual(assistant.tail_place(400, 400), 400 - margin)
+        self.assertEqual(assistant.tail_place(200, 400), 200)
+        self.assertLessEqual(margin, assistant.SIZE / 2)        # level with him, it points at his middle
+
+
 if __name__ == "__main__":
     unittest.main()

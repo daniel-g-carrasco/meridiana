@@ -408,9 +408,12 @@ def clamp(place: tuple[int, int], area: tuple[int, int], size: tuple[int, int]) 
 # the view, with its tail towards him; never over him, never over what the window says to avoid (the selection,
 # the point being drawn); when there is no room, the character slides to a free corner and opens there.
 TAIL = 12                       # the tail's length, px
+TAIL_HALF = 11.0                # half the tail's base, px
 GAP = 4                         # between the character's circle and the tail's tip
-BUBBLE_MIN = (280, 240)
-BUBBLE_DEFAULT = (320, 400)
+BUBBLE_RADIUS = 10              # the bubble's corners
+TAIL_CLEAR = 2                  # the tail's base at least this far from where a corner starts to round
+BUBBLE_MIN = (280, 240)         # the same as Size.BUBBLE_MIN_WIDTH and _HEIGHT in ui/design.py (a test keeps them equal)
+BUBBLE_DEFAULT = (320, 500)     # R362: the whole height is its own, it no longer grows when it opens
 
 
 @dataclass(frozen=True)
@@ -434,6 +437,44 @@ class Bubble:
             return f"{vertical}-{'right' if self.tail == 'left' else 'left'}"
         horizontal = "left" if self.at > self.width / 2 else "right"
         return f"{'bottom' if self.tail == 'top' else 'top'}-{horizontal}"
+
+
+def tail_place(at: float, length: float) -> float:
+    """Where the tail can point along a side `length` long: as near `at` as it can with its base on the straight part
+    of the side, off the rounded corners (R361)."""
+    margin = BUBBLE_RADIUS + TAIL_HALF + TAIL_CLEAR
+    return min(max(at, margin), length - margin)
+
+
+def _span(start: int, length: int, moving_start: bool, delta: int, limits: tuple[int, int], sizes: tuple[int, int],
+          keep: float | None) -> tuple[int, int]:
+    """One axis of a bubble resized by its grip: (start, length), with the edge not moving where it was. `limits` are
+    the edges of the area, `sizes` the least and the most length, `keep` the point the tail must still reach."""
+    margin = BUBBLE_RADIUS + TAIL_HALF + TAIL_CLEAR
+    if moving_start:
+        end = start + length
+        edge = min(max(start + delta, limits[0], end - sizes[1]), end - sizes[0])
+        if keep is not None:                # no further than this when it gets smaller: it never grows for it
+            edge = min(edge, max(start, int(keep - margin)))
+        return edge, end - edge
+    edge = max(min(start + length + delta, limits[1], start + sizes[1]), start + sizes[0])
+    if keep is not None:
+        edge = max(edge, min(start + length, int(keep + margin + 0.5)))
+    return start, edge - start
+
+
+def resized(rect: Rect, corner: str, delta: tuple[int, int], area: Rect, minimum: tuple[int, int],
+            maximum: tuple[int, int], character: Rect, tail: str) -> Rect:
+    """The bubble `rect` with its grip at `corner` dragged by `delta`: the opposite corner does not move (a size over
+    the maximum given to Qt moved it), it stays inside `area`, and the side with the tail still reaches the middle of
+    the character, so that the tail never has to leave him (R361)."""
+    x, y, w, h = rect
+    cx, cy = character[0] + character[2] / 2, character[1] + character[3] / 2
+    x, w = _span(x, w, corner.endswith("left"), delta[0], (area[0], area[0] + area[2]), (minimum[0], maximum[0]),
+                 cx if tail in ("top", "bottom") else None)
+    y, h = _span(y, h, corner.startswith("top"), delta[1], (area[1], area[1] + area[3]), (minimum[1], maximum[1]),
+                 cy if tail in ("left", "right") else None)
+    return x, y, w, h
 
 
 def overlaps(a: Rect, b: Rect) -> bool:
