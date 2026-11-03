@@ -81,7 +81,7 @@ class SharedTables(unittest.TestCase):
         tag = QFont.Tag("tnum")
         self.assertEqual(view.font().featureValue(tag), 1)
         plain = QFont(view.font())
-        plain.clearFeature(tag)
+        plain.unsetFeature(tag)
         view.setFont(plain)
         for _round in range(4):
             QApplication.processEvents()
