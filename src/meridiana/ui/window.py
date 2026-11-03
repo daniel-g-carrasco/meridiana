@@ -6475,7 +6475,9 @@ class MainWindow(QMainWindow):
     def _put_layout(self, layout: dict) -> None:
         """Back to `_layout_now`: a state that leaves open panels out of sight gives way to the default one
         (_check_panels, R294). The Project panel as the phase wants it."""
+        self.help_box.fitting = True                # the help card going with the state is no one closing it
         self.restoreState(QByteArray.fromBase64(layout["state"].encode("ascii")))
+        self.help_box.fitting = False
         split = QByteArray.fromBase64(layout["split"].encode("ascii"))
         if self.split_home is not None:
             self.split_home = split
