@@ -6,6 +6,7 @@ import math
 import unittest
 
 import _setup
+from PySide6.QtCore import QPoint
 
 from meridiana import config, model
 
@@ -31,8 +32,8 @@ class RoofTools(unittest.TestCase):
         return self.win.project.building("b1").roof
 
     def test_the_corners_of_the_roof_in_3d_each_gesture_one_step_of_the_undo(self):
-        """R303: with Move on a building its corners show; a height dragged or written, two corners made one and parted,
-        each is one step, and undo takes the roof back."""
+        """R303, R357: with Move on a building its corners show; on a flat roof one moves the building's height; made
+        pitched, a height dragged or written, each is one step, and undo takes the roof back."""
         win = self.win
         backend, field = win.view3d.backend, win.view3d.vertex_field
         win._select("building", "b1")
@@ -43,13 +44,20 @@ class RoofTools(unittest.TestCase):
         backend.vertexClicked.emit(2)
         self.assertEqual(backend.vertex_on, 2)
         self.assertTrue(field.isVisibleTo(win.view3d))
-        self.assertFalse(field.detach_button.isVisibleTo(field))
         self.assertEqual(win.undo.count(), steps)                # taking a corner changes nothing
-        field.edit.setText("+2")
-        field.typed.emit(field.edit.text())
+        field.typed.emit("+2")
         self.assertEqual(win.undo.count(), steps + 1)
-        self.assertEqual(self.roof().type, "free")
+        self.assertEqual(self.roof().type, "flat")               # R357
+        self.assertAlmostEqual(win.project.building("b1").height, 8.0)
         self.assertEqual(backend.vertex_on, 2)                   # still the one taken
+        win.undo.undo()
+        self.assertAlmostEqual(win.project.building("b1").height, 6.0)
+        win._vertex_make_pitched()
+        self.assertEqual(self.roof().type, "free")
+        steps = win.undo.count()
+        backend.vertexClicked.emit(2)
+        field.typed.emit("+2")
+        self.assertEqual(win.undo.count(), steps + 1)
         self.assertAlmostEqual(win.vertex_handles[2].z, 8.0)
         self.assertIn("off one plane", win.hint.text())
         self.assertEqual(len(win.project.building("b1").pitches()), 2)
@@ -67,13 +75,18 @@ class RoofTools(unittest.TestCase):
         self.assertIn("ground", win.hint.text())
         win.undo.undo()
         self.assertAlmostEqual(self.roof().free_pitches[0]["z"][2], 7.0)
-        for _i in range(2):
+        for _i in range(3):
             win.undo.undo()
         self.assertEqual(self.roof().type, "flat")
 
     def test_two_corners_made_one_and_parted_from_the_3d_view(self):
         win = self.win
-        backend, field = win.view3d.backend, win.view3d.vertex_field
+        backend = win.view3d.backend
+
+        def menu(at):
+            win._vertex_menu(at, QPoint(0, 0))
+            win.context_menu.hide()
+            return {a.text(): a for a in win.context_menu.actions() if a.text()}
 
         def draw(p):
             r = p.building("b1").roof
@@ -84,9 +97,9 @@ class RoofTools(unittest.TestCase):
         win._select("building", "b1")
         win._set_tool("move")
         steps = win.undo.count()
-        backend.vertexClicked.emit(1)                            # [8, 0] of the first pitch
-        self.assertTrue(field.merge_button.isVisibleTo(field))
-        field.merge.emit()
+        options = menu(1)                                        # [8, 0] of the first pitch
+        self.assertNotIn("Part", options)
+        options["Make one with..."].trigger()
         self.assertTrue(win.vertex_merging)
         backend.vertexClicked.emit(4)                            # [8.5, 0] of the second
         self.assertEqual(win.undo.count(), steps + 1)
@@ -94,9 +107,7 @@ class RoofTools(unittest.TestCase):
         self.assertEqual(self.roof().free_pitches[1]["ring"][0], [8.0, 0.0])
         self.assertEqual(len(win.vertex_handles), 7)
         at = next(i for i, h in enumerate(win.vertex_handles) if len(h.corners) == 2)
-        backend.vertexClicked.emit(at)
-        self.assertTrue(field.detach_button.isVisibleTo(field))
-        field.detach.emit()
+        menu(at)["Part"].trigger()
         self.assertEqual(win.undo.count(), steps + 2)
         self.assertEqual(self.roof().welds, [])
         self.assertEqual(len(win.vertex_handles), 8)

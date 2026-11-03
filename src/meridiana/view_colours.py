@@ -120,7 +120,10 @@ WIDTHS = {"building": 2.5, "pitch": 1.8, "exclusion": 2.2, "subfield": 2.5, "mod
 # R67 (24/10/2026, «troppo pesanti»): the selection 2.6 px over a halo of 2 more (it was 3.4 over 3), its veil
 # inside lighter
 # the ribbons that outline the selection and what is under the pointer in 3D, pixels (ui/view3d.py)
-RIBBONS = {"select": 4.0, "hover": 3.0}
+# R360 (Daniel, 03/11/2026: «È troppo spessa»): they were 4.0 and 3.0, measured 6.5 px across on a shed that fills the view
+# (perspective and the square tube's corners make it read wider than it is). These read as the plan's 2.6 px (WIDTHS).
+RIBBONS = {"select": 1.6, "hover": 1.3}
+RIBBON_HALO = 2.5       # the selection's tube with its dark edge: on a light roof its tint alone would not read
 
 
 def plan(imagery: bool) -> dict:

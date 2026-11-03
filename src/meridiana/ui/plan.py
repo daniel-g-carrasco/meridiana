@@ -25,14 +25,14 @@ import math
 import time
 
 import numpy as np
-from PySide6.QtCore import QEvent, QLineF, QPoint, QPointF, QRectF, Qt, QTimer, Signal
-from PySide6.QtGui import (QBrush, QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPen, QPolygonF,
+from PySide6.QtCore import QEvent, QLineF, QPoint, QPointF, QRect, QRectF, Qt, QTimer, Signal
+from PySide6.QtGui import (QBrush, QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPen, QPixmap, QPolygonF,
                            QTransform)
 from PySide6.QtWidgets import (QGraphicsEllipseItem, QGraphicsItem, QGraphicsItemGroup, QGraphicsScene, QGraphicsView,
-                               QLineEdit, QWidget)
+                               QLineEdit, QToolTip, QWidget)
 
 from .. import geo, move, navigation, roofs, sides, sweep, theme_colors, tiles, view_colours, viewaids
-from . import plan_overlays, waiting, world_map
+from . import icons, plan_overlays, waiting, world_map
 from ..i18n import _, ngettext, number, pgettext
 from .cards import round_corners
 from .lit_modules import LitModules
@@ -61,6 +61,8 @@ STRING_DOT_MIN_MODULE_PX = 14.0   # below this, 8 px dots merge into the line wh
 Z_TILES, Z_BUILDING, Z_PITCH, Z_SUBFIELD, Z_EXCLUSION, Z_MODULES, Z_SELECTION = 0, 10, 12, 20, 25, 30, 40
 Z_PROP = 32                     # R269: a tree's crown over the modules it shades, under the wiring and the selection
 Z_WIRING = 35
+GRIP_ICONS = {"move": "move", "rotate": "rotate"}       # the grips of Move: what they do, drawn (R358)
+GRIP_REACH = design.Size.COMPACT / 2 + design.Space.XXS  # pixels from a grip's middle that still take it
 SWEEP_ALPHA = 56                # the ground of the sweep's rectangle or lasso: what is under it still reads
 LIGHT_ALPHA = 150               # what is lit as one (R299, R300): enough to tell it from the modules beside it
 Z_VEIL = 1                      # over the tiles (0 and 0.5), under everything drawn
@@ -348,6 +350,9 @@ class SideEditor(QWidget):
     def disc(self) -> float:
         return self.height() - 2 * design.Space.XXS          # the pill's disc
 
+    def disc_text(self) -> str:
+        return str(self.side + 1)
+
     def open_at(self, side: int, text: str, centre: QPointF, pill: QRectF | None = None) -> None:
         """The field for side `side` (0-based) with `text` selected, over the side's `pill` (the parent's pixels: its
         disc and its height kept), or with its middle at `centre` for a side too short for a pill."""
@@ -422,7 +427,7 @@ class SideEditor(QWidget):
         inset = design.Line.FOCUS / 2
         p.drawRoundedRect(QRectF(inset, inset, self.width() - 2 * inset, h - 2 * inset),
                           design.Radius.PLAN_LABEL, design.Radius.PLAN_LABEL)
-        draw_disc(p, QPointF(design.Space.XXS + self.disc() / 2, h / 2), self.disc(), str(self.side + 1),
+        draw_disc(p, QPointF(design.Space.XXS + self.disc() / 2, h / 2), self.disc(), self.disc_text(),
                   qcolour(self.colours["label_fg"]), fill, self.font())
         p.setPen(qcolour(self.colours["label_fg"]))
         p.setFont(self.field.font())
@@ -446,6 +451,35 @@ class SideEditor(QWidget):
         """Where the field writes its text, in this widget's pixels: its cursor's top and the font's ascent."""
         cursor = self.field.cursorRect()
         return self.field.y() + cursor.top() + (cursor.height() - QFontMetrics(self.field.font()).height()) / 2             + QFontMetrics(self.field.font()).ascent()
+
+
+def grip_tips() -> dict:
+    """What the grips of Move do, and the keys that are not written anywhere near them (R358): on passing over."""
+    return {"move": _("Move: drag it where it goes, or click it and then click the place. Ctrl held at the end makes a "
+                      "copy; Enter or Space pass to Rotate."),
+            "rotate": _("Rotate about the middle: drag it, or click it and then click the direction. Steps of 15°, 5° "
+                        "with Ctrl, 90° with Shift; Ctrl held at the end makes a copy; Enter or Space pass to Move.")}
+
+
+_ROTATE_CURSOR: list = []
+
+
+def rotate_cursor() -> QCursor:
+    """Qt has no cursor that turns: the program's icon, dark over a light disc, readable on any roof (R358)."""
+    if not _ROTATE_CURSOR:
+        side = design.Size.CHIP
+        pix = QPixmap(side, side)
+        pix.fill(Qt.GlobalColor.transparent)
+        p = QPainter(pix)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QColor("#ffffff"))
+        p.drawEllipse(QRectF(1, 1, side - 2, side - 2))
+        icons.icon("rotate", "#0b0d10").paint(p, QRect(design.Space.XS, design.Space.XS, side - 2 * design.Space.XS,
+                                                       side - 2 * design.Space.XS))
+        p.end()
+        _ROTATE_CURSOR.append(QCursor(pix, side // 2, side // 2))
+    return _ROTATE_CURSOR[0]
 
 
 def draw_disc(painter: QPainter, centre: QPointF, diameter: float, text: str, fill: QColor, ink: QColor, base) -> None:
@@ -595,6 +629,7 @@ class PlanView(QGraphicsView):
         self.sweep_lasso = False
         self.sweep_item = None             # what the drag would select, lit (LitModules)
         self.sweep_remove = False          # R344: Shift held, the sweep takes out of the selection
+        self.grip_hover = None             # the grip of Move under the pointer (R358)
         self.quad_index: dict = {}         # sub-field -> sweep.QuadIndex of its modules, made at the first sweep
         self.action_box = QRectF()         # where its sign was painted last
         self.module_action = ""            # R344: "add" or "remove", what a click on the module under the pointer does
@@ -2308,6 +2343,9 @@ class PlanView(QGraphicsView):
         return self.gesture
 
     def _drop_gesture(self) -> None:
+        if self.grip_hover is not None:
+            self.grip_hover = None
+            self.setCursor(Qt.CursorShape.ArrowCursor if self.tool == "select" else Qt.CursorShape.CrossCursor)
         self.gesture = None
         self.grip_press = None
         self.move_pointer = None
@@ -2369,6 +2407,7 @@ class PlanView(QGraphicsView):
             self.viewport().update()
             return
         self._hover("", "", "")
+        self._grip_passed(self.mapFromScene(scene_pos))
         g = self.gesture
         if g is not None and g.mode == "rotate":
             self.snap, self.move_pointer = None, cursor
@@ -2582,12 +2621,67 @@ class PlanView(QGraphicsView):
         return found or (sum(q[0] for q in ring) / len(ring), sum(q[1] for q in ring) / len(ring))
 
     def _grip_at(self, position: QPointF) -> str | None:
-        """The grip under the pointer, within 8 pixels."""
+        """The grip under the pointer, within its disc and a little more."""
         for name, point in self._grips().items():
             p = self.mapFromScene(to_scene(*point))
-            if math.hypot(p.x() - position.x(), p.y() - position.y()) <= 8.0:
+            if math.hypot(p.x() - position.x(), p.y() - position.y()) <= GRIP_REACH:
                 return name
         return None
+
+    def _grip_free(self) -> bool:
+        """A press on a grip would take it: no gesture going on (as _move_press)."""
+        g = self.gesture
+        return g is None or g.mode == "move" and g.base is None and not g.typing
+
+    def _grip_passed(self, position) -> None:
+        """The pointer on a grip: lit, with the cursor of what it does and the status bar saying it (R358: they said
+        nothing, Daniel 03/11/2026: «anche passandoci sopra il puntatore del mouse, non danno suggerimenti»)."""
+        grip = self._grip_at(QPointF(position)) if self._grip_free() else None
+        if grip == self.grip_hover:
+            return
+        self.grip_hover = grip
+        if grip == "move":
+            self.setCursor(Qt.CursorShape.SizeAllCursor)
+        elif grip == "rotate":
+            self.setCursor(rotate_cursor())
+        else:
+            self.setCursor(Qt.CursorShape.CrossCursor)
+        self.hint.emit(grip_tips()[grip] if grip else self._move_hint())
+        self.viewport().update()
+
+    def viewportEvent(self, event) -> bool:
+        """The tooltip of a grip: QGraphicsView sends the viewport's tooltips to the scene's items, and the grips are drawn,
+        not items, so a tooltip set on the view would never show (R358)."""
+        if event.type() == QEvent.Type.ToolTip and getattr(self, "tool", "") == "move":
+            grip = self._grip_at(QPointF(event.pos())) if self._grip_free() else None
+            if grip is not None:
+                QToolTip.showText(event.globalPos(), grip_tips()[grip], self.viewport())
+                return True
+        return super().viewportEvent(event)
+
+    def _draw_grips(self, painter: QPainter) -> None:
+        """The grips of Move (R358): round as the pills' discs, the icon of what they do in them, of the same size at every
+        zoom. Under the pointer, or taken, full of the accent."""
+        g, c, W = self.gesture, self.colours, view_colours.WIDTHS
+        accent, ground = qcolour(c["sel"]), qcolour(c["label_bg"])
+        ground.setAlpha(255)
+        r, side = design.Size.COMPACT / 2, design.Size.COMPACT - 2 * design.Space.XS
+        painter.save()
+        painter.resetTransform()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        for name, point in self._grips().items():
+            at = QPointF(self.mapFromScene(to_scene(*point)))
+            hot = name == self.grip_hover or (g is not None and g.grip and (name == "rotate") == (g.mode == "rotate"))
+            painter.setPen(QPen(qcolour(c["halo"]), design.Line.FOCUS + W["halo"]))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawEllipse(at, r, r)
+            painter.setPen(QPen(accent, design.Line.FOCUS))
+            painter.setBrush(QBrush(accent if hot else ground))
+            painter.drawEllipse(at, r, r)
+            ink = ground if hot else qcolour(c["label_fg"])
+            icons.icon(GRIP_ICONS[name], ink.name()).paint(
+                painter, QRect(round(at.x() - side / 2), round(at.y() - side / 2), side, side))
+        painter.restore()
 
     def _grip_press(self, grip: str, position: QPointF) -> None:
         """A press on a grip: the gesture begins there, hot (Enter or Space go round Move and Rotate, as AutoCAD's
@@ -2622,17 +2716,7 @@ class PlanView(QGraphicsView):
         g = self.gesture
         c, W = self.colours, view_colours.WIDTHS
         accent, draw = qcolour(c["sel"]), qcolour(c["draw"])
-        r = 5 * self.metres_per_pixel()
-        for name, point in self._grips().items():           # the grips: a square that moves, a circle that turns
-            p = to_scene(*point)
-            hot = g is not None and g.grip and (name == "rotate") == (g.mode == "rotate")
-            painter.setPen(cosmetic(c["halo"], 1.6 + W["halo"]))
-            painter.setBrush(Qt.BrushStyle.NoBrush)
-            shape = QRectF(p.x() - r, p.y() - r, 2 * r, 2 * r)
-            painter.drawRect(shape) if name == "move" else painter.drawEllipse(shape)
-            painter.setPen(cosmetic(accent, 1.6))
-            painter.setBrush(QBrush(accent) if hot else QBrush(qcolour(c["label_bg"])))
-            painter.drawRect(shape) if name == "move" else painter.drawEllipse(shape)
+        self._draw_grips(painter)
         painter.setBrush(Qt.BrushStyle.NoBrush)
         if g is None or self.move_pointer is None:
             return
@@ -3710,10 +3794,10 @@ class PlanView(QGraphicsView):
             p = to_scene(*end)
             shape = QRectF(p.x() - r, p.y() - r, 2 * r, 2 * r)
             painter.setPen(cosmetic(self.colours["halo"], 1.6 + W["halo"]))
-            painter.drawRect(shape)
+            painter.drawEllipse(shape)
             painter.setPen(cosmetic(accent, 1.6))
             painter.setBrush(QBrush(accent) if self.row_drag is not None else QBrush(qcolour(self.colours["label_bg"])))
-            painter.drawRect(shape)
+            painter.drawEllipse(shape)
             painter.setBrush(Qt.BrushStyle.NoBrush)
             if self.row_drag is not None:
                 painter.setPen(cosmetic(draw, W["draw"], Qt.PenStyle.DashLine))
@@ -3727,7 +3811,7 @@ class PlanView(QGraphicsView):
                 painter.drawPolygon(QPolygonF([to_scene(*q) for q in moved]))
                 ring = moved
             for q in ring:                    # the corners, to drag
-                self._mark(painter, to_scene(*q), accent, "vertex")
+                self._mark(painter, to_scene(*q), accent, "edge")     # round, as every grip (R354)
         if self.tool == "move":
             self._draw_move(painter)
         if self.point_pick is not None:              # the points clicked so far

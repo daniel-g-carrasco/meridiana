@@ -98,9 +98,10 @@ class Heights(unittest.TestCase):
         self.assertEqual(len(b.solved().folds), 2)           # two quads out of plane, each in two
         self.assertEqual(len(b.pitches()), 4)
 
-    def test_an_eave_corner_on_a_flat_roof_makes_it_by_hand_and_folds_it(self):
+    def test_an_eave_corner_of_a_flat_roof_made_pitched_folds_it(self):
         p = project()
         b = p.buildings[0]
+        rv.to_manual(p, b)                                   # «Make it pitched», asked (R357)
         rv.set_height(p, "b1", rv.handles(b)[2].corners[0], 9.0)
         self.assertEqual(b.roof.type, "free")
         self.assertEqual(len(b.pitches()), 2)
@@ -111,6 +112,7 @@ class Heights(unittest.TestCase):
     def test_three_corners_of_a_flat_roof_raised_in_turn_stay_one_plane_when_they_are(self):
         p = project()
         b = p.buildings[0]
+        rv.to_manual(p, b)
         hs = rv.handles(b)
         for k in (2, 3):
             rv.set_height(p, "b1", hs[k].corners[0], 8.0)
@@ -156,6 +158,109 @@ class Heights(unittest.TestCase):
         for q in b.pitches()[1:3]:
             self.assertEqual(q.tilt, 0.0)
             self.assertAlmostEqual(q.z0, 6.0, places=3)
+
+
+class FlatStaysFlat(unittest.TestCase):
+    """R357: a corner of a flat roof is the height of the building; the roof stays flat, with all that stands on it."""
+
+    def laid(self) -> model.Project:
+        p = project()
+        b = p.buildings[0]
+        b.parapet = 1.0
+        p.subfields.append(model.SubField("s1", "Campo", rect(1, 1, 19, 9), building="b1", params={"tilt": 10.0}))
+        p.exclusions.append(model.ExclusionItem("e1", rect(3, 3, 4, 4), kind="plant", building="b1", height=2.0))
+        return p
+
+    def test_a_corner_written_or_dragged_changes_the_height_of_the_building_and_nothing_else_of_the_roof(self):
+        p = self.laid()
+        b = p.buildings[0]
+        roof_was = json.dumps(b.roof.__dict__, sort_keys=True, default=str)
+        rv.set_height(p, "b1", rv.handles(b)[2].corners[0], 8.5)
+        self.assertEqual(b.roof.type, "flat")
+        self.assertEqual(json.dumps(b.roof.__dict__, sort_keys=True, default=str), roof_was)
+        self.assertEqual(b.height, 8.5)
+        self.assertTrue(all(h.z == 8.5 for h in rv.handles(b)))
+        self.assertEqual(len(b.pitches()), 1)
+        self.assertEqual(b.pitches()[0].tilt, 0.0)
+
+    def test_what_stands_on_it_follows(self):
+        p = self.laid()
+        b = p.buildings[0]
+        key = b.geometry_key()
+        rv.set_height(p, "b1", rv.handles(b)[0].corners[0], 8.5)
+        self.assertNotEqual(b.geometry_key(), key)           # layouts, shadows and the year are made again
+        sf = p.subfields[0]
+        self.assertAlmostEqual(p.surface_of(sf).z(5.0, 5.0), 8.5)
+        self.assertAlmostEqual(move.height(p, "subfield", "s1", (5.0, 5.0)), 8.5)
+        prisms = p.obstacle_prisms()
+        parapet = [o for o in prisms if o.get("kind") == "parapet"]
+        self.assertTrue(parapet)
+        self.assertTrue(all((o["z0"], o["z1"]) == (8.5, 9.5) for o in parapet))     # it still counts for the shadows
+        plant = next(o for o in prisms if o.get("id") == "e1")
+        self.assertAlmostEqual(plant["z1"], 10.5)
+
+    def test_several_corners_at_once_are_one_height(self):
+        p = self.laid()
+        b = p.buildings[0]
+        rv.set_heights(p, "b1", [(h.corners[0], 7.0) for h in rv.handles(b)[:2]])
+        self.assertEqual((b.roof.type, b.height), ("flat", 7.0))
+
+    def test_under_the_ground_is_refused_and_a_canopy_has_none(self):
+        p = self.laid()
+        with self.assertRaises(ValueError):
+            rv.set_height(p, "b1", (0, 0), -1.0)
+        self.assertEqual(p.buildings[0].height, 6.0)
+        self.assertFalse(rv.stays_flat(model.Building("c", "C", rect(0, 0, 5, 5), 3.0, canopy=model.Canopy())))
+
+    def test_pitched_roofs_do_not_change_their_way(self):
+        for kind in ("mono", "gable", "hip"):
+            with self.subTest(kind=kind):
+                p = project(model.Roof(type=kind, tilt=20.0))
+                b = p.buildings[0]
+                rv.set_height(p, "b1", rv.handles(b)[0].corners[0], b.height + 1.0)
+                self.assertEqual(b.roof.type, "free")
+                self.assertEqual(b.height, 6.0)
+
+    def test_it_goes_through_a_save_with_the_format_it_had(self):
+        p = self.laid()
+        rv.set_height(p, "b1", rv.handles(p.buildings[0])[0].corners[0], 8.5)
+        again = model.Project.from_json(json.loads(json.dumps(p.to_json())))
+        self.assertEqual((again.buildings[0].roof.type, again.buildings[0].height), ("flat", 8.5))
+
+
+class SeveralCorners(unittest.TestCase):
+    """R356: several corners take their heights in one change."""
+
+    def test_each_goes_to_its_own_height(self):
+        p = manual_two()
+        b = p.buildings[0]
+        a, c = corner_at(b, 0, 5), corner_at(b, 20, 5)
+        rv.set_heights(p, "b1", [(a.corners[0], 9.0), (c.corners[0], 9.0)])
+        self.assertAlmostEqual(corner_at(b, 0, 5).z, 9.0)
+        self.assertAlmostEqual(corner_at(b, 20, 5).z, 9.0)
+        self.assertEqual(b.solved().folds, [])               # the ridge raised whole: planes still
+
+    def test_generated_roof_too(self):
+        p = project(model.Roof(type="gable", tilt=20.0))
+        b = p.buildings[0]
+        hs = rv.handles(b)
+        rv.set_heights(p, "b1", [(hs[0].corners[0], 7.0), (hs[1].corners[0], 7.5)])
+        now = {(round(h.x, 3), round(h.y, 3)): h.z for h in rv.handles(b)}
+        self.assertAlmostEqual(now[(round(hs[0].x, 3), round(hs[0].y, 3))], 7.0)
+        self.assertAlmostEqual(now[(round(hs[1].x, 3), round(hs[1].y, 3))], 7.5)
+
+    def test_a_folded_pitch_goes_back_on_one_plane(self):
+        p = project()
+        b = p.buildings[0]
+        rv.to_manual(p, b)
+        corner = rv.handles(b)[2].corners[0]
+        self.assertFalse(rv.folded(b, corner))
+        rv.set_height(p, "b1", corner, 9.0)
+        self.assertTrue(rv.folded(b, corner))
+        rv.unfold(p, "b1", corner)
+        self.assertFalse(rv.folded(b, corner))
+        self.assertEqual(len(b.pitches()), 1)
+        self.assertNotIn("z", b.roof.free_pitches[0])
 
 
 class OnePoint(unittest.TestCase):
@@ -302,6 +407,7 @@ class Everywhere(unittest.TestCase):
 
     def folded(self) -> model.Project:
         p = project(footprint=rect(0, 0, 20, 20))
+        rv.to_manual(p, p.buildings[0])
         rv.set_height(p, "b1", rv.handles(p.buildings[0])[2].corners[0], 10.0)
         return p
 

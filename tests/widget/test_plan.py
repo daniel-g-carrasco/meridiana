@@ -775,6 +775,59 @@ class Grips(MoveCase):
         self.view.set_tool("move")
         self.assertEqual(self.view._grips(), {"move": (20.0, 10.0), "rotate": (20.0, 20.0)})
 
+    def test_passing_over_a_grip_says_what_it_does_with_the_cursor_and_the_status_bar(self):
+        """R358: they said nothing; the hint, the cursor and the tooltip name what they do and the keys that do not show."""
+        from unittest import mock
+
+        from PySide6.QtCore import QEvent, QPoint, Qt
+        from PySide6.QtGui import QHelpEvent
+        from PySide6.QtWidgets import QToolTip
+
+        from meridiana.ui import plan
+        self.project()
+        self.view.set_tool("move")
+        self.view.set_selection("building", "b1")
+        hints = []
+        self.view.hint.connect(hints.append)
+        self.move(20.0, 10.0)
+        self.assertEqual(self.view.grip_hover, "move")
+        self.assertEqual(self.view.cursor().shape(), Qt.CursorShape.SizeAllCursor)
+        self.assertIn("Enter or Space", hints[-1])
+        self.view.grab()                                     # drawn lit
+        at = self.move(20.0, 20.0)
+        self.assertEqual(self.view.grip_hover, "rotate")
+        self.assertEqual(self.view.cursor().shape(), Qt.CursorShape.BitmapCursor)
+        self.assertIn("15°", hints[-1])
+        event = QHelpEvent(QEvent.Type.ToolTip, at.toPoint() if hasattr(at, "toPoint") else at, QPoint(0, 0))
+        with mock.patch.object(QToolTip, "showText") as shown:
+            self.assertTrue(self.view.viewportEvent(event))
+        self.assertEqual(shown.call_args[0][1], plan.grip_tips()["rotate"])
+        self.move(5.0, 5.0)
+        self.assertIsNone(self.view.grip_hover)
+        self.assertEqual(self.view.cursor().shape(), Qt.CursorShape.CrossCursor)
+        self.assertEqual(hints[-1], self.view._move_hint())
+
+    def test_the_grips_are_round_with_their_icon_and_take_the_whole_disc(self):
+        from PySide6.QtCore import QPointF
+
+        from meridiana.ui import design, icons, plan
+        self.project()
+        self.view.set_tool("move")
+        self.view.set_selection("building", "b1")
+        for name in plan.GRIP_ICONS.values():
+            self.assertFalse(icons.icon(name).isNull(), name)
+        centre = QPointF(self.view.mapFromScene(plan.to_scene(20.0, 10.0)))
+        self.assertEqual(self.view._grip_at(centre + QPointF(design.Size.COMPACT / 2, 0)), "move")
+        self.assertIsNone(self.view._grip_at(centre + QPointF(design.Size.COMPACT, 0)))
+
+    def test_during_a_gesture_the_grips_keep_quiet(self):
+        self.project()
+        self.view.set_tool("move")
+        self.view.set_selection("building", "b1")
+        self.view._gesture().base = (1.0, 1.0)
+        self.move(20.0, 10.0)
+        self.assertIsNone(self.view.grip_hover)
+
     def test_dragging_the_middle_grip_is_a_move(self):
         self.project()
         self.view.set_tool("move")
