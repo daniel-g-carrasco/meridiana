@@ -94,6 +94,10 @@ def realistic_scene():
 
 
 def detail_scene(name):
+    if name in props.KINDS:
+        family = props.family(name)
+        factory = {"tree": props.tree, "obstacle": props.obstacle, "person": props.person, "car": props.car}[family]
+        return factory(name), np.zeros((0, 20), dtype=np.float32)
     if name == "auto":
         return _join([_placed(props.car("compact", rotation=-18), -3, 0),
                       _placed(props.car("suv", rotation=18), 3, 0)]), np.zeros((0, 20), dtype=np.float32)
@@ -122,7 +126,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--shots", action="store_true", help="Capture both scenes, themes and three viewpoints")
     parser.add_argument("--output", type=Path, default=ROOT / "docs" / "revisioni" / "foto" / "oggetti-3d")
-    parser.add_argument("--scene", choices=("galleria", "realistica", "auto", "alberi", "lineari"), default="galleria")
+    parser.add_argument("--scene", choices=("galleria", "realistica", "auto", "alberi", "lineari", *props.KINDS),
+                        default="galleria")
     parser.add_argument("--theme", choices=("light", "dark"), default="light")
     parser.add_argument("--view", choices=("assonometrica", "fronte", "alto"), default="assonometrica")
     args = parser.parse_args()
@@ -171,7 +176,9 @@ def main() -> int:
             self.view.backend.changed.emit()
             self.view.set_sun(42.0, 135.0)
             self.view._changed()
-            scene_text = "Oggetti e riferimenti di scala" if scene_name == "galleria" else "Capannone e parcheggio"
+            scene_text = ("Oggetti e riferimenti di scala" if scene_name == "galleria" else
+                          "Capannone e parcheggio" if scene_name in ("realistica", "auto", "alberi", "lineari") else
+                          scene_name)
             theme_text = "chiaro" if theme_name == "light" else "scuro"
             self.caption.setText(f"{scene_text} | {view_name} | tema {theme_text}")
 
@@ -183,7 +190,8 @@ def main() -> int:
 
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    jobs = ([(args.theme, args.scene, view) for view in ("assonometrica", "fronte", "alto")]
+    jobs = ([(theme, args.scene, "assonometrica") for theme in ("light", "dark")] if args.scene in props.KINDS else
+            [(args.theme, args.scene, view) for view in ("assonometrica", "fronte", "alto")]
             if args.scene in ("auto", "alberi", "lineari") else shot_jobs())
     failures = []
 

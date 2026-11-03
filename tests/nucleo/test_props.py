@@ -325,6 +325,19 @@ class GalleryScenes(unittest.TestCase):
         self.assertLessEqual(float(span[0]), 50.0)
         self.assertLessEqual(float(span[2]), 30.0)
 
+    def test_each_prop_kind_has_its_own_close_scene(self):
+        gallery = self.gallery()
+        factories = {**{kind: props.tree for kind in props.TREE_KINDS},
+                     **{kind: props.obstacle for kind in props.OBSTACLE_KINDS},
+                     **{kind: props.person for kind in props.PERSON_KINDS},
+                     **{kind: props.car for kind in props.CAR_KINDS}}
+        for kind, factory in factories.items():
+            with self.subTest(kind=kind):
+                shape, table = gallery.detail_scene(kind)
+                expected = factory(kind)
+                self.assertEqual(len(table), 0)
+                np.testing.assert_array_equal(shape[0], expected[0])
+
 
 if __name__ == "__main__":
     unittest.main()
