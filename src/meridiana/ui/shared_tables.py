@@ -355,6 +355,11 @@ class TableStyle(QObject):
             wanted = self._original_sheet + table_sheet(QApplication.palette(), self.compact)
             if self.view.styleSheet() != wanted:
                 QTimer.singleShot(0, self.view, self.refresh)
+        elif kind == QEvent.Type.FontChange and watched is self.view:
+            # the application's sheet makes the font again as it polishes the view (at the first showing, at each
+            # theme): the equal-width figures were lost and the numbers stopped lining up (found by Quotario, 03/11/2026)
+            if not self.view.font().featureValue(QFont.Tag("tnum")):
+                QTimer.singleShot(0, self.view, self.refresh)
         elif kind in (QEvent.Type.Resize, QEvent.Type.Show, QEvent.Type.Hide, QEvent.Type.DevicePixelRatioChange):
             self._follow_header()
         return False

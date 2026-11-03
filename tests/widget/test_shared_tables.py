@@ -68,6 +68,25 @@ class SharedTables(unittest.TestCase):
         theme.apply()
         # _setup owns cached themes: deleting one leaves later modules a dead C++ wrapper.
 
+    def test_the_equal_width_figures_come_back_when_the_font_is_made_again(self):
+        """The application's sheet makes the view's font again as it polishes the view: the figures lost `tnum`, and
+        the numbers stopped lining up (found by Quotario, 03/11/2026)."""
+        from PySide6.QtWidgets import QApplication
+        view = QTableView(self.root)
+        self.addCleanup(view.deleteLater)
+        model = QStandardItemModel(1, 1, view)
+        model.setItem(0, 0, QStandardItem("1"))
+        view.setModel(model)
+        shared_tables.install(view)
+        tag = QFont.Tag("tnum")
+        self.assertEqual(view.font().featureValue(tag), 1)
+        plain = QFont(view.font())
+        plain.clearFeature(tag)
+        view.setFont(plain)
+        for _round in range(4):
+            QApplication.processEvents()
+        self.assertEqual(view.font().featureValue(tag), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
