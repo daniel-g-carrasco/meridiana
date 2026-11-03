@@ -358,7 +358,7 @@ QToolButton#variant-add, QToolButton#variant-more {{ border: 1px solid transpare
     padding: 0 {S.S - 1}px; min-height: {chip_inner}px; max-height: {chip_inner}px; color: {t['text2']};
     background: transparent; }}
 QToolButton#variant-add:hover, QToolButton#variant-more:hover {{ background: {hover}; color: {t['text']}; }}
-QToolButton#variant-more::menu-indicator {{ image: none; width: 0; }}
+QToolButton#variant-more::menu-indicator, QToolButton#view-menu::menu-indicator {{ image: none; width: 0; }}
 QFrame#row-line {{ background: {t['line_soft']}; border: none; }}
 QLabel#row-detail, QLabel#grid-row {{ color: {t['text2']}; }}
 QLabel#row-empty, QLabel#grid-head {{ color: {t['muted']}; }}

@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QRectF, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QObject, QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QKeySequence, QPainter, QPainterPath, QPen, QShortcut
 from PySide6.QtWidgets import (QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy,
                                QStackedWidget, QToolButton, QVBoxLayout, QWidget)
@@ -104,11 +104,29 @@ def row_sizes(count: int, columns: int) -> list[int]:
     return [base + 1] * extra + [base] * (rows - extra)
 
 
+class _FootWatch(QObject):
+    """Tells a section that the row at its foot changed height (the Settings' confirmation came or went)."""
+
+    def __init__(self, foot: QWidget, changed):
+        super().__init__(foot)
+        self.changed = changed
+        foot.installEventFilter(self)
+
+    def eventFilter(self, _obj, event) -> bool:
+        if event.type() == QEvent.Type.LayoutRequest:
+            self.changed()
+        return False
+
+
+COLUMN = 760        # the longest line of a section's text, and the width of its forms (the Settings, R346)
+
+
 class Section(QScrollArea):
     """A section of the page: its title, a line that says what it holds, its groups of tiles."""
 
     def __init__(self, title: str, lead: str):
         super().__init__()
+        self.foot = None
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -124,7 +142,7 @@ class Section(QScrollArea):
         lead_label = QLabel(lead)
         lead_label.setObjectName("fpage-lead")
         lead_label.setWordWrap(True)
-        lead_label.setMaximumWidth(760)
+        lead_label.setMaximumWidth(COLUMN)
         lead_label.setFont(text_font(Text.DESCRIPTION))
         self.box.addWidget(lead_label)
         self.box.addSpacing(Space.S)
@@ -169,6 +187,29 @@ class Section(QScrollArea):
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
         self._reflow()
+        self._place_foot()
+
+    def pin_foot(self, foot: QWidget) -> None:
+        """`foot` stays at the section's foot, in the column, while the rest scrolls above it (the Settings' commands)."""
+        foot.setParent(self)
+        foot.setMaximumWidth(COLUMN)
+        _FootWatch(foot, self._place_foot)
+        foot.show()
+        self.foot = foot
+        self._place_foot()
+
+    def _place_foot(self) -> None:
+        if self.foot is None:
+            return
+        high = self.foot.sizeHint().height()
+        margins = self.viewportMargins()
+        self.setViewportMargins(margins.left(), margins.top(), margins.right(), high + 2 * Space.M)
+        self.foot.setGeometry(Layout.PAGE[0], self.height() - high - Space.M,
+                              min(COLUMN, self.width() - 2 * Layout.PAGE[0]), high)
+        # the column as the layout's own width: a box measures a wrapped page at all its width, past the page's maximum,
+        # and gave it the height of fewer lines (the local models' sentences were cut)
+        side = max(Layout.PAGE[0], self.viewport().width() - COLUMN - Layout.PAGE[0])
+        self.box.setContentsMargins(Layout.PAGE[0], Layout.PAGE[1], side, Layout.PAGE[1])
 
     def finish(self) -> None:
         self.box.addStretch(1)
@@ -243,8 +284,9 @@ class FilePage(QFrame):
             self._settings = Preferences(w.cfg, w.bindings, w.theme, w)
             self._settings.changed.connect(w._apply_preferences)
             self._settings.profileOffer.connect(w._report_offer_answered)
-            self._settings.setMaximumWidth(860)
-            self._settings_section.box.addWidget(self._settings, 1, Qt.AlignmentFlag.AlignLeft)
+            self._settings.setMaximumWidth(COLUMN)
+            self._settings_section.box.addWidget(self._settings, 1)
+            self._settings_section.pin_foot(self._settings.foot)
             self._settings_read = True              # reading them is what making them does
         return self._settings
 

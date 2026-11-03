@@ -3,19 +3,18 @@ groups as in the mockups' C3, a frame with a header band the whole width (a styl
 a tab only), and the menus without their mnemonics underlined (Windows shows them only with Alt; Fusion always,
 and the row of menus looked like a page of links). Alt and its letters work as before.
 
-The style is set on those widgets only (`Group`, `quiet_menus`), not on the application: a style written in
-Python is asked for everything it draws, and the rest of the window stays on Fusion, as fast as it was."""
+The style is set on those widgets only (`Group`, `quiet_menus`). It is the application's style with these things more,
+never another one: under the global sheet a style set on a widget goes down to its children (R339)."""
 
 from __future__ import annotations
 
 from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPointF, QRect, QRectF, QSize, Qt, QTimer, QVariantAnimation, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import (QGroupBox, QHBoxLayout, QMenu, QProxyStyle, QStyle, QStyleFactory, QVBoxLayout,
-                               QWidget)
+from PySide6.QtWidgets import QApplication, QGroupBox, QHBoxLayout, QMenu, QStyle, QVBoxLayout, QWidget
 
 from .. import theme_colors
-from .checkboxes import CheckboxStyle
 from .design import Icon, Line, Motion, Radius, Space
+from .scrollbars import ScrollStyle
 
 GROUP_RADIUS = Radius.CONTROL   # a group is a control's depth (ui/design.py)
 HEAD_PAD = Space.M              # the header band over the title's line of text
@@ -25,22 +24,24 @@ CHEVRON_GAP = Space.S           # between the chevron and the title
 QWIDGETSIZE_MAX = (1 << 24) - 1
 
 
+def is_nested(widget: QWidget) -> bool:
+    """A group inside a group draws no card (R343); a plain QGroupBox is never asked."""
+    return bool(getattr(widget, "nested", False))
+
+
 def title_x(widget: QWidget) -> int:
-    """Where a group's title starts: after the fold's chevron when the group folds."""
-    return TITLE_X + (CHEVRON + CHEVRON_GAP if getattr(widget, "collapsible", False) else 0)
+    """Where a group's title starts: after the fold's chevron when the group folds; a nested group's on its parent's
+    text, the chevron's edge there."""
+    return (0 if is_nested(widget) else TITLE_X) + (CHEVRON + CHEVRON_GAP if getattr(widget, "collapsible", False) else 0)
 
 
-class MeridianaStyle(CheckboxStyle, QProxyStyle):
-    """Fusion, with the groups of C3 and without the menus' underlines. `tokens` are the theme's colours (set by
-    ui/theme.Theme at each change)."""
-
-    def __init__(self):
-        super().__init__(QStyleFactory.create("Fusion"))
-        self.tokens: dict = {}
+class MeridianaStyle(ScrollStyle):
+    """The application's style (scrollbars.ScrollStyle), with the groups of C3 and without the menus' underlines.
+    Under a global sheet a style set on a group goes down to everything inside it: when this was plain Fusion, every
+    area inside a group had Fusion's bars with their arrows and no room kept (R339). `tokens` are the theme's colours
+    (set by ui/theme.Theme at each change)."""
 
     def styleHint(self, hint, option=None, widget=None, returnData=None):
-        if hint == QStyle.StyleHint.SH_ToolTip_WakeUpDelay:
-            return Motion.NORMAL
         if hint == QStyle.StyleHint.SH_UnderlineShortcut:
             return 0
         return super().styleHint(hint, option, widget, returnData)
@@ -58,7 +59,7 @@ class MeridianaStyle(CheckboxStyle, QProxyStyle):
                 x = title_x(widget)
                 return QRect(r.left() + x, r.top(), max(0, r.width() - x - TITLE_X), h)
             if sc == QStyle.SubControl.SC_GroupBoxContents:
-                return r.adjusted(1, h, -1, -1)
+                return r.adjusted(0, h, 0, 0) if is_nested(widget) else r.adjusted(1, h, -1, -1)
             if sc == QStyle.SubControl.SC_GroupBoxCheckBox:
                 return QRect()
         return super().subControlRect(cc, opt, sc, widget)
@@ -68,6 +69,9 @@ class MeridianaStyle(CheckboxStyle, QProxyStyle):
             t = self.tokens
             r = QRectF(opt.rect).adjusted(0.5, 0.5, -0.5, -0.5)
             h = self.head(widget)
+            if is_nested(widget):
+                self._nested(p, widget, r, h)
+                return
             frame = QPainterPath()
             frame.addRoundedRect(r, GROUP_RADIUS, GROUP_RADIUS)
             p.save()
@@ -96,6 +100,27 @@ class MeridianaStyle(CheckboxStyle, QProxyStyle):
             p.restore()
             return
         super().drawComplexControl(cc, opt, p, widget)
+
+    def _nested(self, p: QPainter, widget: QWidget, r: QRectF, h: int) -> None:
+        """A group inside a group (R343): the title on a thin line, nothing behind it; the pointer on a header that
+        folds darkens its chevron, no fill."""
+        t = self.tokens
+        p.save()
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        p.setPen(QPen(QColor(t["line"]), Line.HAIR))
+        p.drawLine(QPointF(0.0, h - 0.5), QPointF(float(widget.width()), h - 0.5))
+        x = title_x(widget)
+        if getattr(widget, "collapsible", False):
+            self._chevron(p, QPointF(CHEVRON / 2, h / 2), float(getattr(widget, "progress", 1.0)),
+                          QColor(t["text"] if getattr(widget, "hot", False) else t["muted"]))
+        font = QFont(widget.font())
+        font.setWeight(QFont.Weight.DemiBold)
+        p.setFont(font)
+        p.setPen(QColor(t["text"] if widget.isEnabled() else t["muted"]))
+        room = max(0.0, r.width() - x)
+        title = QFontMetrics(font).elidedText(widget.title(), Qt.TextElideMode.ElideRight, int(room))
+        p.drawText(QRectF(float(x), 0.0, room, h), int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter), title)
+        p.restore()
 
     @staticmethod
     def _chevron(p: QPainter, centre: QPointF, progress: float, colour: QColor) -> None:
@@ -223,7 +248,12 @@ class Group(QGroupBox):
     hole. The height moves with `Motion.NORMAL` and the curve of every movement (motion.py); with «less motion»
     the body is hidden or shown at once. Which kinds of group are closed is remembered for the session
     (`_FOLDED`, by help id or title), so that a page built again, or the same group of another object, comes
-    back as it was left."""
+    back as it was left.
+
+    A group inside a group is no card (R343, Daniel 03/11/2026: «non mi piacciono le schede dentro le schede»): the
+    one rule, here and in the style, for every group inside another at any depth: no frame and no band, the title in
+    its strong weight on a thin line, the content on the parent's text with no margin of its own; the chevron stays
+    when it folds. `nested` says it, nobody asks for it."""
 
     folded = Signal(bool)           # closed (True) or opened, once the movement is over
 
@@ -237,6 +267,9 @@ class Group(QGroupBox):
         self._fold: _Fold | None = None
         self._pressed = False
         self._remembered = False
+        self._as_nested = False         # what the margins were last set for (_settle_nesting)
+        self._nest_layout = None
+        self._own_margins = None
         self.setStyle(shared())
         if collapsible:
             self.setMouseTracking(True)
@@ -286,10 +319,11 @@ class Group(QGroupBox):
         body = self._body
         if body is None:
             return None
+        frame = 0 if self.nested else 1
         if body.isHidden():
-            return MeridianaStyle.head(self) + 1
+            return MeridianaStyle.head(self) + frame
         if self._fold is not None and self._fold.running:
-            return MeridianaStyle.head(self) + 1 + body.maximumHeight()
+            return MeridianaStyle.head(self) + frame + body.maximumHeight()
         return None
 
     def sizeHint(self) -> QSize:
@@ -331,6 +365,47 @@ class Group(QGroupBox):
         if self.collapsible:
             self._adopt()
             self._remember()
+        self._settle_nesting()
+
+    # a group inside a group (R343)
+
+    @property
+    def nested(self) -> bool:
+        """Whether this group stands inside another, at any depth: through a page, a scroll area, a stack."""
+        parent = self.parentWidget()
+        while parent is not None:
+            if isinstance(parent, QGroupBox):
+                return True
+            parent = parent.parentWidget()
+        return False
+
+    def _settle_nesting(self) -> None:
+        """The margins the place asks for, over whatever the maker gave: a nested group has none but the air under
+        its line, and gets its own back when it is a card again (the Properties, lent to the Plant and returned).
+        Asked when the group is shown, moved, or about to come out of a fold."""
+        now = self.nested
+        lay = self._body.layout() if self._body is not None else QGroupBox.layout(self)
+        changed = now != self._as_nested
+        if not changed and (not now or lay is None or lay is self._nest_layout):
+            return
+        self._as_nested = now
+        if changed:         # the contents' rect of QGroupBox, read again by Qt on a change of style
+            QApplication.sendEvent(self, QEvent(QEvent.Type.StyleChange))
+        if lay is not None:
+            if now:
+                if self._nest_layout is not lay:
+                    self._own_margins, self._nest_layout = lay.contentsMargins(), lay
+                lay.setContentsMargins(0, Space.S, 0, 0)
+            elif self._nest_layout is lay and self._own_margins is not None:
+                lay.setContentsMargins(self._own_margins)
+                self._own_margins, self._nest_layout = None, None
+        self.updateGeometry()
+        self.update()
+
+    def changeEvent(self, e) -> None:
+        super().changeEvent(e)
+        if e.type() == QEvent.Type.ParentChange:
+            self._settle_nesting()
 
     def set_expanded(self, expanded: bool, ms: int = Motion.NORMAL) -> None:
         """Open or close the body; `ms` the movement's time (0: at once)."""
@@ -342,6 +417,16 @@ class Group(QGroupBox):
         if self._fold is None:
             self._fold = _Fold(self)
         self._fold.set_expanded(expanded, ms)
+
+    def natural_height(self, width: int) -> int:
+        """The height of the body open at `width`: where the movement of the fold goes."""
+        body = self._body
+        lay = body.layout()
+        if lay is None:
+            return body.sizeHint().height()
+        if lay.hasHeightForWidth():
+            return lay.totalHeightForWidth(width)
+        return lay.totalSizeHint().height()
 
     def toggle(self) -> None:
         self.set_expanded(not self.expanded)
@@ -415,16 +500,27 @@ class _Fold(QObject):
             self._finish()
             return
         inner = body.layout()
-        self.natural = max(1, self._natural())
         if expanded:
             body.setMaximumHeight(QWIDGETSIZE_MAX)
             inner.setEnabled(True)
             cr = g.contentsRect()
-            body.setGeometry(cr.x(), cr.y(), cr.width(), self.natural)      # its fields in their places
+            # showing a widget first asks its parent's layout: the group's, closed as it is, pressed the body into its
+            # header and the fields were laid out there, and held there through the movement (photo 51, R341, R338)
+            outer = QGroupBox.layout(g)
+            outer.setEnabled(False)
+            # shown first, nothing is painted before the end of this call: never shown, the fields have no font or
+            # padding of the sheet and their rows wrap elsewhere (a first opening went 58 px too far and came back)
+            body.setGeometry(cr.x(), cr.y(), cr.width(), max(1, body.height()))
             body.show()
+            for group in body.findChildren(Group):      # the groups inside it as they will stand (R343)
+                group._settle_nesting()
+            self.natural = max(1, g.natural_height(cr.width()))
+            body.setGeometry(cr.x(), cr.y(), cr.width(), self.natural)      # its fields in their places
             inner.activate()
+            outer.setEnabled(True)
             start, end = 0, self.natural
         else:
+            self.natural = max(1, body.height())
             start, end = body.height(), 0
         inner.setEnabled(False)                 # the fields keep their places while the body's edge moves
         body.setMaximumHeight(start)
@@ -432,16 +528,6 @@ class _Fold(QObject):
         self.animation.setEndValue(float(end))
         self.animation.setDuration(ms)
         self.animation.start()
-
-    def _natural(self) -> int:
-        body = self.group._body
-        lay = body.layout()
-        width = self.group.contentsRect().width()
-        if lay is None:
-            return body.sizeHint().height()
-        if lay.hasHeightForWidth():
-            return lay.totalHeightForWidth(width)
-        return lay.totalSizeHint().height()
 
     def _frame(self, value) -> None:
         body = self.group._body
@@ -459,6 +545,8 @@ class _Fold(QObject):
                 inner.setEnabled(True)
             body.setMaximumHeight(QWIDGETSIZE_MAX)
             body.setVisible(g.expanded)
+            if inner is not None:
+                inner.invalidate()      # what it was told while held (a resize, a field that grew) is not lost
         g.progress = 1.0 if g.expanded else 0.0
         g.updateGeometry()
         g.update()
@@ -628,6 +716,163 @@ def wrap_check(box) -> None:
     """Let a long checkbox or radio button go onto more lines rather than widen its card (`_CheckWrap`); once per checkbox."""
     if not hasattr(box, "_meridiana_wrap") and not box.property("sized_by_owner"):
         box._meridiana_wrap = _CheckWrap(box)
+
+
+class _ButtonWrap(QObject):
+    """A command whose words go onto more lines when its panel is narrow (R341: «Scegli gli inverter in automatico…» held
+    the Plant's page 33 px wider than the panel, and everything on it was cut at the right). The button keeps its text,
+    key and tooltip; at the width where it fits on one line it is Qt's button. Its minimum is its longest word."""
+
+    def __init__(self, button):
+        from PySide6.QtWidgets import QSizePolicy
+        super().__init__(button)
+        self.button = button
+        button.minimumSizeHint = self.minimum
+        button.hasHeightForWidth = lambda: True
+        button.heightForWidth = self.height_for
+        button.paintEvent = self.paint
+        policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum, QSizePolicy.ControlType.PushButton)
+        policy.setHeightForWidth(True)
+        button.setSizePolicy(policy)
+        button.updateGeometry()
+
+    def _pad(self) -> int:
+        """What the button takes round its text across: its own one-line hint less the text."""
+        b = self.button
+        return max(0, type(b).sizeHint(b).width() - QFontMetrics(b.font()).horizontalAdvance(b.text().replace("&", "")))
+
+    def minimum(self) -> QSize:
+        b = self.button
+        metrics = QFontMetrics(b.font())
+        word = max((metrics.horizontalAdvance(w) for w in b.text().replace("&", "").split()), default=0)
+        return QSize(word + self._pad(), type(b).sizeHint(b).height())
+
+    def lines(self, width: int) -> list[str]:
+        """The words shared out in lines of `width` at most, greedily."""
+        b = self.button
+        metrics = QFontMetrics(b.font())
+        room = max(1, width - self._pad())
+        out, line = [], ""
+        for word in b.text().split():
+            joined = f"{line} {word}" if line else word
+            if line and metrics.horizontalAdvance(joined.replace("&", "")) > room:
+                out.append(line)
+                line = word
+            else:
+                line = joined
+        return out + [line] if line else out
+
+    def height_for(self, width: int) -> int:
+        b = self.button
+        extra = max(0, len(self.lines(width)) - 1)
+        return type(b).sizeHint(b).height() + extra * QFontMetrics(b.font()).lineSpacing()
+
+    def paint(self, event) -> None:
+        from PySide6.QtWidgets import QPushButton, QStyleOptionButton
+        b = self.button
+        lines = self.lines(b.width())
+        if len(lines) <= 1:
+            QPushButton.paintEvent(b, event)
+            return
+        opt = QStyleOptionButton()
+        b.initStyleOption(opt)
+        opt.text = "\n".join(lines)
+        painter = QPainter(b)
+        b.style().drawControl(QStyle.ControlElement.CE_PushButton, opt, painter, b)
+        painter.end()
+
+
+def wrap_button(button) -> None:
+    """Let a long command go onto more lines rather than widen its panel (`_ButtonWrap`); once per button."""
+    if not hasattr(button, "_meridiana_wrap"):
+        button._meridiana_wrap = _ButtonWrap(button)
+
+
+class FitArea(QWidget):
+    """A scroll area as tall as the page it holds and no taller, in a column that gives what it can (R337, Daniel
+    03/11/2026: the Plant's sections took the whole panel, frame and all, for two lines of text): the hint is the page's
+    height at the width the area has, followed when the page changes or is replaced; where there is less room the area
+    scrolls. `width` gives the column's width while the area is folded away."""
+
+    def __init__(self, area=None, width=None, parent=None):
+        super().__init__(parent)
+        self.area = None
+        self.column = width
+        self.page = None
+        self.last_width = 0
+        box = QVBoxLayout(self)
+        box.setContentsMargins(0, 0, 0, 0)
+        self.set_area(area)
+
+    def set_area(self, area) -> None:
+        """The area held, in the place of the one before (which is left where it is, for its owner to take)."""
+        if self.area is not None:
+            self.area.viewport().removeEventFilter(self)
+            self.layout().removeWidget(self.area)
+        self.area = area
+        if area is not None:
+            self.layout().addWidget(area)
+            area.viewport().installEventFilter(self)
+        self._watch()
+
+    def _watch(self) -> None:
+        page = self.area.widget() if self.area is not None else None
+        if page is not self.page:
+            self.page = page
+            if page is not None:
+                page.installEventFilter(self)
+            self.updateGeometry()
+
+    def eventFilter(self, obj, event) -> bool:
+        kind = event.type()
+        if kind == QEvent.Type.ChildAdded and self.area is not None and obj is self.area.viewport():
+            QTimer.singleShot(0, self, self._watch)     # setWidget says it before it keeps it
+        elif kind == QEvent.Type.LayoutRequest and obj is self.page:
+            self.updateGeometry()
+        return False
+
+    def content_height(self, width: int) -> int:
+        area = self.area
+        page = area.widget() if area is not None else None
+        if page is None:
+            return 0
+        bar = area.verticalScrollBar()
+        margins = area.viewportMargins()            # the air of the area's soft edges (ui/fades.py)
+        room = (width - 2 * area.frameWidth() - margins.left() - margins.right()
+                - bar.style().pixelMetric(QStyle.PixelMetric.PM_ScrollBarExtent, None, bar))
+        lay = page.layout()
+        if lay is None:
+            high = page.sizeHint().height()
+        elif lay.hasHeightForWidth():
+            high = lay.totalHeightForWidth(max(1, room))
+        else:
+            high = lay.totalSizeHint().height()
+        return high + 2 * area.frameWidth() + margins.top() + margins.bottom()
+
+    def sizeHint(self) -> QSize:
+        width = self.column() if self.column is not None else self.width()
+        return QSize(self.area.sizeHint().width() if self.area is not None else 0, self.content_height(width))
+
+    def minimumSizeHint(self) -> QSize:
+        """As low as the area goes, because it scrolls; never narrower than its page, which would be cut (R341)."""
+        area = self.area
+        if area is None:
+            return QSize(0, 0)
+        hint = area.minimumSizeHint()
+        width = max(hint.width(), area.minimumWidth())
+        page = area.widget()
+        if page is not None:
+            bar = area.verticalScrollBar()
+            margins = area.viewportMargins()
+            width = max(width, page.minimumSizeHint().width() + 2 * area.frameWidth() + margins.left() + margins.right()
+                        + bar.style().pixelMetric(QStyle.PixelMetric.PM_ScrollBarExtent, None, bar))
+        return QSize(width, hint.height())
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        if self.width() != self.last_width:
+            self.last_width = self.width()
+            self.updateGeometry()
 
 
 def pad_fields(root: QWidget) -> None:

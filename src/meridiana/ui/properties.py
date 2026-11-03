@@ -10,7 +10,7 @@ from dataclasses import replace
 
 from PySide6.QtCore import QEvent, QObject, Qt, QTimer, Signal
 from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, QGroupBox,
-                               QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSpinBox, QVBoxLayout,
+                               QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSpinBox, QStyle, QVBoxLayout,
                                QWidget)
 
 from .. import layout, model, roofs, rules, sides
@@ -324,7 +324,16 @@ class Properties(QScrollArea):
         self._page_kind = ""                  # the kind of object of the page shown
         self._scroll_back = None              # waiting for the new page's height to scroll it back
         self._drop = False                    # drop_typing: the next values replace what is being written
+        self.page_margins = None              # the pages' margins where the host asks for its own (the Plant's section)
         self.show_none()
+
+    def set_page_margins(self, margins: tuple | None) -> None:
+        """The margins of the pages, the one shown too: `margins` for a host that has its own (R342), None for Qt's."""
+        self.page_margins = margins
+        page = self.widget()
+        if page is not None and page.layout() is not None:
+            default = self.style().pixelMetric(QStyle.PixelMetric.PM_LayoutLeftMargin, None, page)
+            page.layout().setContentsMargins(*(margins if margins is not None else (default,) * 4))
 
     def _same(self, shape: tuple) -> bool:
         """True when the page shown has these fields already: only the values need setting."""
@@ -398,6 +407,8 @@ class Properties(QScrollArea):
             old.deleteLater()
         page = QWidget()
         box = QVBoxLayout(page)
+        if self.page_margins is not None:
+            box.setContentsMargins(*self.page_margins)
         if hid:
             # the page's title is the header of a group holding its first fields (C3, the target of 24/10/2026)
             register(page, hid)

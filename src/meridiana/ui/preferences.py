@@ -8,9 +8,9 @@ import html
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QSignalBlocker, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QSignalBlocker, QSize, Qt, QTimer, Signal
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QInputDialog, QLabel,
-                               QLineEdit, QPushButton, QScrollArea, QTabWidget, QVBoxLayout, QWidget)
+                               QLineEdit, QPushButton, QTabWidget, QVBoxLayout, QWidget)
 
 from .. import assistant, config, navigation
 from ..i18n import _
@@ -613,6 +613,45 @@ class ReportPage(QWidget):
         return [dict(p) for p in self.profiles], default
 
 
+class FittedPages(QTabWidget):
+    """The pages of the Settings as tall as the one shown, not as the tallest (a stack asks them all, each of them for
+    its height at a width too): every page stands alike in the section of File, and that section scrolls (R346)."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        policy = self.sizePolicy()
+        policy.setHeightForWidth(True)      # a sentence made later (the local models') is measured at the page's width
+        self.setSizePolicy(policy)
+        self.currentChanged.connect(lambda _i: self.updateGeometry())
+
+    def tabInserted(self, index: int) -> None:
+        super().tabInserted(index)
+        self.widget(index).installEventFilter(self)
+
+    def eventFilter(self, obj, event) -> bool:
+        # the page shown changed its height (the local models' steps, made when the survey comes back)
+        if event.type() == QEvent.Type.LayoutRequest and obj is self.currentWidget():
+            self.updateGeometry()
+        return super().eventFilter(obj, event)
+
+    def sizeHint(self) -> QSize:
+        page = self.currentWidget()
+        return page.sizeHint() if page is not None else super().sizeHint()
+
+    def minimumSizeHint(self) -> QSize:
+        page = self.currentWidget()
+        return page.minimumSizeHint() if page is not None else super().minimumSizeHint()
+
+    def hasHeightForWidth(self) -> bool:
+        return True
+
+    def heightForWidth(self, width: int) -> int:
+        page = self.currentWidget()
+        if page is None:
+            return 0
+        return page.heightForWidth(width) if page.hasHeightForWidth() else page.sizeHint().height()
+
+
 class Preferences(QWidget):
     """The settings inside File. Every edit is applied by the window at once; the last edits can be undone and each
     section can restore its defaults with a confirmation drawn here, never in a modal dialog."""
@@ -671,11 +710,16 @@ class Preferences(QWidget):
         no.clicked.connect(self.confirmation.hide)
         confirm.addWidget(no)
         self.confirmation.hide()
-        box.addWidget(self.confirmation)
-        self.pages = QTabWidget()
+        self.pages = FittedPages()
         self.pages.tabBar().hide()                 # the sections are chosen in File's list on the left
         box.addWidget(self.pages, 1)
-        box.addLayout(row)
+        # what stays in sight whatever scrolls: File pins it at the foot of the section (file_page.Section.pin_foot)
+        self.foot = QWidget()
+        foot = QVBoxLayout(self.foot)
+        foot.setContentsMargins(0, 0, 0, 0)
+        foot.addWidget(self.confirmation)
+        foot.addLayout(row)
+        box.addWidget(self.foot)
         self._populate()
         self.show_page(page)
 
@@ -732,24 +776,16 @@ class Preferences(QWidget):
             self.meridio = MeridioPage(cfg, panel, data_dir=getattr(paths, "data", None), survey=survey)
             inside.addWidget(self.meridio)
             inside.addStretch(1)
-            scroll = QScrollArea()
-            scroll.setWidgetResizable(True)
-            scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-            scroll.setWidget(panel)
-            self.assistant_page = scroll
-            self.pages.addTab(scroll, _("Assistant"))
+            self.assistant_page = panel
+            self.pages.addTab(panel, _("Assistant"))
             self.report = ReportPage(cfg, self)
             self.pages.addTab(self.report, _("Report"))
             from .map_sources import MapsPage
             project = getattr(parent, "project", None)
             site = (project.site.lat, project.site.lon) if getattr(project, "site", None) is not None else None
             self.maps = MapsPage(cfg, site, network=lambda: self.privacy.tiles.isChecked())
-            maps = QScrollArea()
-            maps.setWidgetResizable(True)
-            maps.setFrameShape(QScrollArea.Shape.NoFrame)
-            maps.setWidget(self.maps)
-            self.maps_page = maps
-            self.pages.addTab(maps, _("Maps"))
+            self.maps_page = self.maps
+            self.pages.addTab(self.maps, _("Maps"))
             self.privacy = PrivacyPage(cfg, self)
             self.pages.addTab(self.privacy, _("Privacy"))
             self._connect()
@@ -757,7 +793,12 @@ class Preferences(QWidget):
             # here too, or a long list or label held the page wider than File (Daniel, 02/11/2026)
             from .style import pad_fields
             for index in range(self.pages.count()):
-                pad_fields(self.pages.widget(index))
+                page = self.pages.widget(index)
+                # one rule for every page (R346, Daniel 03/11/2026: «molte sezioni delle impostazioni sono impaginate
+                # male ... non c'entrano nulla con le altre in quanto a larghezza, margini e con questa barra brutta»):
+                # the fields on the section's title and text, the width of the column, no scroll area of their own
+                page.layout().setContentsMargins(0, 0, 0, 0)
+                pad_fields(page)
         finally:
             self.loading = False
         self.show_page(current)

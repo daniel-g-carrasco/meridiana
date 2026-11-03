@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import html
 
-from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, QRect, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFontMetrics, QIcon, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QSpinBox, QStackedWidget,
@@ -30,8 +30,8 @@ from .properties import combo, make_form, spin
 from . import icons, marks, symbols
 from .help_box import help_button
 from .theme import symbol_font
-from .design import Button, Icon, Layout, Line, Radius, Size, Space, Text, Type, font, free_text, set_text, strong
-from .style import Group
+from .design import Button, Icon, Layout, Line, Radius, Size, Space, Text, Type, font, set_text, strong
+from .style import FitArea, Group, wrap_button
 from .sections import SectionDelegate
 
 # a string's state in the window's symbols (ui/symbols.py): passed, to be checked, to fix
@@ -164,11 +164,34 @@ class ClipScale(QWidget):
         t = default_tokens()
         self.colours = {"text": t["text"], "muted": t["muted"], "good": "#1baf7a", "warning": "#eda100",
                         "critical": theme_colors.STATUS["critical"]}
-        self.setFixedHeight(self.fontMetrics().lineSpacing() + 18)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        policy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        policy.setHeightForWidth(True)                  # its words go onto two lines in a narrow panel (R341)
+        self.setSizePolicy(policy)
+
+    def head(self) -> str:
+        if self.loss is not None:
+            return _("DC/AC {r} · energy cut {pct} %").format(r=number(self.ratio, 2), pct=number(self.loss, 1))
+        return _("DC/AC {r} · energy cut: after the computation").format(r=number(self.ratio, 2))
+
+    def _text_height(self, width: int) -> int:
+        return self.fontMetrics().boundingRect(QRect(0, 0, max(1, width), 100000), int(Qt.TextFlag.TextWordWrap),
+                                               self.head()).height()
+
+    def hasHeightForWidth(self) -> bool:
+        return True
+
+    def heightForWidth(self, width: int) -> int:
+        return self._text_height(width) + 18
+
+    def sizeHint(self) -> QSize:
+        return QSize(self.fontMetrics().horizontalAdvance(self.head()), self.fontMetrics().lineSpacing() + 18)
+
+    def minimumSizeHint(self) -> QSize:
+        return QSize(0, self.fontMetrics().lineSpacing() + 18)
 
     def set(self, ratio: float, loss: float | None) -> None:
         self.ratio, self.loss = ratio, loss
+        self.updateGeometry()
         if loss is None:
             self.setToolTip(_("The energy the inverter cuts shows once the production is computed"))
         else:
@@ -187,14 +210,12 @@ class ClipScale(QWidget):
         from PySide6.QtGui import QColor, QPainter, QPainterPath
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        fm = self.fontMetrics()
-        head = (_("DC/AC {r} · energy cut {pct} %").format(r=number(self.ratio, 2), pct=number(self.loss, 1))
-                if self.loss is not None else _("DC/AC {r} · energy cut: after the computation").format(
-                    r=number(self.ratio, 2)))
+        high = self._text_height(self.width())
         p.setPen(QColor(self.colours["text"]))
-        p.drawText(QRectF(0, 0, self.width(), fm.lineSpacing()),
-                   Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, head)
-        y = fm.lineSpacing() + 6
+        p.drawText(QRectF(0, 0, self.width(), high),
+                   int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter) | int(Qt.TextFlag.TextWordWrap),
+                   self.head())
+        y = high + 6
         track_w = self.width() - 2.0
         start = 0.0
         for end, key in self.ZONES:
@@ -486,6 +507,18 @@ class MarginBar(QWidget):
         p.fillPath(fill, colour)
 
 
+def chosen_card(card: QWidget) -> None:
+    """A card chosen (R340, Daniel 03/11/2026: «non è troppo chiaro quando si seleziona un inverter; colore troppo
+    chiaro»): filled with the colour of the selection, as a row chosen anywhere, a hair of the accent round it. In
+    the card's paint, under its fields."""
+    p = QPainter(card)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    p.setBrush(card.palette().color(QPalette.ColorRole.Highlight))
+    p.setPen(QPen(card.palette().color(QPalette.ColorRole.Accent), Line.HAIR))
+    p.drawRoundedRect(QRectF(0.5, 0.5, card.width() - 1, card.height() - 1), Radius.CARD, Radius.CARD)
+    p.end()
+
+
 class Disc(QWidget):
     """The number of an inverter in a round disc (R297, A2 with the disc of before): the handle of its card. It is
     dragged to change the order (Alt+Up and Alt+Down do the same from the keyboard); under the pointer the number
@@ -550,14 +583,16 @@ class Disc(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         pal = self.palette()
-        fill = pal.color(QPalette.ColorRole.Highlight if self.current else QPalette.ColorRole.Mid)
+        fill = pal.color(QPalette.ColorRole.Accent if self.current else QPalette.ColorRole.Mid)
         if not self.current:
             fill.setAlphaF(0.45)
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(fill)
         r = QRectF(1, 1, self.SIZE - 2, self.SIZE - 2)
         p.drawEllipse(r)
-        ink = pal.color(QPalette.ColorRole.HighlightedText if self.current else QPalette.ColorRole.Text)
+        ink = pal.color(QPalette.ColorRole.Text)
+        if self.current:                                # on the accent: the side of it that reads
+            ink = QColor("#ffffff" if fill.lightnessF() < 0.6 else "#000000")
         if self.hot:                                    # the grip: two columns of three dots
             p.setBrush(ink)
             cx, cy = self.SIZE / 2, self.SIZE / 2
@@ -695,11 +730,7 @@ class InverterCard(QFrame):
         super().paintEvent(event)
         if not self.current:
             return
-        p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        p.setPen(QPen(self.palette().color(QPalette.ColorRole.Highlight), Line.HAIR))
-        p.setBrush(Qt.BrushStyle.NoBrush)
-        p.drawRoundedRect(QRectF(0.5, 0.5, self.width() - 1, self.height() - 1), Radius.CARD, Radius.CARD)
+        chosen_card(self)
 
 
 class InverterList(QWidget):
@@ -956,8 +987,9 @@ class StringRow(QWidget):
             return
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        colour = self.palette().color(QPalette.ColorRole.Highlight)
-        colour.setAlphaF(0.28 if self.selected else 0.12)
+        colour = self.palette().color(QPalette.ColorRole.Highlight)     # a row chosen as anywhere else (R340)
+        if not self.selected:
+            colour.setAlphaF(0.45)
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(colour)
         p.drawRoundedRect(QRectF(0, 0, self.width(), self.height()), Radius.INNER, Radius.INNER)
@@ -1018,11 +1050,7 @@ class InputCard(QFrame):
         super().paintEvent(event)
         if not self.active:
             return
-        p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        p.setPen(QPen(self.palette().color(QPalette.ColorRole.Highlight), Line.HAIR))
-        p.setBrush(Qt.BrushStyle.NoBrush)
-        p.drawRoundedRect(QRectF(0.5, 0.5, self.width() - 1, self.height() - 1), Radius.CARD, Radius.CARD)
+        chosen_card(self)
 
 
 class InputsGrid(QWidget):
@@ -1406,6 +1434,9 @@ class StringsView(QStackedWidget):
         return self.front().sizeHint()
 
 
+VIEW_ICONS = {"cards": "layout-grid", "diagram": "rows-3"}       # the view in use on its menu's button, no arrow (R341)
+
+
 def view_names() -> dict:
     return {"cards": _("Inputs as cards"), "diagram": _("Single-line diagram in miniature")}
 
@@ -1422,7 +1453,8 @@ class _Beside(QObject):
     def place(self) -> None:
         from .help_box import BUTTON
         head = self.host.fontMetrics().height() + 8
-        self.button.move(self.host.width() - BUTTON - 6 - Space.XS - self.button.width(),
+        edge = 0 if getattr(self.host, "nested", False) else 6
+        self.button.move(self.host.width() - BUTTON - edge - Space.XS - self.button.width(),
                          max(0, (head - self.button.height()) // 2))
         self.button.raise_()
 
@@ -1768,6 +1800,11 @@ class StringingPopup(QDialog):
         self.move(corner.x() - self.width() - Space.M, corner.y() + Space.M)
 
 
+# what stands inside each of the Plant's sections, the same in the three (R342): the frame's text inset at the left, the
+# room of the scroll bar at the right; above and below, the air every scroll area keeps (ui/fades.py)
+SECTION_MARGINS = (Space.M, 0, 0, 0)
+
+
 class PlantInspector(QScrollArea):
     """The Inverter section of the Plant's right panel (design C10; R119; study 23): at the top the string chosen,
     only while one is (R298); the inverters one by one with their menus (R297); the Strings of the inverter shown,
@@ -1794,13 +1831,15 @@ class PlantInspector(QScrollArea):
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setFrameShape(QFrame.Shape.NoFrame)
         self.loading = False
         self.states = {"ok": theme_colors.STATUS["good"], "check": theme_colors.STATUS["warning"],
                        "fail": theme_colors.STATUS["critical"]}
         self.colours: list = []                     # each string's colour, as on the plan (the window's)
         page = QWidget()
         box = QVBoxLayout(page)
-        box.setSpacing(Space.M)
+        box.setContentsMargins(*SECTION_MARGINS)
+        box.setSpacing(Space.L)
         # the string chosen at the top (R298, C4), hidden without one
         self.string_group = ChosenString()
         self.string_group.redrawAsked.connect(lambda i: self.list.redraw.emit(i))
@@ -1810,9 +1849,10 @@ class PlantInspector(QScrollArea):
         self.string_group.hide()
 
         # the inverters (R297): the totals, the cards, the commands, the DC/AC ratio on its scale
-        inv = self.inverters_group = Group(_("Inverter"))
-        help_button(inv, "plant.inverters")
+        # (no group of their own: the section round them is called Inverter already, its «?» says about them, R343)
+        inv = self.inverters_group = QWidget()
         inv_box = QVBoxLayout(inv)
+        inv_box.setContentsMargins(0, 0, 0, 0)
         inv_box.setSpacing(Space.S)
         self.totals = QLabel("")
         self.totals.setWordWrap(True)
@@ -1835,6 +1875,7 @@ class PlantInspector(QScrollArea):
             b = QPushButton(shortcuts.plain(actions[cid].text()))
             b.setToolTip(actions[cid].toolTip())
             b.clicked.connect(actions[cid].trigger)
+            wrap_button(b)
             inv_box.addWidget(b)
             self.inverter_buttons[cid] = b
         form = make_form()
@@ -1854,7 +1895,7 @@ class PlantInspector(QScrollArea):
         self.view_button = QToolButton(self.strings_group)
         self.view_button.setObjectName("view-menu")
         self.view_button.setAutoRaise(True)
-        self.view_button.setIcon(icons.icon("subfield"))
+        self.view_button.setIcon(icons.icon(VIEW_ICONS["cards"]))
         self.view_button.setIconSize(QSize(Icon.CONTROL, Icon.CONTROL))
         self.view_button.setFixedSize(Button.SMALL[0], Button.SMALL[0])
         self.view_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
@@ -1905,6 +1946,7 @@ class PlantInspector(QScrollArea):
             b = QPushButton(shortcuts.plain(actions[cid].text()))
             b.setToolTip(actions[cid].toolTip())
             b.clicked.connect(actions[cid].trigger)
+            wrap_button(b)
             sbox.addWidget(b)
             self.string_buttons[cid] = b
         box.addWidget(self.strings_group)
@@ -1964,7 +2006,7 @@ class PlantInspector(QScrollArea):
             view = "cards"
         self.list.set_view(view)
         self.view_actions[view].setChecked(True)
-        self.view_button.setIcon(icons.icon("subfield" if view == "cards" else "row"))
+        self.view_button.setIcon(icons.icon(VIEW_ICONS[view]))
         if tell:
             self.viewChanged.emit(view)
 
@@ -2123,7 +2165,8 @@ def storage_summary(economics: dict | None) -> str:
 
 class PlantSection(Group):
     """One of the three sections of the Plant's right panel (R277): a group that folds as every other (R287), and
-    tells the page when it opens, so that one only is open and takes the panel's height."""
+    tells the page when it opens, so that one only is open. As tall as what it holds (R337); it opens to that height,
+    or to the room there is when it holds more (R338)."""
 
     def __init__(self, sid: str, title: str, page: "PlantSide"):
         super().__init__(title)
@@ -2132,19 +2175,29 @@ class PlantSection(Group):
 
     def set_expanded(self, expanded: bool, ms: int = -1) -> None:
         from .design import Motion
-        super().set_expanded(expanded, Motion.NORMAL if ms < 0 else ms)
+        ms = Motion.NORMAL if ms < 0 else ms
+        super().set_expanded(expanded, ms)
         if self.collapsible and expanded:
-            self.page._opened(self.sid)
-        elif self.collapsible:
-            self.page._restretch()                  # R296: a section closed keeps no height, the space goes below
+            self.page._opened(self.sid, ms)
+
+    def natural_height(self, width: int) -> int:
+        for fit in self.findChildren(FitArea):          # measured at the panel's width of now, even folded away
+            fit.updateGeometry()
+        self.layout().invalidate()
+        return min(super().natural_height(width), self.page.room_for(self))
 
 
 class PlantSide(QWidget):
     """The right panel of the Plant phase (R277, decision 2c of study 22): one page with three sections in the order
     of the work, Panels, Inverter, Storage. Panels shows the card of the selected sub-field (the model's Properties,
     lent while the phase is open: the layout's fields where the modules are laid), Inverter the inverters and
-    their strings (PlantInspector), Storage the battery with «Configure». One section is open at a time and takes
-    the height left; the command used opens its own (a tool of the Panels, «Catalogue», «Configure», a string).
+    their strings (PlantInspector), Storage the battery with «Configure». One section is open at a time, as tall as
+    what it holds and scrolling only when that does not fit (R337, Daniel 03/11/2026: «rimane un sacco di spazio
+    vuoto»): the space left is below the sections, out of every frame. The three are built alike (R342): a scroll area
+    held by `FitArea`, a page with `SECTION_MARGINS`, the sentence in the catalogue's description. The closing of one
+    and the opening of the other have the same time and the same curve, so that together they are one movement and
+    never need more than the panel (R338). The command used opens its own section (a tool of the Panels, «Catalogue»,
+    «Configure», a string).
     The section open says what a click on a module of the plan is about: its row and its sub-field with Panels,
     as in the Modelling; its string with Inverter and Storage (the window, `_plant_clicks`)."""
 
@@ -2171,37 +2224,32 @@ class PlantSide(QWidget):
             inner.setContentsMargins(0, 0, 0, 0)
             self.sections[sid] = section
             box.addWidget(section)
-        box.addStretch(0)                               # the empty space of the panel when every section is closed
+        box.addStretch(1)                               # what is left of the panel, out of every frame
         # Panels: the sub-field's card, or what to do when none is selected
-        panels = self.sections["panels"].layout()
-        self.panels_hint = QLabel(_("Select a sub-field on the plan to see its layout here, or draw one with "
-                                    "«Sub-field»."))
+        hint, self.hint_fit = self._section_page("panels")
+        self.panels_hint = set_text(QLabel(_("Select a sub-field on the plan to see its layout here, or draw one with "
+                                             "«Sub-field».")), Text.DESCRIPTION)
         self.panels_hint.setWordWrap(True)
         self.panels_hint.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        free_text(self.panels_hint, Text.SECONDARY)             # the section's layout has no margins (R296)
-        panels.addWidget(self.panels_hint)
-        self.props_holder = QWidget()
-        holder = QVBoxLayout(self.props_holder)
-        holder.setContentsMargins(0, 0, 0, 0)
-        panels.addWidget(self.props_holder, 1)
+        hint.addWidget(self.panels_hint)
+        hint.addStretch(1)
+        self.props_holder = self._fit("panels", None)
         self.props_holder.hide()
         # Inverter: the inverters and their strings, as before
-        self.sections["inverter"].layout().addWidget(inverters, 1)
+        self._fit("inverter", inverters)
+        help_button(self.sections["inverter"], "plant.inverters")
         # Storage: the battery in a line and the command that configures it
-        storage = self.sections["storage"].layout()
-        self.storage_text = QLabel(_("No battery"))
+        storage, self.storage_fit = self._section_page("storage")
+        self.storage_text = set_text(QLabel(_("No battery")), Text.DESCRIPTION)
         self.storage_text.setWordWrap(True)
-        free_text(self.storage_text)
         storage.addWidget(self.storage_text)
+        self.configure = None
         if "battery_catalog" in actions:
-            configure = QPushButton(shortcuts.plain(actions["battery_catalog"].text()))
-            configure.setToolTip(actions["battery_catalog"].toolTip())
-            configure.clicked.connect(actions["battery_catalog"].trigger)
-            row = QHBoxLayout()                         # off the frame as the text above it (R296)
-            row.setContentsMargins(Space.M, 0, Space.M, 0)
-            row.addWidget(configure)
-            row.addStretch(1)
-            storage.addLayout(row)
+            self.configure = QPushButton(shortcuts.plain(actions["battery_catalog"].text()))
+            self.configure.setToolTip(actions["battery_catalog"].toolTip())
+            self.configure.clicked.connect(actions["battery_catalog"].trigger)
+            wrap_button(self.configure)
+            storage.addWidget(self.configure)
         storage.addStretch(1)
         # the command used opens its section: the groups of the Plant's bar say which (phases.py)
         from .. import phases
@@ -2218,9 +2266,39 @@ class PlantSide(QWidget):
         self.open("panels", ms=0)
         inverters.side = self
 
+    def _fit(self, sid: str, area) -> FitArea:
+        section = self.sections[sid]
+        fit = FitArea(area, lambda: section.contentsRect().width())
+        section.layout().addWidget(fit)
+        return fit
+
+    def _section_page(self, sid: str) -> tuple:
+        """The page of a section made here, in its scroll area: its layout and the holder of the area."""
+        area = QScrollArea()
+        area.setWidgetResizable(True)
+        area.setFrameShape(QFrame.Shape.NoFrame)
+        area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        page = QWidget()
+        box = QVBoxLayout(page)
+        box.setContentsMargins(*SECTION_MARGINS)
+        box.setSpacing(Space.S)
+        area.setWidget(page)
+        return box, self._fit(sid, area)
+
+    def sizeHint(self) -> QSize:
+        """Modest in height: the right panel is a stack of the phases' inspectors and takes the tallest hint of them."""
+        hint = super().sizeHint()
+        return QSize(hint.width(), min(hint.height(), 320))
+
+    def room_for(self, section: "PlantSection") -> int:
+        """The height the body of `section` may have with the other sections closed."""
+        from .style import MeridianaStyle
+        taken = sum(MeridianaStyle.head(s) + 1 for s in self.sections.values())
+        return max(1, self.height() - taken - self.box.spacing() * (len(self.sections) - 1))
+
     def open(self, sid: str, ms: int = -1) -> None:
-        """Section `sid` open, the others closed; it takes the height left. The storage's line read again: after
-        «Configure», whose dialog has just closed, it says the battery chosen."""
+        """Section `sid` open, the others closed. The storage's line read again: after «Configure», whose dialog has
+        just closed, it says the battery chosen."""
         if sid in self.sections:
             self.sections[sid].set_expanded(True, ms)
         if sid == "storage" and self.project is not None:
@@ -2231,22 +2309,14 @@ class PlantSide(QWidget):
         self.storage_text.setText(text)
         self.storage_text.setToolTip(text)
 
-    def _opened(self, sid: str) -> None:
+    def _opened(self, sid: str, ms: int) -> None:
         changed = sid != self.current
         self.current = sid
         for other, section in self.sections.items():
             if other != sid and section.expanded:
-                section.set_expanded(False)
-        self._restretch()
+                section.set_expanded(False, ms)         # the same time as the one opening: one movement (R338)
         if changed:
             self.sectionOpened.emit(sid)
-
-    def _restretch(self) -> None:
-        """The height goes to the section that is open, to none when every one is closed: a closed section is as
-        tall as its header and the space under it stays empty, out of every frame (R296)."""
-        for section in self.sections.values():
-            self.box.setStretch(self.box.indexOf(section), 1 if section.expanded else 0)
-        self.box.setStretch(self.box.count() - 1, 0 if any(s.expanded for s in self.sections.values()) else 1)
 
     # the Properties, lent while the Plant is open (as the plan is to the Plant page)
 
@@ -2254,7 +2324,8 @@ class PlantSide(QWidget):
         if self.properties is properties:
             return
         self.properties = properties
-        self.props_holder.layout().addWidget(properties)
+        properties.set_page_margins(SECTION_MARGINS)    # as the other two sections (R342)
+        self.props_holder.set_area(properties)
         properties.show()
         self._show_card()
 
@@ -2262,14 +2333,15 @@ class PlantSide(QWidget):
         """The Properties taken back by the inspector: returned to the caller, None when not lent."""
         properties, self.properties = self.properties, None
         if properties is not None:
-            self.props_holder.layout().removeWidget(properties)
+            self.props_holder.set_area(None)
+            properties.set_page_margins(None)
         self._show_card()
         return properties
 
     def _show_card(self) -> None:
         card = self.properties is not None and self.selection[0] in ("subfield", "row")
         self.props_holder.setVisible(card)
-        self.panels_hint.setVisible(not card)
+        self.hint_fit.setVisible(not card)
 
     def follow(self, project, selection: tuple, chosen: int) -> None:
         """What the window shows changed: the sub-field's card in Panels, the storage's line. A sub-field selected

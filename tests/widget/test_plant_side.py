@@ -1,6 +1,6 @@
-"""The Plant's right panel (R277, R296), offscreen: a section closed is as tall as its header and the space below it
-stays empty, outside the frame; the free text of a section (the hint of Panels, the line of Storage) never touches the
-frame's edge."""
+"""The Plant's right panel (R277, R296, R337), offscreen: a section closed is as tall as its header, an open one as tall
+as what it holds, and the space below them stays empty, outside the frame; the free text of a section (the hint of
+Panels, the line of Storage) never touches the frame's edge."""
 
 import unittest
 
@@ -44,7 +44,7 @@ class PlantSideSections(unittest.TestCase):
         from meridiana.ui.style import MeridianaStyle
         side = self.side
         header = MeridianaStyle.head(side.sections["panels"]) + 1
-        self.assertGreater(side.sections["panels"].height(), 300)       # open: it takes the height left
+        self.assertGreater(side.sections["panels"].height(), header + 20)   # open: its text under its header
         side.sections["panels"].set_expanded(False, 0)                  # a click on its header
         _setup.turn_events(self.app, 100)
         for sid, section in side.sections.items():
@@ -52,13 +52,13 @@ class PlantSideSections(unittest.TestCase):
         last = side.sections["storage"]
         self.assertLess(last.geometry().bottom(), side.height() - 200)      # the empty space is below the frame
 
-    def test_the_section_open_takes_the_height_and_the_others_their_headers(self):
+    def test_the_section_open_is_as_tall_as_it_holds_and_the_others_their_headers(self):
         side = self.side
-        for sid in ("inverter", "storage", "panels"):
+        for sid, least in (("inverter", 300), ("storage", 40), ("panels", 40)):
             side.open(sid, ms=0)
             _setup.turn_events(self.app, 100)
             h = self.heights()
-            self.assertGreater(h[sid], 300, h)
+            self.assertGreater(h[sid], least, h)
             self.assertTrue(all(v <= 30 for k, v in h.items() if k != sid), h)
 
     def test_the_free_text_of_a_section_is_off_the_frame(self):
