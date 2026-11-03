@@ -41,6 +41,9 @@ def _typst():
     return typst
 
 
+REPORT_FONTS = ("titillium-web", "inter")   # the report keeps these, whatever font the window has
+
+
 def font_folder() -> Path | None:
     """The fonts the program carries (Titillium Web and Inter, OFL)."""
     return paths.shipped("fonts")
@@ -51,7 +54,7 @@ def fonts():
     typst = _typst()
     folder = font_folder()
     return typst.Fonts(include_system_fonts=False, include_embedded_fonts=True,
-                       font_paths=[str(folder)] if folder is not None else [])
+                       font_paths=[str(folder / name) for name in REPORT_FONTS] if folder is not None else [])
 
 
 def image_format(data: bytes) -> str | None:

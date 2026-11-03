@@ -53,13 +53,15 @@ def mark(symbol: str) -> str:
 
 
 _RAW: list = []         # the text's font as read from its file: which characters it draws
+_CHOSEN: list = ["inter"]   # the key of FONTS in use
 
 
 def in_font(ch: str) -> bool:
     """Whether the text's font draws `ch`; anything when its file is not there (there is no choice then)."""
     if not _RAW:
         from PySide6.QtGui import QRawFont
-        f = paths.shipped("fonts", FONT_DIR, FONT_FILES[0])
+        entry = FONTS[_CHOSEN[0]]
+        f = paths.shipped("fonts", entry["dir"], entry["files"][0])
         raw = QRawFont(str(f), 12) if f is not None and f.exists() else None
         _RAW.append(raw if raw is not None and raw.isValid() else None)
     return _RAW[0] is None or _RAW[0].supportsCharacter(ord(ch))
@@ -718,6 +720,8 @@ def change_font(choice: str, app=None) -> bool:
     everyone = [(w, QFont(w.font())) for w in app.allWidgets()]
     _FAMILY[:] = [family]
     _TIGHT[0] = tight
+    _CHOSEN[0] = choice if choice in FONTS else "inter"
+    _RAW.clear()
     base = QFont(app.font())
     base.setFamily(family)
     app.setFont(base)
@@ -738,7 +742,8 @@ def load_fonts(choice: str = "inter") -> str:
     get it too. Once per process. The family as Qt names it, "" when the files are not there."""
     if _FAMILY:
         return _FAMILY[0]
-    family, _TIGHT[0] = _font_families(choice if choice in FONTS else "inter")
+    _CHOSEN[0] = choice if choice in FONTS else "inter"
+    family, _TIGHT[0] = _font_families(_CHOSEN[0])
     _FAMILY.append(family)
     app = QApplication.instance()
     if family and app is not None and app.font().family() != family:

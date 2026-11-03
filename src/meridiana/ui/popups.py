@@ -286,6 +286,8 @@ class Popups(QObject):
                 self._size_combo(obj.parentWidget())
             if self.native:
                 _dwm(obj, kind == Qt.WindowType.ToolTip)
+            if kind == Qt.WindowType.ToolTip and not isinstance(obj, QLabel):
+                return False                                # a window of that kind but no tooltip: a panel being dragged
             if kind == Qt.WindowType.ToolTip:
                 lay_out_tip(obj)
                 place_tip(obj)

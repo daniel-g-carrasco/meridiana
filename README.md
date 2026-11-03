@@ -175,7 +175,7 @@ How the packages are built and released is in `docs/progetto.md`, section 4 (in 
 ## Data, services and credits
 
 Meridiana stands on the work of others. The libraries (Qt for Python, pvlib, shapely, numpy, scipy, pandas,
-matplotlib, pyqtgraph, pypdf, IfcOpenShell), the fonts (Inter, Titillium Web), the Lucide icons, the NREL CEC
+matplotlib, pyqtgraph, pypdf, IfcOpenShell), the fonts (Inter, IBM Plex Sans, Titillium Web), the Lucide icons, the NREL CEC
 module and inverter lists, the ISTAT municipalities, the Natural Earth outlines and every map source with its
 attribution are listed with their licences in [ATTRIBUTIONS.md](ATTRIBUTIONS.md). The squaring of a traced
 outline is ported from the OpenStreetMap editor iD. PVGIS, OpenStreetMap, OpenTopoMap and the national and

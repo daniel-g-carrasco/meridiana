@@ -50,6 +50,7 @@ BROUGHT = {
     23: {"assistant_cloud_profiles"},
     24: {"inverter_brand_favourites"},
     25: {"strings_view"},
+    26: {"font"},
 }
 
 
