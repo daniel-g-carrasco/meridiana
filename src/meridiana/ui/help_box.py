@@ -156,7 +156,8 @@ class _Corner(QObject):
     def place(self) -> None:
         group = isinstance(self.host, QGroupBox)
         top = max(0, (self.host.fontMetrics().height() + 8 - BUTTON) // 2) if group else 6
-        self.button.move(self.host.width() - BUTTON - 6, top)
+        edge = 0 if getattr(self.host, "nested", False) else 6      # a nested group has no frame to keep off (R343)
+        self.button.move(self.host.width() - BUTTON - edge, top)
         self.button.raise_()
 
     def eventFilter(self, obj, event) -> bool:

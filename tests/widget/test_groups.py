@@ -196,11 +196,15 @@ class EveryGroupHasItsHelp(unittest.TestCase):
         actions = {key: QAction(key) for key in
                    ("inverter_catalog", "inverter_auto", "strings_auto", "strings_manual", "strings_clear")}
         panel = PlantInspector(actions)
-        self.addCleanup(_setup.dispose, panel)
+        self.addCleanup(lambda: _setup.dispose(panel.side or panel))
         self.assertEqual(self.groups_without_help(panel), [])
         from meridiana.ui.help_box import HelpButton
         self.assertEqual(sorted(b.hid for b in panel.findChildren(HelpButton)),
-                         ["plant.conditions", "plant.inverters", "plant.string", "plant.strings", "plant.subfield"])
+                         ["plant.conditions", "plant.string", "plant.strings", "plant.subfield"])
+        # the inverters have no group of their own inside the section called Inverter (R343): its header has their «?»
+        from meridiana.ui.plant_page import PlantSide
+        side = PlantSide(panel, actions, lambda: None)
+        self.assertEqual(side.sections["inverter"].property("help"), "plant.inverters")
 
 
 class InputsGridAndChosenString(unittest.TestCase):
