@@ -3,7 +3,8 @@ import unittest
 from unittest import mock
 
 import _setup
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QPoint, QRect, QSize, Qt
+from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import QApplication, QLabel, QToolTip
 
 from meridiana import config
@@ -59,8 +60,8 @@ class TooltipIdentity(unittest.TestCase):
                            image.pixelColor(x, y))]
             self.assertEqual(len(magenta), 0, "The tooltip must use its own ink, not the magenta label's colour")
 
-    def test_tooltips_wake_quickly_and_have_no_entrance_to_replay_even_with_motion_enabled(self):
-        from PySide6.QtCore import QPropertyAnimation
+    def test_tooltips_wake_quickly_and_come_with_a_fade_unless_less_motion_is_asked(self):
+        from PySide6.QtCore import QVariantAnimation
         from PySide6.QtWidgets import QStyle
         from meridiana.ui import style
         for control_style in (self.host.style(), style.shared()):
@@ -69,8 +70,38 @@ class TooltipIdentity(unittest.TestCase):
             self.assertLessEqual(delay, 250)
         previous = popups._STATE["motion"]
         self.addCleanup(popups.set_motion, previous)
-        for motion in (True, False):
-            popups.set_motion(motion)
-            label = self.show_tip("A simple tooltip " + str(motion))
-            self.assertFalse(label.findChildren(QPropertyAnimation))
-            self.assertEqual(label.windowOpacity(), 1.0)
+        popups.set_motion(False)
+        label = self.show_tip("A simple tooltip, at once")
+        self.assertFalse(label.findChildren(QVariantAnimation))
+        self.assertEqual(label.windowOpacity(), 1.0)
+        QToolTip.hideText()
+        _setup.turn_events(self.app, 400)
+        popups.set_motion(True)
+        label = self.show_tip("A simple tooltip, coming")
+        self.assertLess(label.windowOpacity(), 1.0)
+        _setup.turn_events(self.app, popups.TIP_MS + 150)
+        self.assertEqual(label.windowOpacity(), 1.0)
+        self.assertFalse(label.property(popups._RISING))
+        self.assertEqual(label.pos(), popups.tip_place(QCursor.pos(), label.size(), label.screen().availableGeometry()))
+
+    def test_a_long_tooltip_stands_beside_the_pointer_not_away_by_its_unwrapped_width(self):
+        """Qt places it by the one line of its plain text: left of the pointer by all of that (Daniel, 03/11/2026)."""
+        room = QRect(0, 0, 1920, 1080)
+        size = QSize(popups.TIP_WIDTH, 80)
+        self.assertEqual(popups.tip_place(QPoint(600, 300), size, room), QPoint(602, 321))
+        at_the_right = popups.tip_place(QPoint(1900, 300), size, room)
+        self.assertEqual(at_the_right, QPoint(1920 - popups.TIP_WIDTH, 321))    # pushed back, under the pointer
+        at_the_bottom = popups.tip_place(QPoint(600, 1060), size, room)
+        self.assertEqual(at_the_bottom, QPoint(602, 1060 - popups.TIP_ABOVE - 80))
+        previous = popups._STATE["motion"]
+        self.addCleanup(popups.set_motion, previous)
+        popups.set_motion(False)
+        screen = self.host.screen().availableGeometry()
+        pointer = QPoint(screen.right() - 40, screen.top() + 100)
+        with mock.patch.object(popups, "QCursor") as cursor:
+            cursor.pos.return_value = pointer
+            label = self.show_tip("A long explanation " * 12)
+        self.assertLessEqual(label.width(), popups.TIP_WIDTH)
+        self.assertLess(abs(label.x() + label.width() - 1 - pointer.x()), popups.TIP_WIDTH)
+        self.assertLessEqual(label.x() + label.width() - 1, screen.right())
+        self.assertEqual(label.y(), pointer.y() + popups.TIP_BELOW)

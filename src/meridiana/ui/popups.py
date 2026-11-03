@@ -2,7 +2,7 @@
 menus, the lists of the drop-down fields, the help beside things. One look and one way of coming for all of them.
 
 - **Coming**: Qt's screen-grab effects are off. Menus and lists fade with window opacity (110 ms) unless less
-  motion is requested. Tooltips appear once after the short wake-up delay, without an entrance to replay.
+  motion is requested. A tooltip fades and rises a little when it comes; going from one to the next it just changes.
 - **Corners**: on Windows 11 the system rounds them as it rounds its own (8 px a menu and a popup, 4 px a
   tooltip; Geometry in Windows, learn.microsoft.com), with its shadow and a border in the theme's line colour
   (DwmSetWindowAttribute, DWMWA_WINDOW_CORNER_PREFERENCE and DWMWA_BORDER_COLOR, build 22000 and later). The
@@ -25,8 +25,8 @@ import re
 import sys
 
 from PySide6 import QtGui
-from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPropertyAnimation, QRect, Qt
-from PySide6.QtGui import QAbstractTextDocumentLayout, QColor, QGuiApplication, QKeySequence, QPainter, QPalette, QPen, QTextDocument
+from PySide6.QtCore import QEasingCurve, QEvent, QObject, QPoint, QPropertyAnimation, QRect, Qt, QVariantAnimation
+from PySide6.QtGui import QAbstractTextDocumentLayout, QColor, QCursor, QGuiApplication, QKeySequence, QPainter, QPalette, QPen, QTextDocument
 from PySide6.QtWidgets import QApplication, QComboBox, QLabel, QWidget
 
 from .. import theme_colors
@@ -34,8 +34,12 @@ from .cards import default_tokens
 from .design import Motion, Radius, Space, Text, Type, text_font
 
 FADE_MS = Motion.FAST
+TIP_MS = Motion.NORMAL
 TIP_WIDTH = 340                 # a tooltip's text wraps at this width (R162): some 45 characters of the text
 COMBO_WIDTH = 360               # a stretched settings row does not make its list span the whole window
+TIP_BESIDE, TIP_BELOW = 2, 21   # a tooltip from the pointer's tip: under the arrow, as Qt puts it on Windows
+TIP_ABOVE = 4                   # with no room under it: this far over the pointer's tip
+TIP_RISE = 4                    # how far it rises as it comes
 TIP_SOFT, TIP_KEY = 0.22, 0.42  # the explanation and the key: the tooltip's ink this much towards its ground
 _STATE = {"border": default_tokens()["line"], "motion": True, "tip": default_tokens()["tooltip_fg"],
           "tip_bg": default_tokens()["tooltip_bg"], "popup_bg": default_tokens()["card"]}
@@ -43,6 +47,7 @@ _KINDS = (Qt.WindowType.Popup, Qt.WindowType.ToolTip)
 _HEAD = re.compile(r"^(?P<name>.+?) \((?P<key>[^()]+)\)$")
 _LAID = "meridiana_tip"         # original text, style key, formatted document text, wrapping and size
 _DOCUMENT = "tooltip-document"
+_RISING = "tooltip-rising"      # it is rising to its place: its moves are its own
 
 
 def _is_key(text: str) -> bool:
@@ -83,6 +88,9 @@ class TipLayout(QObject):
             try:
                 if event.type() == QEvent.Type.Resize:
                     lay_out_tip(label)
+                    place_tip(label)
+                elif event.type() == QEvent.Type.Move:
+                    place_tip(label)
                 elif event.type() == QEvent.Type.Paint:
                     lay_out_tip(label)
                     paint_tip(label)
@@ -125,13 +133,31 @@ def lay_out_tip(label: QLabel) -> None:
     label.setWordWrap(wrap)
     if label.size() != size:
         label.resize(size)
-    screen = label.screen()
-    if screen is not None:
-        room, at = screen.availableGeometry(), QRect(label.pos(), size)
-        x = min(at.x(), room.right() + 1 - size.width())
-        y = min(at.y(), room.bottom() + 1 - size.height())
-        if (x, y) != (at.x(), at.y()):
-            label.move(max(room.x(), x), max(room.y(), y))
+
+
+def tip_place(pointer: QPoint, size, room: QRect) -> QPoint:
+    """Where a tooltip of `size` stands for the pointer at `pointer`: under it; pushed back from the right edge of the
+    screen, over it when there is no room under it."""
+    x = min(pointer.x() + TIP_BESIDE, room.right() + 1 - size.width())
+    y = pointer.y() + TIP_BELOW
+    if y + size.height() > room.bottom() + 1:
+        y = pointer.y() - TIP_ABOVE - size.height()
+    return QPoint(max(room.x(), x), max(room.y(), y))
+
+
+def place_tip(label: QLabel) -> None:
+    """Beside the pointer, whatever Qt did. Qt places a tooltip by the size of its plain text, on one line: a long one
+    does not fit, so it goes left of the pointer by all that width, and only then lay_out_tip wraps it (Daniel,
+    03/11/2026: it came hundreds of pixels away from its button). It stays where it came: it does not chase the pointer."""
+    if label.property(_RISING):
+        return
+    pointer = QCursor.pos()
+    screen = QGuiApplication.screenAt(pointer) or label.screen()
+    if screen is None:
+        return
+    at = tip_place(pointer, label.size(), screen.availableGeometry())
+    if label.pos() != at:
+        label.move(at)
 
 
 def paint_tip(label: QLabel) -> None:
@@ -228,6 +254,27 @@ class Popups(QObject):
             obj.installEventFilter(self.tips)
         return False
 
+    @staticmethod
+    def _tip_comes(label: QLabel) -> None:
+        """It fades in and rises the last pixels to its place; the Show event comes before it is on screen."""
+        goal = label.pos()
+        label.setWindowOpacity(0.0)
+        label.setProperty(_RISING, True)
+        come = QVariantAnimation(label)
+        come.setDuration(TIP_MS)
+        come.setEasingCurve(QEasingCurve.Type.OutCubic)
+        come.setStartValue(0.0)
+        come.setEndValue(1.0)
+
+        def step(t: float) -> None:
+            label.setWindowOpacity(t)
+            label.move(goal + QPoint(0, round(TIP_RISE * (1.0 - t))))
+
+        come.valueChanged.connect(step)
+        come.finished.connect(lambda: label.setProperty(_RISING, False))
+        step(0.0)
+        come.start(QVariantAnimation.DeletionPolicy.DeleteWhenStopped)
+
     def eventFilter(self, obj, event) -> bool:
         if event.type() != QEvent.Type.Show or not isinstance(obj, QWidget) or not obj.isWindow():
             return False
@@ -240,8 +287,11 @@ class Popups(QObject):
             if self.native:
                 _dwm(obj, kind == Qt.WindowType.ToolTip)
             if kind == Qt.WindowType.ToolTip:
-                # A tooltip appears once after its short wake-up delay, with no entrance to replay.
-                if obj.windowOpacity() < 1.0:
+                lay_out_tip(obj)
+                place_tip(obj)
+                if _STATE["motion"] and self.fades:
+                    self._tip_comes(obj)
+                elif self.fades and obj.windowOpacity() < 1.0:
                     obj.setWindowOpacity(1.0)
                 return False
             if _STATE["motion"] and self.fades:
