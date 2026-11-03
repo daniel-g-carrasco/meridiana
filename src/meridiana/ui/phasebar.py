@@ -346,10 +346,8 @@ class SplitStrip(QToolButton):
         super().paintEvent(event)
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        if self.parentWidget().underMouse() or self.isDown():      # the line between the two parts, under the pointer
-            p.setPen(QPen(QColor(self.colours["edge"]), Bar.LINE))
-            p.drawLine(0, 0, 0, self.height())
-        p.setPen(QPen(QColor(self.colours["text2"]), Icon.STROKE, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
+        colour = self.colours["text" if self.underMouse() or self.isDown() else "text2"]
+        p.setPen(QPen(QColor(colour), Icon.STROKE, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
                       Qt.PenJoinStyle.RoundJoin))
         x, y = self.width() / 2, self.height() / 2
         side = Space.XS - 1
@@ -490,19 +488,33 @@ class ToolMenuButton(QWidget):
     def open_menu(self, at: QPoint | None = None) -> None:
         self._say()
         self.strip.setDown(True)
+        self.update()
         self.commands.exec(at if at is not None else self.mapToGlobal(QPoint(0, self.height() + 1)))
         self.strip.setDown(False)
+        self.update()
 
     def contextMenuEvent(self, event) -> None:
         self.open_menu(event.globalPos())
 
     def enterEvent(self, event) -> None:
         super().enterEvent(event)
-        self.strip.update()
+        self.update()
 
     def leaveEvent(self, event) -> None:
         super().leaveEvent(event)
-        self.strip.update()
+        self.update()
+
+    def paintEvent(self, event) -> None:
+        """Under the pointer the controls' layer on both parts, as one shape: the part under the pointer adds its own
+        over it, and that difference alone divides them (Daniel 03/11/2026, no line). A command that is off stays out."""
+        if not (self.underMouse() or self.strip.isDown()):
+            return
+        ground = QRectF(self.rect() if self.face.isEnabled() else self.strip.geometry())
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QColor(self.strip.colours["hover"]))
+        p.drawRoundedRect(ground, Button.TOOL[1], Button.TOOL[1])
 
 
 class ToolGroup(QWidget):

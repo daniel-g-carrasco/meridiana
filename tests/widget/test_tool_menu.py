@@ -69,6 +69,11 @@ class Family(unittest.TestCase):
 
 
 class TheTwoParts(Family):
+    def nothing_under_the_pointer(self):
+        """Offscreen the cursor stands at (10, 10), on the button of a window placed there."""
+        for part in (self.button, self.button.face, self.button.strip):
+            part.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, False)
+
     def test_the_strip_is_as_tall_as_the_button_and_of_its_own_width(self):
         self.assertEqual(self.button.strip.size().toTuple(), (Bar.STRIP, self.button.height()))
         self.assertEqual(self.button.face.width() + self.button.strip.width(), self.button.width())
@@ -107,25 +112,61 @@ class TheTwoParts(Family):
         self.assertEqual(self.button.face.popupMode(), QToolButton.ToolButtonPopupMode.DelayedPopup)
         self.assertIsNone(self.button.face.menu())              # no menu: a long press only presses
 
-    def test_each_part_has_its_own_state_under_the_pointer(self):
-        """Offscreen a widget takes its hover from the mouse moved to it: the ground of one part changes, not of the
-        other."""
+    def test_under_the_pointer_both_parts_light_and_only_their_difference_divides_them(self):
+        """Offscreen a widget takes its hover from the mouse moved to it. Daniel, 03/11/2026: the layer on both parts,
+        the one under the pointer a little different, the same when pressed, no line."""
         _setup.meridiana_look()
         self.host.resize(300, 120)
         self.button.fit(Bar.UNDER, 50, 64)
         self.app.processEvents()
-        rest = self.button.grab().toImage()
-        strip_x = self.button.face.width() + 2
-        at_rest = rest.pixelColor(strip_x, 3).name()
-        self.button.strip.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, True)
+        face_x, strip_x, y = 10, self.button.face.width() + 2, 3
+
+        def colours():
+            picture = self.button.grab().toImage()
+            return picture.pixelColor(face_x, y).name(), picture.pixelColor(strip_x, y).name()
+
+        def under(part, on):
+            part.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, on)
+        self.nothing_under_the_pointer()
+        rest = colours()
+        self.assertEqual(rest[0], rest[1])
         self.button.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, True)
-        self.addCleanup(self.button.strip.setAttribute, Qt.WidgetAttribute.WA_UnderMouse, False)
+        self.addCleanup(self.button.setAttribute, Qt.WidgetAttribute.WA_UnderMouse, False)
+        for part, mine in ((self.button.face, 0), (self.button.strip, 1)):
+            under(part, True)
+            over = colours()
+            self.assertNotEqual(over[0], rest[0], part.objectName())
+            self.assertNotEqual(over[1], rest[1], part.objectName())
+            self.assertNotEqual(over[0], over[1], part.objectName())
+            part.setDown(True)
+            pressed = colours()
+            part.setDown(False)
+            under(part, False)
+            self.assertNotEqual(pressed[mine], over[mine], part.objectName())
+            self.assertEqual(pressed[1 - mine], over[1 - mine], part.objectName())
+        # nothing is drawn between the two: going across the join the colour only goes from one part's to the other's
+        under(self.button.face, True)
+        self.addCleanup(under, self.button.face, False)
+        picture = self.button.grab().toImage()
+        join = self.button.face.width()
+        for row in (10, 25, 40):
+            across = [picture.pixelColor(x, row).lightness() for x in range(join - 4, join + 4)]
+            self.assertEqual(across, sorted(across), row)
+
+    def test_a_command_that_is_off_does_not_light_under_the_pointer(self):
+        _setup.meridiana_look()
+        self.host.resize(300, 120)
+        self.button.fit(Bar.UNDER, 50, 64)
+        self.area.setEnabled(False)
+        self.app.processEvents()
+        self.nothing_under_the_pointer()
+        rest = self.button.grab().toImage()
+        self.button.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, True)
+        self.addCleanup(self.button.setAttribute, Qt.WidgetAttribute.WA_UnderMouse, False)
         over = self.button.grab().toImage()
-        self.assertNotEqual(over.pixelColor(strip_x, 3).name(), at_rest)
         self.assertEqual(over.pixelColor(10, 3).name(), rest.pixelColor(10, 3).name())
-        # the line between the two parts comes with the pointer
-        line = self.button.face.width()
-        self.assertNotEqual(over.pixelColor(line, 25).name(), rest.pixelColor(line, 25).name())
+        strip_x = self.button.face.width() + 2
+        self.assertNotEqual(over.pixelColor(strip_x, 3).name(), rest.pixelColor(strip_x, 3).name())
 
 
 class TheRulesOfTheFace(Family):
