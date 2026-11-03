@@ -46,6 +46,19 @@ class LinearProps(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "props\\[0\\].path"):
             model.Project.from_json(data)
 
+    def test_railing_posts_have_a_shadow_map_visible_section(self):
+        ring = props.footprint("walkway", [0, 0], width=0.7, path=[[-2, 2], [3, 2]])
+        surface = lambda x, y: 3.0 + (y + 4.0) * np.tan(np.radians(18.0))
+        base = mesh.path_triangles(ring, surface, 0.02, (0.5, 0.3, 0.2), False)
+        shape = mesh.path_triangles(ring, surface, 0.02, (0.5, 0.3, 0.2), True)
+        rails = shape[0][len(base[0]):]
+        x, y = ring[0]
+        top = surface(x, y) + 0.92
+        near = rails[(np.abs(rails[:, 0] - x) < 0.1) & (np.abs(rails[:, 2] + y) < 0.1) &
+                     (rails[:, 1] < top - 0.2)]
+        self.assertGreaterEqual(float(np.ptp(near[:, 0])), 0.049)
+        self.assertGreaterEqual(float(np.ptp(near[:, 2])), 0.049)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -90,6 +90,22 @@ class MeshChecks(unittest.TestCase):
             self.assertTrue(np.all(qt >= pos.min(axis=0) - tolerance))
             self.assertTrue(np.all(qt <= pos.max(axis=0) + tolerance))
 
+    def colour_components(self, shape, key):
+        coloured = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS[key]), axis=1)
+        _vertices, inverse = np.unique(shape[0][coloured].reshape(-1, 3), axis=0, return_inverse=True)
+        parent = list(range(int(inverse.max()) + 1))
+
+        def root(index):
+            while parent[index] != index:
+                parent[index] = parent[parent[index]]
+                index = parent[index]
+            return index
+
+        for face in inverse.reshape(-1, 3):
+            for other in face[1:]:
+                parent[root(int(other))] = root(int(face[0]))
+        return len({root(i) for i in range(len(parent))})
+
 
 class Trees(MeshChecks):
     def test_every_tree_has_the_requested_dimensions_and_a_valid_mesh(self):
@@ -130,6 +146,33 @@ class Trees(MeshChecks):
         for dimensions in ({"height": 0.0}, {"crown_diameter": -1.0}, {"height": 3.0, "trunk_height": 3.0}):
             with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
                 props.tree("broadleaf", **dimensions)
+
+    def test_the_pine_crown_is_one_connected_mass(self):
+        self.assertEqual(self.colour_components(props.tree("pine"), "tree"), 1)
+
+    def test_broadleaf_and_shrub_crowns_are_not_surfaces_of_revolution(self):
+        for kind in ("broadleaf", "shrub"):
+            with self.subTest(kind=kind):
+                height, crown, trunk, _length = props.TREE_DEFAULTS[kind]
+                shape = props.tree(kind)
+                green = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS["tree"]), axis=1)
+                pos = shape[0][green]
+                middle = (trunk + height) / 2
+                ring = pos[np.abs(pos[:, 1] - middle) < (height - trunk) * 0.08]
+                radii = np.linalg.norm(ring[:, [0, 2]], axis=1)
+                self.assertGreater(float(np.ptp(radii)), crown * 0.02)
+
+    def test_the_conifer_crown_is_one_connected_mass(self):
+        self.assertEqual(self.colour_components(props.tree("conifer"), "tree"), 1)
+
+    def test_the_hedge_has_a_softly_rounded_top(self):
+        length = props.TREE_DEFAULTS["hedge"][3]
+        pos = props.tree("hedge")[0]
+        top = pos[np.isclose(pos[:, 1], props.TREE_DEFAULTS["hedge"][0])]
+        self.assertLess(float(np.ptp(top[:, 0])), length * 0.95)
+
+    def test_the_palm_has_feathered_fronds(self):
+        self.assertGreater(self.colour_components(props.tree("palm"), "tree"), 20)
 
 
 class Obstacles(MeshChecks):
@@ -186,6 +229,63 @@ class Obstacles(MeshChecks):
             with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
                 props.obstacle("plant", **dimensions)
 
+    def test_the_chimney_has_a_dark_recess_under_its_cap(self):
+        shape = props.obstacle("chimney")
+        dark = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS["dark"]), axis=1)
+        self.assertTrue(dark.any())
+        self.assertLess(float(shape[0][dark, 1].max()), props.OBSTACLE_DEFAULTS["chimney"][2])
+
+    def test_the_vent_has_a_dark_underside_below_the_cap(self):
+        shape = props.obstacle("vent")
+        dark = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS["dark"]), axis=1)
+        self.assertTrue(dark.any())
+
+    def test_the_skylight_glass_slopes_upwards(self):
+        width, _depth, height = props.OBSTACLE_DEFAULTS["skylight"]
+        pos, _nor, col = props.obstacle("skylight")
+        glass = np.all(np.isclose(col, props.DEFAULT_COLOURS["glass"]), axis=1)
+        right = pos[glass & (pos[:, 0] > width * 0.4)]
+        left = pos[glass & (pos[:, 0] < -width * 0.4)]
+        self.assertAlmostEqual(float(right[:, 1].max()), height, places=6)
+        self.assertLess(float(left[:, 1].max()), height * 0.70)
+
+    def test_the_rooftop_machine_has_two_fans_and_a_front_grille(self):
+        self.assertEqual(self.colour_components(props.obstacle("plant"), "dark"), 3)
+
+    def test_the_machine_grille_is_in_front_of_its_dark_panel(self):
+        _width, depth, height = props.OBSTACLE_DEFAULTS["plant"]
+        pos, _nor, col = props.obstacle("plant")
+        dark = np.all(np.isclose(col, props.DEFAULT_COLOURS["dark"]), axis=1)
+        metal = np.all(np.isclose(col, props.DEFAULT_COLOURS["metal"]), axis=1)
+        panel_front = float(pos[dark & (pos[:, 1] < height * 0.8), 2].max())
+        slats = pos[metal & (pos[:, 1] > height * 0.25) & (pos[:, 1] < height * 0.65) &
+                    (pos[:, 2] > depth * 0.45), 2]
+        self.assertLess(panel_front, float(slats.max()) - 1e-5)
+
+    def test_the_elevator_doors_are_in_front_of_the_dark_frame(self):
+        _width, depth, height = props.OBSTACLE_DEFAULTS["elevator"]
+        pos, _nor, col = props.obstacle("elevator")
+        dark = np.all(np.isclose(col, props.DEFAULT_COLOURS["dark"]), axis=1)
+        metal = np.all(np.isclose(col, props.DEFAULT_COLOURS["metal"]), axis=1)
+        doors = metal & (pos[:, 1] < height * 0.7) & (pos[:, 2] > depth * 0.45)
+        self.assertLess(float(pos[dark, 2].max()), float(pos[doors, 2].max()) - 1e-5)
+
+    def test_the_tank_has_a_metal_band_around_its_middle(self):
+        width, _depth, height = props.OBSTACLE_DEFAULTS["tank"]
+        pos, _nor, col = props.obstacle("tank")
+        metal = np.all(np.isclose(col, props.DEFAULT_COLOURS["metal"]), axis=1)
+        band = pos[metal & (np.abs(pos[:, 1] - height * 0.55) < height * 0.02)]
+        self.assertGreater(len(band), 0)
+        self.assertGreater(float(np.abs(band[:, 0]).max()), width * 0.49)
+
+    def test_stairwell_and_elevator_have_different_fronts(self):
+        for kind, fraction, expected in (("stairwell", 0.17, "dark"), ("elevator", 0.305, "metal")):
+            width, depth, height = props.OBSTACLE_DEFAULTS[kind]
+            pos, _nor, col = props.obstacle(kind)
+            door = ((np.abs(pos[:, 0] - width * fraction) < width * 0.01) &
+                    (pos[:, 2] > depth * 0.45) & (np.abs(pos[:, 1] - height * 0.35) < height * 0.35))
+            self.assertTrue(np.any(np.all(np.isclose(col[door], props.DEFAULT_COLOURS[expected]), axis=1)))
+
 
 class People(MeshChecks):
     CASES = (
@@ -232,6 +332,19 @@ class People(MeshChecks):
             with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
                 props.person("adult", **dimensions)
 
+    def test_people_have_rounded_torsos(self):
+        width, depth, _height = props.PERSON_DEFAULTS["adult"]
+        pos, _nor, col = props.person("adult")
+        cloth = np.all(np.isclose(col, props.DEFAULT_COLOURS["person"]), axis=1)
+        corners = cloth & (np.abs(pos[:, 0]) > width * 0.27) & (np.abs(pos[:, 2]) > depth * 0.34)
+        self.assertFalse(corners.any())
+
+    def test_the_worker_helmet_has_a_brim(self):
+        width = props.PERSON_DEFAULTS["worker"][0]
+        pos, _nor, col = props.person("worker")
+        helmet = np.all(np.isclose(col, props.DEFAULT_COLOURS["helmet"]), axis=1)
+        self.assertGreater(float(np.abs(pos[helmet, 0]).max()), width * 0.21)
+
 
 class Cars(MeshChecks):
     CASES = (
@@ -268,6 +381,28 @@ class Cars(MeshChecks):
         for dimensions in ({"length": 0.0}, {"width": -1.0}, {"height": 0.0}):
             with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
                 props.car("compact", **dimensions)
+
+    def test_compact_and_suv_have_different_silhouettes(self):
+        normalized = []
+        for kind in ("compact", "suv"):
+            length, width, height = props.CAR_DEFAULTS[kind]
+            pos = props.car(kind)[0].astype(np.float64)
+            normalized.append(pos / np.array((length, height, width)))
+        difference = float(np.max(np.abs(normalized[0] - normalized[1])))
+        self.assertGreater(difference, 0.03)
+
+    def test_car_windows_use_dark_glass(self):
+        self.assertIn("car_glass", props.DEFAULT_COLOURS)
+        self.assertLess(max(props.DEFAULT_COLOURS["car_glass"]), 0.25)
+        shape = props.car("compact")
+        glass = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS["car_glass"]), axis=1)
+        self.assertTrue(glass.any())
+
+    def test_the_bright_wheel_rims_are_on_the_visible_outer_faces(self):
+        width = props.CAR_DEFAULTS["compact"][1]
+        pos, _nor, col = props.car("compact")
+        metal = np.all(np.isclose(col, props.DEFAULT_COLOURS["metal"]), axis=1)
+        self.assertTrue(np.any(np.abs(pos[metal, 2]) > width * 0.499))
 
 
 class Palettes(unittest.TestCase):
@@ -324,6 +459,19 @@ class GalleryScenes(unittest.TestCase):
         span = pos.max(axis=0) - pos.min(axis=0)
         self.assertLessEqual(float(span[0]), 50.0)
         self.assertLessEqual(float(span[2]), 30.0)
+
+    def test_each_prop_kind_has_its_own_close_scene(self):
+        gallery = self.gallery()
+        factories = {**{kind: props.tree for kind in props.TREE_KINDS},
+                     **{kind: props.obstacle for kind in props.OBSTACLE_KINDS},
+                     **{kind: props.person for kind in props.PERSON_KINDS},
+                     **{kind: props.car for kind in props.CAR_KINDS}}
+        for kind, factory in factories.items():
+            with self.subTest(kind=kind):
+                shape, table = gallery.detail_scene(kind)
+                expected = factory(kind)
+                self.assertEqual(len(table), 0)
+                np.testing.assert_array_equal(shape[0], expected[0])
 
 
 if __name__ == "__main__":

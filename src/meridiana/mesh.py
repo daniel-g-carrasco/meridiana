@@ -137,7 +137,7 @@ def path_triangles(ring, surface, thickness: float, colour, railing: bool = Fals
             segments.append((to_qt(*a, za), to_qt(*b, zb)))
             for point, z in ((a, za), (b, zb)):
                 segments.append((to_qt(*point, z - 0.9), to_qt(*point, z)))
-        rails = ribbons(np.asarray(segments), 0.025, (0.42, 0.46, 0.50))
+        rails = ribbons(np.asarray(segments), 0.05, (0.42, 0.46, 0.50))
         return tuple(np.concatenate(values) for values in zip(_arrays(*acc), rails, strict=True))
     return _arrays(*acc)
 

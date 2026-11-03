@@ -13,10 +13,10 @@ import numpy as np
 
 from . import mesh
 
-TREE_TRIANGLE_BUDGET = 400
-PERSON_TRIANGLE_BUDGET = 300
-CAR_TRIANGLE_BUDGET = 850
-OBSTACLE_TRIANGLE_BUDGET = 200
+TREE_TRIANGLE_BUDGET = 700
+PERSON_TRIANGLE_BUDGET = 900
+CAR_TRIANGLE_BUDGET = 1600
+OBSTACLE_TRIANGLE_BUDGET = 400
 
 TREE_KINDS = ("broadleaf", "conifer", "pine", "shrub", "hedge", "palm")
 TREE_DEFAULTS = {
@@ -36,9 +36,11 @@ DEFAULT_COLOURS = {
     "glass": (0.35, 0.62, 0.72),
     "dark": (0.12, 0.16, 0.19),
     "person": (0.25, 0.43, 0.62),
+    "trousers": (0.19, 0.25, 0.33),
     "skin": (0.76, 0.55, 0.40),
     "helmet": (0.95, 0.70, 0.12),
     "car": (0.38, 0.56, 0.68),
+    "car_glass": (0.09, 0.15, 0.18),
     "tyre": (0.09, 0.10, 0.11),
     "light": (0.92, 0.88, 0.62),
     "rear": (0.65, 0.16, 0.12),
@@ -111,6 +113,18 @@ class _Builder:
         self.tri(a, b, c, colour, towards)
         self.tri(a, c, d, colour, towards)
 
+    def smooth(self, points, normals, colour):
+        """A triangle with a normal of its own at each corner: the light runs over it, no facets show."""
+        a, b, c = points
+        face = np.cross(b - a, c - a)
+        if float(np.linalg.norm(face)) < 1e-14:
+            return
+        order = (0, 1, 2) if float(np.dot(face, normals[0] + normals[1] + normals[2])) > 0 else (0, 2, 1)
+        for i in order:
+            self.pos.append(points[i])
+            self.nor.append(normals[i])
+            self.col.append(colour)
+
     def arrays(self):
         return (np.asarray(self.pos, dtype=np.float32), np.asarray(self.nor, dtype=np.float32),
                 np.asarray(self.col, dtype=np.float32))
@@ -161,12 +175,73 @@ def _lathe(builder, profile, segments, colour, x_scale=1.0, z_scale=1.0, centre=
             builder.tri(centre_point, a, b, colour, outward)
 
 
-def _ellipsoid(builder, y0, y1, radius, colour, segments=12, x_scale=1.0, z_scale=1.0):
+def _ellipsoid(builder, y0, y1, radius, colour, segments=12, x_scale=1.0, z_scale=1.0,
+               centre=(0.0, 0.0, 0.0)):
     middle = (y0 + y1) / 2
     half = (y1 - y0) / 2
     profile = ((y0, 0.0), (middle - half * 0.5, radius * math.sqrt(0.75)), (middle, radius),
                (middle + half * 0.5, radius * math.sqrt(0.75)), (y1, 0.0))
-    _lathe(builder, profile, segments, colour, x_scale, z_scale)
+    _lathe(builder, profile, segments, colour, x_scale, z_scale, centre)
+
+
+def _organic_crown(builder, y0, y1, radius, colour, profile, segments=24):
+    angle = np.arange(segments) * math.tau / segments
+    variation = np.minimum(1.0, 1.0 + 0.10 * np.cos(3 * angle) + 0.06 * np.sin(5 * angle))
+    variation[::segments // 4] = 1.0
+    drop = (y1 - y0) * 0.07 * (0.5 - 0.5 * np.cos(3 * angle))
+    rings = []
+    for fraction, size in profile:
+        r = radius * size * variation
+        y = y0 + (y1 - y0) * fraction - drop * fraction ** 1.5
+        rings.append(np.stack((r * np.cos(angle), y, r * np.sin(angle)), axis=1))
+    for lower, upper in zip(rings, rings[1:], strict=False):
+        for i in range(segments):
+            j = (i + 1) % segments
+            middle = (lower[i] + lower[j] + upper[i] + upper[j]) / 4
+            outward = middle - (0.0, middle[1], 0.0)
+            if np.allclose(lower[i], upper[i]):
+                builder.tri(lower[i], lower[j], upper[j], colour, outward)
+            elif np.allclose(upper[i], lower[j]):
+                builder.tri(lower[i], upper[i], upper[j], colour, outward)
+            else:
+                builder.quad(lower[i], lower[j], upper[j], upper[i], colour, outward)
+    for ring, y, outward, reverse in ((rings[0], y0, (0.0, -1.0, 0.0), True),
+                                      (rings[-1], y1, (0.0, 1.0, 0.0), False)):
+        size = profile[0][1] if reverse else profile[-1][1]
+        if size > 0.0:
+            for i in range(segments):
+                j = (i + 1) % segments
+                a, b = (ring[j], ring[i]) if reverse else (ring[i], ring[j])
+                builder.tri((0.0, y, 0.0), a, b, colour, outward)
+
+
+def _extrude_xy(builder, profile, z0, z1, colour):
+    ring = [tuple(map(float, point)) for point in profile]
+    if mesh.signed_area(ring) < 0:
+        ring.reverse()
+    for i0, i1, i2 in mesh.triangulate(ring):
+        for z, outward in ((z0, (0.0, 0.0, -1.0)), (z1, (0.0, 0.0, 1.0))):
+            builder.tri((ring[i0][0], ring[i0][1], z), (ring[i1][0], ring[i1][1], z),
+                        (ring[i2][0], ring[i2][1], z), colour, outward)
+    for a, b in zip(ring, ring[1:] + ring[:1], strict=True):
+        outward = (b[1] - a[1], a[0] - b[0], 0.0)
+        builder.quad((a[0], a[1], z0), (b[0], b[1], z0), (b[0], b[1], z1), (a[0], a[1], z1),
+                     colour, outward)
+
+
+def _loft(builder, layers, colour):
+    layers = [(float(y), [tuple(map(float, point)) for point in ring]) for y, ring in layers]
+    for (y0, lower), (y1, upper) in zip(layers, layers[1:], strict=False):
+        centre = np.mean(np.asarray(lower), axis=0)
+        for a, b, c, d in zip(lower, lower[1:] + lower[:1], upper, upper[1:] + upper[:1], strict=True):
+            outward = ((a[0] + b[0]) / 2 - centre[0], 0.0, (a[1] + b[1]) / 2 - centre[1])
+            builder.quad((a[0], y0, a[1]), (b[0], y0, b[1]), (d[0], y1, d[1]), (c[0], y1, c[1]),
+                         colour, outward)
+    for y, ring, outward in ((layers[0][0], layers[0][1], (0.0, -1.0, 0.0)),
+                             (layers[-1][0], layers[-1][1], (0.0, 1.0, 0.0))):
+        for i0, i1, i2 in mesh.triangulate(ring):
+            builder.tri((ring[i0][0], y, ring[i0][1]), (ring[i1][0], y, ring[i1][1]),
+                        (ring[i2][0], y, ring[i2][1]), colour, outward)
 
 
 def _prism(builder, ring, y0, y1, colour):
@@ -242,44 +317,66 @@ def tree(kind="broadleaf", height=None, crown_diameter=None, trunk_height=None, 
     radius = crown / 2
     crown_height = height - trunk
     trunk_radius = max(0.025, min(crown * 0.035, max(trunk, 0.1) * 0.04))
-    if kind != "pine":
+    if kind not in ("pine", "palm"):
         _lathe(builder, ((0.0, trunk_radius), (max(trunk, 0.02), trunk_radius * 0.8)), 8, bark)
 
     if kind in ("broadleaf", "shrub"):
-        _ellipsoid(builder, trunk, height, radius, green)
+        profile = ((0.0, 0.0), (0.25, 0.86), (0.5, 1.0), (0.75, 0.86), (1.0, 0.0))
+        _organic_crown(builder, trunk, height, radius, green, profile)
     elif kind == "pine":
-        fork = (radius * 0.10, trunk, 0.0)
+        fork = (radius * 0.08, trunk * 0.94, 0.0)
         _rod(builder, (0.0, 0.0, 0.0), (0.0, trunk * 0.55, 0.0), trunk_radius, bark, 10)
         _rod(builder, (0.0, trunk * 0.55, 0.0), fork, trunk_radius * 0.85, bark, 10)
-        for x, z, scale in ((-radius * 0.38, 0.0, 0.62), (radius * 0.38, -radius * 0.38, 0.62),
-                            (0.0, radius * 0.38, 0.62)):
-            _rod(builder, fork, (x, trunk + crown_height * 0.45, z), trunk_radius * 0.58, bark, 8)
-            profile = ((0.0, 0.0), (crown_height * 0.28, radius * scale),
-                       (crown_height * 0.72, radius * scale * 0.90), (crown_height, 0.0))
-            _lathe(builder, profile, 16, green, centre=(x, trunk, z))
+        for x, z in ((-radius * 0.48, -radius * 0.12), (radius * 0.43, -radius * 0.32),
+                     (radius * 0.10, radius * 0.45)):
+            elbow = (x, trunk + crown_height * 0.03, z)
+            _rod(builder, fork, elbow, trunk_radius * 0.62, bark, 6)
+            _rod(builder, elbow, (x * 0.82, trunk + crown_height * 0.34, z * 0.82),
+                 trunk_radius * 0.42, bark, 6)
+        profile = ((0.12, 0.18), (0.24, 0.62), (0.42, 0.96), (0.60, 1.0),
+                   (0.76, 0.94), (0.91, 0.60), (1.0, 0.32))
+        _organic_crown(builder, trunk, height, radius, green, profile)
     elif kind == "conifer":
-        for level, scale in enumerate((1.0, 0.8, 0.58)):
-            base = trunk + crown_height * level * 0.24
-            top = base + crown_height * 0.52
-            _lathe(builder, ((base, radius * scale), (top, 0.0)), 12, green)
+        profile = ((0.0, 0.55), (0.18, 0.92), (0.36, 1.0), (0.52, 0.78),
+                   (0.68, 0.58), (0.84, 0.32), (1.0, 0.0))
+        _organic_crown(builder, trunk, height, radius, green, profile)
     elif kind == "hedge":
         chamfer = min(crown * 0.18, length * 0.08)
         x, z = length / 2, crown / 2
         ring = ((-x + chamfer, -z), (x - chamfer, -z), (x, -z + chamfer), (x, z - chamfer),
                 (x - chamfer, z), (-x + chamfer, z), (-x, z - chamfer), (-x, -z + chamfer))
-        _prism(builder, ring, trunk, height, green)
+        layers = []
+        for y, scale in ((trunk, 0.92), (trunk + crown_height * 0.16, 1.0),
+                         (height - crown_height * 0.18, 1.0), (height, 0.78)):
+            layers.append((y, [(px * scale, pz * scale) for px, pz in ring]))
+        _loft(builder, layers, green)
     else:
+        base_y = max(0.05, trunk_radius * 1.5)
+        _lathe(builder, ((0.0, trunk_radius), (base_y, trunk_radius)), 8, bark)
+        stem_top = trunk + crown_height * 0.62
+        stem = [np.array((radius * 0.08 * (step / 4) ** 2,
+                          base_y + (stem_top - base_y) * step / 4, 0.0)) for step in range(5)]
+        for a, b in zip(stem, stem[1:], strict=False):
+            _rod(builder, a, b, trunk_radius * (1.0 - 0.25 * a[1] / stem[-1][1]), bark, 6)
+        start = stem[-1]
         for index in range(8):
             angle = index * math.tau / 8
             radial = np.array((math.cos(angle), 0.0, math.sin(angle)))
-            start = radial * radius * 0.05 + (0.0, trunk + crown_height * 0.65, 0.0)
-            end = radial * radius + (0.0, trunk + crown_height * (0.18 + 0.08 * (index % 2)), 0.0)
-            _leaf(builder, start, end, radius * 0.18, max(0.015, crown_height * 0.025), green)
+            side = np.array((-math.sin(angle), 0.0, math.cos(angle)))
+            middle = start + radial * radius * 0.48 + (0.0, crown_height * 0.25, 0.0)
+            end = radial * radius + (0.0, trunk + crown_height * (0.20 + 0.06 * (index % 2)), 0.0)
+            _leaf(builder, start, middle, radius * 0.09, max(0.015, crown_height * 0.02), green)
+            _leaf(builder, middle, end, radius * 0.07, max(0.015, crown_height * 0.015), green)
+            for fraction in (0.36, 0.56, 0.74):
+                base = (1 - fraction) ** 2 * start + 2 * (1 - fraction) * fraction * middle + fraction ** 2 * end
+                for sign in (-1.0, 1.0):
+                    tip = base + side * sign * radius * (0.25 - fraction * 0.13) + radial * radius * 0.06
+                    tip[1] -= crown_height * 0.06
+                    _leaf(builder, base, tip, radius * 0.04, max(0.01, crown_height * 0.01), green)
         for index in range(3):
             angle = index * math.tau / 3
             end = (math.cos(angle) * radius * 0.18, height, math.sin(angle) * radius * 0.18)
-            _leaf(builder, (0.0, trunk + crown_height * 0.45, 0.0), end,
-                  radius * 0.12, max(0.015, crown_height * 0.02), green)
+            _leaf(builder, start, end, radius * 0.10, max(0.015, crown_height * 0.02), green)
     return _rotate_qt(builder.arrays(), float(rotation))
 
 
@@ -369,20 +466,38 @@ def obstacle(kind="other", width=None, depth=None, height=None, rotation=0.0, co
     builder = _Builder()
     if kind == "chimney":
         _box(builder, (0.0, height * 0.42, 0.0), (width * 0.72, height * 0.84, depth * 0.72), body)
-        _box(builder, (0.0, height * 0.92, 0.0), (width, height * 0.16, depth), metal)
+        for side in (-1.0, 1.0):
+            _box(builder, (side * width * 0.355, height * 0.92, 0.0),
+                 (width * 0.29, height * 0.16, depth), metal)
+            _box(builder, (0.0, height * 0.92, side * depth * 0.355),
+                 (width * 0.42, height * 0.16, depth * 0.29), metal)
+        _box(builder, (0.0, height * 0.86, 0.0), (width * 0.42, height * 0.04, depth * 0.42), dark)
     elif kind == "vent":
-        _lathe(builder, ((0.0, 0.32), (height * 0.78, 0.32)), 8, metal, width, depth)
-        _lathe(builder, ((height * 0.78, 0.5), (height, 0.5)), 8, body, width, depth)
+        _lathe(builder, ((0.0, 0.5), (height * 0.12, 0.5)), 12, body, width, depth)
+        _lathe(builder, ((height * 0.10, 0.32), (height * 0.72, 0.32)), 12, metal, width, depth)
+        _lathe(builder, ((height * 0.70, 0.47), (height * 0.79, 0.47)), 12, dark, width, depth)
+        _lathe(builder, ((height * 0.79, 0.5), (height * 0.91, 0.42), (height, 0.0)),
+               12, body, width, depth)
     elif kind == "skylight":
-        _box(builder, (0.0, height * 0.15, 0.0), (width, height * 0.3, depth), metal)
-        _box(builder, (0.0, height * 0.65, 0.0), (width * 0.9, height * 0.7, depth * 0.9), glass)
+        _box(builder, (0.0, height * 0.10, 0.0), (width, height * 0.20, depth), metal)
+        profile = ((-width * 0.45, height * 0.20), (width * 0.45, height * 0.20),
+                   (width * 0.45, height), (-width * 0.45, height * 0.55))
+        _extrude_xy(builder, profile, -depth * 0.45, depth * 0.45, glass)
     elif kind == "dome_skylight":
         _box(builder, (0.0, height * 0.1, 0.0), (width, height * 0.2, depth), metal)
         _lathe(builder, ((height * 0.2, 0.5), (height * 0.56, 0.43), (height, 0.0)), 12, glass, width, depth)
     elif kind == "plant":
-        _box(builder, (0.0, height * 0.45, 0.0), (width, height * 0.9, depth), body)
-        _lathe(builder, ((height * 0.9, 0.25), (height, 0.25)), 8, metal, width, depth)
-        _box(builder, (0.0, height * 0.42, depth * 0.49), (width * 0.65, height * 0.42, depth * 0.02), dark)
+        _box(builder, (0.0, height * 0.43, 0.0), (width, height * 0.86, depth * 0.96), body)
+        _box(builder, (0.0, height * 0.88, 0.0), (width, height * 0.04, depth), metal)
+        _box(builder, (0.0, height * 0.43, depth * 0.485), (width * 0.68, height * 0.50, depth * 0.02), dark)
+        for level in (0.30, 0.40, 0.50, 0.60):
+            _box(builder, (0.0, height * level, depth * 0.494),
+                 (width * 0.64, height * 0.018, depth * 0.012), metal)
+        fan_radius = min(width * 0.20, depth * 0.28)
+        for x in (-width * 0.22, width * 0.22):
+            _lathe(builder, ((height * 0.90, 1.0), (height * 0.96, 1.0)), 16, dark,
+                   fan_radius, fan_radius, centre=(x, 0.0, 0.0))
+            _rod(builder, (x, height * 0.96, 0.0), (x, height, 0.0), fan_radius * 0.22, metal, 10)
     elif kind == "antenna":
         radius = min(width, depth) * 0.035
         _box(builder, (0.0, height * 0.03, 0.0), (width * 0.25, height * 0.06, depth), body)
@@ -393,12 +508,28 @@ def obstacle(kind="other", width=None, depth=None, height=None, rotation=0.0, co
     elif kind == "dish":
         _dish(builder, width, depth, height, body)
     elif kind == "tank":
-        _lathe(builder, ((0.0, 0.5), (height * 0.88, 0.5)), 12, body, width, depth)
-        _lathe(builder, ((height * 0.88, 0.16), (height, 0.16)), 8, metal, width, depth)
+        _lathe(builder, ((0.0, 0.5), (height * 0.08, 0.5)), 16, metal, width, depth)
+        _lathe(builder, ((height * 0.08, 0.49), (height * 0.82, 0.49)), 16, body, width, depth)
+        for y0, y1 in ((0.18, 0.21), (0.53, 0.56)):
+            _lathe(builder, ((height * y0, 0.5), (height * y1, 0.5)), 16, metal, width, depth)
+        _lathe(builder, ((height * 0.82, 0.49), (height * 0.92, 0.16)), 16, body, width, depth)
+        _lathe(builder, ((height * 0.92, 0.16), (height, 0.16)), 16, metal, width, depth)
     elif kind in ("stairwell", "elevator"):
         _box(builder, (0.0, height * 0.5, 0.0), (width, height, depth * 0.96), body)
-        _box(builder, (0.0, height * 0.32, depth * 0.49), (width * 0.34, height * 0.64, depth * 0.02), dark)
         _box(builder, (0.0, height * 0.97, 0.0), (width, height * 0.06, depth), metal)
+        if kind == "stairwell":
+            _box(builder, (0.0, height * 0.32, depth * 0.49), (width * 0.34, height * 0.64, depth * 0.02), dark)
+            for side in (-1.0, 1.0):
+                _box(builder, (side * width * 0.19, height * 0.33, depth * 0.49),
+                     (width * 0.035, height * 0.66, depth * 0.02), metal)
+            _box(builder, (0.0, height * 0.67, depth * 0.49), (width * 0.415, height * 0.04, depth * 0.02), metal)
+            _box(builder, (0.0, height * 0.03, depth * 0.46), (width * 0.50, height * 0.06, depth * 0.08), body)
+        else:
+            _box(builder, (0.0, height * 0.35, depth * 0.48), (width * 0.66, height * 0.70, depth * 0.02), dark)
+            for side in (-1.0, 1.0):
+                _box(builder, (side * width * 0.155, height * 0.35, depth * 0.49),
+                     (width * 0.30, height * 0.68, depth * 0.02), metal)
+            _box(builder, (0.0, height * 0.77, depth * 0.48), (width * 0.70, height * 0.08, depth * 0.02), dark)
     elif kind == "walkway":
         radius = min(depth, height) * 0.06
         _box(builder, (0.0, height * 0.15, 0.0), (width, height * 0.3, depth), body)
@@ -412,6 +543,53 @@ def obstacle(kind="other", width=None, depth=None, height=None, rotation=0.0, co
     return _rotate_qt(builder.arrays(), float(rotation))
 
 
+def _blob(builder, a, b, ra, rb, colour, segments=8, caps=1, scale=(1.0, 1.0, 1.0)):
+    """A smooth body between two points, round at both ends, radius `ra` at `a` and `rb` at `b`; `scale` stretches it about
+    its middle, its normals with it."""
+    a, b = np.asarray(a, dtype=np.float64), np.asarray(b, dtype=np.float64)
+    axis = b - a
+    length = float(np.linalg.norm(axis))
+    along = axis / length if length > 1e-9 else np.array((0.0, 1.0, 0.0))
+    helper = np.array((0.0, 0.0, 1.0)) if abs(along[2]) < 0.9 else np.array((1.0, 0.0, 0.0))
+    side = np.cross(along, helper)
+    side /= np.linalg.norm(side)
+    other = np.cross(along, side)
+    waist = math.asin(max(-0.9, min(0.9, (ra - rb) / length))) if length > 1e-9 else 0.0
+    rows = [(a, ra, -math.pi / 2 + (waist + math.pi / 2) * k / (caps + 1)) for k in range(caps + 2)]
+    rows += [(b, rb, waist + (math.pi / 2 - waist) * k / (caps + 1)) for k in range(caps + 2)]
+    stretch = np.asarray(scale, dtype=np.float64)
+    middle = (a + b) / 2
+    angles = [math.tau * j / segments for j in range(segments)]
+    grid = []
+    for centre, radius, theta in rows:
+        ring = []
+        for angle in angles:
+            out = side * math.cos(angle) + other * math.sin(angle)
+            normal = along * math.sin(theta) + out * math.cos(theta)
+            point = centre + normal * radius
+            normal = normal / stretch
+            ring.append((middle + (point - middle) * stretch, normal / np.linalg.norm(normal)))
+        grid.append(ring)
+    for low, high in zip(grid, grid[1:], strict=False):
+        for j in range(segments):
+            k = (j + 1) % segments
+            for one, two, three in ((low[j], low[k], high[k]), (low[j], high[k], high[j])):
+                builder.smooth((one[0], two[0], three[0]), (one[1], two[1], three[1]), colour)
+
+
+def _fitted(shape, width, depth, height):
+    """The figure stretched to its dimensions exactly, standing on the ground, in the middle; its normals with it."""
+    pos, nor, col = shape
+    low, high = pos.min(axis=0), pos.max(axis=0)
+    size = np.maximum(high - low, 1e-6)
+    stretch = np.array((width, height, depth), dtype=np.float64) / size
+    centre = (low + high) / 2
+    out = (pos - np.array((centre[0], low[1], centre[2]))) * stretch
+    normals = nor / stretch
+    normals /= np.linalg.norm(normals, axis=1, keepdims=True)
+    return out.astype(np.float32), normals.astype(np.float32), col
+
+
 def _person_dimensions(kind, width, depth, height):
     if kind not in PERSON_KINDS:
         raise ValueError(f"unknown person kind: {kind}")
@@ -423,40 +601,43 @@ def _person_dimensions(kind, width, depth, height):
 
 
 def person(kind="adult", width=None, depth=None, height=None, rotation=0.0, colours=None):
-    """A standing adult, walking adult, child or helmeted worker, with anatomical reference proportions."""
+    """A standing adult, walking adult, child or helmeted worker, as the scale figures of an architect's drawing: smooth
+    continuous bodies with no features, the proportions right (Daniel, 03/11/2026: «le persone continuano a fare schifo»:
+    the stiff limbs, the shoes as bricks and the head's facets were what showed). Worked out for a height of one."""
     width, depth, height = _person_dimensions(kind, width, depth, height)
     cloth, skin = _colour(colours, "person"), _colour(colours, "skin")
     dark = _colour(colours, "dark")
+    legs = _colour(colours, "trousers")
     builder = _Builder()
-    walking = kind == "walking"
-    stride = 1.0 if walking else 0.0
-
-    _box(builder, (0.0, height * 0.625, -depth * 0.125), (width * 0.55, height * 0.39, depth * 0.75), cloth)
-    _box(builder, (0.0, height * 0.45, 0.0), (width * 0.42, height * 0.10, depth * 0.55), dark)
+    child = kind == "child"
+    stride = 0.095 if kind == "walking" else 0.0
+    hip, chest, neck, head_low, head_high, head_r = ((0.43, 0.68, 0.72, 0.82, 0.86, 0.078) if child
+                                                     else (0.50, 0.76, 0.79, 0.895, 0.925, 0.054))
+    knee = hip * 0.54
     for side in (-1.0, 1.0):
-        hip_z = -side * depth * 0.12 * stride
-        foot_z = side * depth * (0.25 if walking else 0.15)
-        _rod(builder, (side * width * 0.15, height * 0.47, hip_z),
-             (side * width * 0.15, height * 0.08, foot_z), width * 0.065, dark)
-        _box(builder, (side * width * 0.15, height * 0.04, foot_z),
-             (width * 0.14, height * 0.08, depth * (0.50 if walking else 0.70)), dark)
-        hand_x = side * width * 0.435
-        hand_z = -side * depth * 0.20 * stride
-        _rod(builder, (side * width * 0.28, height * 0.78, 0.0),
-             (hand_x, height * 0.43, hand_z), width * 0.05, cloth)
-        _box(builder, (hand_x, height * 0.40, hand_z), (width * 0.13, height * 0.08, depth * 0.18), skin)
-
-    _rod(builder, (0.0, height * 0.77, 0.0), (0.0, height * 0.86, 0.0), width * 0.07, skin)
-    head_radius = width * (0.18 if kind == "child" else 0.15)
-    head_bottom = height * (0.80 if kind == "child" else (0.82 if kind == "worker" else 0.84))
-    head_top = height * (0.96 if kind == "worker" else 1.0)
-    _ellipsoid(builder, head_bottom, head_top, head_radius, skin, z_scale=depth * 0.32 / head_radius)
+        foot_z, hand_z = side * stride, -side * stride * 0.55
+        knee_z = foot_z * (0.75 if side > 0 else 0.35)
+        x = side * 0.05
+        _blob(builder, (x, hip, 0.0), (x, knee, knee_z), 0.06, 0.04, legs, caps=0)
+        _blob(builder, (x, knee, knee_z), (x * 0.92, 0.07, foot_z), 0.04, 0.026, legs, caps=0)
+        _blob(builder, (x * 0.92, 0.03, foot_z - 0.045), (x * 0.92, 0.026, foot_z + 0.07), 0.03, 0.026, dark)
+        shoulder_y = chest + 0.012
+        elbow_y = (shoulder_y + hip) / 2 + 0.005
+        wrist_y = hip - 0.02
+        _blob(builder, (side * 0.112, shoulder_y - 0.008, 0.0), (side * 0.150, elbow_y, hand_z * 0.45), 0.04, 0.028, cloth, 6)
+        _blob(builder, (side * 0.150, elbow_y, hand_z * 0.45), (side * 0.158, wrist_y, hand_z), 0.028, 0.022, cloth, 6, 0)
+        _blob(builder, (side * 0.158, wrist_y - 0.012, hand_z), (side * 0.158, wrist_y - 0.05, hand_z + 0.004), 0.024, 0.02,
+              skin, 6)
+    _blob(builder, (-0.04, hip + 0.01, 0.0), (0.04, hip + 0.01, 0.0), 0.075, 0.075, legs, scale=(1.0, 1.0, 0.78))
+    _blob(builder, (0.0, hip + 0.03, 0.0), (0.0, chest, 0.0), 0.088, 0.108, cloth, 10, 1, scale=(1.22, 1.0, 0.72))
+    _blob(builder, (0.0, neck - 0.02, 0.0), (0.0, head_low, 0.0), 0.03, 0.03, skin, 6, 0)
+    _blob(builder, (0.0, head_low, 0.006), (0.0, head_high, 0.006), head_r, head_r * 0.96, skin, 10, 2,
+          scale=(0.94, 1.0, 1.0))
     if kind == "worker":
-        helmet_radius = width * 0.19
-        _lathe(builder, ((height * 0.93, helmet_radius), (height * 0.97, helmet_radius * 0.88),
-                         (height, 0.0)), 8, _colour(colours, "helmet"),
-               z_scale=depth * 0.38 / helmet_radius)
-    return _rotate_qt(builder.arrays(), float(rotation))
+        helmet = _colour(colours, "helmet")
+        _blob(builder, (0.0, head_high + 0.005, 0.006), (0.0, head_high + 0.006, 0.006), 0.07, 0.07, helmet, 8, 1)
+        _lathe(builder, ((head_high + 0.002, 0.082), (head_high + 0.014, 0.082)), 10, helmet)
+    return _rotate_qt(_fitted(builder.arrays(), width, depth, height), float(rotation))
 
 
 def _car_dimensions(kind, length, width, height):
@@ -468,51 +649,88 @@ def _car_dimensions(kind, length, width, height):
                                                  strict=True))
 
 
-def _car_cabin(builder, length, width, height, colour):
-    y0 = height * 0.52
-    bottom = np.array(((-length * 0.28, y0, -width * 0.40), (length * 0.32, y0, -width * 0.40),
-                       (length * 0.32, y0, width * 0.40), (-length * 0.28, y0, width * 0.40)))
-    top = np.array(((-length * 0.12, height, -width * 0.30), (length * 0.18, height, -width * 0.30),
-                    (length * 0.18, height, width * 0.30), (-length * 0.12, height, width * 0.30)))
-    centre = np.array((length * 0.02, (y0 + height) / 2, 0.0))
+def _car_cabin(builder, kind, length, width, height, colour):
+    suv = kind == "suv"
+    y0 = height * (0.675 if suv else 0.585)
+    roof_y = height * 0.96
+    rear_bottom, front_bottom = (-0.40, 0.24) if suv else (-0.30, 0.23)
+    rear_top, front_top = (-0.34, 0.11) if suv else (-0.11, 0.09)
+    bottom_width, top_width = width * 0.41, width * (0.35 if suv else 0.33)
+    bottom = np.array(((length * rear_bottom, y0, -bottom_width), (length * front_bottom, y0, -bottom_width),
+                       (length * front_bottom, y0, bottom_width), (length * rear_bottom, y0, bottom_width)))
+    top = np.array(((length * rear_top, roof_y, -top_width), (length * front_top, roof_y, -top_width),
+                    (length * front_top, roof_y, top_width), (length * rear_top, roof_y, top_width)))
+    centre = (bottom.mean(axis=0) + top.mean(axis=0)) / 2
     for i in range(4):
         j = (i + 1) % 4
         outward = (bottom[i] + bottom[j] + top[i] + top[j]) / 4 - centre
         builder.quad(bottom[i], bottom[j], top[j], top[i], colour, outward)
-        builder.tri((length * 0.02, y0, 0.0), bottom[j], bottom[i], colour, (0, -1, 0))
-        builder.tri((length * 0.02, height, 0.0), top[i], top[j], colour, (0, 1, 0))
+    for ring, outward in ((bottom, (0.0, -1.0, 0.0)), (top, (0.0, 1.0, 0.0))):
+        builder.tri(ring[0], ring[1], ring[2], colour, outward)
+        builder.tri(ring[0], ring[2], ring[3], colour, outward)
+    return bottom, top
+
+
+def _car_body(builder, kind, length, width, height, colour):
+    radius = height * 0.19
+    arch = radius * 1.16
+    profile = [(-length / 2, radius)]
+    for centre in (-length * 0.31, length * 0.31):
+        for step in range(9):
+            angle = math.pi - step * math.pi / 8
+            profile.append((centre + arch * math.cos(angle), radius + arch * math.sin(angle)))
+    profile.append((length / 2, radius))
+    if kind == "suv":
+        profile.extend(((length / 2, height * 0.59), (length * 0.40, height * 0.64),
+                        (length * 0.18, height * 0.69), (-length * 0.40, height * 0.69),
+                        (-length * 0.48, height * 0.64), (-length / 2, height * 0.59)))
+    else:
+        profile.extend(((length / 2, height * 0.50), (length * 0.40, height * 0.55),
+                        (length * 0.18, height * 0.60), (-length * 0.28, height * 0.60),
+                        (-length * 0.44, height * 0.55), (-length / 2, height * 0.48)))
+    _extrude_xy(builder, profile, -width * 0.43, width * 0.43, colour)
 
 
 def car(kind="compact", length=None, width=None, height=None, rotation=0.0, colours=None):
     """A compact car or SUV, length along local East and wheels resting at height zero."""
     length, width, height = _car_dimensions(kind, length, width, height)
     paint, tyre = _colour(colours, "car"), _colour(colours, "tyre")
-    glass = _colour(colours, "glass")
+    glass = _colour(colours, "car_glass")
     builder = _Builder()
     dark, metal = _colour(colours, "dark"), _colour(colours, "metal")
-    _box(builder, (0.0, height * 0.36, 0.0), (length, height * 0.36, width * 0.84), paint)
-    _box(builder, (length * 0.33, height * 0.55, 0.0), (length * 0.30, height * 0.05, width * 0.82), paint)
-    _box(builder, (-length * 0.37, height * 0.55, 0.0), (length * 0.22, height * 0.05, width * 0.82), paint)
-    _car_cabin(builder, length, width, height, glass)
-    _box(builder, (length * 0.03, height * 0.985, 0.0), (length * 0.30, height * 0.03, width * 0.60), paint)
-    for side in (-1.0, 1.0):
-        for x in (-length * 0.12, length * 0.18):
-            _rod(builder, (x, height * 0.58, side * width * 0.40),
-                 (x, height * 0.98, side * width * 0.30), width * 0.018, paint, 6)
-    radius = height * 0.18
+    _car_body(builder, kind, length, width, height, paint)
+    bottom, top = _car_cabin(builder, kind, length, width, height, glass)
+    roof_length = float(top[:, 0].max() - top[:, 0].min()) + length * 0.04
+    roof_width = float(top[:, 2].max() - top[:, 2].min()) + width * 0.02
+    _box(builder, (float(top[:, 0].mean()), height * 0.98, 0.0),
+         (roof_length, height * 0.04, roof_width), paint)
+    for side in (0, 1):
+        for index in (0, 1):
+            _rod(builder, bottom[index + side * 2], top[index + side * 2], width * 0.014, paint, 6)
+        middle_bottom = bottom[side * 2] * 0.45 + bottom[1 + side * 2] * 0.55
+        middle_top = top[side * 2] * 0.45 + top[1 + side * 2] * 0.55
+        _rod(builder, middle_bottom, middle_top, width * 0.012, paint, 6)
+    radius = height * 0.19
     for x in (-length * 0.31, length * 0.31):
         for side in (-1.0, 1.0):
-            outer = side * width * 0.5
-            _rod(builder, (x, radius, outer), (x, radius, side * width * 0.38), radius, tyre, 16)
-            _rod(builder, (x, radius, outer - side * 0.002), (x, radius, outer - side * width * 0.025),
-                 radius * 0.58, metal, 12)
-            _rod(builder, (x, radius, outer - side * 0.004), (x, radius, outer - side * width * 0.02),
-                 radius * 0.16, dark, 10)
+            _rod(builder, (x, radius, side * width * 0.36), (x, radius, side * width * 0.482),
+                 radius, tyre, 24)
+            _rod(builder, (x, radius, side * width * 0.484), (x, radius, side * width * 0.5),
+                 radius * 0.60, metal, 16)
+            _rod(builder, (x, radius, side * width * 0.486), (x, radius, side * width * 0.5),
+                 radius * 0.17, dark, 10)
+    light_y = height * (0.54 if kind == "suv" else 0.46)
     for side in (-1.0, 1.0):
-        _box(builder, (length * 0.485, height * 0.43, side * width * 0.27),
-             (length * 0.03, height * 0.10, width * 0.20), _colour(colours, "light"))
-        _box(builder, (-length * 0.485, height * 0.43, side * width * 0.27),
-             (length * 0.03, height * 0.10, width * 0.20), _colour(colours, "rear"))
+        _box(builder, (length * 0.495, light_y, side * width * 0.27),
+             (length * 0.01, height * 0.09, width * 0.20), _colour(colours, "light"))
+        _box(builder, (-length * 0.495, light_y, side * width * 0.27),
+             (length * 0.01, height * 0.09, width * 0.20), _colour(colours, "rear"))
+        _box(builder, (length * 0.15, height * 0.63, side * width * 0.45),
+             (length * 0.07, height * 0.06, width * 0.08), paint)
+        _box(builder, (-length * 0.04, height * 0.53, side * width * 0.434),
+             (length * 0.08, height * 0.025, width * 0.008), metal)
+    _box(builder, (length * 0.495, height * 0.36, 0.0),
+         (length * 0.01, height * 0.10, width * 0.34), dark)
     return _rotate_qt(builder.arrays(), float(rotation))
 
 
