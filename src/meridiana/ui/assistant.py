@@ -32,9 +32,9 @@ import math
 import time
 
 from PySide6.QtCore import (QByteArray, QEasingCurve, QEvent, QParallelAnimationGroup, QPoint, QPointF,
-                            QPropertyAnimation, QRect, QRectF, QSize, Qt, QTimer, QUrl, Signal)
+                            QPropertyAnimation, QRect, QRectF, QSize, Qt, QTimer, QUrl, QVariantAnimation, Signal)
 from PySide6.QtGui import (QColor, QCursor, QIcon, QImage, QKeySequence, QPainter, QPainterPath, QPen, QPixmap,
-                           QTextDocument)
+                           QRegion, QTextDocument)
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QLineEdit,
                                QMenu, QPushButton, QScrollArea, QSizePolicy, QTextBrowser, QToolButton, QVBoxLayout,
@@ -457,6 +457,77 @@ def outline(width: int, height: int, tail: str, at: float) -> QPainterPath:
     return path
 
 
+class DragStage(QWidget):
+    """While he is dragged with the bubble open (Daniel, 03/11/2026: «poco fluido, fatto male, brutto e buggoso»): the
+    window as a picture under him, and over it the bubble drawn as a card and the picture of what it holds. The real
+    bubble waits under the stage, its fields and its focus as they are. So a move lays out nothing and repaints nothing
+    of the plan and the panels: the bubble was laid out again and the plan under it repainted at every move of the
+    mouse, some 20 frames a second on a 4K screen, with him behind the pointer. It goes when he is let go."""
+
+    def __init__(self, owner: "Assistant", ground: QPixmap, card: QPixmap, shape: assistant.Bubble):
+        super().__init__(owner.area)
+        self.owner, self.ground, self.card = owner, ground, card
+        self.tail = shape.tail
+        self.place = QRect(shape.x, shape.y, shape.width, shape.height)
+        self.flip_from: QPoint | None = None                # where a change of side started
+        self.goal = self.place.topLeft()
+        self.flip = QVariantAnimation(self)
+        self.flip.setDuration(Motion.NORMAL)
+        self.flip.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self.flip.setStartValue(0.0)
+        self.flip.setEndValue(1.0)
+        self.flip.valueChanged.connect(self._flipping)
+        self.flip.finished.connect(self._flipped)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setGeometry(owner.area.rect())
+        self.show()
+
+    def follow(self, shape: assistant.Bubble) -> None:
+        """The bubble at `shape`: at once on its side, gliding there when it changes side."""
+        self.goal = QPoint(shape.x, shape.y)
+        if shape.tail != self.tail:
+            self.tail = shape.tail
+            self.flip_from = self.place.topLeft()
+            self.flip.start()
+        if self.flip_from is None:
+            self._put(self.goal)
+        elif self.flip.state() != QVariantAnimation.State.Running:
+            self._put(self.goal)
+        else:
+            self._flipping(self.flip.currentValue() or 0.0)
+
+    def _flipping(self, t: float) -> None:
+        if self.flip_from is not None:
+            self._put(self.flip_from + (self.goal - self.flip_from) * t)
+
+    def _flipped(self) -> None:
+        self.flip_from = None
+        self._put(self.goal)
+
+    def _put(self, at: QPoint) -> None:
+        was = self.place
+        self.place = QRect(at, was.size())
+        room = 2 * assistant.TAIL
+        self.update(QRegion(was.adjusted(-room, -room, room, room)) + QRegion(self.place.adjusted(-room, -room, room, room)))
+
+    def paintEvent(self, event) -> None:
+        p = QPainter(self)
+        p.setClipRegion(event.region())
+        p.drawPixmap(0, 0, self.ground)
+        c = self.owner.colours
+        r = self.place
+        along = self.owner.y() + assistant.SIZE / 2 - r.y() if self.tail in ("left", "right") \
+            else self.owner.x() + assistant.SIZE / 2 - r.x()
+        p.translate(r.topLeft())
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        p.setPen(QPen(QColor(c["line"]), 1.0))
+        p.setBrush(QColor(c["panel"]))
+        p.drawPath(outline(r.width(), r.height(), self.tail, along))
+        t = assistant.TAIL + 1
+        p.drawPixmap(t if self.tail == "left" else 1, t if self.tail == "top" else 1, self.card)
+
+
 class SuggestionsBox(QWidget):
     """Keep natural question height, but allow a dock to cross its compact threshold."""
 
@@ -584,6 +655,9 @@ class Assistant(QFrame):
         self.docked = False
         self.moved = False
         self.hand_placed = False                            # the bubble is where the grip let it go (place_bubble)
+        self.stage: DragStage | None = None                 # he is being dragged with the bubble open
+        self.follow_at = 0                                  # how far along its side the bubble was when the drag began
+        self.follow_shape: assistant.Bubble | None = None   # where it is going, in the area's pixels
         self.bubble_dims = assistant.BUBBLE_DEFAULT
         self.clock = time.monotonic
         self.mood = assistant.Mood(seed=int(self.clock() * 1000) % 100000, now=self.clock())
@@ -1314,7 +1388,7 @@ class Assistant(QFrame):
 
     def place_bubble(self) -> None:
         """The bubble at its place beside the character, now (the area changed, he was dragged, it was resized)."""
-        if self.bubble.grip.drag is not None:               # under the designer's hand: its place is his till he lets go
+        if self.bubble.grip.drag is not None or self.stage is not None:     # under the designer's hand: its place is his till he lets go
             return
         self._set_limits()
         if not self._hand_place_holds():
@@ -1329,6 +1403,76 @@ class Assistant(QFrame):
                                                    shape.at))
         self.bubble.raise_()
         self.raise_()
+
+    def _stage_up(self) -> None:
+        """The window and the bubble's content as pictures, once, when the drag begins (DragStage)."""
+        shape = self.bubble.shape
+        if shape is None or not self.bubble.isVisible():
+            return
+        self._stop_bubble_animation()
+        card = self.panel.grab()
+        away = QPoint(-2 * self.area.width(), 0)            # out of the picture: they do not hide, the focus stays
+        bubble_at, him_at = self.bubble.pos(), self.pos()
+        self.bubble.move(away)
+        self.move(away)
+        ground = self.area.grab()
+        self.bubble.move(bubble_at)
+        self.move(him_at)
+        self.follow_at, self.follow_shape = shape.at, shape
+        self.stage = DragStage(self, ground, card, shape)
+        self.raise_()
+
+    def _follow_with_bubble(self) -> None:
+        top, w, h = self.free()
+        s = self.follow_shape
+        if s is None:
+            return
+        character = (self.x(), self.y() - top, assistant.SIZE, assistant.SIZE)
+        new = assistant.bubble_follow(s.tail, self.follow_at, (s.width, s.height), character, (w, h))
+        if (new.tail in ("left", "right")) != (s.tail in ("left", "right")):
+            self.follow_at = new.at                         # from a side to the head or the foot: «along» is another line
+        self.follow_shape = assistant.Bubble(new.x, new.y + top, new.width, new.height, new.tail, new.at)
+        self.stage.follow(self.follow_shape)
+
+    def _stage_down(self) -> None:
+        """The real bubble where the picture is, and the stage gone; if a place it must keep off is under it now, it
+        glides to the first good one."""
+        stage, self.stage = self.stage, None
+        if stage is None:
+            return
+        self.bubble.set_shape(self.follow_shape)
+        self.hand_placed = True
+        stage.flip.stop()
+        stage.hide()
+        stage.deleteLater()
+        self.bubble.raise_()
+        self.raise_()
+        if self._hand_place_holds():
+            return
+        goal = self.bubble_shape()
+        if goal is None:
+            self.place_bubble()
+            return
+        self.hand_placed = False
+        self._slide_bubble(assistant.Bubble(goal.x, goal.y + self.top(), goal.width, goal.height, goal.tail, goal.at))
+
+    def _slide_bubble(self, shape: assistant.Bubble) -> None:
+        if not self.moving():
+            self.bubble.set_shape(shape)
+            return
+        start = self.bubble.geometry()
+        self.bubble.set_shape(shape)
+        self.bubble.placing = True                          # moved, not resized by hand
+        self.bubble.setGeometry(start)
+        slide = QPropertyAnimation(self.bubble, b"geometry", self)
+        slide.setDuration(SLIDE_MS)
+        slide.setEasingCurve(self.animation.easingCurve())
+        slide.setStartValue(start)
+        slide.setEndValue(QRect(shape.x, shape.y, shape.width, shape.height))
+        slide.valueChanged.connect(self.bubble.update)
+        slide.finished.connect(self._stop_slide)
+        self.bubble_slide = slide
+        slide.start()
 
     def _set_limits(self) -> None:
         _top, w, h = self.free()
@@ -1541,8 +1685,13 @@ class Assistant(QFrame):
                 start = self.drag[1] + delta
                 x, y = assistant.clamp((start.x(), start.y() - top), (w, h), self.size_now())
                 self.move(QPoint(x, y + top))
-                if self.opened:
-                    self.place_bubble()
+                if self.opened and not self.docked:
+                    if self.stage is None:
+                        self._stage_up()
+                    if self.stage is not None:
+                        self._follow_with_bubble()
+                    else:
+                        self.place_bubble()
             return True
         if kind == QEvent.Type.MouseButtonRelease and self.drag is not None:
             self.drag = None
@@ -1578,7 +1727,9 @@ class Assistant(QFrame):
         """Dragged: this is his place from now on, in every phase (R155)."""
         top, w, h = self.free()
         self.places[self.tab] = assistant.anchor_of((self.x(), self.y() - top), self.size_now(), (w, h))
-        if self.opened:
+        if self.stage is not None:
+            self._stage_down()
+        elif self.opened:
             self.place_bubble()
 
     def showEvent(self, event) -> None:
@@ -1588,6 +1739,8 @@ class Assistant(QFrame):
     def hideEvent(self, event) -> None:
         super().hideEvent(event)
         self._update_timer()
+        if self.stage is not None:
+            self._stage_down()
 
     # open and closed
 

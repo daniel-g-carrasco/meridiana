@@ -522,6 +522,29 @@ def bubble_place(character: Rect, size: tuple[int, int], area: tuple[int, int],
     return None
 
 
+def bubble_follow(tail: str, at: int, size: tuple[int, int], character: Rect, area: tuple[int, int]) -> Bubble:
+    """Where the bubble goes with him while he is dragged: on the side it is, as far along it as it was (`at`), pushed
+    back inside the area; on the opposite side only when this one has no room left, anywhere else when neither has.
+    bubble_place chooses by where the middle of the area is: while dragging, the bubble jumped at every half
+    (Daniel, 03/11/2026)."""
+    cx, cy, cw, ch = character
+    aw, ah = area
+    bw, bh = size
+    mid_x, mid_y = cx + cw / 2, cy + ch / 2
+    for side in (tail, {"left": "right", "right": "left", "top": "bottom", "bottom": "top"}[tail]):
+        if side in ("left", "right"):
+            x = cx + cw + GAP if side == "left" else cx - GAP - bw
+            y = max(0, min(int(mid_y - at), ah - bh))
+            there = int(mid_y - y)
+        else:
+            y = cy + ch + GAP if side == "top" else cy - GAP - bh
+            x = max(0, min(int(mid_x - at), aw - bw))
+            there = int(mid_x - x)
+        if x >= 0 and y >= 0 and x + bw <= aw and y + bh <= ah:
+            return Bubble(int(x), int(y), bw, bh, side, there)
+    return bubble_place(character, size, area) or bubble_fallback(character, size, area)
+
+
 def bubble_fallback(character: Rect, size: tuple[int, int], area: tuple[int, int]) -> Bubble:
     """When nothing fits (an area smaller than the character and the bubble side by side): beside him towards
     the middle, kept inside the area, over him if it must."""
