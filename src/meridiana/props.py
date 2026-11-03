@@ -14,7 +14,7 @@ import numpy as np
 from . import mesh
 
 TREE_TRIANGLE_BUDGET = 700
-PERSON_TRIANGLE_BUDGET = 600
+PERSON_TRIANGLE_BUDGET = 900
 CAR_TRIANGLE_BUDGET = 1600
 OBSTACLE_TRIANGLE_BUDGET = 400
 
@@ -36,6 +36,7 @@ DEFAULT_COLOURS = {
     "glass": (0.35, 0.62, 0.72),
     "dark": (0.12, 0.16, 0.19),
     "person": (0.25, 0.43, 0.62),
+    "trousers": (0.19, 0.25, 0.33),
     "skin": (0.76, 0.55, 0.40),
     "helmet": (0.95, 0.70, 0.12),
     "car": (0.38, 0.56, 0.68),
@@ -111,6 +112,18 @@ class _Builder:
     def quad(self, a, b, c, d, colour, towards):
         self.tri(a, b, c, colour, towards)
         self.tri(a, c, d, colour, towards)
+
+    def smooth(self, points, normals, colour):
+        """A triangle with a normal of its own at each corner: the light runs over it, no facets show."""
+        a, b, c = points
+        face = np.cross(b - a, c - a)
+        if float(np.linalg.norm(face)) < 1e-14:
+            return
+        order = (0, 1, 2) if float(np.dot(face, normals[0] + normals[1] + normals[2])) > 0 else (0, 2, 1)
+        for i in order:
+            self.pos.append(points[i])
+            self.nor.append(normals[i])
+            self.col.append(colour)
 
     def arrays(self):
         return (np.asarray(self.pos, dtype=np.float32), np.asarray(self.nor, dtype=np.float32),
@@ -530,6 +543,53 @@ def obstacle(kind="other", width=None, depth=None, height=None, rotation=0.0, co
     return _rotate_qt(builder.arrays(), float(rotation))
 
 
+def _blob(builder, a, b, ra, rb, colour, segments=8, caps=1, scale=(1.0, 1.0, 1.0)):
+    """A smooth body between two points, round at both ends, radius `ra` at `a` and `rb` at `b`; `scale` stretches it about
+    its middle, its normals with it."""
+    a, b = np.asarray(a, dtype=np.float64), np.asarray(b, dtype=np.float64)
+    axis = b - a
+    length = float(np.linalg.norm(axis))
+    along = axis / length if length > 1e-9 else np.array((0.0, 1.0, 0.0))
+    helper = np.array((0.0, 0.0, 1.0)) if abs(along[2]) < 0.9 else np.array((1.0, 0.0, 0.0))
+    side = np.cross(along, helper)
+    side /= np.linalg.norm(side)
+    other = np.cross(along, side)
+    waist = math.asin(max(-0.9, min(0.9, (ra - rb) / length))) if length > 1e-9 else 0.0
+    rows = [(a, ra, -math.pi / 2 + (waist + math.pi / 2) * k / (caps + 1)) for k in range(caps + 2)]
+    rows += [(b, rb, waist + (math.pi / 2 - waist) * k / (caps + 1)) for k in range(caps + 2)]
+    stretch = np.asarray(scale, dtype=np.float64)
+    middle = (a + b) / 2
+    angles = [math.tau * j / segments for j in range(segments)]
+    grid = []
+    for centre, radius, theta in rows:
+        ring = []
+        for angle in angles:
+            out = side * math.cos(angle) + other * math.sin(angle)
+            normal = along * math.sin(theta) + out * math.cos(theta)
+            point = centre + normal * radius
+            normal = normal / stretch
+            ring.append((middle + (point - middle) * stretch, normal / np.linalg.norm(normal)))
+        grid.append(ring)
+    for low, high in zip(grid, grid[1:], strict=False):
+        for j in range(segments):
+            k = (j + 1) % segments
+            for one, two, three in ((low[j], low[k], high[k]), (low[j], high[k], high[j])):
+                builder.smooth((one[0], two[0], three[0]), (one[1], two[1], three[1]), colour)
+
+
+def _fitted(shape, width, depth, height):
+    """The figure stretched to its dimensions exactly, standing on the ground, in the middle; its normals with it."""
+    pos, nor, col = shape
+    low, high = pos.min(axis=0), pos.max(axis=0)
+    size = np.maximum(high - low, 1e-6)
+    stretch = np.array((width, height, depth), dtype=np.float64) / size
+    centre = (low + high) / 2
+    out = (pos - np.array((centre[0], low[1], centre[2]))) * stretch
+    normals = nor / stretch
+    normals /= np.linalg.norm(normals, axis=1, keepdims=True)
+    return out.astype(np.float32), normals.astype(np.float32), col
+
+
 def _person_dimensions(kind, width, depth, height):
     if kind not in PERSON_KINDS:
         raise ValueError(f"unknown person kind: {kind}")
@@ -541,52 +601,43 @@ def _person_dimensions(kind, width, depth, height):
 
 
 def person(kind="adult", width=None, depth=None, height=None, rotation=0.0, colours=None):
-    """A standing adult, walking adult, child or helmeted worker, with anatomical reference proportions."""
+    """A standing adult, walking adult, child or helmeted worker, as the scale figures of an architect's drawing: smooth
+    continuous bodies with no features, the proportions right (Daniel, 03/11/2026: «le persone continuano a fare schifo»:
+    the stiff limbs, the shoes as bricks and the head's facets were what showed). Worked out for a height of one."""
     width, depth, height = _person_dimensions(kind, width, depth, height)
     cloth, skin = _colour(colours, "person"), _colour(colours, "skin")
     dark = _colour(colours, "dark")
+    legs = _colour(colours, "trousers")
     builder = _Builder()
-    walking = kind == "walking"
-    stride = 1.0 if walking else 0.0
-
-    torso_radius = width * 0.29
-    _lathe(builder, ((height * 0.43, width * 0.21), (height * 0.52, width * 0.25),
-                     (height * 0.77, torso_radius), (height * 0.84, width * 0.20)), 10, cloth,
-           z_scale=depth * 0.34 / torso_radius, centre=(0.0, 0.0, -depth * 0.125))
-    _lathe(builder, ((height * 0.41, width * 0.20), (height * 0.49, width * 0.21)), 8, dark,
-           z_scale=depth * 0.28 / (width * 0.21))
+    child = kind == "child"
+    stride = 0.095 if kind == "walking" else 0.0
+    hip, chest, neck, head_low, head_high, head_r = ((0.43, 0.68, 0.72, 0.82, 0.86, 0.078) if child
+                                                     else (0.50, 0.76, 0.79, 0.895, 0.925, 0.054))
+    knee = hip * 0.54
     for side in (-1.0, 1.0):
-        hip_z = -side * depth * 0.12 * stride
-        foot_z = side * depth * (0.25 if walking else 0.15)
-        hip = (side * width * 0.15, height * 0.47, hip_z)
-        knee = (side * width * 0.15, height * 0.27, (hip_z + foot_z) * 0.5)
-        ankle = (side * width * 0.15, height * 0.08, foot_z)
-        _rod(builder, hip, knee, width * 0.065, dark)
-        _rod(builder, knee, ankle, width * 0.055, dark)
-        _box(builder, (side * width * 0.15, height * 0.04, foot_z),
-             (width * 0.14, height * 0.08, depth * (0.50 if walking else 0.70)), dark)
-        hand_x = side * width * 0.435
-        hand_z = -side * depth * 0.20 * stride
-        shoulder = (side * width * 0.27, height * 0.77, -depth * 0.08)
-        elbow = (side * width * 0.36, height * 0.59, hand_z * 0.55)
-        _rod(builder, shoulder, elbow, width * 0.052, cloth)
-        _rod(builder, elbow, (hand_x, height * 0.44, hand_z), width * 0.043, cloth)
-        _ellipsoid(builder, height * 0.36, height * 0.44, width * 0.065, skin, segments=8,
-                   z_scale=depth * 0.12 / (width * 0.065), centre=(hand_x, 0.0, hand_z))
-
-    _rod(builder, (0.0, height * 0.78, 0.0), (0.0, height * 0.86, 0.0), width * 0.07, skin)
-    head_radius = width * (0.18 if kind == "child" else 0.15)
-    head_bottom = height * (0.80 if kind == "child" else (0.82 if kind == "worker" else 0.84))
-    head_top = height * (0.96 if kind == "worker" else 1.0)
-    _ellipsoid(builder, head_bottom, head_top, head_radius, skin, z_scale=depth * 0.32 / head_radius)
+        foot_z, hand_z = side * stride, -side * stride * 0.55
+        knee_z = foot_z * (0.75 if side > 0 else 0.35)
+        x = side * 0.05
+        _blob(builder, (x, hip, 0.0), (x, knee, knee_z), 0.06, 0.04, legs, caps=0)
+        _blob(builder, (x, knee, knee_z), (x * 0.92, 0.07, foot_z), 0.04, 0.026, legs, caps=0)
+        _blob(builder, (x * 0.92, 0.03, foot_z - 0.045), (x * 0.92, 0.026, foot_z + 0.07), 0.03, 0.026, dark)
+        shoulder_y = chest + 0.012
+        elbow_y = (shoulder_y + hip) / 2 + 0.005
+        wrist_y = hip - 0.02
+        _blob(builder, (side * 0.112, shoulder_y - 0.008, 0.0), (side * 0.150, elbow_y, hand_z * 0.45), 0.04, 0.028, cloth, 6)
+        _blob(builder, (side * 0.150, elbow_y, hand_z * 0.45), (side * 0.158, wrist_y, hand_z), 0.028, 0.022, cloth, 6, 0)
+        _blob(builder, (side * 0.158, wrist_y - 0.012, hand_z), (side * 0.158, wrist_y - 0.05, hand_z + 0.004), 0.024, 0.02,
+              skin, 6)
+    _blob(builder, (-0.04, hip + 0.01, 0.0), (0.04, hip + 0.01, 0.0), 0.075, 0.075, legs, scale=(1.0, 1.0, 0.78))
+    _blob(builder, (0.0, hip + 0.03, 0.0), (0.0, chest, 0.0), 0.088, 0.108, cloth, 10, 1, scale=(1.22, 1.0, 0.72))
+    _blob(builder, (0.0, neck - 0.02, 0.0), (0.0, head_low, 0.0), 0.03, 0.03, skin, 6, 0)
+    _blob(builder, (0.0, head_low, 0.006), (0.0, head_high, 0.006), head_r, head_r * 0.96, skin, 10, 2,
+          scale=(0.94, 1.0, 1.0))
     if kind == "worker":
         helmet = _colour(colours, "helmet")
-        helmet_radius = width * 0.19
-        _lathe(builder, ((height * 0.925, width * 0.23), (height * 0.945, width * 0.23)), 10, helmet,
-               z_scale=depth * 0.38 / (width * 0.23))
-        _lathe(builder, ((height * 0.945, helmet_radius), (height * 0.975, helmet_radius * 0.82),
-                         (height, 0.0)), 10, helmet, z_scale=depth * 0.34 / helmet_radius)
-    return _rotate_qt(builder.arrays(), float(rotation))
+        _blob(builder, (0.0, head_high + 0.005, 0.006), (0.0, head_high + 0.006, 0.006), 0.07, 0.07, helmet, 8, 1)
+        _lathe(builder, ((head_high + 0.002, 0.082), (head_high + 0.014, 0.082)), 10, helmet)
+    return _rotate_qt(_fitted(builder.arrays(), width, depth, height), float(rotation))
 
 
 def _car_dimensions(kind, length, width, height):
