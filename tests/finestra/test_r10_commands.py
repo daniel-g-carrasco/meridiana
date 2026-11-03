@@ -340,8 +340,8 @@ class StringsDeletedFromTheirModules(WindowCase):
         self.assertIs(bar.button_of("strings_clear"), button)
         self.assertIs(bar.buttons()["tool_erase_string"], button)
         win.commands["tool_erase_inverter"].trigger()
-        self.assertEqual(button.text(), "Delete inv.")
-        self.assertTrue(button.isChecked())
+        self.assertEqual(button.text(), "Delete string")        # R333: what deletes never changes the face
+        self.assertTrue(button.strip.isChecked())
 
 
 class Sweeps(WindowCase):
@@ -639,8 +639,9 @@ class ButtonsWithAMenu(WindowCase):
         self.assertIs(building.family["import_ifc"][1], win.commands["import_ifc"])
         self.assertIn(win.commands["import_ifc"], building.commands.actions())
 
-    def test_the_arrow_and_the_long_press_open_the_menu_and_the_click_runs_the_one_on_the_button(self):
-        from PySide6.QtCore import QPoint, Qt
+    def test_the_strip_opens_the_menu_and_the_click_runs_the_one_on_the_button(self):
+        """R333: the two parts of the button on the window's own commands (tests/widget/test_tool_menu.py has the rules)."""
+        from PySide6.QtCore import Qt
         from PySide6.QtTest import QTest
         win = self.win
         bar = win.bars["model"]
@@ -649,20 +650,10 @@ class ButtonsWithAMenu(WindowCase):
         button = bar.button_of("tool_pitch")
         self.assertIs(button.defaultAction(), win.commands["tool_pitch"])
         words = [win.commands["tool_pitch"].text(), win.commands["tool_ridge"].text()]
-        arrow = button.arrow_rect().center()
-        self.assertEqual(self.menu_of(button, lambda: QTest.mouseClick(button, Qt.MouseButton.LeftButton, pos=arrow)),
-                         [words])
-        self.assertNotEqual(win.plan.tool, "pitch")             # the arrow only opens the menu
-        # held down over the icon: the menu after Qt's delay
-        middle = QPoint(button.width() // 2 - button.ARROW, button.height() // 2)
-        delay = button.style().styleHint(button.style().StyleHint.SH_ToolButton_PopupDelay)
-        self.assertEqual(self.menu_of(button, lambda: (QTest.mousePress(button, Qt.MouseButton.LeftButton, pos=middle),
-                                                       QTest.qWait(delay + 300)), after=delay + 100),
-                         [words])
-        QTest.mouseRelease(button, Qt.MouseButton.LeftButton, pos=middle)
-        self.assertNotEqual(win.plan.tool, "pitch")
-        # a click on the button: the command on it
-        QTest.mouseClick(button, Qt.MouseButton.LeftButton, pos=middle)
+        self.assertEqual(self.menu_of(button, lambda: QTest.mousePress(button.strip, Qt.MouseButton.LeftButton)), [words])
+        self.assertNotEqual(win.plan.tool, "pitch")             # the strip only opens the menu
+        # a click on the command: the one on it
+        QTest.mouseClick(button.face, Qt.MouseButton.LeftButton)
         self.assertEqual(win.plan.tool, "pitch")
         self.assertTrue(button.isChecked())
         # the other one, from the menu or with its key, comes on the button with its word and its tooltip
@@ -672,23 +663,46 @@ class ButtonsWithAMenu(WindowCase):
         self.assertIs(button.defaultAction(), win.commands["tool_ridge"])
         self.assertEqual(button.text(), "Ridge")
         self.assertEqual(button.property("tool"), "tool_ridge")
-        self.assertEqual(button.toolTip(), win.commands["tool_ridge"].toolTip())
+        self.assertTrue(button.toolTip().startswith(win.commands["tool_ridge"].toolTip().split("\n")[0]))
         self.assertEqual(button.width(), width)                 # the bar does not move
         self.assertTrue(button.isChecked())
         win._set_tool("select")
         self.assertFalse(button.isChecked())
-        QTest.mouseClick(button, Qt.MouseButton.LeftButton, pos=middle)
+        QTest.mouseClick(button.face, Qt.MouseButton.LeftButton)
         self.assertEqual(win.plan.tool, "ridge")                # the last one used
 
-    def test_a_command_gone_disabled_gives_way_so_that_the_button_still_opens(self):
+    def test_a_command_gone_disabled_stays_on_the_button_and_the_strip_still_opens(self):
+        """R333, rule 3: nothing changes by itself; a button gone off keeps its strip."""
         win = self.win
         button = win.bars["model"].button_of("tool_building")
-        win.commands["building_template"].setEnabled(True)
-        button.use("building_template")
-        win.commands["building_template"].setEnabled(False)
+        win.commands["tool_building"].setEnabled(False)
+        self.addCleanup(win.commands["tool_building"].setEnabled, True)
         self.assertIs(button.defaultAction(), win.commands["tool_building"])
-        self.assertTrue(button.isEnabled())
-        win.commands["building_template"].setEnabled(True)
+        self.assertFalse(button.face.isEnabled())
+        self.assertTrue(button.strip.isEnabled())
+
+    def test_the_commands_run_once_of_a_menu_leave_the_face_where_it_is(self):
+        win = self.win
+        button = win.bars["model"].button_of("tool_building")
+        win.commands["tool_ridge"].trigger()                    # another family: this one does not move
+        self.assertEqual(button.command, "tool_building")
+        self.assertFalse(win.commands["building_template"].isCheckable())
+        self.assertFalse(win.commands["import_ifc"].isCheckable())
+        win._set_tool("select")
+
+    def test_what_deletes_stays_behind_its_first_word_and_clear_all_stands_apart(self):
+        win = self.win
+        win.show_phase("plant")
+        button = win.bars["plant"].button_of("tool_erase_inverter")
+        win.commands["tool_erase_inverter"].trigger()
+        self.assertEqual(button.command, "tool_erase_string")
+        self.assertEqual(button.text(), "Delete string")
+        self.assertTrue(button.strip.isChecked())               # on, and it shows on the strip
+        win._set_tool("select")
+        self.assertFalse(button.strip.isChecked())
+        actions = button.commands.actions()
+        self.assertIs(actions[-1], win.commands["strings_clear"])
+        self.assertTrue(actions[-2].isSeparator())
 
     def test_the_section_of_the_plant_follows_the_commands_in_the_menus_too(self):
         win = self.win

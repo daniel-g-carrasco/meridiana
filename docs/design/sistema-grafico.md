@@ -150,6 +150,39 @@ Daniel, 25/10/2026 (R121): «deve includere tutti i tasti». Sei tipi, ciascuno 
 | `HELP` «?» | 16 | 8 | `label` | il «?» di un gruppo o di un riquadro |
 | `NAV` voce | 34 | 6 | `body` | le voci della pagina File |
 
+#### I pulsanti della barra della fase (`Bar`, R333)
+
+Daniel, 03/11/2026: «armonizzare le dimensioni dei tasti, renderli più congruenti tra loro». Tre modi della barra (quale, lo
+decide `arrangement.py`, R334), in ciascuno una sola altezza e una sola icona per tutti i pulsanti di tutte le fasi:
+
+| Modo | Pulsante alto | Icona | Largo | Barra | Titolini |
+|---|---|---|---|---|---|
+| `UNDER` parola sotto | icona, riga della parola, 10 (50 a testo medio) | 24 | a passi di 16, minimo 48 | 69 | sì |
+| `BESIDE` parola accanto | 28 | 16 | a passi di 8 | 31 | no |
+| `ICONS` sola icona | 28 | 22 | sempre 32 | 47 | sì |
+
+- **La regola delle larghezze**: la più piccola larghezza del passo che tiene la parola più `Bar.PAD`. Non una larghezza per
+  parola: in italiano quattro larghezze sotto l'icona (48, 64, 80, più 96 e 112 per le parole lunghe), le stesse nella stessa
+  posizione del gruppo. Il passo è più fine con la parola accanto, dove la parola è solo una parte del pulsante.
+- **Il pulsante diviso** è il pulsante semplice più la striscia: la parte comando segue la regola sulla **parola più lunga
+  del suo menu** (la barra non si muove quando la faccia cambia), la striscia è `Bar.STRIP`, 14, alta tutto il pulsante, in tutti i modi.
+- Fra due pulsanti di un gruppo `Bar.GAP` (2). Fra due gruppi un filo alto quanto i pulsanti, con `Bar.GROUP_AIR` (8) per parte.
+- Il pulsante primario della fase (Posa, Calcola): velo `field` e parola `strong`, nessun accento; spento senza velo.
+
+**Il pulsante diviso** (`ui/phasebar.ToolMenuButton`, studio 26, G2): comando e striscia con il chevron, ciascuno col suo stato
+(passaggio, premuto, spento); al passaggio compare il filo fra i due. Con il comando spento la striscia resta viva. La striscia e il
+tasto destro aprono il menu con nomi e tasti. Cosa va sulla faccia:
+1. un **modo di disegno** quando si accende, dal menu, con il suo tasto o da altrove, perché un modo acceso si deve vedere; un
+   comando una tantum no;
+2. i **distruttivi** mai (`Tool.fixed`): quello acceso si vede sulla striscia premuta; «Cancella tutte» (`Tool.danger`) sta in
+   fondo, separata, in rosso;
+3. **mai da sola**: una voce che si spegne si spegne sulla faccia;
+4. un tasto cambia la faccia solo se il comando è un modo (segue dalla 1);
+5. la parola cambia con l'icona, nello stesso posto e alla stessa larghezza, con una dissolvenza di `Motion.FAST` (subito con
+   «meno movimento»);
+6. la faccia dura la sessione: all'avvio torna la voce di base;
+7. il suggerimento dice il comando di ora, il tasto e quanti altri ci sono.
+
 Il pulsante «File» è disegnato come le fasi accanto: senza fondo a riposo, lo strato dell'hover sotto il
 puntatore, quello del premuto finché la sua pagina è aperta (R158, R160).
 

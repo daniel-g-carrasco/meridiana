@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QMenu, QToolButton
 
 from ..i18n import _
 from . import icons
-from .design import Icon
+from .design import Button, Icon
 from .segments import Segments
 
 MAX_SHOWN = 4
@@ -40,6 +40,7 @@ class VariantBar(Segments):
         self.plus.setObjectName("variant-add")
         self.plus.setIcon(icons.icon("plus"))
         self.plus.setIconSize(QSize(Icon.CONTROL - 2, Icon.CONTROL - 2))
+        self.plus.setFixedSize(Button.CHIP[0], Button.CHIP[0])     # square, as tall as the segments beside it (R333)
         self.plus.setToolTip(_("A new variant, a copy of the one in hand, to change without losing it (another "
                                "module, another tilt, a battery) and compare the two"))
         self.plus.setFocusPolicy(Qt.FocusPolicy.NoFocus)
