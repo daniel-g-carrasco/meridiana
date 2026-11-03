@@ -214,8 +214,9 @@ class Corners(unittest.TestCase):
         x, y = b.camera.project(b.vertices[1], *b.size)
         tx, ty = b.camera.project(b.vertices[1] + np.array([0.0, metres, 0.0]), *b.size)
         b.press(1, 0, x, y, False, 0.0, 0.0, 0.0, "", -1)
+        self.assertTrue(b.vertex_dragging(), "the press did not take the corner")
         b.move(0, tx, ty)
-        _setup.turn_events(self.app, 60)
+        self.assertTrue(_setup.wait_until(self.app, lambda: shown, 3), "the model was not drawn during the drag")
         return shown, tx, ty
 
     def test_the_model_follows_the_corner_dragged_and_only_the_release_changes_the_project(self):
