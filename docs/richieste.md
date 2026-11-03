@@ -454,3 +454,6 @@ le righe R242-R265 sopra non sono state promosse a completate senza revisione fi
 | R358 | Sposta in 2D (foto 56): «non si capisce cosa siano questo quadrato centrale e il cerchio sul lato, sono poco chiari, anche passandoci sopra il puntatore del mouse, non danno suggerimenti» | in corso (03/11/2026) |
 | R359 | Cubo della vista 3D (seconda schermata non arrivata): «è possibile far occupare meno spazio a questo elemento? tra simbolo casetta, cerchio esterno, freccia in basso, frecce laterali... La dimensione del cubo ci sta, del resto un po' big e ci starebbe anche una versione compatta con meno scritte / opzioni per schermo piccolo» | in corso (03/11/2026) |
 | R360 | «rendiamo più sottili anche l'evidenziazione dei lati quando selezioniamo un elemento in 3D. È troppo spessa» | in corso (03/11/2026) |
+| R361 | Fumetto di Meridio: «il triangolino che lo unisce al fumetto, quando ridimensiono il fumetto, questo si sposta in modo randomico e non rimane ancorato di fianco a meridio» | in corso (03/11/2026) |
+| R362 | «non mi piace che nel fumetto quando si fanno cose, interazioni, ecc, si ridimensionano continuamente gli elementi e gli spazi, oltretutto in modo scattoso» | in corso (03/11/2026) |
+| R363 | «è da migliorarne la vista / disposizione elementi quando ne viene ridotta molto la dimensione (forse anche limitarla?)» | in corso (03/11/2026) |
