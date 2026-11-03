@@ -21859,3 +21859,6 @@ msgid "{n} corner chosen."
 msgid_plural "{n} corners chosen: they go together."
 msgstr[0] "{n} vertice scelto."
 msgstr[1] "{n} vertici scelti: si muovono insieme."
+
+msgid "Attach and show"
+msgstr "Allega e mostra"
