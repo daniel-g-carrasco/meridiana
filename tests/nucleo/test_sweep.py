@@ -31,6 +31,23 @@ class Sweep(unittest.TestCase):
         self.assertTrue(sweep.chosen_quads(self.QUADS, bow, sweep.CROSSING).any())
         self.assertFalse(sweep.chosen_quads(self.QUADS, [(0, 0), (1, 1)], sweep.CROSSING).any())
 
+    def test_the_index_of_a_layout_gives_the_answer_of_the_plain_function(self):
+        """R344: the shapes made once and the boxes that leave out what is far give the same modules, for a window, a
+        crossing, a turned rectangle and a free shape."""
+        rng = np.random.default_rng(344)
+        xs, ys = np.meshgrid(np.arange(0, 60, 1.2), np.arange(0, 30, 2.1))
+        corner = np.stack([xs.ravel(), ys.ravel()], axis=1)
+        quads = np.stack([corner, corner + [1.0, 0], corner + [1.0, 1.7], corner + [0, 1.7]], axis=1)
+        index = sweep.QuadIndex(quads)
+        rings = [[(5, 3), (40, 3), (40, 20), (5, 20)], [(-5, -5), (70, -5), (70, 40), (-5, 40)],
+                 [(10, 5), (30, 2), (45, 12), (28, 25)], [(5, 5), (35, 25), (35, 5), (5, 25)]]       # the last a bow tie
+        rings += [[tuple(p) for p in rng.uniform(-5, 65, size=(int(rng.integers(3, 12)), 2))] for _ in range(20)]
+        for ring in rings:
+            for kind in (sweep.WINDOW, sweep.CROSSING):
+                self.assertEqual(index.chosen(ring, kind).tolist(), sweep.chosen_quads(quads, ring, kind).tolist())
+        self.assertFalse(index.chosen([(0, 0), (1, 1)], sweep.WINDOW).any())
+        self.assertEqual(len(sweep.QuadIndex(np.zeros((0, 4, 2))).chosen(rings[0], sweep.WINDOW)), 0)
+
     def test_the_outlines_follow_the_same_rule(self):
         ring = [(-1, -1), (1.5, -1), (1.5, 2), (-1, 2)]
         rings = [[(0, 0), (1, 0), (1, 1)], [(1, 0), (2, 0), (2, 1)], [(5, 5), (6, 5), (6, 6)]]

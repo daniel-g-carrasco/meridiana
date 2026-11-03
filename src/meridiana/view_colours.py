@@ -64,6 +64,24 @@ PAPER = {"bg": "#f3f1ec", "bld_stroke": "#3a352d", "bld_fill": "#3a352d10", "pit
          "draw": "#b85c00", "label_bg": "#1e1c19e6", "label_fg": "#f8f7f4", "prop": "#0f7f78",
          "sweep_window": "#1d6fd6", "sweep_crossing": "#178a4a"}
 
+
+def _critical_on(ground: str, lighter: bool) -> str:
+    """The traffic light's red (theme_colors.STATUS) moved in lightness until it reads on `ground` at 4.5:1, as the
+    errors' red of the theme does on a field (`danger`): lighter on a dark ground, darker on a light one."""
+    L, C, h = theme_colors.lch(theme_colors.STATUS["critical"])
+    red = theme_colors.hex_of(L, C, h)
+    while theme_colors.contrast(red, ground) < 4.5 and 0.2 < L < 0.95:
+        L += 0.01 if lighter else -0.01
+        red = theme_colors.hex_of(L, C, h)
+    return red
+
+
+# R344: what a sweep with Shift takes out of the selection: the rectangle, the lasso, the modules lit and the sign
+# beside the pointer, in that red
+PHOTO["sweep_remove"] = _critical_on(PHOTO["bg"], lighter=True)
+PAPER["sweep_remove"] = _critical_on(PAPER["bg"], lighter=False)
+
+
 WORLD = {"ocean": "#263943", "land": ("#52665b", "#5c6858", "#4e6261"), "border": "#a0aa98",
          "graticule": "#78909c35", "label": "#f2efe6", "label_halo": "#14161ae0"}
 
