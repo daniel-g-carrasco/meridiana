@@ -15,7 +15,7 @@ from . import mesh
 
 TREE_TRIANGLE_BUDGET = 400
 PERSON_TRIANGLE_BUDGET = 300
-CAR_TRIANGLE_BUDGET = 300
+CAR_TRIANGLE_BUDGET = 850
 OBSTACLE_TRIANGLE_BUDGET = 200
 
 TREE_KINDS = ("broadleaf", "conifer", "pine", "shrub", "hedge", "palm")
@@ -489,20 +489,30 @@ def car(kind="compact", length=None, width=None, height=None, rotation=0.0, colo
     paint, tyre = _colour(colours, "car"), _colour(colours, "tyre")
     glass = _colour(colours, "glass")
     builder = _Builder()
+    dark, metal = _colour(colours, "dark"), _colour(colours, "metal")
     _box(builder, (0.0, height * 0.36, 0.0), (length, height * 0.36, width * 0.84), paint)
-    _car_cabin(builder, length, width, height, paint)
+    _box(builder, (length * 0.33, height * 0.55, 0.0), (length * 0.30, height * 0.05, width * 0.82), paint)
+    _box(builder, (-length * 0.37, height * 0.55, 0.0), (length * 0.22, height * 0.05, width * 0.82), paint)
+    _car_cabin(builder, length, width, height, glass)
+    _box(builder, (length * 0.03, height * 0.985, 0.0), (length * 0.30, height * 0.03, width * 0.60), paint)
     for side in (-1.0, 1.0):
-        _box(builder, (length * 0.02, height * 0.72, side * width * 0.33),
-             (length * 0.34, height * 0.22, width * 0.02), glass)
+        for x in (-length * 0.12, length * 0.18):
+            _rod(builder, (x, height * 0.58, side * width * 0.40),
+                 (x, height * 0.98, side * width * 0.30), width * 0.018, paint, 6)
     radius = height * 0.18
     for x in (-length * 0.31, length * 0.31):
         for side in (-1.0, 1.0):
-            _rod(builder, (x, radius, side * width * 0.5), (x, radius, side * width * 0.38), radius, tyre, 8)
+            outer = side * width * 0.5
+            _rod(builder, (x, radius, outer), (x, radius, side * width * 0.38), radius, tyre, 16)
+            _rod(builder, (x, radius, outer - side * 0.002), (x, radius, outer - side * width * 0.025),
+                 radius * 0.58, metal, 12)
+            _rod(builder, (x, radius, outer - side * 0.004), (x, radius, outer - side * width * 0.02),
+                 radius * 0.16, dark, 10)
     for side in (-1.0, 1.0):
-        _box(builder, (length * 0.46, height * 0.40, side * width * 0.25),
-             (length * 0.06, height * 0.10, width * 0.16), _colour(colours, "light"))
-        _box(builder, (-length * 0.46, height * 0.40, side * width * 0.25),
-             (length * 0.06, height * 0.10, width * 0.16), _colour(colours, "rear"))
+        _box(builder, (length * 0.485, height * 0.43, side * width * 0.27),
+             (length * 0.03, height * 0.10, width * 0.20), _colour(colours, "light"))
+        _box(builder, (-length * 0.485, height * 0.43, side * width * 0.27),
+             (length * 0.03, height * 0.10, width * 0.20), _colour(colours, "rear"))
     return _rotate_qt(builder.arrays(), float(rotation))
 
 

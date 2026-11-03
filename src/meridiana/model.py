@@ -1344,9 +1344,9 @@ class Project:
         return f"{prop_names().get(item.kind, item.kind)} {n or item.id}"
 
     def prop_base(self, item: Prop) -> float:
-        """The height it stands at: the roof of its building under its middle, the ground otherwise."""
+        """The height it stands at: no corner of its footprint sinks into the roof."""
         b = self.building(item.building)
-        return float(roof_z(b, [(float(item.at[0]), float(item.at[1]))])[0]) if b is not None else 0.0
+        return float(max(roof_z(b, item.footprint()))) if b is not None else 0.0
 
     def prop_host(self, at) -> str | None:
         """The building whose outline holds the point, or None (the ground). Not a canopy: a car or a person under
