@@ -292,8 +292,10 @@ class Alone(unittest.TestCase):
         self.app.processEvents()
         self.app.processEvents()
         margins = a.bubble.box.contentsMargins()
-        self.assertGreaterEqual(a.bubble.height(),
-                                a.panel.minimumSizeHint().height() + margins.top() + margins.bottom())
+        needed = a.panel.minimumSizeHint().height() + margins.top() + margins.bottom()
+        # the bubble grows with its movement when other tests left motion on: patient, the height is what counts
+        _setup.wait_until(self.app, lambda: a.bubble.height() >= needed, 2)
+        self.assertGreaterEqual(a.bubble.height(), needed)
         layout = a.chat_content.layout()
         shown = [layout.itemAt(i).widget() for i in range(layout.count())]
         shown = [w for w in shown if w is not None and w.isVisibleTo(a.panel)]

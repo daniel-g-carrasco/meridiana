@@ -1228,6 +1228,8 @@ class Assistant(QFrame):
         at = shape.at + shape.y - y if shape.tail in ("left", "right") else shape.at
         self.card_room = height
         self.bubble.set_shape(assistant.Bubble(shape.x, y, shape.width, height, shape.tail, at))
+        # the room gained may bring the questions back beside the card, and they ask for more: measured again
+        self.questions_timer.start(0)
 
     def reposition(self, animate: bool = False) -> None:
         self._stop_slide()
