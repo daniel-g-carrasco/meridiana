@@ -118,6 +118,45 @@ class ThemeOfTheWindow(unittest.TestCase):
         sizes.setCurrentIndex(sizes.findData("medium"))
         self.assertEqual({w: QFontInfo(w.font()).pixelSize() for w in before}, before)
 
+    def test_the_font_chosen_in_appearance_changes_the_window_at_once_and_stays(self):
+        """Daniel, 03/11/2026: Plex with its condensed cut in the bar, chosen at will; sizes and weights stay."""
+        from PySide6.QtGui import QFontInfo
+        from PySide6.QtWidgets import QApplication
+
+        from meridiana.ui import phasebar, theme
+
+        self.addCleanup(theme.change_font, "inter")
+        self.win.show()
+        widgets = [w for w in QApplication.allWidgets() if w.window() is self.win and w.isVisible()]
+        before = {w: (QFontInfo(w.font()).pixelSize(), w.font().weight()) for w in widgets}
+        self.win._preferences("appearance")
+        fonts = self.win.file_page.settings.appearance.font_choice
+        self.assertEqual([fonts.itemData(i) for i in range(fonts.count())], list(theme.FONTS))
+        group = next(g for bar in self.win.bars.values() for g in bar.groups)
+        fonts.setCurrentIndex(fonts.findData("plex"))
+        self.assertEqual(config.load(self.paths.config_file).font, "plex")
+        self.assertEqual(QApplication.font().family(), "IBM Plex Sans")
+        self.assertEqual(QFontInfo(self.win.font()).family(), "IBM Plex Sans")
+        self.assertEqual(theme.tight_family(), "IBM Plex Sans Condensed")
+        button = next(b for b in group.buttons.values() if isinstance(b, phasebar.ToolButton))
+        self.assertEqual(QFontInfo(button.font()).family(), "IBM Plex Sans Condensed")
+        self.assertEqual({w: (QFontInfo(w.font()).pixelSize(), w.font().weight()) for w in before}, before)
+        self.assertEqual(theme.load_fonts(), "IBM Plex Sans")
+        fonts.setCurrentIndex(fonts.findData("inter"))
+        self.assertEqual(config.load(self.paths.config_file).font, "inter")
+        self.assertEqual(QFontInfo(button.font()).family(), "Inter")
+        self.assertEqual(theme.tight_family(), "")
+
+    def test_the_condensed_words_of_the_bar_ask_for_less_room(self):
+        from meridiana.ui import theme
+
+        self.addCleanup(theme.change_font, "inter")
+        bar = self.win.bars["plant"]
+        mode = "under"
+        wide = bar.width_in(mode)
+        theme.change_font("plex")
+        self.assertLess(bar.width_in(mode), wide)
+
     def sheet_again(self) -> float:
         """Seconds to take the application's sheet off and put it on again and to polish the window's widgets: what a
         change of theme costs."""

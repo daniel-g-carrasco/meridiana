@@ -32,6 +32,8 @@ def controls() -> tuple[Target, ...]:
           lambda w: w.file_page.settings.appearance.mode),
         T("setting", "appearance.text_size", "appearance", _("Size of the text"),
           lambda w: w.file_page.settings.appearance.text_size),
+        T("setting", "appearance.font", "appearance", _("Font"),
+          lambda w: w.file_page.settings.appearance.font_choice),
         T("setting", "appearance.colour", "appearance", _("Colour"),
           lambda w: w.file_page.settings.appearance.colour),
         T("setting", "privacy.geocoding", "privacy", _("Find the site"),

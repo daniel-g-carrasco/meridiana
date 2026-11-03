@@ -21882,3 +21882,15 @@ msgstr "Con corrimano"
 #: src/meridiana/ui/plan.py:245
 msgid "Click each corner; Enter or a double click finishes, Backspace removes the last point, Esc cancels. Type a number for the length of a segment."
 msgstr "Fai clic su ogni angolo; Invio o doppio clic per finire, Backspace elimina l'ultimo punto, Esc annulla. Scrivi un numero per la lunghezza di un tratto."
+
+#: src/meridiana/ui/appearance.py:96
+msgid "IBM Plex Sans, condensed in the bar"
+msgstr "IBM Plex Sans, condensato nella barra"
+
+#: src/meridiana/ui/appearance.py:135
+msgid "The font of the whole window. The reports keep theirs"
+msgstr "Il carattere di tutta la finestra. Le relazioni mantengono il loro"
+
+#: src/meridiana/ui/appearance.py:136 src/meridiana/ui/navigation_targets.py:35
+msgid "Font"
+msgstr "Carattere"

@@ -29,7 +29,7 @@ from pathlib import Path
 
 from . import SLUG
 
-CONFIG_VERSION = 25
+CONFIG_VERSION = 26
 
 
 def _v1_to_v2(data: dict) -> dict:
@@ -206,6 +206,11 @@ def _v24_to_v25(data: dict) -> dict:
     return {**data, "strings_view": data.get("strings_view", "cards")}
 
 
+def _v25_to_v26(data: dict) -> dict:
+    """Version 26 has the font of the window (Daniel, 03/11/2026): Inter, as before."""
+    return {**data, "font": data.get("font", "inter")}
+
+
 # from one format version to the next, in order: {from_version: step}
 MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5,
                                                  5: _v5_to_v6, 6: _v6_to_v7, 7: _v7_to_v8, 8: _v8_to_v9,
@@ -214,7 +219,7 @@ MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: 
                                                  15: _v15_to_v16, 16: _v16_to_v17, 17: _v17_to_v18,
                                                  18: _v18_to_v19, 19: _v19_to_v20,
                                                  20: _v20_to_v21, 21: _v21_to_v22, 22: _v22_to_v23,
-                                                 23: _v23_to_v24, 24: _v24_to_v25}
+                                                 23: _v23_to_v24, 24: _v24_to_v25, 25: _v25_to_v26}
 
 
 @dataclass
@@ -223,6 +228,7 @@ class Config:
     accent: str = "bronze"               # the theme's colour: "system", a ready-made one by name, or "#rrggbb"
     backgrounds: str = "meridiana"       # "meridiana", "tinted" (from the colour), "grey"
     text_size: str = "medium"            # "small", "medium", "large": the text at 12, 13 or 14 px (design.TEXT_SIZES)
+    font: str = "inter"                  # the font of the window: a key of ui/theme.FONTS
     toolbar: str = "text"                # the bar of the phase: "text" under the icons (hidden by itself in a low
     #                                      window), or "icons" alone (study 17, B4; design C1)
     toolbar_place: str = "top"           # "top" under the row of the phases, or "left" on the side, icons alone

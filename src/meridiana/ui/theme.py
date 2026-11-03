@@ -31,6 +31,15 @@ PORTAL = ("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop", "
 FONT_DIR = "inter"
 FONT_FILES = ("Inter-Regular.ttf", "Inter-SemiBold.ttf", "Inter-Bold.ttf")
 FONT_WEIGHTS = dict(zip(FONT_FILES, (400, 600, 700), strict=True))
+# The fonts to choose from in Preferences > Appearance (Daniel, 03/11/2026, study 29): each one's folder in data/fonts,
+# its files and, where it has one, a condensed cut for where room is short (the words of the phase bars). Static files:
+# on Linux a variable font with its width axis loses it, or its weight, when a weight is asked (study 29, section 4).
+PLEX_WEIGHTS = ("Regular", "SemiBold", "Bold")
+FONTS = {"inter": {"dir": FONT_DIR, "files": FONT_FILES, "tight": ()},
+         "plex": {"dir": "ibm-plex", "files": tuple(f"IBMPlexSans-{w}.ttf" for w in PLEX_WEIGHTS),
+                  "tight": tuple(f"IBMPlexSansCondensed-{w}.ttf" for w in PLEX_WEIGHTS)}}
+FONT_WEIGHTS.update({f: weight for files in (FONTS["plex"]["files"], FONTS["plex"]["tight"])
+                     for f, weight in zip(files, (400, 600, 700), strict=True)})
 # The marks of the notes (⋯) and the snaps' signs (∥ ⊥ ⇧) are not all in Inter, nor all in Segoe UI.
 # The first character Qt has to look for elsewhere costs it 1-2 s on Windows, whatever the font engine
 # (23/10/2026): at the start, with the checks' panel, or later, freezing the page that first shows one. So these
@@ -502,7 +511,7 @@ class Theme(QObject):
             self.scroll_style = scrollbars.install(self.app)
         # after the style: setting one gives the lists, the menus, the tooltips and the status bar the platform's
         # font again (Segoe UI 9 pt on Windows: the project's tree and the checks were 12 px, R121)
-        self.family = load_fonts()
+        self.family = load_fonts(self.cfg.font if self.cfg is not None else "inter")
         class_fonts(self.app)
         from .style import shared
         self.style = shared()                       # the groups' and the menus' style (ui/style.py)
@@ -579,7 +588,12 @@ class Theme(QObject):
             QTimer.singleShot(0, self, self.apply)
 
 
-_FAMILY: list = []          # the family loaded, once per process
+_CHART_FONTS: list = []     # (file, family, weight): given to matplotlib at its first figure or formula
+_MATPLOTLIB_READY: list = []
+_TIGHT_TEXT = "tight-text"  # a widget's property: its text in the condensed cut
+_FAMILY: list = []          # the family in use, set once per process by load_fonts and by change_font after it
+_TIGHT: list = [""]         # its condensed cut, "" when it has none
+_LOADED: dict = {}          # a key of FONTS -> (family, condensed family): files are read once
 
 
 def class_fonts(app=None) -> None:
@@ -652,14 +666,10 @@ def change_text_size(choice: str, app=None) -> int:
     return step
 
 
-def load_fonts() -> str:
-    """Inter from its files (data/fonts), as the application's font at the system's size; the charts
-    get it too. Once per process. The family as Qt names it, "" when the files are not there."""
-    if _FAMILY:
-        return _FAMILY[0]
-    folder = paths.shipped("fonts", FONT_DIR)
+def _font_files(folder, names) -> str:
+    """The files of a family given to Qt and noted for the charts; the family as Qt names it, "" if none is read."""
     family = ""
-    for name in FONT_FILES if folder is not None else ():
+    for name in names:
         f = folder / name
         fid = QFontDatabase.addApplicationFont(str(f)) if f.exists() else -1
         families = QFontDatabase.applicationFontFamilies(fid) if fid >= 0 else []
@@ -668,6 +678,67 @@ def load_fonts() -> str:
             continue
         family = family or families[0]
         _CHART_FONTS.append((f, families[0], FONT_WEIGHTS[name]))
+        if _MATPLOTLIB_READY:
+            _register_for_charts(f, families[0], FONT_WEIGHTS[name])
+    return family
+
+
+def _font_families(choice: str) -> tuple[str, str]:
+    """The family of a key of FONTS and its condensed one, loaded the first time they are asked."""
+    if choice not in _LOADED:
+        entry = FONTS[choice]
+        folder = paths.shipped("fonts", entry["dir"])
+        _LOADED[choice] = ((_font_files(folder, entry["files"]), _font_files(folder, entry["tight"]))
+                           if folder is not None else ("", ""))
+    return _LOADED[choice]
+
+
+def tight_family() -> str:
+    """The condensed cut of the font in use, for where room is short; "" when it has none."""
+    return _TIGHT[0]
+
+
+def tighten(widget) -> None:
+    """`widget` in the condensed cut of the font in use, now and after a change of font (change_font)."""
+    widget.setProperty(_TIGHT_TEXT, True)
+    if _TIGHT[0]:
+        f = QFont(widget.font())
+        f.setFamily(_TIGHT[0])
+        widget.setFont(f)
+
+
+def change_font(choice: str, app=None) -> bool:
+    """The font chosen with the window open, at once like the size of the text and for the same reasons
+    (change_text_size): every widget's font noted, the application's and the kinds' changed, the style sheet set again,
+    then each widget given what it had in the new family. Whether it changed."""
+    app = app or QApplication.instance()
+    family, tight = _font_families(choice if choice in FONTS else "inter")
+    if not family or app is None or (_FAMILY and _FAMILY[0] == family):
+        return False
+    everyone = [(w, QFont(w.font())) for w in app.allWidgets()]
+    _FAMILY[:] = [family]
+    _TIGHT[0] = tight
+    base = QFont(app.font())
+    base.setFamily(family)
+    app.setFont(base)
+    class_fonts(app)
+    sheet = app.styleSheet()
+    if sheet:
+        app.setStyleSheet(sheet + " ")             # a sheet the same as before is not set again
+        app.setStyleSheet(sheet)
+    for w, font in everyone:
+        font.setFamily(tight if tight and w.property(_TIGHT_TEXT) else family)
+        if w.font() != font:
+            w.setFont(font)
+    return True
+
+
+def load_fonts(choice: str = "inter") -> str:
+    """The font chosen from its files (data/fonts), as the application's font at the system's size; the charts
+    get it too. Once per process. The family as Qt names it, "" when the files are not there."""
+    if _FAMILY:
+        return _FAMILY[0]
+    family, _TIGHT[0] = _font_families(choice if choice in FONTS else "inter")
     _FAMILY.append(family)
     app = QApplication.instance()
     if family and app is not None and app.font().family() != family:
@@ -685,8 +756,6 @@ def load_fonts() -> str:
     return family
 
 
-_CHART_FONTS: list = []     # (file, family, weight): given to matplotlib at its first figure or formula
-_MATPLOTLIB_READY: list = []
 
 
 def matplotlib_fonts() -> None:

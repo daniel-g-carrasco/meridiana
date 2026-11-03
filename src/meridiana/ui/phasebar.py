@@ -33,6 +33,7 @@ from . import icons
 from .cards import EDGE, RADIUS, default_tokens
 from .design import Bar, Button, Icon, Motion, Radius, Size, Space, Text, set_text, text_font
 from .motion import SLIDE_EASING
+from .theme import tighten
 from .waiting import STALE_MARK
 
 TALL = 72                   # the bar with the words under the icons (design 5.3): what the bar must not exceed;
@@ -248,6 +249,7 @@ class ToolButton(QToolButton):
         self.setDefaultAction(action)
         if action.menu() is not None:
             self.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        tighten(self)                                           # the words of the bar, where room is short (study 29)
         self._own()
 
     def _own(self) -> None:

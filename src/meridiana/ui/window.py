@@ -1616,6 +1616,7 @@ class MainWindow(QMainWindow):
             self._appearance(*settings.appearance.choice())
             self._toolbar_style(settings.appearance.toolbar.currentData(), settings.appearance.place.currentData())
             self._text_size(settings.appearance.text_size.currentData())
+            self._font_choice(settings.appearance.font_choice.currentData())
         if section in ("navigation", "all"):
             self._navigation(*settings.navigation.choice())
         if section in ("assistant", "all"):
@@ -1645,6 +1646,19 @@ class MainWindow(QMainWindow):
             return
         self.cfg.text_size = size
         if change_text_size(size):
+            self._theme_changed()
+            self.bars_mode = self.bar_needs = None  # the phase bars measured again for the new words (R179)
+            self._fit_bars()
+            if getattr(self, "project", None) is not None:
+                self.plan.show_project(self.project, self.session.good_results(), force=True)
+
+    def _font_choice(self, choice: str) -> None:
+        """The font of the window chosen: at once, as the size of the text."""
+        from .theme import change_font
+        if choice == self.cfg.font:
+            return
+        self.cfg.font = choice
+        if change_font(choice):
             self._theme_changed()
             self.bars_mode = self.bar_needs = None  # the phase bars measured again for the new words (R179)
             self._fit_bars()

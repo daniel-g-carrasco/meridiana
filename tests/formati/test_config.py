@@ -247,7 +247,7 @@ class ConfigTest(unittest.TestCase):
                              ("text", "top", True, "smooth", 320, 500, "level", True))
             save(cfg, path)
             self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["version"], config.CONFIG_VERSION)
-            self.assertEqual(config.CONFIG_VERSION, 25)
+            self.assertEqual(config.CONFIG_VERSION, 26)
             self.assertEqual(cfg.inverter_brand_favourites, [])       # no maker starred yet (R268)
             self.assertEqual(cfg.text_size, "medium")                 # the 13 px of before (R133)
             self.assertEqual((cfg.background, cfg.map_sources), ("auto", []))     # the best for the site (R36)

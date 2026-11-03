@@ -91,6 +91,11 @@ class Preview(QFrame):
         self.character.update()
 
 
+def font_names() -> dict:
+    """The fonts of the window (theme.FONTS)."""
+    return {"inter": "Inter", "plex": _("IBM Plex Sans, condensed in the bar")}
+
+
 class Appearance(QWidget):
     """The page; `settled` (theme, colour, backgrounds) when the choice has stopped changing for a moment."""
 
@@ -123,6 +128,12 @@ class Appearance(QWidget):
         self.text_size.setCurrentIndex(max(0, self.text_size.findData(cfg.text_size)))
         self.text_size.setToolTip(_("The text of the whole window, a pixel smaller or larger"))
         form.addRow(_("Size of the text"), self.text_size)
+        self.font_choice = QComboBox()
+        for key, text in font_names().items():
+            self.font_choice.addItem(text, key)
+        self.font_choice.setCurrentIndex(max(0, self.font_choice.findData(cfg.font)))
+        self.font_choice.setToolTip(_("The font of the whole window. The reports keep theirs"))
+        form.addRow(_("Font"), self.font_choice)
         self.toolbar = QComboBox()
         for key, text in toolbar_names().items():
             self.toolbar.addItem(text, key)

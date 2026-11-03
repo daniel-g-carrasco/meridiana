@@ -660,7 +660,7 @@ class Preferences(QWidget):
     profileOffer = Signal(bool)                 # the answer to «use this profile for this project» (R331)
 
     SECTIONS = {
-        "appearance": ("theme", "accent", "backgrounds", "text_size", "toolbar", "toolbar_place"),
+        "appearance": ("theme", "accent", "backgrounds", "text_size", "font", "toolbar", "toolbar_place"),
         "navigation": ("navigation", "orbit", "pivot", "pivot_hint"),
         "assistant": ("assistant", "assistant_docked", "assistant_animated", "assistant_style",
                       "assistant_provider", "assistant_local_url", "assistant_local_model",
@@ -805,7 +805,7 @@ class Preferences(QWidget):
 
     def _connect(self) -> None:
         self.appearance.settled.connect(lambda *_a: self._edited("appearance"))
-        for widget in (self.appearance.text_size, self.appearance.toolbar, self.appearance.place):
+        for widget in (self.appearance.text_size, self.appearance.font_choice, self.appearance.toolbar, self.appearance.place):
             widget.currentIndexChanged.connect(lambda _i: self._edited("appearance"))
         # not a setting: the window puts the panels back at once (R294), nothing for «Undo the last change»
         self.appearance.layout_reset.clicked.connect(lambda: self.changed.emit("layout"))
