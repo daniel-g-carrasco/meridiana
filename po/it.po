@@ -21814,3 +21814,48 @@ msgstr "Tornata com'era: per questa forma della finestra resta così fino a «Ri
 #: src/meridiana/ui/window.py:1012
 msgid "The words of the bar of the phase; in a window lower than {px} px they go beside the icons, and with no room for them the icons stay alone"
 msgstr "Le parole della barra della fase; in una finestra più bassa di {px} px vanno accanto alle icone, e se non c'è posto restano le sole icone"
+
+#: src/meridiana/ui/window.py:2241
+msgid "Height above the ground…"
+msgstr "Quota da terra…"
+
+#: src/meridiana/ui/window.py:2241
+msgid "Raise or lower by…"
+msgstr "Alza o abbassa di…"
+
+#: src/meridiana/ui/window.py:2220 src/meridiana/ui/window.py:2245
+msgid "Make it pitched"
+msgstr "Rendi a falde"
+
+#: src/meridiana/ui/window.py:2225 src/meridiana/ui/window.py:2252
+msgid "Back on one plane"
+msgstr "Riporta su un piano"
+
+#: src/meridiana/ui/window.py:2253
+msgid "Choose all the corners"
+msgstr "Scegli tutti i vertici"
+
+#: src/meridiana/ui/view3d.py:1285 src/meridiana/ui/window.py:2162
+msgid "Corner: drag it up or down, click to write its height. Ctrl or Shift: more than one. Right button: what else it can do."
+msgstr "Vertice: trascinalo su o giù, clicca per scrivere la quota. Ctrl o Maiusc: più di uno. Tasto destro: cos'altro può fare."
+
+#: src/meridiana/ui/window.py:2281
+msgid "A flat roof goes up and down whole: the building is {z} m high now."
+msgstr "Un tetto piano sale e scende tutto intero: ora l'edificio è alto {z} m."
+
+#: src/meridiana/ui/plan.py:460
+msgid "Move: drag it where it goes, or click it and then click the place. Ctrl held at the end makes a copy; Enter or Space pass to Rotate."
+msgstr "Sposta: trascinala dove deve andare, oppure cliccala e poi clicca il punto. Ctrl tenuto alla fine fa una copia; Invio o Spazio passano a Ruota."
+
+#: src/meridiana/ui/plan.py:462
+msgid "Rotate about the middle: drag it, or click it and then click the direction. Steps of 15°, 5° with Ctrl, 90° with Shift; Ctrl held at the end makes a copy; Enter or Space pass to Move."
+msgstr "Ruota attorno al centro: trascinala, oppure cliccala e poi clicca la direzione. Passi di 15°, 5° con Ctrl, 90° con Maiusc; Ctrl tenuto alla fine fa una copia; Invio o Spazio passano a Sposta."
+
+#: src/meridiana/ui/viewcube.py:286
+msgid "Go to Home"
+msgstr "Vai alla Home"
+
+msgid "{n} corner chosen."
+msgid_plural "{n} corners chosen: they go together."
+msgstr[0] "{n} vertice scelto."
+msgstr[1] "{n} vertici scelti: si muovono insieme."

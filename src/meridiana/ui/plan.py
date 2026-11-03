@@ -332,10 +332,12 @@ class SideEditor(QWidget):
 
     def set_colours(self, colours: dict) -> None:
         self.colours = colours
+        fg = QColor(colours["label_fg"][:7])
         self.field.setStyleSheet(
             "QLineEdit {{ background: transparent; border: none; padding: 0; margin: 0; min-height: 0; color: {fg}; "
-            "selection-background-color: {sel}; selection-color: {bg}; }}".format(
-                fg=colours["label_fg"][:7], sel=colours["sel"][:7], bg=colours["label_bg"][:7]))
+            "selection-background-color: {ground}; selection-color: {fg}; }}".format(
+                # the text chosen a shade off the pill: the selection's own colour lit the whole field (03/11/2026)
+                fg=fg.name(), ground=f"rgba({fg.red()}, {fg.green()}, {fg.blue()}, 64)"))
         self.update()
 
     def pill_font(self):
