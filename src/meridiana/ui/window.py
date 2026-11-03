@@ -11,6 +11,7 @@ project and report gestures.
 
 from __future__ import annotations
 
+import copy
 import sqlite3
 import tempfile
 import time
@@ -641,6 +642,14 @@ class MainWindow(QMainWindow):
         self.vertex_handles: list = []
         self.view3d.backend.vertexClicked.connect(self._vertex_clicked)
         self.view3d.backend.vertexDragged.connect(self._vertex_dragged)
+        self.view3d.backend.vertexMoving.connect(self._vertex_moving)
+        self.view3d.backend.vertexChanged.connect(self._vertex_drag_over)
+        self.vertex_trial = None                    # a copy of the project the drag of a corner shows, not yet done
+        self.vertex_move = None                     # the drag's last place: (corner, metres)
+        self.vertex_timer = QTimer(self)            # the model drawn again at most this often, however fast the pointer
+        self.vertex_timer.setSingleShot(True)
+        self.vertex_timer.setInterval(16)
+        self.vertex_timer.timeout.connect(self._vertex_live)
         self.view3d.backend.vertexToggled.connect(self._vertex_toggled)
         self.view3d.backend.vertexSwept.connect(self._vertex_swept)
         self.view3d.backend.vertexHot.connect(self._vertex_hot)
@@ -2165,8 +2174,48 @@ class MainWindow(QMainWindow):
             self.hint.setText(self.vertex_hint_before)
             self.vertex_hint_before = None
 
-    def _vertex_dragged(self, at: int, metres: float) -> None:
+    def _vertex_moving(self, at: int, metres: float) -> None:
+        self.vertex_move = (at, metres)
+        if not self.vertex_timer.isActive():
+            self.vertex_timer.start()
+
+    def _vertex_live(self) -> None:
+        """The model follows the corner dragged (Daniel, 03/11/2026: «in tempo reale deve modificare anche il modello»):
+        on a copy of the project, which is the real one's only at the release, as one step of the undo. The modules are
+        laid again then: laying them at every pixel would hold the drag back."""
+        if self.vertex_move is None or not self.view3d.backend.vertex_dragging():
+            return
+        at, metres = self.vertex_move
         if not 0 <= at < len(self.vertex_handles):
+            return
+        if self.vertex_trial is None:
+            self.vertex_trial = copy.deepcopy(self.project)
+        hand = self._vertices_in_hand() if at in self.view3d.backend.vertices_on else [self.vertex_handles[at]]
+        kind, oid = self.selection
+        try:
+            self._vertex_put(self.vertex_trial, roof_vertices.owner_of(kind, oid), [(h, h.z + metres) for h in hand])
+        except ValueError:                          # out of its limits: it stays at the last good place, the release says why
+            return
+        self.view3d.geometry_.set_mesh(*self._scene_mesh(self.vertex_trial))
+        self._outline_3d(self.vertex_trial)
+
+    def _vertex_drag_over(self) -> None:
+        """A drag ended with nothing done (Esc, back where it was): the real model again. One that did something has
+        already let its copy go, and its change draws the model."""
+        if self.vertex_trial is not None and not self.view3d.backend.vertex_dragging():
+            QTimer.singleShot(0, self, self._vertex_trial_dropped)
+
+    def _vertex_trial_dropped(self) -> None:
+        if self.vertex_trial is not None and not self.view3d.backend.vertex_dragging():
+            self.vertex_trial = None
+            self._show_3d()
+
+    def _vertex_dragged(self, at: int, metres: float) -> None:
+        self.vertex_timer.stop()
+        self.vertex_move = None
+        self.vertex_trial = None
+        if not 0 <= at < len(self.vertex_handles):
+            self._show_3d()
             return
         if at in self.view3d.backend.vertices_on:
             hand = self._vertices_in_hand()                  # those chosen go together (R356)
@@ -2194,13 +2243,14 @@ class MainWindow(QMainWindow):
 
     def _vertex_heights(self, moves: list) -> None:
         """The heights of those in hand, (handle, z) each, as one step of the undo. An obstacle's top is one height."""
+        said = _("Height of the obstacle") if moves[0][0].obstacle else _("Height of a corner")
+        self._vertex_change(said, lambda p, bid: self._vertex_put(p, bid, moves))
+
+    def _vertex_put(self, project, bid: str, moves: list) -> None:
         if moves[0][0].obstacle:
-            z = moves[0][1]
-            _kind, oid = self.selection
-            self._vertex_change(_("Height of the obstacle"), lambda p, _bid: roof_vertices.set_obstacle_height(p, oid, z))
-            return
-        self._vertex_change(_("Height of a corner"), lambda p, bid: roof_vertices.set_heights(
-            p, bid, [(h.corners[0], z) for h, z in moves]))
+            roof_vertices.set_obstacle_height(project, self.selection[1], moves[0][1])
+        else:
+            roof_vertices.set_heights(project, bid, [(h.corners[0], z) for h, z in moves])
 
     def _vertex_merge_asked(self) -> None:
         self.vertex_merging = True
@@ -3815,48 +3865,7 @@ class MainWindow(QMainWindow):
         kind, oid = self.selection
         hot = view_colours.kind_colour("module" if self.selected_module[0] else kind)       # R67
 
-        def tinted(colour, t):
-            return view_colours.tinted(colour, t, hot)
-        pos_all, nor_all, col_all = [], [], []
-        for b in self.project.buildings:
-            colours = None
-            if kind == "building" and oid == b.id:
-                colours = {"wall": tinted(mesh.WALL, 0.3), "roof": tinted(mesh.ROOF_PITCH, 0.45),
-                           "roof_flat": tinted(mesh.ROOF_FLAT, 0.45)}
-            try:
-                pos, nor, col = mesh.building_triangles(b.footprint, b.pitches(), colours)
-            except (ValueError, IndexError) as error:
-                log.complain(f"mesh of {b.id}", error)
-                continue
-            pos_all.append(pos)
-            nor_all.append(nor)
-            col_all.append(col)
-        for o in self.project.obstacle_prisms():
-            colour = {"tree": mesh.TREE, "parapet": mesh.WALL}.get(o["kind"], mesh.OBSTACLE)
-            if kind == "exclusion" and o["id"] == oid and o["kind"] != "parapet":
-                colour = tinted(colour, 0.6)
-            pos, nor, col = mesh.prism_triangles(o["ring"], o["z0"], o["z1"], colour)
-            pos_all.append(pos)
-            nor_all.append(nor)
-            col_all.append(col)
-
-        def prop_tint(x, palette):                  # R269: the 3D object selected, tinted as the rest
-            if kind != "prop" or x.id != oid:
-                return palette
-            return {k: tinted(mesh.rgb(v) if isinstance(v, str) else v, 0.5) for k, v in palette.items()}
-        for pos, nor, col in mesh.prop_triangles(self.project, tint=prop_tint):     # R269: props.py's meshes
-            pos_all.append(pos)
-            nor_all.append(nor)
-            col_all.append(col)
-        for sf in self.project.subfields:
-            if sf.support is not None and sf.support.enabled:
-                pos, nor, col = mesh.support_triangles(self.project, sf)
-                pos_all.append(pos)
-                nor_all.append(nor)
-                col_all.append(col)
-        cat = (np.concatenate(pos_all) if pos_all else np.zeros((0, 3), np.float32),
-               np.concatenate(nor_all) if nor_all else np.zeros((0, 3), np.float32),
-               np.concatenate(col_all) if col_all else np.zeros((0, 3), np.float32))
+        cat = self._scene_mesh(self.project)
         tables = []
         self.module_index = []
         selected = tuple(self.selected_module)
@@ -3882,7 +3891,7 @@ class MainWindow(QMainWindow):
                 rid = oid.partition("/")[2]
                 sel = {i for i, m in enumerate(r.modules) if m.rid == rid}
             hot_field = kind == "subfield" and oid == sf.id and not selected[0]
-            colour = tinted(mesh.MODULE, 0.35) if hot_field else mesh.MODULE
+            colour = view_colours.tinted(mesh.MODULE, 0.35, hot) if hot_field else mesh.MODULE
             tables.append(mesh.recoloured(entry["table"], colour, sel, mesh.rgb(hot)) if (hot_field or sel)
                           else entry["table"])
             self.module_index.extend(entry["index"])
@@ -3896,18 +3905,68 @@ class MainWindow(QMainWindow):
         self._outline_3d()
         self._show_gizmo()
 
-    def _outline_3d(self) -> None:
-        """The outline of the selection and of what is under the pointer in the 3D view (viewaids.outline)."""
+    def _scene_mesh(self, project) -> tuple:
+        """Buildings, obstacles, 3D objects and supports of `project` in one mesh, what is selected tinted."""
+        kind, oid = self.selection
+        hot = view_colours.kind_colour("module" if self.selected_module[0] else kind)       # R67
+
+        def tinted(colour, t):
+            return view_colours.tinted(colour, t, hot)
+        pos_all, nor_all, col_all = [], [], []
+        for b in project.buildings:
+            colours = None
+            if kind == "building" and oid == b.id:
+                colours = {"wall": tinted(mesh.WALL, 0.3), "roof": tinted(mesh.ROOF_PITCH, 0.45),
+                           "roof_flat": tinted(mesh.ROOF_FLAT, 0.45)}
+            try:
+                pos, nor, col = mesh.building_triangles(b.footprint, b.pitches(), colours)
+            except (ValueError, IndexError) as error:
+                log.complain(f"mesh of {b.id}", error)
+                continue
+            pos_all.append(pos)
+            nor_all.append(nor)
+            col_all.append(col)
+        for o in project.obstacle_prisms():
+            colour = {"tree": mesh.TREE, "parapet": mesh.WALL}.get(o["kind"], mesh.OBSTACLE)
+            if kind == "exclusion" and o["id"] == oid and o["kind"] != "parapet":
+                colour = tinted(colour, 0.6)
+            pos, nor, col = mesh.prism_triangles(o["ring"], o["z0"], o["z1"], colour)
+            pos_all.append(pos)
+            nor_all.append(nor)
+            col_all.append(col)
+
+        def prop_tint(x, palette):                  # R269: the 3D object selected, tinted as the rest
+            if kind != "prop" or x.id != oid:
+                return palette
+            return {k: tinted(mesh.rgb(v) if isinstance(v, str) else v, 0.5) for k, v in palette.items()}
+        for pos, nor, col in mesh.prop_triangles(project, tint=prop_tint):     # R269: props.py's meshes
+            pos_all.append(pos)
+            nor_all.append(nor)
+            col_all.append(col)
+        for sf in project.subfields:
+            if sf.support is not None and sf.support.enabled:
+                pos, nor, col = mesh.support_triangles(project, sf)
+                pos_all.append(pos)
+                nor_all.append(nor)
+                col_all.append(col)
+        return (np.concatenate(pos_all) if pos_all else np.zeros((0, 3), np.float32),
+                np.concatenate(nor_all) if nor_all else np.zeros((0, 3), np.float32),
+                np.concatenate(col_all) if col_all else np.zeros((0, 3), np.float32))
+
+    def _outline_3d(self, project=None) -> None:
+        """The outline of the selection and of what is under the pointer in the 3D view (viewaids.outline), of `project`
+        when it is a copy being tried."""
+        project = project or self.project
         kind, oid = self.selection
         if self.selected_module[0]:
-            select = viewaids.outline(self.project, self.results, "module", *self.selected_module)
+            select = viewaids.outline(project, self.results, "module", *self.selected_module)
         elif kind == "site":
             select = np.zeros((0, 2, 3))
         else:
-            select = viewaids.outline(self.project, self.results, kind, oid)
+            select = viewaids.outline(project, self.results, kind, oid)
         h = self.hovered_3d
         same = h[:2] == (kind, oid) if h[0] != "module" else tuple(h[1:]) == tuple(self.selected_module)
-        hover = viewaids.outline(self.project, self.results, *h) if h[0] and not same else np.zeros((0, 2, 3))
+        hover = viewaids.outline(project, self.results, *h) if h[0] and not same else np.zeros((0, 2, 3))
         # the colours of the kinds (R67): the selection's and the lighter one of what is under the pointer
         self.view3d.set_outline(select, hover, view_colours.kind_colour("module" if self.selected_module[0] else kind),
                                 view_colours.kind_colour(h[0] or "", hover=True))

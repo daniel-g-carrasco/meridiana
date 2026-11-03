@@ -10,7 +10,7 @@ from _fixtures import capannone
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtTest import QTest
 
-from meridiana import config, gizmo, model
+from meridiana import config, gizmo, model, roof_vertices
 
 setUpModule = _setup.keep_global_state
 
@@ -196,6 +196,57 @@ class Corners(unittest.TestCase):
         win._select("building", self.flat)
         self.assertEqual(b.vertex_on, -1)
         self.assertEqual(b.vertices_on, set())
+
+    def _dragged_up(self, metres):
+        """A corner of the gable pressed and dragged up by `metres`: the meshes the 3D view was given, and where."""
+        win, b = self.win, self.back
+        b.resized(800.0, 600.0)
+        win._select("building", "g1")
+        shown = []
+        real = win.view3d.geometry_.set_mesh
+
+        def spy(pos, nor, col):
+            shown.append(np.array(pos))
+            real(pos, nor, col)
+        patch = mock.patch.object(win.view3d.geometry_, "set_mesh", spy)
+        patch.start()
+        self.addCleanup(patch.stop)
+        x, y = b.camera.project(b.vertices[1], *b.size)
+        tx, ty = b.camera.project(b.vertices[1] + np.array([0.0, metres, 0.0]), *b.size)
+        b.press(1, 0, x, y, False, 0.0, 0.0, 0.0, "", -1)
+        b.move(0, tx, ty)
+        _setup.turn_events(self.app, 60)
+        return shown, tx, ty
+
+    def test_the_model_follows_the_corner_dragged_and_only_the_release_changes_the_project(self):
+        win, b = self.win, self.back
+        steps = win.undo.count()
+        shown, tx, ty = self._dragged_up(4.0)
+        self.assertTrue(shown, "the model was not drawn during the drag")
+        real = win._scene_mesh(win.project)[0]
+        self.assertFalse(np.array_equal(shown[-1], real))                   # the corner went, in the view
+        tried = roof_vertices.handles_of(win.vertex_trial, "building", "g1")
+        before = roof_vertices.handles_of(win.project, "building", "g1")
+        self.assertAlmostEqual(tried[1].z, before[1].z + 4.0, delta=0.5)
+        self.assertEqual(win.undo.count(), steps)                           # not done yet
+        self.assertEqual(self.gable().roof.type, "gable")
+        b.release(1, 0, tx, ty)
+        _setup.turn_events(self.app, 60)
+        self.assertEqual(win.undo.count(), steps + 1)
+        self.assertIsNone(win.vertex_trial)
+
+    def test_esc_during_the_drag_brings_the_model_back(self):
+        win, b = self.win, self.back
+        shown, tx, ty = self._dragged_up(4.0)
+        steps = win.undo.count()
+        self.assertFalse(np.array_equal(shown[-1], win._scene_mesh(win.project)[0]))
+        self.assertTrue(b.cancel_vertex())
+        b.release(1, 0, tx, ty)
+        _setup.turn_events(self.app, 60)
+        self.assertIsNone(win.vertex_trial)
+        self.assertTrue(np.array_equal(shown[-1], win._scene_mesh(win.project)[0]))
+        self.assertEqual(win.undo.count(), steps)
+        self.assertEqual(self.gable().roof.type, "gable")
 
     # R356
 
