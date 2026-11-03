@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Barra DC/AC: bozzetti</title>
+<style>
+.light { --panel:#f8f7f4; --field:#ebeae7; --line:#d9d5cc; --text:#1e1c19; --text2:#514c44; --muted:#6f685d;
+  --good:#0ca30c; --warning:#b07a00; --critical:#d03b3b; --track:rgba(126,122,114,.28); --tick:#514c44; }
+.dark { --panel:#252525; --field:#1d1d1d; --line:#404040; --text:#ededed; --text2:#c4c4c4; --muted:#9b9b9b;
+  --good:#0ca30c; --warning:#c98c00; --critical:#d03b3b; --track:rgba(155,155,155,.28); --tick:#c4c4c4; }
+html { background:#e6e3dc; }
+body { margin:0; font:13px/1.35 "Segoe UI", system-ui, sans-serif; color:#1e1c19; padding:20px 24px; }
+h1 { font-size:22px; font-weight:600; margin:0 0 4px; }
+h2 { font-size:15px; font-weight:600; margin:22px 0 2px; }
+p { margin:0 0 8px; color:#514c44; max-width:1100px; }
+.states { display:grid; grid-template-columns:repeat(5, 256px); gap:8px; margin-bottom:6px; }
+.cell { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:8px 10px; box-sizing:border-box; width:256px; min-height:64px; }
+.cap { font-size:11px; color:#6f685d; margin:0 0 2px; }
+.dark .cap { color:#9b9b9b; }
+.row { display:flex; align-items:center; gap:6px; }
+.grow { flex:1; min-width:0; }
+.lab { color:var(--muted); font-size:12px; }
+.val { font-variant-numeric:tabular-nums; }
+.strong { font-weight:600; }
+.track { position:relative; height:6px; border-radius:3px; background:var(--track); }
+.fill { position:absolute; left:0; top:0; bottom:0; border-radius:3px; }
+.tickm { position:absolute; top:-2px; width:1px; height:10px; background:var(--tick); opacity:.65; }
+.scale { position:relative; height:13px; font-size:10px; color:var(--muted); margin-top:2px; }
+.scale span { position:absolute; transform:translateX(-50%); white-space:nowrap; }
+.scale span:first-child { transform:none; }
+.scale span:last-child { transform:translateX(-100%); }
+.bands { position:relative; height:6px; display:flex; gap:2px; }
+.bands i { display:block; height:6px; border-radius:3px; }
+.notches { display:flex; gap:2px; }
+.notches i { display:block; flex:1; height:8px; border-radius:2px; background:var(--track); }
+svg.s { width:14px; height:14px; flex:none; }
+.clip { overflow:hidden; }
+.reco { background:#f8f7f4; border:1px solid #b9b3a6; border-radius:6px; padding:10px 14px; margin-top:22px; max-width:1100px; }
+table { border-collapse:collapse; margin-top:14px; background:#f8f7f4; }
+td, th { border:1px solid #d9d5cc; padding:4px 8px; text-align:left; font-size:12px; }
+</style>
+</head>
+<body>
+<h1>Barra DC/AC: bozzetti (R353)</h1>
+<p>Larghezza vera del pannello (256 px di contenuto), chiaro e scuro, in cinque stati: prima del calcolo, 0,6 %, 2,4 %, 0 % e 7,5 % (oltre la fine della scala). Soglie delle Verifiche: verde sotto 1 %, giallo fino a 3 %, rosso oltre. Scala da 0 a 6 %. Valori di esempio, non di un progetto.</p>
+<div id="out"></div>
+
+<div class="reco"><b>Raccomandazione: C.</b> È la stessa barra di Uoc, Umpp e I delle stringhe, poche righe più sotto: una sola forma per «un valore rispetto a un limite». Il riempimento parte dal bordo, quindi non c'è più niente da tagliare. Prima del calcolo non mostra una barra vuota che sembra un dato. Due tacche dicono dove sono le soglie, il colore dice lo stato. Se preferisci che la scala si legga di più, D ha i numeri sotto. Il taglio del triangolo di oggi va corretto comunque, qualunque sia la scelta.</div>
+
+<table>
+<tr><th></th><th>Forma</th><th>Taglio ai bordi</th><th>Prima del calcolo</th><th>Altezza</th><th>Limite</th></tr>
+<tr><td>A</td><td>oggi: tre fasce e triangolo</td><td>sì, il triangolo esce di 4 px</td><td>tre fasce pallide, sembrano un dato</td><td>una o due righe e la barra</td><td>il titolo mescola due cose</td></tr>
+<tr><td>B</td><td>tre fasce e lancetta</td><td>no, lancetta tenuta dentro</td><td>solo testo</td><td>due righe e la barra</td><td>la più simile a oggi, tre colori sempre accesi</td></tr>
+<tr><td>C</td><td>riempimento con due tacche</td><td>no</td><td>solo testo</td><td>due righe e la barra</td><td>le soglie hanno solo le tacche, non i numeri</td></tr>
+<tr><td>D</td><td>C con simbolo e numeri della scala</td><td>no</td><td>solo testo</td><td>due righe, la barra e i numeri</td><td>la più alta</td></tr>
+<tr><td>E</td><td>tacche che si accendono</td><td>no</td><td>tacche spente</td><td>due righe e la barra</td><td>uno stile che nel programma non c'è ancora; precisione a passi di 0,5 %</td></tr>
+<tr><td>F</td><td>solo simbolo e parole</td><td>non c'è barra</td><td>solo testo</td><td>due righe</td><td>non si vede quanto manca alla soglia</td></tr>
+</table>
+
+<script>
+const DISC = "M0.5,8 A7.5,7.5 0 1 1 15.5,8 A7.5,7.5 0 1 1 0.5,8 Z";
+const TRI = "M9.31,2.801 L14.658,12.496 A1.491,1.491 0 0 1 13.358,14.711 L2.642,14.711 A1.491,1.491 0 0 1 1.342,12.496 L6.69,2.801 A1.491,1.491 0 0 1 9.31,2.801 Z";
+const SIGN = { check:"M3.5,8.9 L6.93,12.34 L12.53,6.07 L11.27,4.93 L6.87,9.86 L4.7,7.7 Z",
+  warning:"M7.15,5.4 L8.85,5.4 L8.85,9.9 L7.15,9.9 Z M6.95,12.05 A1.05,1.05 0 1 1 9.05,12.05 A1.05,1.05 0 1 1 6.95,12.05 Z",
+  stop:"M3.6,7.15 L12.4,7.15 L12.4,8.85 L3.6,8.85 Z" };
+const END = 6, RATIO = "1,44";
+const num = v => v.toFixed(1).replace(".", ",");
+const tone = v => v < 1 ? "good" : v <= 3 ? "warning" : "critical";
+const symbolOf = v => v < 1 ? "check" : v <= 3 ? "warning" : "stop";
+const pct = v => Math.min(v, END) / END * 100;
+const sym = v => { const n = symbolOf(v);
+  return `<svg class="s" viewBox="0 0 16 16"><path fill="var(--${tone(v)})" d="${n === "warning" ? TRI : DISC}"/><path fill="#fff" fill-rule="evenodd" d="${SIGN[n]}"/></svg>`; };
+const ticks = `<i class="tickm" style="left:${100/6}%"></i><i class="tickm" style="left:${300/6}%"></i>`;
+const fill = v => `<div class="fill" style="width:${v === 0 ? 0 : Math.max(pct(v), 2)}%;background:var(--${tone(v)})"></div>`;
+const waiting = `<div class="row"><span class="lab">Energia tagliata</span><span class="grow"></span><span class="lab">dopo il calcolo</span></div>`;
+const ratio = `<div class="row"><span class="lab">DC/AC attuale</span><span class="grow"></span><span class="val">${RATIO}</span></div>`;
+const bands = alpha => `<div class="bands" style="opacity:${alpha}"><i style="width:${100/6}%;background:var(--good)"></i><i style="width:${200/6}%;background:var(--warning)"></i><i style="flex:1;background:var(--critical)"></i></div>`;
+
+const DRAFTS = [
+ ["A", "Oggi, con il taglio", "Il riferimento: a 0 % e oltre il 6 % il triangolo esce dal bordo.", v => {
+   const head = v === null ? `DC/AC ${RATIO} · energia tagliata: dopo il calcolo` : `DC/AC ${RATIO} · energia tagliata ${num(v)} %`;
+   const mark = v === null ? "" : `<svg style="position:absolute;left:${pct(v)}%;top:-8px;margin-left:-5px;overflow:visible" width="10" height="16"><path d="M0,0 L10,0 L5,6 Z" fill="var(--text)"/><rect x="3.5" y="6" width="3" height="8" rx="1" fill="var(--text)"/></svg>`;
+   return `<div>${head}</div><div class="clip" style="position:relative;margin-top:9px;padding:8px 0 2px;"><div style="position:relative">${bands(v === null ? .3 : .75)}${mark}</div></div>`; }],
+ ["B", "Fasce e lancetta tenuta dentro", "La più vicina a oggi: la lancetta si ferma prima del bordo, non può uscire.", v => {
+   if (v === null) return ratio + waiting;
+   const left = `calc(1.5px + (100% - 3px) * ${pct(v) / 100} - 1.5px)`;
+   return `${ratio}<div class="row"><span class="lab">Energia tagliata</span><span class="grow"></span><span class="val strong">${num(v)} %</span></div><div style="position:relative;margin-top:5px">${bands(.55)}<i style="position:absolute;left:${left};top:-3px;width:3px;height:12px;border-radius:2px;background:var(--text);box-shadow:0 0 0 1px var(--panel)"></i></div>`; }],
+ ["C", "Riempimento con due tacche", "La stessa barra di Uoc, Umpp e I: etichetta, valore, riempimento nel colore dello stato. Consigliata.", v => {
+   if (v === null) return ratio + waiting;
+   return `${ratio}<div class="row"><span class="lab">Energia tagliata</span><span class="grow"></span><span class="val strong">${num(v)} %</span></div><div class="track" style="margin-top:5px">${fill(v)}${ticks}</div>`; }],
+ ["D", "C con simbolo e numeri", "Il simbolo dello stato accanto al valore, sotto la barra i numeri delle soglie.", v => {
+   if (v === null) return ratio + waiting;
+   return `${ratio}<div class="row"><span class="lab">Energia tagliata</span><span class="grow"></span>${sym(v)}<span class="val strong">${num(v)} %</span></div><div class="track" style="margin-top:5px">${fill(v)}${ticks}</div><div class="scale"><span style="left:0">0</span><span style="left:${100/6}%">1</span><span style="left:50%">3</span><span style="left:100%">6 %</span></div>`; }],
+ ["E", "Tacche che si accendono", "Dodici tacche da 0,5 %, ognuna nel colore della sua soglia. Si legge in un attimo.", v => {
+   const cells = [...Array(12)].map((_, i) => { const at = (i + 1) * .5; const on = v !== null && v >= at - .25 && v > 0;
+     return `<i ${on ? `style="background:var(--${tone(at - .01)})"` : ""}></i>`; }).join("");
+   return `${ratio}${v === null ? waiting : `<div class="row"><span class="lab">Energia tagliata</span><span class="grow"></span><span class="val strong">${num(v)} %</span></div>`}<div class="notches" style="margin-top:5px">${cells}</div>`; }],
+ ["F", "Solo simbolo e parole", "Nessuna barra: la più compatta. La scala resta nel suggerimento.", v => {
+   if (v === null) return ratio + waiting;
+   const says = v < 1 ? "sotto l'1 %" : v <= 3 ? "tra 1 e 3 %" : "oltre il 3 %";
+   return `${ratio}<div class="row">${sym(v)}<span>Energia tagliata <b class="val">${num(v)} %</b></span><span class="grow"></span><span class="lab">${says}</span></div>`; }],
+];
+const STATES = [["Prima del calcolo", null], ["0,6 %", .6], ["2,4 %", 2.4], ["0 %, tutto a sinistra", 0], ["7,5 %, oltre la scala", 7.5]];
+const out = document.getElementById("out");
+const only = new URLSearchParams(location.search).get("only");
+out.innerHTML = DRAFTS.filter(d => !only || d[0].toLowerCase() === only).map(([id, name, why, draw]) => {
+  const line = theme => `<div class="states ${theme}">` + STATES.map(([cap, v]) => `<div><div class="cap">${cap}</div><div class="cell">${draw(v)}</div></div>`).join("") + `</div>`;
+  return `<h2>${id}. ${name}</h2><p>${why}</p>${line("light")}${line("dark")}`; }).join("");
+</script>
+</body>
+</html>
