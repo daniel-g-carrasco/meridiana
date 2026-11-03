@@ -145,3 +145,22 @@ la riga lo dice.
 | 25/10/2026 | d312585 | riga delle fasi, un filtro solo, scorrimento 180 ms | 0 | 12-14 | |
 | 25/10/2026 | b5c0aeb | avvio: pvlib e matplotlib fuori dal filo della finestra | | | 2,6-2,8 s / 2,8-3,0 s |
 | 25/10/2026 | ebddea1 (primo commit pubblico 3b1d8c8) | codice finale con grafica, stringatura e Meridio uniti, PC fermo (`tutto-schermo-finale.json`, `bordi-schermo-finale.json`) | 0 | 10-12 | finestra costruita 1,1 s, primo disegno 1,2-1,4 s dalla costruzione, anno 1,8-2,0 s |
+
+## Misure del 03/11/2026
+
+Commit 6042b8a, `2026-11-03/tutto-schermo-6042b8a.json`: sequenza `all` sul Dell, Qt 6.12.0, finestra costruita in 1,28 s,
+primo disegno a 1,77 s, anno calcolato a 2,94 s. Confronto con `2026-10-25/base-schermo-correzioni-4.json` (92c760e), una sola
+misura per parte: blocco peggiore e somma dei blocchi, in ms. Le cause non sono ancora indagate.
+
+| Gesto | 25/10 | 03/11 |
+|---|---|---|
+| Fase Impianto, prima volta | 68 / 169 | 136 / 210 |
+| Fase Produzione, prima volta | 0 / 0 | 280 / 341 |
+| Fase Consumi, prima volta | 53 / 53 | 479 / 985 |
+| File, chiusura | 30 / 30 | 450 / 672 |
+| Bordo del pannello destro | 34 / 378 | 81 / 1768 |
+| Finestra ridimensionata | 50 / 582 | 78 / 899 |
+
+Senza blocchi, o con uno solo sotto i 40 ms, come il 25/10: rotelle, orbita e spostamento in 3D, spostamento in pianta, digitazione,
+bordo del pannello sinistro. Nella fase Produzione e seguenti, tornandoci, l'apertura costa 88-116 ms e il bordo destro 1,6-2,0 s
+di blocchi su circa 2,5 s.
