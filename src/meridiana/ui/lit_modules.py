@@ -69,10 +69,10 @@ class LitModules(QGraphicsItem):
         """The modules lit from now, as sorted indices: only what changed is drawn again."""
         order = np.asarray(order, dtype=np.intp)
         old, self.order = self.order, order
-        if self.layer is None or self._key() != self.key:
-            self.layer = None
+        if self.layer is None:
             self.update()
             return
+        self._sync()
         changed = np.concatenate((np.setdiff1d(order, old, assume_unique=True),
                                   np.setdiff1d(old, order, assume_unique=True)))
         if not len(changed):
@@ -86,8 +86,7 @@ class LitModules(QGraphicsItem):
     def paint(self, painter: QPainter, option=None, widget=None) -> None:
         if not len(self.order):
             return
-        if self.layer is None or self._key() != self.key:
-            self._rebuild()
+        self._sync()
         painter.save()
         painter.resetTransform()                        # the layer is in the viewport's pixels
         painter.drawImage(QPointF(0, 0), self.layer)
@@ -101,10 +100,17 @@ class LitModules(QGraphicsItem):
         return (t.m11(), t.m12(), t.m21(), t.m22(), t.dx(), t.dy(), size.width(), size.height(),
                 self.view.viewport().devicePixelRatioF(), self.style)
 
-    def _rebuild(self) -> None:
+    def _sync(self) -> None:
+        """The layer for the view as it is now: kept, or shifted when the view only moved by whole pixels (a pan: only
+        the strip that came into view is drawn), or made again."""
+        if self.layer is not None and self._key() == self.key:
+            return
+        if self.layer is None or not self._shift():
+            self._rebuild()
+
+    def _project(self) -> None:
         t = self.view.viewportTransform()
         size = self.view.viewport().size()
-        dpr = self.view.viewport().devicePixelRatioF()
         self.key = self._key()
         self.size = (size.width(), size.height())
         x, y = self.quads[..., 0], self.quads[..., 1]
@@ -112,14 +118,54 @@ class LitModules(QGraphicsItem):
         reach = max(self.halo.widthF(), self.ink.widthF()) / 2 + 1       # the stroke and its soft edge
         self.low = self.px.min(axis=1) - reach
         self.high = self.px.max(axis=1) + reach
-        self.layer = QImage(max(1, round(size.width() * dpr)), max(1, round(size.height() * dpr)),
-                            QImage.Format.Format_ARGB32_Premultiplied)
-        self.layer.setDevicePixelRatio(dpr)
-        self.layer.fill(Qt.GlobalColor.transparent)
+
+    def _new_layer(self) -> QImage:
+        dpr = self.view.viewport().devicePixelRatioF()
+        layer = QImage(max(1, round(self.size[0] * dpr)), max(1, round(self.size[1] * dpr)),
+                       QImage.Format.Format_ARGB32_Premultiplied)
+        layer.setDevicePixelRatio(dpr)
+        layer.fill(Qt.GlobalColor.transparent)
+        return layer
+
+    def _rebuild(self) -> None:
+        self._project()
+        self.layer = self._new_layer()
         painter = QPainter(self.layer)
         self._draw(painter, self.order)
         painter.end()
         self.drawn = len(self.order)
+
+    def _shift(self) -> bool:
+        """The view moved only by whole pixels (same zoom, turn, size and style): the layer is moved with it, and what
+        came into view is drawn. False when it is not so."""
+        now, was = self._key(), self.key
+        if now[:4] != was[:4] or now[6:] != was[6:]:
+            return False
+        dx, dy = now[4] - was[4], now[5] - was[5]
+        if abs(dx - round(dx)) > 1e-6 or abs(dy - round(dy)) > 1e-6:
+            return False
+        dx, dy = round(dx), round(dy)
+        w, h = self.size
+        if abs(dx) >= w or abs(dy) >= h:
+            return False
+        old = self.layer
+        self._project()
+        self.layer = self._new_layer()
+        painter = QPainter(self.layer)
+        painter.drawImage(QPointF(dx, dy), old)
+        painter.end()
+        gx, gy = -(-w // CELL), -(-h // CELL)
+        marked = np.zeros((gy, gx), dtype=bool)
+        if dx > 0:
+            marked[:, :-(-dx // CELL)] = True
+        elif dx < 0:
+            marked[:, gx - (-dx // CELL) - 1:] = True
+        if dy > 0:
+            marked[:-(-dy // CELL), :] = True
+        elif dy < 0:
+            marked[gy - (-dy // CELL) - 1:, :] = True
+        self._redraw(marked, notify=False)             # it is painting already
+        return True
 
     def _draw(self, painter: QPainter, which) -> None:
         """The modules `which`, each one polygon: first the halos, then the outlines over their fill."""
@@ -159,7 +205,11 @@ class LitModules(QGraphicsItem):
         np.add.at(diff, (first[:, 1], last[:, 0] + 1), -1)
         np.add.at(diff, (last[:, 1] + 1, first[:, 0]), -1)
         np.add.at(diff, (last[:, 1] + 1, last[:, 0] + 1), 1)
-        marked = diff.cumsum(axis=0).cumsum(axis=1)[:gy, :gx] > 0
+        self._redraw(diff.cumsum(axis=0).cumsum(axis=1)[:gy, :gx] > 0)
+
+    def _redraw(self, marked, notify: bool = True) -> None:
+        """The cells `marked` cleared, and the lit modules that touch them drawn over, clipped to them."""
+        gy, gx = marked.shape
         total = np.zeros((gy + 1, gx + 1), dtype=np.int32)      # how many marked cells in any block of cells
         total[1:, 1:] = marked.cumsum(axis=0).cumsum(axis=1)
         a, b, lit_on = self._cells(self.order)
@@ -179,6 +229,8 @@ class LitModules(QGraphicsItem):
         self._draw(painter, touching)
         painter.end()
         self.drawn = len(touching)
+        if not notify:
+            return
         inverse, ok = self.view.viewportTransform().inverted()
         if ok:
             self.update(inverse.mapRect(QRectF(region.boundingRect())))

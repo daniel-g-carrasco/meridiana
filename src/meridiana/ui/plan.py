@@ -1096,27 +1096,22 @@ class PlanView(QGraphicsView):
 
     def _module_light(self, modules: list, colour) -> QGraphicsItem | None:
         """`modules` lit as one item, over the modules and the strings' lines: filled in `colour`, each with its outline
-        over a halo, so that they read on the photo and on the light ground; none without modules."""
+        over a halo, so that they read on the photo and on the light ground; none without modules. Drawn module by
+        module into a layer (ui/lit_modules.py): one path of thousands of modules cost 850 ms to paint (R344)."""
         self._router()
-        order = [self.module_index[m] for m in modules if m in self.module_index]
-        if not order:
+        order = np.unique([self.module_index[m] for m in modules if m in self.module_index]).astype(np.intp)
+        if not len(order):
             return None
-        path = QPainterPath()
-        for q in self.router.quads[order].tolist():
-            path.moveTo(q[0][0], q[0][1])
-            path.lineTo(q[1][0], q[1][1])
-            path.lineTo(q[2][0], q[2][1])
-            path.lineTo(q[3][0], q[3][1])
-            path.closeSubpath()
         W = view_colours.WIDTHS
         fill = qcolour(colour)
         fill.setAlpha(LIGHT_ALPHA)
-        scene = self.scene()
-        halo = scene.addPath(path, cosmetic(self.colours["halo"], W["select_module"] + W["select_halo"]))
-        ink = scene.addPath(path, cosmetic(colour, W["select_module"]), QBrush(fill))
-        group = group_items(scene, [halo, ink])
-        group.setZValue(Z_SELECTION + 0.2)
-        return group
+        item = LitModules(self, self.router.quads, 10 * self.metres_per_pixel())
+        item.set_style(cosmetic(self.colours["halo"], W["select_module"] + W["select_halo"]),
+                       cosmetic(colour, W["select_module"]), fill)
+        item.set_modules(order)
+        item.setZValue(Z_SELECTION + 0.2)
+        self.scene().addItem(item)
+        return item
 
     def _erase_light(self) -> None:
         if self.erase_item is not None:

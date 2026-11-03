@@ -257,6 +257,33 @@ class SweepSpeed(SweepCase):
         self.assertLess(statistics.median(times), 40, times)
         plan._sweep_cancel()
 
+    def test_the_selection_made_follows_the_view_in_the_same_layer(self):
+        """R344: every module selected (3,700) was one path that cost 700 ms to paint at every pan, zoom or move of the
+        pointer; now the layer is shifted with the view and only the strip that came in is drawn."""
+        from meridiana.ui.lit_modules import LitModules
+        plan = self.plan
+        keys = plan.module_corners["s1"][0]
+        plan.set_swept([("s1", k) for k in keys])
+        plan.viewport().repaint()
+        item = plan.swept_item
+        self.assertIsInstance(item, LitModules)
+        self.assertEqual(len(item.order), len(keys))
+        times = []
+        for _step in range(8):
+            t0 = time.perf_counter()
+            plan.translate_view(7, 3)
+            plan.viewport().repaint()
+            times.append((time.perf_counter() - t0) * 1000)
+        self.assertLess(statistics.median(times), 60, times)       # 700 ms before
+        kept = item.layer.copy()
+        item.layer = None                                           # the same view, made whole
+        item._rebuild()
+        self.assertEqual(kept, item.layer, "the shifted layer is not the one made whole")
+        lit = plan._module_light([("s1", keys[0]), ("s1", keys[1])], plan.colours["exclusion"])
+        self.assertIsInstance(lit, LitModules)                      # the erase tool's light, the same
+        plan.scene().removeItem(lit)
+        self.assertIsNone(plan._module_light([("s1", "no:such")], plan.colours["exclusion"]))
+
 
 if __name__ == "__main__":
     unittest.main()
