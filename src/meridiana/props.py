@@ -13,8 +13,8 @@ import numpy as np
 
 from . import mesh
 
-TREE_TRIANGLE_BUDGET = 600
-PERSON_TRIANGLE_BUDGET = 300
+TREE_TRIANGLE_BUDGET = 700
+PERSON_TRIANGLE_BUDGET = 600
 CAR_TRIANGLE_BUDGET = 1600
 OBSTACLE_TRIANGLE_BUDGET = 200
 
@@ -162,12 +162,13 @@ def _lathe(builder, profile, segments, colour, x_scale=1.0, z_scale=1.0, centre=
             builder.tri(centre_point, a, b, colour, outward)
 
 
-def _ellipsoid(builder, y0, y1, radius, colour, segments=12, x_scale=1.0, z_scale=1.0):
+def _ellipsoid(builder, y0, y1, radius, colour, segments=12, x_scale=1.0, z_scale=1.0,
+               centre=(0.0, 0.0, 0.0)):
     middle = (y0 + y1) / 2
     half = (y1 - y0) / 2
     profile = ((y0, 0.0), (middle - half * 0.5, radius * math.sqrt(0.75)), (middle, radius),
                (middle + half * 0.5, radius * math.sqrt(0.75)), (y1, 0.0))
-    _lathe(builder, profile, segments, colour, x_scale, z_scale)
+    _lathe(builder, profile, segments, colour, x_scale, z_scale, centre)
 
 
 def _organic_crown(builder, y0, y1, radius, colour, profile, segments=24):
@@ -213,6 +214,21 @@ def _extrude_xy(builder, profile, z0, z1, colour):
         outward = (b[1] - a[1], a[0] - b[0], 0.0)
         builder.quad((a[0], a[1], z0), (b[0], b[1], z0), (b[0], b[1], z1), (a[0], a[1], z1),
                      colour, outward)
+
+
+def _loft(builder, layers, colour):
+    layers = [(float(y), [tuple(map(float, point)) for point in ring]) for y, ring in layers]
+    for (y0, lower), (y1, upper) in zip(layers, layers[1:], strict=False):
+        centre = np.mean(np.asarray(lower), axis=0)
+        for a, b, c, d in zip(lower, lower[1:] + lower[:1], upper, upper[1:] + upper[:1], strict=True):
+            outward = ((a[0] + b[0]) / 2 - centre[0], 0.0, (a[1] + b[1]) / 2 - centre[1])
+            builder.quad((a[0], y0, a[1]), (b[0], y0, b[1]), (d[0], y1, d[1]), (c[0], y1, c[1]),
+                         colour, outward)
+    for y, ring, outward in ((layers[0][0], layers[0][1], (0.0, -1.0, 0.0)),
+                             (layers[-1][0], layers[-1][1], (0.0, 1.0, 0.0))):
+        for i0, i1, i2 in mesh.triangulate(ring):
+            builder.tri((ring[i0][0], y, ring[i0][1]), (ring[i1][0], y, ring[i1][1]),
+                        (ring[i2][0], y, ring[i2][1]), colour, outward)
 
 
 def _prism(builder, ring, y0, y1, colour):
@@ -288,11 +304,12 @@ def tree(kind="broadleaf", height=None, crown_diameter=None, trunk_height=None, 
     radius = crown / 2
     crown_height = height - trunk
     trunk_radius = max(0.025, min(crown * 0.035, max(trunk, 0.1) * 0.04))
-    if kind != "pine":
+    if kind not in ("pine", "palm"):
         _lathe(builder, ((0.0, trunk_radius), (max(trunk, 0.02), trunk_radius * 0.8)), 8, bark)
 
     if kind in ("broadleaf", "shrub"):
-        _ellipsoid(builder, trunk, height, radius, green)
+        profile = ((0.0, 0.0), (0.25, 0.86), (0.5, 1.0), (0.75, 0.86), (1.0, 0.0))
+        _organic_crown(builder, trunk, height, radius, green, profile)
     elif kind == "pine":
         fork = (radius * 0.08, trunk * 0.94, 0.0)
         _rod(builder, (0.0, 0.0, 0.0), (0.0, trunk * 0.55, 0.0), trunk_radius, bark, 10)
@@ -307,28 +324,46 @@ def tree(kind="broadleaf", height=None, crown_diameter=None, trunk_height=None, 
                    (0.76, 0.94), (0.91, 0.60), (1.0, 0.32))
         _organic_crown(builder, trunk, height, radius, green, profile)
     elif kind == "conifer":
-        for level, scale in enumerate((1.0, 0.8, 0.58)):
-            base = trunk + crown_height * level * 0.24
-            top = base + crown_height * 0.52
-            _lathe(builder, ((base, radius * scale), (top, 0.0)), 12, green)
+        profile = ((0.0, 0.55), (0.18, 0.92), (0.36, 1.0), (0.52, 0.78),
+                   (0.68, 0.58), (0.84, 0.32), (1.0, 0.0))
+        _organic_crown(builder, trunk, height, radius, green, profile)
     elif kind == "hedge":
         chamfer = min(crown * 0.18, length * 0.08)
         x, z = length / 2, crown / 2
         ring = ((-x + chamfer, -z), (x - chamfer, -z), (x, -z + chamfer), (x, z - chamfer),
                 (x - chamfer, z), (-x + chamfer, z), (-x, z - chamfer), (-x, -z + chamfer))
-        _prism(builder, ring, trunk, height, green)
+        layers = []
+        for y, scale in ((trunk, 0.92), (trunk + crown_height * 0.16, 1.0),
+                         (height - crown_height * 0.18, 1.0), (height, 0.78)):
+            layers.append((y, [(px * scale, pz * scale) for px, pz in ring]))
+        _loft(builder, layers, green)
     else:
+        base_y = max(0.05, trunk_radius * 1.5)
+        _lathe(builder, ((0.0, trunk_radius), (base_y, trunk_radius)), 8, bark)
+        stem_top = trunk + crown_height * 0.62
+        stem = [np.array((radius * 0.08 * (step / 4) ** 2,
+                          base_y + (stem_top - base_y) * step / 4, 0.0)) for step in range(5)]
+        for a, b in zip(stem, stem[1:], strict=False):
+            _rod(builder, a, b, trunk_radius * (1.0 - 0.25 * a[1] / stem[-1][1]), bark, 6)
+        start = stem[-1]
         for index in range(8):
             angle = index * math.tau / 8
             radial = np.array((math.cos(angle), 0.0, math.sin(angle)))
-            start = radial * radius * 0.05 + (0.0, trunk + crown_height * 0.65, 0.0)
-            end = radial * radius + (0.0, trunk + crown_height * (0.18 + 0.08 * (index % 2)), 0.0)
-            _leaf(builder, start, end, radius * 0.18, max(0.015, crown_height * 0.025), green)
+            side = np.array((-math.sin(angle), 0.0, math.cos(angle)))
+            middle = start + radial * radius * 0.48 + (0.0, crown_height * 0.25, 0.0)
+            end = radial * radius + (0.0, trunk + crown_height * (0.20 + 0.06 * (index % 2)), 0.0)
+            _leaf(builder, start, middle, radius * 0.09, max(0.015, crown_height * 0.02), green)
+            _leaf(builder, middle, end, radius * 0.07, max(0.015, crown_height * 0.015), green)
+            for fraction in (0.36, 0.56, 0.74):
+                base = (1 - fraction) ** 2 * start + 2 * (1 - fraction) * fraction * middle + fraction ** 2 * end
+                for sign in (-1.0, 1.0):
+                    tip = base + side * sign * radius * (0.25 - fraction * 0.13) + radial * radius * 0.06
+                    tip[1] -= crown_height * 0.06
+                    _leaf(builder, base, tip, radius * 0.04, max(0.01, crown_height * 0.01), green)
         for index in range(3):
             angle = index * math.tau / 3
             end = (math.cos(angle) * radius * 0.18, height, math.sin(angle) * radius * 0.18)
-            _leaf(builder, (0.0, trunk + crown_height * 0.45, 0.0), end,
-                  radius * 0.12, max(0.015, crown_height * 0.02), green)
+            _leaf(builder, start, end, radius * 0.10, max(0.015, crown_height * 0.02), green)
     return _rotate_qt(builder.arrays(), float(rotation))
 
 
@@ -480,31 +515,43 @@ def person(kind="adult", width=None, depth=None, height=None, rotation=0.0, colo
     walking = kind == "walking"
     stride = 1.0 if walking else 0.0
 
-    _box(builder, (0.0, height * 0.625, -depth * 0.125), (width * 0.55, height * 0.39, depth * 0.75), cloth)
-    _box(builder, (0.0, height * 0.45, 0.0), (width * 0.42, height * 0.10, depth * 0.55), dark)
+    torso_radius = width * 0.29
+    _lathe(builder, ((height * 0.43, width * 0.21), (height * 0.52, width * 0.25),
+                     (height * 0.77, torso_radius), (height * 0.84, width * 0.20)), 10, cloth,
+           z_scale=depth * 0.34 / torso_radius, centre=(0.0, 0.0, -depth * 0.125))
+    _lathe(builder, ((height * 0.41, width * 0.20), (height * 0.49, width * 0.21)), 8, dark,
+           z_scale=depth * 0.28 / (width * 0.21))
     for side in (-1.0, 1.0):
         hip_z = -side * depth * 0.12 * stride
         foot_z = side * depth * (0.25 if walking else 0.15)
-        _rod(builder, (side * width * 0.15, height * 0.47, hip_z),
-             (side * width * 0.15, height * 0.08, foot_z), width * 0.065, dark)
+        hip = (side * width * 0.15, height * 0.47, hip_z)
+        knee = (side * width * 0.15, height * 0.27, (hip_z + foot_z) * 0.5)
+        ankle = (side * width * 0.15, height * 0.08, foot_z)
+        _rod(builder, hip, knee, width * 0.065, dark)
+        _rod(builder, knee, ankle, width * 0.055, dark)
         _box(builder, (side * width * 0.15, height * 0.04, foot_z),
              (width * 0.14, height * 0.08, depth * (0.50 if walking else 0.70)), dark)
         hand_x = side * width * 0.435
         hand_z = -side * depth * 0.20 * stride
-        _rod(builder, (side * width * 0.28, height * 0.78, 0.0),
-             (hand_x, height * 0.43, hand_z), width * 0.05, cloth)
-        _box(builder, (hand_x, height * 0.40, hand_z), (width * 0.13, height * 0.08, depth * 0.18), skin)
+        shoulder = (side * width * 0.27, height * 0.77, -depth * 0.08)
+        elbow = (side * width * 0.36, height * 0.59, hand_z * 0.55)
+        _rod(builder, shoulder, elbow, width * 0.052, cloth)
+        _rod(builder, elbow, (hand_x, height * 0.44, hand_z), width * 0.043, cloth)
+        _ellipsoid(builder, height * 0.36, height * 0.44, width * 0.065, skin, segments=8,
+                   z_scale=depth * 0.12 / (width * 0.065), centre=(hand_x, 0.0, hand_z))
 
-    _rod(builder, (0.0, height * 0.77, 0.0), (0.0, height * 0.86, 0.0), width * 0.07, skin)
+    _rod(builder, (0.0, height * 0.78, 0.0), (0.0, height * 0.86, 0.0), width * 0.07, skin)
     head_radius = width * (0.18 if kind == "child" else 0.15)
     head_bottom = height * (0.80 if kind == "child" else (0.82 if kind == "worker" else 0.84))
     head_top = height * (0.96 if kind == "worker" else 1.0)
     _ellipsoid(builder, head_bottom, head_top, head_radius, skin, z_scale=depth * 0.32 / head_radius)
     if kind == "worker":
+        helmet = _colour(colours, "helmet")
         helmet_radius = width * 0.19
-        _lathe(builder, ((height * 0.93, helmet_radius), (height * 0.97, helmet_radius * 0.88),
-                         (height, 0.0)), 8, _colour(colours, "helmet"),
-               z_scale=depth * 0.38 / helmet_radius)
+        _lathe(builder, ((height * 0.925, width * 0.23), (height * 0.945, width * 0.23)), 10, helmet,
+               z_scale=depth * 0.38 / (width * 0.23))
+        _lathe(builder, ((height * 0.945, helmet_radius), (height * 0.975, helmet_radius * 0.82),
+                         (height, 0.0)), 10, helmet, z_scale=depth * 0.34 / helmet_radius)
     return _rotate_qt(builder.arrays(), float(rotation))
 
 

@@ -90,6 +90,22 @@ class MeshChecks(unittest.TestCase):
             self.assertTrue(np.all(qt >= pos.min(axis=0) - tolerance))
             self.assertTrue(np.all(qt <= pos.max(axis=0) + tolerance))
 
+    def colour_components(self, shape, key):
+        coloured = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS[key]), axis=1)
+        _vertices, inverse = np.unique(shape[0][coloured].reshape(-1, 3), axis=0, return_inverse=True)
+        parent = list(range(int(inverse.max()) + 1))
+
+        def root(index):
+            while parent[index] != index:
+                parent[index] = parent[parent[index]]
+                index = parent[index]
+            return index
+
+        for face in inverse.reshape(-1, 3):
+            for other in face[1:]:
+                parent[root(int(other))] = root(int(face[0]))
+        return len({root(i) for i in range(len(parent))})
+
 
 class Trees(MeshChecks):
     def test_every_tree_has_the_requested_dimensions_and_a_valid_mesh(self):
@@ -132,21 +148,31 @@ class Trees(MeshChecks):
                 props.tree("broadleaf", **dimensions)
 
     def test_the_pine_crown_is_one_connected_mass(self):
-        shape = props.tree("pine")
-        green = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS["tree"]), axis=1)
-        _vertices, inverse = np.unique(shape[0][green].reshape(-1, 3), axis=0, return_inverse=True)
-        parent = list(range(int(inverse.max()) + 1))
+        self.assertEqual(self.colour_components(props.tree("pine"), "tree"), 1)
 
-        def root(index):
-            while parent[index] != index:
-                parent[index] = parent[parent[index]]
-                index = parent[index]
-            return index
+    def test_broadleaf_and_shrub_crowns_are_not_surfaces_of_revolution(self):
+        for kind in ("broadleaf", "shrub"):
+            with self.subTest(kind=kind):
+                height, crown, trunk, _length = props.TREE_DEFAULTS[kind]
+                shape = props.tree(kind)
+                green = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS["tree"]), axis=1)
+                pos = shape[0][green]
+                middle = (trunk + height) / 2
+                ring = pos[np.abs(pos[:, 1] - middle) < (height - trunk) * 0.08]
+                radii = np.linalg.norm(ring[:, [0, 2]], axis=1)
+                self.assertGreater(float(np.ptp(radii)), crown * 0.02)
 
-        for face in inverse.reshape(-1, 3):
-            for other in face[1:]:
-                parent[root(int(other))] = root(int(face[0]))
-        self.assertEqual(len({root(i) for i in range(len(parent))}), 1)
+    def test_the_conifer_crown_is_one_connected_mass(self):
+        self.assertEqual(self.colour_components(props.tree("conifer"), "tree"), 1)
+
+    def test_the_hedge_has_a_softly_rounded_top(self):
+        length = props.TREE_DEFAULTS["hedge"][3]
+        pos = props.tree("hedge")[0]
+        top = pos[np.isclose(pos[:, 1], props.TREE_DEFAULTS["hedge"][0])]
+        self.assertLess(float(np.ptp(top[:, 0])), length * 0.95)
+
+    def test_the_palm_has_feathered_fronds(self):
+        self.assertGreater(self.colour_components(props.tree("palm"), "tree"), 20)
 
 
 class Obstacles(MeshChecks):
@@ -248,6 +274,19 @@ class People(MeshChecks):
         for dimensions in ({"width": 0.0}, {"depth": -1.0}, {"height": 0.0}):
             with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
                 props.person("adult", **dimensions)
+
+    def test_people_have_rounded_torsos(self):
+        width, depth, _height = props.PERSON_DEFAULTS["adult"]
+        pos, _nor, col = props.person("adult")
+        cloth = np.all(np.isclose(col, props.DEFAULT_COLOURS["person"]), axis=1)
+        corners = cloth & (np.abs(pos[:, 0]) > width * 0.27) & (np.abs(pos[:, 2]) > depth * 0.34)
+        self.assertFalse(corners.any())
+
+    def test_the_worker_helmet_has_a_brim(self):
+        width = props.PERSON_DEFAULTS["worker"][0]
+        pos, _nor, col = props.person("worker")
+        helmet = np.all(np.isclose(col, props.DEFAULT_COLOURS["helmet"]), axis=1)
+        self.assertGreater(float(np.abs(pos[helmet, 0]).max()), width * 0.21)
 
 
 class Cars(MeshChecks):
