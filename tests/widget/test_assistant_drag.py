@@ -109,7 +109,49 @@ class Dragged(unittest.TestCase):
         self.assertEqual(self.a.bubble.tail_at(), self.a.y() + core.SIZE / 2 - place.y()
                          if self.a.bubble.shape.tail in ("left", "right") else self.a.x() + core.SIZE / 2 - place.x())
 
-    def test_a_click_makes_no_picture(self):
+    def test_resized_by_its_grip_the_bubble_grows_over_a_picture_that_goes_at_the_release(self):
+        grip = self.a.bubble.grip
+        at = grip.mapToGlobal(grip.rect().center())
+
+        def send(kind, where, button=Qt.MouseButton.NoButton, buttons=Qt.MouseButton.LeftButton):
+            QApplication.sendEvent(grip, QMouseEvent(kind, QPointF(grip.mapFromGlobal(where)), QPointF(where), button, buttons,
+                                                     Qt.KeyboardModifier.NoModifier))
+        send(QEvent.Type.MouseButtonPress, at, Qt.MouseButton.LeftButton)
+        self.assertIsNone(self.a.stage)                                     # a press alone makes no picture
+        was = self.a.bubble.size()
+        corner = grip.corner
+        to = at + QPoint(-40 if corner.endswith("left") else 40, -40 if corner.startswith("top") else 40)
+        send(QEvent.Type.MouseMove, to)
+        self.assertIsNotNone(self.a.stage)
+        self.assertIsNone(self.a.stage.card)
+        self.assertNotEqual(self.a.bubble.size(), was)                      # the real one, laid out as it grows
+        kids = self.area.children()
+        self.assertLess(kids.index(self.a.stage), kids.index(self.a.bubble))    # under it
+        stage = self.a.stage
+        send(QEvent.Type.MouseButtonRelease, to, Qt.MouseButton.LeftButton, Qt.MouseButton.NoButton)
+        self.assertIsNone(self.a.stage)
+        self.assertFalse(stage.isVisible())
+
+    def test_the_bubble_comes_and_goes_as_pictures_and_the_real_one_stays_at_its_place(self):
+        a = self.a
+        a.reduced_motion = False
+        a.close_panel()
+        self.assertIsNotNone(a.bubble_fade)
+        place = a.bubble.geometry()
+        self.assertTrue(_setup.wait_until(self.app, lambda: not a.bubble.isVisible() and a.bubble_fade is None, 3))
+        a.open_panel()
+        fade = a.bubble_fade
+        self.assertIsNotNone(fade)
+        self.assertTrue(a.bubble.isVisible())
+        self.assertEqual(a.bubble.geometry().size(), place.size())
+        with mock.patch.object(a.bubble, "setGeometry") as moved:
+            _setup.turn_events(self.app, 60)
+            self.assertFalse(moved.called)                                  # no layout at a frame
+        self.assertTrue(_setup.wait_until(self.app, lambda: a.bubble_fade is None, 3))
+        self.assertFalse(fade.isVisible())
+
+    def test_a_click_makes_no_picture_of_the_window(self):
+        self.a.reduced_motion = True                                        # its bubble's going has its own pictures
         at = self.press()
         with mock.patch.object(self.a.area, "grab") as grab:
             self.release(at)

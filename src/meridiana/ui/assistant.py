@@ -31,12 +31,12 @@ import functools
 import math
 import time
 
-from PySide6.QtCore import (QByteArray, QEasingCurve, QEvent, QParallelAnimationGroup, QPoint, QPointF,
+from PySide6.QtCore import (QByteArray, QEasingCurve, QEvent, QPoint, QPointF,
                             QPropertyAnimation, QRect, QRectF, QSize, Qt, QTimer, QUrl, QVariantAnimation, Signal)
 from PySide6.QtGui import (QColor, QCursor, QIcon, QImage, QKeySequence, QPainter, QPainterPath, QPen, QPixmap,
                            QRegion, QTextDocument)
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QLineEdit,
+from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QLineEdit,
                                QMenu, QPushButton, QScrollArea, QSizePolicy, QTextBrowser, QToolButton, QVBoxLayout,
                                QWidget)
 
@@ -313,6 +313,9 @@ class CornerGrip(QWidget):
             return
         start, initial = self.drag
         delta = event.globalPosition() - start
+        owner = self.bubble.owner
+        if owner.stage is None and delta.manhattanLength() >= QApplication.startDragDistance():
+            owner.stage_under_bubble()
         self.bubble.placing = True
         self.bubble.setGeometry(self.bubble.owner.resized_rect(initial, self.corner, round(delta.x()), round(delta.y())))
         self.bubble.placing = False
@@ -323,6 +326,7 @@ class CornerGrip(QWidget):
         if self.drag is not None and event.button() == Qt.MouseButton.LeftButton:
             self.drag = None
             self.bubble.resizedByHand.emit()
+            self.bubble.owner.stage_away()
             event.accept()
 
 
@@ -462,9 +466,12 @@ class DragStage(QWidget):
     window as a picture under him, and over it the bubble drawn as a card and the picture of what it holds. The real
     bubble waits under the stage, its fields and its focus as they are. So a move lays out nothing and repaints nothing
     of the plan and the panels: the bubble was laid out again and the plan under it repainted at every move of the
-    mouse, some 20 frames a second on a 4K screen, with him behind the pointer. It goes when he is let go."""
+    mouse, some 20 frames a second on a 4K screen, with him behind the pointer. It goes when he is let go.
 
-    def __init__(self, owner: "Assistant", ground: QPixmap, card: QPixmap, shape: assistant.Bubble):
+    With no `card` it is only the picture, under the real bubble while its grip resizes it: the bubble is laid out as
+    it grows, and what it uncovers is a picture, not the plan and the panels drawn again."""
+
+    def __init__(self, owner: "Assistant", ground: QPixmap, card: QPixmap | None, shape: assistant.Bubble):
         super().__init__(owner.area)
         self.owner, self.ground, self.card = owner, ground, card
         self.tail = shape.tail
@@ -515,6 +522,8 @@ class DragStage(QWidget):
         p = QPainter(self)
         p.setClipRegion(event.region())
         p.drawPixmap(0, 0, self.ground)
+        if self.card is None:
+            return
         c = self.owner.colours
         r = self.place
         along = self.owner.y() + assistant.SIZE / 2 - r.y() if self.tail in ("left", "right") \
@@ -526,6 +535,35 @@ class DragStage(QWidget):
         p.drawPath(outline(r.width(), r.height(), self.tail, along))
         t = assistant.TAIL + 1
         p.drawPixmap(t if self.tail == "left" else 1, t if self.tail == "top" else 1, self.card)
+
+
+class BubbleFade(QWidget):
+    """The bubble coming or going: a picture of it fading and sliding over a picture of what is under it, in the part of
+    the window they cross. It was the real bubble, with an opacity effect, changing its geometry at every frame: laid out
+    and drawn twice, with the plan under it drawn again. The real one waits under this, at its place, its focus kept."""
+
+    def __init__(self, owner: "Assistant", ground: QPixmap, room: QRect, picture: QPixmap, start: QRect, final: QRect,
+                 coming: bool):
+        super().__init__(owner.area)
+        self.ground, self.picture, self.coming = ground, picture, coming
+        self.start = start.topLeft() - room.topLeft()
+        self.final = final.topLeft() - room.topLeft()
+        self.t = 0.0
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setGeometry(room)
+        self.show()
+
+    def set_t(self, t: float) -> None:
+        self.t = t
+        self.update()
+
+    def paintEvent(self, event) -> None:
+        p = QPainter(self)
+        p.setClipRegion(event.region())
+        p.drawPixmap(0, 0, self.ground)
+        p.setOpacity(self.t if self.coming else 1.0 - self.t)
+        p.drawPixmap(self.start + (self.final - self.start) * self.t, self.picture)
 
 
 class SuggestionsBox(QWidget):
@@ -655,7 +693,8 @@ class Assistant(QFrame):
         self.docked = False
         self.moved = False
         self.hand_placed = False                            # the bubble is where the grip let it go (place_bubble)
-        self.stage: DragStage | None = None                 # he is being dragged with the bubble open
+        self.stage: DragStage | None = None                 # he is being dragged with the bubble open, or it resized
+        self.bubble_fade: BubbleFade | None = None          # the bubble coming or going
         self.follow_at = 0                                  # how far along its side the bubble was when the drag began
         self.follow_shape: assistant.Bubble | None = None   # where it is going, in the area's pixels
         self.bubble_dims = assistant.BUBBLE_DEFAULT
@@ -683,7 +722,7 @@ class Assistant(QFrame):
         self.animation = QPropertyAnimation(self, b"pos", self)
         self.animation.setDuration(SLIDE_MS)
         self.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self.bubble_animation: QParallelAnimationGroup | None = None
+        self.bubble_animation: QVariantAnimation | None = None
         self.after_slide = None                             # what to do when the slide ends (open the bubble)
         self.animation.finished.connect(self._slide_done)
         self.bubble_slide: QPropertyAnimation | None = None  # the bubble open going with him (R155)
@@ -1411,16 +1450,38 @@ class Assistant(QFrame):
             return
         self._stop_bubble_animation()
         card = self.panel.grab()
-        away = QPoint(-2 * self.area.width(), 0)            # out of the picture: they do not hide, the focus stays
-        bubble_at, him_at = self.bubble.pos(), self.pos()
-        self.bubble.move(away)
-        self.move(away)
-        ground = self.area.grab()
-        self.bubble.move(bubble_at)
-        self.move(him_at)
+        ground = self._window_without_us()
         self.follow_at, self.follow_shape = shape.at, shape
         self.stage = DragStage(self, ground, card, shape)
         self.raise_()
+
+    def _window_without_us(self, room: QRect | None = None) -> QPixmap:
+        """The window, or that part of it, as a picture without him and the bubble: moved out of it, they do not hide,
+        and the focus stays."""
+        away = QPoint(-2 * self.area.width(), 0)
+        bubble_at, him_at = self.bubble.pos(), self.pos()
+        self.bubble.move(away)
+        self.move(away)
+        ground = self.area.grab(room) if room is not None else self.area.grab()
+        self.bubble.move(bubble_at)
+        self.move(him_at)
+        return ground
+
+    def stage_under_bubble(self) -> None:
+        """The picture of the window under the real bubble, while its grip resizes it (DragStage)."""
+        shape = self.bubble.shape
+        if shape is None or not self.bubble.isVisible():
+            return
+        self.stage = DragStage(self, self._window_without_us(), None, shape)
+        self.bubble.raise_()
+        self.raise_()
+
+    def stage_away(self) -> None:
+        """The picture under the bubble resized goes."""
+        stage, self.stage = self.stage, None
+        if stage is not None:
+            stage.hide()
+            stage.deleteLater()
 
     def _follow_with_bubble(self) -> None:
         top, w, h = self.free()
@@ -1437,6 +1498,8 @@ class Assistant(QFrame):
     def _stage_down(self) -> None:
         """The real bubble where the picture is, and the stage gone; if a place it must keep off is under it now, it
         glides to the first good one."""
+        if self.stage is not None and self.stage.card is None:
+            self.stage_away()
         stage, self.stage = self.stage, None
         if stage is None:
             return
@@ -1545,26 +1608,24 @@ class Assistant(QFrame):
         self.raise_()
         if animate and self.moving():
             final = self.bubble.geometry()
-            start = self._towards_him(final)
-            effect = QGraphicsOpacityEffect(self.bubble)
-            self.bubble.setGraphicsEffect(effect)
-            group = QParallelAnimationGroup(self)
-            geom = QPropertyAnimation(self.bubble, b"geometry", group)
-            geom.setDuration(OPEN_MS)
-            geom.setEasingCurve(QEasingCurve.Type.OutCubic)
-            geom.setStartValue(start)
-            geom.setEndValue(final)
-            fade = QPropertyAnimation(effect, b"opacity", group)
-            fade.setDuration(OPEN_MS)
-            fade.setStartValue(0.0)
-            fade.setEndValue(1.0)
-            group.addAnimation(geom)
-            group.addAnimation(fade)
-            group.finished.connect(self._opened)
-            self.bubble.placing = True                      # growing is not a resize by hand (until _opened)
-            self.bubble.setGeometry(start)
-            self.bubble_animation = group
-            group.start()
+            self._bubble_fades(self._towards_him(final), final, True, OPEN_MS, QEasingCurve.Type.OutCubic, self._opened)
+
+    def _bubble_fades(self, start: QRect, final: QRect, coming: bool, ms: int, curve, done) -> None:
+        """The bubble, at its place and laid out, coming or going as pictures (BubbleFade)."""
+        picture = self.bubble.grab()
+        room = start.united(final).adjusted(-assistant.TAIL, -assistant.TAIL, assistant.TAIL, assistant.TAIL)
+        room = room.intersected(self.area.rect())
+        self.bubble_fade = BubbleFade(self, self._window_without_us(room), room, picture, start, final, coming)
+        self.raise_()
+        fade = QVariantAnimation(self)
+        fade.setDuration(ms)
+        fade.setEasingCurve(curve)
+        fade.setStartValue(0.0)
+        fade.setEndValue(1.0)
+        fade.valueChanged.connect(self.bubble_fade.set_t)
+        fade.finished.connect(done)
+        self.bubble_animation = fade
+        fade.start()
 
     def _towards_him(self, final: QRect) -> QRect:
         """The bubble's place moved SLIDE_IN pixels towards the character: where it fades in from."""
@@ -1586,37 +1647,23 @@ class Assistant(QFrame):
             self.bubble_animation.deleteLater()
             self.bubble_animation = None
         self.bubble.placing = False
-        self.bubble.setGraphicsEffect(None)                 # the effect doubles the cost of every paint
+        if self.bubble_fade is not None:
+            self.bubble_fade.hide()
+            self.bubble_fade.deleteLater()
+            self.bubble_fade = None
 
     def _close_bubble(self, animate: bool) -> None:
         self._stop_bubble_animation()
         if animate and self.moving() and self.bubble.isVisible():
             final = self.bubble.geometry()
-            effect = QGraphicsOpacityEffect(self.bubble)
-            self.bubble.setGraphicsEffect(effect)
-            group = QParallelAnimationGroup(self)
-            geom = QPropertyAnimation(self.bubble, b"geometry", group)
-            geom.setDuration(CLOSE_MS)
-            geom.setEasingCurve(QEasingCurve.Type.InCubic)
-            geom.setStartValue(final)
-            geom.setEndValue(self._towards_him(final))
-            fade = QPropertyAnimation(effect, b"opacity", group)
-            fade.setDuration(CLOSE_MS)
-            fade.setStartValue(1.0)
-            fade.setEndValue(0.0)
-            group.addAnimation(geom)
-            group.addAnimation(fade)
-            group.finished.connect(self._closed)
-            self.bubble.placing = True
-            self.bubble_animation = group
-            group.start()
+            self._bubble_fades(final, self._towards_him(final), False, CLOSE_MS, QEasingCurve.Type.InCubic, self._closed)
         else:
             self.bubble.hide()
 
     def _closed(self) -> None:
         self.bubble.placing = False
+        self.bubble.hide()                                  # first: under the picture, nothing shows of it
         self._stop_bubble_animation()
-        self.bubble.hide()
         if self.bubble.shape is not None:
             self.bubble.set_shape(self.bubble.shape)
 

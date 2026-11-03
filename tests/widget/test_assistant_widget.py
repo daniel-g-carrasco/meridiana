@@ -186,13 +186,13 @@ class Alone(unittest.TestCase):
         self.assertIsNotNone(group)
         self.assertEqual(group.state(), QAbstractAnimation.State.Running)
         self.assertEqual(group.duration(), ui.OPEN_MS)
-        self.assertIsNotNone(a.bubble.graphicsEffect())
+        self.assertIsNone(a.bubble.graphicsEffect())                                # pictures: no effect, no layout
         final = a.bubble.shape
-        self.assertEqual((a.bubble.width(), a.bubble.height()), (final.width, final.height))   # its size at once
-        goal = group.animationAt(0).endValue()                                      # where it slides to
-        self.assertEqual(abs(a.bubble.x() - goal.x()) + abs(a.bubble.y() - goal.y()), ui.SLIDE_IN)
+        self.assertEqual(a.bubble.geometry().getRect(), (final.x, final.y, final.width, final.height))   # at its place
+        fade = a.bubble_fade
+        self.assertEqual(abs(fade.start.x() - fade.final.x()) + abs(fade.start.y() - fade.final.y()), ui.SLIDE_IN)
         self.assertTrue(self.wait(lambda: a.bubble_animation is None, 3))
-        self.assertIsNone(a.bubble.graphicsEffect())                                # costs the double: gone
+        self.assertIsNone(a.bubble_fade)
         self.assertEqual((a.bubble.width(), a.bubble.height()), (final.width, final.height))
         a.close_panel()
         self.assertEqual(a.bubble_animation.duration(), ui.CLOSE_MS)
