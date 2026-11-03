@@ -394,7 +394,7 @@ class OpeningIsOneMovement(unittest.TestCase):
             self.assertGreater(len(frames), 5)
             for sid in self.side.sections:
                 ys = [f[sid][0] for f in frames]
-                steps = [b - a for a, b in zip(ys, ys[1:]) if b != a]
+                steps = [b - a for a, b in zip(ys, ys[1:], strict=False) if b != a]
                 self.assertTrue(all(s > 0 for s in steps) or all(s < 0 for s in steps),
                                 f"{first}->{second} {sid} goes back and forth: {ys}")
             heights = [f[second][1] for f in frames]
@@ -446,6 +446,98 @@ class NothingCutAtTheRight(unittest.TestCase):
             for b in list(insp.inverter_buttons.values()) + list(insp.string_buttons.values()):
                 self.assertGreaterEqual(b.height(), b.heightForWidth(b.width()), f"{width}: {b.text()}")
                 self.assertLessEqual(b.mapTo(insp.widget(), QPoint(b.width(), 0)).x(), insp.viewport().width())
+
+
+class FitAreaHoldsThePanelOpen(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.app = look()
+
+    def test_its_minimum_width_is_what_the_page_needs_so_that_nothing_is_cut(self):
+        from meridiana.ui.style import FitArea
+        area = QScrollArea()
+        area.setWidgetResizable(True)
+        area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        page = QWidget()
+        box = QVBoxLayout(page)
+        box.setContentsMargins(0, 0, 0, 0)
+        wide = QWidget()
+        wide.setMinimumWidth(300)
+        box.addWidget(wide)
+        area.setWidget(page)
+        top = QWidget()
+        self.addCleanup(_setup.dispose, top)
+        outer = QVBoxLayout(top)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addWidget(FitArea(area))
+        top.show()
+        top.resize(100, 200)
+        _setup.turn_events(self.app, 40)
+        self.assertLessEqual(page.width(), area.viewport().width())
+        self.assertGreaterEqual(top.width(), 300)
+
+    def test_the_card_lent_to_panels_is_not_cut_at_the_narrowest_panel(self):
+        from _fixtures import capannone
+
+        from meridiana.ui import motion
+        _setup.window(self, capannone(), size=(1600, 900))
+        motion.set_reduced(True)
+        self.addCleanup(motion.set_reduced, False)
+        win = self.win
+        win.show_phase("plant")
+        _setup.turn_events(self.app, 200)
+        side = next(w for w in self.app.allWidgets() if type(w).__name__ == "PlantSide")
+        win._select("subfield", win.project.subfields[0].id)
+        _setup.turn_events(self.app, 200)
+        side.open("panels", ms=0)
+        win.resizeDocks([win.docks[1]], [100], Qt.Orientation.Horizontal)
+        _setup.turn_events(self.app, 300)
+        self.assertLessEqual(win.props.widget().width(), win.props.viewport().width())
+
+
+class ChosenInverterAndViewMenu(unittest.TestCase):
+    """R340, R341."""
+
+    def setUp(self):
+        from widget.test_groups import plant_of
+
+        from meridiana.ui.plant_page import PlantInspector
+        self.app = look(self.theme)
+        self.project, self.plant = plant_of([], 2)
+        self.panel = PlantInspector(Actions())
+        self.addCleanup(_setup.dispose, self.panel)
+        self.panel.show_plant(self.project, self.plant)
+        self.panel.resize(380, 900)
+        self.panel.show()
+        _setup.turn_events(self.app, 60)
+
+    theme = "light"
+
+    def test_the_card_chosen_is_filled_with_the_colour_of_the_selection_and_the_other_is_not(self):
+        from PySide6.QtGui import QPalette
+        cards = self.panel.units.cards
+        self.assertEqual(len(cards), 2)
+        self.panel.units.set_current(1)
+        _setup.turn_events(self.app, 20)
+        chosen, other = cards[1], cards[2]
+        selection = chosen.palette().color(QPalette.ColorRole.Highlight).name()
+        self.assertEqual(chosen.grab().toImage().pixelColor(chosen.width() // 2, 4).name(), selection)
+        self.assertNotEqual(other.grab().toImage().pixelColor(other.width() // 2, 4).name(), selection)
+        ring = chosen.grab().toImage().pixelColor(chosen.width() // 2, 0)
+        self.assertNotEqual(ring.name(), selection)                     # the hair of the accent round it
+
+    def test_the_view_menu_has_the_views_symbol_and_no_arrow(self):
+        from meridiana.ui.plant_page import VIEW_ICONS
+        self.assertNotIn("chevron-down", VIEW_ICONS.values())
+        self.assertIn("QToolButton#view-menu::menu-indicator", self.app.styleSheet())
+        self.assertFalse(self.panel.view_button.icon().isNull())
+        before = self.panel.view_button.icon().cacheKey()
+        self.panel.set_view("diagram")
+        self.assertNotEqual(self.panel.view_button.icon().cacheKey(), before)   # the view in use
+
+
+class ChosenInverterDark(ChosenInverterAndViewMenu):
+    theme = "dark"
 
 
 class WrappedButton(unittest.TestCase):

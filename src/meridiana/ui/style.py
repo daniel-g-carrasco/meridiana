@@ -791,8 +791,8 @@ def wrap_button(button) -> None:
 class FitArea(QWidget):
     """A scroll area as tall as the page it holds and no taller, in a column that gives what it can (R337, Daniel
     03/11/2026: the Plant's sections took the whole panel, frame and all, for two lines of text): the hint is the page's
-    height at the width the area has, followed when the page changes or is replaced; the minimum is the area's, so that
-    where there is less room the area scrolls. `width` gives the column's width while the area is folded away."""
+    height at the width the area has, followed when the page changes or is replaced; where there is less room the area
+    scrolls. `width` gives the column's width while the area is folded away."""
 
     def __init__(self, area=None, width=None, parent=None):
         super().__init__(parent)
@@ -854,7 +854,19 @@ class FitArea(QWidget):
         return QSize(self.area.sizeHint().width() if self.area is not None else 0, self.content_height(width))
 
     def minimumSizeHint(self) -> QSize:
-        return self.area.minimumSizeHint() if self.area is not None else QSize(0, 0)
+        """As low as the area goes, because it scrolls; never narrower than its page, which would be cut (R341)."""
+        area = self.area
+        if area is None:
+            return QSize(0, 0)
+        hint = area.minimumSizeHint()
+        width = max(hint.width(), area.minimumWidth())
+        page = area.widget()
+        if page is not None:
+            bar = area.verticalScrollBar()
+            margins = area.viewportMargins()
+            width = max(width, page.minimumSizeHint().width() + 2 * area.frameWidth() + margins.left() + margins.right()
+                        + bar.style().pixelMetric(QStyle.PixelMetric.PM_ScrollBarExtent, None, bar))
+        return QSize(width, hint.height())
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
