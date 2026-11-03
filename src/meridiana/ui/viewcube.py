@@ -26,8 +26,8 @@ RING = 45                   # the compass ring's radius, pixels (it was 50)
 ARROW_AT = 50               # from the middle to the base of an arrow, beyond the ring's letters (it was 54)
 ARROW_SIDE = 4.5            # half the base of an arrow, and its depth (it was 7)
 ARROW_REACH = 8             # pixels from the arrow's middle that still take it: the drawing is small
-# Below this area of the view (pixels) the cube is compact: two thirds of a 1366 x 768 screen's view, about what a view
-# shares with the plan on a laptop. A threshold of its own: when the window's arrangement decides these things
+# Below this area of the view (pixels) the cube is compact: a view sharing a small window with the plan (a window of
+# 1100 x 700 leaves it 306 x 278). A threshold of its own: when the window's arrangement decides these things
 # (meridiana/arrangement.py, on another branch), it goes through compact_for and nothing else changes.
 COMPACT_VIEW_AREA = 640 * 400
 
