@@ -29,7 +29,8 @@ def prop_solids(project) -> list:
         if not x.casts_shadow():
             continue
         try:
-            corners = props.placed_solids(x.kind, x.at, project.prop_base(x), x.rotation, x.height, x.width, x.length)
+            corners = props.placed_solids(x.kind, x.at, project.prop_base(x), x.rotation, x.height, x.width, x.length,
+                                          x.path)
         except ValueError:
             continue                    # measures a hand-edited file made impossible: the check says nothing more
         out += [nearshade.Solid(c, project.prop_label(x)) for c in corners]

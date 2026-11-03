@@ -27,7 +27,7 @@ from . import atomic, layout, roof_join, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 24
+FORMAT_VERSION = 25
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -503,6 +503,23 @@ def _to_23(data: dict, notes: list | None = None) -> dict:
     return data
 
 
+def _to_25(data: dict) -> dict:
+    """24 -> 25: hedges and walkways are paths; old walkways keep their railings."""
+    for raw in data.get("props") or []:
+        if raw.get("kind") not in ("hedge", "walkway"):
+            continue
+        from . import props
+        at = raw.get("at", [0.0, 0.0])
+        length = raw.get("length") or (props.TREE_DEFAULTS["hedge"][3] if raw["kind"] == "hedge"
+                                      else props.OBSTACLE_DEFAULTS["walkway"][0])
+        angle = math.radians(raw.get("rotation", 0.0))
+        dx, dy = math.cos(angle) * length / 2, math.sin(angle) * length / 2
+        raw["path"] = [[at[0] - dx, at[1] - dy], [at[0] + dx, at[1] + dy]]
+        if raw["kind"] == "walkway":
+            raw["railing"] = True
+    return data
+
+
 MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                     3: lambda data: {**data, "variants": [{"id": "v1", "name": "Base", "note": ""}], "variant": "v1"},
                     4: lambda data: data, 5: lambda data: {**data, "underlays": data.get("underlays", [])},
@@ -517,7 +534,7 @@ MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                         repr((data.get("created", ""), data.get("job_id", ""), data.get("name", ""))))))},
                     19: lambda data: data,  # optional explicit optimizer groups; absent keeps legacy order
                     20: _to_21, 21: lambda data: {**data, "props": data.get("props", [])}, 22: _to_23,
-                    23: lambda data: data}  # the activity of DPR 151/2011 (R327): absent, none chosen
+                    23: lambda data: data, 24: _to_25}
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
 ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
@@ -544,7 +561,8 @@ def exclusion_names() -> dict:
 def prop_names() -> dict:
     """What each kind of 3D object is called (R269): the menu of the tool, the properties, the tree, the shadows."""
     from .i18n import _
-    return {"broadleaf": _("Broadleaf tree"), "conifer": _("Conifer"), "shrub": _("Shrub"), "hedge": _("Hedge"),
+    return {"broadleaf": _("Broadleaf tree"), "conifer": _("Conifer"), "pine": _("Stone pine"),
+            "shrub": _("Shrub"), "hedge": _("Hedge"),
             "palm": _("Palm"), "chimney": _("Chimney"), "vent": _("Smoke vent (EFC)"), "skylight": _("Skylight"),
             "dome_skylight": _("Dome skylight"), "plant": _("Roof plant"), "antenna": _("Antenna"),
             "dish": _("Satellite dish"), "tank": _("Tank"), "stairwell": _("Stairwell"), "elevator": _("Lift shaft"),
@@ -843,6 +861,8 @@ class Prop:
     width: float | None = None
     length: float | None = None
     building: str | None = None
+    path: list | None = None
+    railing: bool = False
 
     def measures(self) -> dict:
         from . import props
@@ -850,11 +870,11 @@ class Prop:
 
     def footprint(self) -> list:
         from . import props
-        return props.footprint(self.kind, self.at, self.rotation, self.height, self.width, self.length)
+        return props.footprint(self.kind, self.at, self.rotation, self.height, self.width, self.length, self.path)
 
     def casts_shadow(self) -> bool:
         from . import props
-        return props.family(self.kind) != "person"
+        return props.family(self.kind) != "person" and (self.kind != "walkway" or self.railing)
 
 
 @dataclass
@@ -1197,6 +1217,15 @@ def _check_project(data: dict) -> list[str]:
             if raw.get(key) is not None:
                 if _check_number(raw[key], f"{path}.{key}", 0.0, HEIGHT_LIMIT) <= 0:
                     raise ValueError(f"{path}.{key}: {raw[key]!r} is not above zero")
+        points = raw.get("path")
+        if points is not None:
+            if points.__class__ is not list or len(points) < 2 or any(q.__class__ is not list or len(q) != 2 for q in points):
+                raise ValueError(f"{path}.path: expected at least two points")
+            for i, point in enumerate(points):
+                for k, value in enumerate(point):
+                    _check_number(value, f"{path}.path[{i}][{k}]", -COORD_LIMIT, COORD_LIMIT)
+        if raw.get("railing", False).__class__ is not bool:
+            raise ValueError(f"{path}.railing: expected true or false")
     for i, raw in enumerate(data.get("underlays") or []):
         path = f"underlays[{i}]"
         raw = _check_dict(raw, path)
@@ -1343,9 +1372,9 @@ class Project:
         return f"{prop_names().get(item.kind, item.kind)} {n or item.id}"
 
     def prop_base(self, item: Prop) -> float:
-        """The height it stands at: the roof of its building under its middle, the ground otherwise."""
+        """The height it stands at: no corner of its footprint sinks into the roof."""
         b = self.building(item.building)
-        return float(roof_z(b, [(float(item.at[0]), float(item.at[1]))])[0]) if b is not None else 0.0
+        return float(max(roof_z(b, item.footprint()))) if b is not None else 0.0
 
     def prop_host(self, at) -> str | None:
         """The building whose outline holds the point, or None (the ground). Not a canopy: a car or a person under
@@ -1380,6 +1409,8 @@ class Project:
                                                           "prop": "o"}[kind]))
         if kind == "prop":                      # R269: a point, not an outline; it stands on what is under it
             copy.at = moved([thing.at])[0]
+            if thing.path is not None:
+                copy.path = moved(thing.path)
             copy.building = self.prop_host(copy.at)
             found.append(copy)
             return copy.id

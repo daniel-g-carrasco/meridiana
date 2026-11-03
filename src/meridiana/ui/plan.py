@@ -43,7 +43,7 @@ from .tileloader import TileLoader
 
 TOOLS = ("select", "building", "pitch", "ridge", "subfield", "exclusion", "row", "east_west", "move", "measure")
 ROW_TOOLS = ("row", "east_west")   # a row drawn by a line: of the sub-field's modules, or of east-west pairs (R279)
-DRAWING = {"building", "pitch", "ridge", "subfield", "exclusion"}   # ridge: a line, not an outline (R275)
+DRAWING = {"building", "pitch", "ridge", "subfield", "exclusion", "prop_line"}   # ridge: a line, not an outline (R275)
 PITCH_FIELDS = ("depth", "tilt", "ridge", "eave")   # the rows of the Pitch card a number typed goes to (R274)
 MOVABLE = ("building", "subfield", "exclusion", "row", "prop")   # what Move takes (task 16b; a row, task 16c)
 PLANT_MOVABLE = ("subfield", "row", "module")                    # what it takes in the Plant (R295)
@@ -242,6 +242,8 @@ def hints() -> dict:
                       "a pitch to take it whole. Modules are laid only when you ask, from its properties."),
         "exclusion": _("Exclusion: draw a skylight, a smoke vent, roof plant or a walkway; modules keep away "
                        "from it."),
+        "prop_line": _("Click each corner; Enter or a double click finishes, Backspace removes the last point, "
+                       "Esc cancels. Type a number for the length of a segment."),
         "row": _("Row: click where it starts in a sub-field, then where it ends, or type its length and Enter. It "
                  "runs along the line, with the module and the gaps of the sub-field; red, it goes beyond the edge "
                  "or onto an exclusion. Esc cancels."),
@@ -1781,7 +1783,10 @@ class PlanView(QGraphicsView):
     def _vertex_near(self, view_pos, pixels: float = 8.0) -> int | None:
         """The corner of the selected outline under the pointer, if any."""
         ring = self.rings.get(self.selection)
-        if not ring or self.selection[0] not in ("building", "subfield", "exclusion"):
+        if self.selection[0] == "prop" and self.drawn:
+            item = self.drawn[0].prop(self.selection[1])
+            ring = item.path if item is not None else None
+        if not ring or (self.selection[0] not in ("building", "subfield", "exclusion", "prop")):
             return None
         here = from_scene(self.mapToScene(view_pos))
         reach = pixels * self.metres_per_pixel()
@@ -1998,7 +2003,7 @@ class PlanView(QGraphicsView):
                 self.ridgeDrawn.emit(points, ridge)
             self.viewport().update()
             return
-        if len(self.chain) >= 3:
+        if len(self.chain) >= (2 if self.tool == "prop_line" else 3):
             ring = list(self.chain)
             tool = self.tool
             card = self.pitch_values(ring) if tool == "pitch" else None
@@ -2970,6 +2975,8 @@ class PlanView(QGraphicsView):
             vertex = self._vertex_near(position.toPoint())
             if vertex is not None:
                 ring = self.rings[self.selection]
+                if self.selection[0] == "prop":
+                    ring = self.drawn[0].prop(self.selection[1]).path
                 self.dragging = (self.selection[0], self.selection[1], vertex, ring)
                 self.drag_point = ring[vertex]
                 self.setCursor(Qt.CursorShape.SizeAllCursor)

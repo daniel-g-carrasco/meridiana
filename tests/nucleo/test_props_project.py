@@ -95,6 +95,17 @@ class Moving(unittest.TestCase):
         self.assertIsNone(p.prop("o1").building)
         self.assertEqual(p.prop_base(p.prop("o1")), 0.0)
 
+    def test_a_roof_object_does_not_sink_below_the_sloped_surface(self):
+        p = site()
+        b = p.building("b1")
+        b.roof.type = "mono"
+        b.roof.eave_side = 0
+        b.roof.tilt = 30.0
+        x = model.Prop(id="o1", kind="chimney", at=[10.0, 5.0], building="b1")
+        p.props.append(x)
+        base = p.prop_base(x)
+        self.assertAlmostEqual(base, max(model.roof_z(b, x.footprint())))
+
     def test_an_object_on_a_roof_goes_with_its_building(self):
         p = site()
         p.props.append(model.Prop(id="o1", kind="chimney", at=[5.0, 5.0], building="b1"))

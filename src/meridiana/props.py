@@ -15,13 +15,14 @@ from . import mesh
 
 TREE_TRIANGLE_BUDGET = 400
 PERSON_TRIANGLE_BUDGET = 300
-CAR_TRIANGLE_BUDGET = 300
+CAR_TRIANGLE_BUDGET = 850
 OBSTACLE_TRIANGLE_BUDGET = 200
 
-TREE_KINDS = ("broadleaf", "conifer", "shrub", "hedge", "palm")
+TREE_KINDS = ("broadleaf", "conifer", "pine", "shrub", "hedge", "palm")
 TREE_DEFAULTS = {
     "broadleaf": (6.0, 4.0, 1.8, 4.0),
     "conifer": (8.0, 3.5, 1.2, 3.5),
+    "pine": (14.0, 10.0, 9.5, 10.0),
     "shrub": (1.2, 1.2, 0.12, 1.2),
     "hedge": (1.5, 0.8, 0.10, 4.0),
     "palm": (9.0, 5.0, 6.5, 5.0),
@@ -67,7 +68,7 @@ OBSTACLE_DEFAULTS = {
     "tank": (1.0, 1.0, 1.6),
     "stairwell": (2.8, 2.2, 2.4),
     "elevator": (2.2, 2.0, 2.6),
-    "walkway": (3.0, 0.8, 0.25),
+    "walkway": (3.0, 0.8, 0.02),
     "opening": (1.0, 0.8, 0.10),
     "other": (1.0, 1.0, 0.5),
 }
@@ -241,10 +242,21 @@ def tree(kind="broadleaf", height=None, crown_diameter=None, trunk_height=None, 
     radius = crown / 2
     crown_height = height - trunk
     trunk_radius = max(0.025, min(crown * 0.035, max(trunk, 0.1) * 0.04))
-    _lathe(builder, ((0.0, trunk_radius), (max(trunk, 0.02), trunk_radius * 0.8)), 8, bark)
+    if kind != "pine":
+        _lathe(builder, ((0.0, trunk_radius), (max(trunk, 0.02), trunk_radius * 0.8)), 8, bark)
 
     if kind in ("broadleaf", "shrub"):
         _ellipsoid(builder, trunk, height, radius, green)
+    elif kind == "pine":
+        fork = (radius * 0.10, trunk, 0.0)
+        _rod(builder, (0.0, 0.0, 0.0), (0.0, trunk * 0.55, 0.0), trunk_radius, bark, 10)
+        _rod(builder, (0.0, trunk * 0.55, 0.0), fork, trunk_radius * 0.85, bark, 10)
+        for x, z, scale in ((-radius * 0.38, 0.0, 0.62), (radius * 0.38, -radius * 0.38, 0.62),
+                            (0.0, radius * 0.38, 0.62)):
+            _rod(builder, fork, (x, trunk + crown_height * 0.45, z), trunk_radius * 0.58, bark, 8)
+            profile = ((0.0, 0.0), (crown_height * 0.28, radius * scale),
+                       (crown_height * 0.72, radius * scale * 0.90), (crown_height, 0.0))
+            _lathe(builder, profile, 16, green, centre=(x, trunk, z))
     elif kind == "conifer":
         for level, scale in enumerate((1.0, 0.8, 0.58)):
             base = trunk + crown_height * level * 0.24
@@ -477,20 +489,30 @@ def car(kind="compact", length=None, width=None, height=None, rotation=0.0, colo
     paint, tyre = _colour(colours, "car"), _colour(colours, "tyre")
     glass = _colour(colours, "glass")
     builder = _Builder()
+    dark, metal = _colour(colours, "dark"), _colour(colours, "metal")
     _box(builder, (0.0, height * 0.36, 0.0), (length, height * 0.36, width * 0.84), paint)
-    _car_cabin(builder, length, width, height, paint)
+    _box(builder, (length * 0.33, height * 0.55, 0.0), (length * 0.30, height * 0.05, width * 0.82), paint)
+    _box(builder, (-length * 0.37, height * 0.55, 0.0), (length * 0.22, height * 0.05, width * 0.82), paint)
+    _car_cabin(builder, length, width, height, glass)
+    _box(builder, (length * 0.03, height * 0.985, 0.0), (length * 0.30, height * 0.03, width * 0.60), paint)
     for side in (-1.0, 1.0):
-        _box(builder, (length * 0.02, height * 0.72, side * width * 0.33),
-             (length * 0.34, height * 0.22, width * 0.02), glass)
+        for x in (-length * 0.12, length * 0.18):
+            _rod(builder, (x, height * 0.58, side * width * 0.40),
+                 (x, height * 0.98, side * width * 0.30), width * 0.018, paint, 6)
     radius = height * 0.18
     for x in (-length * 0.31, length * 0.31):
         for side in (-1.0, 1.0):
-            _rod(builder, (x, radius, side * width * 0.5), (x, radius, side * width * 0.38), radius, tyre, 8)
+            outer = side * width * 0.5
+            _rod(builder, (x, radius, outer), (x, radius, side * width * 0.38), radius, tyre, 16)
+            _rod(builder, (x, radius, outer - side * 0.002), (x, radius, outer - side * width * 0.025),
+                 radius * 0.58, metal, 12)
+            _rod(builder, (x, radius, outer - side * 0.004), (x, radius, outer - side * width * 0.02),
+                 radius * 0.16, dark, 10)
     for side in (-1.0, 1.0):
-        _box(builder, (length * 0.46, height * 0.40, side * width * 0.25),
-             (length * 0.06, height * 0.10, width * 0.16), _colour(colours, "light"))
-        _box(builder, (-length * 0.46, height * 0.40, side * width * 0.25),
-             (length * 0.06, height * 0.10, width * 0.16), _colour(colours, "rear"))
+        _box(builder, (length * 0.485, height * 0.43, side * width * 0.27),
+             (length * 0.03, height * 0.10, width * 0.20), _colour(colours, "light"))
+        _box(builder, (-length * 0.485, height * 0.43, side * width * 0.27),
+             (length * 0.03, height * 0.10, width * 0.20), _colour(colours, "rear"))
     return _rotate_qt(builder.arrays(), float(rotation))
 
 
@@ -527,7 +549,7 @@ def shadow_solid(kind, rotation=0.0, **dimensions):
 FAMILIES = {**{k: "tree" for k in TREE_KINDS}, **{k: "obstacle" for k in OBSTACLE_KINDS},
             **{k: "person" for k in PERSON_KINDS}, **{k: "car" for k in CAR_KINDS}}
 KINDS = tuple(FAMILIES)
-ROUND = ("broadleaf", "conifer", "shrub", "palm")      # a round crown: an octagon on the plan
+ROUND = ("broadleaf", "conifer", "pine", "shrub", "palm")      # a round crown: an octagon on the plan
 
 
 def family(kind: str) -> str:
@@ -572,9 +594,14 @@ def plan_size(kind: str, height=None, width=None, length=None) -> tuple[float, f
     return m["width"], m["depth"]
 
 
-def footprint(kind: str, at, rotation: float = 0.0, height=None, width=None, length=None) -> list[tuple[float, float]]:
-    """The outline the prop covers on the plan, in the site's metres: an octagon for a round crown, else the turned
-    rectangle of its sides."""
+def footprint(kind: str, at, rotation: float = 0.0, height=None, width=None, length=None,
+              path=None) -> list[tuple[float, float]]:
+    """The outline the prop covers on the plan, including the mitred buffer of a linear path."""
+    if path is not None:
+        from shapely.geometry import LineString
+        width = measures(kind, height, width, length)["crown_diameter" if kind == "hedge" else "width"]
+        shape = LineString(path).buffer(width / 2, cap_style="flat", join_style="mitre")
+        return [(round(float(x), 4), round(float(y), 4)) for x, y in list(shape.exterior.coords)[:-1]]
     a, b = plan_size(kind, height, width, length)
     if kind in ROUND:
         angle = np.arange(8) * math.tau / 8 + math.tau / 16
@@ -587,9 +614,15 @@ def footprint(kind: str, at, rotation: float = 0.0, height=None, width=None, len
 
 
 def placed_mesh(kind: str, at, z0: float = 0.0, rotation: float = 0.0, height=None, width=None, length=None,
-                colours=None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+                colours=None, path=None, railing=False, surface=None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """The prop's triangles where it stands (positions, normals, colours), in the 3D view's axes (mesh.to_qt)."""
     m = measures(kind, height, width, length)
+    if path is not None and kind in ("hedge", "walkway"):
+        ring = footprint(kind, at, height=height, width=width, length=length, path=path)
+        if surface is not None:
+            return mesh.path_triangles(ring, surface, m["height"], _colour(colours, "obstacle"), railing)
+        colour = _colour(colours, "tree" if kind == "hedge" else "obstacle")
+        return mesh.prism_triangles(ring, z0, z0 + m["height"], colour)
     builder = {"tree": tree, "obstacle": obstacle, "person": person, "car": car}[family(kind)]
     pos, nor, col = builder(kind, rotation=float(rotation), colours=colours, **m)
     pos = np.asarray(pos, dtype=np.float32) + np.asarray(mesh.to_qt(float(at[0]), float(at[1]), float(z0)),
@@ -598,8 +631,15 @@ def placed_mesh(kind: str, at, z0: float = 0.0, rotation: float = 0.0, height=No
 
 
 def placed_solids(kind: str, at, z0: float = 0.0, rotation: float = 0.0, height=None, width=None,
-                  length=None) -> list[np.ndarray]:
+                  length=None, path=None) -> list[np.ndarray]:
     """The prop's shadow solids where it stands (model axes, nearshade.Solid's corners)."""
+    m = measures(kind, height, width, length)
+    if path is not None:
+        from shapely.geometry import Polygon
+        ring = footprint(kind, at, height=height, width=width, length=length, path=path)
+        hull = Polygon(ring).convex_hull
+        xy = list(hull.exterior.coords)[:-1]
+        return [np.array([(x, y, z) for z in (z0, z0 + m["height"]) for x, y in xy])]
     m = measures(kind, height, width, length)
     shift = np.array((float(at[0]), float(at[1]), float(z0)))
     return [np.asarray(c, dtype=np.float64) + shift for c in shadow_solid(kind, float(rotation), **m)]

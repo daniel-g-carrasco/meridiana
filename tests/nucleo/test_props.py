@@ -13,6 +13,7 @@ TREE_CASES = (
     ("broadleaf", {"height": 9.0, "crown_diameter": 5.5, "trunk_height": 2.7}),
     ("conifer", {"height": 8.0, "crown_diameter": 3.5, "trunk_height": 1.0}),
     ("conifer", {"height": 12.0, "crown_diameter": 4.5, "trunk_height": 1.4}),
+    ("pine", {"height": 14.0, "crown_diameter": 10.0, "trunk_height": 9.5}),
     ("shrub", {"height": 1.4, "crown_diameter": 1.6, "trunk_height": 0.15}),
     ("shrub", {"height": 0.8, "crown_diameter": 1.1, "trunk_height": 0.1}),
     ("hedge", {"height": 1.8, "crown_diameter": 0.9, "trunk_height": 0.1, "length": 6.0}),

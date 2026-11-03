@@ -78,6 +78,25 @@ class PropsWorkflow(unittest.TestCase):
         win.undo.undo()                                 # the placing itself
         self.assertEqual(win.project.props, [])
 
+    def test_a_walkway_is_drawn_as_a_path_and_edited_with_undo(self):
+        win = _setup.window(self, project())
+        win.place_prop("walkway")
+        win._drawn("prop_line", [[2, 2], [8, 2], [8, 6]])
+        x = win.project.props[0]
+        self.assertEqual(x.path, [[2, 2], [8, 2], [8, 6]])
+        self.assertFalse(x.casts_shadow())
+        self.assertEqual(x.measures()["height"], 0.02)
+        win._edited("prop", x.id, {"railing": True})
+        self.assertTrue(x.casts_shadow())
+        win._vertex_moved("prop", x.id, 1, 7.0, 3.0)
+        self.assertEqual(x.path[1], [7.0, 3.0])
+        win.undo.undo()
+        self.assertEqual(win.project.prop(x.id).path[1], [8.0, 2.0])
+        win.undo.undo()
+        self.assertFalse(win.project.prop(x.id).railing)
+        win.undo.undo()
+        self.assertEqual(win.project.props, [])
+
     def test_the_properties_change_the_kind_and_reset_the_measures_across_families(self):
         p = project()
         p.props.append(model.Prop(id="o1", kind="broadleaf", at=[30.0, 4.0], width=6.0))

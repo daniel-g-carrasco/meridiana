@@ -289,6 +289,8 @@ def _apply(p, kind: str, oid: str, f, degrees: float) -> None:
         for x in p.props:                   # R269: the 3D objects on its roof
             if x.building == oid:
                 x.at = moved([x.at], f)[0]
+                if x.path is not None:
+                    x.path = moved(x.path, f)
                 x.rotation = round((float(x.rotation) + degrees) % 360.0, DECIMALS)
         return
     if kind == "subfield":
@@ -314,6 +316,8 @@ def _apply(p, kind: str, oid: str, f, degrees: float) -> None:
         if x is None:
             raise ValueError(_("there is no such object to move"))
         x.at = moved([x.at], f)[0]
+        if x.path is not None:
+            x.path = moved(x.path, f)
         x.rotation = round((float(x.rotation) + degrees) % 360.0, DECIMALS)
         x.building = p.prop_host(x.at)
         return
