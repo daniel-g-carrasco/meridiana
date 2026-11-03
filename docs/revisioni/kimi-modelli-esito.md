@@ -46,7 +46,7 @@ ESITO: verde
 - 72 prove mirate di oggetti, percorsi e formati: verdi, una IFC saltata perché `ifcopenshell` non è installato.
 - `finestra.test_props_workflow`: 4 prove verdi, compresa la nuova spezzata.
 - Gruppi `nucleo`, `formati` e `widget`: i primi run hanno trovato test italiani rossi perché il catalogo non era compilato. Dopo `tools/compile_po.py`, gli 8 casi incriminati ripetuti sono verdi.
-- Il gruppo `finestra` completo è stato avviato separatamente; il suo esito non è usato per questo giudizio.
+- Gruppo `finestra` completo: 325 prove, una rossa e una saltata. `test_nothing_comes_by_itself_and_a_string_is_drawn_numbered_taken_back_closed_and_given_up` attendeva «all 4 strings cleared» e ha trovato «The project changed during string search» (`tests/finestra/test_window.py:1759`), ambito stringhe non toccato.
 - Prova reale con `tools/real_session.sh`: galleria e dettagli prodotti e aperti. `tools/real_tour.py` ha visitato e fotografato tutte le fasi, poi si è fermato a `tools/real_tour.py:161` con `KeyError: 'import'` sulla pagina File, fuori dai file dell'incarico. Le foto preesistenti sovrascritte sono state ripristinate.
 - `findmnt /run/user/1000/doc` conferma il montaggio del portale documenti intatto.
 
