@@ -14,7 +14,7 @@ from PySide6.QtWidgets import QDockWidget, QHBoxLayout, QMainWindow, QMenu, QToo
 
 from ..i18n import _
 from . import icons
-from .design import Icon, Space
+from .design import Button, Icon, Space
 
 
 class PanelButtons(QWidget):
@@ -34,6 +34,7 @@ class PanelButtons(QWidget):
             b.setAutoRaise(True)
             b.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             b.setIconSize(QSize(Icon.CONTROL, Icon.CONTROL))
+            b.setFixedSize(Button.TOOL[0], Button.TOOL[0])      # R333: a tool button's height, the «?» as the others
             b.setProperty("icon_name", icon)
             b.setProperty("action", action)
             b.clicked.connect(lambda _c=False, d=dock: self._clicked(d))

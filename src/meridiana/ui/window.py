@@ -1455,17 +1455,17 @@ class MainWindow(QMainWindow):
         pins = dict(self.shape_pins.get(shape, {}))
         if not self.auto_checks:
             pins["checks_open"] = not self.checks_dock.isHidden()
-        end = Bar.LINE + 2 * Bar.GROUP_AIR + Space.L + Space.M
-        # the weather's strip as last seen in its place: an empty holder must not say that it would fit (and to and fro)
-        self.meteo_room = max(self.meteo_room, self.meteo_holder.minimumSizeHint().width())
+        # what stands at a bar's end, with its line: at the size it asks for, a QToolBar does not squeeze a widget, it
+        # puts it out of sight. The Plant's strip at its widest, whatever it says now (a string being drawn takes more
+        # than the summary); the weather's as last seen in its place: an empty holder must not say that it would fit
+        line = Bar.LINE + 2 * Bar.GROUP_AIR
+        self.meteo_room = max(self.meteo_room, self.meteo_holder.sizeHint().width())
         header = self.tabs.header
         row = (2 * Space.L + header.file_button.sizeHint().width() + Space.L + self.tabs.tab_bar.full_width()
                + self.variant_bar.sizeHint().width())
         return arrangement.Choices(
             toolbar=self.cfg.toolbar, needs=self.bar_needs, bar_sides=BAR_SIDES,
-            # with its line and the holder's margins
-            trailing={"plant": self.plant_page.strip.minimumSizeHint().width() + end,
-                      "production": self.meteo_room + end},
+            trailing={"plant": self.plant_page.strip.maximumWidth() + Space.M + line, "production": self.meteo_room + line},
             row_needs=row, columns=(column(self.docks[0], 240), column(self.docks[1], 300)), pins=pins,
             previous=previous)
 
@@ -1484,6 +1484,10 @@ class MainWindow(QMainWindow):
             self.bars_mode = new.bar
             self.tabs.set_mode(new.bar)
         self.tabs.tab_bar.set_compact(new.row == "numbers")
+        # above the page the strip must not change height with what it says: the plan under it would frame itself again
+        # at the first click of a string (one height for the summary and the card of a string being drawn)
+        page = self.plant_page
+        page.strip.setFixedHeight(max(page.draft_card.height(), page.texts.sizeHint().height()))
         pid = self.phase()
         left = self.cfg.toolbar_place == "left"
         if not left and pid in ("plant", "production") and self.trailing_at.get(pid) != new.trailing_in_bar:
@@ -6487,6 +6491,7 @@ class MainWindow(QMainWindow):
             self.project_auto_hidden = self.project_was_visible
             project.hide()
         self._settle_assistant_dock()
+        self.help_box._fit()                        # open or not is the box's own, the state has it as the height left it
         QTimer.singleShot(0, self, self._check_panels)
 
     def _on_screen(self, like: arrangement.Arrangement) -> arrangement.Arrangement:

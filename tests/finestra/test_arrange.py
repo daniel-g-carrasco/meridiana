@@ -118,6 +118,27 @@ class TheCases(Arrange):
         self.assertTrue(win.bars["plant"].isAncestorOf(strip))
         self.assertTrue(strip.isVisible())
 
+    def test_the_plants_strip_is_never_put_out_of_sight_by_the_bar(self):
+        """A QToolBar does not squeeze what does not fit, it hides it: a string being drawn takes more than the summary,
+        and its card was gone at 1400 x 960 (the strip's widest is what counts, not what it says now)."""
+        win = self.win
+        self.go(1400, 960)
+        win.show_phase("plant")
+        self.app.processEvents()
+        page = win.plant_page
+        self.assertFalse(win.bars["plant"].isAncestorOf(page.strip))
+        self.assertTrue(_setup.wait_settled(self.app, lambda: win.plan.size().toTuple()))
+        plan_before = win.plan.size().toTuple()
+        page.show_draft_card("New string 1.2 · Inverter 1 · Acme AC-20K · Input 2", "3 modules", "short", "", "Enter or Esc")
+        self.addCleanup(page.show_draft_card)
+        self.assertTrue(page.draft_card.isVisibleTo(win))
+        # and the plan under the strip stays as it is: it would frame itself again at the first click of a string
+        self.assertTrue(_setup.wait_settled(self.app, lambda: win.plan.size().toTuple()))
+        self.assertEqual(win.plan.size().toTuple(), plan_before)
+        self.go(1920, 1080)
+        self.assertTrue(win.bars["plant"].isAncestorOf(page.strip))
+        self.assertTrue(page.draft_card.isVisibleTo(win))
+
     def test_the_row_of_the_phases_goes_to_numbers_with_the_name_of_the_phase_open(self):
         win = self.win
         bar = win.tabs.tab_bar
@@ -167,6 +188,21 @@ class TheCases(Arrange):
             area = win.centralWidget().size()
             self.assertAlmostEqual(w - c.sides[0] - left - right, area.width(), delta=40, msg=size)
             self.assertAlmostEqual(h - c.sides[1] - bar - checks, area.height(), delta=40, msg=size)
+
+
+class TheSameSizes(Arrange):
+    def test_the_controls_on_the_rows_of_the_bar_have_the_sizes_of_the_system(self):
+        """R333: «?» with the other buttons of the status bar, a tool button's size; the «+» of the variants square."""
+        from meridiana.ui.design import Button
+        win = self.win
+        self.assertEqual({b.size().toTuple() for b in win.panel_buttons.buttons.values()},
+                         {(Button.TOOL[0], Button.TOOL[0])})
+        self.assertEqual(win.variant_bar.plus.size().toTuple(), (Button.CHIP[0], Button.CHIP[0]))
+        self.assertEqual(win.tabs.header.file_button.height(), Button.PUSH[0])
+
+    def test_the_modes_have_the_same_names_on_both_sides(self):
+        from meridiana import arrangement
+        self.assertEqual((arrangement.UNDER, arrangement.BESIDE, arrangement.ICONS), (Bar.UNDER, Bar.BESIDE, Bar.ICONS))
 
 
 class NoSurprise(Arrange):
