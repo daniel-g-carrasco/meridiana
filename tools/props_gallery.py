@@ -93,6 +93,25 @@ def realistic_scene():
     return _join(parts), table.astype(np.float32)
 
 
+def detail_scene(name):
+    if name == "auto":
+        return _join([_placed(props.car("compact", rotation=-18), -3, 0),
+                      _placed(props.car("suv", rotation=18), 3, 0)]), np.zeros((0, 20), dtype=np.float32)
+    if name == "alberi":
+        return _join([_placed(props.tree("conifer"), -6, 0), _placed(props.tree("pine"), 6, 0)]), \
+            np.zeros((0, 20), dtype=np.float32)
+    footprint = [(-5.0, -4.0), (5.0, -4.0), (5.0, 4.0), (-5.0, 4.0)]
+    parts = [mesh.building_triangles(footprint, roofs.mono(footprint, 0, 3.0, 18.0))]
+    surface = lambda x, y: 3.0 + (y + 4.0) * np.tan(np.radians(18.0))
+    for path, railing in (([(-3, -2), (1, -2), (1, 2)], False), ([(-2, 2), (3, 2)], True)):
+        ring = props.footprint("walkway", path[0], width=0.7, path=path)
+        parts.append(mesh.path_triangles(ring, surface, 0.02, (0.56, 0.28, 0.21), railing))
+    hedge = props.footprint("hedge", [0, 0], width=0.7, height=1.2,
+                            path=[[-4, -5], [-1, -5], [-1, -7], [3, -7]])
+    parts.append(mesh.prism_triangles(hedge, 0.1, 1.2, mesh.TREE))
+    return _join(parts), np.zeros((0, 20), dtype=np.float32)
+
+
 def shot_jobs():
     """The twelve captures in Gallery.apply's theme, scene and viewpoint order."""
     return [(theme, scene, view) for scene in ("galleria", "realistica") for theme in ("light", "dark")
@@ -103,7 +122,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--shots", action="store_true", help="Capture both scenes, themes and three viewpoints")
     parser.add_argument("--output", type=Path, default=ROOT / "docs" / "revisioni" / "foto" / "oggetti-3d")
-    parser.add_argument("--scene", choices=("galleria", "realistica"), default="galleria")
+    parser.add_argument("--scene", choices=("galleria", "realistica", "auto", "alberi", "lineari"), default="galleria")
     parser.add_argument("--theme", choices=("light", "dark"), default="light")
     parser.add_argument("--view", choices=("assonometrica", "fronte", "alto"), default="assonometrica")
     args = parser.parse_args()
@@ -142,7 +161,8 @@ def main() -> int:
         def apply(self, theme_name, scene_name, view_name):
             theme = Theme(Config(theme=theme_name, background="none"), app=app)
             self.setStyleSheet(f"QWidget#props-gallery {{ background: {theme.tokens['panel']}; }}")
-            shape, table = lineup_scene() if scene_name == "galleria" else realistic_scene()
+            shape, table = (lineup_scene() if scene_name == "galleria" else realistic_scene()
+                            if scene_name == "realistica" else detail_scene(scene_name))
             self.view.show_scene(shape, table)
             bearings = {"assonometrica": (35.0, -32.0), "fronte": (0.0, -12.0), "alto": (0.0, -90.0)}
             aspect = max(self.view.width(), 1) / max(self.view.height(), 1)
@@ -163,7 +183,8 @@ def main() -> int:
 
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    jobs = shot_jobs()
+    jobs = ([(args.theme, args.scene, view) for view in ("assonometrica", "fronte", "alto")]
+            if args.scene in ("auto", "alberi", "lineari") else shot_jobs())
     failures = []
 
     def capture(index):

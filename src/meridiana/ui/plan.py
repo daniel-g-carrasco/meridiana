@@ -239,6 +239,8 @@ def hints() -> dict:
                       "a pitch to take it whole. Modules are laid only when you ask, from its properties."),
         "exclusion": _("Exclusion: draw a skylight, a smoke vent, roof plant or a walkway; modules keep away "
                        "from it."),
+        "prop_line": _("Click each corner; Enter or a double click finishes, Backspace removes the last point, "
+                       "Esc cancels. Type a number for the length of a segment."),
         "row": _("Row: click where it starts in a sub-field, then where it ends, or type its length and Enter. It "
                  "runs along the line, with the module and the gaps of the sub-field; red, it goes beyond the edge "
                  "or onto an exclusion. Esc cancels."),
