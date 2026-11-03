@@ -1338,6 +1338,11 @@ class Properties(QScrollArea):
         turn.valueChanged.connect(lambda v: self._emit("rotation", v % 360.0))
         form.addRow(_("Rotation"), turn)
         box.addLayout(form)
+        if x.kind == "walkway":
+            railing = self._bind(QCheckBox(_("With railing")), lambda: self._object().railing)
+            railing.setChecked(x.railing)
+            railing.toggled.connect(lambda on: self._emit("railing", on))
+            box.addWidget(railing)
         if any(v is not None for v in (x.height, x.width, x.length)):
             back = QPushButton(_("Use the default measures"))
             back.clicked.connect(lambda: self.edited.emit(self.kind, self.oid,

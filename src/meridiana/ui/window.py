@@ -2431,7 +2431,11 @@ class MainWindow(QMainWindow):
         what = model.prop_names()[kind]         # KeyError for a kind that is not one
         self._prop_kind = kind
         self.show_phase("model")
-        self.plan.pick_points("prop", [_("{what}: click where it goes on the plan; Esc gives up").format(what=what)])
+        if kind in ("hedge", "walkway"):
+            self.plan.set_tool("prop_line")
+            self.hint.setText(_("{what}: click each corner; Enter or a double click finishes, Esc cancels").format(what=what))
+        else:
+            self.plan.pick_points("prop", [_("{what}: click where it goes on the plan; Esc gives up").format(what=what)])
 
     def _prop_placed(self, at) -> None:
         """R269: the 3D object where the plan was clicked, with its kind's measures, as one step of the undo."""
@@ -2783,6 +2787,17 @@ class MainWindow(QMainWindow):
         import time
         self.last_drawn_at = time.monotonic()      # the help card says what comes next for a moment (R43)
         ring = [[round(x, 4), round(y, 4)] for x, y in ring]
+        if tool == "prop_line":
+            kind, self._prop_kind = getattr(self, "_prop_kind", None), None
+            if kind is None:
+                return
+            pid = self.project.new_id("o")
+            where = ring[0]
+            self.edit(_("Draw a linear 3D object"), lambda p: p.props.append(
+                model.Prop(id=pid, kind=kind, at=where, path=ring, building=p.prop_host(where))))
+            self._select("prop", pid)
+            self._set_tool("select")
+            return
         if Polygon(ring).area < 0.5:
             self.hint.setText(_("Too small to keep: draw it again."))
             return
@@ -3446,6 +3461,14 @@ class MainWindow(QMainWindow):
     def _vertex_moved(self, kind: str, oid: str, vertex: int, x: float, y: float) -> None:
         """A corner of the selected outline dragged to (x, y): one undoable edit, refused if the outline would
         cross itself."""
+        if kind == "prop":
+            item = self.project.prop(oid)
+            if item is None or item.path is None:
+                return
+            moved = [list(map(float, q)) for q in item.path]
+            moved[vertex] = [round(x, 4), round(y, 4)]
+            self._edited(kind, oid, {"path": moved})
+            return
         found = self._outline(kind, oid)
         if found is None:
             return

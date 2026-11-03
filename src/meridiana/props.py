@@ -68,7 +68,7 @@ OBSTACLE_DEFAULTS = {
     "tank": (1.0, 1.0, 1.6),
     "stairwell": (2.8, 2.2, 2.4),
     "elevator": (2.2, 2.0, 2.6),
-    "walkway": (3.0, 0.8, 0.25),
+    "walkway": (3.0, 0.8, 0.02),
     "opening": (1.0, 0.8, 0.10),
     "other": (1.0, 1.0, 0.5),
 }
@@ -594,9 +594,14 @@ def plan_size(kind: str, height=None, width=None, length=None) -> tuple[float, f
     return m["width"], m["depth"]
 
 
-def footprint(kind: str, at, rotation: float = 0.0, height=None, width=None, length=None) -> list[tuple[float, float]]:
-    """The outline the prop covers on the plan, in the site's metres: an octagon for a round crown, else the turned
-    rectangle of its sides."""
+def footprint(kind: str, at, rotation: float = 0.0, height=None, width=None, length=None,
+              path=None) -> list[tuple[float, float]]:
+    """The outline the prop covers on the plan, including the mitred buffer of a linear path."""
+    if path is not None:
+        from shapely.geometry import LineString
+        width = measures(kind, height, width, length)["crown_diameter" if kind == "hedge" else "width"]
+        shape = LineString(path).buffer(width / 2, cap_style="flat", join_style="mitre")
+        return [(round(float(x), 4), round(float(y), 4)) for x, y in list(shape.exterior.coords)[:-1]]
     a, b = plan_size(kind, height, width, length)
     if kind in ROUND:
         angle = np.arange(8) * math.tau / 8 + math.tau / 16
@@ -609,9 +614,15 @@ def footprint(kind: str, at, rotation: float = 0.0, height=None, width=None, len
 
 
 def placed_mesh(kind: str, at, z0: float = 0.0, rotation: float = 0.0, height=None, width=None, length=None,
-                colours=None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+                colours=None, path=None, railing=False, surface=None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """The prop's triangles where it stands (positions, normals, colours), in the 3D view's axes (mesh.to_qt)."""
     m = measures(kind, height, width, length)
+    if path is not None and kind in ("hedge", "walkway"):
+        ring = footprint(kind, at, height=height, width=width, length=length, path=path)
+        if surface is not None:
+            return mesh.path_triangles(ring, surface, m["height"], _colour(colours, "obstacle"), railing)
+        colour = _colour(colours, "tree" if kind == "hedge" else "obstacle")
+        return mesh.prism_triangles(ring, z0, z0 + m["height"], colour)
     builder = {"tree": tree, "obstacle": obstacle, "person": person, "car": car}[family(kind)]
     pos, nor, col = builder(kind, rotation=float(rotation), colours=colours, **m)
     pos = np.asarray(pos, dtype=np.float32) + np.asarray(mesh.to_qt(float(at[0]), float(at[1]), float(z0)),
@@ -620,8 +631,15 @@ def placed_mesh(kind: str, at, z0: float = 0.0, rotation: float = 0.0, height=No
 
 
 def placed_solids(kind: str, at, z0: float = 0.0, rotation: float = 0.0, height=None, width=None,
-                  length=None) -> list[np.ndarray]:
+                  length=None, path=None) -> list[np.ndarray]:
     """The prop's shadow solids where it stands (model axes, nearshade.Solid's corners)."""
+    m = measures(kind, height, width, length)
+    if path is not None:
+        from shapely.geometry import Polygon
+        ring = footprint(kind, at, height=height, width=width, length=length, path=path)
+        hull = Polygon(ring).convex_hull
+        xy = list(hull.exterior.coords)[:-1]
+        return [np.array([(x, y, z) for z in (z0, z0 + m["height"]) for x, y in xy])]
     m = measures(kind, height, width, length)
     shift = np.array((float(at[0]), float(at[1]), float(z0)))
     return [np.asarray(c, dtype=np.float64) + shift for c in shadow_solid(kind, float(rotation), **m)]

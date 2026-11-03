@@ -117,6 +117,31 @@ def prism_triangles(ring: list[Point], z0: float, z1: float, colour=OBSTACLE) ->
     return _arrays(*acc)
 
 
+def path_triangles(ring, surface, thickness: float, colour, railing: bool = False):
+    """A thin continuous band following a roof, with optional rails above its outer edges."""
+    acc = ([], [], [])
+    ring = [tuple(map(float, q)) for q in ring]
+    up = np.array([0.0, 1.0, 0.0])
+    for i0, i1, i2 in triangulate(ring):
+        a, b, c = ((ring[i][0], ring[i][1], surface(*ring[i]) + thickness) for i in (i0, i1, i2))
+        _triangle(acc, a, b, c, colour, up)
+    for a, b in zip(ring, ring[1:] + ring[:1], strict=True):
+        za, zb = surface(*a), surface(*b)
+        out = np.array(to_qt(b[1] - a[1], a[0] - b[0], 0.0))
+        _triangle(acc, (*a, za), (*b, zb), (*b, zb + thickness), colour, out)
+        _triangle(acc, (*a, za), (*b, zb + thickness), (*a, za + thickness), colour, out)
+    if railing:
+        segments = []
+        for a, b in zip(ring, ring[1:] + ring[:1], strict=True):
+            za, zb = surface(*a) + thickness + 0.9, surface(*b) + thickness + 0.9
+            segments.append((to_qt(*a, za), to_qt(*b, zb)))
+            for point, z in ((a, za), (b, zb)):
+                segments.append((to_qt(*point, z - 0.9), to_qt(*point, z)))
+        rails = ribbons(np.asarray(segments), 0.025, (0.42, 0.46, 0.50))
+        return tuple(np.concatenate(values) for values in zip(_arrays(*acc), rails, strict=True))
+    return _arrays(*acc)
+
+
 def rgb(hex_: str) -> tuple[float, float, float]:
     """A colour of the theme ("#rrggbb") as the 0-1 floats of the vertex colours and of the instance table."""
     h = hex_.lstrip("#")[:6]
@@ -495,14 +520,23 @@ def prop_triangles(project, colours: dict | None = None, tint=None) -> list:
     props.py's palette (`colours` replaces some of its keys); `tint(prop, palette)` may give one its own palette (the
     selection). An object a hand-edited file made impossible is left out."""
     from . import props
+    from .model import roof_z as model_roof_z
     out = []
     for x in getattr(project, "props", []):
         palette = {**props.DEFAULT_COLOURS, **(colours or {})}
         if tint is not None:
             palette = tint(x, palette)
         try:
+            surface = None
+            if x.path is not None and x.kind == "walkway":
+                building = project.building(x.building)
+                surface = ((lambda px, py, b=building: model_roof_z(b, [(px, py)])[0]) if building is not None
+                           else (lambda _x, _y: 0.0))
+                roof = palette.get("roof_flat" if building is not None and building.pitches()[0].tilt == 0 else "roof",
+                                   ROOF_FLAT)
+                palette["obstacle"] = tuple(max(0.0, channel - 0.08) for channel in roof)
             out.append(props.placed_mesh(x.kind, x.at, project.prop_base(x), x.rotation, x.height, x.width,
-                                         x.length, palette))
+                                         x.length, palette, x.path, x.railing, surface))
         except ValueError:
             continue
     return out
