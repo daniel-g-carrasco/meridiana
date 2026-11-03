@@ -21750,3 +21750,67 @@ msgstr "{pct} %"
 
 msgid "Inverter's menu"
 msgstr "Menu dell'inverter"
+
+#: src/meridiana/ui/phasebar.py:480
+msgid "All of them: {names} (the right button too)"
+msgstr "Tutti: {names} (anche col tasto destro)"
+
+#: src/meridiana/ui/phasebar.py:483
+msgid "On now: {command}"
+msgstr "Acceso ora: {command}"
+
+#: src/meridiana/ui/window.py:6602
+msgid "Checks closed, the count stays in the status bar"
+msgstr "Verifiche chiuse, il conteggio resta nella barra di stato"
+
+#: src/meridiana/ui/window.py:6603
+msgid "Checks open again"
+msgstr "Verifiche di nuovo aperte"
+
+#: src/meridiana/ui/window.py:6604
+msgid "plan and 3D side by side"
+msgstr "pianta e 3D affiancate"
+
+#: src/meridiana/ui/window.py:6604
+msgid "plan and 3D one above the other"
+msgstr "pianta e 3D una sopra l'altra"
+
+#: src/meridiana/ui/window.py:6605
+msgid "one view at a time"
+msgstr "una vista alla volta"
+
+#: src/meridiana/ui/window.py:6606
+msgid "the side panels together"
+msgstr "i pannelli laterali insieme"
+
+#: src/meridiana/ui/window.py:6606
+msgid "the side panels apart"
+msgstr "i pannelli laterali ai loro lati"
+
+#: src/meridiana/ui/window.py:6607
+msgid "the words under the icons"
+msgstr "le parole sotto le icone"
+
+#: src/meridiana/ui/window.py:6607
+msgid "the words beside the icons"
+msgstr "le parole accanto alle icone"
+
+#: src/meridiana/ui/window.py:6608
+msgid "the icons alone"
+msgstr "le sole icone"
+
+#: src/meridiana/ui/window.py:6610
+msgid "The arrangement you left for this shape of the window is back."
+msgstr "È tornata la disposizione lasciata per questa forma della finestra."
+
+#: src/meridiana/ui/window.py:6612
+msgid "The window changed shape: {what}."
+msgstr "La finestra ha cambiato forma: {what}."
+
+#: src/meridiana/ui/window.py:6642
+msgid "Back as it was: this shape of the window stays so until «Restore the default layout»."
+msgstr "Tornata com'era: per questa forma della finestra resta così fino a «Ripristina la disposizione predefinita»."
+
+#: src/meridiana/ui/window.py:1012
+msgid "The words of the bar of the phase; in a window lower than {px} px they go beside the icons, and with no room for them the icons stay alone"
+msgstr "Le parole della barra della fase; in una finestra più bassa di {px} px vanno accanto alle icone, e se non c'è posto restano le sole icone"
