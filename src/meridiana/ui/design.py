@@ -186,6 +186,35 @@ class Line:
     TEXT_INSET = 8      # a control's text from its edge (border included)
 
 
+class Bar:
+    """The buttons of a phase's bar (R333, Daniel 03/11/2026: «armonizzare le dimensioni dei tasti, renderli più
+    congruenti tra loro»), one height and one icon per mode of the bar for all of them. The width is a rule, not the
+    word's own: the least width that holds the word, on steps, so that a bar has three or four widths and not one
+    per word. A button with a menu is the same button plus its strip. docs/design/sistema-grafico.md, §4."""
+    UNDER, BESIDE, ICONS = "under", "beside", "icons"       # the word under the icon, beside it, the icon alone
+    ICON = {UNDER: Icon.TILE, BESIDE: Icon.CONTROL, ICONS: Icon.BAR}
+    HEIGHT = Size.CONTROL       # beside and icons alone; under the icon, the icon and the word's line
+    WORD_MIN = 48               # the word under the icon (study 26, S2)
+    STEP = {UNDER: Space.XL, BESIDE: Space.M}       # beside the icon the word is one part of the width: finer steps
+    ICON_WIDTH = Space.XXXL     # the icon alone
+    PAD = 2 * Space.XS + 2 + Space.XXS              # around what the button holds: the sheet's padding and border, air
+    WORD_GAP = Space.XS         # between an icon and the word beside it
+    STRIP = Space.L + Space.XXS                     # the strip of a button with a menu, every mode
+    GAP = Space.XXS             # between two buttons of a group
+    GROUP_AIR = Space.M         # between a group and the line beside it
+    LINE = Line.HAIR
+
+    @classmethod
+    def width(cls, mode: str, word: int) -> int:
+        """The command's width in a mode, for a word `word` pixels long (the widest of its menu)."""
+        if mode == cls.ICONS:
+            return cls.ICON_WIDTH
+        step = cls.STEP[mode]
+        need = word + cls.PAD + (cls.ICON[mode] + cls.WORD_GAP if mode == cls.BESIDE else 0)
+        least = cls.WORD_MIN if mode == cls.UNDER else 0
+        return max(least, (need + step - 1) // step * step)
+
+
 class Motion:
     """Durations in milliseconds; with less motion they are nought (Motion.of)."""
     FAST = 110          # a little window comes, a hover

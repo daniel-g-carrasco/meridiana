@@ -4,10 +4,10 @@ inside its tab (the accent's for the phase open), «Variant» in its right corne
 a card with the bar of the phase: the tab of the phase open and the card are one shape (the target of 24/10/2026,
 docs/studio/19-grafica), meeting the card with inverse rounded corners (R84, as GNOME's tabs); at a change of phase
 the tab slides to the new one (R83, as Office's ribbon), the page and the tools change at once. The bar: one QToolBar per phase in a QStackedWidget, the groups side by side with their
-title under them (small capitals, muted) and a thin line between; the words under the icons (68 px: icons of 24,
-the word, the group's title) or the icons alone (44 px: icons of 22, the group's title stays, it is what
-explains). The bar is there in every phase, even with two groups: a row that comes and goes would move the views
-by 70 px at each change.
+title under them (small capitals, muted) and a thin line between; three modes (design.Bar, R333, R334): the words
+under the icons (icons of 24, the word, the group's title), the words beside the icons (icons of 16, no titles, the
+low bar of a laptop) or the icons alone (icons of 22, the group's title stays, it is what explains). The bar is there
+in every phase, even with two groups: a row that comes and goes would move the views by 70 px at each change.
 
 The buttons carry the window's QActions (one command, one action: the menus, the keys and the tooltips are the
 same) with a short word of their own under the icon; the one button full of accent of the phase (Lay the modules,
@@ -22,16 +22,16 @@ from __future__ import annotations
 
 import math
 
-from PySide6.QtCore import QEvent, QPointF, QRect, QRectF, QSize, Qt, QVariantAnimation, Signal
-from PySide6.QtGui import QColor, QFont, QFontMetrics, QFontMetricsF, QPainter, QPainterPath, QPen, QPixmap
+from PySide6.QtCore import QEvent, QPoint, QPointF, QRectF, QSize, Qt, QVariantAnimation, Signal
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QFontMetricsF, QPainter, QPainterPath, QPalette, QPen, QPixmap
 from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QMenu, QSizePolicy, QStackedWidget, QTabBar, QToolBar,
-                               QToolButton, QVBoxLayout, QWidget)
+                               QToolButton, QToolTip, QVBoxLayout, QWidget)
 
-from .. import phases, theme_colors
-from ..i18n import _
+from .. import arrangement, phases, theme_colors
+from ..i18n import _, ngettext
 from . import icons
 from .cards import EDGE, RADIUS, default_tokens
-from .design import Button, Icon, Motion, Radius, Size, Space, Text, set_text, text_font
+from .design import Bar, Button, Icon, Motion, Radius, Size, Space, Text, set_text, text_font
 from .motion import SLIDE_EASING
 from .waiting import STALE_MARK
 
@@ -39,7 +39,7 @@ TALL = 72                   # the bar with the words under the icons (design 5.3
                             # 68 until R179 (Daniel 26/10/2026: «le descrizioni dei singoli strumenti vengono
                             # tagliati in basso»): the buttons were 4 px short of the line the word needs
 LOW = 44                    # the icons alone
-LOW_WINDOW = 900            # logical pixels: a lower window gets the icons alone by itself (the laptop, a column)
+LOW_WINDOW = arrangement.LOW_WINDOW     # a lower window has no words under the icons (the laptop, a column)
 ICON_TALL, ICON_LOW = Icon.TILE, Icon.BAR
 # the word under the icon is Text.SECONDARY, the title of the group Text.GROUP (R159): read when used, the size of
 # the text can change with the window open (R133)
@@ -49,6 +49,9 @@ HOVER_INSET = Space.XXS     # the ground of a phase under the pointer, in from i
 BADGE = Button.SMALL[0]      # the disc of a phase's number
 TAB_PAD = (Space.L, Space.L)  # equal space before the disc and after the name
 CARD_PAD = (Space.L - 2, Space.S, Space.L - 2, Space.S - 1)   # inside the card of the bar
+BAR_SIDES = 2 * (EDGE + CARD_PAD[0])    # what the window takes off its width before the bar
+ITEM_SPACE = Space.XXS      # what QToolBar's layout leaves on each side of an item, whatever the sheet's spacing says
+                            # (measured; tests/widget/test_tool_menu.py holds the air between the groups to Bar.GROUP_AIR)
 
 
 def _colours(t: dict | None = None) -> dict:
@@ -75,8 +78,10 @@ class PhaseTabBar(QTabBar):
         self.colours = _colours()
         self.hovered = -1
         self.file_open = False              # the File page over the window: no phase is the one open (R99)
+        self.compact = False                # the numbers, the name of the phase open alone (R334, study 27, F)
         self.picture: QPixmap | None = None  # the row as last drawn, and what it was drawn for (R97, R120)
         self.drawn_for = None
+        self.currentChanged.connect(self._width_changed)
 
     @property
     def accent(self) -> QColor:
@@ -95,13 +100,57 @@ class PhaseTabBar(QTabBar):
         number, _sp, name = text.partition(" ")
         return (number, name) if number.isdigit() else ("", text)
 
-    def tabSizeHint(self, index: int) -> QSize:
+    def set_compact(self, on: bool) -> None:
+        """The numbers, with the name of the phase open alone; the other names in their tooltips and with Ctrl+number."""
+        if on != self.compact:
+            self.compact = on
+            self._width_changed()
+
+    def _width_changed(self, _index: int = -1) -> None:
+        """With the numbers a tab's width depends on the phase open: QTabBar asks its tabs again only when told."""
+        if self.compact or _index < 0:
+            self.setElideMode(self.elideMode())
+            self.updateGeometry()
+
+    def number_only(self, index: int) -> bool:
+        return self.compact and index != self.currentIndex()
+
+    def full_width(self) -> int:
+        """What the row asks for with every name written, whatever it shows now."""
+        return sum(self._named_width(i) for i in range(self.count()) if self.isTabVisible(i))
+
+    def _named_width(self, index: int) -> int:
         _number, name = self.parts(self.tabText(index))
         text = math.ceil(QFontMetricsF(self.name_font(True)).horizontalAdvance(name)) + 2
-        return QSize(TAB_PAD[0] + BADGE + 8 + text + TAB_PAD[1], TAB_HEIGHT)
+        return TAB_PAD[0] + BADGE + 8 + text + TAB_PAD[1]
+
+    def _number_width(self, index: int) -> int:
+        stale = self.tabText(index).endswith(STALE_MARK)
+        return TAB_PAD[0] + BADGE + (8 if stale else 0) + TAB_PAD[1]
+
+    def tabSizeHint(self, index: int) -> QSize:
+        return QSize(self._number_width(index) if self.number_only(index) else self._named_width(index), TAB_HEIGHT)
 
     def minimumTabSizeHint(self, index: int) -> QSize:
+        if self.compact:
+            return self.tabSizeHint(index)
         return QSize(TAB_PAD[0] + BADGE + 8 + 24 + TAB_PAD[1], TAB_HEIGHT)
+
+    def tip_of(self, index: int) -> str:
+        """What the tab says under the pointer: with the numbers its name comes first, the name being what is not shown."""
+        tip = self.tabToolTip(index)
+        if not self.number_only(index):
+            return tip
+        name = self.parts(self.tabText(index))[1].removesuffix(STALE_MARK)
+        return f"{name}\n{tip}" if tip else name
+
+    def event(self, event) -> bool:
+        if event.type() == QEvent.Type.ToolTip and self.compact:
+            i = self.tabAt(event.pos())
+            if i >= 0:
+                QToolTip.showText(event.globalPos(), self.tip_of(i), self, self.tabRect(i))
+                return True
+        return super().event(event)
 
     def setTabVisible(self, index: int, visible: bool) -> None:
         super().setTabVisible(index, visible)
@@ -129,7 +178,7 @@ class PhaseTabBar(QTabBar):
         """The row drawn again only when something in it changed: the tab of the phase open slides over it, and the
         row was drawn from scratch at every frame of the slide, 17 a change of phase (R97, R120, 25/10/2026)."""
         ratio = self.devicePixelRatioF()
-        key = (self.size().toTuple(), ratio, self.currentIndex(), self.hovered, self.file_open,
+        key = (self.size().toTuple(), ratio, self.currentIndex(), self.hovered, self.file_open, self.compact,
                tuple(self.colours.items()),
                tuple((self.tabText(i), self.isTabVisible(i)) for i in range(self.count())), self.font().key())
         if self.picture is None or key != self.drawn_for:
@@ -171,6 +220,11 @@ class PhaseTabBar(QTabBar):
                 glyph.translate(disc.center() - glyph.boundingRect().center())
                 p.fillPath(glyph, QColor(c["accent_fg"] if on else c["muted"]))
                 x += BADGE + 8
+                if self.number_only(i):                 # the number alone, and the mark of values to update
+                    if not name.endswith(STALE_MARK):
+                        continue
+                    name = STALE_MARK.strip()
+                    x -= 8
             font = self.name_font(on)
             p.setFont(font)
             p.setPen(QColor(c["text"] if on or i == self.hovered else c["text2"]))
@@ -212,67 +266,243 @@ class ToolButton(QToolButton):
         self.own_icon = icon
         self._own()
 
+    def words(self) -> list[str]:
+        return [self.label]
 
-class ToolMenuButton(ToolButton):
-    """A button shared by a few commands, as AutoCAD's flyouts (R306; Daniel, 02/11/2026: «edificio [...] con i modelli,
-    la falda con il colmo»): a click runs the last one used, shown on the button; its arrow, or the button held down,
-    opens the menu of all of them with their names, keys and tooltips, and they are the window's actions, so a key
-    that runs one of them brings it on the button too. A command gone disabled gives way to one that works: a disabled
-    button would not open its menu either. The button keeps the width of its longest word: the bar does not move at a
-    change. Qt's delayed popup holds the long press (SH_ToolButton_PopupDelay)."""
+    def fit(self, mode: str, height: int, width: int) -> None:
+        """The button in a mode of the bar (design.Bar)."""
+        self.setToolButtonStyle({Bar.UNDER: Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+                                 Bar.BESIDE: Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+                                 Bar.ICONS: Qt.ToolButtonStyle.ToolButtonIconOnly}[mode])
+        self.setIconSize(QSize(Bar.ICON[mode], Bar.ICON[mode]))
+        self.setFixedSize(width, height)
 
-    ARROW = Space.L + Space.XXS                 # the arrow's strip at the right of the button, pixels
 
-    def __init__(self, family: list, parent=None):
-        """`family`: (command id, the word under the icon, its QAction), the one shown at first first."""
-        first, label, action = family[0]
+class CommandMenu(QMenu):
+    """The menu of a divided button: the window's actions, with those that delete everything in red."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setToolTipsVisible(True)
+        self.danger: dict = {}                      # an action -> its icon in red
+        self.danger_colour = QColor(default_tokens()["danger"])
+
+    def initStyleOption(self, option, action) -> None:
+        super().initStyleOption(option, action)
+        icon = self.danger.get(action)
+        if icon is not None:
+            option.palette.setColor(QPalette.ColorRole.ButtonText, self.danger_colour)
+            option.icon = icon
+
+
+class SplitFace(ToolButton):
+    """The command of a divided button: its tooltip says the command of now, its key, and that there are others (study
+    26, section 4, rule 7)."""
+
+    def __init__(self, action, label: str, others: int, parent=None):
+        self.others = others
         super().__init__(action, label, parent=parent)
-        self.setProperty("grouped", True)
-        self.family = {cid: (word, a) for cid, word, a in family}
-        self.command = first
-        self.commands = QMenu(self)
-        self.commands.setToolTipsVisible(True)
-        for cid, _word, a in family:
-            self.commands.addAction(a)
-            a.triggered.connect(lambda _c=False, k=cid: self.use(k))
-            a.changed.connect(self._still_usable)
-        self.setMenu(self.commands)
-        self.setPopupMode(QToolButton.ToolButtonPopupMode.DelayedPopup)
+        self.setObjectName("split-face")
 
-    def use(self, command: str) -> None:
-        """`command` on the button from now on: the next click runs it."""
-        if command == self.command:
+    def _own(self) -> None:
+        super()._own()
+        action = self.defaultAction()
+        if action is None:
             return
-        self.command = command
-        self.label, action = self.family[command]
-        self.setProperty("tool", command)
-        self.setDefaultAction(action)
-        self._own()
+        head, _sep, rest = action.toolTip().partition("\n")
+        more = ngettext("{n} more in the arrow", "{n} more in the arrow", self.others).format(n=self.others)
+        tip = f"{head}. {more}" + (f"\n{rest}" if rest else "")
+        if self.toolTip() != tip:
+            self.setToolTip(tip)
 
-    def _still_usable(self) -> None:
-        action = self.family[self.command][1]
-        if not action.isEnabled():
-            usable = next((cid for cid, (_w, a) in self.family.items() if a.isEnabled()), None)
-            if usable is not None:
-                self.use(usable)
 
-    def arrow_rect(self) -> QRect:
-        """Where a press opens the menu at once: the strip of the arrow, beside the icon."""
-        return QRect(self.width() - self.ARROW, 0, self.ARROW, self.height() - QFontMetrics(self.font()).height())
+class SplitStrip(QToolButton):
+    """The strip of a divided button: as tall as the button, a chevron on it, alive when the command is off. A press
+    opens the menu; it shows pressed while a command of the menu that is not on the face is on (the ones that delete
+    never go on the face: rule 2)."""
+
+    pressed_now = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("split-strip")
+        self.setAutoRaise(True)
+        self.setCheckable(True)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoMouseReplay)     # a press on it with the menu open only closes it
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.colours = _colours()
 
     def mousePressEvent(self, event) -> None:
-        if event.button() == Qt.MouseButton.LeftButton and self.arrow_rect().contains(event.position().toPoint()):
-            self.showMenu()
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.pressed_now.emit()
             return
-        super().mousePressEvent(event)
+        event.ignore()
 
-    def sizeHint(self) -> QSize:
-        hint = super().sizeHint()
-        if self.toolButtonStyle() == Qt.ToolButtonStyle.ToolButtonIconOnly:
-            return hint
-        metrics = QFontMetrics(self.font())
-        widest = max(metrics.horizontalAdvance(word) for word, _a in self.family.values())
-        return QSize(max(hint.width(), hint.width() - metrics.horizontalAdvance(self.text()) + widest), hint.height())
+    def mouseReleaseEvent(self, event) -> None:
+        event.ignore()
+
+    def paintEvent(self, event) -> None:
+        super().paintEvent(event)
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        if self.parentWidget().underMouse() or self.isDown():      # the line between the two parts, under the pointer
+            p.setPen(QPen(QColor(self.colours["edge"]), Bar.LINE))
+            p.drawLine(0, 0, 0, self.height())
+        p.setPen(QPen(QColor(self.colours["text2"]), Icon.STROKE, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap,
+                      Qt.PenJoinStyle.RoundJoin))
+        x, y = self.width() / 2, self.height() / 2
+        side = Space.XS - 1
+        p.drawPolyline([QPointF(x - side, y - 1.5), QPointF(x, y + 1.5), QPointF(x + side, y - 1.5)])
+
+
+class ToolMenuButton(QWidget):
+    """A button shared by a few commands (R306, as AutoCAD's flyouts), in two parts (R333, Daniel 03/11/2026, study 26,
+    G2): the command, which runs the one on its face, and a strip with a chevron, as tall as the button, each with its
+    own state under the pointer, pressed and off. The strip, or the right button anywhere on the button, opens the menu
+    of all of them with their names, keys and tooltips, and it stays alive when the command is off.
+
+    What is on the face (study 26, section 4): a mode of drawing when it goes on, by the menu, by its key or by anything
+    else, because a mode that is on must show (a checkable action; rules 1 and 4); never a command run once (rule 1);
+    never from a family that deletes (`fixed`, rule 2); never by itself (rule 3: a command going off goes off on its
+    face). It changes with a short fade, in the same place and at the same width (rule 5). It is not kept: every start
+    has the first one (rule 6)."""
+
+    def __init__(self, family: list, fixed: bool = False, danger: dict | None = None, parent=None):
+        """`family`: (command id, the word under the icon, its QAction), the one shown at first first; `danger`: the
+        command that goes last in red -> its icon's name."""
+        super().__init__(parent)
+        first, label, action = family[0]
+        self.family = {cid: (word, a) for cid, word, a in family}
+        self.command = first
+        self.fixed = fixed
+        self.danger = danger or {}
+        self.face = SplitFace(action, label, len(family) - 1, self)
+        self.strip = SplitStrip(self)
+        self.strip.pressed_now.connect(self.open_menu)
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(0)
+        row.addWidget(self.face)
+        row.addWidget(self.strip)
+        self.commands = CommandMenu(self)
+        for cid, _word, a in family:
+            if cid in self.danger:
+                self.commands.addSeparator()
+            self.commands.addAction(a)
+            a.toggled.connect(lambda on, k=cid: self._toggled(k, on))
+            a.changed.connect(self._say)
+        self.set_colours(default_tokens())
+        self._say()
+        self._mark()
+
+    # what the rest of the window asks of a button of the bar
+
+    @property
+    def label(self) -> str:
+        return self.face.label
+
+    def defaultAction(self):
+        return self.face.defaultAction()
+
+    def text(self) -> str:
+        return self.face.text()
+
+    def icon(self):
+        return self.face.icon()
+
+    def iconSize(self) -> QSize:
+        return self.face.iconSize()
+
+    def toolTip(self) -> str:
+        return self.face.toolTip()
+
+    def toolButtonStyle(self):
+        return self.face.toolButtonStyle()
+
+    def isChecked(self) -> bool:
+        return self.face.isChecked()
+
+    def click(self) -> None:
+        self.face.click()
+
+    def set_own_icon(self, icon) -> None:
+        self.face.set_own_icon(icon)
+
+    def setFont(self, font) -> None:
+        super().setFont(font)
+        self.face.setFont(font)
+
+    def words(self) -> list[str]:
+        return [word for word, _a in self.family.values()]
+
+    def fit(self, mode: str, height: int, width: int) -> None:
+        """The two parts in a mode of the bar: `width` is the command's."""
+        self.face.fit(mode, height, width)
+        self.strip.setFixedSize(Bar.STRIP, height)
+        self.setFixedSize(width + Bar.STRIP, height)
+
+    def set_colours(self, t: dict) -> None:
+        self.strip.colours = _colours(t)
+        self.strip.update()
+        self.commands.danger_colour = QColor(t["danger"])
+        self.commands.danger = {self.family[cid][1]: icons.icon(name, colour=t["danger"]) for cid, name in self.danger.items()}
+
+    # the face
+
+    def _toggled(self, command: str, on: bool) -> None:
+        if on and not self.fixed:
+            self.use(command)
+        self._mark()
+
+    def use(self, command: str) -> None:
+        """`command` on the face from now on: the next click runs it."""
+        if command == self.command:
+            return
+        from . import motion
+        motion.crossfade(self.face, lambda: self._put(command), Motion.FAST)
+
+    def _put(self, command: str) -> None:
+        self.command = command
+        word, action = self.family[command]
+        self.face.label = word
+        self.setProperty("tool", command)
+        self.face.setDefaultAction(action)
+        self.face._own()
+        self._mark()
+
+    def _mark(self) -> None:
+        """The strip pressed while a command of the menu is on and not on the face."""
+        self.strip.setChecked(any(a.isChecked() for cid, (_w, a) in self.family.items() if cid != self.command))
+
+    def _say(self) -> None:
+        names = ", ".join(word for word, _a in self.family.values())
+        tip = _("All of them: {names} (the right button too)").format(names=names)
+        on = next((word for cid, (word, a) in self.family.items() if cid != self.command and a.isChecked()), "")
+        if on:
+            tip = _("On now: {command}").format(command=on) + "\n" + tip
+        if self.strip.toolTip() != tip:
+            self.strip.setToolTip(tip)
+            self.strip.setAccessibleName(tip)
+
+    # the menu
+
+    def open_menu(self, at: QPoint | None = None) -> None:
+        self._say()
+        self.strip.setDown(True)
+        self.commands.exec(at if at is not None else self.mapToGlobal(QPoint(0, self.height() + 1)))
+        self.strip.setDown(False)
+
+    def contextMenuEvent(self, event) -> None:
+        self.open_menu(event.globalPos())
+
+    def enterEvent(self, event) -> None:
+        super().enterEvent(event)
+        self.strip.update()
+
+    def leaveEvent(self, event) -> None:
+        super().leaveEvent(event)
+        self.strip.update()
 
 
 class ToolGroup(QWidget):
@@ -285,11 +515,11 @@ class ToolGroup(QWidget):
         self.shared: dict = {}                                  # the command of a button's menu -> the button (R306)
         self.primary: ToolButton | None = None
         box = QVBoxLayout(self)
-        box.setContentsMargins(4, 0, 4, 0)
+        box.setContentsMargins(0, 0, 0, 0)
         box.setSpacing(0)
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
-        row.setSpacing(2)
+        row.setSpacing(Bar.GAP)
         for tool in tools:
             family = [t for t in tool.family() if t.command in actions]
             for t in family:
@@ -297,10 +527,10 @@ class ToolGroup(QWidget):
                     # a command that came without an icon takes the one its tool was designed with (R277: «On canopy»)
                     actions[t.command].setIcon(icons.icon(t.icon))
             words = [(t.command, t.label or _plain(actions[t.command].text()), actions[t.command]) for t in family]
-            b = (ToolMenuButton(words) if len(words) > 1 else
-                 ToolButton(actions[tool.command], tool.label or _plain(actions[tool.command].text())))
+            b = (ToolMenuButton(words, tool.fixed, {t.command: t.icon or t.command for t in family if t.danger})
+                 if len(words) > 1 else ToolButton(actions[tool.command], tool.label or _plain(actions[tool.command].text())))
             b.setProperty("tool", tool.command)
-            b.setFont(text_font(Text.SECONDARY, b.font()))
+            b.setFont(text_font(Text.STRONG if tool.primary else Text.SECONDARY, b.font()))
             if tool.primary:
                 b.setProperty("primary", True)
                 self.primary = b
@@ -309,27 +539,44 @@ class ToolGroup(QWidget):
             self.buttons[tool.command] = b
             self.shared.update({t.command: b for t in family})
         box.addLayout(row)
-        box.addSpacing(GROUP_GAP)
+        self.title_gap = QWidget()
+        self.title_gap.setFixedHeight(GROUP_GAP)
+        box.addWidget(self.title_gap)
         self.title = QLabel(group.title)
         self.title.setObjectName("group-title")
         self.title.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         self.title.setFont(text_font(Text.GROUP, self.title.font()))
         box.addWidget(self.title)
 
-    def set_mode(self, text: bool) -> int:
-        """The buttons with the word under the icon or the icon alone, at the height that holds them (a font's
-        line is taller than its size, so the button is measured, not guessed); the height of the group."""
-        style = Qt.ToolButtonStyle.ToolButtonTextUnderIcon if text else Qt.ToolButtonStyle.ToolButtonIconOnly
-        size = QSize(ICON_TALL, ICON_TALL) if text else QSize(ICON_LOW, ICON_LOW)
-        height = 0
+    def button_height(self, mode: str) -> int:
+        """One height for all the buttons of a mode, in every group and phase: with the word under the icon the icon and
+        the line of the largest word's font (R179: the large text was cut)."""
+        if mode != Bar.UNDER:
+            return Bar.HEIGHT
+        return Bar.ICON[mode] + QFontMetrics(text_font(Text.STRONG, self.font())).height() + 2 * Space.XS + Space.XXS
+
+    @staticmethod
+    def command_width(button, mode: str) -> int:
+        """The command's part of a button, by the rule of design.Bar: its longest word decides."""
+        metrics = QFontMetrics(button.font())
+        return Bar.width(mode, max(metrics.horizontalAdvance(word) for word in button.words()))
+
+    def width_in(self, mode: str) -> int:
+        """How wide the group is in a mode, asked without changing to it (arrangement.py)."""
+        row = sum(self.command_width(b, mode) + (Bar.STRIP if isinstance(b, ToolMenuButton) else 0)
+                  for b in self.buttons.values()) + Bar.GAP * (len(self.buttons) - 1)
+        return row if mode == Bar.BESIDE else max(row, self.title.sizeHint().width())
+
+    def set_mode(self, mode: str) -> int:
+        """The buttons in a mode of the bar; the height of the group."""
+        height = self.button_height(mode)
         for b in self.buttons.values():
-            b.setToolButtonStyle(style)
-            b.setIconSize(size)
-            # what the button asks for, the word's whole line under the icon (R179: the 4 px added to the font's
-            # line left out the gap the style puts between icon and word, and the large text was cut)
-            b.setFixedHeight(max(ICON_TALL + QFontMetrics(b.font()).height() + 4, b.sizeHint().height()) if text
-                             else ICON_LOW + 6)
-            height = b.height() if b.height() > 1 else b.minimumHeight()
+            b.fit(mode, height, self.command_width(b, mode))
+        titled = mode != Bar.BESIDE
+        self.title_gap.setVisible(titled)
+        self.title.setVisible(titled)
+        if not titled:
+            return height
         title = QFontMetrics(self.title.font()).height()
         self.title.setFixedHeight(title)
         return height + GROUP_GAP + title
@@ -337,6 +584,9 @@ class ToolGroup(QWidget):
     def set_colours(self, t: dict) -> None:
         if self.primary is not None:
             self.primary.set_own_icon(icons.icon(self.primary_icon, colour=t["text"]))      # no accent (R158)
+        for b in self.buttons.values():
+            if isinstance(b, ToolMenuButton):
+                b.set_colours(t)
 
 
 def _plain(text: str) -> str:
@@ -357,20 +607,18 @@ class PhaseBar(QToolBar):
         self.setFloatable(False)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.PreventContextMenu)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.layout().setContentsMargins(4, 1, 4, 1)
+        self.layout().setContentsMargins(Space.XS, 1, Space.XS, 1)
         self.groups: list[ToolGroup] = []
         self.lines: list[QFrame] = []
         self.text = True
+        self.mode = Bar.UNDER
+        self.trailing: list = []                # the actions of what stands at the bar's end
         for group in phase.groups:
             tools = [t for t in group.tools if t.command in actions]
             if not tools:
                 continue
             if self.groups:
-                line = QFrame()
-                line.setObjectName("bar-line")
-                line.setFixedWidth(1)
-                self.addWidget(line)
-                self.lines.append(line)
+                self._add_line()
             w = ToolGroup(group, tools, actions)
             self.addWidget(w)
             self.groups.append(w)
@@ -380,21 +628,51 @@ class PhaseBar(QToolBar):
         """`widget` at the right end of the bar, after a line: what the phase shows of itself (the Plant's strip)."""
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        self.addWidget(spacer)
+        self.trailing = [self.addWidget(spacer), self._add_line(), self.addWidget(widget)]
+
+    def show_trailing(self, on: bool) -> None:
+        """What stands at the bar's end, with its line: out, it leaves all its room to the groups."""
+        for action in self.trailing:
+            action.setVisible(on)
+
+    def _add_line(self):
+        """The line between two groups: as tall as the buttons, level with them (study 26, L2), the same air on its
+        two sides."""
+        holder = QWidget()
+        air = Bar.GROUP_AIR - ITEM_SPACE
+        holder.setFixedWidth(Bar.LINE + 2 * air)
+        box = QVBoxLayout(holder)
+        box.setContentsMargins(air, 0, air, 0)
+        box.setSpacing(0)
         line = QFrame()
         line.setObjectName("bar-line")
-        line.setFixedWidth(1)
-        self.addWidget(line)
-        self.addWidget(widget)
+        line.setFixedWidth(Bar.LINE)
+        box.addWidget(line)
+        box.addStretch(1)
+        self.lines.append(line)
+        return self.addWidget(holder)
 
-    def set_text(self, on: bool) -> None:
-        """The words under the icons, or the icons alone with the groups' titles. The height is the one the
-        buttons and the titles need (the stack gives every phase the tallest, so the views never jump): the
-        tests keep it within TALL and LOW."""
-        self.text = on
-        inside = max((g.set_mode(on) for g in self.groups), default=(TALL if on else LOW) - 3)
+    def width_in(self, mode: str) -> int:
+        """How wide the groups are in a mode, what comes at the bar's end left out."""
+        lines = max(0, len(self.groups) - 1)
+        return sum(g.width_in(mode) for g in self.groups) + lines * (Bar.LINE + 2 * Bar.GROUP_AIR) + 2 * Space.XS
+
+    def set_mode(self, mode: str) -> None:
+        """The mode of the bar (design.Bar). The height is the one the buttons and the titles need (the stack gives
+        every phase the tallest, so the views never jump): the tests keep it within TALL and LOW."""
+        self.mode = mode
+        self.text = mode != Bar.ICONS
+        inside = max((g.set_mode(mode) for g in self.groups), default=(TALL if mode == Bar.UNDER else LOW) - 3)
+        for line in self.lines:
+            line.setFixedHeight(max((g.button_height(mode) for g in self.groups), default=Bar.HEIGHT))
+        for g in self.groups:
+            g.layout().activate()                       # a bar not in view: its groups' sizes are read before it shows
+        self.layout().invalidate()
         self.setFixedHeight(inside + 3)                 # the toolbar's margins and the line under it
         self.updateGeometry()
+
+    def set_text(self, on: bool) -> None:
+        self.set_mode(Bar.UNDER if on else Bar.ICONS)
 
     def set_colours(self, t: dict) -> None:
         for g in self.groups:
@@ -674,16 +952,19 @@ class Phases(QWidget):
         w = self.bars.widget(index)
         return w if isinstance(w, PhaseBar) else None
 
-    def set_text(self, on: bool) -> None:
-        """Every bar with the words or without, and the stack as tall as the tallest: the same height in every
-        phase, so that the views never jump (a QToolBar's size hint ignores its fixed height)."""
+    def set_mode(self, mode: str) -> None:
+        """Every bar in a mode, and the stack as tall as the tallest: the same height in every phase, so that the
+        views never jump (a QToolBar's size hint ignores its fixed height)."""
         heights = []
         for i in range(self.bars.count()):
             bar = self.bar(i)
             if bar is not None:
-                bar.set_text(on)
+                bar.set_mode(mode)
                 heights.append(bar.minimumHeight())
-        self.bars.setFixedHeight(max(heights, default=TALL if on else LOW))
+        self.bars.setFixedHeight(max(heights, default=TALL if mode == Bar.UNDER else LOW))
+
+    def set_text(self, on: bool) -> None:
+        self.set_mode(Bar.UNDER if on else Bar.ICONS)
 
     def _changed(self, index: int) -> None:
         """The page and the bar's tools at once; the tab held where it is while the window paints the new page, then

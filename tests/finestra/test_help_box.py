@@ -173,9 +173,11 @@ class HelpInTheWindow(unittest.TestCase):
         self.assertIsNone(HelpPopup.current)
         del self.box.LOWEST_PANEL                           # the class's threshold again
         self.win.resize(1400, 1000)
-        self.win.checks_dock.hide()
+        # the window arranges itself for the new size first: the panels as they were left at that shape
+        self.assertTrue(_setup.wait_until(self.app, lambda: not self.win.arrange_timer.isActive()))
         self.app.processEvents()
-        self.assertTrue(self.box.isVisible())
+        self.win.checks_dock.hide()
+        self.assertTrue(_setup.wait_until(self.app, self.box.isVisible))
         # the card closed: F1 opens it again (closing it is folding it)
         self.win.help_dock.close()
         self.app.processEvents()

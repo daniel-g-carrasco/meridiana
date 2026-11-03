@@ -29,15 +29,19 @@ from .i18n import _
 class Tool:
     """A button of the bar: the command it starts, the word under its icon (one line: a long name is shortened
     here and stays whole in the tooltip), the icon (ui/icons.NAMES; the command's id when empty), whether it is
-    the one button full of accent of the phase, and the task that brings it when it is not there yet. `more` are the
-    commands that share the button, in a menu (R306, as AutoCAD's flyouts): the button runs the last one used, its
-    arrow or a long press opens the others, each with its name and key."""
+    the one button of the phase that stands out, and the task that brings it when it is not there yet. `more` are the
+    commands that share the button, in a menu (R306, as AutoCAD's flyouts; R333: a button in two parts, the command and
+    the strip that opens the others, each with its name and key). A mode of drawing chosen goes on the button; a command
+    run once does not (study 26, section 4). `fixed`: the button never changes, whatever is chosen, what deletes
+    (rule 2); `danger`: the last of a menu, apart and in red."""
     command: str
     label: str = ""
     icon: str = ""
     primary: bool = False
     planned: str = ""
     more: tuple = ()
+    fixed: bool = False
+    danger: bool = False
 
     def family(self) -> tuple:
         """The tool and those that share its button."""
@@ -140,10 +144,10 @@ def phases() -> list[Phase]:
                 T("strings_manual", _("Draw")),
                 # R299, R306: what is deleted, from the modules on the plan; «Clear all» deletes them all, after a
                 # question
-                T("tool_erase_string", _("Delete string"), icon="erase_string", more=(
+                T("tool_erase_string", _("Delete string"), icon="erase_string", fixed=True, more=(
                     T("tool_erase_inverter_strings", _("Inv. + strings"), icon="erase_inverter_strings"),
                     T("tool_erase_inverter", _("Delete inv."), icon="erase_inverter"),
-                    T("strings_clear", _("Clear all"))))))),
+                    T("strings_clear", _("Clear all"), danger=True)))))),
             "plant", ("layout", "strings", "connection"),
             (_("What do you think of this layout?"),
              _("Are the distances from the edges right for the fire brigade?"),

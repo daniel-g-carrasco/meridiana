@@ -254,10 +254,17 @@ QTabBar::tab:hover:!selected {{ background: {hover}; color: {t['text']}; }}
 QTabBar::tab:selected {{ color: {t['text']}; }}
 QTabBar#phases {{ background: transparent; }}
 QStackedWidget#phase-bars, QWidget#phase-card {{ background: transparent; }}
-QStackedWidget#phase-bars QToolBar {{ padding: 0; spacing: {S.S}px; border: none; background: transparent; }}
+QStackedWidget#phase-bars QToolBar {{ padding: 0; spacing: 0; border: none; background: transparent; }}
 QStackedWidget#phase-bars QToolButton {{ padding: 1px {S.XS}px; }}
 QStackedWidget#phase-bars QLabel#group-title {{ color: {t['muted']}; }}
-QStackedWidget#phase-bars QFrame#bar-line {{ background: {t['line_soft']}; margin: {S.XS}px {S.M}px; }}
+QStackedWidget#phase-bars QFrame#bar-line {{ background: {t['line_soft']}; }}
+QStackedWidget#phase-bars QToolButton[primary="true"] {{ background: {t['field']}; }}
+QStackedWidget#phase-bars QToolButton[primary="true"]:hover {{ background: {field_hover}; }}
+QStackedWidget#phase-bars QToolButton[primary="true"]:pressed {{ background: {field_press}; }}
+QStackedWidget#phase-bars QToolButton[primary="true"]:disabled {{ background: transparent; }}
+QStackedWidget#phase-bars QToolButton#split-face {{ border-top-right-radius: 0; border-bottom-right-radius: 0; }}
+QStackedWidget#phase-bars QToolButton#split-strip {{ padding: 0; border-top-left-radius: 0;
+    border-bottom-left-radius: 0; }}
 QPushButton {{ background: {t['field']}; border: 1px solid transparent; border-radius: {Button.PUSH[1]}px; {button}
               min-height: {inner}px; color: {t['text']}; }}
 QPushButton:hover {{ background: {field_hover}; }}
@@ -274,8 +281,6 @@ QToolButton:checked {{ background: {press}; color: {t['text']}; border-color: tr
 QToolButton:focus {{ border-color: {t['accent']}; }}
 QToolButton[popupMode="2"] {{ padding-right: {S.XL}px; }}
 QToolButton::menu-indicator {{ {drop} subcontrol-origin: padding; subcontrol-position: center right; right: {S.XS}px; }}
-QToolButton[grouped="true"]::menu-indicator {{ {drop} subcontrol-origin: padding; subcontrol-position: top right;
-    top: {S.S}px; right: 0px; }}
 QToolButton#filter {{ border: 1px solid {t['line']}; border-radius: {Button.CHIP[1]}px;
     padding: 0 {S.L - 1}px; min-height: {chip_inner}px; max-height: {chip_inner}px; color: {t['text']};
     background: transparent; }}
