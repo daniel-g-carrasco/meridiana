@@ -544,7 +544,8 @@ def exclusion_names() -> dict:
 def prop_names() -> dict:
     """What each kind of 3D object is called (R269): the menu of the tool, the properties, the tree, the shadows."""
     from .i18n import _
-    return {"broadleaf": _("Broadleaf tree"), "conifer": _("Conifer"), "shrub": _("Shrub"), "hedge": _("Hedge"),
+    return {"broadleaf": _("Broadleaf tree"), "conifer": _("Conifer"), "pine": _("Stone pine"),
+            "shrub": _("Shrub"), "hedge": _("Hedge"),
             "palm": _("Palm"), "chimney": _("Chimney"), "vent": _("Smoke vent (EFC)"), "skylight": _("Skylight"),
             "dome_skylight": _("Dome skylight"), "plant": _("Roof plant"), "antenna": _("Antenna"),
             "dish": _("Satellite dish"), "tank": _("Tank"), "stairwell": _("Stairwell"), "elevator": _("Lift shaft"),

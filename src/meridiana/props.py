@@ -18,10 +18,11 @@ PERSON_TRIANGLE_BUDGET = 300
 CAR_TRIANGLE_BUDGET = 300
 OBSTACLE_TRIANGLE_BUDGET = 200
 
-TREE_KINDS = ("broadleaf", "conifer", "shrub", "hedge", "palm")
+TREE_KINDS = ("broadleaf", "conifer", "pine", "shrub", "hedge", "palm")
 TREE_DEFAULTS = {
     "broadleaf": (6.0, 4.0, 1.8, 4.0),
     "conifer": (8.0, 3.5, 1.2, 3.5),
+    "pine": (14.0, 10.0, 9.5, 10.0),
     "shrub": (1.2, 1.2, 0.12, 1.2),
     "hedge": (1.5, 0.8, 0.10, 4.0),
     "palm": (9.0, 5.0, 6.5, 5.0),
@@ -241,10 +242,21 @@ def tree(kind="broadleaf", height=None, crown_diameter=None, trunk_height=None, 
     radius = crown / 2
     crown_height = height - trunk
     trunk_radius = max(0.025, min(crown * 0.035, max(trunk, 0.1) * 0.04))
-    _lathe(builder, ((0.0, trunk_radius), (max(trunk, 0.02), trunk_radius * 0.8)), 8, bark)
+    if kind != "pine":
+        _lathe(builder, ((0.0, trunk_radius), (max(trunk, 0.02), trunk_radius * 0.8)), 8, bark)
 
     if kind in ("broadleaf", "shrub"):
         _ellipsoid(builder, trunk, height, radius, green)
+    elif kind == "pine":
+        fork = (radius * 0.10, trunk, 0.0)
+        _rod(builder, (0.0, 0.0, 0.0), (0.0, trunk * 0.55, 0.0), trunk_radius, bark, 10)
+        _rod(builder, (0.0, trunk * 0.55, 0.0), fork, trunk_radius * 0.85, bark, 10)
+        for x, z, scale in ((-radius * 0.38, 0.0, 0.62), (radius * 0.38, -radius * 0.38, 0.62),
+                            (0.0, radius * 0.38, 0.62)):
+            _rod(builder, fork, (x, trunk + crown_height * 0.45, z), trunk_radius * 0.58, bark, 8)
+            profile = ((0.0, 0.0), (crown_height * 0.28, radius * scale),
+                       (crown_height * 0.72, radius * scale * 0.90), (crown_height, 0.0))
+            _lathe(builder, profile, 16, green, centre=(x, trunk, z))
     elif kind == "conifer":
         for level, scale in enumerate((1.0, 0.8, 0.58)):
             base = trunk + crown_height * level * 0.24
@@ -527,7 +539,7 @@ def shadow_solid(kind, rotation=0.0, **dimensions):
 FAMILIES = {**{k: "tree" for k in TREE_KINDS}, **{k: "obstacle" for k in OBSTACLE_KINDS},
             **{k: "person" for k in PERSON_KINDS}, **{k: "car" for k in CAR_KINDS}}
 KINDS = tuple(FAMILIES)
-ROUND = ("broadleaf", "conifer", "shrub", "palm")      # a round crown: an octagon on the plan
+ROUND = ("broadleaf", "conifer", "pine", "shrub", "palm")      # a round crown: an octagon on the plan
 
 
 def family(kind: str) -> str:

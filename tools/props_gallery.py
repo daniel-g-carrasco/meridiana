@@ -46,7 +46,7 @@ def lineup_scene():
     parts = [_grid(-24, 24, -14, 14)]
     for index, kind in enumerate(props.TREE_KINDS):
         shape = props.tree(kind, rotation=index * 17.0)
-        parts.append(_placed(shape, -16 + index * 8, -9))
+        parts.append(_placed(shape, -18 + index * 7.2, -9))
     for index, kind in enumerate(props.OBSTACLE_KINDS):
         shape = props.obstacle(kind, rotation=(index % 4) * 15.0)
         parts.append(_placed(shape, -18 + index * 3, 0))
