@@ -16,7 +16,7 @@ from . import mesh
 TREE_TRIANGLE_BUDGET = 700
 PERSON_TRIANGLE_BUDGET = 600
 CAR_TRIANGLE_BUDGET = 1600
-OBSTACLE_TRIANGLE_BUDGET = 200
+OBSTACLE_TRIANGLE_BUDGET = 400
 
 TREE_KINDS = ("broadleaf", "conifer", "pine", "shrub", "hedge", "palm")
 TREE_DEFAULTS = {
@@ -453,20 +453,38 @@ def obstacle(kind="other", width=None, depth=None, height=None, rotation=0.0, co
     builder = _Builder()
     if kind == "chimney":
         _box(builder, (0.0, height * 0.42, 0.0), (width * 0.72, height * 0.84, depth * 0.72), body)
-        _box(builder, (0.0, height * 0.92, 0.0), (width, height * 0.16, depth), metal)
+        for side in (-1.0, 1.0):
+            _box(builder, (side * width * 0.355, height * 0.92, 0.0),
+                 (width * 0.29, height * 0.16, depth), metal)
+            _box(builder, (0.0, height * 0.92, side * depth * 0.355),
+                 (width * 0.42, height * 0.16, depth * 0.29), metal)
+        _box(builder, (0.0, height * 0.86, 0.0), (width * 0.42, height * 0.04, depth * 0.42), dark)
     elif kind == "vent":
-        _lathe(builder, ((0.0, 0.32), (height * 0.78, 0.32)), 8, metal, width, depth)
-        _lathe(builder, ((height * 0.78, 0.5), (height, 0.5)), 8, body, width, depth)
+        _lathe(builder, ((0.0, 0.5), (height * 0.12, 0.5)), 12, body, width, depth)
+        _lathe(builder, ((height * 0.10, 0.32), (height * 0.72, 0.32)), 12, metal, width, depth)
+        _lathe(builder, ((height * 0.70, 0.47), (height * 0.79, 0.47)), 12, dark, width, depth)
+        _lathe(builder, ((height * 0.79, 0.5), (height * 0.91, 0.42), (height, 0.0)),
+               12, body, width, depth)
     elif kind == "skylight":
-        _box(builder, (0.0, height * 0.15, 0.0), (width, height * 0.3, depth), metal)
-        _box(builder, (0.0, height * 0.65, 0.0), (width * 0.9, height * 0.7, depth * 0.9), glass)
+        _box(builder, (0.0, height * 0.10, 0.0), (width, height * 0.20, depth), metal)
+        profile = ((-width * 0.45, height * 0.20), (width * 0.45, height * 0.20),
+                   (width * 0.45, height), (-width * 0.45, height * 0.55))
+        _extrude_xy(builder, profile, -depth * 0.45, depth * 0.45, glass)
     elif kind == "dome_skylight":
         _box(builder, (0.0, height * 0.1, 0.0), (width, height * 0.2, depth), metal)
         _lathe(builder, ((height * 0.2, 0.5), (height * 0.56, 0.43), (height, 0.0)), 12, glass, width, depth)
     elif kind == "plant":
-        _box(builder, (0.0, height * 0.45, 0.0), (width, height * 0.9, depth), body)
-        _lathe(builder, ((height * 0.9, 0.25), (height, 0.25)), 8, metal, width, depth)
-        _box(builder, (0.0, height * 0.42, depth * 0.49), (width * 0.65, height * 0.42, depth * 0.02), dark)
+        _box(builder, (0.0, height * 0.43, 0.0), (width, height * 0.86, depth * 0.96), body)
+        _box(builder, (0.0, height * 0.88, 0.0), (width, height * 0.04, depth), metal)
+        _box(builder, (0.0, height * 0.43, depth * 0.485), (width * 0.68, height * 0.50, depth * 0.02), dark)
+        for level in (0.30, 0.40, 0.50, 0.60):
+            _box(builder, (0.0, height * level, depth * 0.494),
+                 (width * 0.64, height * 0.018, depth * 0.012), metal)
+        fan_radius = min(width * 0.20, depth * 0.28)
+        for x in (-width * 0.22, width * 0.22):
+            _lathe(builder, ((height * 0.90, 1.0), (height * 0.96, 1.0)), 16, dark,
+                   fan_radius, fan_radius, centre=(x, 0.0, 0.0))
+            _rod(builder, (x, height * 0.96, 0.0), (x, height, 0.0), fan_radius * 0.22, metal, 10)
     elif kind == "antenna":
         radius = min(width, depth) * 0.035
         _box(builder, (0.0, height * 0.03, 0.0), (width * 0.25, height * 0.06, depth), body)
@@ -477,12 +495,28 @@ def obstacle(kind="other", width=None, depth=None, height=None, rotation=0.0, co
     elif kind == "dish":
         _dish(builder, width, depth, height, body)
     elif kind == "tank":
-        _lathe(builder, ((0.0, 0.5), (height * 0.88, 0.5)), 12, body, width, depth)
-        _lathe(builder, ((height * 0.88, 0.16), (height, 0.16)), 8, metal, width, depth)
+        _lathe(builder, ((0.0, 0.5), (height * 0.08, 0.5)), 16, metal, width, depth)
+        _lathe(builder, ((height * 0.08, 0.49), (height * 0.82, 0.49)), 16, body, width, depth)
+        for y0, y1 in ((0.18, 0.21), (0.53, 0.56)):
+            _lathe(builder, ((height * y0, 0.5), (height * y1, 0.5)), 16, metal, width, depth)
+        _lathe(builder, ((height * 0.82, 0.49), (height * 0.92, 0.16)), 16, body, width, depth)
+        _lathe(builder, ((height * 0.92, 0.16), (height, 0.16)), 16, metal, width, depth)
     elif kind in ("stairwell", "elevator"):
         _box(builder, (0.0, height * 0.5, 0.0), (width, height, depth * 0.96), body)
-        _box(builder, (0.0, height * 0.32, depth * 0.49), (width * 0.34, height * 0.64, depth * 0.02), dark)
         _box(builder, (0.0, height * 0.97, 0.0), (width, height * 0.06, depth), metal)
+        if kind == "stairwell":
+            _box(builder, (0.0, height * 0.32, depth * 0.49), (width * 0.34, height * 0.64, depth * 0.02), dark)
+            for side in (-1.0, 1.0):
+                _box(builder, (side * width * 0.19, height * 0.33, depth * 0.49),
+                     (width * 0.035, height * 0.66, depth * 0.02), metal)
+            _box(builder, (0.0, height * 0.67, depth * 0.49), (width * 0.415, height * 0.04, depth * 0.02), metal)
+            _box(builder, (0.0, height * 0.03, depth * 0.46), (width * 0.50, height * 0.06, depth * 0.08), body)
+        else:
+            _box(builder, (0.0, height * 0.35, depth * 0.48), (width * 0.66, height * 0.70, depth * 0.02), dark)
+            for side in (-1.0, 1.0):
+                _box(builder, (side * width * 0.155, height * 0.35, depth * 0.49),
+                     (width * 0.30, height * 0.68, depth * 0.02), metal)
+            _box(builder, (0.0, height * 0.77, depth * 0.48), (width * 0.70, height * 0.08, depth * 0.02), dark)
     elif kind == "walkway":
         radius = min(depth, height) * 0.06
         _box(builder, (0.0, height * 0.15, 0.0), (width, height * 0.3, depth), body)

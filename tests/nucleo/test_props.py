@@ -229,6 +229,63 @@ class Obstacles(MeshChecks):
             with self.subTest(dimensions=dimensions), self.assertRaises(ValueError):
                 props.obstacle("plant", **dimensions)
 
+    def test_the_chimney_has_a_dark_recess_under_its_cap(self):
+        shape = props.obstacle("chimney")
+        dark = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS["dark"]), axis=1)
+        self.assertTrue(dark.any())
+        self.assertLess(float(shape[0][dark, 1].max()), props.OBSTACLE_DEFAULTS["chimney"][2])
+
+    def test_the_vent_has_a_dark_underside_below_the_cap(self):
+        shape = props.obstacle("vent")
+        dark = np.all(np.isclose(shape[2], props.DEFAULT_COLOURS["dark"]), axis=1)
+        self.assertTrue(dark.any())
+
+    def test_the_skylight_glass_slopes_upwards(self):
+        width, _depth, height = props.OBSTACLE_DEFAULTS["skylight"]
+        pos, _nor, col = props.obstacle("skylight")
+        glass = np.all(np.isclose(col, props.DEFAULT_COLOURS["glass"]), axis=1)
+        right = pos[glass & (pos[:, 0] > width * 0.4)]
+        left = pos[glass & (pos[:, 0] < -width * 0.4)]
+        self.assertAlmostEqual(float(right[:, 1].max()), height, places=6)
+        self.assertLess(float(left[:, 1].max()), height * 0.70)
+
+    def test_the_rooftop_machine_has_two_fans_and_a_front_grille(self):
+        self.assertEqual(self.colour_components(props.obstacle("plant"), "dark"), 3)
+
+    def test_the_machine_grille_is_in_front_of_its_dark_panel(self):
+        _width, depth, height = props.OBSTACLE_DEFAULTS["plant"]
+        pos, _nor, col = props.obstacle("plant")
+        dark = np.all(np.isclose(col, props.DEFAULT_COLOURS["dark"]), axis=1)
+        metal = np.all(np.isclose(col, props.DEFAULT_COLOURS["metal"]), axis=1)
+        panel_front = float(pos[dark & (pos[:, 1] < height * 0.8), 2].max())
+        slats = pos[metal & (pos[:, 1] > height * 0.25) & (pos[:, 1] < height * 0.65) &
+                    (pos[:, 2] > depth * 0.45), 2]
+        self.assertLess(panel_front, float(slats.max()) - 1e-5)
+
+    def test_the_elevator_doors_are_in_front_of_the_dark_frame(self):
+        _width, depth, height = props.OBSTACLE_DEFAULTS["elevator"]
+        pos, _nor, col = props.obstacle("elevator")
+        dark = np.all(np.isclose(col, props.DEFAULT_COLOURS["dark"]), axis=1)
+        metal = np.all(np.isclose(col, props.DEFAULT_COLOURS["metal"]), axis=1)
+        doors = metal & (pos[:, 1] < height * 0.7) & (pos[:, 2] > depth * 0.45)
+        self.assertLess(float(pos[dark, 2].max()), float(pos[doors, 2].max()) - 1e-5)
+
+    def test_the_tank_has_a_metal_band_around_its_middle(self):
+        width, _depth, height = props.OBSTACLE_DEFAULTS["tank"]
+        pos, _nor, col = props.obstacle("tank")
+        metal = np.all(np.isclose(col, props.DEFAULT_COLOURS["metal"]), axis=1)
+        band = pos[metal & (np.abs(pos[:, 1] - height * 0.55) < height * 0.02)]
+        self.assertGreater(len(band), 0)
+        self.assertGreater(float(np.abs(band[:, 0]).max()), width * 0.49)
+
+    def test_stairwell_and_elevator_have_different_fronts(self):
+        for kind, fraction, expected in (("stairwell", 0.17, "dark"), ("elevator", 0.305, "metal")):
+            width, depth, height = props.OBSTACLE_DEFAULTS[kind]
+            pos, _nor, col = props.obstacle(kind)
+            door = ((np.abs(pos[:, 0] - width * fraction) < width * 0.01) &
+                    (pos[:, 2] > depth * 0.45) & (np.abs(pos[:, 1] - height * 0.35) < height * 0.35))
+            self.assertTrue(np.any(np.all(np.isclose(col[door], props.DEFAULT_COLOURS[expected]), axis=1)))
+
 
 class People(MeshChecks):
     CASES = (
