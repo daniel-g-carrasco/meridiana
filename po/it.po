@@ -21862,3 +21862,23 @@ msgstr[1] "{n} vertici scelti: si muovono insieme."
 
 msgid "Attach and show"
 msgstr "Allega e mostra"
+
+#: src/meridiana/model.py:564
+msgid "Stone pine"
+msgstr "Pino domestico"
+
+#: src/meridiana/ui/window.py:2663
+msgid "{what}: click each corner; Enter or a double click finishes, Esc cancels"
+msgstr "{what}: fai clic su ogni angolo; Invio o doppio clic per finire, Esc per annullare"
+
+#: src/meridiana/ui/window.py:3023
+msgid "Draw a linear 3D object"
+msgstr "Disegna un oggetto 3D lineare"
+
+#: src/meridiana/ui/properties.py:1353
+msgid "With railing"
+msgstr "Con corrimano"
+
+#: src/meridiana/ui/plan.py:245
+msgid "Click each corner; Enter or a double click finishes, Backspace removes the last point, Esc cancels. Type a number for the length of a segment."
+msgstr "Fai clic su ogni angolo; Invio o doppio clic per finire, Backspace elimina l'ultimo punto, Esc annulla. Scrivi un numero per la lunghezza di un tratto."
