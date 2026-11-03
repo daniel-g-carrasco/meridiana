@@ -26,7 +26,7 @@ import time
 
 import numpy as np
 from PySide6.QtCore import QEvent, QLineF, QPoint, QPointF, QRectF, Qt, QTimer, Signal
-from PySide6.QtGui import (QBrush, QColor, QFont, QFontMetrics, QPainter, QPainterPath, QPen, QPolygonF,
+from PySide6.QtGui import (QBrush, QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPen, QPolygonF,
                            QTransform)
 from PySide6.QtWidgets import (QGraphicsEllipseItem, QGraphicsItem, QGraphicsItemGroup, QGraphicsScene, QGraphicsView,
                                QLineEdit, QWidget)
@@ -35,6 +35,7 @@ from .. import geo, move, navigation, roofs, sides, sweep, theme_colors, tiles, 
 from . import plan_overlays, waiting, world_map
 from ..i18n import _, ngettext, number, pgettext
 from .cards import round_corners
+from .lit_modules import LitModules
 from . import design
 from ..snapping import EXACT, Guide, Snap, Snapper, ortho
 from .theme import symbol_font
@@ -420,7 +421,7 @@ class SideEditor(QWidget):
         p.setBrush(QBrush(fill))
         inset = design.Line.FOCUS / 2
         p.drawRoundedRect(QRectF(inset, inset, self.width() - 2 * inset, h - 2 * inset),
-                          design.Radius.CONTROL, design.Radius.CONTROL)
+                          design.Radius.PLAN_LABEL, design.Radius.PLAN_LABEL)
         draw_disc(p, QPointF(design.Space.XXS + self.disc() / 2, h / 2), self.disc(), str(self.side + 1),
                   qcolour(self.colours["label_fg"]), fill, self.font())
         p.setPen(qcolour(self.colours["label_fg"]))
@@ -580,6 +581,7 @@ class PlanView(QGraphicsView):
         self.router = None                 # string_paths.Router over the modules drawn, with their index
         self.router_of = None              # the module_corners it was made of
         self.module_index: dict = {}       # (sub-field, key) -> index into the router's modules
+        self.module_offsets: dict = {}     # sub-field -> the index of its first module there
         self.lock_dir: tuple[float, float] | None = None     # Shift held: the direction kept
         self.snaps_on = True               # F3: the snaps, as in AutoCAD; Ctrl held lets one point go free
         self.ortho = False                 # F8: square to the first side (East and North before it)
@@ -591,7 +593,13 @@ class PlanView(QGraphicsView):
         self.sweep_points: list = []
         self.sweep_kind = ""
         self.sweep_lasso = False
-        self.sweep_item = None             # what the drag would select, lit
+        self.sweep_item = None             # what the drag would select, lit (LitModules)
+        self.sweep_remove = False          # R344: Shift held, the sweep takes out of the selection
+        self.quad_index: dict = {}         # sub-field -> sweep.QuadIndex of its modules, made at the first sweep
+        self.action_box = QRectF()         # where its sign was painted last
+        self.module_action = ""            # R344: "add" or "remove", what a click on the module under the pointer does
+        self.hover_out = False             # ... and the outline of that module is drawn in the colour of the removal
+        self.pointer_mods = Qt.KeyboardModifier.NoModifier
         self.swept: list = []              # (sub-field, key) selected together, in the Plant
         self.swept_item = None
         self.swept_things: list = []       # (kind, id) selected together, in the Modelling
@@ -1088,27 +1096,22 @@ class PlanView(QGraphicsView):
 
     def _module_light(self, modules: list, colour) -> QGraphicsItem | None:
         """`modules` lit as one item, over the modules and the strings' lines: filled in `colour`, each with its outline
-        over a halo, so that they read on the photo and on the light ground; none without modules."""
+        over a halo, so that they read on the photo and on the light ground; none without modules. Drawn module by
+        module into a layer (ui/lit_modules.py): one path of thousands of modules cost 850 ms to paint (R344)."""
         self._router()
-        order = [self.module_index[m] for m in modules if m in self.module_index]
-        if not order:
+        order = np.unique([self.module_index[m] for m in modules if m in self.module_index]).astype(np.intp)
+        if not len(order):
             return None
-        path = QPainterPath()
-        for q in self.router.quads[order].tolist():
-            path.moveTo(q[0][0], q[0][1])
-            path.lineTo(q[1][0], q[1][1])
-            path.lineTo(q[2][0], q[2][1])
-            path.lineTo(q[3][0], q[3][1])
-            path.closeSubpath()
         W = view_colours.WIDTHS
         fill = qcolour(colour)
         fill.setAlpha(LIGHT_ALPHA)
-        scene = self.scene()
-        halo = scene.addPath(path, cosmetic(self.colours["halo"], W["select_module"] + W["select_halo"]))
-        ink = scene.addPath(path, cosmetic(colour, W["select_module"]), QBrush(fill))
-        group = group_items(scene, [halo, ink])
-        group.setZValue(Z_SELECTION + 0.2)
-        return group
+        item = LitModules(self, self.router.quads, 10 * self.metres_per_pixel())
+        item.set_style(cosmetic(self.colours["halo"], W["select_module"] + W["select_halo"]),
+                       cosmetic(colour, W["select_module"]), fill)
+        item.set_modules(order)
+        item.setZValue(Z_SELECTION + 0.2)
+        self.scene().addItem(item)
+        return item
 
     def _erase_light(self) -> None:
         if self.erase_item is not None:
@@ -1306,14 +1309,17 @@ class PlanView(QGraphicsView):
         signature = tuple((sf, id(q)) for sf, (_keys, q) in self.module_corners.items())
         if self.router is None or self.router_of != signature:
             index: dict = {}
+            offsets: dict = {}
             quads = []
             for sf, (keys, q) in self.module_corners.items():
                 if q is None or not len(q):
                     continue
+                offsets[sf] = len(index)
                 for key in keys:
                     index[(sf, key)] = len(index)
                 quads.append(q)
             self.module_index = index
+            self.module_offsets = offsets
             self.router = string_paths.Router(np.vstack(quads) if quads else np.zeros((0, 4, 2)))
             self.router_of = signature
         return self.router
@@ -1886,9 +1892,11 @@ class PlanView(QGraphicsView):
 
     def _hover(self, kind: str, oid: str, key: str) -> None:
         """Outline what a click would select (study 12, V3): one item added or taken away, the plan not drawn again."""
-        if (kind, oid, key) == self.hovered:
+        out = kind == "module" and self.module_action == "remove"      # a click would take it out of the selection
+        if (kind, oid, key) == self.hovered and out == self.hover_out:
             return
         self.hovered = (kind, oid, key)
+        self.hover_out = out
         if self.hover_item is not None:
             self.scene().removeItem(self.hover_item)
             self.hover_item = None
@@ -1905,7 +1913,7 @@ class PlanView(QGraphicsView):
             return
         # the kind's colour, lighter, dashed over a halo (R67)
         W = view_colours.WIDTHS
-        light = view_colours.kind_colour(kind, hover=True)
+        light = self.colours["sweep_remove"] if out else view_colours.kind_colour(kind, hover=True)
         pens = (cosmetic(self.colours["halo"], W["hover"] + W["select_halo"]),
                 cosmetic(light, W["hover"], Qt.PenStyle.DashLine))
         items = [self.scene().addPolygon(poly, pen) for pen in pens]
@@ -2976,11 +2984,12 @@ class PlanView(QGraphicsView):
     def _sweep_cancel(self) -> None:
         had = self.sweeping()
         self.sweep_press, self.sweep_points = None, []
-        self._sweep_light([])
+        self.sweep_remove = False
+        self._sweep_light(None)
         if had:
             self.viewport().update()
 
-    def _sweep_moved(self, position: QPointF) -> None:
+    def _sweep_moved(self, position: QPointF, modifiers=None) -> None:
         start = self.sweep_press[0]
         if not self.sweep_points:
             if (position - start).manhattanLength() <= navigation.CLICK_PX:
@@ -2990,13 +2999,24 @@ class PlanView(QGraphicsView):
             self.sweep_points = [QPointF(start)]
             self._hover("", "", "")
             self.setCursor(Qt.CursorShape.CrossCursor)
+        if modifiers is not None:                       # Shift: the sweep takes out (R344)
+            self.sweep_remove = bool(modifiers & Qt.KeyboardModifier.ShiftModifier)
         if self.sweep_lasso:
             self.sweep_points.append(QPointF(position))
         else:
             self.sweep_kind = sweep.kind_of(start.x(), position.x())
             self.sweep_points = [QPointF(start), QPointF(position)]
         if self.plant_phase:
-            self._sweep_light(self._swept_modules())
+            self._sweep_light(self._sweep_order())
+        self.viewport().update()
+
+    def _sweep_shift(self, on: bool) -> None:
+        """Shift pressed or released while the sweep goes on: the light and the sign change at once (R344)."""
+        if on == self.sweep_remove:
+            return
+        self.sweep_remove = on
+        if self.sweep_item is not None:
+            self._sweep_style()
         self.viewport().update()
 
     def _sweep_outline(self) -> list[QPointF]:
@@ -3010,20 +3030,53 @@ class PlanView(QGraphicsView):
     def _sweep_ring(self) -> list[tuple[float, float]]:
         return [(q.x(), q.y()) for q in (self.mapToScene(p.toPoint()) for p in self._sweep_outline())]
 
-    def _swept_modules(self) -> list[tuple[str, str]]:
+    def _sweep_chosen(self):
+        """The sweep's choice per sub-field: (sub-field, its keys, the indices into them taken). The shapes and boxes
+        of the modules are made once per layout (sweep.QuadIndex), a move tests only the modules near the sweep."""
         ring = self._sweep_ring()
-        out = []
         for sfid, (keys, quads) in self.module_corners.items():
-            if quads is not None and len(quads):
-                out += [(sfid, keys[i]) for i in np.flatnonzero(sweep.chosen_quads(quads, ring, self.sweep_kind)).tolist()]
-        return out
+            if quads is None or not len(quads):
+                continue
+            index = self.quad_index.get(sfid)
+            if index is None or index.quads is not quads:
+                index = self.quad_index[sfid] = sweep.QuadIndex(quads)
+            yield sfid, keys, np.flatnonzero(index.chosen(ring, self.sweep_kind))
 
-    def _sweep_light(self, modules: list) -> None:
-        if self.sweep_item is not None:
-            self.scene().removeItem(self.sweep_item)
-            self.sweep_item = None
-        if modules:
-            self.sweep_item = self._module_light(modules, view_colours.kind_colour("module", hover=True))
+    def _swept_modules(self) -> list[tuple[str, str]]:
+        return [(sfid, keys[i]) for sfid, keys, taken in self._sweep_chosen() for i in taken.tolist()]
+
+    def _sweep_order(self) -> np.ndarray:
+        """The same modules as indices into the router's: what the light is told."""
+        self._router()
+        parts = [self.module_offsets[sfid] + taken for sfid, _keys, taken in self._sweep_chosen()]
+        return np.concatenate(parts) if parts else np.zeros(0, dtype=np.intp)
+
+    def _sweep_colour(self) -> str:
+        return self.colours["sweep_remove"] if self.sweep_remove else view_colours.kind_colour("module", hover=True)
+
+    def _sweep_style(self) -> None:
+        W = view_colours.WIDTHS
+        colour = self._sweep_colour()
+        fill = qcolour(colour)
+        fill.setAlpha(LIGHT_ALPHA)
+        self.sweep_item.set_style(cosmetic(self.colours["halo"], W["select_module"] + W["select_halo"]),
+                                  cosmetic(colour, W["select_module"]), fill)
+
+    def _sweep_light(self, order) -> None:
+        """The modules the sweep would take, lit: the indices `order` (into the router's), or None to put the light
+        out. One item for the whole sweep, drawn module by module into a layer that only follows what changes
+        (ui/lit_modules.py); it was made and deleted at every move (R344)."""
+        if order is None:
+            if self.sweep_item is not None:
+                self.scene().removeItem(self.sweep_item)
+                self.sweep_item = None
+            return
+        if self.sweep_item is None:
+            self.sweep_item = LitModules(self, self._router().quads, 10 * self.metres_per_pixel())
+            self.sweep_item.setZValue(Z_SELECTION + 0.2)
+            self.scene().addItem(self.sweep_item)
+        self._sweep_style()
+        self.sweep_item.set_modules(order)
 
     def _sweep_release(self, modifiers) -> None:
         start, _mods, click, _when = self.sweep_press
@@ -3047,6 +3100,7 @@ class PlanView(QGraphicsView):
     def set_swept(self, modules: list) -> None:
         """The modules selected together in the Plant: lit as one, the commands that take them say what they do."""
         self.swept = list(modules)
+        self._set_module_action("")                     # the next move of the pointer tells it again (R344)
         if self.swept_item is not None:
             self.scene().removeItem(self.swept_item)
             self.swept_item = None
@@ -3075,6 +3129,33 @@ class PlanView(QGraphicsView):
         else:
             self.set_swept([*self.swept, hit])
         return True
+
+    def _module_action(self, hit: tuple | None, modifiers) -> str:
+        """What a click with `modifiers` on the module `hit` does with the modules selected together (R344): "add" or
+        "remove" when some are selected, a module is under the pointer and Ctrl or Shift is held, as `_swept_click`
+        decides it; else ""."""
+        held = bool(modifiers & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier))
+        if not (self.plant_phase and self.swept and held and hit is not None):
+            return ""
+        return "remove" if hit in self.swept else "add"
+
+    def _set_module_action(self, action: str) -> None:
+        """The sign beside the pointer for `_module_action`: only its little box is painted again."""
+        if not action and not self.module_action:
+            return
+        old = self.action_box
+        self.module_action = action
+        self.action_box = self._action_rect() if action else QRectF()
+        self.viewport().update(old.united(self.action_box).adjusted(-2, -2, 2, 2).toAlignedRect())
+
+    def _modifiers_changed(self, modifiers) -> None:
+        """Shift or Ctrl pressed or released: a sweep changes at once; with modules selected the sign under the
+        pointer does (R344)."""
+        self.pointer_mods = modifiers
+        if self.sweeping():
+            self._sweep_shift(bool(modifiers & Qt.KeyboardModifier.ShiftModifier))
+        elif self.tool == "select" and self.plant_phase and (self.swept or self.module_action):
+            self._update_cursor(self.viewport().mapFromGlobal(QCursor.pos()))
 
     def _sweep_things(self, shift: bool) -> None:
         """A sweep in the Modelling: the buildings, the exclusions and the 3D objects it takes; one is the selection as
@@ -3123,9 +3204,11 @@ class PlanView(QGraphicsView):
 
     def _draw_sweep(self, painter: QPainter) -> None:
         """The sweep in the view's pixels: a window full and with a whole line, a crossing dashed, as AutoCAD draws them
-        (blue and green, from the plan's colours)."""
+        (blue and green, from the plan's colours; with Shift, which takes out, both in the red of the removal), and
+        beside the pointer a plus, or a minus with Shift (R344)."""
         window = self.sweep_kind == sweep.WINDOW
-        colour = qcolour(self.colours["sweep_window" if window else "sweep_crossing"])
+        colour = qcolour(self.colours["sweep_remove" if self.sweep_remove else
+                                      "sweep_window" if window else "sweep_crossing"])
         fill = QColor(colour)
         fill.setAlpha(SWEEP_ALPHA)
         painter.save()
@@ -3133,6 +3216,35 @@ class PlanView(QGraphicsView):
         painter.setPen(QPen(colour, design.Line.FOCUS, Qt.PenStyle.SolidLine if window else Qt.PenStyle.DashLine))
         painter.setBrush(QBrush(fill))
         painter.drawPolygon(QPolygonF(self._sweep_outline()))
+        painter.restore()
+        self._draw_action_mark(painter, self.sweep_remove)
+
+    def _action_rect(self) -> QRectF:
+        """The little box of the plus or the minus, beside the pointer as the labels are (R344)."""
+        at = self.pointer_position if self.pointer_position is not None else QPointF()
+        side = design.Size.CHIP                          # a square as tall as a small control, a plus or a minus in it
+        return QRectF(at.x() + design.Space.XL, at.y() + design.Space.XL, side, side)
+
+    def _draw_action_mark(self, painter: QPainter, remove: bool) -> None:
+        """A plus (a sweep adds, a click adds) or a minus (Shift takes out, a click takes out) in a box like the
+        plan's labels, in the colour the modules are lit in: the removal's red or the modules' light blue."""
+        if self.pointer_position is None:
+            return
+        box = self._action_rect()
+        colour = qcolour(self.colours["sweep_remove"] if remove else view_colours.kind_colour("module", hover=True))
+        painter.save()
+        painter.resetTransform()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(qcolour(self.colours["label_bg"]))
+        painter.drawRoundedRect(box, design.Radius.INNER, design.Radius.INNER)
+        pen = QPen(colour, design.Line.FOCUS)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        painter.setPen(pen)
+        c, arm = box.center(), design.Space.S
+        painter.drawLine(QLineF(c.x() - arm, c.y(), c.x() + arm, c.y()))
+        if not remove:
+            painter.drawLine(QLineF(c.x(), c.y() - arm, c.x(), c.y() + arm))
         painter.restore()
 
     def mouseDoubleClickEvent(self, event):
@@ -3180,6 +3292,7 @@ class PlanView(QGraphicsView):
 
     def mouseMoveEvent(self, event):
         self.pointer_position = QPointF(event.position())
+        self.pointer_mods = event.modifiers()
         if self.space and self.panning is None and not self.navigator.held:
             if self.space_last is None:
                 self.space_last = QPointF(event.position())
@@ -3203,7 +3316,7 @@ class PlanView(QGraphicsView):
             self._left_now()                        # a drag of the left button: a corner dragged, a vertex drawn
         if self.sweep_press is not None:
             if event.buttons() & Qt.MouseButton.LeftButton:
-                self._sweep_moved(event.position())
+                self._sweep_moved(event.position(), event.modifiers())
                 return
             self._sweep_cancel()                    # its release went elsewhere
         if self.navigator.held:
@@ -3310,6 +3423,8 @@ class PlanView(QGraphicsView):
     def keyPressEvent(self, event):
         key = event.key()
         text = event.text()
+        if key in (Qt.Key.Key_Shift, Qt.Key.Key_Control) and not event.isAutoRepeat():
+            self._modifiers_changed(event.modifiers())
         if key == Qt.Key.Key_Escape and self.sweeping():
             self._sweep_cancel()
             return
@@ -3431,6 +3546,8 @@ class PlanView(QGraphicsView):
         self.setCursor(Qt.CursorShape.ArrowCursor if self.tool == "select" else Qt.CursorShape.CrossCursor)
 
     def keyReleaseEvent(self, event):
+        if event.key() in (Qt.Key.Key_Shift, Qt.Key.Key_Control) and not event.isAutoRepeat():
+            self._modifiers_changed(event.modifiers())
         if event.key() == Qt.Key.Key_Space and not event.isAutoRepeat():
             self._release_space()
             return
@@ -3447,10 +3564,15 @@ class PlanView(QGraphicsView):
             return
         super().keyReleaseEvent(event)
 
+    def leaveEvent(self, event) -> None:
+        self._set_module_action("")                     # the sign beside the pointer goes with the pointer (R344)
+        super().leaveEvent(event)
+
     def focusOutEvent(self, event) -> None:
         if self.space:
             self._release_space()
         self._sweep_cancel()
+        self._set_module_action("")
         super().focusOutEvent(event)
 
     def _update_cursor(self, view_pos) -> None:
@@ -3477,6 +3599,7 @@ class PlanView(QGraphicsView):
                 self.cursorInfo.emit(_("Side {n}").format(n=pill + 1))
                 return
             kind, oid, key = self._pick(scene_pos, PICK_PX) if self.edge_pick is None else ("", "", "")
+            self._set_module_action(self._module_action((oid, key) if kind == "module" else None, self.pointer_mods))
             rid = self.rid_of(oid, key) if kind == "module" else ""
             if rid and self.selection == ("subfield", oid) and self.selected_module[0] == oid and \
                     self.rid_of(*self.selected_module) == rid:
@@ -3627,6 +3750,8 @@ class PlanView(QGraphicsView):
         self._draw_labels(painter)
         if self.sweeping():
             self._draw_sweep(painter)
+        elif self.module_action:
+            self._draw_action_mark(painter, self.module_action == "remove")
 
     def _draw_row(self, painter: QPainter, draw: QColor, halo: QPen) -> None:
         """The row being drawn: the line from its start, and its modules where they would go, red when they go
@@ -3670,7 +3795,7 @@ class PlanView(QGraphicsView):
             ink = sel if i == lit else fg
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(bg)
-            painter.drawRoundedRect(box, design.Radius.CONTROL, design.Radius.CONTROL)
+            painter.drawRoundedRect(box, design.Radius.PLAN_LABEL, design.Radius.PLAN_LABEL)
             disc = box.height() - 2 * design.Space.XXS
             draw_disc(painter, QPointF(box.left() + design.Space.XXS + disc / 2, box.center().y()), disc, str(i + 1),
                       ink, bg, self.font())

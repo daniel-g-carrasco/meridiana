@@ -34,6 +34,37 @@ def _area(ring):
     return shape
 
 
+class QuadIndex:
+    """The quadrilaterals of a layout made ready once (R344): their shapes and their boxes. A sweep moves many times
+    over the same modules; each move then tests only the modules whose box is near the sweep, not all of them, and the
+    shapes are not made again. Same answer as `chosen_quads`: the box test only leaves out what cannot be chosen."""
+
+    def __init__(self, quads):
+        self.quads = quads
+        q = np.asarray(quads, dtype=float).reshape(-1, 4, 2)
+        self.low = q.min(axis=1) if len(q) else np.zeros((0, 2))
+        self.high = q.max(axis=1) if len(q) else np.zeros((0, 2))
+        self.shapes = shapely.polygons(shapely.linearrings(q)) if len(q) else np.empty(0, dtype=object)
+
+    def chosen(self, ring, kind: str) -> np.ndarray:
+        """Which of the quadrilaterals the sweep `ring` selects, as an array of bools."""
+        out = np.zeros(len(self.shapes), dtype=bool)
+        if len(ring) < 3 or not len(out):
+            return out
+        area = _area(ring)
+        points = np.asarray(ring, dtype=float)
+        low, high = points.min(axis=0), points.max(axis=0)
+        if kind == WINDOW:
+            near = np.all((self.low >= low) & (self.high <= high), axis=1)
+        else:
+            near = np.all((self.high >= low) & (self.low <= high), axis=1)
+        at = np.flatnonzero(near)
+        if len(at):
+            shapes = self.shapes[at]
+            out[at] = shapely.covers(area, shapes) if kind == WINDOW else shapely.intersects(area, shapes)
+        return out
+
+
 def chosen_quads(quads, ring, kind: str) -> np.ndarray:
     """Which of the quadrilaterals `quads` (n, 4, 2) the sweep `ring` selects, as an array of bools."""
     quads = np.asarray(quads, dtype=float)

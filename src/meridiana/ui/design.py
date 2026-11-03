@@ -10,7 +10,8 @@ The rules, in docs/design/sistema-grafico.md with the reasons:
   (button, field, list, group, table, tool button, a track of segments); 4 what stands inside a control or a row (a
   menu's item, a selection inside a card, a small button on a row, a segment); no shape round at its ends, no «pill»
   (R322, R328, Daniel 02/11/2026: «tutti i tasti devono essere portati su questo stile di rettangolo con angoli
-  arrotondati, anziché su quello di rettangoli con due cerchi alle estremità»);
+  arrotondati, anziché su quello di rettangoli con due cerchi alle estremità»), but for the plan's labels of the sides,
+  round again at Daniel's word (R336, `Radius.PLAN_LABEL`);
 - one line of 1 px per depth, 2 px for the focus;
 - the text in a closed catalogue of named styles (`Text`, R121 of 25/10/2026): six sizes (11, 12, 13 the text
   since R123, 14, 18, 22) and two weights, each style with its colour's token; nothing else in the window;
@@ -47,6 +48,8 @@ class Radius:
     CONTROL = 6         # a button, a field, a list, a group, a table, a tool button, a track, a state, a label
     INNER = 4           # inside a control or a row: a menu's item, the selection in a card, a row's small button
     MARK = 2            # a swatch, a tick of a legend
+    PLAN_LABEL = 10     # the plan's labels of the sides (the pill with its disc and the field that opens from it, R336):
+                        # round at the ends, half of their usual height; Qt keeps it to half the height of a smaller one
 
 
 class Type:
