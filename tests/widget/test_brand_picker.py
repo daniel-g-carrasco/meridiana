@@ -266,6 +266,10 @@ class TheLook(PickerCase):
         ground = QColor(image.pixel(rect.center().x() + 30, rect.center().y() + 8))
         self.assertEqual(ground.name(), QColor(self.theme.tokens["card"]).name())
 
+    def assert_near(self, seen, wanted, within=12):
+        self.assertLessEqual(max(abs(seen.red() - wanted.red()), abs(seen.green() - wanted.green()),
+                                 abs(seen.blue() - wanted.blue())), within, (seen.name(), wanted.name()))
+
     def test_the_rows_take_the_colours_of_the_theme_in_light_and_in_dark(self):
         for theme in ("light", "dark"):
             with self.subTest(theme=theme):
@@ -295,8 +299,9 @@ class TheLook(PickerCase):
                 dark = theme == "dark"
                 ink = darkest_or_lightest(image, rows[0], dark)
                 faded = darkest_or_lightest(image, rows[2], dark)
-                self.assertEqual(ink.name(), QColor(look.tokens["text"]).name())
-                self.assertEqual(faded.name(), QColor(theme_colors.faded_text(look.tokens)).name())
+                # near, not equal: on Linux the anti-aliasing of a small text may not reach its ink in any pixel
+                self.assert_near(ink, QColor(look.tokens["text"]))
+                self.assert_near(faded, QColor(theme_colors.faded_text(look.tokens)))
                 _setup.dispose(p)
 
 
