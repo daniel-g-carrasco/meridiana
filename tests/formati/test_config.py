@@ -187,7 +187,7 @@ class ConfigTest(unittest.TestCase):
                 self.assertEqual((load(path).toolbar, load(path).toolbar_place), ("icons", "left"))
         self.assertEqual((Config().toolbar, Config().toolbar_place), ("text", "top"))
 
-    def test_version_10_gets_meridio_animated_smooth_and_his_bubble_at_320_by_400(self):
+    def test_version_10_gets_meridio_animated_smooth_and_his_bubble_at_320_by_500(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "config.json"
             # what version 10 brought (the bar of the phase as chosen) stays as it was
@@ -195,7 +195,7 @@ class ConfigTest(unittest.TestCase):
             cfg = load(path)
             self.assertEqual((cfg.toolbar, cfg.toolbar_place, cfg.assistant_animated, cfg.assistant_style,
                               cfg.assistant_width, cfg.assistant_height, cfg.notices),
-                             ("icons", "left", True, "smooth", 320, 400, []))
+                             ("icons", "left", True, "smooth", 320, 500, []))
             cfg.assistant_style, cfg.assistant_width = "pixel", 460
             save(cfg, path)
             again = load(path)
@@ -244,7 +244,7 @@ class ConfigTest(unittest.TestCase):
             self.assertEqual(cfg, Config(network_tiles=False))
             self.assertEqual((cfg.toolbar, cfg.toolbar_place, cfg.assistant_animated, cfg.assistant_style,
                               cfg.assistant_width, cfg.assistant_height, cfg.checks_view, cfg.help_open),
-                             ("text", "top", True, "smooth", 320, 400, "level", True))
+                             ("text", "top", True, "smooth", 320, 500, "level", True))
             save(cfg, path)
             self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["version"], config.CONFIG_VERSION)
             self.assertEqual(config.CONFIG_VERSION, 25)

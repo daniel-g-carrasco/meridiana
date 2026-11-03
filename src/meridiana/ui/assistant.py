@@ -36,18 +36,20 @@ from PySide6.QtCore import (QByteArray, QEasingCurve, QEvent, QParallelAnimation
 from PySide6.QtGui import (QColor, QCursor, QIcon, QImage, QKeySequence, QPainter, QPainterPath, QPen, QPixmap,
                            QTextDocument)
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QLayout, QLineEdit,
-                               QPushButton, QScrollArea, QSizePolicy, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QLineEdit,
+                               QMenu, QPushButton, QScrollArea, QSizePolicy, QTextBrowser, QToolButton, QVBoxLayout,
+                               QWidget)
 
 from .. import assistant
 from ..assistant import text as words
 from ..i18n import _
 from . import icons
 from .cards import default_tokens
-from .design import Icon, Motion, Space, Text, Type, set_text, text_font
+from .design import Icon, Motion, Size, Space, Text, Type, set_text, text_font
+from .elided import ElidedLabel
 
-MIN_OPEN_HEIGHT = 220
-QUESTIONS_HEIGHT = 260          # below this the questions ready are hidden: the field and the conversation stay
+QUESTIONS_HEIGHT = 260          # docked, below this the questions ready are hidden: the field and the conversation stay
+QUESTION_ROWS, QUESTION_LINES = 3, 2    # floating, their place is kept for so many rows of so many lines (R362)
 DOCKED_CARDS_MIN = 56           # docked, the cards scroll in this much at least (a title and a row of buttons)
 SLIDE_MS = 320                  # his own pace (R155, Daniel 25/10/2026: at 130 ms «troppo rapido, meglio com'era
                                 # prima»)
@@ -61,7 +63,7 @@ RENDER_MS = 50                  # the answer as it comes is drawn again at most 
 DOTS_MS = 300
 SPEAK_CPS = 60                  # his words as he says them (R156): this many characters a second at least,
 SPEAK_MAX_S = 3.0               # and what he has still to say said in this long at most
-RADIUS = 10                     # the bubble's corners
+RADIUS = assistant.BUBBLE_RADIUS
 
 
 def render(text: str, size: int, crisp: bool = False, dpr: float = 1.0) -> QPixmap:
@@ -173,7 +175,7 @@ class Dots(QWidget):
         super().__init__(parent)
         self.owner = owner
         self.phase = 0
-        self.setFixedHeight(14)
+        self.setFixedSize(40, 14)                           # in the status line: nothing moves when they come
         self.timer = QTimer(self, interval=DOTS_MS)
         self.timer.timeout.connect(self._step)
 
@@ -250,6 +252,13 @@ class QuestionRow(QPushButton):
         hint.setHeight(self.heightForWidth(hint.width()))
         return hint
 
+    def minimumSizeHint(self):
+        # a push button's least size is its hint, and the hint's 280 px kept every bubble under 318 px cut on the
+        # right (R363): it wraps instead
+        hint = super().minimumSizeHint()
+        hint.setWidth(0)
+        return hint
+
     def heightForWidth(self, width: int) -> int:
         margins = self.layout().contentsMargins()
         room = (width - margins.left() - margins.right() - self.number.width()
@@ -304,19 +313,10 @@ class CornerGrip(QWidget):
             return
         start, initial = self.drag
         delta = event.globalPosition() - start
-        rect = QRect(initial)
-        minimum = self.bubble.minimumSize().expandedTo(self.bubble.minimumSizeHint())
-        if self.corner.endswith("left"):
-            rect.setLeft(min(initial.left()+round(delta.x()), initial.right()-minimum.width()+1))
-        else:
-            rect.setRight(max(initial.right()+round(delta.x()), initial.left()+minimum.width()-1))
-        if self.corner.startswith("top"):
-            rect.setTop(min(initial.top()+round(delta.y()), initial.bottom()-minimum.height()+1))
-        else:
-            rect.setBottom(max(initial.bottom()+round(delta.y()), initial.top()+minimum.height()-1))
         self.bubble.placing = True
-        self.bubble.setGeometry(rect)
+        self.bubble.setGeometry(self.bubble.owner.resized_rect(initial, self.corner, round(delta.x()), round(delta.y())))
         self.bubble.placing = False
+        self.bubble.update()                                # the tail follows the side while it is dragged
         event.accept()
 
     def mouseReleaseEvent(self, event):
@@ -344,7 +344,7 @@ class Bubble(QFrame):
         self.box.setContentsMargins(1, 1, 1, 1)
         self.box.setSpacing(0)
         self.grip = CornerGrip(self)
-        self.grip.setFixedSize(14, 14)
+        self.grip.setFixedSize(Space.L, Space.L)            # all in the panel's margin but its corner
         self.grip.raise_()
         self.hide()
 
@@ -366,10 +366,10 @@ class Bubble(QFrame):
             return
         corner = self.shape.grip
         self.grip.set_corner(corner)
-        inset = {"left": 2 + (assistant.TAIL if self.shape.tail == "left" else 0),
-                 "right": 2 + (assistant.TAIL if self.shape.tail == "right" else 0),
-                 "top": 2 + (assistant.TAIL if self.shape.tail == "top" else 0),
-                 "bottom": 2 + (assistant.TAIL if self.shape.tail == "bottom" else 0)}
+        inset = {"left": 1 + (assistant.TAIL if self.shape.tail == "left" else 0),
+                 "right": 1 + (assistant.TAIL if self.shape.tail == "right" else 0),
+                 "top": 1 + (assistant.TAIL if self.shape.tail == "top" else 0),
+                 "bottom": 1 + (assistant.TAIL if self.shape.tail == "bottom" else 0)}
         x = inset["left"] if corner.endswith("left") else self.width() - self.grip.width() - inset["right"]
         y = inset["top"] if corner.startswith("top") else self.height() - self.grip.height() - inset["bottom"]
         self.grip.move(x, y)
@@ -397,10 +397,21 @@ class Bubble(QFrame):
         s = self.shape
         p.setPen(QPen(QColor(c["line"]), 1.0))
         p.setBrush(QColor(c["panel"]))
-        p.drawPath(outline(self.width(), self.height(), s.tail if s is not None else "", s.at if s is not None else 0))
+        p.drawPath(outline(self.width(), self.height(), s.tail if s is not None else "", self.tail_at()))
+
+    def tail_at(self) -> float:
+        """Where the tail points along its side: at the middle of the character, from where the two of them are now.
+        The place kept in the shape was old while the grip moved the bubble's top or left: the tail went off with the
+        side, then jumped back at the release (R361)."""
+        s = self.shape
+        if s is None:
+            return 0
+        if s.tail in ("left", "right"):
+            return self.owner.y() + assistant.SIZE / 2 - self.y()
+        return self.owner.x() + assistant.SIZE / 2 - self.x()
 
 
-TAIL_HALF = 11.0                # half the tail's base, px
+TAIL_HALF = assistant.TAIL_HALF
 
 
 def outline(width: int, height: int, tail: str, at: float) -> QPainterPath:
@@ -414,10 +425,8 @@ def outline(width: int, height: int, tail: str, at: float) -> QPainterPath:
     body.adjust(t if tail == "left" else 0, t if tail == "top" else 0,
                 -t if tail == "right" else 0, -t if tail == "bottom" else 0)
     left, top, right, bottom = body.left(), body.top(), body.right(), body.bottom()
-    if tail in ("left", "right"):
-        at = min(max(at, r + half), height - r - half)
-    elif tail:
-        at = min(max(at, r + half), width - r - half)
+    if tail:
+        at = assistant.tail_place(at, height if tail in ("left", "right") else width)
     path = QPainterPath()
     path.moveTo(left + r, top)
     if tail == "top":
@@ -574,6 +583,7 @@ class Assistant(QFrame):
         self.dock = None                                    # the window's panel for it (set_dock), when docked
         self.docked = False
         self.moved = False
+        self.hand_placed = False                            # the bubble is where the grip let it go (place_bubble)
         self.bubble_dims = assistant.BUBBLE_DEFAULT
         self.clock = time.monotonic
         self.mood = assistant.Mood(seed=int(self.clock() * 1000) % 100000, now=self.clock())
@@ -629,6 +639,7 @@ class Assistant(QFrame):
         row = QHBoxLayout()
         heading.addLayout(row)
         row.setContentsMargins(0, 0, 0, 0)
+        self.head_row = row
         self.small = Face(28, self)                         # the character at the head, when docked
         self.small.hide()                                   # floating, he is right beside the bubble
         row.addWidget(self.small)
@@ -649,6 +660,17 @@ class Assistant(QFrame):
         self.voice_button.toggled.connect(self._voice_icon)
         self.voice_button.hide()
         row.addWidget(self.voice_button)
+        self.more_button = QToolButton()                    # a low bubble: what the row of «Attach…» holds
+        self.more_button.setAutoRaise(True)
+        self.more_button.setIcon(icons.icon("ellipsis"))
+        self.more_button.setToolTip(_("Attach and show"))
+        self.more_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.more_button.setObjectName("assistant-more")    # no arrow (ui/theme.py)
+        self.more_menu = QMenu(self.more_button)
+        self.more_menu.aboutToShow.connect(self._fill_more)
+        self.more_button.setMenu(self.more_menu)
+        self.more_button.hide()
+        row.addWidget(self.more_button)
         self.dock_button = QToolButton()
         self.dock_button.setCheckable(True)
         self.dock_button.setAutoRaise(True)
@@ -668,18 +690,40 @@ class Assistant(QFrame):
         inside = QVBoxLayout(self.chat_content)
         inside.setContentsMargins(0, 0, 0, 0)
         inside.setSpacing(6)
-        self.context = QLabel()                            # what the conversation is about: the tab
-        inside.addWidget(self.context)
-        self.cost = QLabel()                               # the tokens and the cost of the conversation
-        self.cost.setWordWrap(True)
+        # the status line, its height kept even when it is empty (R362): what the conversation is about, the dots
+        # while he answers, what the conversation has cost; on one line, each cut when the room is short
+        self.status = QWidget(self.chat_content)
+        self.status.setFixedHeight(Size.BUBBLE_STATUS)
+        status = QHBoxLayout(self.status)
+        status.setContentsMargins(0, 0, 0, 0)
+        status.setSpacing(Space.S)
+        self.context = ElidedLabel()                       # the tab, whole: the cost is what gets cut
+        self.context.setFont(text_font(Text.CAPTION))
+        self.context.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
+        status.addWidget(self.context)
+        self.dots = Dots(self, self.status)
+        keep = self.dots.sizePolicy()
+        keep.setRetainSizeWhenHidden(True)                  # their place stays: the words beside them do not move
+        self.dots.setSizePolicy(keep)
+        self.dots.hide()
+        status.addWidget(self.dots)
+        self.cost = ElidedLabel()                          # the tokens and the cost of the conversation
         self.cost.setFont(text_font(Text.CAPTION))
+        self.cost.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self.cost.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        keep = self.cost.sizePolicy()
+        keep.setRetainSizeWhenHidden(True)
+        self.cost.setSizePolicy(keep)
         self.cost.hide()
-        inside.addWidget(self.cost)
+        status.addWidget(self.cost, 1)
+        inside.addWidget(self.status)
         self.conversation = QTextBrowser()
         self.conversation.setObjectName("assistant-conversation")
         self.conversation.setFrameShape(QFrame.Shape.NoFrame)
         self.conversation.setOpenLinks(False)
         self.conversation.setMinimumHeight(24)              # it gives way before the field in a low area
+        # the bar's room always there: the words do not wrap again when it comes (R100, R362)
+        self.conversation.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         # his bold the catalogue's semibold (R121): «<b>» is 700, a third weight
         self.conversation.document().setDefaultStyleSheet(f"b, strong {{ font-weight: {Type.SEMIBOLD}; }}")
         # the last words stay in sight when the conversation gets lower (the questions ready come back after the
@@ -689,9 +733,14 @@ class Assistant(QFrame):
         bar.valueChanged.connect(self._scrolled)
         bar.rangeChanged.connect(self._range_changed)
         inside.addWidget(self.conversation, 1)
-        self.dots = Dots(self, self.panel)
-        self.dots.hide()
-        inside.addWidget(self.dots)
+        # the place of the questions ready and of the cards: floating, its height does not follow what is in it, and
+        # nothing around it moves when they come and go (R362)
+        self.slot = QWidget(self.chat_content)
+        slot_box = QVBoxLayout(self.slot)
+        slot_box.setContentsMargins(0, 0, 0, 0)
+        slot_box.setSpacing(Space.S)
+        self.slot_floor = (0, 0)                            # (the width, the most it has needed at that width)
+        self.card_room = 0                                  # the bubble this tall while a card asks for it
         self.cards = QWidget()                              # the proposals and the consent, above the field
         self.cards.setAutoFillBackground(False)
         # as wide as the panel, never wider: its words wrap (a scroll area would give it its widest row)
@@ -702,12 +751,11 @@ class Assistant(QFrame):
         self.cards_area = CardsArea(self, self.panel)       # whole in the bubble, scrolling in a low dock
         self.cards_area.setWidget(self.cards)
         self.cards_area.hide()
-        inside.addWidget(self.cards_area)
+        slot_box.addWidget(self.cards_area)
         self.questions_box = SuggestionsBox(self, self.panel)
         qbox = QVBoxLayout(self.questions_box)
         qbox.setContentsMargins(0, 0, 0, 0)
         qbox.setSpacing(Space.XXS)
-        qbox.setSizeConstraint(QLayout.SizeConstraint.SetMinimumSize)
         self.questions_title = QToolButton()
         self.questions_title.setText(_("Suggestions"))
         self.questions_title.setToolTip(_("Show or hide suggestions. Keys: 1, 2, 3."))
@@ -730,7 +778,10 @@ class Assistant(QFrame):
             q.chosen.connect(self.ask)
             rows.addWidget(q)
             self.questions.append(q)
-        inside.addWidget(self.questions_box)
+        qbox.addStretch(1)                                  # the rows at the top of their place, however many
+        slot_box.addWidget(self.questions_box, 1)           # all of the place: it does not change with their number
+        slot_box.addStretch(0)                              # under a card alone
+        inside.addWidget(self.slot)
         self.questions_timer = QTimer(self.questions_box, singleShot=True)
         self.questions_timer.timeout.connect(self._fit_questions)
         self.field = QLineEdit()
@@ -843,6 +894,7 @@ class Assistant(QFrame):
         self._update_timer()
 
     def set_bubble_size(self, width: int, height: int) -> None:
+        """Its size, from the settings or the tour: one saved smaller than the minimum opens at the minimum."""
         self.bubble_dims = (max(assistant.BUBBLE_MIN[0], int(width)), max(assistant.BUBBLE_MIN[1], int(height)))
         if self.opened and not self.docked:
             self.place_bubble()
@@ -1032,6 +1084,8 @@ class Assistant(QFrame):
         self.questions_title.setArrowType(Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow)
         from . import motion
         self.questions_box.setMinimumHeight(0)
+        if not expanded:
+            self.slot.setMinimumHeight(0)                   # the conversation takes the room as they close
         controller = motion.collapse(self.questions_content, expanded, ms=0 if self.reduced_motion else Motion.FAST)
         if not controller.property("assistantConnected"):
             controller.animation.finished.connect(self._fit_questions)
@@ -1043,21 +1097,119 @@ class Assistant(QFrame):
         controller = self.questions_content.findChild(Collapse)
         if controller is not None and controller.running:
             return
-        self.questions_box.setMinimumHeight(0 if self.docked else self.questions_box.sizeHint().height())
+        self._arrange()
+        self._keep_slot()
+        self._show_questions()
         self.panel.layout().activate()
         self._fit_bubble_content()
 
+    def _inner_width(self) -> int:
+        margins = self.panel.layout().contentsMargins()
+        return self.panel.width() - margins.left() - margins.right()
+
+    def _questions_needed(self) -> int:
+        """The height of the questions ready of now at the panel's width; with their rows closed, of their title."""
+        title = self.questions_title.sizeHint().height()
+        if not self.questions_title.isChecked():
+            return title
+        rows = [q.heightForWidth(self._inner_width()) for q in self.questions if q.text()]
+        return title + sum(rows) + self.questions_box.layout().spacing() * len(rows)
+
+    def _questions_wanted_room(self) -> int:
+        """The least height for them: QUESTION_ROWS of QUESTION_LINES, what the ones of now need when more."""
+        title = self.questions_title.sizeHint().height()
+        if not self.questions_title.isChecked():
+            return title
+        margins = self.questions[0].layout().contentsMargins()
+        row = max(Size.CONTROL, QUESTION_LINES * self.questions[0].label.fontMetrics().lineSpacing()
+                  + margins.top() + margins.bottom())
+        return max(title + QUESTION_ROWS * (row + self.questions_box.layout().spacing()), self._questions_needed())
+
+    def _questions_room(self, height: int) -> int:
+        """What a panel `height` tall has for them, with the conversation keeping BUBBLE_READING."""
+        outer, inner = self.panel.layout(), self.chat_content.layout()
+        margins = outer.contentsMargins()
+        return height - (margins.top() + margins.bottom() + self.head.sizeHint().height() + outer.spacing()
+                         + Size.BUBBLE_STATUS + self.attach_row.sizeHint().height() + self.field.sizeHint().height()
+                         + 4 * inner.spacing() + Size.BUBBLE_READING)
+
+    def _questions_kept(self) -> int:
+        """The height kept for them: the least, or the most they have needed at this width while it fitted: once
+        taller, the place stays so, and the conversation does not change at every set of questions."""
+        least = self._questions_wanted_room()
+        if not self.questions_title.isChecked():
+            return least
+        width, room = self._inner_width(), self._questions_room(self.panel.height())
+        floor = self.slot_floor[1] if self.slot_floor[0] == width else 0
+        floor = max(floor, least) if least <= room else floor
+        self.slot_floor = (width, floor)
+        return max(least, min(floor, room))
+
+    def _keep_slot(self) -> None:
+        if self.docked:
+            self.slot.setMinimumHeight(0)
+            self.questions_box.setMinimumHeight(0)
+            return
+        self.questions_box.setMinimumHeight(self._questions_needed())
+        self.slot.setMinimumHeight(self._questions_kept() if self._questions_fit(self.panel.height()) else 0)
+
+    def _questions_fit(self, height: int, besides: int = 0) -> bool:
+        """Is a panel `height` tall enough for the questions ready, with `besides` pixels of cards? Docked, by the
+        threshold; floating, when the conversation keeps BUBBLE_READING beside their place and everything else."""
+        if self.docked:
+            return height >= QUESTIONS_HEIGHT
+        if height < Size.BUBBLE_LOW:
+            return False
+        room = self._questions_room(height)
+        # with a card, what they need now: their kept place is for when they are alone
+        return self._questions_needed() + besides <= room if besides else self._questions_wanted_room() <= room
+
+    def _show_questions(self) -> None:
+        """The questions ready in their place, waiting while he answers: they stay and cannot be chosen, and nothing
+        moves (R362). Gone under a confirmation, in the tour and where there is no room for them."""
+        pending = any(widget.property("confirmation") for widget in self.cards.children())
+        # a card and the questions, when there is room for both; if not, the card alone in their place
+        cards = self.cards_area.whole + self.slot.layout().spacing() if self.cards_box.count() else 0
+        wanted = (not self.property("guidedTourActive") and not pending
+                  and self._questions_fit(self.panel.height(), cards))
+        self.questions_box.setVisible(wanted)
+        self.questions_content.setEnabled(self.questions_wanted())
+
+    def _arrange(self) -> None:
+        """What a small bubble drops (R363): lower than BUBBLE_LOW its name, and «Attach…» goes in a menu at the head;
+        narrower than BUBBLE_NARROW, where he thinks shows its icon alone. Docked and in the tour, all of it."""
+        whole = self.docked or bool(self.property("guidedTourActive"))
+        low = not whole and self.panel.height() < Size.BUBBLE_LOW
+        narrow = not whole and self.panel.width() < Size.BUBBLE_NARROW
+        self.title.setVisible(not low)
+        self.attach_row.setVisible(not low)
+        self.more_button.setVisible(low)
+        self.where_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly if narrow
+                                             else Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        corner = self.bubble.grip.corner                    # the head's row keeps off the grip when level with it
+        off = Space.S if low and corner.startswith("top") else 0
+        self.head_row.setContentsMargins(off if corner.endswith("left") else 0, 0,
+                                         off if corner.endswith("right") else 0, 0)
+
+    def _fill_more(self) -> None:
+        self.more_menu.clear()
+        self.more_menu.addAction(self.attach_button.text(), self.attachmentRequested.emit)
+        if not self.view_button.isHidden():
+            self.more_menu.addAction(self.view_button.text(), self.viewRequested.emit)
+
     def _fit_bubble_content(self) -> None:
+        """Only for a card: a bubble too low to show it whole grows while it is there, then it goes back to its size.
+        Nothing else changes its height: it is the designer's (R362)."""
         if self.property("guidedTourActive") or self.docked or not self.opened or self.bubble.shape is None or self.bubble.placing \
                 or self.bubble_animation is not None:
             return
-        last = self.questions_box.mapTo(self.panel, QPoint(0, self.questions_box.height())).y()
-        field_top = self.field.mapTo(self.panel, QPoint(0, 0)).y()
-        overflow = max(0, last - field_top)
+        if self.cards_box.count() == 0:
+            if self.card_room:
+                self.card_room = 0
+                self.place_bubble()
+            return
         margins = self.bubble.box.contentsMargins()
-        content = max(self.panel.sizeHint().height(), self.panel.minimumSizeHint().height())
-        needed = max(self.bubble.height() + overflow + (Space.S if overflow else 0),
-                     content + margins.top() + margins.bottom())
+        needed = self.panel.minimumSizeHint().height() + margins.top() + margins.bottom()
         if needed <= self.bubble.height():
             return
         shape = self.bubble.shape
@@ -1074,7 +1226,7 @@ class Assistant(QFrame):
         else:
             y = max(highest, bottom - height)
         at = shape.at + shape.y - y if shape.tail in ("left", "right") else shape.at
-        self.bubble_dims = (shape.width, height)
+        self.card_room = height
         self.bubble.set_shape(assistant.Bubble(shape.x, y, shape.width, height, shape.tail, at))
 
     def reposition(self, animate: bool = False) -> None:
@@ -1110,6 +1262,7 @@ class Assistant(QFrame):
         slide.setEndValue(final)
         self.bubble.placing = True                          # moved with him, not resized by hand
         self.bubble_slide = slide
+        slide.valueChanged.connect(self.bubble.update)      # the tail keeps pointing at him, on his way
         slide.start()
 
     def _stop_slide(self) -> None:
@@ -1150,32 +1303,75 @@ class Assistant(QFrame):
         top, w, h = self.free()
         pos = at if at is not None else self.pos()
         character = (pos.x(), pos.y() - top, assistant.SIZE, assistant.SIZE)
-        size = assistant.bubble_size(self.bubble_dims, (w, h))
+        size = assistant.bubble_size(self._dims_now(), (w, h))
         return assistant.bubble_place(character, size, (w, h), self.avoided())
+
+    def _dims_now(self) -> tuple[int, int]:
+        """The size it has now: the designer's, taller while a card asks for it."""
+        return self.bubble_dims[0], max(self.bubble_dims[1], self.card_room)
 
     def place_bubble(self) -> None:
         """The bubble at its place beside the character, now (the area changed, he was dragged, it was resized)."""
-        shape = self.bubble_shape()
-        if shape is None:
+        if self.bubble.grip.drag is not None:               # under the designer's hand: its place is his till he lets go
+            return
+        self._set_limits()
+        if not self._hand_place_holds():
+            self.hand_placed = False
             top, w, h = self.free()
-            size = assistant.bubble_size(self.bubble_dims, (w, h))
-            shape = assistant.bubble_place((self.x(), self.y() - top, assistant.SIZE, assistant.SIZE), size, (w, h))
-        top, w, h = self.free()
-        if shape is None:                                   # not even so: an area too small for both of them
-            size = assistant.bubble_size(self.bubble_dims, (w, h))
-            shape = assistant.bubble_fallback((self.x(), self.y() - top, assistant.SIZE, assistant.SIZE), size, (w, h))
-        self.bubble.setMaximumSize(max(assistant.BUBBLE_MIN[0], w - assistant.SIZE - assistant.GAP - 2 * assistant.MARGIN),
-                                   max(assistant.BUBBLE_MIN[1], h - 2 * assistant.MARGIN))    # the grip stops here
-        self.bubble.set_shape(assistant.Bubble(shape.x, shape.y + top, shape.width, shape.height, shape.tail,
-                                               shape.at))
+            size = assistant.bubble_size(self._dims_now(), (w, h))
+            character = (self.x(), self.y() - top, assistant.SIZE, assistant.SIZE)
+            shape = (assistant.bubble_place(character, size, (w, h), self.avoided())
+                     or assistant.bubble_place(character, size, (w, h))
+                     or assistant.bubble_fallback(character, size, (w, h)))     # an area too small for both of them
+            self.bubble.set_shape(assistant.Bubble(shape.x, shape.y + top, shape.width, shape.height, shape.tail,
+                                                   shape.at))
         self.bubble.raise_()
         self.raise_()
 
+    def _set_limits(self) -> None:
+        _top, w, h = self.free()
+        self.bubble.setMaximumSize(max(assistant.BUBBLE_MIN[0], w - assistant.SIZE - assistant.GAP - 2 * assistant.MARGIN),
+                                   max(assistant.BUBBLE_MIN[1], h - 2 * assistant.MARGIN))    # the grip stops here
+
+    def _hand_place_holds(self) -> bool:
+        """The bubble was left where the grip let it go, and that place is still good: its tail at his side, inside
+        the free part, its size the one asked for, off what it keeps off. The rule of bubble_place would move it a
+        few pixels, or to another side, at the next change of anything (R361)."""
+        s = self.bubble.shape
+        if not self.hand_placed or s is None:
+            return False
+        top, w, h = self.free()
+        rect = (s.x, s.y - top, s.width, s.height)
+        him = (self.x(), self.y() - top, assistant.SIZE, assistant.SIZE)
+        beside = {"left": him[0] + him[2] + assistant.GAP == rect[0],
+                  "right": rect[0] + rect[2] + assistant.GAP == him[0],
+                  "top": him[1] + him[3] + assistant.GAP == rect[1],
+                  "bottom": rect[1] + rect[3] + assistant.GAP == him[1]}[s.tail]
+        return (beside and (s.width, s.height) == assistant.bubble_size(self._dims_now(), (w, h))
+                and rect[0] >= 0 and rect[1] >= 0 and rect[0] + rect[2] <= w and rect[1] + rect[3] <= h
+                and not any(assistant.overlaps(rect, r) for r in self.avoided()))
+
+    def resized_rect(self, initial: QRect, corner: str, dx: int, dy: int) -> QRect:
+        """Where the grip's drag from `initial` by (dx, dy) puts the bubble (assistant.resized)."""
+        top, w, h = self.free()
+        minimum, maximum = self.bubble.minimumSize(), self.bubble.maximumSize()
+        tail = self.bubble.shape.tail if self.bubble.shape is not None else ""
+        x, y, width, height = assistant.resized(
+            (initial.x(), initial.y(), initial.width(), initial.height()), corner, (dx, dy), (0, top, w, h),
+            (minimum.width(), minimum.height()), (maximum.width(), maximum.height()),
+            (self.x(), self.y(), assistant.SIZE, assistant.SIZE), tail)
+        return QRect(x, y, width, height)
+
     def _bubble_resized(self) -> None:
-        """Dragged by its grip: the size is the new one, remembered; the tail follows."""
-        self.bubble_dims = (self.bubble.width(), self.bubble.height())
+        """Dragged by its grip: the size is the new one, remembered, and it stays where it was let go, the tail at him."""
+        g = self.bubble.geometry()
+        self.bubble_dims = (g.width(), g.height())
+        self.card_room = 0
         self.bubbleResized.emit(*self.bubble_dims)
-        self.place_bubble()
+        self.hand_placed = True
+        self.bubble.set_shape(assistant.Bubble(g.x(), g.y(), g.width(), g.height(), self.bubble.shape.tail,
+                                               int(self.bubble.tail_at())))
+        self.questions_timer.start(0)
 
     def _open_bubble(self, animate: bool) -> None:
         self._stop_bubble_animation()
@@ -1313,18 +1509,17 @@ class Assistant(QFrame):
             return False
         if watched is self.panel and kind == QEvent.Type.Resize:
             # a low bubble or panel: the questions ready give way to the conversation and the field
-            wanted = event.size().height() >= QUESTIONS_HEIGHT and self.questions_wanted()
-            back = wanted and not self.questions_box.isVisibleTo(self.panel)
-            self.questions_box.setVisible(wanted)
-            if back:                                        # they need their room too: the bubble fits again
-                self.questions_timer.start(0)
+            self._arrange()
+            self._keep_slot()
+            self._show_questions()
             return False
         if watched in (self.field, self.conversation) and kind == QEvent.Type.KeyPress:
             if event.key() == Qt.Key.Key_Escape and self.opened:
                 self.close_panel()
                 return True
             text = event.text()
-            if text in ("1", "2", "3") and self.questions_box.isVisible() and not self.field.text().strip() \
+            if text in ("1", "2", "3") and self.questions_box.isVisible() and self.questions_content.isEnabled() \
+                    and not self.field.text().strip() \
                     and self.questions[int(text) - 1].text():
                 self.ask(self.questions[int(text) - 1].text())
                 return True
@@ -1415,9 +1610,7 @@ class Assistant(QFrame):
             return
         typing = self.field.hasFocus()
         self.docked = on
-        constraint = QLayout.SizeConstraint.SetDefaultConstraint if on else QLayout.SizeConstraint.SetMinimumSize
-        self.questions_box.layout().setSizeConstraint(constraint)
-        self.questions_box.setMinimumHeight(0 if on else self.questions_box.sizeHint().height())
+        self._keep_slot()
         self.questions_box.updateGeometry()
         self.cards_area.follow_dock()                       # whole in the bubble, scrolling in the dock
         self.dock_button.setChecked(on)
@@ -1514,7 +1707,7 @@ class Assistant(QFrame):
         self.at_bottom = True
         self._show_messages()
         self.set_state(assistant.THINKING)
-        self.questions_box.hide()                           # gone for this turn
+        self._show_questions()                              # they wait in their place for this turn
         self.dots.show()
         self.stop_action.setVisible(True)
         if self.connected:
@@ -1565,7 +1758,7 @@ class Assistant(QFrame):
         self.dots.hide()
         self.stop_action.setVisible(False)
         self.fill_questions()                               # they follow what was just said (R108)
-        self.questions_box.setVisible(self.panel.height() >= QUESTIONS_HEIGHT and self.questions_wanted())
+        self._show_questions()
 
     def greet(self, text: str) -> None:
         """What he says of his own, not as an answer (his presentation, R106): in the conversation as his words,
@@ -1634,8 +1827,8 @@ class Assistant(QFrame):
     def add_card(self, card: QWidget) -> None:
         self.cards_box.addWidget(card)
         self._fit_cards()
-        self.questions_box.setVisible(self.panel.height() >= QUESTIONS_HEIGHT and self.questions_wanted())
         self.cards_area.show()
+        self._show_questions()
         self.questions_timer.start(0)                       # an open bubble makes room for it, nothing overlaps
 
     def remove_card(self, card: QWidget) -> None:
@@ -1645,7 +1838,8 @@ class Assistant(QFrame):
         card.deleteLater()
         self.cards_area.setVisible(self.cards_box.count() > 0)
         self._fit_cards()
-        self.questions_box.setVisible(self.panel.height() >= QUESTIONS_HEIGHT and self.questions_wanted())
+        self._show_questions()
+        self.questions_timer.start(0)                       # a bubble grown for it goes back to its size
 
     def set_where(self, where: str, label: str, tip: str) -> None:
         """Where the next question goes ("local" or "cloud"): the chip at the head, the mark on the character."""
@@ -1658,7 +1852,7 @@ class Assistant(QFrame):
 
     def set_cost(self, text: str) -> None:
         self.cost.setText(text)
-        self.cost.setVisible(bool(text))
+        self.cost.setVisible(bool(text))                    # its line stays
 
     def set_voice(self, available: bool, why: str = "") -> None:
         """The speaker at the head: enabled when a voice of the program's language is there, else why not."""

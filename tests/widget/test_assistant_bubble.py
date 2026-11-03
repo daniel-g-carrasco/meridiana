@@ -13,13 +13,13 @@ setUpModule = _setup.keep_global_state
 def base_segments(path, tail: str, at: float, width: int, height: int) -> list:
     """The segments of the path's outline lying along the tail's base, inside the tail's span."""
     from meridiana import assistant as core
-    from meridiana.ui.assistant import RADIUS, TAIL_HALF
+    from meridiana.ui.assistant import TAIL_HALF
     t, half = core.TAIL, TAIL_HALF
     if tail in ("left", "right"):
-        at = min(max(at, RADIUS + half), height - RADIUS - half)
+        at = core.tail_place(at, height)
         base = 0.5 + t if tail == "left" else width - 0.5 - t
     else:
-        at = min(max(at, RADIUS + half), width - RADIUS - half)
+        at = core.tail_place(at, width)
         base = 0.5 + t if tail == "top" else height - 0.5 - t
     found = []
     for poly in path.toSubpathPolygons():

@@ -86,10 +86,10 @@ def _v9_to_v10(data: dict) -> dict:
 
 def _v10_to_v11(data: dict) -> dict:
     """Version 11 has Meridio's movements and drawing (study 17, G; R34) and the size of his speech bubble
-    (R15): animated, smooth, 320 x 400, as he was."""
+    (R15): animated, smooth, 320 x 500, what he opened at (R362)."""
     return {**data, "assistant_animated": data.get("assistant_animated", True),
             "assistant_style": data.get("assistant_style", "smooth"),
-            "assistant_width": data.get("assistant_width", 320), "assistant_height": data.get("assistant_height", 400)}
+            "assistant_width": data.get("assistant_width", 320), "assistant_height": data.get("assistant_height", 500)}
 
 
 def _v11_to_v12(data: dict) -> dict:
@@ -236,7 +236,7 @@ class Config:
     assistant_animated: bool = True      # Meridio's small movements; off, he only changes state
     assistant_style: str = "smooth"      # his drawing: "smooth" or "pixel" (R34)
     assistant_width: int = 320           # the size of his speech bubble, as last resized
-    assistant_height: int = 400
+    assistant_height: int = 500
     # where Meridio thinks (task 14): "local" (an OpenAI-compatible server on this PC, llama-server by default) or
     # "claude" (Anthropic's API, with the key in the keyring and the designer's consent); the local server's address
     # and model ("" for the one it serves), the Claude model; the consents given, provider -> [ISO date]

@@ -73,7 +73,7 @@ class Alone(unittest.TestCase):
         from PySide6.QtWidgets import QWidget
 
         from meridiana.ui.assistant import Assistant
-        for height in (400, 300, 240):
+        for height in (460, 300, 240):
             with self.subTest(height=height):
                 area = QWidget()
                 area.resize(700, height)
@@ -90,7 +90,7 @@ class Alone(unittest.TestCase):
                 bottom = a.field.mapTo(b, QPoint(0, a.field.height())).y()
                 self.assertTrue(a.field.isVisible())
                 self.assertLessEqual(bottom, b.height())                           # the field is not cut
-                self.assertEqual(a.questions_box.isVisible(), height >= 300)       # the questions give way
+                self.assertEqual(a.questions_box.isVisible(), height > 300)        # the questions give way
                 _setup.dispose(area)
 
     def test_no_room_beside_him_he_slides_to_a_free_corner_and_opens_there(self):
@@ -337,7 +337,7 @@ class Alone(unittest.TestCase):
         a.questions[2].chosen.emit(a.questions[2].text())   # a click on the row
         self.assertEqual(a.messages[-1], ("you", core.questions("production")[2]))
 
-    def test_while_he_answers_the_questions_go_the_dots_show_and_stop_ends_the_turn(self):
+    def test_while_he_answers_the_questions_wait_the_dots_show_and_stop_ends_the_turn(self):
         a = self.a
         a.open_panel()
         self.app.processEvents()
@@ -345,7 +345,8 @@ class Alone(unittest.TestCase):
         a.ask("Quante stringhe?")
         self.assertEqual(a.mood.state, assistant.THINKING)
         self.assertTrue(a.frame.thinking)                   # the face that thinks, even still
-        self.assertFalse(a.questions_box.isVisible())
+        self.assertTrue(a.questions_box.isVisible())        # in their place, nothing moves (R362)
+        self.assertFalse(a.questions_content.isEnabled())
         self.assertTrue(a.dots.isVisible() and a.stop_action.isVisible())
         self.assertTrue(a.pending.isActive())
         a.stop()
@@ -503,7 +504,7 @@ class Alone(unittest.TestCase):
         a.open_panel()
         self.app.processEvents()
         self.assertGreaterEqual(a.questions_box.height(), a.questions_box.sizeHint().height())
-        self.assertGreaterEqual(a.bubble.height(), a.panel.sizeHint().height())
+        self.assertGreaterEqual(a.bubble.height(), a.panel.minimumSizeHint().height())
         for question in a.questions:
             self.assertIsInstance(question, QPushButton)
             self.assertGreaterEqual(question.label.height(), question.label.heightForWidth(question.label.width()))
