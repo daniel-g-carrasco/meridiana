@@ -13,6 +13,24 @@ ROOFS = ("#e8e6e0", "#bdbab2", "#6b6660", "#2c2a28", "#9a5a3e", "#5d7a4a")     #
 OUTLINES = ("bld_stroke", "pitch", "sub_stroke", "exclusion", "sel", "hover", "guide", "draw")
 
 
+class SelectionIn3D(unittest.TestCase):
+    """R360: the selection's ribbons thinner; measured on the screen 6.5 px across before, 2.5 after (the plan's 2.6). Its
+    dark edge makes it read where its tint alone would not."""
+
+    def test_thinner_than_they_were_and_with_a_dark_edge_outside_them(self):
+        self.assertLess(vc.RIBBONS["select"], 4.0)
+        self.assertLess(vc.RIBBONS["hover"], vc.RIBBONS["select"])
+        self.assertGreater(vc.RIBBON_HALO, vc.RIBBONS["select"])
+
+    def test_on_any_roof_the_tint_or_its_edge_stands_out(self):
+        for kind in ("building", "pitch", "subfield", "exclusion", "prop", "module", "row", ""):
+            for roof in ROOFS:
+                with self.subTest(kind=kind, roof=roof):
+                    tint, edge = vc.kind_colour(kind)[:7], vc.D3["gizmo_halo"]
+                    self.assertGreaterEqual(max(tc.contrast(tint, roof), tc.contrast(edge, roof)), 3.0)
+                    self.assertGreaterEqual(tc.contrast(tint, edge), 4.5)
+
+
 class Plan(unittest.TestCase):
     def test_over_the_veiled_photo_each_outline_or_its_halo_stands_out_from_any_roof(self):
         for roof in ROOFS:
@@ -129,7 +147,7 @@ class Strokes(unittest.TestCase):
         self.assertGreater(w["halo"], 2.0)                           # the halo shows around the thicker stroke
         self.assertLess(w["module_line"], 1.0)                       # the modules' lines stay thin
         self.assertGreater(vc.RIBBONS["select"], vc.RIBBONS["hover"])
-        self.assertGreaterEqual(vc.RIBBONS["select"], 4.0)
+        self.assertGreaterEqual(vc.RIBBON_HALO, w["select"] - 0.1)    # R360: with its edge, about the plan's line
 
 
 if __name__ == "__main__":
