@@ -41,12 +41,11 @@ jobs:
           flatpak install --user --noninteractive flathub org.kde.Platform//6.11 org.kde.Sdk//6.11 io.qt.PySide.BaseApp//6.11
       - name: Build without installing the app
         run: |
-          flatpak-builder --user --disable-rofiles-fuse --ccache=false --repo=repo \
-            --state-dir=flatpak-state build-dir "$MANIFEST"
+          flatpak-builder --user --disable-rofiles-fuse --ccache=false --repo=repo build-dir "$MANIFEST"
       - name: Check the packaged program offscreen
         run: |
           mkdir smoke
-          flatpak-builder --run --state-dir=flatpak-state --env=QT_QPA_PLATFORM=offscreen \
+          flatpak-builder --run --env=QT_QPA_PLATFORM=offscreen \
             --filesystem="$PWD/smoke" build-dir "$MANIFEST" \
             sh -c 'meridiana --self-test "$1/self-test.txt"' sh "$PWD/smoke"
       - name: Create the installable bundle and checksum
