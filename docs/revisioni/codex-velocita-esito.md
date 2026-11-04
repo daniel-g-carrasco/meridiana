@@ -490,3 +490,12 @@ Il commit richiesto non e' registrato: non e' possibile creare l'indice del work
 Il ramo resta `r10-velocita`. Non sono stati fatti push, tag o release.
 Anche il tentativo finale, con staging esplicito di rapporto, dati e tre documenti aggiornati, riceve lo stesso
 rifiuto. Comando ed esito sono conservati in `git-stage-attempt.json`.
+
+## Verifica di Claude, 04/11/2026
+
+Rimisurato con lo stesso `probe.py`. I valori di questo rapporto tornano nello stato veloce: bordo destro in Modellazione 2006-2282 ms contro 2061,
+in Consumi 2216-2745 contro 2739, finestra in Consumi 883-1037 contro 868. Il rapporto non vede però lo stato lento, in cui gli stessi gesti
+impiegano circa il doppio: le passate successive alla prima, a poca distanza. Vedi `docs/prestazioni/README.md`.
+
+Delle proposte sono state provate la 2 e la 3, con guadagno misurato, e sono nel programma. La 1, fatta come immagine ferma del grafico, non ha dato
+guadagno misurabile e non è stata tenuta. Le altre restano da fare. I dati grezzi delle 105 prove sono nel ramo locale `r10-velocita-dati`, non pubblicato.

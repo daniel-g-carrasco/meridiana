@@ -179,3 +179,24 @@ misura per parte: blocco peggiore e somma dei blocchi, in ms. Le cause non sono 
 Senza blocchi, o con uno solo sotto i 40 ms, come il 25/10: rotelle, orbita e spostamento in 3D, spostamento in pianta, digitazione,
 bordo del pannello sinistro. Nella fase Produzione e seguenti, tornandoci, l'apertura costa 88-116 ms e il bordo destro 1,6-2,0 s
 di blocchi su circa 2,5 s.
+
+## Verifica e correzioni del 04/11/2026
+
+Misure di Claude con `2026-11-04/probe.py`, anno calcolato e grafici presenti, base b59f832 e correzioni alternate, otto passate in
+`2026-11-04/verifica/`. Le passate escono su **due velocità** con lo stesso codice: la prima dopo una pausa è veloce, le seguenti impiegano
+circa il doppio, anche in un gesto senza blocchi (bordo sinistro in Consumi 660 > 1150 ms). Il timer di sistema resta a 1 ms in entrambe: non
+è quello. Causa non trovata; [dedotto] un limite di potenza della macchina dopo il primo minuto. Nei confronti si tengono separate.
+
+Durata dell'azione nello stato lento, mediana [minimo; massimo], ms; base 3 passate, correzioni 4:
+
+| Gesto | Base | Correzioni |
+|---|---|---|
+| Modellazione, bordo sinistro | 2363 [2342; 2489] | 1653 [1626; 1664] |
+| Modellazione, bordo destro | 4197 [4128; 4217] | 3058 [3003; 3242] |
+| Modellazione, finestra | 1601 [1584; 1670] | 1340 [1214; 1540] |
+| Consumi, bordo destro | 5047 [5035; 5396] | 4877 [4094; 4955] |
+| Consumi, finestra | 1283 [1187; 1351] | 1189 [1077; 1316] |
+
+Nel bordo sinistro in Modellazione il blocco peggiore sale da 84 a 186 ms, una volta sola nel gesto; la somma dei blocchi scende da 1892 a 526 ms.
+La stessa immagine sui grafici non ha dato guadagno in Consumi (4127 > 4625 ms in un'altra serie) e non è stata tenuta: togliere del tutto il
+disegno dei grafici, nell'esclusione di Codex, vale 1057 ms, ma il rimedio che lo sfrutta non è ancora trovato.

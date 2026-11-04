@@ -1,0 +1,455 @@
+{
+ "when": "2026-11-04 04:02",
+ "commit": "base",
+ "on_screen": true,
+ "no_3d": false,
+ "no_vsync": false,
+ "maximized": false,
+ "platform": "windows",
+ "sequence": "edges",
+ "screen": "DELL P2415Q 1920x1080 @ 2",
+ "machine": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+ "qt": "6.12.0",
+ "opened": {
+  "window_built_ms": 1092,
+  "first_paint_ms": 1414,
+  "year_ms": 2500
+ },
+ "stall_ms": 30,
+ "environment": {},
+ "probe": {
+  "mode": "plain",
+  "profile": false,
+  "states": [
+   {
+    "gesture": "model: left edge dragged #1",
+    "energy_page": true,
+    "consumption_page": true,
+    "economics_page": true,
+    "widgets": 2531,
+    "window_size": [
+     1600,
+     960
+    ],
+    "dock_sizes": [
+     [
+      320,
+      571
+     ],
+     [
+      380,
+      667
+     ]
+    ],
+    "phase": "model",
+    "checks": 26,
+    "energy_ready": true,
+    "energy_error": null,
+    "settings_read": false,
+    "plots": 0,
+    "after": {
+     "phase": "model",
+     "energy_ready": true,
+     "plots": 0,
+     "visible_plots": 0
+    }
+   },
+   {
+    "gesture": "model: left edge back #1",
+    "energy_page": true,
+    "consumption_page": true,
+    "economics_page": true,
+    "widgets": 2531,
+    "window_size": [
+     1600,
+     960
+    ],
+    "dock_sizes": [
+     [
+      480,
+      571
+     ],
+     [
+      380,
+      667
+     ]
+    ],
+    "phase": "model",
+    "checks": 26,
+    "energy_ready": true,
+    "energy_error": null,
+    "settings_read": false,
+    "plots": 0,
+    "after": {
+     "phase": "model",
+     "energy_ready": true,
+     "plots": 0,
+     "visible_plots": 0
+    }
+   },
+   {
+    "gesture": "model: right edge dragged #1",
+    "energy_page": true,
+    "consumption_page": true,
+    "economics_page": true,
+    "widgets": 2531,
+    "window_size": [
+     1600,
+     960
+    ],
+    "dock_sizes": [
+     [
+      320,
+      571
+     ],
+     [
+      380,
+      667
+     ]
+    ],
+    "phase": "model",
+    "checks": 26,
+    "energy_ready": true,
+    "energy_error": null,
+    "settings_read": false,
+    "plots": 0,
+    "after": {
+     "phase": "model",
+     "energy_ready": true,
+     "plots": 0,
+     "visible_plots": 0
+    }
+   },
+   {
+    "gesture": "model: right edge back #1",
+    "energy_page": true,
+    "consumption_page": true,
+    "economics_page": true,
+    "widgets": 2531,
+    "window_size": [
+     1600,
+     960
+    ],
+    "dock_sizes": [
+     [
+      320,
+      571
+     ],
+     [
+      540,
+      667
+     ]
+    ],
+    "phase": "model",
+    "checks": 26,
+    "energy_ready": true,
+    "energy_error": null,
+    "settings_read": false,
+    "plots": 0,
+    "after": {
+     "phase": "model",
+     "energy_ready": true,
+     "plots": 0,
+     "visible_plots": 0
+    }
+   },
+   {
+    "gesture": "model: window resized, 15 steps #1",
+    "energy_page": true,
+    "consumption_page": true,
+    "economics_page": true,
+    "widgets": 2531,
+    "window_size": [
+     1600,
+     960
+    ],
+    "dock_sizes": [
+     [
+      320,
+      571
+     ],
+     [
+      380,
+      667
+     ]
+    ],
+    "phase": "model",
+    "checks": 26,
+    "energy_ready": true,
+    "energy_error": null,
+    "settings_read": false,
+    "plots": 0,
+    "after": {
+     "phase": "model",
+     "energy_ready": true,
+     "plots": 0,
+     "visible_plots": 0
+    }
+   },
+   {
+    "gesture": "consumption: left edge dragged #1",
+    "energy_page": true,
+    "consumption_page": true,
+    "economics_page": true,
+    "widgets": 2555,
+    "window_size": [
+     1600,
+     960
+    ],
+    "dock_sizes": [
+     [
+      320,
+      571
+     ],
+     [
+      380,
+      667
+     ]
+    ],
+    "phase": "consumption",
+    "checks": 26,
+    "energy_ready": true,
+    "energy_error": null,
+    "settings_read": false,
+    "plots": 1,
+    "after": {
+     "phase": "consumption",
+     "energy_ready": true,
+     "plots": 1,
+     "visible_plots": 1
+    }
+   },
+   {
+    "gesture": "consumption: left edge back #1",
+    "energy_page": true,
+    "consumption_page": true,
+    "economics_page": true,
+    "widgets": 2555,
+    "window_size": [
+     1600,
+     960
+    ],
+    "dock_sizes": [
+     [
+      320,
+      571
+     ],
+     [
+      380,
+      667
+     ]
+    ],
+    "phase": "consumption",
+    "checks": 26,
+    "energy_ready": true,
+    "energy_error": null,
+    "settings_read": false,
+    "plots": 1,
+    "after": {
+     "phase": "consumption",
+     "energy_ready": true,
+     "plots": 1,
+     "visible_plots": 1
+    }
+   },
+   {
+    "gesture": "consumption: right edge dragged #1",
+    "energy_page": true,
+    "consumption_page": true,
+    "economics_page": true,
+    "widgets": 2555,
+    "window_size": [
+     1600,
+     960
+    ],
+    "dock_sizes": [
+     [
+      320,
+      571
+     ],
+     [
+      380,
+      667
+     ]
+    ],
+    "phase": "consumption",
+    "checks": 26,
+    "energy_ready": true,
+    "energy_error": null,
+    "settings_read": false,
+    "plots": 1,
+    "after": {
+     "phase": "consumption",
+     "energy_ready": true,
+     "plots": 1,
+     "visible_plots": 1
+    }
+   },
+   {
+    "gesture": "consumption: right edge back #1",
+    "energy_page": true,
+    "consumption_page": true,
+    "economics_page": true,
+    "widgets": 2555,
+    "window_size": [
+     1600,
+     960
+    ],
+    "dock_sizes": [
+     [
+      320,
+      571
+     ],
+     [
+      540,
+      667
+     ]
+    ],
+    "phase": "consumption",
+    "checks": 26,
+    "energy_ready": true,
+    "energy_error": null,
+    "settings_read": false,
+    "plots": 1,
+    "after": {
+     "phase": "consumption",
+     "energy_ready": true,
+     "plots": 1,
+     "visible_plots": 1
+    }
+   },
+   {
+    "gesture": "consumption: window resized, 15 steps #1",
+    "energy_page": true,
+    "consumption_page": true,
+    "economics_page": true,
+    "widgets": 2555,
+    "window_size": [
+     1600,
+     960
+    ],
+    "dock_sizes": [
+     [
+      320,
+      571
+     ],
+     [
+      380,
+      667
+     ]
+    ],
+    "phase": "consumption",
+    "checks": 26,
+    "energy_ready": true,
+    "energy_error": null,
+    "settings_read": false,
+    "plots": 1,
+    "after": {
+     "phase": "consumption",
+     "energy_ready": true,
+     "plots": 1,
+     "visible_plots": 1
+    }
+   }
+  ],
+  "weather_cache": "build\\speed\\weather-R01",
+  "settled_energy": true,
+  "harness_sha256": "a567bdee64ce150750376b6f31216faa64430c338effde06adac1fb53e772a32",
+  "fluidity_sha256": "625166a5c5489c05a6b6d5985e1c6657241c632e797817aa31501afd28fbd733",
+  "energy_setup": {
+   "cache_hit": true,
+   "input_key_sha256": "335515bba3cb3d63f6824b4cbcf8e7550523409c1678bbabc9b3a7e0b053952d",
+   "cache_sha256": "774fbdc88d4e1b343da0b7f73bd27fdbf2dd6f473e13832e3517c393593efe0f"
+  },
+  "project_summary": {
+   "buildings": 4,
+   "subfields": 2,
+   "module_count": 778
+  },
+  "samples": {},
+  "calls": {},
+  "events": {}
+ },
+ "results": [
+  {
+   "gesture": "model: left edge dragged",
+   "action_ms": 2363.3,
+   "until_idle_ms": 2369.3,
+   "blocks": 41,
+   "worst_ms": 83.5,
+   "blocked_ms": 1906.1
+  },
+  {
+   "gesture": "model: left edge back",
+   "action_ms": 2446.8,
+   "until_idle_ms": 2447.7,
+   "blocks": 39,
+   "worst_ms": 110.2,
+   "blocked_ms": 1883.0
+  },
+  {
+   "gesture": "model: right edge dragged",
+   "action_ms": 4127.6,
+   "until_idle_ms": 4183.2,
+   "blocks": 76,
+   "worst_ms": 99.8,
+   "blocked_ms": 4030.3
+  },
+  {
+   "gesture": "model: right edge back",
+   "action_ms": 4268.4,
+   "until_idle_ms": 4371.2,
+   "blocks": 42,
+   "worst_ms": 126.1,
+   "blocked_ms": 3988.4
+  },
+  {
+   "gesture": "model: window resized, 15 steps",
+   "action_ms": 1584.1,
+   "until_idle_ms": 1591.9,
+   "blocks": 17,
+   "worst_ms": 129.8,
+   "blocked_ms": 1380.8
+  },
+  {
+   "gesture": "consumption: left edge dragged",
+   "action_ms": 1192.1,
+   "until_idle_ms": 1197.9,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: left edge back",
+   "action_ms": 1179.3,
+   "until_idle_ms": 1183.8,
+   "blocks": 0,
+   "worst_ms": 0.0,
+   "blocked_ms": 0
+  },
+  {
+   "gesture": "consumption: right edge dragged",
+   "action_ms": 5395.9,
+   "until_idle_ms": 5456.9,
+   "blocks": 80,
+   "worst_ms": 175.9,
+   "blocked_ms": 5398.7
+  },
+  {
+   "gesture": "consumption: right edge back",
+   "action_ms": 4021.9,
+   "until_idle_ms": 4030.8,
+   "blocks": 76,
+   "worst_ms": 86.0,
+   "blocked_ms": 3908.9
+  },
+  {
+   "gesture": "consumption: window resized, 15 steps",
+   "action_ms": 1283.3,
+   "until_idle_ms": 1298.3,
+   "blocks": 19,
+   "worst_ms": 83.1,
+   "blocked_ms": 1068.0
+  }
+ ]
+}
