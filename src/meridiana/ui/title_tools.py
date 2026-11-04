@@ -32,6 +32,7 @@ class TitleTools(QWidget):
         self.items: list[tuple[QWidget, str]] = []
         self.indent = 0         # how far from the left the first row starts (the card's title stands there)
         self.first = 0          # the first row at least this tall (the title's line)
+        self.planned = (None, None)     # the last plan and what it was for: asked dozens of times at a step of an edge (R372)
         policy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         policy.setHeightForWidth(True)          # alone in a page's layout the rows ask for their height by the width
         self.setSizePolicy(policy)
@@ -90,13 +91,21 @@ class TitleTools(QWidget):
             y += height + ROW_GAP
         return placed, heights
 
+    def kept_plan(self, width: int, indent: int = 0, first: int = 0) -> tuple[list[tuple[QWidget, QRect]], list[int]]:
+        """The plan, worked out again only when the room, a widget's being shown or a widget's size has changed (a widget
+        that changes size tells its parent with a LayoutRequest, see `event`)."""
+        key = (width, indent, first, tuple(w.isHidden() for w, _a in self.items))
+        if self.planned[0] != key:
+            self.planned = (key, self.plan(width, indent, first))
+        return self.planned[1]
+
     def height_for(self, width: int, indent: int = 0, first: int = 0) -> int:
-        heights = self.plan(width, indent, first)[1]
+        heights = self.kept_plan(width, indent, first)[1]
         return sum(heights) + ROW_GAP * (len(heights) - 1)
 
     def first_row(self, width: int, indent: int = 0, first: int = 0) -> int:
         """The height of the first row, where the title and the cross stand."""
-        return self.plan(width, indent, first)[1][0]
+        return self.kept_plan(width, indent, first)[1][0]
 
     # ----- the widget
 
@@ -120,7 +129,7 @@ class TitleTools(QWidget):
 
     def relayout(self) -> None:
         m = self.contentsMargins()
-        placed, _heights = self.plan(self.room(), self.indent, self.first)
+        placed, _heights = self.kept_plan(self.room(), self.indent, self.first)
         for w, rect in placed:
             w.setGeometry(rect.translated(m.left(), m.top()))
             w.show()
@@ -131,6 +140,7 @@ class TitleTools(QWidget):
 
     def event(self, event) -> bool:
         if event.type() == QEvent.Type.LayoutRequest:
+            self.planned = (None, None)
             self.relayout()
             self.changed.emit()
         return super().event(event)
