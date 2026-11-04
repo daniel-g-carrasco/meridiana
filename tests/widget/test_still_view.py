@@ -1,4 +1,4 @@
-"""A heavy drawing holds still while its size changes (R372): one change costs nothing, the second makes the picture, the
+"""The plan's view holds still while its size changes (R372): one change costs nothing, the second makes the picture, the
 drawing comes back when the size is still."""
 
 from __future__ import annotations
@@ -30,11 +30,11 @@ class StillViewTest(unittest.TestCase):
         self.view = View()
         self.scene = QGraphicsScene(self.view)
         self.view.setScene(self.scene)
-        self.view.still = StillWhileResized(self.view, stretch=True)
+        self.view.still = StillWhileResized(self.view)
         self.view.resize(300, 200)
         self.view.show()
         self.addCleanup(self.view.close)
-        _setup.turn_events(self.app, 200)
+        _setup.turn_events(self.app, 500)
 
     def test_one_change_of_size_makes_no_picture(self):
         self.view.resize(320, 200)
@@ -57,7 +57,7 @@ class StillViewTest(unittest.TestCase):
         _setup.turn_events(self.app, 10)
         self.view.resize(340, 200)
         self.drawn.clear()
-        _setup.turn_events(self.app, 400)
+        _setup.turn_events(self.app, 500)
         self.assertIsNone(self.view.still.picture)
         self.assertTrue(self.drawn)
         self.assertEqual(self.drawn[-1].width(), self.view.viewport().width())
@@ -68,15 +68,12 @@ class StillViewTest(unittest.TestCase):
         self.view.resize(340, 200)
         self.assertIsNone(self.view.still.picture)
 
-    def test_the_picture_of_a_view_with_a_scale_of_its_own_stays_in_the_middle(self):
-        from meridiana.ui.still_view import StillWhileResized
-
-        self.view.still = StillWhileResized(self.view, stretch=False)
+    def test_the_picture_stands_in_the_middle_of_the_view(self):
         self.view.resize(320, 200)
         _setup.turn_events(self.app, 10)
         self.view.resize(340, 200)
         self.assertIsNotNone(self.view.still.picture)
-        self.assertFalse(self.view.grab().isNull())
+        self.assertEqual(self.view.grab().size(), self.view.size())
 
 
 if __name__ == "__main__":
