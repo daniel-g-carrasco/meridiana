@@ -210,7 +210,11 @@ class Chat(unittest.TestCase):
         who, text = self.a.messages[-1]
         self.assertEqual(who, "note")
         self.assertIn("The local model does not answer at http://127.0.0.1:9931/v1. I look for another one", text)
-        self.assertTrue(wait_until(self.app, lambda: self.a.questions_box.isVisible() or self.a.panel.height() < 260, 5))
+        # the questions stand where there is room for them, and the room goes with the system's fonts
+        def as_the_rule_says():
+            besides = self.a.cards_area.whole + self.a.slot.layout().spacing() if self.a.cards_box.count() else 0
+            return self.a.questions_box.isVisible() == self.a._questions_fit(self.a.panel.height(), besides)
+        self.assertTrue(wait_until(self.app, as_the_rule_says, 5))
         # No model: the guide now lives in the conversation and needs no external preferences dialog.
         self.assertTrue(wait_until(self.app, lambda: self.chat.setup_card is not None, 5))
         card = self.chat.setup_card
