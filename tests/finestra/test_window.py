@@ -1752,11 +1752,13 @@ class Stringing(PlantWindow):
         self.assertEqual([d[0] for d in self.dialogs], ["question"])
         self.dialogs.clear()
         count_before_clear = len(self.runs())
+        said = []                                                            # a search still running may speak after it
+        self.win.statusBar().messageChanged.connect(said.append)
         self.win.commands["strings_clear"].trigger()                         # all deleted: asked, one step
         self.assertEqual([d[0] for d in self.dialogs], ["question"])
         plant = self.plant(lambda p: not p.strings)
         self.assertEqual(self.win.undo.undoText(), "Delete all the strings")
-        self.assertIn(f"Plant > Strings: all {count_before_clear} strings cleared", self.win.statusBar().currentMessage())
+        self.assertTrue(any(f"Plant > Strings: all {count_before_clear} strings cleared" in s for s in said), said)
         self.win.undo.undo()
         self.plant(lambda p: bool(p.strings))
 

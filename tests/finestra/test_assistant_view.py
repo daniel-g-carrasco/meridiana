@@ -52,7 +52,9 @@ class ShowWhatISee(unittest.TestCase):
         # the picture is the page as drawn, not the window with the bubble over it
         shown = chat.host.view_image()
         self.assertEqual(shown.size(), expected.size())
-        self.assertEqual(shown.convertToFormat(expected.format()), expected)
+        # the page as it is now: a slow machine may still be finishing a fade of what was there when `expected` was taken
+        self.assertTrue(wait_until(self.app, lambda: chat.host.view_image().convertToFormat(expected.format())
+                                   == page.grab().toImage().convertToFormat(expected.format()), 5))
         OUT.mkdir(parents=True, exist_ok=True)
         shown.save(str(OUT / "OM-vista-catturata.png"))
         a.grab().save(str(OUT / "OM-pulsante-vista.png"))

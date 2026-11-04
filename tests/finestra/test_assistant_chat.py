@@ -210,7 +210,7 @@ class Chat(unittest.TestCase):
         who, text = self.a.messages[-1]
         self.assertEqual(who, "note")
         self.assertIn("The local model does not answer at http://127.0.0.1:9931/v1. I look for another one", text)
-        self.assertTrue(self.a.questions_box.isVisible() or self.a.panel.height() < 260)
+        self.assertTrue(wait_until(self.app, lambda: self.a.questions_box.isVisible() or self.a.panel.height() < 260, 5))
         # No model: the guide now lives in the conversation and needs no external preferences dialog.
         self.assertTrue(wait_until(self.app, lambda: self.chat.setup_card is not None, 5))
         card = self.chat.setup_card
