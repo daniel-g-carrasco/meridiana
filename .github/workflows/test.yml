@@ -84,7 +84,7 @@ jobs:
         run: |
           for group in nucleo calcoli formati widget finestra; do
             echo "::group::tests/$group"
-            python -W default -m unittest discover -s tests/$group -t tests || exit 1
+            python -W default tools/run_tests.py tests/$group || exit 1
             echo "::endgroup::"
           done
         env:
@@ -130,7 +130,7 @@ jobs:
         run: |
           foreach ($group in "nucleo", "calcoli", "formati", "widget", "finestra") {
             Write-Output "tests/$group"
-            python -W default -m unittest discover -s "tests/$group" -t tests
+            python -W default tools/run_tests.py "tests/$group"
             if ($LASTEXITCODE -ne 0) { exit 1 }
           }
       - name: Build with PyInstaller
