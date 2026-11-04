@@ -19,6 +19,7 @@ from PySide6.QtGui import QColor, QFont, QFontMetricsF, QImage, QLinearGradient,
 from PySide6.QtWidgets import QGraphicsGridLayout, QGraphicsLinearLayout, QGraphicsRectItem, QLabel
 
 from .design import Size, Type
+from .still_view import StillWhileResized
 
 __all__ = ["Axis", "ColourScale", "Entry", "Legend", "Plot", "View", "colour", "colour_bar", "colour_map", "export",
            "hover_box", "pg"]
@@ -222,6 +223,15 @@ class Plot(pg.PlotWidget):
         self.readout.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.readout.hide()
         self.proxy = pg.SignalProxy(self.scene().sigMouseMoved, rateLimit=60, slot=moved)
+        self.still = StillWhileResized(self, stretch=True)
+
+    def paintEvent(self, event) -> None:
+        if not self.still.painted():
+            super().paintEvent(event)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self.still.resized()
 
     # what is drawn
 

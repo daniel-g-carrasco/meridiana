@@ -36,6 +36,7 @@ from . import icons, plan_overlays, waiting, world_map
 from ..i18n import _, ngettext, number, pgettext
 from .cards import round_corners
 from .lit_modules import LitModules
+from .still_view import StillWhileResized
 from . import design
 from ..snapping import EXACT, Guide, Snap, Snapper, ortho
 from .theme import symbol_font
@@ -547,6 +548,7 @@ class PlanView(QGraphicsView):
         self.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.NoAnchor)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorViewCenter)
+        self.still = StillWhileResized(self, stretch=False)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
@@ -4089,6 +4091,11 @@ class PlanView(QGraphicsView):
         plan_overlays.place(self)
         self._place_laying()
         self._moved()
+        self.still.resized()
+
+    def paintEvent(self, event):
+        if not self.still.painted():
+            super().paintEvent(event)
 
     def showEvent(self, event):
         super().showEvent(event)
