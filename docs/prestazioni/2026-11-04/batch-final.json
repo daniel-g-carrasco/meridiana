@@ -1,0 +1,8 @@
+{
+ "wait_for": "docs/prestazioni/2026-11-04/it-screen-weather-profile-all-3.json",
+ "resume": true,
+ "runs": [
+  {"name": "it-screen-weather-cold-profile-base", "args": ["--weather-cache", "build/speed/weather-R01", "--settled-energy", "--profile", "--mode", "no-rest", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-weather-starting-all", "args": ["--weather-cache", "build/speed/weather-R01", "--on-screen", "--sequence", "all"]}
+ ]
+}

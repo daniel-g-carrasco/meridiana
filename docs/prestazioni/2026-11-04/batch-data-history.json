@@ -1,0 +1,27 @@
+{
+ "wait_for": "docs/prestazioni/2026-11-04/it-screen-reset-heartbeat-base-3.json",
+ "resume": true,
+ "archive_commits": ["3b1d8c8", "6042b8a"],
+ "compile_trees": ["build/speed/3b1d8c8", "build/speed/9dce421", "build/speed/6042b8a", "build/speed/96dc22f", "build/speed/96dc22f-parent"],
+ "prepare_weather": true,
+ "runs": [
+  {"name": "it-screen-public-root-edges", "args": ["--tree", "build/speed/3b1d8c8", "--revision", "3b1d8c8", "--project", "build/speed/sample-v13-R02.meridiana", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-mid-9dce421-edges", "args": ["--tree", "build/speed/9dce421", "--revision", "9dce421", "--project", "build/speed/sample-v13-R02.meridiana", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-96dc22f-parent-edges", "args": ["--tree", "build/speed/96dc22f-parent", "--revision", "fa847b0", "--project", "build/speed/sample-v13-R02.meridiana", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-96dc22f-edges", "args": ["--tree", "build/speed/96dc22f", "--revision", "96dc22f", "--project", "build/speed/sample-v13-R02.meridiana", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-current-edges", "args": ["--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-async-plant-base", "args": ["--mode", "async-plant", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-instant-file-close-base", "args": ["--mode", "instant-file-close", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-no-settings-profile-base", "args": ["--profile", "--mode", "no-settings", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-base-v13-r02-base", "args": ["--tree", "build/speed/base-92c760e", "--revision", "92c760e", "--project", "build/speed/sample-v13-R02.meridiana", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-current-v13-r02-base", "args": ["--project", "build/speed/sample-v13-R02.meridiana", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-6042b8a-base", "args": ["--tree", "build/speed/6042b8a", "--revision", "6042b8a", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-no-rest-plain-base", "args": ["--mode", "no-rest", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-weather-all", "args": ["--weather-cache", "build/speed/weather-R01", "--settled-energy", "--on-screen", "--sequence", "all"]},
+  {"name": "it-screen-weather-cold-base", "args": ["--weather-cache", "build/speed/weather-R01", "--settled-energy", "--mode", "no-rest", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-weather-edges", "args": ["--weather-cache", "build/speed/weather-R01", "--settled-energy", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-weather-chartless-edges", "args": ["--weather-cache", "build/speed/weather-R01", "--settled-energy", "--mode", "no-chart-paint", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-weather-no-right-paint-edges", "args": ["--weather-cache", "build/speed/weather-R01", "--settled-energy", "--mode", "no-right-paint", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-weather-profile-all", "args": ["--weather-cache", "build/speed/weather-R01", "--settled-energy", "--profile", "--on-screen", "--sequence", "all"]}
+ ]
+}

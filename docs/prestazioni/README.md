@@ -146,6 +146,21 @@ la riga lo dice.
 | 25/10/2026 | b5c0aeb | avvio: pvlib e matplotlib fuori dal filo della finestra | | | 2,6-2,8 s / 2,8-3,0 s |
 | 25/10/2026 | ebddea1 (primo commit pubblico 3b1d8c8) | codice finale con grafica, stringatura e Meridio uniti, PC fermo (`tutto-schermo-finale.json`, `bordi-schermo-finale.json`) | 0 | 10-12 | finestra costruita 1,1 s, primo disegno 1,2-1,4 s dalla costruzione, anno 1,8-2,0 s |
 
+## Indagine del 04/11/2026
+
+| Data | Base e confronti | Prove | Esito |
+|---|---|---|---|
+| 04/11/2026 | b59f832, 6042b8a e revisioni storiche | 35 serie di tre esecuzioni, 105 risultati validi | cause, limiti e proposte in `../revisioni/codex-velocita-esito.md`, dati in `2026-11-04/`; nessuna correzione applicata |
+
+[V] Serie ripetute tre volte, profili del filo principale e degli eventi Qt, prove A/B e confronto fra revisioni:
+`2026-11-04/`. L'esito completo e le proposte sono in `../revisioni/codex-velocita-esito.md`.
+Il confronto padre-figlio individua un costo aggiunto in `96dc22f`; il disegno dei grafici e della pianta,
+i controlli nei titoli e le Impostazioni sono misurati separatamente. Nessuna correzione al programma applicata.
+
+[V] Correzione dell'interpretazione dello strumento: `opened.year_ms` attende i layout riusciti,
+non il risultato energetico. Nelle prove aggiuntive il risultato `sim` e la presenza dei grafici sono controllati
+esplicitamente. `summary.json` conserva mediana, minimo, massimo, scarto e valori delle ripetizioni.
+
 ## Misure del 03/11/2026
 
 Commit 6042b8a, `2026-11-03/tutto-schermo-6042b8a.json`: sequenza `all` sul Dell, Qt 6.12.0, finestra costruita in 1,28 s,

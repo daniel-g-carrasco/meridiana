@@ -1,0 +1,10 @@
+{
+ "_note": "Not executed; superseded by batch-data-history.json.",
+ "wait_for": "docs/prestazioni/2026-11-04/it-screen-reset-heartbeat-base-3.json",
+ "archive_commits": ["3b1d8c8"],
+ "compile_trees": ["build/speed/3b1d8c8", "build/speed/9dce421"],
+ "runs": [
+  {"name": "it-screen-public-root-edges", "args": ["--tree", "build/speed/3b1d8c8", "--revision", "3b1d8c8", "--project", "build/speed/sample-v13-R02.meridiana", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-mid-9dce421-edges", "args": ["--tree", "build/speed/9dce421", "--revision", "9dce421", "--project", "build/speed/sample-v13-R02.meridiana", "--on-screen", "--sequence", "edges"]}
+ ]
+}

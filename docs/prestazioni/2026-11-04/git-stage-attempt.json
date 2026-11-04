@@ -1,0 +1,11 @@
+{
+ "when_local": "2026-11-04 02:33:39 Europe/Rome",
+ "branch": "r10-velocita",
+ "head_before": "b59f832",
+ "command": ["git", "add", "--", "docs/revisioni/codex-velocita-esito.md", "docs/prestazioni/2026-11-04", "docs/prestazioni/README.md", "docs/progetto.md", "docs/richieste.md"],
+ "exit_code": 1,
+ "error": "fatal: Unable to create 'C:/Users/Grasso/dev/meridiana/.git/worktrees/meridiana-wt-r10-velocita/index.lock': Permission denied",
+ "commit_created": false,
+ "push_attempted": false,
+ "suggested_commit_message": "Document R372 latency causes with repeated UI measurements"
+}

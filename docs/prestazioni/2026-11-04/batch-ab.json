@@ -1,0 +1,15 @@
+{
+ "wait_for": "docs/prestazioni/2026-11-04/it-screen-current-v13-r02-edges-3.json",
+ "runs": [
+  {"name": "it-screen-events-all", "args": ["--profile", "--on-screen", "--sequence", "all"]},
+  {"name": "it-screen-no-rest-base", "args": ["--profile", "--mode", "no-rest", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-no-settings-base", "args": ["--mode", "no-settings", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-no-tools-edges", "args": ["--mode", "no-tools", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-no-checks-paint-edges", "args": ["--mode", "no-checks-paint", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-no-plan-paint-edges", "args": ["--mode", "no-plan-paint", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-no-right-paint-edges", "args": ["--mode", "no-right-paint", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-no-chart-paint-edges", "args": ["--mode", "no-chart-paint", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-no-motion-base", "args": ["--mode", "no-motion", "--on-screen", "--sequence", "base"]},
+  {"name": "it-screen-reset-heartbeat-base", "args": ["--mode", "reset-heartbeat", "--on-screen", "--sequence", "base"]}
+ ]
+}

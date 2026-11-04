@@ -1,0 +1,10 @@
+{
+ "wait_for": "docs/prestazioni/2026-11-04/it-screen-profile-all-1.json",
+ "resume": true,
+ "runs": [
+  {"name": "it-screen-current-all", "args": ["--on-screen", "--sequence", "all"]},
+  {"name": "it-screen-current-no3d", "args": ["--on-screen", "--sequence", "base", "--no-3d"]},
+  {"name": "it-screen-base-v13-r02-edges", "args": ["--tree", "build/speed/base-92c760e", "--revision", "92c760e", "--project", "build/speed/sample-v13-R02.meridiana", "--on-screen", "--sequence", "edges"]},
+  {"name": "it-screen-current-v13-r02-edges", "args": ["--project", "build/speed/sample-v13-R02.meridiana", "--on-screen", "--sequence", "edges"]}
+ ]
+}
