@@ -1,0 +1,14 @@
+{
+  "original_sha256": "40d342e81e6314ee5462aa181b6947a218372186dbe7b23013a11cd12005ec13",
+  "original_version": 16,
+  "copy_sha256": "4c5538c7f7406ef4975c6b05e131c4a9cbd1e4d9ac83ea665801a77b30fa1f1c",
+  "copy_version": 13,
+  "unknown_keys": [
+    "variants[0].design.energy.inverter_maker",
+    "network",
+    "network_consent"
+  ],
+  "buildings": 4,
+  "subfields": 0,
+  "variants": 1
+}

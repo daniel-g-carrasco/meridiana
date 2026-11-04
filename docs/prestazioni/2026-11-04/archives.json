@@ -1,0 +1,152 @@
+[
+ {
+  "directory": "base-92c760e",
+  "revision": "92c760e",
+  "commit": "92c760e17f28ce16e2b6168207cf7a662f684e64",
+  "checked_files": {
+   "src/meridiana/ui/window.py": {
+    "archive_sha256": "bb026355ffc4945e7921b61a9d6e486a7120ef7da30eec32d263fe3c081ddcb0",
+    "git_blob_sha256": "26f946430a91370332b1ab3d51f98dee447b0808d7ff9ed8e7998786bd9a23ee",
+    "lf_sha256": "26f946430a91370332b1ab3d51f98dee447b0808d7ff9ed8e7998786bd9a23ee",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/model.py": {
+    "archive_sha256": "1e84b491fe45eb0ce820bec6a976b9410a8c642661b6691e6da3a69b8a474795",
+    "git_blob_sha256": "07247daee7f9530a45f279d11d3d705300ba00fdbae03f3149e9b88e928b0467",
+    "lf_sha256": "07247daee7f9530a45f279d11d3d705300ba00fdbae03f3149e9b88e928b0467",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/ui/cards.py": {
+    "archive_sha256": "30467bd1a2cdaf42715de3994aa138777adbbe6173cfd286d369c42a3ac0ebca",
+    "git_blob_sha256": "03c107452b03ebe271fa1f3f1e78465a34ec73bcb4b8519027298a99b066c4e3",
+    "lf_sha256": "03c107452b03ebe271fa1f3f1e78465a34ec73bcb4b8519027298a99b066c4e3",
+    "normalisation": "CRLF to LF only"
+   }
+  }
+ },
+ {
+  "directory": "3b1d8c8",
+  "revision": "3b1d8c8",
+  "commit": "3b1d8c8fe1c6fe291afb4f33e96be48c71dec2fa",
+  "checked_files": {
+   "src/meridiana/ui/window.py": {
+    "archive_sha256": "f67058120763ff96b3467e22ebb3f4c1b4ff86e53a0abe0fed8a2880d5736643",
+    "git_blob_sha256": "89584580fde546e3a03f496145628cad2315a226c60a88704595eca5b36e817c",
+    "lf_sha256": "89584580fde546e3a03f496145628cad2315a226c60a88704595eca5b36e817c",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/model.py": {
+    "archive_sha256": "7ed28ae91b7d759ffaaf05e99f50d821b81f07a0f0a53eb8375c01798b442ae5",
+    "git_blob_sha256": "ab0019d5451e155e4264ed7dee929f1c20b6cedb64a6a0fc16daaeeba1a24812",
+    "lf_sha256": "ab0019d5451e155e4264ed7dee929f1c20b6cedb64a6a0fc16daaeeba1a24812",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/ui/cards.py": {
+    "archive_sha256": "437779b64c3438dd4176d16ddcba61810581ccca7aa0a7658330d929b23fa059",
+    "git_blob_sha256": "14e16d3ccd4bc43bd04cf12daebe2d9a5d58c546fb94edf8bc50ed5805ad8d23",
+    "lf_sha256": "14e16d3ccd4bc43bd04cf12daebe2d9a5d58c546fb94edf8bc50ed5805ad8d23",
+    "normalisation": "CRLF to LF only"
+   }
+  }
+ },
+ {
+  "directory": "9dce421",
+  "revision": "9dce421",
+  "commit": "9dce421b2a7a634894831538ce25acc6e556ab2c",
+  "checked_files": {
+   "src/meridiana/ui/window.py": {
+    "archive_sha256": "657747f9c0b235018e19ec5413a8e4ee4bee216a149b246ad7b33503a4a9b29e",
+    "git_blob_sha256": "14e6107ae51e9840a647bfdf16fd03c782e58d4d81de65b8f90402034b9d3d2f",
+    "lf_sha256": "14e6107ae51e9840a647bfdf16fd03c782e58d4d81de65b8f90402034b9d3d2f",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/model.py": {
+    "archive_sha256": "50a163fc1d161636c4670bb0c3c68fd917d1302949b6f6a4ea4706f22755a063",
+    "git_blob_sha256": "4302c052faf2c2f46946596aed58e6807a8d04cc067e11892bc7fb30cfa0afe5",
+    "lf_sha256": "4302c052faf2c2f46946596aed58e6807a8d04cc067e11892bc7fb30cfa0afe5",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/ui/cards.py": {
+    "archive_sha256": "57c589da70486fd34a147618c16c30931a679d000aef1189e2ba10e5f5843f73",
+    "git_blob_sha256": "5efbec191982ae439f474d9da94ba628dd41b5259a8bb5bdd7b66eafe3f68a98",
+    "lf_sha256": "5efbec191982ae439f474d9da94ba628dd41b5259a8bb5bdd7b66eafe3f68a98",
+    "normalisation": "CRLF to LF only"
+   }
+  }
+ },
+ {
+  "directory": "96dc22f-parent",
+  "revision": "96dc22f^",
+  "commit": "fa847b094c503d425c68f6bea13f16b4ffb2ab1f",
+  "checked_files": {
+   "src/meridiana/ui/window.py": {
+    "archive_sha256": "482d60c48b933adf7ce13a339a09d7221b3d8f466196de51f6c1db6afb9439be",
+    "git_blob_sha256": "16ded98879191de7c6d005536fb06eea4c1a5b680ce8a8397432fb4f5c53e4f0",
+    "lf_sha256": "16ded98879191de7c6d005536fb06eea4c1a5b680ce8a8397432fb4f5c53e4f0",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/model.py": {
+    "archive_sha256": "6e81fceb8df78b5e0b4c21bd1c199b549aa164575e472781c9d1656cc54ac848",
+    "git_blob_sha256": "52c5f905777447bfd511c5edba798f38fa2cfd922bbd8d683ad373fbb18c275e",
+    "lf_sha256": "52c5f905777447bfd511c5edba798f38fa2cfd922bbd8d683ad373fbb18c275e",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/ui/cards.py": {
+    "archive_sha256": "57c589da70486fd34a147618c16c30931a679d000aef1189e2ba10e5f5843f73",
+    "git_blob_sha256": "5efbec191982ae439f474d9da94ba628dd41b5259a8bb5bdd7b66eafe3f68a98",
+    "lf_sha256": "5efbec191982ae439f474d9da94ba628dd41b5259a8bb5bdd7b66eafe3f68a98",
+    "normalisation": "CRLF to LF only"
+   }
+  }
+ },
+ {
+  "directory": "96dc22f",
+  "revision": "96dc22f",
+  "commit": "96dc22fc5491467eed382d21d4bc2bc46ca1b847",
+  "checked_files": {
+   "src/meridiana/ui/window.py": {
+    "archive_sha256": "4bde4cbbe238d854fb8855eed07564ff5465603ae91fd752f2ad21fc8504641b",
+    "git_blob_sha256": "96e4e39991e7300cf70a7ea15810710361c6038b4d110177aa82e60418a3149b",
+    "lf_sha256": "96e4e39991e7300cf70a7ea15810710361c6038b4d110177aa82e60418a3149b",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/model.py": {
+    "archive_sha256": "6e81fceb8df78b5e0b4c21bd1c199b549aa164575e472781c9d1656cc54ac848",
+    "git_blob_sha256": "52c5f905777447bfd511c5edba798f38fa2cfd922bbd8d683ad373fbb18c275e",
+    "lf_sha256": "52c5f905777447bfd511c5edba798f38fa2cfd922bbd8d683ad373fbb18c275e",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/ui/cards.py": {
+    "archive_sha256": "99e00b102ea50e88ddc07497764e31fec35c6cf2ed0f6d92b6fa6eed46dddac3",
+    "git_blob_sha256": "70c9ef3839bbd74af45dd9aad80c48ba2f894089034593f99306d22aa1d9d7c3",
+    "lf_sha256": "70c9ef3839bbd74af45dd9aad80c48ba2f894089034593f99306d22aa1d9d7c3",
+    "normalisation": "CRLF to LF only"
+   }
+  }
+ },
+ {
+  "directory": "6042b8a",
+  "revision": "6042b8a",
+  "commit": "6042b8a5debe0b2501653f2ee98770e2ddb75e4a",
+  "checked_files": {
+   "src/meridiana/ui/window.py": {
+    "archive_sha256": "2a3c053ad5da76ca8d08f624bbb22a0a480df1d8e6e244581ec124ec75813ec2",
+    "git_blob_sha256": "4dca27cdc2a3027c0d74aa18a678491667ab3f4b80c5d4666d7aff5577414b71",
+    "lf_sha256": "4dca27cdc2a3027c0d74aa18a678491667ab3f4b80c5d4666d7aff5577414b71",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/model.py": {
+    "archive_sha256": "1855ce4dc7968b713ab33cf0cc0d65d67da5eded5713f3f8775ac668e08cdad9",
+    "git_blob_sha256": "282e37248260505409607a86922fcb8a0f50a74a4c834bf6f2de6efe86a046c0",
+    "lf_sha256": "282e37248260505409607a86922fcb8a0f50a74a4c834bf6f2de6efe86a046c0",
+    "normalisation": "CRLF to LF only"
+   },
+   "src/meridiana/ui/cards.py": {
+    "archive_sha256": "99e00b102ea50e88ddc07497764e31fec35c6cf2ed0f6d92b6fa6eed46dddac3",
+    "git_blob_sha256": "70c9ef3839bbd74af45dd9aad80c48ba2f894089034593f99306d22aa1d9d7c3",
+    "lf_sha256": "70c9ef3839bbd74af45dd9aad80c48ba2f894089034593f99306d22aa1d9d7c3",
+    "normalisation": "CRLF to LF only"
+   }
+  }
+ }
+]

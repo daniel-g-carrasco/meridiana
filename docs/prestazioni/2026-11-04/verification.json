@@ -1,0 +1,1615 @@
+{
+ "series": 35,
+ "expected_runs": 105,
+ "input_unchanged": true,
+ "product_sources_unchanged": true,
+ "report_reference_tables_and_gains_match_raw_data": true,
+ "errors": [],
+ "manifest": [
+  {
+   "series": "it-screen-current-all",
+   "args": [
+    "--on-screen",
+    "--sequence",
+    "all"
+   ],
+   "files": [
+    {
+     "name": "it-screen-current-all-1.json",
+     "sha256": "26d2dccb5c7ef2e43a399f60180aa91c4eb39cc06b066993fb78a5d65fdc46db",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:01",
+     "project": null
+    },
+    {
+     "name": "it-screen-current-all-2.json",
+     "sha256": "9cf7a71682cf82a71f693f46112966e81799b1377c2b8424103bd16b156d96d1",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:02",
+     "project": null
+    },
+    {
+     "name": "it-screen-current-all-3.json",
+     "sha256": "eebd2a63413e27104db5a3b736c0a245128e148e7de52f188b520dde90e22945",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:03",
+     "project": null
+    }
+   ]
+  },
+  {
+   "series": "it-screen-current-no3d",
+   "args": [
+    "--on-screen",
+    "--sequence",
+    "base",
+    "--no-3d"
+   ],
+   "files": [
+    {
+     "name": "it-screen-current-no3d-1.json",
+     "sha256": "1ad5d9f74f2dead833d0d11dd76245205b708933ec53c6679b54335d4f17573f",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:04",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-current-no3d-2.json",
+     "sha256": "e42729fa74d78fd846c9f63cae5bb07b9c94d9e4ed73c7f6c0c1ae9b7e676e1a",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:04",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-current-no3d-3.json",
+     "sha256": "c2f17bfc55ff0fb690527bd99019dca193af2f975540c846494dfc791a376467",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:05",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-base-v13-r02-edges",
+   "args": [
+    "--tree",
+    "build/speed/base-92c760e",
+    "--revision",
+    "92c760e",
+    "--project",
+    "build/speed/sample-v13-R02.meridiana",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-base-v13-r02-edges-1.json",
+     "sha256": "790286255b78652b4406d741772402133d51b49d67ca33cdc5baaca3cb668475",
+     "commit": "92c760e",
+     "when": "2026-11-04 01:08",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-base-v13-r02-edges-2.json",
+     "sha256": "4bb26a56455db933d48bf0a39d5997fec86e2e2ebd6332043cd74d839d87b3d9",
+     "commit": "92c760e",
+     "when": "2026-11-04 01:09",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-base-v13-r02-edges-3.json",
+     "sha256": "bd4b20fa23814c37ec05d46fd10fd8fcc0b6599b6e56d9e1d5b24858e7da2c48",
+     "commit": "92c760e",
+     "when": "2026-11-04 01:09",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-current-v13-r02-edges",
+   "args": [
+    "--project",
+    "build/speed/sample-v13-R02.meridiana",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-current-v13-r02-edges-1.json",
+     "sha256": "f17f1209f1f2249fda07bdc3dd9506649fdde5e5f162673ed48bcda158ad84c9",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:09",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-current-v13-r02-edges-2.json",
+     "sha256": "24264a32370c76df0747ef8c2fca5b4fbb58750d125ff9f029cb870f7831dc1e",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:10",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-current-v13-r02-edges-3.json",
+     "sha256": "a89272e9c5957d40d911fe3d5551f3042a11984a58bd544b83754328822b1112",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:10",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-events-all",
+   "args": [
+    "--profile",
+    "--on-screen",
+    "--sequence",
+    "all"
+   ],
+   "files": [
+    {
+     "name": "it-screen-events-all-1.json",
+     "sha256": "cf81bb44e2cedfd32818d6596bca84add9a5d6c50e2b90e93b47e86378fe1e2d",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:12",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-events-all-2.json",
+     "sha256": "d59dd9d553675edbea0949b475a5ca196863a37e84e2e625c819084883b955e0",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:13",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-events-all-3.json",
+     "sha256": "2067170696cec4f3e5801671ab6649bac56bd9a154e01b5d0b1ddca4f7896e8a",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:14",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-no-rest-base",
+   "args": [
+    "--profile",
+    "--mode",
+    "no-rest",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-no-rest-base-1.json",
+     "sha256": "29a3850e75ca58757f5044ae863effbc41e5681ce7c46650653e204b072815c9",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:14",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-rest-base-2.json",
+     "sha256": "92072063348d5e86e038cc8064584ad1e3de8569f0665617488698b8de461b13",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:15",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-rest-base-3.json",
+     "sha256": "54ab2abc84d11dd6704c8c670751b39f9e32e1098ec773b9f07d6a691444d42e",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:16",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-no-settings-base",
+   "args": [
+    "--mode",
+    "no-settings",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-no-settings-base-1.json",
+     "sha256": "d3257ebecce7b044ad788113f39fd5889f555e8745c1011b69629c76756d781d",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:16",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-settings-base-2.json",
+     "sha256": "ed5774ed7da71f1ab47f23d429b97988e5f0e532ba9f5e4a59229c21b38d75cb",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:17",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-settings-base-3.json",
+     "sha256": "a7866866ae48188e434a339b63ec7e352e08eb5ee49feba62b531a623f0a17b8",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:17",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-no-tools-edges",
+   "args": [
+    "--mode",
+    "no-tools",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-no-tools-edges-1.json",
+     "sha256": "9756464db6902fcc6c86d207aaf6ed7f63971ed9c796927257d0ffb29366a1c0",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:18",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-tools-edges-2.json",
+     "sha256": "d5da2952a174cb750bd4f13f9185a5f3359695bb4cdad54dbbaaabbd528bd120",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:18",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-tools-edges-3.json",
+     "sha256": "7eed4966d5a8cf001153b76ff5376590f0fb1090a2205586ce535b135bd0cecc",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:18",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-no-checks-paint-edges",
+   "args": [
+    "--mode",
+    "no-checks-paint",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-no-checks-paint-edges-1.json",
+     "sha256": "f5a9f2f6743dd5b08fcc0409c83e2ce45d0a4ac401da5968f7a225329821ef3a",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:19",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-checks-paint-edges-2.json",
+     "sha256": "5668933add8f457527c9b6ad64d9b9e4f021649388f614430fb5ddbc9258c6cd",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:19",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-checks-paint-edges-3.json",
+     "sha256": "4fb7eb2e0336ce249dce1292fea710c9842d038befa161d6c7408475d7d7439a",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:20",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-no-plan-paint-edges",
+   "args": [
+    "--mode",
+    "no-plan-paint",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-no-plan-paint-edges-1.json",
+     "sha256": "01dd21a2cabfeaf9620e9d19b96c6df630a0c22d31fc2a5f3cc8297e7d380de1",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:20",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-plan-paint-edges-2.json",
+     "sha256": "57cc714149c65bc86d353dfb0ba289db26d196c245d648109d6f57c25de87694",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:21",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-plan-paint-edges-3.json",
+     "sha256": "26e99bb05355bf7a73df6ed370add6afdb1e9cd163b0c03a3077b18abfd55cb4",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:21",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-no-right-paint-edges",
+   "args": [
+    "--mode",
+    "no-right-paint",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-no-right-paint-edges-1.json",
+     "sha256": "b3d8fc05a016f46999c8a17758eaa371af73b6401e3490f332f3817c643c6f42",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:22",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-right-paint-edges-2.json",
+     "sha256": "6c70959ed549e7a57d51f84892182dda7356b7b707f1db588c1c29e653808da7",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:22",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-right-paint-edges-3.json",
+     "sha256": "bcf10651f88e9be6f6c392f448a8cca5470890b06d4f69cd31d8d3c0a336dd63",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:23",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-no-chart-paint-edges",
+   "args": [
+    "--mode",
+    "no-chart-paint",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-no-chart-paint-edges-1.json",
+     "sha256": "5d52ca33d77677cc1cbeaea25d963d0acb47292e91d8109f534b67e9dcab16ce",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:23",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-chart-paint-edges-2.json",
+     "sha256": "78ce9716af1b017147d78eb7b7646f057324c5d39c15a3c257baf90f58d46d14",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:23",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-chart-paint-edges-3.json",
+     "sha256": "439a3c62210250ecbaa0efbb3b38b4e29beed81a298aac0425e5040af916bd3b",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:24",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-no-motion-base",
+   "args": [
+    "--mode",
+    "no-motion",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-no-motion-base-1.json",
+     "sha256": "6de8d8b3e963fb2e565b461e294f467c321bea8b4628441b4e671d52e6432a11",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:24",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-motion-base-2.json",
+     "sha256": "e7568df68798be201f4e94f1d9365a3d2043cbe988a918baf76d2ba456240e0b",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:25",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-motion-base-3.json",
+     "sha256": "6eb08feaff239cc55215628150a1dd4001c5d418bec74de21ea887350557262d",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:25",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-reset-heartbeat-base",
+   "args": [
+    "--mode",
+    "reset-heartbeat",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-reset-heartbeat-base-1.json",
+     "sha256": "870b2e3dd1676d69832e646112733357077b81399700560095647e13da9ae33d",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:26",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-reset-heartbeat-base-2.json",
+     "sha256": "f821996a1bfd6c7d36578002321e64ca93297cb321376f8387593d45b2bb7f55",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:27",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-reset-heartbeat-base-3.json",
+     "sha256": "a9d60bf9f33f1e24b63f61fe355b1170acdcb653f18a7e618a3bb315375d19b7",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:27",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-public-root-edges",
+   "args": [
+    "--tree",
+    "build/speed/3b1d8c8",
+    "--revision",
+    "3b1d8c8",
+    "--project",
+    "build/speed/sample-v13-R02.meridiana",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-public-root-edges-1.json",
+     "sha256": "65ebcdd4467976499257503a09c3c9e7eb9bc56c9d68d949182b0eb62795baf0",
+     "commit": "3b1d8c8",
+     "when": "2026-11-04 01:28",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-public-root-edges-2.json",
+     "sha256": "ed8ca0c84844b669e919846ec8f791edaa97f3bbf6bb4bac516e6a687a6f3140",
+     "commit": "3b1d8c8",
+     "when": "2026-11-04 01:28",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-public-root-edges-3.json",
+     "sha256": "43a3c7fbaf71095d23be5af0fc87d329801fceafb44ea36c7a3dfbd0cf19ca8d",
+     "commit": "3b1d8c8",
+     "when": "2026-11-04 01:29",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-mid-9dce421-edges",
+   "args": [
+    "--tree",
+    "build/speed/9dce421",
+    "--revision",
+    "9dce421",
+    "--project",
+    "build/speed/sample-v13-R02.meridiana",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-mid-9dce421-edges-1.json",
+     "sha256": "adf7e6146fbe1773d8e651a204f07ab1cb044302fc4af8471fc4ac7c33e97fbf",
+     "commit": "9dce421",
+     "when": "2026-11-04 01:29",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-mid-9dce421-edges-2.json",
+     "sha256": "85063e9d52eff0ed8d315b59f09bebffff5bcc5b11943f19f30c4f14d62a8511",
+     "commit": "9dce421",
+     "when": "2026-11-04 01:30",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-mid-9dce421-edges-3.json",
+     "sha256": "0f3938b11d1828ec2ae9876675715a856645cfbd67d69c9ae99b28ae49b355f5",
+     "commit": "9dce421",
+     "when": "2026-11-04 01:30",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-96dc22f-parent-edges",
+   "args": [
+    "--tree",
+    "build/speed/96dc22f-parent",
+    "--revision",
+    "fa847b0",
+    "--project",
+    "build/speed/sample-v13-R02.meridiana",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-96dc22f-parent-edges-1.json",
+     "sha256": "669019f5f9843232de9ea188242acd74ff13019562c8a532a3bd44dfa67f7852",
+     "commit": "fa847b0",
+     "when": "2026-11-04 01:30",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-96dc22f-parent-edges-2.json",
+     "sha256": "f699eee8ff7a949e0ec295fb42e65746579de3c08220771f759c5cca9c827559",
+     "commit": "fa847b0",
+     "when": "2026-11-04 01:31",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-96dc22f-parent-edges-3.json",
+     "sha256": "9c16a8277c972f926cab69df6ed6b8f4b4f63fe5ce1d3ac0b04b7b760e40e808",
+     "commit": "fa847b0",
+     "when": "2026-11-04 01:31",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-96dc22f-edges",
+   "args": [
+    "--tree",
+    "build/speed/96dc22f",
+    "--revision",
+    "96dc22f",
+    "--project",
+    "build/speed/sample-v13-R02.meridiana",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-96dc22f-edges-1.json",
+     "sha256": "221dd7d93ed41b1231e5f84ddc1168a452debbfa48690e4bcb6ed833845b5349",
+     "commit": "96dc22f",
+     "when": "2026-11-04 01:32",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-96dc22f-edges-2.json",
+     "sha256": "ebb1f3aa25fb8f3d8f827f80eb00731fa28f74ead1c040bc5acc356d68329b5c",
+     "commit": "96dc22f",
+     "when": "2026-11-04 01:32",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-96dc22f-edges-3.json",
+     "sha256": "d747b8c4a250b2032f1d2aa7bb064d33004e953cc67f379a9392f439067aefe1",
+     "commit": "96dc22f",
+     "when": "2026-11-04 01:33",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-current-edges",
+   "args": [
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-current-edges-1.json",
+     "sha256": "f9b40851c11c107eb4260f408e5574d92e433032e82a770077b4f9d9e6c70afc",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:33",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-current-edges-2.json",
+     "sha256": "0c7cbd6e4efdb6587bae6c68b64d9cc1e459cdc9ee47541085f993913a50fd37",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:34",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-current-edges-3.json",
+     "sha256": "f996a0920550be4b715063eeb93f70245bd0d52da97deac4dc7635b10e6f5f60",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:34",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-async-plant-base",
+   "args": [
+    "--mode",
+    "async-plant",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-async-plant-base-1.json",
+     "sha256": "86d17b9951a2d154403ba863558764c44e22123ba508315d6905cc9219ac426e",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:35",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-async-plant-base-2.json",
+     "sha256": "cd8d508bca0dceb720774d1b72bd7f1b37cb719778961c9d418e4db03e4d42c3",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:35",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-async-plant-base-3.json",
+     "sha256": "298cd9486c1d0cbdf6300a3758f115577e27854a47bfb77cc47b081ed8b7e457",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:36",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-instant-file-close-base",
+   "args": [
+    "--mode",
+    "instant-file-close",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-instant-file-close-base-1.json",
+     "sha256": "e01f4a4f8a024a9a18260a3484018636087de87bff1d01db514f612345567732",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:36",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-instant-file-close-base-2.json",
+     "sha256": "94cb9d926dca3eb12d6ca55114d2d68b9ebd1dc12fbc20a042e03d05e5da881e",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:37",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-instant-file-close-base-3.json",
+     "sha256": "614b0cea36b58583218b290e2c7034c2f6bb7749d910e7ac2619924e72c9eacf",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:37",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-no-settings-profile-base",
+   "args": [
+    "--profile",
+    "--mode",
+    "no-settings",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-no-settings-profile-base-1.json",
+     "sha256": "4efcab48463e8cf4f0d954c53a945cbf68e8d071c01a0fe6d0064ac2e26a9e0b",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:38",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-settings-profile-base-2.json",
+     "sha256": "b57cfd8c912cfccc45f2b82985a4cc9229cd9431cfe4605625ce3be74813b725",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:38",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-settings-profile-base-3.json",
+     "sha256": "aecc45979b391c18f3ccd652f963b77891d94bfcf110e3c0dfa70b34c8e11403",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:39",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-base-v13-r02-base",
+   "args": [
+    "--tree",
+    "build/speed/base-92c760e",
+    "--revision",
+    "92c760e",
+    "--project",
+    "build/speed/sample-v13-R02.meridiana",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-base-v13-r02-base-1.json",
+     "sha256": "6bacff96e71b04de20eb67e127d7a5516b97f8248e0e13d3a8cf26665fc0978e",
+     "commit": "92c760e",
+     "when": "2026-11-04 01:39",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-base-v13-r02-base-2.json",
+     "sha256": "eff5d9f1e2f3361ea88280f2b7c66280e8a7a43192b9ec3b57fe09da365d9193",
+     "commit": "92c760e",
+     "when": "2026-11-04 01:40",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-base-v13-r02-base-3.json",
+     "sha256": "0f1e348d285c2ec567fec444009eea239b69f69afbccdc5ffa2bd9dbe0853a24",
+     "commit": "92c760e",
+     "when": "2026-11-04 01:40",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-current-v13-r02-base",
+   "args": [
+    "--project",
+    "build/speed/sample-v13-R02.meridiana",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-current-v13-r02-base-1.json",
+     "sha256": "26c514208ddfe2f87f91f4a089cc43821544f608c46e1f89e560da010863bec7",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:41",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-current-v13-r02-base-2.json",
+     "sha256": "2a3429dbcc4f19645fb7b17f9f6987f1df594105a7c595cb4c5fac2528fa0200",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:41",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-current-v13-r02-base-3.json",
+     "sha256": "c682236f86bc4dd917d46211109477eacc0c0c747186a8dfd75b9fef5e1d90e3",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:42",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-6042b8a-base",
+   "args": [
+    "--tree",
+    "build/speed/6042b8a",
+    "--revision",
+    "6042b8a",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-6042b8a-base-1.json",
+     "sha256": "0b84615c50648a5d6fcb28a62eb3220cd3c729fd8565e229446b8087066e0619",
+     "commit": "6042b8a",
+     "when": "2026-11-04 01:42",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-6042b8a-base-2.json",
+     "sha256": "5ffe64b372ba119127bb76ce34e2d4e09465cf1e7d2b238ed32531aaffb036a6",
+     "commit": "6042b8a",
+     "when": "2026-11-04 01:43",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-6042b8a-base-3.json",
+     "sha256": "dc693bc30f7e2ef0d6e3b4c953a3d924085b7b2074e60d6008a50c829ca222e5",
+     "commit": "6042b8a",
+     "when": "2026-11-04 01:43",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-no-rest-plain-base",
+   "args": [
+    "--mode",
+    "no-rest",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-no-rest-plain-base-1.json",
+     "sha256": "d09afebaaa5cdf7248dbc2da2615ff2ff672599bee75b316fef66e123a53d682",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:44",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-rest-plain-base-2.json",
+     "sha256": "adef9194d4f6ccaf564b0c2c1716ff9df93d4fad42273448e7c934c3bc3509c6",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:44",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-no-rest-plain-base-3.json",
+     "sha256": "81a2fdc99581fbd821a6a6010cd3968605a61b1ccf12a62f45afc7d0eb06eef2",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:45",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-weather-all",
+   "args": [
+    "--weather-cache",
+    "build/speed/weather-R01",
+    "--settled-energy",
+    "--on-screen",
+    "--sequence",
+    "all"
+   ],
+   "files": [
+    {
+     "name": "it-screen-weather-all-1.json",
+     "sha256": "8745f9988cbf8505ac73cb2c185880f762b9eed15d7608aa785303f0c4082726",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:52",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-all-2.json",
+     "sha256": "1bb761dc7814e236bf9786fe59759dca304e148654982ffe70f961fe877031ad",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:55",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-all-3.json",
+     "sha256": "9bd93e6f84ed34e1c9078950254e488d6bbf8886ab39407d7bffd9b3b43f489a",
+     "commit": "b59f832",
+     "when": "2026-11-04 01:58",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-weather-cold-base",
+   "args": [
+    "--weather-cache",
+    "build/speed/weather-R01",
+    "--settled-energy",
+    "--mode",
+    "no-rest",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-weather-cold-base-1.json",
+     "sha256": "be7b89a4c40ad492fc0a52b8c42c5ac8d9ec1603623ed583e84d8fe09ef4c631",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:00",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-cold-base-2.json",
+     "sha256": "df6227ae43e4fb37c9690360c0caea6362676b8062b036f95992462abac2d144",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:00",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-cold-base-3.json",
+     "sha256": "a03fed259572fbfe62521e0ba53cb2aa00da1d5f86ade1597b05125e9d1269dc",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:01",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-weather-edges",
+   "args": [
+    "--weather-cache",
+    "build/speed/weather-R01",
+    "--settled-energy",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-weather-edges-1.json",
+     "sha256": "7696b09ff07b275209cbb5465a038cee689b68b86ee68dc38cdb34a042d977cf",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:01",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-edges-2.json",
+     "sha256": "60aa81f075b5fd508773850445bf8356be7281cd68c5ef7463b2a70d4a7de7e4",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:02",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-edges-3.json",
+     "sha256": "2812e4b0d7e03bdcfb4442e975e21389b91f90c13111fa2e7373eb7239978617",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:02",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-weather-chartless-edges",
+   "args": [
+    "--weather-cache",
+    "build/speed/weather-R01",
+    "--settled-energy",
+    "--mode",
+    "no-chart-paint",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-weather-chartless-edges-1.json",
+     "sha256": "944034102b7259e37cbbf373f2a2c9c56d8b380a3c9e4a253457621794aa00bc",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:03",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-chartless-edges-2.json",
+     "sha256": "ba28c61a0da7ea7a88b8b1970f3e00b6f7e2220fefd7d28a8a37046d597d5e6f",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:04",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-chartless-edges-3.json",
+     "sha256": "8de25d6c115589e22fcb71ac1ead59f9a0f05ba0e1e911bcba3fb7b8282c2f07",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:04",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-weather-no-right-paint-edges",
+   "args": [
+    "--weather-cache",
+    "build/speed/weather-R01",
+    "--settled-energy",
+    "--mode",
+    "no-right-paint",
+    "--on-screen",
+    "--sequence",
+    "edges"
+   ],
+   "files": [
+    {
+     "name": "it-screen-weather-no-right-paint-edges-1.json",
+     "sha256": "96d5a9cd5cf69b7b95088b70ffe56b312f44b16f4d51e654a1202d3c72be1e9c",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:05",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-no-right-paint-edges-2.json",
+     "sha256": "c01a068110bf7b6cd195f0b02e879bfc299c590dd8e9250009228c6b12dc7bf4",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:05",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-no-right-paint-edges-3.json",
+     "sha256": "d64b964d56d632358ce3a8ec3c2e0fc7bf0ee37a88d20cf6189913ed343b931d",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:06",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-weather-profile-all",
+   "args": [
+    "--weather-cache",
+    "build/speed/weather-R01",
+    "--settled-energy",
+    "--profile",
+    "--on-screen",
+    "--sequence",
+    "all"
+   ],
+   "files": [
+    {
+     "name": "it-screen-weather-profile-all-1.json",
+     "sha256": "cb1bd8ba1541ebd30f833ea8437b018378a9c8f707c7e428863d375cd9f4aa55",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:07",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-profile-all-2.json",
+     "sha256": "6ba638f01570783ae5c9bc36b59aa0182bfcf750fd2acbfdc615b9107e675227",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:08",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-profile-all-3.json",
+     "sha256": "1b2abee250f64acd2a19820e84256ff2c77a24814ac78863f73270eea1fe3cb2",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:09",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-weather-cold-profile-base",
+   "args": [
+    "--weather-cache",
+    "build/speed/weather-R01",
+    "--settled-energy",
+    "--profile",
+    "--mode",
+    "no-rest",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-weather-cold-profile-base-1.json",
+     "sha256": "4ef7eae706e921dd2d0cef55b6158f4424ea0a0fae2127047d2f94bd243545b1",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:10",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-cold-profile-base-2.json",
+     "sha256": "8e25c6e17f12ff775308edb8b125dabd3615c3cf617bd9fc5722cabe7f3e5e4a",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:10",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-cold-profile-base-3.json",
+     "sha256": "5062e26a5f075ca0473fc9a3b2233b67159e128492b0265ac3fb00f7392636e3",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:11",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-weather-starting-all",
+   "args": [
+    "--weather-cache",
+    "build/speed/weather-R01",
+    "--on-screen",
+    "--sequence",
+    "all"
+   ],
+   "files": [
+    {
+     "name": "it-screen-weather-starting-all-1.json",
+     "sha256": "9586ffcff9c8e24968cb5a4b352f51b6e17f9eccd6c928f5cf55bdeec9826a62",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:13",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-starting-all-2.json",
+     "sha256": "4a23fab8f8ede9b048f02e4793e5dcbd242988adcf6c01e5e0b374a8224f67ae",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:15",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-starting-all-3.json",
+     "sha256": "13fb9f0c32bcc56e4b719c66063e86f43497827b7dbe373dd5d1808aa1abd4a9",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:17",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  },
+  {
+   "series": "it-screen-weather-starting-cold-profile-base",
+   "args": [
+    "--weather-cache",
+    "build/speed/weather-R01",
+    "--mode",
+    "no-rest",
+    "--profile",
+    "--on-screen",
+    "--sequence",
+    "base"
+   ],
+   "files": [
+    {
+     "name": "it-screen-weather-starting-cold-profile-base-1.json",
+     "sha256": "39767a0fcce2f9998dbcafd809a7c0fe605e2f1ba9bd569d927cb40b97f4546d",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:19",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-starting-cold-profile-base-2.json",
+     "sha256": "4febc873b20a7760099b3c3a5f25141ab6f99313d5109f9aa8b2d4fd933e7782",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:20",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    },
+    {
+     "name": "it-screen-weather-starting-cold-profile-base-3.json",
+     "sha256": "d79f1944def2d08ffade108d4f94d49752b6d495dbd755b39d6ec6c3b42d566d",
+     "commit": "b59f832",
+     "when": "2026-11-04 02:21",
+     "project": {
+      "buildings": 4,
+      "subfields": 2,
+      "module_count": 778
+     }
+    }
+   ]
+  }
+ ]
+}

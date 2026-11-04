@@ -1,0 +1,22 @@
+{
+  "python": "3.12.6 (tags/v3.12.6:a4a2d2b, Sep  6 2024, 20:11:23) [MSC v.1940 64 bit (AMD64)]",
+  "executable": "C:\\Users\\Grasso\\dev\\meridiana\\.venv\\Scripts\\python.exe",
+  "windows": "sys.getwindowsversion(major=10, minor=0, build=26100, platform=2, service_pack='')",
+  "processor_identifier": null,
+  "processor_architecture": null,
+  "platform_processor": "",
+  "platform_machine": "",
+  "packages": {
+    "PySide6": "6.12.0",
+    "shiboken6": "6.12.0",
+    "pvlib": "0.16.1",
+    "numpy": "2.5.4",
+    "pyqtgraph": "0.14.0",
+    "shapely": "2.2.0"
+  },
+  "limitations": [
+    "Sandbox: WMI denied; GPU driver and competing load not controlled.",
+    "Native Windows platform; on-screen primary Dell at DPR 2.",
+    "No writes to the source project, production settings, other branches or network publication."
+  ]
+}

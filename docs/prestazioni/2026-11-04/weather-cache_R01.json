@@ -1,0 +1,33 @@
+{
+  "hours": 8760,
+  "horizon_directions": 48,
+  "receipts": [
+    {
+      "fixture": "pvgis53-tmy-rho.json.gz",
+      "sha256": "5e516245f8aa4417f509cc2449326f22883fa1d78b7de8398e48340da22a1bb9",
+      "params": {
+        "lat": 45.5226,
+        "lon": 9.03,
+        "outputformat": "json",
+        "usehorizon": 0
+      }
+    },
+    {
+      "fixture": "pvgis53-printhorizon-rho.json",
+      "sha256": "708ec8f17c5d39e55a4d34ebb4bb1af71ad24bc81563457c6f984dd4384f60b4",
+      "params": {
+        "lat": 45.5226,
+        "lon": 9.03,
+        "outputformat": "json"
+      }
+    }
+  ],
+  "usable_as_embedded_by_current_reader": true,
+  "metadata_alias_normalisation": {
+    "from": "PVGIS-SARAH3",
+    "to": "SARAH-3"
+  },
+  "hourly_columns_sha256_before": "642e01901f2233c1fbe6bf7a3274680ba81a9a2288bb10cef4043339d9eed358",
+  "hourly_columns_sha256_after": "642e01901f2233c1fbe6bf7a3274680ba81a9a2288bb10cef4043339d9eed358",
+  "provenance": "PVGIS 5.3 responses recorded on 2026-10-24; cache prepared offline on 2026-11-04."
+}
