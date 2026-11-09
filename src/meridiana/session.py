@@ -10,6 +10,7 @@ A change that raises leaves the project as it was (A 4.3, defect 1)."""
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import dataclasses
 import json
@@ -18,7 +19,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import model, recovery
+from . import model, recovery, year_store
+from .i18n import _
 
 UNDO_LIMIT = 200                # steps kept: at 0,2 MB a step on a large project, 40 MB at most
 MERGE_SECONDS = 2.0             # the arrows of a field clicked again and again are one step
@@ -36,14 +38,17 @@ MERGE_SECONDS = 2.0             # the arrows of a field clicked again and again 
 #   project:variants    the variants, or the one in hand
 #   project:underlays   the images under the drawing
 #   project:report      the report's choices (template, chapters, profile, client)
+#   project:defaults    the layout the next sub-fields start from (R523): no sub-field already drawn moves
 #   restored            with the topics above: an undo or a redo put the project back
 #   file                another project took the place of this one
 #   layout:<id>         the layout of that sub-field came back (new, or gone)
 #   energy              the energy year came back
 #   selection           what is selected
 #   checks              the inputs of the checks changed (with the topics that changed them)
-GEOMETRY = ("footprint", "height", "roof", "parapet")
-NO_LAYOUT = {"project:text", "project:privacy", "project:underlays", "project:rules", "project:report"}
+GEOMETRY = ("footprint", "height", "roof", "parapet",
+            "base", "on", "part_of")       # format 28: where a body stands, whose it is (study 37)
+NO_LAYOUT = {"project:text", "project:privacy", "project:underlays", "project:rules", "project:report",
+             "project:defaults"}
 CHECK_INPUTS = {"project:text", "project:fire", "project:rules", "project:energy", "project:subfields",
                 "project:geometry", "project:site", "project:variants"}
 
@@ -76,6 +81,8 @@ def topics_of(before: dict, after: dict) -> set[str]:
         topics.add("project:underlays")
     if (before.get("report") or {}) != (after.get("report") or {}):
         topics.add("project:report")
+    if (before.get("layout_defaults") or {}) != (after.get("layout_defaults") or {}):
+        topics.add("project:defaults")
     a, b = before.get("buildings") or [], after.get("buildings") or []
     if a != b:
         pairs = list(zip(a, b, strict=False))
@@ -165,6 +172,20 @@ class Undo:
                 self.clean_index = self.clean_index - drop if self.clean_index >= drop else -1
         self._tell()
 
+    def join_last(self) -> bool:
+        """The last step joins the one before it, as one thing for Undo (a cut and its paste, R432). Not across a save:
+        what was saved stays a place to come back to. Whether it joined."""
+        if self.index < 2 or self.index != len(self.steps) or self.clean_index == self.index - 1:
+            return False
+        last = self.steps.pop()
+        top = self.steps[-1]
+        top.text, top.after, top.when = last.text, last.after, last.when
+        self.index -= 1
+        if self.clean_index > self.index:
+            self.clean_index = -1
+        self._tell()
+        return True
+
     def undo(self) -> None:
         if not self.can_undo():
             return
@@ -234,25 +255,84 @@ class ProjectSession:
         self.layout_keys: dict = {}
         self.energy: dict = {}
         self.generation = 0             # of the layouts asked for
+        self.realigned: list = []       # what the last layout took out of the strings (R442)
         self.energy_generation = 0      # of the energy years asked for
         self.energy_key_asked = ""      # the inputs of the energy year asked for last, and of the one in hand
         self.energy_key_computed = ""
+        self._year_parts_computed: dict = {}
+        self._weather_computed = ""
         self.selection = ("site", "")
         self.selected_module = ("", "")
+        self.many = []                  # R439: ids of one kind selected together; the selection is one of them
         self.undo = Undo(self._restore, undo_limit)
         self.saved_state: str | None = self.state_key()
         self.autosaved: Path | None = None
         self.listeners: list[Callable[[set], None]] = []
+        self._held: set | None = None
+        # R547 «Risposta subito» (Daniel, 08/11/2026): a change that moves modules is shown at once by the listeners
+        # subscribed `at_once` (the plan, the 3D), the others told after the window has drawn it. `later(call)` is
+        # given by the window (call after its next frame); without it every listener is told at once, as before.
+        self.later: Callable[[Callable[[], None]], None] | None = None
+        self._at_once: list = []
+        self._waiting: set | None = None
 
     # events
 
-    def subscribe(self, listener: Callable[[set], None]) -> None:
+    def subscribe(self, listener: Callable[[set], None], at_once: bool = False) -> None:
         self.listeners.append(listener)
+        if at_once:
+            self._at_once.append(listener)
 
     def changed(self, *topics: str) -> None:
+        if self._held is not None:
+            self._held.update(topics)
+            return
         told = set(topics)
-        for listener in list(self.listeners):
+        if self._waiting is not None:       # R547: the others hear it after the frame, all topics together
+            self._waiting.update(told)
+            listeners = [x for x in self.listeners if x in self._at_once]
+        else:
+            listeners = list(self.listeners)
+        for listener in listeners:
             listener(told)
+
+    def _answer_first(self, keys_before: dict | None) -> None:
+        """R547: the change just made moves modules (a layout to wait for): the listeners subscribed `at_once` show it
+        now, the others (properties, checks, plant, the year's bridge that asks for the layout...) once the window
+        has drawn it, in one round with whatever else came meanwhile."""
+        if self.later is None or self._waiting is not None or keys_before is None:
+            return
+        if keys_before == self._expected_keys():        # no module moves (a name, a default, a rule): all at once
+            return
+        self._waiting = set()
+        self.later(self._tell_waiting)
+
+    def _keys_for_answer(self) -> dict | None:
+        """R547: the layout keys before a change, to tell whether it moves modules (only with a window that answers first)."""
+        return self._expected_keys() if self.later is not None else None
+
+    def _tell_waiting(self) -> None:
+        topics, self._waiting = self._waiting, None
+        if not topics:
+            return
+        for listener in [x for x in self.listeners if x not in self._at_once]:
+            listener(set(topics))
+
+    @contextlib.contextmanager
+    def held(self):
+        """The changes made inside told once at the end, with all their topics together: one round of the listeners
+        where there would be one for each (study 41: the layout that comes back and the strings it realigns, two
+        rounds of every view for one gesture)."""
+        if self._held is not None:
+            yield
+            return
+        self._held = set()
+        try:
+            yield
+        finally:
+            topics, self._held = self._held, None
+            if topics:
+                self.changed(*topics)
 
     # the project as data
 
@@ -261,7 +341,9 @@ class ProjectSession:
 
     def _restore(self, data: dict) -> None:
         topics = topics_of(self.project.to_json(), data)
+        keys_before = self._keys_for_answer()
         self.project = model.Project.from_json(copy.deepcopy(data), check=False)
+        self._answer_first(keys_before)
         self.changed("restored", *topics)
 
     def edit(self, text: str, change: Callable[[model.Project], object], merge=None) -> set[str]:
@@ -269,7 +351,10 @@ class ProjectSession:
         change within a moment joins the last one. If `change` raises, the project is put back as it was
         before and the error goes on to the caller. The topics of what changed (empty: nothing did, and
         nobody is told)."""
+        if self._waiting is not None:       # R547: a new edit finds every view told of the one before
+            self._tell_waiting()
         before = self.snapshot()
+        keys_before = self._keys_for_answer()
         try:
             change(self.project)
         except Exception:
@@ -279,6 +364,7 @@ class ProjectSession:
         topics = topics_of(before, after) if before != after else set()
         if topics:
             self.undo.push(Step(text, before, after, merge))
+            self._answer_first(keys_before)
             self.changed(*topics)
         return topics
 
@@ -307,7 +393,28 @@ class ProjectSession:
     def select(self, kind: str, oid: str, module: tuple = ("", "")) -> None:
         """What is selected: an object by kind and id, and within a sub-field one of its modules."""
         self.selection, self.selected_module = (kind, oid), tuple(module)
+        self.many = []
         self.changed("selection")
+
+    def select_many(self, kind: str, oids: list) -> None:
+        """More objects of one kind together (R439): the last is the selection, the one the others follow."""
+        oids = list(dict.fromkeys(oids))
+        if len(oids) < 2:
+            self.select(kind, oids[0] if oids else "")
+            return
+        self.selection, self.selected_module = (kind, oids[-1]), ("", "")
+        self.many = oids
+        self.changed("selection")
+
+    def selected_many(self) -> list:
+        """The ids selected together that still exist, in order; none when fewer than two are left."""
+        field = {"building": "buildings", "subfield": "subfields", "exclusion": "exclusions", "prop": "props"}.get(
+            self.selection[0])
+        if not self.many or field is None:
+            return []
+        there = {x.id for x in getattr(self.project, field)}
+        left = [oid for oid in self.many if oid in there]
+        return left if len(left) > 1 else []
 
     # what the layouts and the energy need and give
 
@@ -331,9 +438,45 @@ class ProjectSession:
         changed = ({sid for sid, r in results.items() if self.results.get(sid) is not r}
                    | {sid for sid in self.results if sid not in results})
         self.results, self.layout_keys = results, keys
-        if changed:
-            self.changed(*(f"layout:{sid}" for sid in sorted(changed)), "checks")
+        with self.held():           # the layout and the strings realigned on it: the views told once
+            if changed:
+                self.changed(*(f"layout:{sid}" for sid in sorted(changed)), "checks")
+            # after a change, the strings follow the modules laid (R442); a project just opened is left as saved (its
+            # year answers for it), the checks say what is lost
+            self.realigned = self.realign_strings() if self.undo.can_undo() or self.undo.can_redo() else []
         return True
+
+    def realign_strings(self) -> list[tuple[str, int, list]]:
+        """The modules no longer laid taken out of the strings (R442), as the program's own note (`amend`): for each
+        string that lost some, its label, how many and the names of their sub-fields. Sub-fields whose layout is
+        not in hand keep their keys."""
+        from .energy import plant
+        runs = ((self.project.energy or {}).get("strings") or {}).get("runs") or []
+        if not runs:
+            return []
+        laid, kept = set(), set()
+        for sf in self.project.subfields:
+            result = self.results.get(sf.id)
+            if result is None or isinstance(result, Exception):
+                kept.add(sf.id)
+                continue
+            removed = set(sf.removed)
+            laid.update(f"{sf.id}/{m.key}" for m in result.modules if m.key not in removed)
+        after, gone = plant.realign(runs, laid, kept)
+        if not gone:
+            return []
+        self.amend(lambda p: p.energy.__setitem__("strings", plant.touched(p.energy.get("strings"), after)))
+        names = {sf.id: sf.name or sf.id for sf in self.project.subfields}
+        return [(label, n, [names.get(sid, sid) for sid in sids]) for label, n, sids in gone]
+
+    @staticmethod
+    def realigned_text(gone: list[tuple[str, int, list]]) -> str:
+        """What `realign_strings` did, in one line for the status bar (R442)."""
+        from .i18n import ngettext
+        total = sum(n for _label, n, _where in gone)
+        where = ", ".join(f"{label} ({n}, {' + '.join(sfs)})" for label, n, sfs in gone)
+        return ngettext("{n} module no longer laid taken out of the strings: {where}",
+                        "{n} modules no longer laid taken out of the strings: {where}", total).format(n=total, where=where)
 
     def energy_key(self, layout_keys: dict | None = None) -> str:
         """Everything the energy year is computed from, as one string: the layouts in hand (by their keys; or the
@@ -341,6 +484,9 @@ class ProjectSession:
         year: a change that leaves it alone (a name, a rule) does not compute the year again (study 18, A 9.2).
         The inverter and the input of each sub-field are in it (they are not in the layout's key:
         model.ELECTRICAL)."""
+        return json.dumps(self._energy_inputs(layout_keys), sort_keys=True, default=str)
+
+    def _energy_inputs(self, layout_keys: dict | None = None) -> dict:
         p = self.project
         keys = self.layout_keys if layout_keys is None else layout_keys
         wired = {sf.id: [sf.params.get(k) for k in model.ELECTRICAL] for sf in p.subfields}
@@ -356,15 +502,86 @@ class ProjectSession:
         walls = {b.id: b.wall_top() for b in p.buildings if b.wall_top() != b.height}
         if walls:
             data["shade"]["walls"] = walls
-        shading = [dataclasses.asdict(x) for x in p.props if x.casts_shadow()]
+        from . import ifc_shade
+        true = ifc_shade.key(p)
+        if true:                            # r22-ifc: the IFC model's shapes cast shadows; only then, as above
+            data["shade"]["ifc"] = true
+        shading = [x.as_dict() for x in p.props if x.casts_shadow()]
         if shading:                         # R269: a tree placed shades the year; only then, the keys of before stay
             data["props"] = shading
-        return json.dumps(data, sort_keys=True, default=str)
+        return data
 
-    def energy_asked(self) -> int:
-        """A new energy year is asked for: its generation; the inputs it is computed from are remembered."""
+    def layouts_answer(self) -> bool:
+        """Whether the layouts in hand are those of the project as it is (no layout to wait for): a change that moves
+        no module, such as the strings realigned on the layout just come (R442)."""
+        return bool(self.layout_keys) and self.layout_keys == self._expected_keys()
+
+    def _expected_keys(self) -> dict:
+        """The key each filled sub-field will have: from the change itself, not from when its layout comes back."""
+        return {sf.id: self.project.layout_key(sf) for sf in self.project.subfields if sf.filled}
+
+    def weather_mark(self) -> str:
+        """When the typical year inside the project was fetched: the same weather whether it is only in the cache or, after
+        a save, in the file too; empty when the project holds none."""
+        climate = self.project.climate or (getattr(self.project, "resources", {}) or {}).get("weather") or {}
+        tmy = climate.get("tmy") if isinstance(climate, dict) else None
+        return str(tmy.get("fetched", "")) if isinstance(tmy, dict) else ""
+
+    def year_fingerprint(self) -> str:
+        """The inputs of the year as they are now, in one short mark (R437): modules, strings, inverters, site, losses,
+        what shades. The same as a year's: that year answers for this project. The weather is a site's, and it counts
+        apart (year_outdated), since it enters the file only when it is saved."""
+        return year_store.fingerprint_of(self.energy_key(self._expected_keys()))
+
+    def year_outdated(self) -> bool:
+        """Whether the year in hand no longer answers for the project: its inputs, or a weather fetched since."""
+        if self.energy_outdated():
+            return True
+        now, was = self.weather_mark(), self._weather_computed
+        return bool(self.energy and now and was and now != was)
+
+    def _year_parts(self, layout_keys: dict | None = None) -> dict:
+        """The inputs of the year, each with a mark, to say what changed (the layouts: as the project will lay them
+        out, or `layout_keys`)."""
+        data = self._energy_inputs(self._expected_keys() if layout_keys is None else layout_keys)
+        energy = data.pop("energy") or {}
+        parts = {f"energy.{k}": v for k, v in energy.items()}
+        parts.update(data)
+        return {name: year_store.fingerprint_of(json.dumps(value, sort_keys=True, default=str)) for name, value in parts.items()}
+
+    def year_changes(self) -> list[str]:
+        """What changed since the year in hand was computed, in words; empty when it answers for the project."""
+        if not self.energy or not self.year_outdated():
+            return []
+        words = {"layouts": _("the layout of the modules"), "modules": _("the modules"), "site": _("the site"),
+                 "wired": _("the inverters"), "shade": _("the buildings and the obstacles"), "props": _("the buildings and the obstacles"),
+                 "consumption": _("the consumption"), "economics": _("the economics"), "energy.strings": _("the strings"),
+                 "energy.losses": _("the losses"), "energy.inverters": _("the inverters")}
+        now, was = self._year_parts(), self._year_parts_computed
+        changed = [name for name in sorted(set(now) | set(was)) if now.get(name) != was.get(name)]
+        said: list[str] = [_("the weather")] if self.weather_mark() and self._weather_computed and self.weather_mark() != self._weather_computed else []
+        for name in changed:
+            word = words.get(name) or (_("the inverters") if "inverter" in name else _("the settings of the plant"))
+            if word not in said:
+                said.append(word)
+        return said
+
+    def take_year(self, results: dict, layout_keys: dict, energy: dict) -> None:
+        """A year kept from an earlier computation of these very inputs (year_store): in hand as if just computed."""
+        self.layout_done(self.generation, results, layout_keys)
+        self.energy_asked()
+        self.energy_done(self.energy_generation, energy)
+
+    def energy_asked(self, layout_keys: dict | None = None) -> int:
+        """A new energy year is asked for: its generation; the inputs it is computed from are remembered, with the
+        keys of the layouts it is computed on: those in hand, or `layout_keys` for a job that lays out by itself
+        (the Quick's, with `_expected_keys()`: at opening there is no layout in hand yet, and the year came back
+        «not up to date» with nothing changed, r17-unita). What each input was is kept too, to say later what
+        changed (R437)."""
         self.energy_generation += 1
-        self.energy_key_asked = self.energy_key()
+        keys = self.layout_keys if layout_keys is None else layout_keys
+        self.energy_key_asked = self.energy_key(keys)
+        self._year_parts_asked = self._year_parts(keys)
         return self.energy_generation
 
     def energy_done(self, generation: int, out: dict) -> bool:
@@ -372,6 +589,8 @@ class ProjectSession:
             return False
         self.energy = out
         self.energy_key_computed = self.energy_key_asked
+        self._year_parts_computed = getattr(self, "_year_parts_asked", None) or self._year_parts()
+        self._weather_computed = self.weather_mark()
         self.changed("energy", "checks")
         return True
 
@@ -410,7 +629,12 @@ class ProjectSession:
         """The project as it would be saved, less the time of the save: equal keys, nothing to save. An image
         under the drawing counts by its size and its ends: written whole it cost 38 ms at each step with an
         image of 8 MB, and an image only changes by being imported again."""
-        data = self.project.to_json() | {"modified": None}
+        return self.key_of(self.project)
+
+    @staticmethod
+    def key_of(project: model.Project) -> str:
+        """state_key of any project: of the copy a save in the background wrote (adopt_save)."""
+        data = project.to_json() | {"modified": None}
         data["underlays"] = [{**u, "image": [len(u["image"]), u["image"][:64], u["image"][-64:]]}
                              for u in data.get("underlays", [])]
         data.pop("resources", None)             # rebuilt on save, never a designer's change to undo
@@ -430,6 +654,7 @@ class ProjectSession:
         self.results, self.layout_keys, self.energy = {}, {}, {}
         self.energy_key_asked = self.energy_key_computed = ""
         self.selection, self.selected_module = ("site", ""), ("", "")
+        self.many = []
         self.undo.clear()
         self.saved_state = self.state_key() if saved else None
         self.changed("file", "project")
@@ -453,6 +678,24 @@ class ProjectSession:
         self.path = target
         self.mark_saved()
         return target
+
+    def adopt_save(self, project: model.Project, written: model.Project, path: Path, key: str) -> bool:
+        """A save made in the background on a copy of the project (R537) taken back: `written` is that copy after
+        its save, `key` the state_key when it was taken. The file is the project's, its time and resources come in;
+        untouched meanwhile, the project is as saved (its report as written, the undo clean); changed meanwhile,
+        what is to save is the difference from the file (the dot of «modified» stays). Another project in hand
+        meanwhile (an open, a new one): nothing changes. True when the project in hand is as saved."""
+        if self.project is not project:
+            return False
+        untouched = self.state_key() == key
+        project.modified, project.resources = written.modified, written.resources
+        self.path = Path(path)
+        if untouched:
+            project.report = written.report
+            self.mark_saved()
+        else:
+            self.saved_state = self.key_of(written)
+        return untouched
 
     def save_revision(self, cache_dir: Path | None = None, report_profile: dict | None = None) -> Path:
         """A new file next to this one, with the suffix _R01, _R02...: the previous one stays as it was."""

@@ -38,9 +38,11 @@ from ..i18n import _, number
 
 if TYPE_CHECKING:
     import pandas as pd             # imported where it is used: 0,4 s at the window's start otherwise (task 18c)
+from .. import resources
 from . import nearshade
 from .components import InverterSpec, ModuleSpec
 from .meteo import Horizon, Meteo
+from . import worked
 from .pedigree import Quantity, Record, Source, Step, computed
 
 REFERENCE_YEAR = 2026
@@ -177,6 +179,10 @@ class Simulation:
     # only the array step and the system's again
     parts: object = field(default=None, repr=False, compare=False)
     inverters: list = field(default_factory=list)   # individually converted/clipped hourly and annual results
+    # the powers of step 8 by array, hour by hour, and the plant's hour of most irradiance with its inverter's
+    # powers: what the steps' lines with the numbers show (energy/worked.py, R479)
+    stages: dict = field(default_factory=dict, repr=False, compare=False)
+    example: dict = field(default_factory=dict, repr=False, compare=False)
 
 
 @dataclass
@@ -215,6 +221,7 @@ class _ArrayPass:
     beam_clear: np.ndarray | None = None           # effective direct irradiance before row/obstacle shading
     diffuse_eff: np.ndarray | None = None
     row_share: np.ndarray | None = None            # one shaded row, before the front-row fraction
+    example: dict = field(default_factory=dict)    # the values of its hour of most irradiance, as computed (R479)
 
 
 @dataclass
@@ -269,6 +276,25 @@ def profile_iam(aoi, theta: list[float], iam: list[float]) -> np.ndarray:
     return np.where(x >= 90.0, 0.0, np.clip(out, 0.0, 1.0))
 
 
+def profile_terms(x: float, theta: list[float], iam: list[float]) -> dict:
+    """The points profile_iam joins at the angle `x`: the straight line between two points, or the cubic through
+    four with the weight of each point (Lagrange's), as the line with the numbers writes them (R479)."""
+    t, v = np.asarray(theta, dtype=float), np.asarray(iam, dtype=float)
+    if t[-1] < 90.0:
+        t, v = np.append(t, 90.0), np.append(v, 0.0)
+    if v[0] > 0:
+        v = v / v[0]
+    n, below = len(t), np.flatnonzero(v < 1.0)
+    k = int(np.clip(np.searchsorted(t, abs(x), side="right") - 1, 0, n - 2))
+    if n >= 4 and below.size and k >= below[0]:
+        j = int(np.clip(k - 1, 0, n - 4))
+        weights = [float(np.prod([(abs(x) - t[j + m]) / (t[j + i] - t[j + m]) for m in range(4) if m != i]))
+                   for i in range(4)]
+        return {"kind": "cubic", "t": [float(t[j + i]) for i in range(4)], "v": [float(v[j + i]) for i in range(4)],
+                "l": weights}
+    return {"kind": "linear", "t": [float(t[k]), float(t[k + 1])], "v": [float(v[k]), float(v[k + 1])]}
+
+
 def _pvwatts_inverter(pdc: np.ndarray, pac_nom: float, eta_nom: float) -> tuple[np.ndarray, np.ndarray]:
     """AC power before and after clipping. The PVWatts v5 curve (Dobos 2014, as pvlib.inverter.pvwatts):
     eta = eta_nom / 0.9637 (-0.0162 z - 0.0059 / z + 0.9858), z = Pdc / Pdc0, Pdc0 = Pac,nom / eta_nom."""
@@ -303,7 +329,8 @@ def _network_ac(network, losses, hours):
         details.append({'number': n, 'name': f'{spec.manufacturer} {spec.model}',
                         'p_ac_kw': spec.pac / 1000, 'dc_kwh': float(pdc.sum() / 1000),
                         'clipping_kwh': float((before - limited).sum() / 1000),
-                        'ac_kwh': float(grid.sum() / 1000), 'p_dc': pdc, 'p_ac': grid})
+                        'ac_kwh': float(grid.sum() / 1000), 'p_dc': pdc, 'p_ac': grid,
+                        'p_raw': before, 'p_clip': limited, 'pac': spec.pac, 'eta': spec.eta})
     return unclipped, clipped, delivered, details
 
 
@@ -358,6 +385,7 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
     per_array: list[_ArrayPass] = []
     weights = np.array([a.p_stc for a in arrays]) / p_stc
     for i, a in enumerate(arrays):
+        resources.checkpoint()          # a stop asked between two arrays (R478)
         surface_az = (180.0 + a.azimuth) % 360.0
         aoi = pvlib.irradiance.aoi(a.tilt, surface_az, zenith, sun_az)
         poa = pvlib.irradiance.get_total_irradiance(a.tilt, surface_az, zenith, sun_az, dni, ghi, dhi,
@@ -369,6 +397,12 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
                                      for name in ("poa_sky_diffuse", "poa_ground_diffuse", "poa_direct",
                                                   "poa_circumsolar"))
         g_inc = beam + sky + ground
+        h = int(np.argmax(g_inc))
+        ex = {"hour": h, "aoi": float(np.asarray(aoi, dtype=float)[h]), "dni": float(dni[h]), "ghi": float(ghi[h]),
+              "sky": float(sky[h]), "ground": float(ground[h]), "beam": float(beam[h]), "circum": float(circum[h]),
+              "albedo": losses.albedo, "zenith": float(zenith[h]), "sun_az": float(sun_az[h]),
+              "sun_el": float(sun_el[h]), "blocked": bool(blocked[h]),
+              "horizon": float(np.atleast_1d(hor.at(np.array([sun_az[h]])))[0]) if hor is not None else None}
         # 3. far shading: the direct part and the circumsolar part come from the sun's direction, the
         # mountains hide part of the rest of the sky, and the ground in front loses its light behind them
         sun_part = beam + circum
@@ -379,6 +413,7 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
         beam_left = np.where(blocked, 0.0, sun_part)
         beam_clear = beam_left.copy()
         g_far = beam_left + sky_left + ground
+        ex.update(beam_far=float(beam_left[h]), sky_far=float(sky_left[h]), ground_far=float(ground[h]))
         # 3b. near shading of tilted rows: every row but the first is shaded by the one in front
         shaded = np.zeros(hours)
         row_share = np.zeros(hours)
@@ -412,6 +447,9 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
         beam_left = beam_left * (1.0 - shaded)
         sky_left = sky_left * (1.0 - sky_mask)
         g_rows = beam_left + sky_left + ground
+        ex.update(f_s=float(shaded[h]), row_share=float(row_share[h]), beam_rows=float(beam_left[h]),
+                  sky_rows=float(sky_left[h]),
+                  ground_rows_lost=1.0 - float(ground[h]) / ex["ground_far"] if ex["ground_far"] > 0 else 0.0)
         # 3c. the shadows of the obstacles of the scene, on the planes of the modules
         near = None
         f_obst = np.zeros(hours)
@@ -424,6 +462,10 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
             beam_left = beam_left * (1.0 - f_obst)
             sky_left = sky_left * near.sky
         g_near = beam_left + sky_left + ground
+        ex.update(f_o=float(f_obst[h]), beam_near=float(beam_left[h]), sky_near=float(sky_left[h]),
+                  ground_near=float(ground[h]), year_far=float(g_far.sum() / 1000.0),
+                  year_rows_lost=float((g_far - g_rows).sum() / 1000.0),
+                  year_near_lost=float((g_rows - g_near).sum() / 1000.0))
         # 4. glass reflection
         profile = a.module.iam_profile
         if profile:
@@ -439,6 +481,8 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
             iam_b = np.nan_to_num(np.asarray(pvlib.iam.ashrae(aoi, b=losses.iam_b0), dtype=float))
             iam_sky, iam_ground = float(np.atleast_1d(iam_d["sky"])[i]), float(np.atleast_1d(iam_d["ground"])[i])
         g_iam = beam_left * iam_b + sky_left * iam_sky + ground * iam_ground
+        ex.update(iam_sky=iam_sky, iam_ground=iam_ground, b0=losses.iam_b0,
+                  iam_terms=profile_terms(ex["aoi"], profile["theta"], profile["iam"]) if profile else None)
         # 5. soiling
         g_eff = g_iam * (1.0 - losses.soiling / 100.0)
         # 6. cell temperature, 7. the module: the heat balance needs the module's efficiency at its working
@@ -453,12 +497,15 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
         gamma = a.module.gamma_pmax / 100.0
         eta_op = np.full(hours, eta_stc)
         for _pass in range(2):
+            eta_used = eta_op
             t_cell = np.asarray(pvlib.temperature.pvsyst_cell(g_far, temp_air, wind, u_c=u_c, u_v=u_v,
                                                               module_efficiency=eta_op, alpha_absorption=0.9), dtype=float)
             p_t = p_25 * (1.0 + gamma * (t_cell - 25.0))
             lit = g_far > 1.0
             eta_op = np.where(lit, np.clip(np.divide(p_t, n * area * g_far, out=np.zeros(hours), where=lit),
                                            0.0, 1.5 * eta_stc), eta_stc)
+        ex.update(eta=float(eta_used[h]), temp_air=float(temp_air[h]), wind=float(wind[h]),
+                  p25_module=float(p_25[h] / n))
         sunny = g_far > 50.0
         eta_mean = float(eta_op[sunny].mean()) if sunny.any() else eta_stc
         # the array's current over its STC current (the module model's current at the maximum power point,
@@ -473,7 +520,8 @@ def _first_pass(meteo: Meteo, arrays: list[ArraySpec], inverter: InverterSpec | 
                                     t_cell, i_ratio, shaded, extra_rows, f_obst, near, layout, lid_pct(losses, a.module),
                                     u_c, u_v, eta_mean, dome, alb, sky_mask, ground_lost,
                                     beam_clear * iam_b * (1 - losses.soiling / 100),
-                                    (sky_left * iam_sky + ground * iam_ground) * (1 - losses.soiling / 100), row_share))
+                                    (sky_left * iam_sky + ground * iam_ground) * (1 - losses.soiling / 100), row_share,
+                                    example=ex))
     return _Pass(meteo, arrays, inverter, losses, hor, index, hours, p_stc, weights, ghi, dhi, temp_air, sun_az, sun_el,
                  per_array)
 
@@ -506,6 +554,7 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
     any_electrical = False
     opts = optimizers.arrays if optimizers is not None else {}
     stage = []                      # what the first half of step 8 gave each array: for the strings' limit, the rest
+    stages = {}                     # what step 8 gave each array, hour by hour: for the lines with the numbers
     for ap in first.per_array:
         a = ap.a
         opt = opts.get(a.key)
@@ -566,6 +615,9 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
         p_dc = np.clip(p_cut - losses.dc_wiring / 100.0 * a.p_connected * squares, 0.0, None)
         if network is not None:
             p_cut, p_dc = (network.stages[a.key][k] for k in ('p_cut', 'p_dc'))
+        stages[a.key] = {"p_t": p_t, "p_mm": p_mm, "p_el": p_el, "p_opt": p_opt, "p_cut": p_cut, "p_dc": p_dc,
+                         "cut_rows": st["cut_rows"], "cut_obst": st["cut_obst"], "mismatch": st["mismatch"],
+                         "network": network is not None}
         for key, val in (("poa", g_inc), ("poa_far", g_far), ("poa_near", g_near), ("poa_iam", g_iam),
                          ("poa_eff", g_eff)):
             tot[key] += weights[i] * val
@@ -583,7 +635,7 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
         per_array[-1]["obstacle_shading"] = float((g_rows - g_near).sum() / far_sum) if far_sum > 0 else 0.0
         per_array[-1]["albedo_seen"] = alb
         _array_steps(rec, a, losses, lid, u_c, u_v, src_meteo, hor, dome, alb, eta_mean,
-                     network=network is not None)
+                     network=network is not None, ex=ap.example)
         if a.rows > 1 and a.pitch > 0 and a.slant > 0:
             _rows_step(rec, a, per_array[-1]["row_shading"], ap.sky_mask, ap.ground_lost, losses)
         mm = p_mm.sum()
@@ -593,6 +645,9 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
             _rows_electrical_step(rec, a, layout, lost, losses)
         if near is not None:
             _obstacles_step(rec, a, near, per_array[-1]["obstacle_shading"])
+        # the shadings of the rows and of the obstacles come in the light's order, after the horizon and before the
+        # glass: the line with the numbers of the glass uses the light they leave
+        _move_after(rec, (f"{a.key}.rows", f"{a.key}.obstacles"), (f"{a.key}.far", f"{a.key}.poa"))
         if extra is not None:
             per_array[-1]["electrical_shading"] = (float((p_mm * np.clip(st["cut_obst"], 0.0, 1.0)).sum() / mm)
                                                    if mm > 0 else 0.0)
@@ -625,7 +680,7 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
         ac_unclipped, ac, p_ac, per_inverter = _network_ac(network, losses, hours)
     p_grid = p_ac * (1.0 - losses.unavailability / 100.0)
     if (ac_unclipped - ac).sum() > 0.005 * ac_unclipped.sum():
-        notes.append(_("The inverter clips {pct} of the energy: check the DC/AC ratio.").format(
+        notes.append(_("The inverter clips {pct} of the energy, with this DC/AC ratio.").format(
             pct=f"{number(100 * (ac_unclipped - ac).sum() / ac_unclipped.sum(), 1)}%"))   # the decimal comma (24/10/2026)
 
     hourly = pd.DataFrame({
@@ -687,6 +742,18 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
     monthly["pr"] = monthly.e_ac / (p0 * monthly.poa)
 
     _system_steps(rec, inverter, losses, p_stc, energy, h_poa, pr, separate=network is not None)
+    h0 = int(np.argmax(tot["poa"]))
+    if network is None:
+        unit = {"p_dc": tot["p_dc"], "pac": pac_nom, "eta": inverter.eta, "p_raw": ac_unclipped, "p_clip": ac,
+                "p_grid": p_grid, "subject": ""}
+    elif per_inverter:
+        best = max(per_inverter, key=lambda d: d["p_dc"][h0])
+        unit = {"p_dc": best["p_dc"], "pac": best["pac"], "eta": best["eta"], "p_raw": best["p_raw"],
+                "p_clip": best["p_clip"], "p_grid": best["p_ac"],
+                "subject": _("Inverter {n}: {name}.").format(n=best["number"], name=best["name"])}
+    else:
+        unit = None
+    example = {"hour": h0, "inverter": unit, "energy": energy, "pr": pr, "p_stc": p_stc, "h_poa": h_poa}
     if network is not None:
         rec.add(Step('electrical_network', _("Cell cohorts, bypass diodes and the connected electrical network"),
                      r"V_s(I)=\sum_j V_j(I),\quad I_p(V)=\sum_s I_s(V),\quad P_{MPP}=\max_V V I_p(V)",
@@ -698,11 +765,24 @@ def _finish(first: _Pass, strings: dict | None, optimizers: Optimizers | None = 
                        "currents, cell avalanche and hot spots are not calculated."),
                      [], Quantity('', _("Individually converted inverters"), len(per_inverter), '', computed(''), 0),
                      'pvlib single-diode equations; PVsyst Module Layout I/V combination'))
+    worked.annotate(rec, first, stages, per_array, example)
     return Simulation(hourly=hourly, monthly=monthly, chain=chain, record=rec, arrays=per_array,
                       p_stc_kw=p0, p_ac_kw=pac_nom / 1000.0, energy_kwh=energy, specific_yield=energy / p0,
-                      pr=pr, notes=notes, parts=first, inverters=per_inverter)
+                      pr=pr, notes=notes, parts=first, inverters=per_inverter, stages=stages, example=example)
 
 
+def _move_after(rec: Record, keys: tuple, anchors: tuple) -> None:
+    """Put the steps `keys` (those there) right after the first of `anchors` there, in their order."""
+    moving = [s for k in keys for s in rec.steps if s.key == k]
+    anchor = next((a for a in anchors if rec.find(a) is not None), None)
+    if not moving or anchor is None:
+        return
+    rest = [s for s in rec.steps if s not in moving]
+    at = next(i for i, s in enumerate(rest) if s.key == anchor) + 1
+    rec.steps[:] = rest[:at] + moving + rest[at:]
+
+
+IAM_SUM = r"G_{IAM} = G'_{b}\,IAM(\theta) + G'_{d}\,IAM_d + G'_{r}\,IAM_r"
 ALBEDO_VANISH_DEG = 20.0           # PVsyst: the far albedo vanishes behind a horizon this high (advanced parameter)
 
 
@@ -731,9 +811,11 @@ def _estimate_shade() -> str:
 
 
 def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: float, u_v: float, src_meteo: Source,
-                 hor: Horizon | None, dome: float, alb: float, eta_mean: float, *, network=False) -> None:
+                 hor: Horizon | None, dome: float, alb: float, eta_mean: float, *, network=False,
+                 ex: dict | None = None) -> None:
+    ex = ex or {}
     designer = Source("input", _("drawn by the designer"))
-    default = Source("default", _("Meridiana's default, can be changed in the losses"))
+    default = Source("default", _("default value of the calculation, can be changed in the losses"))
     m = a.module
     head = f"{a.name}: "
     names = {"perez": "Perez 1990", "haydavies": "Hay and Davies 1980", "isotropic": "Liu and Jordan 1963"}
@@ -749,9 +831,10 @@ def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: flo
                          "p. 13-14").format(model=names.get(losses.transposition, losses.transposition))))
     if hor is not None:
         rec.add(Step(f"{a.key}.far", head + _("Far shading of the horizon"),
-                     r"G_{b}' = 0\ \mathrm{if}\ \alpha_s < h_{oriz}(\gamma_s),\quad "
+                     r"G'_{b} = 0\ \mathrm{if}\ \alpha_s < h_{oriz}(\gamma_s),\quad "
                      r"f_{cielo} = 1 - \frac{\int_{\alpha < h_{oriz}} \cos\theta\,d\Omega}{\int_{cielo} \cos\theta\,d\Omega},"
-                     r"\quad f_{alb} = \overline{\max\left(0,\ 1 - \frac{h_{oriz}(\gamma)}{20°}\right)}",
+                     r"\quad f_{alb} = \overline{\max\left(0,\ 1 - \frac{h_{oriz}(\gamma)}{20°}\right)},"
+                     r"\quad G_{far} = G'_{b} + G'_{cs} + (G_{d,cielo} - G_{cs})\,f_{cielo} + G_{r}\,f_{alb}",
                      _("When the sun is below the horizon line in its direction, the direct and circumsolar parts are "
                        "lost. Of the rest of the sky, taken as uniform, the plane loses the part hidden by the horizon. "
                        "The light reflected by the ground in front is reduced as PVsyst reduces it: linearly with the "
@@ -761,32 +844,38 @@ def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: flo
                       Quantity(r"f_{alb}", _("share of the light reflected by the ground kept"), 100 * alb, "%",
                                Source("model", _("PVsyst's albedo factor of the horizon, vanishing at 20°")), 1)],
                      None, hor.source.ref))
+    marion = Source("model", _("the module's law integrated over the sky and over the ground (Marion 2017)"))
+    iam_diffuse = [Quantity(r"IAM_d", _("reflection factor of the diffuse light of the sky"), ex["iam_sky"], "",
+                            marion, 3),
+                   Quantity(r"IAM_r", _("reflection factor of the light reflected by the ground"), ex["iam_ground"], "",
+                            marion, 3)] if "iam_sky" in ex else []
     if m.iam_profile:
         prof = m.iam_profile
         points = "; ".join(f"{number(t, 0 if t == int(t) else 1)}°: {number(v, 2 if round(v, 2) == v else 3)}"
                            for t, v in zip(prof["theta"], prof["iam"], strict=True))
         rec.add(Step(f"{a.key}.iam", head + _("Reflection on the glass"),
                      r"IAM(\theta) = \sum_{i=0}^{3} IAM_{j+i} \prod_{m \neq i} "
-                     r"\frac{\theta - \theta_{j+m}}{\theta_{j+i} - \theta_{j+m}}",
+                     r"\frac{\theta - \theta_{j+m}}{\theta_{j+i} - \theta_{j+m}},\quad " + IAM_SUM,
                      _("Part of the light is reflected by the glass, more at grazing angles, as the module's own profile "
                        "says. Between its points the profile is joined as PVsyst joins it: a straight line up to the "
                        "first point below 1, then a cubic through the four points around the angle (the formula). The "
                        "diffuse parts use the same profile integrated over the sky and the ground (Marion 2017)."),
-                     [Quantity("", _("profile of the module"), points, "", m.source)], None,
+                     [Quantity("", _("profile of the module"), points, "", m.source), *iam_diffuse], None,
                      _("PVsyst forum, staff replies in «IAM Profile - only 9 points?» and «IAM change in "
                        "PVsyst versions»; pvlib.iam.marion_integrate")))
     else:
         rec.add(Step(f"{a.key}.iam", head + _("Reflection on the glass"),
-                     r"IAM(\theta) = 1 - b_0\left(\frac{1}{\cos\theta} - 1\right)",
+                     r"IAM(\theta) = 1 - b_0\left(\frac{1}{\cos\theta} - 1\right),\quad " + IAM_SUM,
                      _("Part of the light is reflected by the glass, more at grazing angles. The diffuse parts use the "
                        "same law integrated over the sky and the ground (Marion 2017)."),
-                     [Quantity("b_0", _("ASHRAE coefficient"), losses.iam_b0, "", default, 3)], None,
+                     [Quantity("b_0", _("ASHRAE coefficient"), losses.iam_b0, "", default, 3), *iam_diffuse], None,
                      _("ASHRAE incidence angle modifier (pvlib.iam.ashrae, pvlib.iam.marion_diffuse)")))
     rec.add(Step(f"{a.key}.soiling", head + _("Soiling"), r"G_{eff} = G_{IAM}\,(1 - s)",
                  _("Dust, pollen, bird droppings on the glass, as a share of the light."),
                  [Quantity("s", _("soiling loss"), losses.soiling, "%", default, 1)], None, ""))
     rec.add(Step(f"{a.key}.temperature", head + _("Temperature of the cells"),
-                 r"T_c = T_a + \frac{\alpha\,G_{inc}\,(1 - \eta(T_c))}{U_c + U_v\,v}",
+                 r"T_c = T_a + \frac{\alpha\," + ("G_{far}" if hor is not None else "G_{inc}") +
+                 r"\,(1 - \eta(T_c))}{U_c + U_v\,v}",
                  _("The heat balance of the module: what the module absorbs and does not turn into electricity "
                    "warms it; the air carries it away, more where the back is open. The efficiency is the module's "
                    "at its working point of the hour (its power over the incident irradiance), not the STC one: a "
@@ -805,7 +894,7 @@ def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: flo
     estimate = _("The step «loss for the irradiance level» that follows from this model is an estimate: it rests on "
                  "parameters fitted to a few points of the datasheet, not on measurements at low light.")
     if sdm.get("linear"):
-        formula, expl = r"P = P_{STC}\,\frac{G_{eff}}{1000}\,[1 + \gamma\,(T_c - 25)]", _(
+        formula, expl = r"P = N\,P_{STC}\,\frac{G_{eff}}{1000}\,[1 + \gamma\,(T_c - 25)]", _(
             "The one-diode model could not be fitted to this datasheet: the power is taken proportional to the "
             "irradiance (the behaviour at low light is not modelled, the step «loss for the irradiance level» is "
             "zero by construction).")
@@ -814,7 +903,7 @@ def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: flo
     elif sdm.get("form") == "pvsyst":
         formula = (r"I = I_L - I_0\left[e^{\frac{V + I R_s}{\gamma_d N_s V_t}} - 1\right] - \frac{V + I R_s}{R_{sh}(G)},"
                    r"\quad R_{sh}(G) = R_{sh} + (R_{sh,0} - R_{sh})\,e^{-5.5\,G/G_{ref}}"
-                   r",\quad P = P_{mp,25}(G_{eff})\,[1 + \gamma\,(T_c - 25)]")
+                   r",\quad P = N\,P_{mp,25}(G_{eff})\,[1 + \gamma\,(T_c - 25)]")
         if sdm.get("origin") == "pan":
             src = Source("data", _("one-diode parameters of the module's PVsyst file"), m.source.label)
             expl = _("PVsyst's one-diode model with the parameters of the module's PVsyst file: the shunt resistance "
@@ -834,7 +923,7 @@ def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: flo
             if sdm.get("low_light_from") == "datasheet":
                 low_src = Source("data", _("datasheet, relative efficiency at 200 W/m² (IEC 61853-1)"), m.source.ref)
             else:
-                low_src = Source("default", _("conventional value of Meridiana: the datasheet gives no low-light datum "
+                low_src = Source("default", _("conventional value of the calculation: the datasheet gives no low-light datum "
                                               "(recent crystalline modules measure 96-99% to IEC 61853-1)"))
             low = [Quantity(r"\eta_{200}/\eta_{STC}", _("relative efficiency at 200 W/m², 25 °C"),
                             sdm["low_light_200"], "%", low_src, 1)]
@@ -851,7 +940,7 @@ def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: flo
                       "(pvlib.pvsystem.calcparams_pvsyst)")
     else:
         formula = (r"I = I_L - I_0\left[e^{\frac{V + I R_s}{a}} - 1\right] - \frac{V + I R_s}{R_{sh}}"
-                   r",\quad P = P_{mp,25}(G_{eff})\,[1 + \gamma\,(T_c - 25)]")
+                   r",\quad P = N\,P_{mp,25}(G_{eff})\,[1 + \gamma\,(T_c - 25)]")
         expl = _("Single-diode model of De Soto with the five parameters the CEC list gives for this module (fitted by "
                  "NREL's SAM to the datasheet): it gives the power at 25 °C for the irradiance of the hour. The "
                  "temperature acts through the datasheet's coefficient of the maximum power.") + " " + estimate
@@ -895,6 +984,8 @@ def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: flo
                   Quantity("r", _("DC wiring loss at STC"), losses.dc_wiring, "%", default, 1)], None,
                  _("PVsyst help, «Array ohmic wiring loss»: loss fraction at STC, R I² in the simulation")))
     if network:
+        rec.find(f'{a.key}.array').formula = (r"P_{mm} = P\,(1-q)(1-LID)(1-m),\quad P_{DC} = P_{MPP} - "
+                                              r"r\,P_{STC}\left(\frac{I_{mp}}{I_{mp,STC}}\right)^2")
         rec.find(f'{a.key}.array').explanation = _(
             "Quality, LID and residual module mismatch scale the module currents. One module per optimizer "
             "removes the residual mismatch allowance. DC wiring is estimated from the actual string operating "
@@ -905,7 +996,7 @@ def _array_steps(rec: Record, a: ArraySpec, losses: Losses, lid: float, u_c: flo
 def _electrical_quantities(losses: Losses) -> list[Quantity]:
     """The fraction of the electrical effect applied, with its default explained."""
     return [Quantity("f_{el}", _("share of the electrical effect applied"), losses.electrical_fraction, "%",
-                     Source("default", _("Meridiana's default: the whole effect of Martinez-Moreno's model, an upper "
+                     Source("default", _("default value of the calculation: the whole effect of Martinez-Moreno's model, an upper "
                                          "bound (two modules up a table, the strings along the rows); PVsyst's "
                                          "«fraction for electrical effect» is the designer's choice, 100% or less "
                                          "(50% in some public reports)")), 0)]
@@ -919,7 +1010,7 @@ def _rows_step(rec: Record, a: ArraySpec, loss: float, sky_mask: float, ground_l
               "losses (PVsyst's «linear shadings»)."))
     rec.add(Step(f"{a.key}.rows", a.name + ": " + _("Shading between the rows"),
                  r"f_s = f(\theta_z,\ \gamma_s,\ \beta,\ w,\ p)\cdot\frac{n-1}{n},\quad "
-                 r"G_b' = G_b\,(1 - f_s),\quad G_d' = G_d\,(1 - \Delta_d),\quad G_r' = G_r\,(1 - \Delta_r)",
+                 r"G'_{b} = G_b\,(1 - f_s),\quad G'_{d} = G_d\,(1 - \Delta_d),\quad G'_{r} = G_r\,(1 - \Delta_r)",
                  _("Each row but the first is shaded by the one in front when the sun is low: the shaded share of the "
                    "row's height, hour by hour, takes the direct light. The row in front also hides part of the sky, "
                    "as the row's view factor of the sky says, and most of the ground, whose light between the rows "
@@ -963,8 +1054,8 @@ def _obstacles_step(rec: Record, a: ArraySpec, near: nearshade.Shading, loss: fl
     names = near.obstacles
     shown = ", ".join(names[:8]) + (_(" and {n} more").format(n=len(names) - 8) if len(names) > 8 else "")
     rec.add(Step(f"{a.key}.obstacles", a.name + ": " + _("Shading of the obstacles"),
-                 r"f_o(\gamma_s,\ \alpha_s) = \frac{A_{ombra}}{A_{moduli}},\quad G_b' = G_b\,(1 - f_o),\quad "
-                 r"G_d' = G_d\,f_{cielo,o}",
+                 r"f_o(\gamma_s,\ \alpha_s) = \frac{A_{ombra}}{A_{moduli}},\quad G'_{b} = G_b\,(1 - f_o),\quad "
+                 r"G'_{d} = G_d\,f_{cielo,o}",
                  _("The obstacles of the scene (exclusions with a height, parapets, the other buildings) cast their "
                    "shadows along the sun's rays on the plane of the modules, row by row. The shaded share of the "
                    "modules' area is computed for the sun's positions every 5° of azimuth and 4° of elevation along "
@@ -977,7 +1068,7 @@ def _obstacles_step(rec: Record, a: ArraySpec, near: nearshade.Shading, loss: fl
                  Quantity(r"\bar{f_o}", _("irradiance lost to the obstacles over the year"), 100 * loss, "%",
                           computed(""), 2),
                  _("Table of shading factors on the sun's positions, as PVsyst's near shadings; geometry: shadows of "
-                   "convex solids cast on the plane of the modules (Meridiana, nearshade.py)")))
+                   "convex solids cast on the plane of the modules")))
 
 
 def _string_cuts(per_array: list, stage: list, optimizers: Optimizers | None, hours: int) -> dict:
@@ -1025,6 +1116,26 @@ def _optimizers_step(rec: Record, a: ArraySpec, opt: ArrayOptimizers, losses: Lo
                           100 * (1.0 - (1.0 - got["loss"]) * (1.0 - got["cut"])), "%", computed(""), 2),
                  _("{datasheet}, p. 1-2 (module-level MPPT, weighted efficiency); SolarEdge, Single String Design "
                    "Guidelines v1.1, p. 4 (the power cut)").format(datasheet=opt.source.ref or opt.source.label)))
+    if not opt.v_string:
+        # optimizers on an inverter with MPPT (R456): no fixed voltage, the inverter's MPPT chooses it
+        step = rec.find(f'{a.key}.optimizers')
+        step.formula = (r"U_j = \min\left(\eta\,P_j(I)/I,\ U_{out,max}\right),\quad I \geq I_{in,j},\quad "
+                        r"U_{MPPT,min} \leq \sum_j U_j \leq U_{MPPT,max},\quad I \leq I_{out,max}")
+        step.inputs = [q for q in step.inputs if q.symbol != r"U_{string}"]
+        step.explanation = _(
+            "Each optimizer follows the maximum power point of its module (or of its two modules) within its input's "
+            "voltage and current, and gives that power times its weighted efficiency at the string's one current: it "
+            "only lowers the voltage, so its output current is at least the module's. The inverter's MPPT chooses "
+            "the string's voltage within its window: with every optimizer at its maximum power the program takes the "
+            "highest voltage that keeps it, the least current; where the window or the currents do not allow it, "
+            "the modules whose current the string cannot reach move above their maximum power point, solved exactly. "
+            "On a long string the optimizers hold the voltage within the inverter's. The DC wiring loss goes with the "
+            "square of the string's current. Optimizers on some modules of a string only are not represented: the "
+            "whole string has them.")
+        step.reference = _("{datasheet} (module-level MPPT, weighted efficiency, output voltage and current); Huawei, "
+                           "optimizer guides DE 10/11/2025 p. 9 and FR 15/07/2026 p. 8 (long strings)").format(
+            datasheet=opt.source.ref or opt.source.label)
+        return
     if network:
         step = rec.find(f'{a.key}.optimizers')
         step.formula = r"\sum_j \min(P_j/I,V_{out,max,j})\geq U_{string},\quad I\leq I_{out,max}"
@@ -1066,7 +1177,7 @@ def _electrical_step(rec: Record, a: ArraySpec, near: nearshade.Shading, n_strin
 
 def _system_steps(rec: Record, inv: InverterSpec, losses: Losses, p_stc: float, energy: float, h_poa: float,
                   pr: float, separate: bool = False) -> None:
-    default = Source("default", _("Meridiana's default, can be changed in the losses"))
+    default = Source("default", _("default value of the calculation, can be changed in the losses"))
     rec.add(Step("inverter", _("Inverter"),
                  r"\eta = \frac{\eta_{nom}}{0.9637}\left(-0.0162\,\zeta - \frac{0.0059}{\zeta} + 0.9858\right),"
                  r"\quad P_{AC} = \min(\eta\,P_{DC},\ P_{AC,nom})",

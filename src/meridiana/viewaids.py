@@ -177,6 +177,65 @@ def measure_text(m: dict) -> str:
 LIFT = 0.04             # an outline on a roof stands this much above it, not to be hidden in its surface
 
 
+def string_segments(project, results: dict) -> tuple:
+    """The strings in 3D (R433, R456): for each string the segments from the centre of each module to the next one's, a
+    little above the modules, so that a string that goes on over another face is seen climbing over the ridge; and
+    a cross on each module with a power optimizer (on some modules only, those named). (strings (M, 2, 3), crosses
+    (K, 2, 3)) in Qt axes."""
+    import numpy as np
+
+    from . import mesh
+    from .energy import plant
+    good = {k: v for k, v in results.items() if not isinstance(v, Exception) and v is not None}
+    where = {(sfid, m.key): m for sfid, r in good.items() for m in getattr(r, "modules", [])}
+    runs = ((project.energy or {}).get("strings") or {}).get("runs") or []
+    lift = 0.12
+    lines, crosses = [], []
+    if not runs or not where:
+        return np.zeros((0, 2, 3)), np.zeros((0, 2, 3))
+
+    def point(m):
+        return mesh.to_qt(float(m.centre[0]), float(m.centre[1]), float(m.z) + lift)
+
+    import math
+
+    from .energy import faces
+    face_of = faces.faces_of(project)
+    for r in runs:
+        refs = [tuple(k.split("/", 1)) for k in r.get("modules") or [] if tuple(k.split("/", 1)) in where]
+        for a, b in zip(refs, refs[1:], strict=False):
+            ma, mb = where[a], where[b]
+            fa, fb = face_of.get(a[0]), face_of.get(b[0])
+            if fa is None or fb is None or faces.same_face(fa, fb):
+                lines.append((point(ma), point(mb)))
+                continue
+            # over the ridge: through a point above the higher module by the slope over half the way
+            half = 0.5 * math.dist(ma.centre, mb.centre)
+            rise = half * math.tan(math.radians(max(ma.tilt, mb.tilt, 0.0)))
+            mid = mesh.to_qt((ma.centre[0] + mb.centre[0]) / 2, (ma.centre[1] + mb.centre[1]) / 2,
+                             max(ma.z, mb.z) + rise + lift)
+            lines += [(point(ma), mid), (mid, point(mb))]
+    try:
+        state = plant.wired(project, good)
+    except (ValueError, KeyError, TypeError):
+        state = None
+    for s in getattr(state, "strings", []) or []:
+        u = state.unit(s.inverter)
+        for sfid, key, _c in s.modules:
+            if not plant.module_optimized(u, sfid, key):
+                continue
+            m = where.get((sfid, key))
+            if m is None:
+                continue
+            c = np.asarray(m.corners, dtype=float)
+            x, y = float(m.centre[0]), float(m.centre[1])
+            for i, j in ((0, 2), (1, 3)):
+                a = (x + 0.18 * (c[i][0] - x), y + 0.18 * (c[i][1] - y))
+                b = (x + 0.18 * (c[j][0] - x), y + 0.18 * (c[j][1] - y))
+                crosses.append((mesh.to_qt(a[0], a[1], float(m.z) + lift), mesh.to_qt(b[0], b[1], float(m.z) + lift)))
+    return (np.asarray(lines, dtype=float).reshape(-1, 2, 3), np.asarray(crosses, dtype=float).reshape(-1, 2, 3))
+
+
 def outline(project, results: dict, kind: str, oid: str, key: str = ""):
     """The edges the 3D view outlines for an object (mesh.ribbons draws them): (M, 2, 3) in Qt axes. A building
     with its corners and pitches, a pitch, a sub-field on its roof, an exclusion as the prism it rises to, a
@@ -187,7 +246,7 @@ def outline(project, results: dict, kind: str, oid: str, key: str = ""):
     none = np.zeros((0, 2, 3))
     if kind == "building":
         b = project.building(oid)
-        return mesh.building_edges(b.footprint, b.pitches()) if b is not None and len(b.footprint) >= 3 else none
+        return mesh.building_edges(b.footprint, b.pitches(), b.base) if b is not None and len(b.footprint) >= 3 else none
     if kind == "pitch":
         bid, _sep, i = oid.partition(":")
         b = project.building(bid)

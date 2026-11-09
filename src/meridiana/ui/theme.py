@@ -1,6 +1,6 @@
 """The look of the window (study 13, «Meridiana», with the colour chosen of section 12): the Fusion style on every
 system, a full palette made from theme_colors.derive (every role, in the Active, Inactive and Disabled groups,
-Accent included), a small global style sheet without fonts, and Inter loaded from its files (R95), in the styles of
+Accent included), a small global style sheet without fonts, and the chosen font loaded from its files (Plex by default, R390), in the styles of
 the catalogue (design.Text, R121) for the kinds of widget that have one of their own (`class_fonts`). The scroll bars
 are drawn by the application's style, ui/scrollbars.ScrollStyle (R100).
 
@@ -23,6 +23,7 @@ from PySide6.QtGui import QColor, QFont, QFontDatabase, QGuiApplication, QPalett
 from PySide6.QtWidgets import QApplication, QStyleFactory
 
 from .. import log, paths, theme_colors
+from ..config import Config
 from ..i18n import _
 
 PORTAL = ("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop", "org.freedesktop.portal.Settings")
@@ -53,7 +54,8 @@ def mark(symbol: str) -> str:
 
 
 _RAW: list = []         # the text's font as read from its file: which characters it draws
-_CHOSEN: list = ["inter"]   # the key of FONTS in use
+DEFAULT_FONT = Config().font
+_CHOSEN: list = [DEFAULT_FONT]   # the key of FONTS in use
 
 
 def in_font(ch: str) -> bool:
@@ -414,6 +416,8 @@ class SystemAccent(QObject):
     motion = Signal(bool)            # True: less motion, please
 
     def __init__(self, app):
+        if not isinstance(app, QGuiApplication):    # its palette() on a QCoreApplication is an access violation
+            raise RuntimeError(f"SystemAccent needs a QGuiApplication, not {type(app).__name__}")
         super().__init__(app)
         self.value = ""
         self.reduced_motion = False
@@ -513,7 +517,7 @@ class Theme(QObject):
             self.scroll_style = scrollbars.install(self.app)
         # after the style: setting one gives the lists, the menus, the tooltips and the status bar the platform's
         # font again (Segoe UI 9 pt on Windows: the project's tree and the checks were 12 px, R121)
-        self.family = load_fonts(self.cfg.font if self.cfg is not None else "inter")
+        self.family = load_fonts(self.cfg.font if self.cfg is not None else DEFAULT_FONT)
         class_fonts(self.app)
         from .style import shared
         self.style = shared()                       # the groups' and the menus' style (ui/style.py)
@@ -714,13 +718,13 @@ def change_font(choice: str, app=None) -> bool:
     (change_text_size): every widget's font noted, the application's and the kinds' changed, the style sheet set again,
     then each widget given what it had in the new family. Whether it changed."""
     app = app or QApplication.instance()
-    family, tight = _font_families(choice if choice in FONTS else "inter")
+    family, tight = _font_families(choice if choice in FONTS else DEFAULT_FONT)
     if not family or app is None or (_FAMILY and _FAMILY[0] == family):
         return False
     everyone = [(w, QFont(w.font())) for w in app.allWidgets()]
     _FAMILY[:] = [family]
     _TIGHT[0] = tight
-    _CHOSEN[0] = choice if choice in FONTS else "inter"
+    _CHOSEN[0] = choice if choice in FONTS else DEFAULT_FONT
     _RAW.clear()
     base = QFont(app.font())
     base.setFamily(family)
@@ -737,12 +741,12 @@ def change_font(choice: str, app=None) -> bool:
     return True
 
 
-def load_fonts(choice: str = "inter") -> str:
+def load_fonts(choice: str = DEFAULT_FONT) -> str:
     """The font chosen from its files (data/fonts), as the application's font at the system's size; the charts
     get it too. Once per process. The family as Qt names it, "" when the files are not there."""
     if _FAMILY:
         return _FAMILY[0]
-    _CHOSEN[0] = choice if choice in FONTS else "inter"
+    _CHOSEN[0] = choice if choice in FONTS else DEFAULT_FONT
     family, _TIGHT[0] = _font_families(_CHOSEN[0])
     _FAMILY.append(family)
     app = QApplication.instance()

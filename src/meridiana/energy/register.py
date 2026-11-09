@@ -90,7 +90,7 @@ def frame(sim, load=None, econ=None):
 def header(project_name: str, variant: str, version: str, sources: list[tuple[str, str]], cols: list[Column],
            rows: int = 8760) -> list[str]:
     """The lines before the table, without their «#»: what the file is, the time, the sources, each column."""
-    lines = [_("Meridiana {v}: register of the calculations of «{project}», variant «{variant}», {day}").format(
+    lines = [_("Register of the calculations of «{project}», variant «{variant}», {day}; calculated with Meridiana {v}").format(
         v=version, project=project_name, variant=variant, day=date.today().strftime("%d/%m/%Y")),
         _("The typical year hour by hour, {n} rows: each the hour that starts at its time, in Italian local time "
           "({tz}, summer time included) of the reference year {year}; «UTC» is its offset.").format(

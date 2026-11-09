@@ -251,9 +251,10 @@ class ExportIfcJob(QRunnable):
     here), the strings proposed or the designer's, then the file. Each step is told (the bar); `interrupt` (Cancel)
     stops it at the next one, and nothing is written."""
 
-    def __init__(self, snapshot: dict, known: dict, path: Path, state: str = ""):
+    def __init__(self, snapshot: dict, known: dict, path: Path, state: str = "", what: str = "all"):
         super().__init__()
         self.snapshot, self.known, self.path, self.state = snapshot, known, path, state
+        self.what = what                    # "all", or "plant": the plant alone (R453)
         self.signals = IfcSignals()
         self.interrupted = False
 
@@ -271,18 +272,61 @@ class ExportIfcJob(QRunnable):
         try:
             p = model.Project.from_json(self.snapshot, check=False)
             results, _keys, _laid = jobs.layout_of(p, self.known)
+            plant = None
             try:
                 plant = plant_model.build(p, results, check=False)
                 strings = {(sf, key): s.label for s in plant.strings for sf, key, _c in s.modules}
             except Exception as error:      # noqa: BLE001  the strings are a property: the model goes without them
                 log.complain("ifc strings", error)
                 strings = {}
-            out = ifc_export.export(p, results, self.path, strings=strings, progress=self._step)
+            if self.what == "original":     # r22-ifc: the plant added to the architect's own file
+                from .. import ifc_append
+                out = ifc_append.append(p, results, ifc_append.original_of(p), self.path, strings, plant, self._step)
+            else:
+                out = ifc_export.export(p, results, self.path, strings=strings, progress=self._step, what=self.what,
+                                        plant=plant)
         except ifc_export.Interrupted:
             out = None
         except Exception as error:          # noqa: BLE001  a thread's boundary: said, not lost
             if not isinstance(error, OSError):
                 log.complain("ifc export", error)
+            out = error
+        tell(self.signals.done, out)
+
+
+class ExportDxfJob(QRunnable):
+    """The plan written as a DXF (dxf_export.py, R513) away from the window's thread: the layouts in hand (those missing
+    laid here), the strings proposed or the designer's, then the file, in the coordinates `frame` with the `parts`
+    asked. The steps are told as the IFC's (the same bar); `interrupt` stops it at the next one, and nothing is
+    written."""
+
+    def __init__(self, snapshot: dict, known: dict, path: Path, state: str = "", frame: str = "local",
+                 parts: tuple = ()):
+        super().__init__()
+        self.snapshot, self.known, self.path, self.state = snapshot, known, path, state
+        self.frame, self.parts = frame, tuple(parts)
+        self.signals = IfcSignals()
+        self.interrupted = False
+
+    def interrupt(self) -> None:
+        self.interrupted = True
+
+    def _step(self, fraction: float, what: str) -> None:
+        from .. import dxf_export
+        if self.interrupted:
+            raise dxf_export.Interrupted()
+        tell(self.signals.step, fraction, what)
+
+    def run(self):
+        from .. import dxf_export
+        try:
+            out = dxf_export.export_project(model.Project.from_json(self.snapshot, check=False), self.path,
+                                            self.known, self.frame, self.parts or dxf_export.PARTS, self._step)
+        except dxf_export.Interrupted:
+            out = None
+        except Exception as error:          # noqa: BLE001  a thread's boundary: said, not lost
+            if not isinstance(error, (OSError, ValueError)):
+                log.complain("dxf export", error)
             out = error
         tell(self.signals.done, out)
 
@@ -905,6 +949,9 @@ class MainWindow(QMainWindow):
         act(file, "export_ifc", lambda: self._export_ifc(),
             tip=_("The project as an IFC4 model, georeferenced: buildings, roofs, obstacles and every module with its "
                   "string, for the architect or the BIM coordinator"))
+        act(file, "export_dxf", lambda: self._export_dxf(),
+            tip=_("The plan as a DXF for AutoCAD and the free CAD programs: buildings, pitches, obstacles, every module "
+                  "with its data, the strings in their order and colour, the inverters, on named layers"))
         act(file, "copy_notes", lambda: self.checks_page._copy(),
             tip=_("The paragraphs of the rules that apply, with their sources, to paste into the technical report"))
         act(file, "report_logo", self._report_logo,
@@ -1036,6 +1083,9 @@ class MainWindow(QMainWindow):
                                (self.help_dock, "panel_help", _("The help of the field in hand, under the "
                                                                 "properties: show or hide it"))):
             act(panels, cid, None, tip=tip, action=dock.toggleViewAction())
+        # R549: Ctrl+B, the left side as in VS Code; here the left side is the Project panel
+        act(panels, "side_left", lambda: self.docks[0].toggleViewAction().trigger(),
+            tip=_("The cards on the left side: show or hide them all"))
         act(panels, "focus_checks", self._focus_checks,
             tip=_("The checks with the keyboard on them: the arrows go through them, the views follow"))
         act(panels, "fix_check", lambda: self.checks_page.apply_fix(),
@@ -1212,7 +1262,7 @@ class MainWindow(QMainWindow):
         for cid in ("compute", "fetch_pvgis", "inverter_catalog", "inverter_auto", "import_curve", "consumption_base",
                     "battery_catalog", "copy_notes", "export_report", "export_csv", "save_revision", "compare_variants",
                     "new_variant", "strings_auto", "strings_complete", "strings_manual", "strings_clear", "import_ifc",
-                    "export_ifc", "carport", "layout_east_west", "report_logo", "report_profile"):
+                    "export_ifc", "export_dxf", "carport", "layout_east_west", "report_logo", "report_profile"):
             self.commands[cid].setIcon(icons.icon(cid))
         # «Variant» in the right corner of the row of the phases (design 2.1): it is of every phase
         corner = QWidget()
@@ -1547,7 +1597,7 @@ class MainWindow(QMainWindow):
     def _import_curve_file(self) -> None:
         """A load curve from a file (the consumption page's own dialog), on the Consumption phase."""
         self.show_phase("consumption")
-        self.consumption_page._import()
+        self.consumption_page.real()._import()      # R398: the lazy page gives no private names
 
     def _consumption_base(self) -> None:
         """Where the consumption comes from: the Consumption phase, the keyboard on the choice."""
@@ -4785,6 +4835,11 @@ class MainWindow(QMainWindow):
                   lambda p: set_path(getattr(p, section), path, value), self._merge_key((section,), {path: value}))
 
     def _export_report(self) -> None:
+        from ..report_typst.compose import no_plant
+        problem = no_plant({"results": self.results})          # R459: no module laid, no plant to report on
+        if problem:
+            QMessageBox.information(self, _("Export the report"), problem)
+            return
         if not self.energy or self.energy.get("sim") is None:
             QMessageBox.information(self, _("Export the report"), _("Compute the production first (the Production "
                                                                     "page): the report shows its results."))
@@ -4806,10 +4861,22 @@ class MainWindow(QMainWindow):
             if answer != QMessageBox.StandardButton.Yes:
                 return
         start = str(Path(self.cfg.last_folder or Path.home()) / (self.project.name + ".pdf"))
-        name, _f = QFileDialog.getSaveFileName(self, _("Export the report"), start, _("PDF files (*.pdf)"))
+        # R460: the report as a PDF, or editable as ODT (LibreOffice) or DOCX (Word): the same document
+        filters = [_("PDF files (*.pdf)"), _("OpenDocument text, editable (*.odt)"),
+                   _("Word document, editable (*.docx)")]
+        name, chosen = QFileDialog.getSaveFileName(self, _("Export the report"), start, ";;".join(filters))
         if not name:
             return
-        path = Path(name if name.lower().endswith(".pdf") else name + ".pdf")
+        suffix = report.KINDS[filters.index(chosen)] if chosen in filters else report.kind_of(Path(name))
+        path = Path(name if name.lower().endswith("." + suffix) else name + "." + suffix)
+        if suffix != "pdf":
+            from ..report_typst import editable
+            missing = editable.missing_libraries(suffix)
+            if missing:
+                QMessageBox.warning(self, _("Export the report"), _(
+                    "The {kind} export needs a library that is not installed: {libraries}.").format(
+                    kind=suffix.upper(), libraries=", ".join(missing)))
+                return
         # the project as it is now (a copy: the designer goes on working while the report is written)
         project = model.Project.from_json(self.snapshot(), check=False)
         data, profile = self._report_data(), self._report_profile()
@@ -5240,7 +5307,8 @@ class MainWindow(QMainWindow):
         the DC/AC ratio wanted written down; then Meridiana's proposal on what was asked. For one inverter the
         strings of the other inverters are kept; the modules it takes are those in no string and its own."""
         e = self.project.energy or {}
-        s = dict(e.get("strings") if (e.get("strings") or {}).__class__ is dict else {})
+        # a project with no strings yet has no "strings" key: dict(None) stopped the proposal there (W01, 06/11/2026)
+        s = dict(e.get("strings") or {}) if (e.get("strings") or {}).__class__ is dict else {}
         extra = {}
         if options.get("strategy") and options["strategy"] != s.get("strategy"):
             extra["strings.strategy"] = options["strategy"]
@@ -6170,23 +6238,83 @@ class MainWindow(QMainWindow):
                                    "away.", "From {file}: {n} buildings, with their roofs and what stands on them. Ctrl+Z "
                                    "takes them away.", len(added)).format(file=Path(path).name, n=len(added)))
 
-    def _export_ifc(self, path: str = "") -> None:
+    def _export_ifc(self, path: str = "", what: str = "all") -> None:
         title = _("Export the model as IFC4")
         if self._ifc_missing(title) or self._ifc_busy():
             return
         if not path:
             start = str(Path(self.cfg.last_folder or Path.home()) / (self.project.name + ".ifc"))
-            path, _f = QFileDialog.getSaveFileName(self, title, start, _("IFC models (*.ifc)"))
+            # R453: the whole model, or the plant alone to lie on the architect's model (the federated model)
+            whole, alone = _("IFC4, the whole model (*.ifc)"), _("IFC4, the plant alone (*.ifc)")
+            plan = _("DXF, the plan of the plant (*.dxf)")          # R513: beside them, for AutoCAD
+            path, chosen = QFileDialog.getSaveFileName(self, title, start, f"{whole};;{alone};;{plan}")
             if not path:
                 return
+            if chosen == plan:
+                self._export_dxf(str(Path(path).with_suffix(".dxf")))
+                return
+            what = "plant" if chosen == alone else "all"
         target = Path(path if path.lower().endswith(".ifc") else path + ".ifc")
         # the project as it is written: later changes make it stale
-        job = ExportIfcJob(self.snapshot(), self.session.known_layouts(), target, self._state_key())
+        job = ExportIfcJob(self.snapshot(), self.session.known_layouts(), target, self._state_key(), what)
         job.signals.step.connect(self._ifc_export_step)
         job.signals.done.connect(self._ifc_export_done)
         self.ifc_job = job
         self.ifc_progress.begin(_("IFC4: {file}").format(file=target.name))
         self.pool.start(job)
+
+    def _export_dxf(self, path: str = "", frame: str | None = None, parts=None) -> None:
+        """The plan as a DXF (R513): the file, then the coordinates and what goes in it (DxfOptionsDialog; `frame` and
+        `parts` given skip it: the tests), then the job with the bar and Cancel of the IFC."""
+        from .. import dxf_export
+        title = _("Export the plan as DXF")
+        if not dxf_export.available():
+            QMessageBox.information(self, title, _("The DXF export needs ezdxf (MIT), which is not installed: «pip "
+                                                   "install ezdxf» in Meridiana's Python."))
+            return
+        if self._ifc_busy():
+            return
+        if not path:
+            start = str(Path(self.cfg.last_folder or Path.home()) / (self.project.name + ".dxf"))
+            path, _chosen = QFileDialog.getSaveFileName(self, title, start, _("DXF, the plan of the plant (*.dxf)"))
+            if not path:
+                return
+        if frame is None or parts is None:
+            from .dxf_options import DxfOptionsDialog
+            dialog = DxfOptionsDialog(dxf_export.frame_choices(self.project), dxf_export.part_names(),
+                                      getattr(self, "_dxf_options", None), self)
+            if dialog.exec() != QDialog.DialogCode.Accepted:
+                return
+            frame, parts = dialog.choice()
+            self._dxf_options = (frame, parts)
+        target = Path(path if path.lower().endswith(".dxf") else path + ".dxf")
+        job = ExportDxfJob(self.snapshot(), self.session.known_layouts(), target, self._state_key(), frame, parts)
+        job.signals.step.connect(self._dxf_export_step)
+        job.signals.done.connect(self._dxf_export_done)
+        self.ifc_job = job                  # one model or plan at a time, on the same bar
+        self.ifc_progress.begin(_("DXF: {file}").format(file=target.name))
+        self.pool.start(job)
+
+    def _dxf_export_step(self, fraction: float, what: str) -> None:
+        self.ifc_progress.set(fraction, _("DXF: {what}").format(what=what))
+
+    def _dxf_export_done(self, out) -> None:
+        job, self.ifc_job = self.ifc_job, None
+        self.ifc_progress.end()
+        if job is None:
+            return
+        if out is None:
+            self.statusBar().showMessage(_("DXF export stopped: nothing written."), 6000)
+            return
+        if isinstance(out, Exception):
+            QMessageBox.warning(self, _("Export the plan as DXF"), _("The plan could not be written: {error}").format(
+                error=out))
+            return
+        self.cfg.last_folder = str(job.path.parent)
+        self.exports["dxf"] = (job.path.name, time.strftime("%d/%m/%Y %H:%M"), job.state)
+        self._show_inspector()
+        self.statusBar().showMessage(ngettext("DXF written: {file}, {n} module", "DXF written: {file}, {n} modules",
+                                              out["modules"]).format(file=job.path.name, n=out["modules"]), 8000)
 
     def _ifc_export_step(self, fraction: float, what: str) -> None:
         self.ifc_progress.set(fraction, _("IFC4: {what}").format(what=what))

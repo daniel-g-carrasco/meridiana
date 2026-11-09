@@ -84,6 +84,9 @@ def validate(kind: str, record: dict) -> dict:
         for anchor in anchors.values():
             anchor.pop('verified', None)
             anchor['status'] = 'unverified_personal'
+    classes = out.get('classes')
+    if classes is not None and (not isinstance(classes, list) or not all(isinstance(c, dict) for c in classes)):
+        raise ValueError(_('Unknown product kind or invalid record.'))
     issues = audit_record(out, kind)["issues"]
     if issues:
         raise ValueError(_('Inconsistent product data: {issues}').format(issues="; ".join(issues)))

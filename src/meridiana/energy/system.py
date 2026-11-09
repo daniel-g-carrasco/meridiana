@@ -59,6 +59,9 @@ def obstacles_of(project, sf, prisms: list | None = None) -> list:
             name = f"{names.get(o['kind'], o['kind'])} {o['id']}"
         out += nearshade.prism(o["ring"], o["z0"], o["z1"], name)
     out += prop_solids(project)
+    # r22-ifc: with the import's option on, the model's elements cast the shadows instead of its bodies (ifc_shade)
+    from .. import ifc_shade
+    true, skip = ifc_shade.shading(project, sf)
     for b in project.buildings:
         if b.id == sf.building:
             own = b.pitch_index(sf.pitch)
@@ -71,11 +74,13 @@ def obstacles_of(project, sf, prisms: list | None = None) -> list:
             for pt in b.pitches():
                 out += nearshade.under(pt.corners_3d(), b.height - 0.05, b.name)
             continue
-        out += nearshade.prism(b.footprint, 0.0, b.wall_top(), b.name)
+        if b.id in skip:
+            continue
+        out += nearshade.prism(b.footprint, b.base, b.wall_top(), b.name)      # R453: from where it stands
         for pt in b.pitches():
             if _stands_up(pt, b):
                 out += nearshade.under(pt.corners_3d(), b.wall_top(), b.name)
-    return out
+    return out + true
 
 
 def shadow_exclusions(project, sf, window) -> list:

@@ -1,6 +1,7 @@
 """The compilation of the report with Typst (the `typst` wheel, Apache-2.0): a temporary folder that is the root of the
-compilation and all Typst can read, with the look (template.typ), the data (data.json) and the images copied in; the
-fonts from the program's own folder, no font of the system, so the PDF comes out the same on every machine.
+compilation and all Typst can read, with the look (template.typ), the data (data.json), the images and the mitex package
+(the formulas' TeX, Apache-2.0, carried in data/typst/mitex: no download) copied in; the fonts from the program's own
+folder (IBM Plex, OFL), no font of the system, so the PDF comes out the same on every machine.
 
 The texts of the user reach Typst only inside data.json, as JSON strings the template shows as text. Nothing here or
 in the template evaluates a string as markup."""
@@ -15,6 +16,7 @@ from pathlib import Path
 
 from .. import log, paths, symbol_shapes
 from ..i18n import _
+from . import look
 
 TEMPLATE = Path(__file__).resolve().parent / "template.typ"
 SAFE_NAME = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*$")
@@ -41,12 +43,19 @@ def _typst():
     return typst
 
 
-REPORT_FONTS = ("titillium-web", "inter")   # the report keeps these, whatever font the window has
+REPORT_FONTS = ("ibm-plex", "ibm-plex-report")   # the report keeps these, whatever font the window has (R460: Plex Sans Light, Math, Mono)
+MITEX = "mitex"                  # the folder of the mitex package in the report's folder, as template.typ imports it
 
 
 def font_folder() -> Path | None:
-    """The fonts the program carries (Titillium Web and Inter, OFL)."""
+    """The fonts the program carries (IBM Plex, Inter, Titillium Web; OFL)."""
     return paths.shipped("fonts")
+
+
+def mitex_folder() -> Path | None:
+    """The mitex package the program carries (data/typst/mitex)."""
+    folder = paths.shipped("typst")
+    return folder / MITEX if folder is not None and (folder / MITEX / "lib.typ").is_file() else None
 
 
 def fonts():
@@ -84,6 +93,12 @@ class Build:
         self.folder = tempfile.TemporaryDirectory(prefix="meridiana-report-")
         self.root = Path(self.folder.name)
         self.pdf_path = self.root / "report.pdf"
+        source = mitex_folder()
+        if source is None:
+            self.folder.cleanup()
+            raise EngineMissing(_("The mitex package of the report is missing from the program's data"))
+        import shutil
+        shutil.copytree(source, self.root / MITEX)
 
     def __enter__(self) -> Build:
         return self
@@ -113,7 +128,7 @@ class Build:
         """The PDF of `document` (compose.py), its pages and where each attachment's separator fell."""
         typst = _typst()
         # the marks of the results are the window's symbols (symbol_shapes.py, without Qt): their tracks go in the data
-        document = {**document, "marks": symbol_shapes.report_marks()}
+        document = {"style": look.style(), "tex": {}, **document, "marks": symbol_shapes.report_marks()}
         (self.root / "data.json").write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
         main = self.root / "main.typ"
         main.write_text(TEMPLATE.read_text(encoding="utf-8"), encoding="utf-8")
@@ -139,12 +154,13 @@ def self_check() -> tuple[bool, str]:
         return False, "the typst package is missing"
     typst = _typst()
     with Build() as b:
-        src = ('#set text(font: "Titillium Web", lang: "it")\n#table(columns: 2, [Prova °C], '
-               '[#text(font: "Inter")[kWh/m²]])').encode()
+        src = ('#set text(font: "IBM Plex Sans", weight: 300, lang: "it")\n#table(columns: 2, [Prova °C], '
+               '[#text(font: "IBM Plex Mono")[kWh/m²]])\n#show math.equation: set text(font: "IBM Plex Math")\n'
+               '$E = sum_(i=1)^n P_i dot Delta t$').encode()
         pdf = typst.compile(src, root=str(b.root), font_paths=fonts())
     if not pdf.startswith(b"%PDF"):
         return False, "typst wrote something that is not a PDF"
-    missing = {"Titillium Web", "Inter"} - set(fonts().families())
+    missing = {"IBM Plex Sans", "IBM Plex Math", "IBM Plex Mono"} - set(fonts().families())
     if missing:
         return False, f"fonts not found: {', '.join(sorted(missing))}"
     return True, f"typst, {len(pdf)} bytes"

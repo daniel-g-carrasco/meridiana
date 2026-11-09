@@ -15,6 +15,8 @@ The sources are of six kinds, so the designer sees at a glance what to check:
 
 from __future__ import annotations
 
+import math
+
 from dataclasses import dataclass, field
 
 from ..i18n import _, number
@@ -46,6 +48,10 @@ class Quantity:
         """The value as the window writes it, with its unit."""
         if isinstance(self.value, str):
             return self.value
+        # a value that cannot be had (a rate with nothing produced): «–», as the tiles write it; the Quick gets it as
+        # None, JSON having no NaN, and broke the Economics page with nought produced (06/11/2026)
+        if self.value is None or not math.isfinite(float(self.value)):
+            return "–"
         v = number(float(self.value), self.decimals)
         return f"{v} {self.unit}".strip()
 
@@ -59,6 +65,11 @@ class Step:
     inputs: list[Quantity] = field(default_factory=list)
     result: Quantity | None = None
     reference: str = ""
+    # the formula again with the numbers of one declared hour, LaTeX lines each ending in «= result» (R479,
+    # energy/worked.py); the hour said above them; for the tests, where the calculation keeps each value
+    worked: list[str] = field(default_factory=list)
+    example: str = ""
+    proof: list = field(default_factory=list)
 
 
 @dataclass

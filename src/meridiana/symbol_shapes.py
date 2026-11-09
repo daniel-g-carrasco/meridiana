@@ -3,10 +3,12 @@ square, their tones, the checks' levels, and the SVG of one. `ui/symbols.py` dra
 the report's Typst template (`report_typst/`) draws the same tracks, so a check has the same sign on the screen and on
 the paper. A change of geometry is made here, once.
 
-Flat: the ground of one tone (a disc, the warning's triangle, the forbidden's ring), the sign opaque on it, always
-white, painted and never cut out of the ground (the flat ones of 25/10/2026 were refused because their sign was cut
-out and showed what lay under it). The warning's triangle is as wide as the disc's diameter (R330, Daniel
-02/11/2026: «in larghezza sia uguale al diametro del cerchio»)."""
+Flat: the ground of one tone (a disc, the warning's triangle, the forbidden's ring) with the sign cut out of it, so
+that what lies under the symbol shows through the sign (R464, Daniel 06/11/2026: «vai con i trasparenti», after the
+comparison of the white sign and the cut one on white, a selected row, the dark theme and the map; it replaces the
+white opaque sign of R330). The report alone keeps the sign painted white (`report_marks`): on paper the two look the
+same. The warning's triangle is as wide as the disc's diameter (R330, Daniel 02/11/2026: «in larghezza sia uguale al
+diametro del cerchio»)."""
 
 from __future__ import annotations
 
@@ -46,17 +48,25 @@ LEVEL = {"fail": "stop", "warn": "warning", "info": "info", "ok": "check"}      
 TONES = {"good": theme_colors.STATUS["good"], "warning": theme_colors.WARNING_INK,
          "critical": theme_colors.STATUS["critical"], "info": "#2e4a6b", "neutral": "#77767b"}
 TONES_DARK = dict(TONES, info="#5b8fc9", neutral="#9a9996")       # on a dark ground the dark blue and the grey vanish
-LIGHT_SIGN = "#ffffff"                                              # the sign on every symbol, opaque
+LIGHT_SIGN = "#ffffff"                                              # the sign painted white: the report only
 
 
 def colour(name: str, dark: bool = False) -> str:
     return (TONES_DARK if dark else TONES)[SHAPES[name][0]]
 
 
-def svg(name: str, dark: bool = False, fill: str | None = None, signed: bool | None = None) -> bytes:
+def cut(name: str) -> str:
+    """The track of the symbol with its sign cut out (R464): the ground and the sign in one path, filled even-odd, so
+    the sign is a hole. The forbidden has no hole: its ring and its bar are the ground, of one tone."""
+    _tone, ground, track = SHAPES[name]
+    return ground if name == "forbidden" else ground + " " + track
+
+
+def svg(name: str, dark: bool = False, fill: str | None = None, signed: bool | None = None,
+        white: bool = False) -> bytes:
     """The symbol as an SVG file of 16 x 16. `fill`: the ground in that colour instead of the symbol's tone (a halo,
-    an off symbol, the report's palette); `signed`: whether the white sign is on it, by default only when `fill` is
-    not asked for."""
+    an off symbol, the report's palette); `signed`: whether the sign is on it, by default only when `fill` is not
+    asked for; the sign is cut out of the ground (R464), or painted white with `white` (the report)."""
     _tone, ground, track = SHAPES[name]
     signed = fill is None if signed is None else signed
     head = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">'
@@ -64,6 +74,8 @@ def svg(name: str, dark: bool = False, fill: str | None = None, signed: bool | N
     if name == "forbidden":
         # the ring and its bar are the ground, of one tone: the bar runs into the ring
         body = f'<path fill="{paint_}" fill-rule="evenodd" d="{ground}"/><path fill="{paint_}" d="{track}"/>'
+    elif signed and not white:
+        body = f'<path fill="{paint_}" fill-rule="evenodd" d="{cut(name)}"/>'
     else:
         body = f'<path fill="{paint_}" d="{ground}"/>' + (
             f'<path fill="{LIGHT_SIGN}" fill-rule="evenodd" d="{track}"/>' if signed else "")
@@ -76,4 +88,4 @@ FILL_TOKEN = "@fill@"
 def report_marks() -> dict:
     """The marks of the report's results, by level (ok, warn, fail, info): each the symbol's SVG with FILL_TOKEN where
     the report's own colour of the level goes (the template, report_typst/template.typ, puts it there)."""
-    return {level: svg(name, fill=FILL_TOKEN, signed=True).decode() for level, name in LEVEL.items()}
+    return {level: svg(name, fill=FILL_TOKEN, signed=True, white=True).decode() for level, name in LEVEL.items()}

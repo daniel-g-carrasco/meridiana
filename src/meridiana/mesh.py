@@ -148,10 +148,11 @@ def rgb(hex_: str) -> tuple[float, float, float]:
     return tuple(int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
 
 
-def building_triangles(footprint: list[Point], pitches, colours: dict | None = None
+def building_triangles(footprint: list[Point], pitches, colours: dict | None = None, base: float = 0.0
                        ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Positions, normals and colours (each N x 3, float32, Qt axes) of the walls and the roof pitches.
-    `pitches` are roofs.Pitch: a wall rises to the roof surface along its side, ridge ends included.
+    `pitches` are roofs.Pitch: a wall rises from `base` (R453: the ground, or the height the body stands at) to the
+    roof surface along its side, ridge ends included.
     `colours` ("wall", "roof", "roof_flat", as "#rrggbb" or 0-1 floats) replace the defaults: the selected
     building's, tinted."""
     pos, nor, col = [], [], []
@@ -182,33 +183,205 @@ def building_triangles(footprint: list[Point], pitches, colours: dict | None = N
 
     ring = [tuple(map(float, q)) for q in footprint]
     ccw = signed_area(ring) > 0
-    corners = {tuple(map(float, q)) for p in pitches for q in p.ring}
     for a, b in zip(ring, ring[1:] + ring[:1], strict=True):
-        between = sorted((c for c in corners if c not in (a, b) and _on_segment(c, a, b)),
-                         key=lambda c: math.dist(a, c))
-        top = [a, *between, b]
+        top = [a, *_roof_stops(pitches, a, b), b]
         dx, dy = b[0] - a[0], b[1] - a[1]
         nx, ny = (dy, -dx) if ccw else (-dy, dx)            # the side's outward normal, any outline shape
         out = np.array(to_qt(nx, ny, 0.0))
         for p0, p1 in zip(top, top[1:], strict=False):
             z0, z1 = roof_z(*p0), roof_z(*p1)
-            tri((p0[0], p0[1], 0.0), (p1[0], p1[1], 0.0), (p1[0], p1[1], z1), wall, out)
-            tri((p0[0], p0[1], 0.0), (p1[0], p1[1], z1), (p0[0], p0[1], z0), wall, out)
+            tri((p0[0], p0[1], base), (p1[0], p1[1], base), (p1[0], p1[1], z1), wall, out)
+            tri((p0[0], p0[1], base), (p1[0], p1[1], z1), (p0[0], p0[1], z0), wall, out)
+    for p0, p1, low0, low1, top0, top1, nx, ny in step_walls(pitches):
+        out = np.array(to_qt(nx, ny, 0.0))
+        tri((*p0, low0), (*p1, low1), (*p1, top1), wall, out)
+        tri((*p0, low0), (*p1, top1), (*p0, top0), wall, out)
     return _arrays(pos, nor, col)
 
 
+# what a model's outline and its pitches may differ by: the IFC reader joins and simplifies them (ifc_read._outline)
+ROOF_TOLERANCE = 0.06
+
+
+def _closest_on_ring(ring, x: float, y: float) -> tuple[float, float, float]:
+    """The point of a plan polygon closest to (x, y): (distance, its x, its y), the point itself when inside."""
+    inside = False
+    best = (math.inf, x, y)
+    for a, b in zip(ring, ring[1:] + ring[:1], strict=True):
+        ax, ay, bx, by = float(a[0]), float(a[1]), float(b[0]), float(b[1])
+        if (ay > y) != (by > y) and x < ax + (y - ay) * (bx - ax) / (by - ay):
+            inside = not inside
+        dx, dy = bx - ax, by - ay
+        d2 = dx * dx + dy * dy
+        t = 0.0 if d2 <= 0.0 else max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / d2))
+        qx, qy = ax + t * dx, ay + t * dy
+        d = math.hypot(x - qx, y - qy)
+        if d < best[0]:
+            best = (d, qx, qy)
+    return (0.0, x, y) if inside else best
+
+
 def _roof_z(pitches, x: float, y: float) -> float:
-    """The height of the roof at a point of the outline: the highest pitch whose side passes there."""
+    """The height of the roof at a point of the outline: the highest pitch that reaches it, or else the nearest pitch
+    at its closest point. Never a plane prolonged beyond its own outline: a steep pitch prolonged stands tens of metres
+    up (R14, a sports hall of 12 m whose walls reached 50,86 m through its pitch of 54 degrees)."""
     best = None
+    nearest = (math.inf, 0.0)
     for p in pitches:
-        ring = p.ring
+        d, qx, qy = _closest_on_ring(p.ring, x, y)
+        z = p.z(qx, qy)
+        if d <= ROOF_TOLERANCE:
+            best = z if best is None else max(best, z)
+        if d < nearest[0]:
+            nearest = (d, z)
+    if best is not None:
+        return best
+    return nearest[1] if pitches else 0.0
+
+
+def _roof_stops(pitches, a, b) -> list[tuple[float, float]]:
+    """Where the roof's profile bends along the outline's side a-b, in order from a: the corners of the pitches on the
+    side or close by, and where the side crosses a pitch's edge. A wall rising straight from a to b under a ridge that
+    ends on the side leaves a triangle of sky under it (R408: the ridge's corner lay a tenth of a millimetre off the side,
+    rounded when it was drawn)."""
+    length = math.dist(a, b)
+    if length < 1e-9:
+        return []
+    ux, uy = (b[0] - a[0]) / length, (b[1] - a[1]) / length
+    found: dict = {}
+
+    def add(s, point):
+        if 1e-6 < s < length - 1e-6:
+            found[round(s, 4)] = point
+    for p in pitches:
+        ring = [(float(q[0]), float(q[1])) for q in p.ring]
+        for c, d in zip(ring, ring[1:] + ring[:1], strict=True):
+            s = (c[0] - a[0]) * ux + (c[1] - a[1]) * uy
+            off = (c[0] - a[0]) * uy - (c[1] - a[1]) * ux
+            if abs(off) <= ROOF_TOLERANCE:
+                add(s, c)                   # the corner itself: the wall meets the roof where the roof is
+            ex, ey = d[0] - c[0], d[1] - c[1]
+            den = ux * ey - uy * ex
+            if abs(den) > 1e-9:
+                t = ((c[0] - a[0]) * uy - (c[1] - a[1]) * ux) / den
+                if 0.0 < t < 1.0:
+                    q = (c[0] + t * ex, c[1] + t * ey)
+                    add((q[0] - a[0]) * ux + (q[1] - a[1]) * uy, q)
+    # and where two pitches that both reach the side change places as the higher one
+    if 1 < len(pitches) <= 40:
+        heights = [(p.z(*a), p.z(*b)) for p in pitches]
+        for i in range(len(pitches)):
+            for j in range(i + 1, len(pitches)):
+                d0, d1 = heights[i][0] - heights[j][0], heights[i][1] - heights[j][1]
+                if d0 * d1 >= 0.0:
+                    continue
+                s = length * d0 / (d0 - d1)
+                q = (a[0] + ux * s, a[1] + uy * s)
+                if _closest_on_ring(pitches[i].ring, *q)[0] <= ROOF_TOLERANCE \
+                        and _closest_on_ring(pitches[j].ring, *q)[0] <= ROOF_TOLERANCE:
+                    add(s, q)
+    # corners within a few centimetres of each other are one bend
+    out: list = []
+    for s in sorted(found):
+        if out and s - out[-1][0] < ROOF_TOLERANCE / 3:
+            continue
+        out.append((s, found[s]))
+    return [q for _s, q in out]
+
+
+def wall_gap(footprint, pitches, samples: int = 6) -> float:
+    """How far, at most, the walls drawn along the outline stop under the roof that reaches it, in metres: 0 when no sky
+    shows between a wall and a pitch. Measured on the triangles building_triangles draws, so that it says what is seen;
+    the bench and the tests ask it. Sides shorter than 15 cm are left out: the reader's outlines have steps of a few
+    centimetres where two levels meet, and nothing can be seen through them."""
+    if getattr(pitches, "open", False) or not pitches:
+        return 0.0
+    pos = building_triangles(footprint, pitches)[0].reshape(-1, 3, 3)
+    tris = []
+    for t in pos:
+        xs, ys, zs = t[:, 0].astype(float), -t[:, 2].astype(float), t[:, 1].astype(float)
+        area = abs((xs[1] - xs[0]) * (ys[2] - ys[0]) - (xs[2] - xs[0]) * (ys[1] - ys[0]))
+        if area < 1e-3:
+            tris.append((xs, ys, zs))
+    ring = [tuple(map(float, q)) for q in footprint]
+    worst = 0.0
+    for a, b in zip(ring, ring[1:] + ring[:1], strict=True):
+        length = math.dist(a, b)
+        if length < 0.15:
+            continue
+        ux, uy = (b[0] - a[0]) / length, (b[1] - a[1]) / length
+        stops = [0.0, *[(q[0] - a[0]) * ux + (q[1] - a[1]) * uy for q in _roof_stops(pitches, a, b)], length]
+        spots = {length * (k + 0.5) / samples for k in range(samples)} | {min(max(s, 0.01), length - 0.01) for s in stops}
+        # a wall may bend to a pitch's corner a few centimetres off the side's line
+        side = [t for t in tris if max(abs((t[0][i] - a[0]) * uy - (t[1][i] - a[1]) * ux) for i in range(3))
+                < ROOF_TOLERANCE * 1.1]
+        for s in spots:
+            x, y = a[0] + ux * s, a[1] + uy * s
+            roof = None
+            for p in pitches:
+                d, qx, qy = _closest_on_ring(p.ring, x, y)
+                if d <= ROOF_TOLERANCE:
+                    z = p.z(qx, qy)
+                    roof = z if roof is None else max(roof, z)
+            if roof is None:
+                continue
+            top = None
+            for xs, ys, zs in side:
+                along = [(xs[i] - a[0]) * ux + (ys[i] - a[1]) * uy for i in range(3)]
+                for i in range(3):
+                    j = (i + 1) % 3
+                    lo, hi = along[i], along[j]
+                    if min(lo, hi) - 1e-4 <= s <= max(lo, hi) + 1e-4:
+                        f = 0.0 if abs(hi - lo) < 1e-6 else (s - lo) / (hi - lo)
+                        z = float(zs[i]) + f * (float(zs[j]) - float(zs[i])) if abs(hi - lo) >= 1e-6 else max(zs[i], zs[j])
+                        top = z if top is None else max(top, z)
+            worst = max(worst, roof - (top if top is not None else 0.0))
+    return round(max(worst, 0.0), 3)
+
+
+def step_walls(pitches) -> list[tuple]:
+    """Where a pitch stands above the one beside it, the vertical band between them: (a, b, low at a, low at b, high at
+    a, high at b, outward x, outward y) for each stretch. The outline's walls are drawn apart; these are what closes a
+    roof of several levels, which otherwise shows the sky through its steps. Empty on a roof whose pitches meet."""
+    out: list[tuple] = []
+    if len(pitches) < 2:
+        return out
+    rings = [[(float(q[0]), float(q[1])) for q in p.ring] for p in pitches]
+    for i, p in enumerate(pitches):
+        ring = rings[i]
+        ccw = signed_area(ring) > 0
+        others = [(j, rings[j], pitches[j]) for j in range(len(pitches)) if j != i]
+        corners = {q for _j, r, _p in others for q in r}
         for a, b in zip(ring, ring[1:] + ring[:1], strict=True):
-            if _on_segment((x, y), a, b):
-                z = p.z(x, y)
-                best = z if best is None else max(best, z)
-    if best is None:
-        best = max(p.z(x, y) for p in pitches) if pitches else 0.0
-    return best
+            length = math.dist(a, b)
+            if length < 1e-6:
+                continue
+            nx, ny = (b[1] - a[1]) / length, (a[0] - b[0]) / length
+            if not ccw:
+                nx, ny = -nx, -ny
+            # the side is cut where a neighbour's corner stands on it, or close by (the reader's cuts leave a centimetre)
+            stops = []
+            for c in corners:
+                t = ((c[0] - a[0]) * (b[0] - a[0]) + (c[1] - a[1]) * (b[1] - a[1])) / (length * length)
+                if 0.0 < t < 1.0:
+                    e = (a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1]))
+                    if math.dist(c, e) <= ROOF_TOLERANCE:
+                        stops.append(e)
+            points = [a, *sorted(stops, key=lambda c: math.dist(a, c)), b]
+            for p0, p1 in zip(points, points[1:], strict=False):
+                if math.dist(p0, p1) < 0.01:
+                    continue
+                mx, my = (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2
+                qx, qy = mx + nx * ROOF_TOLERANCE * 1.2, my + ny * ROOF_TOLERANCE * 1.2
+                beside = [(o.z(mx, my), o) for _j, r, o in others if _closest_on_ring(r, qx, qy)[0] == 0.0]
+                if not beside:
+                    continue
+                low = max(beside, key=lambda v: v[0])[1]
+                top0, top1, low0, low1 = p.z(*p0), p.z(*p1), low.z(*p0), low.z(*p1)
+                if max(top0 - low0, top1 - low1) <= 0.01:
+                    continue
+                out.append((p0, p1, min(low0, top0), min(low1, top1), top0, top1, nx, ny))
+    return out
 
 
 # The outline of what is selected or under the pointer in 3D (Daniel, 23/10/2026: the selection «si schiarisce
@@ -233,13 +406,13 @@ def prism_edges(ring: list[Point], z0: float, z1: float) -> np.ndarray:
                            verticals])
 
 
-def building_edges(footprint: list[Point], pitches) -> np.ndarray:
-    """The edges of a building: its foot, the corners up to the roof, the outline of each pitch (the eaves,
-    the ridges, the hips)."""
+def building_edges(footprint: list[Point], pitches, base: float = 0.0) -> np.ndarray:
+    """The edges of a building: its foot (at `base`), the corners up to the roof, the outline of each pitch (the
+    eaves, the ridges, the hips)."""
     ring = [tuple(map(float, q)) for q in footprint]
     parts = [] if getattr(pitches, "open", False) else [      # R281: a canopy has no walls, only its roof
-        ring_edges([(x, y, 0.0) for x, y in ring]),
-        np.array([[to_qt(x, y, 0.0), to_qt(x, y, _roof_z(pitches, x, y))] for x, y in ring],
+        ring_edges([(x, y, base) for x, y in ring]),
+        np.array([[to_qt(x, y, base), to_qt(x, y, _roof_z(pitches, x, y))] for x, y in ring],
                  dtype=np.float64).reshape(-1, 2, 3)]
     for p in pitches:
         parts.append(ring_edges([(float(x), float(y), p.z(float(x), float(y))) for x, y in p.ring]))
@@ -515,10 +688,11 @@ def support_triangles(project, sf, colour=(0.30, 0.60, 0.65)) -> tuple[np.ndarra
     return _arrays(*acc)
 
 
-def prop_triangles(project, colours: dict | None = None, tint=None) -> list:
+def prop_triangles(project, colours: dict | None = None, tint=None, ids: list | None = None) -> list:
     """R269: the 3D objects of the project where they stand, each as (positions, normals, colours) in Qt axes, with
     props.py's palette (`colours` replaces some of its keys); `tint(prop, palette)` may give one its own palette (the
-    selection). An object a hand-edited file made impossible is left out."""
+    selection). An object a hand-edited file made impossible is left out; `ids`, when given, gets the id of each
+    object drawn, in the same order."""
     from . import props
     from .model import roof_z as model_roof_z
     out = []
@@ -539,34 +713,49 @@ def prop_triangles(project, colours: dict | None = None, tint=None) -> list:
                                          x.length, palette, x.path, x.railing, surface))
         except ValueError:
             continue
+        if ids is not None:
+            ids.append(x.id)
     return out
 
 
-def project_scene(project, results: dict, colours: dict | None = None, sides=None
+def project_scene(project, results: dict, colours: dict | None = None, sides=None, owners: list | None = None
                   ) -> tuple[tuple[np.ndarray, np.ndarray, np.ndarray], np.ndarray, np.ndarray]:
     """The project's 3D scene with nothing selected, as the report draws it (ui/report_3d.py): the triangles of
     the buildings and of the obstacles (positions, normals, colours), the modules' instance table, the buildings'
     edges as segments (Qt axes). `colours` ("wall", "roof", "roof_flat", "module", "obstacle", "tree", 0-1 floats)
-    replace mesh.py's; `sides(project, sf)` gives a sub-field's module as laid (jobs.module_sides by default)."""
+    replace mesh.py's; `sides(project, sf)` gives a sub-field's module as laid (jobs.module_sides by default).
+    `owners`, when given, gets one (part, id, triangles) for each run of triangles in order, part "building"
+    (walls and roof), "exclusion", "building_part" (a parapet, a canopy's columns: id is the building's), "prop"
+    or "support" (id is the sub-field's): what a click in the 3D view hit (R488)."""
     if sides is None:
         from .jobs import module_sides as sides
     c = {"wall": WALL, "roof": ROOF_PITCH, "roof_flat": ROOF_FLAT, "module": MODULE, "obstacle": OBSTACLE,
          "tree": TREE, **(colours or {})}
-    parts, edges = [], []
+    parts, edges, tags = [], [], []
     for b in project.buildings:
         try:
             pitches = b.pitches()
-            parts.append(building_triangles(b.footprint, pitches, {k: c[k] for k in ("wall", "roof", "roof_flat")}))
-            edges.append(building_edges(b.footprint, pitches))
+            parts.append(building_triangles(b.footprint, pitches, {k: c[k] for k in ("wall", "roof", "roof_flat")},
+                                            b.base))
+            edges.append(building_edges(b.footprint, pitches, b.base))
         except (ValueError, IndexError):
             continue                                    # an outline the roof cannot be made of: the plan says it
+        tags.append(("building", b.id))
+    exclusions = {e.id for e in project.exclusions}
     for o in project.obstacle_prisms():
         colour = {"tree": c["tree"], "parapet": c["wall"]}.get(o["kind"], c["obstacle"])
         parts.append(prism_triangles(o["ring"], o["z0"], o["z1"], colour))
-    parts += prop_triangles(project, {"tree": c["tree"], "obstacle": c["obstacle"]})       # R269
+        tags.append(("exclusion", o["id"]) if o["id"] in exclusions and o["kind"] not in ("parapet", "column", "beam")
+                    else ("building_part", o["building"] or o["id"]))
+    prop_ids = []
+    parts += prop_triangles(project, {"tree": c["tree"], "obstacle": c["obstacle"]}, ids=prop_ids)       # R269
+    tags += [("prop", pid) for pid in prop_ids]
     for sf in project.subfields:
         if sf.support is not None and sf.support.enabled:
             parts.append(support_triangles(project, sf))
+            tags.append(("support", sf.id))
+    if owners is not None:
+        owners.extend((part, oid, len(tri[0]) // 3) for (part, oid), tri in zip(tags, parts, strict=True))
     tri =tuple(np.concatenate([p[i] for p in parts]) if parts else np.zeros((0, 3), np.float32) for i in range(3))
     tables = []
     for sf in project.subfields:

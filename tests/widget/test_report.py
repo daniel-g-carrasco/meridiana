@@ -171,6 +171,38 @@ class Report(unittest.TestCase):
             self.assertNotIn(h, text)
         self.assertIn("4. Energy yield", self.chapters(made))
 
+    def test_the_program_is_named_once_on_the_cover_and_never_as_a_third_person(self):
+        made, text = self.composed()
+        self.assertEqual(text.count("Meridiana"), 1)
+        self.assertIn("Report made by Meridiana", made.document["cover"]["made"])
+
+    def test_the_chapter_of_the_checks_turned_off_leaves_nothing_of_them_in_the_summary(self):
+        _made, text = self.composed()
+        self.assertIn("Every check, with its source: chapter 8.", text)
+        self.p.report = {"off": ["checks"]}
+        made, text = self.composed()
+        self.assertNotIn("Checks and standards", " ".join(self.chapters(made)))
+        for words in ("Every check, with its source", " to look at, ", "Notes for the technical report"):
+            self.assertNotIn(words, text)
+
+    def test_what_asks_the_designer_for_something_stays_out_of_the_document(self):
+        items = self.energy["checks"]
+        to_fill = checks.Item("info", "rules", "Say something", window_only=True)
+        _made, text = self.composed({**self.energy, "checks": [*items, to_fill]})
+        self.assertNotIn("Say something", text)
+        self.assertEqual(checks.for_document([to_fill]), [])
+
+    def test_the_kinds_of_exclusion_are_named_as_the_program_names_them(self):
+        names = model.exclusion_names()
+        kept = self.p.exclusions
+        try:
+            self.p.exclusions = [model.ExclusionItem("x", [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0)], "skylight")]
+            _made, text = self.composed()
+        finally:
+            self.p.exclusions = kept
+        self.assertIn(f"{names['skylight']}: 1", text)
+        self.assertNotIn("skylight: 1", text)
+
     def test_the_strings_are_listed_by_inverter_and_input_with_their_checks_and_modules(self):
         from meridiana.ui.report import _keys_text
         plant = self.energy["plant"]
@@ -178,7 +210,7 @@ class Report(unittest.TestCase):
         self.assertTrue(plant.strings)
         made, text = self.composed()
         self.assertIn(f"{len(plant.strings)} strings on ", text)
-        self.assertIn("proposed by Meridiana", text)
+        self.assertIn("proposed automatically", text)
         self.assertIn("Checked at the hottest cell of the typical year", text)     # the year is there: its cells
         rows = [r for t in blocks_of(made.document, "table") for r in t["rows"] if isinstance(r, list)]
         for s in plant.strings:
@@ -261,13 +293,13 @@ class Report(unittest.TestCase):
     def test_the_checks_and_the_notes_of_the_rules_carry_their_sources(self):
         _made, text = self.composed()
         text = json.loads(json.dumps(text))
-        self.assertIn("4. Minimum renewable capacity obligation", text)            # obligation "new" (D.Lgs. 199/2021)
+        self.assertIn("3. Minimum renewable capacity obligation", text)            # obligation "new" (D.Lgs. 199/2021)
         self.assertIn("N24", text)                                                  # the rule's id beside its source
         notes = rules.notes(self.energy["rules_facts"])
         for _title, chosen in notes:
             for r, _paragraphs in chosen:
                 self.assertIn(json.dumps(r.source(), ensure_ascii=False)[1:-1], text)
-        for it in self.energy["checks"]:
+        for it in checks.for_document(self.energy["checks"]):
             if it.source:
                 self.assertIn(json.dumps(it.source, ensure_ascii=False)[1:-1], text)
 
@@ -277,7 +309,13 @@ class Report(unittest.TestCase):
             self.assertTrue(blocks_of(made.document, kind), kind)
         for name in ("plan.svg", "plan_strings.svg", "carpet.png"):
             self.assertIn(name, made.makers)
-        self.assertTrue(any(n.startswith("f_") and n.endswith(".svg") for n in made.makers))   # the formulas
+        # the formulas: TeX composed by Typst (R460), numbered in their chapter, no picture to draw
+        formulas = [b for b in blocks_of(made.document, "step") if b["tex"]]
+        self.assertTrue(formulas)
+        self.assertFalse([n for n in made.makers if n.startswith("f_")])
+        self.assertTrue(all(b["eq"].startswith("9.") for b in formulas), [b["eq"] for b in formulas][:5])
+        self.assertTrue(any(b["worked"] and b["result"] for b in formulas))        # the numbers put in (R479)
+        self.assertFalse([b for b in formulas if "values" in b])
         self.assertIn("Bifacial modules", text)
         self.assertLess(text.index("9. Parameters and methods"), text.index("What the model does not include"))
         self.assertLess(text.index("What the model does not include"), text.index("Values still at their default"))
@@ -344,17 +382,18 @@ class Report(unittest.TestCase):
         chosen = reports.plan(self.p, report._with_notes(self.energy))
         found = {}
         for n, c in enumerate(chosen, 1):
-            m = re.search(rf"{n}\. {re.escape(c.title)}\s*(\d+)", pages[0])
+            m = re.search(rf"{n}\.\s*{re.escape(c.title)}[\s.]*(\d+)", pages[1])
             self.assertIsNotNone(m, c.title)
             found[c.id] = int(m.group(1))
-        self.assertEqual(found["summary"], 2)                              # the cover, then the summary
+        self.assertEqual(found["summary"], 3)              # the cover, the contents on a page of their own (R460)
         self.assertEqual(list(found.values()), sorted(found.values()))
         for n, c in enumerate(chosen, 1):
             page = pages[found[c.id] - 1]
-            self.assertIn(f"{n}. {c.title}", page, c.id)                   # the heading on the page the contents say
-        for i, t in enumerate(pages):
+            self.assertRegex(page, rf"{n}\.?\s*{re.escape(c.title)}", c.id)    # the heading on the page the contents say
+        for i, t in enumerate(pages[1:], 1):                              # the cover has no header, no footer
             self.assertIn(f"page {i + 1} of {len(pages)}", t)
         self.assertNotIn("Designer", pages[0])                             # no profile: nobody on the cover
+        self.assertIn("LOGO", "".join(pages[0].split()))                    # no logo: its place, dashed
 
     def test_the_users_texts_go_into_the_pdf_as_they_are(self):
         import copy
@@ -396,13 +435,13 @@ class Report(unittest.TestCase):
             self.assertTrue(all(n == 0 for n in logos(path)))
             self.assertIn("Studio di prova", texts(path)[0])                 # the report made all the same
 
-    def test_the_accent_comes_from_the_profile_and_is_blue_by_default(self):
-        from meridiana import reports
-        made, _text = self.composed(profile={**self.PROFILE, "accent": "#A0522D"})
-        self.assertEqual(made.document["accent"], "#a0522d")
-        made, _text = self.composed(profile={**self.PROFILE, "accent": "not a colour"})
-        self.assertEqual(made.document["accent"], reports.ACCENT)
-        self.assertEqual(reports.ACCENT, "#1c6e8c")
+    def test_the_report_has_its_own_grey_whatever_the_profiles_colour(self):
+        # R460 (Daniel, 06/11/2026): no blue in the report; the profile's colour no longer reaches it
+        from meridiana.report_typst import look
+        for accent in ("#A0522D", "#1c6e8c", "not a colour", ""):
+            made, _text = self.composed(profile={**self.PROFILE, "accent": accent})
+            self.assertEqual(made.document["accent"], look.ACCENT)
+            self.assertEqual(made.document["style"]["accent"], look.ACCENT)
 
     def test_in_italian_the_numbers_have_the_decimal_comma(self):
         if not (Path(_setup.ROOT) / "locale" / "it" / "LC_MESSAGES" / "meridiana.mo").exists():
@@ -450,9 +489,9 @@ class Report(unittest.TestCase):
         self.assertEqual(sizes[:first], [a4] * first)                    # the report before: cover to register
         pages = texts(path)
         # the contents say the pages of the PDF: the page before each attachment
-        self.assertRegex(pages[0], rf"Attachment 1: Modulo di prova\s*{first}\b")
-        self.assertRegex(pages[0], rf"Attachment 2: Scheda inverter\s*{first + 3}\b")
-        self.assertNotIn("Manca", pages[0])                                             # left out, not listed
+        self.assertRegex(pages[1], rf"Attachment 1: Modulo di prova[\s.]*{first}\b")     # the contents, page 2
+        self.assertRegex(pages[1], rf"Attachment 2: Scheda inverter[\s.]*{first + 3}\b")
+        self.assertNotIn("Manca", pages[1])                                             # left out, not listed
         self.assertIn(f"page {first} of {len(sizes)}", pages[first - 1])                # the separator's footer
         self.assertIn(f"page {first + 3} of {len(sizes)}", pages[first + 2])             # counted past the first
         # the compact template: no contents, the attachments at the end all the same
@@ -552,7 +591,7 @@ class Report(unittest.TestCase):
         self.assertFalse(path.exists())                               # the register alone: no report made
         text = csv.read_text(encoding="utf-8-sig")
         head = [line for line in text.splitlines() if line.startswith("#")]
-        self.assertIn("register of the calculations of «Prova», variant «Base»", head[0])
+        self.assertIn("Register of the calculations of «Prova», variant «Base»", head[0])
         self.assertTrue(any("Europe/Rome" in line for line in head))
         self.assertTrue(any(line.startswith("#   Cells (°C): cells' temperature, PVsyst") for line in head))
         self.assertTrue(any(line.startswith("# Weather: ") for line in head))
@@ -582,7 +621,8 @@ class Report(unittest.TestCase):
         self.assertEqual(made.document["head"]["kicker"], "REGISTER OF THE CALCULATIONS")
         self.assertIn('"Parameters and methods"', text)
         self.assertIn("What the model does not include", text)
-        self.assertTrue(made.makers and all(n.startswith("f_") for n in made.makers))   # the formulas, nothing else
+        self.assertFalse(made.makers)                       # the formulas are TeX for Typst: nothing to draw (R460)
+        self.assertTrue([b for b in made.document["body"] if b["k"] == "step" and b["tex"]])
         body = json.dumps(made.document["body"], ensure_ascii=False)
         for other in ("Contents", "1. Summary", "Attachment 1"):
             self.assertNotIn(other, body)
@@ -612,7 +652,9 @@ class Report(unittest.TestCase):
             self.assertEqual([f["image"] for f in fill], ["view_south_west.png"])      # the summary's, the page's rest
             self.assertIn("From the south-west", text)
             views = [f for f in blocks_of(made.document, "figure") if f["image"].startswith("view_")]
-            self.assertEqual([f["image"] for f in views], ["view_south_east.png"])     # the layout's, whole width
+            # the layout's, whole width, and the one in the section on the shading (R460: a 3D view in the text)
+            self.assertEqual([f["image"] for f in views][0], "view_south_east.png")
+            self.assertLessEqual({f["image"] for f in views}, {"view_south_east.png", "view_south_west.png"})
             self.p.report = {"template": "compact"}
             made, text = self.composed(pictures=pictures)
             views = [f["image"] for f in blocks_of(made.document, "figure") if f["image"].startswith("view_")]

@@ -57,6 +57,11 @@
   </requires>
 
   <releases>
+    <release version="0.2.0" date="2026-11-09" type="development">
+      <description>
+        <p>The first release of Meridiana: the Qt Quick window, in English and Italian, with the Windows installer and its updates.</p>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-10-21" type="development">
       <description>
         <p>The skeleton of the author's app template, before Meridiana. Never published: the first release of Meridiana itself will be 0.2.0.</p>

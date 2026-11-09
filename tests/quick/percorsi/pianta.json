@@ -1,0 +1,157 @@
+{
+  "size": [
+    1600,
+    960
+  ],
+  "steps": [
+    {
+      "action": "snapshot"
+    },
+    {
+      "action": "prepare_plan"
+    },
+    {
+      "action": "plan_click",
+      "point": [
+        0,
+        0
+      ]
+    },
+    {
+      "action": "plan_menu",
+      "point": [
+        0,
+        0
+      ]
+    },
+    {
+      "action": "key",
+      "key": "Esc"
+    },
+    {
+      "action": "key",
+      "key": "B",
+      "text": "b",
+      "tool": "building"
+    },
+    {
+      "action": "plan_click",
+      "point": [
+        -35,
+        -30
+      ]
+    },
+    {
+      "action": "key",
+      "key": "1",
+      "text": "1"
+    },
+    {
+      "action": "key",
+      "key": "2",
+      "text": "2"
+    },
+    {
+      "action": "key",
+      "key": "Esc",
+      "tool": "building"
+    },
+    {
+      "action": "key",
+      "key": "Esc",
+      "tool": "building"
+    },
+    {
+      "action": "key",
+      "key": "Esc",
+      "tool": "select"
+    },
+    {
+      "action": "click",
+      "target": "Impianto",
+      "expect": {
+        "phase": "plant"
+      }
+    },
+    {
+      "action": "click",
+      "target": "Modellazione",
+      "expect": {
+        "phase": "model"
+      }
+    },
+    {
+      "action": "resize",
+      "size": [
+        1366,
+        900
+      ]
+    },
+    {
+      "action": "resize",
+      "size": [
+        1800,
+        1000
+      ]
+    },
+    {
+      "action": "plan_click",
+      "point": [
+        160,
+        -8
+      ]
+    },
+    {
+      "action": "key",
+      "key": "F",
+      "text": "f"
+    },
+    {
+      "action": "plan_hover",
+      "point": [
+        161,
+        8.2177
+      ]
+    },
+    {
+      "action": "plan_double",
+      "point": [
+        161,
+        8.2177
+      ]
+    },
+    {
+      "action": "key",
+      "key": "Esc"
+    },
+    {
+      "action": "plan_menu",
+      "point": [
+        160,
+        -8
+      ]
+    },
+    {
+      "action": "key",
+      "key": "Esc"
+    },
+    {
+      "action": "key",
+      "key": "M",
+      "text": "m",
+      "tool": "move"
+    },
+    {
+      "action": "key",
+      "key": "Esc",
+      "tool": "select"
+    },
+    {
+      "action": "resize",
+      "size": [
+        1920,
+        1080
+      ]
+    }
+  ]
+}

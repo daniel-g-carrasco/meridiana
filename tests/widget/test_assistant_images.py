@@ -88,6 +88,7 @@ class Images(unittest.TestCase):
         mime.setText("450 W")
         mime.setImageData(picture())
         QApplication.clipboard().setMimeData(mime)
+        self.addCleanup(QApplication.clipboard().clear)   # see quick.meridio.test_fidelity: not left to Qt's end
         self.paste()
         self.app.processEvents()
         self.assertEqual(self.a.field.text(), "450 W")

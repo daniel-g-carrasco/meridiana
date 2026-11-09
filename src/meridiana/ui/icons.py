@@ -41,7 +41,9 @@ NAMES = {"ridge": "house", "undo": "undo-2", "redo": "redo-2", "select": "mouse-
          # the report's attachments: before, after, out
          "up": "arrow-up", "down": "arrow-down", "remove": "x",
          # the IFC models (study 20)
-         "import_ifc": "warehouse", "export_ifc": "box"}
+         "import_ifc": "warehouse", "export_ifc": "box",
+         # the plan as a DXF (R513): its layers
+         "export_dxf": "layers"}
 STROKE = b'stroke-width="1.7"'
 _SVG: dict = {}
 _DRAWN: dict = {}           # (name, colour, width, height): the icon drawn

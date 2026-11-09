@@ -1,8 +1,8 @@
 """Meridio's spoken voice (R82, task 14): his answers read aloud in the program's language, off by default (the
 speaker in his bubble; the setting `assistant_voice`). Two engines behind one face (`Voice`):
 - Kokoro, the natural voice (Daniel, 24/10/2026: «Kokoro era quella buona»; assistant/speech.py): a process of its own
-  synthesizes each sentence and QtMultimedia plays it; a man's voice by default (Nicola in Italian), Meridio being
-  «he». Used when its model is on the PC (`assistant_voice_engine` "auto", the default, or "kokoro");
+  synthesizes each sentence and QtMultimedia plays it; Sara by default in Italian, one semitone up and 1.15 times
+  as fast (R492, Daniel 06/11/2026: the pitch and the speed are settings). Used when its model is on the PC (`assistant_voice_engine` "auto", the default, or "kokoro");
 - the system's voices through QtTextToSpeech (WinRT or SAPI on Windows, speech-dispatcher on Linux), a man's when
   there is one: the fallback, and the choice "system".
 
@@ -57,6 +57,7 @@ class Kokoro(QObject):
     def __init__(self, folder: Path, python: str, voice: str, language: str, fake: bool = False, parent=None):
         super().__init__(parent)
         self.folder, self.python, self.voice, self.language, self.fake = folder, python, voice, language, fake
+        self.pitch, self.speed = 0.0, 1.0      # semitones and speed of the settings (R492), set by Voice._start
         self.process: QProcess | None = None
         self.frames = speech.Frames()
         self.loaded = False
@@ -97,7 +98,8 @@ class Kokoro(QObject):
             self.waiting.append(sentence)
             return
         self.next_id += 1
-        request = {"id": self.next_id, "text": sentence, "voice": self.voice, "lang": self.language, "speed": 1.0}
+        request = {"id": self.next_id, "text": sentence, "voice": self.voice, "lang": self.language,
+                   "speed": self.speed, "pitch": self.pitch}
         self.process.write((json.dumps(request, ensure_ascii=False) + "\n").encode("utf-8"))
 
     def stop(self) -> None:
@@ -298,6 +300,7 @@ class Voice(QObject):
             self.kokoro = Kokoro(folder, speech.worker_python(self._choice("assistant_kokoro_python"),
                                                              model_dir=folder), voice,
                                  self.language, self._choice("assistant_voice_engine") == "fake", self)
+            self.kokoro.pitch, self.kokoro.speed = speech.voice_settings(self.settings)
             self.kokoro.ready.connect(self._kokoro_ready)
             self.kokoro.failed.connect(self._kokoro_failed)
             self.kind = "kokoro"
@@ -401,6 +404,7 @@ class Voice(QObject):
             return
         self.said.append(sentence)
         if self.kind == "kokoro" and self.kokoro is not None:
+            self.kokoro.pitch, self.kokoro.speed = speech.voice_settings(self.settings)   # a change counts at once
             self.kokoro.say(sentence)
         elif self.tts is not None:
             self.tts.enqueue(sentence)

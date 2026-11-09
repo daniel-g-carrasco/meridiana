@@ -1,0 +1,15 @@
+module Meridiana.Plan
+Plan 1.0 Plan.qml
+PlanWindow 1.0 PlanWindow.qml
+PolygonLayer 1.0 PolygonLayer.qml
+MapLayer 1.0 MapLayer.qml
+ToolOverlay 1.0 ToolOverlay.qml
+PlanSymbol 1.0 PlanSymbol.qml
+Compass 1.0 Compass.qml
+ScaleBar 1.0 ScaleBar.qml
+RowHandle 1.0 RowHandle.qml
+PlanLegend 1.0 PlanLegend.qml
+SidePills 1.0 SidePills.qml
+StringLabels 1.0 StringLabels.qml
+MapSources 1.0 MapSources.qml
+MapNotice 1.0 MapNotice.qml

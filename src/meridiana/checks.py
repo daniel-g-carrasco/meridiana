@@ -41,6 +41,12 @@ class Item:
     fix_label: str = ""         # what the fix does, in a few words
     detail: str = ""            # why, and what to do (also when there is no fix): two or three sentences, shown
                                 # on request (task 17e)
+    window_only: bool = False   # asks the designer for something, or is a reminder: not printed in the report
+
+
+def for_document(items: list) -> list:
+    """The items a report prints: the window's list without what is addressed to the designer."""
+    return [it for it in items if not getattr(it, "window_only", False)]
 
 
 TEXT_LENGTH = 90                # the most characters a text may have: the detail takes the rest
@@ -55,11 +61,13 @@ def _production_note(note: str, level: str, detail: str = "") -> Item:
         text = (_("Unconnected modules produce no energy") if note == disconnected else
                 _("Production: calculation notes"))
         detail = note + ("\n\n" + detail if detail else "")
-    return Item(level, "production", text, "", ("phase", "production"), detail=detail)
+    # the short title alone says nothing in a document: the note is in the detail
+    return Item(level, "production", text, "", ("phase", "production"), detail=detail,
+                window_only=text == _("Production: calculation notes"))
 
 
 def area_names() -> dict:
-    return {"layout": _("Layout"), "shade": _("Shading"), "strings": _("Strings (CEI 64-8/7)"),
+    return {"components": _("Components"), "layout": _("Layout"), "shade": _("Shading"), "strings": _("Strings (CEI 64-8/7)"),
             "connection": _("Connection"), "production": _("Production"),
             "consumption": _("Consumption"), "economics": _("Economics"), "rules": _("Rules and report notes"),
             "import": _("From PVsyst"), "defaults": _("Values still at their default")}
@@ -195,7 +203,7 @@ def connection(p_kw: float, phases: int | None, chosen: bool, level: str = "BT",
                         ("phase", "production"),
                         detail=_("Meridiana takes an inverter of typical values from the DC/AC ratio: its phases, its "
                                  "MPPT window and its inputs are not checked. The Production page chooses one from "
-                                 "the catalogue.")))
+                                 "the catalogue."), window_only=True))
     return out
 
 
@@ -208,13 +216,13 @@ def rule_items(f: rules.Facts) -> list[Item]:
                         _("Legislative Decree 199/2021 art. 26, Annex III"), ("site",),
                         detail=_("A new building or a major renovation must have a renewable electrical capacity of "
                                  "k × S (Legislative Decree 199/2021, Annex III); the check needs to know which case "
-                                 "this is. The site's properties have the choice.")))
+                                 "this is. The site's properties have the choice."), window_only=True))
     if rules.design(f) == "unknown":
         out.append(Item("info", "rules", _("Say the supply's contracted power, the floor area and the use of the "
                                            "premises"), _("DM 37/2008 art. 5 par. 2 (p. 4)"), ("site",),
                         detail=_("Who may design depends on them (DM 37/2008 art. 5 par. 2): until they are known, "
                                  "the design of a registered professional is taken as due. The site's properties "
-                                 "have the fields.")))
+                                 "have the fields."), window_only=True))
     need = rules.minimum(f)
     if need is not None and f.p_dc_kw > 0:
         k, p_min = need
@@ -231,7 +239,7 @@ def rule_items(f: rules.Facts) -> list[Item]:
     for r in rules.applying(f):
         paragraphs = r.paragraphs(f)
         out.append(Item(r.level, "rules", f"{r.id} · {rules.title(r, f)}", r.source(), ("site",),
-                        detail=paragraphs[0] if paragraphs else ""))
+                        detail=paragraphs[0] if paragraphs else "", window_only=not rules.in_document(r, f)))
     return out
 
 
@@ -245,13 +253,58 @@ def obstacle_shading_by_subfield(sim) -> dict[str, float]:
     return {sfid: lost / power for sfid, (lost, power) in totals.items() if power}
 
 
+def component_items(project) -> list[Item]:
+    """The state of the components a project uses (R415): out of production or phasing out, from the written sources of the
+    catalogue, with what takes their place when one is known. The project does not change: the check says it, and each
+    project keeps the copy of the record it was designed with."""
+    from . import catalog
+    from .energy import system
+    records = [("modules", m) for m in (project.modules or {}).values()]
+    for entry in system.inverter_entries(project.energy or {}):
+        if entry.get("record"):
+            records.append(("inverters", entry["record"]))
+        if entry.get("optimizer"):
+            records.append(("optimizers", entry["optimizer"]))
+    battery = ((project.energy or {}).get("storage") or {}).get("battery")
+    if battery:
+        records.append(("batteries", battery))
+    out, seen = [], set()
+    for kind, rec in records:
+        name = f"{rec.get('manufacturer', '')} {rec.get('model', '')}".strip()
+        if not rec.get("model") or name in seen:
+            continue
+        seen.add(name)
+        life = catalog.apply_lifecycle({"manufacturer": rec.get("manufacturer"), "model": rec.get("model"), "source": "curated"}, kind).get("lifecycle")
+        if not life or life.get("state") not in (catalog.DISCONTINUED, catalog.PHASING_OUT):
+            continue
+        text = (_("{name}: out of production") if life["state"] == catalog.DISCONTINUED else _("{name}: phasing out")).format(name=name)
+        if life.get("replacement"):
+            text += " · " + _("in its place: {model}").format(model=life["replacement"])
+        out.append(Item("warn" if life["state"] == catalog.DISCONTINUED else "info", "components", text, life.get("url", ""),
+                        ("phase", "plant"), detail=_("Read on {date}: «{text}»").format(date=life.get("checked", ""), text=life.get("text", ""))))
+    return out
+
+
 def gather(project, results: dict, energy: dict | None, inverter=None, chosen: bool = False) -> list[Item]:
     """Every item, most serious first. `results` are the layouts by sub-field, `energy` what the energy job
     gave (or None before it ran), `inverter` the InverterSpec of the project."""
     items: list[Item] = []
     energy = energy or {}
     filled = False
+    from . import move
     for sf in project.subfields:
+        lying = move.straddle(project, sf)
+        if lying is not None:
+            parts = move.can_split(project, sf)
+            items.append(Item(
+                "warn", "layout", _("{name}: on two pitches, computed on pitch {n}").format(
+                    name=sf.name, n=lying.index + 1), "", ("subfield", sf.id),
+                ("action", "split_pitches", "subfield", sf.id) if parts else (),
+                _("Split on the ridge") if parts else "",
+                detail=_("{area} m² of it stand on another pitch, but all of it is computed on the plane of pitch {n}: "
+                         "its tilt and its azimuth, as if the roof did not change there. «Split on the ridge» makes "
+                         "one sub-field per pitch, each on its plane, and they keep moving together.").format(
+                    area=number(lying.other_area, 1), n=lying.index + 1)))
         r = results.get(sf.id)
         if isinstance(r, Exception):
             items.append(Item("fail", "layout", _("{name}: the layout could not be computed ({error})").format(
@@ -264,7 +317,7 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
                               ("subfield", sf.id), ("action", "fill", "subfield", sf.id), _("Lay the modules"),
                               detail=_("The sub-field has its outline but no modules, so nothing is computed for it. "
                                        "«Lay the modules» fills it with the module and the mounting of its "
-                                       "properties.")))
+                                       "properties."), window_only=True))
             continue
         filled = True
         if sf.manual:
@@ -279,7 +332,7 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
                     name=sf.name, n=unmatched), "", ("subfield", sf.id),
                 detail=_("The layout changed after they were taken out (another module, pitch or row): the place they "
                          "had is not there any more. Check the layout, and take out again what should not be "
-                         "there.")))
+                         "there."), window_only=True))
         for note in getattr(r, "notes", []) or []:
             if "NTC" in note:
                 items.append(Item("warn", "layout", _("{name}: ballast alone does not restrain the modules on a roof "
@@ -293,7 +346,7 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
         items.append(Item("info", "layout", _("No sub-field yet: draw one on a roof or on the ground"), "",
                           detail=_("The modules are laid in sub-fields: a sub-field is an outline on a roof or on the "
                                    "ground with its module, its mounting and its distances. The Draw tools make "
-                                   "one.")))
+                                   "one."), window_only=True))
 
     sim = energy.get("sim")
     if sim is not None:
@@ -336,7 +389,7 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
                 name = sf.name if sf is not None else sfid
                 items.append(Item("warn", "shade", _("{name}: the obstacles take {pct}% of the sub-field's annual "
                                                      "irradiance after far shading").format(
-                    name=name, pct=number(100 * lost, 1)), _("Meridiana: shading of the obstacles"),
+                    name=name, pct=number(100 * lost, 1)), _("Calculation of the obstacles' shading"),
                     ("subfield", sfid), fix, label, detail=detail))
         for note in sim.notes:
             items.append(_production_note(note, "warn",
@@ -348,7 +401,7 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
                           _("Compute the production to check the shading, the strings and the balance"), "",
                           ("phase", "production"), ("compute",), _("Compute"),
                           detail=_("Shading, strings and the balance come from the hourly year: until it is computed "
-                                   "the checks that need it are missing.")))
+                                   "the checks that need it are missing."), window_only=True))
     for note in energy.get("notes") or []:
         items.append(_production_note(note, "info"))
 
@@ -387,7 +440,8 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
                "not_imported": _("Meridiana does not read this part of PVsyst's file yet: enter it by hand if it "
                                  "matters.")}
     for level, key in (("warn", "missing"), ("info", "approximated"), ("info", "not_imported")):
-        items += [Item(level, "import", text, source, detail=details[key]) for text in imported.get(key, [])]
+        items += [Item(level, "import", text, source, detail=details[key], window_only=True)
+                  for text in imported.get(key, [])]
 
     from .energy.consumption import Consumption
     if filled and not Consumption.from_dict(project.consumption).has_data():
@@ -395,14 +449,15 @@ def gather(project, results: dict, energy: dict | None, inverter=None, chosen: b
                                                    "POD's curve"), "", ("phase", "consumption"),
                           detail=_("Without data Meridiana takes a user of the size of the system; self-consumption "
                                    "and the balance depend on it. The Consumption page takes the yearly kWh, the "
-                                   "bills or the curve of the POD.")))
+                                   "bills or the curve of the POD."), window_only=True))
     econ = energy.get("econ")
     if econ is not None and {"buy_f1", "sell", "capex_per_kwp"} <= set(_defaults(project)):
         items.append(Item("info", "economics", _("Prices and costs are indicative defaults: enter those of the bill "
                                                  "and of the offer"), "", ("phase", "economics"),
                           detail=_("The balance and the payback are only as good as the prices: Meridiana's are "
                                    "national averages. The Balance page takes the price of the bill, the sale price "
-                                   "and the cost of the offer.")))
+                                   "and the cost of the offer."), window_only=True))
+    items += component_items(project)
     items.sort(key=lambda i: LEVELS.index(i.level))
     return items
 
@@ -424,11 +479,21 @@ def manual_items(project, sf, result, shade=None) -> list[Item]:
         return []
     fix, label = ("action", "relayout", "subfield", sf.id), _("Lay again automatically")
     here = ("subfield", sf.id)
-    items = [Item("info", "layout", _("{name}: rows by hand, not laid again by the automatic layout").format(
+    items = [] if sf.flush else [Item("info", "layout", _("{name}: rows by hand, not laid again by the automatic layout").format(
         name=sf.name), "", here, fix, label,
         detail=_("The rows were drawn, moved or exploded by hand: Meridiana lays them as they are and checks them, and "
                  "a new pitch or new margins do not move them. «Lay again automatically» gives them back to the "
                  "layout, and the changes by hand are lost."))]
+    aside = len(getattr(result, "blocked", None) or [])
+    if aside:
+        from .i18n import ngettext
+        # R445, decision 3: the modules set aside, drawn red; a click on one puts it back
+        items.append(Item("info", "layout", ngettext("{name}: {n} module set aside on an obstacle or off the roof",
+                                                     "{name}: {n} modules set aside on an obstacle or off the roof",
+                                                     aside).format(name=sf.name, n=aside), "", here,
+                          detail=_("The modules drawn red stand on an exclusion with its clearance or past the roof's "
+                                   "edge: they are not laid and not counted. «Add a module» on one puts it back, the "
+                                   "designer's call; the checks then say it stands there.")))
     placed = result.modules
     if not placed:
         return items
@@ -476,8 +541,15 @@ def manual_items(project, sf, result, shade=None) -> list[Item]:
                          "and roof plant under the fire-brigade rules). Move the rows, take the modules out, or lay "
                          "the sub-field again automatically.")))
     edge = max(p.edge, p.fire_edge if p.fire_rules else 0.0)
-    if edge > 0:
-        inner = Polygon([tuple(map(float, q)) for q in sf.ring]).buffer(0).buffer(-edge, join_style="mitre")
+    # a sub-field that is its modules (R445) has no band of its own: the band is from the roof's edge (DCPREV 14030
+    # 3.3.5.1 point 2, p. 15-16 of the file), a guide on the plan and a warning here, never a wall
+    base = (project.host_ring(sf) or []) if sf.flush else sf.ring
+    if edge > 0 and len(base) >= 3:
+        inner = Polygon([tuple(map(float, q)) for q in base]).buffer(0).buffer(-edge, join_style="mitre")
+        host = project.building(sf.building)
+        if sf.flush and host is not None and (host.part_of or project.parts_of(host.id)):
+            # the bodies of one building (R440): the band runs on the edge of them together, not between them
+            inner = Polygon([tuple(map(float, q)) for q in base]).buffer(0).intersection(project.fire_inner(host, edge))
         inner = inner.buffer(layout.DISTANCE_TOLERANCE)
         n = int(np.count_nonzero(shapely.area(shapely.difference(polys, inner)) > 1e-4))
         if n:
@@ -486,8 +558,11 @@ def manual_items(project, sf, result, shade=None) -> list[Item]:
                                                          "{name}: {n} modules beyond the edge band of {m} m", n).format(
                 name=sf.name, n=n, m=number(edge, 2)), FIRE_SOURCE if p.fire_rules and p.fire_edge >= p.edge else "",
                 here, fix, label,
-                detail=_("The modules stay inside the edge band of the sub-field (1 m from the roof edge under the "
-                         "fire-brigade rules). Move the rows inwards, or lay the sub-field again automatically.")))
+                detail=(_("The modules stay 1 m from the roof edge under the fire-brigade rules (DCPREV 14030 of "
+                          "01/09/2025, 3.3.5.1 point 2): a guide the designer may go over, his call. Move the side "
+                          "or take the modules out.") if sf.flush else
+                        _("The modules stay inside the edge band of the sub-field (1 m from the roof edge under the "
+                          "fire-brigade rules). Move the rows inwards, or lay the sub-field again automatically."))))
     if shade is not None:
         n = in_shade(project, sf, result, shade)
         if n:
@@ -495,7 +570,7 @@ def manual_items(project, sf, result, shade=None) -> list[Item]:
             w = vars(p.window)
             items.append(Item("warn", "shade", ngettext("{name}: {n} module in the shade on the design day",
                                                         "{name}: {n} modules in the shade on the design day", n).format(
-                name=sf.name, n=n), _("Meridiana: shading of the obstacles"), here, fix, label,
+                name=sf.name, n=n), _("Calculation of the obstacles' shading"), here, fix, label,
                 detail=_("The obstacles cast their shadow on these modules on {day}/{month} between {start} and {end} "
                          "solar time, the day the pitch is computed for. Move them out of it, or lay the sub-field "
                          "again automatically out of the obstacles' shadows.").format(
@@ -783,7 +858,7 @@ def filtered(items: list[Item], levels) -> list[int]:
 def plant_items(plant) -> list[Item]:
     """The checks of the strings and the inverters (task 16d, energy/plant.py), in the area «strings» of the Plant
     phase: what each input's plan finds (CEI 64-8/7, the clauses stringing.py cites), the strings without an input
-    and those whose modules are gone, each inverter's overload and the balance of its inputs (program thresholds,
+    and those whose modules are gone, each inverter's overload and the balance of its inputs (calculation thresholds,
     said as such), the modules in no string by inverter, and what keeps the strings from being checked. The fix of
     the modules in no string is «Complete the strings» (Meridiana proposes them, the designer's strings stay); a
     string that fails is the designer's to change: no fix rewrites the strings (R114, Daniel 25/10/2026)."""
@@ -854,7 +929,8 @@ def plant_items(plant) -> list[Item]:
                 items.append(Item(c.level, "strings", f"{c.label}: {c.detail}", c.source or threshold, here,
                                   detail=string_detail(c.key) if c.key.startswith("opt_") else ""))
             elif c.level == "info" and c.key in ("opt_suggested", "opt_pairs"):
-                items.append(Item("info", "strings", f"{c.label}: {c.detail}", c.source, here))
+                items.append(Item("info", "strings", f"{c.label}: {c.detail}", c.source, here,
+                                  window_only=c.key == "opt_suggested"))
     for unit_no, n in sorted(plant.left_by_unit.items()):
         unit = plant.unit(unit_no)
         text = (ngettext("{inverter}: {n} module in no string", "{inverter}: {n} modules in no string", n).format(

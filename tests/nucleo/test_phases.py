@@ -38,7 +38,8 @@ class ThePhases(unittest.TestCase):
                 minimum = {("plant", "storage"): 1, ("economics", "compute"): 1, ("model", "obstacles"): 1}.get(
                     (p.id, g.id), 2)                # the obstacles come with the 3D objects (study 22, question 10)
                 # the Panels of the Plant hold six: the layout of before and «On a canopy» (R277, R281)
-                most = 6 if (p.id, g.id) == ("plant", "modules") else 5
+                # the Export of the Report six too: the DXF was planned in it by the design, and came (R513)
+                most = 6 if (p.id, g.id) in (("plant", "modules"), ("report", "export")) else 5
                 self.assertTrue(minimum <= len([t for t in g.tools if not t.planned]) <= most, (p.id, g.id))
         for pid in ("production", "economics", "report"):
             self.assertIn("new_variant", [t.command for t in phases.by_id(pid).tools()])
@@ -122,7 +123,8 @@ class ThePhases(unittest.TestCase):
         now = {p.id: [t.command for t in p.tools(every=True)] for p in phases.phases()}     # R306: their menus too
         lost = {c for cs in before.values() for c in cs} - {c for cs in now.values() for c in cs}
         self.assertEqual(lost, set())
-        added = ["tool_ridge", "canopy_layout", "object_3d", "import_ifc"]     # R275, R281, R269, R315: new on the bars
+        added = ["tool_ridge", "canopy_layout", "object_3d", "import_ifc",     # R275, R281, R269, R315: new on the bars
+                 "export_dxf"]                                             # R513: planned there, made
         erase = ["tool_erase_string", "tool_erase_inverter_strings", "tool_erase_inverter"]      # R299
         added += ["report_logo", "report_profile"]                       # R331: the signature, from the Report
         added += erase + ["tool_select", "tool_move", "tool_rotate"]     # R295: Edit in the Plant as well
@@ -139,7 +141,9 @@ class ThePhases(unittest.TestCase):
                          + erase + before["plant"][-1:])
         for pid in ("production", "consumption", "economics"):
             self.assertEqual(now[pid], before[pid])
-        self.assertEqual(now["report"], before["report"][:2] + ["report_logo", "report_profile"] + before["report"][2:])
+        report = before["report"][:2] + ["report_logo", "report_profile"] + before["report"][2:]
+        report.insert(report.index("export_report") + 1, "export_dxf")              # R513: at its planned place
+        self.assertEqual(now["report"], report)
 
     def test_r277_a_tool_of_the_plan_works_in_the_phase_whose_bar_has_it(self):
         self.assertEqual(phases.home("tool_subfield", "model"), "plant")
@@ -211,9 +215,17 @@ class TheDeliverables(unittest.TestCase):
         d = {x.id: x for x in phases.deliverables(False, made, "k2")}
         self.assertEqual(d["ifc"].state, "stale")
 
+    def test_the_plan_as_dxf_needs_no_year_either(self):
+        # R513: made, and made before the project changed, as the IFC
+        d = {x.id: x for x in phases.deliverables(False, {}, "k1")}
+        self.assertEqual((d["dxf"].state, d["dxf"].command), ("todo", "export_dxf"))
+        made = {"dxf": ("Prova.dxf", "07/11/2026 02:00", "k1")}
+        self.assertEqual({x.id: x for x in phases.deliverables(False, made, "k1")}["dxf"].state, "done")
+        self.assertEqual({x.id: x for x in phases.deliverables(False, made, "k2")}["dxf"].state, "stale")
+
     def test_the_other_deliverables_name_the_task_that_brings_them(self):
-        others = [x for x in phases.deliverables(True, {}, "k") if x.id not in ("report", "csv", "ifc")]
-        self.assertEqual([x.id for x in others], ["dxf", "strings"])
+        others = [x for x in phases.deliverables(True, {}, "k") if x.id not in ("report", "csv", "ifc", "dxf")]
+        self.assertEqual([x.id for x in others], ["strings"])
         for x in others:
             self.assertEqual((x.state, x.command), ("planned", ""))
             self.assertIn("task", x.note)

@@ -1,0 +1,26 @@
+{
+  "size": [1600, 960],
+  "steps": [
+    {"action": "snapshot", "wait": 1200, "expect": {"phase": "model", "fileOpen": false}},
+    {"action": "key", "key": "Ctrl+Shift+3", "wait": 500},
+    {"action": "hover", "target": "@fit", "wait": 900},
+    {"action": "click", "target": "@fit", "wait": 500},
+    {"action": "click", "target": "@scene"},
+    {"action": "right_click", "target": "@scene"},
+    {"action": "key", "key": "Esc"},
+    {"action": "drag3d", "orbit": true, "delta": [65, -20]},
+    {"action": "drag3d", "delta": [40, 20]},
+    {"action": "click", "target": "@cube-menu"},
+    {"action": "key", "key": "Esc"},
+    {"action": "click", "target": "@sun-day"},
+    {"action": "key", "key": "Esc"},
+    {"action": "key", "key": "F", "wait": 500},
+    {"action": "key", "key": "+", "wait": 500},
+    {"action": "key", "key": "-", "wait": 500},
+    {"action": "key", "key": "Esc"},
+    {"action": "resize", "size": [1366, 900], "wait": 500},
+    {"action": "click", "target": "Impianto", "expect": {"phase": "plant"}},
+    {"action": "click", "target": "Modellazione", "expect": {"phase": "model"}},
+    {"action": "resize", "size": [1920, 1080], "wait": 500}
+  ]
+}

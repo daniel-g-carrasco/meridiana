@@ -825,7 +825,7 @@ class ConsumptionPage(Page):
         t[0].set(f"{number(load.annual_kwh, 0, grouping=True)} kWh", load.basis)
         for i, b in enumerate(("F1", "F2", "F3")):
             t[i + 1].set(f"{number(100 * by[b] / total, 0)} %", f"{number(by[b], 0, grouping=True)} kWh")
-        t[4].set(f"{number(float(load.hourly.max()), 2)} kWh", _("in one hour"))
+        t[4].set(f"{number(float(load.hourly.max()), 2)} kW", _("mean power of the busiest hour"))      # R447
         fig = load.figures()
         t[5].set(f"{number(fig['base_kw'], 2)} kW", _("never below it in 95% of the hours"))
         t[6].set(f"{number(100 * fig['load_factor'], 0)} %", _("mean load over the highest"))

@@ -61,7 +61,169 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential all-black mono-facial dual-glass module (2.0+2.0 mm glass), 192 quarter-cut cells (48x4). Series name from jinkosolar.eu ('Tiger Neo 3.0 Mono 48QL6 All Black Dual Glass'); the datasheet prints only the family code JKM460-485N-48QL6-DB, the per-class code follows Jinko naming. No NOCT/NMOT on the datasheet. Power measurement tolerance +-3%. EU datasheet F4-EU (c) 2026. IT: Cobat RAEE Italy certificate published on jinkosolar.eu."
+  "notes": "Residential all-black mono-facial dual-glass module (2.0+2.0 mm glass), 192 quarter-cut cells (48x4). Series name from jinkosolar.eu ('Tiger Neo 3.0 Mono 48QL6 All Black Dual Glass'); the datasheet prints only the family code JKM460-485N-48QL6-DB, the per-class code follows Jinko naming. No NOCT/NMOT on the datasheet. Power measurement tolerance +-3%. EU datasheet F4-EU (c) 2026. IT: Cobat RAEE Italy certificate published on jinkosolar.eu.",
+  "classes": [
+   {
+    "pmax_w": 460.0,
+    "vmp_v": 30.63,
+    "imp_a": 15.02,
+    "voc_v": 35.69,
+    "isc_a": 15.7
+   },
+   {
+    "pmax_w": 465.0,
+    "vmp_v": 30.8,
+    "imp_a": 15.1,
+    "voc_v": 35.94,
+    "isc_a": 15.75
+   },
+   {
+    "pmax_w": 470.0,
+    "vmp_v": 30.97,
+    "imp_a": 15.18,
+    "voc_v": 36.19,
+    "isc_a": 15.8
+   },
+   {
+    "pmax_w": 475.0,
+    "vmp_v": 31.13,
+    "imp_a": 15.26,
+    "voc_v": 36.44,
+    "isc_a": 15.85
+   },
+   {
+    "pmax_w": 480.0,
+    "vmp_v": 31.32,
+    "imp_a": 15.33,
+    "voc_v": 36.69,
+    "isc_a": 15.89
+   },
+   {
+    "pmax_w": 485.0,
+    "vmp_v": 31.5,
+    "imp_a": 15.4,
+    "voc_v": 36.94,
+    "isc_a": 15.94
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "JKM460-485N-48QL6-DB-F4-EU",
+   "page": 2
+  }
+ },
+ {
+  "manufacturer": "Jinko Solar",
+  "model": "JKM475N-48QL6-DV",
+  "series": "Tiger Neo 3.0",
+  "power_classes_w": [
+   460,
+   465,
+   470,
+   475,
+   480,
+   485
+  ],
+  "technology": "n-type TOPCon",
+  "cell_family": "topcon",
+  "bifacial": false,
+  "bifaciality_pct": null,
+  "glass": "glass-glass",
+  "cells": 192,
+  "pmax_w": 475,
+  "vmp_v": 31.11,
+  "imp_a": 15.27,
+  "voc_v": 36.42,
+  "isc_a": 15.86,
+  "efficiency_pct": 23.77,
+  "tolerance": "0~+3%",
+  "nmot_c": null,
+  "noct_c": null,
+  "temp_coeff_pmax_pct_c": -0.26,
+  "temp_coeff_voc_pct_c": -0.24,
+  "temp_coeff_isc_pct_c": 0.046,
+  "max_system_voltage_v": 1500,
+  "max_series_fuse_a": 30,
+  "length_mm": 1762,
+  "width_mm": 1134,
+  "thickness_mm": 30,
+  "weight_kg": 24.4,
+  "fire_rating": "IEC Fire Type: Class C",
+  "certifications": [
+   "IEC61215:2021",
+   "IEC61730:2023",
+   "IEC61701",
+   "IEC62716",
+   "IEC60068",
+   "IEC62804",
+   "ISO9001:2015",
+   "ISO14001:2015",
+   "ISO45001:2018"
+  ],
+  "warranty_product_years": 15,
+  "warranty_power_years": 30,
+  "degradation_first_year_pct": 1,
+  "degradation_annual_pct": 0.35,
+  "power_after_25_or_30_years_pct": 88.85,
+  "power_after_years": 30,
+  "datasheet_url": "https://jinkosolar.eu/wp-content/uploads/2025/09/JKM460-485N-48QL6-DV-F4-EU.pdf",
+  "datasheet_revision": "JKM460-485N-48QL6-DV-F4-EU",
+  "retrieved": "2026-11-05",
+  "markets": [
+   "global",
+   "EU",
+   "IT"
+  ],
+  "notes": "Residential mono-facial dual-glass module with a silver frame look (2.0+2.0 mm glass, the all black twin is -DB), 192 quarter-cut cells (48x4). The datasheet prints only the family code JKM460-485N-48QL6-DV, the per-class code follows Jinko naming. No NOCT/NMOT on the datasheet. Power measurement tolerance +-3%. Product warranty 15 years on this EU sheet F4-EU (c) 2026; the sheet F4C2-EN carried by a distributor says 25 years, the EU sheet prevails. The -DB sheet F4-EU does print 25 years: the two products differ.",
+  "classes": [
+   {
+    "pmax_w": 460.0,
+    "vmp_v": 30.57,
+    "imp_a": 15.05,
+    "voc_v": 35.67,
+    "isc_a": 15.72
+   },
+   {
+    "pmax_w": 465.0,
+    "vmp_v": 30.74,
+    "imp_a": 15.13,
+    "voc_v": 35.92,
+    "isc_a": 15.77
+   },
+   {
+    "pmax_w": 470.0,
+    "vmp_v": 30.93,
+    "imp_a": 15.2,
+    "voc_v": 36.17,
+    "isc_a": 15.82
+   },
+   {
+    "pmax_w": 475.0,
+    "vmp_v": 31.11,
+    "imp_a": 15.27,
+    "voc_v": 36.42,
+    "isc_a": 15.86
+   },
+   {
+    "pmax_w": 480.0,
+    "vmp_v": 31.3,
+    "imp_a": 15.34,
+    "voc_v": 36.67,
+    "isc_a": 15.9
+   },
+   {
+    "pmax_w": 485.0,
+    "vmp_v": 31.48,
+    "imp_a": 15.41,
+    "voc_v": 36.92,
+    "isc_a": 15.95
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "JKM460-485N-48QL6-DV-F4-EU",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Jinko Solar",
@@ -251,7 +413,49 @@
    "EU",
    "IT"
   ],
-  "notes": "Utility bifacial dual-glass flagship (2.0+2.0 mm glass), 264 quarter-cut cells (66x4). Bifacial factor 85+-5% (phiPmax 85+-5%, phiIsc 85+-5%, phiVoc 98+-5%); BNPI columns (front 1000 + rear 135 W/m2) not used. Series name 'Tiger Neo 3.0' from jinkosolar.eu (not in datasheet text); per-class code follows Jinko naming. No NOCT/NMOT on the datasheet. EU datasheet F4-EU (c) 2026."
+  "notes": "Utility bifacial dual-glass flagship (2.0+2.0 mm glass), 264 quarter-cut cells (66x4). Bifacial factor 85+-5% (phiPmax 85+-5%, phiIsc 85+-5%, phiVoc 98+-5%); BNPI columns (front 1000 + rear 135 W/m2) not used. Series name 'Tiger Neo 3.0' from jinkosolar.eu (not in datasheet text); per-class code follows Jinko naming. No NOCT/NMOT on the datasheet. EU datasheet F4-EU (c) 2026.",
+  "classes": [
+   {
+    "pmax_w": 650.0,
+    "vmp_v": 42.57,
+    "imp_a": 15.27,
+    "voc_v": 50.26,
+    "isc_a": 15.98
+   },
+   {
+    "pmax_w": 655.0,
+    "vmp_v": 42.7,
+    "imp_a": 15.34,
+    "voc_v": 50.44,
+    "isc_a": 16.04
+   },
+   {
+    "pmax_w": 660.0,
+    "vmp_v": 42.78,
+    "imp_a": 15.43,
+    "voc_v": 50.5,
+    "isc_a": 16.14
+   },
+   {
+    "pmax_w": 665.0,
+    "vmp_v": 42.85,
+    "imp_a": 15.52,
+    "voc_v": 50.55,
+    "isc_a": 16.24
+   },
+   {
+    "pmax_w": 670.0,
+    "vmp_v": 42.92,
+    "imp_a": 15.61,
+    "voc_v": 50.6,
+    "isc_a": 16.34
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "JKM650-670N-66QL6-BDV-F4-EU",
+   "page": 2
+  }
  },
  {
   "manufacturer": "LONGi",
@@ -501,7 +705,62 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential/C&I rooftop mono-facial dual-glass module (1.6+1.6 mm glass, black frame), i-TOPCon, 144 cells; this 2026 revision is a high-voltage/low-current design (Imp ~10 A) unlike earlier NEG9R.28 datasheets. Power selection 0/+5 W (up to +3%), measuring tolerance +-3%. NOCT only: 43 C (+-2 C). Fire class not printed. 87.4% at year 30 read from the warranty chart. EU download page (trinasolar.com/eu); Trina also runs an Italian site (trinasolar.com/it)."
+  "notes": "Residential/C&I rooftop mono-facial dual-glass module (1.6+1.6 mm glass, black frame), i-TOPCon, 144 cells; this 2026 revision is a high-voltage/low-current design (Imp ~10 A) unlike earlier NEG9R.28 datasheets. Power selection 0/+5 W (up to +3%), measuring tolerance +-3%. NOCT only: 43 C (+-2 C). Fire class not printed. 87.4% at year 30 read from the warranty chart. EU download page (trinasolar.com/eu); Trina also runs an Italian site (trinasolar.com/it).",
+  "classes": [
+   {
+    "pmax_w": 450.0,
+    "vmp_v": 44.6,
+    "imp_a": 10.09,
+    "voc_v": 52.9,
+    "isc_a": 10.74,
+    "efficiency_pct": 22.5
+   },
+   {
+    "pmax_w": 455.0,
+    "vmp_v": 45.0,
+    "imp_a": 10.11,
+    "voc_v": 53.4,
+    "isc_a": 10.77,
+    "efficiency_pct": 22.8
+   },
+   {
+    "pmax_w": 460.0,
+    "vmp_v": 45.4,
+    "imp_a": 10.14,
+    "voc_v": 53.8,
+    "isc_a": 10.81,
+    "efficiency_pct": 23.0
+   },
+   {
+    "pmax_w": 465.0,
+    "vmp_v": 45.8,
+    "imp_a": 10.16,
+    "voc_v": 54.2,
+    "isc_a": 10.85,
+    "efficiency_pct": 23.3
+   },
+   {
+    "pmax_w": 470.0,
+    "vmp_v": 46.1,
+    "imp_a": 10.2,
+    "voc_v": 54.6,
+    "isc_a": 10.89,
+    "efficiency_pct": 23.5
+   },
+   {
+    "pmax_w": 475.0,
+    "vmp_v": 46.4,
+    "imp_a": 10.24,
+    "voc_v": 55.0,
+    "isc_a": 10.93,
+    "efficiency_pct": 23.8
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "TSM_EN_2026_A",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Trina Solar",
@@ -1148,7 +1407,70 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential, black frame; mono-facial dual-glass ('double glass' in the PDF title): 2.0 mm heat-strengthened front and back glass. 'TOPCon cells', arrangement 144 [2 x (12 x 6)] (CS6.2 = 182 Pro wafer). 1500 V IEC/UL. Product warranty '25 years' read from the badge graphic (not in the text layer). Certificates vary by market (datasheet note); the list includes UNI 9177 Class 1 (Italian fire-reaction standard), hence IT. Listed on the CSI Solar EMEA download page ('TOPHiKu6-CS6.2-48TD - Black Frame'); an all-black variant also exists."
+  "notes": "Residential, black frame; mono-facial dual-glass ('double glass' in the PDF title): 2.0 mm heat-strengthened front and back glass. 'TOPCon cells', arrangement 144 [2 x (12 x 6)] (CS6.2 = 182 Pro wafer). 1500 V IEC/UL. Product warranty '25 years' read from the badge graphic (not in the text layer). Certificates vary by market (datasheet note); the list includes UNI 9177 Class 1 (Italian fire-reaction standard), hence IT. Listed on the CSI Solar EMEA download page ('TOPHiKu6-CS6.2-48TD - Black Frame'); an all-black variant also exists.",
+  "classes": [
+   {
+    "pmax_w": 445.0,
+    "vmp_v": 44.6,
+    "imp_a": 9.98,
+    "voc_v": 52.7,
+    "isc_a": 10.61,
+    "efficiency_pct": 22.3
+   },
+   {
+    "pmax_w": 450.0,
+    "vmp_v": 44.8,
+    "imp_a": 10.05,
+    "voc_v": 52.9,
+    "isc_a": 10.68,
+    "efficiency_pct": 22.5
+   },
+   {
+    "pmax_w": 455.0,
+    "vmp_v": 45.0,
+    "imp_a": 10.12,
+    "voc_v": 53.1,
+    "isc_a": 10.75,
+    "efficiency_pct": 22.8
+   },
+   {
+    "pmax_w": 460.0,
+    "vmp_v": 45.2,
+    "imp_a": 10.18,
+    "voc_v": 53.3,
+    "isc_a": 10.82,
+    "efficiency_pct": 23.0
+   },
+   {
+    "pmax_w": 465.0,
+    "vmp_v": 45.4,
+    "imp_a": 10.25,
+    "voc_v": 53.5,
+    "isc_a": 10.89,
+    "efficiency_pct": 23.3
+   },
+   {
+    "pmax_w": 470.0,
+    "vmp_v": 45.6,
+    "imp_a": 10.32,
+    "voc_v": 53.7,
+    "isc_a": 10.96,
+    "efficiency_pct": 23.5
+   },
+   {
+    "pmax_w": 475.0,
+    "vmp_v": 45.8,
+    "imp_a": 10.39,
+    "voc_v": 53.9,
+    "isc_a": 11.03,
+    "efficiency_pct": 23.8
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "September 2025, PV Module Product Datasheet V1.5_EN",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Canadian Solar",
@@ -1532,7 +1854,56 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential 'Bifacial Double Glass Module (Black Frame)', 1722x1134 format (the widely distributed 108-cell size), 1.6+1.6 mm glass. Bifaciality 80%±5%. The datasheet prints only 'N Type': TOPCon taken from DAS Solar's N-Type series web page. Cell count not printed (type code suggests 108). NMOT 42±2 °C. Tolerance also printed as '0 ~ +5 W'. Warranty: 15 years materials and workmanship, 30 years linear power; -1.00% first year, -0.40%/yr; 87.40% at year 30 (chart). Model = type code + power class. Black Pro and Black Thru variants have separate datasheets."
+  "notes": "Residential 'Bifacial Double Glass Module (Black Frame)', 1722x1134 format (the widely distributed 108-cell size), 1.6+1.6 mm glass. Bifaciality 80%±5%. The datasheet prints only 'N Type': TOPCon taken from DAS Solar's N-Type series web page. Cell count not printed (type code suggests 108). NMOT 42±2 °C. Tolerance also printed as '0 ~ +5 W'. Warranty: 15 years materials and workmanship, 30 years linear power; -1.00% first year, -0.40%/yr; 87.40% at year 30 (chart). Model = type code + power class. Black Pro and Black Thru variants have separate datasheets.",
+  "classes": [
+   {
+    "pmax_w": 425.0,
+    "vmp_v": 32.35,
+    "imp_a": 13.14,
+    "voc_v": 38.54,
+    "isc_a": 13.79
+   },
+   {
+    "pmax_w": 430.0,
+    "vmp_v": 32.68,
+    "imp_a": 13.16,
+    "voc_v": 38.6,
+    "isc_a": 13.8
+   },
+   {
+    "pmax_w": 435.0,
+    "vmp_v": 33.01,
+    "imp_a": 13.18,
+    "voc_v": 38.72,
+    "isc_a": 13.89
+   },
+   {
+    "pmax_w": 440.0,
+    "vmp_v": 33.26,
+    "imp_a": 13.23,
+    "voc_v": 38.88,
+    "isc_a": 13.98
+   },
+   {
+    "pmax_w": 445.0,
+    "vmp_v": 33.51,
+    "imp_a": 13.28,
+    "voc_v": 39.12,
+    "isc_a": 14.03
+   },
+   {
+    "pmax_w": 450.0,
+    "vmp_v": 33.76,
+    "imp_a": 13.33,
+    "voc_v": 39.36,
+    "isc_a": 14.08
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "DAS-MP-017-A97.V12",
+   "page": 2
+  }
  },
  {
   "manufacturer": "DAS Solar",
@@ -1596,7 +1967,56 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential 'Monofacial Double Glass Module (Black Frame)', 1.6+1.6 mm glass, black frame (a Black Pro variant exists; the website page calls the series bifacial, but this Black Frame datasheet says monofacial). The datasheet prints only 'N Type': TOPCon taken from DAS Solar's N-Type series web page (N-type TOPCon technology for its DAON modules). Cell count not printed (type code suggests 96). NMOT 42±2 °C. Tolerance also printed as '0 ~ +5 W'. Warranty: 15 years materials and workmanship, 30 years linear power; -1.00% first year, -0.40%/yr; 87.40% at year 30 (chart). Model = type code + power class (no per-class code on the datasheet). PDF linked from the official download centre (das-solar.com/en/site/download, CDN yidao.cdn.shwebspace.com). Markets: DAS Solar has an Italian site (das-solar.com/it)."
+  "notes": "Residential 'Monofacial Double Glass Module (Black Frame)', 1.6+1.6 mm glass, black frame (a Black Pro variant exists; the website page calls the series bifacial, but this Black Frame datasheet says monofacial). The datasheet prints only 'N Type': TOPCon taken from DAS Solar's N-Type series web page (N-type TOPCon technology for its DAON modules). Cell count not printed (type code suggests 96). NMOT 42±2 °C. Tolerance also printed as '0 ~ +5 W'. Warranty: 15 years materials and workmanship, 30 years linear power; -1.00% first year, -0.40%/yr; 87.40% at year 30 (chart). Model = type code + power class (no per-class code on the datasheet). PDF linked from the official download centre (das-solar.com/en/site/download, CDN yidao.cdn.shwebspace.com). Markets: DAS Solar has an Italian site (das-solar.com/it).",
+  "classes": [
+   {
+    "pmax_w": 445.0,
+    "vmp_v": 29.83,
+    "imp_a": 14.92,
+    "voc_v": 35.11,
+    "isc_a": 16.01
+   },
+   {
+    "pmax_w": 450.0,
+    "vmp_v": 30.02,
+    "imp_a": 14.99,
+    "voc_v": 35.3,
+    "isc_a": 16.08
+   },
+   {
+    "pmax_w": 455.0,
+    "vmp_v": 30.22,
+    "imp_a": 15.06,
+    "voc_v": 35.5,
+    "isc_a": 16.16
+   },
+   {
+    "pmax_w": 460.0,
+    "vmp_v": 30.41,
+    "imp_a": 15.13,
+    "voc_v": 35.68,
+    "isc_a": 16.22
+   },
+   {
+    "pmax_w": 465.0,
+    "vmp_v": 30.5,
+    "imp_a": 15.25,
+    "voc_v": 35.78,
+    "isc_a": 16.32
+   },
+   {
+    "pmax_w": 470.0,
+    "vmp_v": 30.56,
+    "imp_a": 15.38,
+    "voc_v": 35.89,
+    "isc_a": 16.43
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "DAS-MP-017-A43.V05",
+   "page": 2
+  }
  },
  {
   "manufacturer": "DAS Solar",
@@ -1658,7 +2078,42 @@
    "EU",
    "IT"
   ],
-  "notes": "Utility / C&I 'Bifacial Double Glass Module', 2382x1134 format, 2.0+2.0 mm glass. Bifaciality 80%±5%. The datasheet prints only 'N Type' (with a '5.0' logo): TOPCon taken from DAS Solar's N-Type series web page. Cell count not printed (type code suggests 132). NMOT 42±2 °C. Tolerance also printed as '0 ~ +5 W'. Warranty: 15 years materials and workmanship, 30 years linear power; -1.00% first year, -0.40%/yr; 87.40% at year 30 (chart). Model = type code + power class. A 605-630 W DH132NE datasheet (V07) also exists; the 635-650 W one (V03) is the newer bin set."
+  "notes": "Utility / C&I 'Bifacial Double Glass Module', 2382x1134 format, 2.0+2.0 mm glass. Bifaciality 80%±5%. The datasheet prints only 'N Type' (with a '5.0' logo): TOPCon taken from DAS Solar's N-Type series web page. Cell count not printed (type code suggests 132). NMOT 42±2 °C. Tolerance also printed as '0 ~ +5 W'. Warranty: 15 years materials and workmanship, 30 years linear power; -1.00% first year, -0.40%/yr; 87.40% at year 30 (chart). Model = type code + power class. A 605-630 W DH132NE datasheet (V07) also exists; the 635-650 W one (V03) is the newer bin set.",
+  "classes": [
+   {
+    "pmax_w": 635.0,
+    "vmp_v": 41.0,
+    "imp_a": 15.49,
+    "voc_v": 48.88,
+    "isc_a": 16.29
+   },
+   {
+    "pmax_w": 640.0,
+    "vmp_v": 41.18,
+    "imp_a": 15.55,
+    "voc_v": 49.06,
+    "isc_a": 16.35
+   },
+   {
+    "pmax_w": 645.0,
+    "vmp_v": 41.33,
+    "imp_a": 15.61,
+    "voc_v": 49.22,
+    "isc_a": 16.41
+   },
+   {
+    "pmax_w": 650.0,
+    "vmp_v": 41.49,
+    "imp_a": 15.67,
+    "voc_v": 49.38,
+    "isc_a": 16.47
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "DAS-MP-017-A50.V03",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Risen Energy",
@@ -1716,7 +2171,56 @@
    "global",
    "EU"
   ],
-  "notes": "Residential n-type TOPCon bifacial dual-glass module ('perfect for residential'), black frame, 96 cells (6x8+6x8), 1.6 mm AR-coated front + 1.6 mm rear heat-strengthened glass. Bifacial factor 80±5%. NMOT 44±2 °C. Power measurement tolerance ±3%; STC per EN 60904-3. Several glyphs in this PDF have no text mapping: values were read from the rendered pages (STC table also verified in the text layer). First-year 1% read from the warranty chart (99% at year 1); 0.4% annual over 30 years; 87.4% at year 30. Certifications: ISO/IEC list printed next to the logos (IEC, CE, CSA, CEC, Inmetro, BABT, Clean Energy Council shown only as logos; region-dependent). Per-class code pattern as printed on the datasheet (e.g. RSM96-11-460BNDG). Markets: Risen has German/French/Spanish sites; no Italian site found."
+  "notes": "Residential n-type TOPCon bifacial dual-glass module ('perfect for residential'), black frame, 96 cells (6x8+6x8), 1.6 mm AR-coated front + 1.6 mm rear heat-strengthened glass. Bifacial factor 80±5%. NMOT 44±2 °C. Power measurement tolerance ±3%; STC per EN 60904-3. Several glyphs in this PDF have no text mapping: values were read from the rendered pages (STC table also verified in the text layer). First-year 1% read from the warranty chart (99% at year 1); 0.4% annual over 30 years; 87.4% at year 30. Certifications: ISO/IEC list printed next to the logos (IEC, CE, CSA, CEC, Inmetro, BABT, Clean Energy Council shown only as logos; region-dependent). Per-class code pattern as printed on the datasheet (e.g. RSM96-11-460BNDG). Markets: Risen has German/French/Spanish sites; no Italian site found.",
+  "classes": [
+   {
+    "pmax_w": 450.0,
+    "vmp_v": 29.9,
+    "imp_a": 15.06,
+    "voc_v": 35.4,
+    "isc_a": 16.14
+   },
+   {
+    "pmax_w": 455.0,
+    "vmp_v": 30.1,
+    "imp_a": 15.12,
+    "voc_v": 35.59,
+    "isc_a": 16.22
+   },
+   {
+    "pmax_w": 460.0,
+    "vmp_v": 30.28,
+    "imp_a": 15.22,
+    "voc_v": 35.79,
+    "isc_a": 16.3
+   },
+   {
+    "pmax_w": 465.0,
+    "vmp_v": 30.44,
+    "imp_a": 15.3,
+    "voc_v": 36.0,
+    "isc_a": 16.38
+   },
+   {
+    "pmax_w": 470.0,
+    "vmp_v": 30.62,
+    "imp_a": 15.38,
+    "voc_v": 36.21,
+    "isc_a": 16.46
+   },
+   {
+    "pmax_w": 475.0,
+    "vmp_v": 30.78,
+    "imp_a": 15.46,
+    "voc_v": 36.42,
+    "isc_a": 16.52
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "REM96-BNDG-EN-H2-1-2026",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Risen Energy",
@@ -1830,7 +2334,46 @@
    "global",
    "EU"
   ],
-  "notes": "Utility heterojunction 'Hyper-ion Series Bifacial Module' (n-type HJT, 0BB, Hyper-link interconnection), 2384x1303 format, 132 cells (6x11+6x11), 2.0+2.0 mm glass, 33 mm aluminium frame (variants: GFRP frame, HSA 30 mm frame, anti-glare, Ultra 740-760 W). Bifacial factor 90±5%. NMOT 43±2 °C. Power measurement tolerance ±3%. Values read from the rendered pages (PDF partly lacks glyph mapping). First-year 1% from the warranty chart (99% at year 1); 0.3% annual over 30 years; 90.3% at year 30. Power slightly above the 720 W utility range: chosen as Risen's HJT flagship."
+  "notes": "Utility heterojunction 'Hyper-ion Series Bifacial Module' (n-type HJT, 0BB, Hyper-link interconnection), 2384x1303 format, 132 cells (6x11+6x11), 2.0+2.0 mm glass, 33 mm aluminium frame (variants: GFRP frame, HSA 30 mm frame, anti-glare, Ultra 740-760 W). Bifacial factor 90±5%. NMOT 43±2 °C. Power measurement tolerance ±3%. Values read from the rendered pages (PDF partly lacks glyph mapping). First-year 1% from the warranty chart (99% at year 1); 0.3% annual over 30 years; 90.3% at year 30. Power slightly above the 720 W utility range: chosen as Risen's HJT flagship.",
+  "classes": [
+   {
+    "pmax_w": 720.0,
+    "vmp_v": 42.08,
+    "imp_a": 17.13,
+    "voc_v": 50.18,
+    "isc_a": 18.19,
+    "efficiency_pct": 23.2
+   },
+   {
+    "pmax_w": 725.0,
+    "vmp_v": 42.14,
+    "imp_a": 17.23,
+    "voc_v": 50.26,
+    "isc_a": 18.29,
+    "efficiency_pct": 23.3
+   },
+   {
+    "pmax_w": 730.0,
+    "vmp_v": 42.2,
+    "imp_a": 17.32,
+    "voc_v": 50.33,
+    "isc_a": 18.38,
+    "efficiency_pct": 23.5
+   },
+   {
+    "pmax_w": 735.0,
+    "vmp_v": 42.26,
+    "imp_a": 17.41,
+    "voc_v": 50.4,
+    "isc_a": 18.47,
+    "efficiency_pct": 23.7
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "REM132-BHDG-0BB-EN-H2-1-2026-Pro",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Aiko",
@@ -1891,7 +2434,46 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential mono-glass module, N-type ABC (all back contact), 108 cells (6*18), 3.2 mm tempered glass + high weather resistant backsheet, black anodized frame (the product page links the 'Full-black Gen-3 Infinite Modules' warranty). Weight 21.1 kg ±3%. NOCT electrical values given (AM1.5, 800 W/m2, 20 °C, 1 m/s) but no NOCT/NMOT temperature printed. Protection class II; hail 25 mm at 23 m/s. ≤1% first year, ≤0.35%/yr years 2-30; 90.6% at year 25 and 88.85% at year 30 (chart). Markets: Aiko has an Italian site (aikosolar.com/it)."
+  "notes": "Residential mono-glass module, N-type ABC (all back contact), 108 cells (6*18), 3.2 mm tempered glass + high weather resistant backsheet, black anodized frame (the product page links the 'Full-black Gen-3 Infinite Modules' warranty). Weight 21.1 kg ±3%. NOCT electrical values given (AM1.5, 800 W/m2, 20 °C, 1 m/s) but no NOCT/NMOT temperature printed. Protection class II; hail 25 mm at 23 m/s. ≤1% first year, ≤0.35%/yr years 2-30; 90.6% at year 25 and 88.85% at year 30 (chart). Markets: Aiko has an Italian site (aikosolar.com/it).",
+  "classes": [
+   {
+    "pmax_w": 460.0,
+    "vmp_v": 34.1,
+    "imp_a": 13.5,
+    "voc_v": 40.5,
+    "isc_a": 14.66,
+    "efficiency_pct": 23.0
+   },
+   {
+    "pmax_w": 465.0,
+    "vmp_v": 34.2,
+    "imp_a": 13.6,
+    "voc_v": 40.6,
+    "isc_a": 14.69,
+    "efficiency_pct": 23.3
+   },
+   {
+    "pmax_w": 470.0,
+    "vmp_v": 34.3,
+    "imp_a": 13.71,
+    "voc_v": 40.7,
+    "isc_a": 14.72,
+    "efficiency_pct": 23.5
+   },
+   {
+    "pmax_w": 475.0,
+    "vmp_v": 34.4,
+    "imp_a": 13.81,
+    "voc_v": 40.8,
+    "isc_a": 14.76,
+    "efficiency_pct": 23.8
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "202608_V1.1_EN",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Aiko",
@@ -1954,7 +2536,56 @@
    "EU",
    "IT"
   ],
-  "notes": "Rooftop residential/C&I mono-glass module, N-type ABC, 120 cells (6*20), 1954x1134 format, 3.2 mm tempered glass + backsheet, black anodized frame. Weight 23.2 kg ±3%. NOCT electrical values given but no NOCT/NMOT temperature printed. Protection class II. ≤1% first year, ≤0.35%/yr years 2-30; 88.85% at year 30 (chart). The Italian edition (202601 V1.1 IT) prints identical values. Markets: Aiko has an Italian site and Italian datasheet edition."
+  "notes": "Rooftop residential/C&I mono-glass module, N-type ABC, 120 cells (6*20), 1954x1134 format, 3.2 mm tempered glass + backsheet, black anodized frame. Weight 23.2 kg ±3%. NOCT electrical values given but no NOCT/NMOT temperature printed. Protection class II. ≤1% first year, ≤0.35%/yr years 2-30; 88.85% at year 30 (chart). The Italian edition (202601 V1.1 IT) prints identical values. Markets: Aiko has an Italian site and Italian datasheet edition.",
+  "classes": [
+   {
+    "pmax_w": 520.0,
+    "vmp_v": 38.0,
+    "imp_a": 13.69,
+    "voc_v": 45.2,
+    "isc_a": 14.69
+   },
+   {
+    "pmax_w": 525.0,
+    "vmp_v": 38.1,
+    "imp_a": 13.79,
+    "voc_v": 45.3,
+    "isc_a": 14.72
+   },
+   {
+    "pmax_w": 530.0,
+    "vmp_v": 38.2,
+    "imp_a": 13.88,
+    "voc_v": 45.4,
+    "isc_a": 14.76
+   },
+   {
+    "pmax_w": 535.0,
+    "vmp_v": 38.3,
+    "imp_a": 13.97,
+    "voc_v": 45.5,
+    "isc_a": 14.8
+   },
+   {
+    "pmax_w": 540.0,
+    "vmp_v": 38.4,
+    "imp_a": 14.07,
+    "voc_v": 45.6,
+    "isc_a": 14.84
+   },
+   {
+    "pmax_w": 545.0,
+    "vmp_v": 38.5,
+    "imp_a": 14.16,
+    "voc_v": 45.7,
+    "isc_a": 14.88
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "202608_V1.1_EN",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Aiko",
@@ -2019,7 +2650,70 @@
    "EU",
    "IT"
   ],
-  "notes": "Utility 'Dual-Glass Module', N-type ABC, 144 cells (6*24), 2.0 mm coated semi-tempered front + 2.0 mm semi-tempered rear glass, anodized aluminium frame. bifacial=true because the datasheet rates the module at BNPI (e.g. 705 W BNPI for the 670 W class); no bifaciality factor and no BNPI irradiance definition are printed, so bifaciality_pct is null. Weight 32.2 kg ±3%. NOCT electrical values given but no NOCT/NMOT temperature printed. Protection class II. ≤1% first year, ≤0.35%/yr years 2-30; 88.85% at year 30 (chart)."
+  "notes": "Utility 'Dual-Glass Module', N-type ABC, 144 cells (6*24), 2.0 mm coated semi-tempered front + 2.0 mm semi-tempered rear glass, anodized aluminium frame. bifacial=true because the datasheet rates the module at BNPI (e.g. 705 W BNPI for the 670 W class); no bifaciality factor and no BNPI irradiance definition are printed, so bifaciality_pct is null. Weight 32.2 kg ±3%. NOCT electrical values given but no NOCT/NMOT temperature printed. Protection class II. ≤1% first year, ≤0.35%/yr years 2-30; 88.85% at year 30 (chart).",
+  "classes": [
+   {
+    "pmax_w": 650.0,
+    "vmp_v": 44.79,
+    "imp_a": 14.52,
+    "voc_v": 54.9,
+    "isc_a": 15.27
+   },
+   {
+    "pmax_w": 655.0,
+    "vmp_v": 44.89,
+    "imp_a": 14.6,
+    "voc_v": 55.0,
+    "isc_a": 15.33
+   },
+   {
+    "pmax_w": 660.0,
+    "vmp_v": 44.99,
+    "imp_a": 14.68,
+    "voc_v": 55.1,
+    "isc_a": 15.39
+   },
+   {
+    "pmax_w": 665.0,
+    "vmp_v": 45.09,
+    "imp_a": 14.75,
+    "voc_v": 55.2,
+    "isc_a": 15.45
+   },
+   {
+    "pmax_w": 670.0,
+    "vmp_v": 45.19,
+    "imp_a": 14.83,
+    "voc_v": 55.3,
+    "isc_a": 15.52
+   },
+   {
+    "pmax_w": 675.0,
+    "vmp_v": 45.29,
+    "imp_a": 14.91,
+    "voc_v": 55.4,
+    "isc_a": 15.59
+   },
+   {
+    "pmax_w": 680.0,
+    "vmp_v": 45.39,
+    "imp_a": 14.99,
+    "voc_v": 55.5,
+    "isc_a": 15.66
+   },
+   {
+    "pmax_w": 685.0,
+    "vmp_v": 45.49,
+    "imp_a": 15.07,
+    "voc_v": 55.6,
+    "isc_a": 15.73
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "202608_V1.1_EN",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Aiko",
@@ -2084,7 +2778,337 @@
    "EU",
    "IT"
   ],
-  "notes": "C&I / utility mono-glass module, N-type ABC, 144 cells (6*24), 2382x1134 format, 3.2 mm tempered glass + backsheet, anodized aluminium frame. Weight 28.2 kg ±3%. Product warranty 15 years, extendable to 25 years (asterisked). NOCT electrical values given but no NOCT/NMOT temperature printed. Protection class II. ≤1% first year, ≤0.35%/yr years 2-30; 88.85% at year 30 (chart)."
+  "notes": "C&I / utility mono-glass module, N-type ABC, 144 cells (6*24), 2382x1134 format, 3.2 mm tempered glass + backsheet, anodized aluminium frame. Weight 28.2 kg ±3%. Product warranty 15 years, extendable to 25 years (asterisked). NOCT electrical values given but no NOCT/NMOT temperature printed. Protection class II. ≤1% first year, ≤0.35%/yr years 2-30; 88.85% at year 30 (chart).",
+  "classes": [
+   {
+    "pmax_w": 655.0,
+    "vmp_v": 45.4,
+    "imp_a": 14.43,
+    "voc_v": 54.1,
+    "isc_a": 15.16
+   },
+   {
+    "pmax_w": 660.0,
+    "vmp_v": 45.5,
+    "imp_a": 14.51,
+    "voc_v": 54.2,
+    "isc_a": 15.22
+   },
+   {
+    "pmax_w": 665.0,
+    "vmp_v": 45.6,
+    "imp_a": 14.59,
+    "voc_v": 54.35,
+    "isc_a": 15.28
+   },
+   {
+    "pmax_w": 670.0,
+    "vmp_v": 45.7,
+    "imp_a": 14.67,
+    "voc_v": 54.5,
+    "isc_a": 15.35
+   },
+   {
+    "pmax_w": 675.0,
+    "vmp_v": 45.8,
+    "imp_a": 14.74,
+    "voc_v": 54.65,
+    "isc_a": 15.41
+   },
+   {
+    "pmax_w": 680.0,
+    "vmp_v": 45.9,
+    "imp_a": 14.82,
+    "voc_v": 54.8,
+    "isc_a": 15.47
+   },
+   {
+    "pmax_w": 685.0,
+    "vmp_v": 46.0,
+    "imp_a": 14.9,
+    "voc_v": 55.0,
+    "isc_a": 15.53
+   },
+   {
+    "pmax_w": 690.0,
+    "vmp_v": 46.1,
+    "imp_a": 14.97,
+    "voc_v": 55.2,
+    "isc_a": 15.59
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "202608_V1.1_EN",
+   "page": 2
+  }
+ },
+ {
+  "manufacturer": "Aiko",
+  "model": "AIKO-A450-MAH54Mw",
+  "series": "Neostar",
+  "power_classes_w": [
+   450,
+   455,
+   460,
+   465
+  ],
+  "technology": "N-Type ABC",
+  "cell_family": "back_contact",
+  "bifacial": false,
+  "bifaciality_pct": null,
+  "glass": "mono-glass",
+  "cells": 108,
+  "pmax_w": 450,
+  "vmp_v": 33.5,
+  "imp_a": 13.44,
+  "voc_v": 40.49,
+  "isc_a": 14.21,
+  "efficiency_pct": 23.1,
+  "tolerance": "0~+3%",
+  "nmot_c": null,
+  "noct_c": null,
+  "temp_coeff_pmax_pct_c": -0.26,
+  "temp_coeff_voc_pct_c": -0.22,
+  "temp_coeff_isc_pct_c": 0.05,
+  "max_system_voltage_v": 1500,
+  "max_series_fuse_a": 25,
+  "length_mm": 1722,
+  "width_mm": 1134,
+  "thickness_mm": 30,
+  "weight_kg": 20.5,
+  "fire_rating": "IEC Class C",
+  "certifications": [
+   "IEC 61215",
+   "IEC 61730",
+   "ISO 9001",
+   "ISO 14001",
+   "ISO 45001"
+  ],
+  "warranty_product_years": 15,
+  "warranty_power_years": 30,
+  "degradation_first_year_pct": 1.0,
+  "degradation_annual_pct": 0.35,
+  "power_after_25_or_30_years_pct": 88.85,
+  "power_after_years": 30,
+  "datasheet_url": "Aiko - Neostar AIKO-A-MAH54Mw 450-465W - AEWHS_EN_202310_V5.3 - 2023-10 EN.pdf",
+  "datasheet_revision": "AEWHS_EN_202310_V5.3",
+  "retrieved": "2026-11-05",
+  "markets": [
+   "global",
+   "EU"
+  ],
+  "notes": "Modulo Neostar a vetro singolo, 108 celle N-Type ABC (6x18). Scheda AEWHS_EN_202310_V5.3, copia di un rivenditore archiviata in reference/catalogs/Aiko: non confrontata con una scheda sul sito di Aiko. Classe 450 W della tabella a p. 2, riletta nel PDF il 05/11/2026 (colonna STC; la colonna NOCT accanto non e' usata). Garanzia di prodotto 15 anni e di potenza 30 anni, a p. 1."
+ },
+ {
+  "manufacturer": "Aiko",
+  "model": "AIKO-A455-MAH54Mw",
+  "series": "Neostar",
+  "power_classes_w": [
+   450,
+   455,
+   460,
+   465
+  ],
+  "technology": "N-Type ABC",
+  "cell_family": "back_contact",
+  "bifacial": false,
+  "bifaciality_pct": null,
+  "glass": "mono-glass",
+  "cells": 108,
+  "pmax_w": 455,
+  "vmp_v": 33.6,
+  "imp_a": 13.55,
+  "voc_v": 40.59,
+  "isc_a": 14.31,
+  "efficiency_pct": 23.3,
+  "tolerance": "0~+3%",
+  "nmot_c": null,
+  "noct_c": null,
+  "temp_coeff_pmax_pct_c": -0.26,
+  "temp_coeff_voc_pct_c": -0.22,
+  "temp_coeff_isc_pct_c": 0.05,
+  "max_system_voltage_v": 1500,
+  "max_series_fuse_a": 25,
+  "length_mm": 1722,
+  "width_mm": 1134,
+  "thickness_mm": 30,
+  "weight_kg": 20.5,
+  "fire_rating": "IEC Class C",
+  "certifications": [
+   "IEC 61215",
+   "IEC 61730",
+   "ISO 9001",
+   "ISO 14001",
+   "ISO 45001"
+  ],
+  "warranty_product_years": 15,
+  "warranty_power_years": 30,
+  "degradation_first_year_pct": 1.0,
+  "degradation_annual_pct": 0.35,
+  "power_after_25_or_30_years_pct": 88.85,
+  "power_after_years": 30,
+  "datasheet_url": "Aiko - Neostar AIKO-A-MAH54Mw 450-465W - AEWHS_EN_202310_V5.3 - 2023-10 EN.pdf",
+  "datasheet_revision": "AEWHS_EN_202310_V5.3",
+  "retrieved": "2026-11-05",
+  "markets": [
+   "global",
+   "EU"
+  ],
+  "notes": "Modulo Neostar a vetro singolo, 108 celle N-Type ABC (6x18). Scheda AEWHS_EN_202310_V5.3, copia di un rivenditore archiviata in reference/catalogs/Aiko: non confrontata con una scheda sul sito di Aiko. Classe 455 W della tabella a p. 2, riletta nel PDF il 05/11/2026 (colonna STC; la colonna NOCT accanto non e' usata). Garanzia di prodotto 15 anni e di potenza 30 anni, a p. 1."
+ },
+ {
+  "manufacturer": "Aiko",
+  "model": "AIKO-A460-MAH54Mw",
+  "series": "Neostar",
+  "power_classes_w": [
+   450,
+   455,
+   460,
+   465
+  ],
+  "technology": "N-Type ABC",
+  "cell_family": "back_contact",
+  "bifacial": false,
+  "bifaciality_pct": null,
+  "glass": "mono-glass",
+  "cells": 108,
+  "pmax_w": 460,
+  "vmp_v": 33.7,
+  "imp_a": 13.66,
+  "voc_v": 40.69,
+  "isc_a": 14.41,
+  "efficiency_pct": 23.6,
+  "tolerance": "0~+3%",
+  "nmot_c": null,
+  "noct_c": null,
+  "temp_coeff_pmax_pct_c": -0.26,
+  "temp_coeff_voc_pct_c": -0.22,
+  "temp_coeff_isc_pct_c": 0.05,
+  "max_system_voltage_v": 1500,
+  "max_series_fuse_a": 25,
+  "length_mm": 1722,
+  "width_mm": 1134,
+  "thickness_mm": 30,
+  "weight_kg": 20.5,
+  "fire_rating": "IEC Class C",
+  "certifications": [
+   "IEC 61215",
+   "IEC 61730",
+   "ISO 9001",
+   "ISO 14001",
+   "ISO 45001"
+  ],
+  "warranty_product_years": 15,
+  "warranty_power_years": 30,
+  "degradation_first_year_pct": 1.0,
+  "degradation_annual_pct": 0.35,
+  "power_after_25_or_30_years_pct": 88.85,
+  "power_after_years": 30,
+  "datasheet_url": "Aiko - Neostar AIKO-A-MAH54Mw 450-465W - AEWHS_EN_202310_V5.3 - 2023-10 EN.pdf",
+  "datasheet_revision": "AEWHS_EN_202310_V5.3",
+  "retrieved": "2026-11-05",
+  "markets": [
+   "global",
+   "EU"
+  ],
+  "notes": "Modulo Neostar a vetro singolo, 108 celle N-Type ABC (6x18). Scheda AEWHS_EN_202310_V5.3, copia di un rivenditore archiviata in reference/catalogs/Aiko: non confrontata con una scheda sul sito di Aiko. Classi 450-465 W, tabella a p. 2 riletta il 05/11/2026 (la colonna NOCT accanto a ciascuna non e' usata). Garanzia di prodotto 15 anni e di potenza 30 anni, a p. 1. Certificazioni: le sole stampate sulla scheda.",
+  "classes": [
+   {
+    "pmax_w": 450,
+    "vmp_v": 33.5,
+    "imp_a": 13.44,
+    "voc_v": 40.49,
+    "isc_a": 14.21,
+    "efficiency_pct": 23.1
+   },
+   {
+    "pmax_w": 455,
+    "vmp_v": 33.6,
+    "imp_a": 13.55,
+    "voc_v": 40.59,
+    "isc_a": 14.31,
+    "efficiency_pct": 23.3
+   },
+   {
+    "pmax_w": 460,
+    "vmp_v": 33.7,
+    "imp_a": 13.66,
+    "voc_v": 40.69,
+    "isc_a": 14.41,
+    "efficiency_pct": 23.6
+   },
+   {
+    "pmax_w": 465,
+    "vmp_v": 33.8,
+    "imp_a": 13.76,
+    "voc_v": 40.79,
+    "isc_a": 14.51,
+    "efficiency_pct": 23.8
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "AEWHS_EN_202310_V5.3",
+   "page": 2
+  }
+ },
+ {
+  "manufacturer": "Aiko",
+  "model": "AIKO-A465-MAH54Mw",
+  "series": "Neostar",
+  "power_classes_w": [
+   450,
+   455,
+   460,
+   465
+  ],
+  "technology": "N-Type ABC",
+  "cell_family": "back_contact",
+  "bifacial": false,
+  "bifaciality_pct": null,
+  "glass": "mono-glass",
+  "cells": 108,
+  "pmax_w": 465,
+  "vmp_v": 33.8,
+  "imp_a": 13.76,
+  "voc_v": 40.79,
+  "isc_a": 14.51,
+  "efficiency_pct": 23.8,
+  "tolerance": "0~+3%",
+  "nmot_c": null,
+  "noct_c": null,
+  "temp_coeff_pmax_pct_c": -0.26,
+  "temp_coeff_voc_pct_c": -0.22,
+  "temp_coeff_isc_pct_c": 0.05,
+  "max_system_voltage_v": 1500,
+  "max_series_fuse_a": 25,
+  "length_mm": 1722,
+  "width_mm": 1134,
+  "thickness_mm": 30,
+  "weight_kg": 20.5,
+  "fire_rating": "IEC Class C",
+  "certifications": [
+   "IEC 61215",
+   "IEC 61730",
+   "ISO 9001",
+   "ISO 14001",
+   "ISO 45001"
+  ],
+  "warranty_product_years": 15,
+  "warranty_power_years": 30,
+  "degradation_first_year_pct": 1.0,
+  "degradation_annual_pct": 0.35,
+  "power_after_25_or_30_years_pct": 88.85,
+  "power_after_years": 30,
+  "datasheet_url": "Aiko - Neostar AIKO-A-MAH54Mw 450-465W - AEWHS_EN_202310_V5.3 - 2023-10 EN.pdf",
+  "datasheet_revision": "AEWHS_EN_202310_V5.3",
+  "retrieved": "2026-11-05",
+  "markets": [
+   "global",
+   "EU"
+  ],
+  "notes": "Modulo Neostar a vetro singolo, 108 celle N-Type ABC (6x18). Scheda AEWHS_EN_202310_V5.3, copia di un rivenditore archiviata in reference/catalogs/Aiko: non confrontata con una scheda sul sito di Aiko. Classe 465 W della tabella a p. 2, riletta nel PDF il 05/11/2026 (colonna STC; la colonna NOCT accanto non e' usata). Garanzia di prodotto 15 anni e di potenza 30 anni, a p. 1."
  },
  {
   "manufacturer": "Huasun",
@@ -2516,7 +3540,62 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential module, 'N-type Mono facial Module with Double Glass' (2 mm + 2 mm heat-strengthened glass), 96 cells (6x16, G12R half-cells). The datasheet and product pages do not name the cell architecture (TOPCon is not printed). Max series fuse = 'Overcurrent Protection Rating' 30 A; 'Power Sorting 0~3%'. Hail class HW3 (VKF 30 mm); loads test 5400/2400 Pa, design 3600/1600 Pa. Datasheet per EN 50380. Bifacial variants DMxxxG12RT-B48HBW / B48HSW (460-485 W, bifaciality 80 +/- 5%) have identical per-class STC values. Series name from the datasheet logo (INFINITY RT 3.0). EU office DMEGC Renewable Energy B.V. (NL) on the datasheet; Italian-language site dmegcsolar.com/it (IT)."
+  "notes": "Residential module, 'N-type Mono facial Module with Double Glass' (2 mm + 2 mm heat-strengthened glass), 96 cells (6x16, G12R half-cells). The datasheet and product pages do not name the cell architecture (TOPCon is not printed). Max series fuse = 'Overcurrent Protection Rating' 30 A; 'Power Sorting 0~3%'. Hail class HW3 (VKF 30 mm); loads test 5400/2400 Pa, design 3600/1600 Pa. Datasheet per EN 50380. Bifacial variants DMxxxG12RT-B48HBW / B48HSW (460-485 W, bifaciality 80 +/- 5%) have identical per-class STC values. Series name from the datasheet logo (INFINITY RT 3.0). EU office DMEGC Renewable Energy B.V. (NL) on the datasheet; Italian-language site dmegcsolar.com/it (IT).",
+  "classes": [
+   {
+    "pmax_w": 460.0,
+    "vmp_v": 30.57,
+    "imp_a": 15.06,
+    "voc_v": 35.81,
+    "isc_a": 15.73,
+    "efficiency_pct": 23.0
+   },
+   {
+    "pmax_w": 465.0,
+    "vmp_v": 30.75,
+    "imp_a": 15.13,
+    "voc_v": 36.03,
+    "isc_a": 15.78,
+    "efficiency_pct": 23.3
+   },
+   {
+    "pmax_w": 470.0,
+    "vmp_v": 30.93,
+    "imp_a": 15.2,
+    "voc_v": 36.25,
+    "isc_a": 15.83,
+    "efficiency_pct": 23.5
+   },
+   {
+    "pmax_w": 475.0,
+    "vmp_v": 31.11,
+    "imp_a": 15.27,
+    "voc_v": 36.47,
+    "isc_a": 15.88,
+    "efficiency_pct": 23.8
+   },
+   {
+    "pmax_w": 480.0,
+    "vmp_v": 31.29,
+    "imp_a": 15.34,
+    "voc_v": 36.69,
+    "isc_a": 15.93,
+    "efficiency_pct": 24.0
+   },
+   {
+    "pmax_w": 485.0,
+    "vmp_v": 31.47,
+    "imp_a": 15.41,
+    "voc_v": 36.91,
+    "isc_a": 15.98,
+    "efficiency_pct": 24.3
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "EN DS-G12RT-G48HBB-20260915",
+   "page": 2
+  }
  },
  {
   "manufacturer": "DMEGC Solar",
@@ -3080,7 +4159,35 @@
   "markets": [
    "EU"
   ],
-  "notes": "Residential module, white backsheet, black frame, 108 half cells 182x91 mm, 10 busbars, 3.2 mm glass; made in Prenzlau (Germany) per datasheet. AVAILABILITY: aleo announced an orderly phase-out of module production in Prenzlau in March 2025 (https://www.pv-magazine.com/2025/03/10/aleo-solar-to-halt-production-at-pv-module-factory-in-germany/); LEO-N is now sold as remaining stock (distributors list it as clearance), so treat it as an end-of-life product. Max series fuse mapped from 'Reverse current load IR 25 A'. Year-1 degradation from '99% performance for the first year'; 87.4% in the 30th year; annual rate not printed. NMOT/NOCT not printed. Revision not printed (PDF created 2024-10-01; aleo overview sheet dated 01/2025). Measurement tolerance Pmpp +/-3%."
+  "notes": "Residential module, white backsheet, black frame, 108 half cells 182x91 mm, 10 busbars, 3.2 mm glass; made in Prenzlau (Germany) per datasheet. AVAILABILITY: aleo announced an orderly phase-out of module production in Prenzlau in March 2025 (https://www.pv-magazine.com/2025/03/10/aleo-solar-to-halt-production-at-pv-module-factory-in-germany/); LEO-N is now sold as remaining stock (distributors list it as clearance), so treat it as an end-of-life product. Max series fuse mapped from 'Reverse current load IR 25 A'. Year-1 degradation from '99% performance for the first year'; 87.4% in the 30th year; annual rate not printed. NMOT/NOCT not printed. Revision not printed (PDF created 2024-10-01; aleo overview sheet dated 01/2025). Measurement tolerance Pmpp +/-3%.",
+  "classes": [
+   {
+    "pmax_w": 430.0,
+    "vmp_v": 33.2,
+    "imp_a": 12.95,
+    "voc_v": 39.22,
+    "isc_a": 13.63
+   },
+   {
+    "pmax_w": 435.0,
+    "vmp_v": 33.38,
+    "imp_a": 13.03,
+    "voc_v": 39.41,
+    "isc_a": 13.71
+   },
+   {
+    "pmax_w": 440.0,
+    "vmp_v": 33.56,
+    "imp_a": 13.11,
+    "voc_v": 39.6,
+    "isc_a": 13.79
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": null,
+   "page": 2
+  }
  },
  {
   "manufacturer": "SoliTek",
@@ -3253,7 +4360,22 @@
    "EU",
    "IT"
   ],
-  "notes": "Utility/commercial module, 210 mm format (cells 210x105 mm, 6x22), 2+2 mm glass; rear glass printed '2, white', frame printed 'White anodized aluminium frame'. Cell technology printed 'N type, TOPCon - bifacial' and the product page calls it bifacial, but no bifaciality factor or BNPI is printed. Cover: 'Suitable for FER X NZIA program' (Italian FER X scheme). Not marked 'Made in the EU' (unlike SOLID/MAGNUS). Product web page quotes 23.18% efficiency, datasheet 23.50% (datasheet used, consistent with 730 W / 2384x1303 mm). 'Max current (A) 35' printed -> max_series_fuse_a left null. Fire rating not printed. Test load wind/snow 2400/5400 Pa. A 650 W FORZA B120 (2172x1303 mm) also exists."
+  "notes": "Utility/commercial module, 210 mm format (cells 210x105 mm, 6x22), 2+2 mm glass; rear glass printed '2, white', frame printed 'White anodized aluminium frame'. Cell technology printed 'N type, TOPCon - bifacial' and the product page calls it bifacial, but no bifaciality factor or BNPI is printed. Cover: 'Suitable for FER X NZIA program' (Italian FER X scheme). Not marked 'Made in the EU' (unlike SOLID/MAGNUS). Product web page quotes 23.18% efficiency, datasheet 23.50% (datasheet used, consistent with 730 W / 2384x1303 mm). 'Max current (A) 35' printed -> max_series_fuse_a left null. Fire rating not printed. Test load wind/snow 2400/5400 Pa. A 650 W FORZA B120 (2172x1303 mm) also exists.",
+  "classes": [
+   {
+    "pmax_w": 730.0,
+    "vmp_v": 41.69,
+    "imp_a": 17.51,
+    "voc_v": 49.25,
+    "isc_a": 18.52,
+    "efficiency_pct": 23.5
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "Rev. 20260319",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Axitec",
@@ -3406,7 +4528,42 @@
    "global",
    "EU"
   ],
-  "notes": "Commercial/ground bifacial glass-glass (2.0 mm semi-tempered AR front, 2.0 mm rear glass with white cell spaces), 30 mm silver frame, 132 N-type bifacial half cells. Bifacial coefficients phiPmpp 0.80 +/-10%; BNPI 699 W. Four bins, the higher central one taken. The 625 W code is printed 'AC-625TGB/132TWS' (sic). NOCT only: 45 C +/-2K. Max series fuse mapped from 'Reverse current feed IR 30.0 A'. Fire class C (UL790), hail HW3. No certification list in the datasheet text. Download page dated 12.05.2026. Measurement tolerance +/-3%."
+  "notes": "Commercial/ground bifacial glass-glass (2.0 mm semi-tempered AR front, 2.0 mm rear glass with white cell spaces), 30 mm silver frame, 132 N-type bifacial half cells. Bifacial coefficients phiPmpp 0.80 +/-10%; BNPI 699 W. Four bins, the higher central one taken. The 625 W code is printed 'AC-625TGB/132TWS' (sic). NOCT only: 45 C +/-2K. Max series fuse mapped from 'Reverse current feed IR 30.0 A'. Fire class C (UL790), hail HW3. No certification list in the datasheet text. Download page dated 12.05.2026. Measurement tolerance +/-3%.",
+  "classes": [
+   {
+    "pmax_w": 625.0,
+    "vmp_v": 41.26,
+    "imp_a": 15.15,
+    "voc_v": 49.63,
+    "isc_a": 16.0
+   },
+   {
+    "pmax_w": 630.0,
+    "vmp_v": 41.45,
+    "imp_a": 15.2,
+    "voc_v": 49.87,
+    "isc_a": 16.05
+   },
+   {
+    "pmax_w": 635.0,
+    "vmp_v": 41.65,
+    "imp_a": 15.25,
+    "voc_v": 50.11,
+    "isc_a": 16.1
+   },
+   {
+    "pmax_w": 640.0,
+    "vmp_v": 41.84,
+    "imp_a": 15.3,
+    "voc_v": 50.35,
+    "isc_a": 16.15
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "132TGBEN260304A",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Sonnenstromfabrik",
@@ -3464,7 +4621,35 @@
   "markets": [
    "EU"
   ],
-  "notes": "Residential full-black glass-glass (2 x 2 mm hardened AR solar glass) back-contact module by CS Wismar GmbH (Wismar, Germany); 108 half-cut monocrystalline cells (n/p type not printed); not declared bifacial. Model code not printed: name built from the datasheet title 'Professional Glass / Glass M 108' and the 495 Wp column. NMOT 45 +/-2 C. Max series fuse mapped from 'Reverse current carrying capacity IR 30 A'. Fire protection class printed only as 'Class C'. 30-year linear performance guarantee and 25-year product guarantee, no degradation values printed. Design load snow 5,400 Pa / wind 2,400 Pa. Measurement tolerances Pmpp +/-3%, Isc/Uoc +/-5%. The brand has an Italian website, but it does not list this model; the other series on the site (Diamond, Sapphire, Excellent) only have 2020-2023 datasheets (e.g. Sapphire N 445-450 M108: release 03/22, mono PERC) and were not used."
+  "notes": "Residential full-black glass-glass (2 x 2 mm hardened AR solar glass) back-contact module by CS Wismar GmbH (Wismar, Germany); 108 half-cut monocrystalline cells (n/p type not printed); not declared bifacial. Model code not printed: name built from the datasheet title 'Professional Glass / Glass M 108' and the 495 Wp column. NMOT 45 +/-2 C. Max series fuse mapped from 'Reverse current carrying capacity IR 30 A'. Fire protection class printed only as 'Class C'. 30-year linear performance guarantee and 25-year product guarantee, no degradation values printed. Design load snow 5,400 Pa / wind 2,400 Pa. Measurement tolerances Pmpp +/-3%, Isc/Uoc +/-5%. The brand has an Italian website, but it does not list this model; the other series on the site (Diamond, Sapphire, Excellent) only have 2020-2023 datasheets (e.g. Sapphire N 445-450 M108: release 03/22, mono PERC) and were not used.",
+  "classes": [
+   {
+    "pmax_w": 490.0,
+    "vmp_v": 33.73,
+    "imp_a": 14.53,
+    "voc_v": 40.74,
+    "isc_a": 15.18
+   },
+   {
+    "pmax_w": 495.0,
+    "vmp_v": 33.84,
+    "imp_a": 14.63,
+    "voc_v": 40.85,
+    "isc_a": 15.28
+   },
+   {
+    "pmax_w": 500.0,
+    "vmp_v": 33.95,
+    "imp_a": 14.73,
+    "voc_v": 40.96,
+    "isc_a": 15.38
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "Version: 02/26 rev. 0.3",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Bauer Solar",
@@ -3572,7 +4757,35 @@
   "markets": [
    "EU"
   ],
-  "notes": "Residential full-black back-contact glass-glass: 2 mm AR front glass, 2 mm black-coated rear glass, black frame; '108 back contact bifacial half-cells' in M10 (182 mm) format, bifaciality printed 70% +/-5% (despite the black rear glass). Cell polarity (n/p) not printed. NOCT only: 45 +/-2 C. 'Engineered & designed in Germany'. Linear performance guarantee 88.85% after 30 years; first-year value only as chart label '>99%'. Static load up to 5400 Pa; hail HW3. A transparent-rear version (BS-108M10BCBT-GG, Glass-Glass Pure Back Contact) also exists."
+  "notes": "Residential full-black back-contact glass-glass: 2 mm AR front glass, 2 mm black-coated rear glass, black frame; '108 back contact bifacial half-cells' in M10 (182 mm) format, bifaciality printed 70% +/-5% (despite the black rear glass). Cell polarity (n/p) not printed. NOCT only: 45 +/-2 C. 'Engineered & designed in Germany'. Linear performance guarantee 88.85% after 30 years; first-year value only as chart label '>99%'. Static load up to 5400 Pa; hail HW3. A transparent-rear version (BS-108M10BCBT-GG, Glass-Glass Pure Back Contact) also exists.",
+  "classes": [
+   {
+    "pmax_w": 480.0,
+    "vmp_v": 33.85,
+    "imp_a": 14.18,
+    "voc_v": 40.47,
+    "isc_a": 15.02
+   },
+   {
+    "pmax_w": 485.0,
+    "vmp_v": 34.07,
+    "imp_a": 14.24,
+    "voc_v": 40.57,
+    "isc_a": 15.08
+   },
+   {
+    "pmax_w": 490.0,
+    "vmp_v": 34.28,
+    "imp_a": 14.29,
+    "voc_v": 40.67,
+    "isc_a": 15.14
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "(c) 2024 BAUER Solar Engineering GmbH. V4. Effective: 01.12.24",
+   "page": 3
+  }
  },
  {
   "manufacturer": "Bauer Solar",
@@ -3626,7 +4839,35 @@
   "markets": [
    "EU"
   ],
-  "notes": "Commercial/project module (Bauer 'Projekt-Module' page): bifacial glass-glass, 2 mm AR front glass, 2 mm white-coated rear glass, silver frame; 132 N-type bifacial TOPCon half cells, M12R (210R) format; bifaciality 80% +/-5%. NOCT only: 42 +/-2 C. Static load 5400 Pa (snow/wind); hail 25 mm at 23 m/s; cable 300 mm. 87.4% after 30 years; first-year value only as chart label '>99%'. 'Engineered & designed in Germany'."
+  "notes": "Commercial/project module (Bauer 'Projekt-Module' page): bifacial glass-glass, 2 mm AR front glass, 2 mm white-coated rear glass, silver frame; 132 N-type bifacial TOPCon half cells, M12R (210R) format; bifaciality 80% +/-5%. NOCT only: 42 +/-2 C. Static load 5400 Pa (snow/wind); hail 25 mm at 23 m/s; cable 300 mm. 87.4% after 30 years; first-year value only as chart label '>99%'. 'Engineered & designed in Germany'.",
+  "classes": [
+   {
+    "pmax_w": 620.0,
+    "vmp_v": 40.85,
+    "imp_a": 15.2,
+    "voc_v": 49.09,
+    "isc_a": 16.11
+   },
+   {
+    "pmax_w": 625.0,
+    "vmp_v": 41.05,
+    "imp_a": 15.25,
+    "voc_v": 49.29,
+    "isc_a": 16.17
+   },
+   {
+    "pmax_w": 630.0,
+    "vmp_v": 41.25,
+    "imp_a": 15.3,
+    "voc_v": 49.49,
+    "isc_a": 16.23
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "(c) 2025 BAUER Solar Engineering GmbH. V4. Effective: 01.03.25",
+   "page": 2
+  }
  },
  {
   "manufacturer": "FuturaSun",
@@ -3681,7 +4922,22 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential/commercial. Printed 'Realizzato in Europa' (module made in Europe; cell origin not printed); the FuturaSun product page calls it suitable for Transizione 5.0 plants. Single power class. 108 half-cut n-type M10 cells 182x91 mm, black frame, 3.2 mm glass + multilayer composite backsheet. Cell technology (TOPCon/other) not stated. NOCT only (45±2 °C). Max system voltage printed '1000 o 1500 V' (version-dependent): 1000 recorded. Fuse value printed as 'Massima corrente inversa (Ir) 25 A'. Power warranty printed: 99% at end of year 1, max -0.4%/yr from year 2, 92% at year 20, 89% at year 25. Italian datasheet, PDF dated 2025-04-10. Same STC values as Trienergia COE-430M10EF (also 'made in Europe') but different temperature coefficients; values as printed."
+  "notes": "Residential/commercial. Printed 'Realizzato in Europa' (module made in Europe; cell origin not printed); the FuturaSun product page calls it suitable for Transizione 5.0 plants. Single power class. 108 half-cut n-type M10 cells 182x91 mm, black frame, 3.2 mm glass + multilayer composite backsheet. Cell technology (TOPCon/other) not stated. NOCT only (45±2 °C). Max system voltage printed '1000 o 1500 V' (version-dependent): 1000 recorded. Fuse value printed as 'Massima corrente inversa (Ir) 25 A'. Power warranty printed: 99% at end of year 1, max -0.4%/yr from year 2, 92% at year 20, 89% at year 25. Italian datasheet, PDF dated 2025-04-10. Same STC values as Trienergia COE-430M10EF (also 'made in Europe') but different temperature coefficients; values as printed.",
+  "classes": [
+   {
+    "pmax_w": 430.0,
+    "vmp_v": 31.73,
+    "imp_a": 13.56,
+    "voc_v": 38.25,
+    "isc_a": 14.31,
+    "efficiency_pct": 22.0
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "IT_03",
+   "page": 2
+  }
  },
  {
   "manufacturer": "FuturaSun",
@@ -3739,7 +4995,46 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential. 96 half-cut n-type cells 182x105 mm (printed 'G12R'), black anodized frame, 3.2 mm glass + multilayer composite backsheet. The datasheet says only 'n-type': cell technology (TOPCon/other) not stated. NOCT only (45±2 °C; footnote: 800 W/m2, AM 1.5). Max system voltage 1000 V, '1500 V su richiesta'. Fuse value printed as 'Massima corrente inversa (Ir) 25 A'. Power warranty printed: 99% at end of year 1, max -0.4%/yr from year 2, 92% at year 20, 89% at year 25. Italian datasheet, PDF dated 2025-07-02. FuturaSun (Cittadella, PD, Italy) states presence in 70+ countries (futurasun.com)."
+  "notes": "Residential. 96 half-cut n-type cells 182x105 mm (printed 'G12R'), black anodized frame, 3.2 mm glass + multilayer composite backsheet. The datasheet says only 'n-type': cell technology (TOPCon/other) not stated. NOCT only (45±2 °C; footnote: 800 W/m2, AM 1.5). Max system voltage 1000 V, '1500 V su richiesta'. Fuse value printed as 'Massima corrente inversa (Ir) 25 A'. Power warranty printed: 99% at end of year 1, max -0.4%/yr from year 2, 92% at year 20, 89% at year 25. Italian datasheet, PDF dated 2025-07-02. FuturaSun (Cittadella, PD, Italy) states presence in 70+ countries (futurasun.com).",
+  "classes": [
+   {
+    "pmax_w": 445.0,
+    "vmp_v": 29.81,
+    "imp_a": 14.93,
+    "voc_v": 35.3,
+    "isc_a": 15.91,
+    "efficiency_pct": 22.27
+   },
+   {
+    "pmax_w": 450.0,
+    "vmp_v": 30.01,
+    "imp_a": 15.0,
+    "voc_v": 35.47,
+    "isc_a": 15.97,
+    "efficiency_pct": 22.52
+   },
+   {
+    "pmax_w": 455.0,
+    "vmp_v": 30.17,
+    "imp_a": 15.08,
+    "voc_v": 35.63,
+    "isc_a": 16.02,
+    "efficiency_pct": 22.77
+   },
+   {
+    "pmax_w": 460.0,
+    "vmp_v": 30.43,
+    "imp_a": 15.13,
+    "voc_v": 35.84,
+    "isc_a": 16.1,
+    "efficiency_pct": 23.02
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "IT_03",
+   "page": 2
+  }
  },
  {
   "manufacturer": "FuturaSun",
@@ -3799,7 +5094,62 @@
    "EU",
    "IT"
   ],
-  "notes": "Commercial/utility bifacial glass-glass (2.0 mm front glass with ARC + 2.0 mm rear glass with white pattern), silver anodized frame, 144 half-cut bifacial n-type M10 cells 182x91 mm; 'ideale per tracker monoassiali'. Bifaciality factor not printed: only BSTC values (front 1000 + rear 135 W/m2; 580 W class -> 642.72 W). Cell technology (TOPCon/other) not stated. NOCT only (45±2 °C). Fuse value printed as 'Massima corrente inversa (Ir) 30 A'. Power warranty printed: 99% at end of year 1, max -0.4%/yr, 92% at year 20, 87% at year 30. Italian datasheet, PDF dated 2025-05-22."
+  "notes": "Commercial/utility bifacial glass-glass (2.0 mm front glass with ARC + 2.0 mm rear glass with white pattern), silver anodized frame, 144 half-cut bifacial n-type M10 cells 182x91 mm; 'ideale per tracker monoassiali'. Bifaciality factor not printed: only BSTC values (front 1000 + rear 135 W/m2; 580 W class -> 642.72 W). Cell technology (TOPCon/other) not stated. NOCT only (45±2 °C). Fuse value printed as 'Massima corrente inversa (Ir) 30 A'. Power warranty printed: 99% at end of year 1, max -0.4%/yr, 92% at year 20, 87% at year 30. Italian datasheet, PDF dated 2025-05-22.",
+  "classes": [
+   {
+    "pmax_w": 565.0,
+    "vmp_v": 41.89,
+    "imp_a": 13.49,
+    "voc_v": 50.58,
+    "isc_a": 14.24,
+    "efficiency_pct": 21.8
+   },
+   {
+    "pmax_w": 570.0,
+    "vmp_v": 42.04,
+    "imp_a": 13.56,
+    "voc_v": 50.72,
+    "isc_a": 14.32,
+    "efficiency_pct": 22.0
+   },
+   {
+    "pmax_w": 575.0,
+    "vmp_v": 42.19,
+    "imp_a": 13.63,
+    "voc_v": 50.86,
+    "isc_a": 14.4,
+    "efficiency_pct": 22.2
+   },
+   {
+    "pmax_w": 580.0,
+    "vmp_v": 42.34,
+    "imp_a": 13.7,
+    "voc_v": 51.0,
+    "isc_a": 14.48,
+    "efficiency_pct": 22.4
+   },
+   {
+    "pmax_w": 585.0,
+    "vmp_v": 42.5,
+    "imp_a": 13.77,
+    "voc_v": 51.14,
+    "isc_a": 14.56,
+    "efficiency_pct": 22.65
+   },
+   {
+    "pmax_w": 590.0,
+    "vmp_v": 42.65,
+    "imp_a": 13.84,
+    "voc_v": 51.28,
+    "isc_a": 14.64,
+    "efficiency_pct": 22.84
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "IT_03",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Peimar",
@@ -3855,7 +5205,22 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential. Printed 'Modulo Made in Italy - Prodotto nel nostro stabilimento produttivo' (cell origin not printed). Monofacial TOPCon, 60 full n-type M10 cells 182x182 mm, black frame + white TPT backsheet, 3.2 mm tempered glass, Class II. One power class per Peimar datasheet; full-black variant SA480MN (FB) 480 W. 30-year linear power warranty, but no degradation percentages printed. Italian datasheet, PDF dated 2026-07-09. Peimar (Brescia) lists branches in Europe, the Americas, Africa, Middle East, India, China and Australia (peimar.com)."
+  "notes": "Residential. Printed 'Modulo Made in Italy - Prodotto nel nostro stabilimento produttivo' (cell origin not printed). Monofacial TOPCon, 60 full n-type M10 cells 182x182 mm, black frame + white TPT backsheet, 3.2 mm tempered glass, Class II. One power class per Peimar datasheet; full-black variant SA480MN (FB) 480 W. 30-year linear power warranty, but no degradation percentages printed. Italian datasheet, PDF dated 2026-07-09. Peimar (Brescia) lists branches in Europe, the Americas, Africa, Middle East, India, China and Australia (peimar.com).",
+  "classes": [
+   {
+    "pmax_w": 485.0,
+    "vmp_v": 35.3,
+    "imp_a": 13.74,
+    "voc_v": 41.73,
+    "isc_a": 14.54,
+    "efficiency_pct": 22.7
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "IT_2026_07_00",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Peimar",
@@ -3911,7 +5276,22 @@
    "EU",
    "IT"
   ],
-  "notes": "Commercial. Printed 'Modulo Made in Italy - Prodotto nel nostro stabilimento produttivo' (cell origin not printed). Monofacial TOPCon, 72 full n-type M10 cells 182x182 mm, silver frame + white TPT backsheet, 3.2 mm tempered glass, Class II. One power class per datasheet. 30-year linear power warranty, no degradation percentages printed. Italian datasheet, PDF dated 2026-09-24."
+  "notes": "Commercial. Printed 'Modulo Made in Italy - Prodotto nel nostro stabilimento produttivo' (cell origin not printed). Monofacial TOPCon, 72 full n-type M10 cells 182x182 mm, silver frame + white TPT backsheet, 3.2 mm tempered glass, Class II. One power class per datasheet. 30-year linear power warranty, no degradation percentages printed. Italian datasheet, PDF dated 2026-09-24.",
+  "classes": [
+   {
+    "pmax_w": 585.0,
+    "vmp_v": 42.36,
+    "imp_a": 13.81,
+    "voc_v": 50.08,
+    "isc_a": 14.64,
+    "efficiency_pct": 22.92
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "IT_2026_09_00",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Peimar",
@@ -4092,7 +5472,62 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential, printed 'MADE IN EUROPE'; sunergsolar.com: series produced entirely in Europe and listed in the ENEA registry (Transizione 5.0, Conto Termico 3.0). Bifacial double glass 2+2 mm, 96 n-type cells (6x16), cell size not printed. Bifaciality factor not printed: only BNPI values (front 1000 + rear 135 W/m2; 455 W class -> 504 W). NOCT only (45±2 °C). Page-1 icons list 'Classe E', 'Classe E in BROOF T2', 'CEI TS 82-89' and 'Classe B-s1-d0'; a '*under certification' footnote does not say which item. IEC 61215/61730 not in the extracted text (logos only). Power warranty printed: 99% at end of year 1, 87.4% at year 30 (annual rate not printed). Italian datasheet, PDF dated 2026-05-12. Sunerg (Citta di Castello, PG) has IT/EN/FR site and exhibits abroad (Intersolar Munich, Genera Madrid)."
+  "notes": "Residential, printed 'MADE IN EUROPE'; sunergsolar.com: series produced entirely in Europe and listed in the ENEA registry (Transizione 5.0, Conto Termico 3.0). Bifacial double glass 2+2 mm, 96 n-type cells (6x16), cell size not printed. Bifaciality factor not printed: only BNPI values (front 1000 + rear 135 W/m2; 455 W class -> 504 W). NOCT only (45±2 °C). Page-1 icons list 'Classe E', 'Classe E in BROOF T2', 'CEI TS 82-89' and 'Classe B-s1-d0'; a '*under certification' footnote does not say which item. IEC 61215/61730 not in the extracted text (logos only). Power warranty printed: 99% at end of year 1, 87.4% at year 30 (annual rate not printed). Italian datasheet, PDF dated 2026-05-12. Sunerg (Citta di Castello, PG) has IT/EN/FR site and exhibits abroad (Intersolar Munich, Genera Madrid).",
+  "classes": [
+   {
+    "pmax_w": 440.0,
+    "vmp_v": 29.75,
+    "imp_a": 14.79,
+    "voc_v": 35.1,
+    "isc_a": 15.5,
+    "efficiency_pct": 22.02
+   },
+   {
+    "pmax_w": 445.0,
+    "vmp_v": 29.95,
+    "imp_a": 14.86,
+    "voc_v": 35.3,
+    "isc_a": 15.56,
+    "efficiency_pct": 22.27
+   },
+   {
+    "pmax_w": 450.0,
+    "vmp_v": 30.15,
+    "imp_a": 14.93,
+    "voc_v": 35.5,
+    "isc_a": 15.62,
+    "efficiency_pct": 22.52
+   },
+   {
+    "pmax_w": 455.0,
+    "vmp_v": 30.35,
+    "imp_a": 14.99,
+    "voc_v": 35.7,
+    "isc_a": 15.68,
+    "efficiency_pct": 22.77
+   },
+   {
+    "pmax_w": 460.0,
+    "vmp_v": 30.55,
+    "imp_a": 15.06,
+    "voc_v": 35.9,
+    "isc_a": 15.74,
+    "efficiency_pct": 23.02
+   },
+   {
+    "pmax_w": 465.0,
+    "vmp_v": 30.75,
+    "imp_a": 15.12,
+    "voc_v": 36.1,
+    "isc_a": 15.8,
+    "efficiency_pct": 23.27
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "Rev. 26.00_05_AM/ITA(AP)",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Sunerg Solar",
@@ -4152,7 +5587,62 @@
    "EU",
    "IT"
   ],
-  "notes": "Commercial/utility, printed 'MADE IN EUROPE' (ENEA-registry series per sunergsolar.com). Bifacial double glass 2+2 mm, 144 n-type cells (6x24), cell size not printed. Bifaciality factor not printed: only BNPI values (front 1000 + rear 135 W/m2; 595 W class -> 659 W). NOCT only (45±2 °C). Loads 5400 Pa wind / 2400 Pa snow (page 1). Same fire icons as the 96-cell EU sheet ('Classe E', 'Classe E in BROOF T2', 'CEI TS 82-89', 'Classe B-s1-d0'). Power warranty printed: 99% at end of year 1, 87.4% at year 30 (annual rate not printed). IEC 61215/61730 not in the extracted text. Italian datasheet, PDF dated 2026-02-06."
+  "notes": "Commercial/utility, printed 'MADE IN EUROPE' (ENEA-registry series per sunergsolar.com). Bifacial double glass 2+2 mm, 144 n-type cells (6x24), cell size not printed. Bifaciality factor not printed: only BNPI values (front 1000 + rear 135 W/m2; 595 W class -> 659 W). NOCT only (45±2 °C). Loads 5400 Pa wind / 2400 Pa snow (page 1). Same fire icons as the 96-cell EU sheet ('Classe E', 'Classe E in BROOF T2', 'CEI TS 82-89', 'Classe B-s1-d0'). Power warranty printed: 99% at end of year 1, 87.4% at year 30 (annual rate not printed). IEC 61215/61730 not in the extracted text. Italian datasheet, PDF dated 2026-02-06.",
+  "classes": [
+   {
+    "pmax_w": 580.0,
+    "vmp_v": 43.95,
+    "imp_a": 13.2,
+    "voc_v": 52.5,
+    "isc_a": 13.93,
+    "efficiency_pct": 22.44
+   },
+   {
+    "pmax_w": 585.0,
+    "vmp_v": 44.15,
+    "imp_a": 13.25,
+    "voc_v": 52.7,
+    "isc_a": 13.99,
+    "efficiency_pct": 22.64
+   },
+   {
+    "pmax_w": 590.0,
+    "vmp_v": 44.35,
+    "imp_a": 13.3,
+    "voc_v": 52.9,
+    "isc_a": 14.05,
+    "efficiency_pct": 22.83
+   },
+   {
+    "pmax_w": 595.0,
+    "vmp_v": 44.55,
+    "imp_a": 13.36,
+    "voc_v": 53.1,
+    "isc_a": 14.11,
+    "efficiency_pct": 23.02
+   },
+   {
+    "pmax_w": 600.0,
+    "vmp_v": 44.75,
+    "imp_a": 13.41,
+    "voc_v": 53.3,
+    "isc_a": 14.17,
+    "efficiency_pct": 23.22
+   },
+   {
+    "pmax_w": 605.0,
+    "vmp_v": 44.95,
+    "imp_a": 13.46,
+    "voc_v": 53.5,
+    "isc_a": 14.23,
+    "efficiency_pct": 23.41
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "Rev. 26.00_02_AM/ITA(AP)",
+   "page": 2
+  }
  },
  {
   "manufacturer": "3Sun",
@@ -4204,7 +5694,54 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential / C&I. HJT (CORE-H) bifacial glass-glass (2.0 mm AR low-iron + 2.0 mm, semi-tempered), black frame, 96 half cells of G12 210x210 mm wafers ((6x8)x2). Printed: 'Cells and modules manufactured by 3SUN S.r.l., Catania (Italy)'. Bifaciality (Pmax) 90±10%; Pmax coefficient printed '-0.24 +/- 0.04'. Warranty: 2% first year then 0.30%/yr; chart labels 98.0% (yr 1), 90.8% (yr 25), 89.3% (yr 30). Certifications left null: the sheet only says 'Electrical characteristics measured under IEC 61215-1:2021; IEC 61215-2:2021; IEC 61730-2:2023' and asks to contact 3Sun to verify certificates per power class. English datasheet; footer date 13/04/2026, file name 13052026, PDF dated 2026-05-13. 3sun.com in EN/IT/ES/FR/PT with distributor network."
+  "notes": "Residential / C&I. HJT (CORE-H) bifacial glass-glass (2.0 mm AR low-iron + 2.0 mm, semi-tempered), black frame, 96 half cells of G12 210x210 mm wafers ((6x8)x2). Printed: 'Cells and modules manufactured by 3SUN S.r.l., Catania (Italy)'. Bifaciality (Pmax) 90±10%; Pmax coefficient printed '-0.24 +/- 0.04'. Warranty: 2% first year then 0.30%/yr; chart labels 98.0% (yr 1), 90.8% (yr 25), 89.3% (yr 30). Certifications left null: the sheet only says 'Electrical characteristics measured under IEC 61215-1:2021; IEC 61215-2:2021; IEC 61730-2:2023' and asks to contact 3Sun to verify certificates per power class. English datasheet; footer date 13/04/2026, file name 13052026, PDF dated 2026-05-13. 3sun.com in EN/IT/ES/FR/PT with distributor network.",
+  "classes": [
+   {
+    "pmax_w": 460.0,
+    "vmp_v": 29.31,
+    "imp_a": 15.7,
+    "voc_v": 35.25,
+    "isc_a": 16.52,
+    "efficiency_pct": 20.1
+   },
+   {
+    "pmax_w": 465.0,
+    "vmp_v": 29.53,
+    "imp_a": 15.75,
+    "voc_v": 35.35,
+    "isc_a": 16.56,
+    "efficiency_pct": 20.3
+   },
+   {
+    "pmax_w": 470.0,
+    "vmp_v": 29.75,
+    "imp_a": 15.8,
+    "voc_v": 35.45,
+    "isc_a": 16.6,
+    "efficiency_pct": 20.6
+   },
+   {
+    "pmax_w": 475.0,
+    "vmp_v": 29.97,
+    "imp_a": 15.85,
+    "voc_v": 35.55,
+    "isc_a": 16.64,
+    "efficiency_pct": 20.8
+   },
+   {
+    "pmax_w": 480.0,
+    "vmp_v": 30.19,
+    "imp_a": 15.9,
+    "voc_v": 35.65,
+    "isc_a": 16.68,
+    "efficiency_pct": 21.0
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "3SUN_B48_3SHBGA-AF-460-480_revision_2.3_13042026",
+   "page": 2
+  }
  },
  {
   "manufacturer": "3Sun",
@@ -4257,7 +5794,62 @@
    "EU",
    "IT"
   ],
-  "notes": "Utility / C&I. Per-class model code not printed on this sheet (only product code 3SHBGH-AD-585-610 with power columns), hence the model string. HJT (CORE-H) bifacial glass-glass 2.0 + 2.0 mm semi-tempered, 120 half cells of G12 210x210 mm wafers ((6x10)x2). Printed: 'Cells and modules manufactured by 3SUN S.r.l., Catania (Italy)'. Bifaciality (Pmax) 90±10%; Pmax coefficient printed '-0.24 +/- 0.04'. Static load 3600 Pa front / 1600 Pa rear (test 5400/2400). Warranty: 2% first year then 0.30%/yr; chart labels 98.0%, 90.8% (yr 25), 89.3% (yr 30). Certifications left null: sheet only says 'measured under IEC 61215-1:2021; IEC 61215-2:2021; IEC 61730-2:2023'. English datasheet, PDF dated 2026-07-02."
+  "notes": "Utility / C&I. Per-class model code not printed on this sheet (only product code 3SHBGH-AD-585-610 with power columns), hence the model string. HJT (CORE-H) bifacial glass-glass 2.0 + 2.0 mm semi-tempered, 120 half cells of G12 210x210 mm wafers ((6x10)x2). Printed: 'Cells and modules manufactured by 3SUN S.r.l., Catania (Italy)'. Bifaciality (Pmax) 90±10%; Pmax coefficient printed '-0.24 +/- 0.04'. Static load 3600 Pa front / 1600 Pa rear (test 5400/2400). Warranty: 2% first year then 0.30%/yr; chart labels 98.0%, 90.8% (yr 25), 89.3% (yr 30). Certifications left null: sheet only says 'measured under IEC 61215-1:2021; IEC 61215-2:2021; IEC 61730-2:2023'. English datasheet, PDF dated 2026-07-02.",
+  "classes": [
+   {
+    "pmax_w": 585.0,
+    "vmp_v": 37.29,
+    "imp_a": 15.69,
+    "voc_v": 44.25,
+    "isc_a": 16.51,
+    "efficiency_pct": 20.7
+   },
+   {
+    "pmax_w": 590.0,
+    "vmp_v": 37.38,
+    "imp_a": 15.79,
+    "voc_v": 44.35,
+    "isc_a": 16.59,
+    "efficiency_pct": 20.8
+   },
+   {
+    "pmax_w": 595.0,
+    "vmp_v": 37.48,
+    "imp_a": 15.88,
+    "voc_v": 44.44,
+    "isc_a": 16.67,
+    "efficiency_pct": 21.0
+   },
+   {
+    "pmax_w": 600.0,
+    "vmp_v": 37.57,
+    "imp_a": 15.97,
+    "voc_v": 44.53,
+    "isc_a": 16.75,
+    "efficiency_pct": 21.2
+   },
+   {
+    "pmax_w": 605.0,
+    "vmp_v": 37.66,
+    "imp_a": 16.06,
+    "voc_v": 44.62,
+    "isc_a": 16.83,
+    "efficiency_pct": 21.4
+   },
+   {
+    "pmax_w": 610.0,
+    "vmp_v": 37.75,
+    "imp_a": 16.16,
+    "voc_v": 44.71,
+    "isc_a": 16.91,
+    "efficiency_pct": 21.6
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "3SUN_B60_3SHBGH-AD-585-610_revision_2.4_02072026",
+   "page": 2
+  }
  },
  {
   "manufacturer": "3Sun",
@@ -4311,7 +5903,70 @@
    "EU",
    "IT"
   ],
-  "notes": "Utility / C&I. Printed: modules assembled/manufactured by 3SUN in Catania (Italy) with 'Cells manufactured outside the European Union'; listed in the ENEA PV module registry. HJT bifacial glass-glass 2.0 + 2.0 mm, 120 half cells of G12 wafers ((6x10)x2); connector QC4.10PLUS. Bifaciality (Pmax) 90±10%. Tolerance printed 'Power tolerance ± 3%' and 'Power tolerance Pmax: -0+5 W'. Warranty: 2% first year then 0.40%/yr, chart label 86.4% at year 30. Certifications left null: sheet only says 'measured under IEC 61215-1:2021; IEC 61215-2:2021; IEC 61730-2:2016; UL 61730:2022'. Voc of the 625 W class printed with decimal comma ('45,55'). English datasheet, PDF dated 2025-02-21. Voc temperature coefficient printed -0.27 %/°C, larger in magnitude than the Pmax coefficient (-0.26 %/°C): unusual, recorded as printed."
+  "notes": "Utility / C&I. Printed: modules assembled/manufactured by 3SUN in Catania (Italy) with 'Cells manufactured outside the European Union'; listed in the ENEA PV module registry. HJT bifacial glass-glass 2.0 + 2.0 mm, 120 half cells of G12 wafers ((6x10)x2); connector QC4.10PLUS. Bifaciality (Pmax) 90±10%. Tolerance printed 'Power tolerance ± 3%' and 'Power tolerance Pmax: -0+5 W'. Warranty: 2% first year then 0.40%/yr, chart label 86.4% at year 30. Certifications left null: sheet only says 'measured under IEC 61215-1:2021; IEC 61215-2:2021; IEC 61730-2:2016; UL 61730:2022'. Voc of the 625 W class printed with decimal comma ('45,55'). English datasheet, PDF dated 2025-02-21. Voc temperature coefficient printed -0.27 %/°C, larger in magnitude than the Pmax coefficient (-0.26 %/°C): unusual, recorded as printed.",
+  "classes": [
+   {
+    "pmax_w": 610.0,
+    "vmp_v": 37.72,
+    "imp_a": 16.16,
+    "voc_v": 45.38,
+    "isc_a": 17.32,
+    "efficiency_pct": 21.6
+   },
+   {
+    "pmax_w": 615.0,
+    "vmp_v": 37.92,
+    "imp_a": 16.21,
+    "voc_v": 45.44,
+    "isc_a": 17.36,
+    "efficiency_pct": 21.7
+   },
+   {
+    "pmax_w": 620.0,
+    "vmp_v": 38.12,
+    "imp_a": 16.26,
+    "voc_v": 45.49,
+    "isc_a": 17.4,
+    "efficiency_pct": 21.9
+   },
+   {
+    "pmax_w": 625.0,
+    "vmp_v": 38.32,
+    "imp_a": 16.31,
+    "voc_v": 45.55,
+    "isc_a": 17.44,
+    "efficiency_pct": 22.1
+   },
+   {
+    "pmax_w": 630.0,
+    "vmp_v": 38.52,
+    "imp_a": 16.36,
+    "voc_v": 45.6,
+    "isc_a": 17.48,
+    "efficiency_pct": 22.3
+   },
+   {
+    "pmax_w": 635.0,
+    "vmp_v": 38.72,
+    "imp_a": 16.41,
+    "voc_v": 45.65,
+    "isc_a": 17.52,
+    "efficiency_pct": 22.4
+   },
+   {
+    "pmax_w": 640.0,
+    "vmp_v": 38.91,
+    "imp_a": 16.46,
+    "voc_v": 45.7,
+    "isc_a": 17.56,
+    "efficiency_pct": 22.6
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "3SUN_B60_LE_3SHBGH-CC-610-640_revision_1.9_21022025",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Trienergia",
@@ -4364,7 +6019,30 @@
    "EU",
    "IT"
   ],
-  "notes": "Commercial ('industriale' on trienergia.com). Printed 'MADE IN EUROPE'. Mono PERC MWT (metal wrap through) back-contact cells, 132 half-cut M6 cells 166x83 mm, conductive backsheet (white), 3.2 mm tempered glass, black frame, central junction box. Temperature row labelled 'NOCT 43+/-2 °C' while the footnote defines NMOT (800 W/m2, 20 °C, 1 m/s): stored as NOCT only. Warranty printed: 90% at 12 years, 82% at 30 years; product 20 years (25 years only for 'Green Specialist GOLD' installers). IT/EN catalogue pages 50-51 (2025 catalogue, product still listed on the site)."
+  "notes": "Commercial ('industriale' on trienergia.com). Printed 'MADE IN EUROPE'. Mono PERC MWT (metal wrap through) back-contact cells, 132 half-cut M6 cells 166x83 mm, conductive backsheet (white), 3.2 mm tempered glass, black frame, central junction box. Temperature row labelled 'NOCT 43+/-2 °C' while the footnote defines NMOT (800 W/m2, 20 °C, 1 m/s): stored as NOCT only. Warranty printed: 90% at 12 years, 82% at 30 years; product 20 years (25 years only for 'Green Specialist GOLD' installers). IT/EN catalogue pages 50-51 (2025 catalogue, product still listed on the site).",
+  "classes": [
+   {
+    "pmax_w": 410.0,
+    "vmp_v": 37.6,
+    "imp_a": 10.9,
+    "voc_v": 45.8,
+    "isc_a": 11.41,
+    "efficiency_pct": 21.0
+   },
+   {
+    "pmax_w": 420.0,
+    "vmp_v": 38.0,
+    "imp_a": 11.05,
+    "voc_v": 46.2,
+    "isc_a": 11.54,
+    "efficiency_pct": 21.5
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "Catalogo/Handbook Trienergia 2025 vr.2 04/2025",
+   "page": 2
+  }
  },
  {
   "manufacturer": "Trienergia",
@@ -4416,6 +6094,29 @@
    "EU",
    "IT"
   ],
-  "notes": "Residential/C&I (listed under 'industriale' on trienergia.com). Printed 'MADE IN EUROPE', 'REGISTRATO ENEA', 'REVAMPING EU', 'FACTORY INSPECTION IEC 61215, IEC 61730'. Monofacial TOPCon, 108 half-cut M10 cells 182x91 mm, black frame, white backsheet, 3.2 mm tempered glass. No NOCT/NMOT value printed (only the NMOT definition footnote). Warranty printed: 90% at 12 years, 80% at 25 years; product 15 years (25 years only for 'Green Specialist GOLD' installers). Operating temperature printed '-40/+5 °C' (sic). IT/EN catalogue pages 52-53. Evidence for EU: English site and 'foreign market' packaging option on the sheet. Temperature coefficients printed -0.35 / -0.275 / +0.05 %/°C, typical of PERC rather than TOPCon, while the STC table is identical to FuturaSun FU 430 MV (-0.29 / -0.25 / +0.045): recorded as printed, to be confirmed with the manufacturer."
+  "notes": "Residential/C&I (listed under 'industriale' on trienergia.com). Printed 'MADE IN EUROPE', 'REGISTRATO ENEA', 'REVAMPING EU', 'FACTORY INSPECTION IEC 61215, IEC 61730'. Monofacial TOPCon, 108 half-cut M10 cells 182x91 mm, black frame, white backsheet, 3.2 mm tempered glass. No NOCT/NMOT value printed (only the NMOT definition footnote). Warranty printed: 90% at 12 years, 80% at 25 years; product 15 years (25 years only for 'Green Specialist GOLD' installers). Operating temperature printed '-40/+5 °C' (sic). IT/EN catalogue pages 52-53. Evidence for EU: English site and 'foreign market' packaging option on the sheet. Temperature coefficients printed -0.35 / -0.275 / +0.05 %/°C, typical of PERC rather than TOPCon, while the STC table is identical to FuturaSun FU 430 MV (-0.29 / -0.25 / +0.045): recorded as printed, to be confirmed with the manufacturer.",
+  "classes": [
+   {
+    "pmax_w": 425.0,
+    "vmp_v": 31.55,
+    "imp_a": 13.48,
+    "voc_v": 38.07,
+    "isc_a": 14.23,
+    "efficiency_pct": 21.76
+   },
+   {
+    "pmax_w": 430.0,
+    "vmp_v": 31.73,
+    "imp_a": 13.56,
+    "voc_v": 38.25,
+    "isc_a": 14.31,
+    "efficiency_pct": 22.02
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-05",
+   "from": "Catalogo/Handbook Trienergia 2026 vr.1 01/2026",
+   "page": 2
+  }
  }
 ]

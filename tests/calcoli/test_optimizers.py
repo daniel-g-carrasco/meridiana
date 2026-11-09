@@ -212,15 +212,24 @@ class TheModule(unittest.TestCase):
 class TheSingleStringNote(unittest.TestCase):
     """The examples of SolarEdge's Single String Design Guidelines v1.1 (08/2026), p. 2-3, through the plant."""
 
-    def test_24_modules_of_415_w_on_an_se5000h_go_in_one_string(self):
+    def test_24_modules_of_415_w_on_an_se5000h_go_in_one_string_only_by_hand(self):
+        # Daniel, 06/11/2026: the proposals never above the continuous power (5.7 kW single-phase, DS-000091-IT p. 3);
+        # by hand one string of 9.96 kW is allowed (SolarEdge's table: 200 % of the AC power), with the warning
         p = project("SE5000H", optimizer="S440")
         out = plant.build(p, groups=[group(grid(2, 12), mod=module(pmax=415))])
-        self.assertEqual([len(s.modules) for s in out.strings], [24])
+        self.assertEqual([len(s.modules) for s in out.strings], [12, 12])
+        self.assertTrue(all(s.plan.power_w <= 5700.0 and s.state == "ok" for s in out.strings))
+        keys = [k for s in out.strings for k in s.keys]
+        by_hand = {"auto": False, "runs": [{"inverter": 1, "mppt": 1, "modules": keys}]}
+        out = plant.build(project("SE5000H", optimizer="S440", strings=by_hand),
+                          groups=[group(grid(2, 12), mod=module(pmax=415))])
         (s,) = out.strings
         self.assertAlmostEqual(s.plan.power_w, 9960.0)
-        self.assertEqual(s.state, "ok")                     # 9.96 kW within the 10 kW of 200 % oversizing
-        levels = {c.key: c.level for c in s.plan.checks}
-        self.assertEqual(levels["opt_continuous"], "info")  # above 5.7 kW the peaks are cut, within the 5 kW of AC
+        self.assertEqual(s.state, "check")                  # 9.96 kW within the 10 kW of 200 % oversizing, warned
+        found = {c.key: c for c in s.plan.checks}
+        self.assertEqual(found["opt_string_power"].level, "ok")
+        self.assertEqual(found["opt_continuous"].level, "warn")
+        self.assertIn("Single String Design Guidelines v1.1", found["opt_continuous"].source)
 
     def test_27_modules_of_370_w_take_two_strings(self):
         p = project("SE5000H", optimizer="S440")
@@ -270,7 +279,12 @@ class TheProposal(unittest.TestCase):
         budget = stringing.SearchBudget(20000)
         out = plant.build(project("SE50K", optimizer="S1000", per=2), groups=[g], search=budget)
         self.assertTrue(out.search_complete, out.search_reason)
-        self.assertFalse(out.left)
+        # a commercial table: within the power it allows connected (Daniel, 06/11/2026, R456 answer 1), DS-000105-IT
+        # p. 3 for an SE25K unit: 15,750 W with one string, 18,500 W each with two or more; 27 modules at least (14
+        # optimizers). 100 = 37 + 36 on one unit (18,315 and 17,820 W) and 27 on the other (13,365 W): none left out
+        self.assertEqual(sorted(len(s.modules) for s in out.strings), [27, 36, 37])
+        self.assertTrue(all(s.plan.power_w <= s.plan.limit_w + 1e-6 for s in out.strings))
+        self.assertEqual(len(out.left), 0)
         self.assertTrue(all(plant.acceptable(s) for s in out.strings), [s.why for s in out.strings])
         for k in (1, 2):
             self.assertLessEqual(out.inputs[(1, k)].power_w, 43750.0)
@@ -330,7 +344,7 @@ class TheProposal(unittest.TestCase):
         self.assertIn("6", plant.voltages(out.strings[0]))
 
     def test_strings_of_different_lengths_side_by_side_are_fine(self):
-        placed = grid(2, 12)
+        placed = grid(2, 11)                                # 10 and 12 x 450 W, within the 5.7 kW carried
         keys = [f"s1/{pm.key}" for pm in placed]
         by_hand = {"auto": False, "runs": [{"inverter": 1, "mppt": 1, "modules": keys[:10]},
                                            {"inverter": 1, "mppt": 1, "modules": keys[10:]}]}
@@ -466,6 +480,8 @@ class TheYear(unittest.TestCase):
                 return {f.name: plain(getattr(x, f.name)) for f in dataclasses.fields(x) if f.name != "parts"}
             if hasattr(x, "to_numpy"):
                 return x.to_numpy().tolist()
+            if hasattr(x, "tolist"):            # the hourly stages kept for the lines with the numbers (R479)
+                return x.tolist()
             if isinstance(x, dict):
                 return {k: plain(v) for k, v in x.items()}
             if isinstance(x, (list, tuple)):
@@ -517,7 +533,10 @@ class TheAssistant(unittest.TestCase):
         import json
 
         from meridiana.assistant import tools
-        out = plant.build(project("SE5000H", optimizer="S440"), groups=[group(grid(2, 12), mod=module(pmax=415))])
+        placed = grid(2, 12)
+        by_hand = {"auto": False, "runs": [{"inverter": 1, "mppt": 1, "modules": [f"s1/{pm.key}" for pm in placed]}]}
+        out = plant.build(project("SE5000H", optimizer="S440", strings=by_hand),
+                          groups=[group(placed, mod=module(pmax=415))])
 
         class Host:
             def plant(self):

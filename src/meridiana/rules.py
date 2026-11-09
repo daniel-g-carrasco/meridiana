@@ -127,6 +127,9 @@ def facts(project, results: dict | None = None, energy: dict | None = None, inve
     hosts = {sf.building for sf in project.subfields}
     roofs = [b for b in project.buildings if b.id in hosts]
     buildings = roofs or ([] if project.subfields else list(project.buildings))
+    # the bodies of one building are one building for the fire rules (R440): its name, its activity, once
+    wholes = list(dict.fromkeys(project.whole_of(b).id for b in buildings))
+    buildings = [project.building(bid) for bid in wholes]
     if buildings:
         f.fire = any(b.fire.subject for b in buildings)
         f.fire_activities = [(b.name, b.fire.activity, b.fire.category) for b in buildings if b.fire.subject]
@@ -543,13 +546,27 @@ def applying(f: Facts) -> list[Rule]:
     return sorted((r for r in RULES if r.applies(f)), key=lambda r: r.chapter)
 
 
+def in_document(r: Rule, f: Facts) -> bool:
+    """Whether a rule that applies has its note in a document: not when it only says what is not needed (N14, N21), is
+    only a reminder to the designer (N07), or stands for what the designer has not said yet (N02 with the supply and
+    the premises unknown). The window's list keeps them all (Daniel, 05/11/2026)."""
+    if r.id in ("N07", "N14", "N21"):
+        return False
+    return r.id != "N02" or design(f) != "unknown"
+
+
 def notes(f: Facts) -> list[tuple[str, list[tuple[Rule, list[str]]]]]:
-    """The notes for the report: [(chapter title, [(rule, paragraphs)])] for the chapters with a rule."""
+    """The notes for the report: [(chapter title, [(rule, paragraphs)])] for the chapters with a rule that goes in a
+    document, numbered as they come."""
     names = chapter_names()
     out: list = []
+    last = None
     for r in applying(f):
-        if not out or out[-1][0] != names[r.chapter]:
-            out.append((names[r.chapter], []))
+        if not in_document(r, f):
+            continue
+        if r.chapter != last:
+            last = r.chapter
+            out.append((f"{len(out) + 1}. {names[r.chapter].split('. ', 1)[1]}", []))
         out[-1][1].append((r, r.paragraphs(f)))
     return out
 

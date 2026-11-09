@@ -412,7 +412,7 @@ def evaluate(production: pd.Series, load: pd.Series, p_stc_kw: float, p_ac_kw: f
                      ""))
     deg_src = (s.source("degradation") if s.degradation >= 0 else
                (Source("data", _("yearly degradation of the module's datasheet")) if module_degradation is not None
-                else Source("default", _("Meridiana's default (0.4%/year)"))))
+                else Source("default", _("default value of the calculation (0.4%/year)"))))
     capex_src = s.source("capex_total") if s.capex_total > 0 else s.source("capex_per_kwp")
     rec.add(Step("saving", _("Saving on the bill"), r"R_1 = \sum_{F} E_{auto,F}\, c_F",
                  _("The energy self-consumed in each band is energy not bought at that band's price."),

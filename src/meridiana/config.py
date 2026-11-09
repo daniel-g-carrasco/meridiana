@@ -29,7 +29,7 @@ from pathlib import Path
 
 from . import SLUG
 
-CONFIG_VERSION = 26
+CONFIG_VERSION = 32
 
 
 def _v1_to_v2(data: dict) -> dict:
@@ -211,6 +211,56 @@ def _v25_to_v26(data: dict) -> dict:
     return {**data, "font": data.get("font", "inter")}
 
 
+def _v26_to_v27(data: dict) -> dict:
+    """Version 27 has the memory Meridiana may spend to save time (R435, Daniel 06/11/2026): 0 is automatic (what
+    is free now, less a reserve for the system), else the share of the machine's memory, as Photoshop's slider."""
+    return {**data, "memory_share": data.get("memory_share", 0.0)}
+
+
+
+def _v27_to_v28(data: dict) -> dict:
+    """Version 28 has the year computed again in the background after the changes (R461, Daniel 06/11/2026): on,
+    after 5 seconds without changes, with 2 processes at low priority; on battery the wait times 3 (0: never)."""
+    return {**data, "background_year": data.get("background_year", True),
+            "background_year_wait_s": data.get("background_year_wait_s", 5.0),
+            "background_year_workers": data.get("background_year_workers", 2),
+            "background_year_battery_factor": data.get("background_year_battery_factor", 3.0)}
+
+
+def _v28_to_v29(data: dict) -> dict:
+    """Version 29 has the pitch and the speed of Meridio's voice (R492, Daniel 06/11/2026: Sara, one semitone up,
+    1.15 times as fast, the new default). A voice chosen before keeps its sound (pitch 0, speed 1.0); who never
+    chose gets the new default. Version 28 is r18-stringhe's (R461): 29 was the next free one."""
+    chosen = bool(data.get("assistant_voice_name", ""))
+    return {**data, "assistant_voice_pitch": data.get("assistant_voice_pitch", 0 if chosen else 1),
+            "assistant_voice_speed": data.get("assistant_voice_speed", 1.0 if chosen else 1.15)}
+
+def _v29_to_v30(data: dict) -> dict:
+    """Version 30 has the layout a new project's sub-fields start from (R523, Daniel 07/11/2026): none, the program's."""
+    return {**data, "layout_defaults": data.get("layout_defaults", {})}
+
+
+def _v30_to_v31(data: dict) -> dict:
+    """Version 31 has the quality of the 3D's edges (study 41, slice E; Daniel 08/11/2026): "full", the smoothest
+    always, as the program drew it until now and the default; "moving", lighter while the view moves; "low", lighter
+    always."""
+    return {**data, "edges_3d": data.get("edges_3d", "full")}
+
+
+def _v31_to_v32(data: dict) -> dict:
+    """Version 32 has the choice of the memory in three words (R548, Daniel 08/11/2026): "save", "auto", "all"
+    (Risparmia, Automatico, Usa tutto). It takes the place of the share of version 27, which stays in the file for
+    the versions before and is no longer read: a share up to a quarter of the machine was a saving, from three
+    quarters a use of all of it, anything else (and 0, the automatic) is the automatic."""
+    share = data.get("memory_share", 0.0)
+    try:
+        share = float(share or 0.0)
+    except (TypeError, ValueError):
+        share = 0.0
+    chosen = "auto" if not share else "save" if share <= 0.25 else "all" if share >= 0.75 else "auto"
+    return {**data, "memory_mode": data.get("memory_mode", chosen)}
+
+
 # from one format version to the next, in order: {from_version: step}
 MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5,
                                                  5: _v5_to_v6, 6: _v6_to_v7, 7: _v7_to_v8, 8: _v8_to_v9,
@@ -219,16 +269,19 @@ MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: 
                                                  15: _v15_to_v16, 16: _v16_to_v17, 17: _v17_to_v18,
                                                  18: _v18_to_v19, 19: _v19_to_v20,
                                                  20: _v20_to_v21, 21: _v21_to_v22, 22: _v22_to_v23,
-                                                 23: _v23_to_v24, 24: _v24_to_v25, 25: _v25_to_v26}
+                                                 23: _v23_to_v24, 24: _v24_to_v25, 25: _v25_to_v26,
+                                                 26: _v26_to_v27, 27: _v27_to_v28, 28: _v28_to_v29,
+                                                 29: _v29_to_v30, 30: _v30_to_v31,
+                                                 31: _v31_to_v32}
 
 
 @dataclass
 class Config:
     theme: str = "system"                # "system", "light", "dark"
-    accent: str = "bronze"               # the theme's colour: "system", a ready-made one by name, or "#rrggbb"
-    backgrounds: str = "meridiana"       # "meridiana", "tinted" (from the colour), "grey"
+    accent: str = "indigo"               # the theme's colour: "system", a ready-made one by name, or "#rrggbb"
+    backgrounds: str = "grey"            # "meridiana", "tinted" (from the colour), "grey"
     text_size: str = "medium"            # "small", "medium", "large": the text at 12, 13 or 14 px (design.TEXT_SIZES)
-    font: str = "inter"                  # the font of the window: a key of ui/theme.FONTS
+    font: str = "plex"                   # the font of the window: a key of ui/theme.FONTS
     toolbar: str = "text"                # the bar of the phase: "text" under the icons (hidden by itself in a low
     #                                      window), or "icons" alone (study 17, B4; design C1)
     toolbar_place: str = "top"           # "top" under the row of the phases, or "left" on the side, icons alone
@@ -237,6 +290,9 @@ class Config:
     orbit: str = "turntable"             # "turntable" (the vertical stays) or "arcball"
     pivot: str = "cursor"                # the orbit's centre: "cursor", "selection", "centre" (of the view)
     pivot_hint: bool = True              # the pivot's cross-hair on passing over, with the orbit's key held (16g)
+    # the 3D's edges (study 41, slice E): "full" multisampled at the highest always, "moving" lighter while the view
+    # turns, pans or zooms and full as soon as it stops, "low" lighter always (View3D/Viewport.qml)
+    edges_3d: str = "full"
     assistant: bool = True               # the assistant and its item in the status bar; off hides everything
     assistant_docked: bool = False       # the conversation in a panel of the window, not floating over the views
     assistant_animated: bool = True      # Meridio's small movements; off, he only changes state
@@ -260,9 +316,18 @@ class Config:
     # ("" the default places, assistant/speech.py, and the program's own Python)
     assistant_voice_engine: str = "auto"
     assistant_voice_name: str = ""
+    assistant_voice_pitch: int = 1          # semitones, -3 to +4 (R492); by resampling, kokoro_worker.shifted
+    assistant_voice_speed: float = 1.15     # 0.8 to 1.4 (R492)
     assistant_kokoro_dir: str = ""
     assistant_kokoro_python: str = ""
     language: str = ""                   # "" = the desktop's; "en", "it"
+    memory_share: float = 0.0            # version 27 to 31: the memory for the caches (0 automatic, else a share of the
+                                         # machine); kept for those versions, no longer read (memory_mode, R548)
+    memory_mode: str = "auto"            # R548: "save", "auto", "all" (resources.Budget, resources.preload)
+    background_year: bool = True         # R461: the year computed again by itself when the changes stop
+    background_year_wait_s: float = 5.0  # seconds without changes before it starts
+    background_year_workers: int = 2     # processes of the electrical network for it, at low priority
+    background_year_battery_factor: float = 3.0  # on battery the wait times this, one process; 0: not on battery
     check_updates: bool = True           # Windows: a newer release, once a day at start
     auto_install_updates: bool = False
     pending_update: dict = field(default_factory=dict)
@@ -287,6 +352,9 @@ class Config:
     # the inverter makers starred in the picker of the automatic sizing (R268), in the order they were starred: the
     # user's favourites, apart from the maker a project was sized with (project.energy["inverter_maker"])
     inverter_brand_favourites: list = field(default_factory=list)
+    # R523: the layout a new project's sub-fields start from (model.profile_defaults: the project's layout_defaults
+    # with the datasheet of their module), kept with «Keep in the profile»; {} the program's
+    layout_defaults: dict = field(default_factory=dict)
     # what leaves the PC, each with its switch (Preferences > Privacy): the address typed, to OpenStreetMap's
     # Nominatim; the site's coordinates, to PVGIS; the area in view, to the map servers (tiles.SOURCES)
     network_geocoding: bool = True
@@ -326,6 +394,9 @@ _RECORD_TABLES = {"assistant_cloud_profiles"}
 # the lists that hold texts only (the other lists, `recent`, `report_profiles` and `map_sources`, are read by those
 # who use them, an entry at a time)
 _TEXT_LISTS = {"inverter_brand_favourites"}
+# the tables read by who uses them, a key at a time: the layout of the new projects (R523, model.start_from_profile
+# leaves out what is not of its kind)
+_FREE_TABLES = {"layout_defaults"}
 
 
 def _typed(cls, kwargs: dict) -> dict:
@@ -340,7 +411,10 @@ def _typed(cls, kwargs: dict) -> dict:
             continue
         if f.name in kwargs and f.default_factory is dict and f.name != "extra":
             value = kwargs[f.name]
-            if f.name in _TEXT_TABLES:
+            if f.name in _FREE_TABLES:
+                if value.__class__ is not dict:
+                    raise ValueError(f"{f.name}: {value!r} is not a table")
+            elif f.name in _TEXT_TABLES:
                 if value.__class__ is not dict or any(v.__class__ is not str for v in value.values()):
                     raise ValueError(f"{f.name}: {value!r} is not a table of text")
             elif f.name in _RECORD_TABLES:

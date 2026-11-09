@@ -30,14 +30,16 @@ is task 18d, step 3."""
 
 from __future__ import annotations
 
+import dataclasses
 import threading
 import copy
 import itertools
+import math
 from collections import defaultdict
 from dataclasses import dataclass, field
 
 from ..i18n import _, ngettext, number
-from . import optimizers, stringing, system
+from . import faces, optimizer_strings, optimizers, stringing, system
 from .components import InverterSpec, ModuleSpec
 from .pedigree import Source
 
@@ -61,7 +63,12 @@ def state_names() -> dict:
 # Warnings that state a condition of the order, not a fault of the string: the S1400 is valid only on an inverter
 # variant without integrated DC fuses (DS-000205-EU p. 2, note 4). A proposal may use it; the string stays yellow
 # so that the condition is read, and the sizing says it.
-CONDITIONS = frozenset({"opt_fuses"})
+CONDITIONS = frozenset({"opt_fuses", "mlpe_energy", "mlpe_rules",   # warnings that leave a proposal valid (R456)
+                        faces.KEY})                                # a string over two faces, said (R433)
+PARTIAL = "optimized"           # energy["strings"][PARTIAL]: "sf/key" of the modules with an optimizer when only some
+                                # have one (R456, answer 6); written only when it has some: optional, no new format
+ACROSS = "across_faces"         # energy["strings"][ACROSS]: the designer lets the proposal go over faces without
+                                # optimizers (R433); written only when true
 
 
 def acceptable(s) -> bool:
@@ -100,6 +107,8 @@ class Unit:
     name: str
     fixed: optimizers.FixedVoltage | None = None
     choice: optimizers.Choice | None = None
+    mlpe: optimizer_strings.Setup | None = None      # optimizers on an inverter with MPPT (Huawei, Tigo, Sungrow: R456)
+    partial: tuple | None = None                     # R456: the modules with an optimizer, when only some have one
 
     @property
     def optimized(self) -> bool:
@@ -149,6 +158,7 @@ class String:
     run: int = -1                                       # its place in energy["strings"]["runs"] (by hand)
     plan: object = None                                 # stringing.StringPlan its state comes from
     optimizer_group_sizes: list = field(default_factory=list)
+    optimized: tuple | None = None                      # R456: its modules on an optimizer, when only some have one
 
     @property
     def label(self) -> str:
@@ -206,6 +216,8 @@ class Plant:
     entries: list | None = None                        # None preserves hardware; a list explicitly replaces it
     shortest: int = 0                                  # proposal on chosen modules: the fewest in series that make a
                                                        # string on these inverters; 0 when it cannot be said (R300)
+    exposure: dict | None = None                       # the year's planes for the estimate of faces.py (R433)
+    crossings: list = field(default_factory=list)      # faces.Crossing of the strings over more than one face
 
     def string_of(self, sfid: str, key: str) -> int:
         """The index of the string a module is in, -1 when in none."""
@@ -294,8 +306,9 @@ def units_of(project, p_stc_w: float, module: ModuleSpec | None = None, t_min: f
         name = item["name"] or f"{spec.manufacturer} {spec.model}".strip()
         fixed = optimizers.fixed_voltage(item["record"])
         chosen = optimizers.choice(item, module, fixed, t_min) if fixed is not None else None
+        mlpe = optimizer_strings.setup(item, item["record"]) if fixed is None else None
         for _n in range(item["count"]):
-            out.append(Unit(len(out) + 1, i, spec, name, fixed, chosen))
+            out.append(Unit(len(out) + 1, i, spec, name, fixed, chosen, mlpe))
     if not out:
         (spec,) = system.inverters_of(project, p_stc_w)
         out.append(Unit(1, -1, spec, spec.model))
@@ -400,7 +413,7 @@ def conditions(project, t_cell_max_year: float | None = None, t_min_year: float 
     else:
         t_min = DESIGN_COLD
         seen = (_("; the typical year's is {t} °C").format(t=number(t_min_year, 1)) if t_min_year is not None else "")
-        t_src = Source("default", _("Meridiana's prudent default for a minimum temperature, as PVsyst's design "
+        t_src = Source("default", _("prudent default of the calculation for a minimum temperature, as PVsyst's design "
                                     "conditions; the standard asks for the lowest temperature of the site") + seen)
     if t_cell_max_year is not None:
         return Conditions(float(t_cell_max_year), t_min, t_min, True,
@@ -415,19 +428,36 @@ def conditions(project, t_cell_max_year: float | None = None, t_min_year: float 
 def _capacity(module: ModuleSpec, unit: Unit, k: int, asked: list) -> int:
     if asked:
         return max(0, int(asked[min(k, len(asked) - 1)]))
-    return max(0, stringing.strings_allowed(module, unit.spec, k))
+    allowed = max(0, stringing.strings_allowed(module, unit.spec, k))
+    if unit.mlpe is not None and unit.mlpe.max_strings_per_input:
+        allowed = min(allowed, unit.mlpe.max_strings_per_input)        # MERC: one string an MPPT
+    return allowed
+
+
+def _series_range(module: ModuleSpec, unit: Unit, cond: Conditions) -> tuple[int, int]:
+    """The fewest and the most modules in series an input of `unit` takes: its MPPT window and voltage
+    (stringing.series_range), or with optimizers on an inverter with MPPT the length their maker's rules give
+    (optimizer_strings.length_range: Huawei's long strings, never above the power per string)."""
+    window = stringing.series_range(module, unit.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+    if unit.mlpe is None:
+        return window
+    return optimizer_strings.length_range(unit.mlpe, module, cond.t_min, window)
+
+
+def _length_allowed(unit: Unit, n: int) -> bool:
+    return unit.mlpe is None or optimizer_strings.length_allowed(unit.mlpe, n)
 
 
 def _best_series(group: Group, units: list[Unit], cond: Conditions, strategy: str) -> int:
     """The length that leaves fewest modules of a group out, considering only the inverters whose window takes
     that length and the strings their inputs can carry. At a tie the longer string wins: fewer strings, less current."""
-    ranges = [stringing.series_range(group.module, u.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+    ranges = [_series_range(group.module, u, cond)
               for u in units]
     rows = [len(r) for r in _rows(group.placed)]
     best = None
     for n in range(max((hi for _lo, hi in ranges), default=0),
                    min((lo for lo, _hi in ranges if _hi), default=1) - 1, -1):
-        compatible = [u for u, (lo, hi) in zip(units, ranges, strict=True) if lo <= n <= hi]
+        compatible = [u for u, (lo, hi) in zip(units, ranges, strict=True) if lo <= n <= hi and _length_allowed(u, n)]
         if not compatible:
             continue
         remainder = _left_out(rows, n, strategy)
@@ -467,7 +497,7 @@ def _corrections(units: list[Unit], groups: list[Group], cond: Conditions, strat
             continue
         unit = units_by_number(units, g.target[0])
         destinations = [unit] if unit is not None else [u for u in units if not u.optimized and u.checkable]
-        ranges = [stringing.series_range(g.module, u.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+        ranges = [_series_range(g.module, u, cond)
                   for u in destinations]
         original = [len(r) for r in _rows(g.placed)]
         total = len(g.placed)
@@ -556,13 +586,15 @@ def _optimized_sizes(modules: int, unit: Unit, pmax: float, slots: int = 1) -> l
     cut at the peaks (SolarEdge advises it for the residential optimizers: Single String Design Guidelines v1.1,
     p. 5; the commercial tables allow more connected than carried, which is kept for when the fewest optimizers ask
     for it), then within the table's limit alone; the fewest optimizers are never given up for the peaks. A single
-    module on the last optimizer of two."""
+    module on the last optimizer of two. Since 06/11/2026 never above what a string carries continuously on the
+    residential inverters (Daniel: the automatic proposals never above the continuous power; by hand allowed, with the
+    warning and its source); on the commercial ones within it first, then within the power the table allows connected
+    (Daniel, 06/11/2026, R456 answer 1; optimizers.proposal_tiers): [] when no string fits it."""
     ch = unit.choice
-    r, per, inv = ch.rules, ch.per, unit.fixed
+    r, per = ch.rules, ch.per
     n_opt = optimizers.optimizer_count(modules, per)
     if n_opt <= 0:
         return []
-    advised = inv.unit_pac > r.p_cont
 
     def sizes_of(count: int) -> list[int]:
         mods = [per * n for n in stringing.spread(n_opt, count)]
@@ -583,11 +615,147 @@ def _optimized_sizes(modules: int, unit: Unit, pmax: float, slots: int = 1) -> l
             cap = min(cap, r.p_cont)
         return max(powers) <= cap + 1e-6
 
-    for cap_advised, shortest in ((advised, True), (False, True), (False, False)):
+    tiers = optimizers.proposal_tiers(r)
+    for cap_advised in tiers:
         for count in range(1, n_opt + 1):
-            if fits(count, cap_advised, shortest):
+            if fits(count, cap_advised, True):
                 return sizes_of(count)
-    return [per] * (n_opt - 1) + [modules - per * (n_opt - 1)]
+    # not every module within what the proposals allow: the most modules that are, the rest stays out (said by the
+    # caller)
+    least = max(r.opt_min * per - (per - 1), r.mod_min, 1)
+    if least * pmax > optimizers.proposal_ceiling(r) + 1e-6:
+        return []
+    for fewer in range(modules - 1, least - 1, -1):
+        # modules spread alike, each string with at most one optimizer on a single module (DS-000105-IT p. 3, note 2)
+        for count in range(max(1, -(-fewer // max(1, r.mod_max or r.opt_max * per))), fewer // least + 1):
+            mods = stringing.spread(fewer, count)
+            sizes = [optimizers.optimizer_count(x, per) for x in mods]
+            if (min(sizes) < r.opt_min or max(sizes) > r.opt_max or (r.mod_min and min(mods) < r.mod_min)
+                    or (r.mod_max and max(mods) > r.mod_max)):
+                continue
+            powers = [x * pmax for x in mods]
+            cap = optimizers.connected_limit(r, max(1, count // max(1, slots)), max(powers) - min(powers))[0]
+            if tiers == (True,):
+                cap = min(r.p_cont, cap)
+            if max(powers) <= cap + 1e-6:
+                return mods
+    return []
+
+
+def _unit_options(unit: Unit, modules: int, pmax: float) -> dict:
+    """For each count of modules up to `modules`, how `unit` would take it: {count: (0 within what a string carries or 1
+    within the table's limit alone, the modules of each string)}, as few strings as the limits allow. Only what SolarEdge's
+    table allows: a count no strings can make is not there (R428: 95 modules on two SE20K with S1400 can be 54 + 41, not
+    47 + 48: one string up to 20.25 kW, two of at least 27 modules)."""
+    ch, inv = unit.choice, unit.fixed
+    r, per = ch.rules, ch.per
+    inputs = max(1, unit.inputs)
+    out: dict = {0: (0, [])}
+    for m in range(1, modules + 1):
+        if inv.p_dc_max and m * pmax > inv.p_dc_max + 1e-6:
+            break
+        # residential: never above the continuous power (Daniel, 06/11/2026); commercial: within it first, then within
+        # the table's connected power (R456 answer 1)
+        for tier, advised in enumerate(optimizers.proposal_tiers(r)):
+            taken = None
+            for count in range(1, optimizers.optimizer_count(m, per) + 1):
+                # modules, not optimizers: 54 modules are 27 + 27, each string with its one optimizer on a single module
+                # (DS-000105-IT p. 3, note 2; DS-000205-EU p. 3, note 9)
+                mods = stringing.spread(m, count)
+                sizes = [optimizers.optimizer_count(x, per) for x in mods]
+                if min(sizes) < r.opt_min or (r.mod_min and min(mods) < r.mod_min) or (inv.pairs and count > inv.pairs * inputs):
+                    break
+                if max(sizes) > r.opt_max or (r.mod_max and max(mods) > r.mod_max):
+                    continue
+                powers = [x * pmax for x in mods]
+                cap = optimizers.connected_limit(r, max(1, count // inputs), max(powers) - min(powers))[0]
+                if advised:
+                    cap = min(cap, r.p_cont)
+                if max(powers) <= cap + 1e-6:
+                    taken = (tier, mods)
+                    break
+            if taken is not None:
+                out[m] = taken
+                break
+    return out
+
+
+BALANCE_STEPS = 40000       # a few tenths of a second; past them the best share found so far is kept
+
+
+def _balanced_shares(candidates: list[Unit], modules: int, pmax: float, loads: dict) -> list | None:
+    """The modules of one group shared among inverters with the same optimizers, in strings: of the shares the limits
+    allow, the one with the DC/AC ratios closest to each other, then the strings most alike, then the fewest strings
+    (R428). [(unit, modules of each string)], or None when no share uses every module."""
+    cached: dict = {}
+    options = []
+    for u in candidates:
+        key = (u.spec.pac, u.inputs, u.fixed.p_dc_max, u.fixed.pairs, u.fixed.unit_pac, u.choice.rules, u.choice.per)
+        options.append(cached.setdefault(key, _unit_options(u, modules, pmax)))
+    pac = [max(1.0, u.spec.pac) for u in candidates]
+    held = [sum(v for (n, _k), v in loads.items() if n == u.number) for u in candidates]
+    target = (sum(held) + modules * pmax) / sum(pac)
+    alike = [i > 0 and options[i] is options[i - 1] and held[i] == held[i - 1] for i in range(len(candidates))]
+    best: list = [None, None]
+    steps = [0]
+    chosen = [0] * len(candidates)
+
+    def score():
+        ratios = [(held[i] + chosen[i] * pmax) / pac[i] for i in range(len(pac))]
+        sizes = [x for i, m in enumerate(chosen) for x in options[i][m][1]]
+        return (round(max(ratios) - min(ratios), 3), max(sizes) - min(sizes) if sizes else 0,
+                sum(options[i][m][0] for i, m in enumerate(chosen)), len(sizes))
+
+    def visit(i: int, left: int) -> None:
+        if steps[0] > BALANCE_STEPS:
+            return
+        steps[0] += 1
+        if i == len(candidates) - 1:
+            if left not in options[i] or (alike[i] and left > chosen[i - 1]):
+                return
+            chosen[i] = left
+            found = score()
+            if best[0] is None or found < best[0]:
+                best[0], best[1] = found, list(chosen)
+            return
+        wanted = (target * pac[i] - held[i]) / max(1e-9, pmax)
+        counts = [m for m in options[i] if m <= left and not (alike[i] and m > chosen[i - 1])]
+        for m in sorted(counts, key=lambda c: (abs(c - wanted), c))[:24]:
+            chosen[i] = m
+            ratio = (held[i] + m * pmax) / pac[i]
+            if best[0] is not None and abs(ratio - target) > best[0][0] + 1e-9:
+                continue
+            visit(i + 1, left - m)
+
+    visit(0, modules)
+    if best[1] is None:
+        return None
+    return [(u, options[i][m][1]) for i, (u, m) in enumerate(zip(candidates, best[1], strict=True)) if m]
+
+
+BALANCE_FAMILIES = 4        # valid choices of optimizers compared for the share of the power
+
+
+def _ratio_spread(plant: Plant) -> float:
+    ratios = unit_ratios(plant)
+    return max(ratios.values()) - min(ratios.values()) if ratios else 0.0
+
+
+def unit_ratios(plant: Plant) -> dict:
+    """The DC/AC ratio of each inverter with its strings: {unit number: ratio}."""
+    power: dict = defaultdict(float)
+    for (number_, _k), slot in plant.inputs.items():
+        power[number_] += slot.power_w
+    return {u.number: power[u.number] / u.spec.pac for u in plant.units if u.spec.pac}
+
+
+def wiring_length(plant: Plant) -> float:
+    """The metres from module to module along the strings: the measure of the shorter wiring between valid proposals."""
+    total = 0.0
+    for s in plant.strings:
+        centres = [ref[2] for ref in s.modules if len(ref) > 2]
+        total += sum(math.dist(a[:2], b[:2]) for a, b in zip(centres, centres[1:], strict=False))
+    return total
 
 
 def _orientation(pm) -> tuple:
@@ -652,7 +820,25 @@ def _propose_optimized(units: list[Unit], groups: list[Group], s: dict, out: Pla
                 out.left += [(gg.sfid, pm.key, tuple(pm.centre)) for gg, pm in pairs]
                 continue
             pmax = pairs[0][0].module.pmax if pairs else 0.0
+            # each inverter takes its share by its own table: different models can share a group
+            shares = (_balanced_shares(candidates, len(pairs), pmax, loads)
+                      if not unit_no and not mppt and len(candidates) > 1 and not s.get("_unbalanced") else None)
+            if shares:
+                # along the path: the strings of an inverter next to each other, which is also the shortest wiring
+                at = 0
+                for owner, sizes in shares:
+                    mine_slots = [(owner.number, k + 1) for k in range(owner.inputs)]
+                    for n in sizes:
+                        chunk = pairs[at:at + n]
+                        at += n
+                        slot = min(mine_slots, key=lambda sl: (loads[sl], sl[1]))
+                        loads[slot] += sum(gg.module.pmax for gg, _pm in chunk)
+                        out.strings.append(String(slot[0], slot[1], [(gg.sfid, pm.key, tuple(pm.centre)) for gg, pm in chunk]))
+                continue
             sizes = _optimized_sizes(len(pairs), unit, pmax, len(slots))
+            if not sizes:
+                out.left += [(gg.sfid, pm.key, tuple(pm.centre)) for gg, pm in pairs]
+                continue
             at = 0
             for n in sizes:
                 chunk = pairs[at:at + n]
@@ -661,6 +847,7 @@ def _propose_optimized(units: list[Unit], groups: list[Group], s: dict, out: Pla
                                                   slots.index(sl)))
                 loads[slot] += sum(gg.module.pmax for gg, _pm in chunk)
                 out.strings.append(String(slot[0], slot[1], [(gg.sfid, pm.key, tuple(pm.centre)) for gg, pm in chunk]))
+            out.left += [(gg.sfid, pm.key, tuple(pm.centre)) for gg, pm in pairs[at:]]
 
 
 def units_by_number(units: list[Unit], number: int) -> Unit | None:
@@ -718,8 +905,8 @@ def _propose_greedy(units: list[Unit], groups: list[Group], s: dict, cond: Condi
 
     def compatible(g, n, slot):
         unit = units[slot[0] - 1]
-        lo, hi = stringing.series_range(g.module, unit.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
-        return ((lo <= n <= hi or asked_n) and alike(slot, n)
+        lo, hi = _series_range(g.module, unit, cond)
+        return ((lo <= n <= hi or asked_n) and alike(slot, n) and _length_allowed(unit, n)
                 and (slot not in owners or owners[slot] == signature(g, n)))
 
     def place(g, n, chunk, slot):
@@ -767,6 +954,28 @@ def _propose_greedy(units: list[Unit], groups: list[Group], s: dict, cond: Condi
                     continue
                 place(g, n, [pms], free[k])
         return
+    held: dict = defaultdict(float)                     # W at STC each inverter has from the groups before
+
+    def on_inputs(g, n, strings, slots):
+        """`strings` on `slots`: as few inputs as they need, spread evenly."""
+        room = [max(0, _capacity(g.module, units[u - 1], k - 1, asked_per) - used[(u, k)]) for u, k in slots]
+        needed = max(1, -(-len(strings) // max(room)))
+        slots, room = slots[:min(len(strings), needed)], room[:min(len(strings), needed)]
+        counts = stringing.spread(min(len(strings), sum(room)), len(slots))
+        for i in range(len(counts)):
+            if counts[i] > room[i]:
+                spare = counts[i] - room[i]
+                counts[i] = room[i]
+                for j in range(len(counts)):
+                    if spare and counts[j] < room[j] and j != i:
+                        add = min(spare, room[j] - counts[j])
+                        counts[j] += add
+                        spare -= add
+        for slot, count in zip(slots, counts, strict=True):
+            place(g, n, strings[:count], slot)
+            strings = strings[count:]
+        return strings
+
     for g, strings, n in automatic:
         if not strings:
             continue
@@ -776,6 +985,33 @@ def _propose_greedy(units: list[Unit], groups: list[Group], s: dict, cond: Condi
         if not slots:
             out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pms in strings for pm in pms]
             continue
+        watts = n * g.module.pmax
+        share = lambda u: (held[u] + watts) / max(1.0, units[u - 1].spec.pac)  # noqa: E731, B023
+        if len({u for u, _k in slots}) > 1 and not s.get("_unbalanced"):
+            # R428: as many strings on each inverter as keep their DC/AC ratios closest, next to each other along the path
+            if strategy == "row_per_mppt":
+                slots = sorted(slots, key=lambda sl: (share(sl[0]), sl))
+                held[slots[0][0]] += watts * len(strings)
+            else:
+                rooms = defaultdict(int)
+                for u, k in slots:
+                    rooms[u] += max(0, _capacity(g.module, units[u - 1], k - 1, asked_per) - used[(u, k)])
+                shares = defaultdict(int)
+                for _string in strings:
+                    open_units = [u for u in rooms if shares[u] < rooms[u]]
+                    if not open_units:
+                        break
+                    u = min(open_units, key=lambda x: (share(x), x))
+                    shares[u] += 1
+                    held[u] += watts
+                rest = list(strings)
+                for u in sorted(u for u in shares if shares[u]):
+                    mine = rest[:shares[u]]
+                    rest = rest[shares[u]:]
+                    left_here = on_inputs(g, n, mine, [sl for sl in slots if sl[0] == u])
+                    out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pms in left_here for pm in pms]
+                out.left += [(g.sfid, pm.key, tuple(pm.centre)) for pms in rest for pm in pms]
+                continue
         room = [max(0, _capacity(g.module, units[u - 1], k - 1, asked_per) - used[(u, k)]) for u, k in slots]
         needed = max(1, -(-len(strings) // max(room)))
         slots, room = slots[:min(len(strings), needed)], room[:min(len(strings), needed)]
@@ -896,18 +1132,19 @@ def _search_assignment(project, units, groups, settings, cond, out, budget, all_
                 hi = min(pool, rules.opt_max * ch.per, rules.mod_max or pool)
                 # No count of strings lets a string carry more than the table's highest limit
                 # (optimizers.connected_limit never exceeds it): longer strings are never valid leaves.
-                ceiling = max(rules.p_one, rules.p_many, rules.p_cont)
+                ceiling = optimizers.proposal_ceiling(rules)     # optimizers.proposal_tiers (06/11/2026, R456)
                 if g.module.pmax > 0 and ceiling < float("inf"):
                     hi = min(hi, int(ceiling / g.module.pmax + 1e-9))
                 cap = u.fixed.pairs or pool // max(1, lo)
             else:
-                lo, hi = stringing.series_range(g.module, u.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+                lo, hi = _series_range(g.module, u, cond)
                 cap = _capacity(g.module, u, k - 1, asked_per)
             if asked_n:
                 lo, hi = max(lo, asked_n), min(hi, asked_n)
             if hi < lo or not lo or not cap:
                 continue
-            lengths = tuple(n for n in range(min(hi, pool), lo - 1, -1) if not paired or n % 2 == 0)
+            lengths = tuple(n for n in range(min(hi, pool), lo - 1, -1)
+                            if (not paired or n % 2 == 0) and _length_allowed(u, n))
             if u.optimized:
                 for n in lengths:
                     budget.step()
@@ -1006,7 +1243,14 @@ def _search_assignment(project, units, groups, settings, cond, out, budget, all_
         g = buckets[i][0]
         signature = _group_signature(g)
         seen_slots = set()
-        for j, (u, k) in enumerate(slots):
+        # R428: the least loaded inverter first, the share nearest the common ratio first: the first valid leaf is a
+        # balanced one, and nothing is left out of the search.
+        total_pac = sum(max(1.0, u.spec.pac) for u, _k in {u.number: (u, 0) for u, _k in slots}.values())
+        common = (sum(powers) + sum(remaining[x] * buckets[x][0].module.pmax for x in active)) / max(1.0, total_pac)
+        ordered = (sorted(range(len(slots)), key=lambda x: (powers[slots[x][0].number - 1] / max(1.0, slots[x][0].spec.pac), x))
+                   if len(units) > 1 else range(len(slots)))
+        for j in ordered:
+            u, k = slots[j]
             if (i, j) not in domains:
                 continue
             lengths, cap = domains[i, j]
@@ -1028,7 +1272,9 @@ def _search_assignment(project, units, groups, settings, cond, out, budget, all_
                                   and _group_signature(buckets[other][0]) == signature
                                   and n in domains[other, j][0]]) if strategy == "serpentine" else [i]
                 room = min(cap - counts[j], sum(remaining[source] for source in sources) // n)
-                for q in range(room, 0, -1):
+                counts_of = (sorted(range(1, room + 1), key=lambda c: (abs((powers[u.number - 1] + c * n * g.module.pmax) / max(1.0, u.spec.pac) - common), -c))
+                             if len(units) > 1 else range(room, 0, -1))
+                for q in counts_of:
                     budget.step(depth)
                     if strategy == "row_per_mppt" and q * n != remaining[i]:
                         continue
@@ -1137,11 +1383,8 @@ def _optimizer_entry_variants(project, groups, cond, budget):
         alternatives.extend([options] * entry["count"])
         entry_indices.extend([entry_index] * entry["count"])
     targeted = any(g.target[0] for g in groups)
-    for indices in itertools.product(*(range(len(options)) for options in alternatives)):
-        budget.step()
-        if not targeted and any(entry_indices[i] == entry_indices[i - 1] and indices[i] < indices[i - 1]
-                                for i in range(1, len(indices))):
-            continue
+
+    def built(indices):
         chosen = []
         for i, option in enumerate(indices):
             item = alternatives[i][option]
@@ -1151,7 +1394,30 @@ def _optimizer_entry_variants(project, groups, cond, budget):
                 chosen[-1]["count"] += 1
             else:
                 chosen.append(dict(item))
-        yield chosen
+        return chosen
+
+    # the same optimizers on every inverter first: mixing them comes only when none of those does it (R428)
+    def key_of(item):
+        return (item.get("optimizer") or {}).get("model"), item.get("per_optimizer")
+
+    seen = set()
+    for wanted in dict.fromkeys(key_of(item) for options in alternatives for item in options):
+        budget.step()
+        indices = []
+        for options in alternatives:
+            at = next((n for n, item in enumerate(options) if key_of(item) == wanted), None)
+            if at is None:
+                break
+            indices.append(at)
+        if len(indices) == len(alternatives):
+            seen.add(tuple(indices))
+            yield built(indices)
+    for indices in itertools.product(*(range(len(options)) for options in alternatives)):
+        budget.step()
+        if indices in seen or (not targeted and any(entry_indices[i] == entry_indices[i - 1] and indices[i] < indices[i - 1]
+                                                    for i in range(1, len(indices)))):
+            continue
+        yield built(indices)
 
 
 def _propose(units, groups, settings, cond, out, busy=None, loaded=None, lengths=None, owners=None,
@@ -1166,6 +1432,7 @@ def _propose(units, groups, settings, cond, out, busy=None, loaded=None, lengths
         return
     if families and project is not None and not out.strings and any(u.optimized for u in units):
         best = None
+        best_valid, best_spread, tried_valid = False, 0.0, 0
         try:
             for entries in _optimizer_entry_variants(project, groups, cond, budget):
                 candidate = copy.copy(project)
@@ -1176,18 +1443,37 @@ def _propose(units, groups, settings, cond, out, busy=None, loaded=None, lengths
                     if u.choice is not None and before.choice is not None and before.choice.suggested:
                         u.choice.suggested = True
                 trial = Plant(units=choices, entries=entries)
+                # with a valid proposal at hand the others get a small share of the search: they only refine it
+                share = budget.part(3000) if best_valid else budget
                 _propose(choices, groups, settings, cond, trial, busy, loaded, lengths, owners,
-                         project=candidate, search=budget, all_groups=all_groups, families=False)
-                if best is None or len(trial.left) < len(best.left):
-                    best = trial
+                         project=candidate, search=share, all_groups=all_groups, families=False)
+                if share is not budget:
+                    budget.nodes += share.nodes
                 if not trial.search_complete:
+                    if best_valid:
+                        break
+                    if best is None or len(trial.left) < len(best.left):
+                        best = trial
                     out.search_complete, out.search_reason = False, trial.search_reason
                     break
-                if not trial.left and all(acceptable(s) for s in trial.strings):
+                valid = not trial.left and all(acceptable(s) for s in trial.strings)
+                if valid and len(units) > 1:
+                    # R428: the optimizers that let the power be shared best, the preferred ones on a tie; a few are enough
+                    _check(candidate, all_groups or groups, cond, trial, None)
+                    spread = _ratio_spread(trial)
+                    if best is None or not best_valid or spread < best_spread - 1e-3:
+                        best, best_valid, best_spread = trial, True, spread
+                    tried_valid += 1
+                    if tried_valid >= BALANCE_FAMILIES:
+                        break
+                elif valid:
                     best = trial
                     break
+                elif not best_valid and (best is None or len(trial.left) < len(best.left)):
+                    best = trial
         except stringing.SearchStopped:
-            out.search_complete, out.search_reason = False, budget.reason
+            if not best_valid:
+                out.search_complete, out.search_reason = False, budget.reason
         if best is not None:
             out.units, out.strings, out.left, out.entries = best.units, best.strings, best.left, best.entries
         else:
@@ -1205,21 +1491,24 @@ def _propose(units, groups, settings, cond, out, busy=None, loaded=None, lengths
         return any((target[0] and target[0] != run.inverter) or (target[1] and target[1] != run.mppt)
                    for sf, key, _centre in run.modules if (target := targets.get((sf, key))) is not None)
 
-    preview = Plant(units=units, strings=list(initial))
-    _propose_greedy(units, groups, settings, cond, preview, busy, loaded, lengths, owners)
-    if project is not None and not preview.left and preview.strings:
-        _number_strings(preview)
-        _check(project, all_groups or groups, cond, preview, None)
-        if (all(acceptable(s) and not target_mismatch(s) for s in preview.strings)
-                and not any(c.level == "fail" or c.key == "imp_total" and c.level == "warn"
-                            for checks in preview.checks.values() for c in checks)):
-            try:
-                budget.step()
-            except stringing.SearchStopped:
-                out.search_complete, out.search_reason = False, budget.reason
-            else:
-                out.strings, out.search_nodes = preview.strings, budget.nodes
-                return
+    # The most even share of the power first (R428); the plain order only if that one does not pass the checks.
+    tries = ((settings,) if settings.get("_unbalanced") or len(units) < 2 else (settings, {**settings, "_unbalanced": True}))
+    for attempt in tries:
+        preview = Plant(units=units, strings=list(initial))
+        _propose_greedy(units, groups, attempt, cond, preview, busy, loaded, lengths, owners)
+        if project is not None and not preview.left and preview.strings:
+            _number_strings(preview)
+            _check(project, all_groups or groups, cond, preview, None)
+            if (all(acceptable(s) and not target_mismatch(s) for s in preview.strings)
+                    and not any(c.level == "fail" or c.key == "imp_total" and c.level == "warn"
+                                for checks in preview.checks.values() for c in checks)):
+                try:
+                    budget.step()
+                except stringing.SearchStopped:
+                    out.search_complete, out.search_reason = False, budget.reason
+                else:
+                    out.strings, out.search_nodes = preview.strings, budget.nodes
+                    return
     try:
         if project is not None and _search_assignment(project, units, groups, settings, cond, out, budget, all_groups):
             return
@@ -1246,22 +1535,13 @@ def _number_strings(out: Plant) -> None:
 
 def build(project, results: dict | None = None, groups: list | None = None, t_cell_max_year: float | None = None,
           t_min_year: float | None = None, p_dc_hourly=None, check: bool = True, p_dc_connected: bool = False,
-          *, search=None, p_dc_by_inverter=None) -> Plant:
+          *, search=None, p_dc_by_inverter=None, exposure=None) -> Plant:
     """The plant of `project` on its layouts (`results`: sub-field id -> layout.Result) or on the energy job's
     groups (groups_from_arrays): the units, the strings (proposed, or the designer's), the modules in no string, and
     with `check` the checks at the conditions of the year (when given: its hottest cell, its lowest temperature, the
-    DC power of each hour for the overload) or at the design ones."""
-    if groups is None:
-        groups = groups_of(project, results or {})
-    p_stc = sum(len(g.placed) * g.module.pmax for g in groups)
-    e = project.energy or {}
-    s = e.get("strings") if (e.get("strings") or {}).__class__ is dict else {}
-    s = s or {}
-    cond = conditions(project, t_cell_max_year, t_min_year)
-    module = groups[0].module if groups else None
-    out = Plant(units=units_of(project, p_stc, module, cond.t_min), auto=bool(s.get("auto", False)),
-                strategy=s.get("strategy") or "serpentine", year=cond.year, t_cell_max=cond.t_cell_max,
-                t_cell_cold=cond.t_cell_cold, t_min=cond.t_min, p_stc_w=p_stc)
+    DC power of each hour for the overload) or at the design ones. The corrections (a search on the IV curve for each
+    group of modules in no string) come with the checks: without them nobody reads them (study 41, 08/11/2026)."""
+    out, groups, s, cond = _skeleton(project, results, groups, t_cell_max_year, t_min_year, exposure)
     if not groups:
         return out
     if out.auto:
@@ -1269,6 +1549,7 @@ def build(project, results: dict | None = None, groups: list | None = None, t_ce
     else:
         _runs(groups, s.get("runs") or [], out)
     _number_strings(out)
+    apply_partial(project, out)
     if not any(u.checkable for u in out.units if not u.optimized) and not any(u.optimized for u in out.units):
         out.notes.append(_("Choose an inverter from the catalogue to check the strings: its MPPT window and "
                            "currents are needed."))
@@ -1280,10 +1561,42 @@ def build(project, results: dict | None = None, groups: list | None = None, t_ce
                              _("{name}: none of SolarEdge's optimizers in the catalogue takes this module; choose one "
                                "in the Plant").format(name=u.name))
     _by_unit(groups, out)
-    if out.left:
-        out.corrections = _corrections(out.units, groups, cond, out.strategy, out.left)
     if check:
+        if out.left:
+            out.corrections = _corrections(out.units, groups, cond, out.strategy, out.left)
         _check(project, groups, cond, out, p_dc_hourly, p_dc_connected, p_dc_by_inverter)
+    return out
+
+
+def _skeleton(project, results, groups, t_cell_max_year, t_min_year, exposure) -> tuple:
+    """The plant before its strings: the groups, the units at the conditions, the settings of the strings."""
+    if groups is None:
+        groups = groups_of(project, results or {})
+    p_stc = sum(len(g.placed) * g.module.pmax for g in groups)
+    e = project.energy or {}
+    s = e.get("strings") if (e.get("strings") or {}).__class__ is dict else {}
+    s = s or {}
+    cond = conditions(project, t_cell_max_year, t_min_year)
+    module = groups[0].module if groups else None
+    out = Plant(units=units_of(project, p_stc, module, cond.t_min), auto=bool(s.get("auto", False)),
+                strategy=s.get("strategy") or "serpentine", year=cond.year, t_cell_max=cond.t_cell_max,
+                t_cell_cold=cond.t_cell_cold, t_min=cond.t_min, p_stc_w=p_stc, exposure=exposure)
+    return out, groups, s, cond
+
+
+def wired(project, results: dict | None = None) -> Plant:
+    """The units and the designer's strings on the layouts as `build` makes them, and nothing else: no notes, no
+    modules sorted by unit, no corrections, no checks. What the 3D view needs to draw the strings and the optimizers
+    (viewaids.string_segments: `build` cost it 93 ms a gesture, study 41). Strings proposed by Meridiana (`auto`) are
+    `build`'s own."""
+    out, groups, s, _cond = _skeleton(project, results, None, None, None, None)
+    if not groups:
+        return out
+    if out.auto:
+        return build(project, results, groups=groups, check=False)
+    _runs(groups, s.get("runs") or [], out)
+    _number_strings(out)
+    apply_partial(project, out)
     return out
 
 
@@ -1345,7 +1658,7 @@ def proposal(project, results: dict | None = None, groups: list | None = None, s
         groups = [g for g in groups if g.placed]
     out = Plant(units=units, strategy=s.get("strategy") or "serpentine")
     if only is not None and groups and not any(u.optimized for u in units):
-        ranges = [stringing.series_range(g.module, u.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+        ranges = [_series_range(g.module, u, cond)
                   for g in groups for u in units if u.checkable]
         out.shortest = min((lo for lo, hi in ranges if hi), default=0)
     _runs(all_groups, kept, out)
@@ -1353,7 +1666,9 @@ def proposal(project, results: dict | None = None, groups: list | None = None, s
     if groups:
         _propose(units, groups, s, cond, out, dict(busy), dict(loaded), dict(lengths), owners,
                  project=project, search=search, all_groups=all_groups)
+        _continue_on_faces(project, units, groups, all_groups, s, cond, out)
     _number_strings(out)
+    apply_partial(project, out)
     _by_unit(all_groups, out)
     _check(project, all_groups, cond, out, None)
     return out
@@ -1537,10 +1852,51 @@ def run_label(runs: list[dict], index: int) -> str:
 def touched(strings: dict | None, runs: list[dict]) -> dict:
     """energy["strings"] with the strings `runs` (the empty ones left out), the designer's: a proposal of before
     format 14 is no longer to be written down; the rest kept (the strategy and the modules in series of the next
-    proposal)."""
+    proposal). Optimizer groups that no longer split their string are made again (R442)."""
     out = {k: v for k, v in (strings or {}).items() if k != "auto"}
-    out["runs"] = [r for r in runs if r.get("modules")]
+    out["runs"] = [regrouped(r) for r in runs if r.get("modules")]
     return out
+
+
+def regrouped(run: dict) -> dict:
+    """`run` with optimizer groups that split all its modules (R442): groups that do not (a string changed without
+    them, «Optimizer groups must partition the string») are made again, in order, as large as the old largest."""
+    sizes = run.get("optimizer_group_sizes")
+    if not sizes:
+        return run
+    n = len(run.get("modules") or [])
+    per = max((k for k in sizes if type(k) is int and k in (1, 2)), default=1)
+    if all(type(k) is int and 1 <= k <= per for k in sizes) and sum(sizes) == n:
+        return run
+    return dict(run, optimizer_group_sizes=[min(per, n - i) for i in range(0, n, per)])
+
+
+def realign(runs: list[dict], laid: set, kept: set = frozenset()) -> tuple[list[dict], list[tuple[str, int, list]]]:
+    """The strings on the modules laid (R442): each key not in `laid` taken out, the optimizer groups following
+    (each physical optimizer keeps the modules left on it), a string left empty dropped. The keys of the sub-fields
+    in `kept` (whose layout is not in hand) stay. The new runs and, for each string that lost modules, its label,
+    how many and the sub-fields they were on."""
+    out, gone = [], []
+    for i, run in enumerate(runs):
+        if run.__class__ is not dict:
+            out.append(run)
+            continue
+        mods = list(run.get("modules") or [])
+        keep = {k for k in mods if k in laid or str(k).partition("/")[0] in kept}
+        lost = [k for k in mods if k not in keep]
+        if not lost:
+            out.append(run)
+            continue
+        new = dict(run, modules=mods)
+        try:
+            _filter_run_groups(new, keep)
+        except ValueError:          # groups that did not split the string before: made again below
+            new["modules"] = [k for k in mods if k in keep]
+        new = regrouped(new)
+        gone.append((run_label(runs, i), len(lost), sorted({str(k).partition("/")[0] for k in lost})))
+        if new["modules"]:
+            out.append(new)
+    return out, gone
 
 
 def materialize_optimizer_groups(runs: list[dict], state: Plant) -> list[dict]:
@@ -1617,9 +1973,13 @@ def optimizers_of(plant: Plant, arrays: list):
     """The power optimizers of the year (simulate.Optimizers) from the plant's strings on the energy job's arrays: for
     each array the share of its modules in a string of optimizers and of those alone on one, the optimizers'
     efficiency (weighted by the modules) and the inverter's string voltage; each string of optimizers with its
-    modules by array and the power it carries at most. None without optimizers."""
+    modules by array and the power it carries at most. None without optimizers. The optimizers on an inverter with
+    MPPT (Huawei, Sungrow, Tigo TS4-A-O: R456) count by array as SolarEdge's, without a fixed string voltage (0) and
+    without a power carried at most: the year's network computes them optimizer by optimizer."""
     from .simulate import ArrayOptimizers, Optimizers
-    if plant is None or not plant.optimized:
+    tracked = {u.number for u in (plant.units if plant is not None else [])
+               if u.mlpe is not None and u.mlpe.family.function == "optimizer"}
+    if plant is None or not (plant.optimized or tracked):
         return None
     where = {}
     for a in arrays:
@@ -1633,6 +1993,9 @@ def optimizers_of(plant: Plant, arrays: list):
     strings = []
     for s in plant.strings:
         u = plant.unit(s.inverter)
+        if u is not None and u.number in tracked and s.modules:
+            _count_mppt_optimizers(s, u, where, count, single, eta, about)
+            continue
         if u is None or not u.optimized or u.choice is None or not s.modules:
             continue
         ch = u.choice
@@ -1647,7 +2010,7 @@ def optimizers_of(plant: Plant, arrays: list):
                 counts[key] += 1
         label = _("datasheet of {name}").format(name=ch.optimizer.name)
         if ch.suggested:
-            label += " " + _("(proposed by Meridiana)")
+            label += " " + _("(proposed automatically)")
         for key, n in counts.items():
             count[key] += n
             eta[key] += n * ch.optimizer.eta
@@ -1671,6 +2034,28 @@ def optimizers_of(plant: Plant, arrays: list):
             out.arrays[a.key] = ArrayOptimizers(share=min(1.0, n / a.modules), single=min(1.0, single[a.key] / a.modules),
                                                 eta=eta[a.key] / n, v_string=v, name=name, source=source)
     return out if out.arrays else None
+
+
+def _count_mppt_optimizers(s: String, u: Unit, where: dict, count: dict, single: dict, eta: dict, about: dict) -> None:
+    """optimizers_of for a string of optimizers on an inverter with MPPT: its modules by array, those alone on one; on
+    part of the modules (R456) only those with one."""
+    setup = u.mlpe
+    mods = s.modules if s.optimized is None else [r for r in s.modules if f"{r[0]}/{r[1]}" in set(s.optimized)]
+    try:
+        physical = optimizers.module_groups(mods, setup.per, s.optimizer_group_sizes if s.optimized is None else None)
+    except ValueError:
+        return
+    label = _("datasheet of {name}").format(name=setup.optimizer.name)
+    for group in physical:
+        for sf, k, _c in group:
+            key = where.get((sf, k))
+            if key is None:
+                continue
+            count[key] += 1
+            eta[key] += setup.optimizer.eta
+            about[key] = (0.0, setup.optimizer.name, Source("data", label, setup.family.datasheet))
+            if len(group) == 1:
+                single[key] += 1
 
 
 def dcac(plant: Plant) -> tuple[float, float | None]:
@@ -1776,9 +2161,31 @@ def _runs(groups: list[Group], runs: list, out: Plant) -> None:
                 lost.append(key)
         inv, mppt = run.get("inverter", 0), run.get("mppt", 0)
         s = String(inv if inv.__class__ is int else 0, mppt if mppt.__class__ is int else 0, mods, run=i, lost=lost)
-        s.optimizer_group_sizes = list(run.get("optimizer_group_sizes") or [])
+        s.optimizer_group_sizes = _kept_sizes(list(run.get("modules") or []), list(run.get("optimizer_group_sizes") or []),
+                                              [f"{sf}/{k}" for sf, k, _c in mods])
         out.strings.append(s)
     out.left += [v for k, v in laid.items() if k not in seen]
+
+
+def _kept_sizes(keys: list, sizes: list, taken: list) -> list:
+    """The optimizer groups of a string whose modules `taken` are those of `keys` still laid (R442): each physical
+    optimizer keeps the modules left on it; groups that did not split the string give way to the plain ones."""
+    if not sizes or len(taken) == len(keys):
+        return sizes if sum(sizes) == len(taken) else []
+    try:
+        groups = optimizers.module_groups(keys, max(sizes), sizes)
+    except ValueError:
+        return []
+    left, out = set(taken), []
+    for group in groups:
+        n = 0
+        for key in group:
+            if key in left:
+                left.discard(key)
+                n += 1
+        if n:
+            out.append(n)
+    return out
 
 
 def _by_unit(groups: list[Group], out: Plant) -> None:
@@ -1858,9 +2265,9 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
             continue
         first = next((modules.get(out.strings[i].modules[0][0]) for i in slot.strings if out.strings[i].modules), None)
         module = first or next(iter(modules.values()))
-        slot.allowed = max(0, stringing.strings_allowed(module, unit.spec, k - 1))
+        slot.allowed = _capacity(module, unit, k - 1, [])
         if unit.checkable:
-            slot.series = stringing.series_range(module, unit.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+            slot.series = _series_range(module, unit, cond)
         if not slot.strings:
             continue
         mine = [out.strings[i] for i in slot.strings]
@@ -1872,9 +2279,18 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
                                             "catalogue)")
             continue
         facings = [tuple(sorted({orientations[(sf, key)] for sf, key, _c in x.modules})) for x in mine if x.modules]
-        orientation_ok = bool(facings) and all(len(f) == 1 and f == facings[0] for f in facings)
+        # one string over more exposures is the check of faces.py (R433); this rule is of the parallel strings
+        orientation_ok = bool(facings) and (len(facings) == 1 or all(len(f) == 1 and f == facings[0] for f in facings))
         module_types = {_module_key(modules[sf]) for x in mine for sf, _key, _c in x.modules}
         alike = len({len(x.modules) for x in mine}) <= 1 and len(module_types) <= 1 and orientation_ok
+        extra: list = []
+        if unit.mlpe is not None:
+            # the optimizers' maker settles the parallel strings: lengths, count, orientations (R456)
+            extra, settled = optimizer_strings.input_checks(unit.mlpe, [len(x.modules) for x in mine if x.modules],
+                                                            facings)
+            if settled:
+                orientation_ok = bool(facings)
+                alike = len(module_types) <= 1 and not any(c.level == "fail" for c in extra)
         if not orientation_ok:
             slot.why = _("parallel strings must have the same orientation: this input mixes different orientations")
         elif not alike:
@@ -1891,6 +2307,18 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
             if key not in plans:
                 plans[key] = _plan(m, unit, k, n, len(mine), cond)
             p = plans[key]
+            mixed = x.optimized is not None and len(x.optimized) < n
+            if unit.mlpe is not None and not mixed:
+                window = stringing.series_range(m, unit.spec, cond.t_min, cond.t_cell_max, cond.t_cell_cold)
+                p = optimizer_strings.adapt_plan(p, unit.mlpe, m, n, x.optimizer_group_sizes or None, cond.t_min,
+                                                 window, extra, _string_power(x, modules))
+            elif unit.mlpe is not None and x.optimized:
+                # R456: optimizers on some of its modules, sized as without them, by the maker's rules of partial use
+                planes = {orientations[(sf, key)] for sf, key, _c in x.modules}
+                p = dataclasses.replace(p, checks=list(p.checks)
+                                        + optimizer_strings.module_checks(unit.mlpe, m, unit.mlpe.per, cond.t_min)
+                                        + optimizer_strings.partial_checks(unit.mlpe, n, len(x.optimized), len(planes),
+                                                                           len(mine)))
             slot.plan = slot.plan or p
             x.plan = p
             bad = [c for c in p.checks if c.level == "fail"]
@@ -1945,7 +2373,12 @@ def _check(project, groups: list[Group], cond: Conditions, out: Plant, p_dc_hour
                 checks.append(balance)
         if u.optimized:
             checks += _optimized_unit_checks(u, out, modules, dc)
+        if u.mlpe is not None:
+            checks += optimizer_strings.unit_checks(name, u.mlpe, [_string_power(x, modules) for x in out.strings
+                                                                   if x.inverter == u.number and x.modules])
         out.checks[u.number] = checks
+    _check_partial_fixed(project, out)
+    _check_faces(project, groups, out)
 
 
 def _string_power(x: String, modules: dict) -> float:
@@ -2049,8 +2482,8 @@ def _optimized_unit_checks(unit: Unit, out: Plant, modules: dict, dc_w: float) -
     elif ch.suggested:
         found.append(stringing.Check(
             "opt_suggested", _("{name}: power optimizers").format(name=name), True,
-            ngettext("{opt}, {n} module on each, proposed by Meridiana: choose them in the Plant to confirm",
-                     "{opt}, {n} modules on each, proposed by Meridiana: choose them in the Plant to confirm",
+            ngettext("{opt}, {n} module on each, proposed automatically: choose them in the Plant to confirm",
+                     "{opt}, {n} modules on each, proposed automatically: choose them in the Plant to confirm",
                      ch.per).format(opt=ch.optimizer.name, n=ch.per), "info", ch.rules.source))
     for k in range(1, unit.inputs + 1):
         slot = out.inputs[(unit.number, k)]
@@ -2076,3 +2509,257 @@ def input_name(unit, k: int) -> str:
     if not unit.optimized:
         return _("MPPT {k}").format(k=k)
     return _("Synergy unit {k}").format(k=k) if unit.inputs > 1 else _("Strings")
+
+
+# R456, answer 6 (Daniel, 06/11/2026: «sì, parziale più avanti, Meridio deve saperlo»): optimizers on some modules only
+
+def partial_keys(energy: dict | None) -> tuple:
+    """The modules ("sub-field/key") with an optimizer when only some have one, as the file keeps them."""
+    strings = (energy or {}).get("strings")
+    raw = strings.get(PARTIAL) if strings.__class__ is dict else None
+    return tuple(k for k in raw if k.__class__ is str) if isinstance(raw, list) else ()
+
+
+def admits_partial(unit: Unit | None) -> bool:
+    """Whether the optimizers of `unit` may go on part of its modules by their maker's documents (Huawei SUN2000-P
+    and PA0, Tigo TS4-A-O: optimizer_rules.json, «partial»); never SolarEdge's (an inverter at a fixed string voltage)."""
+    return (unit is not None and unit.mlpe is not None and unit.mlpe.family.function == "optimizer"
+            and unit.mlpe.family.partial == "conditions")
+
+
+def apply_partial(project, out: Plant) -> None:
+    """Which modules carry an optimizer: on an inverter with MPPT whose strings name some modules of
+    energy["strings"]["optimized"], only those (each string's `optimized`, the unit's `partial`); every other inverter as
+    before, an optimizer on every module of its strings."""
+    keys = set(partial_keys(project.energy if project is not None else None))
+    for u in out.units:
+        u.partial = None
+    for x in out.strings:
+        x.optimized = None
+    if not keys:
+        return
+    for u in out.units:
+        if u.mlpe is None:
+            continue
+        mine = [x for x in out.strings if x.inverter == u.number]
+        if any(k in keys for x in mine for k in x.keys):
+            u.partial = tuple(sorted(k for x in mine for k in x.keys if k in keys))
+            for x in mine:
+                x.optimized = tuple(k for k in x.keys if k in keys)
+
+
+def module_optimized(unit: Unit | None, sfid: str, key: str) -> bool:
+    """Whether a module of a string of `unit` sits on an optimizer that keeps it at its maximum power point."""
+    if unit is None:
+        return False
+    if unit.optimized:
+        return True
+    if unit.mlpe is None or unit.mlpe.family.function != "optimizer":
+        return False
+    return unit.partial is None or f"{sfid}/{key}" in unit.partial
+
+
+def _check_partial_fixed(project, out: Plant) -> None:
+    """Modules named without an optimizer on an inverter at a fixed string voltage (SolarEdge): not admitted, every module
+    on one (the inverters «progettato specificamente per il funzionamento con ottimizzatori di potenza», at a fixed string
+    voltage: SE25K-SE33.3K, Italian datasheet p. 1; the string lengths are counted in optimizers, DS-000105-IT p. 3 and
+    DS-000205-EU p. 3; no SolarEdge document of the archive admits a module without one). The year counts one on each."""
+    keys = set(partial_keys(project.energy if project is not None else None))
+    if not keys:
+        return
+    for x in out.strings:
+        u = out.unit(x.inverter)
+        if u is None or not u.optimized or x.plan is None:
+            continue
+        named = [k for k in x.keys if k in keys]
+        if not named or len(named) == len(x.keys):
+            continue
+        check = stringing.Check(
+            "mlpe_partial", _("String {label}: optimizers on some modules only").format(label=x.label), False,
+            _("SolarEdge's inverters work only with an optimizer on every module (fixed string voltage): the program "
+              "counts one on each of the {n} modules").format(n=len(x.modules)), "fail",
+            _("SolarEdge SE25K-SE33.3K, Italian datasheet, p. 1; DS-000105-IT p. 3; DS-000205-EU p. 3"))
+        x.plan = dataclasses.replace(x.plan, checks=list(x.plan.checks) + [check])
+        x.why = "; ".join(w for w in (x.why if x.state == "fail" else "", f"{check.label}: {check.detail}") if w)
+        x.state = "fail"
+
+
+def _check_faces(project, groups: list, out: Plant) -> None:
+    """R433: every string over more than one face or exposure is said, with the estimate of what its exposures cost
+    (faces.py); its traffic light at least yellow."""
+    out.crossings = []
+    if project is None or not out.strings:
+        return
+    face_of = faces.faces_of(project)
+    orientations = {(g.sfid, pm.key): _orientation(pm) for g in groups for pm in g.placed}
+    for i, x in enumerate(out.strings):
+        if len(x.modules) < 2:
+            continue
+        unit = out.unit(x.inverter)
+        c = faces.crossing(project, i, x.label, x.modules, orientations, face_of,
+                           lambda sf, k, unit=unit: module_optimized(unit, sf, k), out.exposure, by_hand=x.run >= 0)
+        if c is None:
+            continue
+        out.crossings.append(c)
+        source = _("Daniel's rule of 05/11/2026 (R433)")
+        if unit is not None and unit.optimized:
+            source += "; " + _("SolarEdge, Single String Design Guidelines v1.1, p. 1: a string over more faces loses more")
+        title = (_("String {label}: over more than one face") if len(c.faces) > 1 else
+                 _("String {label}: modules with different exposures")).format(label=x.label)
+        check = stringing.Check(faces.KEY, title, True, faces.detail(c), faces.level(c), source)
+        if x.plan is not None:
+            x.plan = dataclasses.replace(x.plan, checks=list(x.plan.checks) + [check])
+        if check.level != "warn":
+            continue
+        if x.state == "ok":
+            x.state, x.why = "check", f"{check.label}: {check.detail}"
+        elif x.state == "check":
+            x.why = "; ".join(w for w in (x.why, f"{check.label}: {check.detail}") if w)
+
+
+def _continue_on_faces(project, units: list, groups: list, all_groups: list, s: dict, cond: Conditions,
+                       out: Plant) -> None:
+    """R433 in the proposal: the modules of one building left out because their face alone makes no string go on over
+    its other faces, face after face along the strategy's path, when the inverter has optimizers that keep each module at
+    its maximum power point, or without them when the designer asked (energy["strings"]["across_faces"]); never
+    between buildings, never with another module. Only strings that pass the checks are kept (the warning of the faces
+    is one of the CONDITIONS)."""
+    left = {(sf, k) for sf, k, _c in out.left}
+    if not left or not groups:
+        return
+    face_of = faces.faces_of(project)
+    strategy = s.get("strategy") or "serpentine"
+    plain_too = bool(s.get(ACROSS))
+    by_building: dict = defaultdict(list)
+    for g in groups:
+        f = face_of.get(g.sfid)
+        if f is None or not f.building:
+            continue
+        rest = [pm for pm in _path(g.placed, strategy) if (g.sfid, pm.key) in left]
+        if rest:
+            by_building[f.building].append((g, f, rest))
+    used: dict = defaultdict(int)
+    loads: dict = defaultdict(float)
+    power = {(g.sfid, pm.key): g.module.pmax for g in all_groups for pm in g.placed}
+    for x in out.strings:
+        used[(x.inverter, x.mppt)] += 1
+        loads[(x.inverter, x.mppt)] += sum(power.get((sf, k), 0.0) for sf, k, _c in x.modules)
+    made = []
+    for _b, parts in by_building.items():
+        if len({f.pitch for _g, f, _r in parts}) < 2:
+            continue
+        if len({_module_key(g.module) for g, _f, _r in parts}) > 1:
+            continue
+        module = parts[0][0].module
+        pairs = [(g, pm) for g, _f, rest in parts for pm in rest]
+        for unit in units:
+            if not pairs:
+                break
+            tracked = unit.optimized or (unit.mlpe is not None and unit.mlpe.family.function == "optimizer")
+            if not (tracked or plain_too) or not unit.checkable:
+                continue
+            if unit.optimized:
+                if any(c.level == "fail" for c in optimizers.module_checks(
+                        module, unit.choice.optimizer, unit.choice.per, cond.t_min, unit.fixed)):
+                    continue
+                slots = [(unit.number, k + 1) for k in range(unit.inputs)]
+                for n in _optimized_sizes(len(pairs), unit, module.pmax, len(slots)):
+                    chunk, pairs = pairs[:n], pairs[n:]
+                    slot = min(slots, key=lambda sl: (loads[sl] / max(1.0, unit.fixed.unit_pac), sl))
+                    loads[slot] += n * module.pmax
+                    made.append(String(slot[0], slot[1], [(gg.sfid, pm.key, tuple(pm.centre)) for gg, pm in chunk]))
+                continue
+            lo, hi = _series_range(module, unit, cond)
+            if not hi:
+                continue
+            for k in range(unit.inputs):
+                slot = (unit.number, k + 1)
+                if used[slot] or _capacity(module, unit, k, []) < 1:
+                    continue
+                n = next((m for m in range(min(hi, len(pairs)), lo - 1, -1) if _length_allowed(unit, m)), 0)
+                if not n:
+                    break
+                chunk, pairs = pairs[:n], pairs[n:]
+                used[slot] += 1
+                made.append(String(slot[0], slot[1], [(gg.sfid, pm.key, tuple(pm.centre)) for gg, pm in chunk]))
+    if not made:
+        return
+    trial = Plant(units=out.units, strings=list(out.strings) + made)
+    _number_strings(trial)
+    apply_partial(project, trial)
+    _check(project, all_groups, cond, trial, None)
+    kept = [x for x in trial.strings[len(out.strings):] if acceptable(x)]
+    if not kept:
+        return
+    taken = {(sf, k) for x in kept for sf, k, _c in x.modules}
+    out.strings += [String(x.inverter, x.mppt, x.modules) for x in kept]
+    out.left = [r for r in out.left if (r[0], r[1]) not in taken]
+
+
+def shaded_keys(project, results: dict) -> list[str]:
+    """The modules the obstacles shade in the design window of their sub-field (system.shadow_exclusions: the shadows
+    the layout keeps out of with «out of the obstacles' shadows»), more than 2 % of a module: where the automatic choice
+    puts the optimizers when only some modules have one (R456)."""
+    from shapely.geometry import Polygon
+    out = []
+    for sf in project.subfields:
+        r = results.get(sf.id)
+        if not sf.filled or r is None or isinstance(r, Exception) or not r.modules:
+            continue
+        shade = [Polygon(e.ring, e.holes or None) for e in system.shadow_exclusions(project, sf, sf.layout_params().window)]
+        shade = [g for g in shade if g.is_valid and not g.is_empty]
+        if not shade:
+            continue
+        for pm in r.modules:
+            q = Polygon(pm.corners)
+            if q.area > 0 and any(q.intersection(g).area > 0.02 * q.area for g in shade):
+                out.append(f"{sf.id}/{pm.key}")
+    return out
+
+
+def optimized_after(project, results: dict, keys, on: bool, only: bool = False) -> tuple[list[str] | None, str]:
+    """energy["strings"]["optimized"] after putting (`on`) or taking off the optimizers of the modules `keys` (R456),
+    with what to tell the designer; None when nothing changes. With `only` the optimizers of each inverter touched go
+    on those modules alone (the automatic choice on the modules in the shade). Only the strings of inverters whose
+    optimizers admit it (admits_partial); an inverter whose every module has one again is back to the plain case (no key
+    of it kept)."""
+    state = build(project, results, check=False)
+    keys = set(keys)
+    current = set(partial_keys(project.energy))
+    out, touched, refused = set(current), [], []
+    for u in state.units:
+        mine = [k for x in state.strings if x.inverter == u.number for k in x.keys]
+        asked = keys.intersection(mine)
+        if not asked:
+            continue
+        if not admits_partial(u):
+            refused.append(u)
+            continue
+        base = set(mine) if u.partial is None else current.intersection(mine)
+        base = set(asked) if only else base | asked if on else base - asked
+        out -= set(mine)
+        if base and base != set(mine):
+            out |= base
+        touched.append(u)
+    if refused and not touched:
+        u = refused[0]
+        name = u.mlpe.optimizer.name if u.mlpe is not None else (u.choice.optimizer.name if u.choice else "")
+        why = (_("{name}: no optimizer on its inverter").format(name=u.name) if not name else
+               _("{name}: its maker does not admit optimizers on some modules only").format(name=name))
+        return None, why
+    if not touched:
+        return None, _("Choose modules in a string of an inverter with optimizers.")
+    if out == current:
+        return None, _("Nothing changes: those modules are already so.")
+    return sorted(out), (_("Optimizers on {n} modules").format(n=len(keys)) if on else
+                         _("No optimizer on {n} modules").format(n=len(keys)))
+
+
+def set_optimized(energy: dict, keys: list[str] | None) -> None:
+    """Write the list of the modules with an optimizer (only when it has some: an optional field, no new format)."""
+    s = dict(energy.get("strings") or {})
+    if keys:
+        s[PARTIAL] = list(keys)
+    else:
+        s.pop(PARTIAL, None)
+    energy["strings"] = s

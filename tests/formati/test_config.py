@@ -235,19 +235,33 @@ class ConfigTest(unittest.TestCase):
             path.write_text(json.dumps({"version": 18}), encoding="utf-8")         # the default of then, unwritten
             self.assertEqual(load(path).background, "auto")
 
+    def test_version_31_share_of_the_memory_becomes_the_choice_of_version_32(self):
+        # R548: the share of version 27 told in three words; the share itself stays in the file for the versions before
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            for share, mode in ((0.0, "auto"), (0.1, "save"), (0.25, "save"), (0.5, "auto"), (0.75, "all"),
+                                (0.9, "all"), ("x", "auto")):
+                path.write_text(json.dumps({"version": 31, "memory_share": share}), encoding="utf-8")
+                cfg = load(path)
+                self.assertEqual(cfg.memory_mode, mode, share)
+            path.write_text(json.dumps({"version": 31}), encoding="utf-8")
+            self.assertEqual(load(path).memory_mode, "auto")
+
     def test_version_9_reaches_the_latest_version_with_every_default(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "config.json"
             path.write_text(json.dumps({"version": 9, "network_tiles": False}), encoding="utf-8")
             cfg = load(path)
             self.assertEqual(cfg.notices, [])
-            self.assertEqual(cfg, Config(network_tiles=False))
+            self.assertEqual(cfg, Config(network_tiles=False, font="inter"))
             self.assertEqual((cfg.toolbar, cfg.toolbar_place, cfg.assistant_animated, cfg.assistant_style,
                               cfg.assistant_width, cfg.assistant_height, cfg.checks_view, cfg.help_open),
                              ("text", "top", True, "smooth", 320, 500, "level", True))
             save(cfg, path)
             self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["version"], config.CONFIG_VERSION)
-            self.assertEqual(config.CONFIG_VERSION, 26)
+            self.assertEqual(config.CONFIG_VERSION, 32)
+            self.assertEqual(cfg.edges_3d, "full")    # 31: the 3D's edges as drawn before (study 41, E)
+            self.assertEqual(cfg.memory_mode, "auto")  # 32: the memory's choice, automatic (R548)
             self.assertEqual(cfg.inverter_brand_favourites, [])       # no maker starred yet (R268)
             self.assertEqual(cfg.text_size, "medium")                 # the 13 px of before (R133)
             self.assertEqual((cfg.background, cfg.map_sources), ("auto", []))     # the best for the site (R36)

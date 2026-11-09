@@ -1,0 +1,4 @@
+module Meridiana.Settings
+SettingsPage 1.0 SettingsPage.qml
+SettingField 1.0 SettingField.qml
+SettingsRecords 1.0 SettingsRecords.qml

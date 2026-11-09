@@ -1,0 +1,22 @@
+{
+  "size": [1600, 960],
+  "steps": [
+    {"action": "snapshot"},
+    {"action": "click", "target": "tree:Capannone"},
+    {"action": "click", "target": "value:Capannone"},
+    {"action": "key", "key": "Ctrl+A"},
+    {"action": "type", "text": "Edificio prova"},
+    {"action": "key", "key": "Return"},
+    {"action": "click", "target": "tree:Edificio prova"},
+    {"action": "key", "key": "Ctrl+Z"},
+    {"action": "click", "target": "Per oggetto"},
+    {"action": "click", "target": "Per area"},
+    {"action": "click", "target": "Pronto per la consegna"},
+    {"action": "click", "target": "Per livello"},
+    {"action": "click", "target": "Questa fase"},
+    {"action": "click", "target": "Questo oggetto"},
+    {"action": "hover", "target": "Per livello", "wait": 800},
+    {"action": "resize", "size": [1366, 900]},
+    {"action": "snapshot"}
+  ]
+}

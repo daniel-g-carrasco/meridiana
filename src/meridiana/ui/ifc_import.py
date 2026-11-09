@@ -20,6 +20,8 @@ from .. import ifc_import, log, procmem
 from ..i18n import _, number
 from .design import Space, Text, strong, text_font
 
+KEPT_READINGS = 2              # R548: the readings kept in memory (pickled), the same file asked again in the session
+_KEPT: dict = {}                # (path, size, mtime) -> the reading, pickled (a fresh copy for each asker)
 BUDGET_S = 180                  # a reading that takes longer is stopped: the file is said too heavy (study 20, 4.2)
 MEMORY = procmem.limit()        # half the PC's memory, 8 GiB at most
 WATCH_MS = 500
@@ -34,10 +36,16 @@ def worker_command(path: str, mode: str = "direct") -> tuple[str, list[str], dic
     src = str(Path(__file__).resolve().parents[2])
     env = {"PYTHONPATH": os.pathsep.join(x for x in (src, os.environ.get("PYTHONPATH", "")) if x),
            "PYTHONIOENCODING": "utf-8"}
-    return str(exe), ["-m", "meridiana.ifc_worker", path, "--mode", mode], env
+    budget = SECOND_TRY_S if mode == "simple" else BUDGET_S
+    from meridiana.paths import Paths
+    # r21-ifc-vista: the true geometry of the model for the 3D, kept in the cache (ifc_mesh, scene_context)
+    context = str(Paths.from_env().cache / "ifc")
+    return str(exe), ["-m", "meridiana.ifc_worker", path, "--mode", mode, "--budget", str(round(budget * BUDGET_SHARE)),
+                      "--context", context], env
 
 
 SECOND_TRY_S = 60               # the reading again without IfcOpenShell's iterator, after it crashed or got stuck
+BUDGET_SHARE = 0.7              # past this share of its time the worker gives up the shapes left and answers with the rest
 
 
 class IfcReading(QObject):
@@ -50,7 +58,7 @@ class IfcReading(QObject):
     stands in for the worker in the tests: a program with its arguments, or a function of the way giving them."""
 
     progress = Signal(float, str)
-    done = Signal(dict)
+    done = Signal(object)          # R400: a Python dict as it is (11 MB of solids as a QVariantMap cost seconds)
     failed = Signal(str)
 
     def __init__(self, path: str, budget_s: float = BUDGET_S, memory: int = MEMORY, command=None, parent=None):
@@ -72,7 +80,47 @@ class IfcReading(QObject):
         self.watch.timeout.connect(self._watch)
 
     def start(self) -> None:
+        kept = self._kept()
+        if kept is not None:
+            # R548: the same file read before in this session, unchanged: its reading at once, without a worker
+            self.started_at = time.monotonic()
+            QTimer.singleShot(0, self, lambda: self._give(kept))
+            return
         self._launch("direct", self.budget_s)
+
+    def _identity(self):
+        try:
+            st = os.stat(self.path)
+        except (OSError, TypeError, ValueError):
+            return None
+        return (os.path.normcase(os.path.abspath(self.path)), st.st_size, st.st_mtime_ns)
+
+    def _kept(self):
+        from .. import resources
+        if self.command is not None or not resources.preload():
+            return None
+        return _KEPT.get(self._identity())
+
+    def _keep(self, result: dict) -> None:
+        from .. import resources
+        key = self._identity()
+        if self.command is not None or key is None or not resources.preload():
+            return
+        import pickle
+        _KEPT.pop(key, None)
+        _KEPT[key] = pickle.dumps(result, protocol=pickle.HIGHEST_PROTOCOL)
+        while len(_KEPT) > KEPT_READINGS:
+            _KEPT.pop(next(iter(_KEPT)))
+
+    def _give(self, kept: bytes) -> None:
+        if self.ended:
+            return
+        import pickle
+        self.ended = True
+        self.result = pickle.loads(kept)
+        self.result["read_seconds"] = round(time.monotonic() - self.started_at, 2)
+        self.result["from_memory"] = True
+        self.done.emit(self.result)
 
     def _launch(self, mode: str, budget: float) -> None:
         program, args, env = worker_command(self.path, mode)
@@ -106,9 +154,17 @@ class IfcReading(QObject):
     def _kill(self) -> None:
         p = self.process
         if p is not None and p.state() != QProcess.ProcessState.NotRunning:
+            # R400: the scan's processes too (the worker's job ends them on Windows; here also where it has none)
+            pid = p.processId()
+            below = procmem.children(pid) if pid else []
             p.finished.disconnect(self._finished)
             p.kill()
             p.waitForFinished(2000)
+            for child in below:
+                try:
+                    os.kill(child, 9)
+                except OSError:
+                    pass
 
     def _end(self, why: str = "") -> None:
         if self.ended:
@@ -150,10 +206,15 @@ class IfcReading(QObject):
                                 gb=number(self.memory / procmem.GIB, 1)))
 
     def _out(self) -> None:
-        self.buffer += bytes(self.process.readAllStandardOutput())
-        while b"\n" in self.buffer:
-            line, _sep, rest = bytes(self.buffer).partition(b"\n")
-            self.buffer = bytearray(rest)
+        # the new bytes only are looked at for an end of line: a long line looked at again at every chunk of the pipe
+        # cost 12 s for a result of 11 MB (R400)
+        chunk = bytes(self.process.readAllStandardOutput())
+        self.buffer += chunk
+        if b"\n" not in chunk:
+            return
+        *lines, rest = bytes(self.buffer).split(b"\n")
+        self.buffer = bytearray(rest)
+        for line in lines:
             try:
                 msg = json.loads(line.decode("utf-8"))
             except (ValueError, UnicodeDecodeError):
@@ -162,6 +223,14 @@ class IfcReading(QObject):
                 self.progress.emit(float(msg["progress"]), str(msg.get("what", "")))
             elif "result" in msg:
                 self.result = msg["result"]
+            elif "result_file" in msg:
+                # R400: a large result comes through a file of the worker, read here and removed
+                try:
+                    path = Path(msg["result_file"])
+                    self.result = json.loads(path.read_text(encoding="utf-8"))
+                    path.unlink(missing_ok=True)
+                except (OSError, ValueError) as error:
+                    self.error = str(error)
             elif "error" in msg:
                 self.error = str(msg["error"])
 
@@ -192,6 +261,7 @@ class IfcReading(QObject):
             self.result["read_peak_mb"] = round(self.peak / 2 ** 20)
             if self.first_failure:
                 self.result["second_try"] = self.first_failure
+            self._keep(self.result)
             self.done.emit(self.result)
         else:
             self.failed.emit(_("{file} could not be read: {why}").format(file=Path(self.path).name, why=self.error))
@@ -288,9 +358,11 @@ class IfcImportDialog(QDialog):
         self.how = QButtonGroup(self)
         km = ifc_import.distance_km(self.place, project.site)
         choices = []
-        if self.place.lat is not None:
+        offered = ifc_import.offers(self.place, project)     # a template's place is never proposed; the site never moves by itself
+        if "file" in offered:
             choices.append(("file", _("Where the file places them, around the project's site ({km} km from its "
                                       "origin)").format(km=number(km or 0.0, 2))))
+        if "site" in offered:
             choices.append(("site", _("Move the project's site to the model's place ({lat}, {lon})").format(
                 lat=number(self.place.lat, 6), lon=number(self.place.lon, 6))))
         choices.append(("origin", _("At the site's origin: the file's place is not used")))

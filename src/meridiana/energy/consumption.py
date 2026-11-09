@@ -333,7 +333,7 @@ def build(c: Consumption, ctx: Context | None = None) -> Load:
     guessed = c.profile == "auto" or c.profile not in PROFILES
     if guessed:
         c = Consumption(**{**c.__dict__, "profile": g.profile})
-    synthetic = Source("default", _("Meridiana's conventional profile '{name}' (a shape drawn by hand, from no "
+    synthetic = Source("default", _("conventional profile of the calculation '{name}' (a shape drawn by hand, from no "
                                     "survey or standard: the bills or the curve of the POD replace it)").format(
         name=profile_names().get(c.profile, c.profile)) + ("; " + by_context.label if guessed else ""))
     given = Source("input", _("given by the designer"))
@@ -372,7 +372,7 @@ def build(c: Consumption, ctx: Context | None = None) -> Load:
             given = Source("default", _("guessed from the context, to be replaced by the bills or the curve of the POD: "
                                         "{why}").format(why=g.why))
         hourly = base * (total / base.sum()) if base.sum() > 0 else base * 0.0
-        basis = _("yearly kWh")
+        basis = _("estimated from the yearly kWh")      # R447: under the kWh it read as their unit
         formula = r"E_h = E_{anno}\,\frac{w_h}{\sum_k w_k}"
     rec.add(Step("load", _("Hourly consumption"), formula,
                  _("The typical profile gives the weight w of each hour (weekday, Saturday, Sunday and holiday, month); "

@@ -11,7 +11,15 @@ What the file holds:
 - the obstacles: IfcChimney, IfcWindow SKYLIGHT, IfcGeographicElement (trees), IfcBuildingElementProxy (the rest);
 - the modules: an IfcSolarDeviceType SOLARPANEL for each module and orientation, with its shape once
   (IfcRepresentationMap), one IfcSolarDevice for each module laid, placed by an IfcMappedItem, with its Pset; an
-  IfcGroup for each sub-field and for each string.
+  IfcGroup for each sub-field; the plant an IfcDistributionSystem POWERGENERATION, each string an
+  IfcDistributionCircuit in it, each inverter an IfcTransformer INVERTER (without a place: the model has none).
+
+`what` (R453): "all" the whole model; "plant" the plant alone (modules, the canopies' columns and beams, strings,
+inverters), in the same coordinates and with the same georeferencing, to lie on the architect's model in a federated
+model without a second copy of the buildings. A project whose buildings came from an IFC (ifc_import.reference, kept in
+Project.resources["ifc_reference"]) is written in that model's frame: its site, its true north, its map conversion, its
+origin, each building's storey at its ground; both exports then lie on the model it came from, moved or not since
+(`frame_of`: the buildings as imported against the buildings now).
 
 The property sets keep the names of the prototype that FreeCAD read (study 15, 5.2): Meridiana_Edificio, Meridiana_Falda,
 Meridiana_Ostacolo, Meridiana_DatiModulo, Meridiana_Modulo, Meridiana_Sottocampo, Meridiana_Stringa; the azimuth both by
@@ -53,8 +61,51 @@ CANOPY_SLAB = 0.05              # m, a canopy's roof sheet: it lies on the beams
 MODULE_THICKNESS = 0.035        # m, when the module's record does not say
 
 
+WHAT = ("all", "plant")
+
+
 class Interrupted(Exception):
     """The designer stopped the export: nothing written."""
+
+
+def _rigid(old, new) -> tuple[float, float, float] | None:
+    """The turn (radians) and the move that take the outline `old` to `new`, vertex by vertex: (a, tx, ty), new =
+    R(a) old + t; None when they are not the same outline moved and turned (a building reshaped since)."""
+    a, b = np.asarray(old, dtype=float), np.asarray(new, dtype=float)
+    if a.shape != b.shape or a.ndim != 2 or len(a) < 2:
+        return None
+    ca, cb = a.mean(axis=0), b.mean(axis=0)
+    h = (a - ca).T @ (b - cb)
+    angle = math.atan2(h[0, 1] - h[1, 0], h[0, 0] + h[1, 1])
+    c, s = math.cos(angle), math.sin(angle)
+    r = np.array([[c, -s], [s, c]])
+    t = cb - r @ ca
+    if float(np.abs(a @ r.T + t - b).max()) > 0.005:
+        return None
+    return angle, float(t[0]), float(t[1])
+
+
+def frame_of(project) -> tuple[dict | None, str]:
+    """The frame of the IFC the buildings came from (ifc_import.reference), valid for the buildings as they are now:
+    (the reference with "turn" and "move", the plan's frame in the model's world; "" or why it cannot be used)."""
+    ref = (getattr(project, "resources", None) or {}).get("ifc_reference")
+    if not isinstance(ref, dict):
+        return None, ""
+    anchor = ref.get("anchor") or {}
+    b = next((b for b in project.buildings if b.id == anchor.get("building")), None)
+    moved = _rigid(anchor.get("footprint") or [], b.footprint) if b is not None else None
+    if moved is None:
+        return None, "changed"
+    a, tx, ty = moved
+    theta = math.radians(float(ref.get("theta") or 0.0))
+    phi = theta - a                                           # the plan now, turned into the model's world
+    ox, oy = (list(ref.get("origin") or [0.0, 0.0]) + [0.0, 0.0])[:2]
+    dx, dy = (list(ref.get("shift") or [0.0, 0.0]) + [0.0, 0.0])[:2]
+    ct, st, cp, sp = math.cos(theta), math.sin(theta), math.cos(phi), math.sin(phi)
+    # world = R(theta) (R(-a) (p - t) - shift) + origin = R(phi) p + move
+    mx = ox - (ct * dx - st * dy) - (cp * tx - sp * ty)
+    my = oy - (st * dx + ct * dy) - (sp * tx + cp * ty)
+    return {**ref, "turn": phi, "move": (mx, my)}, ""
 
 
 def dms(degrees: float) -> tuple[int, int, int, int]:
@@ -73,7 +124,8 @@ class Writer:
     the module's string («1.2.3», plant.String.label)."""
 
     def __init__(self, project, results: dict, strings: dict | None = None, map_conversion: bool = True,
-                 progress: Callable[[float, str], None] | None = None):
+                 progress: Callable[[float, str], None] | None = None, what: str = "all", plant=None,
+                 reference: bool = True):
         import ifcopenshell
         import ifcopenshell.api
         import ifcopenshell.guid
@@ -90,6 +142,11 @@ class Writer:
         self.counts: dict[str, int] = {}
         self.storeys: dict = {}
         self.contained: dict = {}
+        if what not in WHAT:
+            raise ValueError(f"what: {what!r}")
+        self.what = what
+        self.plant = plant
+        self.ref, self.ref_note = frame_of(project) if reference else (None, "")
 
     def stable(self, *key) -> str:
         return self.ios.guid.compress(uuid.uuid5(self.namespace, json.dumps(key, ensure_ascii=False)).hex)
@@ -197,16 +254,22 @@ class Writer:
         self.ctx_model = api.run("context.add_context", f, context_type="Model")
         self.ctx_body = api.run("context.add_context", f, context_type="Model", context_identifier="Body",
                                 target_view="MODEL_VIEW", parent=self.ctx_model)
-        api.run("georeference.edit_true_north", f, true_north=0.0)       # +Y is the true north
-        self.site = self.element("IfcSite", p.site.address or p.name, identity=("site",))
-        self.site.RefLatitude = dms(p.site.lat)
-        self.site.RefLongitude = dms(p.site.lon)
-        self.site.RefElevation = 0.0
+        ref = self.ref
+        # +Y is the true north, or the model's own north when the buildings came from it
+        api.run("georeference.edit_true_north", f, true_north=float(ref.get("true_north") or 0.0) if ref else 0.0)
+        there = (ref or {}).get("site") or {}
+        self.site = self.element("IfcSite", there.get("name") or p.site.address or p.name, identity=("site",))
+        self.site.RefLatitude = dms(there["lat"] if there else p.site.lat)
+        self.site.RefLongitude = dms(there["lon"] if there else p.site.lon)
+        self.site.RefElevation = float(there.get("elevation") or 0.0)
         if p.site.address:
             self.site.Description = p.site.address
         api.run("aggregate.assign_object", f, products=[self.site], relating_object=self.project)
-        self.place(self.site)
-        if self.map_conversion:
+        sx, sy, sz = (list(there.get("placement") or [0.0, 0.0, 0.0]) + [0.0] * 3)[:3]
+        self.place(self.site, (sx, sy, sz))
+        if ref is not None:
+            self._their_map(ref.get("map"))
+        elif self.map_conversion:
             zone, east, north, gamma, k = geo.to_utm(p.site.lat, p.site.lon)
             south = p.site.lat < 0
             code = (32700 if south else 32600) + zone
@@ -221,22 +284,57 @@ class Writer:
                                           "Scale": 1.0})
             self.utm = {"epsg": code, "east": east, "north": north, "convergence": gamma, "k": k}
         self.storeys = {}
-        self.building = self.element("IfcBuilding", p.name, identity=("building-container",))
+        name = p.name if self.what == "all" else f"{p.name}: impianto fotovoltaico"
+        self.building = self.element("IfcBuilding", name, identity=("building-container",))
         api.run("aggregate.assign_object", f, products=[self.building], relating_object=self.site)
-        self.place(self.building, relative=self.site.ObjectPlacement)
+        if ref is not None:                 # the plan's frame in the model's world, under the model's site
+            mx, my = ref["move"]
+            self.place(self.building, (mx - sx, my - sy, -sz), xdir=(math.cos(ref["turn"]), math.sin(ref["turn"]), 0.0),
+                       relative=self.site.ObjectPlacement)
+        else:
+            self.place(self.building, relative=self.site.ObjectPlacement)
+        grounds = (ref or {}).get("buildings") or {}
+        self.base = float(grounds.get(((ref or {}).get("anchor") or {}).get("building"), 0.0)) if ref else 0.0
+        hosts = {sf.building for sf in p.subfields if sf.id in self.results and self.results[sf.id].modules}
+        hosts |= {b.id for b in p.buildings if getattr(b, "canopy", None) is not None}
         for b in p.buildings:
+            if self.what == "plant" and b.id not in hosts:
+                continue
             st = self.element("IfcBuildingStorey", b.name, identity=("storey", b.id))
-            st.Elevation = 0.0
+            st.Elevation = float(grounds.get(b.id, self.base))
             api.run("aggregate.assign_object", f, products=[st], relating_object=self.building)
-            self.place(st, relative=self.building.ObjectPlacement)
+            self.place(st, (0.0, 0.0, st.Elevation), relative=self.building.ObjectPlacement)
             self.storeys[b.id] = st
-        if any(sf.building is None for sf in p.subfields) or any(e.building is None for e in p.exclusions):
+        loose = any(sf.building is None for sf in p.subfields)
+        if self.what == "all":
+            loose = loose or any(e.building is None for e in p.exclusions)
+        if loose:
             self.ground = self.element("IfcBuildingStorey", "Terreno", identity=("ground",))
-            self.ground.Elevation = 0.0
+            self.ground.Elevation = self.base
             api.run("aggregate.assign_object", f, products=[self.ground], relating_object=self.building)
-            self.place(self.ground, relative=self.building.ObjectPlacement)
+            self.place(self.ground, (0.0, 0.0, self.base), relative=self.building.ObjectPlacement)
         else:
             self.ground = None
+
+    def _their_map(self, m) -> None:
+        """The map conversion of the model the buildings came from, as it has it (in metres); none if it has none:
+        the coordinates are that model's, and a conversion of Meridiana's own would put them elsewhere."""
+        if not m:
+            return
+        api, f = self.api, self.f
+        crs = m.get("crs") or "EPSG"
+        api.run("georeference.add_georeferencing", f, ifc_class="IfcMapConversion", name=crs)
+        projected = {"Name": crs}
+        if m.get("description"):
+            projected["Description"] = m["description"]
+        a, o = (list(m.get("x_axis") or [1.0, 0.0]) + [0.0, 0.0])[:2]
+        api.run("georeference.edit_georeferencing", f, projected_crs=projected,
+                coordinate_operation={"Eastings": float(m.get("eastings") or 0.0),
+                                      "Northings": float(m.get("northings") or 0.0),
+                                      "OrthogonalHeight": float(m.get("height") or 0.0),
+                                      "XAxisAbscissa": float(a), "XAxisOrdinate": float(o),
+                                      "Scale": float(m.get("scale") or 1.0)})
+        self.utm = {"crs": crs, "east": float(m.get("eastings") or 0.0), "north": float(m.get("northings") or 0.0)}
 
     def container(self, building_id):
         return self.storeys.get(building_id) or self.ground or self.building
@@ -279,14 +377,15 @@ class Writer:
             between = sorted((q for q in corners if q not in (a, c) and mesh._on_segment(q, a, c)),
                              key=lambda q: math.dist(a, q))
             top = [a, *between, c]
-            prof = [(0.0, 0.0), (length, 0.0)] + [(math.dist(a, q), roof_z(*q)) for q in reversed(top)]
+            # R453: the wall stands from the body's base (its placement), the profile measured from there
+            prof = [(0.0, 0.0), (length, 0.0)] + [(math.dist(a, q), roof_z(*q) - b.base) for q in reversed(top)]
             wall = self.element("IfcWall", f"{b.name}, parete {i + 1}", predefined="SOLIDWALL",
                                 identity=("wall", b.id, i))
             wall.Representation = self.f.createIfcProductDefinitionShape(None, None, [
                 self.body([self.extrusion(prof, WALL, down=True)])])
             d = (dx / length, dy / length, 0.0)
             out = (dy / length, -dx / length, 0.0)
-            self.place(wall, (a[0], a[1], 0.0), out, d, storey.ObjectPlacement)
+            self.place(wall, (a[0], a[1], float(b.base)), out, d, storey.ObjectPlacement)
             walls.append(wall)
         self.contain(walls, storey)
 
@@ -343,6 +442,8 @@ class Writer:
         parts = {}
         by_container: dict = {}
         prisms = self.p.obstacle_prisms()
+        if self.what == "plant":            # of the obstacles, the plant has the canopies' columns and beams
+            prisms = [o for o in prisms if o["kind"] in ("column", "beam")]
         for i, o in enumerate(prisms):
             if i % 50 == 0:
                 self.tell(0.30 + 0.05 * i / max(1, len(prisms)), "obstacles")
@@ -371,7 +472,7 @@ class Writer:
                                                                        max(float(o["z1"] - o["z0"]), 1e-6))})
             by_container.setdefault(id(holder), (holder, []))[1].append(el)
         from . import props
-        for x in self.p.props:
+        for x in (self.p.props if self.what == "all" else []):
             # R269: the 3D objects as proxies, their outline raised to their height (people stay out, as in the shadows)
             if not x.casts_shadow():
                 continue
@@ -519,18 +620,50 @@ class Writer:
                     "NordRiferimento": self.value("IfcLengthMeasure", sf.support.y0)})
         for key, occs in of_type.items():
             f.createIfcRelDefinesByType(self.guid(), None, None, None, occs, types[key][0])
+        circuits = []
         for label, occs in sorted(by_string.items()):
-            grp = f.createIfcGroup(self.stable("string", self.p.variant, label), None, f"Stringa {label}", None, None)
+            grp = f.createIfcDistributionCircuit(self.stable("string", self.p.variant, label), None, f"Stringa {label}",
+                                                 None, None, None, "ELECTRICAL")
             f.createIfcRelAssignsToGroup(self.guid(), None, None, None, occs, None, grp)
-            self.pset(grp, "Meridiana_Stringa", {"Stringa": label, "Moduli": len(occs)})
+            inverter, _dot, rest = label.partition(".")
+            self.pset(grp, "Meridiana_Stringa", {"Stringa": label, "Moduli": len(occs),
+                                                 "Inverter": int(inverter) if inverter.isdigit() else None,
+                                                 "Ingresso": int(rest.partition(".")[0])
+                                                 if rest.partition(".")[0].isdigit() else None})
+            circuits.append(grp)
         self.counts["strings"] = len(by_string)
         if all_modules:
-            system = self.element("IfcSystem", "Impianto fotovoltaico", identity=("pv-system", self.p.variant))
-            f.createIfcRelAssignsToGroup(self.guid(), None, None, None, all_modules, None, system)
+            system = f.createIfcDistributionSystem(self.stable("pv-system", self.p.variant), None,
+                                                   "Impianto fotovoltaico", None, None, None, "POWERGENERATION")
+            self.counts["IfcDistributionSystem"] = 1
+            inverters = self.inverters()
+            f.createIfcRelAssignsToGroup(self.guid(), None, None, None, all_modules + inverters, None, system)
+            if circuits:
+                f.createIfcRelAggregates(self.guid(), None, None, None, system, circuits)
             self.pset(system, "Meridiana_Impianto", {"IdProgettoBIM": self.p.bim_id,
                       "IdVariante": self.p.variant, "Variante": self.p.current_variant().get("name", ""),
-                      "ModuliPosati": len(all_modules)})
+                      "ModuliPosati": len(all_modules), "Inverter": len(inverters)})
         return total
+
+    def inverters(self) -> list:
+        """The inverters of the plant, IfcTransformer INVERTER with their data, in the building without a place: the
+        project says which inverters and which strings, not where they stand."""
+        out = []
+        for u in getattr(self.plant, "units", None) or []:
+            spec = u.spec
+            label = " ".join(x for x in (getattr(spec, "manufacturer", ""), getattr(spec, "model", "")) if x) or u.name
+            el = self.f.createIfcTransformer(self.stable("inverter", self.p.variant, u.number), None,
+                                             f"Inverter {u.number}: {u.name}", None, label, None, None, None,
+                                             "INVERTER")
+            self.pset(el, "Meridiana_Inverter", {
+                "Numero": int(u.number), "Modello": label, "Ingressi": int(u.inputs),
+                "PotenzaAC": self.value("IfcPowerMeasure", float(spec.pac))
+                if getattr(spec, "pac", None) else None,
+                "Ottimizzatori": bool(u.optimized)})
+            out.append(el)
+        self.counts["IfcTransformer"] = len(out)
+        self.contain(out, self.building)
+        return out
 
     def _module_type(self, sf, data: dict, mod, along: float, across: float, thick: float, portrait: bool):
         f = self.f
@@ -572,9 +705,11 @@ class Writer:
     def write(self, path: Path) -> dict:
         self.tell(0.0, "project")
         self.setup()
-        self.buildings()
+        if self.what == "all":
+            self.buildings()
         self.obstacles()
-        self.supports()
+        if self.what == "all":
+            self.supports()
         n = self.modules()
         self.relationships()
         self.tell(0.92, "file")
@@ -588,14 +723,19 @@ class Writer:
                 part.unlink()
         self.tell(1.0, "done")
         return {"file": str(path), "schema": self.f.schema, "modules": n, "classes": dict(self.counts),
-                "bytes": path.stat().st_size, "map": getattr(self, "utm", None)}
+                "bytes": path.stat().st_size, "map": getattr(self, "utm", None), "what": self.what,
+                "frame": "imported" if self.ref is not None else self.ref_note or "site",
+                "source": (self.ref or {}).get("file", "")}
 
 
 def export(project, results: dict, path, strings: dict | None = None, map_conversion: bool = True,
-           progress: Callable[[float, str], None] | None = None) -> dict:
-    """Write `project` with the layouts `results` (sub-field id -> layout.Result) to `path` as IFC4. `progress(fraction,
-    what)` is told along the way and may raise Interrupted to stop: nothing is written then. A summary comes back."""
-    return Writer(project, results, strings, map_conversion, progress).write(Path(path))
+           progress: Callable[[float, str], None] | None = None, what: str = "all", plant=None) -> dict:
+    """Write `project` with the layouts `results` (sub-field id -> layout.Result) to `path` as IFC4: the whole model, or
+    with `what` "plant" the plant alone (the module's docstring); `plant` (energy.plant.Plant) gives the inverters.
+    `progress(fraction, what)` is told along the way and may raise Interrupted to stop: nothing is written then. A
+    summary comes back: "frame" says whose coordinates ("site": Meridiana's; "imported": the model the buildings came
+    from; "changed": that model's, given up because its buildings were reshaped since)."""
+    return Writer(project, results, strings, map_conversion, progress, what, plant).write(Path(path))
 
 
 def validate(path) -> list[str]:

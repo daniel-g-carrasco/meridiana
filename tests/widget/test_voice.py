@@ -110,9 +110,9 @@ class NaturalVoice(unittest.TestCase):
         self.assertEqual(f.feed(data[7:]), [(3, b"\x01\x00" * 5), (4, b"")])
         with self.assertRaises(ValueError):
             speech.Frames().feed(b"XXXX" + bytes(8))
-        self.assertEqual(speech.voice_for("it"), "im_nicola")             # Meridio is «he»
-        self.assertEqual(speech.voice_for("it", "if_sara"), "if_sara")
-        self.assertEqual(speech.voice_for("it", "am_michael"), "im_nicola")   # not a voice of the language
+        self.assertEqual(speech.voice_for("it"), "if_sara")               # R492: Daniel chose Sara
+        self.assertEqual(speech.voice_for("it", "im_nicola"), "im_nicola")
+        self.assertEqual(speech.voice_for("it", "am_michael"), "if_sara")     # not a voice of the language
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.assertIsNone(speech.find_model(str(root), None, environ={}))
@@ -127,12 +127,16 @@ class NaturalVoice(unittest.TestCase):
 
     def test_what_is_read_aloud_is_words_not_marks(self):
         from meridiana.assistant import speech
-        self.assertEqual(speech.speakable("**Il progetto** ha 4 verifiche:"), "Il progetto ha 4 verifiche:")
-        self.assertEqual(speech.speakable("- Copertura: il 3,7% perso."), "Copertura: il 3,7% perso.")
+        # in Italian the numbers and units in words too (R493, assistant/reading.py; its own tests in
+        # tests/nucleo/test_assistant_reading.py)
+        self.assertEqual(speech.speakable("**Il progetto** ha 4 verifiche:"), "Il progetto ha quattro verifiche:")
+        self.assertEqual(speech.speakable("- Copertura: il 3,7% perso."), "Copertura: il tre virgola sette per cento perso.")
         self.assertEqual(speech.speakable("## Riepilogo"), "Riepilogo")
         self.assertEqual(speech.speakable("Fammi sapere! 😊"), "Fammi sapere!")
-        self.assertEqual(speech.speakable("1.043 V ≥ 1.000 V"), "1.043 V maggiore o uguale a 1.000 V")
+        self.assertEqual(speech.speakable("1.043 V ≥ 1.000 V"), "millequarantatré volt maggiore o uguale a mille volt")
         self.assertEqual(speech.speakable("Vedi [il manuale](manual:plant)."), "Vedi il manuale.")
+        self.assertEqual(speech.speakable("_La revisione_ R03_26149, ~3 %"), "La revisione erre zero tre due sei uno quattro nove, circa tre per cento")
+        self.assertEqual(speech.speakable("1,043 V ≥ 1,000 V", "en"), "1,043 V at least 1,000 V")     # English as it was
         for nothing in ("", "   ", "---", "😊", "**", "✅ ⚠️"):
             self.assertEqual(speech.speakable(nothing), "", nothing)
 
@@ -253,7 +257,7 @@ class NaturalVoice(unittest.TestCase):
         with mock.patch.object(voice.Kokoro, "_pump", lambda k: (heard.append(len(k.pending)), k.pending.clear())):
             v.set_on(True)
             self.assertEqual(v.kind, "kokoro")
-            self.assertEqual(v.voice_name, "Nicola, a man's voice")
+            self.assertEqual(v.voice_name, "Sara, a woman's voice")       # R492
             v.feed("Il sottocampo Sud è a posto. Le stringhe ")             # one whole sentence, one still coming
             v.flush()
             self.assertTrue(wait_until(self.app, lambda: v.ready and len(v.kokoro.played) == 2, 20))

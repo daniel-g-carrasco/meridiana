@@ -96,6 +96,14 @@ Come i moduli stanno sulla superficie: complanari alla falda, integrati nella co
 
 Quanti moduli stanno uno sopra l'altro in una tavola, di traverso alla fila: con i moduli in verticale, 2 è la «2V» dei montaggi a terra. Più moduli in altezza fanno una fila più alta, quindi un passo più lungo dal sole. «Moduli per tavola, in lunghezza» divide invece la fila in tavole (0: file continue), con la distanza «Tra le tavole».
 
+### La posa dei moduli
+
+Come stanno le file tra loro: **allineati** (una griglia sola, le colonne dritte, l'origine che fa stare più moduli; su un lato inclinato resta lo spazio di una parte di modulo), **sfalsati di mezzo modulo** (una fila può spostarsi dalla vicina di mezzo modulo, come i mattoni, dove così ne stanno di più) oppure **liberi** (ogni fila sfrutta tutto il suo spazio, le file possono stare più distanti del passo dove serve, e ne stanno di più). I sottocampi nuovi nascono allineati. Un sottocampo salvato prima di questa scelta resta **come salvato**, con gli stessi moduli, finché non lo cambi. Cambiando modo, i moduli tolti a mano restano tolti al loro posto, dove nel nuovo modo c'è un modulo.
+
+#### Potenza richiesta
+
+Facoltativa, in kWp: il sottocampo posa il numero di moduli più vicino a quella potenza, anche sopra; a parità di scarto, quello che non supera (45 kWp con moduli da 475 W: 94,7, quindi 95 moduli e 45,13 kWp). I moduli stanno in file vicine, l'ultima in parte, partendo dalle file meno ombreggiate: le ombre sono stimate con le aree d'ombra degli ostacoli nella finestra di progetto del passo e nella stessa giornata con due ore in più per parte, senza calcolo orario. A pari ombra si parte dalla prima fila. Le tavole restano intere e così i moduli di una stessa posizione. Se non ci stanno, la scheda dice quanti ne mancano e il massimo che il sottocampo può contenere. I moduli tolti a mano non contano.
+
 ### Distanze e margini
 
 Le distanze tra i moduli, dal bordo dell'area, tra le file e tra le tavole. I predefiniti sono 2 cm tra i moduli (i morsetti), 0,5 m dal bordo, 2 cm tra le file a filo e 0,3 m tra le tavole (valori predefiniti di Meridiana, `layout.py`, `Params`). Se l'edificio è soggetto al controllo dei Vigili del Fuoco, Meridiana tiene da sola almeno 1 m dal bordo e aggiunge i corridoi tra i gruppi (vedi [Prevenzione incendi](#prevenzione-incendi)).

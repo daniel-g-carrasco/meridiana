@@ -18,6 +18,7 @@ matplotlib>=3.9
 pyqtgraph>=0.14
 pypdf>=6.0
 typst==0.15.0
+# odfpy, python-docx, lxml, latex2mathml (R460): pinned in ../flatpak-quick/python3-report-editable.json, not here
 anthropic>=2.3
 keyring>=25.7
 ifcopenshell>=0.9.0.post1

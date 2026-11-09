@@ -1,0 +1,15 @@
+module Meridiana.Assistant
+Character 1.0 Character.qml
+AssistantLayer 1.0 AssistantLayer.qml
+AssistantHost 1.0 AssistantHost.qml
+BubbleOutline 1.0 BubbleOutline.qml
+DragHandle 1.0 DragHandle.qml
+Conversation 1.0 Conversation.qml
+HelpPage 1.0 HelpPage.qml
+ManualPage 1.0 ManualPage.qml
+TourPage 1.0 TourPage.qml
+SetupPage 1.0 SetupPage.qml
+LocalPage 1.0 LocalPage.qml
+Spotlight 1.0 Spotlight.qml
+HelpButton 1.0 HelpButton.qml
+GuideCard 1.0 GuideCard.qml

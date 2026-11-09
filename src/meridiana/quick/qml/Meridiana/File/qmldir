@@ -1,0 +1,5 @@
+module Meridiana.File
+FilePage 1.0 FilePage.qml
+FileSection 1.0 FileSection.qml
+FileTile 1.0 FileTile.qml
+PageHost 1.0 PageHost.qml

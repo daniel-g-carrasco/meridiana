@@ -17,6 +17,67 @@ software centres show.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-09
+
+The first release of Meridiana: everything below this line, with the Qt Quick window as the program's own.
+
+### The Windows package of the Qt Quick window, 2026-11-09 (r28)
+
+- The Windows installer opens the Qt Quick window, with its QML, Quick 3D, the 3D props, Meridio and every module of
+  the program; the window's workers (the computation, the tasks, the report) run as `Meridiana.exe -m ...`.
+- The Qt Quick window speaks the language of Settings (the desktop's by default): English on an English Windows,
+  its computation and its report too; the 3D view's menus, cube and sun bar no longer had Italian sources.
+- The installed program checks for a newer version by itself once a day (Settings > Privacy), says it in the status
+  bar, and Help > Check for updates downloads it, verifies its SHA-256 and its minisign signature, installs it for
+  the user and starts the program again.
+- Without a project on the command line the window opens an empty project (the sample of a checkout is not there).
+- The installer speaks English unless Windows speaks Italian.
+
+### Recovered from branches never merged, 2026-11-07
+
+- R386: the cloud chat test initializes the optional cloud SDK before timing the fake answers and drains the
+  window's workers before disposal; it fell 3 times in 6 offscreen, now 6 in 6 pass.
+- R390, R391: new settings start with IBM Plex Sans, grey backgrounds and the indigo colour (Daniel, 04/11/2026).
+  Saved settings keep what they have: every saved file has the three keys since format 3 (colours) and 26 (font),
+  and the older formats keep Bronze, Meridiana's backgrounds and Inter through their migrations. No new format.
+
+### The new technical report, 2026-11-06
+
+- The report has the look of draft A5 of its study (R460): IBM Plex Sans Light, square tables with a grey head,
+  a vertical scale of 6 pt, the cover with the plant's 3D view and the data in a column, the logo on the left of
+  every header, «Contents» on two levels on a page of its own, justified text with Italian hyphenation. Its own
+  warm greys, without blue: the profile's colour no longer reaches it. Charts in taupe and sand, the losses hatched.
+- Results in boxes at the head of the summary and of the chapters of calculation; a 3D view in the shading section.
+- Every step of a calculation with its formula on a line of its own and numbered, «where:» and the symbols with the
+  digits on the decimal comma, the values put in on a line of their own and the result in evidence; the same layout
+  in the Quick window's «How it is computed».
+- The report can be exported as an editable ODT or DOCX (both windows): the same content, real styles, a contents
+  that updates, the formulas editable (LibreOffice Math, Word equations), the fonts embedded.
+- A project without modules says there is no plant to report on, instead of stopping on «cannot divide by zero»
+  (R459).
+
+### BIM import, 2026-11-05
+
+- The project's site never moves by itself: a model comes in at the middle of the plan, a place in the file is only a
+  proposal, with its distance, and only when it can be trusted. A site called «Default» is not believed.
+- A roof of several levels comes in as bodies that meet, moved and turned as one (`Building.group`, format 26); slabs under
+  the open sky on walls are roofs; beams and walls under a slope are no obstacles, which also removes false shadows.
+- Walls rise to the roof wherever it bends and never above it; steps between pitches are closed (R408).
+- A new import window in Quick, a Revit file says its version and what to do (study 32); dialogs take the height of their
+  content, with one margin all round (R403). Ctrl+Z works in Modelling.
+- `tools/ifc_banco.py`: reads and checks a private collection of models.
+
+### Quick assistant integration, 2026-11-04
+
+- Connect Meridio's conversation, attachments, provider setup, contextual help and guided tour to the live Quick session.
+- Keep the character and bubble together during dragging, preserve the tail while resizing, and return from contextual help with Esc.
+- Verify the port with synthetic providers, real Qt gestures and Widgets/Quick captures. The existing Widgets application is unchanged.
+### Quick inspectors, 2026-11-05
+- Connect complete Properties, Checks and Project panels to the Quick workbench's session.
+  Match field inventories, grouped checks, correction previews, tree menus and undo with Widgets.
+- Keep inspector content visible through selection changes; match section help, count pills,
+  wrapped filter headers, continuous row cards and scrolling fades.
+
 ### Fire prevention activities and Meridio's answers, 2026-11-02
 
 - Carry Annex I of DPR 151/2011 as data (the 80 activities, thresholds and categories, GU no. 221 of 22/09/2011).

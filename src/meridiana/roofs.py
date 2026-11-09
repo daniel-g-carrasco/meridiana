@@ -99,6 +99,103 @@ def flat(footprint, height: float) -> list[Pitch]:
     return [Pitch(ring, 0.0, 0.0, height, ring[0][0], ring[0][1], None, _("flat roof"))]
 
 
+def flat_plane(footprint, heights) -> list[Pitch]:
+    """A flat roof on one inclined plane (R455, format 28): the plane through the corners at `heights` (one for each
+    corner, least squares when they are more than three), as one pitch; level when it is."""
+    import numpy as np
+    ring = [tuple(map(float, p)) for p in footprint]
+    pts = np.asarray(ring, float)
+    zs = np.asarray([float(z) for z in heights], float)
+    origin = pts.mean(0)
+    rows = np.column_stack([pts[:, 0] - origin[0], pts[:, 1] - origin[1], np.ones(len(pts))])
+    a, b, c = np.linalg.lstsq(rows, zs, rcond=None)[0]
+    tilt = math.degrees(math.atan(math.hypot(a, b)))
+    if tilt < 1e-4:
+        return flat(footprint, float(zs.min()))
+    azimuth = geo.bearing_to_azimuth(geo.bearing(-a, -b))        # it faces downhill
+    x0, y0 = ring[0]
+    z0 = float(a * (x0 - origin[0]) + b * (y0 - origin[1]) + c)
+    return [Pitch(ring, round(tilt, 4), round(azimuth, 4), z0, x0, y0, None, _("flat roof"))]
+
+
+SADDLE_DEFAULTS = {"direction": 0.0, "band": 2.5, "tilt": 10.0, "channel": 0.6, "depth": 0.15, "offset": 0.0}
+
+
+def saddle_spec(spec: dict | None) -> dict:
+    """The parameters of a saddle roof with their defaults where not given, kept within sense."""
+    out = {**SADDLE_DEFAULTS, **{k: float(v) for k, v in (spec or {}).items() if k in SADDLE_DEFAULTS}}
+    out["band"] = max(out["band"], 0.2)
+    out["channel"] = max(out["channel"], 0.0)
+    out["tilt"] = min(max(out["tilt"], 0.0), 80.0)
+    out["depth"] = max(out["depth"], 0.0)
+    return out
+
+
+def saddles(footprint, height: float, spec: dict | None = None) -> list[Pitch]:
+    """A roof of saddle-backed bands (R455, format 28): parallel bands `band` m wide, each with two pitches falling
+    from its ridge (at `height`) to its edges at `tilt`, parted by level drainage channels `channel` m wide and
+    `depth` m under the bands' edges. `direction` is the bearing of the bands' axis (degrees from North), `offset`
+    slides the pattern along the normal. The pattern starts at the outline's upstream side and repeats across it."""
+    import shapely
+    s = saddle_spec(spec)
+    ring = [tuple(map(float, p)) for p in footprint]
+    poly = Polygon(ring)
+    if not poly.is_valid:
+        poly = poly.buffer(0)
+    if poly.is_empty or poly.area < 1e-6:
+        return flat(footprint, height)
+    d = math.radians(s["direction"])
+    ux, uy = math.sin(d), math.cos(d)             # along the bands
+    nx, ny = math.cos(d), -math.sin(d)            # across them, to their right
+    along = [x * ux + y * uy for x, y in ring]
+    across = [x * nx + y * ny for x, y in ring]
+    lo, hi = min(across), max(across)
+    t0, t1 = min(along) - 1.0, max(along) + 1.0
+    period = s["band"] + s["channel"]
+    start = lo + (s["offset"] % period if period > 0 else 0.0) - period
+    drop = s["band"] / 2.0 * math.tan(math.radians(s["tilt"]))
+
+    def strip(a, b):
+        return Polygon([(a * nx + t0 * ux, a * ny + t0 * uy), (b * nx + t0 * ux, b * ny + t0 * uy),
+                        (b * nx + t1 * ux, b * ny + t1 * uy), (a * nx + t1 * ux, a * ny + t1 * uy)])
+
+    def pieces(shape):
+        for g in getattr(shape, "geoms", [shape]):
+            if g.geom_type == "Polygon" and g.area > 0.05:
+                r = [(float(x), float(y)) for x, y in list(g.exterior.coords)[:-1]]
+                if len(r) >= 3:
+                    yield r if _area2(r) > 0 else r[::-1]
+
+    out = []
+    k = 0
+    at = start
+    while at < hi + 1e-9:
+        b0, b1 = at, at + s["band"]
+        mid = (b0 + b1) / 2.0
+        band = poly.intersection(strip(b0, b1))
+        if not band.is_empty:
+            k += 1
+            for half, (facing, where) in enumerate(((( -nx, -ny), strip(b0, mid)), ((nx, ny), strip(mid, b1)))):
+                for r in pieces(band.intersection(where)):
+                    c = Polygon(r).representative_point()
+                    sc = c.x * nx + c.y * ny
+                    x0, y0 = c.x + (mid - sc) * nx, c.y + (mid - sc) * ny        # a point on the ridge line
+                    azimuth = geo.bearing_to_azimuth(geo.bearing(*facing))
+                    name = _("band {n}, {side}").format(n=k, side=_("left") if half == 0 else _("right"))
+                    out.append(Pitch(r, s["tilt"], round(azimuth, 4), height, x0, y0, None, name))
+        if s["channel"] > 0:
+            for r in pieces(poly.intersection(strip(b1, b1 + s["channel"]))):
+                out.append(Pitch(r, 0.0, 0.0, height - drop - s["depth"], r[0][0], r[0][1], None,
+                                 _("channel {n}").format(n=k)))
+        at += period if period > 0 else s["band"]
+    return out or flat(footprint, height)
+
+
+def _area2(ring) -> float:
+    return sum(ring[i][0] * ring[(i + 1) % len(ring)][1] - ring[(i + 1) % len(ring)][0] * ring[i][1]
+               for i in range(len(ring)))
+
+
 def mono(footprint, eave_side: int, eave: float, tilt: float) -> list[Pitch]:
     """One plane: down towards side `eave_side` (index of the side from vertex i to i+1)."""
     ring = [tuple(map(float, p)) for p in footprint]
@@ -268,6 +365,27 @@ def free_tilt(ring, eave_side: int, eave: float, ridge: float) -> float:
     return slope_from_heights(eave, ridge, depth)
 
 
+def free_keeping_ridge(ring, eave_side: int, eave: float, tilt: float, *, new_eave: float | None = None,
+                       new_tilt: float | None = None) -> tuple[float, float]:
+    """A free pitch with its ridge kept (R413): (eave, slope) after the eave or the slope is written. A pitch lying flat
+    has no ridge of its own, and its eave moves alone. ValueError, said for the designer, when they cannot meet."""
+    ridge = free_ridge(ring, eave_side, eave, tilt)
+    if new_eave is not None:
+        return (new_eave, tilt) if tilt <= 0 else (new_eave, free_tilt(ring, eave_side, new_eave, ridge))
+    if tilt <= 0 and new_tilt > 0:
+        return eave, new_tilt
+    return eave_keeping_ridge(ridge, free_depth(ring, eave_side), new_tilt), new_tilt
+
+
+def eave_keeping_ridge(ridge: float, run: float, tilt: float) -> float:
+    """The eave of a roof of `run` metres from eave to top, its top kept at `ridge`, at the slope `tilt`. ValueError, said
+    for the designer, when the eave would go under the ground."""
+    eave = ridge - run * math.tan(math.radians(tilt))
+    if eave < 0:
+        raise ValueError(_("with the ridge kept at {h} m this slope takes the eave under the ground").format(h=round(ridge, 2)))
+    return round(eave, 3)
+
+
 def opposite_side(ring, side: int) -> int:
     """The side across from `side`: the one whose middle lies farthest from its line (on a rectangle, the side
     parallel to it). Where the eave goes when eave and ridge are swapped."""
@@ -375,6 +493,60 @@ def from_ridge(footprint, points, eave: float, tilt: float, ridge: float | None 
     return RidgeRoof("gable" if used else "hip", edges, found, off, sorted(dropped))
 
 
+def off_axis_pitches(footprint, points, eave: float, ridge: float | None, tilt: float) -> list[dict] | None:
+    """A ridge drawn off the axis of a four-sided outline, where it is drawn (R410, Daniel 05/11/2026): the two pitches
+    along it from their eaves to the ridge, each with its own slope, and a hip's triangle where it ends inside the
+    outline. As free pitches written by the heights of their corners. None when the ridge is not one segment across
+    such an outline: there the roof stays on the axis, and it is said."""
+    ring = [tuple(map(float, p)) for p in footprint]
+    pts = [tuple(map(float, p)) for p in points]
+    if len(ring) != 4 or len(pts) != 2 or math.dist(*pts) < 1e-6:
+        return None
+    if not Polygon(ring).exterior.is_ccw:       # the pitches run counter-clockwise whichever way it was drawn
+        ring.reverse()
+    a, b = pts
+    u = (b[0] - a[0], b[1] - a[1])
+    across = [i for i in range(4) if _angle((ring[(i + 1) % 4][0] - ring[i][0], ring[(i + 1) % 4][1] - ring[i][1]), u) > CROSSING]
+    if len(across) != 2 or (across[1] - across[0]) % 4 != 2:
+        return None
+
+    def nearest(p):
+        return min(across, key=lambda i: _segment_distance(p, ring[i], ring[(i + 1) % 4]))
+    start, end = nearest(a), nearest(b)
+    if start == end:
+        return None
+
+    def hit(p, side):
+        """Where the ridge's line meets a side it reaches."""
+        q, r = ring[side], ring[(side + 1) % 4]
+        v = (r[0] - q[0], r[1] - q[1])
+        det = u[0]*v[1] - u[1]*v[0]
+        t = ((q[0] - p[0])*v[1] - (q[1] - p[1])*v[0]) / det
+        return (p[0] + t*u[0], p[1] + t*u[1])
+    gables = ridge_gables(ring, pts)
+    p = hit(a, start) if start in gables else a
+    q = hit(b, end) if end in gables else b
+    if ridge is None:
+        ridge = eave + ridge_run(ring) * math.tan(math.radians(tilt))
+    if ridge <= eave:
+        return None
+    faces = []
+
+    def face(corners, heights):
+        i = len(faces)
+        faces.append({"id": f"p{i + 1}", "ring": [[float(x), float(y)] for x, y in corners], "eave_side": 0,
+                      "eave": float(eave), "tilt": float(tilt), "z": [round(float(z), 3) for z in heights]})
+    after_start, after_end = (start + 1) % 4, (end + 1) % 4
+    # The two long sides run from the side the ridge starts at to the one where it ends, and back.
+    face([ring[after_start], ring[(after_start + 1) % 4], q, p], [eave, eave, ridge, ridge])
+    face([ring[after_end], ring[(after_end + 1) % 4], p, q], [eave, eave, ridge, ridge])
+    if start not in gables:
+        face([ring[start], ring[(start + 1) % 4], p], [eave, eave, ridge])
+    if end not in gables:
+        face([ring[end], ring[(end + 1) % 4], q], [eave, eave, ridge])
+    return faces
+
+
 def ridge_run(footprint) -> float:
     """The largest horizontal run of a pitched roof on the outline, from an eave to the top (half the width of a
     rectangle): what a proposed slope multiplies to give the ridge's height. 0 when no roof can be built."""
@@ -382,3 +554,22 @@ def ridge_run(footprint) -> float:
         return ridge_height(pitched(footprint, 0.0, 45.0)[0])
     except skeleton.SkeletonError:
         return 0.0
+
+
+def axis_bearing(a, b) -> float:
+    """The bearing (degrees from North, 0 to 180) of the line from `a` to `b` traced on the plan: the way the bands of
+    a saddle roof run when the designer draws it. ValueError for two points closer than 10 cm."""
+    dx, dy = float(b[0]) - float(a[0]), float(b[1]) - float(a[1])
+    if math.hypot(dx, dy) < 0.1:
+        raise ValueError(_("trace a line at least 10 cm long"))
+    return round(geo.bearing(dx, dy) % 180.0, 2)
+
+
+def long_side_bearing(footprint) -> float:
+    """The bearing (degrees from North) of the longest side of an outline: the way the bands of a saddle roof run by
+    default."""
+    ring = [tuple(map(float, p)) for p in footprint]
+    if len(ring) < 2:
+        return 0.0
+    a, b = max(zip(ring, ring[1:] + ring[:1], strict=True), key=lambda ab: math.dist(*ab))
+    return round(geo.bearing(b[0] - a[0], b[1] - a[1]) % 180.0, 2)

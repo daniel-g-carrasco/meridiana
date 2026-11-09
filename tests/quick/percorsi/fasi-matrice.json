@@ -1,0 +1,211 @@
+{
+  "size": [
+    1600,
+    960
+  ],
+  "steps": [
+    {
+      "action": "key",
+      "key": "Ctrl+2",
+      "wait": 1500,
+      "expect": {
+        "phase": "plant"
+      }
+    },
+    {
+      "action": "resize",
+      "size": [
+        1366,
+        900
+      ],
+      "wait": 650
+    },
+    {
+      "action": "resize",
+      "size": [
+        1920,
+        1080
+      ],
+      "wait": 650
+    },
+    {
+      "action": "resize",
+      "size": [
+        1600,
+        960
+      ],
+      "wait": 650
+    },
+    {
+      "action": "key",
+      "key": "Ctrl+3",
+      "wait": 1500,
+      "expect": {
+        "phase": "production"
+      }
+    },
+    {
+      "action": "resize",
+      "size": [
+        1366,
+        900
+      ],
+      "wait": 650
+    },
+    {
+      "action": "resize",
+      "size": [
+        1920,
+        1080
+      ],
+      "wait": 650
+    },
+    {
+      "action": "resize",
+      "size": [
+        1600,
+        960
+      ],
+      "wait": 650
+    },
+    {
+      "action": "click",
+      "target": "Perdite",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Giorno tipo",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Come è calcolato",
+      "wait": 1000
+    },
+    {
+      "action": "key",
+      "key": "Ctrl+4",
+      "wait": 1500,
+      "expect": {
+        "phase": "consumption"
+      }
+    },
+    {
+      "action": "resize",
+      "size": [
+        1366,
+        900
+      ],
+      "wait": 650
+    },
+    {
+      "action": "resize",
+      "size": [
+        1920,
+        1080
+      ],
+      "wait": 650
+    },
+    {
+      "action": "resize",
+      "size": [
+        1600,
+        960
+      ],
+      "wait": 650
+    },
+    {
+      "action": "click",
+      "target": "Giorno tipo",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Anno",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Settimana",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Durata",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Come è calcolato",
+      "wait": 1000
+    },
+    {
+      "action": "key",
+      "key": "Ctrl+5",
+      "wait": 1500,
+      "expect": {
+        "phase": "economics"
+      }
+    },
+    {
+      "action": "resize",
+      "size": [
+        1366,
+        900
+      ],
+      "wait": 650
+    },
+    {
+      "action": "resize",
+      "size": [
+        1920,
+        1080
+      ],
+      "wait": 650
+    },
+    {
+      "action": "resize",
+      "size": [
+        1600,
+        960
+      ],
+      "wait": 650
+    },
+    {
+      "action": "click",
+      "target": "Anno",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Bolletta",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Flusso di cassa",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Anno per anno",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Taglia",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Accumulo",
+      "wait": 800
+    },
+    {
+      "action": "click",
+      "target": "Come è calcolato",
+      "wait": 1000
+    }
+  ]
+}

@@ -142,12 +142,12 @@ class FreePitchFromThePlan(unittest.TestCase):
 
 
 class Refused(unittest.TestCase):
-    def test_a_sub_field_that_would_leave_its_pitch_is_refused_with_the_reason_and_the_project_stays(self):
+    def test_a_sub_field_that_would_leave_its_building_is_refused_with_the_reason_and_the_project_stays(self):
         s = session.ProjectSession(project())
         before = s.snapshot()
         with self.assertRaises(ValueError) as caught:
             s.edit("Move", move.translate(s.project, "subfield", "s1", 15.0, 0.0))
-        self.assertIn("pitch", str(caught.exception))
+        self.assertIn("building", str(caught.exception))
         self.assertEqual(s.snapshot(), before)
         self.assertEqual(s.undo.count(), 0)
         s.edit("Move", move.translate(s.project, "subfield", "s1", 5.0, 0.0))     # on its pitch still: fine

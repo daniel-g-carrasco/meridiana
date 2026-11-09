@@ -7,9 +7,10 @@ unless parted; corners made to coincide (Roof.welds) go together on any roof and
 new model of the roof, until they are parted. Parting them (Roof.detached) leaves them where they are, each free to go
 its own way; two handles then stand on one point, and a click on them passes from one to the other.
 
-A flat roof stays flat (R357): a corner moved takes the whole roof up or down, which is the building's height, and what
-stands on it follows; who wants it sloped asks for it (to_manual, "Make it pitched" in the corner's menu). A roof of
-another type (mono-pitch, gable, hip) becomes a roof drawn by hand at the first corner moved (to_manual): its faces become
+A flat roof moved by one corner tilts (R411, in place of R357): that corner goes where it is taken, the one opposite stays,
+the others rise as little as one plane allows, and the roof remains one plane and remains flat (R455, Roof.plane, format
+28): not a pitched roof, the building's height its lowest corner. All its corners taken together at one height are the
+building's height again, the plane gone, and what stands on it follows. A roof of another type (mono-pitch, gable, hip) becomes a roof drawn by hand at the first corner moved (to_manual): its faces become
 free pitches, the same planes in the same places, the sub-fields following; undo takes it back. A canopy has no corners
 to move: its roof is its structure's (canopies.py).
 
@@ -22,6 +23,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
 from shapely.geometry import Polygon
 
 from . import roof_join
@@ -30,6 +32,7 @@ from .i18n import _
 GROUND = 0.0            # m: no corner goes under the ground
 LIMIT = 1000.0          # m: as the file's heights (model.HEIGHT_LIMIT)
 OBSTACLE = -1           # the "pitch" of a corner of an obstacle
+BASE = -2               # the "pitch" of a corner of the base of a body (r20-solidi: Building.base)
 
 
 @dataclass(frozen=True)
@@ -43,6 +46,10 @@ class Handle:
     @property
     def obstacle(self) -> bool:
         return self.corners[0][0] == OBSTACLE
+
+    @property
+    def base(self) -> bool:
+        return self.corners[0][0] == BASE
 
 
 def parse_height(text: str) -> tuple[float, bool] | None:
@@ -127,13 +134,36 @@ def obstacle_handles(project, oid: str) -> list[Handle]:
     return [Handle(((OBSTACLE, j),), x, y, float(found["z1"])) for j, (x, y) in enumerate(found["ring"])]
 
 
+def base_handles(project, b) -> list[Handle]:
+    """The corners of the base of a body (r20-solidi): each takes the whole base up or down, the walls start there.
+    Only on a body that does not simply stand on the ground: one raised, one on another building, one part of a
+    building or a building with parts; the others change their base in the Properties."""
+    if b.canopy is not None or not (b.base > 0 or b.on or b.part_of or project.parts_of(b.id)):
+        return []
+    return [Handle(((BASE, j),), float(x), float(y), float(b.base)) for j, (x, y) in enumerate(b.footprint)]
+
+
+def set_base(project, bid: str, z: float) -> None:
+    """The base of body `bid` at height `z` above the ground: its walls start there, its heights stay where they
+    are (measured from the ground). Refused under the ground or above its roof."""
+    b = project.building(bid)
+    if b is None:
+        raise ValueError(_("there is no such object"))
+    if z < GROUND:
+        raise ValueError(_("the base stands on the ground or above it"))
+    if z >= b.wall_top() - 0.1:
+        raise ValueError(_("the base must stand under the roof ({h} m)").format(h=round(b.wall_top(), 2)))
+    b.base = round(float(z), 3)
+
+
 def handles_of(project, kind: str, oid: str) -> list[Handle]:
-    """The handles of what is selected: a building, one of its pitches, an obstacle; else none."""
+    """The handles of what is selected: a building, one of its pitches, an obstacle; else none. A body has those of
+    its base after those of its roof."""
     if kind == "exclusion":
         return obstacle_handles(project, oid)
     bid = oid.partition(":")[0] if kind == "pitch" else oid
     b = project.building(bid) if kind in ("building", "pitch") else None
-    return handles(b) if b is not None else []
+    return handles(b) + base_handles(project, b) if b is not None else []
 
 
 def owner_of(kind: str, oid: str) -> str:
@@ -216,6 +246,11 @@ def _settle(b, pitches) -> None:
             fp["eave_side"] = side
 
 
+def settled(b, pitches) -> None:
+    """Free pitches just written by the heights of their corners: their fields say what they are."""
+    _settle(b, list(pitches))
+
+
 def _group_of(b, corner) -> list[tuple[int, int]]:
     corner = tuple(corner)
     for group in _groups(b, _corners_of(b)):
@@ -225,20 +260,65 @@ def _group_of(b, corner) -> list[tuple[int, int]]:
 
 
 def stays_flat(b) -> bool:
-    """A corner of this roof moves the whole roof: its height is the building's (R357)."""
+    """A flat roof, not a canopy's: all its corners together are the building's height, one alone tilts it (R411)."""
     return b.roof.type == "flat" and b.canopy is None
 
 
+def _plane_through(ring, moved: dict, base) -> list[float]:
+    """The heights of a flat roof's corners on the plane that takes the `moved` ones (place: height) where asked. One
+    corner alone keeps the farthest from it where it is; the others stay as near to where they are (`base`: one height,
+    or one for each corner) as the plane lets them: on a level rectangle the two beside it rise by half (Daniel,
+    05/11/2026)."""
+    points = np.asarray(ring, float)[:, :2]
+    now = [float(base)] * len(points) if np.isscalar(base) else [float(z) for z in base]
+    fixed = dict(moved)
+    if len(moved) == 1:
+        place = next(iter(moved))
+        far = int(np.argmax(np.hypot(*(points - points[place]).T)))
+        fixed[far] = now[far]
+    origin = points.mean(0)
+    rows, values = [], []
+    for j, (x, y) in enumerate(points):
+        weight = 1e4 if j in fixed else 1.0     # hard where it is written, the least change elsewhere
+        rows.append([weight*(x - origin[0]), weight*(y - origin[1]), weight])
+        values.append(weight*fixed.get(j, now[j]))
+    a, b, c = np.linalg.lstsq(np.asarray(rows), np.asarray(values), rcond=None)[0]
+    return [float(a*(x - origin[0]) + b*(y - origin[1]) + c) for x, y in points]
+
+
+def _move_flat(project, b, moves) -> None:
+    """Corners of a flat roof: all of them at one height, the building's height, the roof level; fewer, the roof tilted
+    on one plane and still flat (R455: Roof.plane), the building's height its lowest corner."""
+    ring = b.pitches()[0].ring
+    moved = {tuple(corner)[1]: float(z) for corner, z in moves}
+    if len(moved) == len(ring) and len(set(moved.values())) == 1:
+        b.height = round(next(iter(moved.values())), 3)
+        b.roof.plane = None
+        return
+    now = b.plane() or [float(b.height)] * len(ring)
+    heights = _plane_through(ring, moved, now)
+    if min(heights) < GROUND:
+        raise ValueError(_("a corner stands between the ground and {limit} m").format(limit=int(LIMIT)))
+    if min(heights) <= b.base:
+        raise ValueError(_("a corner would stand under the base of the walls ({h} m)").format(h=round(b.base, 2)))
+    level = max(heights) - min(heights) < 1e-3
+    b.roof.plane = None if level else [round(z, 3) for z in heights]
+    b.height = round(min(heights), 3)
+
+
 def set_height(project, bid: str, corner, z: float) -> None:
-    """The corner, and those that go with it, at height `z`; on a flat roof the whole roof, which stays flat (R357).
+    """The corner, and those that go with it, at height `z`; a flat roof tilts on one plane (R411).
     ValueError, said for the designer, under the ground."""
+    if corner[0] == BASE:
+        set_base(project, bid, z)
+        return
     if not GROUND <= z <= LIMIT:
         raise ValueError(_("a corner stands between the ground and {limit} m").format(limit=int(LIMIT)))
     b = project.building(bid)
     if b is None:
         raise ValueError(_("there is no such object"))
     if stays_flat(b):
-        b.height = round(float(z), 3)
+        _move_flat(project, b, [(corner, z)])
         return
     to_manual(project, b)
     group = _group_of(b, corner)
@@ -251,14 +331,25 @@ def set_height(project, bid: str, corner, z: float) -> None:
 
 def set_heights(project, bid: str, moves) -> None:
     """Several corners, (corner, z) each, as one change (R356). The first refused refuses them all: session.edit puts the
-    project back."""
+    project back. The base of a body (BASE) goes with the first of its corners."""
+    based = [(corner, z) for corner, z in moves if corner[0] == BASE]
+    if based:
+        set_base(project, bid, based[0][1])
+        moves = [(corner, z) for corner, z in moves if corner[0] != BASE]
+    b = project.building(bid)
+    if b is not None and stays_flat(b) and moves:
+        for _corner, z in moves:
+            if not GROUND <= z <= LIMIT:
+                raise ValueError(_("a corner stands between the ground and {limit} m").format(limit=int(LIMIT)))
+        _move_flat(project, b, moves)
+        return
     for corner, z in moves:
         set_height(project, bid, corner, z)
 
 
 def folded(b, corner) -> bool:
     """Whether a pitch of this corner is folded (roof_join.Fold): its heights keep it off one plane."""
-    solved = b.solved() if b.roof.type == "free" else None
+    solved = b.solved() if b.roof.type == "free" and corner[0] != BASE else None
     if solved is None:
         return False
     pitches = {i for i, _j in _group_of(b, corner)}
@@ -281,6 +372,8 @@ def weld(project, bid: str, corner_a, corner_b) -> None:
     b = project.building(bid)
     if b is None:
         raise ValueError(_("there is no such object"))
+    if BASE in (corner_a[0], corner_b[0]):
+        raise ValueError(_("a corner of the base goes with the whole base: it cannot be made one with another"))
     to_manual(project, b)
     one, two = _group_of(b, corner_a), _group_of(b, corner_b)
     if one == two and len(one) > 1 and any(sorted(map(list, one)) == sorted(map(list, w)) for w in b.roof.welds):
@@ -316,6 +409,8 @@ def detach(project, bid: str, corner) -> None:
     b = project.building(bid)
     if b is None:
         raise ValueError(_("there is no such object"))
+    if corner[0] == BASE:
+        raise ValueError(_("this corner is on its own already"))
     to_manual(project, b)
     group = _group_of(b, corner)
     if len(group) < 2:
@@ -327,7 +422,7 @@ def detach(project, bid: str, corner) -> None:
 
 
 def can_detach(corners) -> bool:
-    return len(corners) > 1
+    return len(corners) > 1 and corners[0][0] != BASE
 
 
 def forget_pitch_corners(b, index: int) -> None:

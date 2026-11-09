@@ -51,6 +51,13 @@ BROUGHT = {
     24: {"inverter_brand_favourites"},
     25: {"strings_view"},
     26: {"font"},
+    27: {"memory_share"},
+    28: {"background_year", "background_year_wait_s", "background_year_workers",
+         "background_year_battery_factor"},              # r18-stringhe (R461)
+    29: {"assistant_voice_pitch", "assistant_voice_speed"},   # R492
+    30: {"layout_defaults"},                                  # R523
+    31: {"edges_3d"},                                         # study 41, slice E
+    32: {"memory_mode"},                                      # R548
 }
 
 
@@ -97,6 +104,14 @@ class SettingsFiles(unittest.TestCase):
                         self.assertEqual(got, "text", "version 10 gives everybody the text under the icons")
                     elif f.name == "shortcuts" and version == 13:
                         self.assertEqual(got, {"fit": ["Z"], "tool_measure": ["D", "Shift+M"]})   # M is Move from 14
+                    elif f.name in ("assistant_voice_pitch", "assistant_voice_speed") and f.name not in raw:
+                        # R492: a voice chosen before 29 keeps its sound (0 semitones, speed 1), else the new default
+                        kept = {"assistant_voice_pitch": 0, "assistant_voice_speed": 1.0}[f.name]
+                        self.assertEqual(got, kept if raw.get("assistant_voice_name") else getattr(defaults, f.name))
+                    elif f.name in ("accent", "backgrounds") and version < 3:
+                        self.assertEqual(got, {"accent": "bronze", "backgrounds": "meridiana"}[f.name])
+                    elif f.name == "font" and version < 26:
+                        self.assertEqual(got, "inter", "Historical settings retain their original font")
                     elif f.name in raw:
                         self.assertEqual(got, raw[f.name], f.name)
                     else:

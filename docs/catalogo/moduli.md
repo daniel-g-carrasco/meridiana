@@ -7,7 +7,7 @@ Dati raccolti il 21/10/2026 (campo `retrieved`).
 
 ## File
 
-- `modules_curated.json`: 73 moduli di 26 marchi, un record per modello e una sola classe di potenza per record.
+- `modules_curated.json`: 78 moduli di 26 marchi, un record per modello e una sola classe di potenza per record.
   È un array JSON in UTF-8 (senza BOM), con unità SI e i numeri scritti come numeri. Le note (`notes`) sono in inglese.
 - `datasheets_modules\<Marca>\`: copie delle schede ufficiali scaricate (non nel repository).
   - Per LONGi la scheda è la pagina HTML ufficiale: il PDF del sito viene generato nel browser.
@@ -47,7 +47,7 @@ Dati raccolti il 21/10/2026 (campo `retrieved`).
 
 Composizione dell'archivio:
 - potenze da 420 a 745 W; 47 moduli bifacciali e 58 vetro-vetro;
-- tecnologie: 41 TOPCon, 9 HJT, 13 back contact (HPBC 2.0, ABC, GPC, BC, BC a celle sovrapposte, MWT) e 10 "n-type" senza architettura dichiarata.
+- tecnologie: 42 TOPCon, 9 HJT, 17 back contact (HPBC 2.0, ABC, GPC, BC, BC a celle sovrapposte, MWT) e 10 "n-type" senza architettura dichiarata.
 
 ## Regole usate per i dati
 

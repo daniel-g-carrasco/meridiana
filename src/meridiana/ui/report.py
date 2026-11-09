@@ -164,9 +164,18 @@ def _logo(build: Build, profile: dict | None) -> str | None:
     return name if build.usable_image(name) else None
 
 
-def _build(project, energy: dict, profile: dict | None, only: str = ""):
-    """The report in its folder, a step at a time: yields (fraction of the images, what) after each image; returns
-    (build, compiled result, attachments that go in). The caller closes the build."""
+KINDS = ("pdf", "odt", "docx")           # the report as a PDF, or editable (R460: ODT first, then DOCX)
+
+
+def kind_of(path: Path, kind: str = "") -> str:
+    """The format of a report: the one asked, else the file's extension, else PDF."""
+    kind = (kind or Path(path).suffix.lstrip(".")).lower()
+    return kind if kind in KINDS else "pdf"
+
+
+def _prepared(project, energy: dict, profile: dict | None, only: str = ""):
+    """The report's document and its images in a folder, a step at a time: yields (fraction of the images, what) after
+    each image; returns (build, document, attachments that go in). The caller closes the build."""
     from .theme import matplotlib_fonts
     matplotlib_fonts()                               # the formulas' fonts, as the window's charts have them
     attached = [] if only else [a for a in attachments(project) if not a.problem]
@@ -184,6 +193,17 @@ def _build(project, energy: dict, profile: dict | None, only: str = ""):
             yield n / max(1, len(made.makers)), _("charts and formulas, {n} of {total}").format(
                 n=n, total=len(made.makers))
         document["doc"]["logo"] = _logo(build, profile)
+    except BaseException:
+        build.close()
+        raise
+    return build, document, attached
+
+
+def _build(project, energy: dict, profile: dict | None, only: str = ""):
+    """The report in its folder, a step at a time: yields (fraction of the images, what) after each image; returns
+    (build, compiled result, attachments that go in). The caller closes the build."""
+    build, document, attached = yield from _prepared(project, energy, profile, only)
+    try:
         yield 1.0, _("laying out the pages")
         result = build.compile(document)
     except BaseException:
@@ -210,12 +230,16 @@ def export_pdf(project, energy: dict, path: Path, profile: dict | None = None, o
         pass
 
 
-def export_steps(project, energy: dict, path: Path, profile: dict | None = None, only: str = ""):
+def export_steps(project, energy: dict, path: Path, profile: dict | None = None, only: str = "", kind: str = ""):
     """The report a step at a time, on the thread that calls it: (fraction of the way, what is being done) after
     each image, the laying out and each attachment. The attachments are put after the page that names each (pypdf),
     a protected one drawn page by page. The file is written beside `path` and put in its place at the end: a report
     stopped half way (the generator closed, Cancel) leaves nothing, and an older report under the same name stays as
-    it was. `only`: a chapter alone (report_typst.compose)."""
+    it was. `only`: a chapter alone (report_typst.compose). `kind`: "pdf", "odt" or "docx" (from the extension when
+    not given): the editable files have the same document, the attachments named as files apart."""
+    kind = kind_of(path, kind)
+    if kind != "pdf":
+        return (yield from _editable_steps(project, energy, path, profile, only, kind))
     part = path.with_name(path.name + ".part")
     drawn: list[Path] = []
     build = None
@@ -253,6 +277,30 @@ def export_steps(project, energy: dict, path: Path, profile: dict | None = None,
         for f in (part, *drawn):
             if f.exists():
                 f.unlink()
+
+
+def _editable_steps(project, energy: dict, path: Path, profile: dict | None, only: str, kind: str):
+    """The report as an editable ODT or DOCX (report_typst/editable.py), written beside `path` and put in its place at
+    the end, as the PDF."""
+    from ..report_typst import editable
+    editable.require(kind)                           # said before anything is made: which library is missing
+    part = path.with_name(path.name + ".part")
+    build = None
+    try:
+        try:
+            part.write_bytes(b"")
+        except OSError as error:
+            raise OSError(_("{file} cannot be written").format(file=part)) from error
+        build, document, _attached = yield from _scaled(_prepared(project, energy, profile, only), IMAGES_SHARE)
+        yield IMAGES_SHARE, _("writing the {kind} file").format(kind=kind.upper())
+        editable.export(document, build.root, part, kind)
+        os.replace(part, path)
+        yield 1.0, _("writing the {kind} file").format(kind=kind.upper())
+    finally:
+        if build is not None:
+            build.close()
+        if part.exists():
+            part.unlink()
 
 
 def _drawn_pdf(source: str, target: str) -> None:
@@ -408,21 +456,79 @@ def _attachment_images(a: Attachment, width: int):
         pdf.close()
     more = a.pages - shown
     if more > 0:
-        scale = width / A4.width()
-        image = QImage(width, round(A4.height() * scale), QImage.Format.Format_RGB32)
-        image.fill(QColor("white"))
-        painter = QPainter(image)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.scale(scale, scale)
-        f = QFont()
-        f.setPixelSize(round(11 * A4.width() / 8.27 / 72))
-        painter.setFont(f)
-        painter.setPen(QColor(MUTED))
-        margin = 2 / 2.54 * 96
-        painter.drawText(QRectF(margin, margin, A4.width() - 2 * margin, A4.height() - 2 * margin),
-                         int(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap),
-                         ngettext("{n} more page of «{title}»: it is in the PDF, not in the preview.",
-                                  "{n} more pages of «{title}»: they are in the PDF, not in the preview.",
-                                  more).format(n=more, title=a.title))
-        painter.end()
-        yield image
+        yield note_page(_more_pages(a, more), width)
+
+
+def _more_pages(a: Attachment, more: int) -> str:
+    return ngettext("{n} more page of «{title}»: it is in the PDF, not in the preview.",
+                    "{n} more pages of «{title}»: they are in the PDF, not in the preview.",
+                    more).format(n=more, title=a.title)
+
+
+def note_page(text: str, width: int) -> QImage:
+    """A page of the preview's own that says `text`, `width` pixels wide, in the proportions of an A4 sheet."""
+    scale = width / A4.width()
+    image = QImage(width, round(A4.height() * scale), QImage.Format.Format_RGB32)
+    image.fill(QColor("white"))
+    painter = QPainter(image)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.scale(scale, scale)
+    f = QFont()
+    f.setPixelSize(round(11 * A4.width() / 8.27 / 72))
+    painter.setFont(f)
+    painter.setPen(QColor(MUTED))
+    margin = 2 / 2.54 * 96
+    painter.drawText(QRectF(margin, margin, A4.width() - 2 * margin, A4.height() - 2 * margin),
+                     int(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap), text)
+    painter.end()
+    return image
+
+
+def _ratio(pdf, i: int) -> float:
+    pt = pdf.pagePointSize(i)
+    return pt.height() / pt.width() if pt.width() > 0 else 297 / 210
+
+
+def preview_pages(project, energy: dict, folder, out: list, profile: dict | None = None):
+    """R509: the preview's pages as the places to draw them from, not as images of a fixed width: the report's PDF
+    written in `folder` as preview.pdf and, for each page in the order of preview_steps, a dict with the PDF and the
+    page index it comes from (an attachment's own file for its pages), its number and its ratio; the page that says
+    how many more pages an attachment has carries its sentence as "note" instead. The window draws each page when it
+    is shown, in the device pixels of its size (quick/backend/report_pages.py), and again after a zoom. Yields as
+    preview_steps; returns the pages of the PDF made."""
+    from PySide6.QtPdf import QPdfDocument
+    build, result, attached = yield from _scaled(_build(project, energy, profile), IMAGES_SHARE)
+    build.close()
+    made = Path(folder) / "preview.pdf"
+    made.write_bytes(result.pdf)
+    pdf = QPdfDocument()
+    try:
+        pdf.load(str(made))
+        pages = pdf.pageCount()
+        after: dict = {}
+        for k, a in enumerate(attached, 1):
+            if result.after.get(k):
+                after.setdefault(result.after[k] - 1, []).append(a)
+        total = pages + sum(a.pages for a in attached if result.after.get(attached.index(a) + 1))
+        n = 0
+        for i in range(pages):
+            n += 1
+            out.append({"path": str(made), "index": i, "page": str(n), "ratio": _ratio(pdf, i)})
+            yield (IMAGES_SHARE + (1 - IMAGES_SHARE) * (i + 1) / pages, _("page {n} of {total}").format(n=n, total=total))
+            for a in after.get(i, []):
+                shown = 0
+                other = QPdfDocument()
+                try:
+                    other.load(a.path)
+                    shown = min(other.pageCount(), PREVIEW_ATTACHMENT_PAGES)
+                    for k in range(shown):
+                        out.append({"path": a.path, "index": k, "page": str(n + 1 + k), "ratio": _ratio(other, k)})
+                finally:
+                    other.close()
+                if a.pages - shown > 0:
+                    out.append({"path": "", "index": -1, "page": str(n + 1 + shown), "ratio": A4.height() / A4.width(),
+                                "note": _more_pages(a, a.pages - shown)})
+                n += a.pages
+    finally:
+        pdf.close()
+    return total

@@ -201,7 +201,7 @@ class Plant(unittest.TestCase):
         self.assertEqual(stringing.overload_check("Inverter 1", 3.1).level, "fail")
         self.assertEqual(stringing.overload_check("Inverter 1", 1.0).level, "warn")
         self.assertEqual(stringing.overload_check("Inverter 1", 0.1).level, "ok")
-        self.assertIn("program", stringing.overload_check("Inverter 1", 3.1).detail)
+        self.assertIn("calculation thresholds", stringing.overload_check("Inverter 1", 3.1).detail)
         self.assertEqual(stringing.threshold_source().kind, "default")        # said as Meridiana's, not a norm's
         small = inverter_rec(ac_power_nominal_w=8000, dc_isc_max_per_mppt_a=[80, 80],
                              dc_current_max_per_mppt_a=[60, 60])

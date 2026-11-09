@@ -24,10 +24,12 @@ from __future__ import annotations
 
 import hashlib
 import math
-import threading
+import time
 from dataclasses import dataclass, field
 
 import numpy as np
+
+from .. import resources
 
 AZ_STEP, EL_STEP = 5.0, 4.0
 AZIMUTHS = np.arange(0.0, 360.0, AZ_STEP)            # of the sun, from North clockwise
@@ -422,6 +424,7 @@ def shading(modules: list, solids: list[Solid], tilt: float, azimuth: float,
         reach = shapely.box(*shapely.total_bounds(boxes))
         hulls, hits = [], []
         for s in solids:
+            resources.checkpoint()      # a stop asked: here, between two solids (R478)
             h = _hulls(s, n, d, axes, suns)
             if h is None:
                 continue
@@ -460,10 +463,18 @@ def shading(modules: list, solids: list[Solid], tilt: float, azimuth: float,
                 block_fraction[mods_index[mi], b, lit_indices[cells[ci]]] = np.rint(
                     np.clip(block_area, 0, 1) * 65535).astype(np.uint16)
                 if cells_per_block:
-                    cell_rects = cell_boxes(area_blocks[mi, b], cells_per_block)
-                    cell_area = (mods_area[mi] / nb / cells_per_block)[:, None]
-                    fractions = rings.areas_in(np.repeat(ci, cells_per_block), cell_rects.reshape(-1, 4))
-                    fractions = np.clip(fractions.reshape(-1, cells_per_block) / cell_area, 0, 1)
+                    # the cells one by one only where the shadow covers part of the block: a block it covers
+                    # whole has every cell whole, one it leaves clear has every cell clear (R435: on the
+                    # large plant of the trial the cells were four fifths of the shadows' time)
+                    fractions = np.where(block_area[:, None] >= 1 - 1e-9, 1.0, 0.0).repeat(cells_per_block, axis=1)
+                    partial = np.flatnonzero((block_area > 1e-9) & (block_area < 1 - 1e-9))
+                    if len(partial):
+                        # the grid of the cells on every pair's block, as before, then the partial ones: cell_boxes
+                        # reads the grid off the first block it is given, and that must stay the first pair's
+                        cell_rects = cell_boxes(area_blocks[mi, b], cells_per_block)[partial]
+                        cell_area = (mods_area[mi[partial]] / nb / cells_per_block)[:, None]
+                        cut = rings.areas_in(np.repeat(ci[partial], cells_per_block), cell_rects.reshape(-1, 4))
+                        fractions[partial] = np.clip(cut.reshape(-1, cells_per_block) / cell_area, 0, 1)
                     hist = cell_histogram(fractions, CELL_LEVELS)
                     for local in np.unique(mi):
                         selected = mi == local
@@ -492,14 +503,14 @@ def shading(modules: list, solids: list[Solid], tilt: float, azimuth: float,
                    bool(cells_per_block))
 
 
-_CACHE: dict = {}
-_CACHE_LOCK = threading.Lock()
-_CACHE_BYTES = 128 * 1024 * 1024
-
-
 def _cache_bytes(sh):
     return (sum(a.nbytes for a in (sh.table, sh.modules, sh.blocks, sh.block_fractions) if a is not None)
             + sum(a.nbytes for a in sh.cell_histograms.values()))
+
+
+# the shadings kept, within the memory the machine can give (R435): the limit follows resources.Budget, and a
+# shading that took a minute outlives the quick ones used after it (resources.Cache)
+_CACHE = resources.Cache(lambda: resources.cache_limit("shading"), _cache_bytes)
 
 
 def cached_shading(modules: list, solids: list[Solid], tilt: float, azimuth: float,
@@ -515,15 +526,12 @@ def cached_shading(modules: list, solids: list[Solid], tilt: float, azimuth: flo
     if needed is not None:
         h.update(needed.tobytes())
     key = h.hexdigest()
-    with _CACHE_LOCK:
-        if key in _CACHE:
-            return _CACHE[key]
+    found = _CACHE.get(key)
+    if found is not None:
+        return found
+    start = time.perf_counter()
     out = shading(modules, solids, tilt, azimuth, needed, layout, cell_count)
-    with _CACHE_LOCK:
-        while _CACHE and (len(_CACHE) >= 16 or sum(_cache_bytes(s) for s in _CACHE.values()) + _cache_bytes(out) > _CACHE_BYTES):
-            _CACHE.pop(next(iter(_CACHE)))
-        if _cache_bytes(out) <= _CACHE_BYTES:
-            _CACHE[key] = out
+    _CACHE.put(key, out, cost=time.perf_counter() - start)
     return out
 
 

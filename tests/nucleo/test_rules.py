@@ -32,6 +32,20 @@ class Which(unittest.TestCase):
         self.assertIn("N14", got)                            # not subject to the fire brigade
         self.assertEqual(got[-1], "N23")                     # permitting, always
 
+    def test_the_window_lists_what_the_document_leaves_out(self):
+        # Daniel, 05/11/2026: «non deve essere obbligatorio indicare che non è soggetta»
+        f = facts(p_dc_kw=30.0, p_ac_kw=30.0)
+        self.assertEqual(rules.design(f), "unknown")
+        self.assertTrue({"N02", "N14"} <= set(ids(f)))
+        printed = [r.id for _title, chapter in rules.notes(f) for r, _paragraphs in chapter]
+        self.assertFalse({"N02", "N14"} & set(printed))
+        self.assertEqual([title.split(". ")[0] for title, _chapter in rules.notes(f)], ["1", "2", "3"])
+        by_text ={it.text.split(" · ")[0]: it for it in checks.rule_items(f)}
+        self.assertTrue(by_text["N14"].window_only)
+        self.assertFalse(by_text["N01"].window_only)
+        self.assertNotIn("N14", " ".join(it.text for it in checks.for_document(checks.rule_items(f))))
+        self.assertIn("N02", [r.id for _t, c in rules.notes(facts(p_dc_kw=30.0, p_ac_kw=30.0, fire=True)) for r, _p in c])
+
     def test_the_nominal_power_is_the_smaller_of_modules_and_inverters(self):
         f = facts(p_dc_kw=12.5, p_ac_kw=10.0)                 # CEI 0-21:2026-07 3.61
         self.assertEqual(f.p_nominal_kw, 10.0)

@@ -3,6 +3,7 @@ file opened from it and said; a file edited by hand or damaged refused with the 
 for every version of the format, opened as it is (tests/formati/file), and the migrations field by field.
 The files of the settings and the damaged ones are in test_formats."""
 
+import copy
 import json
 import math
 import tempfile
@@ -368,6 +369,65 @@ class Formats(unittest.TestCase):
             with self.subTest(activity=wrong), self.assertRaises(ValueError) as caught:
                 model.Project.from_json(data)
             self.assertIn("buildings[0].fire.activity", str(caught.exception))
+
+    def test_the_twenty_seventh_format_is_written_as_it_was_and_the_twenty_eighth_has_the_solids(self):
+        # format 28 (study 37): the new fields of a building (base, on, part_of, roof.plane, roof.saddles) go into the
+        # file only when they hold, so a file of 27 saved again differs by its version alone
+        folder = _setup.FORMATS
+        before = json.loads((folder / "progetto-v27.meridiana").read_text(encoding="utf-8"))
+        again = model.Project.from_json(copy.deepcopy(before)).to_json()
+        self.assertEqual(again.pop("version"), model.FORMAT_VERSION)       # 29 since R523 (below)
+        for was, now in zip(before["buildings"], again["buildings"], strict=True):
+            for key in ("base", "on", "part_of"):
+                self.assertNotIn(key, now)
+            for key in ("plane", "saddles"):
+                self.assertNotIn(key, now["roof"])
+            for key, value in was.items():          # what the file had, as it had it (keep_eave came after this file)
+                if key == "roof":
+                    self.assertEqual({k: v for k, v in now[key].items() if k != "keep_eave"}, value)
+                else:
+                    self.assertEqual(now[key], value, key)
+        new, _notice = model.Project.load(folder / "progetto-v28.meridiana")
+        b = new.buildings[0]
+        self.assertEqual((b.roof.type, b.roof.saddles["direction"], b.base, b.on), ("saddles", 90.0, 0.0, ""))
+        self.assertGreater(len(b.pitches()), 4)
+        self.assertEqual(model.Project.from_json(new.to_json()).buildings[0].roof.saddles, b.roof.saddles)
+        for wrong in ({"base": -2.0}, {"roof": {**new.to_json()["buildings"][0]["roof"], "plane": [1.0]}}):
+            data = new.to_json()
+            data["buildings"][0].update(wrong)
+            with self.subTest(wrong=list(wrong)), self.assertRaises(ValueError):
+                model.Project.from_json(data)
+
+    def test_the_twenty_eighth_format_is_written_as_it_was_and_the_twenty_ninth_has_the_layout_defaults(self):
+        # format 29 (R523, r20-posa; 28 there too until the union with r20-solidi): `layout_defaults` goes into the
+        # file only when it holds, so a file of 28 saved again differs by its version alone
+        folder = _setup.FORMATS
+        before = json.loads((folder / "progetto-v28.meridiana").read_text(encoding="utf-8"))
+        again = model.Project.from_json(copy.deepcopy(before)).to_json()
+        self.assertEqual((before.pop("version"), again.pop("version")), (28, model.FORMAT_VERSION))
+        self.assertNotIn("layout_defaults", again)
+        self.assertEqual(set(again) - set(before), set())
+        new, _notice = model.Project.load(folder / "progetto-v29.meridiana")
+        self.assertTrue(new.layout_defaults)
+        self.assertEqual(model.Project.from_json(new.to_json()).layout_defaults, new.layout_defaults)
+
+    def test_the_twenty_ninth_format_is_written_as_it_was_and_the_thirtieth_has_the_objects_model(self):
+        # format 30 (R374, r22-f2): a 3D object's `asset` goes into the file only when set, so a file of 29 saved
+        # again differs by its version alone; the frozen file of 30 holds a lamp with the other lamp's model, a fence
+        # along its path and a container
+        folder = _setup.FORMATS
+        before = json.loads((folder / "progetto-v29.meridiana").read_text(encoding="utf-8"))
+        again = model.Project.from_json(copy.deepcopy(before)).to_json()
+        self.assertEqual((before.pop("version"), again.pop("version")), (29, 30))
+        self.assertEqual(set(again) - set(before), set())
+        self.assertEqual([x["kind"] for x in again["props"]], [x["kind"] for x in before["props"]])
+        self.assertTrue(all("asset" not in x for x in again["props"]))
+        new, _notice = model.Project.load(folder / "progetto-v30.meridiana")
+        self.assertEqual([(x.kind, x.asset) for x in new.props][-3:], [("lamp", "street_light"), ("fence", None), ("container", None)])
+        self.assertEqual(len(new.props[-2].path), 3)
+        raw = model.Project.from_json(new.to_json()).to_json()["props"]
+        self.assertEqual([x.get("asset") for x in raw][-3:], ["street_light", None, None])
+        self.assertNotIn("asset", raw[-1])
 
 
 if __name__ == "__main__":

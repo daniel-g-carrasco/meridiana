@@ -27,8 +27,23 @@ MODEL_BYTES = {"kokoro-v1.0.onnx": 325_532_387, "voices-v1.0.bin": 28_214_398}
 MODEL_SHA256 = {"kokoro-v1.0.onnx": "7d5df8ecf7d4b1878015a32686053fd0eebe2bc377234608764cc0ef3636a6c5",
                 "voices-v1.0.bin": "bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d"}
 RATE = 24000                    # Hz, 16-bit mono: what the worker sends
-# the voices by language, a man's first (Meridio is «he»): Kokoro 1.0 has these two in Italian
-VOICES = {"it": ("im_nicola", "if_sara"), "en": ("am_michael", "af_heart")}
+# the voices by language, the default first: in Italian Sara since R492 (Daniel 06/11/2026: Nicola «troppo profonda e
+# scura», «più da bambino»; he chose Sara one semitone up and 1.15 times as fast, the settings' defaults)
+VOICES = {"it": ("if_sara", "im_nicola"), "en": ("am_michael", "af_heart")}
+PITCH = (-3, 4)                 # semitones the settings allow (R492)
+SPEED = (0.8, 1.4)
+LISTEN = {"it": "Ciao, sono Meridio. Il tuo impianto da 45 kWp produce circa 58.000 kWh all'anno.",
+          "en": "Hello, I am Meridio. Your 45 kWp plant makes about 58,000 kWh a year."}
+
+
+def voice_settings(settings) -> tuple[float, float]:
+    """The pitch (semitones) and the speed of the settings, inside their ranges; 0 and 1.0 without settings."""
+    try:
+        pitch = float(getattr(settings, "assistant_voice_pitch", 0) or 0)
+        speed = float(getattr(settings, "assistant_voice_speed", 1.0) or 1.0)
+    except (TypeError, ValueError):
+        return 0.0, 1.0
+    return min(max(pitch, PITCH[0]), PITCH[1]), min(max(speed, SPEED[0]), SPEED[1])
 MAGIC = b"MRDV"
 HEADER = struct.Struct("<4sII")             # magic, sentence id, bytes of PCM that follow
 
@@ -43,7 +58,7 @@ def default_voice(language: str) -> str:
 
 
 def voice_for(language: str, chosen: str = "") -> str:
-    """The voice to speak `language` with: the one chosen when it is of that language, else the man's."""
+    """The voice to speak `language` with: the one chosen when it is of that language, else the default."""
     return chosen if chosen in VOICES.get(language, ()) else default_voice(language)
 
 
@@ -127,8 +142,8 @@ def download_model(dest: Path, progress=lambda done, total: None, stopped=lambda
 
 
 _MARKUP = [(r"\[([^\]]+)\]\([^)]+\)", r"\1"),           # a link: its words
-           (r"[*_`#>|~]+", " "),                                 # emphasis, code, headings, quotes, tables
-           (r"^\s*(?:[-+]|\d+[.)])\s+", ""),                   # a list's mark at the start
+           (r"[*`#>|]+|~~|(?<!\w)_+|_+(?!\w)|~(?!\s?\d)", " "),   # emphasis, code, headings, quotes, tables
+           (r"^\s*(?:[-+•]|\d+[.)])\s+", ""),                  # a list's mark at the start
            (r"\s+", " ")]
 _SAYS = {"it": {"→": ", ", "≥": " maggiore o uguale a ", "≤": " minore o uguale a ", "×": " per ", "±": " più o meno "},
          "en": {"→": ", ", "≥": " at least ", "≤": " at most ", "×": " by ", "±": " plus or minus "}}
@@ -137,16 +152,21 @@ _SAYS = {"it": {"→": ", ", "≥": " maggiore o uguale a ", "≤": " minore o u
 def speakable(sentence: str, language: str = "it") -> str:
     """What is to be read aloud of a sentence the model wrote in Markdown: the marks of emphasis, code, headings and
     lists taken out, the arrows and comparison signs said in words, the emoji left out (the voice read «asterisco
-    asterisco» and the names of the faces, 25/10/2026); "" when nothing is left to say."""
+    asterisco» and the names of the faces, 25/10/2026); "" when nothing is left to say. In Italian the words a
+    designer would say, too (assistant/reading.py, R493: «chilowatt», not «cappa vu»)."""
     import re
     text = sentence
-    for sign, words in _SAYS.get(language, _SAYS["en"]).items():
-        text = text.replace(sign, words)
+    if language != "it":
+        for sign, words in _SAYS.get(language, _SAYS["en"]).items():
+            text = text.replace(sign, words)
     text = "".join(ch for ch in text if not (0x1F000 <= ord(ch) <= 0x1FAFF or 0x2600 <= ord(ch) <= 0x27BF
                                             or ord(ch) in (0xFE0F, 0x200D)))
     for pattern, repl in _MARKUP:
         text = re.sub(pattern, repl, text, flags=re.M)
     text = text.strip(" -")
+    if language == "it" and any(ch.isalnum() for ch in text):
+        from . import reading
+        text = reading.normalize(text)
     return text if any(ch.isalnum() for ch in text) else ""
 
 

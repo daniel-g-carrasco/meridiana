@@ -1,0 +1,17 @@
+{
+  "size": [1600, 960],
+  "steps": [
+    {"action": "snapshot", "wait": 800},
+    {"action": "hover", "target": "Edificio", "wait": 700},
+    {"action": "key", "key": "Esc"},
+    {"action": "click", "target": "Edificio"},
+    {"action": "key", "key": "Esc"},
+    {"action": "click", "target": "Impianto"},
+    {"action": "click", "target": "Modellazione"},
+    {"action": "click", "target": "File", "expect": {"fileOpen": true}},
+    {"action": "key", "key": "Esc", "expect": {"fileOpen": false}},
+    {"action": "resize", "size": [1366, 900]},
+    {"action": "resize", "size": [1920, 1080]},
+    {"action": "resize", "size": [1600, 960]}
+  ]
+}

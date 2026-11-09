@@ -160,8 +160,9 @@ class Heights(unittest.TestCase):
             self.assertAlmostEqual(q.z0, 6.0, places=3)
 
 
-class FlatStaysFlat(unittest.TestCase):
-    """R357: a corner of a flat roof is the height of the building; the roof stays flat, with all that stands on it."""
+class FlatRoofCorners(unittest.TestCase):
+    """R411, in place of R357: one corner of a flat roof tilts it on one plane, the opposite staying; all of them together
+    are the height of the building, the roof flat, with all that stands on it."""
 
     def laid(self) -> model.Project:
         p = project()
@@ -171,11 +172,38 @@ class FlatStaysFlat(unittest.TestCase):
         p.exclusions.append(model.ExclusionItem("e1", rect(3, 3, 4, 4), kind="plant", building="b1", height=2.0))
         return p
 
-    def test_a_corner_written_or_dragged_changes_the_height_of_the_building_and_nothing_else_of_the_roof(self):
+    def test_one_corner_tilts_the_roof_on_one_plane_and_the_opposite_stays(self):
+        p = self.laid()
+        b = p.buildings[0]
+        rv.set_height(p, "b1", rv.handles(b)[2].corners[0], 8.5)
+        self.assertEqual(b.roof.type, "flat")                    # R455: still flat, on an inclined plane
+        self.assertEqual(len(b.pitches()), 1)
+        self.assertEqual(sorted(round(h.z, 2) for h in rv.handles(b)), [6.0, 7.25, 7.25, 8.5])
+        self.assertEqual(round(rv.handles(b)[2].z, 2), 8.5)
+        self.assertEqual(round(rv.handles(b)[0].z, 2), 6.0)      # the opposite corner
+        self.assertEqual(b.height, 6.0)
+        self.assertEqual([round(z, 2) for z in b.roof.plane], [6.0, 7.25, 8.5, 7.25])
+        self.assertGreater(b.pitches()[0].tilt, 0)
+        # a second corner moved starts from the plane as it is, not from the level roof
+        rv.set_height(p, "b1", rv.handles(b)[1].corners[0], 7.25)
+        self.assertEqual(sorted(round(h.z, 2) for h in rv.handles(b)), [6.0, 7.25, 7.25, 8.5])
+
+    def test_going_down_too_and_refused_under_the_ground(self):
+        p = self.laid()
+        b = p.buildings[0]
+        with self.assertRaises(ValueError):
+            rv.set_height(p, "b1", rv.handles(b)[2].corners[0], -1.0)
+        with self.assertRaises(ValueError):                  # the plane would take the far side below the ground
+            rv.set_heights(p, "b1", [(rv.handles(b)[2].corners[0], 13.0), (rv.handles(b)[0].corners[0], 0.0), (rv.handles(b)[1].corners[0], 0.0)])
+        self.assertEqual(b.roof.type, "flat")
+        rv.set_height(p, "b1", rv.handles(b)[2].corners[0], 4.0)
+        self.assertEqual(sorted(round(h.z, 2) for h in rv.handles(b)), [4.0, 5.0, 5.0, 6.0])
+
+    def test_all_corners_together_change_the_height_of_the_building_and_nothing_else_of_the_roof(self):
         p = self.laid()
         b = p.buildings[0]
         roof_was = json.dumps(b.roof.__dict__, sort_keys=True, default=str)
-        rv.set_height(p, "b1", rv.handles(b)[2].corners[0], 8.5)
+        rv.set_heights(p, "b1", [(h.corners[0], 8.5) for h in rv.handles(b)])
         self.assertEqual(b.roof.type, "flat")
         self.assertEqual(json.dumps(b.roof.__dict__, sort_keys=True, default=str), roof_was)
         self.assertEqual(b.height, 8.5)
@@ -187,7 +215,7 @@ class FlatStaysFlat(unittest.TestCase):
         p = self.laid()
         b = p.buildings[0]
         key = b.geometry_key()
-        rv.set_height(p, "b1", rv.handles(b)[0].corners[0], 8.5)
+        rv.set_heights(p, "b1", [(h.corners[0], 8.5) for h in rv.handles(b)])
         self.assertNotEqual(b.geometry_key(), key)           # layouts, shadows and the year are made again
         sf = p.subfields[0]
         self.assertAlmostEqual(p.surface_of(sf).z(5.0, 5.0), 8.5)
@@ -199,11 +227,13 @@ class FlatStaysFlat(unittest.TestCase):
         plant = next(o for o in prisms if o.get("id") == "e1")
         self.assertAlmostEqual(plant["z1"], 10.5)
 
-    def test_several_corners_at_once_are_one_height(self):
+    def test_two_corners_of_a_side_tilt_it_about_the_other_side(self):
         p = self.laid()
         b = p.buildings[0]
         rv.set_heights(p, "b1", [(h.corners[0], 7.0) for h in rv.handles(b)[:2]])
-        self.assertEqual((b.roof.type, b.height), ("flat", 7.0))
+        self.assertEqual(b.roof.type, "flat")
+        self.assertEqual(len(b.pitches()), 1)
+        self.assertEqual([round(h.z, 2) for h in rv.handles(b)], [7.0, 7.0, 6.0, 6.0])
 
     def test_under_the_ground_is_refused_and_a_canopy_has_none(self):
         p = self.laid()
@@ -223,7 +253,7 @@ class FlatStaysFlat(unittest.TestCase):
 
     def test_it_goes_through_a_save_with_the_format_it_had(self):
         p = self.laid()
-        rv.set_height(p, "b1", rv.handles(p.buildings[0])[0].corners[0], 8.5)
+        rv.set_heights(p, "b1", [(h.corners[0], 8.5) for h in rv.handles(p.buildings[0])])
         again = model.Project.from_json(json.loads(json.dumps(p.to_json())))
         self.assertEqual((again.buildings[0].roof.type, again.buildings[0].height), ("flat", 8.5))
 

@@ -10,4 +10,4 @@ apt-get install -y -q gettext desktop-file-utils appstream libegl1 libgl1 libxkb
 python3 -m pip install -q --break-system-packages \
     "PySide6_Essentials==6.12.0" "PySide6_Addons==6.12.0" "PySide6_Pdf==6.12.0.140" "shapely>=2.0" \
     "numpy>=1.26" "pandas>=2.2" "requests>=2.31" "pvlib==0.16.1" "scipy>=1.15" "matplotlib>=3.9" "pyqtgraph>=0.14" \
-    "pypdf>=6.0" "anthropic>=2.3" "keyring>=25.7" "ifcopenshell>=0.9.0.post1" ruff polib
+    "pypdf>=6.0" "odfpy==1.4.1" "python-docx==1.2.0" "lxml>=6.1" "latex2mathml==3.81.1" "anthropic>=2.3" "keyring>=25.7" "ifcopenshell>=0.9.0.post1" "ezdxf==1.4.5" ruff polib

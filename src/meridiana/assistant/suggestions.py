@@ -260,7 +260,7 @@ def tool_topics(calls: list[dict]) -> list[str]:
                 out.append(SECTION_TOPICS[section])
             if name == "read_pedigree":
                 out.append("assumptions")
-        elif name == "read_rules":
+        elif name in ("read_rules", "design_rules"):
             out.append("rules")
         elif name == "vvf_activities":
             out.append("fire")

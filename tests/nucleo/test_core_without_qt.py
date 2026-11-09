@@ -1,6 +1,6 @@
 """The core runs without Qt (NQ, for a future interface that is not Qt): the energy system, the model and the
 session, imported in a fresh interpreter, never load PySide6; nor does any other module of the package outside the
-interface's side (ui/, app.py, single_instance.py, __main__.py)."""
+interface's side (ui/, quick/, app.py, single_instance.py, __main__.py)."""
 
 import subprocess
 import sys
@@ -9,7 +9,7 @@ import unittest
 import _setup
 
 SRC = str(_setup.ROOT / "src")
-INTERFACE = ("meridiana.ui", "meridiana.app", "meridiana.single_instance", "meridiana.__main__")
+INTERFACE = ("meridiana.ui", "meridiana.quick", "meridiana.app", "meridiana.single_instance", "meridiana.__main__")
 
 
 def run(code: str) -> str:

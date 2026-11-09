@@ -16,6 +16,7 @@ draws it red, the designer may be right): the checks say it."""
 
 from __future__ import annotations
 
+import copy
 from collections.abc import Callable
 
 from . import geo, layout
@@ -46,6 +47,30 @@ def rows_now(project, sf, result=None) -> list[layout.Row]:
     if not sf.filled:
         return []
     return [layout.Row.of(r.as_dict()) for r in project.fill(sf, shade=_shade()).rows]
+
+
+def removed_on_alignment(project, sf, alignment: str, result=None) -> list[str]:
+    """The modules taken out by hand of a sub-field that changes its alignment (R418): their keys say where they stood
+    in the rows of the old way, so they become those of the modules that take their place in the new one, where one
+    does, at most a module's width away (rows further apart than the pitch move across). Lays the sub-field once, only
+    when something was taken out."""
+    import shapely
+    from shapely.geometry import Polygon
+    whole = copy.deepcopy(sf)
+    whole.removed = []
+    whole.params.pop("target_kwp", None)
+    params = project.fill_params(whole)
+    module, surface = project.module_of(whole), project.surface_of(whole)
+    rows = result.rows if result is not None and not isinstance(result, Exception) else project.fill(whole, shade=_shade()).rows
+    gone = set(sf.removed)
+    points = [pm.centre for pm in layout.modules_of(rows, module, params, surface) if pm.key in gone]
+    whole.params["alignment"] = alignment
+    laid = project.fill(whole, shade=_shade()).modules
+    if not laid or not points:
+        return []
+    tree = shapely.STRtree([Polygon(pm.corners) for pm in laid])
+    found = tree.query_nearest(shapely.points(points), max_distance=module.width, all_matches=False)
+    return sorted({laid[i].key for i in found[1].tolist()})
 
 
 def _shade():
@@ -112,10 +137,21 @@ def new_id(rows: list[layout.Row]) -> str:
     return f"f{used + 1}"
 
 
-def _store(sf, rows: list[layout.Row]) -> None:
+def _store(sf, rows: list[layout.Row], project=None) -> None:
     sf.rows = [r.as_dict() for r in rows]
     sf.manual = True
     sf.filled = True
+    if project is not None:
+        refresh_outline(project, sf)
+
+
+def refresh_outline(project, sf) -> None:
+    """A sub-field that is its modules (R445) keeps its outline flush with them: made again from its rows, less the
+    modules taken out by hand, after every change of them. Nothing for the others."""
+    if sf.flush and sf.rows:
+        ring = outline(project, sf, sf.hand_rows(), sf.removed)
+        if ring:
+            sf.ring = ring
 
 
 def take(project, sfid: str, result=None) -> Callable:
@@ -126,7 +162,7 @@ def take(project, sfid: str, result=None) -> Callable:
     def change(p):
         sf = _subfield(p, sfid)
         if not sf.manual:
-            _store(sf, rows or [])
+            _store(sf, rows or [], p)
     return change
 
 
@@ -215,7 +251,7 @@ def draw(project, sfid: str, start, end, result=None, east_west: bool = False) -
             target.params["mounting"] = "east_west"
             if not keep:
                 target.removed = []
-        _store(target, keep + [row])
+        _store(target, keep + [row], p)
         return row.id
     return change
 
@@ -232,7 +268,7 @@ def remove(project, sfid: str, rid: str, result=None) -> Callable:
     def change(p):
         sf = _subfield(p, sfid)
         sf.removed = [k for k in sf.removed if k not in keys]
-        _store(sf, [r for r in rows if r.id != rid])
+        _store(sf, [r for r in rows if r.id != rid], p)
     return change
 
 
@@ -253,7 +289,7 @@ def append(project, sfid: str, rid: str, result=None) -> Callable:
     row = layout.Row(new_id(rows), x, y, like.azimuth, list(like.places), turned=like.turned)
 
     def change(q):
-        _store(_subfield(q, sfid), rows + [row])
+        _store(_subfield(q, sfid), rows + [row], q)
         return row.id
     return change
 
@@ -278,7 +314,7 @@ def resize(project, sfid: str, rid: str, point, result=None) -> Callable:
     new = layout.Row(row.id, row.x, row.y, row.azimuth, places, keys, row.turned)
 
     def change(q):
-        _store(_subfield(q, sfid), [new if r.id == rid else r for r in rows])
+        _store(_subfield(q, sfid), [new if r.id == rid else r for r in rows], q)
     return change
 
 
@@ -292,7 +328,7 @@ def explode(project, sfid: str, rid: str | None = None, result=None) -> Callable
     out, made = _exploded(project, sf, rows, rid)
 
     def change(q):
-        _store(_subfield(q, sfid), out)
+        _store(_subfield(q, sfid), out, q)
         return made
     return change
 
@@ -339,15 +375,22 @@ def turn(project, sfid: str, rid: str, result=None) -> Callable:
     new = layout.Row(row.id, x, y, row.azimuth, [0.0], list(row.keys), not row.turned)
 
     def change(q):
-        _store(_subfield(q, sfid), [new if r.id == rid else r for r in rows])
+        _store(_subfield(q, sfid), [new if r.id == rid else r for r in rows], q)
     return change
 
 
 def _outside(project, sf, rows) -> float:
+    """How much of the modules of `rows` lies out of where they may be: the sub-field's outline; for a sub-field that
+    is its modules (R445), the roof it lies on (its outline follows the modules), nothing on the ground."""
     from shapely.geometry import Polygon
     shape = footprint(project, sf, rows)
-    area = Polygon([tuple(map(float, q)) for q in sf.ring]).buffer(0)
-    return float(shape.difference(area).area) if not shape.is_empty else 0.0
+    if shape.is_empty:
+        return 0.0
+    ring = project.host_ring(sf) if sf.flush else sf.ring
+    if ring is None:
+        return 0.0
+    area = Polygon([tuple(map(float, q)) for q in ring]).buffer(0)
+    return float(shape.difference(area).area)
 
 
 def translate(project, sfid: str, rid: str, dx: float, dy: float, result=None) -> Callable:
@@ -362,7 +405,7 @@ def translate(project, sfid: str, rid: str, dx: float, dy: float, result=None) -
         raise ValueError(_("a row stays in its sub-field: this would take it out"))
 
     def change(q):
-        _store(_subfield(q, sfid), [new if r.id == rid else r for r in rows])
+        _store(_subfield(q, sfid), [new if r.id == rid else r for r in rows], q)
     return change
 
 
@@ -388,7 +431,7 @@ def move_module(project, sfid: str, key: str, dx: float, dy: float, result=None)
         raise ValueError(_("a module stays in its sub-field: this would take it out"))
 
     def change(q):
-        _store(_subfield(q, sfid), [new if r.id == row.id else r for r in alone])
+        _store(_subfield(q, sfid), [new if r.id == row.id else r for r in alone], q)
     return change
 
 
@@ -409,6 +452,7 @@ def delete_module(project, sfid: str, key: str, result=None) -> Callable:
         target = _subfield(p, sfid)
         if key not in target.removed:
             target.removed.append(key)
+        refresh_outline(p, target)
     return change
 
 
@@ -426,19 +470,122 @@ def delete_modules(project, sfid: str, keys: list[str], result=None) -> Callable
     def change(p):
         target = _subfield(p, sfid)
         if gone:
-            _store(target, [r for r in target.hand_rows() if r.id not in gone])
+            _store(target, [r for r in target.hand_rows() if r.id not in gone], p)
         target.removed = [k for k in target.removed if k not in alone]
         target.removed += [k for k in keys if k not in alone and k not in target.removed]
+        refresh_outline(p, target)
     return change
+
+
+def _fresh_key(rows: list[layout.Row], removed, rid: str) -> str:
+    """A key «rid:n» no module of the sub-field has, nor one taken out (with its levels, «rid:n:level»)."""
+    taken = {r.slot_key(slot) for r in rows for slot in range(max(len(r.keys), 2 * r.count))}
+    taken.update(str(k).rsplit(":", 1)[0] for k in removed if str(k).count(":") >= 2)
+    taken.update(str(k) for k in removed)
+    n = 0
+    while f"{rid}:{n}" in taken:
+        n += 1
+    return f"{rid}:{n}"
+
+
+def add_module(project, sfid: str, point, result=None) -> Callable:
+    """«Add a module» where the designer points (06/11/2026), one, never a whole row: a module taken out by hand
+    under the point comes back; else the row whose line the point is on gets one place there, at the row's step from
+    its nearest place (past an end or in a gap), the other modules keeping their keys and places; else a row of one
+    module at the point, facing as the others. Refused on a module already there, with no room between two, or
+    where the module would leave the sub-field."""
+    from shapely.geometry import Point, Polygon
+    sf = _subfield(project, sfid)
+    here = Point(float(point[0]), float(point[1]))
+    rows = _hand(project, sfid, result)
+    if not rows:
+        raise ValueError(_("lay the modules first: a module goes on a row of its sub-field"))
+    placed = layout.modules_of(rows, project.module_of(sf), project.fill_params(sf), project.surface_of(sf))
+    under = [m for m in placed if Polygon(m.corners).buffer(1e-6).contains(here)]
+    back = next((m for m in under if m.key in sf.removed), None)
+    if back is not None:
+        def restore(q):
+            target = _subfield(q, sfid)
+            target.removed = [k for k in target.removed if k != back.key]
+            refresh_outline(q, target)
+        return restore
+    # R445, decision 3: a module set aside on an obstacle or off the roof (drawn red) comes back with a click, the
+    # designer's call; the checks say it stands on the obstacle
+    aside = next((m for m in getattr(result, "blocked", None) or [] if Polygon(m.corners).buffer(1e-6).contains(here)),
+                 None)
+    if aside is not None and aside.key not in sf.kept:
+        def keep(q):
+            target = _subfield(q, sfid)
+            if aside.key not in target.kept:
+                target.kept.append(aside.key)
+        return keep
+    if under:
+        raise ValueError(_("there is a module here already"))
+    f, size, p = frame(project, sf, rows)
+    halves = 2 if size.east_west else 1
+    ordered = sorted(rows, key=lambda r: footprint(project, sf, [r]).distance(here))
+    for row in ordered:
+        if not row.places:
+            continue
+        own = layout.row_frame(row.azimuth, size)
+        along = size.across if row.turned else size.along
+        u_o, _v = own.to_work(row.x, row.y)
+        start = own.to_work(here.x, here.y)[0] - u_o - along / 2
+        steps = sorted(b - a for a, b in zip(row.places, row.places[1:], strict=False) if b - a > 1e-6)
+        step = steps[0] if steps else along + size.gap
+        near = min(row.places, key=lambda u: abs(u - start))
+        place = round(near + round((start - near) / step) * step, 6)
+        alone = layout.Row(row.id, row.x, row.y, row.azimuth, [place], [], row.turned)
+        if not any(Polygon(c).buffer(1e-6).contains(here) for c in corners(project, sf, [alone])):
+            continue        # the point is not on this row's line
+        if any(abs(place - u) < along + size.gap - 1e-6 for u in row.places):
+            raise ValueError(_("no room for a module here: it would lie on the modules beside it"))
+        at = sum(1 for u in row.places if u < place)
+        keys = [row.slot_key(slot) for slot in range(row.count * halves)]
+        fresh = []
+        for _half in range(halves):
+            fresh.append(_fresh_key(rows + [layout.Row(row.id, 0, 0, 0, [], keys + fresh)], sf.removed, row.id))
+        places = row.places[:at] + [place] + row.places[at:]
+        keys = keys[:at * halves] + fresh + keys[at * halves:]
+        new = layout.Row(row.id, row.x, row.y, row.azimuth, places, keys, row.turned)
+        if _outside(project, sf, [new]) > _outside(project, sf, [row]) + OUTSIDE_TOLERANCE:
+            raise ValueError(_("a module stays in its sub-field: this would take it out"))
+
+        def change(q, new=new):
+            _store(_subfield(q, sfid), [new if r.id == new.id else r for r in rows], q)
+        return change
+    like = ordered[0]
+    own = layout.row_frame(like.azimuth, size)
+    along = size.across if like.turned else size.along
+    u, v = own.to_work(here.x, here.y)
+    probe = layout.Row("probe", *own.to_plan(u - along / 2, v), like.azimuth, [0.0], [], like.turned)
+    shape = footprint(project, sf, [probe])
+    dx, dy = here.x - shape.centroid.x, here.y - shape.centroid.y
+    one = layout.Row(new_id(rows), round(probe.x + dx, DECIMALS), round(probe.y + dy, DECIMALS), like.azimuth, [0.0],
+                     [], like.turned)
+    if _outside(project, sf, [one]) > OUTSIDE_TOLERANCE:
+        raise ValueError(_("a module stays in its sub-field: this would take it out"))
+    if not footprint(project, sf, [one]).intersection(footprint(project, sf, rows)).area < 1e-4:
+        raise ValueError(_("no room for a module here: it would lie on the modules beside it"))
+
+    def single(q):
+        _store(_subfield(q, sfid), rows + [one], q)
+    return single
 
 
 def relayout(project, sfid: str) -> Callable:
     """«Lay again automatically»: the rows by hand go, and the modules taken out by hand with them; the generator
-    lays the sub-field again from its parameters."""
-    _subfield(project, sfid)
+    lays the sub-field again from its parameters. A sub-field that is its modules (R445) is gridded again whole over
+    its outline, the modules taken out and those kept on obstacles forgotten: it stays its modules."""
+    sf = _subfield(project, sfid)
+    rows = grid(project, sf) if sf.flush else None
 
     def change(p):
         sf = _subfield(p, sfid)
+        if rows is not None:
+            sf.removed, sf.kept = [], []
+            _store(sf, rows, p)
+            return
         sf.rows, sf.manual, sf.removed, sf.filled = [], False, [], True
     return change
 
@@ -488,6 +635,35 @@ def change_module(project, sfid: str, module_id: str, adapt: bool = True) -> Cal
     return change
 
 
+def apply_defaults(project, sfid: str) -> Callable:
+    """«Apply the defaults» to a sub-field (R523): the module and the DEFAULT_KEYS of the project's defaults in place
+    of its own (what it says of its strings and the power asked of it stay), the mounting chosen for its surface. A
+    sub-field that is its modules is gridded again whole over its outline, as `relayout`; one by hand keeps its rows,
+    adapted to the new module as `change_module`; an automatic one lays again from the parameters."""
+    from . import model
+    sf = _subfield(project, sfid)
+    module = project.default_module()
+    params = {k: v for k, v in project.default_params().items() if k not in model.OWN_KEYS}
+    mounting = model.chosen_mounting(params.pop("mounting", None), project.building(sf.building), sf.pitch)
+    params = {"mounting": mounting, "alignment": params.pop("alignment", layout.NEW_ALIGNMENT), **params}
+    old = project.module_of(sf)
+
+    def change(p):
+        target = _subfield(p, sfid)
+        own = {k: v for k, v in target.params.items() if k not in model.DEFAULT_KEYS or k in model.OWN_KEYS}
+        target.params = {**params, **own}
+        target.module = module
+        if target.flush:
+            rows = grid(p, target)
+            if not rows:
+                raise ValueError(_("no module of the defaults fits in this sub-field"))
+            target.removed, target.kept = [], []
+            _store(target, rows, p)
+        elif target.manual:
+            target.rows = adapted(target.rows, old, p.module_of(target), target.layout_params().portrait)
+    return change
+
+
 def needs_asking(project, sfid: str, module_id: str) -> bool:
     """Whether a new module on a sub-field by hand differs from the one there by more than 2 cm in a side: then the
     designer is asked whether to adapt the rows or lay the sub-field again (Daniel, 23/10/2026)."""
@@ -514,3 +690,204 @@ def end_point(row: layout.Row, size: layout.Sizes) -> tuple[float, float]:
     u_o, v0 = own.to_work(row.x, row.y)
     along = size.across if row.turned else size.along
     return own.to_plan(u_o + (row.places[-1] if row.places else 0.0) + along, v0)
+
+
+# the sub-field as its modules (R445, format 27)
+
+def grid_params(project, sf) -> layout.Params:
+    """The parameters of the plain grid a sub-field drawn as modules is made of: no band inside it, rows from its
+    front edge on one grid of straight columns (aligned, R418: a row no longer centred on its own room), no
+    fire-brigade corridors (the rules are guides and checks there, decision 2), no power asked (laid out of the grid at
+    the layout, R417) and no keeping out of the shadows (the designer takes modules out himself)."""
+    import dataclasses
+    return dataclasses.replace(project.fill_params(sf), edge=0.0, alignment="aligned", target_kwp=0.0,
+                               shade_free=False, fire_rules=False)
+
+
+def grid(project, sf, ring=None) -> list[layout.Row]:
+    """The rows of a plain grid of the sub-field's modules filling `ring` (its outline): as many whole modules as
+    fit on one grid of columns (R418), a row every pitch from the front. The obstacles are not taken out here: the modules
+    on them are set aside at the layout (layout.set_aside), red and rimettibili."""
+    ring = [tuple(map(float, q)) for q in (ring if ring is not None else sf.ring)]
+    result = layout.compute(ring, project.surface_of(sf), project.module_of(sf), grid_params(project, sf), [],
+                            project.site.lat, project.site.lon)
+    return [r for r in result.rows if r.places]
+
+
+def outline(project, sf, rows: list[layout.Row], removed=()) -> list[list[float]]:
+    """The outline of a sub-field that is its modules: flush with the outer modules of `rows` (those taken out by
+    hand left out), the gaps between modules and rows closed, the corners of a grid kept and the steps of a stepped
+    one (decision 1); the hull when the modules stand in parts apart. [] without modules."""
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    placed = layout.modules_of(rows, project.module_of(sf), project.fill_params(sf), project.surface_of(sf),
+                               set(removed))
+    if not placed:
+        return []
+    f, size, _p = frame(project, sf, rows)
+    vs = sorted({round(f.to_work(r.x, r.y)[1], 4) for r in rows})
+    pitch = min((b - a for a, b in zip(vs, vs[1:], strict=False) if b - a > 1e-6), default=size.depth)
+    reach = 0.5 * max(pitch - size.depth, size.gap, 0.0) + 0.002
+    union = unary_union([Polygon(m.corners) for m in placed])
+    shape = union.buffer(reach, join_style="mitre").buffer(-reach, join_style="mitre").simplify(0.002)
+    if shape.geom_type != "Polygon":
+        shape = union.convex_hull
+    if shape.is_empty or shape.geom_type != "Polygon":
+        return []
+    return [[round(x, DECIMALS), round(y, DECIMALS)] for x, y in shape.exterior.coords[:-1]]
+
+
+def make_flush(project, sf) -> None:
+    """Make `sf` a sub-field that is its modules, in place: a grid of rows over its outline, by hand from the start,
+    the outline brought flush with them. Called inside the change that draws it."""
+    sf.flush = True
+    sf.removed, sf.kept = [], []
+    _store(sf, grid(project, sf), project)
+
+
+def _fits(zone, u0: float, v0: float, along: float, depth: float) -> bool:
+    from shapely.geometry import box
+    return zone.covers(box(u0 + 1e-4, v0 + 1e-4, u0 + along - 1e-4, v0 + depth - 1e-4))
+
+
+def reshape(project, sf, rows: list[layout.Row], ring, removed=(), pitch: float | None = None) -> tuple:
+    """The rows of a sub-field that is its modules after its outline became `ring` (R445, phase B): the modules
+    stay where they are; the places whose module no longer fits whole inside go, a row left empty goes with them;
+    along every row that stays, places are added at its step past either end while a module fits; past the first and
+    the last row, rows are added a pitch apart (`pitch` on the plan across the rows, else the rows' own) with the
+    places of the row next to them, lengthened the same way. Returns (rows, keys added, keys gone)."""
+    from shapely.geometry import Polygon
+    f, size, _p = frame(project, sf, rows)
+    zone = Polygon([f.to_work(float(x), float(y)) for x, y in ring]).buffer(0).buffer(layout.DISTANCE_TOLERANCE)
+    halves = 2 if size.east_west else 1
+    depth = size.depth
+    gone: list[str] = []
+    added: list[str] = []
+    kept_rows: list[layout.Row] = []
+    for row in rows:
+        along = size.across if row.turned else size.along
+        u_o, v0 = f.to_work(row.x, row.y)
+        places, keys = [], []
+        for i, u in enumerate(row.places):
+            slots = [row.slot_key(i * halves + h) for h in range(halves)]
+            if _fits(zone, u_o + u, v0, along, depth):
+                places.append(u)
+                keys.extend(slots)
+            else:
+                gone.extend(slots)
+        if places:
+            kept_rows.append(layout.Row(row.id, row.x, row.y, row.azimuth, places, keys, row.turned))
+    vs = sorted({round(f.to_work(r.x, r.y)[1], 4) for r in rows})
+    if pitch is None:
+        pitch = min((b - a for a, b in zip(vs, vs[1:], strict=False) if b - a > 1e-6), default=None)
+    if pitch is None:
+        pitch = project.fill(sf).pitch if sf.manual else depth + size.gap
+
+    def lengthened(row: layout.Row, taken: list[layout.Row]) -> layout.Row:
+        along = size.across if row.turned else size.along
+        u_o, v0 = f.to_work(row.x, row.y)
+        steps = sorted(b - a for a, b in zip(row.places, row.places[1:], strict=False) if b - a > 1e-6)
+        step = steps[0] if steps else along + size.gap
+        places, keys = list(row.places), [row.slot_key(j) for j in range(row.count * halves)]
+        for direction in (1, -1):
+            u = (max(places) if direction > 0 else min(places)) + direction * step
+            while _fits(zone, u_o + u, v0, along, depth):
+                fresh = []
+                for _h in range(halves):
+                    fresh.append(_fresh_key(taken + [layout.Row(row.id, 0, 0, 0, [], keys + fresh)], removed, row.id))
+                added.extend(fresh)
+                if direction > 0:
+                    places.append(u)
+                    keys.extend(fresh)
+                else:
+                    places.insert(0, u)
+                    keys[0:0] = fresh
+                u += direction * step
+        return layout.Row(row.id, row.x, row.y, row.azimuth, places, keys, row.turned)
+
+    out = []
+    for row in kept_rows:
+        out.append(lengthened(row, rows + out))
+    if not out:
+        return out, added, gone
+    for direction in (1, -1):
+        like = max(out, key=lambda r: f.to_work(r.x, r.y)[1]) if direction > 0 else min(out, key=lambda r: f.to_work(r.x, r.y)[1])
+        while True:
+            along = size.across if like.turned else size.along
+            u_o, v0 = f.to_work(like.x, like.y)
+            v = v0 + direction * pitch
+            if not zone.intersects(Polygon([(u_o, v), (u_o + 1, v), (u_o + 1, v + depth), (u_o, v + depth)])):
+                break
+            places = [u for u in like.places if _fits(zone, u_o + u, v, along, depth)]
+            if not places:
+                break
+            first = places[0]
+            x, y = f.to_plan(u_o + first, v)
+            rid = new_id(rows + out)
+            keys = []
+            for _u in places:
+                for _h in range(halves):
+                    keys.append(_fresh_key(rows + out + [layout.Row(rid, 0, 0, 0, [], keys)], removed, rid))
+            added.extend(keys)
+            new = layout.Row(rid, round(x, DECIMALS), round(y, DECIMALS), like.azimuth, [u - first for u in places],
+                             keys, like.turned)
+            new = lengthened(new, rows + out)
+            out.append(new)
+            like = new
+    return out, added, gone
+
+
+def preview_shift(project, sf, side: int, distance: float, result=None) -> dict:
+    """What dragging side `side` of a sub-field that is its modules by `distance` metres would do (R445, phase B): the
+    outline it would have, the plan corners of the modules that would be added (green ghosts) and taken away (red),
+    their numbers. A move that would fold the outline is refused with the reason."""
+    from . import sides
+    ring = sides.shift(sf.ring, side, distance)
+    rows = rows_now(project, sf, result)
+    pitch = getattr(result, "pitch", None) if result is not None and not isinstance(result, Exception) else None
+    new_rows, added, gone = reshape(project, sf, rows, ring, sf.removed, pitch)
+    before = {m.key: m.corners for m in layout.modules_of(rows, project.module_of(sf), project.fill_params(sf),
+                                                            project.surface_of(sf), set(sf.removed))}
+    after = {m.key: m.corners for m in layout.modules_of(new_rows, project.module_of(sf), project.fill_params(sf),
+                                                           project.surface_of(sf), set(sf.removed))}
+    add = [after[k] for k in added if k in after]
+    remove = [before[k] for k in gone if k in before]
+    return {"ring": ring, "rows": new_rows, "add": add, "remove": remove, "added": len(add), "removed": len(remove)}
+
+
+def reshape_to(project, sfid: str, ring, result=None) -> Callable:
+    """The change that gives a sub-field that is its modules the outline `ring` (a vertex dragged or a side written,
+    R418): its rows reshaped as for a side (`reshape`: the modules stay where they are, those that no longer fit go,
+    new ones come on the same grid) and its outline brought flush with them again; one step of undo."""
+    sf = _subfield(project, sfid)
+    rows = rows_now(project, sf, result)
+    pitch = getattr(result, "pitch", None) if result is not None and not isinstance(result, Exception) else None
+    new_rows, _added, _gone = reshape(project, sf, rows, [tuple(map(float, q)) for q in ring], sf.removed, pitch)
+    laid = {k for r in new_rows for k in layout.row_keys(r, frame(project, sf, new_rows)[1])} if new_rows else set()
+
+    def change(q):
+        target = _subfield(q, sfid)
+        if not new_rows:
+            raise ValueError(_("no module would be left: the sub-field is its modules"))
+        target.removed = [k for k in target.removed if k in laid]
+        target.kept = [k for k in target.kept if k in laid]
+        _store(target, new_rows, q)
+    return change
+
+
+def shift_side(project, sfid: str, side: int, distance: float, result=None) -> Callable:
+    """The change that moves side `side` of a sub-field that is its modules by `distance` metres, its rows reshaped
+    (`reshape`) and its outline brought flush with them again; one step of undo."""
+    sf = _subfield(project, sfid)
+    found = preview_shift(project, sf, side, distance, result)
+    rows = found["rows"]
+    laid = {k for r in rows for k in layout.row_keys(r, frame(project, sf, rows)[1])} if rows else set()
+
+    def change(q):
+        target = _subfield(q, sfid)
+        target.removed = [k for k in target.removed if k in laid]
+        target.kept = [k for k in target.kept if k in laid]
+        if not rows:
+            raise ValueError(_("no module would be left: the sub-field is its modules"))
+        _store(target, rows, q)
+    return change

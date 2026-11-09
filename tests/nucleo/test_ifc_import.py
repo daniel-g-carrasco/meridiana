@@ -120,7 +120,7 @@ class RoundTrip(unittest.TestCase):
     def test_moved_site_and_origin_places_and_a_far_project(self):
         empty = model.Project()                                        # Milan's default site, nothing drawn yet
         place = ifc_import.place_of(self.found)
-        self.assertEqual(ifc_import.default_how(place, empty), "site")
+        self.assertEqual(ifc_import.default_how(place, empty), "hand")    # moving the site is the designer's choice
         moved = ifc_import.plan(self.found, empty, "site")
         self.assertAlmostEqual(moved.site.lat, RHO["lat"], places=6)
         self.assertEqual(sorted(round(b.footprint[0][0]) for b in moved.buildings),

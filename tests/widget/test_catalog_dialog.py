@@ -170,7 +170,7 @@ class CatalogueFilters(DialogCase):
                          ["manufacturer", "model", "pmax", "cell_family", "source"])
         self.choose(dialog.family, "topcon")
         dialog._search()
-        self.assertEqual(dialog.rows.rowCount(), 41)
+        self.assertEqual(dialog.rows.rowCount(), len(catalog.search("modules", family="topcon", source="curated", limit=None)))
         self.assertEqual({dialog.rows.index(i, 3).data() for i in range(dialog.rows.rowCount())}, {"TOPCon"})
         self.assertIn("n-type TOPCon", dialog.detail.toPlainText())             # the datasheet's own label
         self.assertIn("Cell family", dialog.detail.toPlainText())
@@ -229,7 +229,7 @@ class CatalogueFilters(DialogCase):
         self.assertLess(dialog.maker.count(), everyone)
         self.pick(dialog, "Jinko Solar")
         dialog._search()
-        self.assertEqual(dialog.rows.rowCount(), 4)                              # Jinko's four datasheets
+        self.assertEqual(dialog.rows.rowCount(), len(catalog.search("modules", manufacturer="Jinko Solar", source="curated", limit=None)))
         self.assertEqual({r["manufacturer"] for r in self.shown(dialog)}, {"Jinko Solar"})
         self.choose(dialog.origin, "")
         self.assertEqual(dialog.maker_name(), "Jinko Solar")                     # still there in the longer list

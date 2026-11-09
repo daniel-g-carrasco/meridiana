@@ -1,53 +1,85 @@
-// The report of Meridiana, sketch V1 «Cornice» of study 24 (docs/studio/24-relazione): the look and nothing else.
-// What it says comes from data.json, written by report_typst/compose.py: every text there is a JSON string, shown as
-// text and never read as markup, so a name with #, $, * or [ prints as it is. This file evaluates no string.
-// Files are read only from the root of the compilation, a temporary folder (report_typst/engine.py).
+// The look of Meridiana's report (R460, draft A5 of the study of 06/11/2026): square, thin rules, IBM Plex Sans Light,
+// warm greys without blue. Everything it shows comes from data.json (compose.py), the values of the look from
+// D.style (look.py, shared with the ODT and DOCX exports). No string of the data is ever evaluated as markup: the texts
+// of the user are shown as text. The formulas are TeX composed by Typst (the mitex package, carried by the program and
+// copied into the report's folder) in IBM Plex Math. Files are read only from the root of the compilation.
+
+#import "mitex/lib.typ": mitex, mi, mitex-convert, mitex-scope
 
 #let D = json("data.json")
 #let T = D.texts
+#let S = D.style
+#let TEX = D.at("tex", default: (:))
 
-// the palette of the sketch; the accent comes from the signing profile
-#let accent = rgb(D.accent)
-#let colours = (
-  acc: accent, sun: rgb("#e8a317"), leaf: rgb("#2e8b57"), slate: rgb("#2b3440"), red: rgb("#d9534f"),
-  ok: rgb("#2e7d4f"), warn: rgb("#b7791f"), fail: rgb("#c0392b"), info: rgb("#2a7fc4"), grey: rgb("#9aa2ab"),
-)
-#let ink = rgb("#1a1a1a")
-#let txt2 = rgb("#58616c")
-#let faint = rgb("#7d8792")
-#let card = rgb("#f3f3f0")
-#let rule-colour = rgb("#d4d4ce")
-#let radius-card = 8pt
-#let radius-table = 5pt
+#let accent = rgb(S.accent)
+#let colours = {
+  let c = (:)
+  for (k, v) in S.colours { c.insert(k, rgb(v)) }
+  c
+}
+#let ink = rgb(S.ink)
+#let txt2 = rgb(S.txt2)
+#let faint = rgb(S.faint)
+#let tint = rgb(S.tint)
+#let rule-colour = rgb(S.rule)
+#let hair = 0.4pt + rule-colour
+#let thin = 0.6pt + rule-colour
+#let body-font = S.font.body
+#let head-font = S.font.head
+#let table-font = S.font.table
+#let table-stretch = S.font.table_stretch * 1%
+#let math-font = S.font.math
+#let mono-font = S.font.mono
+#let head-weight = S.font.head_weight
+#let head-fill = rgb(S.head_fill)
+#let grid-colour = rgb(S.grid)
+// the vertical scale, in points: 6 pt is half a line of text
+#let SP = S.spacing
+#let sp(k) = SP.at(k) * 1pt
+// the charts' colours: taupe and sand, the losses hatched, the lines anthracite
+#let CH = S.chart
+#let ch(k) = rgb(CH.at(k))
+#let hatch(colour, bg) = {
+  let s = CH.hatch * 1pt
+  tiling(size: (s, s), {
+    place(rect(width: s, height: s, fill: bg, stroke: none))
+    place(line(start: (0pt, s), end: (s, 0pt), stroke: 0.5pt + colour))
+  })
+}
+#let loss-fill() = hatch(ch("loss"), ch("loss_bg"))
+#let line-width = CH.line_width * 1pt
 
 #let shown(name) = name != none and name != "" and name not in D.missing
 
 #set document(title: D.doc.title, author: D.doc.author)
-#set text(font: ("Titillium Web", "Inter"), size: 9.5pt, lang: D.lang, fill: ink, hyphenate: false)
-#set par(justify: false, leading: 0.52em, spacing: 0.75em)
-#set block(spacing: 0.9em)
+#set text(font: (body-font, "IBM Plex Sans", "IBM Plex Math"), weight: S.font.weight, size: S.size * 1pt, lang: D.lang, fill: ink,
+  hyphenate: S.hyphenate)
+#set par(justify: S.justify, leading: 0.58em, spacing: sp("par"))
+#set block(spacing: sp("par"))
+#show math.equation: set text(font: math-font, weight: 400)
 
-// page numbers: the attachments' pages come between the report's, in the PDF as merged (ui/report.py)
 #let attachments-before(p) = {
   query(<meridiana-attachment>).filter(m => m.location().page() < p).map(m => m.value.pages).sum(default: 0)
 }
 #let shown-page(p) = p + attachments-before(p)
 #let total-pages() = counter(page).final().first() + D.attachments.map(a => a.pages).sum(default: 0)
 
-// the marks of the results, drawn: no font is asked for them. The same flat symbols as the window's (R330): the
-// tracks come from data.json (meridiana/symbol_shapes.py), the colour is the report's own, the sign white on it
 #let mark(level, size: 8.2pt) = {
   let svg = D.marks.at(level, default: D.marks.info).replace("@fill@", colours.at(level, default: colours.info).to-hex())
   box(width: size, height: size, baseline: 12%, image(bytes(svg), format: "svg", width: size))
 }
 
-// an image no wider than the room it has
 #let fitted(name) = layout(size => context {
   let natural = measure(image(name))
   if natural.width > size.width { image(name, width: size.width) } else { image(name) }
 })
 
-// a piece of text: a string, or a run (bold, muted, mark, formula), or a list of them
+// a symbol: from its TeX when there is one, else its image
+#let symbol(c) = {
+  let tex = TEX.at(c.formula, default: none)
+  if tex != none { mi(tex) } else if shown(c.formula) { box(baseline: 20%, fitted(c.formula)) }
+}
+
 #let inline(c) = {
   if c == none { [] }
   else if type(c) == str { c }
@@ -56,43 +88,63 @@
   else if "bb" in c { text(weight: 700, c.bb) }
   else if "m" in c { text(fill: txt2, c.m) }
   else if "mark" in c { mark(c.mark) }
-  else if "formula" in c { if shown(c.formula) { box(baseline: 20%, fitted(c.formula)) } }
+  else if "formula" in c { symbol(c) }
   else { [] }
 }
 
-// the head of a page: the logo in the corner when there is one (the rest closes up when not), what and for whom, the
-// revision and the date on the right, the sketch's thin rule under them
-#let logo-box(height: 11.5mm, room: 44mm) = context {
+// a number in two parts, the whole and the decimals with the unit: the digits aligned on the comma
+#let num-parts(s) = {
+  if type(s) != str { return none }
+  let m = s.match(regex("^(-?[0-9][0-9.]*)(,[0-9]+)?( .*)?$"))
+  if m == none { none } else {
+    (int: m.captures.at(0),
+     rest: (if m.captures.at(1) == none { "" } else { m.captures.at(1) }) + (if m.captures.at(2) == none { "" } else { m.captures.at(2) }))
+  }
+}
+#let decimal-cell(c, share: 58%) = {
+  let p = num-parts(c)
+  if p == none { align(right, inline(c)) } else {
+    box(width: share, align(right, p.int)) + box(width: 100% - share, align(left, p.rest))
+  }
+}
+
+// the header and the footer: the logo on the left, the words on the right, the same thin rule
+#let logo-box(height: 10mm, room: 40mm) = context {
   let size = measure(image(D.doc.logo))
   let w = size.width / size.height * height
   if w > room { image(D.doc.logo, width: room) } else { image(D.doc.logo, height: height) }
 }
+#let logo-placeholder(height: 9mm, width: 36mm) = box(width: width, height: height,
+  stroke: (paint: rule-colour, thickness: 0.5pt, dash: "densely-dashed"),
+  align(center + horizon, text(6.5pt, fill: faint, tracking: 0.12em, "LOGO")))
+#let has-logo = D.doc.logo != none and shown(D.doc.logo)
 #let page-header = context {
+  set par(justify: false)
+  set text(hyphenate: false)
   let p = here().page()
   let chapters = query(<meridiana-chapter>).filter(m => {
     let at = m.location()
     at.page() < p or (at.page() == p and (at.position().y < 50mm or m.value.id.starts-with("attachment")))
   })
-  let title = if p == 1 and D.cover != none { T.report } else { D.doc.head_title }
+  let short = D.doc.at("doc_short", default: T.report)
   let sub = D.doc.head_sub
-  let sub = if chapters.len() > 0 and not (p == 1 and D.cover != none) {
-    sub + (if sub != "" { " · " } else { "" }) + chapters.last().value.title
-  } else { sub }
-  let middle = stack(spacing: 2.4pt,
-    text(8.6pt, weight: 700, title),
-    text(7.2pt, fill: txt2, sub))
-  let right-side = align(right, stack(spacing: 2.4pt,
-    text(7.8pt, weight: 600, D.doc.revision),
-    text(7.2pt, fill: txt2, D.doc.date)))
-  let has-logo = D.doc.logo != none and shown(D.doc.logo)
-  block(width: 100%, inset: (bottom: 5pt), stroke: (bottom: 1.1pt + accent), breakable: false,
-    grid(columns: if has-logo { (auto, 1fr, auto) } else { (1fr, auto) }, column-gutter: 8pt, align: horizon,
-      ..(if has-logo { (logo-box(),) } else { () }), middle, right-side))
+  let sub = if chapters.len() > 0 { sub + (if sub != "" { " · " } else { "" }) + chapters.last().value.title } else { sub }
+  let logo-side = if has-logo { logo-box() } else if D.doc.at("logo_placeholder", default: false) { logo-placeholder() } else { none }
+  set text(font: head-font)
+  block(width: 100%, inset: (bottom: 5pt), stroke: (bottom: S.hf_rule * 1pt + rgb(S.hf_colour)), breakable: false,
+    grid(columns: (auto, 1fr), column-gutter: 8pt, align: (left + bottom, right + bottom),
+      logo-side,
+      align(right, stack(spacing: 2.4pt,
+        text(8pt, weight: 600, short + " · " + D.doc.head_title),
+        text(7pt, fill: txt2, sub),
+        text(7pt, fill: txt2, D.doc.revision + (if D.doc.revision != "" { " · " } else { "" }) + D.doc.date)))))
 }
 #let page-footer = context {
+  set par(justify: false)
+  set text(hyphenate: false)
   let p = here().page()
-  set text(7.2pt, fill: txt2)
-  block(width: 100%, inset: (top: 5pt), stroke: (top: 0.6pt + rule-colour), breakable: false,
+  set text(7pt, fill: txt2, font: head-font)
+  block(width: 100%, inset: (top: 5pt), stroke: (top: S.hf_rule * 1pt + rgb(S.hf_colour)), breakable: false,
     grid(columns: (1fr, auto, 1fr), column-gutter: 8pt,
       stack(spacing: 2.2pt, text(fill: ink, weight: 600, D.doc.foot_left), D.doc.foot_left2),
       align(center, stack(spacing: 2.2pt, D.doc.foot_centre, D.doc.foot_centre2)),
@@ -101,89 +153,91 @@
         D.doc.foot_right2))))
 }
 
-#set page(paper: "a4", margin: (x: 15mm, top: 26mm, bottom: 19mm), header-ascent: 3.5mm, footer-descent: 3mm,
-  header: page-header, footer: page-footer)
+#set page(paper: "a4", margin: (left: S.margin_left * 1mm, right: 16mm, top: 25mm, bottom: 19mm),
+  header-ascent: 4mm, footer-descent: 3mm, header: page-header, footer: page-footer)
 
-// the headings: chapters, sections with their coloured square, the small ones
-#show heading: it => it.body
-#show heading.where(level: 1): it => block(above: 15pt, below: 8pt, sticky: true, width: 100%, breakable: false,
-  text(15.5pt, weight: 700, it.body))
-#show heading.where(level: 2): it => block(above: 12pt, below: 6pt, sticky: true, breakable: false,
-  text(10.8pt, weight: 700, it.body))
-#show heading.where(level: 3): it => block(above: 10pt, below: 4.5pt, sticky: true, breakable: false,
-  text(9.5pt, weight: 700, it.body))
-#show heading.where(level: 4): it => block(above: 8pt, below: 3.5pt, sticky: true, breakable: false,
-  text(8.8pt, weight: 600, fill: txt2, it.body))
-
-#let square-of(c) = box(baseline: 0.6pt, rect(width: 7pt, height: 7pt, radius: 2pt, fill: colours.at(c, default: colours.slate)))
-
-// the four numbers: rounded tiles with a coloured edge on top, all as tall as the tallest
-#let tile-inside(t) = block(width: 100%, radius: radius-card, clip: true, fill: card, breakable: false, stack(
-  rect(width: 100%, height: 3.4pt, fill: colours.at(t.c, default: colours.slate)),
-  pad(x: 8pt, top: 7pt, bottom: 7pt, {
-    set par(leading: 0.4em)
-    stack(spacing: 5pt,
-      box[#text(19pt, weight: 700, t.n)#if t.u != "" { h(2pt); text(8.5pt, weight: 600, fill: txt2, t.u) }],
-      text(6.8pt, weight: 600, fill: txt2, tracking: 0.05em, upper(t.l)),
-      ..(if t.s != "" { (text(6.6pt, fill: faint, t.s),) } else { () }))
-  })))
-#let tiles(b) = layout(size => {
-  let gap = 2.2mm
-  let n = b.items.len()
-  let w = (size.width - gap * (n - 1)) / n
-  let inside(t) = block(width: w, radius: radius-card, clip: true, fill: card, breakable: false,
-    tile-inside(t))
-  let h = calc.max(..b.items.map(t => measure(inside(t)).height))
-  grid(columns: (w,) * n, column-gutter: gap,
-    ..b.items.map(t => block(width: w, height: h, radius: radius-card, clip: true, fill: card, tile-inside(t))))
+// the headings: chapters and sections numbered by Typst (1, 1.1), the sub-headings not; never hyphenated
+#set heading(numbering: "1.1")
+#show heading.where(level: 1): it => {
+  let num = if it.numbering != none { counter(heading).display(it.numbering) } else { none }
+  set text(font: head-font, weight: head-weight, hyphenate: false)
+  set par(justify: false)
+  block(above: sp("h1a"), below: sp("h1b"), sticky: true, width: 100%, breakable: false,
+    text(17pt, if num != none { num + h(0.55em) } + it.body))
+}
+#show heading.where(level: 2): it => {
+  let num = if it.numbering != none { counter(heading).display(it.numbering) } else { none }
+  set text(font: head-font, weight: head-weight, hyphenate: false)
+  set par(justify: false)
+  block(above: sp("h2a"), below: sp("h2b"), sticky: true, breakable: false,
+    text(11pt, if num != none { text(fill: accent, num) + h(0.55em) } + it.body))
+}
+#show heading.where(level: 3): it => block(above: sp("h3a"), below: sp("h3b"), sticky: true, breakable: false, {
+  set text(hyphenate: false)
+  set par(justify: false)
+  text(9.6pt, font: head-font, weight: 600, it.body)
+})
+#show heading.where(level: 4): it => block(above: sp("h4a"), below: sp("h4b"), sticky: true, breakable: false, {
+  set text(hyphenate: false)
+  set par(justify: false)
+  text(8.8pt, font: head-font, weight: 600, fill: txt2, it.body)
 })
 
-// a table: outer corners rounded, a line between the rows and one between the columns, the head again on every page,
-// a row never split between two pages
-#let hair = 0.45pt + rule-colour
-#let on-dark = 0.45pt + rgb("#59616d")
+// the results in boxes: cells of a grid with a thin rule, a rule in the result's colour on top, the number large
+#let dash(b) = block(width: 100%, above: sp("dasha"), below: sp("dashb"), breakable: false, {
+  let n = b.items.len()
+  let cols = calc.max(1, calc.min(n, b.at("cols", default: 4)))
+  set par(leading: 0.4em, justify: false)
+  set text(hyphenate: false)
+  grid(columns: (1fr,) * cols, column-gutter: 3mm, row-gutter: 3mm,
+    ..b.items.map(t => grid.cell(
+      stroke: (top: 2pt + colours.at(t.c, default: colours.slate), left: hair, right: hair, bottom: hair),
+      inset: (x: 7pt, top: 7pt, bottom: 6pt),
+      stack(spacing: 4.5pt,
+        text(6.6pt, weight: 600, fill: txt2, tracking: 0.06em, font: head-font, upper(t.l)),
+        box[#text(19pt, weight: 300, font: head-font, t.n)#if t.u != "" { h(2.5pt); text(8pt, weight: 500, fill: txt2, t.u) }],
+        ..(if t.at("s", default: "") != "" { (text(6.8pt, fill: faint, t.s),) } else { () })))))
+})
+
+// the tables, «grid»: rules across and down in a light grey, the head on a grey ground, the numbers on the comma
+#let grid-stroke = 0.4pt + grid-colour
+#let head-text(h) = text(7.8pt, weight: 600, fill: rgb("#3a3a37"), h)
 #let data-table(b) = {
   let n = b.widths.len()
   let columns = if b.source { b.widths.slice(0, n - 1).map(w => w * 1fr) + (15mm,) } else { b.widths.map(w => w * 1fr) }
   let has-head = b.head != none
+  let decimal-col = range(n).map(i => i in b.right
+    and b.rows.any(r => type(r) == array and r.len() > i and type(r.at(i)) == str and r.at(i).contains(",")))
   let cell-style(c, i, result) = {
-    let body = inline(c)
-    let body = if result { text(weight: 700, body) } else { body }
-    if i == n - 1 and b.source { text(6.6pt, font: "Inter", fill: faint, body) } else { body }
+    let body = if decimal-col.at(i) and type(c) == str { decimal-cell(c) } else { inline(c) }
+    let body = if result { text(weight: 600, body) } else { body }
+    if i == n - 1 and b.source { text(6.6pt, font: mono-font, fill: faint, inline(c)) } else { body }
   }
   let cells = ()
   if has-head {
-    cells.push(table.header(..b.head.enumerate().map(((i, h)) => table.cell(fill: colours.slate,
-      align: (if i in b.right { right } else { left }) + bottom,
-      text(7.6pt, weight: 600, fill: white, inline(h))))))
+    cells.push(table.header(..b.head.enumerate().map(((i, h)) => table.cell(
+      align: (if i in b.right { right } else { left }) + bottom, fill: head-fill,
+      head-text(inline(h))))))
   }
   for (r, row) in b.rows.enumerate() {
     if type(row) == dictionary {
-      let group = table.cell(colspan: n, fill: card, text(weight: 700, inline(row.group)))
-      cells.push(table.header(level: 2, group))
+      cells.push(table.header(level: 2, table.cell(colspan: n, fill: tint, text(weight: 600, inline(row.group)))))
     } else {
       let result = r == b.result
       for (i, c) in row.enumerate() {
-        cells.push(table.cell(fill: if result { card } else { none }, cell-style(c, i, result)))
+        cells.push(table.cell(fill: if result { tint } else { none }, cell-style(c, i, result)))
       }
     }
   }
   set table.cell(breakable: false)
-  set text(8.3pt)
-  set par(leading: 0.42em)
-  block(width: 100%, radius: radius-table, clip: true, stroke: 0.6pt + rule-colour, breakable: true, above: 5pt, below: 7pt,
-    table(columns: columns, inset: (x: 4.2pt, y: 3.1pt),
+  set text(font: table-font, stretch: table-stretch, size: S.table_size * 1pt, weight: 400)
+  set par(leading: 0.42em, justify: false)
+  block(width: 100%, breakable: true, above: sp("taba"), below: sp("tabb"),
+    table(columns: columns, inset: (x: 4pt, y: S.table_pad * 1pt),
       align: (x, y) => (if x in b.right { right } else { left }) + top,
-      stroke: (x, y) => {
-        let dark = has-head and y == 0
-        (left: if x > 0 { if dark { on-dark } else { hair } } else { none },
-         top: if y > 0 { if dark { on-dark } else { hair } } else { none })
-      },
-      ..cells))
+      stroke: grid-stroke, ..cells))
 }
 
-// label and value in a rounded box: a filled card with a line between the rows and one between the columns; the code
-// of the register in a third column when the report has the register
 #let facts(b) = {
   let with-source = b.rows.any(r => r.len() > 2)
   let cells = ()
@@ -192,28 +246,28 @@
     cells.push(text(fill: txt2, inline(row.at(0))))
     cells.push(table.cell(align: value, if b.strong { text(weight: 600, inline(row.at(1))) } else { inline(row.at(1)) }))
     if with-source {
-      cells.push(table.cell(align: right + horizon, text(6.6pt, font: "Inter", fill: faint, inline(row.at(2)))))
+      cells.push(table.cell(align: right + horizon, text(6.6pt, font: mono-font, fill: faint, inline(row.at(2)))))
     }
   }
-  block(width: 100%, radius: radius-card, fill: card, inset: (x: 5pt, y: 2.2pt), breakable: false, above: 5pt, below: 7pt, {
+  block(width: 100%, breakable: false, above: sp("taba"), below: sp("tabb"), {
     set table.cell(breakable: false)
-    set text(8.4pt)
-    set par(leading: 0.42em)
+    set text(font: table-font, stretch: table-stretch, size: 8.5pt)
+    set par(leading: 0.42em, justify: false)
     table(columns: if with-source { (b.ratio.at(0) * 1fr, b.ratio.at(1) * 1fr, auto) }
                    else { (b.ratio.at(0) * 1fr, b.ratio.at(1) * 1fr) },
-      inset: (x: 3.4pt, y: 2.9pt),
-      stroke: (x, y) => (left: if x > 0 { hair } else { none }, top: if y > 0 { hair } else { none }),
-      ..cells)
+      inset: (x: 3.6pt, y: 3.4pt), stroke: grid-stroke, ..cells)
   })
 }
 
-#let chips(items) = block(above: 5pt, below: 3pt, breakable: false, {
-  set text(7.4pt)
+#let chips(items) = block(above: 5pt, below: 4pt, breakable: false, {
+  set text(7.4pt, font: table-font)
+  set par(justify: false)
   for c in items {
-    box(fill: card, radius: 8pt, inset: (x: 5pt, y: 2.6pt), outset: (y: 0pt), {
+    box(stroke: hair, inset: (x: 5pt, y: 2.6pt), {
       if "fill" in c {
-        box(baseline: 0.5pt, rect(width: 6.5pt, height: 6.5pt, radius: 1.5pt,
-          fill: rgb(c.fill), stroke: if c.at("edge", default: none) != none { (paint: rgb(c.edge), thickness: 0.6pt,
+        let fill = if c.at("hatch", default: false) { loss-fill() } else { rgb(c.fill) }
+        box(baseline: 0.5pt, rect(width: 6pt, height: 6pt, fill: fill,
+          stroke: if c.at("edge", default: none) != none { (paint: rgb(c.edge), thickness: 0.6pt,
           dash: if c.at("dash", default: false) { "densely-dashed" } else { "solid" }) } else { none }))
         h(3pt)
       }
@@ -223,115 +277,118 @@
   }
 })
 
-// the image of a figure in its rounded frame, as tall as the picture wants within `max`; the frame fills what the page
-// leaves when `fill` is set (the closed page of the summary)
-#let framed(b, width: 100%) = layout(size => context {
+// the figures: a thin frame for the drawings, none for the 3D views
+#let is-view(name) = type(name) == str and name.starts-with("view_")
+#let framed(b) = layout(size => context {
   let natural = measure(image(b.image))
   let w = size.width
   let ratio = natural.height / natural.width
   let top = if b.at("max_h", default: none) != none { b.max_h * 1mm } else { 120mm }
   let h = calc.min(w * ratio, top)
-  block(width: w, height: h, radius: 10pt, clip: true, breakable: false,
-    fill: if b.at("tint", default: false) { card } else { white },
-    stroke: if b.at("tint", default: false) { none } else { 0.6pt + rule-colour },
+  block(width: w, height: h, breakable: false,
+    fill: if b.at("tint", default: false) { tint } else { white },
+    stroke: if is-view(b.image) { none } else { thin },
     inset: b.at("inset", default: 0) * 1mm,
     align(center + horizon, image(b.image, width: 100%, height: 100%, fit: "contain")))
 })
-#let caption(c) = block(above: 4pt, below: 7pt, {
-  set par(leading: 0.42em)
-  text(7.4pt, fill: txt2, inline(c))
-})
-
+#let caption-text(c) = { set par(leading: 0.42em, justify: false); text(7.6pt, fill: txt2, inline(c)) }
+#let caption(c) = block(above: sp("capa"), below: sp("capb"), caption-text(c))
 #let figure-block(b) = {
   if shown(b.image) {
-    block(above: 5pt, below: 7pt, breakable: false, {
+    block(above: sp("figa"), below: sp("figb"), breakable: false, {
       framed(b)
       if b.at("chips", default: none) != none { chips(b.chips) }
-      if b.at("caption", default: none) != none { caption(b.caption) }
+      if b.at("caption", default: none) != none { block(above: sp("capa"), below: 0pt, caption-text(b.caption)) }
     })
   }
 }
-
-// a filling figure: the rest of the page, for the closed page of the summary
 #let fill-figure(b) = if shown(b.image) {
-  block(width: 100%, height: 1fr, above: 6pt, below: 4pt, radius: 10pt, clip: true, stroke: 0.6pt + rule-colour, fill: white,
-    align(center + horizon, image(b.image, width: 100%, height: 100%, fit: "contain")))
+  block(width: 100%, height: 1fr, above: sp("figa"), below: 4pt, stroke: if is-view(b.image) { none } else { thin },
+    fill: white, align(center + horizon, image(b.image, width: 100%, height: 100%, fit: "contain")))
   if b.at("caption", default: none) != none { caption(b.caption) }
 }
 
-// charts drawn here in the document's style: full bars with rounded tops, their values on them, no axes
-#let bar-top = (top-left: 1.8pt, top-right: 1.8pt)
-#let bars(b) = block(above: 6pt, below: 5pt, breakable: false, width: 100%, {
+// the charts: flat, square, a light grid behind the bars
+#let series-colour(s) = if s.color == "sun" { ch("calc") } else if s.color in ("slate", "acc") { ch("ref") } else if s.color in colours { colours.at(s.color) } else { rgb(s.color) }
+#let grid-lines(h, n: 4) = { for k in range(1, n + 1) { place(dy: h - k * h / n, line(length: 100%, stroke: CH.grid_width * 1pt + ch("grid"))) } }
+#let bars(b) = block(above: sp("figa"), below: sp("par"), breakable: false, width: 100%, {
   let h = b.h * 1mm
-  let many = b.series.len()
-  let top = calc.max(..b.series.map(s => calc.max(..s.values)), 1e-9)
-  if many > 1 { chips(b.series.map(s => (t: s.name, fill: if s.color in colours { colours.at(s.color).to-hex() } else { s.color }))) }
-  let colour(s) = colours.at(s.color, default: rgb("#999999"))
+  let many = calc.max(1, b.series.len())
+  let top = calc.max(..b.series.map(s => calc.max(0, ..s.values)), 1e-9)
+  if b.series.len() > 1 { chips(b.series.map(s => (t: s.name, fill: series-colour(s).to-hex()))) }
   let bar-column(i) = {
     let group = b.series.map(s => {
       let v = s.values.at(i)
-      let bar = rect(width: 100%, height: calc.max(v / top, 0.002) * h, radius: bar-top, fill: colour(s))
+      let bar = rect(width: 100%, height: calc.max(v / top, 0.002) * h, fill: series-colour(s))
       if s.at("texts", default: none) != none {
-        stack(spacing: 1.5pt, align(center, text(6.1pt, fill: txt2, s.texts.at(i))), bar)
+        stack(spacing: 1.5pt, align(center, text(6.1pt, fill: txt2, font: table-font, s.texts.at(i))), bar)
       } else { bar }
     })
     grid(columns: (1fr,) * many, column-gutter: 0.6pt, align: bottom, ..group)
   }
-  grid(columns: (1fr,) * b.labels.len(), column-gutter: if many > 1 { 2.4pt } else { 1.6pt }, row-gutter: 0pt, align: bottom,
-    ..range(b.labels.len()).map(bar-column))
-  line(length: 100%, stroke: 0.6pt + rgb("#c9c9c4"))
+  let n = calc.max(1, b.labels.len())
+  box(width: 100%, {
+    grid-lines(h)
+    grid(columns: (1fr,) * n, column-gutter: if many > 1 { 2.4pt } else { 1.6pt }, row-gutter: 0pt, align: bottom,
+      ..range(b.labels.len()).map(bar-column))
+  })
+  line(length: 100%, stroke: 0.6pt + ch("axis"))
   v(-0.55em)
-  grid(columns: (1fr,) * b.labels.len(), column-gutter: if many > 1 { 2.4pt } else { 1.6pt },
-    ..b.labels.map(l => align(center, text(6.8pt, fill: txt2, l))))
+  grid(columns: (1fr,) * n, column-gutter: if many > 1 { 2.4pt } else { 1.6pt },
+    ..b.labels.map(l => align(center, text(6.8pt, fill: txt2, font: table-font, l))))
 })
 
 #let waterfall(b) = block(above: 8pt, below: 5pt, breakable: false, width: 100%, {
   let h = b.h * 1mm
-  let colour(t) = if t == "total" { colours.sun } else if t == "gain" { colours.leaf } else if t == "zero" { colours.grey } else { colours.red }
-  grid(columns: (1fr,) * b.items.len(), column-gutter: 3pt, align: bottom,
+  let colour(t) = if t == "total" { ch("total") } else if t == "gain" { ch("gain") } else if t == "zero" { ch("zero") } else { loss-fill() }
+  let n = calc.max(1, b.items.len())
+  grid(columns: (1fr,) * n, column-gutter: 3pt, align: bottom,
     ..b.items.map(i => stack(spacing: 1.5pt,
-      align(center, text(6.3pt, weight: 600, i.text)),
-      ..(if i.at("extra", default: "") != "" { (align(center, text(6pt, fill: colours.leaf.darken(20%), weight: 600, i.extra)),) } else { () }),
-      rect(width: 100%, height: calc.max(i.h, 0.012) * h, radius: bar-top, fill: colour(i.t)))))
-  line(length: 100%, stroke: 0.6pt + rgb("#c9c9c4"))
+      align(center, text(6.3pt, weight: 600, font: table-font, i.text)),
+      ..(if i.at("extra", default: "") != "" { (align(center, text(6pt, fill: ch("extra"), weight: 600, i.extra)),) } else { () }),
+      rect(width: 100%, height: calc.max(i.h, 0.012) * h, fill: colour(i.t),
+        stroke: if i.t == "loss" { 0.5pt + ch("loss") } else { none }))))
+  line(length: 100%, stroke: 0.6pt + ch("axis"))
   v(-0.55em)
-  set par(leading: 0.3em)
-  grid(columns: (1fr,) * b.items.len(), column-gutter: 3pt,
-    ..b.items.map(i => align(center, text(5.9pt, fill: txt2, i.label))))
+  set par(leading: 0.3em, justify: false)
+  grid(columns: (1fr,) * n, column-gutter: 3pt,
+    ..b.items.map(i => align(center, text(5.9pt, fill: txt2, font: table-font, i.label))))
 })
 
-// what a month's bars cannot say: the line of what is used on site over the produced and consumed bars
 #let balance(b) = block(above: 6pt, below: 5pt, breakable: false, width: 100%, {
   let h = b.h * 1mm
-  chips((
-    (t: b.names.at(0), fill: colours.sun.to-hex()),
-    (t: b.names.at(1), fill: colours.slate.to-hex()),
-    (t: b.names.at(2), fill: colours.leaf.to-hex()),
-  ))
+  chips(((t: b.names.at(0), fill: ch("produced").to-hex()), (t: b.names.at(1), fill: ch("consumed").to-hex()),
+         (t: b.names.at(2), fill: "#ffffff", edge: ch("self").to-hex())))
   layout(size => {
-    let n = b.labels.len()
+    let n = calc.max(1, b.labels.len())
     let w = size.width / n
     let pad-x = 0.14 * w
     let bw = (w - 2 * pad-x) / 2
     box(width: size.width, height: h, {
-      for i in range(n) {
+      grid-lines(h)
+      for i in range(b.labels.len()) {
         let x = i * w + pad-x
         let p = b.first.at(i) * h
         let c = b.second.at(i) * h
-        place(dx: x, dy: h - p, rect(width: bw, height: p, radius: bar-top, fill: colours.sun))
-        place(dx: x + bw, dy: h - c, rect(width: bw, height: c, radius: bar-top, fill: colours.slate))
+        place(dx: x, dy: h - p, rect(width: bw, height: p, fill: ch("produced")))
+        place(dx: x + bw, dy: h - c, rect(width: bw, height: c, fill: ch("consumed")))
       }
-      let points = range(n).map(i => ((i + 0.5) * w, h - b.line.at(i) * h))
-      place(curve(stroke: (paint: colours.leaf, thickness: 1.3pt, join: "round"),
-        curve.move(points.at(0)), ..points.slice(1).map(p => curve.line(p))))
+      let points = range(b.labels.len()).map(i => ((i + 0.5) * w, h - b.line.at(i) * h))
+      if points.len() > 1 {
+        // a white halo under the line: it reads over the bars of the same grey
+        place(curve(stroke: (paint: white, thickness: line-width + 2.2pt, join: "round"),
+          curve.move(points.at(0)), ..points.slice(1).map(p => curve.line(p))))
+        place(curve(stroke: (paint: ch("self"), thickness: line-width, join: "round"),
+          curve.move(points.at(0)), ..points.slice(1).map(p => curve.line(p))))
+      }
       for pt in points {
-        place(dx: pt.at(0) - 1.6pt, dy: pt.at(1) - 1.6pt, circle(radius: 1.6pt, fill: colours.leaf, stroke: 0.5pt + white))
+        place(dx: pt.at(0) - 1.6pt, dy: pt.at(1) - 1.6pt, rect(width: 3.2pt, height: 3.2pt, fill: ch("self"), stroke: 0.5pt + white))
       }
     })
     v(-0.55em)
-    line(length: 100%, stroke: 0.6pt + rgb("#c9c9c4"))
+    line(length: 100%, stroke: 0.6pt + ch("axis"))
     v(-0.55em)
-    grid(columns: (1fr,) * n, ..b.labels.map(l => align(center, text(6.8pt, fill: txt2, l))))
+    grid(columns: (1fr,) * n, ..b.labels.map(l => align(center, text(6.8pt, fill: txt2, font: table-font, l))))
   })
 })
 
@@ -343,18 +400,23 @@
     let zero = h - b.zero * h
     box(width: size.width, height: h, {
       let pts = b.points.map(at)
-      let first-x = pts.first().at(0)
-      let last-x = pts.last().at(0)
-      place(curve(fill: accent.transparentize(84%), stroke: none,
-        curve.move((first-x, zero)), ..pts.map(p => curve.line(p)), curve.line((last-x, zero)), curve.close()))
-      place(line(start: (16mm, zero), end: (size.width, zero), stroke: 0.6pt + rgb("#9a9a94")))
-      place(curve(stroke: (paint: accent, thickness: 1.5pt, join: "round"),
-        curve.move(pts.at(0)), ..pts.slice(1).map(p => curve.line(p))))
+      place(dx: 16mm, box(width: w, height: h, grid-lines(h)))
+      if pts.len() > 1 {
+        let first-x = pts.first().at(0)
+        let last-x = pts.last().at(0)
+        place(curve(fill: ch("cash").transparentize(82%), stroke: none,
+          curve.move((first-x, zero)), ..pts.map(p => curve.line(p)), curve.line((last-x, zero)), curve.close()))
+      }
+      place(line(start: (16mm, zero), end: (size.width, zero), stroke: 0.6pt + ink))
+      if pts.len() > 1 {
+        place(curve(stroke: (paint: ch("cash_line"), thickness: line-width, join: "round"),
+          curve.move(pts.at(0)), ..pts.slice(1).map(p => curve.line(p))))
+      }
       for t in b.y {
-        place(dy: h - t.at("at") * h - 3.5pt, box(width: 14.5mm, align(right, text(6.6pt, fill: txt2, t.t))))
+        place(dy: h - t.at("at") * h - 3.5pt, box(width: 14.5mm, align(right, text(6.6pt, fill: txt2, font: table-font, t.t))))
       }
       for t in b.x {
-        place(dx: 16mm + t.at("at") * w - 5mm, dy: h + 1.5pt, box(width: 10mm, align(center, text(6.6pt, fill: txt2, t.t))))
+        place(dx: 16mm + t.at("at") * w - 5mm, dy: h + 1.5pt, box(width: 10mm, align(center, text(6.6pt, fill: txt2, font: table-font, t.t))))
       }
     })
     v(7pt)
@@ -366,59 +428,123 @@
   layout(size => {
     let w = size.width - 26mm
     box(width: size.width, height: h + 9pt, {
-      place(dx: 7mm, block(width: w, height: h, radius: 4pt, clip: true,
+      place(dx: 7mm, block(width: w, height: h, stroke: hair,
         image(b.image, width: w, height: h, fit: "stretch", scaling: "pixelated")))
-      for t in b.hours {
-        place(dy: h - t.at("at") * h - 3.5pt, box(width: 5.6mm, align(right, text(6.5pt, fill: txt2, t.t))))
-      }
-      for t in b.months {
-        place(dx: 7mm + t.at("at") * w, dy: h + 1.5pt, text(6.5pt, fill: txt2, t.t))
-      }
-      // the scale of the colours
-      place(dx: size.width - 14mm, block(width: 3mm, height: h, radius: 2pt,
-        fill: gradient.linear(white, accent, angle: -90deg), stroke: 0.4pt + rule-colour))
+      for t in b.hours { place(dy: h - t.at("at") * h - 3.5pt, box(width: 5.6mm, align(right, text(6.5pt, fill: txt2, t.t)))) }
+      for t in b.months { place(dx: 7mm + t.at("at") * w, dy: h + 1.5pt, text(6.5pt, fill: txt2, t.t)) }
+      place(dx: size.width - 14mm, block(width: 3mm, height: h, fill: gradient.linear(white, accent, angle: -90deg), stroke: hair))
       place(dx: size.width - 10mm, text(6.5pt, fill: txt2, b.top))
       place(dx: size.width - 10mm, dy: h - 8pt, text(6.5pt, fill: txt2, "0 " + b.unit))
     })
   })
 })
 
-#let badge(b) = block(above: 4pt, below: 5pt, breakable: false,
-  box(fill: colours.at(b.level).lighten(84%), radius: 12pt, inset: (x: 7pt, y: 4.2pt), {
-    box(baseline: 15%, mark(b.level, size: 10.5pt))
+#let badge(b) = block(above: 4pt, below: 6pt, breakable: false,
+  box(stroke: 0.6pt + colours.at(b.level), inset: (x: 7pt, y: 4pt), {
+    box(baseline: 15%, mark(b.level, size: 10pt))
     h(4pt)
     text(8.6pt, weight: 600, fill: colours.at(b.level).darken(30%), b.t)
   }))
 
-#let bullets(b) = block(above: 4pt, below: 7pt, {
-  set text(8.8pt)
-  list(tight: true, marker: text(fill: accent, "•"), indent: 2pt, ..b.items.map(i => inline(i)))
+#let bullets(b) = block(above: sp("lista"), below: sp("listb"), {
+  set text(9pt)
+  list(tight: false, marker: text(fill: accent, "–"), indent: 2pt, spacing: sp("lista"), ..b.items.map(i => inline(i)))
 })
 
-// the blocks of a chapter
+// a step of a calculation: its title with its code, the explanation, the equation on a line of its own and numbered,
+// «where:» with the symbols, their values on the comma and their sources, the hour of the example, the same equation
+// with the numbers in place of the symbols ending in the result, in evidence (R479), the reference
+// a line with the numbers (R479): mitex makes the comma of «30{,}0» a punctuation comma, spaced after; between two
+// digits it is the decimal comma, set as an ordinary character
+#let numbers-line(t) = {
+  let res = mitex-convert(t)
+  let tight = res.replace(regex("(\\d)\\s*\\\\,\\s*(\\d)"), m => m.captures.at(0) + "\",\"" + m.captures.at(1))
+  math.equation(block: true, eval("$" + tight + "$", scope: mitex-scope))
+}
+
+#let step(b) = {
+  let code = if b.code != "" { text(font: mono-font, size: 8pt, fill: accent, b.code) + h(6pt) } else { none }
+  heading(level: 3, bookmarked: false, outlined: false, numbering: none, [#code#b.title])
+  if b.explanation != "" { par(inline(b.explanation)) }
+  let eq = if b.tex != "" { mitex(b.tex) } else { none }
+  let number = text(8pt, font: table-font, fill: txt2, "(" + b.eq + ")")
+  if eq != none {
+    block(above: sp("eqa"), below: sp("eqb"), width: 100%, breakable: false,
+      grid(columns: (1fr, auto), align: horizon, inset: (x: 0pt, y: 2pt), eq, number))
+  }
+  if b.inputs.len() > 0 or b.result != none {
+    block(above: sp("par"), below: 2pt, text(8pt, fill: txt2, font: table-font, weight: 500, T.where))
+    let rows = ()
+    let cell(q, strong: false, fill: none) = {
+      let sym = if q.symbol != "" { mi(q.symbol) } else { none }
+      let w(x) = if strong { text(weight: 600, x) } else { x }
+      (table.cell(align: left + horizon, fill: fill, sym),
+       table.cell(fill: fill, w(q.label)),
+       ..(if q.int == "" { (table.cell(colspan: 2, align: right, fill: fill, w(q.value)),) }
+          else { (table.cell(align: right, inset: (right: 0pt), fill: fill, w(q.int)),
+                  table.cell(align: left, inset: (left: 0pt), fill: fill, w(q.rest))) }),
+       table.cell(fill: fill, text(fill: txt2, size: 7.4pt, inline(q.source))))
+    }
+    for q in b.inputs { rows += cell(q) }
+    if b.result != none { rows += cell(b.result, strong: true, fill: tint) }
+    set text(font: table-font, stretch: table-stretch, size: 8.4pt)
+    set par(leading: 0.42em, justify: false)
+    set table.cell(breakable: false)
+    let header = (table.header(table.cell(fill: head-fill, head-text(T.symbol)), table.cell(fill: head-fill, head-text(T.quantity)),
+      table.cell(fill: head-fill, colspan: 2, align: right, head-text(T.value)), table.cell(fill: head-fill, head-text(T.source))),)
+    block(width: 100%, above: 2pt, below: sp("par"), breakable: true,
+      table(columns: (13mm, 1fr, auto, auto, 0.9fr), inset: (x: 4pt, y: 3.4pt), align: top,
+        stroke: (x, y) => {
+          // the whole and the decimals are one column: no rule between the two
+          if x == 2 { (top: grid-stroke, bottom: grid-stroke, left: grid-stroke, right: none) }
+          else if x == 3 { (top: grid-stroke, bottom: grid-stroke, left: none, right: grid-stroke) }
+          else { grid-stroke }
+        },
+        ..header, ..rows))
+  }
+  if b.at("worked", default: ()).len() > 0 {
+    if b.example != "" {
+      block(above: sp("par"), below: 3pt, text(8pt, fill: txt2, font: table-font, b.example))
+    }
+    block(above: 3pt, below: sp("par"), width: 100%, breakable: false,
+      box(width: 100%, fill: tint, inset: (x: 8pt, y: 5pt), stroke: (left: 1.4pt + accent), {
+        set text(9pt)
+        stack(dir: ttb, spacing: 7pt, ..b.worked.map(t => align(left, numbers-line(t))))
+      }))
+  }
+  if b.reference != "" {
+    block(above: 2pt, below: sp("capb"), text(7.4pt, fill: faint, font: table-font, [#T.reference: #b.reference]))
+  }
+}
+
+#let chapter-title(t) = t.replace(regex("^[0-9]+\.\s+"), "")
+
 #let render(b) = {
   let k = b.k
   if k == "chapter" {
-    if b.at("break", default: false) { pagebreak(weak: true) }
-    [#metadata((title: b.title, id: b.id)) <meridiana-chapter>]
-    heading(level: 1, outlined: true, bookmarked: true, b.title)
+    pagebreak(weak: true)
+    context [#metadata((title: b.title, id: b.id, page: here().page())) <meridiana-chapter>]
+    let attachment = b.id.starts-with("attachment")
+    heading(level: 1, outlined: true, bookmarked: true, numbering: if attachment { none } else { "1.1" },
+      if attachment { b.title } else { chapter-title(b.title) })
   } else if k == "section" {
-    heading(level: 2, bookmarked: true, [#square-of(b.c) #h(2.5pt) #b.t])
+    heading(level: 2, bookmarked: true, b.t)
   } else if k == "sub" {
-    heading(level: b.at("level", default: 3), bookmarked: false, inline(b.t))
-  } else if k == "p" {
+    heading(level: b.at("level", default: 3), bookmarked: false, outlined: false, numbering: none, inline(b.t))
+  } else if k == "step" { step(b) }
+  else if k == "p" {
     let style = b.at("style", default: "")
     if style == "caption" { caption(b.t) }
     else if style == "muted" { block(above: 4pt, below: 6pt, text(8.6pt, fill: txt2, inline(b.t))) }
-    else if style == "source" { block(above: 3pt, below: 7pt, text(6.8pt, fill: faint, inline(b.t))) }
-    else if style == "lead" { block(above: 4pt, below: 7pt, text(10pt, inline(b.t))) }
+    else if style == "source" { block(above: 3pt, below: 7pt, { set par(justify: false); text(7pt, fill: faint, font: table-font, stretch: table-stretch, inline(b.t)) }) }
+    else if style == "lead" { block(above: 4pt, below: 8pt, text(10.5pt, inline(b.t))) }
     else { par(inline(b.t)) }
-  } else if k == "tiles" { tiles(b); v(2pt) }
+  } else if k == "tiles" or k == "dash" { dash(b) }
   else if k == "facts" { facts(b) }
   else if k == "table" { data-table(b) }
   else if k == "two" {
     let ratio = b.at("ratio", default: (1, 1))
-    grid(columns: ratio.map(r => r * 1fr), column-gutter: 5mm, align: top,
+    grid(columns: ratio.map(r => r * 1fr), column-gutter: 6mm, align: top,
       block(breakable: false, { for x in b.left { render(x) } }), block(breakable: false, { for x in b.right { render(x) } }))
   }
   else if k == "keep" { block(breakable: false, { for x in b.items { render(x) } }) }
@@ -434,7 +560,9 @@
   else if k == "badge" { badge(b) }
   else if k == "list" { bullets(b) }
   else if k == "formula" {
-    if shown(b.image) { block(above: 5pt, below: 6pt, breakable: false, fitted(b.image)) }
+    let tex = b.at("tex", default: TEX.at(b.image, default: none))
+    if tex != none { block(above: sp("eqa"), below: sp("eqb"), mitex(tex)) }
+    else if shown(b.image) { block(above: 5pt, below: 6pt, breakable: false, fitted(b.image)) }
   }
   else if k == "pagebreak" { pagebreak(weak: true) }
   else if k == "attachment" {
@@ -442,77 +570,100 @@
     context [#metadata((k: b.n, pages: b.pages, page: here().page())) <meridiana-attachment>]
     [#metadata((title: b.title, id: b.id)) <meridiana-chapter>]
     v(55mm)
-    block(width: 100%, radius: 12pt, fill: card, inset: 9mm, breakable: false, {
+    block(width: 100%, stroke: (left: 2pt + accent), inset: (left: 9mm, y: 4mm), breakable: false, {
       text(7.4pt, weight: 600, fill: accent, tracking: 0.1em, upper(T.attachment))
-      heading(level: 1, bookmarked: true, b.title)
+      heading(level: 1, bookmarked: true, numbering: none, b.title)
       { for x in b.items { render(x) } }
     })
   }
 }
-
 #let render-all(items) = { for b in items { render(b) } }
 
-// the contents, with the pages of the PDF as merged
-#let contents(columns) = context {
-  let found = query(<meridiana-chapter>)
-  let cell(m) = link(m.location(), grid(columns: (1fr, auto), column-gutter: 4pt,
-    text(8.2pt, m.value.title),
-    text(8.2pt, weight: 600, str(shown-page(m.location().page())))))
-  block(width: 100%, radius: radius-card, fill: card, inset: (x: 8pt, y: 6pt), breakable: false, {
-    text(7pt, weight: 600, fill: txt2, tracking: 0.08em, upper(T.contents))
-    v(2pt, weak: true)
-    let n = found.len()
-    let half = calc.ceil(n / columns)
-    let lists = range(columns).map(c => found.slice(calc.min(c * half, n), calc.min((c + 1) * half, n)))
-    grid(columns: (1fr,) * columns, column-gutter: 7mm,
-      ..lists.map(l => stack(spacing: 3.6pt, ..l.map(cell))))
-  })
+// the contents: chapters and sections, the numbers in a column of their own, dots up to the page on the right
+#let toc-entry(hd) = {
+  let loc = hd.location()
+  let page = str(shown-page(loc.page()))
+  let num = if hd.numbering != none { numbering(if hd.level == 1 { "1." } else { "1.1" }, ..counter(heading).at(loc)) } else { "" }
+  let lead = box(width: 1fr, repeat(text(fill: if hd.level == 1 { ink } else { faint }, "."), gap: 2.2pt))
+  set par(leading: 0.45em, justify: false)
+  set text(hyphenate: false)
+  if hd.level == 1 {
+    block(above: 11pt, below: 4pt, width: 100%, link(loc,
+      [#box(width: 14mm, text(weight: 600, font: head-font, num))#text(weight: 600, font: head-font, hd.body)#h(3pt)#lead#h(3pt)#text(weight: 600, page)]))
+  } else {
+    block(above: 3.5pt, below: 3.5pt, width: 100%, link(loc,
+      [#box(width: 14mm, num)#hd.body#h(3pt)#lead#h(3pt)#page]))
+  }
+}
+#let contents-page() = context {
+  let found = query(heading.where(outlined: true)).filter(h => h.level <= S.toc_levels)
+  heading(level: 1, numbering: none, outlined: false, bookmarked: true, T.contents)
+  for hd in found { toc-entry(hd) }
 }
 
-// the cover: the picture in its frame, the title, the four numbers, who and what, the contents
-#let cover-page(c) = {
-  if shown(c.image) {
-    block(above: 0pt, below: 7mm, framed((image: c.image, max_h: c.max_h, tint: c.at("tint", default: false),
-      inset: c.at("inset", default: 0))))
-  }
-  text(7.6pt, weight: 600, fill: accent, tracking: 0.14em, upper(c.kicker))
-  v(3pt, weak: true)
-  block(above: 4pt, below: 10pt, text(25pt, weight: 700, c.title))
-  block(above: 0pt, below: 10pt, text(10.2pt, fill: txt2, c.sub))
-  tiles((items: c.tiles))
-  v(3mm)
-  grid(columns: (1fr,) * c.meta.len(), column-gutter: 5mm,
-    ..c.meta.map(m => {
-      set par(leading: 0.42em)
-      text(6.8pt, weight: 600, fill: txt2, tracking: 0.08em, upper(m.t))
-      linebreak()
-      set text(8.2pt)
-      for (i, line) in m.lines.enumerate() { line; if i < m.lines.len() - 1 { linebreak() } }
+// the cover: the logo's row, the title of the document and the plant on the left, the data in a column on the right,
+// the 3D view large and without a frame
+#let doc-title = D.doc.at("doc_title", default: T.report)
+#let doc-sub = D.doc.at("doc_sub", default: "")
+#let cover-image(c, h) = if shown(c.image) {
+  block(width: 100%, height: h, fill: if c.at("tint", default: false) { tint } else { white },
+    stroke: if is-view(c.image) { none } else { thin }, inset: c.at("inset", default: 0) * 1mm,
+    align(center + horizon, image(c.image, width: 100%, height: 100%, fit: "contain")))
+}
+#let cover-logo-row() = {
+  block(width: 100%, stroke: (bottom: 0.5pt + ink), inset: (bottom: 5pt),
+    grid(columns: (auto, 1fr), align: (left + bottom, right + bottom),
+      if has-logo { logo-box(height: 14mm, room: 60mm) } else if D.doc.at("logo_placeholder", default: false) { logo-placeholder(height: 14mm, width: 56mm) } else { none },
+      align(right, stack(spacing: 2.4pt, text(8pt, weight: 600, font: head-font, D.doc.foot_left), text(7.5pt, fill: txt2, D.doc.foot_left2)))))
+}
+#let cover(c) = page(header: none, footer: none, margin: (left: 20mm, right: 16mm, top: 20mm, bottom: 18mm), {
+  set text(hyphenate: false)
+  set par(justify: false)
+  cover-logo-row()
+  v(10mm)
+  grid(columns: (1fr, 60mm), column-gutter: 10mm, align: top,
+    {
+      block({ set par(leading: 0.42em); text(24pt, weight: 300, font: head-font, doc-title) })
+      v(2mm)
+      text(11pt, fill: txt2, font: head-font, doc-sub)
+      v(6mm)
+      text(7.5pt, weight: 600, fill: accent, tracking: 0.16em, font: head-font, upper(T.plant))
+      v(1.5mm)
+      text(15pt, weight: 500, font: head-font, c.title)
+      v(2mm)
+      text(9.5pt, fill: txt2, c.sub)
+    },
+    block(width: 100%, stroke: (left: 1.2pt + accent), inset: (left: 5mm, y: 1mm), {
+      set text(8.4pt)
+      set par(leading: 0.45em)
+      for m in c.meta {
+        text(6.6pt, weight: 600, fill: txt2, tracking: 0.06em, upper(m.t))
+        linebreak()
+        m.lines.join(linebreak())
+        v(3.5mm, weak: true)
+      }
     }))
+  v(8mm)
+  cover-image(c, 112mm)
   v(1fr)
-  if D.toc == "cover" { contents(2) }
-  v(2.5mm)
-  text(6.8pt, fill: faint, c.made)
-  pagebreak()
-}
+  block(width: 100%, stroke: (top: 0.5pt + ink), inset: (top: 5pt), align(right, text(7pt, fill: faint, c.made)))
+})
 
-#let compact-head(c) = block(above: 0pt, below: 7pt, breakable: false, {
+#let compact-head(c) = block(above: 0pt, below: 8pt, breakable: false, {
+  set par(justify: false)
   text(7.6pt, weight: 600, fill: accent, tracking: 0.14em, upper(c.kicker))
-  block(above: 4pt, below: 8pt, text(21pt, weight: 700, c.title))
+  block(above: 4pt, below: 8pt, text(21pt, weight: 300, font: head-font, c.title))
   if c.sub != "" { block(above: 3pt, below: 3pt, text(9.6pt, fill: txt2, c.sub)) }
-  if c.lines.len() > 0 {
-    block(above: 4pt, below: 0pt, {
-      set text(8pt, fill: txt2)
-      c.lines.join(" · ")
-    })
-  }
+  if c.lines.len() > 0 { block(above: 4pt, below: 0pt, { set text(8pt, fill: txt2); c.lines.join(" · ") }) }
   if c.made != "" { block(above: 3pt, below: 0pt, text(6.8pt, fill: faint, c.made)) }
 })
 
-#if D.cover != none { cover-page(D.cover) }
-#if D.toc == "page" {
-  heading(level: 2, bookmarked: false, T.contents)
-  contents(1)
+// ---- the document ----
+// (what is above is also the head of the pictures of the editable exports: report_typst/editable.py cuts here)
+
+#if D.cover != none { cover(D.cover) }
+#if D.cover != none or D.toc == "page" {
+  contents-page()
   pagebreak()
 }
 #if D.head != none { compact-head(D.head) }

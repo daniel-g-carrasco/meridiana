@@ -21,7 +21,8 @@ class ThemeOfTheWindow(unittest.TestCase):
         cls.app = _setup.qt_or_skip()
 
     def setUp(self):
-        _setup.window(self, cfg=config.Config(background="none", theme="light", accent="petrol"))
+        _setup.window(self, cfg=config.Config(background="none", theme="light", accent="petrol",
+                                                     font="inter"))      # Inter first: the tests switch to Plex
 
     def test_a_change_of_theme_leaves_no_old_colour_and_the_views_keep_their_own(self):
         from PySide6.QtGui import QPalette

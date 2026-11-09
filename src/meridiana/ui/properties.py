@@ -26,7 +26,7 @@ from .style import Group, SectionGate
 
 def roof_names() -> dict:
     return {"flat": _("Flat"), "mono": _("Mono-pitch"), "gable": _("Gable"), "hip": _("Hip"),
-            "free": _("Pitches drawn by hand")}
+            "free": _("Pitches drawn by hand"), "saddles": _("Saddle-backed bands")}
 
 
 def exclusion_names() -> dict:

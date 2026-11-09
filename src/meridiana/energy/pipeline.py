@@ -15,7 +15,7 @@ from pathlib import Path
 from .. import checks, log
 from ..i18n import _, number
 from . import consumption as consumption_model
-from . import economics, meteo, plant, pvgis, system
+from . import economics, faces, meteo, plant, pvgis, system
 from .simulate import simulate, with_network
 from .calculation_basis import CalculationBasis, basis_of
 
@@ -150,7 +150,8 @@ def compute(project, results: dict, cache: Path, fetch: bool, progress=None, ref
     # Overload checks receive the connected DC year, not the preliminary potential year.
     out.plant = plant.build(project, groups=plant.groups_from_arrays(project, arrays), t_cell_max_year=t_cell_max,
                             t_min_year=t_air_min, p_dc_hourly=sim.hourly.p_dc.to_numpy(), p_dc_connected=True,
-                            p_dc_by_inverter={item['number']: item['p_dc'] for item in sim.inverters})
+                            p_dc_by_inverter={item['number']: item['p_dc'] for item in sim.inverters},
+                            exposure=faces.year_of(sim))
     # what keeping the modules out of the obstacles' shadows would leave, for the fix the checks offer: a
     # layout for each shaded sub-field, here and not in the window's thread (it cost 30-40 ms there at each
     # result, 0.3-0.4 s on a large field)

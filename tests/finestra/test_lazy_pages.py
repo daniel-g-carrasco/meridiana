@@ -53,17 +53,29 @@ class LazyPages(unittest.TestCase):
         _setup.turn_events(self.app, 200)
         self.assertTrue(win.consumption_page.is_built())
 
+    def test_r398_the_menu_s_load_curve_reaches_the_page_s_dialog(self):
+        from unittest import mock
+        from meridiana.ui.energy_pages import ConsumptionPage
+        with mock.patch.object(ConsumptionPage, "_import") as dialog:
+            self.win._import_curve_file()                             # the AttributeError of R398 before
+        dialog.assert_called_once()
+        self.assertTrue(self.win.consumption_page.is_built())
+
     def test_the_stale_mark_told_before_is_there_at_the_visit(self):
         from unittest import mock
         win = self.win
-        with mock.patch.object(win.session, "energy_outdated", return_value=True):
-            win._show_stale()                                         # told to pages that are not there
-        self.assertEqual([p.is_built() for p in self.pages], [False, False, False])
-        self.assertTrue(win.tabs.is_stale("production"))
-        win.show_phase("consumption")
-        _setup.turn_events(self.app, 100)
-        self.assertTrue(win.consumption_page.stale)                   # and there when it is
-        self.assertFalse(win.economics_page.is_built())
+        # The subject is deferred replay, not the automatic computation triggered by a first visit.
+        with mock.patch.object(win.session, "energy_outdated", return_value=True), \
+                mock.patch.object(win, "_compute_energy"):
+            win._show_stale()
+            self.assertEqual([p.is_built() for p in self.pages], [False, False, False])
+            self.assertTrue(win.tabs.is_stale("production"))
+            win.show_phase("consumption")
+            _setup.turn_events(self.app, 100)
+            self.assertTrue(win.consumption_page.stale)
+            self.assertFalse(win.economics_page.is_built())
+            win.consumption_page.set_stale(False)
+            self.assertFalse(win.consumption_page.stale)
 
     def test_a_widget_asked_of_a_page_makes_only_that_page(self):
         win = self.win

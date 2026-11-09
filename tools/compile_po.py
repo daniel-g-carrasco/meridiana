@@ -8,6 +8,7 @@ out, as msgfmt does), and a check of the {placeholders} a translation may not ad
   python3 tools/compile_po.py --dest /app/share/locale
   python3 tools/compile_po.py --python        the compiler below even when msgfmt is there
   python3 tools/compile_po.py --update        refresh po/<domain>.pot and merge it into po/*.po
+  python3 tools/compile_po.py --check         broken encoding, keys twice, placeholders, entries src does not use
 
 --update on Windows: MSYS2's xgettext writes location comments differently
 from Linux's, so it rewrites thousands of lines of the .po files; run it on
@@ -112,6 +113,90 @@ def check(entries: list[dict], name: str = "po") -> None:
                     raise PoError(f"{name}: «{e['msgid'][:50]}» translated with {sorted(extra)} it does not have")
 
 
+BROKEN = re.compile(r"[^\W\d_]\?[^\W\d_]|\s\?\s|�|Ã.|â€|Â")     # «un?immagine», «non ? disponibile», mojibake
+PRINTF = re.compile(r"%(?:\([A-Za-z_]\w*\))?[sdifr]|%\d")                 # %s, %(name)s, Qt's %1
+SOURCES = {".py", ".qml", ".js", ".json", ".txt", ".toml", ".yaml", ".yml", ".csv", ".html"}
+
+
+def _literals(root: Path) -> tuple[set, str]:
+    """Every string written in src: Python's constants (implicit concatenations joined), the QML's and the JSON's
+    quoted strings; and the raw text of the files, for what is written another way."""
+    found, raw = set(), []
+    for p in sorted((root / "src").rglob("*")):
+        if not p.is_file() or p.suffix.lower() not in SOURCES:
+            continue
+        try:
+            text = p.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        raw.append(text)
+        if p.suffix == ".py":
+            try:
+                found.update(n.value for n in ast.walk(ast.parse(text))
+                             if isinstance(n, ast.Constant) and isinstance(n.value, str))
+            except SyntaxError:
+                pass
+            continue
+        for m in re.finditer(r'"((?:[^"\\\n]|\\.)*)"|\'((?:[^\'\\\n]|\\.)*)\'', text):
+            s = m.group(1) if m.group(1) is not None else m.group(2)
+            if "\\" in s:
+                try:
+                    s = s.encode("utf-8").decode("unicode_escape").encode("latin-1").decode("utf-8")
+                except UnicodeError:
+                    pass
+            found.add(s)
+    return found, "\n".join(raw)
+
+
+def problems(po: Path, used: tuple[set, str] | None = None) -> list[str]:
+    """What --check refuses in one catalogue: broken encoding, keys twice, placeholders that differ between msgid
+    and msgstr, entries no line of src asks for (used: the literals of src, _literals(ROOT))."""
+    name = po.relative_to(ROOT).as_posix() if po.is_relative_to(ROOT) else po.name
+    try:
+        text = po.read_bytes().decode("utf-8")
+    except UnicodeDecodeError as error:
+        return [f"{name}: not UTF-8 ({error})"]
+    try:
+        entries = parse(text, name)
+    except PoError as error:
+        return [str(error)]
+    out, seen = [], set()
+    for e in entries:
+        msgid, label = e["msgid"], e["msgid"][:60].replace("\n", " ")
+        key = (e.get("msgctxt"), msgid)
+        if key in seen:
+            out.append(f"{name}: key twice: {key[0] or ''}|{label}")
+        seen.add(key)
+        if not msgid:
+            continue
+        forms = {k: v for k, v in e.items() if k.startswith("msgstr") and v}
+        source = msgid + e.get("msgid_plural", "")
+        for k, v in forms.items():
+            if BROKEN.search(v) and not BROKEN.search(source):
+                out.append(f"{name}: broken encoding in «{label}»: {v[:60]}")
+            mine, theirs = set(FIELD.findall(source)), set(FIELD.findall(v))
+            pm, pt = sorted(PRINTF.findall(source)), sorted(PRINTF.findall(v))
+            if "msgid_plural" in e:
+                bad = not theirs <= mine or not set(pt) <= set(pm)
+            else:
+                bad = mine != theirs or pm != pt
+            if bad:
+                out.append(f"{name}: placeholders differ in «{label}»: {sorted(mine | set(pm))} / {sorted(theirs | set(pt))}")
+        if used is not None and msgid not in used[0] and msgid not in used[1]:
+            out.append(f"{name}: no line of src uses «{label}»")
+    return out
+
+
+def check_all(root: Path = ROOT) -> list[str]:
+    """--check on every catalogue: one catalogue per language, directly in po/."""
+    used = _literals(root)
+    out = [f"{p.relative_to(root).as_posix()}: a second catalogue; its entries go in po/{p.name}"
+           for p in sorted((root / "po").rglob("*.po")) if p.parent != root / "po"]
+    for po in sorted((root / "po").glob("*.po")):
+        out += problems(po, used)
+    return out
+
+
 def mo(entries: list[dict]) -> bytes:
     """The catalogue as GNU's .mo (little endian, no hash table: gettext reads it so)."""
     table = {}
@@ -167,7 +252,13 @@ def main() -> int:
     parser.add_argument("--dest", type=Path, default=ROOT / "locale")
     parser.add_argument("--update", action="store_true")
     parser.add_argument("--python", action="store_true", help="the compiler of this file, not msgfmt")
+    parser.add_argument("--check", action="store_true",
+                        help="refuse broken encoding, keys twice, placeholders that differ, entries src does not use")
     args = parser.parse_args()
+    if args.check:
+        found = check_all()
+        print("\n".join(found) or "po: every catalogue is in order")
+        return 1 if found else 0
     if args.update:
         update()
     for out in compile_all(args.dest, args.python):

@@ -497,7 +497,11 @@ class FilePage(QFrame):
         exports.group(_("Models"), [
             Tile("export_ifc", _("IFC4 model"), _("Buildings, roofs, obstacles and every module with its string, "
                                                   "georeferenced: for the architect, the BIM coordinator, FreeCAD."),
-                 (".ifc",), _("Export…"), self._command("export_ifc"))])
+                 (".ifc",), _("Export…"), self._command("export_ifc")),
+            Tile("export_dxf", _("Plan as DXF"), _("Buildings, pitches, obstacles, every module with its data and the "
+                                                   "strings in their order, on named layers: for AutoCAD and the free "
+                                                   "CAD programs, local, UTM or the imported file's coordinates."),
+                 (".dxf",), _("Export…"), self._command("export_dxf"))])
         exports.finish()
         self.sections["export"] = exports
 

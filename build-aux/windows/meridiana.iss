@@ -1,5 +1,6 @@
 ; Inno Setup script for Meridiana (Inno Setup 6.4 or later: the windows-2025 runner has 6.7).
 ; Compiled by the CI with:  ISCC.exe /DAppVersion=X.Y.Z build-aux\windows\meridiana.iss
+; or by build-aux\windowsuild.ps1, which gives it the version of src\meridiana\__init__.py (r28).
 ; Expects the PyInstaller output in dist\Meridiana (repository root) and build-aux\windows\meridiana.ico
 ; (tools/make_ico.py).
 ;
@@ -22,6 +23,8 @@
 AppId={{BC7761C0-15BD-40FC-87D1-98D297118957}
 AppName=Meridiana
 AppVersion={#AppVersion}
+AppVerName=Meridiana {#AppVersion}
+ShowLanguageDialog=no
 AppPublisher=Daniel Grasso
 AppPublisherURL=https://github.com/daniel-g-carrasco/meridiana
 AppSupportURL=https://github.com/daniel-g-carrasco/meridiana/issues
@@ -54,8 +57,10 @@ RestartApplications=no
 ChangesAssociations=yes
 
 [Languages]
-Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
+; Windows' own language picks one (LanguageDetectionMethod=uilanguage, the default); any other language gets the
+; first, English (r28: the Windows of a colleague abroad)
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
 
 [CustomMessages]
 italian.AppDescription=Progettazione fotovoltaica: mappa, modello dell'edificio, percorso del sole, posa dei moduli e norme italiane
@@ -109,7 +114,8 @@ var
 
 function AppWasRunning(): Boolean;
 begin
-  Result := WasRunning;
+  { /RESTARTAPP=1: the Qt Quick window quits as soon as it has started Setup (updates.installer_command, r28) }
+  Result := WasRunning or (ExpandConstant('{param:RESTARTAPP|0}') = '1');
 end;
 
 { Was the program running when Setup started? The Restart Manager closes it

@@ -102,7 +102,7 @@ class TheReportDrawsTheWindowsSymbols(unittest.TestCase):
 
     def test_the_template_draws_them_and_no_longer_its_own(self):
         template = (SRC / "report_typst" / "template.typ").read_text(encoding="utf-8")
-        mark = template[template.index("#let mark("):template.index("// an image no wider")]
+        mark = template[template.index("#let mark("):template.index("#let fitted(")]
         self.assertIn("D.marks", mark)
         self.assertFalse(re.search(r"\b(polygon|curve|circle|line)\(", mark), "the template draws its own marks again")
 

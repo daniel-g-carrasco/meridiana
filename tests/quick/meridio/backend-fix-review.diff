@@ -1,0 +1,210 @@
+﻿diff --git a/src/meridiana/quick/backend/assistant_chat.py b/src/meridiana/quick/backend/assistant_chat.py
+index 26275e5..836f094 100644
+--- a/src/meridiana/quick/backend/assistant_chat.py
++++ b/src/meridiana/quick/backend/assistant_chat.py
+@@ -174,11 +174,13 @@ class Presentation:
+     def add_card(self, card):
+         self.cards.append(card)
+         self.owner.cardsChanged.emit()
++        self.owner.changed.emit()
+ 
+     def remove_card(self, card):
+         if card in self.cards:
+             self.cards.remove(card)
+             self.owner.cardsChanged.emit()
++            self.owner.changed.emit()
+ 
+     def clear(self):
+         self.messages.clear()
+@@ -225,7 +227,8 @@ class AssistantChat(QObject):
+     setupRequested = Signal()
+     attachmentsRequested = Signal()
+     previewChanged = Signal()
+-    catalogReviewRequested = Signal(str, "QVariantMap")
++    catalogReviewRequested = Signal(str, str, "QVariantMap")  # card id, kind, proposed record
++    preferencesRequested = Signal()
+     openRequested = Signal()
+ 
+     def __init__(self, host, cfg, save_config=lambda: None, parent=None, *, key_store=None, voice=None):
+@@ -306,7 +309,11 @@ class AssistantChat(QObject):
+     @Property("QStringList", notify=changed)
+     def suggestions(self):
+         pending = any(card.property("confirmation") for card in self.view.cards)
+-        return self._suggestions if not self.busy and not pending else []
++        return self._suggestions if not pending else []
++
++    @Property(bool, notify=changed)
++    def suggestionsEnabled(self):
++        return not self.busy and not any(card.property("confirmation") for card in self.view.cards)
+ 
+     busy = Property(bool, lambda self: self.view.mood.state != core.IDLE, notify=changed)
+     state = Property(str, lambda self: self.view.mood.state, notify=changed)
+@@ -403,6 +410,15 @@ class AssistantChat(QObject):
+     def showSetup(self):
+         self.show_setup()
+ 
++    @Slot()
++    def withdrawConsent(self):
++        self.apply_preferences({"withdraw": True})
++        self.save_config()
++
++    @Slot()
++    def requestPreferences(self):
++        self.preferencesRequested.emit()
++
+     @Slot()
+     def choose_attachments(self):
+         self.attachmentsRequested.emit()
+@@ -425,11 +441,24 @@ class AssistantChat(QObject):
+                     [_escape(str(record.get("manufacturer", "")) + " " + str(record.get("model", ""))),
+                      _("No catalogue entry or project value changes until you review and save.")],
+                     [("review", _("Review product…")), ("discard", _("Discard"))])
+-        card.buttons["review"].clicked.connect(lambda: self.catalogReviewRequested.emit(kind, record))
++        card.kind = "catalog"
++        card.buttons["review"].clicked.connect(lambda: self.catalogReviewRequested.emit(card.id, kind, record))
+         card.buttons["discard"].clicked.connect(lambda: self.view.remove_card(card))
+         self.view.add_card(card)
+         return True
+ 
++    @Slot(str, bool)
++    def catalogReviewFinished(self, identifier, saved):
++        """The external catalogue editor reports its outcome for this exact proposal.
++
++        Cancelling keeps the proposal available, as the Widgets dialog does.
++        Late callbacks after a discard or a new conversation are ignored.
++        """
++        card = next((c for c in self.view.cards if c.id == identifier and c.kind == "catalog"), None)
++        if card is not None and saved:
++            self.view.note(_("Product saved in the personal catalogue."))
++            self.view.remove_card(card)
++
+     def refresh(self):
+         cloud = self.goes_to_cloud()
+         if cloud:
+@@ -446,8 +475,19 @@ class AssistantChat(QObject):
+         if hasattr(self.host, "set_status"):
+             self.host.set_status(tip)
+         configured = self.ready.available(self.cfg)
+-        self._provider_options = [{"id": "local", "text": _("Local model, on this PC")}]
+-        self._provider_options += [{"id": key, "text": setup.CLOUD[key].name} for key in configured]
++        self._provider_options = [{"id": "local", "text": _("Local model, on this PC"), "model": "",
++                                   "checked": not self.wants_cloud(), "enabled": True}]
++        quick_models = costs.models()
++        if "anthropic" in configured:
++            self._provider_options += [
++                {"id": "anthropic", "text": text, "model": model, "enabled": True,
++                 "checked": self.cloud_id() == "anthropic" and self.cloud_profile()["model"] == model}
++                for model, text in quick_models.items()]
++        self._provider_options += [
++            {"id": key, "text": setup.CLOUD[key].name, "model": "", "enabled": True,
++             "checked": self.cloud_id() == key and not (
++                 key == "anthropic" and self.cloud_profile()["model"] in quick_models)}
++            for key in configured]
+         self._bill()
+         self.changed.emit()
+ 
+@@ -1182,7 +1222,7 @@ class AssistantChat(QObject):
+ 
+     def _survey_preferences(self) -> None:
+         self._drop_survey()
+-        self.host.preferences()
++        self.requestPreferences()
+ 
+ 
+     def _drop_survey(self) -> None:
+diff --git a/tests/quick/meridio/test_chat.py b/tests/quick/meridio/test_chat.py
+index 5b6ae25..b5ef3c4 100644
+--- a/tests/quick/meridio/test_chat.py
++++ b/tests/quick/meridio/test_chat.py
+@@ -310,3 +310,91 @@ class ChatTest(unittest.TestCase):
+         fenced = message_html("```\n| A | B |\n| --- | --- |\n| 1 | 2 |\n```")
+         self.assertNotIn("<table", fenced)
+         self.assertIn("<pre>", fenced)
++
++    def test_r362_busy_retains_suggestions_and_disables_actions(self):
++        from unittest.mock import Mock
++        before = list(self.chat.suggestions)
++        self.assertTrue(before)
++        self.chat.pool = SimpleNamespace(start=Mock())
++        self.chat.ask("Wait for model")
++        self.assertEqual(self.chat.suggestions, before)
++        self.assertFalse(self.chat.suggestionsEnabled)
++        self.chat.stop()
++        self.assertTrue(self.chat.suggestionsEnabled)
++
++    def test_qml_suggestion_binding_updates_when_confirmation_appears_and_is_discarded(self):
++        from PySide6.QtCore import QUrl
++        from PySide6.QtQml import QQmlComponent, QQmlEngine
++        engine = QQmlEngine()
++        engine.rootContext().setContextProperty("chat", self.chat)
++        component = QQmlComponent(engine)
++        component.setData(b'import QtQml\nQtObject { property int count: chat.suggestions.length }', QUrl())
++        bound = component.create()
++        self.assertIsNotNone(bound, str(component.errors()))
++        try:
++            before = bound.property("count")
++            self.assertGreater(before, 0)
++            proposal = tools.Proposal("confirm-task", "Task", "task", "", [], item={"action": "create"})
++            self.chat._show_proposal(proposal)
++            self.assertEqual(bound.property("count"), 0)
++            self.chat.cardAction(self.chat.cards[-1]["id"], "discard")
++            self.assertEqual(bound.property("count"), before)
++        finally:
++            bound.setParent(engine)
++
++    def test_catalog_reviews_report_id_and_save_removes_only_its_own_card(self):
++        from meridiana.catalog import KINDS
++        kind = next(iter(KINDS))
++        requested = []
++        self.chat.catalogReviewRequested.connect(lambda *args: requested.append(args))
++        self.assertTrue(self.chat.prepare_catalog_record(kind, {"model": "One"}))
++        self.assertTrue(self.chat.prepare_catalog_record(kind, {"model": "Two"}))
++        first, second = self.chat.cards
++        self.chat.cardAction(first["id"], "review")
++        self.chat.cardAction(second["id"], "review")
++        self.assertEqual(requested, [(first["id"], kind, {"model": "One"}),
++                                     (second["id"], kind, {"model": "Two"})])
++        self.chat.catalogReviewFinished(second["id"], False)
++        self.assertEqual(len(self.chat.cards), 2)
++        self.chat.catalogReviewFinished(first["id"], True)
++        self.assertEqual([c["id"] for c in self.chat.cards], [second["id"]])
++        self.assertIn("Product saved in the personal catalogue.", str(self.chat.messages))
++        count = len(self.chat.messages)
++        self.chat.catalogReviewFinished(first["id"], True)
++        self.assertEqual(len(self.chat.messages), count)
++        self.chat.newConversation()
++        self.chat.catalogReviewFinished(second["id"], True)
++        self.assertFalse(self.chat.messages)
++
++    def test_provider_menu_has_quick_claude_models_and_one_checked_entry(self):
++        from meridiana.assistant import costs
++        quick = [row for row in self.chat.providerOptions if row.get("model")]
++        self.assertEqual({row["model"] for row in quick}, set(costs.models()))
++        self.assertTrue(all(row["enabled"] for row in self.chat.providerOptions))
++        for model in costs.models():
++            self.chat.chooseModel("anthropic", model)
++            checked = [row for row in self.chat.providerOptions if row["checked"]]
++            self.assertEqual([(row["id"], row["model"]) for row in checked], [("anthropic", model)])
++        self.chat.chooseModel("anthropic", "custom-model")
++        checked = [row for row in self.chat.providerOptions if row["checked"]]
++        self.assertEqual([(row["id"], row["model"]) for row in checked], [("anthropic", "")])
++        self.chat.chooseProvider("local")
++        self.assertEqual([row["id"] for row in self.chat.providerOptions if row["checked"]], ["local"])
++
++    def test_withdraw_consent_cancels_pending_cloud_question_and_preferences_is_a_signal(self):
++        from unittest.mock import Mock
++        setup.remember(self.cfg, "openai", "test-model")
++        self.chat.chooseProvider("openai")
++        self.chat.ask("Wait for consent")
++        self.cfg.assistant_consent = {"openai": "synthetic"}
++        self.chat.save_config = Mock()
++        self.chat.withdrawConsent()
++        self.assertFalse(self.cfg.assistant_consent)
++        self.assertFalse(self.chat.busy)
++        self.assertFalse(self.chat.waiting)
++        self.assertIsNone(self.chat.consent_card)
++        self.chat.save_config.assert_called_once()
++        opened = []
++        self.chat.preferencesRequested.connect(lambda: opened.append(True))
++        self.chat.requestPreferences()
++        self.assertEqual(opened, [True])

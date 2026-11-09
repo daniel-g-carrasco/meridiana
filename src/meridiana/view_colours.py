@@ -99,10 +99,11 @@ D3 = {"sky_top": "#a9c9e3", "sky_bottom": "#e4edf3", "ground": "#9fae93", "selec
 # their marks, in pixels: what takes a press is wider (gizmo.VERTEX_TOLERANCE)
 VERTEX_MARK = {"idle": 7, "hot": 9, "on": 11}
 
-# the 3D pictures of the report (ui/report_3d.py): the same scene on paper, light and neutral, the modules in the
-# plan's navy so that they stand out, the edges of the buildings drawn as thin lines, as an axonometric drawing has
+# the 3D pictures of the report (ui/report_3d.py): the same scene on paper, light and neutral, the modules in a dark
+# warm grey so that they stand out without the blue of before (R460, report_typst/look.py), the edges of the
+# buildings drawn as thin lines, as an axonometric drawing has them
 D3_PAPER = {"background": "#ffffff", "ground": "#ffffff", "wall": "#ebe8e2", "roof_flat": "#d8d5cf",
-            "roof": "#d9b9a8", "module": "#2f4f7f", "obstacle": "#bfc1c6", "tree": "#b5c7a8", "edge": "#7d786f"}
+            "roof": "#d9b9a8", "module": "#4a4743", "obstacle": "#c2beb6", "tree": "#b5c7a8", "edge": "#7d786f"}
 
 # the pivot's cross-hair in 3D (task 16g, study 16 G): a lime green that nothing else on the plan or in 3D has, over a
 # dark halo (flat bands under the tubes) drawn this opaque. The cross-hair belongs to the drawing, so it keeps the

@@ -372,9 +372,9 @@ class Corners(unittest.TestCase):
         self.assertFalse(b.vertexBox["on"])
         b.release(1, 0, 200.0, 200.0)
 
-    # R357
+    # R411, in place of R357
 
-    def test_a_flat_roof_stays_flat_and_its_building_changes_height_one_step(self):
+    def test_one_corner_of_a_flat_roof_tilts_it_on_one_plane_one_step(self):
         win, b = self.win, self.back
         win._select("building", self.flat)
         building = win.project.buildings[0]
@@ -385,13 +385,12 @@ class Corners(unittest.TestCase):
         self.field.typed.emit("+2")
         self.assertEqual(win.undo.count(), steps + 1)
         building = win.project.buildings[0]
-        self.assertEqual(building.roof.type, "flat")
-        self.assertAlmostEqual(building.height, height + 2.0)
-        self.assertTrue(all(abs(h.z - (height + 2.0)) < 1e-6 for h in win.vertex_handles))
-        self.assertNotIn("parapet", win.hint.text())
-        self.assertIn("flat roof", win.hint.text())
+        self.assertEqual(building.roof.type, "free")
+        self.assertEqual(len(building.pitches()), 1)
+        self.assertEqual(sorted(round(h.z - height, 2) for h in win.vertex_handles), [0.0, 1.0, 1.0, 2.0])
         self.assertEqual(b.vertex_on, 2)
         win.undo.undo()
+        self.assertEqual(win.project.buildings[0].roof.type, "flat")
         self.assertAlmostEqual(win.project.buildings[0].height, height)
 
     def test_the_modules_and_the_outline_go_with_it(self):
@@ -401,8 +400,7 @@ class Corners(unittest.TestCase):
         self.assertTrue(_setup.wait_until(self.app, lambda: sf.id in win.results, 30))
         before = win.results[sf.id]
         win.vertex_taken = None
-        b.vertexClicked.emit(0)
-        self.field.typed.emit("+3")
+        win.edit("Height", lambda p: roof_vertices.set_heights(p, self.flat, [(h.corners[0], 12.5) for h in roof_vertices.handles(p.buildings[0])]))
         self.assertTrue(_setup.wait_until(self.app, lambda: win.results.get(sf.id) is not before, 30))
         self.assertEqual(sum(m.rid is not None for m in win.results[sf.id].modules),
                          sum(m.rid is not None for m in before.modules))

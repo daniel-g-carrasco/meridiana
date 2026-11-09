@@ -1,0 +1,9 @@
+﻿module Meridiana.Dialogs
+DialogsPage 1.0 DialogsPage.qml
+NewProjectPage 1.0 NewProjectPage.qml
+RegistryPage 1.0 RegistryPage.qml
+ShortcutsPage 1.0 ShortcutsPage.qml
+FormFields 1.0 FormFields.qml
+SiteMap 1.0 SiteMap.qml
+GeometryPreview 1.0 GeometryPreview.qml
+DxfOptions 1.0 DxfOptions.qml

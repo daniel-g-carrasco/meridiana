@@ -4,10 +4,13 @@ it (study 16, B; task 16b). No Qt: the plan and the 3D view collect the gestures
 What moves with what (study 16, B.7):
 - a building: its outline, the pitches drawn by hand on it, the sub-fields and the exclusions that cite it (the
   sub-fields of every variant, not only of the one in hand: the building is shared by the variants); turned, the
-  sides keep their places, so the eave of a single pitch, the gable ends and the sub-fields' pitches stay;
+  sides keep their places, so the eave of a single pitch, the gable ends and the sub-fields' pitches stay; the bodies of
+  an imported model (Building.group) move and turn together, as one, until the designer takes one out of its group;
 - a sub-field: its outline and its rows by hand (task 16c); turned, its explicit azimuth turns as much (automatic,
-  the layout finds it again), and so do its rows; the modules taken out by hand stay taken out. It stays on its
-  pitch (or on the ground): one that would leave it is refused, with the reason;
+  the layout finds it again), and so do its rows; the modules taken out by hand stay taken out. On a roof it moves
+  freely (R426, Daniel 05/11/2026) and at the end it lies on the pitch that holds most of its area; one left astride a
+  ridge is said (`straddle`, the checks) and split on demand (`split_on_pitches`), the parts moving together. It stays
+  on its building, and one on the ground on the ground: what would leave is refused, with the reason;
 - an exclusion: its outline; one that leaves its building (or comes onto one) belongs to the building now under
   its middle, or to the ground (`host`);
 - a 3D object ("prop", R269): where it stands and its turn; it stands on the building now under it, or on the
@@ -29,14 +32,16 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from . import roof_vertices
 from .i18n import _
 
 KINDS = ("building", "subfield", "exclusion", "pitch", "row", "prop")
 DECIMALS = 4                    # 0,1 mm, as the outlines drawn and the copies (model.Project.duplicate)
-OUTSIDE_TOLERANCE = 0.01        # m2 a sub-field or a free pitch may go further out of its pitch or building
+OUTSIDE_TOLERANCE = 0.01        # m2 a sub-field or a free pitch may go further out of its building
+STRADDLE_TOLERANCE = 0.1        # m2 on another pitch that do not count as lying on it (an outline a hair over a ridge)
+SPLIT_LEAST = 0.5               # m2 under which a part of a split is no sub-field: as an outline drawn (`_polygon`)
 NUDGE = {"": 0.10, "shift": 1.0, "ctrl": 0.01}      # the arrows: 10 cm, 1 m with Shift, 1 cm with Ctrl (PVsyst)
 ANGLE_STEPS = {"": 15.0, "ctrl": 5.0, "shift": 90.0}   # the steps of a rotation on the plan (SketchUp, the cube)
 
@@ -105,14 +110,37 @@ def outline(project, kind: str, oid: str) -> list[Point] | None:
     return [tuple(map(float, q)) for q in (thing.footprint if kind == "building" else thing.ring)]
 
 
+def members(project, oid: str) -> list[str]:
+    """The buildings that move with a building, itself first: its model's bodies when it is in a group; the other
+    bodies of the building it is a part of (R440); what stands on any of them (R352)."""
+    b = project.building(oid)
+    if b is None:
+        return [oid]
+    out = [oid]
+    if b.group:
+        out += [x.id for x in project.buildings if x.group == b.group and x.id != oid]
+    whole = project.whole_of(b)
+    out += [x.id for x in (whole, *project.parts_of(whole.id)) if x.id not in out]
+    for host in list(out):
+        out += [x.id for x in project.standing_on(host) if x.id not in out]
+    return out
+
+
 def centre(project, kind: str, oid: str) -> Point | None:
-    """The middle of the object's outline (its centroid): where a rotation turns by default and the 3D gizmo
-    stands."""
+    """The middle of the object's outline (its centroid), of the whole model for a building in a group: where a rotation
+    turns by default and the 3D gizmo stands."""
     ring = outline(project, kind, oid)
     if not ring or len(ring) < 3:
         return None
     from shapely.geometry import Polygon
-    c = Polygon(ring).centroid
+    if kind == "building" and len(ids := members(project, oid)) > 1:
+        import shapely
+        c = shapely.union_all([Polygon(outline(project, kind, i)).buffer(0) for i in ids]).centroid
+        return (float(c.x), float(c.y)) if not c.is_empty else ring[0]
+    from shapely.ops import unary_union
+    parts = _group_of(project, oid) if kind == "subfield" else []
+    shape = unary_union([_polygon(x.ring) for x in parts]) if len(parts) > 1 else Polygon(ring)
+    c = shape.centroid
     return (float(c.x), float(c.y)) if not c.is_empty else ring[0]
 
 
@@ -144,16 +172,42 @@ def moving(project, kind: str, oid: str) -> list[list[Point]]:
         return []
     out = [own]
     if kind == "building":
-        b = project.building(oid)
-        out += [[tuple(map(float, q)) for q in fp["ring"]] for fp in b.roof.free_pitches]
-        out += [[tuple(map(float, q)) for q in x.ring] for x in (*project.subfields, *project.exclusions)
-                if x.building == oid]
+        for i in members(project, oid):
+            b = project.building(i)
+            if i != oid:
+                out.append(outline(project, kind, i))
+            out += [[tuple(map(float, q)) for q in fp["ring"]] for fp in b.roof.free_pitches]
+            out += [[tuple(map(float, q)) for q in x.ring] for x in (*project.subfields, *project.exclusions)
+                    if x.building == i]
         out += [[tuple(map(float, q)) for q in x.footprint()] for x in project.props if x.building == oid]    # R269
     elif kind == "pitch":
         b, _fp, index = _free_pitch(project, oid)
         out += [[tuple(map(float, q)) for q in sf.ring] for sf in project.subfields
                 if sf.building == b.id and sf.pitch == index]
+    elif kind == "subfield":
+        out += [[tuple(map(float, q)) for q in x.ring] for x in _group_of(project, oid) if x.id != oid]
     return out
+
+
+def centre_of(rings: list) -> Point:
+    """The middle of some outlines together."""
+    from shapely.ops import unary_union
+    c = unary_union([_polygon(ring) for ring in rings]).centroid
+    return (float(c.x), float(c.y))
+
+
+def _group_of(project, oid: str) -> list:
+    """The sub-field and those that move with it (R426): the parts of its split."""
+    sf = next((s for s in project.subfields if s.id == oid), None)
+    if sf is None:
+        return []
+    return [s for s in project.subfields if s.group == sf.group] if sf.group else [sf]
+
+
+def drawn_ring(ring) -> list[list[float]]:
+    """An outline as the drawing tools keep it: its points to 0.1 mm. The preview of an area drawn as modules lays
+    this ring, the one the drawing will keep, so that what is seen while drawing is what is made (R551)."""
+    return [[round(float(x), 4), round(float(y), 4)] for x, y in ring]
 
 
 def host(project, ring):
@@ -163,11 +217,57 @@ def host(project, ring):
     point = Polygon([tuple(map(float, q)) for q in ring]).representative_point()
     for b in project.buildings:
         if Polygon(b.footprint).buffer(1e-6).contains(point):
-            for i, p in enumerate(b.pitches()):
-                if Polygon(p.ring).buffer(1e-6).contains(point):
-                    return b, b.pitch_ref(i)
-            return b, b.pitch_ref(0)
+            index = _largest_pitch(b, ring)
+            return b, b.pitch_ref(index if index is not None else 0)
     return None, None
+
+
+def _polygon(ring):
+    from shapely.geometry import Polygon
+    poly = Polygon([tuple(map(float, q)) for q in ring])
+    return poly if poly.is_valid else poly.buffer(0)
+
+
+def _on_each_pitch(b, ring) -> list[float]:
+    """The area of `ring` on each of the building's pitches, in plan."""
+    shape = _polygon(ring)
+    return [float(shape.intersection(_polygon(p.ring)).area) for p in b.pitches()]
+
+
+def _largest_pitch(b, ring) -> int | None:
+    """Where in pitches() is the pitch that holds most of `ring`; None when none holds any."""
+    areas = _on_each_pitch(b, ring)
+    if not areas or max(areas) <= 0.0:
+        return None
+    return max(range(len(areas)), key=lambda i: areas[i])
+
+
+@dataclass(frozen=True)
+class Straddle:
+    """A sub-field that lies on more than its pitch: `index` in pitches() is the plane it is computed on, `other_area`
+    the m2 of it that stand on the others."""
+    index: int
+    other_area: float
+
+
+def straddle(project, sf) -> Straddle | None:
+    """Whether a sub-field lies on other pitches than its own, and how much of it: nothing on the ground, on a support
+    plane of its own, on a single pitch, or for less than a hair (STRADDLE_TOLERANCE)."""
+    from shapely.ops import unary_union
+    if sf.support is not None and sf.support.enabled:
+        return None
+    b = project.building(sf.building)
+    if b is None:
+        return None
+    pitches = b.pitches()
+    if len(pitches) < 2 or len(sf.ring) < 3:
+        return None
+    index = b.pitch_index(sf.pitch)
+    index = index if index is not None else 0
+    others = unary_union([_polygon(p.ring) for i, p in enumerate(pitches) if i != index])
+    shape = _polygon(sf.ring)
+    other = float(shape.intersection(others).difference(_polygon(pitches[index].ring)).area)
+    return Straddle(index, other) if other > STRADDLE_TOLERANCE else None
 
 
 # the transformations
@@ -225,10 +325,11 @@ def _outside(ring, shape) -> float:
     return float(poly.difference(shape).area)
 
 
-def _keep_on_pitch(project, sf, before) -> None:
-    """A sub-field on a roof stays on its pitch: no further out of it than it was (a sub-field drawn a hair over the
+def _keep_on_its_ground(project, sf, before) -> None:
+    """A sub-field on a roof stays on its building: no further out of it than it was (a sub-field drawn a hair over the
     eave can still move). On the ground it stays on the ground."""
     from shapely.geometry import Polygon
+    from shapely.ops import unary_union
     if sf.support is not None and sf.support.enabled:
         return
     b = project.building(sf.building)
@@ -240,11 +341,45 @@ def _keep_on_pitch(project, sf, before) -> None:
             if Polygon(other.footprint).contains(middle):
                 raise ValueError(_("a sub-field on the ground cannot go onto a building: draw it on its roof"))
         return
-    pitches = b.pitches()
-    index = b.pitch_index(sf.pitch)
-    shape = Polygon(pitches[index].ring if index is not None else b.footprint).buffer(0)
+    shape = unary_union([_polygon(b.footprint), *(_polygon(p.ring) for p in b.pitches())])
     if _outside(sf.ring, shape) > _outside(before, shape) + OUTSIDE_TOLERANCE:
-        raise ValueError(_("the sub-field would leave its pitch: a sub-field moves on its own pitch only"))
+        raise ValueError(_("the sub-field would leave its building: it moves on its roof only"))
+
+
+def _lay_on_pitch(b, sf, index: int) -> None:
+    """A sub-field put on pitches()[index]: what faces the plane it left turns as much, a level roof and a sloped one
+    have their own mounting."""
+    pitches = b.pitches()
+    now = b.pitch_index(sf.pitch)
+    old = pitches[now if now is not None else 0]
+    new = pitches[index]
+    sf.pitch = b.pitch_ref(index)
+    degrees = float(old.azimuth) - float(new.azimuth)
+    if abs(degrees) > 1e-9:
+        if sf.params.get("azimuth") is not None:
+            sf.params = {**sf.params, "azimuth": turned_azimuth(sf.params["azimuth"], degrees)}
+        if sf.rows:
+            middle = _polygon(sf.ring).centroid
+            sf.rows = moved_rows(sf.rows, turn(float(middle.x), float(middle.y), degrees), degrees)
+    if (old.tilt > 0) != (new.tilt > 0) and sf.params.get("mounting") in ("coplanar", "tilted_anchored"):
+        sf.params = {**sf.params, "mounting": "coplanar" if new.tilt > 0 else "tilted_anchored"}
+
+
+def _settle_on_pitch(project, sf) -> None:
+    """At the end of a move a sub-field on a roof lies on the pitch that holds most of its area (R426). A tie stays."""
+    if sf.support is not None and sf.support.enabled:
+        return
+    b = project.building(sf.building)
+    if b is None:
+        return
+    areas = _on_each_pitch(b, sf.ring)
+    if len(areas) < 2 or max(areas) <= 0.0:
+        return
+    now = b.pitch_index(sf.pitch)
+    now = now if now is not None else 0
+    best = max(range(len(areas)), key=lambda i: areas[i])
+    if areas[best] > areas[now] + 1e-9:
+        _lay_on_pitch(b, sf, best)
 
 
 def _move_support(support, f, degrees: float) -> None:
@@ -294,14 +429,16 @@ def _apply(p, kind: str, oid: str, f, degrees: float) -> None:
                 x.rotation = round((float(x.rotation) + degrees) % 360.0, DECIMALS)
         return
     if kind == "subfield":
-        sf = next((s for s in p.subfields if s.id == oid), None)
-        if sf is None:
+        parts = _group_of(p, oid)
+        if not parts:
             raise ValueError(_("there is no such object to move"))
-        before = sf.ring
-        sf.ring, sf.params = _subfield(sf.ring, sf.params, f, degrees)
-        sf.rows = moved_rows(sf.rows, f, degrees)
-        _move_support(sf.support, f, degrees)
-        _keep_on_pitch(p, sf, before)
+        for sf in parts:
+            before = sf.ring
+            sf.ring, sf.params = _subfield(sf.ring, sf.params, f, degrees)
+            sf.rows = moved_rows(sf.rows, f, degrees)
+            _move_support(sf.support, f, degrees)
+            _keep_on_its_ground(p, sf, before)
+            _settle_on_pitch(p, sf)
         return
     if kind == "exclusion":
         e = next((x for x in p.exclusions if x.id == oid), None)
@@ -356,7 +493,8 @@ def translate(project, kind: str, oid: str, dx: float, dy: float) -> Callable:
         sfid, _sep, rid = oid.partition("/")
         return manual.translate(project, sfid, rid, dx, dy)
     f = shift(float(dx), float(dy))
-    return lambda p: _apply(p, kind, oid, f, 0.0)
+    ids = members(project, oid) if kind == "building" else [oid]
+    return lambda p: [_apply(p, kind, i, f, 0.0) for i in ids][-1]
 
 
 def rotate(project, kind: str, oid: str, cx: float, cy: float, degrees: float) -> Callable:
@@ -366,7 +504,8 @@ def rotate(project, kind: str, oid: str, cx: float, cy: float, degrees: float) -
     if kind == "row":
         raise ValueError(_("a row turns with its sub-field; a module on its own turns with a double click"))
     f = turn(float(cx), float(cy), float(degrees))
-    return lambda p: _apply(p, kind, oid, f, float(degrees))
+    ids = members(project, oid) if kind == "building" else [oid]
+    return lambda p: [_apply(p, kind, i, f, float(degrees)) for i in ids][-1]
 
 
 def copy(project, kind: str, oid: str, dx: float = 0.0, dy: float = 0.0, about: Point | None = None,
@@ -388,6 +527,73 @@ def copy(project, kind: str, oid: str, dx: float = 0.0, dy: float = 0.0, about: 
         g = f if f is not None else turn(*centre(p, kind, made), float(degrees))
         _apply(p, kind, made, g, float(degrees))
         return made
+    return change
+
+
+# a sub-field split on the ridge (R426, B)
+
+def _parts_on_pitches(project, sf) -> list[tuple[int, list[list[float]]]]:
+    """The parts of a sub-field by pitch, the largest first: (place in pitches(), outline), each a polygon of at least
+    SPLIT_LEAST m2. A pitch cut in two by the outline gives two parts."""
+    b = project.building(sf.building)
+    if b is None or (sf.support is not None and sf.support.enabled):
+        return []
+    shape = _polygon(sf.ring)
+    parts = []
+    for i, pitch in enumerate(b.pitches()):
+        found = shape.intersection(_polygon(pitch.ring))
+        for poly in getattr(found, "geoms", [found]):
+            if poly.geom_type == "Polygon" and poly.area >= SPLIT_LEAST:
+                parts.append((poly.area, i, moved(list(poly.exterior.coords)[:-1], shift(0.0, 0.0))))
+    parts.sort(key=lambda part: -part[0])
+    return [(i, ring) for _area, i, ring in parts]
+
+
+def can_split(project, sf) -> bool:
+    """Whether «Split on the ridge» has at least two parts to make."""
+    return len(_parts_on_pitches(project, sf)) > 1
+
+
+def split_on_pitches(project, oid: str) -> Callable:
+    """The change that divides a sub-field along the lines between the pitches: one sub-field per part, each on its
+    pitch, moving together (`SubField.group`). The largest keeps the id, so what cites it stays good; all keep the
+    module and the parameters, and lay automatically: rows by hand stand on one plane and go, as with «Lay again
+    automatically», and Undo brings them back. ValueError, with the reason, when there is nothing to split. The change
+    gives the ids of the parts."""
+    sf = next((s for s in project.subfields if s.id == oid), None)
+    if sf is None:
+        raise ValueError(_("there is no such object to move"))
+    if not can_split(project, sf):
+        raise ValueError(_("this sub-field lies on one pitch: there is nothing to split"))
+
+    def change(p):
+        whole = next(s for s in p.subfields if s.id == oid)
+        b = p.building(whole.building)
+        parts = _parts_on_pitches(p, whole)
+        whole.group = whole.group or whole.id
+        whole.manual, whole.rows, whole.removed = False, [], []
+        name = whole.name
+        made = []
+        for place, (index, ring) in enumerate(parts):
+            part = whole if place == 0 else replace(whole, id=p.new_id("s"), params=dict(whole.params), rows=[],
+                                                    removed=[])
+            part.ring = ring
+            part.name = _("{name}, pitch {n}").format(name=name, n=index + 1)
+            if place:
+                p.subfields.append(part)
+            _lay_on_pitch(b, part, index)
+            made.append(part.id)
+        return made
+    return change
+
+
+def leave_group(project, oid: str) -> Callable:
+    """The change that lets a part of a split move on its own."""
+    if not any(s.id == oid for s in project.subfields):
+        raise ValueError(_("there is no such object to move"))
+
+    def change(p):
+        next(s for s in p.subfields if s.id == oid).group = ""
     return change
 
 

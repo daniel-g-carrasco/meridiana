@@ -1,0 +1,17 @@
+{
+  "size": [1600, 960],
+  "steps": [
+    {"action": "click", "target": "Impianto", "expect": {"phase": "plant"}},
+    {"action": "hover", "target": "Catalogo"},
+    {"action": "key", "key": "F5", "wait": 25000},
+    {"action": "key", "key": "Ctrl+3", "wait": 1500, "expect": {"phase": "production"}},
+    {"action": "click", "target": "Perdite"},
+    {"action": "click", "target": "Giorno tipo"},
+    {"action": "click", "target": "Come è calcolato"},
+    {"action": "key", "key": "Ctrl+4", "wait": 1500, "expect": {"phase": "consumption"}},
+    {"action": "resize", "size": [1366, 900]},
+    {"action": "resize", "size": [1920, 1080]},
+    {"action": "key", "key": "Ctrl+5", "wait": 1500, "expect": {"phase": "economics"}},
+    {"action": "click", "target": "Accumulo"}
+  ]
+}

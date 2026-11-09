@@ -1,0 +1,14 @@
+{
+  "size": [1600, 960],
+  "steps": [
+    {"action": "snapshot"},
+    {"action": "hover", "target": "Edificio", "wait": 650},
+    {"action": "right_click", "target": "Edificio"},
+    {"action": "key", "key": "Esc"},
+    {"action": "click", "target": "Impianto", "expect": {"phase": "plant"}},
+    {"action": "hover", "target": "Posa", "wait": 650},
+    {"action": "right_click", "target": "Posa"},
+    {"action": "key", "key": "Esc"},
+    {"action": "key", "key": "Alt"}
+  ]
+}

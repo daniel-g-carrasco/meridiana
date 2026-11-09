@@ -32,7 +32,7 @@ class RoofTools(unittest.TestCase):
         return self.win.project.building("b1").roof
 
     def test_the_corners_of_the_roof_in_3d_each_gesture_one_step_of_the_undo(self):
-        """R303, R357: with Move on a building its corners show; on a flat roof one moves the building's height; made
+        """R303, R411: with Move on a building its corners show; on a flat roof one tilts it on one plane; made
         pitched, a height dragged or written, each is one step, and undo takes the roof back."""
         win = self.win
         backend, field = win.view3d.backend, win.view3d.vertex_field
@@ -47,10 +47,11 @@ class RoofTools(unittest.TestCase):
         self.assertEqual(win.undo.count(), steps)                # taking a corner changes nothing
         field.typed.emit("+2")
         self.assertEqual(win.undo.count(), steps + 1)
-        self.assertEqual(self.roof().type, "flat")               # R357
-        self.assertAlmostEqual(win.project.building("b1").height, 8.0)
+        self.assertEqual(self.roof().type, "free")               # R411
+        self.assertEqual(len(win.project.building("b1").pitches()), 1)
         self.assertEqual(backend.vertex_on, 2)                   # still the one taken
         win.undo.undo()
+        self.assertEqual(self.roof().type, "flat")
         self.assertAlmostEqual(win.project.building("b1").height, 6.0)
         win._vertex_make_pitched()
         self.assertEqual(self.roof().type, "free")

@@ -18,11 +18,12 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from .. import reports
-from ..energy.pedigree import kind_names, limits
+from ..energy.pedigree import limits
 from ..fields import mounting_names
 from ..i18n import _, ngettext, number
 from . import blocks as B
-from . import figures
+from . import figures, look
+from . import steps as STEPS
 from .blocks import bold, facts, floating, keep, muted, para, section, sub, table, two
 from .register import Register
 
@@ -45,9 +46,10 @@ class Context:
     register: Register
     chosen: tuple = ()               # the ids of the chapters written, in order: a chapter leaves out what another has
     pictures: dict = field(default_factory=dict)     # view id -> Picture
-    accent: str = "#1c6e8c"
+    accent: str = look.ACCENT
     chapter: int = 0                 # the number of the chapter being written
     figures: int = 0                 # its figures so far
+    memo: dict = field(default_factory=dict)         # what two chapters would draw twice (the plant's sheets)
 
     def get(self, key: str):
         return self.data.get(key)
@@ -223,6 +225,78 @@ def tiles(ctx: Context, details: bool = True) -> dict:
     return {"k": "tiles", "items": items}
 
 
+def _box(label: str, value: str, unit: str, colour: str, sub: str = "") -> dict:
+    return {"n": value, "u": unit, "l": label, "s": sub, "c": colour}
+
+
+def summary_dash(ctx: Context) -> dict:
+    """The eight results at the head of the summary: the plant, its energy, its yield and what it is worth."""
+    sim, econ = ctx.get("sim"), ctx.get("econ")
+    items = [_box(_("Power at STC"), number(sim.p_stc_kw, 2), "kWp", "acc"),
+             _box(_("Energy a year"), kwh(sim.energy_kwh), "kWh", "sun", _("typical year")),
+             _box(_("Performance ratio"), number(100 * sim.pr, 1), "%", "sun", _("from the sun to the grid")),
+             _box(_("Specific yield"), kwh(sim.specific_yield), "kWh/kWp", "sun")]
+    k = econ.kpi if econ is not None else None
+    if k:
+        if k.get("payback") is not None:
+            items.insert(3, _box(_("Payback"), number(k["payback"], 1), _("years"), "leaf"))
+        items += [_box(_("Self-consumption"), number(100 * k["self_ratio"], 0), "%", "leaf",
+                       _("of the production used on site")),
+                  _box(_("Self-sufficiency"), number(100 * k["self_sufficiency"], 0), "%", "leaf",
+                       _("of the demand covered")),
+                  _box(_("Saving, first year"), kwh(k["saving_1"]), "€", "leaf")]
+    return {"k": "dash", "items": items[:8], "cols": 4}
+
+
+def chapter_dash(ctx: Context, cid: str) -> dict | None:
+    """The results at the head of a chapter of calculation: the same numbers as its tables."""
+    sim, econ, pl = ctx.get("sim"), ctx.get("econ"), ctx.get("plant")
+    if sim is None:
+        return None
+    k = econ.kpi if econ is not None else None
+    items: list = []
+    if cid == "plant":
+        items = [_box(_("Power at STC"), number(sim.p_stc_kw, 2), "kWp", "acc"),
+                 _box(_("AC power"), number(sim.p_ac_kw, 1), "kW", "acc")]
+        if pl is not None and getattr(pl, "strings", None):
+            items.append(_box(_("Strings"), str(len(pl.strings)), "", "acc"))
+        if pl is not None and getattr(pl, "units", None):
+            items.append(_box(_("Inverters"), str(len(pl.units)), "", "acc"))
+            from ..energy import plant as plants
+            ratio, _cut = plants.dcac(pl)
+            if ratio:
+                items.append(_box(_("DC/AC ratio"), number(ratio, 2), "", "slate"))
+    elif cid == "production":
+        items = [_box(_("Energy a year"), kwh(sim.energy_kwh), "kWh", "sun", _("typical year")),
+                 _box(_("Specific yield"), kwh(sim.specific_yield), "kWh/kWp", "sun"),
+                 _box(_("Performance ratio"), number(100 * sim.pr, 1), "%", "sun", _("from the sun to the grid")),
+                 _box(_("Power at STC"), number(sim.p_stc_kw, 2), "kWp", "acc")]
+    elif cid == "consumption" and k:
+        items = [_box(_("Demand"), kwh(k["consumption"]), "kWh", "slate", _("a year")),
+                 _box(_("Self-consumed"), kwh(k["self"]), "kWh", "leaf"),
+                 _box(_("Self-consumption"), number(100 * k["self_ratio"], 0), "%", "leaf"),
+                 _box(_("Self-sufficiency"), number(100 * k["self_sufficiency"], 0), "%", "leaf")]
+    elif cid == "economics" and k:
+        items = [_box(_("Saving, first year"), kwh(k["saving_1"]), "€", "leaf"),
+                 _box(_("Payback"), number(k["payback"], 1), _("years"), "leaf") if k.get("payback") is not None
+                 else _box(_("Payback"), _payback(k), "", "leaf"),
+                 _box(_("Net present value"), kwh(k["npv"]), "€", "leaf", _("over the life of the system"))]
+        if k.get("irr") is not None:
+            items.append(_box(_("Internal rate of return"), number(100 * k["irr"], 1), "%", "leaf"))
+        if k.get("lcoe") is not None and math.isfinite(k["lcoe"]):
+            items.append(_box(_("Levelised cost"), number(k["lcoe"], 3), "€/kWh", "slate"))
+    elif cid == "checks" and ctx.get("checks"):
+        from collections import Counter
+        levels = Counter(i.level for i in ctx.get("checks"))
+        items = [_box(_("Met"), str(levels.get("ok", 0)), "", "ok"),
+                 _box(_("To look at"), str(levels.get("warn", 0)), "", "warn"),
+                 _box(_("Not met"), str(levels.get("fail", 0)), "", "fail"),
+                 _box(_("Notes"), str(levels.get("info", 0)), "", "info")]
+    if not items:
+        return None
+    return {"k": "dash", "items": items[:5], "cols": min(5, len(items))}
+
+
 def plan_block(ctx: Context, strings: bool = False) -> dict | None:
     """The plan at the whole width, on its card with its legend under it, floating: the text after it fills the page
     it would have left half empty («ampio, come quello in C»)."""
@@ -246,6 +320,39 @@ def plan_block(ctx: Context, strings: bool = False) -> dict | None:
                     B.figure(image, ctx.caption(caption), max_h=175.0, tint=True, inset=2.5, chips=chips))
 
 
+def plant_plan_blocks(ctx: Context) -> list:
+    """R436: the plan of the plant, the strings each in its hue with its name (inverter.input.string) from its first
+    module to its last, and the optimizers when there are; one sheet for each sub-field when on one sheet the modules
+    would be too small to read, on A4 as on A3."""
+    pl = ctx.get("plant")
+    if pl is None or not pl.strings:
+        return []
+    if "plant_sheets" not in ctx.memo:
+        ctx.memo["plant_sheets"] = figures.plant_sheets(ctx.project, ctx.get("results") or {}, pl)
+    sheets = ctx.memo["plant_sheets"]
+    hues = figures.string_hues(pl, ctx.get("results") or {}) if sheets else {}
+    out = []
+    for n, sheet in enumerate(sheets, 1):
+        name = "plan_strings.svg" if n == 1 else f"plan_strings_{n}.svg"
+        image = ctx.image(name, lambda svg=sheet.svg: svg)
+        chips = [{"t": str(s.label), "fill": hues.get(s.label, figures.STRING_HUES[0])} for s in sheet.strings]
+        chips.append({"t": _("first module"), "fill": figures._ink(figures.STRING_HUES[0])})
+        chips.append({"t": _("last module"), "fill": "#ffffff", "edge": figures._ink(figures.STRING_HUES[0])})
+        if sheet.optimizers:
+            chips.append({"t": _("Optimizers, {n}").format(n=number(sheet.optimizers, 0, grouping=True)),
+                          "fill": figures.OPTIMIZER})
+        if sheet.free:
+            chips.append({"t": _("Modules in no string, {n}").format(n=number(sheet.free, 0, grouping=True)),
+                          "fill": figures.PLAN["free"]})
+        chips.append({"t": _("Sub-fields"), "fill": "#ffffff", "edge": figures.PLAN["subfield"], "dash": True})
+        text = _("The plan of the plant: each string in a hue of its own, named inverter.input.string, its line from "
+                 "its first module (full dot) to its last (hollow dot), where the cables to its input start.")
+        head = _("The plan of the plant") if not sheet.title else             _("The plan of the plant: {name}").format(name=sheet.title)
+        out.append(floating(section(head, "acc"),
+                            B.figure(image, ctx.caption(text), max_h=190.0, tint=True, inset=2.5, chips=chips)))
+    return out
+
+
 def view_block(ctx: Context, vid: str) -> dict | None:
     """A 3D view at the whole width; floating, as the plan."""
     picture = ctx.pictures.get(vid)
@@ -255,7 +362,7 @@ def view_block(ctx: Context, vid: str) -> dict | None:
 
 
 def monthly_bars(ctx: Context, h: float = 34.0) -> dict:
-    """The energy month by month as full bars with their values, Meridiana beside PVGIS when it is there."""
+    """The energy month by month as full bars with their values, the calculation beside PVGIS when it is there."""
     sim, pv = ctx.get("sim"), ctx.get("pvgis")
     mine = [float(v) for v in sim.monthly.e_ac.to_numpy()]
     top = max(mine) if mine else 0.0
@@ -263,7 +370,7 @@ def monthly_bars(ctx: Context, h: float = 34.0) -> dict:
         texts = [number(v / 1000, 1) for v in mine]
     else:
         texts = [kwh(v) for v in mine]
-    series = [{"name": "Meridiana", "color": "sun", "values": mine, "texts": texts if pv is None else None}]
+    series = [{"name": _("Calculation"), "color": "sun", "values": mine, "texts": texts if pv is None else None}]
     if pv is not None:
         series.append({"name": "PVGIS", "color": "acc", "values": [float(v) for v in pv.monthly_kwh], "texts": None})
     return {"k": "bars", "labels": months()[:len(mine)], "series": series, "h": h, "thousands": top >= 1000}
@@ -325,8 +432,11 @@ def _sheet(ctx: Context) -> list:
     if money:
         below_left = [section(_("What it yields"), "leaf"), facts([(r[0], r[1]) for r in money]),
                       ctx.source_of("balance", "saving", "npv")]
-    below_right = [section(_("Checks"), "slate"), checks_badge(ctx), *checks_note(ctx)] if ctx.get("checks") else []
-    parts = [tiles(ctx), para(text), two(left, right)]
+    # the chapter turned off takes its results off the summary too: what the document says of them is the designer's
+    # choice (Daniel, 05/11/2026)
+    below_right = ([section(_("Checks"), "slate"), checks_badge(ctx), *checks_note(ctx)]
+                   if ctx.get("checks") and ctx.has_chapter("checks") else [])
+    parts = [summary_dash(ctx), para(text), two(left, right)]
     if below_left or below_right:
         parts.append(two(below_left, below_right) if below_left and below_right
                      else keep(*(below_left or below_right)))
@@ -384,7 +494,7 @@ def layout(ctx: Context) -> list:
     results = ctx.get("results") or {}
     p = ctx.project
     mounts = mounting_names()
-    buildings = {b.id: b.name for b in p.buildings}
+    buildings = {b.id: p.shown_name(b) for b in p.buildings}        # R440: a body by its building's name
     rows, rules = [], []
     for sf in p.subfields:
         r = results.get(sf.id)
@@ -415,7 +525,7 @@ def layout(ctx: Context) -> list:
 
         from .. import model
         kinds = Counter(e.kind for e in p.exclusions)
-        names = model.exclusion_kind_names() if hasattr(model, "exclusion_kind_names") else {}
+        names = model.exclusion_names()
         parts.append(section(_("Exclusions"), "slate"))
         parts.append(para("; ".join(f"{names.get(k, k)}: {n}" for k, n in sorted(kinds.items()))))
     parts.append(plan_block(ctx))                     # here, once in the report, at its full size
@@ -434,13 +544,13 @@ def _dcac_text(pl) -> str:
         return ""
     text = _("DC/AC ratio {r}").format(r=number(ratio, 2))
     if cut is not None:
-        text += "; " + _("energy cut by the inverters {c} % of the year's").format(c=number(100 * cut, 1))
+        text += "; " + _("energy cut by the inverters {c} % of the year's").format(c=number(cut, 1))
     return text + "."
 
 
 def plant(ctx: Context) -> list:
     pl = ctx.get("plant")
-    parts = []
+    parts = [chapter_dash(ctx, "plant")]
     invs = _inverters(pl)
     if invs:
         rows = [(name, str(n), number(ac, 1)) for name, n, ac in invs]
@@ -450,7 +560,7 @@ def plant(ctx: Context) -> list:
         if text:
             parts.append(para(text))
     if pl.strings:
-        parts.append(plan_block(ctx, strings=True))
+        parts += plant_plan_blocks(ctx)
         parts += plant_parts(ctx.project, pl, ctx)
     return parts
 
@@ -506,7 +616,7 @@ def _chain_bars(ctx: Context) -> dict | None:
 
 def production(ctx: Context) -> list:
     sim, pv = ctx.get("sim"), ctx.get("pvgis")
-    parts = []
+    parts = [chapter_dash(ctx, "production")]
     bars = _chain_bars(ctx)
     steps = [s for s in sim.chain if s.change is not None]
     if bars is not None and steps:
@@ -515,8 +625,9 @@ def production(ctx: Context) -> list:
                             "then the losses down to the energy delivered.")))
         parts.append(bars)
         parts.append(para(ctx.caption(_("From the sun to the grid: each step as a percentage of the one before.") + " "
-                                      + _("A red or green bar at full height is {p} %; the amber ones are the energy, "
-                                          "in the unit written on them.").format(p=number(FULL_SCALE, 0))), "caption"))
+                                      + _("A loss (hatched) or a gain at full height is {p} %; the totals are the "
+                                          "energy, in the unit written on them.").format(p=number(FULL_SCALE, 0))),
+                          "caption"))
     rows = [(_("Energy a year (typical year)"), f"{kwh(sim.energy_kwh)} kWh", "ac"),
             (_("Specific yield"), f"{kwh(sim.specific_yield)} kWh/kWp", "ac"),
             (_("Performance ratio"), f"{number(100 * sim.pr, 1)} %", "pr")]
@@ -543,7 +654,7 @@ def production(ctx: Context) -> list:
     chart = [monthly_bars(ctx, 30.0)]
     if chart[0].get("thousands"):
         chart.append(para(_("In MWh."), "source"))
-    chart.append(para(ctx.caption(_("Energy delivered month by month, Meridiana beside PVGIS.") if pv is not None
+    chart.append(para(ctx.caption(_("Energy delivered month by month, the calculation beside PVGIS.") if pv is not None
                                   else _("Energy delivered month by month.")), "caption"))
     parts.append(two(side, chart, (5, 6)))
     if steps:
@@ -570,12 +681,17 @@ def production(ctx: Context) -> list:
                               number(100 * (a.get('rows_electrical') or 0), 1)) for a in sim.arrays],
                             [_("Array"), f"{_('Rows, linear')}, %", f"{_('Obstacles, linear')}, %",
                              f"{_('Rows, electrical')}, %"], right=(1, 2, 3), group=_("Shading"), where="rows")
+        # a 3D view in the middle of the report too (Daniel, 06/11/2026): from the south-west, where the shade is
+        if "south_west" in ctx.pictures:
+            parts.append(B.figure(ctx.view("south_west"), ctx.caption(
+                _("The plant from the south-west: the rows and the obstacles that shade the modules.")), max_h=88.0))
     return parts
 
 
 def consumption(ctx: Context) -> list:
     load, econ = ctx.get("load"), ctx.get("econ")
     by = load.by_band()
+    head = chapter_dash(ctx, "consumption")
     rows = [(_("Consumption a year"), f"{kwh(load.annual_kwh)} kWh ({load.basis})", "load")]
     rows += [(b, f"{kwh(by[b])} kWh", "load") for b in ("F1", "F2", "F3")]
     if econ is not None:
@@ -583,7 +699,7 @@ def consumption(ctx: Context) -> list:
         rows += [(_("Self-consumption"), f"{number(100 * k['self_ratio'], 0)} % ({kwh(k['self'])} kWh)", "balance"),
                  (_("Self-sufficiency"), f"{number(100 * k['self_sufficiency'], 0)} %", "balance"),
                  (_("Energy fed in"), f"{kwh(k['export'])} kWh", "balance")]
-    parts = ctx.carded(rows, group=_("Consumption and balance"), ratio=(1, 1))
+    parts = ([head] if head else []) + ctx.carded(rows, group=_("Consumption and balance"), ratio=(1, 1))
     if econ is not None and len(getattr(econ, "monthly", [])) == 12:
         mo = econ.monthly
         names = months()
@@ -653,7 +769,7 @@ def economics(ctx: Context) -> list:
     right = [section(_("Cumulative cash flow"), "leaf"), _cash_chart(econ),
              para(ctx.caption(_("Cumulative cash flow over the years: the investment at year 0, the payback where the "
                                 "line crosses zero.")), "caption")]
-    parts = [two(left, right, (4, 5))]
+    parts = [chapter_dash(ctx, "economics"), two(left, right, (4, 5))]
     sizing, storage, sim = ctx.get("sizing"), ctx.get("storage"), ctx.get("sim")
     if sizing is not None and sim is not None:
         parts.append(section(_("Size of the system and of the storage"), "leaf"))
@@ -686,7 +802,7 @@ def economics(ctx: Context) -> list:
 
 def checks(ctx: Context) -> list:
     from ..checks import area_names
-    parts = [checks_badge(ctx)]
+    parts = [chapter_dash(ctx, "checks"), checks_badge(ctx)]
     items = ctx.get("checks") or []
     if items:
         # by area, each area a group row: the area's name was repeated on every row (R291)
@@ -715,46 +831,18 @@ def _formula_name(tex: str, size: float) -> str:
 
 
 def _records_blocks(ctx: Context, records: list) -> list:
-    """The records as the methods chapter writes them: each step with its code in the register, its formula, the values
-    that went in with their sources, the result and the reference; what the model leaves out at the end."""
-    kinds = kind_names()
+    """The records as the methods chapter writes them: each step (steps.py) with its code in the register, its formula
+    on a line of its own numbered in the chapter, the values that went in with their sources, the result, the values
+    put in and the reference; what the model leaves out at the end."""
     out = []
 
-    def picture(tex: str, size: float) -> str:
-        name = _formula_name(tex, size)
-        return ctx.image(name, lambda: figures.formula_svg(tex, size))
+    def code(key: str):
+        found = ctx.register.step(key) if ctx.register.active else None
+        return found[0] if found else None
 
-    for rec in records:
+    for rec, mine in zip(records, STEPS.numbered(records, ctx.chapter or "", code), strict=True):
         out.append(section(rec.title, "slate"))
-        for step in rec.steps:
-            code = ctx.register.step(step.key) if ctx.register.active else None
-            title = [bold(code[0]), "  ", step.title] if code else step.title
-            out.append(sub(title))
-            if step.explanation:
-                out.append(para(step.explanation))
-            if step.formula:
-                out.append({"k": "formula", "image": picture(step.formula, 12.0)})
-            rows = []
-            for q in step.inputs:
-                src = q.source
-                where: list = []
-                if src is not None:
-                    where.append(bold(kinds.get(src.kind, src.kind)))
-                    if src.label:
-                        where.append(f": {src.label}")
-                    if src.ref:
-                        where.append(muted(f" ({src.ref})"))
-                rows.append((B.formula(picture(q.symbol, 10.0)) if q.symbol else "", q.label, q.text(), where))
-            result = None
-            if step.result is not None:
-                q = step.result
-                result = len(rows)
-                rows.append((B.formula(picture(q.symbol, 10.0)) if q.symbol else "", q.label, q.text(), ""))
-            if rows:
-                out.append(table(rows, [_("Symbol"), _("Quantity"), _("Value and unit"), _("Source")], right=(2,),
-                                 widths=("13%", "37%", "18%", "32%"), mark_row=result))
-            if step.reference:
-                out.append(para(f"{_('Reference')}: {step.reference}", "muted"))
+        out += mine
     if records:
         out.append(section(_("What the model does not include"), "slate"))
         out.append(para(_("The steps above are the whole of the calculation. What it leaves out, and what it only "
@@ -784,8 +872,7 @@ def methods(ctx: Context) -> list:
                         defaults.append((st.title, q.label, q.text()))
         if defaults:
             parts.append(section(_("Values still at their default"), "sun"))
-            parts.append(para(_("Meridiana chose these values because none was given: check them before the final "
-                                "design.")))
+            parts.append(para(_("These values were not given: the calculation takes its defaults.")))
             parts.append(table(list(dict.fromkeys(defaults)), [_("Step"), _("Value"), _("As used")]))
     return parts
 
@@ -891,7 +978,7 @@ def monthly(ctx: Context) -> list:
     right = [chart]
     if chart.get("thousands"):
         right.append(para(_("In MWh."), "source"))
-    right.append(para(ctx.caption(_("Energy delivered month by month, Meridiana beside PVGIS.")
+    right.append(para(ctx.caption(_("Energy delivered month by month, the calculation beside PVGIS.")
                                   if ctx.get("pvgis") is not None else _("Energy delivered month by month.")), "caption"))
     return [two(left, right)]
 
@@ -939,11 +1026,25 @@ def electrical(ctx: Context) -> list:
                               [B.mark(MARKS[s.state]), " ", states[s.state]]) for s in mine],
                             [_("String"), _("Input"), _("Modules"), _("Sub-field"), _("State")], right=(1, 2),
                             group=_("Electrical design"), where="uocmax")
+        if getattr(u, "partial", None) and u.mlpe is not None:
+            # R456: optimizers on some modules only, with the maker's rule
+            from ..energy import optimizer_strings
+            on = sum(len(s.optimized or ()) for s in mine)
+            total = sum(len(s.modules) for s in mine)
+            rule = (u.mlpe.family.part("partial").get("rule") or "").rstrip(".")
+            source = optimizer_strings.PARTIAL_SOURCES.get(u.mlpe.family.id) or u.mlpe.family.part("partial").get("source", "")
+            parts.append(para(_("Power optimizers {name} on {k} of the {n} modules of this inverter, only on some "
+                                "modules: {rule} ({source}).").format(name=u.mlpe.optimizer.name, k=on, n=total,
+                                                                     rule=rule, source=source)))
+    for c in getattr(pl, "crossings", []) or []:
+        # R433: a string over more than one face, with the estimate of its exposures
+        from ..energy import faces
+        parts.append(para(_("String {label}: {detail}.").format(label=c.label, detail=faces.detail(c))))
     text = _dcac_text(pl)
     if text:
         parts.append(para(text))
     if pl.strings:
-        parts.append(plan_block(ctx, strings=True))
+        parts += plant_plan_blocks(ctx)
     return parts
 
 
@@ -1001,7 +1102,7 @@ def optimizer_text(u) -> str:
     text = ngettext("Power optimizers {name}, {n} module on each", "Power optimizers {name}, {n} modules on each",
                     ch.per).format(name=ch.optimizer.name, n=ch.per)
     if ch.suggested:
-        text += " " + _("(proposed by Meridiana)")
+        text += " " + _("(proposed automatically)")
     text += "; " + _("strings at the inverter's fixed voltage, {v} V").format(v=number(u.fixed.v_string, 0))
     if ch.rules is not None:
         text += "; " + _("checked by SolarEdge's table, {column} ({source})").format(column=ch.rules.column,
@@ -1049,7 +1150,7 @@ def _optimized_parts(plant_state, u, ctx=None) -> list:
         parts.append(para(_("A string of {n} modules, {o} optimizers, {p} kWp").format(
             n=n, o=p.optimizers, p=number(p.power_w / 1000.0, 2)), "muted"))
         parts.append(table([(B.mark(c.level if c.level in ("ok", "warn", "fail", "info") else "ok"), c.label,
-                             f"{c.detail} ({c.source})" if c.source else c.detail) for c in p.checks],
+                             f"{c.detail} ({c.source})" if c.source else c.detail) for c in _printed(p.checks)],
                            widths=("4%", "40%", "56%")))
     for c in plant_state.checks.get(u.number, []):
         source = f" ({c.source})" if c.source else ""
@@ -1060,6 +1161,12 @@ def _optimized_parts(plant_state, u, ctx=None) -> list:
 
 def _level(c) -> str:
     return c.level if c.level in ("ok", "warn", "fail", "info") else "ok"
+
+
+def _printed(found: list) -> list:
+    """The checks of a plan as the document has them: the invitation to confirm the proposed optimizers is for the
+    window, the optimizers' line already says they were proposed."""
+    return [c for c in found if c.key != "opt_suggested"]
 
 
 def _string_plans(plant_state, units) -> list[tuple[int, list, list[str]]]:
@@ -1073,14 +1180,15 @@ def _string_plans(plant_state, units) -> list[tuple[int, list, list[str]]]:
             slot = plant_state.inputs.get((u.number, k))
             for p in {id(p): p for p in [plant_state.strings[i].plan for i in (slot.strings if slot else [])] if p}.values():
                 rows = []
-                for c in p.checks:
+                printed = _printed(p.checks)
+                for c in printed:
                     label = c.label
                     for prefix in prefixes:
                         if label.startswith(prefix):
                             label = label[len(prefix):]
                             label = label[:1].upper() + label[1:]
                     rows.append((B.mark(_level(c)), label, c.detail))
-                key = (p.n_series, tuple((c.level, r[1], r[2]) for c, r in zip(p.checks, rows, strict=True)))
+                key = (p.n_series, tuple((c.level, r[1], r[2]) for c, r in zip(printed, rows, strict=True)))
                 kinds.setdefault(key, (p.n_series, rows, []))[2].append(f"{u.number}.{k}")
     return list(kinds.values())
 
@@ -1098,9 +1206,9 @@ def plant_parts(project, plant_state, ctx=None) -> list:
     parts = [section(title, "acc")]
     head = _("{n} strings on {m} inputs of {u} inverters, named inverter.input.string; {how}.").format(
         n=len(plant_state.strings), m=used, u=len(plant_state.units),
-        how=(_("proposed by Meridiana: {strategy}").format(
+        how=(_("proposed automatically: {strategy}").format(
             strategy=plant_model.strategy_names().get(plant_state.strategy, "").lower()) if plant_state.auto else
-             _("the designer's: drawn on the plan, or proposed by Meridiana when asked and kept")))
+             _("the designer's: drawn on the plan, or proposed automatically when asked and kept")))
     if plant_state.left:
         head += " " + _("{m} modules are in no string.").format(m=len(plant_state.left))
     when = (_("Checked at the hottest cell of the typical year, {t} °C, and at {c} °C.").format(

@@ -88,6 +88,21 @@ def language() -> str:
     return (_translation.info().get("language") or "en").split("_")[0]
 
 
+WINDOW_LANGUAGE = "MERIDIANA_WINDOW_LANGUAGE"
+
+
+def share_with_children() -> None:
+    """The language of this window given to the processes it starts (the computation, the tasks), through the
+    environment they inherit: their messages speak it too."""
+    os.environ[WINDOW_LANGUAGE] = language()
+
+
+def setup_as_window(default: str = "it") -> None:
+    """In a process started by the Qt Quick window: the window's language (share_with_children), else `default`
+    (a worker started by a test or a tool on its own)."""
+    setup(os.environ.get(WINDOW_LANGUAGE) or default)
+
+
 def number(value: float, decimals: int = 2, sign: bool = False, grouping: bool = False) -> str:
     """A measure as the language of the window writes it: 3,58 in Italian, 3.58 in English; with grouping
     12.345,6 and 12,345.6. The spin boxes follow the same language (app.py sets Qt's default locale)."""

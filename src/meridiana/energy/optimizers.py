@@ -35,6 +35,7 @@ import re
 from dataclasses import dataclass, field
 
 from ..i18n import _, ngettext, number
+from ..catalog import rules as catalog_rules
 from . import stringing
 from .pedigree import Quantity, Record, Source, Step, computed
 
@@ -273,43 +274,17 @@ class Rules:
 # the residential tables: (fewest for the optimizers of the long and of the short modules, most, continuous power,
 # what may be connected above the continuous power: (with one string, with `many`), whether an inverter whose rated
 # AC power is within the continuous power takes up to its own maximum DC power)
-RES_S = {"single_phase": (8, 6, 25, 5700.0, (6000.0, 6800.0), True),
-         "three_phase_short": (9, 8, 20, 5625.0, None, True),
-         "three_phase_400": (16, 14, 50, 11250.0, (13500.0, 13500.0), True),
-         "three_phase_480": (18, 14, 50, 12750.0, (15000.0, 15000.0), True)}
-RES_S_LONG = ("S440", "S500")                   # DS-000091-IT p. 3: the fewest 8, 9, 16, 18; S500B and S650B fewer
-RES_P = {"single_phase": (8, 6, 25, 5700.0, (5700.0, 5700.0), True),
-         "three_phase_short": (9, 8, 20, 5625.0, (5625.0, 5625.0), True),
-         "three_phase_400": (16, 14, 50, 11250.0, (13500.0, 13500.0), False),
-         "three_phase_480": (18, 14, 50, 12750.0, (15000.0, 15000.0), False)}
-RES_P_LONG = ("P370", "P401", "P500")
+_RULES = catalog_rules.solaredge()                # catalog/data/optimizer_rules.json: the tables, with source and page
+_row = lambda row: tuple(tuple(v) if isinstance(v, list) else v for v in row)  # noqa: E731
+RES_S = {k: _row(v) for k, v in _RULES["residential_s"]["table"].items()}
+RES_S_LONG = tuple(_RULES["residential_s"]["long"])   # DS-000091-IT p. 3: the fewest 8, 9, 16, 18; S500B and S650B fewer
+RES_P = {k: _row(v) for k, v in _RULES["residential_p"]["table"].items()}
+RES_P_LONG = tuple(_RULES["residential_p"]["long"])
 # the commercial tables, by optimizer and column: (fewest optimizers, fewest modules, most optimizers, most modules,
 # continuous power, connected with one string or fewer than `many`, connected with `many` or more, many)
-COM_S = {
-    "S1000": {"SE25K": (14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 2),
-              "SE27.6K": (14, 27, 30, 60, 13950.0, 16200.0, 18950.0, 2),
-              "SE30K": (15, 29, 30, 60, 15300.0, 17550.0, 20300.0, 2),
-              "SE33.3K": (14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 3),
-              "SE40K": (15, 29, 30, 60, 15300.0, 17550.0, 20300.0, 3)},
-    "S1200": {"SE25K": (14, 27, 30, 60, 15000.0, 17250.0, 20000.0, 2),
-              "SE27.6K": (14, 27, 30, 60, 15500.0, 17750.0, 20500.0, 2),
-              "SE30K": (15, 29, 30, 60, 17000.0, 19250.0, 23000.0, 2),
-              "SE33.3K": (15, 29, 30, 60, 17000.0, 19250.0, 23000.0, 2),
-              "SE40K": (15, 29, 30, 60, 17000.0, 19250.0, 23000.0, 3)},
-    "S1400": {"SE20K": (14, 27, 30, 60, 18000.0, 20250.0, 28000.0, 2),
-              "SE25K": (14, 27, 30, 60, 18000.0, 20250.0, 28000.0, 2),
-              "SE27.6K": (14, 27, 30, 60, 18600.0, 20850.0, 28600.0, 2),
-              "SE30K": (15, 29, 30, 60, 20400.0, 22650.0, 30400.0, 2),
-              "SE33.3K": (14, 27, 30, 60, 18000.0, 20250.0, 28000.0, 2),
-              "SE40K": (15, 29, 30, 60, 20400.0, 22650.0, 30400.0, 2)}}
+COM_S = {model: {column: _row(row) for column, row in entry["table"].items()} for model, entry in _RULES["commercial"].items()}
 COM_S_SOURCE = {"S1000": COM, "S1200": COM, "S1400": S1400_DS}
-P_COM_TABLE = {"SE16K": (14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 2),
-               "SE17K": (14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 2),
-               "SE25K": (14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 2),
-               "SE27.6K": (14, 27, 30, 60, 13950.0, 16200.0, 18950.0, 2),
-               "SE30K": (15, 29, 30, 60, 15300.0, 17550.0, 20300.0, 2),
-               "SE33.3K": (14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 3),
-               "SE40K": (14, 27, 30, 60, 15300.0, 17550.0, 20300.0, 3)}
+P_COM_TABLE = {column: _row(row) for column, row in _RULES["commercial_p"]["table"].items()}
 P_COM_MODELS = ("P800P", "P850", "P950", "P1100")
 SINGLE_MODULE_NOTE = {"S1000": "2", "S1200": "2", "S1400": "9"}     # the note of the rule, by datasheet
 
@@ -374,7 +349,7 @@ def rules_for(opt: Optimizer, inv: FixedVoltage) -> tuple[Rules | None, str]:
     if model in ("S440", "S500", "S500B", "S650B") or model in ("P370", "P401", "P404", "P485", "P500", "P505",
                                                                   "P601"):
         return _residential(opt, inv), ""
-    return None, _("{name}: Meridiana does not know SolarEdge's string rules for it").format(name=opt.name)
+    return None, _("{name}: SolarEdge's string rules for it are not available").format(name=opt.name)
 
 
 def connected_limit(r: Rules, strings: int, spread_w: float) -> tuple[float, str]:
@@ -385,6 +360,21 @@ def connected_limit(r: Rules, strings: int, spread_w: float) -> tuple[float, str
         return r.p_cont, _("the strings differ by {d} W, more than {lim} W: each within its continuous power").format(
             d=number(spread_w, 0, grouping=True), lim=number(r.diff_w, 0, grouping=True))
     return base, ""
+
+
+def proposal_tiers(r: Rules) -> tuple:
+    """How the automatic proposals cap a string's power, in order of preference: True within what it carries
+    continuously, False within what the table allows connected. The residential tables: within the continuous power
+    only (Daniel, 06/11/2026: the proposals never above it). The commercial tables (S1000, S1200, S1400, P-series):
+    within it first, then within the power the table allows connected per string, above the continuous power on purpose
+    (Daniel, 06/11/2026, R456 answer 1: «usare la potenza collegata se la scheda la ammette»; DS-000105-IT p. 3,
+    DS-000205-EU p. 3, DS-000012-ENG p. 3)."""
+    return (True, False) if r.commercial else (True,)
+
+
+def proposal_ceiling(r: Rules) -> float:
+    """W at STC the automatic proposals never put on one string with these rules (proposal_tiers)."""
+    return max(r.p_one, r.p_many, r.p_cont) if r.commercial else r.p_cont
 
 
 def optimizer_count(modules: int, per: int) -> int:
@@ -496,7 +486,8 @@ def string_plan(module, opt: Optimizer, per: int, inv: FixedVoltage, rules: Rule
                              "warn" if (not ok and rules.commercial) else "", rules.source))
     if power > rules.p_cont:
         # the advice is the residential optimizers' (the single string guidelines cover the S- and P-series for
-        # homes): the commercial tables allow more connected than carried on purpose
+        # homes): the commercial tables allow more connected than carried on purpose, and within them it is said,
+        # not warned (Daniel, 06/11/2026, R456 answer 1)
         advised = inv.unit_pac > rules.p_cont and not rules.commercial
         out.checks.append(_check(
             "opt_continuous", _("String power within what it carries continuously"), True,
@@ -504,7 +495,8 @@ def string_plan(module, opt: Optimizer, per: int, inv: FixedVoltage, rules: Rule
              _("{p} W of {c} W: the power above is cut at the peaks, as SolarEdge's table allows") if rules.commercial
              else _("{p} W of {c} W: the power above is cut at the peaks, within the inverter's own limit")).format(
                 p=number(power, 0, grouping=True), c=number(rules.p_cont, 0, grouping=True)),
-            "warn" if advised else "info", f"{SINGLE}, p. 4-5"))
+            "info" if (rules.commercial and ok) else "warn",
+            f"{rules.source}; {SINGLE}, p. 4-5"))   # residential: by hand only, the proposals stay within it (06/11/2026)
     for key, label, text, source in rules.warnings:
         out.checks.append(_check(f"opt_{key}", label, True, text, "warn", source))
     _plan_steps(rec, module, opt, per, inv, rules, modules, n_opt, power, limit, t_min, t_min_source)
@@ -516,7 +508,7 @@ def _plan_steps(rec: Record, module, opt: Optimizer, per: int, inv: FixedVoltage
     ds = Source("data", _("datasheet of {name}").format(name=opt.name), opt.datasheet)
     table = Source("data", _("SolarEdge's design table: {column}").format(column=rules.column), rules.source)
     m_src = module.source
-    t_src = t_min_source or Source("default", _("Meridiana's prudent default"))
+    t_src = t_min_source or Source("default", _("prudent default of the calculation"))
     rec.add(Step("opt_module", _("The module on its optimizer"),
                  (r"k\,P_{STC} \leq P_{opt},\quad K_U\,U_{OC} \leq U_{in,max},\quad I_{SC} \leq I_{SC,max}"
                   if opt.parallel_inputs else

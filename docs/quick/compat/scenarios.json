@@ -1,0 +1,442 @@
+{
+  "richiesta": "R389",
+  "ambito": "Comandi reali delle due interfacce, distinto dai gesti mouse e tastiera",
+  "regola": "Un comando assente conta come mancante, mai come parita verificata",
+  "scenarios": [
+    {
+      "id": "building",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "building",
+          "args": {
+            "x1": 60.0,
+            "y1": 0.0,
+            "x2": 75.0,
+            "y2": 12.0
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "roof",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "roof",
+          "args": {
+            "oid": "b1",
+            "kind": "gable"
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "subfield",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "subfield",
+          "args": {
+            "ring": [
+              [
+                2,
+                2
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                15,
+                10
+              ],
+              [
+                2,
+                10
+              ]
+            ]
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "layout",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "subfield",
+          "args": {
+            "ring": [[2, 2], [15, 2], [15, 10], [2, 10]]
+          }
+        },
+        {
+          "command": "select",
+          "args": {
+            "kind": "subfield",
+            "oid": "s2"
+          }
+        },
+        {
+          "command": "layout"
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "exclusion",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "exclusion",
+          "args": {
+            "ring": [
+              [
+                18,
+                8
+              ],
+              [
+                20,
+                8
+              ],
+              [
+                20,
+                10
+              ],
+              [
+                18,
+                10
+              ]
+            ]
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "row",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "row",
+          "args": {
+            "start": [
+              4.0,
+              4.0
+            ],
+            "end": [
+              15.0,
+              4.0
+            ]
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "move",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "move",
+          "args": {
+            "kind": "building",
+            "oid": "b1",
+            "dx": 3.0,
+            "dy": 2.0
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "rotate",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "rotate",
+          "args": {
+            "kind": "building",
+            "oid": "b1",
+            "cx": 20.0,
+            "cy": 10.0,
+            "degrees": 15.0
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "undo_redo",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "select",
+          "args": {
+            "kind": "building",
+            "oid": "b1"
+          }
+        },
+        {
+          "command": "height",
+          "args": {
+            "value": 11.5
+          }
+        },
+        {
+          "command": "undo"
+        },
+        {
+          "command": "redo"
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "variants",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "variants",
+          "args": {
+            "name": "Alternativa Est"
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "automatic_strings",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "inverters",
+          "args": {
+            "count": 2
+          }
+        },
+        {
+          "command": "automatic_strings",
+          "args": {
+            "strategy": "serpentine"
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "manual_strings",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "inverters",
+          "args": {
+            "count": 2
+          }
+        },
+        {
+          "command": "manual_strings",
+          "args": {
+            "unit": 1,
+            "mppt": 1,
+            "count": 20
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "inverters",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "inverters",
+          "args": {
+            "count": 2
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "battery",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "battery",
+          "args": {
+            "value": {
+              "manufacturer": "Fixture",
+              "model": "AC20",
+              "usable_energy_kwh": 20.0,
+              "max_charge_power_w": 10000.0,
+              "max_discharge_power_w": 10000.0,
+              "round_trip_efficiency_pct": 90.0
+            }
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "consumption",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "consumption",
+          "args": {
+            "value": 40000.0
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "economics",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "economics",
+          "args": {
+            "value": 45000.0
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    },
+    {
+      "id": "recorded_year",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "calculate",
+          "args": {}
+        }
+      ],
+      "observations": [
+        "project",
+        "checks",
+        "year",
+        "messages"
+      ]
+    },
+    {
+      "id": "report",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "report",
+          "args": {}
+        }
+      ],
+      "observations": [
+        "report"
+      ]
+    },
+    {
+      "id": "save",
+      "requests": [
+        "R389"
+      ],
+      "steps": [
+        {
+          "command": "save",
+          "args": {
+            "path": "parity-output.mer"
+          }
+        }
+      ],
+      "observations": [
+        "project",
+        "undo"
+      ]
+    }
+  ]
+}

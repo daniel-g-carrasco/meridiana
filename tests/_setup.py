@@ -11,6 +11,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+# The journeys on a hidden desktop open the proof project of the real profile, kept apart from the tests' home.
+os.environ.setdefault("MERIDIANA_REAL_HOME", str(Path.home()))
 _TEST_HOME = tempfile.TemporaryDirectory(prefix="meridiana-tests-")
 os.environ["HOME"] = _TEST_HOME.name
 os.environ["USERPROFILE"] = _TEST_HOME.name
@@ -26,8 +28,26 @@ sys.path.insert(0, str(ROOT / "src"))
 # the system's keyring is never touched by a test (Meridio's key, task 14): a keyring that keeps nothing, unless a
 # test puts its own in memory (keyring.set_keyring)
 os.environ.setdefault("PYTHON_KEYRING_BACKEND", "keyring.backends.null.Keyring")
+# nothing prepared ahead behind a test's back (R548: the report's preview, the IFC model's geometry), whatever memory
+# the PC has free: the tests of the precaching ask for it (MERIDIANA_PRELOAD=1)
+os.environ.setdefault("MERIDIANA_PRELOAD", "0")
 
 WINDOWS = sys.platform == "win32"
+
+
+def _italian_catalogue() -> None:
+    """locale/ is not in git. In a new tree without it the program stays in English and says nothing, and the tests on
+    words and numbers fail with misleading messages: it is compiled here, once, or the reason is said."""
+    import subprocess
+    po, mo = ROOT / "po" / "it.po", ROOT / "locale" / "it" / "LC_MESSAGES" / "meridiana.mo"
+    if po.exists() and (not mo.exists() or mo.stat().st_mtime < po.stat().st_mtime):
+        done = subprocess.run([sys.executable, str(ROOT / "tools" / "compile_po.py"), "--python"], cwd=ROOT,
+                              capture_output=True, text=True)
+        if done.returncode:
+            raise RuntimeError("The Italian catalogue could not be compiled: " + done.stdout + done.stderr)
+
+
+_italian_catalogue()
 
 
 def fixture_text(name: str) -> str:
@@ -67,7 +87,10 @@ def meridiana_look(theme: str = "light", accent: str = "bronze"):
     app = qt_or_skip()
     key = (theme, accent)
     if key not in _LOOKS:
-        _LOOKS[key] = Theme(config.Config(theme=theme, accent=accent, background="none"), app=app)
+        # the Widgets' tests are measured on the look of before R390/R391 (Inter, Meridiana's backgrounds): the new
+        # settings' defaults (Plex, grey, indigo) are the Quick's and are proved in tests/formati
+        _LOOKS[key] = Theme(config.Config(theme=theme, accent=accent, background="none", font="inter",
+                                          backgrounds="meridiana"), app=app)
     else:
         _LOOKS[key].applied = None
         _LOOKS[key].apply()
@@ -136,7 +159,9 @@ def keyboard_or_skip(test, widget) -> None:
 def _qt_state(app) -> dict:
     from PySide6.QtGui import QPalette
     from meridiana.ui import qt_translations
-    return {"palette": QPalette(app.palette()), "sheet": app.styleSheet(), "qt_words": list(qt_translations._INSTALLED),
+    # a QGuiApplication (the Quick's, quick.app.create_app) has no style sheet: None, and nothing to put back
+    sheet = app.styleSheet() if hasattr(app, "styleSheet") else None
+    return {"palette": QPalette(app.palette()), "sheet": sheet, "qt_words": list(qt_translations._INSTALLED),
             "wheel": getattr(app, "_meridiana_wheel_guard", None)}
 
 
@@ -151,7 +176,7 @@ def _restore_qt(app, state: dict) -> None:
     if guard is not None and state["wheel"] is None:
         app.removeEventFilter(guard)
         del app._meridiana_wheel_guard
-    if app.styleSheet() != state["sheet"]:
+    if state["sheet"] is not None and hasattr(app, "styleSheet") and app.styleSheet() != state["sheet"]:
         app.setStyleSheet(state["sheet"])
     if app.palette() != state["palette"]:
         app.setPalette(state["palette"])
@@ -240,6 +265,31 @@ def _windows_on_screen(app) -> None:
     app.installEventFilter(app._test_screen)
 
 
+def end_qt() -> None:
+    """What Qt still holds at the end of a run, taken apart before the process ends (tools/run_tests.py, before its
+    os._exit). A tearDown that calls engine.deleteLater() and processEvents() leaves the last engine and its window
+    alive: processEvents() never delivers a DeferredDelete posted outside an event loop (only QTest.qWait in the next
+    test did). With os._exit the DLLs' static destructors then ran on a live QQuickWindow and its scene graph: an
+    access violation at every end of quick.pianta.test_aids_window (3 runs out of 3, 07/11/2026), and of the whole
+    tests/quick/pianta, unseen because the exit code had already been set."""
+    from PySide6.QtCore import QCoreApplication, QEvent
+    app = QCoreApplication.instance()
+    if app is None:
+        return
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    try:
+        from PySide6.QtGui import QGuiApplication
+    except ImportError:
+        return
+    if isinstance(app, QGuiApplication):
+        for window in QGuiApplication.topLevelWindows():
+            window.close()
+            window.deleteLater()
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    QCoreApplication.processEvents()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+
+
 def dispose(window) -> None:
     """Close a test's window and delete it now. A window only closed stays alive (the lambdas connected to its
     signals keep it), and every change of the application's palette or style sheet then polishes its widgets
@@ -290,7 +340,14 @@ def window(test, project=None, cfg=None, size=(1200, 800), answers=None, cache=N
     if cache is not None:
         from _fixtures import write_cache
         write_cache(cache, test.paths.cache)
-    test.cfg = cfg if cfg is not None else config_module.Config(background="none", network_pvgis=False)
+    test.cfg = cfg if cfg is not None else config_module.Config(background="none", network_pvgis=False, font="inter",
+                                                                accent="bronze", backgrounds="meridiana")   # see meridiana_look
+    # the window's font is loaded once per process and the Widgets' tests are measured on Inter: whatever test came
+    # first, every window of a test starts on it (a test that wants Plex changes it, as test_theme does)
+    test.cfg.font = "inter"
+    from meridiana.ui import theme as theme_module
+    if theme_module._FAMILY and theme_module._CHOSEN[0] != "inter":     # only when another test left Plex
+        theme_module.change_font("inter")
     from meridiana.ui import window as window_module
     # the results pages are made when their phase is first shown, not at rest after the start (a test that wants
     # that calls win._start_rest_build() with the constants of ui/window.py patched)
@@ -325,3 +382,199 @@ def window(test, project=None, cfg=None, size=(1200, 800), answers=None, cache=N
 
 
 os.environ.setdefault("LANGUAGE", "en")        # the tests read the source strings
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The Quick's common base (r23-f8, docs/revisioni/piano-riordino-r21.md F8, docs/quick/regole.md rule 10).
+#
+# tests/quick/__init__.py installs it, so it holds for every module of tests/quick whatever the module does itself (118
+# of the 193 modules did not even import _setup). Order does not count any more:
+#   - one application for the whole run, a QApplication made before the first module (crash 1 of 07/11/2026: a
+#     QGuiApplication made first by quick.app.create_app took the QApplication away from every module after it);
+#   - every module starts from the same state: the language of the strings (create_app calls i18n.setup('it'), 57
+#     modules call it), Qt's default locale (backend/properties_page.py sets it_IT), the environment, the clipboard
+#     of the offscreen platform; what the module left is taken apart before the next one: the visible Quick windows
+#     closed, the objects given to deleteLater deleted (outside an event loop processEvents never delivers them: the
+#     engines of a finished module lived on until a random qWait of another one), Python's garbage collected there
+#     and not in the middle of another module;
+#   - every test of a module gives back the language, the locale and the environment it found, and its deleteLater
+#     objects are deleted when it ends.
+# tools/run_tests.py adds faulthandler: the stacks of every thread on a crash, and on a test that does not end.
+
+_QUICK: dict = {}
+
+
+def _is_quick(name) -> bool:
+    return bool(name) and (name == "quick" or name.startswith("quick."))
+
+
+def quick_app():
+    """The one application of a run of the Quick's tests, made once: a QApplication, whatever module comes first. None
+    without PySide6 or without a display (the module then skips itself, as before)."""
+    try:
+        from PySide6.QtWidgets import QApplication
+    except ImportError:
+        return None
+    app = QApplication.instance()
+    if app is None:
+        if not WINDOWS and not (os.environ.get("WAYLAND_DISPLAY") or os.environ.get("DISPLAY")
+                                or os.environ.get("QT_QPA_PLATFORM")):
+            return None
+        app = QApplication(["meridiana-quick"])
+        app._pristine = _qt_state(app)
+    return app
+
+
+def _quick_baseline() -> None:
+    """The state every module of tests/quick starts from, taken once, before the first module's setUpModule: English
+    (the source strings, as LANGUAGE=en above), the environment after the imports, Qt's default locale of the PC."""
+    if _QUICK:
+        return
+    from meridiana import i18n
+    app = quick_app()
+    _QUICK["env"] = dict(os.environ)
+    _QUICK["translation"] = i18n.translation_for("en")
+    _QUICK["locale"] = None
+    if app is not None:
+        from PySide6.QtCore import QLocale
+        _QUICK["locale"] = QLocale()
+
+
+def _put_back(env: dict, translation, locale) -> None:
+    from meridiana import i18n
+    for key in set(os.environ) | set(env):
+        if os.environ.get(key) != env.get(key):
+            if key in env:
+                os.environ[key] = env[key]
+            else:
+                del os.environ[key]
+    i18n._translation = translation
+    if locale is not None:
+        from PySide6.QtCore import QLocale
+        if QLocale() != locale:
+            QLocale.setDefault(locale)
+
+
+def _flush_deleted() -> None:
+    """The objects given to deleteLater, deleted now (also outside an event loop, as end_qt does)."""
+    try:
+        from PySide6.QtCore import QCoreApplication, QEvent
+    except ImportError:
+        return
+    if QCoreApplication.instance() is not None:
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+
+
+def _clear_clipboard(app) -> None:
+    # only the clipboard of a platform of the tests: never the one of whoever works at the computer
+    if app is not None and app.platformName() in ("offscreen", "minimal") and hasattr(app, "clipboard"):
+        app.clipboard().clear()
+
+
+def quick_module_end() -> None:
+    """After a module of tests/quick (its tearDownModule and module cleanups done): what it left taken apart, and the
+    state put back to the baseline, so that the next module finds what it would find alone."""
+    import gc
+    if not _QUICK:
+        return
+    try:
+        from PySide6.QtCore import QCoreApplication
+        from PySide6.QtQuick import QQuickWindow
+    except ImportError:
+        QCoreApplication = None
+    app = QCoreApplication.instance() if QCoreApplication is not None else None
+    if app is not None:
+        from PySide6.QtGui import QGuiApplication
+        if isinstance(app, QGuiApplication):
+            # closed, not deleted: the engine that made a window deletes it (a window deleted under its engine is a
+            # crash later); a closed window stops its render loop, its animations and the timers they drive
+            for window in QGuiApplication.topLevelWindows():
+                if isinstance(window, QQuickWindow) and window.isVisible():
+                    window.close()
+        _flush_deleted()
+        app.processEvents()
+    gc.collect()
+    _flush_deleted()
+    _put_back(_QUICK["env"], _QUICK["translation"], _QUICK["locale"])
+    _clear_clipboard(app)
+
+
+def quick_isolation() -> None:
+    """Installed once by tests/quick/__init__.py: the hooks of unittest that run the baseline before the first module,
+    quick_module_end after each module of tests/quick, and give back to every test of tests/quick the state it found."""
+    import faulthandler
+    import unittest
+    import unittest.suite as suite
+    if getattr(suite.TestSuite, "_meridiana_quick", False):
+        return
+    if not faulthandler.is_enabled():
+        faulthandler.enable()                       # a crash says where (exit code 139 alone said nothing)
+    fixture, teardown, run = (suite.TestSuite._handleModuleFixture, suite.TestSuite._handleModuleTearDown,
+                              unittest.TestCase.run)
+
+    def handle_fixture(self, test, result):
+        if _is_quick(test.__class__.__module__):
+            _quick_baseline()
+        return fixture(self, test, result)
+
+    def handle_teardown(self, result):
+        previous = self._get_previous_module(result)
+        try:
+            return teardown(self, result)
+        finally:
+            if _is_quick(previous):
+                quick_module_end()
+
+    def run_test(self, result=None):
+        if not _is_quick(type(self).__module__):
+            return run(self, result)
+        from meridiana import i18n
+        locale = None
+        try:
+            from PySide6.QtCore import QCoreApplication, QLocale
+            app = QCoreApplication.instance()
+            locale = QLocale() if app is not None else None
+        except ImportError:
+            app = None
+        env, translation = dict(os.environ), i18n._translation
+        try:
+            return run(self, result)
+        finally:
+            _flush_deleted()
+            _put_back(env, translation, locale)
+            _clear_clipboard(app)
+
+    suite.TestSuite._handleModuleFixture = handle_fixture
+    suite.TestSuite._handleModuleTearDown = handle_teardown
+    unittest.TestCase.run = run_test
+    suite.TestSuite._meridiana_quick = True
+
+
+def wait_for(condition, ms: int = 10000) -> bool:
+    """The events turned (QTest.qWait in steps of 10 ms) until `condition()` holds, at most `ms`: whether it did, as
+    Qt's QTest::qWaitFor, which PySide6 does not have. The wait of the Quick's tests in the place of a fixed
+    QTest.qWait (rule 10): it ends as soon as the thing is there, and under load it waits longer instead of failing;
+    the test then asserts what it asserted before."""
+    import time
+    from PySide6.QtTest import QTest
+    end = time.monotonic() + ms / 1000
+    while not condition():
+        if time.monotonic() >= end:
+            return bool(condition())
+        QTest.qWait(10)
+    return True
+
+
+def native_reason() -> str:
+    """Why the native journeys of tests/quick/percorsi (real mouse and keyboard on a hidden desktop) do not run here,
+    or "" when they do. They are apart from the normal suite (r23-f8): only on Windows, only when asked with
+    MERIDIANA_NATIVE=1, never with an offscreen platform (the program they start would inherit it) nor with
+    MERIDIANA_NO_NATIVE. They cannot run while Daniel works at the PC, and under load they went red for no fault."""
+    if not WINDOWS:
+        return "Windows messages"
+    if os.environ.get("MERIDIANA_NATIVE") != "1" or os.environ.get("MERIDIANA_NO_NATIVE"):
+        return "native journey: only with MERIDIANA_NATIVE=1 (a free desktop, tools/quick_native_input.py)"
+    if os.environ.get("QT_QPA_PLATFORM") in ("offscreen", "minimal"):
+        return "native journey: not with an offscreen platform"
+    return ""
+

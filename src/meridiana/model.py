@@ -18,6 +18,7 @@ import copy
 import dataclasses
 import math
 import os
+import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -27,7 +28,7 @@ from . import atomic, layout, roof_join, roofs, settings, skeleton, sun
 from .underlay import Underlay
 
 FORMAT = "meridiana-project"
-FORMAT_VERSION = 25
+FORMAT_VERSION = 30
 # what a variant holds: the rest of the project (site, buildings, exclusions, consumption, rules) is shared
 DESIGN = ("subfields", "modules", "energy", "economics")
 
@@ -534,13 +535,25 @@ MIGRATIONS: dict = {1: lambda data: data, 2: lambda data: data,
                         repr((data.get("created", ""), data.get("job_id", ""), data.get("name", ""))))))},
                     19: lambda data: data,  # optional explicit optimizer groups; absent keeps legacy order
                     20: _to_21, 21: lambda data: {**data, "props": data.get("props", [])}, 22: _to_23,
-                    23: lambda data: data, 24: _to_25}
+                    23: lambda data: data, 24: _to_25, 25: lambda data: data,
+                    # 27 (R445): a sub-field that is its modules (`flush`, `kept`) and the «band» exclusions; a
+                    # file of 26 reads as it is, the new fields have their defaults
+                    26: lambda data: data,
+                    # 28 (R453, R455, R352, R440): a building's base height, what it stands on, the building it is a
+                    # part of, a flat roof on an inclined plane, the saddle roof; a file of 27 reads as it is
+                    27: lambda data: data,
+                    # 29 (R523): the layout the next sub-fields start from (`layout_defaults`), written only when
+                    # set; a file of 28 reads as it is
+                    28: lambda data: data,
+                    # 30 (R374): a 3D object's `asset`, the model of the catalogue drawn for it, written only when set;
+                    # a file of 29 reads as it is
+                    29: lambda data: data}
 # the keys of a sub-field's params that say where its strings go (task 16d): never a reason to lay it out again
 ELECTRICAL = ("inverter", "mppt")
-ROOF_TYPES = ("flat", "mono", "gable", "hip", "free")
+ROOF_TYPES = ("flat", "mono", "gable", "hip", "free", "saddles")
 EDGE_KINDS = ("eave", "gable")           # what a side of a gable or hip roof is (task 16a)
 PITCHED = ("gable", "hip")               # the roofs that follow the outline with the skeleton
-EXCLUSION_KINDS = ("vent", "opening", "plant", "skylight", "chimney", "tree", "walkway", "other")
+EXCLUSION_KINDS = ("vent", "opening", "plant", "skylight", "chimney", "tree", "walkway", "band", "other")
 # how high above the roof (or the ground) an exclusion of each kind usually rises, in metres: indicative
 # defaults, to be measured on the site; zero casts no shadow
 OBSTACLE_HEIGHTS = {"vent": 0.5, "opening": 0.0, "plant": 1.5, "skylight": 0.4, "chimney": 1.0, "tree": 8.0,
@@ -555,7 +568,7 @@ def exclusion_names() -> dict:
     from .i18n import _
     return {"vent": _("Smoke vent (EFC)"), "opening": _("Opening"), "plant": _("Roof plant"),
             "skylight": _("Skylight"), "chimney": _("Chimney"), "tree": _("Tree"), "walkway": _("Walkway"),
-            "other": _("Other")}
+            "band": _("Free band (DCPREV 14030)"), "other": _("Other")}
 
 
 def prop_names() -> dict:
@@ -568,7 +581,10 @@ def prop_names() -> dict:
             "dish": _("Satellite dish"), "tank": _("Tank"), "stairwell": _("Stairwell"), "elevator": _("Lift shaft"),
             "walkway": _("Walkway"), "opening": _("Opening"), "other": _("Obstacle"), "adult": _("Person"),
             "walking": _("Person walking"), "child": _("Child"), "worker": _("Worker"), "compact": _("Car"),
-            "suv": _("SUV")}
+            "suv": _("SUV"), "truck": _("Truck"), "pickup": _("Pickup"), "sports_car": _("Sports car"),
+            "bicycle": _("Bicycle"), "silo": _("Silo"), "container": _("Shipping container"),
+            "gas_tank": _("Gas tank"), "utility_box": _("Utility box"), "lamp": _("Street lamp"),
+            "tower": _("Transmission tower"), "fence": _("Fence")}
 
 
 def _now() -> str:
@@ -650,6 +666,14 @@ class Roof:
     welds: list = field(default_factory=list)
     # corners of pitches side by side parted by the designer (R303): their heights no longer go together
     detached: list = field(default_factory=list)
+    # R413: what stays when the slope or the eave is written; False, the ridge (Daniel's default); True, the eave
+    keep_eave: bool = False
+    # R455 (format 28): a flat roof on one inclined plane, the height of each corner of the outline; None, level at
+    # the building's height. Only for type "flat"
+    plane: list | None = None
+    # the saddle roof (type "saddles", format 28): "direction" (bearing of the bands' axis), "band", "tilt",
+    # "channel", "depth", "offset" (roofs.SADDLE_DEFAULTS where not given)
+    saddles: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -693,6 +717,13 @@ class Building:
     fire: Fire = field(default_factory=Fire)
     parapet: float = 0.0          # height of the parapet above a flat roof, all round the outline
     canopy: Canopy | None = None  # a parking canopy: its structure (format 21), the height the one under its low edge
+    group: str = ""               # the model it came in with (format 26): its bodies move and turn together; "" alone
+    # format 28 (R453, R352, R440): where the walls start, m above the ground (0, the ground); the building it stands
+    # on (a plant room on a roof: it moves with it and keeps that roof's modules off its outline); the building this
+    # body is a part of (one name, one fire subjection, one entry in the report; the geometry its own)
+    base: float = 0.0
+    on: str = ""
+    part_of: str = ""
 
     def __post_init__(self):
         if isinstance(self.canopy, dict):       # read from a file or a snapshot (R281)
@@ -711,9 +742,17 @@ class Building:
         for name in ("welds", "detached"):
             if not roof[name]:
                 del roof[name]
+        del roof["keep_eave"]                   # how a field is read, not a shape
+        # format 28: said only when they hold, so that the keys of before stay as they were
+        if not (self.roof.type == "flat" and roof["plane"]):
+            del roof["plane"]
+        if self.roof.type != "saddles":
+            del roof["saddles"]
         shape = {"footprint": self.footprint, "height": self.height, "roof": roof, "parapet": self.parapet}
         if self.canopy is not None:             # R281: only when there is one, so the other keys stay as they were
             shape["canopy"] = asdict(self.canopy)
+        if self.base:
+            shape["base"] = self.base
         return json.dumps(shape, sort_keys=True, default=str)
 
     def pitches(self) -> list[roofs.Pitch]:
@@ -744,8 +783,20 @@ class Building:
     def wall_top(self) -> float:
         """Up to where the walls stand whole under the roof: the building's height, or the lowest corner of a roof
         drawn by hand when one goes under it (the shadows' solid must not stand above the roof)."""
-        found = self.pitches() if self.roof.type == "free" else []
+        found = self.pitches() if self.roof.type in ("free", "saddles") or self.plane() else []
         return min([self.height, *(z for p in found for _x, _y, z in p.corners_3d())])
+
+    def plane(self) -> list | None:
+        """The heights of the corners of a flat roof on an inclined plane (R455): one for each corner of the outline,
+        else None (level, or the outline changed since)."""
+        heights = self.roof.plane
+        if self.roof.type != "flat" or not heights or len(heights) != len(self.footprint):
+            return None
+        return heights
+
+    def resting_on(self, project) -> "Building | None":
+        """The building this one stands on (R352), when it is in the project."""
+        return project.building(self.on) if self.on else None
 
     def roof_problem(self) -> tuple[str, list[int]]:
         """What the roof could not be as asked: ("", []) when it is; ("gables", sides) when those gable ends had
@@ -779,11 +830,75 @@ class Building:
         """The height of the highest point of the roof above the ground (the ridge of a pitched roof)."""
         return max(self.height, roofs.ridge_height(self.pitches()))
 
+    def eave_written(self, value: float) -> dict:
+        """The changes when the eave height is written (`roof.` paths): on a sloping roof with its ridge kept (R413), the
+        slope is worked out again; with its eave free to go, the whole roof goes with it. ValueError for an eave over the
+        ridge."""
+        from .i18n import _
+        changes: dict = {"height": value}
+        roof = self.roof
+        plane = self.plane()
+        if plane is not None:                   # R455: the whole plane goes up or down with its lowest corner
+            changes["roof.plane"] = [round(z + value - self.height, 3) for z in plane]
+            return changes
+        if self.canopy is not None or roof.keep_eave or roof.type not in ("mono", *PITCHED) or self.slope() <= 0:
+            return changes
+        top, run = self.ridge(), (self.ridge() - self.height) / math.tan(math.radians(self.slope()))
+        if value >= top - 1e-3:
+            raise ValueError(_("the ridge must stand above the eave ({h} m)").format(h=value))
+        if roof.type in PITCHED:
+            changes["roof.ridge_height"] = round(top, 3)
+        else:
+            changes["roof.tilt"] = roofs.slope_from_heights(value, top, run)
+        return changes
+
+    def vertices_added(self, side: int, ring: list, count: int) -> None:
+        """The outline `ring`, with `count` vertices added on side `side` (sides.insert, R356), in place of the
+        footprint, and what the roof says side by side or corner by corner following it: the kind of the side (the
+        new parts take that of the side they come from), the eave of a mono-pitch, the heights of an inclined plane
+        (on the line between the two corners)."""
+        n = len(self.footprint)
+        at = side % n + 1
+        roof = self.roof
+        if len(roof.edges) == n:
+            roof.edges[at:at] = [roof.edges[side % n]] * count
+        if roof.eave_side > side % n:
+            roof.eave_side += count
+        if roof.plane is not None and len(roof.plane) == n:
+            a, b = self.footprint[side % n], self.footprint[(side + 1) % n]
+            za, zb = roof.plane[side % n], roof.plane[(side + 1) % n]
+            whole = math.dist(a, b)
+            roof.plane[at:at] = [round(za + (zb - za) * math.dist(a, q) / whole, 3) if whole > 0 else za
+                                 for q in ring[at:at + count]]
+        self.footprint = ring
+
+    def slope_written(self, tilt: float) -> dict:
+        """The changes when the slope is written (`roof.` paths): with the ridge kept (R413) the eave comes up or down to
+        it; with the eave kept the ridge moves, as it always did. ValueError for an eave under the ground."""
+        from .i18n import _
+        changes: dict = {"roof.tilt": tilt}
+        roof = self.roof
+        if roof.ridge_height is not None:
+            changes["roof.ridge_height"] = None
+        now = self.slope()
+        if roof.keep_eave or self.canopy is not None or now <= 0 or roof.type not in ("mono", *PITCHED):
+            return changes
+        run = (self.ridge() - self.height) / math.tan(math.radians(now))
+        eave = roofs.eave_keeping_ridge(self.ridge(), run, tilt)
+        if eave < 0.5:                          # the field's own limit
+            raise ValueError(_("with the ridge kept at {h} m this slope takes the eave under the ground").format(h=round(self.ridge(), 2)))
+        changes["height"] = eave
+        return changes
+
     def retyped(self, kind: str) -> dict:
         """The changes of a new roof type, as the window sends them (`roof.` paths): the type; the sides back to
         the type's own; and, for a pitched roof that had no slope, the covering and the slope it proposes
         (roofs.COVERINGS: 35 % for tiles, Daniel 23/10/2026)."""
         changes: dict = {"roof.type": kind, "roof.edges": []}
+        if kind != "flat" and self.roof.plane is not None:
+            changes["roof.plane"] = None
+        if kind == "saddles" and not self.roof.saddles:
+            changes["roof.saddles"] = roofs.saddle_spec({"direction": roofs.long_side_bearing(self.footprint)})
         if kind in ("mono", *PITCHED) and self.roof.tilt <= 0:
             covering = self.roof.covering or roofs.DEFAULT_COVERING
             changes["roof.covering"] = covering
@@ -819,7 +934,12 @@ class Building:
         r = self.roof
         fine = ("", [])
         if r.type == "flat":
+            plane = self.plane()
+            if plane is not None:
+                return roofs.flat_plane(self.footprint, plane), fine, None
             return roofs.flat(self.footprint, self.height), fine, None
+        if r.type == "saddles":
+            return roofs.saddles(self.footprint, self.height, r.saddles), fine, None
         if r.type == "mono":
             return roofs.mono(self.footprint, r.eave_side, self.height, r.tilt), fine, None
         if r.type in PITCHED:
@@ -863,6 +983,17 @@ class Prop:
     building: str | None = None
     path: list | None = None
     railing: bool = False
+    # R374 (format 30): the model of the catalogue (data/models, its `key`) drawn for this object in the 3D view,
+    # when not the kind's own: another person, the other lamp. Written only when set; nothing of the calculation
+    # reads it (the shadow is the kind's).
+    asset: str | None = None
+
+    def as_dict(self) -> dict:
+        """The object as the file and the cache keys hold it: `asset` only when set (the keys of before stay)."""
+        out = asdict(self)
+        if out.get("asset") is None:
+            out.pop("asset", None)
+        return out
 
     def measures(self) -> dict:
         from . import props
@@ -874,7 +1005,7 @@ class Prop:
 
     def casts_shadow(self) -> bool:
         from . import props
-        return props.family(self.kind) != "person" and (self.kind != "walkway" or self.railing)
+        return props.casts_shadow(self.kind, self.railing)
 
 
 @dataclass
@@ -907,6 +1038,13 @@ class SubField:
     rows: list = field(default_factory=list)
     manual: bool = False
     support: SupportPlane | None = None
+    group: str = ""               # the parts of one sub-field split on its ridge (R426) move together; "" alone.
+                                  # Optional, written only when there is one: no new format
+    # R445 (format 27): the sub-field is its modules. Drawn as a grid of rows (`manual`), its outline flush with the
+    # outer modules and following them; the modules over an obstacle or off the roof are set aside (Result.blocked,
+    # drawn red) unless the designer keeps them (`kept`, his call). Written only when set: a file without is as before.
+    flush: bool = False
+    kept: list = field(default_factory=list)
 
     def __post_init__(self):
         if isinstance(self.support, dict):
@@ -926,12 +1064,114 @@ class SubField:
         return p
 
 
+def new_params(mounting: str) -> dict:
+    """The parameters of a sub-field the designer draws now: a sub-field that says nothing of its alignment was saved
+    before R418, and keeps laying as it did."""
+    return {"mounting": mounting, "alignment": layout.NEW_ALIGNMENT}
+
+
+# R523: the layout the next sub-fields start from (Project.layout_defaults): the layout.Params a designer chooses
+# before drawing. Not the power asked (of one sub-field), not where its strings go, not the fire rules (they come from
+# the building), not the 3D stand-off.
+DEFAULT_KEYS = ("mounting", "portrait", "stack", "tilt", "azimuth", "gap", "edge", "flush_row_gap", "table_modules",
+                "table_gap", "shade_free", "pitch_mode", "pitch", "gcr", "window", "alignment", "ew_ridge_gap",
+                "ew_aisle", "target_kwp", "target_from")
+# of the DEFAULT_KEYS, those a sub-field already drawn keeps as its own: the power asked (R417) is set for the sub-fields
+# drawn from now on, never taken from one («Use as defaults») nor put on one («Apply the defaults»)
+OWN_KEYS = ("target_kwp", "target_from")
+# the mountings that lie on a surface: on the ground the surface's own mounting takes their place
+_ON_A_ROOF = ("coplanar", "integrated")
+
+
+def profile_defaults(project) -> dict:
+    """The defaults of `project` as the profile keeps them for the new projects (R523): with the datasheet of their
+    module when it is not a generic one, since a new project has only the generic ones."""
+    out = copy.deepcopy(project.layout_defaults)
+    key = out.get("module")
+    if key and key not in GENERIC_MODULES and key in project.modules:
+        out["module_data"] = copy.deepcopy(project.modules[key])
+    return out
+
+
+def start_from_profile(project, saved) -> None:
+    """A new project takes the defaults of the profile (R523): what is not a table, or a module without its
+    datasheet, is left out; the project's own defaults are written only when they hold something."""
+    if not isinstance(saved, dict) or not saved:
+        return
+    out = {}
+    params = saved.get("params")
+    if isinstance(params, dict):
+        params = {k: copy.deepcopy(v) for k, v in params.items() if k in DEFAULT_KEYS}
+        if params:
+            out["params"] = params
+    key, data = saved.get("module"), saved.get("module_data")
+    if isinstance(key, str) and key:
+        if key not in project.modules and isinstance(data, dict) and all(
+                _is_number(data.get(k)) for k in ("length", "width", "power_kw")):
+            project.modules[key] = copy.deepcopy(data)
+        if key in project.modules:
+            out["module"] = key
+    if saved.get("fire_bands") is True:
+        out["fire_bands"] = True
+    project.layout_defaults = out
+
+
+def host_mounting(building, pitch) -> str:
+    """The mounting a sub-field drawn here gets when nothing is chosen: on the ground, rows; on a pitch that slopes,
+    coplanar; on a flat roof, tilted rows anchored (as the drawing tools did before R523)."""
+    if building is None:
+        return "ground"
+    return "coplanar" if building.pitches()[building.pitch_index(pitch) or 0].tilt > 0 else "tilted_anchored"
+
+
+def chosen_mounting(chosen: str | None, building, pitch) -> str:
+    """The mounting of the defaults on this host: none chosen, the surface's; a coplanar or integrated one on the
+    ground, and ground rows on a roof, give way to the surface's (they cannot stand there)."""
+    own = host_mounting(building, pitch)
+    if not chosen or chosen not in layout.MOUNTINGS:
+        return own
+    if (building is None and chosen in _ON_A_ROOF) or (building is not None and chosen == "ground"):
+        return own
+    return chosen
+
+
+# The shadows the places for a power asked keep away from (R417), no hourly calculation: the design window's, and the
+# same day with these hours more on each side, which count less. (weight, hours)
+TARGET_WINDOWS = ((1.0, 0.0), (0.25, 2.0))
+
+
 GENERIC_MODULES = {
     "generic-450": {"manufacturer": "Generico", "model": "450 W, 2278 x 1134 mm", "length": 2.278, "width": 1.134,
                     "power_kw": 0.450},
     "generic-550": {"manufacturer": "Generico", "model": "550 W, 2278 x 1134 mm", "length": 2.278, "width": 1.134,
                     "power_kw": 0.550},
 }
+
+
+def _building_json(raw: dict) -> dict:
+    """A building as the file holds it: the fields of format 28 only when they hold, so that a file of before is
+    written as it was."""
+    for key in ("base", "on", "part_of"):
+        if not raw.get(key):
+            raw.pop(key, None)
+    roof = raw.get("roof") or {}
+    if roof.get("plane") is None or raw.get("roof", {}).get("type") != "flat":
+        roof.pop("plane", None)
+    if not roof.get("saddles") or roof.get("type") != "saddles":
+        roof.pop("saddles", None)
+    return raw
+
+
+def _subfield_json(sf: SubField) -> dict:
+    """A sub-field as the file keeps it: the group only when it has one, so a file without groups is as before."""
+    raw = asdict(sf)
+    if not raw["group"]:
+        del raw["group"]
+    if not raw["flush"]:
+        del raw["flush"]
+    if not raw["kept"]:
+        del raw["kept"]
+    return raw
 
 
 def _build(kls, raw):
@@ -1014,6 +1254,8 @@ def _check_fields(kls, raw: dict, path: str, unknown: list[str]) -> None:
         elif kind is None and f.default is None and value is not None:
             # a field whose default is None: an int, a number or text by its name (ridge_along, pitch, height,
             # building)
+            if f.name == "plane" and value.__class__ is not list:
+                raise ValueError(f"{path}.{f.name}: {value!r} is not a list")
             if f.name in ("ridge_along", "pitch") and value.__class__ is not int:
                 raise ValueError(f"{path}.{f.name}: {value!r} is not a whole number")
             if f.name in ("height", "ridge_height") and not _is_number(value):
@@ -1047,6 +1289,9 @@ def _check_design(design: dict, path: str, ids: set[str], unknown: list[str]) ->
             raise ValueError(f"{where}.id: '{raw['id']}' is used twice")
         mine.add(raw["id"])
         _check_rows(raw.get("rows") or [], f"{where}.rows")
+        _check_placement(raw.get("params") or {}, f"{where}.params")
+        if any(k.__class__ is not str for k in raw.get("kept") or []):
+            raise ValueError(f"{where}.kept: not a list of text")
         if raw.get("support") is not None:
             support = _check_dict(raw["support"], f"{where}.support")
             _check_fields(SupportPlane, support, f"{where}.support", unknown)
@@ -1057,6 +1302,16 @@ def _check_design(design: dict, path: str, ids: set[str], unknown: list[str]) ->
                                    ("x0", -COORD_LIMIT, COORD_LIMIT), ("y0", -COORD_LIMIT, COORD_LIMIT)):
                 _check_number(support.get(key, 0.0), f"{where}.support.{key}", low, high)
     unknown.extend(f"{path}.{k}" for k in design if k not in DESIGN)
+
+
+def _check_placement(params: dict, path: str) -> None:
+    """The alignment of the modules and the power asked of a sub-field (R417, R418), when it says them."""
+    if "alignment" in params and params["alignment"] not in (layout.LEGACY_ALIGNMENT, *layout.ALIGNMENTS):
+        raise ValueError(f"{path}.alignment: {params['alignment']!r} is not a way to align modules")
+    if "target_kwp" in params:
+        _check_number(params["target_kwp"], f"{path}.target_kwp", 0.0, 1.0e6)
+    if "target_from" in params and params["target_from"] not in layout.TARGET_FROM:
+        raise ValueError(f"{path}.target_from: {params['target_from']!r} is not where a power asked starts")
 
 
 def _check_rows(rows: list, path: str) -> None:
@@ -1139,8 +1394,20 @@ def _check_project(data: dict) -> list[str]:
         _check_ring(raw["footprint"], f"{path}.footprint", 3)
         _check_number(raw.get("height", 10.0), f"{path}.height", 0.0, HEIGHT_LIMIT)
         _check_number(raw.get("parapet", 0.0), f"{path}.parapet", 0.0, HEIGHT_LIMIT)
+        _check_number(raw.get("base", 0.0), f"{path}.base", 0.0, HEIGHT_LIMIT)
         roof = _check_dict(raw.get("roof", {}), f"{path}.roof")
         _check_fields(Roof, roof, f"{path}.roof", unknown)
+        if roof.get("plane") is not None:                 # R455, format 28: a height for each corner of the outline
+            heights = roof["plane"]
+            if heights.__class__ is not list or len(heights) != len(raw["footprint"]):
+                raise ValueError(f"{path}.roof.plane: not one height for each corner of the outline")
+            for k, value in enumerate(heights):
+                _check_number(value, f"{path}.roof.plane[{k}]", 0.0, HEIGHT_LIMIT)
+        for key, value in (roof.get("saddles") or {}).items():
+            if key not in roofs.SADDLE_DEFAULTS:
+                unknown.append(f"{path}.roof.saddles.{key}")
+            elif not _is_number(value):
+                raise ValueError(f"{path}.roof.saddles.{key}: {value!r} is not a number")
         if roof.get("type", "flat") not in ROOF_TYPES:
             raise ValueError(f"{path}.roof.type: {roof.get('type')!r} is not one of {', '.join(ROOF_TYPES)}")
         _check_number(roof.get("tilt", 0.0), f"{path}.roof.tilt", 0.0, 89.0)
@@ -1217,6 +1484,9 @@ def _check_project(data: dict) -> list[str]:
             if raw.get(key) is not None:
                 if _check_number(raw[key], f"{path}.{key}", 0.0, HEIGHT_LIMIT) <= 0:
                     raise ValueError(f"{path}.{key}: {raw[key]!r} is not above zero")
+        asset = raw.get("asset")           # R374, format 30: a key of the catalogue of models
+        if asset is not None and (asset.__class__ is not str or not re.fullmatch(r"[a-z0-9_]{1,64}", asset)):
+            raise ValueError(f"{path}.asset: {asset!r} is not the key of a model")
         points = raw.get("path")
         if points is not None:
             if points.__class__ is not list or len(points) < 2 or any(q.__class__ is not list or len(q) != 2 for q in points):
@@ -1268,7 +1538,21 @@ def _check_project(data: dict) -> list[str]:
         raise ValueError("bim_id: expected a UUID") from None
     known = {"format", "version", "app_version", "name", "site", "climate", "sun_window", "buildings", "exclusions",
              "consumption", "rules", "network", "network_consent", "variants", "variant", "underlays", "report",
-             "resources", "reserved", "created", "modified", "job_id", "series_id", "bim_id", "props"}
+             "resources", "reserved", "created", "modified", "job_id", "series_id", "bim_id", "props",
+             "layout_defaults"}
+    if "layout_defaults" in data:           # R523 (format 28): the layout of the next sub-fields
+        defaults = _check_dict(data["layout_defaults"], "layout_defaults")
+        if defaults.get("module", "").__class__ is not str:
+            raise ValueError(f"layout_defaults.module: {defaults.get('module')!r} is not text")
+        if defaults.get("fire_bands", False).__class__ is not bool:
+            raise ValueError(f"layout_defaults.fire_bands: {defaults.get('fire_bands')!r} is not a switch")
+        params = _check_dict(defaults.get("params", {}), "layout_defaults.params")
+        _check_fields(layout.Params, {k: v for k, v in params.items() if k != "window"}, "layout_defaults.params",
+                      unknown)
+        if "window" in params:
+            _check_fields(sun.DesignWindow, _check_dict(params["window"], "layout_defaults.params.window"),
+                          "layout_defaults.params.window", unknown)
+        unknown.extend(f"layout_defaults.{k}" for k in defaults if k not in ("module", "params", "fire_bands"))
     unknown.extend(k for k in data if k not in known)
     return unknown
 
@@ -1316,6 +1600,10 @@ class Project:
     reserved: bool = False
     # coordinates may leave a reserved project only to these services, after its own consent (ISO date each)
     network_consent: dict = field(default_factory=dict)
+    # R523: the layout the next sub-fields start from, {"module", "params" (DEFAULT_KEYS that differ, "mounting" only
+    # when chosen), "fire_bands"}; the sub-fields already drawn keep their own. Shared by the variants, written only
+    # when set (format 28)
+    layout_defaults: dict = field(default_factory=dict)
     created: str = field(default_factory=_now)
     modified: str = field(default_factory=_now)
 
@@ -1420,6 +1708,7 @@ class Project:
             copy.roof = _copy.deepcopy(thing.roof)
             copy.fire = _copy.deepcopy(thing.fire)
             copy.canopy = _copy.deepcopy(thing.canopy)      # R281: its own structure, not the original's
+            copy.group = ""                                 # a copy stands on its own
             # the pitches drawn by hand are in the site's coordinates too: left behind, the copy's roof stood
             # on the original, with its shadows and the pitches its sub-fields lie on (review, 23/10/2026)
             for pitch in copy.roof.free_pitches:
@@ -1429,6 +1718,7 @@ class Project:
         if kind == "subfield":
             copy.params, copy.removed, copy.filled = _copy.deepcopy(thing.params), [], False
             copy.rows, copy.manual = [], False
+            copy.group = ""                             # R426: a copy stands on its own
             copy.support = _copy.deepcopy(thing.support)
             if copy.support is not None:
                 copy.support.x0 += offset[0]
@@ -1441,7 +1731,7 @@ class Project:
     def design(self) -> dict:
         """The design of the variant being worked on, as JSON (a copy)."""
         import copy
-        return copy.deepcopy({"subfields": [asdict(s) for s in self.subfields], "modules": self.modules,
+        return copy.deepcopy({"subfields": [_subfield_json(s) for s in self.subfields], "modules": self.modules,
                               "energy": self.energy, "economics": self.economics})
 
     def set_design(self, design: dict) -> None:
@@ -1517,7 +1807,54 @@ class Project:
                 for e in self.exclusions if e.building == sf.building] + [
             # R269: a roof obstacle placed as a 3D object keeps the modules off its outline too
             layout.Exclusion(ring=x.footprint(), kind=x.kind if x.kind in EXCLUSION_KINDS else "other")
-            for x in self._prop_exclusions(sf.building)]
+            for x in self._prop_exclusions(sf.building)] + [
+            # R352: a plant room standing on this roof keeps the modules off its outline
+            layout.Exclusion(ring=[tuple(map(float, q)) for q in x.footprint], kind="other")
+            for x in self.standing_on(sf.building)]
+
+    def standing_on(self, bid: str | None) -> list[Building]:
+        """The buildings that stand on building `bid` (R352: Building.on)."""
+        return [x for x in self.buildings if bid and x.on == bid and x.id != bid] if bid else []
+
+    def whole_of(self, b: Building) -> Building:
+        """The building a body is a part of (R440: Building.part_of), itself when it stands alone or its whole is
+        gone."""
+        whole = self.building(b.part_of) if b.part_of else None
+        return b if whole is None or whole is b else whole
+
+    def parts_of(self, bid: str) -> list[Building]:
+        """The other bodies of building `bid` (R440), in their order."""
+        return [x for x in self.buildings if x.part_of == bid and x.id != bid]
+
+    def wholes(self) -> list[tuple[Building, list[Building]]]:
+        """The buildings as the report and the counts see them (R440): each whole with its parts; a body whose
+        whole is gone stands alone."""
+        return [(b, self.parts_of(b.id)) for b in self.buildings if self.whole_of(b) is b]
+
+    def shown_name(self, b: Building) -> str:
+        """The name of a body in the lists: its whole's, with the place of the body (R440)."""
+        whole = self.whole_of(b)
+        if whole is b:
+            return b.name
+        from .i18n import _
+        n = 2 + self.parts_of(whole.id).index(b)
+        return _("{name} (body {n})").format(name=whole.name, n=n)
+
+    def fire_of(self, b: Building) -> Fire:
+        """The fire data that hold for a body: those of its building (R440: one activity, one subjection)."""
+        return self.whole_of(b).fire
+
+    def fire_inner(self, b: Building, width: float):
+        """What is `width` metres inside the roof edge of the building body `b` belongs to: its bodies together
+        (R440), so that a side two bodies share is no edge; one body alone, its own outline. A shapely geometry."""
+        from shapely.geometry import Polygon
+        from shapely.ops import unary_union
+        whole = self.whole_of(b)
+        bodies = [x for x in [whole, *self.parts_of(whole.id)] if len(x.footprint) >= 3]
+        shape = unary_union([Polygon([tuple(map(float, q)) for q in x.footprint]).buffer(0) for x in bodies])
+        # the hair between bodies drawn side by side is closed before the band is taken
+        shape = shape.buffer(0.01, join_style="mitre").buffer(-0.01, join_style="mitre") if len(bodies) > 1 else shape
+        return shape.buffer(-width, join_style="mitre")
 
     def obstacle_prisms(self) -> list[dict]:
         """The exclusions that rise above their roof or the ground, and the parapets of the flat roofs, as
@@ -1536,12 +1873,61 @@ class Project:
         for b in self.buildings:
             if b.parapet > 0 and b.roof.type == "flat":
                 for quad in parapet_quads(b.footprint):
-                    out.append({"ring": quad, "z0": b.height, "z1": b.height + b.parapet, "kind": "parapet",
+                    zs = roof_z(b, quad) if b.plane() is not None else [b.height]
+                    out.append({"ring": quad, "z0": min(zs), "z1": max(zs) + b.parapet, "kind": "parapet",
                                 "id": b.id, "building": b.id})
             if b.canopy is not None:
                 # R281: a canopy's columns and beams, upright boxes: drawn, shading and exported as the obstacles
                 from . import canopies
                 out.extend(canopies.structure(b))
+        return out
+
+    # R523: the defaults of the next sub-fields
+
+    def default_module(self) -> str:
+        """The module of the next sub-field: the one of the defaults while the project has it, else the generic one
+        every project had before R523."""
+        own = self.layout_defaults.get("module")
+        return own if isinstance(own, str) and own in self.modules else "generic-450"
+
+    def default_params(self) -> dict:
+        """The parameters the defaults set, DEFAULT_KEYS only, "mounting" among them only when one is chosen."""
+        raw = self.layout_defaults.get("params")
+        return {k: copy.deepcopy(v) for k, v in raw.items() if k in DEFAULT_KEYS} if isinstance(raw, dict) else {}
+
+    def new_subfield(self, sid: str, name: str, ring: list, building: str | None, pitch=None) -> SubField:
+        """A sub-field drawn now with the defaults (R523): their module and parameters, the mounting chosen for this
+        host (`chosen_mounting`), the alignment of a sub-field drawn after R418 unless the defaults say another. With
+        no defaults it is what the drawing tools made before: the surface's mounting, aligned, the generic module."""
+        params = self.default_params()
+        b = self.building(building)
+        mounting = chosen_mounting(params.pop("mounting", None), b, pitch)
+        alignment = params.pop("alignment", layout.NEW_ALIGNMENT)
+        return SubField(id=sid, name=name, ring=ring, building=building, pitch=pitch, module=self.default_module(),
+                        params={"mounting": mounting, "alignment": alignment, **params})
+
+    def add_subfield(self, sf: SubField) -> list:
+        """`sf` added to the project; with the defaults' «fire_bands» and a building subject to the fire rules, the
+        free bands of 1 m along its roof edges added as obstacles first, when they are not there (DCPREV 14030,
+        3.3.5.1 point 2, as `fire_bands`). The bands added."""
+        self.subfields.append(sf)
+        b = self.building(sf.building)
+        if self.layout_defaults.get("fire_bands") is True and b is not None and self.fire_of(b).subject:
+            return self.fire_bands(b.id)
+        return []
+
+    def defaults_of(self, sf: SubField) -> dict:
+        """The defaults a sub-field gives «Use as defaults» (R523): its module and the DEFAULT_KEYS it sets; its
+        mounting only when it is not the one its surface would have given (a coplanar sub-field on a pitch leaves the
+        mounting to the surface), its alignment only when it is not the legacy one. The fire bands stay as they were."""
+        params = {k: copy.deepcopy(v) for k, v in sf.params.items() if k in DEFAULT_KEYS and k not in OWN_KEYS}
+        if params.get("mounting") == host_mounting(self.building(sf.building), sf.pitch):
+            params.pop("mounting")
+        if params.get("alignment") == layout.LEGACY_ALIGNMENT:
+            params.pop("alignment")         # a sub-field saved before R418 lays as it did; a new one is aligned
+        out = {"module": sf.module, "params": params}
+        if self.layout_defaults.get("fire_bands") is True:
+            out["fire_bands"] = True
         return out
 
     def fill_params(self, sf: SubField) -> layout.Params:
@@ -1551,8 +1937,10 @@ class Project:
         if "window" not in sf.params:
             p.window = sun.DesignWindow(**self.sun_window)        # the site's, unless the sub-field has its own
         b = self.building(sf.building)
-        if b and b.fire.subject:
+        if b and self.fire_of(b).subject:          # a body follows its building (R440)
             p.fire_rules = True
+        if sf.flush:
+            p.edge = 0.0          # R445: no band hidden inside it; the band from the roof edge is a guide and a check
         return p
 
     def fill(self, sf: SubField, shade=None) -> layout.Result:
@@ -1566,13 +1954,82 @@ class Project:
         ring = self._ring_on_its_part(sf)
         if sf.manual:
             return layout.compute(ring, self.surface_of(sf), self.module_of(sf), p,
-                                  blocked, self.site.lat, self.site.lon, set(sf.removed), rows=sf.hand_rows())
+                                  blocked, self.site.lat, self.site.lon, set(sf.removed), rows=sf.hand_rows(),
+                                  host=self.host_ring(sf) if sf.flush else None, kept=set(sf.kept),
+                                  shaded=self._target_shadows(sf, p, shade) if sf.flush else [])
         if p.shade_free:
             if shade is None:
                 raise ValueError("keeping out of the shadows needs the shadow function (energy.system.shadow_exclusions)")
             blocked = blocked + shade(self, sf, p.window)
         return layout.compute(ring, self.surface_of(sf), self.module_of(sf), p,
-                              blocked, self.site.lat, self.site.lon, set(sf.removed))
+                              blocked, self.site.lat, self.site.lon, set(sf.removed),
+                              shaded=self._target_shadows(sf, p, shade))
+
+    def _target_shadows(self, sf: SubField, p: layout.Params, shade) -> list:
+        """The areas in shadow a power asked keeps away from (R417), (weight, exclusions) for TARGET_WINDOWS; none
+        without a power asked or without the shadow function."""
+        if p.target_kwp <= 0 or shade is None:
+            return []
+        w = p.window
+        return [(weight, shade(self, sf, dataclasses.replace(w, start=max(0.0, w.start - more),
+                                                             end=min(24.0, w.end + more))))
+                for weight, more in TARGET_WINDOWS]
+
+    def host_ring(self, sf: SubField) -> list[tuple] | None:
+        """Where the modules of a sub-field may stand (R445): the pitch it lies on (its building's outline on a flat
+        roof), None on the ground or on its own support plane. A module off it is set aside, drawn red."""
+        b = self.building(sf.building)
+        if b is None or sf.support is not None and sf.support.enabled:
+            return None
+        pitches = b.pitches()
+        index = b.pitch_index(sf.pitch)
+        pitch = pitches[index] if index is not None else None
+        if pitch is not None and pitch.tilt > 0 and len(pitch.ring) >= 3:
+            return [tuple(map(float, q)) for q in pitch.ring]
+        return [tuple(map(float, q)) for q in b.footprint]
+
+    def fire_bands(self, bid: str | None = None, width: float = 1.0) -> list[ExclusionItem]:
+        """The free bands along the roof edges as exclusions of kind «band» (R445, decision 2): DCPREV 14030 of
+        01/09/2025, 3.3.5.1 point 2 (p. 15-16 of the file): a band of at least 1 m next to the limit of the roof, free
+        of modules. One quad per side of the building (`bid`, or every building), inside its outline; the 1 m around
+        smoke vents, openings and roof plant (point 3) is the clearance those exclusions already carry under the rules.
+        Not added where one of the same side is there already."""
+        out = []
+        have = {tuple(tuple(q) for q in e.ring) for e in self.exclusions if e.kind == "band"}
+        for b in self.buildings:
+            if bid is not None and b.id != bid:
+                continue
+            for quad in parapet_quads(b.footprint, width):
+                ring = [[round(x, 4), round(y, 4)] for x, y in quad]
+                if tuple(tuple(q) for q in ring) in have:
+                    continue
+                out.append(ExclusionItem(id=self.new_id("e"), ring=ring, kind="band", building=b.id, height=0.0))
+                self.exclusions.append(out[-1])
+        return out
+
+    def fire_guides(self) -> list[tuple[str, list]]:
+        """The lines the fire-brigade rules draw on a roof (R445, decision 2), as (building id, ring): the inner limit
+        of the 1 m band along the roof edge of every building subject to them (DCPREV 14030 3.3.5.1 point 2) and the
+        1 m around its smoke vents, openings and roof plant (point 3). Guides on the plan, not walls: the designer may
+        draw over them, and the checks say so."""
+        from shapely.geometry import Polygon
+        out = []
+        for b, parts in self.wholes():
+            bodies = [x for x in [b, *parts] if len(x.footprint) >= 3]
+            if not b.fire.subject or not bodies:
+                continue
+            inner = self.fire_inner(b, 1.0)         # the bodies of one building: one roof edge, theirs together (R440)
+            for part in getattr(inner, "geoms", [inner]):
+                if not part.is_empty and part.geom_type == "Polygon":
+                    out.append((b.id, [list(q) for q in part.exterior.coords[:-1]]))
+            ids = {x.id for x in bodies}
+            for e in self.exclusions:
+                if e.building in ids and e.kind in ("vent", "opening", "plant") and len(e.ring) >= 3:
+                    grown = Polygon([tuple(map(float, q)) for q in e.ring]).buffer(0).buffer(
+                        e.clearance + 1.0, join_style="mitre")
+                    if grown.geom_type == "Polygon":
+                        out.append((b.id, [list(q) for q in grown.exterior.coords[:-1]]))
+        return out
 
     def _ring_on_its_part(self, sf: SubField) -> list[tuple]:
         """The outline a sub-field is laid in: its own; on a free pitch folded out of plane (roof_join) the part of it
@@ -1605,20 +2062,30 @@ class Project:
         the input the sub-field's strings go to (ELECTRICAL): they move no module."""
         import json
         host = self.building(sf.building)
-        own = asdict(sf)
+        own = _subfield_json(sf)
+        own.pop("group", None)                  # R426: the parts of a split move together, their modules are their own
         own["params"] = {k: v for k, v in own["params"].items() if k not in ELECTRICAL}
         data = {"sf": own, "module": self.modules.get(sf.module), "site": asdict(self.site),
                 "window": self.sun_window,
-                "host": [host.geometry_key(), host.fire.subject] if host is not None else None,
+                "host": [host.geometry_key(), self.fire_of(host).subject] if host is not None else None,
                 "exclusions": [[e.ring, e.kind, e.clearance] for e in self.exclusions if e.building == sf.building]}
         own_props = self._prop_exclusions(sf.building)
         if own_props:                           # R269: only when there are, so the keys of before stay as they were
-            data["props"] = [asdict(x) for x in own_props]
-        if sf.layout_params().shade_free and not sf.manual:
+            data["props"] = [x.as_dict() for x in own_props]
+        rooms = self.standing_on(sf.building)
+        if rooms:                               # R352: only when there are, as above
+            data["rooms"] = [x.footprint for x in rooms]
+        placement = sf.layout_params()
+        if ((placement.shade_free and not sf.manual)
+                or (placement.target_kwp > 0 and (not sf.manual or sf.flush))):
             data["shade"] = {"buildings": [b.geometry_key() for b in self.buildings],
                              "obstacles": [[e.ring, e.kind, e.height, e.building] for e in self.exclusions]}
             if self.props:                      # R269: their shadows
-                data["shade"]["props"] = [asdict(x) for x in self.props if x.casts_shadow()]
+                data["shade"]["props"] = [x.as_dict() for x in self.props if x.casts_shadow()]
+            from . import ifc_shade
+            true = ifc_shade.key(self)
+            if true:                            # r22-ifc: the model's shapes cast them; only then, as above
+                data["shade"]["ifc"] = true
         return json.dumps(data, sort_keys=True, default=str)
 
     def layout_state(self, sf: SubField, keys: dict, results: dict) -> str:
@@ -1642,6 +2109,10 @@ class Project:
         for v in data["variants"]:
             if v.get("id") == self.variant:
                 v["design"] = self.design()
+        data["buildings"] = [_building_json(raw) for raw in data["buildings"]]
+        data["props"] = [x.as_dict() for x in self.props]      # R374: `asset` only when set
+        if not data["layout_defaults"]:
+            del data["layout_defaults"]           # R523: written only when set, a project without is as before
         data["format"] = FORMAT
         data["version"] = FORMAT_VERSION
         return data
@@ -1703,6 +2174,7 @@ class Project:
                 variants=data.get("variants") or [{"id": "v1", "name": "Base", "note": ""}],
                 variant=data.get("variant") or "v1", reserved=data.get("reserved", False) is True,
                 network_consent=dict(data.get("network_consent") or {}),
+                layout_defaults=copy.deepcopy(data.get("layout_defaults") or {}),
                 created=data.get("created", _now()), modified=data.get("modified", _now()))
         for raw in data.get("buildings", []):
             b = build(Building, raw)

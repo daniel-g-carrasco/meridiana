@@ -118,7 +118,7 @@ def main(argv: list[str]) -> int:
 
     from PySide6.QtCore import QLocale
 
-    from . import APP_ID, APP_NAME, ENV_PREFIX, config, i18n, log
+    from . import APP_ID, APP_NAME, ENV_PREFIX, config, i18n, log, resources
     from .paths import Paths
 
     linux_theme()
@@ -159,6 +159,7 @@ def main(argv: list[str]) -> int:
     except OSError as error:
         log.complain("claim the recovery copies", error)
     cfg = config.load(paths.config_file)
+    resources.configure(cfg.memory_mode)
     if tour_request is not None and tour_request.new:
         cfg.tour_status = "new"          # the first start, simulated: the offer comes by itself
     # the size of the text before any widget or font is made (R133)

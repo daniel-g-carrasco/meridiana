@@ -31,6 +31,7 @@ Sentinel-2 mosaics after 2016 are non-commercial; Denmark, Norway, Sweden and Fi
 from __future__ import annotations
 
 import hashlib
+import functools
 import math
 import re
 from dataclasses import dataclass
@@ -101,7 +102,11 @@ class Source:
     format: str = "image/jpeg"
     version: str = "1.3.0"         # wms
     crs: str = "EPSG:3857"         # wms: one of WMS_CRS
-    max_age_days: int = 30         # how long a tile of the cache is good
+    max_age_days: int = 30         # how long a tile of the cache is good; 0: always (an orthophoto of a year, R516)
+    # R516: the licence allows keeping the area of a project ahead (plan_offline.py): the open orthophotos, never
+    # OpenStreetMap's servers (their policy forbids the bulk download) or a volunteer's
+    bulk: bool = False
+    detail_zoom: int = 0           # the zoom of the imagery's own detail, the last one kept ahead (0: max_zoom)
     sample: tuple = ()             # (lat, lon) of a public square in its area: the trial (tools/try_map_sources.py)
     custom: bool = False           # added by the designer
     capabilities: str = ""         # the capabilities address it was read from (a designer's source)
@@ -123,12 +128,26 @@ class Source:
         what = "|".join((self.kind, self.url, self.layer, self.style, self.matrix_set, self.format, self.crs))
         return f"{self.key}-{hashlib.sha1(what.encode()).hexdigest()[:8]}"
 
+    def fresh(self, age_seconds: float) -> bool:
+        """Whether a tile of the cache this old is good as it is: a tile older is still shown, and renewed in
+        background (R516)."""
+        return self.max_age_days <= 0 or age_seconds < self.max_age_days * 86400
+
+    @property
+    def last_zoom(self) -> int:
+        """The finest zoom with detail of its own: further is only enlargement."""
+        return min(self.max_zoom, self.detail_zoom or self.max_zoom)
+
     def credit(self, year: int | None = None) -> str:
         return self.attribution.replace("{year}", str(year or date.today().year))
 
-    def tile_url(self, z: int, x: int, y: int, key: str = "") -> str:
+    def tile_url(self, z: int, x: int, y: int, key: str = "", attempt: int = 0) -> str:
+        """`attempt`, a WMS asked again: the same image under another address (R516). The national orthophoto's
+        server keeps the error of an exact address and gives it again and again, while the same GetMap with one
+        parameter more, at its default value, draws the image (07/11/2026: 38 tiles of 40 at zoom 18 over Rho)."""
         if self.kind == "wms":
-            return self._getmap(z, x, y, key)
+            url = self._getmap(z, x, y, key)
+            return url + WMS_AGAIN[(attempt - 1) % len(WMS_AGAIN)] if attempt > 0 else url
         if self.kind == "wmts":
             matrix = self.matrices[z] if 0 <= z < len(self.matrices) else str(z)
             values = {"TileMatrix": matrix, "TileCol": x, "TileRow": y, "TileMatrixSet": self.matrix_set,
@@ -163,8 +182,7 @@ class Source:
     def inside(self, lon: float, lat: float) -> bool:
         """The site inside its area itself (no margin); the world's sources are inside everywhere."""
         if self.area:
-            a = _area(self.area)
-            return a is not None and _in_box(a.bbox, lon, lat, 0.0) and _even_odd(a.rings, lon, lat)
+            return _area_inside(self.area, lon, lat)
         if self.bbox:
             return _in_box(self.bbox, lon, lat, 0.0)
         return True
@@ -177,7 +195,7 @@ class Source:
             a = _area(self.area)
             if a is None or not _in_box(a.bbox, lon, lat, margin_km):
                 return False
-            return _distance_km(a.rings, lon, lat) <= margin_km
+            return _area_distance(self.area, lon, lat) <= margin_km
         return bool(self.bbox) and _in_box(self.bbox, lon, lat, margin_km)
 
 
@@ -238,6 +256,20 @@ def _even_odd(rings, lon: float, lat: float) -> bool:
     return inside
 
 
+@functools.lru_cache(maxsize=1024)
+def _area_inside(name: str, lon: float, lat: float) -> bool:
+    a = _area(name)
+    return a is not None and _in_box(a.bbox, lon, lat, 0.0) and _even_odd(a.rings, lon, lat)
+
+
+@functools.lru_cache(maxsize=1024)
+def _area_distance(name: str, lon: float, lat: float) -> float:
+    """`_distance_km` of an area by name, kept: the plan asks the source for its site at every settle of the view
+    (06/11/2026: 11.800 hypot per settle, 25-66 ms on the window's thread)."""
+    a = _area(name)
+    return math.inf if a is None else _distance_km(a.rings, lon, lat)
+
+
 def _distance_km(rings, lon: float, lat: float) -> float:
     """From the site to the nearest side of the outline, on a plane tangent at the site (a few kilometres matter)."""
     kx, ky = 111.32 * math.cos(math.radians(lat)), 110.57
@@ -252,6 +284,10 @@ def _distance_km(rings, lon: float, lat: float) -> float:
     return best
 
 
+# A WMS asked again (R516): parameters of the standard at their default value, so the image is the same and the
+# address is not; the third attempt carries both.
+WMS_AGAIN = ("&TRANSPARENT=FALSE", "&TRANSPARENT=FALSE&BGCOLOR=0xFFFFFF")
+
 # the program's own sources, read and tried on 25/10/2026 (docs/compiti/21-mappe.md)
 
 CHECKED = "2026-10-25"
@@ -263,28 +299,34 @@ _SOURCES = [
            "Geoportale Nazionale (MASE): no access constraints, no fees",
            "http://wms.pcn.minambiente.it/ogc?map=/ms_ogc/WMS_v1.3/raster/ortofoto_colore_12.map&service=WMS"
            "&request=GetCapabilities&version=1.3.0", "2026-10-23", area="it", rank=40, max_zoom=20,
-           layer="OI.ORTOIMMAGINI.2012.32,OI.ORTOIMMAGINI.2012.33", sample=(45.4641, 9.1900)),
+           layer="OI.ORTOIMMAGINI.2012.32,OI.ORTOIMMAGINI.2012.33", sample=(45.4641, 9.1900),
+           max_age_days=0, bulk=True, detail_zoom=18,
+           # R539: MaxScaleDenominator 500000 in its capabilities (read 07/11/2026): zoom 10 is 1:546.000, blank
+           min_zoom=11),
     Source("it-bz", "South Tyrol: orthophoto 2023", "xyz",
            "https://geoservices.buergernetz.bz.it/mapproxy/root/wmts/p_bz-Orthoimagery:Aerial-2023-RGB/EPSG_3857/"
            "{z:02d}/{x}/{y}.png",
            "Ortofoto 2023 © Provincia autonoma di Bolzano - Alto Adige, CC BY 4.0", "CC BY 4.0",
            "https://geonetwork1.civis.bz.it/geonetwork/srv/api/records/p_bz:Orthoimagery:Aerial-2023-RGB", CHECKED,
-           area="it-bz", rank=55, max_zoom=20, sample=(46.4983, 11.3548)),
+           area="it-bz", rank=55, max_zoom=20, sample=(46.4983, 11.3548), max_age_days=0, bulk=True,
+           detail_zoom=19),
     Source("it-tn", "Trentino: orthophoto 2015", "wms", "https://siat.provincia.tn.it/geoserver/stem/ecw-rgb-2015/wms",
            "Ortofoto Digitale 2015 - PAT, Provincia Autonoma di Trento (Ufficio Sistemi Informativi, Servizio "
            "Geologico), CC BY 2.5 IT", "CC BY 2.5 IT", "https://pctrento.it/PORTALE/OFD2015/licenza_ofd_2015.pdf",
-           CHECKED, area="it-tn", rank=45, max_zoom=20, layer="ecw-rgb-2015", sample=(46.0670, 11.1211)),
+           CHECKED, area="it-tn", rank=45, max_zoom=20, layer="ecw-rgb-2015", sample=(46.0670, 11.1211),
+           max_age_days=0, bulk=True, detail_zoom=19),
     Source("it-toscana", "Tuscany: orthophoto 2023", "wms",
            "https://www502.regione.toscana.it/ows_ofc/com.rt.wms.RTmap/wms?map=owsofc_rt",
            "Ortofoto 2023 © Regione Toscana, CC BY 4.0", "CC BY 4.0",
            "https://www502.regione.toscana.it/geonetwork/srv/api/records/r_toscan:66ca3807-815a-4bd1-b626-98ca240d72a2",
-           CHECKED, area="it-toscana", rank=55, max_zoom=20, layer="rt_ofc.5k23.32bit", sample=(43.3183, 11.3314)),
+           CHECKED, area="it-toscana", rank=55, max_zoom=20, layer="rt_ofc.5k23.32bit",
+           sample=(43.3183, 11.3314), max_age_days=0, bulk=True, detail_zoom=19),
     Source("it-fvg", "Friuli Venezia Giulia: true orthophoto 2017-2020", "wms",
            "https://irdat-ortofoto.regione.fvg.it/geoserver/ows",
            "Ortofoto 2017-2020 © Regione Autonoma Friuli Venezia Giulia, IODL 2.0", "IODL 2.0",
            "https://www.regione.fvg.it/rafvg/cms/RAFVG/ambiente-territorio/conoscere-ambiente-territorio/FOGLIA4/",
            CHECKED, area="it-fvg", rank=50, max_zoom=21, layer="ortofoto:trueorto_FVG_1720",
-           sample=(45.6503, 13.7676)),
+           sample=(45.6503, 13.7676), max_age_days=0, bulk=True, detail_zoom=19),
     # Europe
     Source("fr-ign", "France: IGN orthophotos", "wmts", "https://data.geopf.fr/wmts",
            "© IGN, BD ORTHO, Licence Ouverte Etalab 2.0", "Licence Ouverte 2.0 (Etalab)", "https://cartes.gouv.fr/cgu",
@@ -299,7 +341,8 @@ _SOURCES = [
            "Informação geográfica cedida pela Direção-Geral do Território, OrtoSat2023 (Pléiades Neo © Airbus DS)",
            "DGT viewing service, without restrictions",
            "https://snig.dgterritorio.gov.pt/rndg/srv/por/catalog.search#/metadata/b2a1ca02-779b-4189-b895-85d10fff610f", CHECKED,
-           area="pt", rank=40, max_zoom=20, layer="ortoSat2023-CorVerdadeira", sample=(38.7076, -9.1365)),
+           area="pt", rank=40, max_zoom=20, layer="ortoSat2023-CorVerdadeira", sample=(38.7076, -9.1365),
+           max_age_days=0),
     Source("nl-pdok", "Netherlands: PDOK aerial photo", "xyz",
            "https://service.pdok.nl/hwh/luchtfotorgb/wmts/v1_0/Actueel_orthoHR/EPSG:3857/{z:02d}/{x}/{y}.jpeg",
            "Luchtfoto © Beeldmateriaal.nl, CC BY 4.0, via PDOK", "CC BY 4.0",
@@ -376,7 +419,8 @@ _SOURCES = [
     Source("de-be", "Berlin: TrueDOP20 2025", "wms", "https://gdi.berlin.de/services/wms/truedop_2025_sommer",
            "Geoportal Berlin, TrueDOP20 Sommer 2025, dl-de/zero-2-0", "dl-de/zero-2-0",
            "https://gdi.berlin.de/geonetwork/srv/api/records/488857c4-d13f-410e-bf3b-569ca73af5d2", CHECKED,
-           area="de-be", rank=55, max_zoom=20, layer="truedop_2025_sommer_rgb", sample=(52.5137, 13.3928)),
+           area="de-be", rank=55, max_zoom=20, layer="truedop_2025_sommer_rgb", sample=(52.5137, 13.3928),
+           max_age_days=0),
     Source("de-bb", "Brandenburg: DOP20", "wms", "https://isk.geobasis-bb.de/mapproxy/dop20c/service/wms",
            "© GeoBasis-DE/LGB ({year}), dl-de/by-2-0; © Geoportal Berlin, dl-de/by-2-0", "dl-de/by-2-0",
            "https://geobasis-bb.de/lgb/de/agnb/", CHECKED, area="de-bb", rank=50, max_zoom=20, layer="bebb_dop20c",
@@ -384,7 +428,8 @@ _SOURCES = [
     Source("de-hh", "Hamburg: DOP 2024", "wms", "https://geodienste.hamburg.de/wms_dop_zeitreihe_belaubt?TIME=2024",
            "Freie und Hansestadt Hamburg, Landesbetrieb Geoinformation und Vermessung (LGV), dl-de/by-2-0",
            "dl-de/by-2-0", "https://suche.transparenz.hamburg.de/dataset/digitale-orthophotos-belaubt-hamburg8",
-           CHECKED, area="de-hh", rank=50, max_zoom=20, layer="dop_zeitreihe_belaubt", sample=(53.5505, 9.9922)),
+           CHECKED, area="de-hh", rank=50, max_zoom=20, layer="dop_zeitreihe_belaubt", sample=(53.5505, 9.9922),
+           max_age_days=0),
     Source("de-sh", "Schleswig-Holstein: DOP20", "wms", "https://dienste.gdi-sh.de/WMS_SH_DOP20col_OpenGBD",
            "© GeoBasis-DE/LVermGeo SH/CC BY 4.0", "CC BY 4.0",
            "https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/lizenz.html", CHECKED,
@@ -404,11 +449,11 @@ _SOURCES = [
     Source("de-sl", "Saarland: DOP20 2025", "wms", "https://geoportal.saarland.de/freewms/dop2025",
            "© GeoBasis DE/LVGL-SL ({year}), dl-de/by-2-0", "dl-de/by-2-0",
            "https://www.shop.lvgl.saarland.de/index.php?id=18&option=com_content&view=article", CHECKED, area="de-sl",
-           rank=50, max_zoom=20, layer="sl_dop20_rgb", sample=(49.2324, 6.9965)),
+           rank=50, max_zoom=20, layer="sl_dop20_rgb", sample=(49.2324, 6.9965), max_age_days=0),
     Source("de-hb", "Bremen: DOP10 2025", "wms", "https://geodienste.bremen.de/wms_dop_lb",
            "© GeoBasis-DE / Landesamt GeoInformation Bremen ({year}), CC BY 4.0", "CC BY 4.0",
            "https://www.geo.bremen.de/sixcms/detail.php?gsid=bremen04.c.15613.de", CHECKED, area="de-hb", rank=55,
-           max_zoom=21, layer="dop10_2025_HB,dop10_2025_BHV", sample=(53.0758, 8.8072)),
+           max_zoom=21, layer="dop10_2025_HB,dop10_2025_BHV", sample=(53.0758, 8.8072), max_age_days=0),
     # elsewhere
     Source("us-usgs", "United States: USGS imagery", "xyz",
            "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}",
@@ -419,7 +464,7 @@ _SOURCES = [
            "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg",
            "Sentinel-2 cloudless 2016 by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2016), "
            "CC BY 4.0", "CC BY 4.0, a reasonable traffic", "https://cloudless.eox.at/documentation/faq", CHECKED,
-           rank=5, max_zoom=14, max_age_days=60, sample=(-34.6083, -58.3723)),
+           rank=5, max_zoom=14, max_age_days=0, sample=(-34.6083, -58.3723)),
     # maps
     Source("osm", "OpenStreetMap", "xyz", "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
            "© OpenStreetMap contributors", "ODbL data; OpenStreetMap's tile usage policy",
@@ -611,25 +656,28 @@ def best(sources: dict, lon: float, lat: float) -> str:
 AUTO_PHOTO_MPP = 2.0            # a 40 m roof is about 20 screen pixels at this transition
 
 
-def automatic(sources: dict, lon: float, lat: float, metres_per_pixel: float) -> str:
-    """The street map to orient yourself from afar, the best local orthophoto near enough to draw."""
-    if metres_per_pixel > AUTO_PHOTO_MPP and "osm" in sources:
+def automatic(sources: dict, lon: float, lat: float, metres_per_pixel: float, far_map: bool = True) -> str:
+    """The street map to orient yourself from afar, the best local orthophoto near enough to draw. Without `far_map`
+    (the Quick, R539, Daniel 07/11/2026) the orthophoto at every zoom: the plan puts the street map only where the
+    photo does not reach (quick/backend/plan_maps.py)."""
+    if far_map and metres_per_pixel > AUTO_PHOTO_MPP and "osm" in sources:
         return "osm"
     return best(sources, lon, lat)
 
 
-def effective(choice: str, sources: dict, lon: float, lat: float, metres_per_pixel: float = 0.0) -> str:
+def effective(choice: str, sources: dict, lon: float, lat: float, metres_per_pixel: float = 0.0,
+              far_map: bool = True) -> str:
     """The source the plan shows for the designer's choice: none, the source chosen where it covers the site, else
     the automatic source for this zoom (a source chosen for a French project is not used on an Italian one, and comes
     back on the next French one)."""
     if choice == NONE:
         return NONE
     if choice == AUTO:
-        return automatic(sources, lon, lat, metres_per_pixel)
+        return automatic(sources, lon, lat, metres_per_pixel, far_map)
     s = sources.get(choice)
     if s is not None and s.covers(lon, lat):
         return choice
-    return automatic(sources, lon, lat, metres_per_pixel)
+    return automatic(sources, lon, lat, metres_per_pixel, far_map)
 
 
 def fallbacks(sources: dict, failed: str, lon: float, lat: float, detailed: bool = True) -> list[str]:

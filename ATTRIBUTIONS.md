@@ -23,6 +23,12 @@ every distribution (source, installer, Flatpak: the packages are being rebuilt f
 | pyqtgraph | 0.14.0 | MIT |
 | pypdf (the report's attachments, merged into its PDF) | 6.21.2 | BSD-3-Clause |
 | typst, the Python binding of the Typst compiler (the report's layout, R314) | 0.15.0 | Apache-2.0 |
+| mitex, the Typst package that composes the TeX of the report's formulas (carried in `data/typst/mitex`, R460) | 0.2.7 | Apache-2.0 (`data/typst/mitex/LICENSE`) |
+| odfpy, the report as an editable ODT (R460) | 1.4.1 | Apache-2.0, or GPL-2.0-or-later, or LGPL-2.1-or-later |
+| defusedxml, brought by odfpy | 0.7.1 | PSF-2.0 |
+| python-docx, the report as an editable DOCX (R460) | 1.2.0 | MIT |
+| lxml, brought by python-docx (and the report's OMML formulas) | 6.1.3 | BSD-3-Clause |
+| latex2mathml, the TeX of the formulas into MathML for the ODT and the DOCX (R460) | 3.81.1 | MIT |
 | pandas | 3.0.6 | BSD-3-Clause |
 | requests | 2.34.2 | Apache-2.0 |
 | anthropic (Claude's SDK, for Meridio in the cloud: optional, imported only when used) | 2.3.0 | Apache-2.0 |
@@ -32,6 +38,7 @@ every distribution (source, installer, Flatpak: the packages are being rebuilt f
 | phonemizer, espeakng-loader (the voice's phonemes, with espeak-ng) | 3.4.0, 0.2.4 | GPL-3.0, GPL-3.0 (espeak-ng) |
 | IfcOpenShell (the IFC models, export and import: optional, imported only when used; the reading runs in a process of its own) | 0.9.0.post1 | LGPL-3.0-or-later |
 | lark, isodate (brought by IfcOpenShell) | 1.3.1, 0.7.2 | MIT, BSD |
+| ezdxf (the plan as a DXF, R513: imported only when a plan is exported) | 1.4.5 | MIT |
 
 What these bring along (h5py, contourpy, cycler, fonttools, kiwisolver, pillow, pyparsing, python-dateutil,
 pytz, tzdata, urllib3, idna, charset-normalizer, certifi, colorama; for anthropic and keyring: httpx2, httpcore2,
@@ -51,6 +58,7 @@ Setup are build tools and are not distributed.
 
 | Component | Licence | Where |
 |---|---|---|
+| IBM Plex Sans (Light, Light Italic, Regular, Italic, Medium, SemiBold, Bold), IBM Plex Sans Condensed (Light, Regular, Medium, SemiBold, Bold), IBM Plex Mono (Regular), IBM Plex Math (Regular), by IBM Corp. (Reserved Font Name «Plex», unchanged): a font of the window to choose, and the report's fonts since 06/11/2026 (R460), embedded in its ODT and DOCX | SIL Open Font License 1.1 | `data/fonts/ibm-plex/OFL.txt`, `data/fonts/ibm-plex-report/OFL.txt` |
 | Inter (Regular, SemiBold, Bold), by Rasmus Andersson and the Inter Project Authors: the text's font since 25/10/2026 | SIL Open Font License 1.1 | `data/fonts/inter/OFL.txt` |
 | Titillium Web (Regular, SemiBold, Bold), by the Accademia di Belle Arti di Urbino: the text's font until 25/10/2026, kept for a return | SIL Open Font License 1.1 | `data/fonts/titillium-web/OFL.txt` |
 | Lucide icons (the 76 SVG files in `data/icons/lucide`), copyright (c) Lucide Icons and Contributors; some derive from Feather, copyright (c) Cole Bemis, MIT | ISC (MIT for the Feather ones) | `data/icons/lucide/LICENSE` |

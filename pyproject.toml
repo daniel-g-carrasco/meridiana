@@ -28,6 +28,11 @@ dependencies = [
     "pyqtgraph>=0.14",
     "pypdf>=6.0",
     "typst==0.15.0",
+    "odfpy==1.4.1",
+    "python-docx==1.2.0",
+    "lxml>=6.1",
+    "latex2mathml==3.81.1",
+    "ezdxf==1.4.5",
 ]
 
 [project.optional-dependencies]

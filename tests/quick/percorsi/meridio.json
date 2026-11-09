@@ -1,0 +1,118 @@
+{
+  "size": [
+    1600,
+    960
+  ],
+  "steps": [
+    {
+      "action": "key",
+      "key": "Ctrl+L",
+      "home": true,
+      "assistant": {
+        "opened": true,
+        "docked": false
+      }
+    },
+    {
+      "action": "hover",
+      "target": "provider",
+      "wait": 1000,
+      "assistant": {
+        "opened": true,
+        "docked": false
+      }
+    },
+    {
+      "action": "click",
+      "target": "question",
+      "assistant": {
+        "opened": true,
+        "docked": false
+      }
+    },
+    {
+      "action": "type",
+      "text": "Come verifichi una stringa?",
+      "assistant": {
+        "opened": true,
+        "docked": false
+      }
+    },
+    {
+      "action": "key",
+      "key": "Return",
+      "wait": 4000,
+      "assistant": {
+        "opened": true,
+        "docked": false
+      }
+    },
+    {
+      "action": "click",
+      "target": "suggestions",
+      "assistant": {
+        "opened": true,
+        "docked": false
+      }
+    },
+    {
+      "action": "click",
+      "target": "suggestions",
+      "assistant": {
+        "opened": true,
+        "docked": false
+      }
+    },
+    {
+      "action": "click",
+      "target": "dock",
+      "assistant": {
+        "opened": true,
+        "docked": true
+      }
+    },
+    {
+      "action": "resize",
+      "size": [
+        1366,
+        900
+      ],
+      "assistant": {
+        "opened": true,
+        "docked": true
+      }
+    },
+    {
+      "action": "click",
+      "target": "dock",
+      "assistant": {
+        "opened": true,
+        "docked": false
+      }
+    },
+    {
+      "action": "key",
+      "key": "Esc",
+      "assistant": {
+        "opened": false,
+        "docked": false
+      }
+    },
+    {
+      "action": "key",
+      "key": "Ctrl+L",
+      "assistant": {
+        "opened": true,
+        "docked": false
+      }
+    },
+    {
+      "action": "click",
+      "target": "close",
+      "assistant": {
+        "opened": false,
+        "docked": false
+      }
+    }
+  ]
+}

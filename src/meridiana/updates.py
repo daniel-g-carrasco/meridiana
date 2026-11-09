@@ -123,12 +123,16 @@ def check_due(enabled: bool, last: str, today: str) -> bool:
     return enabled and last != today
 
 
-def installer_command(installer: Path) -> list[str]:
+def installer_command(installer: Path, restart: bool = False) -> list[str]:
     """Setup started by the program: silent but with its progress shown, no restart of Windows, and for this user
-    only when the program is installed for this user (no elevation)."""
+    only when the program is installed for this user (no elevation). `restart`: the program quits as soon as Setup
+    has started (the Qt Quick window, r28), so Setup cannot see it running (its mutex): /RESTARTAPP=1 tells Setup to
+    start it again at the end (meridiana.iss, AppWasRunning)."""
     args = [str(installer), "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART"]
     if per_user_install():
         args.append("/CURRENTUSER")
+    if restart:
+        args.append("/RESTARTAPP=1")
     return args
 
 
@@ -160,12 +164,26 @@ def parse_release(data: dict) -> Release:
     return Release(tag.lstrip("vV"), str(data.get("html_url") or RELEASES_URL), str(data.get("body") or ""), assets)
 
 
+DEV_RELEASE_API = f"{SLUG.upper().replace('-', '_')}_DEV_RELEASE_API"
+DEV_RELEASE_DOWNLOADS = f"{SLUG.upper().replace('-', '_')}_DEV_RELEASE_DOWNLOADS"
+
+
+def release_source() -> tuple[str, str]:
+    """Where the latest release is asked and where its files must come from: GitHub. Developer aid, to try the
+    whole update without publishing a release: MERIDIANA_DEV_RELEASE_API names another answer (a local file, a
+    local server); from the sources alone it is enough, the built program also needs MERIDIANA_DEV_RELEASE_DOWNLOADS
+    (the prefix its files' addresses must have: docs/revisioni/pacchetto-windows-20261109.md). Either way the
+    installer must still be signed with PUBLIC_KEY and named for the release's version: these variables change
+    where a file is fetched, never what is trusted."""
+    api = os.environ.get(DEV_RELEASE_API)
+    downloads = os.environ.get(DEV_RELEASE_DOWNLOADS)
+    if api and (downloads or not getattr(sys, "frozen", False)):
+        return api, downloads or DOWNLOADS
+    return LATEST_RELEASE_API, DOWNLOADS
+
+
 def latest_release(timeout: float = 15.0) -> Release:
-    # developer aid: a release described in a local file, to try the dialog
-    # without publishing one; never in the built app
-    url = LATEST_RELEASE_API
-    if not getattr(sys, "frozen", False):
-        url = os.environ.get(f"{SLUG.upper().replace('-', '_')}_DEV_RELEASE_API") or url
+    url = release_source()[0]
     try:
         with _get(url, timeout) as response:
             raw = response.read(RELEASE_MAX_BYTES + 1)
@@ -190,9 +208,10 @@ def installer_of(release: Release) -> Asset | None:
     from the project's own releases, with the SHA-256 GitHub gives for it
     and its signature. Else None: the dialog then opens the release page."""
     wanted = installer_name(release.version).lower()
+    downloads = release_source()[1]
     return next((a for a in release.assets
-                 if INSTALLER.match(a.name) and a.name.lower() == wanted and a.url.startswith(DOWNLOADS)
-                 and a.sha256 and a.signature_url.startswith(DOWNLOADS)), None)
+                 if INSTALLER.match(a.name) and a.name.lower() == wanted and a.url.startswith(downloads)
+                 and a.sha256 and a.signature_url.startswith(downloads)), None)
 
 
 def per_user_install() -> bool:

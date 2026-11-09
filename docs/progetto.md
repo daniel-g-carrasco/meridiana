@@ -28,6 +28,7 @@ Legenda: **[V]** verificato con una prova o sulla fonte; **[I]** dedotto, da con
 
 | Data | Decisione | Perché |
 |---|---|---|
+| 04/11/2026 | R389: prova Quick separata, nessun cambio al programma Widgets o al nucleo | [V] Pianta di Rho con 778 moduli, proprietà/annulla, Verifiche e anno orario, eventi e immagini offscreen; `revisioni/quick-prova-esito.md` e misuratore per la sera. [I] Raccomandato restare sui Widgets ottimizzati finché il confronto a schermo non giustifica una migrazione per percorsi. La decisione resta a Daniel; limiti e fallimenti sono nell’esito. |
 | 21/10/2026 | Qt 6 + PySide6, 2D in QGraphicsView e 3D in Qt Quick 3D, senza motore web | Sono state provate trenta strade (`studio/01`). Qt Quick 3D va a 60 fps su Windows (Direct3D 11) e a 120 fps su niri (OpenGL), anche in Flatpak [V]. GTK su Windows non va oltre 18-29 fps [V]. |
 | 21/10/2026 | Licenza GPL-3.0-or-later | Qt Quick 3D è GPLv3. Il programma è open source per scelta di Daniel. |
 | 21/10/2026 | Ambito nazionale | Le norme regionali (Allegato H lombardo) sono moduli, non l'ambito. |
@@ -459,3 +460,142 @@ portabile, Setup Windows e Flatpak verificati; integrati nei checkout Windows e 
 Il test tempo cambio tema è sensibile al carico, come sulla base: passa dopo la compressione, soglia invariata.
 
 [V] Ricevuta finale R06: docs/revisioni/ricevuta-consegna-20261029-R06.json; commit applicativo 36fc0a0.
+
+## 04/11/2026: base della riscrittura Quick, R389
+
+[V] Nel ramo `r12-sistema`, interfaccia separata: Theme reattivo da design e colori condivisi,
+Controls con galleria, Shell con fasi e comandi dei cataloghi, schede mobili e Modellazione.
+Widgets e nucleo di calcolo invariati. Contratti in `quick/sistema-api.md`, stato in
+`quick/stato/r12-sistema.md`, confronto fotografico in `quick/confronto/modellazione.html`.
+Verificati 72 test Quick, 96 test dei formati e due test del nucleo senza Qt; prove D3D11 a scala 2.
+Il confronto non certifica parità integrale: pianta completa, 3D e pagine successive hanno rami dedicati.
+Diagnosi dei residui al 200%: DPR della cattura software corretto e aggiornamenti parziali software disattivati;
+regressione rossa di 318 pixel prima, verde dopo. Il difetto non si riproduce sul renderer Direct3D 11.
+
+## 05/11/2026: passata dei controlli Quick, r13-controlli
+
+[V] Portati misure, superfici, icone, stati e gesti dei controlli comuni dal codice
+Widgets, API precedente conservata. Aggiunti Slider, CountPill, MenuSeparator ed
+EdgeFades; sfumature con le curve originali e nessun passaggio Python nei fotogrammi.
+Matrice di 35 casi, 760 coppie al 200 %, due temi e DPR 1/2, testo grande e campi stretti.
+48 prove mirate verdi a entrambe le scale, 46 di sistema e 96 dei formati verdi.
+Parity: 70 eseguite, un fallimento di inventario CSV, sette saltate e due fallimenti
+attesi; test grafici della testata ancora rosso (600 richiesto contro 500 approvato).
+Rapporto con residui e prove: `quick/r13-controlli-fedelta.md`; indice fotografico
+`quick/confronto/controlli/index.html`. Widgets e nucleo invariati.
+L'integrazione è provata in una copia archiviata della shell con i controlli aggiornati.
+Git add/commit e merge impediti dal permesso di scrittura del gitdir esterno al worktree;
+modifiche e prove conservate nella cartella assegnata, nessun vincolo aggirato.
+
+
+
+## 04/11/2026: passata di fedelta e integrazione Quick, r13-shell
+
+[V] Registro delle parti consegnato per primo (31d0bc6): pianta, 3D e adattatori
+scoperti prima del caricamento QML, una sessione e una configurazione condivise.
+Pilot comune Widgets/Quick con eventi Qt e cattura dopo ogni gesto; progetto di
+prova di Rho in sola lettura. Linguette, File, barre, schede persistenti per fase,
+menu ad Alt, scorciatoie personalizzate e comandi collegati alle parti reali.
+Il lavoro lungo di posa/anno, confronto ed esportazione usa processi annullabili;
+chiudere non aspetta il calcolo annuale. I file esportati sono impegnati solo dopo
+il successo, con staging univoco. Widgets e nucleo lasciati intatti.
+Esito, confronti al 200 %, limiti e ricevute delle verifiche:
+`quick/r13-shell-fedelta.md` e `quick/confronto/r13-shell/index.html`.
+
+## 04/11/2026: Meridio nella finestra Quick, passata r13
+
+[V] Registro delle parti: conversazione, allegati, fornitori, aiuto e tour nella sessione reale.
+Movimento e ridimensionamento QML, sprite originale, lettura progressiva, scheda agganciata vera e ritorno dall'aiuto R383.
+63 prove Meridio verdi, 46 sistema, 96 formati e lint completo; controlli mirati dopo gli ultimi ritocchi.
+La compatibilità generale termina con un rosso sul registro da riallineare ai sorgenti integrati, segnalato senza filtri.
+Widgets, nucleo e R332 invariati. Confronto, differenze e prova a monitor ancora da fare in
+`quick/r13-meridio-fedelta.md`; galleria `quick/confronto/r13-meridio/index.html`.
+
+
+### 04/11/2026: fedelt? della pianta Quick, ramo r13-pianta
+
+[V] Rendering con Shapes nativi raggruppati: nessuna callback Python sul thread
+render. Confrontati CurveRenderer, GeometryRenderer, Shape per modulo, Canvas,
+geometria caricata e FileInstancing. Il dettaglio delle prove ? nello stato
+`quick/stato/r13-pianta.md`. Due misure della finestra unita sul desktop separato
+rispettano 721 ms per 40 pan e 192 ms per 10 rotelle; la misura al monitor resta
+separata, con comando per Claude. [V] Ripristinati barra, quote, prese, selezioni,
+menu e conferma della posa manuale. La fascia usa la barra di stato della shell.
+Le prove isolate e i viaggi nella finestra unita hanno trovato e corretto Esc,
+zoom globale, scorrimento a fasi, colore dei moduli senza stringa e doppio clic
+un pixel fuori dal contorno. [I] Nessuna dichiarazione di fedelt? integrale prima
+del confronto fotografico finale; inventario conservativo in `quick/stato/pianta-prove.md`.
+
+05/11/2026, r13 Meridio: conclusa la passata con 64 prove della parte verdi dopo le correzioni
+ai limiti del fumetto e alle domande su più righe (R197). Guardate 19 coppie della matrice,
+due catture dopo l'ultimo ritocco e i 13 passi del percorso sui due programmi. Log e differenze
+conservati nell'esito; resta il riallineamento del registro generale di compatibilità.
+
+### 05/11/2026: chiusura della passata r13-shell
+
+[V] Registro delle parti pubblicato come primo traguardo, pilot comune e unioni
+dei sette rami. Linguette e File, menu Alt e scorciatoie, strumenti anche
+laterali, fascia di stato, pannelli raggruppati e persistenti al riavvio.
+Calcolo e operazioni lunghe annullabili alla chiusura. R396 conservata:
+Calcola e Posa senza enfasi permanente. Il profilo Quick resta separato.
+
+[V] Matrice nativa in quattro combinazioni tema/scala, tre dimensioni, sei
+fasi e File; percorsi aggiuntivi a testo grande, menu e modi della barra.
+Shell, sistema, registro e formati verdi. Le prove ancora rosse dei grafici
+e della raccolta precedente, il limite del banco pagine threaded e gli scarti
+visivi sono riportati senza attribuirli tutti all'uso ordinario. Esito completo
+in `quick/r13-shell-fedelta.md`, immagini in `quick/confronto/r13-shell/index.html`.
+Nessuna certificazione di fluidita al monitor, nessuna pubblicazione.
+
+## 05/11/2026: Proprietà, Verifiche e Progetto nella finestra Quick
+[V] `r13-proprieta`: installazione dei tre pannelli nel registro delle parti, sulla stessa
+`ProjectSession` della finestra. Campi, sezioni, quantità e azioni da `ui/properties.py`,
+gruppi e correzioni da `ui/checks_page.py`, albero con conteggi e menu. Le modifiche passano
+da `session.edit`; i risultati arrivano dai calcoli del nucleo, fuori dal filo della finestra.
+[V] Inventario diretto contro i controlli Widgets: 130 configurazioni, 1.721 confronti.
+Percorso di 17 gesti sul progetto reale di Rho: stessi dati dopo ogni passo, esclusa la data
+di modifica. R377: 30 fotogrammi D3D11 a scala 2 senza schede vuote; cambio di tipo con
+dissolvenza 180 ms OutCubic, editor conservati per lo stesso tipo. La prova fotografica
+non misura i tempi di presentazione al monitor.
+[V] Confine concordato con il registro Shell: Proprietà in Modellazione; le pagine delle
+altre fasi prestano i rispettivi editor al posto destro. Relazione entra nella vista
+Pronto per la consegna e all'uscita ripristina la precedente. Aiuto instradato una volta
+al servizio Meridio. `GuideCard` è il componente condiviso del modulo Assistant già unito.
+Confronti, prove, differenze della disposizione Shell e richieste agli altri rami:
+`quick/r13-proprieta-fedelta.md`, `quick/confronto/r13-proprieta/index.html`.
+Nessuna modifica ai Widgets, al nucleo o ai file di progetto dell'utente.
+05/11/2026, r13-fasi: [V] Impianto, risultati e inspector installati nel registro delle parti,
+con una sola ProjectSession. F5 sulla copia di Rho produce 8.760 ore e 425.566,385 kWh nelle tre pagine.
+Portati i gesti Impianto, cataloghi e accumulo, tabelle R394, stato obsoleto R396, formule e grafici
+con percorsi preparati fuori dai gesti. Confronti chiaro/scuro a scala 1/2 conservati nella galleria.
+[V] Ultima integrazione: bordo Consumi sotto 30 ms in un giro completo, ripetizione a 30,64 ms;
+requisito non ancora stabile. Esito, differenze fotografiche e limiti in `quick/r13-fasi-fedelta.md`.
+## 05/11/2026: File, Impostazioni, Relazione e finestre Quick, r13-file
+[V] Aggancio al registro delle parti con sessione e configurazione condivise: sette
+categorie, sezioni File, Nuovo progetto, Anagrafica, Relazione e dialoghi. Ripresi
+moduli, geometria delle anteprime, importazioni, scorciatoie e comandi. Corrette la
+prima cartella cache della relazione e la doppia preparazione causata dal timer
+automatico pendente. Widgets e nucleo invariati.
+[V] Prove native D3D11, confronto Widgets/Quick chiaro/scuro a DPR 1/2, tre misure;
+81 test pagine anche con threaded (174,916 s), 46 sistema, 96 formati, lint completo verde. Esito e
+ricevute: quick/r13-file-fedelta.md; galleria quick/confronto/r13-file/index.html.
+[V] Blocco riprodotto con threaded in QTest.qWait, traccia a 45 s; la stessa prova
+passa usando il ciclo eventi Qt locale, senza modifiche applicative. Non è una
+diagnosi di blocco del programma normale. Foto in basic, verifiche threaded
+separate. Non è dichiarata indistinguibilità visiva integrale.
+
+## 06/11/2026: la relazione A5 nel programma, con ODT e DOCX, r18-relazione
+
+[V] Modello Typst nuovo dalla bozza A5 dello studio della relazione (colori della decisione finale), tavolozza propria
+in `report_typst/look.py` (niente blu, il colore del profilo non arriva più), riquadri dei risultati, passi di calcolo
+da `report_typst/steps.py` (una fonte per la relazione e per «Come è calcolato» della Quick), esportazione ODT e DOCX
+dai dialoghi delle due interfacce, R459 detto. Dipendenze nuove: odfpy (Apache-2.0/GPL/LGPL), python-docx (MIT), lxml
+(BSD-3-Clause), latex2mathml (MIT), defusedxml (PSF); mitex 0.2.7 (Apache-2.0) portato nei dati. Prove, pagine
+affiancate alla A5 e limiti: `docs/revisioni/r18-relazione/README.md`.
+
+
+## Censimenti R11, 4 novembre 2026
+
+[V] Il blocco C del piano R11 completa i censimenti di transizioni e fascia e la verifica dei modelli liberi, senza modificare il programma. Rapporti, script ripetibili e misure sono in `docs/revisioni/censimenti-r11/`; catture e modelli scaricati restano nelle cartelle ignorate `build/transizioni/` e `build/modelli/`. Le fonti pubbliche di licenza sono archiviate con data e hash. Due pose Quaternius sono applicate fuori programma e ridotte; i Poly Haven sono convertiti a colori per vertice.
+
+[V] Le prove sono soltanto offscreen, con fixture e configurazioni isolate. Durate dichiarate nel codice, cambiamenti misurati nelle immagini e proposte restano distinti. [Non verificato] Fluidità sul monitor, compositing dei popup e resa GPU delle scene e dei modelli: da provare a PC libero. R374 e R376 restano aperte per l'integrazione, R380 per le correzioni da scegliere e R388 per l'applicazione dei testi e la grafica. Nessun commit o push eseguito.

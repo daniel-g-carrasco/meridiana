@@ -20,6 +20,7 @@ ground cover ratio.
 
 from __future__ import annotations
 
+import bisect
 import math
 from dataclasses import dataclass, field
 
@@ -40,6 +41,15 @@ TILTED = {"tilted_anchored", "tilted_ballasted", "ground"}
 FLUSH = {"coplanar", "integrated", "canopy"}
 BALLAST_WARNING = N_("Ballast alone is not a restraint on a roof slab (NTC 2018 7.2.4, recalled by CEI 82-25/3 6.2): "
                      "anchors or tie-downs are needed.")
+# How the places of the rows stand to each other (R418). LEGACY_ALIGNMENT is what a sub-field saved before keeps until
+# the designer changes it (its params say nothing): every row centred on its own room, from the front edge.
+ALIGNMENTS = ("aligned", "staggered", "free")
+LEGACY_ALIGNMENT = "legacy"
+NEW_ALIGNMENT = "aligned"       # of a sub-field drawn now (model.new_params)
+# Where the modules of a power asked (R417) are taken from: "best" the rows least in shadow, of those alike the front
+# ones; "front" whole rows from the front edge (the eave on a pitch); "back" whole rows from the back (the ridge). In
+# all three the rows are next to each other and only the last one is in part.
+TARGET_FROM = ("best", "front", "back")
 EPS = 1e-6
 LINE_TOLERANCE = 0.01           # m: rows whose front edges are this close stand on one line
 DISTANCE_TOLERANCE = 0.001      # m: a distance this much short of a rule's is the rule's (rows kept to 0,1 mm)
@@ -103,6 +113,9 @@ class Params:
     fire_corridor: float = 2.0
     stand_off: float = 0.15           # module bottom above the surface, for the 3D model
     shade_free: bool = False          # out of the obstacles' shadows in the design window (model.py draws them)
+    alignment: str = LEGACY_ALIGNMENT  # or one of ALIGNMENTS (R418)
+    target_kwp: float = 0.0           # the power asked of the sub-field, 0 none: how many modules it lays (R417)
+    target_from: str = "best"         # one of TARGET_FROM: where the rows of the power asked start
 
 
 @dataclass
@@ -206,6 +219,11 @@ class Result:
     rows: list = field(default_factory=list)       # the rows the modules come from (task 16c)
     manual: bool = False           # the rows are the designer's: kept, not made again
     unmatched: list = field(default_factory=list)  # keys taken out by hand that match no module laid
+    capacity: int = 0              # the modules the sub-field can hold, whatever the power asked
+    target_missing: int = 0        # the modules short of the power asked
+    # R445: the modules of a sub-field that is its modules set aside because they lie on an obstacle (with its
+    # clearance) or off the roof: drawn red, not counted, put back with a click (SubField.kept)
+    blocked: list = field(default_factory=list)
 
     @property
     def count(self) -> int:
@@ -226,21 +244,47 @@ def _ring(poly: Polygon) -> list[tuple[float, float]]:
     return [(float(x), float(y)) for x, y in list(poly.exterior.coords)[:-1]]
 
 
+TIE = 1e-5          # relative: two rectangles whose areas differ by less are the same minimum (R551): a point drawn
+                    # and rounded to 0.1 mm moves a 20 m triangle's rectangles by some millionths, a hand's wobble by more
+
+
+def _least_rectangles(area: Polygon) -> list[float]:
+    """The directions (radians) of the hull's edges whose rectangle around the area is the least, all of them when two
+    or more are equal to TIE: a right isosceles triangle has two, along its legs and along its hypotenuse, and which
+    one shapely's minimum_rotated_rectangle gave turned on the last digits of the points (R551)."""
+    hull = list(area.convex_hull.exterior.coords)
+    sizes = []
+    for (x1, y1), (x2, y2) in zip(hull, hull[1:]):
+        if math.hypot(x2 - x1, y2 - y1) < EPS:
+            continue
+        ax = math.atan2(y2 - y1, x2 - x1)
+        c, s = math.cos(ax), math.sin(ax)
+        us = [x * c + y * s for x, y in hull]
+        vs = [-x * s + y * c for x, y in hull]
+        sizes.append(((max(us) - min(us)) * (max(vs) - min(vs)), ax))
+    if not sizes:
+        return [0.0]
+    least = min(size for size, _ax in sizes)
+    return [ax for size, ax in sizes if size <= least * (1 + TIE) + 1e-12]
+
+
 def auto_azimuth(area: Polygon, east_west: bool = False) -> float:
     """Of the two directions of the area's minimum rotated rectangle, the one that lets the rows face
     closest to South: on a flat surface the yield matters more than the long side. For east-west pairs,
-    the one closest to East (the pair then faces East and West)."""
-    c = list(area.minimum_rotated_rectangle.exterior.coords)
+    the one closest to East (the pair then faces East and West). R551 (Daniel 08/11/2026: «la preview di come
+    verranno posati i moduli non è corretta»): when two rectangles are the least alike, the rule chooses among all
+    their directions, so the answer no longer turns on the last digits of the points (the preview of an area drawn
+    as modules laid a right isosceles triangle along its hypotenuse, the layout of the same triangle along its legs)."""
     best = None
-    for (x1, y1), (x2, y2) in ((c[0], c[1]), (c[1], c[2])):
-        ax = math.atan2(y2 - y1, x2 - x1)
-        nx, ny = -math.sin(ax), math.cos(ax)
-        if (east_west and nx < 0) or (not east_west and ny > 0):
-            nx, ny = -nx, -ny               # towards East for a pair, towards South otherwise
-        alpha = geo.bearing_to_azimuth(geo.bearing(nx, ny))
-        score = abs(abs(alpha) - 90.0) if east_west else abs(alpha)
-        if best is None or score < best[0]:
-            best = (score, alpha)
+    for edge in _least_rectangles(area):
+        for ax in (edge, edge + math.pi / 2):
+            nx, ny = -math.sin(ax), math.cos(ax)
+            if (east_west and nx < 0) or (not east_west and ny > 0):
+                nx, ny = -nx, -ny               # towards East for a pair, towards South otherwise
+            alpha = geo.bearing_to_azimuth(geo.bearing(nx, ny))
+            score = abs(abs(alpha) - 90.0) if east_west else abs(alpha)
+            if best is None or score < best[0] - 1e-9:
+                best = (score, alpha)
     return round(best[1], 2)
 
 
@@ -248,7 +292,11 @@ def _intervals_free(strip: Polygon, usable, u0: float, u1: float) -> list[tuple[
     """The u-ranges of the strip where a module spanning its whole depth stays inside `usable`: whatever
     of the strip is not usable forbids its u-projection."""
     bad = strip.difference(usable)
-    cuts = sorted((g.bounds[0], g.bounds[2]) for g in _polys(bad) if g.area > EPS)
+    return _free_between(sorted((g.bounds[0], g.bounds[2]) for g in _polys(bad) if g.area > EPS), u0, u1)
+
+
+def _free_between(cuts: list[tuple[float, float]], u0: float, u1: float) -> list[tuple[float, float]]:
+    """What the cuts (sorted u-ranges) leave of the range from u0 to u1."""
     free, start = [], u0
     for a, b in cuts:
         if a > start + EPS:
@@ -402,16 +450,24 @@ def row_frame(azimuth: float, size: Sizes) -> Frame:
 
 def compute(area_ring, surface: Surface | None = None, module: Module | None = None, params: Params | None = None,
             exclusions: list[Exclusion] = (), lat: float = 45.0, lon: float = 9.0,
-            removed: set[str] = frozenset(), rows: list[Row] | None = None) -> Result:
+            removed: set[str] = frozenset(), rows: list[Row] | None = None, shaded=(),
+            host=None, kept: set[str] = frozenset()) -> Result:
     """Fill the area (a plan ring, local metres) with modules. `lat`, `lon` place the sun for the pitch;
     `removed` are module keys the designer took out by hand. With `rows` (a sub-field laid by hand, task 16c) the
     modules are those of the rows given, wherever they are: nothing is made again, and the fire-brigade groups
-    are found from the modules (`clusters`) rather than made."""
+    are found from the modules (`clusters`) rather than made. `shaded`, (weight, exclusions) pairs, are the areas in
+    shadow that the places for a power asked keep away from (`_fit_target`). With `host` (a plan ring: the roof the
+    sub-field lies on, R445) the modules of the rows that lie on an exclusion with its clearance or off the host are set
+    aside in `Result.blocked`, drawn red, unless their key is in `kept`: the designer's call."""
     surface = surface or Surface()
     module = module or Module()
     p = params or Params()
     if p.mounting not in MOUNTINGS:
         raise ValueError(f"unknown mounting {p.mounting!r}")
+    if p.alignment != LEGACY_ALIGNMENT and p.alignment not in ALIGNMENTS:
+        raise ValueError(f"unknown alignment {p.alignment!r}")
+    if p.target_from not in TARGET_FROM:
+        raise ValueError(f"unknown start of the power asked {p.target_from!r}")
     area = Polygon(area_ring).buffer(0)
     if area.is_empty or area.area < 1.0:
         raise ValueError(_("the area encloses less than 1 m2"))
@@ -454,8 +510,26 @@ def compute(area_ring, surface: Surface | None = None, module: Module | None = N
         if usable.is_empty:
             return Result([], [], [], alpha, tilt, 0.0, 0.0, 90.0, round(area.area, 2),
                           notes + [N_("no room left inside the margins")], corners=np.zeros((0, 4, 2)), keys=[])
-        rows, group_of = _auto_rows(to_work(usable), frame, size, p, pitch)
+        usable_w = to_work(usable)
+        rows, group_of = (_auto_rows(usable_w, frame, size, p, pitch) if p.alignment == LEGACY_ALIGNMENT else
+                          _arranged_rows(usable_w, frame, size, p, pitch))
+    else:
+        group_of = {}
+    whole = rows
+    capacity, missing = 0, 0
+    # a sub-field drawn as its modules (host given, R445) keeps its rows whole in the file and lays the power asked
+    # out of them; rows laid by hand on an area stay the designer's
+    if p.target_kwp > 0 and (not manual or host is not None):
+        out = set(removed)
+        if manual:          # the modules set aside on an obstacle do not count for the power asked
+            out |= {pm.key for pm in set_aside(modules_of(rows, module, p, surface, removed), host, p, exclusions,
+                                               kept)[1]}
+        costs = _shade_costs(rows, frame, size, [(w, to_work(_exclusion_union(e))) for w, e in shaded if e])
+        rows, group_of, capacity, missing = _fit_target(rows, group_of, frame, size, p, module, out, costs)
     placed = modules_of(rows, module, p, surface, removed)
+    blocked_out: list[PlacedModule] = []
+    if manual and host is not None and placed:
+        placed, blocked_out = set_aside(placed, host, p, exclusions, kept)
     groups = []
     if not manual:
         for pm in placed:
@@ -473,13 +547,20 @@ def compute(area_ring, surface: Surface | None = None, module: Module | None = N
                 placed[i].group = g
             hull = MultiPolygon([Polygon(placed[i].corners) for i in members]).minimum_rotated_rectangle
             groups.append(_ring(hull))
-    laid = {k for r in rows for k in row_keys(r, size)}
+    laid = {k for r in whole for k in row_keys(r, size)}
     unmatched = sorted(k for k in removed if k not in laid)
     return Result(modules=placed, usable=[_ring(g) for g in _polys(usable)], groups=groups, azimuth=round(alpha, 2),
                   tilt=tilt, pitch=round(pitch, 3), clearance=round(clearance, 3), limit_angle=limit,
                   area=round(area.area, 2), notes=notes,
                   corners=np.array([pm.corners for pm in placed], dtype=float).reshape(-1, 4, 2),
-                  keys=[pm.key for pm in placed], rows=list(rows), manual=manual, unmatched=unmatched)
+                  keys=[pm.key for pm in placed], rows=list(rows), manual=manual, unmatched=unmatched,
+                  capacity=capacity or len(placed), target_missing=missing, blocked=blocked_out)
+
+
+def blocked_zones(p: Params, exclusions: list[Exclusion] = ()) -> list[Polygon]:
+    """The exclusions with their clearances (1 m more for vents, openings and plant under the fire-brigade rules)."""
+    return [Polygon(e.ring, e.holes or None).buffer(e.clearance + (p.fire_edge if p.fire_rules and e.kind in ("vent", "opening", "plant") else 0.0),
+                                       join_style="mitre") for e in exclusions if len(e.ring) >= 3]
 
 
 def usable_area(area: Polygon, p: Params, exclusions: list[Exclusion] = ()):
@@ -487,11 +568,53 @@ def usable_area(area: Polygon, p: Params, exclusions: list[Exclusion] = ()):
     with their clearances (1 m more for vents, openings and plant under the rules)."""
     edge = max(p.edge, p.fire_edge if p.fire_rules else 0.0)
     usable = area.buffer(-edge, join_style="mitre") if edge > 0 else area
-    blocked = [Polygon(e.ring, e.holes or None).buffer(e.clearance + (p.fire_edge if p.fire_rules and e.kind in ("vent", "opening", "plant") else 0.0),
-                                      join_style="mitre") for e in exclusions if len(e.ring) >= 3]
+    blocked = blocked_zones(p, exclusions)
     if blocked:
         usable = usable.difference(unary_union(blocked))
     return usable
+
+
+def set_aside(placed: list[PlacedModule], host, p: Params, exclusions: list[Exclusion] = (),
+              kept: set[str] = frozenset()) -> tuple[list[PlacedModule], list[PlacedModule]]:
+    """The modules that may stay and those set aside (R445, decision 3): a module on an exclusion with its clearance
+    or more than a hair off `host` (the roof's plan ring) goes aside, unless its key is in `kept`. The band from the
+    roof edge is not a reason: the fire-brigade rules are a guide and a check there (decision 2)."""
+    zone = Polygon(host).buffer(0)
+    blocked = blocked_zones(p, exclusions)
+    if blocked:
+        zone = zone.difference(unary_union(blocked))
+    polys = shapely.polygons(np.array([pm.corners for pm in placed], dtype=float))
+    off = shapely.area(shapely.difference(polys, zone.buffer(DISTANCE_TOLERANCE))) > 1e-4
+    stay, aside = [], []
+    for pm, out in zip(placed, off.tolist(), strict=True):
+        (aside if out and pm.key not in kept else stay).append(pm)
+    return stay, aside
+
+
+def _row_lines(start: float, maxv: float, depth: float, pitch: float, p: Params) -> list[tuple[float, int]]:
+    """The front edges of regular rows from `start`, a pitch apart, with their fire-brigade band across the rows."""
+    lines_v: list[tuple[float, int]] = []
+    v, group_start, gv = start, start, 0
+    while v + depth <= maxv + EPS:
+        if p.fire_rules and v + depth - group_start > p.fire_group + EPS:
+            v = max(v, lines_v[-1][0] + depth + p.fire_corridor if lines_v else v)
+            group_start, gv = v, gv + 1
+            if v + depth > maxv + EPS:
+                break
+        lines_v.append((v, gv))
+        v += pitch
+    return lines_v
+
+
+def _fire_cells(minu: float, maxu: float, p: Params) -> list[tuple[float, float]]:
+    """The stretches along the rows a group may take: the whole width, or 20 m with 2 m corridors under the rules."""
+    if not p.fire_rules:
+        return [(minu, maxu)]
+    cells, u = [], minu
+    while u < maxu - EPS:
+        cells.append((u, min(u + p.fire_group, maxu)))
+        u += p.fire_group + p.fire_corridor
+    return cells
 
 
 def _auto_rows(usable_w, frame: Frame, size: Sizes, p: Params, pitch: float) -> tuple[list[Row], dict]:
@@ -500,23 +623,8 @@ def _auto_rows(usable_w, frame: Frame, size: Sizes, p: Params, pitch: float) -> 
     «f2»... in their order (a line without room keeps its number); and the fire-brigade group of each slot."""
     depth = size.depth
     minu, minv, maxu, maxv = usable_w.bounds
-    rows_v: list[tuple[float, int]] = []
-    v, group_start, gv = minv, minv, 0
-    while v + depth <= maxv + EPS:
-        if p.fire_rules and v + depth - group_start > p.fire_group + EPS:
-            v = max(v, rows_v[-1][0] + depth + p.fire_corridor if rows_v else v)
-            group_start, gv = v, gv + 1
-            if v + depth > maxv + EPS:
-                break
-        rows_v.append((v, gv))
-        v += pitch
-    if p.fire_rules:
-        cells, u = [], minu
-        while u < maxu - EPS:
-            cells.append((u, min(u + p.fire_group, maxu)))
-            u += p.fire_group + p.fire_corridor
-    else:
-        cells = [(minu, maxu)]
+    rows_v = _row_lines(minv, maxv, depth, pitch, p)
+    cells = _fire_cells(minu, maxu, p)
     along = size.along
     rows: list[Row] = []
     group_of: dict = {}
@@ -553,6 +661,379 @@ def _auto_rows(usable_w, frame: Frame, size: Sizes, p: Params, pitch: float) -> 
         x, y = frame.to_plan(first, v0)
         rows.append(Row(rid, x, y, frame.azimuth, [u0 - first for u0 in us]))
     return rows, group_of
+
+
+def _exclusion_union(exclusions: list[Exclusion]):
+    return unary_union([Polygon(e.ring, e.holes or None).buffer(0) for e in exclusions if len(e.ring) >= 3])
+
+
+MAX_ROW_SEEDS = 24              # origins of the rows tried, across them
+MIN_ROW_SEEDS = 6               # on a roof so wide that this many rows are enough for a row's worth of gain
+MAX_STRIPS = 1200               # rows looked at in all: they are what costs most, 0,1-0,4 ms each in GEOS
+MAX_COARSE_ORIGINS = 48         # origins of the columns tried per origin of the rows; all of them for the best one
+ORIGIN_CHUNK = 64               # origins of the columns counted at a time
+
+
+def _row_seeds(usable_w, minv: float, pitch: float, depth: float) -> list[float]:
+    """Where the rows may start, from the front edge and within a pitch: against each height of the outline with their
+    front or their back (a corner of the shape is where a row gains or loses most), and regularly between."""
+    heights = shapely.get_coordinates(usable_w)[:, 1]
+    found = np.concatenate([(heights - minv) % pitch, (heights - depth - minv) % pitch, np.arange(1, 12) * pitch / 12])
+    found = np.unique(np.round(found, 3))
+    found = found[(found > 0.0005) & (found < pitch - 0.0005)]
+    rows = max(1.0, (float(heights.max()) - minv) / pitch)
+    seeds = int(min(MAX_ROW_SEEDS, max(MIN_ROW_SEEDS, MAX_STRIPS / rows)))
+    if len(found) > seeds - 1:
+        found = found[np.linspace(0, len(found) - 1, seeds - 1).round().astype(int)]
+    return [0.0, *found.tolist()]
+
+
+class _Strips:
+    """What is free along the rows at each front edge, each edge computed once, all at a time in GEOS."""
+
+    def __init__(self, usable_w, depth: float, cells: list[tuple[float, float]]):
+        self.usable, self.depth, self.cells = usable_w, depth, cells
+        self.minu, self.maxu = usable_w.bounds[0], usable_w.bounds[2]
+        self.free: dict[float, list[list[tuple[float, float]]]] = {}
+
+    def load(self, edges) -> None:
+        todo = sorted({v for v in edges if v not in self.free})
+        if not todo:
+            return
+        at = np.array(todo, dtype=float)
+        strips = shapely.box(self.minu - 1, at + EPS, self.maxu + 1, at + self.depth - EPS)
+        parts, owner = shapely.get_parts(shapely.difference(strips, self.usable), return_index=True)
+        keep = (shapely.get_type_id(parts) == 3) & (shapely.area(parts) > EPS)
+        cuts: list[list[tuple[float, float]]] = [[] for _ in todo]
+        for k, b in zip(owner[keep].tolist(), shapely.bounds(parts[keep]).tolist(), strict=True):
+            cuts[k].append((b[0], b[2]))
+        for v, row_cuts in zip(todo, cuts, strict=True):
+            row_cuts.sort()
+            self.free[v] = [_free_between(row_cuts, c0, c1) for c0, c1 in self.cells]
+
+    def stretches(self, lines_v: list, cell: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """The free stretches of the rows given in a cell, as arrays: starts, ends, the row of each."""
+        found = [(lo, hi, r) for r, (v, _gv) in enumerate(lines_v) for lo, hi in self.free[v][cell]]
+        if not found:
+            return np.zeros(0), np.zeros(0), np.zeros(0, dtype=int)
+        a, b, owners = zip(*found, strict=True)
+        return np.array(a), np.array(b), np.array(owners, dtype=int)
+
+
+@dataclass
+class _Unit:
+    """What a row is made of along it: a place, or a whole table of `per` places."""
+    length: float
+    step: float
+    per: int
+    place_step: float
+
+    @classmethod
+    def of(cls, size: Sizes, p: Params) -> "_Unit":
+        place_step = size.along + p.gap
+        if p.table_modules > 0:
+            length = p.table_modules * size.along + (p.table_modules - 1) * p.gap
+            return cls(length, length + p.table_gap, p.table_modules, place_step)
+        return cls(size.along, place_step, 1, place_step)
+
+    @property
+    def half(self) -> float:
+        """Half a module along the row: how far a staggered row moves."""
+        return self.place_step / 2
+
+    def places(self, start: float) -> list[float]:
+        return [start + k * self.place_step for k in range(self.per)]
+
+    def fits(self, lo: float, hi: float) -> int:
+        return int((hi - lo + self.step - self.length) // self.step + EPS)
+
+
+def _grid_counts(a: np.ndarray, b: np.ndarray, origins: np.ndarray, unit: _Unit) -> tuple:
+    """How many units of the grids of the origins given fit in each free stretch, a unit at origin + k * step: the
+    counts and the k of the first and of the last, (origins, stretches) arrays."""
+    first = np.ceil((a[None, :] - origins[:, None]) / unit.step - 1e-9)
+    last = np.floor((b[None, :] - unit.length - origins[:, None]) / unit.step + 1e-9)
+    return np.maximum(last - first + 1.0, 0.0), first, last
+
+
+def _origins(a: np.ndarray, b: np.ndarray, unit: _Unit, staggered: bool) -> np.ndarray:
+    """The origins of the columns worth trying. A grid that lays most can slide back until a unit starts where a free
+    stretch does, so those are enough for the count; those that centre the units in the longest stretches are there
+    for the choice among equals (a rectangle lays as it always did). One per millimetre."""
+    n = np.floor((b - a + unit.step - unit.length) / unit.step + 1e-9)
+    centred = (a + (b - a - (n * unit.step - (unit.step - unit.length))) / 2)[np.argsort(a - b)[:8]]
+    found = np.concatenate([a, centred, a - unit.half, centred - unit.half] if staggered else [a, centred]) % unit.step
+    _rounded, index = np.unique(np.round(found, 3), return_index=True)
+    return found[index]
+
+
+def _best_grid(a: np.ndarray, b: np.ndarray, owners: np.ndarray, unit: _Unit, staggered: bool, span: tuple,
+               limit: int | None = None) -> tuple[float, float]:
+    """The origin of the columns that lays most over the free stretches (a, b) of the rows `owners`, and how many: one
+    grid; staggered, for each row the better of that grid and of the one half a module on. Of the origins that lay as
+    many, the one whose modules stand most in the middle of `span`."""
+    if not len(a):
+        return span[0], 0.0
+    origins = _origins(a, b, unit, staggered)
+    if limit is not None and len(origins) > limit:
+        origins = origins[np.linspace(0, len(origins) - 1, limit).round().astype(int)]
+    starts = np.flatnonzero(np.r_[True, owners[1:] != owners[:-1]])
+    best_count, best_edge, best = -1.0, math.inf, float(origins[0])
+    for at in range(0, len(origins), ORIGIN_CHUNK):
+        chunk = origins[at:at + ORIGIN_CHUNK]
+        counts, first, last = _grid_counts(a, b, chunk, unit)
+        total = counts.sum(axis=1)
+        if staggered:
+            other = _grid_counts(a, b, chunk + unit.half, unit)[0]
+            total = np.maximum(np.add.reduceat(counts, starts, axis=1), np.add.reduceat(other, starts, axis=1)).sum(axis=1)
+        top = float(total.max())
+        if top < best_count - 0.5:
+            continue
+        for i in np.flatnonzero(total >= top - 0.5).tolist():
+            edge = math.inf
+            full = counts[i] > 0
+            if full.any():
+                low = float((chunk[i] + first[i][full] * unit.step).min())
+                high = float((chunk[i] + last[i][full] * unit.step + unit.length).max())
+                edge = abs((low - span[0]) - (span[1] - high))
+            if top > best_count + 0.5 or edge < best_edge - 1e-6:
+                best_count, best_edge, best = top, edge, float(chunk[i])
+    return best, best_count
+
+
+def _free_start(lo: float, hi: float, unit: _Unit, origin: float) -> tuple[int, float]:
+    """A free row in a stretch: as many units as fit, on the columns of `origin` where its room lets them, else as
+    close to them as it can, so that the rows do not shift from each other for nothing."""
+    n = unit.fits(lo, hi)
+    slack = max(0.0, hi - lo - (n * unit.step - (unit.step - unit.length)))
+    near = origin + round((lo + slack / 2 - origin) / unit.step) * unit.step
+    return n, min(max(near, lo), lo + slack)
+
+
+def _free_lines(strips: _Strips, seeds: list[float], minv: float, maxv: float, depth: float, pitch: float,
+                unit: _Unit, p: Params) -> list[tuple[float, int]]:
+    """The rows of the free way without fire-brigade groups: the front edges that lay most, at least a pitch apart. The
+    edges tried are the runs from each seed (`_row_seeds`), each keeping the pitch exact; of the choices that lay as
+    many, the one with the rows closest from the front."""
+    edges = sorted({v for seed in seeds for v, _gv in _row_lines(minv + seed, maxv, depth, pitch, p)})
+    strips.load(edges)
+    counts = [sum(unit.fits(lo, hi) for lo, hi in strips.free[v][0]) for v in edges]
+    n = len(edges)
+    following = [bisect.bisect_left(edges, v + pitch - 1e-9) for v in edges]
+    best, chosen = [0] * (n + 1), [n] * (n + 1)     # from each edge on: the most it can lay, and the edge to start on
+    for i in range(n - 1, -1, -1):
+        taken = counts[i] + best[following[i]]
+        if counts[i] > 0 and taken >= best[i + 1]:
+            best[i], chosen[i] = taken, i
+        else:
+            best[i], chosen[i] = best[i + 1], chosen[i + 1]
+    out: list[tuple[float, int]] = []
+    i = chosen[0]
+    while i < n:
+        out.append((edges[i], 0))
+        i = chosen[following[i]]
+    return out
+
+
+def _arranged_rows(usable_w, frame: Frame, size: Sizes, p: Params, pitch: float) -> tuple[list[Row], dict]:
+    """The rows of a sub-field that says how its places stand (ALIGNMENTS, R418), as `_auto_rows` gives them:
+    - aligned: one grid, the columns straight whatever the outline, its origin along and across the rows the one that
+      lays most;
+    - staggered: two grids half a module apart, each row on the one that holds more of it, staying on the grid of the
+      row before when they hold as many: a row moves from the next by half a module or not at all (two such moves are
+      a whole place, so nothing but these two grids can come out);
+    - free: each row takes all its room, a row stands on the columns of the grid where that room lets it, and without
+      fire-brigade groups the rows may stand further than the pitch where that lays more."""
+    depth = size.depth
+    minu, minv, maxu, maxv = usable_w.bounds
+    cells = _fire_cells(minu, maxu, p)
+    unit = _Unit.of(size, p)
+    strips = _Strips(usable_w, depth, cells)
+    seeds = _row_seeds(usable_w, minv, pitch, depth)
+    mode = p.alignment
+    if mode == "free" and not p.fire_rules:
+        lines_v = _free_lines(strips, seeds, minv, maxv, depth, pitch, unit, p)
+    else:
+        runs = [_row_lines(minv + seed, maxv, depth, pitch, p) for seed in seeds]
+        strips.load([v for run in runs for v, _gv in run])
+
+        def holds(run):
+            total = 0.0
+            for ci, span in enumerate(cells):
+                a, b, owners = strips.stretches(run, ci)
+                total += (sum(unit.fits(lo, hi) for lo, hi in zip(a.tolist(), b.tolist(), strict=True)) if mode == "free"
+                          else _best_grid(a, b, owners, unit, mode == "staggered", span, MAX_COARSE_ORIGINS)[1])
+            return total
+        totals = [holds(run) for run in runs]
+        lines_v = runs[totals.index(max(totals))]           # of those alike the first: rows from the front edge
+    found: list[list[tuple[float, int]]] = [[] for _ in lines_v]        # (where the place starts, its cell) per row
+    for ci, span in enumerate(cells):
+        a, b, owners = strips.stretches(lines_v, ci)
+        if not len(a):
+            continue
+        origin, _count = _best_grid(a, b, owners, unit, mode == "staggered", span)
+        if mode == "free":
+            for r, lo, hi in zip(owners.tolist(), a.tolist(), b.tolist(), strict=True):
+                n, start = _free_start(lo, hi, unit, origin)
+                for k in range(n):
+                    found[r] += [(u, ci) for u in unit.places(start + k * unit.step)]
+            continue
+        grids = [(origin, _grid_counts(a, b, np.array([origin]), unit))]
+        if mode == "staggered":
+            grids.append((origin + unit.half, _grid_counts(a, b, np.array([origin + unit.half]), unit)))
+        on = 0
+        for r in np.unique(owners).tolist():
+            mine = np.flatnonzero(owners == r)
+            holding = [float(g[1][0][0][mine].sum()) for g in grids]
+            if holding[on] < max(holding):
+                on = holding.index(max(holding))
+            base, (counts, first, last) = grids[on]
+            for s in mine.tolist():
+                if counts[0][s] > 0:
+                    for k in range(int(first[0][s]), int(last[0][s]) + 1):
+                        found[r] += [(u, ci) for u in unit.places(base + k * unit.step)]
+    rows: list[Row] = []
+    group_of: dict = {}
+    halves = 2 if size.east_west else 1
+    for r, ((v0, gv), row_places) in enumerate(zip(lines_v, found, strict=True)):
+        row_places.sort()
+        rid = f"f{r + 1}"
+        for i, (_u, ci) in enumerate(row_places):
+            for h in range(halves):
+                group_of[(rid, i * halves + h)] = gv * len(cells) + ci
+        first_u = row_places[0][0] if row_places else minu
+        x, y = frame.to_plan(first_u, v0)
+        rows.append(Row(rid, x, y, frame.azimuth, [u - first_u for u, _ci in row_places]))
+    return rows, group_of
+
+
+def target_modules(target_kwp: float, power_kw: float) -> int:
+    """The number of modules nearest to the power asked, above it too; on equal distance the one that does not exceed
+    it (Daniel, 05/11/2026); at least one."""
+    ratio = target_kwp / power_kw
+    low = math.floor(ratio + 1e-9)
+    return max(1, low if ratio - low <= low + 1 - ratio + 1e-9 else low + 1)
+
+
+def _shade_costs(rows: list[Row], frame: Frame, size: Sizes, shaded: list) -> dict:
+    """How much in shadow each place is: (row id, place) -> the part of the place in each area, weighted and summed. No
+    hourly calculation: only the areas `Project.fill` draws from the shadows of the obstacles."""
+    costs: dict = {}
+    boxes, owners = [], []
+    if shaded:
+        for row in rows:
+            u_o, v0 = frame.to_work(row.x, row.y)
+            for i, offset in enumerate(row.places):
+                boxes.append((u_o + offset, v0, u_o + offset + size.along, v0 + size.depth))
+                owners.append((row.id, i))
+    if not boxes:
+        return costs
+    polys = shapely.box(*np.array(boxes, dtype=float).T)
+    whole = shapely.area(polys)
+    for weight, area in shaded:
+        parts = shapely.area(shapely.intersection(polys, area)) / whole
+        for i in np.flatnonzero(parts > 1e-6).tolist():
+            costs[owners[i]] = costs.get(owners[i], 0.0) + weight * float(parts[i])
+    return costs
+
+
+def _fit_target(rows: list[Row], group_of: dict, frame: Frame, size: Sizes, p: Params, module: Module, removed,
+                costs: dict) -> tuple[list[Row], dict, int, int]:
+    """The places that hold the power asked (R417), out of the rows laid: rows next to each other, only the last row
+    in part, a run of its places; the set least in shadow and of those alike the frontmost ("best"), or the one
+    starting on the front row ("front") or on the back row ("back", p.target_from). A table stays whole, and so
+    do a place's stack and pair, so the count is the nearest these allow. The modules keep the keys they have in the
+    whole layout, so that those taken out by hand and the strings stay on them. Gives the rows, their groups, the
+    modules the whole layout holds and those short of the power asked."""
+    halves = 2 if size.east_west else 1
+    per = max(1, p.table_modules)
+    lines_u = []                        # per row with places: (its index, its units)
+    capacity = 0
+    for r, row in enumerate(rows):
+        if not row.places:
+            continue
+        u_o = frame.to_work(row.x, row.y)[0]
+        units = []                      # (modules, how much in shadow, where its middle is along the row)
+        for start in range(0, row.count, per):
+            taken = range(start, min(start + per, row.count))
+            count = len(taken) * halves * size.stack
+            if removed:
+                count = sum((row.slot_key(slot) if k == 0 else f"{row.slot_key(slot)}:{k}") not in removed
+                            for i in taken for slot in range(i * halves, (i + 1) * halves) for k in range(size.stack))
+            units.append((count, sum(costs.get((row.id, i), 0.0) for i in taken),
+                          u_o + (row.places[taken[0]] + row.places[taken[-1]] + size.along) / 2))
+        lines_u.append((frame.to_work(row.x, row.y)[1], r, units))
+        capacity += sum(u[0] for u in units)
+    want = target_modules(p.target_kwp, module.power_kw)
+    if capacity <= want:
+        return rows, group_of, capacity, want - capacity
+    aim = max(p.target_kwp / module.power_kw, 1.0)
+    # front to back (rows by hand may be in any order), from the back for "back"; "front" and "back" start on the
+    # first row, "best" tries every start (TARGET_FROM)
+    lines_u = [(r, units) for _v, r, units in sorted(lines_u, key=lambda line: line[0],
+                                                       reverse=p.target_from == "back")]
+    best = None
+    for start in range(len(lines_u) if p.target_from == "best" else 1):
+        total, cost, chosen, middle = 0, 0.0, {}, None
+        for r, units in lines_u[start:]:
+            held = sum(u[0] for u in units)
+            if total + held <= aim:
+                total += held
+                cost += sum(u[1] for u in units)
+                chosen[r] = (0, len(units))
+                middle = (units[0][2] + units[-1][2]) / 2
+                if total == aim:
+                    break
+                continue
+            run = _run_of_units(units, aim - total, middle)
+            if run is not None:
+                chosen[r] = run[:2]
+                total, cost = total + run[2], cost + run[3]
+            break
+        candidate = (round(abs(total - aim), 6), total, round(cost, 6), start)
+        if best is None or candidate < best[0]:
+            best = (candidate, chosen)
+    return (*_cut_rows(rows, group_of, frame, best[1], per, halves), capacity, 0)
+
+
+def _run_of_units(units: list[tuple], wanted: float, middle: float | None) -> tuple | None:
+    """A run of units of a row holding the modules nearest to `wanted`, fewer on equal distance: (first, past the last,
+    modules, shadow). Of the runs alike the one least in shadow, then the one closest to `middle` (of the row before; of
+    its own row without one). None if no unit at all is nearest."""
+    counts = np.r_[0.0, np.cumsum([u[0] for u in units])]
+    shade = np.r_[0.0, np.cumsum([u[1] for u in units])]
+    length = int(np.argmin(np.abs(counts - wanted) + 1e-9 * np.arange(len(counts))))
+    if length == 0:
+        return None
+    if middle is None:
+        middle = (units[0][2] + units[-1][2]) / 2
+    best, out = None, None
+    for s in range(len(units) - length + 1):
+        modules = counts[s + length] - counts[s]
+        cost = shade[s + length] - shade[s]
+        place = abs((units[s][2] + units[s + length - 1][2]) / 2 - middle)
+        candidate = (round(abs(modules - wanted), 6), modules, round(float(cost), 6), round(place, 3), s)
+        if best is None or candidate < best:
+            best, out = candidate, (s, s + length, int(modules), float(cost))
+    return out
+
+
+def _cut_rows(rows: list[Row], group_of: dict, frame: Frame, chosen: dict, per: int, halves: int) -> tuple[list, dict]:
+    """The rows left with the units chosen, (first, past the last) by row index; a row left without any stays, empty,
+    to keep its number. Its slots keep the keys they had."""
+    out, groups = [], {}
+    for r, row in enumerate(rows):
+        first, past = chosen.get(r, (0, 0))
+        i0, i1 = first * per, min(past * per, row.count)
+        u_o, v0 = frame.to_work(row.x, row.y)
+        offset = row.places[i0] if i1 > i0 else 0.0
+        x, y = frame.to_plan(u_o + offset, v0) if i0 else (row.x, row.y)
+        keys = [row.slot_key(slot) for slot in range(i0 * halves, i1 * halves)] if i0 else list(row.keys)
+        out.append(Row(row.id, x, y, row.azimuth, [u - offset for u in row.places[i0:i1]], keys, row.turned))
+        for i in range(i0, i1):
+            for h in range(halves):
+                groups[(row.id, (i - i0) * halves + h)] = group_of.get((row.id, i * halves + h), 0)
+    return out, groups
 
 
 def row_keys(row: Row, size: Sizes) -> list[str]:

@@ -1,0 +1,80 @@
+{
+  "size": [
+    1600,
+    960
+  ],
+  "steps": [
+    {
+      "action": "prepare_plan"
+    },
+    {
+      "action": "click",
+      "target": "Impianto",
+      "expect": {
+        "phase": "plant"
+      }
+    },
+    {
+      "action": "click",
+      "target": "Modellazione",
+      "expect": {
+        "phase": "model"
+      }
+    },
+    {
+      "action": "plan_click",
+      "point": [
+        160,
+        -8
+      ]
+    },
+    {
+      "action": "key",
+      "key": "F",
+      "text": "f"
+    },
+    {
+      "action": "plan_hover",
+      "point": [
+        161,
+        8.2177
+      ]
+    },
+    {
+      "action": "plan_double",
+      "point": [
+        161,
+        8.2177
+      ]
+    },
+    {
+      "action": "key",
+      "key": "Esc"
+    },
+    {
+      "action": "plan_menu",
+      "point": [
+        160,
+        -8
+      ]
+    },
+    {
+      "action": "key",
+      "key": "Esc"
+    },
+    {
+      "action": "resize",
+      "size": [
+        1366,
+        900
+      ]
+    },
+    {
+      "action": "resize",
+      "size": [
+        1920,
+        1080
+      ]
+    }
+  ]
+}

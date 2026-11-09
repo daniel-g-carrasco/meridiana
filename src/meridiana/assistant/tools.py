@@ -3,7 +3,7 @@ call, each with its name, its description and the JSON schema of its arguments, 
 from the project as it is now.
 
 Reading, without asking: `read_checks`, `project_summary`, `read_selection`, `read_results`, `read_pedigree`,
-`read_rules`, `vvf_activities`, `search_manual`, `search_projects`, `project_revisions`, `similar_projects` and
+`read_rules`, `vvf_activities`, `design_rules`, `search_manual`, `search_projects`, `project_revisions`, `similar_projects` and
 `list_tasks`; `go_to`
 only moves the window. Proposing, never applying: `propose_fix` offers the fix a check already has (the way to prefer: in the
 trial of study 14, 4.4, a model free to write the fields invented one), `propose_edit` a change of the fields the
@@ -145,6 +145,21 @@ SPECS = {
         "parameters": _schema({"query": {"type": "string", "description": "a number from 1 to 80, or a few words in "
                                                                           "Italian; empty for the whole list"}}),
     },
+    "design_rules": {
+        "description": "Search Meridiana's design rules, each with its source: optimizers by maker (architecture, "
+                       "modules per unit, string length, singles and doubles in one string, partial installation, "
+                       "strings in parallel, module power), SolarEdge's tables of continuous and connected power per "
+                       "string, how the automatic proposals use them, the DC/AC band of the inverter sizing, the "
+                       "preferred makers, the fire brigade's rules for sub-fields, how an imported IFC model is placed on the "
+                       "plan (mouse, coordinates, overlaps). With an inverter or optimizer model "
+                       "(SE20K, S1400, SUN2000-450W-P2...) and the module's power, also what the program's rules give "
+                       "for that pair. Use it before advising a choice of optimizer, inverter, ratio or maker.",
+        "parameters": _schema({
+            "query": {"type": "string", "description": "the designer's question or a few words, Italian or English"},
+            "inverter": {"type": "string", "description": "an inverter model, e.g. SE20K"},
+            "optimizer": {"type": "string", "description": "an optimizer model, e.g. S1400"},
+            "module_w": {"type": "number", "description": "the module's STC power, W"}}, ("query",)),
+    },
     "propose_fix": {
         "description": "Propose to the designer the fix a check already has (its id from read_checks). The "
                        "designer sees a card and applies it or not: you never apply anything. Prefer this to "
@@ -211,10 +226,16 @@ SPECS = {
     },
 }
 STEP_1 = ("read_checks", "project_summary", "go_to", "search_manual", "list_navigation_targets", "read_navigation")
-STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "vvf_activities", "propose_fix",
+STEP_2 = ("read_selection", "read_results", "read_pedigree", "read_rules", "vvf_activities", "design_rules",
+          "propose_fix",
           "propose_edit", "propose_undo")
 STEP_3 = ("search_projects", "project_revisions", "similar_projects", "prepare_open_project", "list_tasks",
           "prepare_task", "prepare_bug_report", "start_guided_tour", "propose_catalog_record")
+
+
+# What stays on while a document is in the conversation: it can only fill the review window, and the designer confirms.
+# The project's tools stay off, as a document's words must not reach them.
+DOCUMENT_TOOLS = ("propose_catalog_record",)
 
 
 def specs(names=None) -> list[dict]:
@@ -819,6 +840,21 @@ def vvf_activities(host, state: State, query: str = "") -> Outcome:
     return Outcome(_json(out), said)
 
 
+def design_rules(host, state: State, query: str, inverter: str = "", optimizer: str = "",
+                 module_w: float | None = None) -> Outcome:
+    """The design rules (R462): assistant/design_rules.py builds them from the data the program designs with."""
+    from . import design_rules as knowledge
+    if not str(query or "").strip() and not inverter and not optimizer:
+        raise ValueError("query: write the question or a few words")
+    try:
+        watts = float(module_w) if module_w not in (None, "") else None
+    except (TypeError, ValueError):
+        raise ValueError("module_w: a number of watts") from None
+    out = knowledge.fitted(knowledge.search(str(query or ""), str(inverter or ""), str(optimizer or ""), watts),
+                           RESULT_LIMIT - 200)
+    return Outcome(_json(out), _("Read the design rules: «{query}»").format(query=query))
+
+
 # proposing
 
 def _show(v) -> str:
@@ -1228,6 +1264,8 @@ def propose_catalog_record(host, state: State, kind: str, record: dict) -> Outco
     from ..catalog import KINDS
     if kind not in KINDS or not isinstance(record, dict):
         return _error("choose a catalogue kind and a record object")
+    if not hasattr(host, "prepare_catalog_record"):
+        return _error("this window cannot show a catalogue review")
     shown = host.prepare_catalog_record(kind, record)
     return Outcome(_json({"shown_for_review": bool(shown), "saved": False}),
                    _("Prepared a catalogue record for your review"))
@@ -1243,7 +1281,7 @@ SPECS.update({
         "parameters": _schema(),
     },
     "propose_catalog_record": {
-        "description": "Prepare a personal catalogue entry for the designer to review and correct. Never saves automatically. Retain the source and mark missing or uncertain technical values, never invent them.",
+        "description": "Fill the catalogue's review window with a product, for the designer to check and confirm; it never saves. Call it when the designer asks to add a product or a datasheet. Fields of `record`: manufacturer, model, datasheet_url and those of the kind, with the units of the catalogue (metres for a module's size): modules pmax vmp imp voc isc gamma_pmax beta_voc alpha_isc length width cells max_system_voltage_v max_series_fuse_a and classes (one {pmax, vmp, imp, voc, isc} per power class, each from its own column); inverters ac_power_nominal_w phases dc_voltage_max_v mppt_voltage_min_v mppt_voltage_max_v mppt_count dc_current_max_per_mppt_a dc_isc_max_per_mppt_a efficiency_euro_pct; microinverters ac_power_nominal_w modules_per_unit dc_power_max_per_input_w dc_voltage_max_v mppt_voltage_min_v mppt_voltage_max_v dc_current_max_per_input_a dc_isc_max_per_input_a efficiency_weighted_pct; optimizers rated_input_power_w max_input_voltage_v mppt_voltage_min_v mppt_voltage_max_v max_input_isc_a max_output_current_a modules_per_unit efficiency_weighted_pct compatible_inverters; batteries usable_energy_kwh coupling max_charge_power_w max_discharge_power_w round_trip_efficiency_pct. Only what the source states: leave out the rest, never a typical value.",
         "parameters": _schema({"kind": {"type": "string", "enum": ["modules", "inverters", "microinverters", "optimizers", "batteries"]}, "record": {"type": "object"}}, ("kind", "record")),
     },
 })
@@ -1255,6 +1293,7 @@ TOOLS = {"read_checks": read_checks, "project_summary": project_summary, "go_to"
          "list_navigation_targets": list_navigation_targets, "read_navigation": read_navigation,
          "search_manual": search_manual, "read_selection": read_selection, "read_results": read_results,
          "read_pedigree": read_pedigree, "read_rules": read_rules, "vvf_activities": vvf_activities,
+         "design_rules": design_rules,
          "propose_fix": propose_fix,
          "propose_edit": propose_edit, "propose_undo": propose_undo, "search_projects": search_projects,
          "project_revisions": project_revisions, "similar_projects": similar_projects,

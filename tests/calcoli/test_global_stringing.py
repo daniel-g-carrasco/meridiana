@@ -54,6 +54,21 @@ class Global(unittest.TestCase):
         self.assertEqual(len(out.strings), 1)
         self.assertEqual(len(out.strings[0].modules), 6)
 
+    def test_mppt_strings_are_shared_among_the_inverters_in_proportion(self):
+        """R428: the first inverter filled while the other stays empty was the old order."""
+        out = plant.build(project([(inverter(), 2)]), groups=[group(40)])
+        ratios = plant.unit_ratios(out)
+        self.assertEqual(len(ratios), 2)
+        self.assertLess(max(ratios.values()) - min(ratios.values()), 0.2, ratios)
+
+    def test_a_larger_inverter_takes_more_strings(self):
+        big = inverter('B', 4, ac_power_nominal_w=3000)
+        out = plant.build(project([(big, 1), (inverter(), 1)]), groups=[group(40)])
+        counts = {}
+        for s in out.strings:
+            counts[s.inverter] = counts.get(s.inverter, 0) + len(s.modules)
+        self.assertGreater(counts[1], counts.get(2, 0))
+
     def test_shared_current_redistributes_strings_over_two_units(self):
         rec = inverter(dc_current_max_a=8)
         result = sizing.choose(project([]), [group(10), group(10, 's2', 90)], [rec], 1)

@@ -56,6 +56,7 @@ def commands() -> list[Command]:
         c("export_report", _("&Export the report (PDF)…"), ("Ctrl+E",), "file"),
         c("export_csv", _("Export the &hourly series (CSV)…"), (), "file"),
         c("export_ifc", _("Export the model as IF&C4…"), (), "file"),
+        c("export_dxf", _("Export the plan as D&XF…"), (), "file"),
         c("copy_notes", _("Copy the notes for the &report"), (), "file"),
         c("report_logo", _("&Logo…"), (), "file"),
         c("report_profile", _("The designer's &profile…"), (), "file"),
@@ -112,7 +113,10 @@ def commands() -> list[Command]:
         c("phase_report", _("Report"), ("Ctrl+6",), "phases"),
         c("next_phase", _("Next phase"), ("Ctrl+Tab", "Ctrl+PgDown"), "phases"),
         c("previous_phase", _("Previous phase"), ("Ctrl+Shift+Backtab", "Ctrl+PgUp"), "phases"),
-        c("panel_project", _("Project"), ("Ctrl+B",), "panels"),
+        # R549 (Daniel 08/11/2026): Ctrl+B is the left side, whatever cards stand there, as in VS Code; the cards one
+        # by one, by name, stay in the Panels menu
+        c("side_left", _("Left side"), ("Ctrl+B",), "panels"),
+        c("panel_project", _("Project"), (), "panels"),
         c("panel_properties", _("Properties"), ("Ctrl+P",), "panels"),
         c("panel_checks", _("Checks"), ("Ctrl+J",), "panels"),
         c("panel_help", _("Help"), (), "panels"),

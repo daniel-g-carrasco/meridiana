@@ -834,7 +834,7 @@ class Window(Journeys):
                     menus.append(a)
         for a in self.win.menuBar().actions():
             walk(a.menu())
-        for dock, keys in ((right, "Ctrl+P"), (left, "Ctrl+B")):
+        for dock, keys in ((right, "Ctrl+P"), (left, "")):
             toggle = dock.toggleViewAction()
             self.assertIn(toggle, menus)                    # View > Panels
             self.assertEqual(toggle.shortcut().toString(), keys)
@@ -842,6 +842,12 @@ class Window(Journeys):
             self.assertFalse(dock.isVisible())
             toggle.trigger()
             self.assertTrue(dock.isVisible())
+        # R549: Ctrl+B is the left side (as in VS Code), here the Project panel
+        self.assertEqual(self.win.commands["side_left"].shortcut().toString(), "Ctrl+B")
+        self.win.commands["side_left"].trigger()
+        self.assertFalse(left.isVisible())
+        self.win.commands["side_left"].trigger()
+        self.assertTrue(left.isVisible())
 
     def only_the_drawing_and_back_and_the_default_layout(self):
         from PySide6.QtWidgets import QToolBar
@@ -929,11 +935,11 @@ class Window(Journeys):
         from meridiana.ui.shortcuts_dialog import ShortcutsEditor
         editor = ShortcutsEditor(self.win.bindings)         # what it says of the keys typed: widget/test_preferences.py
         self.addCleanup(_setup.dispose, editor)
-        editor.assign("ortho", "Ctrl+B")                    # taken from the Project panel
-        self.assertEqual(editor.bindings["panel_project"], [])
+        editor.assign("ortho", "Ctrl+B")                    # taken from the left side (R549)
+        self.assertEqual(editor.bindings["side_left"], [])
         self.win._set_shortcuts(editor.bindings)
         self.assertEqual(self.win.commands["ortho"].shortcut().toString(), "Ctrl+B")
-        self.assertEqual(self.win.cfg.shortcuts, {"ortho": ["Ctrl+B"], "panel_project": []})
+        self.assertEqual(self.win.cfg.shortcuts, {"ortho": ["Ctrl+B"], "side_left": []})
         saved = config.load(self.paths.config_file)
         self.assertEqual(shortcuts.bindings(saved.shortcuts)["ortho"], ["Ctrl+B"])
 

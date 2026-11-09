@@ -232,3 +232,20 @@ def parse_coordinates(text: str) -> tuple[float, float] | None:
     except CoordinateError:
         return None
     return point.lat, point.lon
+
+
+def point_texts(origin: Origin, east: float, north: float) -> dict[str, str]:
+    """A point of the plan written to be pasted elsewhere (R487), each within a centimetre of it: latitude and
+    longitude with their hemispheres in the window's language, the decimal pair maps and GIS read
+    ("45.5226123, 9.0300456"), UTM WGS84 with its zone and EPSG code, the project's own metres East and North.
+    Seven decimals of a degree are 1,1 cm of latitude; UTM and the local metres to the millimetre."""
+    from .i18n import number
+    lon, lat = origin.to_lonlat(east, north)
+    zone, u_east, u_north, _gamma, _k = to_utm(lat, lon)
+    hemisphere = "S" if lat < 0 else "N"
+    return {
+        "degrees": f"{number(abs(lat), 7)}° {hemisphere}, {number(abs(lon), 7)}° {'W' if lon < 0 else 'E'}",
+        "decimal": f"{lat:.7f}, {lon:.7f}",
+        "utm": f"UTM WGS84 {zone}{hemisphere} {u_east:.3f} {u_north:.3f} (EPSG:{(32700 if lat < 0 else 32600) + zone})",
+        "local": f"E {number(east, 3)} m, N {number(north, 3)} m",
+    }

@@ -60,7 +60,7 @@ class Startup(unittest.TestCase):
         src = Path(app.__file__).resolve().parents[1]
         env["PYTHONPATH"] = str(src)
         try:
-            run = subprocess.run([sys.executable, "-m", "meridiana", "-platform", "offscreen"], env=env,
+            run = subprocess.run([sys.executable, "-m", "meridiana", "--widgets", "-platform", "offscreen"], env=env,
                                  cwd=str(root), timeout=90, capture_output=True, text=True, errors="replace")
         except subprocess.TimeoutExpired:
             self.fail("the start stopped: an argument of Qt was opened as a project")

@@ -1,10 +1,11 @@
 """The symbols of the window (R138, Daniel 25/10/2026: «per l'applicativo Spola avevamo creato dei begli svg ... che
 vorrei utilizzare anche qua in Meridiana a livello globale»): Spola's check, forbidden, warning and error, and the
 cross, the stop and the info drawn in the same geometry (a 16-unit disc, strokes 1.7 wide). Flat (R330, Daniel
-02/11/2026: «come simboli usiamo quelli piatti»): the ground of one tone, the sign opaque on it, the same for all of
-them, so that it reads on any ground, an orthophoto and the dark panels too (the flat ones of 25/10/2026 were refused
-because their sign was cut out and showed what lay under it: this one is painted). The warning's triangle is as wide
-as the disc's diameter. SVG drawn by Qt's own renderer at the size and the density asked, never a character of a font
+02/11/2026: «come simboli usiamo quelli piatti»): the ground of one tone with the sign cut out of it, the same for all
+of them (R464, Daniel 06/11/2026: «vai con i trasparenti», in place of R330's white sign). On the views (the plan, the
+3D view), where the ground under it is an orthophoto or a roof, the symbol stands in a disc of the plan's pills
+(`paint_pill`, Daniel 06/11/2026: «lo metti dentro un pallino con lo stile grafico delle pillole in pianta»), and its
+sign shows the pill. The warning's triangle is as wide as the disc's diameter. SVG drawn by Qt's own renderer at the size and the density asked, never a character of a font
 (a missing glyph left a box in the place of the cross).
 
 What each one says (the same in the template, qtkit):
@@ -20,12 +21,13 @@ What each one says (the same in the template, qtkit):
   che avesse un bel cestino. Mentre l'annulla un simbolo di tornare indietro»).
 
 Colours: the status colours of the theme (theme_colors.STATUS), a lighter blue and grey on a dark ground, where the
-dark ones vanish. `sign` is the sign alone, for a pill already in the level's colour. The tracks, the tones and the SVG
+dark ones vanish. `sign` is the sign alone, as a path. The tracks, the tones and the SVG
 are in `meridiana/symbol_shapes.py`, without Qt, because the report's Typst template draws the same marks (R330)."""
 
 from __future__ import annotations
 
 import math
+import sys
 import tempfile
 from pathlib import Path
 
@@ -39,10 +41,10 @@ from ..symbol_shapes import DISC, LEVEL, LIGHT_SIGN, NAMES, SHAPES, TONES, TONES
 _RENDERERS: dict = {}
 
 
-def renderer(name: str, dark: bool = False, fill: str | None = None) -> QSvgRenderer:
-    key = (name, dark, fill)
+def renderer(name: str, dark: bool = False, fill: str | None = None, signed: bool | None = None) -> QSvgRenderer:
+    key = (name, dark, fill, signed)
     if key not in _RENDERERS:
-        _RENDERERS[key] = QSvgRenderer(QByteArray(svg(name, dark, fill)))
+        _RENDERERS[key] = QSvgRenderer(QByteArray(svg(name, dark, fill, signed)))
     return _RENDERERS[key]
 
 
@@ -52,16 +54,87 @@ def dark_ground() -> bool:
     return app is not None and QGuiApplication.palette().window().color().lightnessF() < 0.5
 
 
-def paint(painter: QPainter, rect: QRectF, name: str, dark: bool | None = None, off: bool = False) -> None:
+def paint(painter: QPainter, rect: QRectF, name: str, dark: bool | None = None, off: bool = False,
+          round_: bool = False) -> None:
     """The symbol in `rect` (square), as it is on any ground: no halo (Daniel, 25/10/2026: «terribili»). `off`: in the
     grey of the symbols, for a level with nothing in it (R328). The one drawing of a symbol: the signs of the views, of
     the tree and of the counts all come through here, and a new look of them changes here."""
     dark = dark_ground() if dark is None else dark
+    if round_:                      # in a round place (a pill's end): its enclosing centre on the middle (R515)
+        rect = centred(rect, name)
     if off:
-        renderer(name, dark, fill=TONES_DARK["neutral"] if dark else TONES["neutral"]).render(painter, rect)
-        painter.fillPath(sign(name, rect), QColor(LIGHT_SIGN))
+        renderer(name, dark, fill=TONES_DARK["neutral"] if dark else TONES["neutral"], signed=True).render(painter, rect)
         return
     renderer(name, dark).render(painter, rect)
+
+
+PILL_SIGN = 16 / 22     # the symbol in its pill: 16 px in a disc of 22, the height of the plan's pills (R464)
+_CENTRES: dict = {}
+
+
+def enclosing_centre(name: str) -> tuple[float, float]:
+    """The centre of the smallest circle round the symbol's ground as it is drawn, rounded corners included, in the 16
+    units of its square: (8, 8) for the discs; for the warning's triangle, point up, its circumcentre, lower than the
+    middle of the square (R515, Daniel 06/11/2026: «il triangolo centralo nel cerchio please, i 3 angoli equidistanti
+    dalla circonferenza»). Measured once on the ground drawn at 1600 px by Qt's renderer: the grounds are symmetric
+    about x = 8, so the centre is on that line where the farthest point of the outline is the nearest."""
+    if name not in _CENTRES:
+        _tone, ground, _track = SHAPES[name]
+        if ground.startswith(DISC):
+            _CENTRES[name] = (8.0, 8.0)
+            return _CENTRES[name]
+        size = 1600
+        image = QImage(size, size, QImage.Format.Format_ARGB32_Premultiplied)
+        image.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(image)
+        QSvgRenderer(QByteArray(svg(name, fill="#000000", signed=False))).render(painter, QRectF(0, 0, size, size))
+        painter.end()
+        # r24-fasi (studio 41, S8): the same points as before (every other row and column, the first and the last
+        # inside), read from the image's bytes at once: 640 000 pixelColor were 0.63 s of the Quick's opening
+        import numpy as np
+        k = 16 / size
+        alpha = np.frombuffer(image.constBits(), np.uint8).reshape(size, image.bytesPerLine() // 4, 4)
+        alpha = alpha[0:size:2, 0:size:2, 3 if sys.byteorder == "little" else 0] > 127
+        rows = np.flatnonzero(alpha.any(axis=1))
+        first = alpha[rows].argmax(axis=1) * 2
+        last = (alpha.shape[1] - 1 - alpha[rows][:, ::-1].argmax(axis=1)) * 2
+        ys = (rows * 2 + .5) * k
+        xs = np.stack(((first + .5) * k, (last + .5) * k), axis=1).ravel()
+        ys = np.repeat(ys, 2)
+
+        def reach(cy):
+            return float(np.max(np.hypot(xs - 8, ys - cy)))
+        lo, hi = 0.0, 16.0
+        for _ in range(60):
+            a, b = lo + (hi - lo) / 3, hi - (hi - lo) / 3
+            lo, hi = (lo, b) if reach(a) < reach(b) else (a, hi)
+        _CENTRES[name] = (8.0, round((lo + hi) / 2, 3))
+    return _CENTRES[name]
+
+
+def centred(rect: QRectF, name: str) -> QRectF:
+    """`rect` moved so that the symbol's enclosing centre falls on its middle: a sign in a disc or in the round end of a
+    pill sits in the middle of it (R515)."""
+    cx, cy = enclosing_centre(name)
+    k = rect.width() / 16
+    return rect.translated((8 - cx) * k, (8 - cy) * k)
+
+
+def paint_pill(painter: QPainter, rect: QRectF, name: str, ground) -> None:
+    """The symbol in a disc of the plan's pills (R464): the disc in `ground` (the pills' colour, `label_bg`) filling
+    `rect`, the symbol of the dark ground's palette in its middle (as in the labels' pills: the light one's dark blue
+    vanished on the pill) with its sign cut out, so that the sign shows the pill and not the orthophoto or the roof
+    under it. `ground` a QColor or a token in CSS's order, "#rrggbbaa"."""
+    from .. import theme_colors
+    painter.save()
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(QColor(theme_colors.qt_hex(ground)) if isinstance(ground, str) else QColor(ground))
+    painter.drawEllipse(rect)
+    side = rect.width() * PILL_SIGN
+    inner = QRectF(rect.center().x() - side / 2, rect.center().y() - side / 2, side, side)
+    renderer(name, True).render(painter, centred(inner, name))      # its corners at one distance from the disc (R515)
+    painter.restore()
 
 
 def sign(name: str, rect: QRectF) -> QPainterPath:

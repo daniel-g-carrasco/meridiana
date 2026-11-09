@@ -69,7 +69,7 @@ class Network(unittest.TestCase):
         self.assertGreater(result.dc[1][0], 850)
         self.assertLess(result.dc[1][0], 900)
         opt.i_out_max = 0
-        self.assertTrue(any('i_out_max' in n for n in network.solve(first, wiring).notes))
+        self.assertTrue(any('maximum output current' in n for n in network.solve(first, wiring).notes))
         unit.choice = None
         missing = network.solve(first, wiring)
         np.testing.assert_equal(missing.dc[1], [0, 0])
@@ -175,6 +175,7 @@ class SharedShapes(unittest.TestCase):
         counts = []
         for slots in (4, 24):           # 16 and 96 modules, the same four places in the rows
             first, wiring, _strings = self.plant(slots)
+            network._PARTS.clear()      # what the years kept (R478) would be found, not computed
             with mock.patch.object(iv, 'module_curve', wraps=iv.module_curve) as curves, \
                     mock.patch.object(nearshade, 'cell_histogram', wraps=nearshade.cell_histogram) as cohorts:
                 network.solve(first, wiring)

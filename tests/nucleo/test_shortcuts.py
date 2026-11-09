@@ -11,7 +11,7 @@ from meridiana import shortcuts as sc
 class TheMap(unittest.TestCase):
     def test_the_keys_decided_in_study_12(self):
         b = sc.bindings({})
-        for cid, keys in (("ortho", "F8"), ("snaps", "F3"), ("panel_checks", "Ctrl+J"), ("panel_project", "Ctrl+B"),
+        for cid, keys in (("ortho", "F8"), ("snaps", "F3"), ("panel_checks", "Ctrl+J"), ("side_left", "Ctrl+B"),
                           ("panel_properties", "Ctrl+P"), ("phase_model", "Ctrl+1"), ("phase_report", "Ctrl+6"), ("clean_screen", "Ctrl+0"), ("view_plan", "Ctrl+Shift+2"),
                           ("view_3d", "Ctrl+Shift+3"), ("focus_checks", "Ctrl+Shift+M"), ("shortcuts", "Ctrl+?"),
                           ("fix_check", "Ctrl+."),
@@ -81,11 +81,11 @@ class Changes(unittest.TestCase):
 
     def test_a_key_already_taken_names_who_would_lose_it(self):
         b = sc.bindings({})
-        self.assertEqual(sc.clashes(b, "ortho", "ctrl+b"), ["panel_project"])
+        self.assertEqual(sc.clashes(b, "ortho", "ctrl+b"), ["side_left"])     # R549
         self.assertEqual(sc.clashes(b, "ortho", "F8"), [])   # its own key
         self.assertEqual(sc.clashes(b, "ortho", "Ctrl+K"), [])
         b["ortho"] = ["Ctrl+B"]
-        self.assertEqual(sc.conflicts(b), {"Ctrl+B": ["ortho", "panel_project"]})
+        self.assertEqual(sc.conflicts(b), {"Ctrl+B": ["ortho", "side_left"]})
 
     def test_a_key_chosen_before_a_newer_default_took_it_stays_the_designers(self):
         keys, notes = sc.settle({"fit": ["Ctrl+L"]})        # chosen when Ctrl+L was nobody's; the assistant came later

@@ -15,15 +15,26 @@ from PySide6.QtWidgets import QGraphicsItem, QStyledItemDelegate, QWidget
 SIZE = 18.0
 
 
+PILL = 22.0         # a mark on the views: the symbol in a disc of the plan's pills, as tall as they are (R464)
+
+
 def paint(p: QPainter, centre: QPointF, level: str, count: int = 1, size: float = SIZE, views: bool = False) -> None:
     """A mark of `level` centred at `centre`, `size` pixels across, with its number when `count` > 1; on the `views`
-    (the plan, the 3D view) in the light theme's colours, which keep theirs in both themes (R16)."""
+    (the plan, the 3D view) in the light theme's colours, which keep theirs in both themes (R16), and in a disc of the
+    plan's pills `PILL` pixels across (R464), with its sign cut out showing the pill."""
     from . import symbols
+    from .. import view_colours
     p.save()
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
-    r = size / 2
-    symbols.paint(p, QRectF(centre.x() - r, centre.y() - r, size, size), symbols.LEVEL.get(level, "info"),
-                  dark=False if views else None)
+    name = symbols.LEVEL.get(level, "info")
+    if views:
+        size = PILL * size / SIZE
+        r = size / 2
+        symbols.paint_pill(p, QRectF(centre.x() - r, centre.y() - r, size, size), name,
+                           view_colours.PHOTO["label_bg"])
+    else:
+        r = size / 2
+        symbols.paint(p, QRectF(centre.x() - r, centre.y() - r, size, size), name)
     font = QFont()
     font.setBold(True)
     if count > 1:

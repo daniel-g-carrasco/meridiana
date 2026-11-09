@@ -90,7 +90,7 @@ class TileLoader(QObject):
             return
         path = self._path(*tile)
         try:
-            fresh = path.exists() and time.time() - path.stat().st_mtime < source.max_age_days * 86400
+            fresh = path.exists() and source.fresh(time.time() - path.stat().st_mtime)
         except OSError:
             fresh = False
         if fresh or (self.offline and path.exists()):

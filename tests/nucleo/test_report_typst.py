@@ -90,10 +90,10 @@ class Engine(unittest.TestCase):
 
         from meridiana.report_typst import blocks
         families = set(self.engine.fonts().families())
-        self.assertLessEqual({"Titillium Web", "Inter"}, families)
+        self.assertLessEqual({"IBM Plex Sans", "IBM Plex Math", "IBM Plex Mono"}, families)
         # the fonts inside Typst may stay (for a letter neither of ours has); the system's are never asked
-        self.assertLessEqual(families - {"Titillium Web", "Inter"},
-                             {"DejaVu Sans Mono", "Libertinus Serif", "New Computer Modern", "New Computer Modern Math"})
+        self.assertFalse({f for f in families if not f.startswith("IBM Plex")} -
+                         {"DejaVu Sans Mono", "Libertinus Serif", "New Computer Modern", "New Computer Modern Math"})
         doc = document([blocks.para("Potenza 310,50 kWp, 86,0 %, 1.893 kWh/m², −10 °C, ±2 %, γ, Ω"),
                         blocks.para([blocks.mark("ok"), " ", blocks.mark("warn"), " ", blocks.mark("fail"), " ",
                                      blocks.mark("info")])])
@@ -103,9 +103,9 @@ class Engine(unittest.TestCase):
         for page in PdfReader(io.BytesIO(result.pdf)).pages:
             for font in page["/Resources"]["/Font"].values():
                 used.add(str(font.get_object()["/BaseFont"]).split("+")[-1])
-        self.assertTrue(any("Titillium" in f for f in used), used)
-        self.assertTrue(any("Inter" in f for f in used), used)            # the source codes, in the footers' digits
-        self.assertFalse([f for f in used if not ("Titillium" in f or "Inter" in f)], used)
+        self.assertTrue(any("IBMPlexSans-Light" in f for f in used), used)      # the text, light (R460)
+        self.assertTrue(any(f.startswith("IBMPlexSans") and "Light" not in f for f in used), used)   # the footer
+        self.assertFalse([f for f in used if not f.startswith("IBMPlex")], used)
 
     def test_the_logo_is_in_the_corner_of_every_header_and_without_it_the_header_closes_up(self):
         from pypdf import PdfReader
@@ -171,6 +171,55 @@ class Register(unittest.TestCase):
         off = R(False, [rec])
         self.assertEqual(off.code("poa", "Tabella", "x", "y"), "")
         self.assertEqual(off.words("poa"), "Piano")
+
+
+class Steps(unittest.TestCase):
+    """R460: a step as the report and the window lay it out (report_typst/steps.py), one source for both."""
+
+    def test_a_step_numbered_on_with_its_values_split_on_the_comma_and_the_numbers_put_in(self):
+        from meridiana.energy.pedigree import Quantity, Record, Source, Step
+        from meridiana.i18n import setup
+        from meridiana.report_typst import steps
+        setup("it")
+        try:
+            worked = [r"E = 10{,}25\,\mathrm{kW} \cdot 2{,}1\,\mathrm{h} = \mathbf{21{,}5}\,\mathrm{kWh}"]
+            rec = [Record("A", [Step("a", "Uno", r"E = P \cdot t", "", [Quantity("P", "Potenza", 10.25, "kW",
+                                                                              Source("data", "Scheda", "p. 2"))],
+                                     Quantity("E", "Energia", 21.5, "kWh", decimals=1), worked=worked,
+                                     example="Esempio: 14 luglio")]),
+                   Record("B", [Step("b", "Scelta", "", ""), Step("c", "Due", "x = 1", "")])]
+            first, second = steps.numbered(rec, 9)
+            self.assertEqual([s["eq"] for s in first + second], ["9.1", "", "9.2"])
+            q = first[0]["inputs"][0]
+            self.assertEqual((q["value"], q["int"], q["rest"]), ("10,25 kW", "10", ",25 kW"))
+            # R479: the formula again with the numbers, after the hour of the example; no list «symbol = value»
+            self.assertNotIn("values", first[0])
+            self.assertEqual((first[0]["worked"], first[0]["example"]), (worked, "Esempio: 14 luglio"))
+            self.assertEqual((second[0]["worked"], second[1]["worked"]), ([], []))
+            self.assertEqual(first[0]["result"]["value"], "21,5 kWh")
+            self.assertEqual(steps.parts("–"), ("", ""))
+            plain = [{"title": "A", "steps": [{"key": "a", "title": "Uno", "formula": "E", "explanation": "",
+                                               "inputs": [{"symbol": "P", "label": "Potenza", "value": 3,
+                                                           "unit": "kW", "decimals": 0,
+                                                           "source": {"kind": "data", "label": "Scheda", "ref": ""}}],
+                                               "result": None, "reference": ""}]}]
+            view = steps.for_window(plain)[0][0]
+            self.assertEqual((view["eq"], view["inputs"][0]["value"], view["inputs"][0]["source"]),
+                             ("1", "3 kW", "dato: Scheda"))
+        finally:
+            setup("en")
+
+
+class NoPlant(unittest.TestCase):
+    def test_a_project_without_modules_is_said_not_stopped_on_a_division_by_zero_r459(self):
+        from _fixtures import capannone
+
+        from meridiana.report_typst.compose import NoPlant, compose, no_plant
+        problem = no_plant({"results": {}})
+        self.assertIn("no module is laid", problem)
+        with self.assertRaises(NoPlant) as caught:
+            compose(capannone(), {"results": {}})
+        self.assertEqual(str(caught.exception), problem)
 
 
 if __name__ == "__main__":

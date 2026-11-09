@@ -25,6 +25,25 @@ TOUCH = 1.5                     # the shorter sides within which two modules are
 MAX_BRIDGE_SPAN = 12.0          # shorter sides between centres: a long jump stays direct instead of a huge detour
 
 
+def optimizer_units(quads, groups):
+    """Where the power optimizers of a string stand (R424): one for each group of modules (`groups`, lists of indices into
+    `quads`, (N, 4, 2)), at the middle of its modules; alone on a module, off its centre towards a short side, so that
+    its cable shows. Returns, one for each group, (x, y, ux, uy, side): the place, the module's long direction as a unit
+    vector and the side of the symbol, a third of the module's short side."""
+    units = []
+    for group in groups:
+        q = np.asarray([quads[i] for i in group], dtype=float)
+        centre = q.mean(axis=(0, 1))
+        first, second = q[0, 1] - q[0, 0], q[0, 2] - q[0, 1]
+        along, across = (first, second) if np.hypot(*first) >= np.hypot(*second) else (second, first)
+        size = float(np.hypot(*across))
+        unit = along / max(float(np.hypot(*along)), 1e-9)
+        if len(group) == 1:
+            centre = centre + along * .28
+        units.append((float(centre[0]), float(centre[1]), float(unit[0]), float(unit[1]), size / 3))
+    return units
+
+
 class Router:
     """The modules of the plan, `quads` (N, 4, 2), to route the strings over them: module i is quads[i]."""
 

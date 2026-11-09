@@ -303,12 +303,12 @@ class ReportAndPlant(unittest.TestCase):
         states = win.inspector.deliverables.states
         self.assertEqual(states["report"], "unavailable")                        # no production yet
         self.assertEqual(states["csv"], "unavailable")
-        self.assertEqual(states["dxf"], "planned")
+        self.assertEqual(states["dxf"], "todo")                                   # the plan needs no year (R513)
         self.assertEqual(states["ifc"], "todo")                                   # the model needs no year (R91)
         buttons = [b for b in win.inspector.deliverables.findChildren(QPushButton)
                    if not win.report_side.isAncestorOf(b)]                       # the deliverables' own
-        self.assertEqual(len(buttons), 3)                                         # the report's and the series', greyed; the IFC's
-        self.assertEqual(sorted(b.isEnabled() for b in buttons), [False, False, True])
+        self.assertEqual(len(buttons), 4)                 # the report's and the series', greyed; the IFC's and the DXF's
+        self.assertEqual(sorted(b.isEnabled() for b in buttons), [False, False, True, True])
         with mock.patch.object(win, "_export_report") as export:
             bar.button_of("export_report").click()
         export.assert_called_once()
@@ -483,7 +483,7 @@ class ReportAndPlant(unittest.TestCase):
         alone = self.paths.data / "Serie.csv"
         with mock.patch.object(QFileDialog, "getSaveFileName", return_value=(str(alone), "")):
             win.commands["export_csv"].trigger()
-        self.assertTrue(alone.read_text(encoding="utf-8-sig").startswith("# Meridiana"))
+        self.assertTrue(alone.read_text(encoding="utf-8-sig").startswith("# Register of the calculations"))
         self.assertEqual(win.exports["csv"][0], "Serie.csv")
         self.assertIn("export_csv", win.bars["report"].buttons())
 

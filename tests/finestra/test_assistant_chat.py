@@ -573,6 +573,9 @@ class Cloud(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.app = _setup.qt_or_skip()
+        from meridiana.assistant import providers
+        # The fake transport's 10 s budget starts after the optional SDK's lazy imports.
+        providers._anthropic_errors()
 
     def setUp(self):
         import keyring
@@ -597,6 +600,10 @@ class Cloud(unittest.TestCase):
         self.addCleanup(self.local.close)
         self.chat.make_local = lambda: providers.OpenAICompatible(base_url=self.local.url)
         self.a.open_panel()
+
+        def finish_workers():
+            self.assertTrue(self.win.pool.waitForDone(30000), "Window workers did not finish before disposal")
+        self.addCleanup(finish_workers)
 
     def idle(self) -> bool:
         return wait_until(self.app, lambda: self.a.mood.state == assistant.IDLE and self.chat.job is None, 10)

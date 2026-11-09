@@ -1,0 +1,868 @@
+{
+ "checked": "2026-11-06",
+ "SolarEdge": {
+  "architecture": "fixed_string_voltage",
+  "note": "Rows checked one by one on 05/11/2026 against the sheets of reference\\catalogs\\SolarEdge\\optimizers. The same rules apply to Synergy units of equal power (note * of the tables): SE50K = 2 x SE25K, SE66.6K = 2 x SE33.3K, SE90K = 3 x SE30K, SE100K = 3 x SE33.3K.",
+  "columns": "fewest optimizers, fewest modules, most optimizers, most modules, continuous W per string, connected W with fewer than `many` strings, connected W with `many` or more, many",
+  "commercial": {
+   "S1000": {
+    "source": "DS-000105-IT, 01/12/2025, p. 3",
+    "table": {
+     "SE25K": [14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 2],
+     "SE27.6K": [14, 27, 30, 60, 13950.0, 16200.0, 18950.0, 2],
+     "SE30K": [15, 29, 30, 60, 15300.0, 17550.0, 20300.0, 2],
+     "SE33.3K": [14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 3],
+     "SE40K": [15, 29, 30, 60, 15300.0, 17550.0, 20300.0, 3]
+    }
+   },
+   "S1200": {
+    "source": "DS-000105-IT, 01/12/2025, p. 3",
+    "table": {
+     "SE25K": [14, 27, 30, 60, 15000.0, 17250.0, 20000.0, 2],
+     "SE27.6K": [14, 27, 30, 60, 15500.0, 17750.0, 20500.0, 2],
+     "SE30K": [15, 29, 30, 60, 17000.0, 19250.0, 23000.0, 2],
+     "SE33.3K": [15, 29, 30, 60, 17000.0, 19250.0, 23000.0, 2],
+     "SE40K": [15, 29, 30, 60, 17000.0, 19250.0, 23000.0, 3]
+    }
+   },
+   "S1400": {
+    "source": "DS-000205-EU, 08/01/2024, p. 3",
+    "table": {
+     "SE20K": [14, 27, 30, 60, 18000.0, 20250.0, 28000.0, 2],
+     "SE25K": [14, 27, 30, 60, 18000.0, 20250.0, 28000.0, 2],
+     "SE27.6K": [14, 27, 30, 60, 18600.0, 20850.0, 28600.0, 2],
+     "SE30K": [15, 29, 30, 60, 20400.0, 22650.0, 30400.0, 2],
+     "SE33.3K": [14, 27, 30, 60, 18000.0, 20250.0, 28000.0, 2],
+     "SE40K": [15, 29, 30, 60, 20400.0, 22650.0, 30400.0, 2]
+    }
+   }
+  },
+  "commercial_p": {
+   "source": "DS-000012-ENG, 29/12/2022, not read again on 05/11/2026",
+   "table": {
+    "SE16K": [14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 2],
+    "SE17K": [14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 2],
+    "SE25K": [14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 2],
+    "SE27.6K": [14, 27, 30, 60, 13950.0, 16200.0, 18950.0, 2],
+    "SE30K": [15, 29, 30, 60, 15300.0, 17550.0, 20300.0, 2],
+    "SE33.3K": [14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 3],
+    "SE40K": [14, 27, 30, 60, 15300.0, 17550.0, 20300.0, 3]
+   }
+  },
+  "residential_columns": "fewest for the long modules, fewest for the short modules, most, continuous W, connected W [one string, many], whether an inverter whose rated AC power is within the continuous power takes up to its own maximum DC power",
+  "residential_s": {
+   "source": "DS-000091-IT, 14/09/2026, p. 3",
+   "long": ["S440", "S500"],
+   "table": {
+    "single_phase": [
+     8,
+     6,
+     25,
+     5700.0,
+     [6000.0, 6800.0],
+     true
+    ],
+    "three_phase_short": [9, 8, 20, 5625.0, null, true],
+    "three_phase_400": [
+     16,
+     14,
+     50,
+     11250.0,
+     [13500.0, 13500.0],
+     true
+    ],
+    "three_phase_480": [
+     18,
+     14,
+     50,
+     12750.0,
+     [15000.0, 15000.0],
+     true
+    ]
+   }
+  },
+  "residential_p": {
+   "source": "DS-000047-ITA, 15/02/2022, p. 2, not read again on 05/11/2026",
+   "long": ["P370", "P401", "P500"],
+   "table": {
+    "single_phase": [
+     8,
+     6,
+     25,
+     5700.0,
+     [5700.0, 5700.0],
+     true
+    ],
+    "three_phase_short": [
+     9,
+     8,
+     20,
+     5625.0,
+     [5625.0, 5625.0],
+     true
+    ],
+    "three_phase_400": [
+     16,
+     14,
+     50,
+     11250.0,
+     [13500.0, 13500.0],
+     false
+    ],
+    "three_phase_480": [
+     18,
+     14,
+     50,
+     12750.0,
+     [15000.0, 15000.0],
+     false
+    ]
+   }
+  },
+  "groups": [
+   {
+    "optimizers": "^(S440|S500|S500B|S650B|P401|P505)$",
+    "inverters": "^SE\\d",
+    "state": "by_table",
+    "modules_per_unit": 1
+   },
+   {
+    "optimizers": "^(S1000|S1200|S1400|P850|P950|P1100)$",
+    "inverters": "^SE\\d",
+    "state": "by_table",
+    "modules_per_unit": 2
+   }
+  ],
+  "families": [
+   {
+    "function": "optimizer",
+    "sizing": "solaredge_tables",
+    "energy": "modelled",
+    "orientations": {
+     "state": "free",
+     "source": "SolarEdge, Single String Design Guidelines v1.1 (08/2026), p. 1: più falde con perdite aggiuntive"
+    },
+    "parallel": {
+     "same_length": false,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": null,
+     "level": "fail",
+     "source": "tabelle SolarEdge: «Stringhe parallele di lunghezze o orientamenti diversi: Sì»"
+    },
+    "partial": {
+     "state": "no",
+     "source": "[I] inverter senza MPPT a tensione di stringa fissa: ogni modulo su un ottimizzatore"
+    },
+    "id": "solaredge_s_res",
+    "name": "SolarEdge S440, S500, S500B, S650B",
+    "optimizers": "^(S440|S500|S500B|S650B)$",
+    "modules_per_unit": [1],
+    "datasheet": "SolarEdge DS-000091-IT (14/09/2026), p. 3",
+    "mixing": {
+     "state": "no",
+     "source": "SolarEdge DS-000091-IT (14/09/2026), p. 3, nota 7: serie S e serie P mai nella stessa stringa"
+    }
+   },
+   {
+    "function": "optimizer",
+    "sizing": "solaredge_tables",
+    "energy": "modelled",
+    "orientations": {
+     "state": "free",
+     "source": "SolarEdge, Single String Design Guidelines v1.1 (08/2026), p. 1: più falde con perdite aggiuntive"
+    },
+    "parallel": {
+     "same_length": false,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": null,
+     "level": "fail",
+     "source": "tabelle SolarEdge: «Stringhe parallele di lunghezze o orientamenti diversi: Sì»"
+    },
+    "partial": {
+     "state": "no",
+     "source": "[I] inverter senza MPPT a tensione di stringa fissa: ogni modulo su un ottimizzatore"
+    },
+    "id": "solaredge_s_com",
+    "name": "SolarEdge S1000, S1200",
+    "optimizers": "^(S1000|S1200)$",
+    "modules_per_unit": [1, 2],
+    "datasheet": "SolarEdge DS-000105-IT (01/12/2025), p. 3",
+    "mixing": {
+     "state": "one_single",
+     "source": "SolarEdge DS-000105-IT (01/12/2025), p. 3, nota 2: un solo ottimizzatore con un modulo per stringa, oppure tutti"
+    }
+   },
+   {
+    "function": "optimizer",
+    "sizing": "solaredge_tables",
+    "energy": "modelled",
+    "orientations": {
+     "state": "free",
+     "source": "SolarEdge, Single String Design Guidelines v1.1 (08/2026), p. 1: più falde con perdite aggiuntive"
+    },
+    "parallel": {
+     "same_length": false,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": null,
+     "level": "fail",
+     "source": "tabelle SolarEdge: «Stringhe parallele di lunghezze o orientamenti diversi: Sì»"
+    },
+    "partial": {
+     "state": "no",
+     "source": "[I] inverter senza MPPT a tensione di stringa fissa: ogni modulo su un ottimizzatore"
+    },
+    "id": "solaredge_s1400",
+    "name": "SolarEdge S1400",
+    "optimizers": "^S1400$",
+    "modules_per_unit": [1, 2],
+    "datasheet": "SolarEdge DS-000205-EU (08/01/2024), p. 3",
+    "mixing": {
+     "state": "one_single",
+     "source": "SolarEdge DS-000205-EU (08/01/2024), p. 3, nota 9: un solo ottimizzatore con un modulo per stringa, oppure tutti; nota 8: mai con altri modelli"
+    }
+   },
+   {
+    "function": "optimizer",
+    "sizing": "solaredge_tables",
+    "energy": "modelled",
+    "orientations": {
+     "state": "free",
+     "source": "SolarEdge, Single String Design Guidelines v1.1 (08/2026), p. 1: più falde con perdite aggiuntive"
+    },
+    "parallel": {
+     "same_length": false,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": null,
+     "level": "fail",
+     "source": "tabelle SolarEdge: «Stringhe parallele di lunghezze o orientamenti diversi: Sì»"
+    },
+    "partial": {
+     "state": "no",
+     "source": "[I] inverter senza MPPT a tensione di stringa fissa: ogni modulo su un ottimizzatore"
+    },
+    "id": "solaredge_p_res",
+    "name": "SolarEdge P370-P601",
+    "optimizers": "^P(370|401|404|485|500|505|601)$",
+    "modules_per_unit": [1],
+    "datasheet": "SolarEdge DS-000047-ITA (15/02/2022), p. 2",
+    "mixing": {
+     "state": "no",
+     "source": "SolarEdge DS-000091-IT (14/09/2026), p. 3, nota 7"
+    }
+   },
+   {
+    "function": "optimizer",
+    "sizing": "solaredge_tables",
+    "energy": "modelled",
+    "orientations": {
+     "state": "free",
+     "source": "SolarEdge, Single String Design Guidelines v1.1 (08/2026), p. 1: più falde con perdite aggiuntive"
+    },
+    "parallel": {
+     "same_length": false,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": null,
+     "level": "fail",
+     "source": "tabelle SolarEdge: «Stringhe parallele di lunghezze o orientamenti diversi: Sì»"
+    },
+    "partial": {
+     "state": "no",
+     "source": "[I] inverter senza MPPT a tensione di stringa fissa: ogni modulo su un ottimizzatore"
+    },
+    "id": "solaredge_p_com",
+    "name": "SolarEdge P800p, P850, P950, P1100",
+    "optimizers": "^(P800P|P850|P950|P1100)$",
+    "modules_per_unit": [1, 2],
+    "datasheet": "SolarEdge DS-000012-ENG (29/12/2022), p. 3",
+    "mixing": {
+     "state": "one_single",
+     "source": "SolarEdge DS-000012-ENG (29/12/2022), p. 3, nota 6"
+    }
+   }
+  ]
+ },
+ "Huawei": {
+  "architecture": "mppt_with_optimizers",
+  "note": "Inverter Huawei con MPPT propri e ottimizzatori sui moduli. Con ottimizzazione completa la stringa si dimensiona sul numero di ottimizzatori e sulla potenza massima per stringa delle tabelle (stringa lunga, gli ottimizzatori tengono la tensione sotto il limite dell'inverter: Huawei Digital Power Schweiz, Optimierer-Anleitung, 10/11/2025, p. 9; Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 8); con ottimizzazione parziale come senza ottimizzatori (Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 10). SUN2000-450W-P2/600W-P e MERC-1100/1300W-P mai insieme sotto un inverter (Huawei MERC-1100/1300W-P, scheda EN del 20/08/2025, p. 2, nota 9).",
+  "families": [
+   {
+    "id": "huawei_sun2000_p",
+    "name": "Huawei SUN2000-450W-P2 / SUN2000-600W-P",
+    "optimizers": "^SUN2000-(450W-P2|600W-P)$",
+    "function": "optimizer",
+    "sizing": "long_string",
+    "modules_per_unit": [1],
+    "datasheet": "Huawei SUN2000-450W-P2/600W-P, scheda IT del 06/02/2023, p. 1",
+    "module_power": {
+     "factor": 1.05,
+     "level": "fail",
+     "source": "Huawei SUN2000-450W-P2/600W-P, scheda IT del 06/02/2023, p. 1, nota 1: «non deve superare di 1.05 volte la potenza nominale»"
+    },
+    "imp_over": {
+     "level": "warn",
+     "source": "Huawei Digital Power Schweiz, Optimierer-Anleitung, 10/11/2025, p. 4; Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 12: oltre 14,5 A nessuna incompatibilità, solo perdite"
+    },
+    "p_string_over": "warn",
+     "p_string_over_source": "Huawei Digital Power Schweiz, Optimierer-Anleitung, 10/11/2025, p. 5 («Leistungslimit kann überschritten werden. Es kann jedoch zu Ertragsverlusten kommen»); Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 22",
+     "long_string_voc_v": 1900.0,
+    "long_string_source": "Huawei Digital Power Schweiz, Optimierer-Anleitung, 10/11/2025, p. 9 («Maximum = 50 und Maximum = 1900V / Voc at Tmin»); Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 8",
+    "partial": {
+     "state": "conditions",
+     "rule": "Solo su una stringa per MPPT, oppure su tutte le stringhe dello stesso MPPT; stringa di un solo orientamento, dimensionata come senza ottimizzatori",
+     "source": "Huawei Digital Power Schweiz, Optimierer-Anleitung, 10/11/2025, p. 5, 11 e 12; Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 10, 11 e 22"
+    },
+    "mixing": {
+     "state": "n/a",
+     "source": ""
+    },
+    "orientations": {
+     "state": "free",
+     "source": "Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 10; Huawei Digital Power Schweiz, Optimierer-Anleitung, 10/11/2025, p. 11 (ottimizzazione completa)"
+    },
+    "parallel": {
+     "same_length": true,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": null,
+     "level": "fail",
+     "source": "Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 11: «même totalement optimisées, deux chaînes en parallèle (même MPPT) doivent être de même longueur»"
+    },
+    "inverter_spread_w": null,
+    "energy": "modelled",
+    "string_rules": [
+     {
+      "inverters": "^SUN2000-[\\d.]+KTL-L1$",
+      "state": "ok",
+      "min": 4,
+      "max": 25,
+      "p_string_w": 6000.0,
+      "source": "Huawei SUN2000-450W-P2/600W-P, scheda IT del 06/02/2023, p. 1"
+     },
+     {
+      "inverters": "^SUN2000-[\\d.]+KTL-M1$",
+      "state": "ok",
+      "min": 6,
+      "max": 35,
+      "p_string_w": 10000.0,
+      "source": "Huawei SUN2000-450W-P2/600W-P, scheda IT del 06/02/2023, p. 1"
+     },
+     {
+      "inverters": "^SUN2000-(12|15|17|20)KTL-M2$",
+      "state": "ok",
+      "min": 6,
+      "max": 35,
+      "p_string_w": 12000.0,
+      "source": "Huawei SUN2000-450W-P2/600W-P, scheda IT del 06/02/2023, p. 1"
+     },
+     {
+      "inverters": "^SUN2000-(12|15|17|20|23|25)KTL-M5$",
+      "state": "ok",
+      "min": 6,
+      "max": 35,
+      "p_string_w": 12000.0,
+      "source": "Huawei SUN2000-450W-P2/600W-P, scheda IT del 06/02/2023, p. 1"
+     },
+     {
+      "inverters": "^SUN2000-(30|36|40)KTL-M3$",
+      "state": "ok",
+      "min": 6,
+      "max": 25,
+      "p_string_w": 12000.0,
+      "source": "Huawei SUN2000-450W-P2/600W-P, scheda IT del 06/02/2023, p. 1"
+     },
+     {
+      "inverters": "^SUN2000-[\\d/-]+K-MB0$",
+      "state": "unknown",
+      "source": "Huawei SUN2000-12-25K-MB0, scheda EN 01-202504, p. 2: «Compatible optimizer SUN2000-450W-P2, SUN2000-600W-P»; la scheda dell'ottimizzatore non ha la colonna MB0, limiti non stampati"
+     }
+    ],
+    "default": {
+     "state": "no",
+     "why": "Huawei's sheets do not name this inverter for this optimizer"
+    }
+   },
+   {
+    "id": "huawei_pa0",
+    "name": "Huawei SUN2000-600W-PA0 (MERC-600W-PA0)",
+    "optimizers": "^(SUN2000|MERC)-600W-PA0$",
+    "function": "optimizer",
+    "sizing": "long_string",
+    "modules_per_unit": [1],
+    "datasheet": "https://solar.huawei.com/en/products/merc-600w-pa0/specs/ letta il 05/11/2026",
+    "module_power": {
+     "factor": 1.0,
+     "level": "fail",
+     "source": "https://solar.huawei.com/en/products/merc-600w-pa0/specs/ letta il 05/11/2026"
+    },
+    "imp_over": {
+     "level": "warn",
+     "source": "Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 4: oltre 16 A si perde corrente"
+    },
+    "long_string_voc_v": null,
+    "long_string_source": "",
+    "partial": {
+     "state": "conditions",
+     "rule": "Possibile con l'aggiornamento dell'inverter e le regole dell'ottimizzazione parziale (la guida tedesca del 10/11/2025, p. 6, diceva solo ottimizzazione completa)",
+     "source": "Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 5"
+    },
+    "mixing": {
+     "state": "n/a",
+     "source": ""
+    },
+    "orientations": {
+     "state": "free",
+     "source": "Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 10 (ottimizzazione completa)"
+    },
+    "parallel": {
+     "same_length": true,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": 1,
+     "level": "warn",
+     "source": "Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 5 («utilisation d'une entrée par MPPT»); Huawei Digital Power Schweiz, Optimierer-Anleitung, 10/11/2025, p. 6"
+    },
+    "inverter_spread_w": null,
+    "energy": "modelled",
+    "string_rules": [
+     {
+      "inverters": "^SUN2000-[\\d.]+KTL-L1$",
+      "state": "ok",
+      "min": 4,
+      "max": 20,
+      "p_string_w": 6000.0,
+      "source": "https://solar.huawei.com/en/products/merc-600w-pa0/specs/ letta il 05/11/2026"
+     },
+     {
+      "inverters": "^SUN2000-[\\d.]+KTL-M1$",
+      "state": "ok",
+      "min": 6,
+      "max": 35,
+      "p_string_w": 10000.0,
+      "source": "https://solar.huawei.com/en/products/merc-600w-pa0/specs/ letta il 05/11/2026"
+     },
+     {
+      "inverters": "^SUN2000-\\d+K-MAP0$",
+      "state": "ok",
+      "min": 6,
+      "max": 35,
+      "p_string_w": 12000.0,
+      "source": "https://solar.huawei.com/en/products/merc-600w-pa0/specs/ letta il 05/11/2026"
+     },
+     {
+      "inverters": "^SUN2000-\\d+K-MB0$",
+      "state": "ok",
+      "min": 6,
+      "max": 35,
+      "p_string_w": 12000.0,
+      "source": "https://solar.huawei.com/en/products/merc-600w-pa0/specs/ letta il 05/11/2026"
+     }
+    ],
+    "default": {
+     "state": "no",
+     "why": "Huawei's sheets do not name this inverter for this optimizer"
+    }
+   },
+   {
+    "id": "huawei_merc",
+    "name": "Huawei MERC-1100W-P / MERC-1300W-P",
+    "optimizers": "^MERC-1[13]00W-P$",
+    "function": "optimizer",
+    "sizing": "long_string",
+    "modules_per_unit": [1, 2],
+    "datasheet": "Huawei MERC-1100/1300W-P, scheda EN del 20/08/2025, p. 2",
+    "module_power": {
+     "factor": 1.0,
+     "per_module": true,
+     "level": "fail",
+     "source": "Huawei MERC-1100/1300W-P, scheda EN del 20/08/2025, p. 2, nota 1: MERC-1100W-P moduli fino a 605 W, MERC-1300W-P fino a 800 W a STC; potenza massima in ingresso 1155 W e 1430 W"
+    },
+    "imp_over": {
+     "level": "warn",
+     "source": "Huawei MERC-1100/1300W-P, scheda EN del 20/08/2025, p. 2"
+    },
+    "long_string_voc_v": null,
+    "long_string_source": "",
+    "partial": {
+     "state": "no",
+     "source": "Huawei MERC-1100/1300W-P, scheda EN del 20/08/2025, p. 2, nota 8: «Each PV module under the same inverter must be equipped with a MERC-1100/1300W-P»"
+    },
+    "mixing": {
+     "state": "not_stated",
+     "source": "Huawei Digital Power Schweiz, Optimierer-Anleitung, 10/11/2025, p. 8 e Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 7: collegamento «1-1 und 2-1»; la scheda non dice se nella stessa stringa"
+    },
+    "orientations": {
+     "state": "free",
+     "source": "Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 10 (ottimizzazione completa)"
+    },
+    "parallel": {
+     "same_length": true,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": 1,
+     "level": "fail",
+     "source": "Huawei Digital Power Schweiz, Optimierer-Anleitung, 10/11/2025, p. 7: «Nur ein String pro MPPT belegbar»; Huawei Digital Power Suisse, Instructions Optimiseurs, 15/07/2026, p. 6"
+    },
+    "inverter_spread_w": 2000.0,
+    "inverter_spread_source": "Huawei MERC-1100/1300W-P, scheda EN del 20/08/2025, p. 2, nota 10: differenza fra le stringhe dello stesso inverter entro 2 kW",
+    "energy": "modelled",
+    "string_rules": [
+     {
+      "inverters": "^SUN2000-(8|10|12|15|17|20)KTL-M2$",
+      "state": "ok",
+      "min": 8,
+      "max": 25,
+      "p_string_w": 20000.0,
+      "source": "Huawei MERC-1100/1300W-P, scheda EN del 20/08/2025, p. 2"
+     },
+     {
+      "inverters": "^SUN2000-(12|15|17|20|23|25)KTL-M5$",
+      "state": "ok",
+      "min": 8,
+      "max": 25,
+      "p_string_w": 20000.0,
+      "source": "Huawei MERC-1100/1300W-P, scheda EN del 20/08/2025, p. 2"
+     },
+     {
+      "inverters": "^SUN2000-(30|36|40)KTL-M3$",
+      "state": "ok",
+      "min": 8,
+      "max": 25,
+      "p_string_w": 20000.0,
+      "source": "Huawei MERC-1100/1300W-P, scheda EN del 20/08/2025, p. 2"
+     },
+     {
+      "inverters": "^SUN2000-50KTL-M3$",
+      "state": "ok",
+      "min": 8,
+      "max": 20,
+      "p_string_w": 20000.0,
+      "source": "Huawei MERC-1100/1300W-P, scheda EN del 20/08/2025, p. 2"
+     },
+     {
+      "inverters": "^SUN5000-150K(TL)?-MG0$",
+      "state": "ok",
+      "min": 12,
+      "max": 20,
+      "p_string_w": 20000.0,
+      "source": "Huawei ProfiLink SUN5000 C&I, scheda EN del 22/05/2024, p. 2"
+     }
+    ],
+    "default": {
+     "state": "no",
+     "why": "Huawei's sheets do not name this inverter for this optimizer"
+    }
+   }
+  ],
+  "other_makers": {
+   "state": "no",
+   "why": "Huawei's optimizers are named only for Huawei's inverters"
+  }
+ },
+ "Sungrow": {
+  "architecture": "mppt_with_optimizers",
+  "note": "La scheda non stampa limiti di stringa: le stringhe si dimensionano come senza ottimizzatori [I].",
+  "families": [
+   {
+    "id": "sungrow_sp",
+    "name": "Sungrow SP600S",
+    "optimizers": "^SP600S$",
+    "function": "optimizer",
+    "sizing": "inverter_window",
+    "modules_per_unit": [1],
+    "datasheet": "Sungrow SP600S, scheda V8 (DS_20240104), p. 1",
+    "module_power": {
+     "factor": 1.05,
+     "level": "warn",
+     "source": "Sungrow SP600S, scheda V8 (DS_20240104), p. 1, nota **: consigliata entro il 5 % sopra la potenza nominale; oltre 630 W rapporto DC/AC sopra 1,2"
+    },
+    "imp_over": {
+     "level": "warn",
+     "source": "Sungrow SP600S, scheda V8 (DS_20240104), p. 1"
+    },
+    "long_string_voc_v": null,
+    "long_string_source": "",
+    "partial": {
+     "state": "not_stated",
+     "source": "Sungrow SP600S, scheda V8 (DS_20240104), p. 1"
+    },
+    "mixing": {
+     "state": "n/a",
+     "source": ""
+    },
+    "orientations": {
+     "state": "free",
+     "source": "Sungrow SP600S, scheda V8 (DS_20240104), p. 1: «Optimize rooftops with different orientations and tilt angles»"
+    },
+    "parallel": {
+     "same_length": true,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": null,
+     "level": "fail",
+     "source": "CEI 64-8/7 come senza ottimizzatori [I]: la scheda non lo dice"
+    },
+    "inverter_spread_w": null,
+    "energy": "modelled",
+    "string_rules": [
+     {
+      "inverters": "^SG(5\\.0|6\\.0|7\\.0|8\\.0|10|12|15|17|20)RT-P2$",
+      "state": "unknown",
+      "source": "Sungrow SP600S, scheda V8 (DS_20240104), p. 1"
+     },
+     {
+      "inverters": "^SG(2\\.0|2\\.5|3\\.0)RS-S$",
+      "state": "unknown",
+      "consult": true,
+      "source": "Sungrow SP600S, scheda V8 (DS_20240104), p. 1: «Please consult Sungrow before placing an order on optimizers and compatible inverters»"
+     },
+     {
+      "inverters": "^SG(3\\.0|3\\.6|4\\.0|5\\.0|6\\.0|8\\.0|9\\.0|10)RS$",
+      "state": "unknown",
+      "consult": true,
+      "source": "Sungrow SP600S, scheda V8 (DS_20240104), p. 1: «Please consult Sungrow before placing an order on optimizers and compatible inverters»"
+     },
+     {
+      "inverters": "^SH(3\\.0|3\\.6|4\\.0|5\\.0|6\\.0)RS$",
+      "state": "unknown",
+      "consult": true,
+      "source": "Sungrow SP600S, scheda V8 (DS_20240104), p. 1: «Please consult Sungrow before placing an order on optimizers and compatible inverters»"
+     },
+     {
+      "inverters": "^SG(25|30|33|36|40|50|125)CX-P2$",
+      "state": "unknown",
+      "consult": true,
+      "source": "Sungrow SP600S, scheda V8 (DS_20240104), p. 1: «Please consult Sungrow before placing an order on optimizers and compatible inverters»"
+     }
+    ],
+    "default": {
+     "state": "no",
+     "why": "Sungrow's sheet does not name this inverter for the SP600S"
+    }
+   }
+  ],
+  "other_makers": {
+   "state": "no",
+   "why": "Sungrow's sheet names only its own inverters"
+  }
+ },
+ "Tigo": {
+  "architecture": "mppt_add_on",
+  "note": "TS4 su inverter di altre marche con MPPT propri: le stringhe si dimensionano come senza ottimizzatori (https://support.tigoenergy.com/hc/en-us/articles/35838437199507-FAQ-Optimizers-TS4-O (aggiornata il 17/01/2025, letta il 06/11/2026)); l'uscita del TS4-O non supera mai la Voc del modulo (stessa pagina). TS4-A-F, TS4-A-2F e TS4-A-S non ottimizzano: spegnimento rapido e (S) monitoraggio.",
+  "families": [
+   {
+    "id": "tigo_ts4_o",
+    "name": "Tigo TS4-A-O",
+    "optimizers": "^TS4-A-O",
+    "function": "optimizer",
+    "sizing": "inverter_window",
+    "modules_per_unit": [1],
+    "datasheet": "Tigo TS4-A-O, scheda 002-00143-00 Rev. 1.4 (29/11/2023), p. 1",
+    "module_power": {
+     "factor": 1.0,
+     "level": "fail",
+     "source": "Tigo TS4-A-O, scheda 002-00143-00 Rev. 1.4 (29/11/2023), p. 1: potenza massima in uscita 700 W"
+    },
+    "imp_over": {
+     "level": "fail",
+     "source": "Tigo TS4-A-O, scheda 002-00143-00 Rev. 1.4 (29/11/2023), p. 1: corrente massima IMP/ISC 15 A/20 A"
+    },
+    "long_string_voc_v": null,
+    "long_string_source": "",
+    "partial": {
+     "state": "conditions",
+     "rule": "Solo su una stringa con il suo MPPT, senza stringhe in parallelo, tutti i moduli con lo stesso orientamento e la stessa inclinazione; gli altri moduli senza TS4 o con TS4-A-S",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/209345667-TS4-O-Design-and-Placement-for-Different-Orientations-and-Tilts (aggiornata il 14/09/2026, letta il 06/11/2026), punti 1, 2 e 5; https://support.tigoenergy.com/hc/en-us/articles/4618530325139-TS4-Systems-Partial-Deployment (aggiornata il 24/11/2025, letta il 06/11/2026); https://support.tigoenergy.com/hc/en-us/articles/4618622913427-TS4-Systems-Selective-Deployment (aggiornata il 24/11/2025, letta il 06/11/2026); https://support.tigoenergy.com/hc/en-us/articles/360024860193-TS4-Systems-Methods-of-Deployment (aggiornata il 19/11/2024, letta il 06/11/2026)"
+    },
+    "mixing": {
+     "state": "with_safety",
+     "with": "TS4-A-S",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/209345667-TS4-O-Design-and-Placement-for-Different-Orientations-and-Tilts (aggiornata il 14/09/2026, letta il 06/11/2026), punto 2; https://support.tigoenergy.com/hc/en-us/articles/4618622913427-TS4-Systems-Selective-Deployment (aggiornata il 24/11/2025, letta il 06/11/2026)"
+    },
+    "orientations": {
+     "state": "free",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/209345667-TS4-O-Design-and-Placement-for-Different-Orientations-and-Tilts (aggiornata il 14/09/2026, letta il 06/11/2026), punto 3: con orientamenti diversi TS4-O su ogni modulo della stringa"
+    },
+    "parallel": {
+     "same_length": false,
+     "length_mismatch_max": 0.25,
+     "max_strings_per_mppt": null,
+     "level": "fail",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/202304236-Design-Considerations-for-Uneven-Parallel-Strings (aggiornata il 11/08/2026, letta il 06/11/2026): 1 - (corta / lunga) al massimo 25 %, TS4-O su tutti i moduli delle stringhe in parallelo"
+    },
+    "inverter_spread_w": null,
+    "energy": "modelled",
+    "string_rules": [
+     {
+      "inverters": ".",
+      "state": "unknown",
+      "sizing_only": true,
+      "source": "https://support.tigoenergy.com/hc/en-us/articles/35838437199507-FAQ-Optimizers-TS4-O (aggiornata il 17/01/2025, letta il 06/11/2026): «The string configuration with optimizer will be the identical one without the Optimizers»"
+     }
+    ],
+    "default": {
+     "state": "unknown",
+     "why": ""
+    }
+   },
+   {
+    "function": "safety",
+    "sizing": "inverter_window",
+    "long_string_voc_v": null,
+    "long_string_source": "",
+    "imp_over": {
+     "level": "fail",
+     "source": ""
+    },
+    "orientations": {
+     "state": "one",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/202304236-Design-Considerations-for-Uneven-Parallel-Strings (aggiornata il 11/08/2026, letta il 06/11/2026)"
+    },
+    "parallel": {
+     "same_length": true,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": null,
+     "level": "fail",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/202304236-Design-Considerations-for-Uneven-Parallel-Strings (aggiornata il 11/08/2026, letta il 06/11/2026): i TS4 che non ottimizzano (TS4-F, TS4-2F, TS4-M, TS4-S) chiedono stringhe in parallelo della stessa lunghezza e dello stesso orientamento"
+    },
+    "inverter_spread_w": null,
+    "energy": "plain",
+    "string_rules": [
+     {
+      "inverters": ".",
+      "state": "unknown",
+      "sizing_only": true,
+      "source": "https://support.tigoenergy.com/hc/en-us/articles/35838437199507-FAQ-Optimizers-TS4-O (aggiornata il 17/01/2025, letta il 06/11/2026): «The string configuration with optimizer will be the identical one without the Optimizers»"
+     }
+    ],
+    "default": {
+     "state": "unknown",
+     "why": ""
+    },
+    "id": "tigo_ts4_s",
+    "name": "Tigo TS4-A-S",
+    "optimizers": "^TS4-A-S",
+    "modules_per_unit": [1],
+    "datasheet": "Tigo TS4-A-S, scheda 002-00142-00 Rev. 1.5 (14/05/2025), p. 1",
+    "module_power": {
+     "factor": 1.0,
+     "level": "fail",
+     "source": "Tigo TS4-A-S, scheda 002-00142-00 Rev. 1.5 (14/05/2025), p. 1: potenza massima 700 W"
+    },
+    "partial": {
+     "state": "conditions",
+     "rule": "Con TS4-A-O sugli altri moduli della stessa stringa (selettivo)",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/4618622913427-TS4-Systems-Selective-Deployment (aggiornata il 24/11/2025, letta il 06/11/2026); https://support.tigoenergy.com/hc/en-us/articles/209345667-TS4-O-Design-and-Placement-for-Different-Orientations-and-Tilts (aggiornata il 14/09/2026, letta il 06/11/2026), punto 2"
+    },
+    "mixing": {
+     "state": "with_optimizer",
+     "with": "TS4-A-O",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/4618622913427-TS4-Systems-Selective-Deployment (aggiornata il 24/11/2025, letta il 06/11/2026); https://support.tigoenergy.com/hc/en-us/articles/209345667-TS4-O-Design-and-Placement-for-Different-Orientations-and-Tilts (aggiornata il 14/09/2026, letta il 06/11/2026), punto 2"
+    }
+   },
+   {
+    "function": "safety",
+    "sizing": "inverter_window",
+    "long_string_voc_v": null,
+    "long_string_source": "",
+    "imp_over": {
+     "level": "fail",
+     "source": ""
+    },
+    "orientations": {
+     "state": "one",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/202304236-Design-Considerations-for-Uneven-Parallel-Strings (aggiornata il 11/08/2026, letta il 06/11/2026)"
+    },
+    "parallel": {
+     "same_length": true,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": null,
+     "level": "fail",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/202304236-Design-Considerations-for-Uneven-Parallel-Strings (aggiornata il 11/08/2026, letta il 06/11/2026): i TS4 che non ottimizzano (TS4-F, TS4-2F, TS4-M, TS4-S) chiedono stringhe in parallelo della stessa lunghezza e dello stesso orientamento"
+    },
+    "inverter_spread_w": null,
+    "energy": "plain",
+    "string_rules": [
+     {
+      "inverters": ".",
+      "state": "unknown",
+      "sizing_only": true,
+      "source": "https://support.tigoenergy.com/hc/en-us/articles/35838437199507-FAQ-Optimizers-TS4-O (aggiornata il 17/01/2025, letta il 06/11/2026): «The string configuration with optimizer will be the identical one without the Optimizers»"
+     }
+    ],
+    "default": {
+     "state": "unknown",
+     "why": ""
+    },
+    "id": "tigo_ts4_2f",
+    "name": "Tigo TS4-A-2F",
+    "optimizers": "^TS4-A-2F",
+    "modules_per_unit": [1, 2],
+    "datasheet": "Tigo TS4-A-2F, scheda 002-00092-00 Rev. 2.9 (20/03/2026), p. 1",
+    "module_power": {
+     "factor": 1.0,
+     "per_input": true,
+     "level": "fail",
+     "source": "Tigo TS4-A-2F, scheda 002-00092-00 Rev. 2.9 (20/03/2026), p. 1: 500 W per ingresso (versione 20 A), 700 W (versione 25 A)"
+    },
+    "partial": {
+     "state": "no",
+     "source": "Tigo Quick Start Guide TS4-A-F/2F 002-00157-00 Rev. 1.3 (08/10/2025), p. 2: «All solar modules in an RSS string must be controlled by a TS4-A-F or TS4-A-2F device»"
+    },
+    "mixing": {
+     "state": "ok",
+     "with": "TS4-A-F",
+     "source": "Tigo Quick Start Guide TS4-A-F/2F 002-00157-00 Rev. 1.3 (08/10/2025), p. 2: TS4-A-F e TS4-A-2F nella stessa stringa RSS (il modulo da solo va su un TS4-A-F)"
+    }
+   },
+   {
+    "function": "safety",
+    "sizing": "inverter_window",
+    "long_string_voc_v": null,
+    "long_string_source": "",
+    "imp_over": {
+     "level": "fail",
+     "source": ""
+    },
+    "orientations": {
+     "state": "one",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/202304236-Design-Considerations-for-Uneven-Parallel-Strings (aggiornata il 11/08/2026, letta il 06/11/2026)"
+    },
+    "parallel": {
+     "same_length": true,
+     "length_mismatch_max": null,
+     "max_strings_per_mppt": null,
+     "level": "fail",
+     "source": "https://support.tigoenergy.com/hc/en-us/articles/202304236-Design-Considerations-for-Uneven-Parallel-Strings (aggiornata il 11/08/2026, letta il 06/11/2026): i TS4 che non ottimizzano (TS4-F, TS4-2F, TS4-M, TS4-S) chiedono stringhe in parallelo della stessa lunghezza e dello stesso orientamento"
+    },
+    "inverter_spread_w": null,
+    "energy": "plain",
+    "string_rules": [
+     {
+      "inverters": ".",
+      "state": "unknown",
+      "sizing_only": true,
+      "source": "https://support.tigoenergy.com/hc/en-us/articles/35838437199507-FAQ-Optimizers-TS4-O (aggiornata il 17/01/2025, letta il 06/11/2026): «The string configuration with optimizer will be the identical one without the Optimizers»"
+     }
+    ],
+    "default": {
+     "state": "unknown",
+     "why": ""
+    },
+    "id": "tigo_ts4_f",
+    "name": "Tigo TS4-A-F",
+    "optimizers": "^TS4-A-F",
+    "modules_per_unit": [1],
+    "datasheet": "Tigo TS4-A-F, scheda 002-00093-00 Rev. 3.5 (04/12/2024), p. 1",
+    "module_power": {
+     "factor": 1.0,
+     "level": "fail",
+     "source": "Tigo TS4-A-F, scheda 002-00093-00 Rev. 3.5 (04/12/2024), p. 1: potenza massima 700 W"
+    },
+    "partial": {
+     "state": "no",
+     "source": "Tigo Quick Start Guide TS4-A-F/2F 002-00157-00 Rev. 1.3 (08/10/2025), p. 2: «All solar modules in an RSS string must be controlled by a TS4-A-F or TS4-A-2F device»"
+    },
+    "mixing": {
+     "state": "n/a",
+     "source": ""
+    }
+   }
+  ]
+ }
+}

@@ -46,8 +46,29 @@ DEFAULT_COLOURS = {
     "rear": (0.65, 0.16, 0.12),
 }
 
-CAR_KINDS = ("compact", "suv")
-CAR_DEFAULTS = {"compact": (4.10, 1.78, 1.48), "suv": (4.65, 1.90, 1.70)}
+# R374 (Daniel 05/11/2026, 07/11/2026): the vehicles of the catalogue of models (data/models): a truck, a pickup, a
+# sports car, a bicycle; length along local East, width, height. The new ones cast no shadow in the calculation
+# (Daniel 07/11: «veicoli e persone no»); the car and the SUV of R269 keep theirs, so the kWh of before stay.
+CAR_KINDS = ("compact", "suv", "truck", "pickup", "sports_car", "bicycle")
+CAR_DEFAULTS = {"compact": (4.10, 1.78, 1.48), "suv": (4.65, 1.90, 1.70), "truck": (7.50, 2.50, 3.30),
+                "pickup": (5.40, 2.00, 1.90), "sports_car": (4.50, 1.90, 1.30), "bicycle": (1.80, 0.60, 1.10)}
+
+# R374: the fixed objects of the site (family "site"): width along local East, depth along local North, height. The
+# silo, the container, the tower and the fence cast their shadow (a simple solid of their shape: an octagonal prism,
+# a box, a frustum, a thin box along each segment); the lamps, the gas tank and the utility box do not (Daniel
+# 07/11/2026). The fence is drawn along a path, as a hedge; its `width` is its thickness.
+SITE_KINDS = ("silo", "container", "gas_tank", "utility_box", "lamp", "tower", "fence")
+SITE_DEFAULTS = {
+    "silo": (3.0, 3.0, 8.0),
+    "container": (6.06, 2.44, 2.59),
+    "gas_tank": (1.2, 1.1, 1.6),
+    "utility_box": (0.6, 0.5, 1.3),
+    "lamp": (0.5, 1.9, 8.0),
+    "tower": (8.7, 8.4, 30.0),
+    "fence": (0.1, 2.0, 1.5),
+}
+NO_SHADOW_KINDS = frozenset({"truck", "pickup", "sports_car", "bicycle", "gas_tank", "utility_box", "lamp"})
+FENCE_MODULE = 4.0      # metres of fence drawn by one copy of the model along a segment (scaled to fit it)
 
 PERSON_KINDS = ("adult", "walking", "child", "worker")
 PERSON_DEFAULTS = {
@@ -734,8 +755,55 @@ def car(kind="compact", length=None, width=None, height=None, rotation=0.0, colo
     return _rotate_qt(builder.arrays(), float(rotation))
 
 
+def _site_dimensions(kind, width, depth, height):
+    if kind not in SITE_KINDS:
+        raise ValueError(f"unknown site kind: {kind}")
+    defaults = SITE_DEFAULTS[kind]
+    return tuple(_positive(default if value is None else value, name)
+                 for default, value, name in zip(defaults, (width, depth, height), ("width", "depth", "height"),
+                                                 strict=True))
+
+
+def site(kind="container", width=None, depth=None, height=None, rotation=0.0, colours=None):
+    """A fixed object of the site as a plain solid (the 3D view draws the catalogue's model in its place): a cylinder
+    for the silo, a box for the rest; metal for the lamp, the tower and the fence."""
+    width, depth, height = _site_dimensions(kind, width, depth, height)
+    colour = _colour(colours, "metal" if kind in ("lamp", "tower", "fence") else "obstacle")
+    builder = _Builder()
+    if kind == "silo":
+        _lathe(builder, ((0.0, 0.0), (0.5, 0.0), (0.5, 0.86), (0.0, 1.0)), 16, colour,
+               x_scale=width, z_scale=depth, centre=(0.0, 0.0, 0.0))
+        return _rotate_qt(builder.arrays(), float(rotation))
+    _box(builder, (0.0, height / 2, 0.0), (width, height, depth), colour)
+    return _rotate_qt(builder.arrays(), float(rotation))
+
+
+def _shadow_frustum(width, depth, height, top=0.3):
+    base = [(x, y) for x, y in ((-width / 2, -depth / 2), (width / 2, -depth / 2), (width / 2, depth / 2), (-width / 2, depth / 2))]
+    return np.array([(x, y, 0.0) for x, y in base] + [(x * top, y * top, height) for x, y in base])
+
+
+def _shadow_prism(width, depth, height, sides=8):
+    angle = np.arange(sides) * math.tau / sides + math.tau / (2 * sides)
+    return np.array([(width / 2 * math.cos(a), depth / 2 * math.sin(a), z) for z in (0.0, height) for a in angle])
+
+
+def casts_shadow(kind: str, railing: bool = False) -> bool:
+    """Whether the kind shades the modules in the calculation (model.Prop.casts_shadow): trees, roof obstacles, the
+    car and the SUV of R269, the silo, the container, the tower and the fence do; people, the other vehicles, the
+    lamps, the gas tank and the utility box do not; a walkway only with its railing."""
+    return family(kind) != "person" and kind not in NO_SHADOW_KINDS and (kind != "walkway" or railing)
+
+
 def shadow_solid(kind, rotation=0.0, **dimensions):
     """Simplified convex shadow hulls, in model coordinates, contained in the decorative envelope."""
+    if kind in SITE_KINDS:
+        width, depth, height = _site_dimensions(kind, dimensions.get("width"), dimensions.get("depth"),
+                                                dimensions.get("height"))
+        solid = (_shadow_prism(width, depth, height) if kind == "silo"
+                 else _shadow_frustum(width, depth, height) if kind == "tower"
+                 else _shadow_box(width, depth, 0.0, height))
+        return [_rotate_model(solid, rotation)]
     if kind in TREE_KINDS:
         values = _tree_dimensions(kind, dimensions.get("height"), dimensions.get("crown_diameter"),
                                   dimensions.get("trunk_height"), dimensions.get("length"))
@@ -765,13 +833,14 @@ def shadow_solid(kind, rotation=0.0, **dimensions):
 # the 3D scene and its shadow solids at its place.
 
 FAMILIES = {**{k: "tree" for k in TREE_KINDS}, **{k: "obstacle" for k in OBSTACLE_KINDS},
-            **{k: "person" for k in PERSON_KINDS}, **{k: "car" for k in CAR_KINDS}}
+            **{k: "person" for k in PERSON_KINDS}, **{k: "car" for k in CAR_KINDS}, **{k: "site" for k in SITE_KINDS}}
 KINDS = tuple(FAMILIES)
-ROUND = ("broadleaf", "conifer", "pine", "shrub", "palm")      # a round crown: an octagon on the plan
+ROUND = ("broadleaf", "conifer", "pine", "shrub", "palm", "silo")      # a round crown or a silo: an octagon on the plan
+PATH_KINDS = ("hedge", "walkway", "fence")      # drawn along a line (model.Prop.path)
 
 
 def family(kind: str) -> str:
-    """"tree", "obstacle", "person" or "car"; ValueError for a kind that is none of them."""
+    """"tree", "obstacle", "person", "car" or "site"; ValueError for a kind that is none of them."""
     if kind not in FAMILIES:
         raise ValueError(f"unknown prop kind: {kind}")
     return FAMILIES[kind]
@@ -793,6 +862,9 @@ def measures(kind: str, height=None, width=None, length=None) -> dict:
         return out
     if group == "obstacle":
         w, d, h = _obstacle_dimensions(kind, width, length, height)
+        return {"width": w, "depth": d, "height": h}
+    if group == "site":
+        w, d, h = _site_dimensions(kind, width, length, height)
         return {"width": w, "depth": d, "height": h}
     if group == "person":
         w, d, h = _person_dimensions(kind, width, None, height)
@@ -835,13 +907,13 @@ def placed_mesh(kind: str, at, z0: float = 0.0, rotation: float = 0.0, height=No
                 colours=None, path=None, railing=False, surface=None) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """The prop's triangles where it stands (positions, normals, colours), in the 3D view's axes (mesh.to_qt)."""
     m = measures(kind, height, width, length)
-    if path is not None and kind in ("hedge", "walkway"):
+    if path is not None and kind in PATH_KINDS:
         ring = footprint(kind, at, height=height, width=width, length=length, path=path)
         if surface is not None:
             return mesh.path_triangles(ring, surface, m["height"], _colour(colours, "obstacle"), railing)
-        colour = _colour(colours, "tree" if kind == "hedge" else "obstacle")
+        colour = _colour(colours, "tree" if kind == "hedge" else "metal" if kind == "fence" else "obstacle")
         return mesh.prism_triangles(ring, z0, z0 + m["height"], colour)
-    builder = {"tree": tree, "obstacle": obstacle, "person": person, "car": car}[family(kind)]
+    builder = {"tree": tree, "obstacle": obstacle, "person": person, "car": car, "site": site}[family(kind)]
     pos, nor, col = builder(kind, rotation=float(rotation), colours=colours, **m)
     pos = np.asarray(pos, dtype=np.float32) + np.asarray(mesh.to_qt(float(at[0]), float(at[1]), float(z0)),
                                                          dtype=np.float32)
@@ -852,6 +924,18 @@ def placed_solids(kind: str, at, z0: float = 0.0, rotation: float = 0.0, height=
                   length=None, path=None) -> list[np.ndarray]:
     """The prop's shadow solids where it stands (model axes, nearshade.Solid's corners)."""
     m = measures(kind, height, width, length)
+    if path is not None and kind == "fence":
+        # one thin box per segment: the hull of the whole path would shade everything a fence goes round
+        half, out = m["width"] / 2, []
+        for (ax, ay), (bx, by) in zip(path, path[1:]):
+            dx, dy = bx - ax, by - ay
+            run = math.hypot(dx, dy)
+            if run < 1e-6:
+                continue
+            nx, ny = -dy / run * half, dx / run * half
+            xy = ((ax + nx, ay + ny), (bx + nx, by + ny), (bx - nx, by - ny), (ax - nx, ay - ny))
+            out.append(np.array([(x, y, z) for z in (z0, z0 + m["height"]) for x, y in xy]))
+        return out
     if path is not None:
         from shapely.geometry import Polygon
         ring = footprint(kind, at, height=height, width=width, length=length, path=path)

@@ -162,6 +162,13 @@ def texts() -> dict[str, Help]:
               "canopy whose plane differs from the roof's. The building and the pitch stay as references; the "
               "model received is unchanged."),
             manual="1-modello.md#il-sottocampo"),
+        "subfield.placement": h(
+            _("Module placement"), _("How the rows stand to each other, and how much power to lay."),
+            _("Aligned: one grid, straight columns. Staggered: a row may move half a module from the next, where that lays "
+              "more. Free: each row takes all its room and they lay the most. A sub-field saved earlier stays as it was "
+              "until you change it. Power asked: the nearest number of modules, in adjacent rows, from the places least "
+              "in shadow."),
+            manual="1-modello.md#la-posa-dei-moduli"),
         "subfield.gaps": h(
             _("Gaps and margins"), _("The free space between modules, rows and tables, and from the edge."),
             _("The gaps between the modules, from the edge of the area, between the rows and between the tables. "

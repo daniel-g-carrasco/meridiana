@@ -7,6 +7,8 @@
 #   pyinstaller --noconfirm build-aux/windows/meridiana.spec
 #   dist\Meridiana\Meridiana.exe --self-test report.txt          (offscreen; 0 when every check passed)
 # A folder, never one file: a single exe would unpack some 400 MB at every start.
+# r28 (09/11/2026): the Qt Quick window is the one the package opens (`Meridiana.exe`; `--widgets` the old one); the
+# whole build, with the version of src/meridiana/__init__.py, is build-aux/windows/build.ps1.
 #
 # What goes in: the program; Qt Quick 3D and the QML modules the 3D scene imports; QtPdf, QtSvg, QtMultimedia and
 # QtTextToSpeech (Meridio's voices: the system's through SAPI or WinRT); Qt's own translations in Italian and
@@ -50,15 +52,28 @@ datas = [
     (str(ROOT / 'docs' / 'manuale'), 'share/manuale'),          # read inside the program (help.manual_dir)
     (str(ROOT / 'locale'), 'share/locale'),
     (str(SRC / 'ui' / 'qml'), 'meridiana/ui/qml'),              # view3d.QML_FILE, next to its module
+    # r28: the Qt Quick window, the program's own since R542 (quick/app.py; parts.py, plan.py, tokens.py... load
+    # them beside their modules): its QML modules with their scripts and shaders, and the two loose views
+    (str(SRC / 'quick' / 'qml'), 'meridiana/quick/qml'),
+    (str(SRC / 'quick' / 'Plan.qml'), 'meridiana/quick'),
+    (str(SRC / 'quick' / 'YearChart.qml'), 'meridiana/quick'),
+    (str(ROOT / 'data' / 'models'), 'share/models'),            # the 3D props and their previews (scene_assets.py)
+    (str(ROOT / 'data' / 'meridio'), 'share/meridio'),          # Meridio's drawing (quick/app.py, mascotSource)
     (str(SRC / 'catalog' / 'data'), 'meridiana/catalog/data'),  # catalog.DATA
     (str(SRC / 'report_typst' / 'template.typ'), 'meridiana/report_typst'),   # the report's look (R314)
+    (str(ROOT / 'data' / 'typst'), 'share/typst'),              # the mitex package of the formulas (R460)
     (str(SRC / 'assistant' / 'kokoro_worker.py'), 'meridiana/assistant'),
+    (str(SRC / 'assistant' / 'reading_it.json'), 'meridiana/assistant'),       # how Meridio reads aloud (R493)
 ]
 # pvlib's tables read at run time (the Linke turbidity of the Ineichen sky, the altitude of a place, the reference
 # spectrum); not its copies of the CEC and Sandia libraries (Meridiana has its own catalogue) nor its sample years
 datas += [(str(PVLIB_TABLES / name), 'pvlib/data') for name in ('LinkeTurbidities.h5', 'Altitude.h5', 'ASTMG173.csv')]
 # IFC API utilities load schema/type maps and other resources beside their modules.
 datas += collect_data_files('ifcopenshell')
+# the report's editable copies (R460): python-docx's blank document and styles, latex2mathml's table of symbols
+datas += collect_data_files('docx') + collect_data_files('latex2mathml')
+# the plan as a DXF (R513): ezdxf reads its resources (fonts' measures, line types) beside its modules
+datas += collect_data_files('ezdxf')
 # EXPRESS checks for a physical parser file before importing it. Without it, the
 # library invokes sys.executable as Python, recursively launching the frozen app.
 datas += collect_data_files('ifcopenshell.express', include_py_files=True)
@@ -78,7 +93,9 @@ a = Analysis(
     # keyring finds its Windows backend by entry point (hook-keyring)
     # IfcOpenShell's api.run resolves these export operations by name at run time.
     # typst: the report's layout, a compiled module (typst._typst) imported only when a report is made
-    hiddenimports=[*voice_imports, 'keyring.backends.Windows', 'ifcopenshell.geom', 'typst', 'typst._typst',
+    # r28: every module of the program: the Quick finds its parts by name (parts.discover) and starts its workers as
+    # `Meridiana.exe -m meridiana.quick.backend...` (meridiana_main.py), which no import of the window names
+    hiddenimports=[*collect_submodules('meridiana'), *voice_imports, 'keyring.backends.Windows', 'ifcopenshell.geom', 'typst', 'typst._typst',
                    *collect_submodules('ifcopenshell.express.rules'),
                    *['ifcopenshell.api.' + family for family in
                      ('project', 'root', 'unit', 'context', 'georeference', 'aggregate')]],

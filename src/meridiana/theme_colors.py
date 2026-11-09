@@ -69,6 +69,36 @@ FIXED_DARK = {
 }
 # the warning's yellow is 1.8:1 on white: a mark alone on a light background takes a darker ochre (study 13, 3.1)
 WARNING_INK = "#b07a00"
+# R21-F3: the signs drawn over the plan, the map and the 3D view (the pills and labels, the compass, the scale, the
+# map's notice, the pointer's sign, the legend, the sweeps, the hover of the objects, the 3D handles): dark glass and
+# light ink in both themes, because what lies under them is an orthophoto or a map, not the theme's floor. They are
+# the values the QML had written in by hand (07/11/2026), now in one place: Theme.colors.overlay.
+OVERLAY = {
+    "glass": "#14161ac8",           # the pills and labels on the plan and in 3D (OverlayField, PlanSymbol, CheckMark)
+    "glass_soft": "#14161a8c",      # the compass, the map's notice, the attribution
+    "glass_line": "#14161a99",      # the scale bar's outline
+    "glass_solid": "#14161a",       # the outline of the map's texts
+    "legend": "#0a0c10c8", "legend_line": "#0a0c10",       # the plan's legend
+    "pill": "#1e1c19e6", "pill_ink": "#f8f7f4",            # the views' pill (Plan/ViewPill)
+    "ink": "#f2efe6", "white": "#ffffff",
+    "badge": "#1e1c19",             # the count's badge on a mark
+    "halo": "#0b0d10e0", "halo_solid": "#0b0d10",           # view_colours.PHOTO halo
+    "hover": "#ffffff26", "press": "#ffffff40",             # a button on the map
+    "shade": "#00000065",           # the plan outside the site
+    "pick": "#4fc3ff", "add": "#9bd4ff", "remove": "#ff6b70", "remove_3d": "#d34c50",
+    "sweep_window": "#6fb6ff", "sweep_crossing": "#6fe39a", "sweep_fill": "#6366f120",
+    "select": "#ff38c8",            # view_colours.SELECT
+    "module": "#192d5a", "module_line": "#c6cbd6",         # the modules drawn on the plan
+    "ocean": "#263943", "blank": "#2b2f33", "border": "#a0aa98", "graticule": "#78909c35",   # the world map
+    "string_none": "#888888",       # a string without its tint yet
+}
+# R21-F3: over the views too, the object under the pointer and the 3D handles (groups of their own: a token is one level deep)
+HOT = {"building": "#d6c2ff", "pitch": "#e6d6ff", "subfield": "#9bd4ff", "module": "#9bd4ff",
+       "exclusion": "#ff9fc6", "prop": "#8be3dd"}      # the object under the pointer
+GIZMO = {"x": "#ff5a52", "y": "#5ad66e", "z": "#5b8cff", "hot": "#ffd84a", "handle": "#7dff6a"}
+# R21-F3: the colour of each kind of object in the lists (the project tree, the checks), light and dark theme
+KIND_LIGHT = {"building": "#7a4fd1", "subfield": "#1d6fd6", "exclusion": "#c2306f", "prop": "#0f7f78"}
+KIND_DARK = {"building": "#c4a6ff", "subfield": "#6db6ff", "exclusion": "#ff7fb6", "prop": "#5fd8cf"}
 
 
 def _to_lin(c: float) -> float:
@@ -334,6 +364,13 @@ def derive(seed: str, dark: bool, backgrounds: str = "meridiana", base: dict | N
     t["plan"].update(sub_stroke=acc, sub_fill=acc + ("12" if dark else "14"), sel=acc)
     t["d3"]["module_sel"] = mod_sel
     _surfaces(t, dark)
+    # R21-F3: what the QML wrote by hand. The same in both themes: the signs over the views and the popups' shadow;
+    # by theme: the kinds' colours, the warning's ink (the ochre on light floors, study 13, 3.1), Meridio's ring
+    t["overlay"] = copy.deepcopy(OVERLAY)
+    t["kind"] = dict(KIND_DARK if dark else KIND_LIGHT)
+    t["hot"], t["gizmo"] = dict(HOT), dict(GIZMO)
+    t.update(warning_ink=STATUS["warning"] if dark else WARNING_INK, popup_shadow="#00000030",
+             assistant_line="#24211d")
     report = Report(
         on_accent=contrast(acc, fg), on_view=contrast(acc, t["view"]), on_window=contrast(acc, t["window"]),
         near=near if moved else "", status_distance=nearest_status(acc)[1],
@@ -350,6 +387,7 @@ def qt_hex(hex_: str) -> str:
     return "#" + h[6:8] + h[:6] if len(h) == 8 else "#" + h
 
 
+@functools.lru_cache(maxsize=4096)
 def mix(a: str, b: str, t: float) -> str:
     """`a` towards `b` by `t` (0 to 1), in sRGB as Qt mixes the colours of a palette."""
     pa, pb = _rgb(a), _rgb(b)

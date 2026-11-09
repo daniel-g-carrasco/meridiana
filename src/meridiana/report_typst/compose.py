@@ -11,10 +11,33 @@ from .. import __version__, reports
 from ..i18n import _, language, number
 from . import blocks as B
 from . import chapters as C
+from . import look
 from .chapters import Picture  # noqa: F401  (the interfaces give their 3D pictures so)
 from .register import Register
 
 MAX_TOC_ON_COVER = 22            # entries; more and the contents have a page of their own
+
+
+class NoPlant(ValueError):
+    """The project has no module laid: there is no plant to write a report on (R459)."""
+
+
+def no_plant(data: dict) -> str:
+    """Why the report cannot be written, said for the designer; "" when it can: a project without modules has no plant,
+    and Typst stopped on it with «cannot divide by zero» (R459)."""
+    if any(getattr(r, "modules", None) for r in (data.get("results") or {}).values()):
+        return ""
+    return _("There is no plant to write the report on: no module is laid. Lay the modules (Layout), compute the "
+             "production, then export the report.")
+
+
+def texts() -> dict:
+    """The words of the document that are not the chapters': the same for the PDF, the ODT and the DOCX."""
+    return {"page_of": _("page {n} of {total}"), "contents": _("Contents"), "report": _("Technical report"),
+            "attachment": _("Attachment"), "plant": _("Plant"), "where": _("where:"),
+            "with_values": _("With the values:"), "result": _("result"), "reference": _("Reference"),
+            "symbol": _("Symbol"), "quantity": _("Quantity"), "value": _("Value and unit"), "source": _("Source"),
+            "figure": _("Figure")}
 
 
 @dataclass
@@ -25,10 +48,14 @@ class Composed:
 
 
 def with_notes(data: dict) -> dict:
-    """The data with the notes of the rules worked out once, for the chapter of the checks and for its presence."""
+    """The data with the notes of the rules worked out once, for the chapter of the checks and for its presence, and
+    with the checks the document prints: what asks the designer for something stays in the window."""
     if data.get("rules_facts") is not None and "rules_notes" not in data:
         from .. import rules
         data = {**data, "rules_notes": rules.notes(data["rules_facts"])}
+    if data.get("checks"):
+        from ..checks import for_document
+        data = {**data, "checks": for_document(data["checks"])}
     return data
 
 
@@ -114,6 +141,9 @@ def compose(project, data: dict, *, profile: dict | None = None, only: str = "",
     a page of its own after the last chapter; `pictures`: the 3D views the interface can make, id -> Picture, the
     first for the cover; `only`: a chapter alone, under a title of its own (the «How it is computed» of the register of
     the calculations), without cover, contents and attachments."""
+    problem = no_plant(data)
+    if problem:
+        raise NoPlant(problem)
     data = with_notes(data)
     settings = reports.settings(project)
     template = reports.templates()[settings["template"]]
@@ -129,7 +159,8 @@ def compose(project, data: dict, *, profile: dict | None = None, only: str = "",
         makers.setdefault(name, make)
         return name
 
-    accent = reports.accent_of(profile)
+    # the report has its own palette, warm greys: the profile's colour no longer reaches it (R460, look.py)
+    accent = look.ACCENT
     register = Register("register" in ids, C.records_of(data))
     ctx = C.Context(project, data, image, settings, register, ids, dict(pictures or {}), accent)
     profile = profile or {}
@@ -145,15 +176,20 @@ def compose(project, data: dict, *, profile: dict | None = None, only: str = "",
         "accent": accent,
         "missing": [],
         "attachments": [{"k": k, "title": a.title, "pages": a.pages} for k, a in enumerate(attached, 1)],
-        "texts": {"page_of": _("page {n} of {total}"), "contents": _("Contents"), "report": _("Technical report"),
-                  "attachment": _("Attachment")},
+        "style": look.style(),
+        "texts": texts(),
         "doc": {"title": project.name, "author": profile.get("signer") or firm or "",
                 "logo_file": logo_path, "logo": None,
                 "head_title": project.name or _("Technical report"), "head_sub": " · ".join(client_site),
                 "revision": settings.get("revision") or "", "date": today,
                 "foot_left": firm, "foot_left2": second or contacts,
                 "foot_centre": project.name, "foot_centre2": " · ".join(x for x in (settings.get("revision"), today) if x),
-                "foot_right2": contacts if second else ""},
+                "foot_right2": contacts if second else "",
+                # the kind of document, written at the head of the cover and of every page (Daniel, 06/11/2026), and
+                # the place of the logo, dashed, when the profile has none
+                "doc_title": _("Technical report of the photovoltaic system"),
+                "doc_sub": _("Yield and electrical checks"), "doc_short": _("PV technical report"),
+                "logo_placeholder": True},
         "cover": None, "head": None, "toc": "none", "body": [],
     }
     body: list = []
@@ -179,9 +215,7 @@ def compose(project, data: dict, *, profile: dict | None = None, only: str = "",
                                                                   colours={"module": accent}))
             doc["cover"] = {"image": picture or plan, "tint": not picture, "inset": 0 if picture else 3, "max_h": 108.0,
                             "kicker": _("TECHNICAL REPORT"), "title": project.name or _("Photovoltaic system"),
-                            "sub": _what(project, data, ctx),
-                            "tiles": C.tiles(ctx, details=False)["items"] if sim is not None else [],
-                            "meta": _meta(project, settings, profile), "made": made}
+                            "sub": _what(project, data, ctx), "meta": _meta(project, settings, profile), "made": made}
             entries = len(chosen) + len(attached)
             doc["toc"] = "none" if not entries else "cover" if entries <= MAX_TOC_ON_COVER else "page"
         else:

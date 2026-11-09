@@ -1,0 +1,21 @@
+module Meridiana.Plant
+PlantMargin 1.0 PlantMargin.qml
+PlantDiagram 1.0 PlantDiagram.qml
+PlantClipScale 1.0 PlantClipScale.qml
+StaleMark 1.0 StaleMark.qml
+PlantInputCards 1.0 PlantInputCards.qml
+PlantSide 1.0 PlantSide.qml
+PlantInverters 1.0 PlantInverters.qml
+PlantDialogs 1.0 PlantDialogs.qml
+PlantPage 1.0 PlantPage.qml
+PlantTable 1.0 PlantTable.qml
+PlantInputs 1.0 PlantInputs.qml
+PlantStorage 1.0 PlantStorage.qml
+PlantProposal 1.0 PlantProposal.qml
+PlantChecks 1.0 PlantChecks.qml
+PlantCommand 1.0 PlantCommand.qml
+PlantFormRow 1.0 PlantFormRow.qml
+PlantInverterCard 1.0 PlantInverterCard.qml
+PlantStringMenu 1.0 PlantStringMenu.qml
+PlantStrip 1.0 PlantStrip.qml
+PlantOptimizerGroups 1.0 PlantOptimizerGroups.qml

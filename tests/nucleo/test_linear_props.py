@@ -16,7 +16,7 @@ class LinearProps(unittest.TestCase):
             {"id": "w", "kind": "walkway", "at": [2, 3], "length": 3, "width": 0.8},
         ]
         p = model.Project.from_json(data)
-        self.assertEqual(model.FORMAT_VERSION, 25)
+        self.assertGreaterEqual(model.FORMAT_VERSION, 25)
         np.testing.assert_allclose(p.props[0].path, [[10, 3], [10, 7]])
         np.testing.assert_allclose(p.props[1].path, [[0.5, 3], [3.5, 3]])
         self.assertTrue(p.props[1].railing)

@@ -235,6 +235,15 @@ class Motion:
     TYPING_MS = 24      # text that comes as in a chat (motion.TypeOut): one step every so many ms...
     TYPING_CHARS = 4    # ...of at least so many characters (more when the text is long: it takes TYPING_MAX_MS at most)
     TYPING_MAX_MS = 1800
+    # F4 (the reordering of R21, 07/11/2026): the Quick's durations that were written as numbers, the same numbers.
+    # With less motion they stay as they were (Meridio's slide is already nought there: his layer's motionEnabled)
+    SLIDE = 320         # Meridio carried to a new place: his own slide, slower than SLOW (R155)
+    GROW = 520          # a chart's entrance: its marks grow from 30 % to their size
+    PULSE = 1500        # the spotlight's beat around what Meridio shows: a beat, not a movement
+    # the curves, names of QEasingCurve.Type (this module has no Qt: tokens.py gives the Quick their Easing.* numbers)
+    EASE = "OutCubic"           # every movement: quick at the start, settling at the end
+    EASE_IN = "InCubic"         # what goes away (Meridio's bubble closing): slow at the start, gone at the end
+    EASE_SWING = "InOutQuad"    # a back and forth that loops (a progress bar without an end)
 
     @staticmethod
     def of(ms: int, reduced: bool) -> int:

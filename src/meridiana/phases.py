@@ -191,7 +191,7 @@ def phases() -> list[Phase]:
                 T("report_profile", _("Profile"), icon="user"))),
             Group("export", _("Export"), (
                 T("export_report", _("Report")),
-                T("export_dxf", _("DXF"), planned="relazione"),
+                T("export_dxf", _("DXF")),
                 T("export_ifc", _("IFC4")),
                 T("export_csv", _("CSV")),
                 T("save_revision", _("Revision")),
@@ -297,9 +297,19 @@ def deliverables(production_ready: bool, exports: dict, state_key: str) -> list[
         out.append(Deliverable("ifc", _("Model (IFC4)"), "export_ifc", "done" if key == state_key else "stale",
                                _("{file}, {when}").format(file=name, when=when) if key == state_key else
                                _("The project changed after {when}: export it again").format(when=when)))
-    for did, title, task in (("dxf", _("Plan with the modules (DXF)"), "relazione"),
-                             # in the technical report since task 16d; a file of its own with the report's task
-                             ("strings", _("List of modules and strings"), "relazione")):
+    # the plan (DXF, R513): the project's geometry and strings, it needs no computed year either
+    plan_dxf = exports.get("dxf")
+    if plan_dxf is None:
+        out.append(Deliverable("dxf", _("Plan with the modules (DXF)"), "export_dxf", "todo", _("Not exported yet")))
+    else:
+        name, when, key = plan_dxf
+        out.append(Deliverable("dxf", _("Plan with the modules (DXF)"), "export_dxf",
+                               "done" if key == state_key else "stale",
+                               _("{file}, {when}").format(file=name, when=when) if key == state_key else
+                               _("The project changed after {when}: export it again").format(when=when)))
+    for did, title, task in (
+            # in the technical report since task 16d; a file of its own with the report's task
+            ("strings", _("List of modules and strings"), "relazione"),):
         out.append(Deliverable(did, title, "", "planned", _("Comes with task {task}").format(task=task)))
     return out
 

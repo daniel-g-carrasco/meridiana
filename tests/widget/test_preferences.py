@@ -115,12 +115,12 @@ class KeysEditor(unittest.TestCase):
         from meridiana.ui.shortcuts_dialog import ShortcutsEditor
         editor = ShortcutsEditor(shortcuts.bindings({}))
         self.addCleanup(_setup.dispose, editor)
-        self.assertIn("«Project»", editor.verdict("ortho", "Ctrl+B"))       # said while the keys are typed
+        self.assertIn("«Left side»", editor.verdict("ortho", "Ctrl+B"))       # said while the keys are typed
         self.assertIn("AltGr", editor.verdict("ortho", "Ctrl+Alt+O"))
         self.assertEqual(editor.verdict("ortho", "Ctrl+K"), "")
-        editor.assign("ortho", "Ctrl+B")                    # taken from the Project panel
+        editor.assign("ortho", "Ctrl+B")                    # taken from the left side (R549)
         self.assertEqual(editor.bindings["ortho"], ["Ctrl+B"])
-        self.assertEqual(editor.bindings["panel_project"], [])
+        self.assertEqual(editor.bindings["side_left"], [])
 
 
 if __name__ == "__main__":

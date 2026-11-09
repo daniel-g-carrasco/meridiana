@@ -15,6 +15,15 @@ or read from its words (CEC), `efficiency_derived` says the efficiency was worke
 
 A record chosen for a project is copied into the project file: the project stays as it was designed even
 when the catalogue changes.
+
+Two things the catalogue says about a product beyond its datasheet (05/11/2026, R415 and R416):
+- `lifecycle`: {"state": current, phasing_out, discontinued or unknown, "checked": date, "url", "text": the words read,
+  "replacement": a model, "note"}. A record without it is unknown, as every CEC row is: only a written source makes it
+  anything else (docs/studio/34-catalogo-marche-fonti.md). Out of production is not the same as not sold in Italy, and
+  the warehouse is not something a catalogue knows.
+- `classes`: a module's power classes as the datasheet's table prints them, each with its own Vmp, Imp, Voc and Isc. One
+  row per class is made at loading, sharing `family_id`; a class is never scaled from its neighbours, and a class in
+  `power_classes_w` without its values is not a row: `unread_classes` names it and its reason.
 """
 
 from __future__ import annotations
@@ -27,6 +36,8 @@ from pathlib import Path
 
 DATA = Path(__file__).resolve().parent / "data"
 KINDS = ("modules", "inverters", "microinverters", "optimizers", "batteries")
+CURRENT, PHASING_OUT, DISCONTINUED, UNKNOWN = "current", "phasing_out", "discontinued", "unknown"
+LIFECYCLE_STATES = (CURRENT, PHASING_OUT, DISCONTINUED, UNKNOWN)
 
 
 def _read(name: str) -> list:
@@ -165,7 +176,133 @@ def normalise_module(r: dict) -> dict | None:
         "datasheet_url": r.get("datasheet_url", ""), "datasheet_revision": r.get("datasheet_revision"),
         "retrieved": r.get("retrieved", ""), "notes": r.get("notes", ""),
     }
+    if r.get("lifecycle"):
+        out["lifecycle"] = r["lifecycle"]
+    if r.get("classes"):
+        out["classes"] = [{"pmax": _num(c.get("pmax_w", c.get("pmax"))), "vmp": _num(c.get("vmp_v", c.get("vmp"))),
+                           "imp": _num(c.get("imp_a", c.get("imp"))), "voc": _num(c.get("voc_v", c.get("voc"))),
+                           "isc": _num(c.get("isc_a", c.get("isc"))),
+                           "efficiency_pct": _num(c.get("efficiency_pct"))} for c in r["classes"]]
     return out
+
+
+def class_model(rec: dict, power: float) -> str:
+    """The name of a module of a family at another power class: the power in the model's name replaced when it appears
+    there once (JKM475N-48QL6-DV at 480 W is JKM480N-48QL6-DV, the manufacturer's rule), the class added otherwise."""
+    model, own = str(rec.get("model") or ""), f"{rec.get('pmax', 0):g}"
+    target = f"{power:g}"
+    found = re.findall(rf"(?<!\d){re.escape(own)}(?!\d)", model)
+    if len(found) == 1:
+        return re.sub(rf"(?<!\d){re.escape(own)}(?!\d)", target, model)
+    return f"{model} {target} W"
+
+
+UNREAD_CLASS = "the table of this class could not be read on the datasheet: choose it only after adding its values"
+
+
+def expand_classes(rec: dict) -> list[dict]:
+    """A module record and one more row for each other class of its table, with that class's own values; `family_id` is
+    the same for all and the row as it was written keeps its id, so that a project that names it finds the same thing.
+    A class of `power_classes_w` that the table does not give is named in `unread_classes`, and it is no row."""
+    classes = rec.get("classes") or []
+    if not classes:
+        return [rec]
+    family = rec.get("id") or f"cur:{rec.get('manufacturer', '')}:{rec.get('model', '')}"
+    out, read = [], set()
+    for entry in classes:
+        if not all(entry.get(k) for k in ("pmax", "vmp", "imp", "voc", "isc")):
+            continue
+        read.add(float(entry["pmax"]))
+        if float(entry["pmax"]) == float(rec.get("pmax") or 0):
+            continue
+        row = dict(rec)
+        row.update({k: entry[k] for k in ("pmax", "vmp", "imp", "voc", "isc")})
+        row["efficiency_pct"] = entry.get("efficiency_pct")
+        row["efficiency_derived"] = False
+        row["model"] = class_model(rec, float(entry["pmax"]))
+        row["id"] = f"{family.rpartition(':')[0]}:{row['model']}" if ":" in family else f"{family}:{row['model']}"
+        row["family_id"], row["class_of"] = family, rec.get("model")
+        out.append(row)
+    base = dict(rec)
+    base["family_id"] = family
+    unread = [float(p) for p in rec.get("power_classes_w") or [] if float(p) not in read and float(p) != float(rec.get("pmax") or 0)]
+    for row in (base, *out):
+        row["unread_classes"] = unread
+    return sorted([base, *out], key=lambda r: float(r.get("pmax") or 0))
+
+
+@lru_cache(maxsize=1)
+def lifecycle_rules() -> tuple:
+    """What written sources say of the state of the products of a maker (data/lifecycle.json): the first rule whose
+    `match` finds the record's model applies. Every rule has its address and the words read there."""
+    path = DATA / "lifecycle.json"
+    rules = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+    for rule in rules:
+        rule["_match"] = re.compile(rule["match"])
+    return tuple(rules)
+
+
+def apply_lifecycle(rec: dict, kind: str) -> dict:
+    """The record with the `lifecycle` a rule gives it; a state already on the record stands, and nothing else changes."""
+    if rec.get("lifecycle") or rec.get("source") != "curated":
+        return rec
+    for rule in lifecycle_rules():
+        if rule["kind"] == kind and rule["manufacturer"] == rec.get("manufacturer") and rule["_match"].search(str(rec.get("model") or "")):
+            rec["lifecycle"] = {k: rule[k] for k in ("state", "checked", "url", "text", "replacement", "note") if rule.get(k)}
+            break
+    return rec
+
+
+def lifecycle_state(rec: dict) -> str:
+    """The state a record's written source gives it; unknown when there is none (every CEC row)."""
+    life = rec.get("lifecycle")
+    state = life.get("state") if isinstance(life, dict) else None
+    return state if state in LIFECYCLE_STATES else UNKNOWN
+
+
+def family_key(rec: dict, kind: str) -> str:
+    """What makes rows one family in the list: a module's class table; the inverters, microinverters and optimizers of
+    one datasheet of one maker, with the same phases and type. Nothing for batteries (their sizes are modules in a
+    stack, each with its own limits), for the CEC's rows (nothing certain says what goes together) or when the
+    datasheet is not known."""
+    if rec.get("family_id"):
+        return str(rec["family_id"])
+    if kind not in ("inverters", "microinverters", "optimizers") or rec.get("source") != "curated":
+        return ""
+    url = rec.get("datasheet_url")
+    if not url:
+        return ""
+    return f"{rec.get('manufacturer', '')}|{url}|{rec.get('phases', '')}|{rec.get('type', '')}"
+
+
+def central_class(rows: list[dict], kind: str) -> dict:
+    """The default class of a family: the middle one by power, the upper of the two middle ones when they are even."""
+    ordered = sorted(rows, key=lambda r: power_of(r, kind))
+    return ordered[len(ordered) // 2]
+
+
+def family_name(rows: list[dict]) -> str:
+    """A family's name for its row: the part its models share, with the range of powers of a module family as the
+    datasheet writes it (JKM460-485N-48QL6-DV); the series when the models share too little."""
+    models = [str(r.get("model") or "") for r in rows]
+    powers = sorted(float(r.get("pmax") or 0) for r in rows)
+    if powers and powers[-1] and len(rows) > 1:
+        own = f"{rows[0].get('pmax', 0):g}"
+        found = re.findall(rf"(?<!\d){re.escape(own)}(?!\d)", models[0])
+        if len(found) == 1:
+            return re.sub(rf"(?<!\d){re.escape(own)}(?!\d)", f"{powers[0]:g}-{powers[-1]:g}", models[0])
+    prefix = models[0] if models else ""
+    for model in models[1:]:
+        while prefix and not model.startswith(prefix):
+            prefix = prefix[:-1]
+    series = str(rows[0].get("series") or "") if rows else ""
+    shortest = min((len(model) for model in models), default=0)
+    if len(prefix) >= 4 and len(prefix) >= 0.6 * shortest:
+        return prefix.partition(" (")[0].rstrip(" -_/")
+    if series:
+        return series
+    # nothing shared worth saying: their names, never one of them alone, which would look like that model
+    return " / ".join(models[:3]) + (" …" if len(models) > 3 else "")
 
 
 def normalise_other(r: dict, kind: str) -> dict:
@@ -184,12 +321,13 @@ def load(kind: str) -> tuple:
     from .personal import load as personal_load
     personal = personal_load(kind)
     if kind == "modules":
-        curated = [m for m in (normalise_module(r) for r in _read("modules_curated.json")) if m]
-        return tuple(enrich_module(m) for m in personal + curated + _read("modules_cec.json.gz"))
+        curated = [apply_lifecycle(m, kind) for m in (normalise_module(r) for r in _read("modules_curated.json")) if m]
+        rows = [row for m in personal + curated for row in expand_classes(m)]
+        return tuple(enrich_module(m) for m in rows + _read("modules_cec.json.gz"))
     if kind == "inverters":
-        curated = [normalise_other(r, kind) for r in _read("inverters_curated.json")]
+        curated = [apply_lifecycle(normalise_other(r, kind), kind) for r in _read("inverters_curated.json")]
         return tuple(personal + curated + _read("inverters_cec.json.gz"))
-    return tuple(personal + [normalise_other(r, kind) for r in _read(f"{kind}_curated.json")])
+    return tuple(personal + [apply_lifecycle(normalise_other(r, kind), kind) for r in _read(f"{kind}_curated.json")])
 
 
 def power_of(rec: dict, kind: str) -> float:
@@ -235,14 +373,15 @@ def prepare(kind: str) -> None:
 def search(kind: str, text: str = "", source: str = "", low: float = 0.0, high: float = 0.0,
            market: str = "", limit: int | None = 500, *, family: str = "", bifacial: bool | None = None,
            manufacturer: str = "", efficiency_min: float = 0.0, length_max: float = 0.0, sort: str = "",
-           descending: bool = False) -> list:
+           descending: bool = False, states: tuple = ()) -> list:
     """The records whose maker, model and series contain every word of `text` (any case), within the power
     range (W; kWh for batteries) and of the source and market asked; curated first, then by maker and power, or
     by the field `sort` (a record without it last either way).
 
     Modules also by `family` (a key of FAMILIES, or UNKNOWN_FAMILY), `bifacial` (None: either), `manufacturer`
     (the whole name, any case), `efficiency_min` (%) and `length_max` (m): a module without the efficiency or the
-    size is left out when that filter is on, because it cannot be said to satisfy it."""
+    size is left out when that filter is on, because it cannot be said to satisfy it. `states`: only the records in
+    these lifecycle states (all, when empty)."""
     records, haystacks = _ordered(kind)
     words = text.casefold().split()
     if words:
@@ -266,6 +405,8 @@ def search(kind: str, text: str = "", source: str = "", low: float = 0.0, high: 
         records = [r for r in records if (r.get("efficiency_pct") or 0.0) >= efficiency_min]
     if length_max:
         records = [r for r in records if r.get("length") and r["length"] <= length_max]
+    if states:
+        records = [r for r in records if lifecycle_state(r) in states]
     if sort:
         records = sorted_by(records, sort, descending)
     return list(records) if limit is None else list(records[:limit])

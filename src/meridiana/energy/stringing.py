@@ -17,6 +17,7 @@ takes, and what CEI 64-8/7:2024 (9th edition, in reference\\standards\\cei) asks
 from __future__ import annotations
 
 import math
+import time
 from dataclasses import dataclass, field
 
 from ..i18n import _, number
@@ -76,12 +77,27 @@ class SearchBudget:
     cancelled: object = None
     nodes: int = 0
     reason: str = ""
+    # R522: a time limit (time.monotonic) and «Stop» (a callable): past either the search ends as at its step limit,
+    # and the sizing keeps the best proposal found so far (cancelled throws everything away)
+    deadline: float | None = None
+    enough: object = None
+
+    def expired(self) -> bool:
+        return ((self.enough is not None and bool(self.enough()))
+                or (self.deadline is not None and time.monotonic() > self.deadline))
+
+    def part(self, limit: int) -> "SearchBudget":
+        """A share of this search of at most `limit` steps, with its cancellation, time limit and «Stop»."""
+        return SearchBudget(max(1, min(limit, self.limit - self.nodes)), self.cancelled,
+                            deadline=self.deadline, enough=self.enough)
 
     def step(self, depth: int = 0) -> None:
         if self.cancelled is not None and self.cancelled():
             self.reason = _("String assignment cancelled; no complete choice has been applied.")
         elif self.nodes >= self.limit or depth >= 400:
             self.reason = _("String assignment incomplete: the search limit was reached.")
+        elif (self.deadline is not None or self.enough is not None) and not self.nodes & 63 and self.expired():
+            self.reason = _("String assignment incomplete: the time limit was reached.")
         if self.reason:
             raise SearchStopped(self.reason)
         self.nodes += 1
@@ -351,7 +367,7 @@ def spread(strings: int, inputs: int) -> list[int]:
     return [base + (1 if k >= inputs - extra else 0) for k in range(inputs)]
 
 
-# the inverter: how much it is loaded, and how evenly its inputs (program thresholds, said as such, not standards)
+# the inverter: how much it is loaded, and how evenly its inputs (calculation thresholds, said as such, not standards)
 
 # % of the energy lost beyond the inverter's nominal power: a warning from here (Daniel's scale of 24/10/2026, R62:
 # green under 1 %, yellow to 3 %, red beyond; PVsyst warns from 0.2 %)
@@ -361,7 +377,7 @@ IMBALANCE = 30.0                # % an input's DC power may differ from the mean
 
 
 def threshold_source() -> Source:
-    return Source("default", _("Meridiana's threshold, as PVsyst's: not a standard"))
+    return Source("default", _("calculation threshold, as PVsyst's: not a standard"))
 
 
 def overload_loss(p_dc_w, pac_w: float, eta: float) -> float:
@@ -380,7 +396,7 @@ def overload_check(name: str, loss_pct: float) -> Check:
     thresholds, the scale of the DC/AC ratio's: not a standard)."""
     level = "ok" if loss_pct < OVERLOAD_WARN else ("warn" if loss_pct <= OVERLOAD_FAIL else "fail")
     return Check("overload", _("{name}: energy lost beyond the nominal power").format(name=name), level != "fail",
-                 _("{pct} % of the year (program thresholds: a warning from {w} %, too much beyond {f} %, as "
+                 _("{pct} % of the year (calculation thresholds: a warning from {w} %, too much beyond {f} %, as "
                    "PVsyst's red)").format(pct=number(loss_pct, 1), w=f"{OVERLOAD_WARN:.0f}", f=f"{OVERLOAD_FAIL:.0f}"),
                  level)
 

@@ -1,0 +1,47 @@
+{
+  "size": [
+    1600,
+    960
+  ],
+  "steps": [
+    {
+      "action": "key",
+      "key": "Ctrl+3",
+      "wait": 1000,
+      "expect": {
+        "phase": "production"
+      }
+    },
+    {
+      "action": "click",
+      "target": "Come è calcolato",
+      "wait": 8000
+    },
+    {
+      "action": "key",
+      "key": "Ctrl+4",
+      "wait": 1000,
+      "expect": {
+        "phase": "consumption"
+      }
+    },
+    {
+      "action": "click",
+      "target": "Come è calcolato",
+      "wait": 8000
+    },
+    {
+      "action": "key",
+      "key": "Ctrl+5",
+      "wait": 1000,
+      "expect": {
+        "phase": "economics"
+      }
+    },
+    {
+      "action": "click",
+      "target": "Come è calcolato",
+      "wait": 8000
+    }
+  ]
+}

@@ -29,6 +29,15 @@ pypdf>=6.0
 # The report's layout (R314, study 24): Typst through its Python binding (Apache-2.0), one wheel of about 30 MB with no
 # library of the system (abi3: Windows x64, Linux x86_64 and aarch64). The report's look is report_typst/template.typ.
 typst==0.15.0
+# The report's editable copies (R460, 06/11/2026): ODT with odfpy (Apache-2.0, or GPL-2.0-or-later, or LGPL-2.1-or-later;
+# it brings defusedxml, PSF-2.0), DOCX with python-docx (MIT; it brings lxml, BSD-3-Clause, and typing_extensions,
+# PSF-2.0), the formulas' TeX into MathML with latex2mathml (MIT), MathML into Word's OMML with the program's own
+# converter (report_typst/omml.py). Imported only when an ODT or a DOCX is asked: without them the PDF is written and
+# the dialog says what to install. The versions are those tried on 06/11/2026.
+odfpy==1.4.1
+python-docx==1.2.0
+lxml>=6.1
+latex2mathml==3.81.1
 # Meridio's cloud model and its key (task 14): Claude's official SDK (Apache-2.0) and the system's keyring (MIT).
 # Both are imported only when used: without them the program starts and Meridio answers with the local model only.
 anthropic>=2.3
@@ -42,3 +51,7 @@ kokoro-onnx==0.6.1; python_version < "3.14"
 # brings lark (MIT) and isodate (BSD). 0.9.0.post1 is the version tried (study 20): the iterator's threads crash on a
 # file opened lazily, and the reader keeps to one thread there.
 ifcopenshell>=0.9.0.post1
+# The plan as a DXF (R513): ezdxf (MIT), imported only when a plan is exported; pure Python with optional C
+# accelerators. It brings pyparsing, typing_extensions, numpy and fonttools, already here. 1.4.5 is the version tried
+# (07/11/2026: AutoCAD LT 2021 opens its files, ezdxf's audit finds nothing).
+ezdxf==1.4.5

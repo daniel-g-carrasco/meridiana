@@ -301,6 +301,8 @@ class Physics(unittest.TestCase):
                 return {f.name: plain(getattr(x, f.name)) for f in dataclasses.fields(x) if f.name != "parts"}
             if hasattr(x, "to_numpy"):
                 return x.to_numpy().tolist()
+            if hasattr(x, "tolist"):            # the hourly stages kept for the lines with the numbers (R479)
+                return x.tolist()
             if isinstance(x, dict):
                 return {k: plain(v) for k, v in x.items()}
             if isinstance(x, (list, tuple)):

@@ -1,0 +1,4 @@
+module Meridiana.Catalog
+CatalogPage 1.0 CatalogPage.qml
+CatalogChoice 1.0 CatalogChoice.qml
+CatalogEditor 1.0 CatalogEditor.qml
