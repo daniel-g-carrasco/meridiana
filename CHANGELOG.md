@@ -1,18 +1,9 @@
-## Servizi e cataloghi, 29 ottobre 2026
-
-- Aggiornamenti firmati facoltativi con consenso revocabile e protezione delle modifiche non salvate.
-- Allegati locali PDF/testo in Meridio, revisione dei prodotti e catalogo personale con confronto.
-- Accumulo AC/DC in Impianto con compatibilità esatta e limiti documentati; audit strutturale del catalogo.
-- Visita guidata riprendibile e bozze di segnalazione dalla GUI e dalla chat, senza invio automatico.
-- Self-test grafico corretto per esporre il 3D anche nelle finestre strette.
-
 # Changelog
 
 What changed in Meridiana, version by version, the newest first. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions
-are `0.x`, development releases, published on GitHub as a Windows installer
-and a portable zip, signed (the installed program updates itself), and later
-as a Flatpak. The same notes, shorter, are in the app's metainfo, which
+are `0.x`, development releases, published on GitHub as a signed Windows
+installer (the installed program updates itself), and later as a Flatpak. The same notes, shorter, are in the app's metainfo, which
 software centres show.
 
 ## [Unreleased]
@@ -86,6 +77,14 @@ The first release of Meridiana: everything below this line, with the Qt Quick wi
 - Meridio quotes thresholds and laws only from the sources the program carries and says which document is missing,
   answers first and then gives the grounds and the project data; the tool for the rules gives their whole text,
   a new tool searches the activities.
+
+### Services and catalogues, 2026-10-29
+
+- Optional signed updates, with a consent that can be withdrawn and protection of unsaved changes.
+- Local PDF and text attachments in Meridio, a review of the products and a personal catalogue with comparison.
+- AC and DC storage in Plant, with exact compatibility and documented limits; a structural audit of the catalogue.
+- A guided tour that can be resumed, and draft reports of problems from the window and from the chat, never sent automatically.
+- The graphical self-test fixed so that it shows the 3D view in narrow windows too.
 
 ### Electrical completion, 2026-10-29
 

@@ -172,7 +172,7 @@ def release_source() -> tuple[str, str]:
     """Where the latest release is asked and where its files must come from: GitHub. Developer aid, to try the
     whole update without publishing a release: MERIDIANA_DEV_RELEASE_API names another answer (a local file, a
     local server); from the sources alone it is enough, the built program also needs MERIDIANA_DEV_RELEASE_DOWNLOADS
-    (the prefix its files' addresses must have: docs/revisioni/pacchetto-windows-20261109.md). Either way the
+    (the prefix its files' addresses must have: docs/progetto.md, section 4). Either way the
     installer must still be signed with PUBLIC_KEY and named for the release's version: these variables change
     where a file is fetched, never what is trusted."""
     api = os.environ.get(DEV_RELEASE_API)

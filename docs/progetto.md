@@ -199,7 +199,25 @@ Regole: il nucleo non importa `session` né `ui`; `session` non importa Qt; `mod
 
 ## 4. Rilascio e pacchetti
 
-Compito 18f del 25/10/2026, dal rapporto `studio/18-prove/H-pacchetti.md`. Le misure sono del PC di Daniel (Windows 11, Python 3.12.6 di python.org) e del WSL openSUSE dello stesso PC per il Flatpak.
+### Come si fa oggi (release 0.2.0, 09/11/2026)
+
+La prima release pubblicata è la 0.2.0 (https://github.com/daniel-g-carrasco/meridiana/releases/tag/v0.2.0), con la finestra Qt Quick. Si fa da questo PC, non dal CI; i paragrafi dopo questa sezione sono la storia del 25/10 (finestra Widgets, zip portabile, release dal CI) e valgono solo dove questa non dice altro.
+
+**Pubblicare** (solo quando Daniel la chiede: è un'azione pubblica).
+1. Versione in tre posti, uguali (`tests/nucleo/test_release.py` lo controlla): `src/meridiana/__init__.py` (`__version__ = "0.2.1"`, tre numeri), `CHANGELOG.md` (`[Unreleased]` diventa `[0.2.1] - data`), `data/io.github.daniel_g_carrasco.meridiana.metainfo.xml` (un `<release version="0.2.1" date="...">` in cima).
+2. Pacchetto: `powershell -ExecutionPolicy Bypass -File build-aux\windows\build.ps1 [-Python <python del venv>] [-Iscc <ISCC.exe>]`. Fa i cataloghi e l'icona, PyInstaller (`dist\Meridiana`), la prova del pacchetto e Inno Setup con la versione letta da `__init__.py`; esce `dist\meridiana-setup-v<versione>-windows-x64.exe`, il nome che l'aggiornamento del programma cerca in una release (`updates.installer_name`). Circa 6 minuti. Niente zip portabile.
+3. Prova del pacchetto installato: `Meridiana.exe -m meridiana.quick.package_check PROGETTO USCITA [--language en]` (dai sorgenti `python -m meridiana.quick.package_check ...`): apre il progetto con un profilo suo, calcola l'anno, mostra ogni fase, File, Impostazioni e Meridio, scrive la relazione; `USCITA\check.json` dice cosa ha visto. Installazione silenziosa per utente: `meridiana-setup-...exe /VERYSILENT /CURRENTUSER`.
+4. Firma con la chiave minisign comune alle app di Daniel (id `CEFFF9269F08F845`, in `%USERPROFILE%\.config\minisign-app-releases`; la metà pubblica è `updates.PUBLIC_KEY` e `CODE_SIGNING.md`): `minisign -S -s <cartella della chiave>\minisign.key -m <installer>`, poi il file `.sha256` accanto.
+5. Il commit pubblico: su GitHub va un commit solo, sopra il `main` pubblico, con il codice della versione; i documenti di lavoro dei giri (misure, stati, revisioni, schermate) restano nell'archivio privato e nessun nome di cliente o di commessa entra nel repository pubblico (controllo con `git grep` prima della spinta).
+6. `gh release create vX.Y.Z --repo daniel-g-carrasco/meridiana --target <SHA completo del commit pubblico> --title "Meridiana X.Y.Z" --notes-file <note> <installer> <installer>.minisig <installer>.sha256`. Né `--prerelease` né `--draft`: l'aggiornamento chiede `releases/latest`, che le esclude. GitHub calcola da sé il `digest` SHA-256 di ogni file, ed è quello che l'aggiornamento confronta.
+
+**L'aggiornamento nel programma installato** (`updates.py`, `quick/backend/update_check.py`, `quick/backend/dialogs.py`). Una volta al giorno, un minuto dopo l'avvio, solo nel programma per Windows e se Impostazioni > Privacy lo permette, chiede a GitHub l'ultima release; se è più nuova (`updates.is_newer`) lo dice nella barra di stato, e Aiuto > Cerca aggiornamenti mostra la versione, scarica l'installer, ne verifica dimensione, SHA-256 e firma minisign e solo allora avvia Setup, che chiude e riapre il programma. Firma sbagliata, file alterato o nessuna rete: un messaggio e nessuna installazione. Provato da capo a fondo il 09/11/2026 con una 0.2.1 servita da un server locale (variabili d'ambiente solo per le prove: cambiano da dove si scarica, non di cosa ci si fida).
+
+**Flatpak** (`build-aux/flatpak-quick/`): runtime KDE 6.11, Qt 6.12 costruito nel pacchetto (`python3-qt612.json`), ezdxf e le librerie della relazione modificabile come moduli; si costruisce da un archivio senza CRLF (`git -c core.autocrlf=false archive`) con `flatpak run org.flatpak.Builder --user --install --force-clean build-dir build-aux/flatpak-quick/io.github.daniel_g_carrasco.meridiana.yaml`. Non è ancora pubblicato in un repository.
+
+### La storia: compito 18f del 25/10/2026
+
+Dal rapporto `studio/18-prove/H-pacchetti.md`. Le misure sono del PC di Daniel (Windows 11, Python 3.12.6 di python.org) e del WSL openSUSE dello stesso PC per il Flatpak.
 
 **Windows** (`build-aux/windows/`).
 - Si costruisce con il Python 3.12 di python.org in un venv a parte (`.venv-build`, mai quello del programma): `pip install -r requirements.txt pyinstaller==6.22.3`, poi `python tools/compile_po.py` (con `msgfmt`, o dove manca con il compilatore dello stesso file, che dà lo stesso catalogo di GNU: [V] 2.541 voci uguali), `python tools/make_ico.py` (Qt disegna l'SVG: niente GTK), `pyinstaller --noconfirm build-aux/windows/meridiana.spec`, `ISCC.exe /DAppVersion=X.Y.Z build-aux\windows\meridiana.iss`.

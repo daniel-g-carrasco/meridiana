@@ -3,7 +3,7 @@
 # 1. the catalogues (locale\) and the icon; 2. PyInstaller (dist\Meridiana); 3. the self-test of the bundle;
 # 4. Inno Setup with the version of src\meridiana\__init__.py: dist\meridiana-setup-v<version>-windows-x64.exe,
 # the name the program's own update looks for in a release (updates.installer_name).
-# Signing (minisign) and publishing are separate steps: docs\revisioni\pacchetto-windows-20261109.md.
+# Signing (minisign) and publishing are separate steps: docs\progetto.md, section 4.
 param(
     [string]$Python = "$env:USERPROFILE\dev\meridiana\.venv\Scripts\python.exe",
     [string]$Iscc = "",
@@ -30,7 +30,7 @@ if (-not $SkipSelfTest) {
     $report = Join-Path $root 'build\selftest.txt'
     $p = Start-Process -FilePath dist\Meridiana\Meridiana.exe -ArgumentList '--self-test', "`"$report`"" -Wait -PassThru
     # the Widgets self-test fails at its report since r27 (no module laid in its sample, from the sources too):
-    # said, not fatal; the Qt Quick's check is meridiana.quick.package_check (docs\revisioni\pacchetto-windows-20261109.md)
+    # said, not fatal; the Qt Quick's check is meridiana.quick.package_check (docs\progetto.md, section 4)
     if ($p.ExitCode) { Write-Warning "self-test: exit $($p.ExitCode), see $report" }
 }
 & $Iscc "/DAppVersion=$version" build-aux\windows\meridiana.iss
