@@ -40,6 +40,7 @@ Dati raccolti il 21/10/2026 (campo `retrieved`).
 | Sonnenstromfabrik (CS Wismar) | 1 | Professional Glass/Glass M108 495 Wp |
 | Bauer Solar | 3 | BS-465-96G12HBT-GG, BS-485-108M10BCBB-GG, BS-625-132M12RHSW-GG |
 | FuturaSun | 3 | FU 430 MV, FU 455 M, FU 580 MV |
+| Eurener | 1 | MEPV NEXA DG 500 (classi 480, 490, 500 W; scheda IT itagcg 2026-06) |
 | Peimar | 3 | SA485MN (BF), SA585MN, OR12H715MNDB |
 | Sunerg Solar | 3 | XMTC3450CBDBW, XMTC3455EBDW, XMTG1595EBDW |
 | 3Sun | 3 | 3SHBGA-AF-470, 3SHBGH-AD-585-610 (600 Wp class), 3SHBGH-CC-625 |
@@ -47,7 +48,7 @@ Dati raccolti il 21/10/2026 (campo `retrieved`).
 
 Composizione dell'archivio:
 - potenze da 420 a 745 W; 47 moduli bifacciali e 58 vetro-vetro;
-- tecnologie: 42 TOPCon, 9 HJT, 17 back contact (HPBC 2.0, ABC, GPC, BC, BC a celle sovrapposte, MWT) e 10 "n-type" senza architettura dichiarata.
+- tecnologie: 43 TOPCon, 9 HJT, 17 back contact (HPBC 2.0, ABC, GPC, BC, BC a celle sovrapposte, MWT) e 10 "n-type" senza architettura dichiarata.
 
 ## Regole usate per i dati
 

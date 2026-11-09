@@ -8,6 +8,13 @@ software centres show.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-09
+
+### Catalogue, 2026-11-09 (r29)
+
+- Three products added from their official datasheets: the Sungrow SG150CX (V7) and SG15RT-P2 (V2) inverters and the
+  Eurener MEPV NEXA DG bifacial glass-glass module, with its 480, 490 and 500 W classes (Italian sheet itagcg, 2026-06).
+
 ## [0.2.0] - 2026-11-09
 
 The first release of Meridiana: everything below this line, with the Qt Quick window as the program's own.

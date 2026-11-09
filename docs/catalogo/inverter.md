@@ -15,7 +15,7 @@ Nessun valore è stimato o calcolato.
 |---|---|---|---|
 | Huawei | 9 | SUN2000-3/5/6KTL-L1 (ibridi), -10KTL-M1 (ibrido), -20K-MB0 (ibrido), -20KTL-M5, -50KTL-M3, -100KTL-M2, -150K-MG0 | solar.huawei.com |
 | SMA | 9 | SB3.0/5.0/6.0-1AV-41, SBSE6.0-50 (ibrido), STP10.0-3SE-40 (ibrido), Sunny Tripower X STP 20-50, 25-50, 50-80, CORE2 STP 110-60 | files.sma.de |
-| Sungrow | 8 | SG3.0RS, SG6.0RS, SH5.0RS (ibrido), SG10RT, SG20RT, SH10RT-20 (ibrido), SG50CX-P2, SG125CX-P2 | info-support.sungrowpower.com |
+| Sungrow | 10 | SG3.0RS, SG6.0RS, SH5.0RS (ibrido), SG10RT, SG20RT, SH10RT-20 (ibrido), SG15RT-P2, SG50CX-P2, SG125CX-P2, SG150CX | info-support.sungrowpower.com |
 | SolarEdge | 13 | SE3000H, SE5000H, SE6000H (Home Wave), SE6000H, SE8000H, SE10000H (Home Hub), SE10K (Home Wave trifase), SE12.5K, SE16K, SE17K (trifase), SE50K, SE90K, SE100K (Synergy) | knowledge-center.solaredge.com |
 | GoodWe | 7 | GW3K-DNS-G40, GW5K-DNS-G40, GW6000N-EH (ibrido), GW10K-ET-20 (ibrido), GW10K-SDT-EU30, GW20K-SDT-30, GW50K-SDT-C30 | it.goodwe.com (schede EMEA in italiano) |
 | Solis | 7 | S6-GR1P3K/5K/6K, S5-GR3P10K, S6-GC3P50K04-NV-ND, S6-EH1P6K-L-PLUS (ibrido), S6-EH3P10K-H-EU (ibrido) | solisinverters.com (schede italiane) |

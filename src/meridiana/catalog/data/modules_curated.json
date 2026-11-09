@@ -6118,5 +6118,94 @@
    "from": "Catalogo/Handbook Trienergia 2026 vr.1 01/2026",
    "page": 2
   }
+ },
+ {
+  "manufacturer": "Eurener",
+  "model": "MEPV NEXA DG 500",
+  "series": "NEXA DG Bifacial",
+  "power_classes_w": [
+   480,
+   490,
+   500
+  ],
+  "technology": "n-type TOPCon",
+  "cell_family": "topcon",
+  "bifacial": true,
+  "bifaciality_pct": 80,
+  "glass": "glass-glass",
+  "cells": 120,
+  "pmax_w": 500,
+  "vmp_v": 35.88,
+  "imp_a": 13.94,
+  "voc_v": 43.25,
+  "isc_a": 14.52,
+  "efficiency_pct": 23.1,
+  "tolerance": "0/+3 %",
+  "nmot_c": null,
+  "noct_c": 45,
+  "temp_coeff_pmax_pct_c": -0.29,
+  "temp_coeff_voc_pct_c": -0.275,
+  "temp_coeff_isc_pct_c": 0.045,
+  "max_system_voltage_v": 1500,
+  "max_series_fuse_a": 25,
+  "length_mm": 1909,
+  "width_mm": 1134,
+  "thickness_mm": 30,
+  "weight_kg": 27,
+  "fire_rating": "BROOF(t4) EN 13501-5; Classe 1 UNI 9177",
+  "certifications": [
+   "IEC 61215",
+   "IEC 61730",
+   "IEC 61701",
+   "IEC 62716",
+   "IEC TS 62804",
+   "ISO 9001:2015",
+   "ISO 14001:2015"
+  ],
+  "warranty_product_years": 25,
+  "warranty_power_years": 30,
+  "degradation_first_year_pct": 1.0,
+  "degradation_annual_pct": 0.38,
+  "power_after_25_or_30_years_pct": 88,
+  "power_after_years": 30,
+  "datasheet_url": "https://eurener.com/wp-content/uploads/2026/06/Eurener-MEPV_Nexa-DG-Bif_480-500W_itagcg.pdf",
+  "datasheet_revision": "itagcg (2026-06, file suffix on eurener.com)",
+  "retrieved": "2026-11-09",
+  "markets": [
+   "EU",
+   "IT"
+  ],
+  "notes": "Eurener MEPV NEXA Double Glass Bifacial 480-500 W (Italian datasheet, 2 pages); sold by Wind & Sun as EU-MEPV500-NEXA-DG (1909 x 1134 x 30 mm). Classes MEPV 480 / 490 / 500, all read from the table on page 2 (STC and NOCT columns, rendered page checked). The 500 W class: NOCT 376 Wp, Isc 11.81 A, Voc 41.43 V, Imp 11.13 A, Vmp 33.80 V; with 10 % bifacial gain 550 Wp, Isc 16.02 A, Voc 43.31 V, Imp 15.30 A, Vmp 35.97 V (the 480 and 490 W gain columns are in the datasheet, not stored). Bifaciality factor printed '80 +/- 5'; cell efficiency 24.15 / 24.65 / 25.16 %. Cells: '60 x 2 M10' = 120 half-cells, from the English sheet ESM480-500W-60HM10 enafcf (2025-05), same module, the Italian sheet does not print the count. Glass 2 mm + 2 mm tempered, black or silver anodized frame, junction box IP68 with 3 bypass diodes, MC4-Evo 2, cable 1000 mm (+/- 20 %) 4 mm2. Power tolerance 0/+3 %, Voc and Isc tolerance +/- 3 %. Loads 5400 Pa front, 2400 Pa back; hail HW3/RG3; protection class II (IEC 61140); temperature range -40/+85 degC. Product warranty 25 years (+5 for Premium Partners), linear power warranty 30 years, 1 % first year, 0.38 % a year, 88 % at year 30. The 500-515 W sheet of Eurener (1961 x 1134 mm, Voc 40.10 V) is another module and is not here.",
+  "classes": [
+   {
+    "pmax_w": 480.0,
+    "vmp_v": 35.31,
+    "imp_a": 13.6,
+    "voc_v": 42.63,
+    "isc_a": 14.34,
+    "efficiency_pct": 22.18
+   },
+   {
+    "pmax_w": 490.0,
+    "vmp_v": 35.61,
+    "imp_a": 13.78,
+    "voc_v": 42.95,
+    "isc_a": 14.44,
+    "efficiency_pct": 22.63
+   },
+   {
+    "pmax_w": 500.0,
+    "vmp_v": 35.88,
+    "imp_a": 13.94,
+    "voc_v": 43.25,
+    "isc_a": 14.52,
+    "efficiency_pct": 23.1
+   }
+  ],
+  "classes_read": {
+   "on": "2026-11-09",
+   "from": "itagcg (2026-06)",
+   "page": 2
+  }
  }
 ]

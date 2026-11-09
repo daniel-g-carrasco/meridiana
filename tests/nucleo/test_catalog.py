@@ -74,8 +74,8 @@ class Families(unittest.TestCase):
 
     def test_the_datasheets_read_give_topcon_back_contact_hjt_and_ten_unstated(self):
         # the study counted 48 TOPCon and 3 unstated: seven datasheets say «TOPCon is not printed» or «not stated»
-        # (docs/catalogo/moduli.md: 42 TOPCon, 9 HJT, 17 back contact and 10 «n-type» without architecture)
-        self.assertEqual(self.counts("curated"), {"topcon": 42, "back_contact": 17, "hjt": 9, "unknown": 10})
+        # (docs/catalogo/moduli.md: 43 TOPCon, 9 HJT, 17 back contact and 10 «n-type» without architecture)
+        self.assertEqual(self.counts("curated"), {"topcon": 43, "back_contact": 17, "hjt": 9, "unknown": 10})
 
     def test_the_cec_list_in_use_gives_mono_poly_thin_film_and_one_hjt(self):
         # list 2026.7.3: the material of the list (17,372 + 9 Mono-c-Si, 3,926 Multi-c-Si, 333 thin film), and the one
@@ -119,7 +119,7 @@ class Families(unittest.TestCase):
         must agree on every record: a new datasheet that the rule reads differently is looked at, not trusted."""
         import json
         raw = json.loads((catalog.DATA / "modules_curated.json").read_text(encoding="utf-8"))
-        self.assertEqual(len(raw), 78)
+        self.assertEqual(len(raw), 79)
         known = {key for key, _p in catalog.FAMILIES} | {catalog.UNKNOWN_FAMILY}
         for r in raw:
             with self.subTest(r["model"]):
@@ -235,7 +235,7 @@ class EstimatedBifaciality(unittest.TestCase):
         self.assertEqual({m["manufacturer"] for m in estimated}, {"SoliTek", "Peimar", "Sunerg Solar"})
         # the ones that print a factor keep it and carry no estimate
         printed = [m for m in modules if m["source"] == "curated" and m["bifacial"] and m.get("bifaciality")]
-        self.assertEqual(len(printed), 36)
+        self.assertEqual(len(printed), 37)
         self.assertTrue(all("bifaciality_estimated" not in m for m in printed))
         # back contact and the unstated that print none stay without
         bare = [m for m in modules if m["source"] == "curated" and m["bifacial"]
@@ -271,7 +271,7 @@ class Facets(unittest.TestCase):
         self.assertEqual(found[0]["source"], "curated")
 
     def test_the_family_alone(self):
-        for family, expected in (("topcon", 41), ("back_contact", 17), ("hjt", None), ("mono", None), ("poly", None)):
+        for family, expected in (("topcon", 42), ("back_contact", 17), ("hjt", None), ("mono", None), ("poly", None)):
             found = catalog.search("modules", family=family, limit=None)
             with self.subTest(family):
                 self.assertEqual(self.ids(found), self.ids(m for m in catalog.search("modules", limit=None)
@@ -291,7 +291,7 @@ class Facets(unittest.TestCase):
         self.assertTrue(all(r["bifacial"] is False for r in no))
         self.assertEqual(len(yes) + len(no), len(either))
         self.assertEqual(len(either), len(self.modules))
-        self.assertEqual(len([r for r in yes if r["source"] == "curated" and not r.get("class_of")]), 47)
+        self.assertEqual(len([r for r in yes if r["source"] == "curated" and not r.get("class_of")]), 48)
 
     def test_the_manufacturer_without_case(self):
         found = catalog.search("modules", manufacturer="jinko solar", limit=None)
@@ -344,7 +344,7 @@ class Facets(unittest.TestCase):
         self.assertEqual(every, sorted(every, key=str.casefold))
         self.assertIn("Axitec", every)                                  # the datasheet's spelling, not the CEC's
         self.assertNotIn("AXITEC", every)
-        self.assertEqual(len(catalog.brands("modules", "curated")), 26)
+        self.assertEqual(len(catalog.brands("modules", "curated")), 27)
         self.assertTrue(set(catalog.brands("modules", "cec")) - set(catalog.brands("modules", "curated")))
 
     def test_the_limit_applies_after_the_filters(self):

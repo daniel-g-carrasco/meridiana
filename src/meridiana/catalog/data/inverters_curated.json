@@ -7948,5 +7948,138 @@
       "EU"
     ],
     "notes": "Scheda internazionale en-INT V3.0 del 2026-08-12; potenza FV stampata come 'Recommended max. PV input power' 170000 Wp (valore raccomandato; a pag. 1 '170% DC input overload'); potenza apparente max 100 kVA a 45 °C e 90 kVA a 50 °C; corrente CA max 152 A a 380 V, 145 A a 400 V (usata), 139.2 A a 415 V; tensione 3/N/PE 380/400/415 V (310-480 Vac), fattore di potenza '0.8 leading - 0.8 lagging'; 10 MPPT e 20 ingressi DC in totale (ripartizione per MPPT non stampata), 10x40 A e Isc 10x50 A; AFCI di serie (riga 'AFCI Yes'); recupero PID di serie ('PID recovery Yes'); THDi < 1% a 100% P; IP66; altitudine max 4000 m (declassamento oltre 3000 m); raffreddamento 'Smart air cooling'; SPD tipo II lato FV e CA; backup/EPS non menzionato; norme citate: EN 50549, VDE-AR-N 4105/4110, VDE V 0126-1-1, UTE C15-712-1, NTS 631, UNE 217001/217002, G99, C10/11, EN 50530, IEC 62116, IEC 61727; CEI 0-16 e CEI 0-21 non citate né nella scheda né tra i certificati del download center ufficiale (controllato il 2026-10-21); nella stessa scheda 110KTLX-G4 (100 kW), 125KTLX-G4 (110 kW) e 125KTLX-G4-A (125 kW); garanzia non stampata"
+  },
+  {
+    "manufacturer": "Sungrow",
+    "model": "SG150CX",
+    "series": "SG-CX",
+    "type": "string",
+    "phases": 3,
+    "ac_power_nominal_w": 150000,
+    "ac_power_max_va": 165000,
+    "ac_voltage_nominal_v": 400,
+    "ac_current_max_a": 240.6,
+    "dc_power_max_w": 210000,
+    "dc_voltage_max_v": 1100,
+    "dc_voltage_nominal_v": 600,
+    "startup_voltage_v": 200,
+    "mppt_voltage_min_v": 180,
+    "mppt_voltage_max_v": 1000,
+    "full_power_mppt_min_v": null,
+    "mppt_count": 7,
+    "strings_per_mppt": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "dc_current_max_per_mppt_a": [
+      48,
+      48,
+      48,
+      48,
+      48,
+      48,
+      48
+    ],
+    "dc_isc_max_per_mppt_a": [
+      66,
+      66,
+      66,
+      66,
+      66,
+      66,
+      66
+    ],
+    "efficiency_max_pct": 98.8,
+    "efficiency_euro_pct": 98.2,
+    "battery_voltage_range_v": null,
+    "battery_power_max_w": null,
+    "backup_or_eps": null,
+    "ip_rating": "IP66",
+    "operating_temp_c": [
+      -30,
+      60
+    ],
+    "weight_kg": 100,
+    "dimensions_mm": [
+      1025,
+      795,
+      360
+    ],
+    "cei_0_21": true,
+    "afci": true,
+    "warranty_years": null,
+    "datasheet_url": "https://info-support.sungrowpower.com/application/pdf/2025/08/13/DS_20250806_SG150CX_Datasheet_V7_EN.pdf",
+    "datasheet_revision": "Version 7",
+    "retrieved": "2026-11-09",
+    "markets": [
+      "global",
+      "EU",
+      "IT"
+    ],
+    "notes": "dc_power_max_w = 'Recommended max. PV input power' 210 kWp (recommended, printed in kWp); datasheet printed as 336 A (48 A * 7) max PV input current and 462 A (66 A * 7) max DC short-circuit current, 3 strings on each of the 7 MPPT; max current per DC connector 30 A; MPPT range 180-1000 V (full-load range left to the manual, note **); PV voltage above the MPPT range puts the inverter in protection (note *); rated PV input 600 V (380/400/415 V grids) or 720 V (480 V grid); start-up 200 V. AC values are those of the 400 V grid: max AC current 240.6 A (250.7 A at 380 V, 200.5 A at 480 V), rated 216.5 A; max apparent power 165 kVA; European efficiency 98.2 % at 380/400/415 V and 98.4 % at 480 V. Weight printed as '<= 100 kg'. Lists CEI 0-16 and CEI 0-21 among the grid codes; AFCI and string-current monitoring standard; surge protection DC Type I+II / AC Type II; C5 corrosion class; RSD optional (SR20D-M, consult Sungrow). Figures read from page 2 of the rendered official PDF."
+  },
+  {
+    "manufacturer": "Sungrow",
+    "model": "SG15RT-P2",
+    "series": "SG-RT-P2",
+    "type": "string",
+    "phases": 3,
+    "ac_power_nominal_w": 15000,
+    "ac_power_max_va": 16500,
+    "ac_voltage_nominal_v": 400,
+    "ac_current_max_a": 25.0,
+    "dc_power_max_w": 22500,
+    "dc_voltage_max_v": 1100,
+    "dc_voltage_nominal_v": 600,
+    "startup_voltage_v": 180,
+    "mppt_voltage_min_v": 160,
+    "mppt_voltage_max_v": 1000,
+    "full_power_mppt_min_v": null,
+    "mppt_count": 2,
+    "strings_per_mppt": [
+      2,
+      2
+    ],
+    "dc_current_max_per_mppt_a": [
+      32,
+      32
+    ],
+    "dc_isc_max_per_mppt_a": [
+      40,
+      40
+    ],
+    "efficiency_max_pct": 98.3,
+    "efficiency_euro_pct": 97.9,
+    "battery_voltage_range_v": null,
+    "battery_power_max_w": null,
+    "backup_or_eps": null,
+    "ip_rating": "IP65",
+    "operating_temp_c": [
+      -25,
+      60
+    ],
+    "weight_kg": 22,
+    "dimensions_mm": [
+      370,
+      480,
+      195
+    ],
+    "cei_0_21": true,
+    "afci": true,
+    "warranty_years": null,
+    "datasheet_url": "https://info-support.sungrowpower.com/application/pdf/2023/11/24/DS_20231113_SG15_17_20RT-P2_Datasheet_V2_EN.pdf",
+    "datasheet_revision": "Version 2",
+    "retrieved": "2026-11-09",
+    "markets": [
+      "global",
+      "EU",
+      "IT"
+    ],
+    "notes": "One datasheet for SG15RT-P2, SG17RT-P2 and SG20RT-P2: the SG15RT-P2 column was used (max and rated apparent power are both 16500 VA; 15000 VA for Belgium and Germany, note ****). dc_power_max_w = 'Recommended max. PV input power' 22.5 kWp (recommended); 64 A (32 A / 32 A) max PV input current and 80 A (40 A / 40 A) max DC short-circuit current, 2 strings per MPPT; PV voltage 160 V min, 180 V start-up, 600 V rated; 1100 V max with note **: between 1000 and 1100 V the inverter goes in standby and, if the system voltage can exceed 1000 V, the MC4 Evo2 connectors must replace the supplied MC4; AC 3/N/PE 220/380, 230/400, 240/415 V; European efficiency 97.90 % and max 98.30 % printed once for the three models; AFCI and PID recovery standard, surge protection DC Type II / AC Type II; optimizer compatibility optional (consult Sungrow); CEI-021 listed among the compliance standards. The PDF also carries a hidden text layer with the data of other models: values taken from the visible table (page 2 rendered and read)."
   }
 ]

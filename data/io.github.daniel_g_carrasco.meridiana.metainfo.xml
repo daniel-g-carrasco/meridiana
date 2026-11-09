@@ -57,6 +57,11 @@
   </requires>
 
   <releases>
+    <release version="0.2.1" date="2026-11-09" type="development">
+      <description>
+        <p>Catalogue: the Sungrow SG150CX and SG15RT-P2 inverters and the Eurener MEPV NEXA DG bifacial module, from their datasheets.</p>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-11-09" type="development">
       <description>
         <p>The first release of Meridiana: the Qt Quick window, in English and Italian, with the Windows installer and its updates.</p>
