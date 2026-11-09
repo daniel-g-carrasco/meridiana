@@ -29,6 +29,20 @@ the manual is in Italian.
 > Meridiana is in **alpha** (version 0.2). Every result carries its pedigree (the formula, the values, their source),
 > but check the numbers before using them in a real project, and expect rough edges on large models.
 
+![Meridiana in the Modelling phase: the project tree, the plan on the national orthophoto beside the 3D view, the site's properties and the Checks panel](docs/images/modelling.png)
+
+<details>
+<summary>More screenshots</summary>
+
+![The Plant phase: sub-fields, inverters and strings on the plan, with the defaults for the panels](docs/images/plant.png)
+
+![The Balance and economics phase: self-consumption, savings, NPV, IRR, payback and the monthly balance](docs/images/economics.png)
+
+</details>
+
+The screenshots show the sample project in [`docs/quick/compat/fixtures`](docs/quick/compat/fixtures/README.md), in
+English.
+
 ## What it does
 
 The work follows six phases, shown as tabs at the top of the window. Each phase has its tools and its page of
