@@ -110,8 +110,8 @@ class WindowsIconTest(unittest.TestCase):
         spec = importlib.util.spec_from_file_location("make_ico_under_test", ROOT / "tools" / "make_ico.py")
         make_ico = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(make_ico)
-        self.assertEqual(self.drawn(make_ico.render_png(make_ico.SVG, 32)), (28, 30), "the theme's margin")
-        self.assertEqual(self.drawn(make_ico.render_png(make_ico.SVG, 32, full_view=True)), (30, 32))
+        self.assertEqual(self.drawn(make_ico.render_png(make_ico.SVG, 32)), (30, 30), "the theme's margin")
+        self.assertEqual(self.drawn(make_ico.render_png(make_ico.SVG, 32, full_view=True)), (32, 32))
         self.assertTrue(make_ico.SMALL_SVG.is_file(), "the drawing for 16-24 px")
         self.assertEqual(self.drawn(make_ico.render_png(make_ico.SMALL_SVG, 24, full_view=True)), (24, 24))
 

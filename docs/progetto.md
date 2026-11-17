@@ -621,3 +621,7 @@ affiancate alla A5 e limiti: `docs/revisioni/r18-relazione/README.md`.
 ## 17/11/2026: l'icona del programma (R93)
 
 [V] L'SVG nuovo era già su `main` (26d1e8f); qui il resto: la simbolica, il disegno per 16-24 px (`build-aux/windows/meridiana-small.svg`, la tela a tutta griglia), il modello Inkscape (`docs/design/meridiana-icona.svg`), i PNG 64, 128, 256 e `site/icon.png` rifatti con `tools/make_icons.py`. `tools/make_ico.py` disegna il `.ico` con la vista chiusa sulla tela (`viewBox 16 16 480 480`, come Quotario): nella barra delle applicazioni l'icona arriva al bordo come quelle degli altri programmi, mentre SVG e PNG del tema tengono il margine. Prova `WindowsIconTest` in `tests/nucleo/test_release.py` (28 × 30 px dal tema a 32, 30 × 32 nel `.ico`, 24 × 24 dal disegno piccolo). Da guardare sul PC: l'icona nella barra del titolo e delle applicazioni al 100 % e al 125 %.
+
+## 17/11/2026: la tela dell'icona a 480 su 512
+
+[V] Decisione di Daniel: la tela quadrata dell'icona sta in 480 su 512 come il disco con lo spessore (faccia 464, spessore 16, 16 di margine tutto intorno); il soggetto resta della sua misura. SVG, modello e PNG rifatti; `WindowsIconTest` segue: 30 × 30 px dal tema a 32, 32 × 32 nel `.ico`.
