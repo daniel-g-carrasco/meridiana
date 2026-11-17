@@ -8,6 +8,13 @@ software centres show.
 
 ## [Unreleased]
 
+### Icon, 2026-11-17
+
+- Meridiana has its own icon: on the square canvas shared by the apps of the same family, a blue half disc, a red gnomon
+  standing on it and a small yellow sun at its tip, light on the left and shadow on the right. The symbolic icon, the
+  drawing for 16-24 px and the Inkscape master (`docs/design/meridiana-icona.svg`) come with it. On Windows the icon
+  reaches the edge of its square, as the other programs' icons do in the taskbar; on Linux it keeps the theme's margin.
+
 ## [0.2.1] - 2026-11-09
 
 ### Catalogue, 2026-11-09 (r29)
