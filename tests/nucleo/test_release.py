@@ -90,5 +90,31 @@ class TextsTest(unittest.TestCase):
         self.assertEqual(offenders, [])
 
 
+class WindowsIconTest(unittest.TestCase):
+    """The .ico reaches the edge as the other programs' icons do in the taskbar, the theme's SVG keeps its margin
+    (17/11/2026: the same view as Quotario's make_ico.py)."""
+
+    def drawn(self, png: bytes) -> tuple[int, int]:
+        from PySide6.QtGui import QImage
+        image = QImage.fromData(png, "PNG")
+        xs, ys = [], []
+        for y in range(image.height()):
+            row = [x for x in range(image.width()) if image.pixelColor(x, y).alpha() > 0]
+            if row:
+                xs += (row[0], row[-1])
+                ys.append(y)
+        return (max(xs) - min(xs) + 1, max(ys) - min(ys) + 1) if xs else (0, 0)
+
+    def test_the_windows_icon_reaches_the_edge_and_the_theme_keeps_its_margin(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("make_ico_under_test", ROOT / "tools" / "make_ico.py")
+        make_ico = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(make_ico)
+        self.assertEqual(self.drawn(make_ico.render_png(make_ico.SVG, 32)), (28, 30), "the theme's margin")
+        self.assertEqual(self.drawn(make_ico.render_png(make_ico.SVG, 32, full_view=True)), (30, 32))
+        self.assertTrue(make_ico.SMALL_SVG.is_file(), "the drawing for 16-24 px")
+        self.assertEqual(self.drawn(make_ico.render_png(make_ico.SMALL_SVG, 24, full_view=True)), (24, 24))
+
+
 if __name__ == "__main__":
     unittest.main()
