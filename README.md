@@ -1,12 +1,10 @@
-<p align="center">
-  <img src="data/icons/hicolor/scalable/apps/io.github.daniel_g_carrasco.meridiana.svg" alt="Meridiana" width="96">
-</p>
+<h1 align="center">
+  <img src="data/icons/hicolor/scalable/apps/io.github.daniel_g_carrasco.meridiana.svg" alt="" width="64" align="absmiddle">
+  Meridiana
+</h1>
 
-<h1 align="center">Meridiana</h1>
-
 <p align="center">
-  Photovoltaic design on the desktop: site, building model, sun, module layout, strings, energy, economics and the
-  Italian standards, in one program.
+  Photovoltaic design on the desktop: draw the site, connect the modules, calculate the year and explain the results.
 </p>
 
 <p align="center">
@@ -19,34 +17,47 @@
 Meridiana is a desktop program for designing photovoltaic plants, for Windows and Linux. It is written in Python with
 Qt 6.12 (PySide6, Qt Quick and Qt Quick 3D) and pvlib, and it is free software under the GPL-3.0-or-later.
 
-It is made for designers who work with the Italian rules: CEI 0-21 and CEI 0-16 for the connection, CEI 64-8 and
-CEI 82-25 for the plant and its strings, the fire brigade guidelines for the distances on the roof (DCPREV
-14030/2025), the ARERA time bands for the consumption. The scope is the whole country: regional rules, where they
-exist, are options and never the default. The interface is in English and Italian and follows the system's language;
-the manual is in Italian.
+It is made for designers working with Italian connection, electrical and fire prevention rules, across the whole
+country. A project's regulatory profile records its scope and timezone; the generic IEC scope supports declared
+equipment and manual strings, without assessing local obligations or conformity. The interface, built-in manual
+and technical report are available in English and Italian.
 
 > [!WARNING]
 > Meridiana is in **alpha** (version 0.2). Every result carries its pedigree (the formula, the values, their source),
-> but check the numbers before using them in a real project, and expect rough edges on large models.
+> but check the numbers before using them in a real project, and expect rough edges on large models. Checks help
+> review a design; they do not certify compliance. The calculation's assumptions and limits remain explicit.
 
-![Meridiana in the Modelling phase: the project tree, the plan on the national orthophoto beside the 3D view, the site's properties and the Checks panel](docs/images/modelling.png)
+> [!NOTE]
+> This page and its screenshots show the version in development. The latest release (0.2.1) is older: part of what
+> is described here, among them the window shown below, arrives with the next release.
+
+![Modelling: a purpose-built demonstration site, with the plan and 3D view side by side](docs/images/modelling.png)
 
 <details>
 <summary>More screenshots</summary>
 
 ![The Plant phase: sub-fields, inverters and strings on the plan, with the defaults for the panels](docs/images/plant.png)
 
+![Production: the calculated year, monthly energy and losses](docs/images/production.png)
+
 ![The Balance and economics phase: self-consumption, savings, NPV, IRR, payback and the monthly balance](docs/images/economics.png)
+
+![Report: the technical report preview and its chapter outline](docs/images/report.png)
+
+![Meridio: an offline answer in the real assistant panel](docs/images/meridio.png)
+
+![The same demonstration site in the dark theme](docs/images/modelling-dark.png)
 
 </details>
 
-The screenshots show the sample project in [`docs/quick/compat/fixtures`](docs/quick/compat/fixtures/README.md), in
-English.
+These are captures of the running application in English, on Linux, using a fictional demonstration project drawn
+over the national orthophoto and recorded test weather. Meridio's example uses a built-in offline command, without a
+language model.
 
 ## What it does
 
 The work follows six phases, shown as tabs at the top of the window. Each phase has its tools and its page of
-results, with the plan and the 3D view side by side.
+results. Modelling and Plant keep the plan and 3D view together; the remaining phases show charts and documents.
 
 1. **Modelling.** The site from an address or coordinates, on the national orthophoto, OpenStreetMap or other public
    map sources. Buildings traced with CAD-like aids (guides, typed lengths and angles, rectangles, squaring,
@@ -56,14 +67,17 @@ results, with the plan and the 3D view side by side.
    row by row by hand, keeping the margins, the fire brigade distances and the row pitch the sun asks for. Then the
    inverter (from the catalogue or sized by the program), the storage (AC or DC battery) and the strings: proposed,
    completed or drawn by hand, checked against CEI 64-8/7 and the inverter's limits, with optimizers where used.
-3. **Production.** The hourly production of a PVGIS typical meteorological year with every loss on the way (pvlib):
+3. **Production.** Hourly production from a PVGIS typical meteorological year, with a chain of modelled losses (pvlib):
    horizon, shading between rows and from obstacles and the IFC context, soiling, mismatch, cables, inverter
-   efficiency and clipping. PVGIS's own estimate beside it, as a second opinion. Variants to compare layouts.
+   efficiency and clipping. Only modules connected to an existing inverter input produce energy. PVGIS's own
+   estimate is available beside it, as a second opinion. Variants let you compare layouts. Recorded weather can
+   travel with a saved project for offline calculations.
 4. **Consumption.** The loads of the supply point: standard profiles, bills, measured curves, ARERA time bands.
 5. **Balance and economics.** Self-consumption with or without a battery, savings, dedicated withdrawal, renewable
    energy communities, NPV, IRR, payback, LCOE.
 6. **Report.** A technical report in PDF, ODT or DOCX, in the program's language, where every calculation shows its
-   formula, its values and their origin, with the datasheets attached.
+   formula, its values and their origin. The preview has a chapter outline; report templates, signature profiles
+   and datasheet attachments let you prepare the deliverable.
 
 Across the phases:
 
@@ -75,8 +89,10 @@ Across the phases:
   **PVsyst** projects and variants (read only);
 - **Meridio**, an assistant that answers questions about the open project with a language model running on the
   computer (Ollama, LM Studio, llama.cpp and similar local servers) or, if you choose it and give your own key, with
-  Claude;
-- a **manual** inside the program (F1 on any field), in Italian, also readable in [`docs/manuale`](docs/manuale/README.md).
+  Claude with explicit consent. Reserved projects stay local;
+- a **manual** inside the program (F1 for contextual help), also readable [in Italian](docs/manuale/README.md);
+- **background work with progress and cancellation** for lengthy calculations, IFC imports and report generation.
+  Heavy jobs use separate processes so you can keep working in the window.
 
 ## Install
 
@@ -92,9 +108,7 @@ Windows 10 or 11, 64 bit. Download `meridiana-setup-vX.Y.Z-windows-x64.exe` from
 
 > [!NOTE]
 > The installer is not signed with an Authenticode certificate yet, so the first time Windows SmartScreen shows
-> "Windows protected your PC": choose **More info**, then **Run anyway**. Each file of a release has a
-> [minisign](https://jedisct1.github.io/minisign/) signature (`.minisig`): the key and the command that checks a
-> download are in [CODE_SIGNING.md](CODE_SIGNING.md).
+> "Windows protected your PC": choose **More info**, then **Run anyway**.
 
 Settings stay in `%APPDATA%\Meridiana`, caches and recovery copies in `%LOCALAPPDATA%\Meridiana`; uninstalling
 leaves them.
@@ -102,13 +116,13 @@ leaves them.
 ### Linux (Flatpak)
 
 The Flatpak is not published in a repository yet. It is built from
-[`build-aux/flatpak-quick`](build-aux/flatpak-quick/io.github.daniel_g_carrasco.meridiana.yaml) on the KDE runtime
-6.11, with Qt 6.12 built into the package:
+[`build-aux/flatpak`](build-aux/flatpak/io.github.daniel_g_carrasco.meridiana.yaml) on the KDE runtime
+6.11, with Qt 6.12 supplied by the PySide6 wheels inside the package:
 
 ```bash
 flatpak install --user flathub org.kde.Platform//6.11 org.kde.Sdk//6.11 org.flatpak.Builder
 flatpak run org.flatpak.Builder --user --install --force-clean build-dir \
-    build-aux/flatpak-quick/io.github.daniel_g_carrasco.meridiana.yaml
+    build-aux/flatpak/io.github.daniel_g_carrasco.meridiana.yaml
 flatpak run io.github.daniel_g_carrasco.meridiana
 ```
 
@@ -130,14 +144,10 @@ python3 -m venv .venv
 Optional parts, imported only when used: `ifcopenshell` for the IFC import and export, `anthropic` and `keyring` for
 Meridio with Claude, `kokoro-onnx` for Meridio's natural voice (its model is downloaded separately).
 
-`python -m meridiana.quick.package_check PROJECT OUT [--language en]` checks the window from end to end without a
+`python -m meridiana.gui.package_check PROJECT OUT [--language en]` checks the window from end to end without a
 screen and without touching your settings: it opens the project with a profile of its own, computes the year, shows
 every phase, writes the report and says in `OUT/check.json` what it saw. The installed program runs the same check as
-`Meridiana.exe -m meridiana.quick.package_check ...`.
-
-> [!TIP]
-> `meridiana --widgets` opens the previous Qt Widgets window. It is frozen (no new work goes there) and will be
-> removed.
+`Meridiana.exe -m meridiana.gui.package_check ...`.
 
 ## What leaves the computer
 
@@ -155,7 +165,7 @@ own switch in Settings > Privacy:
 ## Development
 
 ```bash
-python -m ruff check src tests tools                     # lint (rules in pyproject.toml)
+python -m ruff check --select F,E9,B .                   # lint, the whole repository (rules in pyproject.toml)
 python tools/compile_po.py                               # the catalogues the tests load
 python tools/compile_po.py --check                       # every string of the window has its translation
 QT_QPA_PLATFORM=offscreen python tools/run_tests.py tests/nucleo     # one group of tests, offscreen
@@ -170,11 +180,11 @@ down. The tests are grouped in packages under `tests/`:
 | `calcoli/` | the energy pipeline against recorded PVGIS answers (`calcoli/riferimenti/`) |
 | `formati/` | project and settings files of every format version, frozen (a new format adds a file, never rewrites one) |
 | `quick/` | the Qt Quick window, offscreen: controls, plan, 3D view, pages, shell, Meridio, system rules |
-| `widget/`, `finestra/` | the previous Qt Widgets window (frozen) |
 | `esterni/` | what needs real PVsyst files or an idle machine; run only on request |
 
 The CI ([`.github/workflows/test.yml`](.github/workflows/test.yml)) runs the lint and the suite on Linux offscreen on
-every push. The Windows installer is built by [`build-aux/windows/build.ps1`](build-aux/windows/build.ps1)
+every push; [`.github/workflows/release.yml`](.github/workflows/release.yml) builds and checks the Windows package on a
+`v*` tag or by hand, and publishes the signed release. The Windows installer is built by [`build-aux/windows/build.ps1`](build-aux/windows/build.ps1)
 (PyInstaller and Inno Setup); how versions are raised and releases are made is in
 [`docs/progetto.md`](docs/progetto.md), section 4 (in Italian).
 
@@ -182,12 +192,12 @@ every push. The Windows installer is built by [`build-aux/windows/build.ps1`](bu
 
 ```
 bin/                    the launcher
-src/meridiana/          the core, plain Python without Qt: coordinates, sun, roofs, layout, drawing aids, rules,
-                        checks, project file, IFC and DXF; energy/ (weather, simulation, strings, storage,
-                        economics), catalog/, pvsyst/ (reading PVsyst files), assistant/ (Meridio),
-                        report_typst/ (the report)
-src/meridiana/quick/    the Qt Quick window: the QML in qml/, the bridges to the core in backend/
-src/meridiana/ui/       the previous Qt Widgets window, frozen
+src/meridiana/core/     the computations, plain Python without Qt: geometry, model, layout, rules, energy
+src/meridiana/data/     the formats and stores: project file, registry, cached years, the catalogue and its data
+src/meridiana/app/      what joins them, without Qt: the session, the jobs, paths and settings, IFC, DXF and
+                        PVsyst, the report, Meridio, the updates
+src/meridiana/gui/      the Qt Quick window: the QML in qml/, the bridges to the layers below in backend/
+                        (the rules of the layers: tests/nucleo/test_strati.py, docs/progetto.md section 2)
 tests/                  the suite, by group
 po/, locale/            translations (gettext)
 data/                   fonts, icons, 3D models, ISTAT municipalities, Natural Earth outlines, Meridio's drawings
@@ -199,7 +209,7 @@ tools/                  helper scripts: catalogues, translations, icons, map cov
 ## Data, services and credits
 
 Meridiana stands on the work of others. The libraries (Qt for Python, pvlib, shapely, numpy, scipy, pandas,
-matplotlib, pyqtgraph, Typst, IfcOpenShell, ezdxf), the fonts, the Lucide icons, the 3D models, the NREL CEC module
+matplotlib, Typst, IfcOpenShell, ezdxf), the fonts, the Lucide icons, the 3D models, the NREL CEC module
 and inverter lists, the ISTAT municipalities, the Natural Earth outlines and every map source with its attribution
 are listed with their licences in [ATTRIBUTIONS.md](ATTRIBUTIONS.md). The squaring of a traced outline is ported from
 the OpenStreetMap editor iD. PVGIS, OpenStreetMap, OpenTopoMap and the national and regional orthophoto services are
