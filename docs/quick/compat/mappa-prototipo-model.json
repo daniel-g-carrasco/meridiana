@@ -1,0 +1,6 @@
+{
+  "window/project[0]": {"id": "leftPanel", "colors": {"Window": "color"}},
+  "window/properties[0]": {"id": "rightPanel", "colors": {"Window": "color"}},
+  "window/checks[0]": {"id": "checksPanel", "colors": {"Window": "color"}},
+  "window/top-area[0]/phase-header[0]/phase-card[0]/phase-bars[0]/bar-model[0]/ToolGroup[0]/ToolButton[0]": "selectTool"
+}

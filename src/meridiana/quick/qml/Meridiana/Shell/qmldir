@@ -1,0 +1,9 @@
+module Meridiana.Shell
+Workbench 1.0 Workbench.qml
+PhaseHeader 1.0 PhaseHeader.qml
+ObjectPicker 1.0 ObjectPicker.qml
+DockPanel 1.0 DockPanel.qml
+ProjectPanel 1.0 ProjectPanel.qml
+PropertiesPanel 1.0 PropertiesPanel.qml
+ChecksPanel 1.0 ChecksPanel.qml
+AppearancePanel 1.0 AppearancePanel.qml

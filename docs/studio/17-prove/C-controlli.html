@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8"><title>C. Pulsanti, campi e gruppi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>:root {
+  --window: #f2f1ed;
+  --panel: #f8f7f4;
+  --view: #ffffff;
+  --header: #f2f1ed;
+  --card: #ffffff;
+  --line: #d9d5cc;
+  --line-soft: #e8e5de;
+  --text: #1e1c19;
+  --text2: #514c44;
+  --muted: #6f685d;
+  --tooltip-bg: #1e1c19;
+  --tooltip-fg: #f8f7f4;
+  --accent: #805210;
+  --accent-fg: #ffffff;
+  --accent-soft: #80521020;
+  --select-bg: #ffe1bf;
+  --select-fg: #1e1c19;
+  --assistant: #334f6d;
+  --plan-bg: #fbfaf8;
+  --plan-bld: #3a352d;
+  --plan-bld-fill: #3a352d0d;
+  --plan-module: #1f3352;
+  --plan-sub: #805210;
+  --plan-sub-fill: #80521014;
+  --plan-sel: #805210;
+  --plan-guide: #2e6fb0;
+  --plan-pitch: #808080;
+  --sky-top: #dde7f0;
+  --sky-bottom: #f6f2ea;
+  --ground: #d6d0bf;
+  --wall: #f0ebe1;
+  --roof: #b5643f;
+  --d3-module: #1f3352;
+  --chart-surface: #ffffff;
+  --chart-grid: #e8e8e8;
+  --chart-axis: #c7c7c7;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --good: #0ca30c;
+  --warning-ink: #b07a00;
+  --shadow: rgba(20, 24, 30, 0.14);
+  --raise: rgba(255, 255, 255, 0.9);
+  --sink: rgba(30, 28, 25, 0.06);
+}
+html.dark {
+  --window: #14181e;
+  --panel: #1a1f26;
+  --view: #101318;
+  --header: #14181e;
+  --card: #1a1f26;
+  --line: #2b323c;
+  --line-soft: #20262e;
+  --text: #ece8e1;
+  --text2: #c0b9ad;
+  --muted: #918a7e;
+  --tooltip-bg: #ece8e1;
+  --tooltip-fg: #14181e;
+  --accent: #f1dac1;
+  --accent-fg: #14181e;
+  --accent-soft: #f1dac124;
+  --select-bg: #483319;
+  --select-fg: #ece8e1;
+  --assistant: #a1c1e4;
+  --plan-bg: #101318;
+  --plan-bld: #d8d2c6;
+  --plan-bld-fill: #d8d2c60d;
+  --plan-module: #1d3152;
+  --plan-sub: #f1dac1;
+  --plan-sub-fill: #f1dac112;
+  --plan-sel: #f1dac1;
+  --plan-guide: #8ab4f8;
+  --plan-pitch: #929292;
+  --sky-top: #0f141c;
+  --sky-bottom: #1f2a3a;
+  --ground: #23272a;
+  --wall: #d6d0c4;
+  --roof: #9a5a3e;
+  --d3-module: #1d3152;
+  --chart-surface: #101318;
+  --chart-grid: #222222;
+  --chart-axis: #383838;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --good: #0ca30c;
+  --warning-ink: #fab219;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --raise: rgba(255, 255, 255, 0.045);
+  --sink: rgba(0, 0, 0, 0.22);
+}
+
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-Regular.ttf"); font-weight: 400; }
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-SemiBold.ttf"); font-weight: 600; }
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-Bold.ttf"); font-weight: 700; }
+* { box-sizing: border-box; }
+html { --zoom: 0.62; }
+body { margin: 0; font-family: "Titillium Web", "Segoe UI", sans-serif; font-size: 15px; color: var(--text);
+       background: var(--window); }
+.page { padding: 20px 28px 60px; max-width: 2400px; }
+.page h1 { font-size: 26px; margin: 0 0 4px; font-weight: 600; }
+.page h2 { font-size: 20px; margin: 28px 0 6px; font-weight: 600; }
+.page p { max-width: 920px; line-height: 1.4; color: var(--text2); margin: 4px 0; }
+.controls { display: flex; gap: 14px; align-items: center; margin: 10px 0 18px; flex-wrap: wrap; }
+.controls label { display: flex; gap: 6px; align-items: center; color: var(--text2); }
+.controls button, .controls select { font: inherit; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--line);
+       background: var(--panel); color: var(--text); cursor: pointer; }
+.controls button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.row { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; padding-bottom: 12px; }
+.dir { flex: 0 0 auto; }
+.dir h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+.dir .note { max-width: calc(1180px * var(--zoom)); font-size: 14px; color: var(--text2); line-height: 1.35; margin: 6px 0 0; }
+.dir .note b { color: var(--text); }
+.frame { width: calc(1180px * var(--zoom)); height: calc(720px * var(--zoom)); overflow: hidden; border-radius: 6px;
+          box-shadow: 0 2px 10px var(--shadow); border: 1px solid var(--line); }
+.mock { width: 1180px; height: 720px; transform: scale(var(--zoom)); transform-origin: 0 0; display: grid;
+         grid-template-rows: 28px 34px auto 1fr 24px; grid-template-columns: 1fr; background: var(--window);
+         color: var(--text); font-size: 13px; position: relative; }
+.mock .menubar { display: flex; align-items: center; gap: 2px; padding: 0 8px; background: var(--window); }
+.mock .menubar span { padding: 4px 8px; border-radius: 4px; }
+.mock .menubar span.on { background: var(--select-bg); color: var(--select-fg); }
+.mock .menubar .sp { flex: 1; }
+.mock .menubar .chip { border: 1px solid var(--line); background: var(--panel); font-size: 12px; padding: 2px 8px; }
+.mock .tabs { display: flex; align-items: flex-end; gap: 2px; padding: 0 10px; background: var(--window);
+               border-bottom: 1px solid var(--line); }
+.mock .tabs span { padding: 7px 12px 6px; color: var(--text2); border-bottom: 2px solid transparent; }
+.mock .tabs span.on { color: var(--text); border-bottom-color: var(--accent); }
+.mock .tabs span.on::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+                               background: var(--accent); margin-right: 7px; vertical-align: 1px; }
+.mock .toolbar { display: flex; align-items: center; gap: 4px; padding: 3px 8px; background: var(--window); min-height: 34px; }
+.mock .toolbar .tb { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 5px;
+                      color: var(--text2); border: 1px solid transparent; }
+.mock .toolbar .tb svg { width: 18px; height: 18px; }
+.mock .toolbar .tb.on { background: var(--select-bg); color: var(--select-fg); border-color: var(--line); }
+.mock .toolbar .sep { width: 1px; height: 20px; background: var(--line); margin: 0 6px; }
+.mock .body { display: grid; grid-template-columns: 220px 1fr 300px; min-height: 0; }
+.mock .side { display: flex; flex-direction: column; min-height: 0; background: var(--panel); }
+.mock .ptitle { padding: 5px 10px; font-weight: 600; font-size: 12px; color: var(--text2); background: var(--header);
+                 border-bottom: 1px solid var(--line-soft); display: flex; align-items: center; gap: 6px; }
+.mock .ptitle .x { margin-left: auto; color: var(--muted); font-weight: 400; }
+.mock .centre { display: grid; grid-template-rows: 1fr auto; min-height: 0; background: var(--window); }
+.mock .views { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); min-height: 0; }
+.mock .view { position: relative; overflow: hidden; background: var(--plan-bg); }
+.mock .view svg { width: 100%; height: 100%; display: block; }
+.mock .view.d3 { background: linear-gradient(var(--sky-top), var(--sky-bottom)); }
+.mock .viewbar { position: absolute; top: 8px; left: 8px; display: flex; gap: 2px; background: var(--panel);
+                  border: 1px solid var(--line); border-radius: 6px; padding: 2px; font-size: 12px;
+                  box-shadow: 0 1px 4px var(--shadow); }
+.mock .viewbar span { padding: 2px 8px; border-radius: 4px; color: var(--text2); }
+.mock .viewbar span.on { background: var(--select-bg); color: var(--select-fg); }
+.mock .checks { grid-column: 1 / -1; background: var(--panel); border-top: 1px solid var(--line); min-height: 0;
+                 display: flex; flex-direction: column; }
+.mock .status { display: flex; align-items: center; gap: 14px; padding: 0 10px; border-top: 1px solid var(--line);
+                 font-size: 12px; color: var(--text2); background: var(--window); }
+.mock .status .sp { flex: 1; }
+.mock .status .cnt { display: inline-flex; gap: 4px; align-items: center; }
+.mock .tree { padding: 6px 4px; overflow: hidden; line-height: 1.6; font-size: 13px; }
+.mock .tree div { display: flex; align-items: center; gap: 6px; padding: 0 6px; border-radius: 4px; white-space: nowrap; }
+.mock .tree div.sel { background: var(--select-bg); color: var(--select-fg); }
+.mock .tree svg { width: 15px; height: 15px; flex: none; color: var(--text2); }
+.mock .tree .mark { margin-left: auto; font-size: 11px; padding: 0 5px; border-radius: 8px; color: #fff; }
+.mock .tree .mark.warn { background: var(--warning-ink); }
+.mock .tree .mark.info { background: var(--muted); }
+.mock .tree .mark.fail { background: var(--critical); }
+.mock .tree .lvl1 { padding-left: 20px; }
+.mock .tree .lvl2 { padding-left: 36px; }
+.mock .tree .lvl3 { padding-left: 52px; }
+.mock .props { padding: 6px 8px; overflow: hidden; font-size: 13px; }
+.mock .props h4 { margin: 6px 0 4px; font-size: 13px; font-weight: 600; }
+.mock .group { margin: 8px 0; }
+.mock .group .gt { font-weight: 600; font-size: 12px; color: var(--text2); padding: 2px 0; }
+.mock .form { display: grid; grid-template-columns: 1fr 128px; gap: 4px 8px; align-items: center; }
+.mock .form label { color: var(--text2); }
+.mock .field { display: flex; align-items: center; justify-content: space-between; height: 24px; padding: 0 6px;
+                border-radius: 4px; background: var(--view); border: 1px solid var(--line); color: var(--text); }
+.mock .field .arr { color: var(--muted); font-size: 10px; letter-spacing: -2px; }
+.mock .field.combo::after { content: "⌄"; color: var(--muted); }
+.mock .btn { display: inline-flex; align-items: center; justify-content: center; height: 26px; padding: 0 12px;
+              border-radius: 5px; border: 1px solid var(--line); background: var(--view); color: var(--text); }
+.mock .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.mock .check { display: flex; gap: 6px; align-items: center; }
+.mock .check i { width: 14px; height: 14px; border: 1px solid var(--line); border-radius: 3px; background: var(--view); }
+.mock .check i.on { background: var(--accent); border-color: var(--accent); }
+.mock .clist { overflow: hidden; font-size: 12.5px; padding: 2px 6px; }
+.mock .clist div { display: flex; gap: 8px; align-items: baseline; padding: 2px 4px; }
+.mock .clist .m { width: 16px; text-align: center; font-weight: 700; }
+.mock .clist .m.fail { color: var(--critical); } .mock .clist .m.warn { color: var(--warning-ink); }
+.mock .clist .m.ok { color: var(--good); } .mock .clist .m.info { color: var(--muted); }
+.mock .clist .src { margin-left: auto; color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+.mock .chead { display: flex; gap: 6px; align-items: center; padding: 4px 8px; font-size: 12px; }
+.mock .chead .f { padding: 1px 7px; border: 1px solid var(--line); border-radius: 4px; background: var(--view); }
+.mock .chead .f.on { background: var(--select-bg); }
+.mock .sunbar { display: flex; align-items: center; gap: 10px; padding: 3px 10px; font-size: 12px; color: var(--text2);
+                 background: var(--panel); border-top: 1px solid var(--line); }
+.mock .sunbar .track { flex: 1; height: 4px; background: var(--line); border-radius: 2px; position: relative; }
+.mock .sunbar .track i { position: absolute; left: 46%; top: -4px; width: 12px; height: 12px; border-radius: 50%;
+                          background: var(--accent); }
+.mock .meridio { position: absolute; right: 318px; bottom: 60px; width: 46px; height: 46px; border-radius: 50%;
+                  background: var(--panel); border: 1px solid var(--line); display: grid; place-items: center;
+                  box-shadow: 0 1px 4px var(--shadow); }
+.mock .meridio svg { width: 34px; height: 34px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+.ctl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.ctl .box { background: var(--window); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+.ctl h3 { margin: 0 0 10px; font-size: 16px; }
+.ctl .samples { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 8px 0 14px; }
+.ctl .side { width: 310px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; font-size: 13px; }
+.ctl .side .ptitle { padding: 6px 10px; font-weight: 600; font-size: 12px; color: var(--text2); border-bottom: 1px solid var(--line-soft); }
+.ctl .props { padding: 6px 8px; }
+.ctl .group { margin: 8px 0; }
+.ctl .group .gt { font-weight: 600; font-size: 12px; color: var(--text2); padding: 2px 0; }
+.ctl .form { display: grid; grid-template-columns: 1fr 128px; gap: 5px 8px; align-items: center; }
+.ctl .form label { color: var(--text2); }
+.ctl .hbox { display: flex; gap: 6px; }
+.ctl .value { font-weight: 600; text-align: right; }
+.ctl .note { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+.ctl .check { display: flex; gap: 6px; align-items: center; }
+.ctl .check i { width: 14px; height: 14px; border: 1px solid var(--line); border-radius: 3px; background: var(--view); }
+.ctl .check i.on { background: var(--accent); border-color: var(--accent); }
+.ctl .field { display: flex; align-items: center; justify-content: space-between; height: 26px; padding: 0 7px; border-radius: 4px; }
+.ctl .field .arr { color: var(--muted); font-size: 10px; letter-spacing: -2px; }
+.ctl .field.combo::after { content: "⌄"; color: var(--muted); }
+.ctl .btn { display: inline-flex; align-items: center; justify-content: center; height: 28px; padding: 0 14px; border-radius: 6px; font-weight: 600; }
+.ctl .help { display: none; }
+/* C1: Fusion ritoccato: pulsante con fondo leggero e bordo, campo con fondo vista e bordo; gruppo con titolo e riga */
+.c1 .btn { background: var(--raise); border: 1px solid var(--line); color: var(--text); box-shadow: 0 1px 0 var(--sink); }
+.c1 .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.c1 .btn.flat { background: transparent; border-color: transparent; box-shadow: none; color: var(--accent); }
+.c1 .field { background: var(--view); border: 1px solid var(--line); color: var(--text); }
+.c1 .field.focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.c1 .group .gt { border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+/* C2: alla GNOME: pulsanti tonali pieni senza bordo, campi pieni, gruppi come schede piene con angoli */
+.c2 .btn { background: var(--sink); border: 1px solid transparent; color: var(--text); }
+.c2 .btn.primary { background: var(--accent); color: var(--accent-fg); }
+.c2 .btn.flat { background: transparent; color: var(--accent); }
+.c2 .field { background: var(--sink); border: 1px solid transparent; color: var(--text); }
+.c2 .field.focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.c2 .group { background: var(--card); border: 1px solid var(--line-soft); border-radius: 8px; padding: 8px 10px 10px; }
+.c2 .group .gt { color: var(--text); font-size: 13px; margin-bottom: 6px; }
+.c2 .check i { background: var(--sink); border-color: transparent; }
+.c2 .check i.on { background: var(--accent); }
+/* C3: contorni forti: pulsanti a contorno, campi con bordo da 1,5 px, gruppi con cornice e intestazione piena */
+.c3 .btn { background: transparent; border: 1.5px solid var(--text2); color: var(--text); }
+.c3 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.c3 .btn.flat { border-color: transparent; color: var(--accent); }
+.c3 .field { background: var(--view); border: 1.5px solid var(--text2); color: var(--text); border-radius: 3px; }
+.c3 .field.focus { border-color: var(--accent); }
+.c3 .group { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.c3 .group .gt { background: var(--line-soft); color: var(--text); padding: 4px 8px; margin: 0 0 6px; }
+.c3 .group .form { padding: 0 8px 8px; }
+/* i riquadri dei risultati */
+.res { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 10px; }
+.res .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+.res h3 { margin: 0 0 10px; font-size: 16px; }
+.res .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.res .card { border-radius: 6px; padding: 8px 10px; }
+.res .card .k { font-size: 12px; color: var(--text2); }
+.res .card .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.res .card .u { font-size: 12px; color: var(--muted); margin-left: 3px; font-weight: 400; }
+.res .card .s { font-size: 11px; color: var(--muted); }
+.res .card .s a { color: var(--accent); text-decoration: none; }
+.r1 .card { background: var(--card); border: 1px solid var(--line-soft); }
+.r2 .card { background: var(--sink); }
+.r2 .card.key { background: var(--accent-soft); }
+.r3 .card { border-bottom: 1px solid var(--line); border-radius: 0; padding-left: 0; }
+.r3 .card .v { color: var(--accent); }
+.contrast { font-size: 13px; color: var(--text2); margin-top: 8px; }
+</style>
+<script>
+const root = document.documentElement;
+function setTheme(dark) {
+  root.classList.toggle('dark', dark);
+  document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('on', (b.dataset.theme === 'dark') === dark));
+  try { localStorage.setItem('m17-dark', dark ? '1' : '0'); } catch (e) {}
+}
+function setZoom(z) { root.style.setProperty('--zoom', z); const o = document.getElementById('zoomv'); if (o) o.textContent = Math.round(z * 100) + '%'; }
+try { setTheme(localStorage.getItem('m17-dark') === '1'); } catch (e) { setTheme(false); }
+</script>
+</head>
+<body><div class="page"><h1>C. Pulsanti, campi e gruppi</h1><p>R22. Daniel: «il design di tasti e bottoni non è il massimo. […] Le caselle di input non si distinguono bene dallo sfondo (almeno in modalità scura) e sarebbe buono dare alle varie sottosezioni un contorno più evidente […]. Anche i contorni all'interno dei risultati di consumi, bilancio ed economia, producibilità, non si leggono. […] non è possibile usare un approccio alla gnome nel quale sottosezioni e tasti non solo hanno contorno ma riempimento come il contorno?». Tre direzioni per pulsanti, campi e gruppi, poi tre per i riquadri dei risultati. Il colore d'accento è il bronzo in chiaro e il sole pallido in scuro.</p>
+<div class="controls">
+  <label>Tema:
+    <button data-theme="light" class="on" onclick="setTheme(false)">Chiaro</button>
+    <button data-theme="dark" onclick="setTheme(true)">Scuro</button></label>
+  <label>Scala: <input type="range" min="0.35" max="1" step="0.01" value="0.62" oninput="setZoom(this.value)"> <span id="zoomv">62%</span></label>
+</div><div class="ctl"><div class="box"><h3>C1. Fusion ritoccato</h3><div class="samples c1"><span class="btn primary">Calcola</span><span class="btn">Catalogo…</span><span class="btn flat">Come è calcolato</span><div class="field" style="width:120px">12,36 m</div><div class="field focus" style="width:120px">10 m + 50 cm</div><div class="field combo" style="width:150px">Complanare alla falda</div><div class="check"><i class="on"></i>Fuori dalle ombre</div></div><div class="side c1"><div class="ptitle">Proprietà</div><div class="props"><div class="group g-c1"><div class="gt">Sottocampo</div><div class="form"><label>Nome</label><div class="field">Copertura Sud</div><label>Montaggio</label><div class="field combo">Complanare</div><label>Modulo</label><div class="hbox"><div class="field" style="flex:1;min-width:0;overflow:hidden">JKM475N</div><span class="btn" style="padding:0 7px">…</span></div><label>Orientamento</label><div class="field combo">Verticale</div><label>Moduli per tavola, di traverso</label><div class="field">1<span class="arr">▴▾</span></div><label>Azimut</label><div class="check"><i class="on"></i>Automatico</div></div></div><div class="group g-c1"><div class="gt">Distanze e margini</div><div class="form"><label>Tra i moduli</label><div class="field">0,02 m<span class="arr">▴▾</span></div><label>Dal bordo dell'area</label><div class="field">0,50 m<span class="arr">▴▾</span></div><label>Tra le file</label><div class="field">0,05 m<span class="arr">▴▾</span></div><label>Moduli per tavola, lungo</label><div class="field">file continue<span class="arr">▴▾</span></div><label>Fuori dalle ombre</label><div class="check"><i class="on"></i></div></div></div><div class="group g-c1"><div class="gt">Risultato della posa</div><div class="form"><label>Moduli</label><div class="value">156</div><label>Potenza</label><div class="value">74,1 kWp</div><label>Passo</label><div class="value">1,18 m</div><label>Nota</label><div class="note">1 fila tolta per il corridoio VVF</div></div></div><div class="hbox" style="margin-top:8px"><span class="btn primary">Posa i moduli</span><span class="btn">Svuota</span></div></div></div><p class="contrast">Pulsanti con <b>fondo leggero e bordo</b> (come Fusion, ma con il bordo del tema e un'ombra di 1 px), campi con il fondo della vista e il bordo, gruppi con titolo e riga sotto. Il più vicino a oggi: cambia solo il foglio di stile. In scuro il campo (#101318) si stacca dal pannello (#1a1f26) per 1,5:1 più il bordo #2b323c.</p></div><div class="box"><h3>C2. Alla GNOME, tonale</h3><div class="samples c2"><span class="btn primary">Calcola</span><span class="btn">Catalogo…</span><span class="btn flat">Come è calcolato</span><div class="field" style="width:120px">12,36 m</div><div class="field focus" style="width:120px">10 m + 50 cm</div><div class="field combo" style="width:150px">Complanare alla falda</div><div class="check"><i class="on"></i>Fuori dalle ombre</div></div><div class="side c2"><div class="ptitle">Proprietà</div><div class="props"><div class="group g-c2"><div class="gt">Sottocampo</div><div class="form"><label>Nome</label><div class="field">Copertura Sud</div><label>Montaggio</label><div class="field combo">Complanare</div><label>Modulo</label><div class="hbox"><div class="field" style="flex:1;min-width:0;overflow:hidden">JKM475N</div><span class="btn" style="padding:0 7px">…</span></div><label>Orientamento</label><div class="field combo">Verticale</div><label>Moduli per tavola, di traverso</label><div class="field">1<span class="arr">▴▾</span></div><label>Azimut</label><div class="check"><i class="on"></i>Automatico</div></div></div><div class="group g-c2"><div class="gt">Distanze e margini</div><div class="form"><label>Tra i moduli</label><div class="field">0,02 m<span class="arr">▴▾</span></div><label>Dal bordo dell'area</label><div class="field">0,50 m<span class="arr">▴▾</span></div><label>Tra le file</label><div class="field">0,05 m<span class="arr">▴▾</span></div><label>Moduli per tavola, lungo</label><div class="field">file continue<span class="arr">▴▾</span></div><label>Fuori dalle ombre</label><div class="check"><i class="on"></i></div></div></div><div class="group g-c2"><div class="gt">Risultato della posa</div><div class="form"><label>Moduli</label><div class="value">156</div><label>Potenza</label><div class="value">74,1 kWp</div><label>Passo</label><div class="value">1,18 m</div><label>Nota</label><div class="note">1 fila tolta per il corridoio VVF</div></div></div><div class="hbox" style="margin-top:8px"><span class="btn primary">Posa i moduli</span><span class="btn">Svuota</span></div></div></div><p class="contrast">Pulsanti <b>pieni senza bordo</b> (un velo del testo al 6-10 %, come i «button» di Adwaita), il pulsante principale pieno d'accento, campi pieni dello stesso velo, <b>gruppi come schede</b> arrotondate con fondo proprio (preferences groups, boxed lists). Il riempimento «come il contorno» che chiede Daniel. In scuro i campi hanno un velo nero al 22 %.</p></div><div class="box"><h3>C3. Contorni forti</h3><div class="samples c3"><span class="btn primary">Calcola</span><span class="btn">Catalogo…</span><span class="btn flat">Come è calcolato</span><div class="field" style="width:120px">12,36 m</div><div class="field focus" style="width:120px">10 m + 50 cm</div><div class="field combo" style="width:150px">Complanare alla falda</div><div class="check"><i class="on"></i>Fuori dalle ombre</div></div><div class="side c3"><div class="ptitle">Proprietà</div><div class="props"><div class="group g-c3"><div class="gt">Sottocampo</div><div class="form"><label>Nome</label><div class="field">Copertura Sud</div><label>Montaggio</label><div class="field combo">Complanare</div><label>Modulo</label><div class="hbox"><div class="field" style="flex:1;min-width:0;overflow:hidden">JKM475N</div><span class="btn" style="padding:0 7px">…</span></div><label>Orientamento</label><div class="field combo">Verticale</div><label>Moduli per tavola, di traverso</label><div class="field">1<span class="arr">▴▾</span></div><label>Azimut</label><div class="check"><i class="on"></i>Automatico</div></div></div><div class="group g-c3"><div class="gt">Distanze e margini</div><div class="form"><label>Tra i moduli</label><div class="field">0,02 m<span class="arr">▴▾</span></div><label>Dal bordo dell'area</label><div class="field">0,50 m<span class="arr">▴▾</span></div><label>Tra le file</label><div class="field">0,05 m<span class="arr">▴▾</span></div><label>Moduli per tavola, lungo</label><div class="field">file continue<span class="arr">▴▾</span></div><label>Fuori dalle ombre</label><div class="check"><i class="on"></i></div></div></div><div class="group g-c3"><div class="gt">Risultato della posa</div><div class="form"><label>Moduli</label><div class="value">156</div><label>Potenza</label><div class="value">74,1 kWp</div><label>Passo</label><div class="value">1,18 m</div><label>Nota</label><div class="note">1 fila tolta per il corridoio VVF</div></div></div><div class="hbox" style="margin-top:8px"><span class="btn primary">Posa i moduli</span><span class="btn">Svuota</span></div></div></div><p class="contrast">Pulsanti <b>a contorno</b> di 1,5 px nel colore del testo secondario, campi con bordo di 1,5 px, gruppi con cornice e <b>intestazione piena</b>. Si legge sempre (WCAG 1.4.11: bordi a 3:1 garantiti), ma è la più «disegnata» e i contorni si sommano a quelli dei pannelli.</p></div></div><h2>I riquadri dei risultati (Producibilità, Consumi, Bilancio)</h2><div class="res"><div class="box r1"><h3>R1. Schede dei risultati</h3><div class="cards"><div class="card key"><div class="k">Produzione annua</div><div class="v">92.410<span class="u">kWh</span></div><div class="s">da PVGIS, anno tipo 2005-2023 · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Resa specifica</div><div class="v">1.247<span class="u">kWh/kWp</span></div><div class="s">calcolata · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Performance ratio</div><div class="v">82,6<span class="u">%</span></div><div class="s">calcolato · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Autoconsumo</div><div class="v">61<span class="u">%</span></div><div class="s">con i consumi stimati · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Perdita per ombre vicine</div><div class="v">3,4<span class="u">%</span></div><div class="s">ostacoli della scena · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">VAN a 20 anni</div><div class="v">48.300<span class="u">€</span></div><div class="s">prezzi indicativi · <a href="#">come è calcolato</a></div></div></div><p class="contrast">Ogni numero in una <b>scheda</b> con fondo e bordo leggero, l'unità piccola, la fonte e il collegamento a «Come è calcolato». Legge bene in griglia; i contorni si vedono anche in scuro (#1a1f26 su #14181e più il bordo).</p></div><div class="box r2"><h3>R2. Schede piene, il risultato chiave in evidenza</h3><div class="cards"><div class="card key"><div class="k">Produzione annua</div><div class="v">92.410<span class="u">kWh</span></div><div class="s">da PVGIS, anno tipo 2005-2023 · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Resa specifica</div><div class="v">1.247<span class="u">kWh/kWp</span></div><div class="s">calcolata · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Performance ratio</div><div class="v">82,6<span class="u">%</span></div><div class="s">calcolato · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Autoconsumo</div><div class="v">61<span class="u">%</span></div><div class="s">con i consumi stimati · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Perdita per ombre vicine</div><div class="v">3,4<span class="u">%</span></div><div class="s">ostacoli della scena · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">VAN a 20 anni</div><div class="v">48.300<span class="u">€</span></div><div class="s">prezzi indicativi · <a href="#">come è calcolato</a></div></div></div><p class="contrast">Schede <b>piene senza bordo</b> (velo del testo), la prima nel velo d'accento: il numero che conta si trova a colpo d'occhio. Stile tonale, coerente con C2.</p></div><div class="box r3"><h3>R3. Righe con il numero d'accento</h3><div class="cards"><div class="card key"><div class="k">Produzione annua</div><div class="v">92.410<span class="u">kWh</span></div><div class="s">da PVGIS, anno tipo 2005-2023 · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Resa specifica</div><div class="v">1.247<span class="u">kWh/kWp</span></div><div class="s">calcolata · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Performance ratio</div><div class="v">82,6<span class="u">%</span></div><div class="s">calcolato · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Autoconsumo</div><div class="v">61<span class="u">%</span></div><div class="s">con i consumi stimati · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">Perdita per ombre vicine</div><div class="v">3,4<span class="u">%</span></div><div class="s">ostacoli della scena · <a href="#">come è calcolato</a></div></div><div class="card "><div class="k">VAN a 20 anni</div><div class="v">48.300<span class="u">€</span></div><div class="s">prezzi indicativi · <a href="#">come è calcolato</a></div></div></div><p class="contrast">Niente riquadri: <b>righe separate da una linea</b>, il numero nel colore d'accento. La più leggera; meno «contorno», che è ciò che Daniel lamenta.</p></div></div>
+<p style="margin-top:30px;font-size:13px">Studio 17, Meridiana. Colori da <code>theme_colors.py</code> (bronzo, fondi Meridiana); carattere Titillium Web dai file del repository; nessuna libreria, nessuna rete. <a href="index.html" style="color:var(--accent)">Indice dei bozzetti</a>.</p>
+</div></body></html>

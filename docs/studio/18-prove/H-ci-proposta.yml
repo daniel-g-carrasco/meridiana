@@ -1,0 +1,220 @@
+name: CI
+
+# Proposta della revisione completa, tema H (docs/studio/18-prove/H-pacchetti.md, 23/10/2026). Non e' in
+# .github/workflows: va copiato li' come test.yml (al posto di quello di oggi) quando Daniel decide.
+#
+# Che cosa consuma: il job Linux a ogni push di qualsiasi ramo (2-3 minuti, offscreen, con la cache di pip),
+# niente per i commit che toccano solo i documenti, niente doppione su pull_request (il push del ramo basta,
+# GitHub mostra lo stato sul commit e quindi sulla richiesta di unione); il job Windows solo sui tag v* e a
+# mano (casella "windows" di workflow_dispatch): suite sul desktop del runner, PyInstaller, Inno Setup
+# (preinstallato sull'immagine windows-2025), installer e zip come artifact; la release sul tag firma con
+# minisign e carica. Il Flatpak resta un workflow a parte (build-aux/ci-gtk-da-adattare/build.yml, da
+# adattare al runtime KDE), sul tag.
+#
+# Le azioni sono ancorate al commit (regola del template, docs/05-ci-rilascio.md): gli SHA sono quelli dei tag
+# letti con gh api il 23/10/2026.
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'site/**'
+      - '.claude/**'
+  workflow_dispatch:
+    inputs:
+      windows:
+        description: 'Also the Windows job (suite on a real desktop, PyInstaller, Inno Setup)'
+        type: boolean
+        default: false
+
+# read-only for every job: only "release" writes (the release itself), and it runs nothing of the build
+permissions:
+  contents: read
+
+# a push on top of a push cancels the run of the older commit (a tag never)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip                      # the wheels downloaded, keyed on the hash of requirements.txt
+      - name: Qt offscreen, gettext and the validators
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends gettext desktop-file-utils appstream \
+            libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+      - run: python -m pip install -r requirements.txt ruff
+      - run: python -m ruff check --select F,E9,B .
+      - run: python tools/compile_po.py
+      - run: python -W default -m unittest discover -s tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+      - name: Validate desktop entry and AppStream metadata
+        run: |
+          desktop-file-validate data/io.github.daniel_g_carrasco.meridiana.desktop
+          appstreamcli validate --no-net data/io.github.daniel_g_carrasco.meridiana.metainfo.xml
+      - name: The tag matches __version__
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          v="$(python -c 'import sys; sys.path.insert(0, "src"); import meridiana as p; print(p.__version__)')"
+          if [ "v$v" != "${GITHUB_REF_NAME}" ]; then
+            echo "tag ${GITHUB_REF_NAME} does not match __version__ = $v"; exit 1
+          fi
+      - name: The catalogues for the Windows job (the Windows runner has no msgfmt)
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.windows
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: locale
+          path: locale/
+
+  windows:
+    # a tag, or asked by hand: the suite on a real desktop, then the package
+    needs: linux
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.windows)
+    runs-on: windows-2025
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: locale
+          path: locale
+      - name: Python packages (PySide6 without WebEngine: 132 MB of wheel the app never imports)
+        run: |
+          python -m pip install -r requirements.txt pyinstaller==6.22.3
+          python -m pip uninstall -y PySide6 PySide6_WebEngine
+          python -c "import PySide6.QtQuick3D, PySide6.QtPdf; print('Quick3D and Pdf present')"
+      - name: Tests on the runner's desktop
+        run: python -W default -m unittest discover -s tests
+      - name: Build with PyInstaller
+        run: |
+          python tools/make_ico.py
+          pyinstaller --noconfirm build-aux/windows/meridiana.spec
+      - name: What the bundle must and must not contain
+        run: |
+          $i = "dist\Meridiana\_internal"
+          foreach ($f in @("$i\PySide6\translations\qtbase_it.qm", "$i\PySide6\qml\QtQuick3D\qmldir",
+                           "$i\PySide6\qml\QtQuick3D\Helpers\qmldir", "$i\PySide6\plugins\platforms\qwindows.dll",
+                           "$i\share\locale\it\LC_MESSAGES\meridiana.mo", "$i\share\fonts\titillium-web\TitilliumWeb-Regular.ttf",
+                           "$i\share\icons\lucide\map.svg")) {
+            if (-not (Test-Path $f)) { Write-Error "missing: $f"; exit 1 }
+          }
+          foreach ($f in @("$i\PySide6\Qt6WebEngineCore.dll", "$i\PySide6\qml\QtWebEngine", "$i\PySide6\Qt63DRender.dll",
+                           "$i\PySide6\Qt6Charts.dll", "$i\PySide6\Qt6Multimedia.dll")) {
+            if (Test-Path $f) { Write-Error "must not be there: $f"; exit 1 }
+          }
+          "bundle: {0:N0} MB" -f ((Get-ChildItem dist\Meridiana -Recurse -File | Measure-Object Length -Sum).Sum / 1MB)
+      - name: Smoke test (the real exe opens its window and writes a screenshot)
+        run: |
+          New-Item -ItemType Directory -Force smoke\config, smoke\state, smoke\data | Out-Null
+          $env:XDG_CONFIG_HOME = "$PWD\smoke\config"; $env:XDG_STATE_HOME = "$PWD\smoke\state"; $env:XDG_DATA_HOME = "$PWD\smoke\data"
+          $env:MERIDIANA_SCREENSHOT = "$PWD\smoke\window.png"; $env:MERIDIANA_SCREENSHOT_DELAY = "8"
+          $p = Start-Process dist\Meridiana\Meridiana.exe -PassThru
+          if (-not $p.WaitForExit(120000)) { Stop-Process $p -Force; Write-Error "the app did not quit after the screenshot"; exit 1 }
+          if (-not (Test-Path smoke\window.png)) { Write-Error "no screenshot"; exit 1 }
+      - name: Portable zip
+        run: |
+          $v = if ($env:GITHUB_REF_NAME -like 'v*') { $env:GITHUB_REF_NAME } else { 'dev' }
+          7z a -tzip -mx=5 "dist\meridiana-$v-windows-x64-portable.zip" .\dist\Meridiana | Out-Null
+      - name: Installer (Inno Setup, preinstalled on windows-2025)
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { Write-Error "ISCC.exe not found: the image changed, download it as the GTK workflow did"; exit 1 }
+          $version = if ($env:GITHUB_REF_NAME -like 'v*') { $env:GITHUB_REF_NAME.Substring(1) } else { 'dev' }
+          & $iscc "/DAppVersion=$version" "build-aux\windows\meridiana.iss"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Silent install, start, update over the running app
+        run: |
+          $setup = (Get-ChildItem dist -Filter 'meridiana-setup-*.exe' | Select-Object -First 1).FullName
+          $opts = '/VERYSILENT', '/CURRENTUSER', '/SUPPRESSMSGBOXES', '/NORESTART'
+          $p = Start-Process $setup -ArgumentList $opts -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "install: $($p.ExitCode)"; exit 1 }
+          Start-Process "$env:LOCALAPPDATA\Programs\Meridiana\Meridiana.exe"
+          Start-Sleep 20
+          if (-not (Get-Process Meridiana -ErrorAction SilentlyContinue)) { Write-Error 'the app did not start'; exit 1 }
+          $p = Start-Process $setup -ArgumentList ($opts + '/LOG=update.log') -PassThru
+          if (-not $p.WaitForExit(300000)) { Write-Error 'Setup did not finish'; exit 1 }
+          if ($p.ExitCode -ne 0) { Write-Error "update over a running app: $($p.ExitCode)"; exit 1 }
+          Start-Sleep 20
+          if (-not (Get-Process Meridiana -ErrorAction SilentlyContinue)) { Write-Error 'the app was not started again'; exit 1 }
+          Get-Process Meridiana | Stop-Process
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: meridiana-windows
+          path: |
+            dist/meridiana-setup-*.exe
+            dist/meridiana-*-windows-x64-portable.zip
+            smoke/window.png
+
+  release:
+    # a v* tag: the installer and the zip, signed, on the release. The only job that can write; it runs nothing
+    # of the build. The Flatpak workflow adds its bundle to the same release.
+    needs: windows
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: meridiana-windows
+          path: artifact
+      - name: Sign with the project's key (minisign), checked before anything is uploaded
+        # the installed app runs an update only with this signature (updates.py, the same public key);
+        # the trusted comment names the file, so another release's installer is not taken for this one
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+          PUBLIC_KEY: RWRF+AifJvn/zhz0o7MBObIYHgw9+sWoc4GaBK+qYnJY0AqeJm540y0a
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq minisign
+          key="$RUNNER_TEMP/minisign.key"
+          (umask 077
+           case "$MINISIGN_SECRET_KEY" in
+             "untrusted comment:"*) printf '%s\n' "$MINISIGN_SECRET_KEY" ;;
+             *) printf 'untrusted comment: releases\n%s\n' "$MINISIGN_SECRET_KEY" ;;
+           esac | tr -d '\r' > "$key")
+          for f in "artifact/dist/meridiana-setup-${GITHUB_REF_NAME}-windows-x64.exe" \
+                   "artifact/dist/meridiana-${GITHUB_REF_NAME}-windows-x64-portable.zip"; do
+            test -f "$f"
+            minisign -S -s "$key" -m "$f" -x "$f.minisig" \
+              -t "timestamp:$(date +%s) file:$(basename "$f") hashed" </dev/null
+            minisign -V -P "$PUBLIC_KEY" -m "$f" -x "$f.minisig"
+          done
+          rm -f "$key"
+      - name: The release, created if the Flatpak workflow has not yet, with the files attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          setup="artifact/dist/meridiana-setup-${GITHUB_REF_NAME}-windows-x64.exe"
+          zip="artifact/dist/meridiana-${GITHUB_REF_NAME}-windows-x64-portable.zip"
+          gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 \
+            || gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" \
+                 --title "Meridiana ${GITHUB_REF_NAME#v}" --generate-notes
+          gh release upload "${GITHUB_REF_NAME}" "$setup" "$zip" "$setup.minisig" "$zip.minisig" \
+            --repo "${GITHUB_REPOSITORY}" --clobber

@@ -1,0 +1,26 @@
+tema chiaro
+  campo C1: fondo vista su pannello: 1.07:1
+  campo C1: bordo linea su pannello: 1.37:1
+  campo C3: bordo testo2 su pannello: 7.95:1
+  pulsante primario: testo su accento: 6.70:1
+  testo attenuato su pannello: 5.14:1
+  scheda C2: fondo card su pannello: 1.07:1
+  scheda C2: bordo leggero su pannello: 1.17:1
+  finestra contro pannello (A1): 1.05:1
+  campo C2: velo tonale (#eae9e6) su pannello: 1.13:1
+  C1 + A1: 101 widget, foglio di stile applicato in 16 ms, disegno 8 ms, 21 regole -> controlli_prova_C1_A1_chiaro.png
+  C2 + A3: 108 widget, foglio di stile applicato in 21 ms, disegno 8 ms, 23 regole -> controlli_prova_C2_A3_chiaro.png
+  C3 + A2: 101 widget, foglio di stile applicato in 28 ms, disegno 11 ms, 22 regole -> controlli_prova_C3_A2_chiaro.png
+tema scuro
+  campo C1: fondo vista su pannello: 1.12:1
+  campo C1: bordo linea su pannello: 1.28:1
+  campo C3: bordo testo2 su pannello: 8.51:1
+  pulsante primario: testo su accento: 13.18:1
+  testo attenuato su pannello: 4.84:1
+  scheda C2: fondo card su pannello: 1.00:1
+  scheda C2: bordo leggero su pannello: 1.09:1
+  finestra contro pannello (A1): 1.08:1
+  campo C2: velo tonale (#14181d) su pannello: 1.08:1
+  C1 + A1: 101 widget, foglio di stile applicato in 23 ms, disegno 7 ms, 21 regole -> controlli_prova_C1_A1_scuro.png
+  C2 + A3: 108 widget, foglio di stile applicato in 37 ms, disegno 14 ms, 23 regole -> controlli_prova_C2_A3_scuro.png
+  C3 + A2: 101 widget, foglio di stile applicato in 31 ms, disegno 10 ms, 22 regole -> controlli_prova_C3_A2_scuro.png

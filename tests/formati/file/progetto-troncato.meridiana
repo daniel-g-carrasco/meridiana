@@ -1,0 +1,172 @@
+{
+ "name": "Capannone Rho",
+ "site": {
+  "lat": 45.5226,
+  "lon": 9.03,
+  "address": "Rho (MI)"
+ },
+ "sun_window": {
+  "month": 12,
+  "day": 21,
+  "start": 10.0,
+  "end": 14.0,
+  "step_minutes": 10
+ },
+ "buildings": [
+  {
+   "id": "b1",
+   "name": "Capannone",
+   "footprint": [
+    [
+     0,
+     0
+    ],
+    [
+     40,
+     0
+    ],
+    [
+     40,
+     20
+    ],
+    [
+     0,
+     20
+    ]
+   ],
+   "height": 9.5,
+   "roof": {
+    "type": "gable",
+    "eave_side": 0,
+    "ridge_along": null,
+    "tilt": 4.0,
+    "free_pitches": [],
+    "edges": [
+     "eave",
+     "gable",
+     "eave",
+     "gable"
+    ],
+    "ridge_height": 10.2,
+    "covering": "metal"
+   },
+   "fire": {
+    "subject": true,
+    "category": "B",
+    "roof_fire_resistant": false
+   },
+   "parapet": 0.8
+  }
+ ],
+ "exclusions": [
+  {
+   "id": "e1",
+   "ring": [
+    [
+     18,
+     8
+    ],
+    [
+     20,
+     8
+    ],
+    [
+     20,
+     10
+    ],
+    [
+     18,
+     10
+    ]
+   ],
+   "kind": "vent",
+   "clearance": 0.0,
+   "building": "b1",
+   "height": null
+  },
+  {
+   "id": "e2",
+   "ring": [
+    [
+     30,
+     12
+    ],
+    [
+     31,
+     12
+    ],
+    [
+     31,
+     13
+    ],
+    [
+     30,
+     13
+    ]
+   ],
+   "kind": "plant",
+   "clearance": 0.0,
+   "building": "b1",
+   "height": 2.2
+  }
+ ],
+ "consumption": {},
+ "rules": {},
+ "variants": [
+  {
+   "id": "v1",
+   "name": "Base",
+   "note": "",
+   "design": {
+    "subfields": [
+     {
+      "id": "s1",
+      "name": "Sud",
+      "ring": [
+       [
+        1,
+        1
+       ],
+       [
+        39,
+        1
+       ],
+       [
+        39,
+        19
+       ],
+       [
+        1,
+        19
+       ]
+      ],
+      "building": "b1",
+      "pitch": 0,
+      "module": "generic-450",
+      "params": {
+       "tilt": 15.0,
+       "stack": 2,
+       "inverter": 1,
+       "mppt": 2
+      },
+      "filled": true,
+      "removed": [
+       "f1:1"
+      ],
+      "rows": [
+       {
+        "id": "f1",
+        "x": 2.201,
+        "y": 2.0,
+        "azimuth": 0.0,
+        "places": [
+         0.0,
+         1.154,
+         2.308,
+         3.462,
+         4.616,
+         5.77
+        ]
+       },
+       {
+        "i

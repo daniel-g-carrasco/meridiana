@@ -1,0 +1,72 @@
+name: Build
+
+# Every push to main and every v* tag: the tests, then the Flatpak bundle;
+# on a tag, the release (the Windows workflow attaches the installer to it).
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+# read-only for every job: only "release" below writes (the release itself)
+permissions:
+  contents: read
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
+  flatpak:
+    needs: test
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      options: --privileged
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build
+        run: |
+          flatpak-builder --disable-rofiles-fuse --force-clean --ccache=false --repo=repo \
+            build-dir build-aux/flatpak/io.github.daniel_g_carrasco.meridiana.yaml
+          flatpak build-bundle repo meridiana.flatpak io.github.daniel_g_carrasco.meridiana stable \
+            --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: meridiana-flatpak
+          path: meridiana.flatpak
+
+  release:
+    needs: [test, flatpak]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: meridiana-flatpak
+      - name: Sign the bundle (minisign), checked before anything is uploaded
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+          PUBLIC_KEY: RWRF+AifJvn/zhz0o7MBObIYHgw9+sWoc4GaBK+qYnJY0AqeJm540y0a
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq minisign
+          key="$RUNNER_TEMP/minisign.key"
+          (umask 077
+           case "$MINISIGN_SECRET_KEY" in
+             "untrusted comment:"*) printf '%s\n' "$MINISIGN_SECRET_KEY" ;;
+             *) printf 'untrusted comment: releases\n%s\n' "$MINISIGN_SECRET_KEY" ;;
+           esac | tr -d '\r' > "$key")
+          f=meridiana.flatpak
+          minisign -S -s "$key" -m "$f" -x "$f.minisig" -t "timestamp:$(date +%s) file:$f hashed" </dev/null
+          minisign -V -P "$PUBLIC_KEY" -m "$f" -x "$f.minisig"
+          rm -f "$key"
+      - name: Publish the release
+        run: gh release create "${GITHUB_REF_NAME}" meridiana.flatpak meridiana.flatpak.minisig --repo "${GITHUB_REPOSITORY}" --title "Meridiana ${GITHUB_REF_NAME#v}" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

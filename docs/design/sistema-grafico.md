@@ -1,0 +1,499 @@
+# Sistema grafico
+
+Le regole visive di Meridiana in un posto solo, scritte perché valgano anche per altri programmi (Daniel, 24/10/2026:
+«dai massima priorità all'armonizzazione estetica e di stile, facendo un ottimo lavoro. L'obiettivo è avere un
+template facilmente riutilizzabile per altri programmi»).
+
+- I numeri stanno in `src/meridiana/ui/design.py`: scale chiuse, nessun valore scritto a mano nei componenti.
+- I colori stanno nei gettoni del tema (`src/meridiana/theme_colors.py`), ricavati da un accento e da una scelta di
+  fondi.
+- La galleria `python -m meridiana.ui.gallery [light|dark] [--shot file.png]` mostra tutto su una pagina:
+  gettoni, scale e componenti. È il controllo dell'armonia, perché un valore fuori scala si vede lì per primo, ed è
+  la vetrina del modello.
+
+## 1. Il principio: schede su un tavolo
+
+La finestra è un **tavolo** (il fondo `window`) su cui stanno **schede** (`panel`), ognuna con un bordo sottile e
+nessuna ombra. È la scelta di Daniel fra due prove del 24/10/2026: «vai con niente ombre». Tre piani:
+
+| Piano | Gettone | Cosa ci sta |
+|---|---|---|
+| Tavolo | `window` | la riga delle fasi, la barra di stato, gli spazi fra le schede |
+| Scheda | `panel` | i pannelli (Progetto, Proprietà, Verifiche, Aiuto), la pagina della fase, la pagina File |
+| Vista | `view`, `card` | gli elenchi delle finestre di dialogo, le tabelle, i riquadri bianchi |
+
+Regole:
+
+- **Distanze**: le schede stanno a 8 px una dall'altra e dalle barre (`Layout.GAP`), a 12 px dai lati della
+  finestra (`Layout.EDGE`).
+- **Titolo**: dentro la scheda, a 12 px dal bordo, nello stile `title` (14 px semigrassetto).
+- **Niente schede dentro una scheda**: un raggruppamento dentro una scheda è un *gruppo* (§4), non un'altra scheda.
+- **Un solo fondo**: il tavolo lo dipinge solo la finestra. Barra dei menu, barra di stato e riga delle fasi sono
+  trasparenti. Un fondo dipinto sopra quello della finestra taglia di netto quello che c'è sotto: è il difetto di
+  ombre e separatori del 24/10/2026.
+
+## 2. Le scale
+
+### Spaziature (`Space`)
+
+**2, 4, 6, 8, 12, 16, 24, 32**, e niente in mezzo.
+
+| Nome | px | Uso tipico |
+|---|---|---|
+| XXS | 2 | fra pulsanti di una barra, la pista intorno ai segmenti |
+| XS | 4 | dentro un controllo, sopra e sotto il testo |
+| S | 6 | dentro una scheda, intorno al contenuto (`Layout.PAD`) |
+| M | 8 | fra due schede (`Layout.GAP`), testo di un controllo dal bordo (`Line.TEXT_INSET`), fra le righe di un modulo |
+| L | 12 | dai lati della finestra (`Layout.EDGE`), titolo di una scheda dal bordo, dentro un riquadro |
+| XL | 16 | fra due gruppi di una pagina, dentro un riquadro della pagina File |
+| XXL | 24 | intorno a una pagina, altezza della sfumatura di fine contenuto |
+| XXXL | 32 | margini delle pagine grandi |
+
+### Raggi (`Radius`), per profondità
+
+| Raggio | Cosa |
+|---|---|
+| 8 (`CARD`) | scheda, riquadro, pagina, finestrella (menu, elenco a tendina, aiuto a comparsa) |
+| 6 (`VIEW`) | vista (pianta, 3D) dentro la sua scheda, a 6 px dal bordo (R77) |
+| 6 (`CONTROL`) | pulsante, campo, elenco, gruppo, tabella, pulsante strumento, barra della vista, etichette sopra la pianta |
+| 4 (`INNER`) | quello che sta dentro un controllo o una riga: voce di menu, selezione dentro una scheda, pulsantino su una riga, misure accanto al cursore, suggerimenti (Windows li arrotonda a 4) |
+| 2 (`MARK`) | campioni di colore, tacche delle legende |
+
+### Testo: il catalogo degli stili (`Text`)
+
+### Testo: il catalogo degli stili (`Text`)
+
+Carattere Inter, il testo a 13 px (Daniel, 25/10/2026: 14 px con R95, scelto sul confronto fatto sulla finestra vera al
+200 %, cinque caratteri e tre motori di Windows; poi «diminuisci di 1px la dimensione del font. Da 14 a 13», R123).
+Titillium Web, usato fino ad allora, a 13 px si leggeva piccolo e sottile: i suoi file restano in
+`data/fonts/titillium-web` per un ritorno.
+
+La dimensione del testo si sceglie in File > Impostazioni > Aspetto (R133, Daniel 26/10/2026: «farei 12, 13 e 14 come piccolo,
+medio e grande»): Piccolo, Medio (13 px, quella di queste tabelle) e Grande spostano tutta la scala di un pixel in giù o
+in su (`design.set_text_size` all'avvio; con la finestra aperta `theme.change_text_size`, subito: ogni testo di un
+pixel, una volta sola, anche quelli che la dimensione la prendono dal contenitore). Perché: su uno schermo al
+100 % i 13 px del testo sono 13 pixel veri e il testo sembra stretto; al 200 % (il 4K di casa) sono 26 (R171, misurato
+sulla finestra vera: stessa larghezza, al pixel, che in Chrome con gli stessi file).
+
+Daniel, 25/10/2026 (R121): «Vedo ancora troppe differenze tra dimensioni testo, stili, colori nelle varie sezioni
+(alcune differenze ci devono essere ma non devono essere troppe e devono avere un senso, e devono essere salvate come
+stile, tipo i testi nelle linguette sono troppo grandi)». Ogni testo della finestra è uno di questi dieci stili, con
+un nome, in `ui/design.py` (`Text`); niente altro. Sei grandezze (11, 12, 13, 14, 18, 22) e due pesi (normale 400,
+semigrassetto 600): il grassetto (700) non c'è più, chi lo chiede ha il semigrassetto (`Type.BOLD`), e il «<b>» del
+testo ricco diventa semigrassetto (`design.strong`, `design.semibold`, il foglio dei documenti).
+
+| Stile | px | Peso | Colore | Dove |
+|---|---|---|---|---|
+| `display` | 22 | semigrassetto | `text` | cifra di un risultato, titolo di una pagina (File) e il primo titolo del manuale |
+| `heading` | 18 | semigrassetto | `text` | titolo dentro una pagina o una finestra di dialogo (aggiornamento, secondo titolo del manuale) |
+| `title` | 14 | semigrassetto | `text` | titolo di una scheda (Progetto, Proprietà, Aiuto, Verifiche), di Meridio, di un riquadro della pagina File, terzo titolo del manuale |
+| `strong` | 13 | semigrassetto | `text` | titolo di un gruppo, nome in una riga, soggetto dell'aiuto, titoli dentro un pannello (risultati, consegne, relazione) e di un grafico, parola di un pulsante (anche «File»), nome della fase in mano, ciò che spicca dentro una frase |
+| `body` | 13 | normale | `text` | il testo: campi, etichette, elenchi (albero del progetto, Verifiche, tabelle), menu, suggerimenti, aiuto, conversazione con Meridio, voci della pagina File |
+| `description` | 13 | normale | `text2` | una frase che spiega sotto un titolo: guida della pagina File, testo dei riquadri File, unità accanto alla cifra |
+| `control` | 13 | normale | `text` | linguette (fasi, grafici e schede accorpate), segmenti delle piste (varianti, viste e filtri delle Verifiche), pulsanti strumento con la parola accanto, stati delle consegne |
+| `secondary` | 12 | normale | `text2` | note sotto i campi, barra di stato, parole sotto gli strumenti, etichetta e dettaglio dei riquadri, titoli degli assi, tasti della pagina File, scala e fonte sulla pianta |
+| `caption` | 11 | normale | `muted` | tacche dei grafici, formati dei riquadri File, costo della conversazione |
+| `group` | 10 | normale | `muted` | in maiuscolo con spaziatura del 4 %: i nomi dei gruppi della barra della fase, 4 px sotto i comandi (R159: «più leggeri, piccoli, e distanziati») |
+| `label` | 11 | semigrassetto | `muted` | in maiuscolo con spaziatura del 4 %: intestazioni delle sezioni (albero, Verifiche, pagina File), numeri nei dischi delle fasi e nei segni, facce del cubo, «N» della pianta, «Domande pronte» di Meridio |
+
+Perché queste differenze:
+- **13 il testo e i comandi**: linguette, segmenti e pulsanti hanno la grandezza del testo (le linguette a 15
+  sembravano troppo grandi); si distinguono per la forma, non per il carattere.
+- **14 semigrassetto solo i titoli delle schede**, il primo livello; **13 semigrassetto** (`strong`) il secondo:
+  gruppi, righe, titoli dentro un pannello, la parola dei pulsanti.
+- **12 il secondario**: ciò che accompagna (note, stato, parole degli strumenti), mai una frase da leggere a lungo.
+- **11 solo per le etichette**: le maiuscole a 11 si leggono come i 12 normali; le tacche dei grafici.
+- **22 e 18** solo per le cifre dei risultati e i titoli di pagina.
+- **I colori del testo sono tre** (`text`, `text2`, `muted`): ogni stile ha il suo, e lo mette il foglio di stile
+  con la proprietà `tone` (`design.set_text`).
+
+Le regole:
+- **I caratteri li mette il codice**, mai il foglio di stile: `design.set_text(widget, Text.X)` (carattere e colore),
+  `design.text_font(Text.X)` per chi disegna da sé. Il foglio non contiene né `font-size` né `font-weight` (lo
+  controlla la prova `test_the_sheet_has_the_rules_of_the_surfaces_and_only_the_colours_of_the_tokens`), salvo una
+  regola: la barra delle linguette di una `QTabWidget` (grafici, Preferenze) sotto un foglio di stile prende il
+  carattere della sua `QTabWidget` qualunque cosa le si dia, a meno che glielo dia il foglio (Qt la tratta da «figlia
+  naturale», come ogni widget che si chiama `qt_...`).
+- **Le classi di Qt hanno il loro stile** (`theme.class_fonts`): i pulsanti `strong`, linguette e pulsanti strumento
+  `control`, intestazioni delle tabelle e barra di stato `secondary`, elenchi, menu, suggerimenti e finestre di
+  messaggio `body`. È anche la correzione del difetto per cui l'albero del progetto e le Verifiche sembravano più
+  piccoli dell'aiuto: Qt, impostando lo stile, ridava a elenchi, menu, suggerimenti e barra di stato il carattere di
+  Windows (Segoe UI 9 pt, 12 px), e lo rifà a ogni `setStyle` (anche il primo foglio di stile ne imposta uno).
+- **Il testo ricco** (aiuto, Meridio, manuale): niente `font-size` scritti a mano; i titoli del manuale e delle note
+  di versione presi dal catalogo (`help_box.dress`).
+- **La prova** `test_every_text_of_the_window_is_a_style_of_the_catalogue` gira tutte le fasi e la pagina File e
+  guarda ogni testo, anche quelli che la finestra disegna da sé (titoli delle schede, linguette delle fasi, sezioni,
+  segni); restano fuori solo i disegni (pianta e 3D); i segni di stato sono i simboli (§4), mai caratteri.
+
+
+### Misure (`Size`, `Icon`, `Line`)
+
+- **Controlli**: alti 28 px (`Size.CONTROL`) tutti, pulsanti e campi (numeri, elenchi, date compresi), testo a 8 px
+  dal bordo, bordo compreso. Prima i pulsanti erano 25, i campi 27, i numeri e le date 30.
+- **Segmenti**: alti 24 px (`Size.CHIP`) su una pista di 28 (2 px intorno, `ui/segments.py`); anche gli stati delle consegne sono alti 24. Nessuna forma ha gli estremi tondi (R322, R328, Daniel 02/11/2026: «tutti i tasti devono essere portati su questo stile di rettangolo con angoli arrotondati, anziché su quello di rettangoli con due cerchi alle estremità»).
+- **Barre di scorrimento**: 10 px di posto, il cursore largo 6 (`Size.SCROLLBAR`, `Size.THUMB`).
+- **Linguette e righe**: linguette delle fasi 36 px (`Size.TAB`); voci di un elenco di posti, come la pagina File,
+  34 px (`Size.NAV`).
+- **Icone**: 16 in un controllo, 18 in un elenco, 22 in una barra, 24 in un riquadro; tratto 1,7 px, come i bozzetti.
+- **Linee**: 1 px per ogni profondità, 2 px per il fuoco con l'accento.
+
+### I tasti (`Button`)
+
+Daniel, 25/10/2026 (R121): «deve includere tutti i tasti». Sei tipi, ciascuno con un'altezza e un raggio:
+
+| Tipo | Alto | Raggio | Testo | Dove |
+|---|---|---|---|---|
+| `PUSH` pulsante | 28 | 6 | `strong` | i comandi («Calcola», «Esporta…», «OK»); velo `field`; nessuno pieno di accento (R158), nemmeno il `primary`; `destructive` col testo rosso; spento senza velo |
+| `TOOL` strumento | 28, o icona 24 e parola | 6 | `secondary` sotto l'icona, `control` accanto | barra della fase, barra della vista, barra del sole, pulsanti della barra di stato |
+| `CHIP` | 24 | 6 | `control` | un pulsantino con la parola: i passi del tour. Le scelte fra viste non sono pulsanti: sono segmenti su una pista (`ui/segments.py`) |
+| `SMALL` piccolo | 20 | 4 | `control` | croce delle schede, puntina e «Sgancia» dell'aiuto, «Correggi» sulle righe delle Verifiche |
+| `HELP` «?» | 16 | 8 | `label` | il «?» di un gruppo o di un riquadro |
+| `NAV` voce | 34 | 6 | `body` | le voci della pagina File |
+
+#### I pulsanti della barra della fase (`Bar`, R333)
+
+Daniel, 03/11/2026: «armonizzare le dimensioni dei tasti, renderli più congruenti tra loro». Tre modi della barra (quale, lo
+decide `arrangement.py`, R334), in ciascuno una sola altezza e una sola icona per tutti i pulsanti di tutte le fasi:
+
+| Modo | Pulsante alto | Icona | Largo | Barra | Titolini |
+|---|---|---|---|---|---|
+| `UNDER` parola sotto | icona, riga della parola, 10 (50 a testo medio) | 24 | a passi di 16, minimo 48 | 69 | sì |
+| `BESIDE` parola accanto | 28 | 16 | a passi di 8 | 31 | no |
+| `ICONS` sola icona | 28 | 22 | sempre 32 | 47 | sì |
+
+- **La regola delle larghezze**: la più piccola larghezza del passo che tiene la parola più `Bar.PAD`. Non una larghezza per
+  parola: in italiano quattro larghezze sotto l'icona (48, 64, 80, più 96 e 112 per le parole lunghe), le stesse nella stessa
+  posizione del gruppo. Il passo è più fine con la parola accanto, dove la parola è solo una parte del pulsante.
+- **Il pulsante diviso** è il pulsante semplice più la striscia: la parte comando segue la regola sulla **parola più lunga
+  del suo menu** (la barra non si muove quando la faccia cambia), la striscia è `Bar.STRIP`, 14, alta tutto il pulsante, in tutti i modi.
+- Fra due pulsanti di un gruppo `Bar.GAP` (2). Fra due gruppi un filo alto quanto i pulsanti, con `Bar.GROUP_AIR` (8) per parte.
+- Il pulsante primario della fase (Posa, Calcola): velo `field` e parola `strong`, nessun accento; spento senza velo.
+
+**Il pulsante diviso** (`ui/phasebar.ToolMenuButton`, studio 26, G2): comando e striscia con il chevron, ciascuno col suo stato
+(passaggio, premuto, spento); al passaggio compare il filo fra i due. Con il comando spento la striscia resta viva. La striscia e il
+tasto destro aprono il menu con nomi e tasti. Cosa va sulla faccia:
+1. un **modo di disegno** quando si accende, dal menu, con il suo tasto o da altrove, perché un modo acceso si deve vedere; un
+   comando una tantum no;
+2. i **distruttivi** mai (`Tool.fixed`): quello acceso si vede sulla striscia premuta; «Cancella tutte» (`Tool.danger`) sta in
+   fondo, separata, in rosso;
+3. **mai da sola**: una voce che si spegne si spegne sulla faccia;
+4. un tasto cambia la faccia solo se il comando è un modo (segue dalla 1);
+5. la parola cambia con l'icona, nello stesso posto e alla stessa larghezza, con una dissolvenza di `Motion.FAST` (subito con
+   «meno movimento»);
+6. la faccia dura la sessione: all'avvio torna la voce di base;
+7. il suggerimento dice il comando di ora, il tasto e quanti altri ci sono.
+
+Il pulsante «File» è disegnato come le fasi accanto: senza fondo a riposo, lo strato dell'hover sotto il
+puntatore, quello del premuto finché la sua pagina è aperta (R158, R160).
+
+### Sotto il puntatore e premuto
+
+Daniel, 25/10/2026 (R160): «L'hover è ancora troppo incongruente ... Deve avere certi roundings, dimensioni e
+caratteristiche di delta colore». Una regola sola, in tutti e due i temi:
+
+- **colore**: il colore di riposo del controllo con sopra il colore del testo all'**8 %** sotto il puntatore e al
+  **16 %** premuto o acceso (`theme_colors.HOVER`, `PRESS`; gettoni `hover` e `press`). Dove il controllo non ha
+  un fondo suo (strumenti, segmenti, voci di menu, righe, fasi, «File») lo strato si usa trasparente; dove ce l'ha
+  (pulsanti sul velo `field`, pulsanti dei riquadri sul `panel`) lo si calcola sopra
+  (`theme_colors.state`). Nel tema scuro lo strato schiarisce, nel chiaro scurisce: non più il nero sul velo scuro;
+- **forma**: quella del controllo, mai un'altra: 28 px e raggio 6 per pulsanti, strumenti, «File» e fasi; 24 px a
+  4 per segmenti e linguette dei grafici; la voce di un menu col raggio 4; la riga di un elenco tutta la sua
+  forma (la scheda di una verifica, la pillola di 4 px delle sezioni);
+- **testo**: non cambia peso; i nomi spenti (fasi, linguette, segmenti) passano al colore del testo.
+
+### Movimento (`Motion`)
+
+**110 ms** (`FAST`), **130 ms** (`QUICK`), **180 ms** (`NORMAL`) e **240 ms** (`SLOW`), con curva in uscita
+(OutCubic). Con «meno movimento», chiesto dal sistema o dalle preferenze, sono zero. `QUICK` è la chiusura del
+fumetto di Meridio (Daniel, 25/10/2026: «130 ms»). Meridio scivola al posto nuovo col passo suo, 320 ms, col fumetto
+aperto che scivola con lui (R155: a 130 ms era «troppo rapido, meglio com'era prima»); cambiando fase resta dov'è e
+si sposta solo quanto basta per non stare sulla barra del sole. Le sue parole compaiono come se le dicesse (R156):
+almeno 60 caratteri al secondo, quello che resta da dire detto entro 3 secondi dall'ultimo pezzo arrivato. La camera della
+vista 3D va da una vista all'altra in `SLOW`.
+
+Regole del movimento (R83, misurate il 24/10/2026):
+- si muove solo una zona piccola: mai l'intera pagina (un fotogramma della pagina costava 23-45 ms, uno
+  dell'intestazione e della barra 5-8 ms, sotto i 16 ms dei 60 fotogrammi al secondo);
+- mai `QGraphicsOpacityEffect` su zone grandi: ridisegna tutto sotto di sé a ogni fotogramma; si dipingono due
+  fotografie con l'opacità del pittore, sotto un velo opaco (`ui/motion.Veil`);
+- il movimento parte dopo il lavoro che il cambio chiede alla finestra (il giro successivo del ciclo degli eventi),
+  così mostra tutti i fotogrammi; durante quel lavoro il velo tiene ferma l'immagine di prima;
+- quello che servirebbe al primo uso (la prima fotografia, la libreria dei grafici) si prepara a finestra ferma
+  dopo l'avvio.
+
+## 3. I colori
+
+I gettoni vengono da `theme_colors.derive(accento, scuro, fondi)`; in chiaro e in scuro hanno gli stessi nomi.
+I principali:
+
+| Gettone | Ruolo |
+|---|---|
+| `window`, `panel`, `view`, `card`, `field` | tavolo, scheda, vista, bianco delle tabelle, velo tonale dei controlli |
+| `line`, `line_soft`, `card_line` | linea piena (anche il bordo delle schede), linea leggera dentro le schede |
+| `text`, `text2`, `muted` | testo, secondario, spento |
+| `accent`, `accent_fg`, `accent_hover`, `accent_soft` | il colore scelto: la fase in mano e il fuoco, nessun pulsante pieno (R158) |
+| `hover`, `press` | lo strato del testo all'8 % e al 16 %: sotto il puntatore, premuto o acceso (R160) |
+| `select_bg`, `select_fg` | selezione in un elenco: un grigio che pende verso la tinta dell'accento (lo strumento acceso ha `press`, R158; il segmento scelto è rialzato in `panel` col filo) |
+| `danger`, stati `good`/`warning`/`critical` | errori e semaforo: sempre con un segno o una parola, mai solo col colore |
+
+Regole:
+
+- **L'accento con misura** (R104, Daniel 25/10/2026: «lo vorrei un po' meno presente in tutto Meridiana il colore
+  di accento»). Resta dove dice «questa è la cosa in mano»: il disco del numero della fase in mano, l'anello del
+  fuoco (2 px), la selezione e il sottocampo sulla pianta e il modulo scelto in 3D (i disegni). Dal 25/10/2026
+  (R158: «i pulsanti già evidenziati con il colore di accento non devono esistere, né negli strumenti né altrove
+  ... sono brutti») nessun pulsante ne è pieno: né il `primary`, né lo strumento primario della barra, né «File»
+  con la sua pagina aperta. Tolto, neutro, anche da: selezione (`select_bg`, ora con croma 0,018 al massimo: era la tinta pallida
+  dell'accento), strumenti accesi, linguette e segmenti scelti, voce scelta della pagina File, riquadro chiave dei
+  risultati (era in `accent_soft`), «Correggi» sulle righe delle Verifiche (era pieno di accento), stato «da
+  aggiornare» delle consegne (ora un contorno), passaggio sulla barra della vista e sul cubo, arco dell'attesa,
+  collegamenti dell'aiuto (ora nel colore del testo, sottolineati). La prova
+  `test_the_accent_of_the_sheet_only_for_what_is_in_hand_and_the_one_action` lo controlla regola per regola,
+  `test_the_accent_shows_only_on_the_phase_in_hand_and_the_one_action` sulla finestra disegnata.
+- **Solo gettoni**: nessun colore scritto a mano nel foglio di stile. Lo controlla la prova
+  `test_the_sheet_has_the_rules_of_the_surfaces_and_only_the_colours_of_the_tokens`.
+- **Scuro in scala di grigi**: grigi neutri e più contrastati (24/10/2026).
+- **Pianta e 3D**: tengono i loro colori in entrambi i temi (`view_colours.py`, R16).
+- **Grafici**: le serie hanno la loro tavolozza validata (D2); l'accento è dell'interfaccia, non dei dati.
+
+## 4. I componenti
+
+| Componente | Dove | Regola |
+|---|---|---|
+| Scheda di un pannello | `ui/cards.py` (`CardDock`) | fondo `panel`, linea `card_line`, raggio 8, titolo 14 semigrassetto, croce che chiude |
+| Contorno d'aggancio | Quick: `Controls/DropOutline.qml` (`M.DropOutline`); Widgets: nessuno | dove cadrà una cosa portata, detto subito (R504, studio 36, proposta 1, come VS Code e AutoCAD): linea d'accento di 2 px (`Line.FOCUS`), velo `accent_soft`, raggio delle schede, niente ombra e niente dentro; compare e sparisce in `FAST` (110 ms), scivola in `FAST` fra due posti mentre si vede, ricompare fermo al suo posto (`show` salta prima di mostrarsi). Il segnaposto tratteggiato della Workbench (`dropZone`) è dello stesso accento e nasce da questo contorno |
+| Pagina della fase | foglio di stile (`#phase-pages`) | come una scheda |
+| Pulsante | foglio di stile, `Button.PUSH` | velo `field`, raggio 6, 28 px, stile `strong`; nessuno pieno di accento (R158); `destructive` col testo rosso; sotto il puntatore lo strato `hover` sopra il velo (R160) |
+| Pulsante strumento | `ui/phasebar.py`, foglio di stile, `Button.TOOL` | trasparente, raggio 6; `hover` sotto il puntatore, acceso e premuto in `press` (R158, R160) |
+| Pista di segmenti | `ui/segments.py`: `Segments` (pulsanti), `on_bar` (una `QTabBar`: grafici, schede accorpate) | ogni scelta fra viste (R322, B1): pista `field` di 28 px e raggio 6, segmenti di 24 e raggio 4, testo `control` (tagliato coi puntini se manca lo spazio, il suggerimento lo dice intero); la scelta è un rettangolo in `panel` col filo `line` che **scorre** al segmento nuovo come la linguetta delle fasi (`OutCubic`, `Motion.FAST`, dopo il lavoro del cambio, subito con «riduci animazioni»); frecce sinistra e destra; con la tastiera sopra il filo è d'accento. Non esclusiva (`exclusive=False`: conteggi e filtri delle Verifiche, più d'uno acceso insieme): ogni acceso ha il suo rettangolo, che compare e scompare in dissolvenza |
+| Campo (testo, numero, elenco, data) | foglio di stile, `ui/style.pad_fields` | velo `field` senza bordo; bordo `field_line` al passaggio, 2 px di accento col fuoco; frecce piccole e spente; numeri allineati a sinistra |
+| Gruppo | `ui/style.py` (`Group`) | cornice `line`, raggio 6, intestazione piena in `line_soft` per tutta la larghezza, «?» sulla riga del titolo; **richiudibile** (R287, riga sotto) |
+| Gruppo dentro un gruppo | `ui/style.py` (`Group.nested`) | a qualunque profondità, anche attraverso una pagina o un'area a scorrimento, non è una scheda (R343, Daniel 03/11/2026: «non mi piacciono le schede dentro le schede»): niente cornice né fascia piena, titolo `strong` su una linea `line` di 1 px per tutta la larghezza, il contenuto sul testo del padre senza margini propri (solo 6 px d'aria sotto la linea). Il chevron resta se è richiudibile, senza fondo: sotto il puntatore si scurisce lui. Regola unica: nessuno la chiede, il gruppo vede dove sta; rimesso fuori torna scheda con i suoi margini. Un titolo non ripete quello del padre: dentro la sezione Inverter gli inverter stanno senza gruppo, il «?» sull'intestazione della sezione |
+| Stile dentro un gruppo | `ui/style.py` (`MeridianaStyle`), `ui/scrollbars.py` | lo stile di `Group` è quello dell'applicazione (`ScrollStyle`) con in più i gruppi: col foglio di stile globale Qt passa lo stile di un widget ai figli, e con Fusion puro le aree dentro un gruppo avevano le barre con le frecce (R339) |
+| Sezione alta quanto il contenuto | `ui/style.py` (`FitArea`), `ui/plant_page.py` (`PlantSide`) | un'area a scorrimento in una colonna: alta quanto la sua pagina, scorre solo se non ci sta, mai più stretta della pagina; ciò che avanza resta sotto, fuori da ogni cornice (R337). La sezione che si chiude e quella che si apre hanno tempo e curva uguali: un solo movimento, fino all'altezza vera, senza ritorni (R338) |
+| Comando lungo in un pannello stretto | `ui/style.py` (`wrap_button`) | le parole vanno su più righe invece di allargare il pannello; il minimo è la parola più lunga (R341) |
+| Gruppo richiudibile | `ui/style.py` (`Group`, `_Fold`) | ogni gruppo si chiude e si riapre con un clic sulla sua intestazione (R287, Daniel 30/10/2026: «tutte le sottosezioni nella barra di destra devono poter essere collassate ... con un'animazione armonizzata»). Il segno è un chevron di 10 px nel colore `muted`, col tratto delle icone (1,7 px), prima del titolo: punta in basso aperto, a destra chiuso, e ruota con il movimento; il «?» resta al suo posto a destra. Sotto il puntatore l'intestazione prende lo strato `hover` (8 % del testo su `line_soft`) e il puntatore a mano. Il corpo (i campi, nel layout che il chiamante dà al gruppo come sempre: il gruppo lo sposta in un widget suo) si apre e si chiude in altezza in `Motion.NORMAL` (180 ms, OutCubic): mentre si muove il suo layout è fermo, così i campi vengono tagliati dal bordo del corpo e non schiacciati; aprendosi il corpo è prima disposto alla sua altezza intera e poi scoperto da zero. Chiuso, il gruppo è alto quanto l'intestazione più la linea della cornice: niente buchi, e Tab non entra nei campi nascosti (il corpo è nascosto). Con «meno movimento» si apre e si chiude subito. Lo stato è ricordato per tipo di gruppo (il suo id d'aiuto, altrimenti il titolo) per la sessione: la stessa pagina rifatta, o lo stesso gruppo di un altro oggetto, torna com'era stata lasciata. Un gruppo che non deve chiudersi si chiede con `collapsible=False`. I gruppi delle finestre di dialogo seguono la stessa regola |
+| Tabella degli ingressi | `ui/plant_page.py` (`InputsTable`) | nel gruppo Stringhe, un ingresso (MPPT) per riga (R286): stringhe su quante ne prende, moduli in serie, Voc alla temperatura minima su quella massima, Umpp alla cella più calda e più fredda (la finestra MPPT nel suggerimento), Isc su quella dell'ingresso, lo stato come segno (parola e motivi nel suggerimento). Trattamento condiviso delle tabelle (`shared_tables.install`, compatta, senza velature), alta quanto le righe, nessuna barra sua; in un pannello stretto spariscono per prime Isc, poi Umpp, poi Voc, mai oltre il bordo del gruppo. La «stringa scelta» è in tre blocchi con titoli `label` (Identità e percorso, Elettrico, Verifiche), M (8) fra i blocchi e XS (4) fra titolo e testo, una grandezza per riga, le condizioni in `secondary` in fondo |
+| Riquadro di un risultato | `ui/energy_pages.Tile`, `Tiles` | velo `field` senza bordo, raggio 8; etichetta `secondary`, cifra `display`, unità `description` sulla stessa linea di base della cifra, dettaglio `secondary`; il riquadro chiave è il primo, senza tinta (R104). Una griglia sola per Producibilità, Consumi, Bilancio ed economia (R309, R310): colonne uguali, tutti alti quanto il più esigente a quella larghezza, almeno due righe di dettaglio; etichetta e dettaglio vanno a capo, la cifra resta sulla sua riga; nessun suggerimento che ripeta l'etichetta |
+| Striscia | foglio di stile (`#strip`) | come un riquadro, su una riga |
+| Scheda dei grafici e sue sottoschede | `ui/energy_pages.chart_card`, `tab_stack` | una regola per tutte le sottoschede (R284, R285, Daniel 30/10/2026): i segmenti stanno al centro della loro fascia, con M (8) d'aria sopra e sotto (XS della scheda + XS della barra sopra; XS della barra + XS fra barra e filo sotto), la fascia alta 40; sotto il filo il contenuto di ogni sottoscheda, un grafico solo o una pila, parte a M (8), senza margini propri ai lati (li dà la scheda, 8) e in basso (8 della scheda); in una pila i grafici distano L (12), come le parti dei risultati. Prima: 10 sopra e 4 sotto i segmenti; «Bilancio», «Dimensioni» e «Accumulo» coi margini di Qt (11) intorno ai grafici, gli altri a 0 dal filo |
+| Riga delle basi del calcolo | `ui/energy_pages.Page.show_basis` | la prima riga dei risultati, prima dei riquadri, in Producibilità, Consumi e Bilancio ed economia (R246, R292): inverter, moduli e batterie davvero nel calcolo, su una riga, a capo solo se la scheda è stretta, il dettaglio nel suggerimento |
+| Pillola di stato | foglio di stile (`#state-*`) | 24 px, estremi tondi |
+| Conteggio di un livello | `ui/checks_page.CountChip`, `CountRow`, `ui/status_pill.py` (`paint_pill`) | pillola a sé, non su una pista (R335, P3, Daniel 03/11/2026): 24 px, raggio 6, fondo e linea nel tono del livello mescolato al colore della finestra (10 % e 28 %, al buio 17 % e 38 %), segno 12 px col suo colore (`symbols.paint`, l'unico disegno dei segni) a sinistra, numero `label` nel colore del testo a destra; filtro acceso: fondo 19 % (al buio 26 %) e linea 65 %; sotto il puntatore a metà strada; lo zero sbiadito per intero (55 %), al suo posto; focus da tastiera: anello `accent` di 2 px. Le pillole distano S (6). Non si usa nelle righe dell'albero (R328: senza contenitore) |
+| Varianti | `ui/variant_bar.py` | la pista di segmenti (R73, R322); «+» e «…» sulla stessa pista; tasto destro per il resto |
+| Elenco a sezioni | `ui/sections.py`, `ui/marks.py` | intestazioni maiuscole 11 px con il conteggio, non selezionabili; a destra il segno e il numero, senza contenitore (R328) |
+| Testata delle Verifiche | `ui/checks_page.ChecksPage.tools`, `ui/title_tools.py`, `ui/cards.CardTitle.set_tools` | la sola riga di testata (R345, Daniel 03/11/2026): titolo, pista delle viste, conteggi, a destra «Questa fase» e «Questo oggetto», «Copia le note per la relazione» come solo simbolo (20 px, `title-tool`, nome e suggerimento) e la X; strette, le parti vanno a capo ciascuna intera su righe sotto (mai tagliate né sovrapposte), una più larga di una riga si riduce al minimo (le parole delle piste con i puntini); la riga di sintesi sotto la testata c'è solo quando ha qualcosa da dire |
+| Schede delle Verifiche | `ui/checks_page.ChecksTree` | le voci di una sezione in una scheda, niente selezione; sotto il puntatore la voce intera col suo dettaglio prende lo strato `hover` (R153, R160); il segno tiene il suo colore anche sulla riga scelta |
+| Vista | `ui/cards.round_corners` | a 6 px dal bordo della sua scheda, quattro angoli a raggio 6 disegnati (non a maschera), 6 px fra due viste |
+| Barra della vista | `ui/viewbar.py` | soli simboli, nome e tasto nel suggerimento; raggio 6, pulsanti raggio 4; quando la barra larga mostra le parole, «Allinea a un lato» resta un'eccezione a sola icona (R183); «Nord in alto» non ha pulsante, restano N, bussola e menu del clic destro |
+| Nord, scala, fonte sulla pianta | `ui/plan_overlays.py` | stile B scelto il 24/10/2026: freccia sottile sotto la N, scala a linea con la lunghezza a destra, ciascuno in un riquadro trasparente al 55 % che lo avvolge con lo stesso margine; raggio 6, testo 12; mai uno sopra l'altro |
+| Riga delle fasi | `ui/phasebar.py` | linguette `control` (13 px), la fase in mano `strong`, con il disco del numero in `label`; sotto il puntatore un fondo `hover` di 28 px e raggio 6 come «File» (R160); la linguetta scelta e la scheda della barra sono una forma sola, unite da due angoli inversi del raggio delle schede (R84, come le linguette di GNOME); al cambio di fase la linguetta scorre fino alla nuova in 240 ms |
+| Pulsante «File» e pagina File | `ui/phasebar.py`, `ui/file_page.py` | a sinistra delle fasi e disegnato come loro: senza fondo, `hover` sotto il puntatore, `press` con la pagina aperta (R158, R160); la pagina è una scheda con l'elenco dei posti a sinistra (`body`) e riquadri a destra (`title` e `description`) |
+| Barra dei menu | `ui/menubar.py` | nascosta: Alt la aggiunge al suo posto sopra la riga delle fasi e il resto della finestra scende per farle posto, e risale quando va via (R164, `motion.push`, 180 ms; la barra di stato resta ferma); Vista > Barra dei menu la tiene sempre |
+| Pulsanti delle schede | `ui/panel_buttons.py` | nella barra di stato, un'icona per scheda: piena se si vede, spenta se chiusa o coperta |
+| Aiuto | `ui/help_box.py` | scheda sotto Proprietà; il testo occupa lo spazio che c'è; un «?» o F1 lo blocca sull'argomento (puntina accanto al titolo), «Sgancia» lo mette in una finestrella sua (R44, R68) |
+| Elenco a righe | `ui/rows.RowList` | al posto di una tabella da leggere: nome a sinistra in semigrassetto, cosa è a destra in `text2`, una linea leggera fra due righe; alto quanto le righe, scorre con la scheda |
+| Griglia di campi | `ui/rows.FieldGrid` | al posto di una tabella da scrivere (le bollette): i campi numerici normali in righe e colonne, i nomi a sinistra e in alto, il totale di ogni colonna; Tab da uno all'altro |
+| Meridio | `ui/assistant.py` | il fumetto scivola di 10 px dalla sua parte e si accende; nome `title` sul lato opposto alla maniglia, conversazione `body`, «Domande pronte» `label`; opzioni come pulsanti del programma con hover, solo fra un turno e l'altro (R197) |
+| Sezione con spunta | `ui/style.py` (`SectionGate`) | campi accesi solo nello stato previsto della spunta, attenuati altrimenti e con il suggerimento che spiega perché; valori conservati (R194) |
+| Stato dei salvataggi | `ui/save_status.py` | piccolo arco durante la scrittura, poi «Salvato alle HH:MM» o «Salvato in automatico alle HH:MM» nella barra di stato; errori invariati (R195) |
+| Barra di scorrimento | `ui/scrollbars.py` (`ScrollStyle`) | un cursore di 6 px, raggio 3, `line` a riposo, `muted` sotto il puntatore, `text2` premuto; nessuna guida, nessuna freccia; niente se non c'è da scorrere |
+
+### I simboli (`ui/symbols.py`, R138, R330)
+
+Un solo disegno per «confermato, errore, avviso, informazione, blocco»: nessun carattere di un font (✔ ⚠ ✘ ℹ e simili
+non si usano più, una prova li cerca nei sorgenti), nessuna icona Lucide con quei significati. **Piatti** (R330, Daniel
+02/11/2026: «come simboli usiamo quelli piatti»): un fondo di una tinta sola (il disco, il triangolo, l'anello del
+divieto) e il segno **bianco opaco** sopra. Le geometrie stanno in `symbol_shapes.py`, senza Qt (16 unità, tratti di
+1,7): le leggono la finestra (`ui/symbols.py`, con il disegnatore SVG di Qt) e la relazione (`report_typst/`, che le
+passa a Typst nei dati e le disegna come immagini vettoriali).
+
+| Simbolo | Significato | Tinta | Dove |
+|---|---|---|---|
+| `check` | confermato, superato | `good` | Verifiche «Superate», stringa corretta, tasto «Tieni» |
+| `cross` | chiudi, no | `critical` | pulsanti «No», «Chiudi» delle finestre |
+| `forbidden` | operazione non permessa | `critical` | nessun uso oggi; riservato ai comandi non ammessi |
+| `stop` | blocco (le verifiche da correggere) | `critical` | livello «fail», stringa fuori finestra |
+| `info` | dettaglio (le verifiche da sapere, le note) | `info` | livello «info», note |
+| `warning` | possibile problema (da controllare) | `warning` | livello «warn», stringa da verificare |
+| `error` | il programma ha incontrato un errore | `critical` | finestre di errore |
+| `trash` | butta via | `critical` | «Scarta» di una finestra |
+| `back` | torna indietro, niente è cambiato | `neutral` | «Annulla» di una finestra, ritorno alla proposta degli ottimizzatori |
+
+**Regole d'uso**
+
+- **Il triangolo è largo quanto il disco** (R330: «in larghezza sia uguale al diametro del cerchio»): 15 unità di
+  larghezza, appena sopra e sotto il disco, perché a pari altezza il triangolo sembrava piccolo accanto ai cerchi. Lo
+  vincola `test_the_warning_is_as_wide_as_the_disc`.
+- **Il segno è dipinto, non ritagliato.** I piatti del 25/10/2026 furono rifiutati perché il segno era un buco nel
+  fondo e lasciava vedere quello che c'era sotto (l'ortofoto, la pianta, la scheda): su un fondo qualunque il segno
+  cambiava colore. Qui il fondo è pieno e il segno è un secondo tracciato bianco, opaco: lo stesso segno su ogni fondo.
+  Per questo il divieto è un anello e la sua sbarra della stessa tinta, fusi senza giunta.
+- **Una tinta per significato** (`theme_colors.STATUS` e `WARNING_INK`); sul fondo scuro il blu e il grigio si
+  schiariscono (`TONES_DARK`), perché quelli scuri sparirebbero. Il colore non è l'unico indizio: ogni livello ha una
+  forma sua (WCAG 1.4.1).
+- **Testi e `alt` non cambiano**: il simbolo sta accanto al testo, che continua a dire la stessa cosa; i nomi dei
+  livelli sono nei suggerimenti.
+- **Si disegna solo qui.** Pianta, 3D, albero, conteggi, schede delle stringhe, dialoghi (`scrollbars.py` mette i
+  simboli al posto delle icone standard di Qt) e relazione passano per le stesse forme; cambiare l'aspetto dei simboli
+  è cambiare `symbol_shapes.py` e `symbols.py` e basta.
+- **Mai la sfumatura**, mai un alone (R138).
+
+**Le forme**
+
+| Forma | Cosa dà | Quando |
+|---|---|---|
+| `symbols.icon(name)` | una `QIcon` (motore di icone) disegnata alla grandezza e alla densità chieste, chiara o scura secondo il fondo | pulsanti, voci d'albero, `setIcon` |
+| `symbols.paint(painter, rect, name, dark=None, off=False)` | il disegno unico: pianta, 3D, conteggi, schede; `off`: grigio, per un livello vuoto | tutto ciò che dipinge da sé |
+| `symbols.sign(name, rect)` | il solo segno come `QPainterPath`, per un fondo già nel colore del livello | caselle di spunta (`checkboxes.py`) |
+| `symbols.html(name, size=14)` | un `<img>` per il testo ricco (PNG a 1, 2 e 3 volte nella cartella temporanea: Qt sceglie da solo); il carattere solo se la cartella non si può scrivere | etichette, note, righe delle schede |
+| `symbol_shapes.report_marks()` | l'SVG di ogni livello con il segnaposto del colore, per Typst | solo la relazione (`template.typ`, `mark`) |
+
+Nella relazione il colore del livello è quello della tavolozza della carta (`colours.ok/warn/fail/info` in
+`template.typ`), non quello della finestra: cambia la tinta, non la forma.
+
+**Eccezioni giustificate**: i caratteri nel solo `html()` quando la cartella temporanea non si scrive (ultima
+risorsa); `⟳` (da ricalcolare) nelle note delle schede della posa, per cui non c'è un simbolo; `⋯`, `∥ ⊥ ⇧` delle guide
+non sono segni di stato. La prova `tests/nucleo/test_symbols_sources.py` tiene l'elenco (`ALLOWED`).
+
+## 5. I comportamenti
+
+- **Fine morbida** (`ui/fades.py`): quando un elenco o una pagina continua oltre la scheda, l'ultimo pezzo sfuma nel
+  colore della scheda invece di tagliarsi. La sfumatura è alta 12 px (al massimo un quinto dell'area), piena solo sul
+  filo esterno e subito molto più leggera, dentro la linea e gli angoli tondi della scheda. Così la prima voce resta
+  leggibile anche nel pannello Inverter scorso a metà (R192), senza riaprire il bordo ai contenuti. Compare solo dal
+  lato dove c'è altro e non c'è quando il contenuto è fermo in cima. Daniel,
+  24/10/2026: «carina la semplice sfumatura… mantienila come stile». Vale per ogni area che scorre dentro una scheda.
+  Nelle pagine e nei pannelli ciò che scorre si ferma 8 px prima delle linee in alto e in basso della scheda
+  (`fades.attach(area, air=True)`, `fades.AIR`), e la sfumatura sta sul bordo del contenuto: R177, Daniel
+  26/10/2026, «i contenuti ... arrivano fino al limite della scheda sfondandolo» (all'85 % sul bordo, e senza
+  aria, quello che c'era sotto arrivava fino alla linea). Gli elenchi no: il loro margine in alto è quello
+  dell'intestazione.
+- **Finestrelle** (`ui/popups.py`): suggerimenti, menu, elenchi a tendina e aiuto a comparsa entrano sfumando in
+  110 ms; gli effetti di Qt, che a 200 % scattano, sono spenti. Su Windows 11 il sistema li arrotonda e disegna la
+  loro ombra e il bordo nel colore `line`; altrove il foglio di stile disegna lo stesso bordo e, per i suggerimenti,
+  gli stessi angoli di 4 px su una finestrella trasparente intorno.
+- **Suggerimenti** (R162, Daniel 25/10/2026: «una larghezza massima in cui il testo va in colonna ... una bella
+  formattazione ai contenuti come fanno programmi tipo VS Code»): «Nome (tasto)» sulla prima riga e la spiegazione
+  sotto diventano il nome (semigrassetto se segue una spiegazione), il tasto attenuato accanto, la spiegazione in
+  un inchiostro più tenue 4 px sotto; a capo a 340 px; 6 px sopra e sotto e 8 ai lati (una riga: 28 px, come un
+  controllo). Vale per ogni suggerimento, da dovunque venga, perché si formatta l'etichetta di Qt quando compare.
+- **Pagina File** (R157, riveduta con R178): entra in 180 ms con una dissolvenza e uno scorrimento di 16 px dal
+  lato del menu (`ui/motion.enter`, `Entrance`). Il velo opaco tiene la fotografia di prima e dipinge quella della
+  pagina: niente `QGraphicsOpacityEffect`, maschere o ridisposizioni ai fotogrammi. Con «meno movimento» la pagina è
+  subito presente; si chiude subito. Le alternative fotografate sono il foglio che si scopre da sinistra e la sola
+  dissolvenza, alla stessa durata.
+- **Cambio di fase** (`ui/phasebar.Phases._changed`, come la barra multifunzione di Office): la pagina e gli
+  strumenti della barra cambiano subito; scorre soltanto la linguetta scelta, fino alla nuova fase (110 ms, R97), con la stessa curva del rettangolo delle piste. Gli
+  strumenti che entravano scorrendo sfarfallavano (Daniel, 24/10/2026): niente movimento dentro una barra piena di
+  controlli.
+- **Cambio di argomento** (`ui/motion.crossfade`): l'argomento delle Proprietà sfuma nel successivo in 180 ms; lo
+  stesso argomento rifatto (un valore cambiato) non sfuma.
+- **Righe espandibili** (le Verifiche): si aprono subito, senza l'animazione di Qt (lenta, e spostava l'elenco);
+  la freccia apre e chiude soltanto, senza prendere la riga né muovere le viste; il dettaglio sta sul fondo della
+  scheda, attenuato e un punto più piccolo, sotto il testo della riga, come le righe espandibili di libadwaita.
+- **Separatori**: fra due schede nessun segno; il puntatore a doppia freccia dice dove si ridimensiona (Daniel,
+  25/10/2026, R113: la linea tratteggiata del 24/10 tolta, «sono proprio brutte»).
+- **Viste**: angoli disegnati nel colore della scheda; le etichette sopra la pianta stanno a 8 px dai bordi.
+- **Moduli dentro la scheda** (`ui/style.pad_fields`): in una scheda che scorre nessun campo allarga la colonna
+  oltre il bordo. Gli elenchi a tendina si accorciano (il testo intero nel suggerimento e nell'elenco aperto), le
+  etichette lunghe vanno a capo e la loro altezza minima segue testo, larghezza e carattere, così la riga cresce
+  con loro anche dopo un cambio di impostazioni (`grow_label`, anche per le righe create dopo, R193), una pila di
+  pagine prende la misura della pagina mostrata, il campo passa sotto la
+  sua etichetta quando non ci sta accanto, il titolo lungo di un gruppo si accorcia con «...» invece di allargarlo
+  (25/10/2026: «Energia acquistata (tutti i costi variabili, imposte comprese)» spingeva i campi del Bilancio oltre la
+  scheda), due pulsanti che non ci stanno affiancati vanno uno sotto l'altro. Prima i contenuti uscivano dalla
+  colonna Dati (24/10/2026).
+- **Trascinamento delle schede** (Quick: `Shell/Workbench.qml`, `DockPanel.qml`; R312, R504, studio 36): la scheda portata è un'immagine al puntatore (`cardLift`), senza animazione. Due segnali, uno dopo l'altro e dello stesso accento: **subito** il contorno d'aggancio (`M.DropOutline`) sul posto che la scheda avrà (la metà sopra o sotto della scheda accanto a cui va, sinistra o destra nella riga in basso, la scheda intera se va dietro come linguetta, la colonna o la riga intera se il lato è vuoto); **dopo l'attesa** di `Motion.DWELL` (280 ms, Daniel 06/11/2026: «ci sta») il segnaposto tratteggiato con il nome nasce dal contorno e le altre schede fanno spazio in `Motion.CAREFUL` (360 ms). Sul centro niente contorno: la scheda resta flottante dov'è lasciata. Mentre si porta una scheda la pianta e la vista 3D tengono la loro misura (le ritaglia lo spazio che cambia) e la prendono una volta sola al rilascio: così i buffer del 3D non si rifanno a ogni bersaglio. Le zone: bande di 32 px ai bordi (vince il lato più vicino), terzi sulla scheda, inerzia di 12 px.
+- **Rotella**: cambia un numero o una scelta solo nel campo che ha la tastiera; altrimenti fa scorrere la scheda
+  (`ui/wheel.py`).
+- **Barre di scorrimento** (`ui/scrollbars.py`, R100; Daniel, 25/10/2026: «Le varie barre di scorrimento, quando
+  compaiono, spostano tutti i contenuti in modo fastidioso. Forse deve occupare meno spazio e avere spazio già
+  assegnato?»). Ogni elenco, modulo e testo da leggere tiene a destra il posto della barra (10 px) anche quando non
+  scorre: la barra c'è sempre, disegnata vuota finché non serve; così quando compare, o quando un ridimensionamento
+  la fa comparire, nulla si sposta. Il cursore è sottile (6 px) e senza guida. Non la tengono la pianta (si sposta
+  col mouse), gli elenchi delle finestrelle (si misurano da sé) e i campi in cui si scrive.
+  Provate e scartate il 25/10/2026 le barre «transitorie» di Qt, sopra il contenuto come in VS Code: il foglio di
+  stile le spegne appena una sua regola tocca la barra; disegnate dallo stile, coprivano la fine delle righe (i segni
+  dell'albero, «Correggi» delle Verifiche) e ne prendevano i clic; e gli alberi rifanno da sé i margini della loro
+  vista, quindi non si poteva tenere loro un posto accanto.
+  Il posto: la barra sta a 6 px dal bordo destro della sua scheda, in ogni scheda (nessun margine proprio a
+  destra di ciò che scorre), e il cursore non va oltre 8 px dalle estremità (`scrollbars.END = Radius.CARD`),
+  fuori dagli angoli tondi: R182, Daniel 26/10/2026, «mi piace di più la versione più attaccata al bordo destro
+  della scheda ... anche se non deve sforare sopra e sotto».
+
+## 6. Cosa non si fa
+
+- Ombre sotto le schede (prova A del 24/10/2026, scartata).
+- Tabelle vere dentro le schede (R79): rotella e frecce passano alla scheda ai bordi, i contenuti escono. Un elenco
+  di cose si mostra come righe o riquadri; i valori da scrivere come campi di un modulo.
+- Colori scritti a mano; misure fuori scala; testo sotto 10 px.
+- Testo sopra un'immagine senza fondo; parole semitrasparenti (si leggono sfocate, come era il cubo della vista).
+- Più di un pulsante pieno di accento per pagina.
+- Effetti di Qt per menu e suggerimenti, e maschere per arrotondare (gradini).
+
+## 7. Riusarlo in un altro programma
+
+I moduli generici, che non sanno niente di fotovoltaico:
+
+| Modulo | Cosa porta | Dipende da |
+|---|---|---|
+| `ui/design.py` | le scale, il catalogo dei testi (`Text`), i tipi di tasti (`Button`) | niente (Qt solo per `font`, `text_font`, `set_text`) |
+| `theme_colors.py` | i gettoni da un accento, contrasti verificati | niente |
+| `ui/theme.py` | tavolozza, foglio di stile, caratteri e loro stili per classe, accento del sistema | `paths` (i file dei caratteri), `i18n` |
+| `ui/scrollbars.py` | lo stile dell'applicazione: Fusion con le barre di scorrimento sottili che tengono il loro posto | `design` |
+| `ui/style.py` | gruppi, menu senza sottolineature, testo dei campi | `design` |
+| `ui/cards.py` | schede dei pannelli, distanze, angoli delle viste | `design`, `theme_colors` |
+| `ui/popups.py`, `ui/fades.py`, `ui/motion.py`, `ui/separators.py` | i comportamenti del §5 | `design` |
+| Quick: `Controls/DropOutline.qml` | il contorno d'aggancio del §4 e del §5 (da portare nel modello `qt-app-template`, pacchetto `qtkit`, con la riga della tabella del §4; la Workbench che lo usa resta di Meridiana) | `Theme` (`colors.accent`, `accent_soft`, `line.FOCUS`, `radius.CARD`, `motion.FAST`) |
+| Quick: `Controls/OverlayField.qml` | il campo scritto sopra una vista, uno per tutte (R534): la lunghezza del lato in pianta (`Plan/SideEditor.qml`) e la quota dei vertici nella vista 3D. Fondo e testo delle pillole della pianta (`label_bg` opaco, `label_fg`), contorno della selezione (`sel`) largo `line.FOCUS`, raggio `radius.PLAN_LABEL`, testo `type.SMALL` a cifre di uguale larghezza, `space.XXS` sopra e sotto, `space.S` ai lati; davanti il numero in un disco (il lato) o una parola che dice cos'è («Quota da terra»), dopo l'unità; largo quanto ciò che contiene. Invio conferma, Esc annulla. Nella vista 3D resta accanto al vertice da cui si è aperto (13 px a destra e sotto, o in uno degli altri tre angoli se lì copre il manipolatore o un altro vertice scelto), lo segue in orbita, spostamento e zoom nello stesso fotogramma e si ferma al bordo quando il vertice esce. Da portare nel modello `qt-app-template` (`qtkit`) | `Theme` (`type.SMALL`, `space`, `radius.PLAN_LABEL`, `line.FOCUS`); i colori li passa la vista (`planColors`, `overlayColors`) |
+| Quick: `Controls/PointerSign.qml` | il segno accanto al puntatore di un tasto che cambia il clic (R535): il + e il − della selezione in pianta (Ctrl aggiunge o toglie, Maiusc toglie), l'icona del comando su un lato (Allinea, R497), il Ctrl sui vertici della vista 3D (− sopra un vertice già scelto). Quadrato di 18 px, raggio 3, fondo `halo`, 14 px a destra e 16 sotto il puntatore, segno in grassetto 16 px azzurro (aggiunge) o rosso critico (`sweep_remove`, toglie). Da portare nel modello `qt-app-template` (`qtkit`) | `Theme` (`fontFamily`), `Icon` |
+| `ui/menubar.py`, `ui/panel_buttons.py`, `ui/segments.py`, `ui/variant_bar.py` | barra dei menu ad Alt, pulsanti delle schede, pista di segmenti, varianti | `design`, `icons`, `motion` |
+| `ui/day_picker.py` | il calendario dei campi data: un fondo solo, giorno scelto neutro, oggi in un anello | `design`, `icons` |
+| `ui/icons.py` | icone Lucide (ISC) e proprie, nel colore del tema | `paths` |
+| `ui/sections.py`, `ui/marks.py` | elenchi a sezioni con i segni | `design`, `symbols` |
+| `symbol_shapes.py`, `ui/symbols.py` | i dieci simboli piatti (§4): le forme senza Qt, poi icona, disegno, segno e testo ricco | `theme_colors` (le forme); Qt Svg (il disegno) |
+| `ui/rows.py` | elenco a righe e griglia di campi al posto delle tabelle | `design` |
+| `ui/phasebar.py`, `ui/file_page.py` | riga delle fasi con la barra; pagina File | il contenuto viene dal programma (`phases.py`, i comandi) |
+| `ui/gallery.py` | la vetrina | tutti i precedenti |
+
+Passi per un programma nuovo:
+
+1. copiare i moduli della tabella, i caratteri (`data/fonts/inter`, OFL) e le icone (`data/icons`);
+2. all'avvio creare `Theme(cfg)` prima della finestra: tavolozza, foglio di stile, caratteri, finestrelle e
+   movimento;
+3. fare della finestra un tavolo di `CardDock` con `keep_gaps`, le viste con `round_corners`, le aree che scorrono con
+   `fades.attach`;
+4. prendere ogni misura da `design.py` e ogni colore dai gettoni;
+5. controllare con la galleria in chiaro e in scuro.
+
+Il modello a sé esiste dal 24/10/2026: `%USERPROFILE%\dev\qt-app-template`, pacchetto `qtkit`, con la galleria e
+una finestra d'esempio. Il 25/10/2026 (R122) vi sono stati portati il catalogo dei testi, i tipi di tasti, le barre
+di scorrimento, il calendario, i campi data e il cursore, la pista delle schede accorpate e la minore presenza
+dell'accento; la provenienza commit per commit è nel suo `docs/da-dove-viene.md`.
+
+## 8. La carta: la relazione e i documenti stampati
+
+La relazione (`ui/report.py`, `ui/report_chapters.py`, foglio in `ui/document_style.py` con `paper=True`, colori in
+`ui/report_style.py`) non segue il tema della finestra: è carta bianca, inchiostro `INK`, secondario `MUTED`, filetti
+`RULE`, fondo delle intestazioni `HEAD`, in chiaro e in scuro. Regole (R291, Daniel 30/10/2026: «la relazione è
+brutta, va rivista da un punto di vista estetico e di esposizione dei contenuti»):
+
+- **Quattro gradini di titolo, tutti semigrassetto**: h1 23 pt (solo il titolo del progetto), h2 16 pt (i capitoli,
+  numerati, ognuno su una pagina nuova nel modello Completo), h3 12 pt (le sezioni), h4 10,5 pt (le voci); testo
+  10,5 pt, didascalie e note 8,5 pt in `MUTED`. Lo spazio sopra un titolo cala con il livello (24, 18, 14 px). Un
+  testo preso da un altro modulo (i record di «Come è calcolato») entra con i titoli **abbassati di un livello**.
+- **Tabelle**: un punto meno del testo (9,5 pt), celle 4×6 px, intestazione su `HEAD` ripetuta a ogni pagina, un
+  filetto `RULE` sotto ogni riga; **i numeri a destra e nudi, l'unità nell'intestazione** («Azimut, °», «PR, %»,
+  «Valore attuale netto, €»); la riga del totale o del progetto evidenziata (`tr.result`); una riga di gruppo
+  (`td.group`) al posto di una colonna che ripete lo stesso nome; larghezze date alle colonne delle tabelle larghe,
+  così le parole dell'intestazione non si spezzano; mai una tabella più larga della pagina.
+- **Fatti** (`facts`): etichetta in `MUTED` al 34 %, valore in inchiostro normale; semigrassetto solo per i numeri
+  di testa della Sintesi.
+- **Figure** (`figure`): centrate, larghe 620 px (16 cm), con la didascalia numerata subito sotto («Figura n. ...»),
+  a interlinea 100 % perché il 125 % dei paragrafi lasciava una fascia bianca sotto l'immagine; la pianta alta
+  quanto chiede il suo disegno; la legenda dei grafici sopra il grafico, mai sulle barre.
+- **Niente due volte**: la pianta sta nella Sintesi e non torna in Coperture e posa; le verifiche delle stringhe
+  una volta per ogni tipo di stringa, con gli ingressi su cui vale; le verifiche del capitolo per ambito.
+- **Copertina**: nel Completo dipinta a sé (`_paint_cover`); nel Sintetico un blocco chiuso da un filetto `<hr>`
+  prima del primo capitolo. Intestazione e piè di pagina a 7,5 pt in `MUTED` dalla seconda pagina.

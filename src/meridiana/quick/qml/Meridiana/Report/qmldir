@@ -1,0 +1,3 @@
+module Meridiana.Report
+ReportPage 1.0 ReportPage.qml
+ReportChoice 1.0 ReportChoice.qml

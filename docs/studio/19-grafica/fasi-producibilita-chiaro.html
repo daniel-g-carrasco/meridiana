@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8"><title>Bozzetto: 3. Producibilità</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>:root {
+  --window: #f2f1ed;
+  --panel: #f8f7f4;
+  --view: #ffffff;
+  --header: #f2f1ed;
+  --card: #ffffff;
+  --line: #d9d5cc;
+  --line-soft: #e8e5de;
+  --text: #1e1c19;
+  --text2: #514c44;
+  --muted: #6f685d;
+  --tooltip-bg: #1e1c19;
+  --tooltip-fg: #f8f7f4;
+  --accent: #805210;
+  --accent-fg: #ffffff;
+  --accent-soft: #80521020;
+  --select-bg: #ffe1bf;
+  --select-fg: #1e1c19;
+  --assistant: #334f6d;
+  --plan-bg: #fbfaf8;
+  --plan-bld: #3a352d;
+  --plan-bld-fill: #3a352d0d;
+  --plan-module: #1f3352;
+  --plan-sub: #805210;
+  --plan-sub-fill: #80521014;
+  --plan-sel: #805210;
+  --plan-guide: #2e6fb0;
+  --plan-pitch: #808080;
+  --sky-top: #dde7f0;
+  --sky-bottom: #f6f2ea;
+  --ground: #d6d0bf;
+  --wall: #f0ebe1;
+  --roof: #b5643f;
+  --d3-module: #1f3352;
+  --chart-surface: #ffffff;
+  --chart-grid: #e8e8e8;
+  --chart-axis: #c7c7c7;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --good: #0ca30c;
+  --warning-ink: #b07a00;
+  --shadow: rgba(20, 24, 30, 0.14);
+  --raise: rgba(255, 255, 255, 0.9);
+  --sink: rgba(30, 28, 25, 0.06);
+}
+html.dark {
+  --window: #151515;
+  --panel: #252525;
+  --view: #1c1c1c;
+  --header: #151515;
+  --card: #252525;
+  --line: #404040;
+  --line-soft: #333333;
+  --text: #ededed;
+  --text2: #c4c4c4;
+  --muted: #9b9b9b;
+  --tooltip-bg: #ededed;
+  --tooltip-fg: #151515;
+  --accent: #f1dac1;
+  --accent-fg: #151515;
+  --accent-soft: #f1dac124;
+  --select-bg: #483319;
+  --select-fg: #ededed;
+  --assistant: #a1c1e4;
+  --plan-bg: #1c1c1c;
+  --plan-bld: #d6d6d6;
+  --plan-bld-fill: #d6d6d60d;
+  --plan-module: #1d3152;
+  --plan-sub: #f1dac1;
+  --plan-sub-fill: #f1dac112;
+  --plan-sel: #f1dac1;
+  --plan-guide: #8ab4f8;
+  --plan-pitch: #929292;
+  --sky-top: #0f141c;
+  --sky-bottom: #1f2a3a;
+  --ground: #23272a;
+  --wall: #d6d0c4;
+  --roof: #9a5a3e;
+  --d3-module: #1d3152;
+  --chart-surface: #1c1c1c;
+  --chart-grid: #282828;
+  --chart-axis: #424242;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --good: #0ca30c;
+  --warning-ink: #fab219;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --raise: rgba(255, 255, 255, 0.045);
+  --sink: rgba(0, 0, 0, 0.22);
+}
+
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-Regular.ttf"); font-weight: 400; }
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-SemiBold.ttf"); font-weight: 600; }
+@font-face { font-family: "Titillium Web"; src: url("../../../data/fonts/titillium-web/TitilliumWeb-Bold.ttf"); font-weight: 700; }
+* { box-sizing: border-box; }
+html { --zoom: 0.62; }
+body { margin: 0; font-family: "Titillium Web", "Segoe UI", sans-serif; font-size: 15px; color: var(--text);
+       background: var(--window); }
+.page { padding: 20px 28px 60px; max-width: 2400px; }
+.page h1 { font-size: 26px; margin: 0 0 4px; font-weight: 600; }
+.page h2 { font-size: 20px; margin: 28px 0 6px; font-weight: 600; }
+.page p { max-width: 920px; line-height: 1.4; color: var(--text2); margin: 4px 0; }
+.controls { display: flex; gap: 14px; align-items: center; margin: 10px 0 18px; flex-wrap: wrap; }
+.controls label { display: flex; gap: 6px; align-items: center; color: var(--text2); }
+.controls button, .controls select { font: inherit; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--line);
+       background: var(--panel); color: var(--text); cursor: pointer; }
+.controls button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.row { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; padding-bottom: 12px; }
+.dir { flex: 0 0 auto; }
+.dir h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+.dir .note { max-width: calc(1180px * var(--zoom)); font-size: 14px; color: var(--text2); line-height: 1.35; margin: 6px 0 0; }
+.dir .note b { color: var(--text); }
+.frame { width: calc(1180px * var(--zoom)); height: calc(720px * var(--zoom)); overflow: hidden; border-radius: 6px;
+          box-shadow: 0 2px 10px var(--shadow); border: 1px solid var(--line); }
+.mock { width: 1180px; height: 720px; transform: scale(var(--zoom)); transform-origin: 0 0; display: grid;
+         grid-template-rows: 28px 34px auto 1fr 24px; grid-template-columns: 1fr; background: var(--window);
+         color: var(--text); font-size: 13px; position: relative; }
+.mock .menubar { display: flex; align-items: center; gap: 2px; padding: 0 8px; background: var(--window); }
+.mock .menubar span { padding: 4px 8px; border-radius: 4px; }
+.mock .menubar span.on { background: var(--select-bg); color: var(--select-fg); }
+.mock .menubar .sp { flex: 1; }
+.mock .menubar .chip { border: 1px solid var(--line); background: var(--panel); font-size: 12px; padding: 2px 8px; }
+.mock .tabs { display: flex; align-items: flex-end; gap: 2px; padding: 0 10px; background: var(--window);
+               border-bottom: 1px solid var(--line); }
+.mock .tabs span { padding: 7px 12px 6px; color: var(--text2); border-bottom: 2px solid transparent; }
+.mock .tabs span.on { color: var(--text); border-bottom-color: var(--accent); }
+.mock .tabs span.on::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+                               background: var(--accent); margin-right: 7px; vertical-align: 1px; }
+.mock .toolbar { display: flex; align-items: center; gap: 4px; padding: 3px 8px; background: var(--window); min-height: 34px; }
+.mock .toolbar .tb { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 5px;
+                      color: var(--text2); border: 1px solid transparent; }
+.mock .toolbar .tb svg { width: 18px; height: 18px; }
+.mock .toolbar .tb.on { background: var(--select-bg); color: var(--select-fg); border-color: var(--line); }
+.mock .toolbar .sep { width: 1px; height: 20px; background: var(--line); margin: 0 6px; }
+.mock .body { display: grid; grid-template-columns: 220px 1fr 300px; min-height: 0; }
+.mock .side { display: flex; flex-direction: column; min-height: 0; background: var(--panel); }
+.mock .ptitle { padding: 5px 10px; font-weight: 600; font-size: 12px; color: var(--text2); background: var(--header);
+                 border-bottom: 1px solid var(--line-soft); display: flex; align-items: center; gap: 6px; }
+.mock .ptitle .x { margin-left: auto; color: var(--muted); font-weight: 400; }
+.mock .centre { display: grid; grid-template-rows: 1fr auto; min-height: 0; background: var(--window); }
+.mock .views { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); min-height: 0; }
+.mock .view { position: relative; overflow: hidden; background: var(--plan-bg); }
+.mock .view svg { width: 100%; height: 100%; display: block; }
+.mock .view.d3 { background: linear-gradient(var(--sky-top), var(--sky-bottom)); }
+.mock .viewbar { position: absolute; top: 8px; left: 8px; display: flex; gap: 2px; background: var(--panel);
+                  border: 1px solid var(--line); border-radius: 6px; padding: 2px; font-size: 12px;
+                  box-shadow: 0 1px 4px var(--shadow); }
+.mock .viewbar span { padding: 2px 8px; border-radius: 4px; color: var(--text2); }
+.mock .viewbar span.on { background: var(--select-bg); color: var(--select-fg); }
+.mock .checks { grid-column: 1 / -1; background: var(--panel); border-top: 1px solid var(--line); min-height: 0;
+                 display: flex; flex-direction: column; }
+.mock .status { display: flex; align-items: center; gap: 14px; padding: 0 10px; border-top: 1px solid var(--line);
+                 font-size: 12px; color: var(--text2); background: var(--window); }
+.mock .status .sp { flex: 1; }
+.mock .status .cnt { display: inline-flex; gap: 4px; align-items: center; }
+.mock .tree { padding: 6px 4px; overflow: hidden; line-height: 1.6; font-size: 13px; }
+.mock .tree div { display: flex; align-items: center; gap: 6px; padding: 0 6px; border-radius: 4px; white-space: nowrap; }
+.mock .tree div.sel { background: var(--select-bg); color: var(--select-fg); }
+.mock .tree svg { width: 15px; height: 15px; flex: none; color: var(--text2); }
+.mock .tree .mark { margin-left: auto; font-size: 11px; padding: 0 5px; border-radius: 8px; color: #fff; }
+.mock .tree .mark.warn { background: var(--warning-ink); }
+.mock .tree .mark.info { background: var(--muted); }
+.mock .tree .mark.fail { background: var(--critical); }
+.mock .tree .lvl1 { padding-left: 20px; }
+.mock .tree .lvl2 { padding-left: 36px; }
+.mock .tree .lvl3 { padding-left: 52px; }
+.mock .props { padding: 6px 8px; overflow: hidden; font-size: 13px; }
+.mock .props h4 { margin: 6px 0 4px; font-size: 13px; font-weight: 600; }
+.mock .group { margin: 8px 0; }
+.mock .group .gt { font-weight: 600; font-size: 12px; color: var(--text2); padding: 2px 0; }
+.mock .form { display: grid; grid-template-columns: 1fr 128px; gap: 4px 8px; align-items: center; }
+.mock .form label { color: var(--text2); }
+.mock .field { display: flex; align-items: center; justify-content: space-between; height: 24px; padding: 0 6px;
+                border-radius: 4px; background: var(--view); border: 1px solid var(--line); color: var(--text); }
+.mock .field .arr { color: var(--muted); font-size: 10px; letter-spacing: -2px; }
+.mock .field.combo::after { content: "⌄"; color: var(--muted); }
+.mock .btn { display: inline-flex; align-items: center; justify-content: center; height: 26px; padding: 0 12px;
+              border-radius: 5px; border: 1px solid var(--line); background: var(--view); color: var(--text); }
+.mock .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.mock .check { display: flex; gap: 6px; align-items: center; }
+.mock .check i { width: 14px; height: 14px; border: 1px solid var(--line); border-radius: 3px; background: var(--view); }
+.mock .check i.on { background: var(--accent); border-color: var(--accent); }
+.mock .clist { overflow: hidden; font-size: 12.5px; padding: 2px 6px; }
+.mock .clist div { display: flex; gap: 8px; align-items: baseline; padding: 2px 4px; }
+.mock .clist .m { width: 16px; text-align: center; font-weight: 700; }
+.mock .clist .m.fail { color: var(--critical); } .mock .clist .m.warn { color: var(--warning-ink); }
+.mock .clist .m.ok { color: var(--good); } .mock .clist .m.info { color: var(--muted); }
+.mock .clist .src { margin-left: auto; color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+.mock .chead { display: flex; gap: 6px; align-items: center; padding: 4px 8px; font-size: 12px; }
+.mock .chead .f { padding: 1px 7px; border: 1px solid var(--line); border-radius: 4px; background: var(--view); }
+.mock .chead .f.on { background: var(--select-bg); }
+.mock .sunbar { display: flex; align-items: center; gap: 10px; padding: 3px 10px; font-size: 12px; color: var(--text2);
+                 background: var(--panel); border-top: 1px solid var(--line); }
+.mock .sunbar .track { flex: 1; height: 4px; background: var(--line); border-radius: 2px; position: relative; }
+.mock .sunbar .track i { position: absolute; left: 46%; top: -4px; width: 12px; height: 12px; border-radius: 50%;
+                          background: var(--accent); }
+.mock .meridio { position: absolute; right: 318px; bottom: 60px; width: 46px; height: 46px; border-radius: 50%;
+                  background: var(--panel); border: 1px solid var(--line); display: grid; place-items: center;
+                  box-shadow: 0 1px 4px var(--shadow); }
+.mock .meridio svg { width: 34px; height: 34px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+.mock { width: 250px; height: 330px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+           font-size: 13px; }
+.mock .ptitle { padding: 6px 10px; font-weight: 600; font-size: 12px; color: var(--text2); border-bottom: 1px solid var(--line-soft); }
+.mock .tree { padding: 6px 4px; line-height: 1.7; }
+.mock .tree div { display: flex; align-items: center; gap: 6px; padding: 0 6px; border-radius: 4px; white-space: nowrap; }
+.mock .tree div.sel { background: var(--select-bg); color: var(--select-fg); }
+.mock .tree svg { width: 15px; height: 15px; color: var(--text2); flex: none; }
+.mock .tree .mark { margin-left: auto; font-size: 11px; padding: 0 6px; border-radius: 8px; color: #fff; }
+.mock .tree .mark.warn { background: var(--warning-ink); } .mock .tree .mark.info { background: var(--muted); }
+.mock .tree .lvl1 { padding-left: 22px; } .mock .tree .lvl2 { padding-left: 40px; }
+.mock .sec { margin-top: 8px; padding: 2px 8px 0; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.mock .sec .n { margin-left: 6px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.mock.t3 .tree { padding: 6px; }
+.mock.t3 .card { background: var(--card); border: 1px solid var(--line-soft); border-radius: 6px; margin: 6px 0; padding: 4px 2px; }
+.mock.t3 .card .sec { margin-top: 0; }
+.mock .cnt { color: var(--muted); font-size: 12px; }
+.mock .chev { color: var(--muted); width: 12px; }
+.treerow { display: flex; gap: 22px; flex-wrap: wrap; }
+.treerow .dir .note { max-width: 250px; }
+
+.mock .field { height: 26px; padding: 0 7px; background: var(--sink); border: 1px solid transparent; color: var(--text); }
+.mock .btn { height: 28px; padding: 0 14px; border-radius: 6px; font-weight: 600; background: var(--sink);
+             border: 1px solid transparent; color: var(--text); }
+.mock .btn.primary { background: var(--accent); color: var(--accent-fg); }
+.mock .check i { background: var(--sink); border-color: transparent; }
+.mock .check i.on { background: var(--accent); }
+.mock .props { padding: 2px 12px 10px; }
+.mock .group { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; margin: 8px 0; }
+.mock .group .gt { background: var(--line-soft); color: var(--text); padding: 4px 8px; margin: 0 0 6px; font-size: 13px; }
+.mock .group .form { padding: 0 8px 8px; grid-template-columns: 1fr 150px; gap: 5px 8px; }
+.mock .group .form label { color: var(--text2); }
+.mock .value { font-weight: 600; text-align: right; }
+.mock .note { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+.mock .hbox { display: flex; gap: 6px; }
+
+.vrow-x { display: flex; gap: 22px; align-items: flex-start; overflow-x: auto; }
+.vbox-x { flex: 0 0 auto; width: 760px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; font-size: 13px; }
+.vbox .ptitle { padding: 6px 10px; font-weight: 600; font-size: 12px; color: var(--text2); border-bottom: 1px solid var(--line-soft); display: flex; gap: 8px; align-items: center; }
+.vbox .ptitle .x { margin-left: auto; color: var(--muted); font-weight: 400; }
+.vbox .chead { display: flex; gap: 6px; align-items: center; padding: 6px 10px; font-size: 12px; border-bottom: 1px solid var(--line-soft); }
+.vbox .chead .f { padding: 1px 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--view); display: inline-flex; gap: 4px; align-items: center; }
+.vbox .chead .f.on { background: var(--select-bg); }
+.vbox .chead .f b { font-size: 11px; }
+.vbox .chead .sp { flex: 1; }
+.vbox .m { width: 18px; text-align: center; font-weight: 700; flex: none; }
+.vbox .m.fail { color: var(--critical); } .vbox .m.warn { color: var(--warning-ink); } .vbox .m.ok { color: var(--good); } .vbox .m.info { color: var(--muted); }
+.vbox .it { display: flex; gap: 8px; align-items: center; padding: 5px 10px; border-bottom: 1px solid var(--line-soft); }
+.vbox .it:hover { background: var(--sink); }
+.vbox .it .t { flex: 1; }
+.vbox .it .src { color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+.vbox .it .act { display: inline-flex; gap: 6px; }
+.vbox .it .b { font-size: 11.5px; padding: 1px 8px; border-radius: 4px; border: 1px solid var(--line); background: var(--view); color: var(--text); white-space: nowrap; }
+.vbox .it .b.fix { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.vbox .it .b.ico { padding: 1px 5px; color: var(--text2); }
+.vbox .it .chev { color: var(--muted); font-size: 11px; width: 10px; }
+.vbox .detail { padding: 4px 10px 8px 46px; color: var(--text2); font-size: 12.5px; line-height: 1.4; border-bottom: 1px solid var(--line-soft); background: var(--sink); }
+.vbox .detail b { color: var(--text); }
+.vbox .obj { display: flex; gap: 8px; align-items: center; padding: 6px 10px; font-weight: 600; background: var(--line-soft); }
+.vbox .obj svg { width: 15px; height: 15px; color: var(--text2); }
+.vbox .obj .cnt { margin-left: auto; font-weight: 400; color: var(--muted); font-size: 12px; }
+.vbox .it.sub { padding-left: 34px; }
+.vbox .lvlhead { display: flex; gap: 8px; align-items: center; padding: 8px 10px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+.vbox .lvlhead .m { font-size: 13px; text-transform: none; }
+.vbox .card { margin: 0 10px 8px; background: var(--card); border: 1px solid var(--line-soft); border-radius: 6px; overflow: hidden; }
+.vbox .card .it { border-bottom: 1px solid var(--line-soft); } .vbox .card .it:last-child { border-bottom: none; }
+.vbox table { border-collapse: collapse; width: 100%; }
+.vbox th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding: 5px 10px; border-bottom: 1px solid var(--line); font-weight: 600; }
+.vbox td { padding: 5px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+.vbox td.src { color: var(--muted); font-size: 11.5px; }
+.vbox .areahead td { background: var(--line-soft); font-weight: 600; }
+.vdir .note { max-width: 760px; font-size: 14px; color: var(--text2); line-height: 1.35; margin: 6px 0 0; }
+.vdir .note b { color: var(--text); }
+.vdir h3 { margin: 0 0 6px; font-size: 17px; }
+
+.mock .checks .vbox { width: auto; border: none; border-radius: 0; background: transparent; height: 100%; overflow: hidden; }
+
+.mock .tabs { display: flex; align-items: flex-end; gap: 2px; padding: 0 12px; background: var(--window); border: none;
+               position: relative; z-index: 2; }
+.mock .tabs .file { align-self: center; display: inline-flex; align-items: center; gap: 6px; height: 28px; margin: 6px 12px 0 0;
+                     padding: 0 13px 0 10px; border-radius: 6px; background: var(--accent); color: var(--accent-fg); font-weight: 600;
+                     font-size: 13.5px; }
+.mock .tabs .file svg { width: 15px; height: 15px; }
+.mock .tabs .file.on { box-shadow: 0 0 0 2px var(--window), 0 0 0 4px var(--accent); }
+.mock .tabs .tab { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px 0 10px; color: var(--text2);
+                    border: 1px solid transparent; border-bottom: none; border-radius: 8px 8px 0 0; font-size: 14px; }
+.mock .tabs .tab i { font-style: normal; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+                      background: var(--line-soft); color: var(--muted); font-size: 11.5px; font-weight: 600; }
+.mock .tabs .tab.on { background: var(--panel); border-color: var(--line-soft); color: var(--text); font-weight: 600;
+                       height: 37px; margin-bottom: -1px; }
+.mock .tabs .tab.on i { background: var(--accent); color: var(--accent-fg); }
+.mock .tabs .sp { flex: 1; }
+.mock .tabs .chip { align-self: center; margin-top: 6px; font-size: 12.5px; padding: 3px 10px; border-radius: 6px;
+                     background: var(--sink); color: var(--text); }
+
+.mock .tools { margin: 0 12px; display: flex; align-items: stretch; gap: 2px; padding: 6px 10px 5px; background: var(--panel);
+                border: 1px solid var(--line-soft); border-radius: 8px; box-shadow: 0 1px 3px var(--shadow); position: relative;
+                z-index: 1; }
+.mock .tools .grp { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.mock .tools .gi { display: flex; gap: 2px; }
+.mock .tools .tb { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 64px; padding: 5px 8px 4px;
+                    border-radius: 6px; color: var(--text2); font-size: 12px; border: 1px solid transparent; }
+.mock .tools .tb svg { width: 22px; height: 22px; }
+.mock .tools .tb.on { background: var(--select-bg); color: var(--select-fg); border-color: var(--line); }
+.mock .tools .gl { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.mock .tools .sep { width: 1px; background: var(--line-soft); margin: 4px 8px; }
+
+.mock .body { display: grid; grid-template-columns: 320px 1fr 380px; grid-template-rows: 1fr 214px; gap: 8px;
+               padding: 8px 12px 0; min-height: 0; background: var(--window); }
+.mock .pane { background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px; box-shadow: 0 1px 3px var(--shadow);
+               overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.mock .pane > .ptitle, .mock .checks .vbox > .ptitle { background: transparent; border: none; padding: 9px 12px 5px;
+               font-size: 13.5px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 7px; }
+.mock .pane > .ptitle svg { width: 15px; height: 15px; color: var(--text2); }
+.mock .pane > .ptitle .x, .mock .checks .vbox > .ptitle .x { margin-left: auto; color: var(--muted); font-weight: 400; }
+.mock .left { grid-column: 1; grid-row: 1; }
+.mock .centre { grid-column: 2; grid-row: 1; display: grid; grid-template-rows: 1fr auto; background: var(--panel); }
+.mock .checks { grid-column: 1 / 3; grid-row: 2; border-top: 1px solid var(--line-soft); }
+.mock .rcol { grid-column: 3; grid-row: 1 / 3; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.mock .rcol .props-card { flex: 1; }
+.mock .help-card { flex: none; }
+.mock .help-card .hb { padding: 0 12px 12px; font-size: 13px; line-height: 1.45; color: var(--text2); }
+.mock .help-card .hb b { display: block; color: var(--text); margin-bottom: 2px; }
+.mock .help-card .links { display: flex; gap: 16px; margin-top: 8px; }
+.mock .help-card a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 12.5px; }
+.mock .props .focus { box-shadow: 0 0 0 2px var(--accent); }
+.mock .status { display: flex; align-items: center; gap: 14px; padding: 0 16px; border: none; font-size: 12px;
+                 color: var(--text2); background: var(--window); }
+.mock .meridio { right: 414px; bottom: 292px; }
+
+.mock .tools .tb.prim-tb { background: var(--accent); color: var(--accent-fg); }
+
+.mock .pane.page { display: block; padding: 14px 16px; overflow: hidden; }
+.mock .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.mock .tiles.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mock .tile { background: var(--sink); border-radius: 8px; padding: 10px 14px 11px; min-width: 0; }
+.mock .tile.key { background: var(--accent-soft); }
+.mock .tile .l { font-size: 12.5px; color: var(--text2); display: flex; justify-content: space-between; }
+.mock .tile .l i { font-style: normal; color: var(--muted); border: 1px solid var(--line); border-radius: 50%;
+                   width: 15px; height: 15px; display: inline-grid; place-items: center; font-size: 10px; }
+.mock .tile .v { font-size: 24px; font-weight: 600; line-height: 1.25; margin-top: 2px; }
+.mock .tile .v small { font-size: 12.5px; font-weight: 400; color: var(--muted); margin-left: 3px; }
+.mock .tile .d { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.mock .tile .bar3 { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 8px 0 4px; gap: 2px; }
+.mock .tile .bar3 b { display: block; }
+.mock .sect { margin: 14px 0 6px; font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted);
+              font-weight: 600; display: flex; gap: 10px; align-items: baseline; }
+.mock .sect span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.mock .chartcard { border: 1px solid var(--line-soft); border-radius: 8px; margin-top: 10px; overflow: hidden; }
+.mock .chartcard .ct { display: flex; align-items: center; gap: 2px; padding: 6px 8px; border-bottom: 1px solid var(--line-soft); }
+.mock .chartcard .ct span { padding: 3px 10px; border-radius: 6px; color: var(--text2); font-size: 13px; }
+.mock .chartcard .ct span.on { background: var(--select-bg); color: var(--select-fg); font-weight: 600; }
+.mock .chartcard .ct .sp { flex: 1; }
+.mock .chartcard .ct a { color: var(--accent); font-size: 12.5px; font-weight: 600; padding: 0 6px; }
+.mock .chartcard .cb { padding: 10px 14px 8px; }
+.mock .chartcard .cb h5 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+.mock .chartcard svg { display: block; width: 100%; }
+.mock .strip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--text2);
+               background: var(--sink); border-radius: 8px; padding: 7px 12px; margin-top: 10px; }
+.mock .strip b { color: var(--text); }
+.mock .strip .sp { flex: 1; }
+.mock .strip a { color: var(--accent); font-weight: 600; }
+.mock .chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 11px; font-size: 12px;
+              border: 1px solid var(--line); color: var(--text2); background: var(--panel); white-space: nowrap; }
+.mock .chip.on { background: var(--select-bg); color: var(--select-fg); border-color: var(--line); }
+.mock .chip.warn { border-color: transparent; background: var(--warning-ink); color: #fff; }
+.mock .chip.ok { border-color: transparent; background: var(--good); color: #fff; }
+.mock .chip.muted { border-color: transparent; background: var(--line-soft); color: var(--muted); }
+.mock .rlist { padding: 0 12px 10px; font-size: 13px; }
+.mock .rlist .r { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 5px 0;
+                  border-bottom: 1px solid var(--line-soft); align-items: center; }
+.mock .rlist .r:last-child { border-bottom: none; }
+.mock .rlist .r .n { color: var(--text2); }
+.mock .rlist .r .q { font-weight: 600; text-align: right; }
+.mock .rlist .r .bar { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: var(--line-soft); overflow: hidden; }
+.mock .rlist .r .bar b { display: block; height: 100%; background: var(--muted); border-radius: 3px; }
+.mock .rlist .r.warn .q { color: var(--warning-ink); }
+.mock .rlist .r.warn .bar b { background: var(--warning-ink); }
+.mock .rlist .r.total { border-top: 1px solid var(--line); }
+.mock .side-tiles { padding: 2px 12px 10px; display: grid; gap: 8px; }
+.mock .inv { background: var(--sink); border-radius: 8px; padding: 10px 12px; display: grid; grid-template-columns: 1fr auto;
+             gap: 2px 8px; font-size: 13px; }
+.mock .inv b { font-size: 14px; }
+.mock .inv .s { color: var(--muted); font-size: 12px; grid-column: 1; }
+.mock .inv .qty { grid-row: 1 / 3; grid-column: 2; display: flex; align-items: center; gap: 6px; }
+.mock .inv .qty .field { width: 64px; background: var(--panel); }
+.mock .gauge { position: relative; height: 10px; border-radius: 5px; background: var(--line-soft); margin: 6px 0 2px; }
+.mock .gauge .band { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--good) 35%, transparent); border-radius: 5px; }
+.mock .gauge .pin { position: absolute; top: -4px; width: 4px; height: 18px; border-radius: 2px; background: var(--warning-ink); }
+.mock .gl { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); }
+.mock .mppt { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 4px 8px; padding: 6px 0; border-bottom: 1px solid var(--line-soft);
+              font-size: 12.5px; align-items: center; }
+.mock .mppt:last-child { border-bottom: none; }
+.mock .mppt .k { font-weight: 600; }
+.mock .mppt .ss { display: flex; gap: 4px; flex-wrap: wrap; }
+.mock .mppt .note { grid-column: 2; color: var(--muted); font-size: 11.5px; }
+.mock .sc { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px 1px 5px; border-radius: 10px; font-size: 12px;
+            background: var(--sink); }
+.mock .sc i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.mock .sc .okm { color: var(--good); font-weight: 700; }
+.mock .planbox { position: relative; height: 520px; border-radius: 6px; overflow: hidden; margin-top: 10px; background: var(--plan-bg); }
+.mock .planbox svg { width: 100%; height: 100%; display: block; }
+.mock .twocol { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; }
+.mock .outline { border: 1px solid var(--line-soft); border-radius: 8px; overflow: hidden; }
+.mock .outline .o { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-bottom: 1px solid var(--line-soft); font-size: 13px; }
+.mock .outline .o:last-child { border-bottom: none; }
+.mock .outline .o .num { color: var(--muted); width: 18px; }
+.mock .outline .o .t { flex: 1; }
+.mock .outline .o .p { color: var(--muted); font-size: 12px; }
+.mock .paper { background: #ffffff; border: 1px solid var(--line); border-radius: 4px; aspect-ratio: 210 / 297; padding: 16px 18px;
+               box-shadow: 0 2px 8px var(--shadow); color: #1e1c19; font-size: 7px; line-height: 1.5; }
+.mock .paper .hb { height: 6px; background: #8b5a12; border-radius: 2px; width: 40%; margin-bottom: 10px; }
+.mock .paper h6 { font-size: 11px; margin: 0 0 6px; }
+.mock .paper .ln { height: 4px; background: #e8e5de; border-radius: 2px; margin: 4px 0; }
+.mock .paper .ln.s { width: 70%; }
+.mock .paper .fig { height: 60px; background: #f2f1ed; border-radius: 3px; margin: 8px 0; display: grid; place-items: center; color: #8a857c; }
+.mock .deliv { padding: 2px 12px 10px; display: grid; gap: 8px; }
+.mock .deliv .d { background: var(--sink); border-radius: 8px; padding: 9px 12px; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px;
+                  font-size: 13px; align-items: center; }
+.mock .deliv .d b { font-size: 13.5px; }
+.mock .deliv .d .s { color: var(--muted); font-size: 12px; }
+.mock .heat { display: grid; grid-template-columns: 34px repeat(24, minmax(0, 1fr)); gap: 2px; font-size: 10px; color: var(--muted); }
+.mock .heat i { display: block; height: 12px; border-radius: 2px; }
+.mock .heat .m { line-height: 12px; }
+.mock .head-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.mock .head-row h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.mock .head-row .sp { flex: 1; }
+.mock .prim { display: inline-flex; align-items: center; height: 30px; padding: 0 16px; border-radius: 6px; font-weight: 600;
+              background: var(--accent); color: var(--accent-fg); }
+.mock .form2 { display: grid; grid-template-columns: 1fr 150px; gap: 5px 8px; align-items: center; padding: 0 8px 8px; font-size: 13px; }
+.mock .form2 label { color: var(--text2); }
+
+.frame { width: 1600px; height: 960px; border-radius: 0; box-shadow: none; border: none; }
+.mock { width: 1600px; height: 960px; transform: none; grid-template-rows: 44px auto 1fr 30px; }
+.mock.filepage { grid-template-rows: 44px 1fr 30px; }
+.page { padding: 0; }
+.label { font: 600 15px "Titillium Web"; padding: 10px 0 6px; }
+</style>
+<script>
+const root = document.documentElement;
+function setTheme(dark) {
+  root.classList.toggle('dark', dark);
+  document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('on', (b.dataset.theme === 'dark') === dark));
+  try { localStorage.setItem('m17-dark', dark ? '1' : '0'); } catch (e) {}
+}
+function setZoom(z) { root.style.setProperty('--zoom', z); const o = document.getElementById('zoomv'); if (o) o.textContent = Math.round(z * 100) + '%'; }
+try { setTheme(localStorage.getItem('m17-dark') === '1'); } catch (e) { setTheme(false); }
+</script>
+</head>
+<body><div class="page"><div class="frame"><div class="mock"><div class="tabs"><div class="file "><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 6h6l2 2h10v11H3z"/></svg>File</div><div class="tab "><i>1</i>Modello</div><div class="tab "><i>2</i>Impianto</div><div class="tab on"><i>3</i>Producibilità</div><div class="tab "><i>4</i>Consumi</div><div class="tab "><i>5</i>Bilancio ed economia</div><div class="tab "><i>6</i>Relazione</div><div class="sp"></div><div class="chip">Variante: Base ⌄</div></div><div class="tools"><div class="grp"><div class="gi"><div class="tb  prim-tb"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M7 4l13 8-13 8z"/></svg><span>Calcola</span></div><div class="tb  "><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M7 18a5 5 0 01-.6-10A6 6 0 0118 9a4 4 0 01-1 9"/><path d="M12 12v8M9 17l3 3 3-3"/></svg><span>Da PVGIS</span></div></div><div class="gl">Calcolo</div></div><div class="sep"></div><div class="grp"><div class="gi"><div class="tb  "><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5V15a3 3 0 003 3h6.5M18 15.5V9a3 3 0 00-3-3H8.5"/></svg><span>Varianti</span></div></div><div class="gl">Confronto</div></div></div><div class="body"><div class="pane left"><div class="ptitle">Progetto<span class="x">✕</span></div><div class="tree"><div class="lvl0 sel"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 21s-6-5.5-6-10a6 6 0 0112 0c0 4.5-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg><span>Capannone Rho</span><span class="mark info">3</span></div><div class="sec">Edifici<span class="n">2</span></div><div class="lvl0 "><span class="chev">⌄</span><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2M10 21v-4h4v4"/></svg><span>Edificio 1</span></div><div class="lvl1 "><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg><span>Falda 1 · Sud 19°</span></div><div class="lvl1 "><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg><span>Falda 2 · Nord 19°</span></div><div class="lvl0 "><span class="chev">›</span><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2M10 21v-4h4v4"/></svg><span>Uffici</span></div><div class="sec">Sottocampi<span class="n">2 · 188 moduli</span></div><div class="lvl0 "><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M3 14h18M9 4v16M15 4v16"/></svg><span>Copertura Sud <span class=cnt>156</span></span><span class="mark warn">1</span></div><div class="lvl0 "><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M3 14h18M9 4v16M15 4v16"/></svg><span>Copertura Nord <span class=cnt>32</span></span></div><div class="sec">Esclusioni<span class="n">3</span></div><div class="lvl0 "><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="8"/><path d="M6.5 6.5l11 11"/></svg><span>Lucernario 1</span></div><div class="lvl0 "><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="8"/><path d="M6.5 6.5l11 11"/></svg><span>Lucernario 2</span></div><div class="lvl0 "><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="8"/><path d="M6.5 6.5l11 11"/></svg><span>Camino 1</span></div></div></div><div class="pane centre page"><div class="tiles"><div class="tile key"><div class="l"><span>Energia all'anno</span><i>?</i></div><div class="v">107.130<small>kWh</small></div><div class="d">anno tipo, dopo tutte le perdite</div></div><div class="tile "><div class="l"><span>Producibilità specifica</span><i>?</i></div><div class="v">1.151<small>kWh/kWp</small></div><div class="d">in Lombardia di solito 1.100-1.300</div></div><div class="tile "><div class="l"><span>Indice di prestazione</span><i>?</i></div><div class="v">69,9<small>%</small></div><div class="d">IEC 61724-1 · basso per il taglio</div></div><div class="tile "><div class="l"><span>Potenza</span><i>?</i></div><div class="v">93,06<small>kWp</small></div><div class="d">50,0 kW AC · DC/AC 1,86</div></div></div><div class="chartcard"><div class="ct"><span class="on">Mesi</span><span>Perdite</span><span>Giorno tipo</span><span>Come è calcolato</span><span class="sp"></span><a>Tabella</a><a>Copia</a></div><div class="cb"><h5>Produzione mese per mese</h5><svg viewBox="0 0 1060 230" role="img" aria-label="Produzione mese per mese"><line x1="44" x2="1050" y1="204.0" y2="204.0" stroke="var(--line-soft)"/><text x="36" y="208.0" text-anchor="end" font-size="11" fill="var(--muted)">0</text><line x1="44" x2="1050" y1="155.5" y2="155.5" stroke="var(--line-soft)"/><text x="36" y="159.5" text-anchor="end" font-size="11" fill="var(--muted)">4</text><line x1="44" x2="1050" y1="107.0" y2="107.0" stroke="var(--line-soft)"/><text x="36" y="111.0" text-anchor="end" font-size="11" fill="var(--muted)">8</text><line x1="44" x2="1050" y1="58.5" y2="58.5" stroke="var(--line-soft)"/><text x="36" y="62.5" text-anchor="end" font-size="11" fill="var(--muted)">12</text><line x1="44" x2="1050" y1="10.0" y2="10.0" stroke="var(--line-soft)"/><text x="36" y="14.0" text-anchor="end" font-size="11" fill="var(--muted)">15</text><rect x="62.4" y="154.9" width="46.9" height="49.1" rx="3" fill="#2e6fb0" opacity="0.55"/><text x="85.9" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">gen</text><rect x="146.3" y="133.5" width="46.9" height="70.5" rx="3" fill="#2e6fb0" opacity="0.55"/><text x="169.8" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">feb</text><rect x="230.1" y="95.7" width="46.9" height="108.3" rx="3" fill="#2e6fb0" opacity="0.55"/><text x="253.6" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">mar</text><rect x="313.9" y="69.3" width="46.9" height="134.7" rx="3" fill="#2e6fb0" opacity="0.55"/><text x="337.4" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">apr</text><rect x="397.8" y="45.4" width="46.9" height="158.6" rx="3" fill="#2e6fb0" opacity="0.55"/><text x="421.2" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">mag</text><rect x="481.6" y="39.1" width="46.9" height="164.9" rx="3" fill="#2e6fb0" opacity="0.55"/><text x="505.1" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">giu</text><rect x="565.4" y="35.3" width="46.9" height="168.7" rx="3" fill="#2e6fb0"/><text x="588.9" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">lug</text><rect x="649.3" y="52.9" width="46.9" height="151.1" rx="3" fill="#2e6fb0" opacity="0.55"/><text x="672.7" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">ago</text><rect x="733.1" y="85.7" width="46.9" height="118.3" rx="3" fill="#2e6fb0" opacity="0.55"/><text x="756.6" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">set</text><rect x="816.9" y="115.9" width="46.9" height="88.1" rx="3" fill="#2e6fb0" opacity="0.55"/><text x="840.4" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">ott</text><rect x="900.8" y="148.6" width="46.9" height="55.4" rx="3" fill="#2e6fb0" opacity="0.55"/><text x="924.2" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">nov</text><rect x="984.6" y="161.2" width="46.9" height="42.8" rx="3" fill="#2e6fb0" opacity="0.55"/><text x="1008.1" y="222" text-anchor="middle" font-size="11" fill="var(--muted)">dic</text><g><rect x="602.9" y="18" width="190" height="39" rx="6" fill="var(--tooltip-bg)"/><text x="614.9" y="36" font-size="12" font-weight="600" fill="var(--tooltip-fg)">luglio</text><text x="614.9" y="53" font-size="12" fill="var(--tooltip-fg)">Produzione: 13.400 kWh</text></g><text x="44" y="10" font-size="11" fill="var(--muted)">MWh</text></svg></div></div><div class="strip"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M7 18a5 5 0 01-.6-10A6 6 0 0118 9a4 4 0 01-1 9"/><path d="M12 12v8M9 17l3 3 3-3"/></svg><span>Meteo: <b>PVGIS 5.3</b>, anno tipo SARAH3 + ERA5 2005-2023, scaricato il 21/10/2026 · <b>1.450 kWh/m²</b> sull'orizzontale · 13,1 °C di media</span><span class="sp"></span><span class="chip on">✓ Orizzonte lontano</span><span class="chip on">✓ Ostacoli della scena</span><a>Scarica di nuovo</a></div><div class="sect">PVGIS, secondo parere<span>non disponibile senza rete: si calcola quando c'è</span></div></div><div class="rcol"><div class="pane props-card"><div class="ptitle">Perdite, dal sole al contatore<span class="x">✕</span></div><div class="props" style="padding-bottom:0"><div class="form2" style="padding:0 0 6px"><label>Variante</label><div class="field combo">Base</div></div></div><div class="rlist"><div class="r  "><span class="n">Irraggiamento sul piano</span><span class="q">1.512 kWh/m²</span><span class="bar"><b style="width:100%"></b></span></div><div class="r  "><span class="n">Ombre vicine (effetto elettrico)</span><span class="q">−8,0 %</span><span class="bar"><b style="width:40%"></b></span></div><div class="r  "><span class="n">Angolo e riflessione</span><span class="q">−2,6 %</span><span class="bar"><b style="width:13%"></b></span></div><div class="r  "><span class="n">Temperatura dei moduli</span><span class="q">−5,1 %</span><span class="bar"><b style="width:26%"></b></span></div><div class="r  "><span class="n">Sporco e neve</span><span class="q">−2,0 %</span><span class="bar"><b style="width:10%"></b></span></div><div class="r  "><span class="n">Mismatch e cavi DC</span><span class="q">−2,2 %</span><span class="bar"><b style="width:11%"></b></span></div><div class="r warn "><span class="n">Taglio dell'inverter</span><span class="q">−12,4 %</span><span class="bar"><b style="width:62%"></b></span></div><div class="r  "><span class="n">Rendimento dell'inverter</span><span class="q">−1,6 %</span><span class="bar"><b style="width:8%"></b></span></div><div class="r  "><span class="n">Cavi AC e trasformatore</span><span class="q">−0,9 %</span><span class="bar"><b style="width:5%"></b></span></div><div class="r  total"><span class="n">Al contatore</span><span class="q">107.130 kWh</span><span class="bar"><b style="width:70%"></b></span></div></div></div><div class="pane help-card"><div class="ptitle"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 4h6a3 3 0 013 3v13a2 2 0 00-2-2H4zM20 4h-6a3 3 0 00-3 3v13a2 2 0 012-2h7z"/></svg>Aiuto<span class="x">✕</span></div><div class="hb"><b>Producibilità</b>Meridiana calcola l'anno ora per ora, dal sole sui moduli al contatore, con il meteo del sito da PVGIS. Ogni riquadro ha il suo «?», e «Come è calcolato» mostra formula e fonte di ogni numero.<div class="links"><a>Manuale ›</a><a>Come è calcolato ›</a><a>Chiedi a Meridio ›</a></div></div></div></div><div class="pane checks"><div class="vbox"><div class="ptitle">Verifiche<span class="x">✕</span></div><div class="chead"><span class=f>Per livello ⌄</span><span class="sp"></span><span class="f on"><b style="color:var(--critical)">✘</b> 1</span><span class="f on"><b style="color:var(--warning-ink)">⚠</b> 2</span><span class="f on"><b style="color:var(--muted)">ℹ</b> 2</span><span class="f"><b style="color:var(--good)">✔</b> 2</span></div><div class="lvlhead"><span class="m fail">✘</span>Da correggere · 1</div><div class="card"><div class="it "><span class="chev">⌄</span><span class="m fail">✘</span><span class="t">Copertura Sud: 3 moduli nell&#x27;ombra del Camino 1 nel giorno di progetto</span><span class="src">DCPREV 14030/2025, 3.3.5.1</span><span class="act"><span class="b fix">Correggi</span><span class="b ico" title="Mostra nelle viste"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></span></div><div class="detail">Tra le 10 e le 14 del 21 dicembre l'ombra del camino copre i moduli 3:4, 3:5 e 4:4. «Correggi» li toglie dalla posa (−1,4 kWp); oppure abbassa il camino, o sposta la fila.</div></div><div class="lvlhead"><span class="m warn">⚠</span>Da controllare · 2</div><div class="card"><div class="it "><span class="chev">›</span><span class="m warn">⚠</span><span class="t">Copertura Sud: 4 moduli non sono in nessuna stringa</span><span class="src">CEI 64-8/7:2024</span><span class="act"><span class="b ico" title="Mostra nelle viste"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></span></div><div class="it "><span class="chev">›</span><span class="m warn">⚠</span><span class="t">Copertura Sud: 1 fila tolta per il corridoio dei Vigili del Fuoco</span><span class="src">DCPREV 14030/2025</span><span class="act"><span class="b ico" title="Mostra nelle viste"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span></span></div></div></div></div></div><div class="status"><span>Sottocampo: disegna l'area dove possono andare i moduli, sul tetto o a terra.</span><span class="sp"></span><span class="cnt"><b style="color:var(--critical)">✘</b> 1</span><span class="cnt"><b style="color:var(--warning-ink)">⚠</b> 2</span><span>12,4 × 8,6 m</span><span>E 12,36  N 8,40 m</span><span><svg class="" viewBox="0 0 24 24" width="14" height="14"><path class="rays" d="M5.1 10.2H3.4M6.02 6.75L4.55 5.9M8.55 4.22L7.7 2.75M12 3.3V1.6M15.45 4.22L16.3 2.75M17.98 6.75L19.45 5.9M18.9 10.2H20.6M3 19.4H21M12 16.9V21.8" fill="none" stroke="var(--text)" stroke-width="1.3" stroke-linecap="round"/><circle class="disc" cx="12" cy="10.2" r="5.3" fill="var(--assistant)" stroke="#24211d" stroke-width="1.3"/><path class="smile" d="M10.2 12.1Q12 13.5 13.8 12.1" fill="none" stroke="#24211d" stroke-width="1.2" stroke-linecap="round"/><circle class="eye l" cx="10.1" cy="9.5" r="0.9" fill="#24211d"/><circle class="eye r" cx="13.9" cy="9.5" r="0.9" fill="#24211d"/></svg> Meridio</span></div><div class="meridio"><svg class="" viewBox="0 0 24 24" width="34" height="34"><path class="rays" d="M5.1 10.2H3.4M6.02 6.75L4.55 5.9M8.55 4.22L7.7 2.75M12 3.3V1.6M15.45 4.22L16.3 2.75M17.98 6.75L19.45 5.9M18.9 10.2H20.6M3 19.4H21M12 16.9V21.8" fill="none" stroke="var(--text)" stroke-width="1.3" stroke-linecap="round"/><circle class="disc" cx="12" cy="10.2" r="5.3" fill="var(--assistant)" stroke="#24211d" stroke-width="1.3"/><path class="smile" d="M10.2 12.1Q12 13.5 13.8 12.1" fill="none" stroke="#24211d" stroke-width="1.2" stroke-linecap="round"/><circle class="eye l" cx="10.1" cy="9.5" r="0.9" fill="#24211d"/><circle class="eye r" cx="13.9" cy="9.5" r="0.9" fill="#24211d"/></svg></div></div></div>
+<p style="margin-top:30px;font-size:13px">Studio 17, Meridiana. Colori da <code>theme_colors.py</code> (bronzo, fondi Meridiana); carattere Titillium Web dai file del repository; nessuna libreria, nessuna rete. <a href="index.html" style="color:var(--accent)">Indice dei bozzetti</a>.</p>
+</div></body></html>

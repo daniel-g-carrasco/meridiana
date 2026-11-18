@@ -1,0 +1,3865 @@
+[
+ {
+  "case": "A-1920x1080",
+  "asked": [
+   1920,
+   1080
+  ],
+  "screen": [
+   1920,
+   1080
+  ],
+  "phases": {
+   "model": {
+    "window": [
+     1920,
+     1080
+    ],
+    "minimum_hint": [
+     766,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     328,
+     114,
+     1204,
+     675
+    ],
+    "bar_w": 1876,
+    "bar_h": 69,
+    "bar_needs_w": 799,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "project": {
+      "rect": [
+       0,
+       114,
+       320,
+       675
+      ],
+      "minimum": [
+       84,
+       111
+      ]
+     },
+     "properties": {
+      "rect": [
+       1540,
+       114,
+       380,
+       788
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1540,
+       910,
+       380,
+       134
+      ],
+      "minimum": [
+       106,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       797,
+       1532,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     7,
+     7,
+     652,
+     653
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 75,
+    "buttons_under_40": 64
+   },
+   "plant": {
+    "window": [
+     1920,
+     1080
+    ],
+    "minimum_hint": [
+     557,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     388,
+     114,
+     1144,
+     675
+    ],
+    "bar_w": 1876,
+    "bar_h": 69,
+    "bar_needs_w": 950,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "project": {
+      "rect": [
+       0,
+       114,
+       380,
+       675
+      ],
+      "minimum": [
+       84,
+       111
+      ]
+     },
+     "properties": {
+      "rect": [
+       1540,
+       114,
+       380,
+       788
+      ],
+      "minimum": [
+       128,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1540,
+       910,
+       380,
+       134
+      ],
+      "minimum": [
+       137,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       797,
+       1532,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     0,
+     0,
+     1130,
+     653
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 63,
+    "buttons_under_40": 51
+   },
+   "production": {
+    "window": [
+     1920,
+     1080
+    ],
+    "minimum_hint": [
+     624,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     1532,
+     675
+    ],
+    "bar_w": 1876,
+    "bar_h": 69,
+    "bar_needs_w": 333,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       1540,
+       114,
+       380,
+       788
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1540,
+       910,
+       380,
+       134
+      ],
+      "minimum": [
+       159,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       797,
+       1532,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 56,
+    "buttons_under_40": 52
+   },
+   "consumption": {
+    "window": [
+     1920,
+     1080
+    ],
+    "minimum_hint": [
+     686,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     1532,
+     675
+    ],
+    "bar_w": 1876,
+    "bar_h": 69,
+    "bar_needs_w": 119,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       1540,
+       114,
+       380,
+       788
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1540,
+       910,
+       380,
+       134
+      ],
+      "minimum": [
+       138,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       797,
+       1532,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 58,
+    "buttons_under_40": 56
+   },
+   "economics": {
+    "window": [
+     1920,
+     1080
+    ],
+    "minimum_hint": [
+     686,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     1532,
+     675
+    ],
+    "bar_w": 1876,
+    "bar_h": 69,
+    "bar_needs_w": 257,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       1540,
+       114,
+       380,
+       788
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1540,
+       910,
+       380,
+       134
+      ],
+      "minimum": [
+       215,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       797,
+       1532,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 59,
+    "buttons_under_40": 56
+   },
+   "report": {
+    "window": [
+     1920,
+     1080
+    ],
+    "minimum_hint": [
+     686,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     1532,
+     675
+    ],
+    "bar_w": 1876,
+    "bar_h": 69,
+    "bar_needs_w": 549,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       1540,
+       114,
+       380,
+       788
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1540,
+       910,
+       380,
+       134
+      ],
+      "minimum": [
+       142,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       797,
+       1532,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 66,
+    "buttons_under_40": 59
+   }
+  },
+  "minimum_hint": [
+   766,
+   565
+  ],
+  "got": [
+   1920,
+   1080
+  ],
+  "narrow": false,
+  "bars_text": true,
+  "smallest": {
+   "model": [
+    778,
+    565
+   ],
+   "plant": [
+    469,
+    543
+   ],
+   "production": [
+    612,
+    543
+   ],
+   "consumption": [
+    612,
+    543
+   ],
+   "economics": [
+    612,
+    543
+   ],
+   "report": [
+    612,
+    543
+   ]
+  }
+ },
+ {
+  "case": "B-1366x768",
+  "asked": [
+   1366,
+   768
+  ],
+  "screen": [
+   1366,
+   768
+  ],
+  "phases": {
+   "model": {
+    "window": [
+     1366,
+     768
+    ],
+    "minimum_hint": [
+     766,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     248,
+     92,
+     810,
+     385
+    ],
+    "bar_w": 1322,
+    "bar_h": 47,
+    "bar_needs_w": 442,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "project": {
+      "rect": [
+       0,
+       92,
+       240,
+       385
+      ],
+      "minimum": [
+       84,
+       111
+      ]
+     },
+     "properties": {
+      "rect": [
+       1066,
+       92,
+       300,
+       498
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1066,
+       598,
+       300,
+       134
+      ],
+      "minimum": [
+       106,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       485,
+       1058,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     7,
+     7,
+     435,
+     363
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 75,
+    "buttons_under_40": 75
+   },
+   "plant": {
+    "window": [
+     1366,
+     768
+    ],
+    "minimum_hint": [
+     557,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     308,
+     92,
+     750,
+     385
+    ],
+    "bar_w": 1322,
+    "bar_h": 47,
+    "bar_needs_w": 512,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "project": {
+      "rect": [
+       0,
+       92,
+       300,
+       385
+      ],
+      "minimum": [
+       84,
+       111
+      ]
+     },
+     "properties": {
+      "rect": [
+       1066,
+       92,
+       300,
+       498
+      ],
+      "minimum": [
+       128,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1066,
+       598,
+       300,
+       134
+      ],
+      "minimum": [
+       137,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       485,
+       1058,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     0,
+     0,
+     736,
+     363
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 63,
+    "buttons_under_40": 63
+   },
+   "production": {
+    "window": [
+     1366,
+     768
+    ],
+    "minimum_hint": [
+     624,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     1058,
+     385
+    ],
+    "bar_w": 1322,
+    "bar_h": 47,
+    "bar_needs_w": 169,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       1066,
+       92,
+       300,
+       482
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1066,
+       582,
+       300,
+       150
+      ],
+      "minimum": [
+       159,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       485,
+       1058,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 56,
+    "buttons_under_40": 56
+   },
+   "consumption": {
+    "window": [
+     1366,
+     768
+    ],
+    "minimum_hint": [
+     686,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     1058,
+     385
+    ],
+    "bar_w": 1322,
+    "bar_h": 47,
+    "bar_needs_w": 88,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       1066,
+       92,
+       300,
+       482
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1066,
+       582,
+       300,
+       150
+      ],
+      "minimum": [
+       138,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       485,
+       1058,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 58,
+    "buttons_under_40": 57
+   },
+   "economics": {
+    "window": [
+     1366,
+     768
+    ],
+    "minimum_hint": [
+     686,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     1058,
+     385
+    ],
+    "bar_w": 1322,
+    "bar_h": 47,
+    "bar_needs_w": 148,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       1066,
+       92,
+       300,
+       482
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1066,
+       582,
+       300,
+       150
+      ],
+      "minimum": [
+       215,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       485,
+       1058,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 59,
+    "buttons_under_40": 58
+   },
+   "report": {
+    "window": [
+     1366,
+     768
+    ],
+    "minimum_hint": [
+     686,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     1058,
+     385
+    ],
+    "bar_w": 1322,
+    "bar_h": 47,
+    "bar_needs_w": 280,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       1066,
+       92,
+       300,
+       482
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       1066,
+       582,
+       300,
+       150
+      ],
+      "minimum": [
+       142,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       485,
+       1058,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 66,
+    "buttons_under_40": 66
+   }
+  },
+  "minimum_hint": [
+   766,
+   543
+  ],
+  "got": [
+   1366,
+   768
+  ],
+  "narrow": false,
+  "bars_text": false,
+  "smallest": {
+   "model": [
+    778,
+    543
+   ],
+   "plant": [
+    469,
+    543
+   ],
+   "production": [
+    612,
+    543
+   ],
+   "consumption": [
+    612,
+    543
+   ],
+   "economics": [
+    612,
+    543
+   ],
+   "report": [
+    612,
+    543
+   ]
+  }
+ },
+ {
+  "case": "C-1080x1920",
+  "asked": [
+   1080,
+   1920
+  ],
+  "screen": [
+   1080,
+   1920
+  ],
+  "phases": {
+   "model": {
+    "window": [
+     1080,
+     1920
+    ],
+    "minimum_hint": [
+     766,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     248,
+     114,
+     524,
+     1515
+    ],
+    "bar_w": 1036,
+    "bar_h": 69,
+    "bar_needs_w": 799,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "project": {
+      "rect": [
+       0,
+       114,
+       240,
+       1515
+      ],
+      "minimum": [
+       84,
+       111
+      ]
+     },
+     "properties": {
+      "rect": [
+       780,
+       114,
+       300,
+       1621
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       780,
+       1743,
+       300,
+       141
+      ],
+      "minimum": [
+       106,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       1637,
+       772,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     7,
+     7,
+     186,
+     1493
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 75,
+    "buttons_under_40": 64
+   },
+   "plant": {
+    "window": [
+     1080,
+     1920
+    ],
+    "minimum_hint": [
+     557,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     308,
+     114,
+     464,
+     1515
+    ],
+    "bar_w": 1036,
+    "bar_h": 69,
+    "bar_needs_w": 950,
+    "overflow_button": true,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "project": {
+      "rect": [
+       0,
+       114,
+       300,
+       1515
+      ],
+      "minimum": [
+       84,
+       111
+      ]
+     },
+     "properties": {
+      "rect": [
+       780,
+       114,
+       300,
+       1621
+      ],
+      "minimum": [
+       128,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       780,
+       1743,
+       300,
+       141
+      ],
+      "minimum": [
+       137,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       1637,
+       772,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     0,
+     0,
+     450,
+     1493
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 64,
+    "buttons_under_40": 52
+   },
+   "production": {
+    "window": [
+     1080,
+     1920
+    ],
+    "minimum_hint": [
+     624,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     772,
+     1515
+    ],
+    "bar_w": 1036,
+    "bar_h": 69,
+    "bar_needs_w": 333,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       780,
+       114,
+       300,
+       1612
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       780,
+       1734,
+       300,
+       150
+      ],
+      "minimum": [
+       159,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       1637,
+       772,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 56,
+    "buttons_under_40": 52
+   },
+   "consumption": {
+    "window": [
+     1080,
+     1920
+    ],
+    "minimum_hint": [
+     686,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     772,
+     1515
+    ],
+    "bar_w": 1036,
+    "bar_h": 69,
+    "bar_needs_w": 119,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       780,
+       114,
+       300,
+       1612
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       780,
+       1734,
+       300,
+       150
+      ],
+      "minimum": [
+       138,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       1637,
+       772,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 58,
+    "buttons_under_40": 55
+   },
+   "economics": {
+    "window": [
+     1080,
+     1920
+    ],
+    "minimum_hint": [
+     686,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     772,
+     1515
+    ],
+    "bar_w": 1036,
+    "bar_h": 69,
+    "bar_needs_w": 257,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       780,
+       114,
+       300,
+       1612
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       780,
+       1734,
+       300,
+       150
+      ],
+      "minimum": [
+       215,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       1637,
+       772,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 61,
+    "buttons_under_40": 57
+   },
+   "report": {
+    "window": [
+     1080,
+     1920
+    ],
+    "minimum_hint": [
+     686,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     772,
+     1515
+    ],
+    "bar_w": 1036,
+    "bar_h": 69,
+    "bar_needs_w": 549,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       780,
+       114,
+       300,
+       1612
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       780,
+       1734,
+       300,
+       150
+      ],
+      "minimum": [
+       142,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       1637,
+       772,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 66,
+    "buttons_under_40": 59
+   }
+  },
+  "minimum_hint": [
+   766,
+   565
+  ],
+  "got": [
+   1080,
+   1920
+  ],
+  "narrow": false,
+  "bars_text": true,
+  "smallest": {
+   "model": [
+    778,
+    565
+   ],
+   "plant": [
+    469,
+    543
+   ],
+   "production": [
+    612,
+    543
+   ],
+   "consumption": [
+    612,
+    543
+   ],
+   "economics": [
+    612,
+    543
+   ],
+   "report": [
+    612,
+    543
+   ]
+  }
+ },
+ {
+  "case": "D-1280x800",
+  "asked": [
+   1280,
+   800
+  ],
+  "screen": [
+   1280,
+   800
+  ],
+  "phases": {
+   "model": {
+    "window": [
+     1280,
+     800
+    ],
+    "minimum_hint": [
+     766,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     248,
+     92,
+     724,
+     417
+    ],
+    "bar_w": 1236,
+    "bar_h": 47,
+    "bar_needs_w": 442,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "project": {
+      "rect": [
+       0,
+       92,
+       240,
+       417
+      ],
+      "minimum": [
+       84,
+       111
+      ]
+     },
+     "properties": {
+      "rect": [
+       980,
+       92,
+       300,
+       530
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       980,
+       630,
+       300,
+       134
+      ],
+      "minimum": [
+       106,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       517,
+       972,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     7,
+     7,
+     386,
+     395
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 75,
+    "buttons_under_40": 75
+   },
+   "plant": {
+    "window": [
+     1280,
+     800
+    ],
+    "minimum_hint": [
+     557,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     308,
+     92,
+     664,
+     417
+    ],
+    "bar_w": 1236,
+    "bar_h": 47,
+    "bar_needs_w": 512,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "project": {
+      "rect": [
+       0,
+       92,
+       300,
+       417
+      ],
+      "minimum": [
+       84,
+       111
+      ]
+     },
+     "properties": {
+      "rect": [
+       980,
+       92,
+       300,
+       530
+      ],
+      "minimum": [
+       128,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       980,
+       630,
+       300,
+       134
+      ],
+      "minimum": [
+       137,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       517,
+       972,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     0,
+     0,
+     650,
+     395
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 63,
+    "buttons_under_40": 63
+   },
+   "production": {
+    "window": [
+     1280,
+     800
+    ],
+    "minimum_hint": [
+     624,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     972,
+     417
+    ],
+    "bar_w": 1236,
+    "bar_h": 47,
+    "bar_needs_w": 169,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       980,
+       92,
+       300,
+       514
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       980,
+       614,
+       300,
+       150
+      ],
+      "minimum": [
+       159,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       517,
+       972,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 56,
+    "buttons_under_40": 56
+   },
+   "consumption": {
+    "window": [
+     1280,
+     800
+    ],
+    "minimum_hint": [
+     686,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     972,
+     417
+    ],
+    "bar_w": 1236,
+    "bar_h": 47,
+    "bar_needs_w": 88,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       980,
+       92,
+       300,
+       514
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       980,
+       614,
+       300,
+       150
+      ],
+      "minimum": [
+       138,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       517,
+       972,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 58,
+    "buttons_under_40": 57
+   },
+   "economics": {
+    "window": [
+     1280,
+     800
+    ],
+    "minimum_hint": [
+     686,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     972,
+     417
+    ],
+    "bar_w": 1236,
+    "bar_h": 47,
+    "bar_needs_w": 148,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       980,
+       92,
+       300,
+       514
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       980,
+       614,
+       300,
+       150
+      ],
+      "minimum": [
+       215,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       517,
+       972,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 59,
+    "buttons_under_40": 58
+   },
+   "report": {
+    "window": [
+     1280,
+     800
+    ],
+    "minimum_hint": [
+     686,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     972,
+     417
+    ],
+    "bar_w": 1236,
+    "bar_h": 47,
+    "bar_needs_w": 280,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 788,
+    "row_needs_w": 788,
+    "row_tabs": [
+     137,
+     109,
+     131,
+     110,
+     187,
+     114
+    ],
+    "corner_w": 88,
+    "docks": {
+     "properties": {
+      "rect": [
+       980,
+       92,
+       300,
+       514
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     },
+     "help": {
+      "rect": [
+       980,
+       614,
+       300,
+       150
+      ],
+      "minimum": [
+       142,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       517,
+       972,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 66,
+    "buttons_under_40": 66
+   }
+  },
+  "minimum_hint": [
+   766,
+   543
+  ],
+  "got": [
+   1280,
+   800
+  ],
+  "narrow": false,
+  "bars_text": false,
+  "smallest": {
+   "model": [
+    778,
+    543
+   ],
+   "plant": [
+    469,
+    543
+   ],
+   "production": [
+    612,
+    543
+   ],
+   "consumption": [
+    612,
+    543
+   ],
+   "economics": [
+    612,
+    543
+   ],
+   "report": [
+    612,
+    543
+   ]
+  }
+ },
+ {
+  "case": "E-800x1280",
+  "asked": [
+   800,
+   1280
+  ],
+  "screen": [
+   800,
+   1280
+  ],
+  "phases": {
+   "model": {
+    "window": [
+     800,
+     1280
+    ],
+    "minimum_hint": [
+     612,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     520,
+     875
+    ],
+    "bar_w": 756,
+    "bar_h": 69,
+    "bar_needs_w": 799,
+    "overflow_button": true,
+    "groups_cut": [
+     "precision"
+    ],
+    "row_w": 630,
+    "row_needs_w": 788,
+    "row_tabs": [
+     111,
+     82,
+     105,
+     84,
+     160,
+     88
+    ],
+    "corner_w": 64,
+    "docks": {
+     "project": {
+      "rect": [
+       -642,
+       -1414,
+       142,
+       914
+      ],
+      "minimum": [
+       72,
+       95
+      ]
+     },
+     "help": {
+      "rect": [
+       528,
+       1110,
+       272,
+       134
+      ],
+      "minimum": [
+       106,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       997,
+       520,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       528,
+       114,
+       284,
+       956
+      ],
+      "minimum": [
+       272,
+       213
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     7,
+     7,
+     494,
+     853
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 68,
+    "buttons_under_40": 60
+   },
+   "plant": {
+    "window": [
+     800,
+     1280
+    ],
+    "minimum_hint": [
+     477,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     508,
+     875
+    ],
+    "bar_w": 756,
+    "bar_h": 69,
+    "bar_needs_w": 950,
+    "overflow_button": true,
+    "groups_cut": [
+     "strings"
+    ],
+    "row_w": 630,
+    "row_needs_w": 788,
+    "row_tabs": [
+     111,
+     82,
+     105,
+     84,
+     160,
+     88
+    ],
+    "corner_w": 64,
+    "docks": {
+     "project": {
+      "rect": [
+       -642,
+       -1414,
+       142,
+       914
+      ],
+      "minimum": [
+       72,
+       95
+      ]
+     },
+     "help": {
+      "rect": [
+       516,
+       1110,
+       284,
+       134
+      ],
+      "minimum": [
+       137,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       997,
+       508,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       516,
+       114,
+       284,
+       956
+      ],
+      "minimum": [
+       128,
+       213
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     0,
+     0,
+     482,
+     853
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 61,
+    "buttons_under_40": 52
+   },
+   "production": {
+    "window": [
+     800,
+     1280
+    ],
+    "minimum_hint": [
+     624,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     508,
+     875
+    ],
+    "bar_w": 756,
+    "bar_h": 69,
+    "bar_needs_w": 333,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 630,
+    "row_needs_w": 788,
+    "row_tabs": [
+     111,
+     82,
+     105,
+     84,
+     160,
+     88
+    ],
+    "corner_w": 64,
+    "docks": {
+     "help": {
+      "rect": [
+       516,
+       1094,
+       284,
+       150
+      ],
+      "minimum": [
+       159,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       997,
+       508,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       516,
+       114,
+       284,
+       972
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 56,
+    "buttons_under_40": 52
+   },
+   "consumption": {
+    "window": [
+     800,
+     1280
+    ],
+    "minimum_hint": [
+     624,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     508,
+     875
+    ],
+    "bar_w": 756,
+    "bar_h": 69,
+    "bar_needs_w": 119,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 630,
+    "row_needs_w": 788,
+    "row_tabs": [
+     111,
+     82,
+     105,
+     84,
+     160,
+     88
+    ],
+    "corner_w": 64,
+    "docks": {
+     "help": {
+      "rect": [
+       516,
+       1094,
+       284,
+       150
+      ],
+      "minimum": [
+       138,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       997,
+       508,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       516,
+       114,
+       284,
+       972
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 60,
+    "buttons_under_40": 57
+   },
+   "economics": {
+    "window": [
+     800,
+     1280
+    ],
+    "minimum_hint": [
+     624,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     508,
+     875
+    ],
+    "bar_w": 756,
+    "bar_h": 69,
+    "bar_needs_w": 257,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 630,
+    "row_needs_w": 788,
+    "row_tabs": [
+     111,
+     82,
+     105,
+     84,
+     160,
+     88
+    ],
+    "corner_w": 64,
+    "docks": {
+     "help": {
+      "rect": [
+       516,
+       1094,
+       284,
+       150
+      ],
+      "minimum": [
+       215,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       997,
+       508,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       516,
+       114,
+       284,
+       972
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 61,
+    "buttons_under_40": 57
+   },
+   "report": {
+    "window": [
+     800,
+     1280
+    ],
+    "minimum_hint": [
+     624,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     508,
+     875
+    ],
+    "bar_w": 756,
+    "bar_h": 69,
+    "bar_needs_w": 549,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 630,
+    "row_needs_w": 788,
+    "row_tabs": [
+     111,
+     82,
+     105,
+     84,
+     160,
+     88
+    ],
+    "corner_w": 64,
+    "docks": {
+     "help": {
+      "rect": [
+       516,
+       1094,
+       284,
+       150
+      ],
+      "minimum": [
+       142,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       997,
+       508,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       516,
+       114,
+       284,
+       972
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 66,
+    "buttons_under_40": 58
+   }
+  },
+  "minimum_hint": [
+   612,
+   565
+  ],
+  "got": [
+   800,
+   1280
+  ],
+  "narrow": true,
+  "bars_text": true,
+  "smallest": {
+   "model": [
+    624,
+    565
+   ],
+   "plant": [
+    469,
+    543
+   ],
+   "production": [
+    612,
+    543
+   ],
+   "consumption": [
+    612,
+    543
+   ],
+   "economics": [
+    612,
+    543
+   ],
+   "report": [
+    612,
+    543
+   ]
+  }
+ },
+ {
+  "case": "F-960x1040",
+  "asked": [
+   960,
+   1040
+  ],
+  "screen": [
+   960,
+   1040
+  ],
+  "phases": {
+   "model": {
+    "window": [
+     960,
+     1040
+    ],
+    "minimum_hint": [
+     624,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     652,
+     635
+    ],
+    "bar_w": 916,
+    "bar_h": 69,
+    "bar_needs_w": 799,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 777,
+    "row_needs_w": 788,
+    "row_tabs": [
+     135,
+     107,
+     130,
+     108,
+     185,
+     112
+    ],
+    "corner_w": 77,
+    "docks": {
+     "project": {
+      "rect": [
+       -740,
+       -1174,
+       240,
+       674
+      ],
+      "minimum": [
+       72,
+       95
+      ]
+     },
+     "help": {
+      "rect": [
+       660,
+       870,
+       300,
+       134
+      ],
+      "minimum": [
+       106,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       757,
+       652,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       660,
+       114,
+       300,
+       716
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     7,
+     7,
+     626,
+     613
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 70,
+    "buttons_under_40": 59
+   },
+   "plant": {
+    "window": [
+     960,
+     1040
+    ],
+    "minimum_hint": [
+     477,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     652,
+     635
+    ],
+    "bar_w": 916,
+    "bar_h": 69,
+    "bar_needs_w": 950,
+    "overflow_button": true,
+    "groups_cut": [
+     "strings"
+    ],
+    "row_w": 777,
+    "row_needs_w": 788,
+    "row_tabs": [
+     135,
+     107,
+     130,
+     108,
+     185,
+     112
+    ],
+    "corner_w": 77,
+    "docks": {
+     "project": {
+      "rect": [
+       -740,
+       -1174,
+       240,
+       674
+      ],
+      "minimum": [
+       72,
+       95
+      ]
+     },
+     "help": {
+      "rect": [
+       660,
+       870,
+       300,
+       134
+      ],
+      "minimum": [
+       137,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       757,
+       652,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       660,
+       114,
+       300,
+       716
+      ],
+      "minimum": [
+       128,
+       213
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     0,
+     0,
+     626,
+     613
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 61,
+    "buttons_under_40": 52
+   },
+   "production": {
+    "window": [
+     960,
+     1040
+    ],
+    "minimum_hint": [
+     624,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     652,
+     635
+    ],
+    "bar_w": 916,
+    "bar_h": 69,
+    "bar_needs_w": 333,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 777,
+    "row_needs_w": 788,
+    "row_tabs": [
+     135,
+     107,
+     130,
+     108,
+     185,
+     112
+    ],
+    "corner_w": 77,
+    "docks": {
+     "help": {
+      "rect": [
+       660,
+       854,
+       300,
+       150
+      ],
+      "minimum": [
+       159,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       757,
+       652,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       660,
+       114,
+       300,
+       732
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 56,
+    "buttons_under_40": 52
+   },
+   "consumption": {
+    "window": [
+     960,
+     1040
+    ],
+    "minimum_hint": [
+     624,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     652,
+     635
+    ],
+    "bar_w": 916,
+    "bar_h": 69,
+    "bar_needs_w": 119,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 777,
+    "row_needs_w": 788,
+    "row_tabs": [
+     135,
+     107,
+     130,
+     108,
+     185,
+     112
+    ],
+    "corner_w": 77,
+    "docks": {
+     "help": {
+      "rect": [
+       660,
+       854,
+       300,
+       150
+      ],
+      "minimum": [
+       138,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       757,
+       652,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       660,
+       114,
+       300,
+       732
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 58,
+    "buttons_under_40": 55
+   },
+   "economics": {
+    "window": [
+     960,
+     1040
+    ],
+    "minimum_hint": [
+     624,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     652,
+     635
+    ],
+    "bar_w": 916,
+    "bar_h": 69,
+    "bar_needs_w": 257,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 777,
+    "row_needs_w": 788,
+    "row_tabs": [
+     135,
+     107,
+     130,
+     108,
+     185,
+     112
+    ],
+    "corner_w": 77,
+    "docks": {
+     "help": {
+      "rect": [
+       660,
+       854,
+       300,
+       150
+      ],
+      "minimum": [
+       215,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       757,
+       652,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       660,
+       114,
+       300,
+       732
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 61,
+    "buttons_under_40": 57
+   },
+   "report": {
+    "window": [
+     960,
+     1040
+    ],
+    "minimum_hint": [
+     624,
+     565
+    ],
+    "header_h": 114,
+    "header_min_w": 626,
+    "central": [
+     0,
+     114,
+     652,
+     635
+    ],
+    "bar_w": 916,
+    "bar_h": 69,
+    "bar_needs_w": 549,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 777,
+    "row_needs_w": 788,
+    "row_tabs": [
+     135,
+     107,
+     130,
+     108,
+     185,
+     112
+    ],
+    "corner_w": 77,
+    "docks": {
+     "help": {
+      "rect": [
+       660,
+       854,
+       300,
+       150
+      ],
+      "minimum": [
+       142,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       757,
+       652,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       660,
+       114,
+       300,
+       732
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 66,
+    "buttons_under_40": 59
+   }
+  },
+  "minimum_hint": [
+   624,
+   565
+  ],
+  "got": [
+   960,
+   1040
+  ],
+  "narrow": true,
+  "bars_text": true,
+  "smallest": {
+   "model": [
+    624,
+    565
+   ],
+   "plant": [
+    469,
+    543
+   ],
+   "production": [
+    612,
+    543
+   ],
+   "consumption": [
+    612,
+    543
+   ],
+   "economics": [
+    612,
+    543
+   ],
+   "report": [
+    612,
+    543
+   ]
+  }
+ },
+ {
+  "case": "G-683x728",
+  "asked": [
+   683,
+   728
+  ],
+  "screen": [
+   683,
+   728
+  ],
+  "phases": {
+   "model": {
+    "window": [
+     718,
+     728
+    ],
+    "minimum_hint": [
+     612,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     438,
+     345
+    ],
+    "bar_w": 674,
+    "bar_h": 47,
+    "bar_needs_w": 442,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 548,
+    "row_needs_w": 788,
+    "row_tabs": [
+     92,
+     76,
+     86,
+     76,
+     142,
+     76
+    ],
+    "corner_w": 64,
+    "docks": {
+     "project": {
+      "rect": [
+       -572,
+       -862,
+       72,
+       362
+      ],
+      "minimum": [
+       72,
+       95
+      ]
+     },
+     "help": {
+      "rect": [
+       446,
+       558,
+       272,
+       134
+      ],
+      "minimum": [
+       106,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       445,
+       438,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       446,
+       92,
+       284,
+       426
+      ],
+      "minimum": [
+       272,
+       213
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     7,
+     7,
+     412,
+     323
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 70,
+    "buttons_under_40": 70
+   },
+   "plant": {
+    "window": [
+     718,
+     728
+    ],
+    "minimum_hint": [
+     477,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     426,
+     345
+    ],
+    "bar_w": 674,
+    "bar_h": 47,
+    "bar_needs_w": 512,
+    "overflow_button": true,
+    "groups_cut": [],
+    "row_w": 548,
+    "row_needs_w": 788,
+    "row_tabs": [
+     92,
+     76,
+     86,
+     76,
+     142,
+     76
+    ],
+    "corner_w": 64,
+    "docks": {
+     "project": {
+      "rect": [
+       -572,
+       -862,
+       72,
+       362
+      ],
+      "minimum": [
+       72,
+       95
+      ]
+     },
+     "help": {
+      "rect": [
+       434,
+       558,
+       284,
+       134
+      ],
+      "minimum": [
+       137,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       445,
+       426,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       434,
+       92,
+       284,
+       426
+      ],
+      "minimum": [
+       128,
+       213
+      ]
+     }
+    },
+    "plan_visible": true,
+    "plan_rect": [
+     0,
+     0,
+     400,
+     323
+    ],
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 64,
+    "buttons_under_40": 64
+   },
+   "production": {
+    "window": [
+     718,
+     728
+    ],
+    "minimum_hint": [
+     624,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     426,
+     345
+    ],
+    "bar_w": 674,
+    "bar_h": 47,
+    "bar_needs_w": 169,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 548,
+    "row_needs_w": 788,
+    "row_tabs": [
+     92,
+     76,
+     86,
+     76,
+     142,
+     76
+    ],
+    "corner_w": 64,
+    "docks": {
+     "help": {
+      "rect": [
+       434,
+       542,
+       284,
+       150
+      ],
+      "minimum": [
+       159,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       445,
+       426,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       434,
+       92,
+       284,
+       442
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 58,
+    "buttons_under_40": 58
+   },
+   "consumption": {
+    "window": [
+     718,
+     728
+    ],
+    "minimum_hint": [
+     624,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     426,
+     345
+    ],
+    "bar_w": 674,
+    "bar_h": 47,
+    "bar_needs_w": 88,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 548,
+    "row_needs_w": 788,
+    "row_tabs": [
+     92,
+     76,
+     86,
+     76,
+     142,
+     76
+    ],
+    "corner_w": 64,
+    "docks": {
+     "help": {
+      "rect": [
+       434,
+       542,
+       284,
+       150
+      ],
+      "minimum": [
+       138,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       445,
+       426,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       434,
+       92,
+       284,
+       442
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 324,
+    "buttons": 60,
+    "buttons_under_40": 59
+   },
+   "economics": {
+    "window": [
+     718,
+     728
+    ],
+    "minimum_hint": [
+     624,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     426,
+     345
+    ],
+    "bar_w": 674,
+    "bar_h": 47,
+    "bar_needs_w": 148,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 548,
+    "row_needs_w": 788,
+    "row_tabs": [
+     92,
+     76,
+     86,
+     76,
+     142,
+     76
+    ],
+    "corner_w": 64,
+    "docks": {
+     "help": {
+      "rect": [
+       434,
+       542,
+       284,
+       150
+      ],
+      "minimum": [
+       215,
+       142
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       445,
+       426,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       434,
+       92,
+       284,
+       442
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 61,
+    "buttons_under_40": 60
+   },
+   "report": {
+    "window": [
+     718,
+     728
+    ],
+    "minimum_hint": [
+     624,
+     543
+    ],
+    "header_h": 92,
+    "header_min_w": 626,
+    "central": [
+     0,
+     92,
+     426,
+     345
+    ],
+    "bar_w": 674,
+    "bar_h": 47,
+    "bar_needs_w": 280,
+    "overflow_button": false,
+    "groups_cut": [],
+    "row_w": 548,
+    "row_needs_w": 788,
+    "row_tabs": [
+     92,
+     76,
+     86,
+     76,
+     142,
+     76
+    ],
+    "corner_w": 64,
+    "docks": {
+     "help": {
+      "rect": [
+       434,
+       542,
+       284,
+       150
+      ],
+      "minimum": [
+       142,
+       126
+      ]
+     },
+     "checks": {
+      "rect": [
+       0,
+       445,
+       426,
+       247
+      ],
+      "minimum": [
+       321,
+       239
+      ]
+     },
+     "properties": {
+      "rect": [
+       434,
+       92,
+       284,
+       442
+      ],
+      "minimum": [
+       284,
+       213
+      ]
+     }
+    },
+    "plan_visible": false,
+    "plan_rect": null,
+    "status_h": 36,
+    "status_min_w": 331,
+    "buttons": 66,
+    "buttons_under_40": 65
+   }
+  },
+  "minimum_hint": [
+   612,
+   543
+  ],
+  "got": [
+   718,
+   728
+  ],
+  "narrow": true,
+  "bars_text": false,
+  "smallest": {
+   "model": [
+    624,
+    543
+   ],
+   "plant": [
+    469,
+    543
+   ],
+   "production": [
+    612,
+    543
+   ],
+   "consumption": [
+    612,
+    543
+   ],
+   "economics": [
+    612,
+    543
+   ],
+   "report": [
+    612,
+    543
+   ]
+  }
+ }
+]

@@ -1,0 +1,1857 @@
+{
+  "format": 1,
+  "axes": "Y up; base zero; X/Z centred",
+  "colour_space": "sRGB RGBA; opaque context geometry",
+  "models": [
+    {
+      "key": "sports_car",
+      "name": "Sports Car",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/1mkmFkAz5v",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/sports_car.json",
+      "source_sha256": "bbb1c718d2aaf5f4344e9fb2cd66d8332a998a515b09ddd4dfa14698d787124e",
+      "source_files": [
+        {
+          "path": "sports_car/model.glb",
+          "url": "https://static.poly.pizza/34db1344-31cc-49ac-bc46-c055f68e39ca.glb",
+          "sha256": "bbb1c718d2aaf5f4344e9fb2cd66d8332a998a515b09ddd4dfa14698d787124e",
+          "bytes": 175100
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/sports_car.npz",
+      "sha256": "457869cc5114f729b6e27d94b6df44810d08d1b967c656795cc52cf72ae8a85f",
+      "active": true,
+      "triangles": 3148,
+      "bounds": [
+        [
+          -0.7778493165969849,
+          0.0,
+          -1.6319007873535156
+        ],
+        [
+          0.7778493165969849,
+          1.0,
+          1.6319007873535156
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.9357960224151611,
+          -0.015737999230623245,
+          -2.028563976287842
+        ],
+        [
+          0.9357950091362,
+          1.1873170137405396,
+          1.8979690074920654
+        ]
+      ],
+      "normalization_height": 1.2030550129711628,
+      "default_height_m": 1.3,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "propane_tank",
+      "name": "Propane Tank",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/3revwBHxDC",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/propane_tank.json",
+      "source_sha256": "d38fa01373ffb00c255a877bc59686bbf7ab89ba63752a556c6e440483381bea",
+      "source_files": [
+        {
+          "path": "propane_tank/model.glb",
+          "url": "https://static.poly.pizza/d694382c-fd11-4ed0-a300-e5e7891a842b.glb",
+          "sha256": "d38fa01373ffb00c255a877bc59686bbf7ab89ba63752a556c6e440483381bea",
+          "bytes": 31956
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/propane_tank.npz",
+      "sha256": "e1a777471f8ce32bc94e6f665cf4ea98ad5c863f832f48f677a87d916123a61c",
+      "active": true,
+      "triangles": 516,
+      "bounds": [
+        [
+          -0.3727436065673828,
+          0.0,
+          -0.35450026392936707
+        ],
+        [
+          0.3727436065673828,
+          1.0,
+          0.35450026392936707
+        ]
+      ],
+      "native_bounds": [
+        [
+          -1.0814651250839233,
+          -1.3648767471313477,
+          -1.0725904703140259
+        ],
+        [
+          1.0737165212631226,
+          1.52609384059906,
+          0.9771091938018799
+        ]
+      ],
+      "normalization_height": 2.8909705877304077,
+      "default_height_m": 1.5,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "silo",
+      "name": "Silo",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/5GhLrv5Ce3",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/silo.json",
+      "source_sha256": "5894991c0371129fa12b858181b60dfb2c732494c07fa2a5b3afbba0f25d4e1d",
+      "source_files": [
+        {
+          "path": "silo/model.glb",
+          "url": "https://static.poly.pizza/3944662c-ccdd-440d-94bf-a1e37624a536.glb",
+          "sha256": "5894991c0371129fa12b858181b60dfb2c732494c07fa2a5b3afbba0f25d4e1d",
+          "bytes": 69244
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/silo.npz",
+      "sha256": "e69fa9487cb4aef29bbf728eba35cc06245483154c13628d92587544792ecb91",
+      "active": true,
+      "triangles": 1592,
+      "bounds": [
+        [
+          -0.20220883190631866,
+          0.0,
+          -0.1935238391160965
+        ],
+        [
+          0.20220883190631866,
+          1.0,
+          0.1935238391160965
+        ]
+      ],
+      "native_bounds": [
+        [
+          -1.7502249479293823,
+          -0.04944600164890289,
+          -1.6645629405975342
+        ],
+        [
+          1.9172899723052979,
+          9.019186019897461,
+          1.8454300165176392
+        ]
+      ],
+      "normalization_height": 9.068632021546364,
+      "default_height_m": 8.0,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "shipping_container",
+      "name": "Shipping Container",
+      "author": "Davidlamic000",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/83Cai5aKxa",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/shipping_container.json",
+      "source_sha256": "8f0798b9f0ce0e7322ef566e7908e884964340d7ba82cfc173cb70a5eab2aa03",
+      "source_files": [
+        {
+          "path": "shipping_container/model.glb",
+          "url": "https://static.poly.pizza/9bbc9f31-f136-4777-84cb-a6b80b62b7f8.glb",
+          "sha256": "8f0798b9f0ce0e7322ef566e7908e884964340d7ba82cfc173cb70a5eab2aa03",
+          "bytes": 751756
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/shipping_container.npz",
+      "sha256": "6d5647d6f95166dd7665f89446f1224512f6e91ee1f28cfa0187bab4069c2914",
+      "active": true,
+      "triangles": 1504,
+      "bounds": [
+        [
+          -0.49964165687561035,
+          0.0,
+          -0.9977648258209229
+        ],
+        [
+          0.49964165687561035,
+          1.0,
+          0.9977648258209229
+        ]
+      ],
+      "native_bounds": [
+        [
+          -1.0144109725952148,
+          -0.015138999558985233,
+          -3.0148210525512695
+        ],
+        [
+          1.0144120454788208,
+          2.015139102935791,
+          1.0366590023040771
+        ]
+      ],
+      "normalization_height": 2.0302781024947762,
+      "default_height_m": 2.6,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "streetlight",
+      "name": "Streetlight",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/Bq1Qj4DAre",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/streetlight.json",
+      "source_sha256": "5f733c872d67d773f55a707aaebc91763b71b3b1ec5e3f1aaa430971279c1840",
+      "source_files": [
+        {
+          "path": "streetlight/model.glb",
+          "url": "https://static.poly.pizza/7576487c-00cd-43cd-93a7-d2c217fa8c25.glb",
+          "sha256": "5f733c872d67d773f55a707aaebc91763b71b3b1ec5e3f1aaa430971279c1840",
+          "bytes": 19332
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/streetlight.npz",
+      "sha256": "14202e485313c0c4f485138b4b9e1aabc3dc0bb1463569c956f5695bf980b3fa",
+      "active": true,
+      "triangles": 526,
+      "bounds": [
+        [
+          -0.030651750043034554,
+          0.0,
+          -0.11724510043859482
+        ],
+        [
+          0.030651750043034554,
+          1.0,
+          0.11724510043859482
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.08785467594861984,
+          -0.009609352797269821,
+          -0.08785466849803925
+        ],
+        [
+          0.08785467594861984,
+          2.8566112518310547,
+          0.5842459797859192
+        ]
+      ],
+      "normalization_height": 2.8662206046283245,
+      "default_height_m": 6.0,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "truck",
+      "name": "Truck",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/cXw6oiFtZ8",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/truck.json",
+      "source_sha256": "a5d107b5b06f8ca2d8d7e66ae6309f2e1a25cac577c5db8ebb661b3f0ca5ed8f",
+      "source_files": [
+        {
+          "path": "truck/model.glb",
+          "url": "https://static.poly.pizza/f4b28921-b45e-4653-b54c-c3976e4ea0fe.glb",
+          "sha256": "a5d107b5b06f8ca2d8d7e66ae6309f2e1a25cac577c5db8ebb661b3f0ca5ed8f",
+          "bytes": 326828
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/truck.npz",
+      "sha256": "edefa419bb19b0fde5d912164fa859f010664f7be5031bf34dddfc5e4838e510",
+      "active": true,
+      "triangles": 7474,
+      "bounds": [
+        [
+          -0.46971437335014343,
+          0.0,
+          -0.9111695289611816
+        ],
+        [
+          0.46971437335014343,
+          1.0,
+          0.9111695289611816
+        ]
+      ],
+      "native_bounds": [
+        [
+          -1.3546411991119385,
+          0.0006734050693921745,
+          -3.062991142272949
+        ],
+        [
+          1.3546411991119385,
+          2.884641408920288,
+          2.1925764083862305
+        ]
+      ],
+      "normalization_height": 2.883968003850896,
+      "default_height_m": 3.0,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "roof_antenna",
+      "name": "Roof Antenna",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/Fbdg52kqJ6",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/roof_antenna.json",
+      "source_sha256": "26a099187aae0bcef5f189065ef7a57da559c53723a049a98053f24f75855cb0",
+      "source_files": [
+        {
+          "path": "roof_antenna/model.glb",
+          "url": "https://static.poly.pizza/f11fe705-f599-4b9f-8a1b-3b1fb81b40a6.glb",
+          "sha256": "26a099187aae0bcef5f189065ef7a57da559c53723a049a98053f24f75855cb0",
+          "bytes": 29380
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/roof_antenna.npz",
+      "sha256": "b265d77de477c77ad9648d4e425bb6b56829715743f593a00e9f9e0c7191de86",
+      "active": true,
+      "triangles": 492,
+      "bounds": [
+        [
+          -0.19923779368400574,
+          0.0,
+          -0.20231133699417114
+        ],
+        [
+          0.19923779368400574,
+          1.0,
+          0.20231133699417114
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.7060440182685852,
+          4.0677103996276855,
+          -0.7162614464759827
+        ],
+        [
+          0.7056761980056763,
+          7.610512733459473,
+          0.7172367572784424
+        ]
+      ],
+      "normalization_height": 3.542802333831787,
+      "default_height_m": 1.2,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "man_standing",
+      "name": "Man",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/HMnuH5geEG",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/man.json",
+      "source_sha256": "dad8fa3ca2bc7760892f9ff47f544941179e50acb2aa772cf9f035154a37fc58",
+      "source_files": [
+        {
+          "path": "man/model.glb",
+          "url": "https://static.poly.pizza/3746be88-6799-4817-929b-6bc067c47caa.glb",
+          "sha256": "dad8fa3ca2bc7760892f9ff47f544941179e50acb2aa772cf9f035154a37fc58",
+          "bytes": 493196
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/man_standing.npz",
+      "sha256": "12a34b74880e2386edaebdd3aca9b6d38722d8392aad73799688e9b4c7fdb7f9",
+      "active": true,
+      "triangles": 1852,
+      "bounds": [
+        [
+          -0.14724072813987732,
+          0.0,
+          -0.0858977735042572
+        ],
+        [
+          0.14724072813987732,
+          1.0,
+          0.0858977735042572
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.7017244100570679,
+          -0.00429473677650094,
+          -0.32764336466789246
+        ],
+        [
+          0.7153065204620361,
+          4.8076581954956055,
+          0.499028742313385
+        ]
+      ],
+      "normalization_height": 4.811952932272106,
+      "default_height_m": 1.75,
+      "pose": "Man_Idle",
+      "seconds": 0,
+      "maximum_weight_sum_error": 1.341104507446289e-07,
+      "maximum_displacement_from_unskinned": 2.9183051586151123
+    },
+    {
+      "key": "man_walking",
+      "name": "Man",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/HMnuH5geEG",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/man.json",
+      "source_sha256": "dad8fa3ca2bc7760892f9ff47f544941179e50acb2aa772cf9f035154a37fc58",
+      "source_files": [
+        {
+          "path": "man/model.glb",
+          "url": "https://static.poly.pizza/3746be88-6799-4817-929b-6bc067c47caa.glb",
+          "sha256": "dad8fa3ca2bc7760892f9ff47f544941179e50acb2aa772cf9f035154a37fc58",
+          "bytes": 493196
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/man_walking.npz",
+      "sha256": "786b3fd6adcc4262a092e2edf974af4a42e9530b35524aa06ff0b92cc0388f0e",
+      "active": true,
+      "triangles": 1852,
+      "bounds": [
+        [
+          -0.1693611592054367,
+          0.0,
+          -0.2535157799720764
+        ],
+        [
+          0.1693611592054367,
+          0.9612622261047363,
+          0.2535157799720764
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.8242340683937073,
+          -0.007193377241492271,
+          -0.9714027047157288
+        ],
+        [
+          0.8056818246841431,
+          4.6183552742004395,
+          1.4684094190597534
+        ]
+      ],
+      "normalization_height": 4.811952932272106,
+      "default_height_m": 1.75,
+      "pose": "Man_Walk",
+      "seconds": 0.2,
+      "maximum_weight_sum_error": 1.341104507446289e-07,
+      "maximum_displacement_from_unskinned": 2.9754698276519775
+    },
+    {
+      "key": "woman_standing",
+      "name": "Woman Casual",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/jpKRgGDxhk",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/woman.json",
+      "source_sha256": "99c4df0aaabd19022809facc68f5fb5f564d35df3a9893c273a31fdaacf68e96",
+      "source_files": [
+        {
+          "path": "woman/model.glb",
+          "url": "https://static.poly.pizza/51d5abdd-bb87-4b8d-9967-21738ffb8437.glb",
+          "sha256": "99c4df0aaabd19022809facc68f5fb5f564d35df3a9893c273a31fdaacf68e96",
+          "bytes": 586108
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/woman_standing.npz",
+      "sha256": "f27d3e3d0d0894d867138a45f9ccbf4d8cf7e8ff03a78404b9cb96ca32afa6ea",
+      "active": true,
+      "triangles": 2776,
+      "bounds": [
+        [
+          -0.1512906402349472,
+          0.0,
+          -0.08872174471616745
+        ],
+        [
+          0.1512906402349472,
+          1.0,
+          0.08872174471616745
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.6835777163505554,
+          -0.02598254196345806,
+          -0.33394497632980347
+        ],
+        [
+          0.7153064608573914,
+          4.5971856117248535,
+          0.4864061176776886
+        ]
+      ],
+      "normalization_height": 4.623168153688312,
+      "default_height_m": 1.7,
+      "pose": "Female_Idle",
+      "seconds": 0,
+      "maximum_weight_sum_error": 1.2293457984924316e-07,
+      "maximum_displacement_from_unskinned": 2.845991373062134
+    },
+    {
+      "key": "woman_walking",
+      "name": "Woman Casual",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/jpKRgGDxhk",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/woman.json",
+      "source_sha256": "99c4df0aaabd19022809facc68f5fb5f564d35df3a9893c273a31fdaacf68e96",
+      "source_files": [
+        {
+          "path": "woman/model.glb",
+          "url": "https://static.poly.pizza/51d5abdd-bb87-4b8d-9967-21738ffb8437.glb",
+          "sha256": "99c4df0aaabd19022809facc68f5fb5f564d35df3a9893c273a31fdaacf68e96",
+          "bytes": 586108
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/woman_walking.npz",
+      "sha256": "40cd0c2d41d47e28b08e3dec99dedd67611bebd1d00069d09a6e44592472e879",
+      "active": true,
+      "triangles": 2776,
+      "bounds": [
+        [
+          -0.15800878405570984,
+          0.0,
+          -0.26554468274116516
+        ],
+        [
+          0.15800878405570984,
+          0.9597371816635132,
+          0.26554468274116516
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.7658364176750183,
+          -0.02768256515264511,
+          -0.9781076908111572
+        ],
+        [
+          0.6951658725738525,
+          4.409343719482422,
+          1.4772077798843384
+        ]
+      ],
+      "normalization_height": 4.623168153688312,
+      "default_height_m": 1.7,
+      "pose": "Female_Walk",
+      "seconds": 0.2,
+      "maximum_weight_sum_error": 1.2293457984924316e-07,
+      "maximum_displacement_from_unskinned": 3.0047779083251953
+    },
+    {
+      "key": "street_light",
+      "name": "Street Light",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/nFwrlcLvM5",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/street_light.json",
+      "source_sha256": "812b82718233f91850490805b67afd6166a17ed802907521ccc8a2280839f275",
+      "source_files": [
+        {
+          "path": "street_light/model.glb",
+          "url": "https://static.poly.pizza/9a8aac3e-d1ee-4860-b294-edca62ef50be.glb",
+          "sha256": "812b82718233f91850490805b67afd6166a17ed802907521ccc8a2280839f275",
+          "bytes": 11056
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/street_light.npz",
+      "sha256": "51c0269b17673448f707b42c0b4f05b96254fd63a16745c1f973e5b6fdd8585d",
+      "active": true,
+      "triangles": 324,
+      "bounds": [
+        [
+          -0.03704012557864189,
+          0.0,
+          -0.1847473829984665
+        ],
+        [
+          0.03704012557864189,
+          1.0,
+          0.1847473829984665
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.20912113785743713,
+          -0.008023492991924286,
+          -0.20309998095035553
+        ],
+        [
+          0.20912092924118042,
+          5.637773513793945,
+          1.8829925060272217
+        ]
+      ],
+      "normalization_height": 5.64579700678587,
+      "default_height_m": 6.0,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "pickup_truck",
+      "name": "Pickup Truck",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/qn4grQgHm8",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/pickup_truck.json",
+      "source_sha256": "9d6b2e33af0d37bf42b2e7af850949f4efd0ddbb9a88077812d152d8b4c1c3eb",
+      "source_files": [
+        {
+          "path": "pickup_truck/model.glb",
+          "url": "https://static.poly.pizza/4e925a01-dbb8-4aab-848b-221306b835ea.glb",
+          "sha256": "9d6b2e33af0d37bf42b2e7af850949f4efd0ddbb9a88077812d152d8b4c1c3eb",
+          "bytes": 273012
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/pickup_truck.npz",
+      "sha256": "f71384b17d8454e69c13d3e2dc56abbb8006a187e349011974fe463c39337d00",
+      "active": true,
+      "triangles": 6432,
+      "bounds": [
+        [
+          -0.6254374384880066,
+          0.0,
+          -1.4012805223464966
+        ],
+        [
+          0.6254374384880066,
+          1.0,
+          1.4012805223464966
+        ]
+      ],
+      "native_bounds": [
+        [
+          -1.1560873985290527,
+          -0.005935953930020332,
+          -2.487295389175415
+        ],
+        [
+          1.1560866832733154,
+          1.8425095081329346,
+          2.6930859088897705
+        ]
+      ],
+      "normalization_height": 1.848445462062955,
+      "default_height_m": 1.8,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "transmission_tower",
+      "name": "Transmission Tower",
+      "author": "iPoly3D",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/TYK3rPu7E5",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/transmission_tower.json",
+      "source_sha256": "b0ab9d357e5fb70714db6a4322d3b73c326e959954a5c8962acefc0d1db0494e",
+      "source_files": [
+        {
+          "path": "transmission_tower/model.glb",
+          "url": "https://static.poly.pizza/b233f7ce-a3fd-4aac-94a1-716bf5f29400.glb",
+          "sha256": "b0ab9d357e5fb70714db6a4322d3b73c326e959954a5c8962acefc0d1db0494e",
+          "bytes": 403896
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/transmission_tower.npz",
+      "sha256": "3ef90dfd580b9efca308e40bd74cba3b8331845a46dd7462652a9d1a13c4d5ff",
+      "active": true,
+      "triangles": 5743,
+      "bounds": [
+        [
+          -0.144206240773201,
+          0.0,
+          -0.14082618057727814
+        ],
+        [
+          0.144206240773201,
+          1.0,
+          0.14082618057727814
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.9934034943580627,
+          -9.445845671192756e-16,
+          -0.961738646030426
+        ],
+        [
+          0.9934033155441284,
+          6.888768672943115,
+          0.9784993529319763
+        ]
+      ],
+      "normalization_height": 6.888768672943116,
+      "default_height_m": 25.0,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "fence",
+      "name": "Fence",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/U7g0Wxpt63",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/fence.json",
+      "source_sha256": "b1a671ca198b8a5848002c2da22f5b9e6fc36e9303389c15b23d19e3eea1d901",
+      "source_files": [
+        {
+          "path": "fence/model.glb",
+          "url": "https://static.poly.pizza/e53463b2-c5e8-4734-bc36-9ea8581ab148.glb",
+          "sha256": "b1a671ca198b8a5848002c2da22f5b9e6fc36e9303389c15b23d19e3eea1d901",
+          "bytes": 16812
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/fence.npz",
+      "sha256": "38d670128685d84c79f9d5c8bd54573019e5eef53b5d0caa26fd763516d6e7ac",
+      "active": true,
+      "triangles": 324,
+      "bounds": [
+        [
+          -2.5099079608917236,
+          0.0,
+          -0.070525623857975
+        ],
+        [
+          2.5099079608917236,
+          1.0,
+          0.070525623857975
+        ]
+      ],
+      "native_bounds": [
+        [
+          -2.9450631141662598,
+          -0.009340000338852406,
+          -0.0827530026435852
+        ],
+        [
+          2.9450631141662598,
+          1.1640349626541138,
+          0.0827530026435852
+        ]
+      ],
+      "normalization_height": 1.1733749629929662,
+      "default_height_m": 1.5,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "car",
+      "name": "Car",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/unqqkULtRU",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/car.json",
+      "source_sha256": "e5f5fa41c4434383b20287725c0e9d757cbd0f059eedc342ec265d32a195fe39",
+      "source_files": [
+        {
+          "path": "car/model.glb",
+          "url": "https://static.poly.pizza/d35173c8-6078-4367-8f87-b1f2599f0bb7.glb",
+          "sha256": "e5f5fa41c4434383b20287725c0e9d757cbd0f059eedc342ec265d32a195fe39",
+          "bytes": 174320
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/car.npz",
+      "sha256": "d418e55da1b3ce4333784f4ce56b1702b603609b1556aba89b155ed2c5c784c3",
+      "active": true,
+      "triangles": 3124,
+      "bounds": [
+        [
+          -0.715094804763794,
+          0.0,
+          -1.444473147392273
+        ],
+        [
+          0.715094804763794,
+          1.0,
+          1.444473147392273
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.8192239999771118,
+          -0.028342999517917633,
+          -1.6492890119552612
+        ],
+        [
+          0.8192239999771118,
+          1.117272973060608,
+          1.6603339910507202
+        ]
+      ],
+      "normalization_height": 1.1456159725785255,
+      "default_height_m": 1.5,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "suv",
+      "name": "SUV",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/xsMtZhBkxL",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/suv.json",
+      "source_sha256": "1a9ce2bba813dca5005abab09715b01b8b5f4a9c48d7260463afdfeb876aa8b6",
+      "source_files": [
+        {
+          "path": "suv/model.glb",
+          "url": "https://static.poly.pizza/e5fbf2ee-5c9e-47d5-8ab6-80cacd463baa.glb",
+          "sha256": "1a9ce2bba813dca5005abab09715b01b8b5f4a9c48d7260463afdfeb876aa8b6",
+          "bytes": 181608
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/suv.npz",
+      "sha256": "ba7251a22a543307963f9b3578b76d25d457a1dc884f223c4c9fa8253fc2199b",
+      "active": true,
+      "triangles": 3294,
+      "bounds": [
+        [
+          -0.6908730268478394,
+          0.0,
+          -1.3775391578674316
+        ],
+        [
+          0.6908730268478394,
+          1.0,
+          1.3775391578674316
+        ]
+      ],
+      "native_bounds": [
+        [
+          -1.0555510520935059,
+          -0.01809000037610531,
+          -2.104891061782837
+        ],
+        [
+          1.0555510520935059,
+          1.5097609758377075,
+          2.1044580936431885
+        ]
+      ],
+      "normalization_height": 1.5278509762138128,
+      "default_height_m": 1.8,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "water_tank",
+      "name": "Water Tank",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/XVB8vUbnZb",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/water_tank.json",
+      "source_sha256": "09c9575645014476c2b274e29446c731675254f7a1ab540245d16ab9e230bf19",
+      "source_files": [
+        {
+          "path": "water_tank/model.glb",
+          "url": "https://static.poly.pizza/90ce7828-ec94-4b41-9e44-e524af7aafa5.glb",
+          "sha256": "09c9575645014476c2b274e29446c731675254f7a1ab540245d16ab9e230bf19",
+          "bytes": 35380
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/water_tank.npz",
+      "sha256": "6ffe50f45701bee47cefad12f7ce4117f81673f83be3c2c270ad6fb195c3ea4e",
+      "active": true,
+      "triangles": 872,
+      "bounds": [
+        [
+          -0.23025712370872498,
+          0.0,
+          -0.3337532877922058
+        ],
+        [
+          0.23025712370872498,
+          1.0,
+          0.3337532877922058
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.8116838932037354,
+          -0.04879458248615265,
+          -0.8762216567993164
+        ],
+        [
+          0.8095667362213135,
+          3.4717276096343994,
+          1.473750114440918
+        ]
+      ],
+      "normalization_height": 3.520522192120552,
+      "default_height_m": 2.5,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "casual_standing",
+      "name": "Casual Character",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/kZ3DmIoGip",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/casual.json",
+      "source_sha256": "fea7e71271203e7073f1a073fa1208de7402df276f87f80e149bf7589b5d46b4",
+      "source_files": [
+        {
+          "path": "casual/model.glb",
+          "url": "https://static.poly.pizza/90a9e2d4-053f-42f1-99a2-8f5e1180ea7f.glb",
+          "sha256": "fea7e71271203e7073f1a073fa1208de7402df276f87f80e149bf7589b5d46b4",
+          "bytes": 1430660
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/casual_standing.npz",
+      "sha256": "343dcdcea25b4abf1ad465ff118d2a0b16255914b69994c4fd81826b5d053a14",
+      "active": true,
+      "triangles": 5776,
+      "bounds": [
+        [
+          -0.14277979731559753,
+          0.0,
+          -0.12130745500326157
+        ],
+        [
+          0.14277979731559753,
+          1.0,
+          0.12130745500326157
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.26409828662872314,
+          -0.0012144995853304863,
+          -0.16216254234313965
+        ],
+        [
+          0.26420271396636963,
+          1.848840594291687,
+          0.2866884171962738
+        ]
+      ],
+      "normalization_height": 1.8500550938770175,
+      "default_height_m": 1.75,
+      "pose": "Idle_Neutral",
+      "seconds": 0,
+      "maximum_weight_sum_error": 1.30385160446167e-07,
+      "maximum_displacement_from_unskinned": 0.9481073617935181
+    },
+    {
+      "key": "casual_walking",
+      "name": "Casual Character",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/kZ3DmIoGip",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/casual.json",
+      "source_sha256": "fea7e71271203e7073f1a073fa1208de7402df276f87f80e149bf7589b5d46b4",
+      "source_files": [
+        {
+          "path": "casual/model.glb",
+          "url": "https://static.poly.pizza/90a9e2d4-053f-42f1-99a2-8f5e1180ea7f.glb",
+          "sha256": "fea7e71271203e7073f1a073fa1208de7402df276f87f80e149bf7589b5d46b4",
+          "bytes": 1430660
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/casual_walking.npz",
+      "sha256": "466d22aa84d414a8ec52c2f68c3ed704a93122274330e8fb89026f0af010bba0",
+      "active": true,
+      "triangles": 5776,
+      "bounds": [
+        [
+          -0.13866612315177917,
+          0.0,
+          -0.23494140803813934
+        ],
+        [
+          0.13866612315177917,
+          0.9653226137161255,
+          0.23494140803813934
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.2601442337036133,
+          -0.0016705688321962953,
+          -0.42272043228149414
+        ],
+        [
+          0.2529357075691223,
+          1.7842293977737427,
+          0.4465886652469635
+        ]
+      ],
+      "normalization_height": 1.8500550938770175,
+      "default_height_m": 1.75,
+      "pose": "Walk",
+      "seconds": 0.2,
+      "maximum_weight_sum_error": 1.30385160446167e-07,
+      "maximum_displacement_from_unskinned": 1.0008893013000488
+    },
+    {
+      "key": "utility_box",
+      "name": "Utility Box 01",
+      "author": "James Ray Cock",
+      "license": "CC0-1.0",
+      "source_url": "https://polyhaven.com/a/utility_box_01",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/utility_box.json",
+      "source_sha256": "5b9f8c45f2640c9dd831dc3450529e45b24c987208ddcf73010fe717ce8c454e",
+      "source_files": [
+        {
+          "path": "utility_box/utility_box_01.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/utility_box_01/utility_box_01_1k.gltf",
+          "sha256": "5b9f8c45f2640c9dd831dc3450529e45b24c987208ddcf73010fe717ce8c454e",
+          "bytes": 2766
+        },
+        {
+          "path": "utility_box/textures/utility_box_01_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/utility_box_01/utility_box_01_diff_1k.jpg",
+          "sha256": "6a703a4cdf20c3fc3d0400fa815e5a1834836c96c207bdb57ba9e4a5db3a5532",
+          "bytes": 558681
+        },
+        {
+          "path": "utility_box/textures/utility_box_01_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/utility_box_01/utility_box_01_nor_gl_1k.jpg",
+          "sha256": "1c4e377906c13e864c9c7ffbd31a7d86075f28b948bf54872d6ad3ab38a08124",
+          "bytes": 557001
+        },
+        {
+          "path": "utility_box/textures/utility_box_01_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/utility_box_01/utility_box_01_arm_1k.jpg",
+          "sha256": "e65428774e94b6a8aeb7a23802e0af8f1568952ea79e21a7a3475b957e34956b",
+          "bytes": 716061
+        },
+        {
+          "path": "utility_box/utility_box_01.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/utility_box_01/utility_box_01.bin",
+          "sha256": "e4249eb754d7802154eed36bb12070dc24c90fc331f355d60ef7570d61fc0f5c",
+          "bytes": 142552
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/utility_box.npz",
+      "sha256": "8ebe1d2c4f64725fba8047001ca737ff5ceb9b105c9952af65aedb76c9210694",
+      "active": true,
+      "triangles": 4404,
+      "bounds": [
+        [
+          -0.2320738583803177,
+          0.0,
+          -0.19279974699020386
+        ],
+        [
+          0.2320738583803177,
+          1.0,
+          0.19279974699020386
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.2600001096725464,
+          0.0,
+          -0.20999999344348907
+        ],
+        [
+          0.2600001096725464,
+          1.1203334331512451,
+          0.22200000286102295
+        ]
+      ],
+      "normalization_height": 1.1203334331512451,
+      "default_height_m": 1.5,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "street_lamp_01",
+      "name": "Street Lamp 01",
+      "author": "Josh Dean",
+      "license": "CC0-1.0",
+      "source_url": "https://polyhaven.com/a/street_lamp_01",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/street_lamp_01.json",
+      "source_sha256": "5d0358ede168b5e04547780b99d8e6d651cbe644e468e67cb505019047cbd5c8",
+      "source_files": [
+        {
+          "path": "street_lamp_01/street_lamp_01.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/street_lamp_01/street_lamp_01_1k.gltf",
+          "sha256": "5d0358ede168b5e04547780b99d8e6d651cbe644e468e67cb505019047cbd5c8",
+          "bytes": 6419
+        },
+        {
+          "path": "street_lamp_01/textures/street_lamp_01_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/street_lamp_01/street_lamp_01_arm_1k.jpg",
+          "sha256": "4b5487a6c7ee300c3cf5449629e01c35409e5c7ac1695edb9fe69d4821853c7c",
+          "bytes": 664324
+        },
+        {
+          "path": "street_lamp_01/textures/street_lamp_01_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/street_lamp_01/street_lamp_01_diff_1k.jpg",
+          "sha256": "3e9d3471b33eb1f8075ed741c2b1932103598626d057ca12ef38005ea5fcb165",
+          "bytes": 307889
+        },
+        {
+          "path": "street_lamp_01/textures/street_lamp_01_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/street_lamp_01/street_lamp_01_nor_gl_1k.jpg",
+          "sha256": "172af0fd7ed4999e9f520b9f56e1f357a6dba87adbd7b8aa87e0a0b95840c63d",
+          "bytes": 438623
+        },
+        {
+          "path": "street_lamp_01/street_lamp_01.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/street_lamp_01/street_lamp_01.bin",
+          "sha256": "c283db9b6d95835d9e8fc1692829acadcb21a0623b2daaa7231cec1440488401",
+          "bytes": 748908
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "staged/street_lamp_01.npz",
+      "sha256": "bd8e7e879fedf599069a89fcea02bbc352fc70b1464c7aa3a326517ca627a25c",
+      "active": false,
+      "triangles": 30610,
+      "bounds": [
+        [
+          -0.0909864529967308,
+          0.0,
+          -0.049927350133657455
+        ],
+        [
+          0.0909864529967308,
+          1.0,
+          0.049927350133657455
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.35216811299324036,
+          0.0,
+          -0.19324657320976257
+        ],
+        [
+          0.35216811299324036,
+          3.8705554008483887,
+          0.19324658811092377
+        ]
+      ],
+      "normalization_height": 3.8705554008483887,
+      "default_height_m": 4.5,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "bicycle_drummyfish",
+      "name": "Bicycle",
+      "author": "Drummyfish",
+      "license": "CC0-1.0",
+      "source_url": "https://opengameart.org/content/32-low-poly-models",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/bicycle_drummyfish.json",
+      "source_sha256": "001990d3e76f9eb869669a988075c93bdf400b52513060671f051343ad9e2dac",
+      "source_files": [
+        {
+          "path": "bicycle_drummyfish/bicycle.obj",
+          "url": "https://opengameart.org/sites/default/files/bicycle.obj",
+          "sha256": "001990d3e76f9eb869669a988075c93bdf400b52513060671f051343ad9e2dac",
+          "bytes": 17299
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "staged/bicycle_drummyfish.npz",
+      "sha256": "1ad8a5549ec16b89436d00e19c36e216036f64be40ec2f820deb74bdb2a7b0a1",
+      "active": false,
+      "triangles": 274,
+      "bounds": [
+        [
+          -0.8126161694526672,
+          0.0,
+          -0.2952590882778168
+        ],
+        [
+          0.8126161694526672,
+          1.0,
+          0.2952590882778168
+        ]
+      ],
+      "native_bounds": [
+        [
+          -7.921072959899902,
+          -4.805211067199707,
+          -2.992840051651001
+        ],
+        [
+          8.52542495727539,
+          5.314263820648193,
+          2.982893943786621
+        ]
+      ],
+      "normalization_height": 10.1194748878479,
+      "default_height_m": 1.1,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "bicycle_innerscene",
+      "name": "City bicycle",
+      "author": "Innerscene",
+      "license": "CC0-1.0",
+      "source_url": "https://www.innerscene.com/tools/library/3d-parts/city-bicycle-58a2a324",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/bicycle_innerscene.json",
+      "source_sha256": "991f3defc3827f30b0521df257b33f243bf86398f26691a46733e9ef54b1b74a",
+      "source_files": [
+        {
+          "path": "bicycle_innerscene/bicycle.glb",
+          "url": "https://files.innerscene.com/library/city-bicycle-58a2a324/b2c6f964782dd212ba7f/bicycle-original.glb",
+          "sha256": "991f3defc3827f30b0521df257b33f243bf86398f26691a46733e9ef54b1b74a",
+          "bytes": 430176
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/bicycle_innerscene.npz",
+      "sha256": "ea80dc383fb204f09b2755e8bc06acd014451c41d108892e9dbf6ae8baf06af6",
+      "active": true,
+      "triangles": 11784,
+      "bounds": [
+        [
+          -0.2695699632167816,
+          0.0,
+          -0.8271586298942566
+        ],
+        [
+          0.2695699632167816,
+          1.0,
+          0.8271586298942566
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.2900499105453491,
+          -7.682792357854851e-08,
+          -0.89000004529953
+        ],
+        [
+          0.2900499105453491,
+          1.075972557067871,
+          0.89000004529953
+        ]
+      ],
+      "normalization_height": 1.0759726338957947,
+      "default_height_m": 1.076,
+      "pose": null,
+      "seconds": 0,
+      "maximum_weight_sum_error": 0.0,
+      "maximum_displacement_from_unskinned": 0.0
+    },
+    {
+      "key": "worker_standing",
+      "name": "Worker",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/Yg2bQZO6Hj",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/worker.json",
+      "source_sha256": "9c28614f465b7dc105f908c20c22fc045f4b07caf8c5ef0e9f8049eceb6dd38d",
+      "source_files": [
+        {
+          "path": "worker/model.glb",
+          "url": "https://static.poly.pizza/3a5f3056-ffe6-42eb-bd52-122afcbd22b2.glb",
+          "sha256": "9c28614f465b7dc105f908c20c22fc045f4b07caf8c5ef0e9f8049eceb6dd38d",
+          "bytes": 1344928
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/worker_standing.npz",
+      "sha256": "2b08f1987647a25b5682a425897f8b3d79f7dcf8bead7105bd24f231095ce317",
+      "active": true,
+      "triangles": 5240,
+      "bounds": [
+        [
+          -0.1421937346458435,
+          0.0,
+          -0.10399863123893738
+        ],
+        [
+          0.1421937346458435,
+          1.0,
+          0.10399863123893738
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.26409828662872314,
+          -0.0035011060535907745,
+          -0.09970399737358093
+        ],
+        [
+          0.26420271396636963,
+          1.8541791439056396,
+          0.2866884171962738
+        ]
+      ],
+      "normalization_height": 1.8576802499592304,
+      "default_height_m": 1.75,
+      "pose": "Idle_Neutral",
+      "seconds": 0,
+      "maximum_weight_sum_error": 1.341104507446289e-07,
+      "maximum_displacement_from_unskinned": 0.9481073617935181
+    },
+    {
+      "key": "worker_walking",
+      "name": "Worker",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/Yg2bQZO6Hj",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/worker.json",
+      "source_sha256": "9c28614f465b7dc105f908c20c22fc045f4b07caf8c5ef0e9f8049eceb6dd38d",
+      "source_files": [
+        {
+          "path": "worker/model.glb",
+          "url": "https://static.poly.pizza/3a5f3056-ffe6-42eb-bd52-122afcbd22b2.glb",
+          "sha256": "9c28614f465b7dc105f908c20c22fc045f4b07caf8c5ef0e9f8049eceb6dd38d",
+          "bytes": 1344928
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/worker_walking.npz",
+      "sha256": "fddd73adda7568a721c4fb865f3c790b61fa7e89e88c3f7aa427b9b5562bccb5",
+      "active": true,
+      "triangles": 5240,
+      "bounds": [
+        [
+          -0.13809694349765778,
+          0.0,
+          -0.23333853483200073
+        ],
+        [
+          0.13809694349765778,
+          0.9664108157157898,
+          0.23333853483200073
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.2601442337036133,
+          -0.003964037634432316,
+          -0.4203481376171112
+        ],
+        [
+          0.2529357075691223,
+          1.7913182973861694,
+          0.4465886652469635
+        ]
+      ],
+      "normalization_height": 1.8576802499592304,
+      "default_height_m": 1.75,
+      "pose": "Walk",
+      "seconds": 0.2,
+      "maximum_weight_sum_error": 1.341104507446289e-07,
+      "maximum_displacement_from_unskinned": 1.0008893013000488
+    },
+    {
+      "key": "woman_dress_standing",
+      "name": "Animated Woman",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/nIItLV9nxS",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/woman_dress.json",
+      "source_sha256": "a6522fe53d15de21130a957d1bf2b8a9a58d4e4e9a12af646645b667a9bb2d17",
+      "source_files": [
+        {
+          "path": "woman_dress/model.glb",
+          "url": "https://static.poly.pizza/46d6db5a-3c9f-4238-8cdf-8eb7194498dc.glb",
+          "sha256": "a6522fe53d15de21130a957d1bf2b8a9a58d4e4e9a12af646645b667a9bb2d17",
+          "bytes": 1491780
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/woman_dress_standing.npz",
+      "sha256": "3266869eaef470eb50e9cd8bfac78fa0b300d679e31fcb49299e0bd95f9647f6",
+      "active": true,
+      "triangles": 6108,
+      "bounds": [
+        [
+          -0.14180888235569,
+          0.0,
+          -0.10130657255649567
+        ],
+        [
+          0.14180888235569,
+          1.0,
+          0.10130657255649567
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.2655055522918701,
+          0.0012326316209509969,
+          -0.1165536418557167
+        ],
+        [
+          0.25525712966918945,
+          1.837375283241272,
+          0.25547298789024353
+        ]
+      ],
+      "normalization_height": 1.836142651620321,
+      "default_height_m": 1.7,
+      "pose": "Idle_Neutral",
+      "seconds": 0,
+      "maximum_weight_sum_error": 1.341104507446289e-07,
+      "maximum_displacement_from_unskinned": 0.92083340883255
+    },
+    {
+      "key": "woman_dress_walking",
+      "name": "Animated Woman",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/nIItLV9nxS",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/woman_dress.json",
+      "source_sha256": "a6522fe53d15de21130a957d1bf2b8a9a58d4e4e9a12af646645b667a9bb2d17",
+      "source_files": [
+        {
+          "path": "woman_dress/model.glb",
+          "url": "https://static.poly.pizza/46d6db5a-3c9f-4238-8cdf-8eb7194498dc.glb",
+          "sha256": "a6522fe53d15de21130a957d1bf2b8a9a58d4e4e9a12af646645b667a9bb2d17",
+          "bytes": 1491780
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/woman_dress_walking.npz",
+      "sha256": "92fb0ac331151a4b25eac14d2d128484217cd984444d079cac1d55a7f9f4c729",
+      "active": true,
+      "triangles": 6108,
+      "bounds": [
+        [
+          -0.11542949080467224,
+          0.0,
+          -0.2611004114151001
+        ],
+        [
+          0.11542949080467224,
+          0.9623401165008545,
+          0.2611004114151001
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.22545669972896576,
+          0.0008128096233122051,
+          -0.46963006258010864
+        ],
+        [
+          0.1984333097934723,
+          1.7678065299987793,
+          0.48920509219169617
+        ]
+      ],
+      "normalization_height": 1.836142651620321,
+      "default_height_m": 1.7,
+      "pose": "Walk",
+      "seconds": 0.2,
+      "maximum_weight_sum_error": 1.341104507446289e-07,
+      "maximum_displacement_from_unskinned": 1.0400649309158325
+    },
+    {
+      "key": "woman_modular_standing",
+      "name": "Animated Woman",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/qJ2gsTUBHL",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/woman_modular.json",
+      "source_sha256": "a2212729826b718e59e698211ed3951c22459b48733b1ee6a24fac0abf74dca8",
+      "source_files": [
+        {
+          "path": "woman_modular/model.glb",
+          "url": "https://static.poly.pizza/ba7a1955-ea51-4cb9-a561-188bdef0a6c7.glb",
+          "sha256": "a2212729826b718e59e698211ed3951c22459b48733b1ee6a24fac0abf74dca8",
+          "bytes": 1530616
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/woman_modular_standing.npz",
+      "sha256": "efa8134683dc38fcdfaddb4ea63de0a99e6f36108a07f365cd629a683fe3473d",
+      "active": true,
+      "triangles": 6424,
+      "bounds": [
+        [
+          -0.14118020236492157,
+          0.0,
+          -0.09990548342466354
+        ],
+        [
+          0.14118020236492157,
+          1.0,
+          0.09990548342466354
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.26566052436828613,
+          -0.008566931821405888,
+          -0.09791731089353561
+        ],
+        [
+          0.25540581345558167,
+          1.8368275165557861,
+          0.2708127498626709
+        ]
+      ],
+      "normalization_height": 1.845394448377192,
+      "default_height_m": 1.7,
+      "pose": "Idle_Neutral",
+      "seconds": 0,
+      "maximum_weight_sum_error": 1.4621764421463013e-07,
+      "maximum_displacement_from_unskinned": 0.9215928912162781
+    },
+    {
+      "key": "woman_modular_walking",
+      "name": "Animated Woman",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/qJ2gsTUBHL",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/woman_modular.json",
+      "source_sha256": "a2212729826b718e59e698211ed3951c22459b48733b1ee6a24fac0abf74dca8",
+      "source_files": [
+        {
+          "path": "woman_modular/model.glb",
+          "url": "https://static.poly.pizza/ba7a1955-ea51-4cb9-a561-188bdef0a6c7.glb",
+          "sha256": "a2212729826b718e59e698211ed3951c22459b48733b1ee6a24fac0abf74dca8",
+          "bytes": 1530616
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/woman_modular_walking.npz",
+      "sha256": "718f9e9a015aba1b8e1e00f8cd58e45a4df8f6d3c4be96cdfda59e7415c27e35",
+      "active": true,
+      "triangles": 6424,
+      "bounds": [
+        [
+          -0.11652146279811859,
+          0.0,
+          -0.26111504435539246
+        ],
+        [
+          0.11652146279811859,
+          0.9628728032112122,
+          0.26111504435539246
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.22569967806339264,
+          -0.008874607272446156,
+          -0.47420501708984375
+        ],
+        [
+          0.20435644686222076,
+          1.7680054903030396,
+          0.489515483379364
+        ]
+      ],
+      "normalization_height": 1.845394448377192,
+      "default_height_m": 1.7,
+      "pose": "Walk",
+      "seconds": 0.2,
+      "maximum_weight_sum_error": 1.4621764421463013e-07,
+      "maximum_displacement_from_unskinned": 1.0408380031585693
+    },
+    {
+      "key": "business_man_standing",
+      "name": "Business Man",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/JFrLIKqvCH",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/business_man.json",
+      "source_sha256": "82b81257c1e94cd9ee48cb1dcbe5ff506e81c9ce67cd0c5af542d8712dca546e",
+      "source_files": [
+        {
+          "path": "business_man/model.glb",
+          "url": "https://static.poly.pizza/e599abbe-7d73-488c-9d7e-3ead281e705c.glb",
+          "sha256": "82b81257c1e94cd9ee48cb1dcbe5ff506e81c9ce67cd0c5af542d8712dca546e",
+          "bytes": 1529248
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/business_man_standing.npz",
+      "sha256": "61ff1b924ca9115b9c50cc283adc090ae51738c10bdf0a762cdc210a189324c7",
+      "active": true,
+      "triangles": 6634,
+      "bounds": [
+        [
+          -0.14225612580776215,
+          0.0,
+          -0.1000954732298851
+        ],
+        [
+          0.14225612580776215,
+          1.0,
+          0.1000954732298851
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.2629944980144501,
+          -0.0011054502101615071,
+          -0.08348085731267929
+        ],
+        [
+          0.26309168338775635,
+          1.847975492477417,
+          0.2866884171962738
+        ]
+      ],
+      "normalization_height": 1.8490809426875785,
+      "default_height_m": 1.75,
+      "pose": "Idle_Neutral",
+      "seconds": 0,
+      "maximum_weight_sum_error": 1.341104507446289e-07,
+      "maximum_displacement_from_unskinned": 0.9481073617935181
+    },
+    {
+      "key": "business_man_walking",
+      "name": "Business Man",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/JFrLIKqvCH",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/business_man.json",
+      "source_sha256": "82b81257c1e94cd9ee48cb1dcbe5ff506e81c9ce67cd0c5af542d8712dca546e",
+      "source_files": [
+        {
+          "path": "business_man/model.glb",
+          "url": "https://static.poly.pizza/e599abbe-7d73-488c-9d7e-3ead281e705c.glb",
+          "sha256": "82b81257c1e94cd9ee48cb1dcbe5ff506e81c9ce67cd0c5af542d8712dca546e",
+          "bytes": 1529248
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/business_man_walking.npz",
+      "sha256": "49b2acf3f23c6e7ef63d6065f688121c0f346f4a8793e51475eb21693783aa41",
+      "active": true,
+      "triangles": 6634,
+      "bounds": [
+        [
+          -0.1389281153678894,
+          0.0,
+          -0.23490990698337555
+        ],
+        [
+          0.1389281153678894,
+          0.9656725525856018,
+          0.23490990698337555
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.26130491495132446,
+          -0.001555306720547378,
+          -0.422146201133728
+        ],
+        [
+          0.25247377157211304,
+          1.7840514183044434,
+          0.4465886652469635
+        ]
+      ],
+      "normalization_height": 1.8490809426875785,
+      "default_height_m": 1.75,
+      "pose": "Walk",
+      "seconds": 0.2,
+      "maximum_weight_sum_error": 1.341104507446289e-07,
+      "maximum_displacement_from_unskinned": 1.0008894205093384
+    },
+    {
+      "key": "hoodie_standing",
+      "name": "Hoodie Character",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/gKLBoRsyKe",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/hoodie.json",
+      "source_sha256": "0de1bcd789d409214cf82f66f61daeb53d2f7de6d914b23e7b3660bfb3dee61e",
+      "source_files": [
+        {
+          "path": "hoodie/model.glb",
+          "url": "https://static.poly.pizza/bcd66ec5-5e81-4901-a222-47abc875fe2a.glb",
+          "sha256": "0de1bcd789d409214cf82f66f61daeb53d2f7de6d914b23e7b3660bfb3dee61e",
+          "bytes": 1456760
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/hoodie_standing.npz",
+      "sha256": "dac205ebb30bbd9b40bf21e0ff7bcaedd125ca75065e76e67efdf949242e61b0",
+      "active": true,
+      "triangles": 6206,
+      "bounds": [
+        [
+          -0.14612270891666412,
+          0.0,
+          -0.10001334547996521
+        ],
+        [
+          0.14612270891666412,
+          1.0,
+          0.10001334547996521
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.2720872163772583,
+          -0.0039641642943024635,
+          -0.08585873991250992
+        ],
+        [
+          0.27221614122390747,
+          1.8585231304168701,
+          0.2866884171962738
+        ]
+      ],
+      "normalization_height": 1.8624872947111726,
+      "default_height_m": 1.75,
+      "pose": "Idle_Neutral",
+      "seconds": 0,
+      "maximum_weight_sum_error": 1.564621925354004e-07,
+      "maximum_displacement_from_unskinned": 0.9481073617935181
+    },
+    {
+      "key": "hoodie_walking",
+      "name": "Hoodie Character",
+      "author": "Quaternius",
+      "license": "CC0-1.0",
+      "source_url": "https://poly.pizza/m/gKLBoRsyKe",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_evidence": "licenses/hoodie.json",
+      "source_sha256": "0de1bcd789d409214cf82f66f61daeb53d2f7de6d914b23e7b3660bfb3dee61e",
+      "source_files": [
+        {
+          "path": "hoodie/model.glb",
+          "url": "https://static.poly.pizza/bcd66ec5-5e81-4901-a222-47abc875fe2a.glb",
+          "sha256": "0de1bcd789d409214cf82f66f61daeb53d2f7de6d914b23e7b3660bfb3dee61e",
+          "bytes": 1456760
+        }
+      ],
+      "verified": "2026-11-04",
+      "file": "active/hoodie_walking.npz",
+      "sha256": "a499671e8de14292f4e1654d23043ab8973f586d112c9f4b4a99f9206cb1ec95",
+      "active": true,
+      "triangles": 6206,
+      "bounds": [
+        [
+          -0.14234352111816406,
+          0.0,
+          -0.23389972746372223
+        ],
+        [
+          0.14234352111816406,
+          0.9654581546783447,
+          0.23389972746372223
+        ]
+      ],
+      "native_bounds": [
+        [
+          -0.267366498708725,
+          -0.004415821749716997,
+          -0.4246818721294403
+        ],
+        [
+          0.2628594934940338,
+          1.793737769126892,
+          0.4465886652469635
+        ]
+      ],
+      "normalization_height": 1.8624872947111726,
+      "default_height_m": 1.75,
+      "pose": "Walk",
+      "seconds": 0.2,
+      "maximum_weight_sum_error": 1.564621925354004e-07,
+      "maximum_displacement_from_unskinned": 1.0008893013000488
+    }
+  ]
+}

@@ -1,0 +1,589 @@
+MISURE DI src/meridiana (script misure.py, solo libreria standard, lettura AST)
+Radice: C:\Users\utente\dev\meridiana-lavoro
+
+1. RIGHE PER FILE (totali / codice / docstring / commenti / vuote)
+file                                                    tot    cod    doc    com    vuo
+src/meridiana/ui/window.py                             2474   2115    102     42    215
+src/meridiana/ui/plan.py                               1229   1037     51     43     98
+src/meridiana/ui/energy_pages.py                        836    757      9      8     62
+src/meridiana/ui/properties.py                          763    628     45      9     81
+src/meridiana/energy/simulate.py                        633    529     31     20     53
+src/meridiana/ui/view3d.py                              494    375     32      8     79
+src/meridiana/model.py                                  466    341     37     21     67
+src/meridiana/rules.py                                  443    376     22      5     40
+src/meridiana/energy/consumption.py                     430    328     41      4     57
+src/meridiana/energy/nearshade.py                       418    297     63      4     54
+src/meridiana/energy/economics.py                       414    335     30      4     45
+src/meridiana/ui/assistant.py                           387    318     20      6     43
+src/meridiana/ui/charts.py                              384    311     25      4     44
+src/meridiana/theme_colors.py                           377    256     43      8     70
+src/meridiana/pvsyst/project.py                         369    305     15      3     46
+src/meridiana/layout.py                                 364    280     30     11     43
+src/meridiana/pvsyst/mapping.py                         321    265     18      3     35
+src/meridiana/ui/theme.py                               310    213     32     12     53
+src/meridiana/ui/checks_page.py                         305    256     15      7     27
+src/meridiana/mesh.py                                   303    217     30      3     53
+src/meridiana/energy/stringing.py                       302    230     33      1     38
+src/meridiana/checks.py                                 301    229     26      2     44
+src/meridiana/ui/catalog_dialog.py                      297    245     15      2     35
+src/meridiana/updates.py                                279    181     41     13     44
+src/meridiana/config.py                                 275    183     42      4     46
+src/meridiana/navigation.py                             271    205     28      3     35
+src/meridiana/ui/report.py                              260    228     10      0     22
+src/meridiana/snapping.py                               255    179     22      4     50
+src/meridiana/camera.py                                 250    162     36      5     47
+src/meridiana/energy/components.py                      245    190     27      3     25
+src/meridiana/pvsyst/pvobject.py                        237    182     20      2     33
+src/meridiana/energy/meteo.py                           231    174     24      0     33
+src/meridiana/ui/viewcube.py                            226    183      8      6     29
+src/meridiana/shortcuts.py                              214    139     34      2     39
+src/meridiana/quantity.py                               212    156     24      3     29
+src/meridiana/ui/marks.py                               184    136     13      0     35
+src/meridiana/viewaids.py                               184    141     17      0     26
+src/meridiana/ui/appearance.py                          174    142      8      0     24
+src/meridiana/ui/shortcuts_dialog.py                    174    144      7      0     23
+src/meridiana/catalog/panond.py                         172    136     18      3     15
+src/meridiana/catalog/__init__.py                       161    114     20      0     27
+src/meridiana/geo.py                                    160     99     25      1     35
+src/meridiana/sun.py                                    160    110     21      0     29
+src/meridiana/roofs.py                                  151     96     22      1     32
+src/meridiana/ui/sunbar.py                              149    121      6      3     19
+src/meridiana/ui/variants.py                            141    116      5      0     20
+src/meridiana/ui/plan_overlays.py                       139    101     11      0     27
+src/meridiana/minisign.py                               136     86     19      1     30
+src/meridiana/squaring.py                               133     91     13     11     18
+src/meridiana/navicube.py                               129     80     21      0     28
+src/meridiana/ui/preferences.py                         124    104      3      1     16
+src/meridiana/ui/pedigree.py                            122     95      9      0     18
+src/meridiana/ui/tileloader.py                          114     93      6      1     14
+src/meridiana/assistant.py                              113     67     18      5     23
+src/meridiana/energy/system.py                          104     79     10      0     15
+src/meridiana/ui/underlays.py                           104     78      7      0     19
+src/meridiana/i18n.py                                   100     61     15      0     24
+src/meridiana/underlay.py                                93     51     21      1     20
+src/meridiana/tiles.py                                   92     56     19      0     17
+src/meridiana/paths.py                                   83     53     12      1     17
+src/meridiana/energy/pedigree.py                         82     46     16      0     20
+src/meridiana/ui/icons.py                                79     56      7      1     15
+src/meridiana/ui/pvsyst_import.py                        78     63      3      0     12
+src/meridiana/app.py                                     73     45      7      5     16
+src/meridiana/compare.py                                 73     50      8      0     15
+src/meridiana/ui/inspector.py                            73     58      4      0     11
+src/meridiana/ui/viewbar.py                              70     52     10      0      8
+src/meridiana/view_colours.py                            67     25     21      5     16
+src/meridiana/pvsyst/records.py                          66     43      9      0     14
+src/meridiana/recovery.py                                66     39     12      0     15
+src/meridiana/energy/pvgis.py                            65     51      5      0      9
+src/meridiana/ui/quantity_field.py                       61     43      6      1     11
+src/meridiana/sides.py                                   59     38      9      0     12
+src/meridiana/ui/wheel.py                                57     35     12      0     10
+src/meridiana/energy/bands.py                            56     36     10      0     10
+src/meridiana/ui/qt_translations.py                      47     31      7      0      9
+src/meridiana/atomic.py                                  46     32      7      0      7
+src/meridiana/__main__.py                                35     23      3      3      6
+src/meridiana/__init__.py                                24     10      9      0      5
+src/meridiana/log.py                                     18      7      6      0      5
+src/meridiana/ui/__init__.py                             13      6      5      0      2
+src/meridiana/pvsyst/__init__.py                          7     -1      7      0      1
+src/meridiana/energy/__init__.py                          4      0      4      0      0
+TOTALE (83 file)                                      20190  15643   1614    319   2614
+nucleo (senza ui/): 53 file, 10322 righe, 7503 di codice
+ui/: 30 file, 9868 righe, 8140 di codice
+
+2. FUNZIONI E METODI OLTRE 60 RIGHE (righe, file:riga, nome); funzioni in tutto: 1228
+    253  src/meridiana/energy/simulate.py:168  simulate
+    212  src/meridiana/ui/window.py:604  MainWindow._actions
+    199  src/meridiana/ui/window.py:402  MainWindow.__init__
+    177  src/meridiana/ui/report.py:59  build_html
+    172  src/meridiana/layout.py:193  compute
+    161  src/meridiana/energy/economics.py:200  evaluate
+    124  src/meridiana/ui/properties.py:575  Properties._build_subfield
+    122  src/meridiana/pvsyst/mapping.py:168  design_of
+    121  src/meridiana/ui/energy_pages.py:621  EconomicsPage.__init__
+    121  src/meridiana/ui/energy_pages.py:155  EnergyPage.__init__
+    102  src/meridiana/energy/stringing.py:115  plan
+     99  src/meridiana/ui/energy_pages.py:397  ConsumptionPage.__init__
+     99  src/meridiana/pvsyst/pvobject.py:103  parse
+     99  src/meridiana/checks.py:111  gather
+     97  src/meridiana/ui/window.py:154  EnergyJob._compute
+     95  src/meridiana/energy/simulate.py:423  _array_steps
+     87  src/meridiana/ui/plan.py:254  PlanView.show_project
+     85  src/meridiana/ui/plan.py:725  PlanView._left_press
+     81  src/meridiana/ui/assistant.py:71  Assistant.__init__
+     76  src/meridiana/ui/plan.py:110  PlanView.__init__
+     75  src/meridiana/energy/nearshade.py:208  shading
+     73  src/meridiana/ui/checks_page.py:34  ChecksPage.__init__
+     72  src/meridiana/ui/catalog_dialog.py:148  CatalogDialog.__init__
+     70  src/meridiana/squaring.py:64  square
+     67  src/meridiana/ui/viewcube.py:98  ViewCube.paintEvent
+     66  src/meridiana/ui/plan.py:998  PlanView.drawForeground
+     61  src/meridiana/ui/properties.py:357  Properties._build_site
+  totale: 27 funzioni oltre 60 righe, 3066 righe in tutto
+  distribuzione: <=20: 1067, 21-40: 104, 41-60: 30, 61-100: 16, >100: 11
+
+2b. CLASSI OLTRE 500 RIGHE (e le 10 piu' lunghe); classi in tutto: 143
+   2074  src/meridiana/ui/window.py:401  MainWindow  <-- oltre 500
+   1134  src/meridiana/ui/plan.py:96  PlanView  <-- oltre 500
+    592  src/meridiana/ui/properties.py:172  Properties  <-- oltre 500
+    323  src/meridiana/ui/assistant.py:65  Assistant
+    283  src/meridiana/model.py:184  Project
+    277  src/meridiana/ui/checks_page.py:29  ChecksPage
+    275  src/meridiana/ui/view3d.py:91  Backend
+    239  src/meridiana/ui/energy_pages.py:151  EnergyPage
+    234  src/meridiana/ui/charts.py:151  Chart
+    220  src/meridiana/ui/energy_pages.py:394  ConsumptionPage
+
+3. OGNI `except` (file:riga, cosa cattura, cosa fa; * = tace: niente messaggio, niente log, niente raise)
+  * src/meridiana/assistant.py:85  except (TypeError, ValueError)  ->  return | return None
+    src/meridiana/atomic.py:30  except BaseException  ->  raise | if os.path.exists(tmp):
+    src/meridiana/atomic.py:41  except (OSError, ValueError)  ->  raise | backup = path.with_name(path.name + '.bak')
+  * src/meridiana/catalog/__init__.py:39  except (TypeError, ValueError)  ->  return | return None
+  * src/meridiana/catalog/panond.py:31  except UnicodeDecodeError  ->  continue | continue
+  * src/meridiana/catalog/panond.py:63  except ValueError  ->  return | return None
+  * src/meridiana/checks.py:220  except ValueError  ->  return | return None
+    src/meridiana/config.py:184  except FileNotFoundError  ->  raise | raise
+    src/meridiana/config.py:186  except (OSError, ValueError)  ->  raise | raise Damaged(f'{type(e).__name__}: {e}') from e
+    src/meridiana/config.py:193  except (TypeError, ValueError)  ->  raise | raise Damaged(f'{type(e).__name__}: {e}') from e
+  * src/meridiana/config.py:202  except OSError  ->  pass
+    src/meridiana/config.py:215  except FileNotFoundError  ->  message/signal | try:
+  * src/meridiana/config.py:220  except (FileNotFoundError, Damaged)  ->  assign | cfg = Config()
+    src/meridiana/config.py:222  except Damaged  ->  message/signal | aside = _set_aside(path)
+    src/meridiana/config.py:228  except (FileNotFoundError, Damaged)  ->  message/signal | cfg = Config()
+  * src/meridiana/config.py:236  except OSError  ->  pass
+    src/meridiana/config.py:256  except BaseException  ->  raise | try:
+  * src/meridiana/config.py:259  except FileNotFoundError  ->  pass
+  * src/meridiana/config.py:272  except OSError  ->  other | shutil.copyfile(path, bak)
+  * src/meridiana/config.py:274  except OSError  ->  pass
+  * src/meridiana/energy/components.py:164  except (KeyError, TypeError, ValueError)  ->  return | return None
+  * src/meridiana/energy/components.py:189  except (RuntimeError, ValueError, FloatingPointError)  ->  continue | continue
+  * src/meridiana/energy/consumption.py:378  except UnicodeDecodeError  ->  continue | continue
+    src/meridiana/energy/meteo.py:124  except (KeyError, TypeError, ValueError)  ->  raise | raise MeteoError(f'damaged weather cache: {error}') from error
+  * src/meridiana/energy/meteo.py:135  except (OSError, ValueError, MeteoError)  ->  pass
+    src/meridiana/energy/meteo.py:141  except requests.RequestException  ->  raise | try:
+    src/meridiana/energy/meteo.py:144  except (requests.RequestException, MeteoError, KeyError, TypeError, ValueError)  ->  raise | raise MeteoError(f'PVGIS 5.3: {error}; PVGIS 6: {error6}') from error6
+  * src/meridiana/energy/meteo.py:201  except (OSError, ValueError)  ->  assign | raw = None
+    src/meridiana/energy/meteo.py:210  except requests.RequestException  ->  raise | try:
+    src/meridiana/energy/meteo.py:218  except (requests.RequestException, KeyError, TypeError, ValueError)  ->  raise | raise MeteoError(f'PVGIS 5.3: {error}; PVGIS 6: {error6}') from error6
+    src/meridiana/energy/meteo.py:223  except (KeyError, TypeError, ValueError)  ->  raise | raise MeteoError(f'damaged horizon cache: {error}') from error
+  * src/meridiana/energy/pvgis.py:39  except (OSError, ValueError)  ->  assign | raw = None
+    src/meridiana/energy/pvgis.py:49  except (requests.RequestException, ValueError)  ->  raise | raise MeteoError(f'PVGIS: {error}') from error
+    src/meridiana/energy/pvgis.py:57  except (KeyError, TypeError, ValueError)  ->  raise | raise MeteoError(f'PVGIS answered something unexpected: {error}') from error
+  * src/meridiana/geo.py:156  except ValueError  ->  return | return None
+  * src/meridiana/i18n.py:36  except (AttributeError, OSError)  ->  return | return []
+  * src/meridiana/i18n.py:99  except ValueError  ->  return | return str(n)
+  * src/meridiana/minisign.py:100  except (binascii.Error, ValueError)  ->  assign | data = b''
+    src/meridiana/pvsyst/mapping.py:80  except (OSError, ValueError)  ->  message/signal, _() | rep.missing.append(_('{file} could not be read: {error}').format(file=path.name, error=err...
+    src/meridiana/pvsyst/mapping.py:105  except (OSError, ValueError)  ->  message/signal, _() | rep.missing.append(_('{file} could not be read: {error}').format(file=path.name, error=err...
+  * src/meridiana/pvsyst/project.py:346  except (ValueError, KeyError)  ->  continue | continue
+  * src/meridiana/pvsyst/pvobject.py:86  except UnicodeDecodeError  ->  continue | continue
+  * src/meridiana/pvsyst/pvobject.py:230  except ValueError  ->  continue | continue
+  * src/meridiana/recovery.py:51  except (OSError, ValueError, KeyError, TypeError, AttributeError)  ->  other | f.replace(f.with_suffix('.unreadable'))
+  * src/meridiana/theme_colors.py:327  except (TypeError, ValueError)  ->  return | return ''
+    src/meridiana/ui/__init__.py:11  except RuntimeError  ->  raise | if 'deleted' not in str(error):
+  * src/meridiana/ui/charts.py:132  except (TypeError, ValueError)  ->  return | return str(v)
+  * src/meridiana/ui/charts.py:382  except (TypeError, ValueError)  ->  assign | text = ''
+  * src/meridiana/ui/energy_pages.py:330  except ValueError  ->  assign | per = []
+  * src/meridiana/ui/energy_pages.py:530  except ValueError  ->  assign | row[b] = 0.0
+    src/meridiana/ui/icons.py:29  except OSError  ->  log.complain | log.complain(f'icon {name}', error)
+  * src/meridiana/ui/pedigree.py:114  except ValueError  ->  return | return ''
+  * src/meridiana/ui/plan.py:577  except ValueError  ->  return, assign | self.typed = ''
+    src/meridiana/ui/properties.py:550  except ValueError  ->  message/signal | self.action.emit('refused:' + str(error), self.kind, self.oid)
+  * src/meridiana/ui/qt_translations.py:24  except (ImportError, TypeError)  ->  pass
+  * src/meridiana/ui/quantity_field.py:39  except quantity.QuantityError  ->  return | return (None, str(error))
+  * src/meridiana/ui/theme.py:138  except ImportError  ->  return | return
+  * src/meridiana/ui/theme.py:185  except (AttributeError, OSError)  ->  pass
+    src/meridiana/ui/theme.py:309  except (ImportError, AttributeError, TypeError)  ->  log.complain | log.complain('fonts for the charts', error)
+  * src/meridiana/ui/tileloader.py:51  except OSError  ->  assign | fresh = False
+    src/meridiana/ui/tileloader.py:112  except OSError  ->  log.complain | log.complain('tile cache', error)
+  * src/meridiana/ui/underlays.py:23  except ImportError  ->  return | return False
+    src/meridiana/ui/underlays.py:73  except OSError  ->  raise, _() | raise ValueError(_('The file could not be read: {why}').format(why=error.strerror or error...
+    src/meridiana/ui/variants.py:48  except Exception  ->  log.complain | log.complain(f'variant {vid}', error)
+  * src/meridiana/ui/window.py:119  except ValueError  ->  assign | results[sf.id] = error
+    src/meridiana/ui/window.py:121  except Exception  ->  log.complain | log.complain(f'layout of {sf.id}', error)
+    src/meridiana/ui/window.py:147  except meteo.MeteoError  ->  _() | out['error_sim'] = _('The weather could not be had: {error}').format(error=error)
+    src/meridiana/ui/window.py:149  except Exception  ->  log.complain | log.complain('energy', error)
+    src/meridiana/ui/window.py:180  except meteo.MeteoError  ->  message/signal | out.setdefault('notes', []).append(str(error))
+  * src/meridiana/ui/window.py:237  except meteo.MeteoError  ->  assign | out['notes'] = out.get('notes', []) + [str(error)]
+    src/meridiana/ui/window.py:378  except ValueError  ->  message/signal, _() | self.status.setText(_('The search answered something unreadable.'))
+    src/meridiana/ui/window.py:1048  except ValueError  ->  message/signal, _() | QMessageBox.warning(self, _('Import an image'), str(error))
+    src/meridiana/ui/window.py:1066  except ValueError  ->  message/signal | self.hint.setText(str(error))
+    src/meridiana/ui/window.py:1095  except ValueError  ->  message/signal | self.hint.setText(str(error))
+    src/meridiana/ui/window.py:1255  except meteo.MeteoError  ->  _() | out['error_sim'] = _('The weather could not be had: {error}').format(error=error)
+    src/meridiana/ui/window.py:1532  except ValueError  ->  message/signal, _() | self.hint.setText(_('Not changed: {why}').format(why=error))
+    src/meridiana/ui/window.py:1622  except (ValueError, IndexError)  ->  log.complain | log.complain(f'mesh of {b.id}', error)
+    src/meridiana/ui/window.py:1773  except (ValueError, KeyError)  ->  log.complain | log.complain('arrays', error)
+    src/meridiana/ui/window.py:1839  except (ValueError, KeyError)  ->  log.complain | log.complain('checks', error)
+    src/meridiana/ui/window.py:2040  except (ValueError, KeyError)  ->  log.complain | log.complain('rules', error)
+    src/meridiana/ui/window.py:2067  except OSError  ->  message/signal, _() | QMessageBox.warning(self, _('Export the report'), _('The report could not be written: {err...
+    src/meridiana/ui/window.py:2108  except (OSError, ValueError)  ->  message/signal | QMessageBox.warning(self, title, str(error))
+    src/meridiana/ui/window.py:2145  except (OSError, ValueError)  ->  message/signal, _() | QMessageBox.warning(self, title, _('{file} could not be read: {error}').format(file=Path(p...
+    src/meridiana/ui/window.py:2165  except (OSError, ValueError, pvobject.FormatError)  ->  message/signal, _() | QGuiApplication.restoreOverrideCursor()
+    src/meridiana/ui/window.py:2193  except (OSError, ValueError)  ->  message/signal, _() | QMessageBox.warning(self, _('Import a load curve'), _('{file} could not be read: {error}')...
+    src/meridiana/ui/window.py:2243  except OSError  ->  log.complain | log.complain('autosave', error)
+    src/meridiana/ui/window.py:2274  except (ValueError, KeyError, TypeError)  ->  message/signal, _() | QMessageBox.warning(self, _('Recover the changes'), _('The copy could not be read: {error}...
+    src/meridiana/ui/window.py:2294  except OSError  ->  message/signal, _() | QMessageBox.warning(self, _('Save'), _('The project could not be saved: {error}').format(e...
+    src/meridiana/ui/window.py:2340  except (OSError, ValueError)  ->  message/signal, _() | QMessageBox.warning(self, _('Open a project'), _('{file} could not be opened: {error}').fo...
+    src/meridiana/ui/window.py:2359  except OSError  ->  message/signal, _() | QMessageBox.warning(self, _('Save'), _('The project could not be saved: {error}').format(e...
+    src/meridiana/ui/window.py:2381  except OSError  ->  log.complain | log.complain('settings', error)
+  * src/meridiana/ui/window.py:2442  except (OSError, ValueError, KeyError, TypeError, AttributeError)  ->  return | return False
+    src/meridiana/ui/window.py:2464  except OSError  ->  log.complain | log.complain('window state', error)
+  * src/meridiana/updates.py:112  except (ssl.SSLError, OSError)  ->  pass
+    src/meridiana/updates.py:150  except urllib.error.HTTPError  ->  raise, _() | raise UpdateError(_('GitHub answered {code}').format(code=e.code)) from None
+    src/meridiana/updates.py:152  except (urllib.error.URLError, OSError, ValueError)  ->  raise | raise UpdateError(str(getattr(e, 'reason', e))) from None
+  * src/meridiana/updates.py:262  except minisign.SignatureError  ->  assign | trusted = ''
+    src/meridiana/updates.py:271  except urllib.error.HTTPError  ->  raise, _() | raise UpdateError(_('download failed ({code})').format(code=e.code)) from None
+    src/meridiana/updates.py:273  except (urllib.error.URLError, OSError)  ->  raise | raise UpdateError(str(getattr(e, 'reason', e))) from None
+  * src/meridiana/updates.py:278  except OSError  ->  pass
+  totale: 100 except, di cui 44 che tacciono, 10 su Exception/BaseException/nudi
+
+3b. print E LOG
+  src/meridiana/__main__.py:24  print(__version__)
+  src/meridiana/__main__.py:28  print(_('usage: {command} [FOLDER...]').format(command=__package__.replace('_', '-')))
+  src/meridiana/log.py:17  print(f'{SLUG}: {where}: {type(error).__name__}: {error}', file=sys.stderr, flush=True)
+  src/meridiana/ui/icons.py:30  log.complain(f'icon {name}', error)
+  src/meridiana/ui/qt_translations.py:46  log.complain(f"Qt's translations for {language}", FileNotFoundError(', '.join(folders())))
+  src/meridiana/ui/theme.py:285  log.complain('fonts', OSError(f'{f} could not be loaded'))
+  src/meridiana/ui/theme.py:310  log.complain('fonts for the charts', error)
+  src/meridiana/ui/tileloader.py:114  log.complain('tile cache', error)
+  src/meridiana/ui/variants.py:49  log.complain(f'variant {vid}', error)
+  src/meridiana/ui/window.py:150  log.complain('energy', error)
+  src/meridiana/ui/window.py:1774  log.complain('arrays', error)
+  src/meridiana/ui/window.py:1840  log.complain('checks', error)
+  src/meridiana/ui/window.py:2041  log.complain('rules', error)
+  src/meridiana/ui/window.py:2244  log.complain('autosave', error)
+  src/meridiana/ui/window.py:2382  log.complain('settings', error)
+  src/meridiana/ui/window.py:2465  log.complain('window state', error)
+  src/meridiana/ui/window.py:122  log.complain(f'layout of {sf.id}', error)
+  src/meridiana/ui/window.py:1623  log.complain(f'mesh of {b.id}', error)
+
+4. IMPORT FRA I MODULI DI meridiana
+  archi a livello di modulo: 210; cicli a livello di modulo: 0
+  Qt importato nel nucleo (fuori da ui/): src/meridiana/app.py:29, src/meridiana/app.py:30, src/meridiana/app.py:32
+  archi nucleo -> ui (non dovrebbero esserci): nessuno
+  import dentro funzioni (pigri) verso moduli di meridiana: 62
+  di questi, 0 evitano un ciclo (portati in testa al modulo chiuderebbero un ciclo):
+  gli altri import pigri (per avvio piu' rapido o per comodita'):
+    src/meridiana/__main__.py:27  in main: importa meridiana.i18n
+    src/meridiana/__main__.py:30  in main: importa meridiana.app
+    src/meridiana/app.py:34  in main: importa meridiana
+    src/meridiana/app.py:34  in main: importa meridiana.config
+    src/meridiana/app.py:34  in main: importa meridiana.i18n
+    src/meridiana/app.py:35  in main: importa meridiana.paths
+    src/meridiana/app.py:48  in main: importa meridiana.ui.qt_translations
+    src/meridiana/app.py:52  in main: importa meridiana.ui.window
+    src/meridiana/assistant.py:101  in questions: importa meridiana.i18n
+    src/meridiana/checks.py:200  in gather: importa meridiana.energy.consumption
+    src/meridiana/checks.py:225  in _defaults: importa meridiana.energy.economics
+    src/meridiana/energy/nearshade.py:66  in _pieces: importa meridiana.mesh
+    src/meridiana/energy/nearshade.py:99  in plane_axes: importa meridiana.geo
+    src/meridiana/energy/nearshade.py:111  in module_corners: importa meridiana.geo
+    src/meridiana/energy/stringing.py:268  in serpentine: importa meridiana.geo
+    src/meridiana/model.py:234  in Project.duplicate: importa meridiana.i18n
+    src/meridiana/model.py:388  in Project.shadow_exclusions: importa meridiana.energy.nearshade
+    src/meridiana/model.py:388  in Project.shadow_exclusions: importa meridiana.energy.system
+    src/meridiana/navicube.py:28  in face_names: importa meridiana.i18n
+    src/meridiana/navigation.py:82  in gesture_text: importa meridiana.i18n
+    src/meridiana/navigation.py:94  in table: importa meridiana.i18n
+    src/meridiana/navigation.py:121  in audience: importa meridiana.i18n
+    src/meridiana/pvsyst/mapping.py:72  in _module: importa meridiana.catalog.panond
+    src/meridiana/pvsyst/mapping.py:97  in _inverter: importa meridiana.catalog.panond
+    src/meridiana/theme_colors.py:371  in retouch_note: importa meridiana.i18n
+    src/meridiana/ui/energy_pages.py:591  in ConsumptionPage.show_results: importa meridiana.energy.bands
+    src/meridiana/ui/plan.py:213  in PlanView.set_marks: importa meridiana.ui.marks
+    src/meridiana/ui/plan.py:291  in PlanView.show_project: importa meridiana.ui.underlays
+    src/meridiana/ui/plan.py:964  in PlanView._update_cursor: importa meridiana.ui.properties
+    src/meridiana/ui/report.py:198  in build_html: importa meridiana.checks
+    src/meridiana/ui/report.py:208  in build_html: importa meridiana.rules
+    src/meridiana/ui/view3d.py:395  in View3D.__init__: importa meridiana.ui.marks
+    src/meridiana/ui/view3d.py:396  in View3D.__init__: importa meridiana.ui.viewcube
+    src/meridiana/ui/window.py:257  in EnergyJob._strings: importa meridiana.energy.pedigree
+    src/meridiana/ui/window.py:351  in SiteDialog._search: importa meridiana.ui.tileloader
+    src/meridiana/ui/window.py:476  in MainWindow.__init__: importa meridiana.ui.marks
+    src/meridiana/ui/window.py:780  in MainWindow._actions: importa meridiana.ui.catalog_dialog
+    src/meridiana/ui/window.py:875  in MainWindow._show_shortcuts: importa meridiana.ui.shortcuts_dialog
+    src/meridiana/ui/window.py:903  in MainWindow._preferences: importa meridiana.ui.preferences
+    src/meridiana/ui/window.py:1088  in MainWindow._ask_distance: importa meridiana.quantity
+    src/meridiana/ui/window.py:1158  in MainWindow._fit: importa meridiana.ui.plan
+    src/meridiana/ui/window.py:1260  in MainWindow._compare_variants: importa meridiana.ui.variants
+    src/meridiana/ui/window.py:1386  in MainWindow._point_picked_3d: importa meridiana.ui.plan
+    src/meridiana/ui/window.py:1680  in MainWindow._hover_3d: importa meridiana.ui.plan
+    src/meridiana/ui/window.py:1697  in MainWindow._show_tree: importa meridiana.ui.properties
+    src/meridiana/ui/window.py:1864  in MainWindow._show_marks: importa meridiana.ui.checks_page
+    src/meridiana/ui/window.py:1865  in MainWindow._show_marks: importa meridiana.ui.theme
+    src/meridiana/ui/window.py:1876  in MainWindow._mark_tree: importa meridiana.ui.marks
+    src/meridiana/ui/window.py:1956  in MainWindow._view3d_menu: importa meridiana.ui.plan
+    src/meridiana/ui/window.py:2062  in MainWindow._export_report: importa meridiana.ui.report
+    src/meridiana/ui/window.py:2099  in MainWindow._import_pvsyst: importa meridiana.catalog.panond
+    src/meridiana/ui/window.py:2135  in MainWindow._import_pvsyst_project: importa meridiana.pvsyst.mapping
+    src/meridiana/ui/window.py:2135  in MainWindow._import_pvsyst_project: importa meridiana.pvsyst.pvobject
+    src/meridiana/ui/window.py:2136  in MainWindow._import_pvsyst_project: importa meridiana.pvsyst.project
+    src/meridiana/ui/window.py:2137  in MainWindow._import_pvsyst_project: importa meridiana.ui.pvsyst_import
+    src/meridiana/ui/window.py:2385  in MainWindow._about: importa meridiana
+    src/meridiana/viewaids.py:150  in outline: importa meridiana.mesh
+    src/meridiana/viewaids.py:150  in outline: importa meridiana.model
+  moduli con piu' dipendenze interne a livello di modulo:
+    meridiana.ui.window: 45 -> assistant, atomic, catalog, checks, compare, config, energy.consumption, energy.economics, energy.meteo, energy.pvgis, energy.simulate, energy.stringing, energy.system, geo, i18n, log, mesh, model, paths, recovery, rules, shortcuts, sides, squaring, tiles, ui, ui.assistant, ui.catalog_dialog, ui.charts, ui.checks_page, ui.energy_pages, ui.icons, ui.inspector, ui.marks, ui.plan, ui.properties, ui.sunbar, ui.theme, ui.underlays, ui.view3d, ui.viewbar, ui.wheel, underlay, view_colours, viewaids
+    meridiana.ui.plan: 12 -> geo, i18n, navigation, sides, snapping, theme_colors, tiles, ui.plan_overlays, ui.theme, ui.tileloader, view_colours, viewaids
+    meridiana.ui.energy_pages: 8 -> energy.consumption, energy.economics, energy.simulate, i18n, ui.charts, ui.pedigree, ui.properties, ui.theme
+    meridiana.ui.properties: 7 -> i18n, layout, model, rules, sides, ui.quantity_field, ui.theme
+    meridiana.model: 6 -> atomic, layout, meridiana, roofs, sun, underlay
+    meridiana.ui.preferences: 6 -> assistant, config, i18n, navigation, ui.appearance, ui.shortcuts_dialog
+    meridiana.energy.simulate: 5 -> energy.components, energy.meteo, energy.nearshade, energy.pedigree, i18n
+    meridiana.ui.report: 5 -> i18n, meridiana, ui.charts, ui.pedigree, ui.theme
+
+5. DUPLICAZIONI
+5a. Blocchi identici (finestre di 6 righe di codice normalizzate, spazi a parte): finestre doppie 4, blocchi 1, di cui mostrati quelli di almeno 7 righe
+  ~9 righe in 2 posti: src/meridiana/energy/nearshade.py:315-323; src/meridiana/energy/nearshade.py:333-341
+      az = np.mod(np.asarray(azimuth, dtype=float), 360.0)
+5b. Blocchi della stessa forma (nomi, numeri e stringhe sostituiti; finestre di 4 righe): finestre doppie 47, blocchi 29, di cui mostrati quelli di almeno 5 righe
+  ~9 righe in 2 posti: src/meridiana/energy/nearshade.py:315-323; src/meridiana/energy/nearshade.py:333-341
+      az = np.mod(np.asarray(azimuth, dtype=float), 360.0)
+  ~9 righe in 2 posti: src/meridiana/ui/energy_pages.py:199-207; src/meridiana/ui/energy_pages.py:669-677
+      holder = QWidget()
+  ~6 righe in 2 posti: src/meridiana/camera.py:158-163; src/meridiana/camera.py:211-215
+      def pivot(self, px: float, py: float, w: float, h: float, hit=None) -> np.ndarray:
+  ~6 righe in 2 posti: src/meridiana/pvsyst/mapping.py:73-78; src/meridiana/pvsyst/mapping.py:98-103
+      path = find_file(name, base, "module")
+  ~6 righe in 2 posti: src/meridiana/ui/properties.py:434-439; src/meridiana/ui/properties.py:440-445
+      obligation = self._bind(combo(rules.obligation_names().items(), ""), lambda: rules_now().get("obligation") or 
+  ~6 righe in 2 posti: src/meridiana/ui/window.py:1835-1840; src/meridiana/ui/window.py:2036-2041
+      good = {k: v for k, v in self.results.items() if not isinstance(v, Exception)}
+  ~6 righe in 2 posti: src/meridiana/ui/window.py:2089-2094; src/meridiana/ui/window.py:2123-2128
+      def choose(p):
+  ~5 righe in 2 posti: src/meridiana/layout.py:68-72; src/meridiana/roofs.py:35-38
+      if self.tilt == 0:
+  ~5 righe in 2 posti: src/meridiana/ui/energy_pages.py:192-196; src/meridiana/ui/energy_pages.py:662-666
+      choose = QPushButton(_("Choose from the catalogue…"))
+  ~5 righe in 2 posti: src/meridiana/ui/properties.py:468-472; src/meridiana/ui/properties.py:577-581
+      box = self._page(_("Building"))
+  ~5 righe in 2 posti: src/meridiana/ui/properties.py:505-509; src/meridiana/ui/properties.py:672-676
+      parapet.valueChanged.connect(lambda v: self._emit("parapet", v))
+  ~5 righe in 2 posti: src/meridiana/ui/pvsyst_import.py:36-40; src/meridiana/ui/pvsyst_import.py:72-76
+      box.addWidget(self.list, 1)
+  ~5 righe in 2 posti: src/meridiana/ui/window.py:672-676; src/meridiana/ui/window.py:703-707
+      ("exclusion", _("Draw a skylight, vent, plant or walkway")),
+
+6. TESTI. Voci msgid in po/it.po: 1491
+6a. STRINGHE PASSATE AI WIDGET SENZA _() (euristica: lettere e uno spazio; file:riga, metodo, testo): 65
+  src/meridiana/checks.py:60  Item  ', 6.3, Tab. 5, p. 33'
+  src/meridiana/checks.py:129  Item  'NTC 2018 7.2.4; CEI 82-25/3 6.2'
+  src/meridiana/checks.py:178  Item  'CEI 64-8/7:2024'
+  src/meridiana/checks.py:181  Item  'CEI 64-8/7:2024'
+  src/meridiana/energy/economics.py:209  Step  'E_{auto} = \\sum_h \\min(P_h, C_h),\\quad E_{imm} = \\sum_h (P_h - C_h)^+,\\quad E_{rete} = \\sum_h (C_h -'
+  src/meridiana/energy/economics.py:209  Step  '\\sum C_h'
+  src/meridiana/energy/economics.py:209  Step  '\\sum P_h'
+  src/meridiana/energy/economics.py:213  Quantity  '\\sum P_h'
+  src/meridiana/energy/economics.py:214  Quantity  '\\sum C_h'
+  src/meridiana/energy/economics.py:219  Step  'S_h = S_{h-1} + \\sqrt{\\eta}\\,C_h - \\frac{D_h}{\\sqrt{\\eta}},\\quad 0 \\leq S_h \\leq E_u,\\ C_h \\leq P_c,'
+  src/meridiana/energy/economics.py:219  Step  '\\sum C_h'
+  src/meridiana/energy/economics.py:219  Step  '\\sum D_h'
+  src/meridiana/energy/economics.py:229  Quantity  '\\sum C_h'
+  src/meridiana/energy/economics.py:230  Quantity  '\\sum D_h'
+  src/meridiana/energy/economics.py:233  Step  'E_{imm,h} = \\min(E_{imm,h},\\ P_{lim}\\,\\Delta t),\\quad E_{tagliata} = \\sum_h (E_{imm,h} - P_{lim}\\,\\D'
+  src/meridiana/energy/economics.py:295  Step  'R_1 = \\sum_{F} E_{auto,F}\\, c_F'
+  src/meridiana/energy/economics.py:304  Step  'V_1 = E_{imm}\\, p_{RID}'
+  src/meridiana/energy/economics.py:310  Step  'TIP = \\min\\left(T_0 + \\max(0;\\ 180 - P_z),\\ T_{max}\\right) + \\Delta_{zona},\\quad I_1 = E_{cond}\\,(TI'
+  src/meridiana/energy/economics.py:323  Step  'VAN = -I_0 + \\sum_{y=1}^{N} \\frac{F_y}{(1 + r)^y}'
+  src/meridiana/energy/economics.py:334  Step  '\\sum_{y=0}^{N} \\frac{F_y}{(1 + TIR)^y} = 0'
+  src/meridiana/energy/economics.py:338  Step  'LCOE = \\frac{I_0 + \\sum_y \\frac{O_y}{(1 + r)^y}}{\\sum_y \\frac{E_y}{(1 + r)^y}}'
+  src/meridiana/energy/simulate.py:197  Step  '\\Delta t'
+  src/meridiana/energy/simulate.py:197  Step  '\\theta_z,\\ \\gamma_s = \\mathrm{SPA}(t + \\Delta t,\\ \\varphi,\\ \\lambda,\\ h)'
+  src/meridiana/energy/simulate.py:203  Quantity  '\\Delta t'
+  src/meridiana/energy/simulate.py:430  Step  'G_{inc} = G_{b}\\cos\\theta + G_{d,cielo}(\\beta) + G_{h}\\,\\rho\\,\\frac{1-\\cos\\beta}{2}'
+  src/meridiana/energy/simulate.py:441  Step  "G_{b}' = 0\\ \\mathrm{if}\\ \\alpha_s < h_{oriz}(\\gamma_s),\\quad f_{cielo} = 1 - \\frac{\\int_{\\alpha < h_"
+  src/meridiana/energy/simulate.py:453  Step  'IAM(\\theta) = \\sum_{i=0}^{3} IAM_{j+i} \\prod_{m \\neq i} \\frac{\\theta - \\theta_{j+m}}{\\theta_{j+i} - '
+  src/meridiana/energy/simulate.py:464  Step  'IAM(\\theta) = 1 - b_0\\left(\\frac{1}{\\cos\\theta} - 1\\right)'
+  src/meridiana/energy/simulate.py:470  Step  'G_{eff} = G_{IAM}\\,(1 - s)'
+  src/meridiana/energy/simulate.py:473  Step  'T_c = T_a + \\frac{\\alpha\\,G_{inc}\\,(1 - \\eta_m)}{U_c + U_v\\,v}'
+  src/meridiana/energy/simulate.py:510  Step  'P_{DC} = P\\,(1-q)(1-LID)(1-m)\\left(1 - r\\,\\frac{P}{P_{STC}}\\right)'
+  src/meridiana/energy/simulate.py:522  Step  'Mikofski et al. 2019'
+  src/meridiana/energy/simulate.py:522  Step  "f_s = f(\\theta_z,\\ \\gamma_s,\\ \\beta,\\ w,\\ p)\\cdot\\frac{n-1}{n},\\quad G_b' = G_b\\,(1 - f_s),\\quad G_d"
+  src/meridiana/energy/simulate.py:536  Quantity  'Mikofski et al. 2019'
+  src/meridiana/energy/simulate.py:537  Source  'Mikofski et al. 2019'
+  src/meridiana/energy/simulate.py:546  Step  '(1 - F_{ES}) = (1 - f_s)\\left(1 - \\frac{N_{SB}}{N_{TB}}\\right)'
+  src/meridiana/energy/simulate.py:546  Step  '\\Delta E'
+  src/meridiana/energy/simulate.py:556  Quantity  '\\Delta E'
+  src/meridiana/energy/simulate.py:566  Step  "f_o(\\gamma_s,\\ \\alpha_s) = \\frac{A_{ombra}}{A_{moduli}},\\quad G_b' = G_b\\,(1 - f_o),\\quad G_d' = G_d"
+  src/meridiana/energy/simulate.py:585  Step  '(1 - F_{ES}) = (1 - F_{GS})\\left(1 - \\frac{N_{SB}}{N_{TB} + 1}\\right),\\quad N_{TB} = n_b\\,N_s'
+  src/meridiana/energy/simulate.py:585  Step  '\\Delta E'
+  src/meridiana/energy/simulate.py:601  Quantity  '\\Delta E'
+  src/meridiana/energy/simulate.py:610  Step  '\\eta = \\frac{\\eta_{nom}}{0.9637}\\left(-0.0162\\,\\zeta - \\frac{0.0059}{\\zeta} + 0.9858\\right),\\quad P_'
+  src/meridiana/energy/simulate.py:619  Step  'E_{AC} = \\sum_h P_{AC}\\left(1 - r_{AC}\\frac{P_{AC}}{P_{AC,nom}}\\right)(1-u)\\,\\Delta t'
+  src/meridiana/energy/simulate.py:624  Step  'IEC 61724-1:2021'
+  src/meridiana/energy/simulate.py:624  Step  'PR = \\frac{E_{AC} / P_0}{H_i / G_{ref}}'
+  src/meridiana/energy/simulate.py:631  Quantity  'IEC 61724-1:2021'
+  src/meridiana/energy/simulate.py:631  Source  'IEC 61724-1:2021'
+  src/meridiana/energy/stringing.py:136  Step  ', Allegato B, B.1, p. 109'
+  src/meridiana/energy/stringing.py:136  Step  'U_{OC\\,MAX} = K_U\\,N_s\\,U_{OC\\,STC},\\quad K_U = 1 + \\frac{\\alpha_{U_{OC}}}{100}\\,(T_{min} - 25)'
+  src/meridiana/energy/stringing.py:158  Step  'U_{MPP}(T) = N_s\\,U_{MPP,mod}(1000\\ W/m^2,\\ T)'
+  src/meridiana/energy/stringing.py:168  Step  ', Allegato B, B.2, p. 109'
+  src/meridiana/energy/stringing.py:168  Step  'I_{SC\\,MAX} = K_I\\,I_{SC\\,STC},\\ K_I \\geq 1{,}25'
+  src/meridiana/tiles.py:51  Source  'Geoportale Nazionale (MASE): WMS without access constraints or fees'
+  src/meridiana/tiles.py:51  Source  'Ortofoto 2012: Geoportale Nazionale (MASE)'
+  src/meridiana/tiles.py:51  Source  'Ortofoto nazionale 2012 (PCN)'
+  src/meridiana/tiles.py:55  Source  "ODbL data; OpenStreetMap's tile usage policy"
+  src/meridiana/tiles.py:55  Source  '© OpenStreetMap contributors'
+  src/meridiana/tiles.py:58  Source  'CC-BY-SA 3.0, with the attribution; a light use'
+  src/meridiana/tiles.py:58  Source  '© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)'
+  src/meridiana/ui/appearance.py:72  setText  "<span style='color:"
+  src/meridiana/ui/energy_pages.py:234  combo  'Hay e Davies'
+  src/meridiana/ui/energy_pages.py:234  combo  'Perez 1990'
+  src/meridiana/ui/energy_pages.py:367  set  'IEC 61724-1'
+  src/meridiana/ui/window.py:2228  setWindowTitle  '- Meridiana'
+
+6b. CHIAMATE _()/ngettext/pgettext nei sorgenti: 1685; con testo non presente in po/it.po (restano in inglese nella finestra italiana): 0; con argomento non letterale (xgettext non le estrae): 2
+  argomento non letterale:
+  src/meridiana/checks.py:129
+  src/meridiana/ui/properties.py:697
+
+6c. ECCEZIONI DEL NUCLEO CON TESTO LETTERALE NON TRADOTTO (raise X('...')), che la finestra mostra come sono
+  src/meridiana/config.py:167  ValueError(f'format version {version!r}')
+  src/meridiana/config.py:139  ValueError(f'{f.name}: {value!r} is not text')
+  src/meridiana/config.py:171  ValueError(f'no migration from format version {version}')
+  src/meridiana/config.py:129  ValueError(f'{f.name}: {value!r} is not a table of keys')
+  src/meridiana/energy/meteo.py:147  MeteoError(f'PVGIS answered {len(data)} hours with columns {list(data.columns)}')
+  src/meridiana/energy/meteo.py:226  MeteoError('damaged horizon profile')
+  src/meridiana/energy/meteo.py:125  MeteoError(f'damaged weather cache: {error}')
+  src/meridiana/energy/meteo.py:224  MeteoError(f'damaged horizon cache: {error}')
+  src/meridiana/energy/pedigree.py:33  ValueError(f'source kind {self.kind!r}')
+  src/meridiana/energy/pvgis.py:58  MeteoError(f'PVGIS answered something unexpected: {error}')
+  src/meridiana/layout.py:202  ValueError(f'unknown mounting {p.mounting!r}')
+  src/meridiana/layout.py:205  ValueError('the area encloses less than 1 m2')
+  src/meridiana/minisign.py:120  SignatureError('not a minisign signature')
+  src/meridiana/minisign.py:125  SignatureError('not an Ed25519 key')
+  src/meridiana/minisign.py:128  SignatureError('not a prehashed signature')
+  src/meridiana/minisign.py:130  SignatureError('signed with another key')
+  src/meridiana/minisign.py:133  SignatureError('the signature does not match the file')
+  src/meridiana/minisign.py:135  SignatureError('the signature does not match its trusted comment')
+  src/meridiana/model.py:308  ValueError('the variant in hand cannot be deleted')
+  src/meridiana/model.py:426  ValueError('not a Meridiana project')
+  src/meridiana/model.py:429  ValueError(f'made by a newer Meridiana (format {version}); update the program to open it')
+  src/meridiana/navicube.py:69  ValueError(f'unknown arrow {arrow!r}')
+  src/meridiana/pvsyst/project.py:207  pvobject.FormatError(f'{Path(path).name}: not a PVsyst project')
+  src/meridiana/pvsyst/project.py:222  pvobject.FormatError(f'{Path(path).name}: not a PVsyst variant')
+  src/meridiana/pvsyst/project.py:361  pvobject.FormatError(f'{Path(path).name}: not a PVsyst weather file')
+  src/meridiana/pvsyst/pvobject.py:97  FormatError(f'{Path(path).name}: not a PVsyst text file (PVsyst wrote binary files up to 6.39)')
+  src/meridiana/pvsyst/records.py:49  ValueError(f'{k}: {len(vals)} values instead of {per_day}')
+  src/meridiana/quantity.py:196  ValueError(f'unknown kind {kind!r}')
+  src/meridiana/roofs.py:51  ValueError('the run must be positive')
+  src/meridiana/sun.py:36  ValueError('a time without a time zone: give UTC')
+  src/meridiana/theme_colors.py:233  ValueError(f'unknown backgrounds {backgrounds!r}')
+  src/meridiana/underlay.py:65  ValueError('two distinct points and a distance above zero are needed')
+  src/meridiana/viewaids.py:20  ValueError('the scale must be a positive number')
+
+7. TYPE HINTS: funzioni e metodi pubblici del nucleo (fuori da ui/) senza annotazione del ritorno o di un parametro
+  pubbliche nel nucleo: 445; senza qualche annotazione: 113
+  src/meridiana/app.py:16  linux_theme: environ
+  src/meridiana/app.py:65  take: ritorno
+  src/meridiana/assistant.py:81  valid_anchor: value
+  src/meridiana/atomic.py:17  write_json: data
+  src/meridiana/camera.py:32  qmul: a, b
+  src/meridiana/camera.py:39  axis_angle: axis
+  src/meridiana/camera.py:45  rotate: q, v
+  src/meridiana/camera.py:51  slerp: a, b
+  src/meridiana/camera.py:132  Camera.project: point
+  src/meridiana/camera.py:158  Camera.pivot: hit
+  src/meridiana/camera.py:168  Camera.orbit: pivot
+  src/meridiana/camera.py:190  Camera.pan: depth_point
+  src/meridiana/camera.py:201  Camera.zoom: point
+  src/meridiana/camera.py:211  Camera.zoom_point: hit
+  src/meridiana/camera.py:223  Camera.recentre: point
+  src/meridiana/camera.py:230  Camera.fit: centre
+  src/meridiana/camera.py:239  Camera.view: centre
+  src/meridiana/catalog/__init__.py:128  sorted_by: records
+  src/meridiana/catalog/__init__.py:131  value: ritorno, r
+  src/meridiana/checks.py:111  gather: project, inverter
+  src/meridiana/checks.py:212  count_out_of_shadows: project, sf
+  src/meridiana/checks.py:237  mark_text: mark
+  src/meridiana/checks.py:259  worst: levels
+  src/meridiana/checks.py:263  marks: levels
+  src/meridiana/checks.py:279  tree_marks: levels
+  src/meridiana/checks.py:299  filtered: levels
+  src/meridiana/compare.py:41  pct: ritorno, key
+  src/meridiana/config.py:109  Config.from_json: data
+  src/meridiana/energy/components.py:85  ModuleSpec.power_at_25: irradiance
+  src/meridiana/energy/economics.py:41  tip: ritorno, pz_eur_mwh
+  src/meridiana/energy/economics.py:375  sizing: factors
+  src/meridiana/energy/economics.py:390  storage_sizing: factors
+  src/meridiana/energy/meteo.py:64  Horizon.at: azimuth
+  src/meridiana/energy/nearshade.py:70  prism: ring
+  src/meridiana/energy/nearshade.py:78  under: ring3d
+  src/meridiana/energy/nearshade.py:90  sun_vectors: azimuth, elevation
+  src/meridiana/energy/nearshade.py:108  module_corners: pm
+  src/meridiana/energy/nearshade.py:165  needed_cells: azimuth, elevation
+  src/meridiana/energy/nearshade.py:182  block_boxes: rect
+  src/meridiana/energy/nearshade.py:313  at: azimuth, elevation
+  src/meridiana/energy/nearshade.py:345  electrical: azimuth, elevation
+  src/meridiana/energy/nearshade.py:367  rows_electrical: shaded
+  src/meridiana/energy/nearshade.py:410  plan_shadow: ritorno
+  src/meridiana/energy/simulate.py:131  profile_iam: aoi
+  src/meridiana/energy/simulate.py:286  own: ritorno, x, p
+  src/meridiana/energy/simulate.py:374  kwh: ritorno, x
+  src/meridiana/energy/stringing.py:133  add: ritorno, key, label, ok, detail, level
+  src/meridiana/energy/system.py:21  obstacles_of: project, sf
+  src/meridiana/energy/system.py:50  arrays_of: project
+  src/meridiana/energy/system.py:84  inverter_of: project
+  src/meridiana/energy/system.py:94  losses_of: project
+  src/meridiana/geo.py:83  Origin.ring_to_local: ring
+  src/meridiana/geo.py:86  Origin.ring_to_lonlat: ring
+  src/meridiana/layout.py:193  compute: area_ring
+  src/meridiana/layout.py:213  chosen: ritorno, default
+  src/meridiana/layout.py:235  to_work: ritorno, g
+  src/meridiana/layout.py:239  to_plan: ritorno, g
+  src/meridiana/mesh.py:45  cross: ritorno, o, a, b
+  src/meridiana/mesh.py:48  inside: ritorno, p, a, b, c
+  src/meridiana/mesh.py:104  prism_triangles: colour
+  src/meridiana/mesh.py:126  building_triangles: pitches
+  src/meridiana/mesh.py:135  given: ritorno, key, default
+  src/meridiana/mesh.py:140  tri: ritorno, a, b, c, colour, towards
+  src/meridiana/mesh.py:151  roof_z: ritorno, x, y
+  src/meridiana/mesh.py:194  ring_edges: points3d
+  src/meridiana/mesh.py:207  building_edges: pitches
+  src/meridiana/mesh.py:219  module_edges: m
+  src/meridiana/mesh.py:226  ribbons: colour
+  src/meridiana/mesh.py:288  module_table: modules, colour, selected_colour
+  src/meridiana/minisign.py:107  blake2b: ritorno
+  src/meridiana/model.py:53  parapet_quads: footprint
+  src/meridiana/model.py:68  roof_z: building, ring
+  src/meridiana/model.py:241  moved: ritorno, ring
+  src/meridiana/model.py:424  Project.from_json: data
+  src/meridiana/navicube.py:39  kind: part
+  src/meridiana/navicube.py:44  looking_from: part
+  src/meridiana/navigation.py:97  words: gestures
+  src/meridiana/navigation.py:197  Navigator.press: mods
+  src/meridiana/navigation.py:207  Navigator.move: mods
+  src/meridiana/navigation.py:227  Navigator.release: mods
+  src/meridiana/navigation.py:260  Navigator.double: mods
+  src/meridiana/navigation.py:269  Navigator.wheel: mods
+  src/meridiana/paths.py:35  Paths.from_env: environ
+  src/meridiana/pvsyst/project.py:177  order: ritorno
+  src/meridiana/pvsyst/pvobject.py:43  Node.get: ritorno, default
+  src/meridiana/pvsyst/pvobject.py:52  Node.walk: ritorno
+  src/meridiana/pvsyst/pvobject.py:110  open_: ritorno, node
+  src/meridiana/pvsyst/pvobject.py:114  close: ritorno, pred, what, number
+  src/meridiana/roofs.py:73  flat: footprint
+  src/meridiana/roofs.py:78  mono: footprint
+  src/meridiana/roofs.py:96  parallel: ritorno, a, b
+  src/meridiana/roofs.py:103  side_direction: footprint
+  src/meridiana/roofs.py:109  gable: footprint, along
+  src/meridiana/roofs.py:127  hip: footprint
+  src/meridiana/roofs.py:149  free: ring
+  src/meridiana/rules.py:88  facts: project, inverter
+  src/meridiana/shortcuts.py:155  only_f_key: keys
+  src/meridiana/shortcuts.py:157  f: ritorno, k
+  src/meridiana/sides.py:18  lengths: ring
+  src/meridiana/sides.py:23  nearest: ring, point
+  src/meridiana/sides.py:37  stretch: ring
+  src/meridiana/snapping.py:184  add: ritorno
+  src/meridiana/squaring.py:103  motion: ritorno, i
+  src/meridiana/theme_colors.py:206  N: ritorno, L, C
+  src/meridiana/theme_colors.py:322  portal_accent: rgb
+  src/meridiana/tiles.py:73  tiles_for: ritorno
+  src/meridiana/updates.py:103  ssl_context: ritorno
+  src/meridiana/view_colours.py:64  tinted: colour
+  src/meridiana/viewaids.py:46  height_at: project
+  src/meridiana/viewaids.py:76  under_text: project
+  src/meridiana/viewaids.py:98  anchor: project
+  src/meridiana/viewaids.py:110  measure: project
+  src/meridiana/viewaids.py:144  outline: ritorno, project
+

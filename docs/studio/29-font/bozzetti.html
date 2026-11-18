@@ -1,0 +1,139 @@
+<!doctype html><html lang='it'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Studio 29: font</title><style>
+:root{--bg:#f4f2ee;--fg:#1e1c19;--mut:#5a554c;--card:#fff;--line:#d6d1c6;--acc:#4b3fa8}
+@media (prefers-color-scheme: dark){:root{--bg:#1d1c1a;--fg:#ece8df;--mut:#a39e92;--card:#26241f;--line:#3d3a33;--acc:#a79cf0}}
+html{background:var(--bg)}
+body{margin:0;padding:20px 24px 60px;font:14px/1.45 Inter,"Segoe UI",system-ui,sans-serif;color:var(--fg)}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:34px 0 4px;border-top:1px solid var(--line);padding-top:14px}
+h3{font-size:14px;margin:16px 0 4px}p{margin:0 0 8px;color:var(--mut);max-width:980px}
+.row{margin:0 0 14px}.cap{font-size:12px;color:var(--mut);margin:0 0 2px}.cap b{color:var(--fg)}
+.row img{display:block;border:1px solid var(--line);max-width:100%;height:auto}
+.panels{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.panels figure{margin:0}.panels img{display:block;border:1px solid var(--line)}
+figcaption{font-size:12px;color:var(--mut);margin-top:3px;max-width:340px}
+.chart{max-width:900px}.chart div{display:flex;align-items:center;gap:8px;height:20px;font-size:12px}
+.chart span.n{width:250px;flex:none;text-align:right;color:var(--mut)}.chart i{display:block;height:12px;background:var(--acc);border-radius:2px}
+.chart i.ref{background:#8a867c}.chart em{font-style:normal;color:var(--mut);font-size:11px}
+details{margin:6px 0}summary{cursor:pointer;color:var(--acc)}
+.note{border-left:3px solid var(--acc);padding:2px 10px;margin:8px 0;color:var(--fg)}
+</style></head><body>
+<h1>Studio 29: il carattere di Meridiana</h1>
+<p>Finestra vera di Meridiana, offscreen su Windows (Qt 6.12, DirectWrite), con il carattere cambiato senza toccare il sorgente. Nelle varianti «condensato» il carattere stretto è usato solo nei bottoni delle barre, nelle linguette, nei titoli dei pannelli e nelle etichette del pannello Proprietà. La resa su uno schermo vero (ClearType, spaziatura dei pixel) non si vede offscreen: <b>non verificata</b>. Il 100 % è mostrato a grandezza naturale, il 200 % ridotto a metà (la foto ha il doppio dei pixel: si ingrandisce con il pulsante destro, apri immagine).</p>
+<h2>1. Larghezza dei testi veri, in percentuale di Inter</h2>
+<p>Somma della larghezza di 3181 stringhe italiane del programma (po/it.po) a 13 px, hinting predefinito di Windows. 100 % = Inter.</p>
+<div class="chart"><div><span class="n">Inter 4.1 (oggi)</span><i class="ref" style="width:400px"></i><em>100 %</em></div>
+<div><span class="n">Inter, spaziatura -0,2 px</span><i class="" style="width:388px"></i><em>97 %</em></div>
+<div><span class="n">Inter, spaziatura -0,4 px</span><i class="" style="width:375px"></i><em>94 %</em></div>
+<div><span class="n">Inter, cifre tabellari (tnum)</span><i class="" style="width:393px"></i><em>98 %</em></div>
+<div><span class="n">Inter Tight</span><i class="" style="width:366px"></i><em>91 %</em></div>
+<div><span class="n">Adwaita Sans</span><i class="" style="width:406px"></i><em>101 %</em></div>
+<div><span class="n">Noto Sans wdth 100</span><i class="" style="width:387px"></i><em>97 %</em></div>
+<div><span class="n">Noto Sans wdth 75</span><i class="" style="width:343px"></i><em>86 %</em></div>
+<div><span class="n">Open Sans wdth 75</span><i class="" style="width:286px"></i><em>71 %</em></div>
+<div><span class="n">Roboto wdth 100</span><i class="" style="width:362px"></i><em>91 %</em></div>
+<div><span class="n">Roboto Condensed (statico del wght)</span><i class="" style="width:330px"></i><em>82 %</em></div>
+<div><span class="n">Roboto Flex wdth 100</span><i class="" style="width:381px"></i><em>95 %</em></div>
+<div><span class="n">IBM Plex Sans wdth 100</span><i class="" style="width:377px"></i><em>94 %</em></div>
+<div><span class="n">IBM Plex Sans wdth 85</span><i class="" style="width:359px"></i><em>90 %</em></div>
+<div><span class="n">IBM Plex Sans Condensed (statico)</span><i class="" style="width:342px"></i><em>86 %</em></div>
+<div><span class="n">Source Sans 3</span><i class="" style="width:351px"></i><em>88 %</em></div>
+<div><span class="n">Fira Sans</span><i class="" style="width:384px"></i><em>96 %</em></div>
+<div><span class="n">Fira Sans Condensed</span><i class="" style="width:341px"></i><em>85 %</em></div>
+<div><span class="n">Barlow</span><i class="" style="width:364px"></i><em>91 %</em></div>
+<div><span class="n">Barlow Semi Condensed</span><i class="" style="width:322px"></i><em>81 %</em></div>
+<div><span class="n">Archivo wdth 100</span><i class="" style="width:383px"></i><em>96 %</em></div>
+<div><span class="n">Archivo wdth 75</span><i class="" style="width:307px"></i><em>77 %</em></div>
+<div><span class="n">Ubuntu Nerd Font Propo</span><i class="" style="width:379px"></i><em>95 %</em></div>
+<div><span class="n">Ubuntu Nerd Font Propo Condensed</span><i class="" style="width:313px"></i><em>78 %</em></div>
+<div><span class="n">JetBrains Mono 2.304 (monospazio)</span><i class="" style="width:516px"></i><em>129 %</em></div></div>
+<h2>2. Barre</h2>
+<h3>Barra degli strumenti, fase Impianto, 100 %, tema chiaro</h3>
+<div class="row"><p class="cap"><b>Inter 4.1 (oggi)</b>: riferimento: i tre file statici del programma</p><img src="foto/inter-1x-light-bar.png" width="1456" alt="inter-1x-light-bar.png"></div>
+<div class="row"><p class="cap"><b>Inter Tight</b>: stesso disegno di Inter, spaziatura e sagome più strette (-9 %)</p><img src="foto/intertight-1x-light-bar.png" width="1456" alt="intertight-1x-light-bar.png"></div>
+<div class="row"><p class="cap"><b>Inter + Plex Condensed</b>: Inter ovunque; IBM Plex Sans Condensed solo nei bottoni delle barre, nelle linguette, nei titoli dei pannelli e nelle etichette del pannello Proprietà</p><img src="foto/intercond-1x-light-bar.png" width="1456" alt="intercond-1x-light-bar.png"></div>
+<div class="row"><p class="cap"><b>Inter + Inter Tight</b>: Inter ovunque; Inter Tight solo negli stessi posti del condensato</p><img src="foto/intertight-narrow-1x-light-bar.png" width="1456" alt="intertight-narrow-1x-light-bar.png"></div>
+<div class="row"><p class="cap"><b>Plex + Plex Condensed</b>: Plex Sans ovunque; Plex Condensed negli stessi posti</p><img src="foto/plexcond-1x-light-bar.png" width="1456" alt="plexcond-1x-light-bar.png"></div>
+<div class="row"><p class="cap"><b>Fira + Fira Condensed</b>: Fira Sans ovunque; Fira Sans Condensed negli stessi posti</p><img src="foto/firacond-1x-light-bar.png" width="1456" alt="firacond-1x-light-bar.png"></div>
+<div class="row"><p class="cap"><b>Noto Sans + asse wdth 75</b>: Noto Sans variabile; asse wdth 75 (e wght come asse) negli stessi posti</p><img src="foto/notowdth-1x-light-bar.png" width="1456" alt="notowdth-1x-light-bar.png"></div>
+<div class="row"><p class="cap"><b>JetBrains Mono ovunque</b>: tutta l&#x27;interfaccia a spaziatura fissa</p><img src="foto/jball-1x-light-bar.png" width="1456" alt="jball-1x-light-bar.png"></div>
+<div class="row"><p class="cap"><b>Inter + JetBrains Mono per i valori</b>: campi, caselle numeriche, tabelle e liste in JetBrains Mono; il resto in Inter</p><img src="foto/jbnum-1x-light-bar.png" width="1456" alt="jbnum-1x-light-bar.png"></div>
+<h3>Barra degli strumenti, fase Impianto, 200 %, tema scuro</h3>
+<div class="row"><p class="cap"><b>Inter 4.1 (oggi)</b>: riferimento: i tre file statici del programma</p><img src="foto/inter-2x-dark-bar.png" width="1456" alt="inter-2x-dark-bar.png"></div>
+<div class="row"><p class="cap"><b>Inter Tight</b>: stesso disegno di Inter, spaziatura e sagome più strette (-9 %)</p><img src="foto/intertight-2x-dark-bar.png" width="1456" alt="intertight-2x-dark-bar.png"></div>
+<div class="row"><p class="cap"><b>Inter + Plex Condensed</b>: Inter ovunque; IBM Plex Sans Condensed solo nei bottoni delle barre, nelle linguette, nei titoli dei pannelli e nelle etichette del pannello Proprietà</p><img src="foto/intercond-2x-dark-bar.png" width="1456" alt="intercond-2x-dark-bar.png"></div>
+<div class="row"><p class="cap"><b>Inter + Inter Tight</b>: Inter ovunque; Inter Tight solo negli stessi posti del condensato</p><img src="foto/intertight-narrow-2x-dark-bar.png" width="1456" alt="intertight-narrow-2x-dark-bar.png"></div>
+<div class="row"><p class="cap"><b>Plex + Plex Condensed</b>: Plex Sans ovunque; Plex Condensed negli stessi posti</p><img src="foto/plexcond-2x-dark-bar.png" width="1456" alt="plexcond-2x-dark-bar.png"></div>
+<div class="row"><p class="cap"><b>Fira + Fira Condensed</b>: Fira Sans ovunque; Fira Sans Condensed negli stessi posti</p><img src="foto/firacond-2x-dark-bar.png" width="1456" alt="firacond-2x-dark-bar.png"></div>
+<div class="row"><p class="cap"><b>Noto Sans + asse wdth 75</b>: Noto Sans variabile; asse wdth 75 (e wght come asse) negli stessi posti</p><img src="foto/notowdth-2x-dark-bar.png" width="1456" alt="notowdth-2x-dark-bar.png"></div>
+<div class="row"><p class="cap"><b>JetBrains Mono ovunque</b>: tutta l&#x27;interfaccia a spaziatura fissa</p><img src="foto/jball-2x-dark-bar.png" width="1456" alt="jball-2x-dark-bar.png"></div>
+<div class="row"><p class="cap"><b>Inter + JetBrains Mono per i valori</b>: campi, caselle numeriche, tabelle e liste in JetBrains Mono; il resto in Inter</p><img src="foto/jbnum-2x-dark-bar.png" width="1456" alt="jbnum-2x-dark-bar.png"></div>
+<h2>3. Pannello Impianto stretto</h2>
+<p>Il pannello delle proprietà con il sottocampo selezionato, tirato a 276 px (si ferma al minimo del contenuto).</p>
+<h3>Pannello Impianto stretto, 100 %, tema chiaro</h3>
+<div class="panels">
+<figure><img src="foto/inter-1x-light-panel.png" width="298" alt="inter-1x-light-panel.png"><figcaption><b>Inter 4.1 (oggi)</b><br>riferimento: i tre file statici del programma</figcaption></figure>
+<figure><img src="foto/intertight-1x-light-panel.png" width="289" alt="intertight-1x-light-panel.png"><figcaption><b>Inter Tight</b><br>stesso disegno di Inter, spaziatura e sagome più strette (-9 %)</figcaption></figure>
+<figure><img src="foto/intercond-1x-light-panel.png" width="298" alt="intercond-1x-light-panel.png"><figcaption><b>Inter + Plex Condensed</b><br>Inter ovunque; IBM Plex Sans Condensed solo nei bottoni delle barre, nelle linguette, nei titoli dei pannelli e nelle etichette del pannello Proprietà</figcaption></figure>
+<figure><img src="foto/intertight-narrow-1x-light-panel.png" width="298" alt="intertight-narrow-1x-light-panel.png"><figcaption><b>Inter + Inter Tight</b><br>Inter ovunque; Inter Tight solo negli stessi posti del condensato</figcaption></figure>
+<figure><img src="foto/plexcond-1x-light-panel.png" width="286" alt="plexcond-1x-light-panel.png"><figcaption><b>Plex + Plex Condensed</b><br>Plex Sans ovunque; Plex Condensed negli stessi posti</figcaption></figure>
+<figure><img src="foto/firacond-1x-light-panel.png" width="286" alt="firacond-1x-light-panel.png"><figcaption><b>Fira + Fira Condensed</b><br>Fira Sans ovunque; Fira Sans Condensed negli stessi posti</figcaption></figure>
+<figure><img src="foto/notowdth-1x-light-panel.png" width="293" alt="notowdth-1x-light-panel.png"><figcaption><b>Noto Sans + asse wdth 75</b><br>Noto Sans variabile; asse wdth 75 (e wght come asse) negli stessi posti</figcaption></figure>
+<figure><img src="foto/jball-1x-light-panel.png" width="302" alt="jball-1x-light-panel.png"><figcaption><b>JetBrains Mono ovunque</b><br>tutta l&#x27;interfaccia a spaziatura fissa</figcaption></figure>
+<figure><img src="foto/jbnum-1x-light-panel.png" width="300" alt="jbnum-1x-light-panel.png"><figcaption><b>Inter + JetBrains Mono per i valori</b><br>campi, caselle numeriche, tabelle e liste in JetBrains Mono; il resto in Inter</figcaption></figure>
+</div>
+<h3>Pannello Impianto stretto, 200 %, tema chiaro</h3>
+<div class="panels">
+<figure><img src="foto/inter-2x-light-panel.png" width="298" alt="inter-2x-light-panel.png"><figcaption><b>Inter 4.1 (oggi)</b><br>riferimento: i tre file statici del programma</figcaption></figure>
+<figure><img src="foto/intertight-2x-light-panel.png" width="289" alt="intertight-2x-light-panel.png"><figcaption><b>Inter Tight</b><br>stesso disegno di Inter, spaziatura e sagome più strette (-9 %)</figcaption></figure>
+<figure><img src="foto/intercond-2x-light-panel.png" width="298" alt="intercond-2x-light-panel.png"><figcaption><b>Inter + Plex Condensed</b><br>Inter ovunque; IBM Plex Sans Condensed solo nei bottoni delle barre, nelle linguette, nei titoli dei pannelli e nelle etichette del pannello Proprietà</figcaption></figure>
+<figure><img src="foto/intertight-narrow-2x-light-panel.png" width="298" alt="intertight-narrow-2x-light-panel.png"><figcaption><b>Inter + Inter Tight</b><br>Inter ovunque; Inter Tight solo negli stessi posti del condensato</figcaption></figure>
+<figure><img src="foto/plexcond-2x-light-panel.png" width="286" alt="plexcond-2x-light-panel.png"><figcaption><b>Plex + Plex Condensed</b><br>Plex Sans ovunque; Plex Condensed negli stessi posti</figcaption></figure>
+<figure><img src="foto/firacond-2x-light-panel.png" width="286" alt="firacond-2x-light-panel.png"><figcaption><b>Fira + Fira Condensed</b><br>Fira Sans ovunque; Fira Sans Condensed negli stessi posti</figcaption></figure>
+<figure><img src="foto/notowdth-2x-light-panel.png" width="293" alt="notowdth-2x-light-panel.png"><figcaption><b>Noto Sans + asse wdth 75</b><br>Noto Sans variabile; asse wdth 75 (e wght come asse) negli stessi posti</figcaption></figure>
+<figure><img src="foto/jball-2x-light-panel.png" width="302" alt="jball-2x-light-panel.png"><figcaption><b>JetBrains Mono ovunque</b><br>tutta l&#x27;interfaccia a spaziatura fissa</figcaption></figure>
+<figure><img src="foto/jbnum-2x-light-panel.png" width="300" alt="jbnum-2x-light-panel.png"><figcaption><b>Inter + JetBrains Mono per i valori</b><br>campi, caselle numeriche, tabelle e liste in JetBrains Mono; il resto in Inter</figcaption></figure>
+</div>
+<h3>Pannello Impianto stretto, 200 %, tema scuro</h3>
+<div class="panels">
+<figure><img src="foto/inter-2x-dark-panel.png" width="298" alt="inter-2x-dark-panel.png"><figcaption><b>Inter 4.1 (oggi)</b><br>riferimento: i tre file statici del programma</figcaption></figure>
+<figure><img src="foto/intertight-2x-dark-panel.png" width="289" alt="intertight-2x-dark-panel.png"><figcaption><b>Inter Tight</b><br>stesso disegno di Inter, spaziatura e sagome più strette (-9 %)</figcaption></figure>
+<figure><img src="foto/intercond-2x-dark-panel.png" width="298" alt="intercond-2x-dark-panel.png"><figcaption><b>Inter + Plex Condensed</b><br>Inter ovunque; IBM Plex Sans Condensed solo nei bottoni delle barre, nelle linguette, nei titoli dei pannelli e nelle etichette del pannello Proprietà</figcaption></figure>
+<figure><img src="foto/intertight-narrow-2x-dark-panel.png" width="298" alt="intertight-narrow-2x-dark-panel.png"><figcaption><b>Inter + Inter Tight</b><br>Inter ovunque; Inter Tight solo negli stessi posti del condensato</figcaption></figure>
+<figure><img src="foto/plexcond-2x-dark-panel.png" width="286" alt="plexcond-2x-dark-panel.png"><figcaption><b>Plex + Plex Condensed</b><br>Plex Sans ovunque; Plex Condensed negli stessi posti</figcaption></figure>
+<figure><img src="foto/firacond-2x-dark-panel.png" width="286" alt="firacond-2x-dark-panel.png"><figcaption><b>Fira + Fira Condensed</b><br>Fira Sans ovunque; Fira Sans Condensed negli stessi posti</figcaption></figure>
+<figure><img src="foto/notowdth-2x-dark-panel.png" width="293" alt="notowdth-2x-dark-panel.png"><figcaption><b>Noto Sans + asse wdth 75</b><br>Noto Sans variabile; asse wdth 75 (e wght come asse) negli stessi posti</figcaption></figure>
+<figure><img src="foto/jball-2x-dark-panel.png" width="302" alt="jball-2x-dark-panel.png"><figcaption><b>JetBrains Mono ovunque</b><br>tutta l&#x27;interfaccia a spaziatura fissa</figcaption></figure>
+<figure><img src="foto/jbnum-2x-dark-panel.png" width="300" alt="jbnum-2x-dark-panel.png"><figcaption><b>Inter + JetBrains Mono per i valori</b><br>campi, caselle numeriche, tabelle e liste in JetBrains Mono; il resto in Inter</figcaption></figure>
+</div>
+<h2>4. Le altre prove di Inter, di Plex e di Fira senza condensato</h2>
+<h3>Pannello Impianto stretto, 100 %, tema chiaro</h3>
+<div class="panels">
+<figure><img src="foto/inter-tnum-1x-light-panel.png" width="296" alt="inter-tnum-1x-light-panel.png"><figcaption><b>Inter + cifre tabellari</b><br>stesso Inter, feature tnum su tutto il testo</figcaption></figure>
+<figure><img src="foto/inter-ls-1x-light-panel.png" width="298" alt="inter-ls-1x-light-panel.png"><figcaption><b>Inter, spaziatura -0,2 px</b><br>stesso Inter, 3 % più stretto</figcaption></figure>
+<figure><img src="foto/adwaita-1x-light-panel.png" width="301" alt="adwaita-1x-light-panel.png"><figcaption><b>Adwaita Sans</b><br>il carattere di Lucciola: derivato da Inter</figcaption></figure>
+<figure><img src="foto/plex-1x-light-panel.png" width="286" alt="plex-1x-light-panel.png"><figcaption><b>IBM Plex Sans</b><br>IBM Plex Sans, asse wdth 100</figcaption></figure>
+<figure><img src="foto/fira-1x-light-panel.png" width="286" alt="fira-1x-light-panel.png"><figcaption><b>Fira Sans</b><br>Fira Sans</figcaption></figure>
+</div>
+<h2>5. Finestre intere (100 %)</h2>
+<details><summary>Inter 4.1 (oggi), chiaro</summary><img src="foto/inter-1x-light-window.png" width="1500" alt="inter-1x-light-window.png"></details>
+<details><summary>Inter Tight, chiaro</summary><img src="foto/intertight-1x-light-window.png" width="1500" alt="intertight-1x-light-window.png"></details>
+<details><summary>Inter + Plex Condensed, chiaro</summary><img src="foto/intercond-1x-light-window.png" width="1500" alt="intercond-1x-light-window.png"></details>
+<details><summary>Inter + Inter Tight, chiaro</summary><img src="foto/intertight-narrow-1x-light-window.png" width="1500" alt="intertight-narrow-1x-light-window.png"></details>
+<details><summary>Plex + Plex Condensed, chiaro</summary><img src="foto/plexcond-1x-light-window.png" width="1500" alt="plexcond-1x-light-window.png"></details>
+<details><summary>Fira + Fira Condensed, chiaro</summary><img src="foto/firacond-1x-light-window.png" width="1500" alt="firacond-1x-light-window.png"></details>
+<details><summary>Noto Sans + asse wdth 75, chiaro</summary><img src="foto/notowdth-1x-light-window.png" width="1500" alt="notowdth-1x-light-window.png"></details>
+<details><summary>JetBrains Mono ovunque, chiaro</summary><img src="foto/jball-1x-light-window.png" width="1500" alt="jball-1x-light-window.png"></details>
+<details><summary>Inter + JetBrains Mono per i valori, chiaro</summary><img src="foto/jbnum-1x-light-window.png" width="1500" alt="jbnum-1x-light-window.png"></details>
+<details><summary>Inter 4.1 (oggi), scuro</summary><img src="foto/inter-1x-dark-window.png" width="1500" alt="inter-1x-dark-window.png"></details>
+<details><summary>Inter Tight, scuro</summary><img src="foto/intertight-1x-dark-window.png" width="1500" alt="intertight-1x-dark-window.png"></details>
+<details><summary>Inter + Plex Condensed, scuro</summary><img src="foto/intercond-1x-dark-window.png" width="1500" alt="intercond-1x-dark-window.png"></details>
+<details><summary>Inter + Inter Tight, scuro</summary><img src="foto/intertight-narrow-1x-dark-window.png" width="1500" alt="intertight-narrow-1x-dark-window.png"></details>
+<details><summary>Plex + Plex Condensed, scuro</summary><img src="foto/plexcond-1x-dark-window.png" width="1500" alt="plexcond-1x-dark-window.png"></details>
+<details><summary>Fira + Fira Condensed, scuro</summary><img src="foto/firacond-1x-dark-window.png" width="1500" alt="firacond-1x-dark-window.png"></details>
+<details><summary>Noto Sans + asse wdth 75, scuro</summary><img src="foto/notowdth-1x-dark-window.png" width="1500" alt="notowdth-1x-dark-window.png"></details>
+<details><summary>JetBrains Mono ovunque, scuro</summary><img src="foto/jball-1x-dark-window.png" width="1500" alt="jball-1x-dark-window.png"></details>
+<details><summary>Inter + JetBrains Mono per i valori, scuro</summary><img src="foto/jbnum-1x-dark-window.png" width="1500" alt="jbnum-1x-dark-window.png"></details>
+<h2>6. L'asse wdth in Qt</h2>
+<p>Lo stesso testo a 13 px con <code>QFont.setVariableAxis(wdth)</code>, con <code>setStretch(75)</code>, con il nome dello stile e con un condensato statico. Windows (DirectWrite) e Linux (FreeType) danno risultati diversi: vedi il README.</p>
+<div class="row"><p class="cap"><b>Windows 11, Qt 6.12</b></p><img src="foto/axis-win.png" width="560" alt="axis-win.png"></div>
+<div class="row"><p class="cap"><b>Fedora (Lucciola), Qt 6.12</b></p><img src="foto/axis-linux.png" width="560" alt="axis-linux.png"></div>
+</body></html>

@@ -1,0 +1,70 @@
+{
+  "size": [
+    1600,
+    960
+  ],
+  "steps": [
+    {
+      "action": "click",
+      "target": "File",
+      "expect": {
+        "fileOpen": true
+      }
+    },
+    {
+      "action": "click",
+      "target": "Impostazioni"
+    },
+    {
+      "action": "click",
+      "target": "Navigazione"
+    },
+    {
+      "action": "click",
+      "target": "Tastiera"
+    },
+    {
+      "action": "click",
+      "target": "Assistente"
+    },
+    {
+      "action": "click",
+      "target": "Relazione"
+    },
+    {
+      "action": "click",
+      "target": "Mappe"
+    },
+    {
+      "action": "click",
+      "target": "Riservatezza"
+    },
+    {
+      "action": "click",
+      "target": "Torna a File"
+    },
+    {
+      "action": "click",
+      "target": "Salva e revisioni"
+    },
+    {
+      "action": "click",
+      "target": "Esporta"
+    },
+    {
+      "action": "click",
+      "target": "Cataloghi"
+    },
+    {
+      "action": "click",
+      "target": "Aiuto e manuale"
+    },
+    {
+      "action": "click",
+      "target": "Torna al progetto",
+      "expect": {
+        "fileOpen": false
+      }
+    }
+  ]
+}

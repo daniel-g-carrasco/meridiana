@@ -1,0 +1,2462 @@
+{
+ "corpus_n": 3181,
+ "non_ascii_chars": {
+  "è": 667,
+  "à": 364,
+  "ù": 221,
+  "…": 209,
+  "«": 145,
+  "»": 145,
+  "ò": 110,
+  "°": 101,
+  "·": 76,
+  "é": 65,
+  "²": 48,
+  "ì": 47,
+  "€": 23,
+  "×": 13,
+  "È": 10,
+  "›": 8,
+  "’": 8,
+  "Ω": 6,
+  "→": 3,
+  "§": 2,
+  "Č": 2,
+  "Ú": 2,
+  "γ": 2,
+  "β": 2,
+  "α": 2,
+  "↑": 2,
+  "↓": 2,
+  "↔": 2,
+  "Ì": 2,
+  "©": 2,
+  "●": 1,
+  "✕": 1,
+  "⋯": 1
+ },
+ "fonts": {
+  "inter": {
+   "label": "Inter 4.1 (oggi)",
+   "family": "Inter",
+   "groups": {
+    "fasi": 402.0,
+    "barra": 948.0,
+    "etichette": 1186.0,
+    "verifiche": 1792.0,
+    "numeri": 453.0
+   },
+   "groups600": {
+    "fasi": 408.0,
+    "barra": 964.0,
+    "etichette": 1192.0,
+    "verifiche": 1798.0,
+    "numeri": 463.0
+   },
+   "corpus": 529149.0,
+   "corpus_nohint": 523222.62,
+   "height": 16.0,
+   "ascent": 13.0,
+   "descent": 3.0,
+   "xheight_qt": 7.09375,
+   "capheight_qt": 9.453125,
+   "digits": [
+    8.0,
+    5.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    7.0,
+    8.0,
+    8.0
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 0.625,
+   "fraction_text_width": [
+    54.0,
+    84.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    402,
+    410,
+    411
+   ],
+   "xheight_em": 0.546,
+   "capheight_em": 0.728,
+   "gsub_tnum": true,
+   "axes": {},
+   "glyphs": 2937,
+   "name_version": "Version 4.001;git-9221beed3"
+  },
+  "inter-ls1": {
+   "label": "Inter, spaziatura -0,2 px",
+   "family": "Inter",
+   "groups": {
+    "fasi": 390.38,
+    "barra": 920.06,
+    "etichette": 1152.06,
+    "verifiche": 1736.5,
+    "numeri": 440.62
+   },
+   "groups600": {
+    "fasi": 396.38,
+    "barra": 936.06,
+    "etichette": 1158.06,
+    "verifiche": 1742.5,
+    "numeri": 450.62
+   },
+   "corpus": 513141.0,
+   "corpus_nohint": 507214.62,
+   "height": 16.0,
+   "ascent": 13.0,
+   "descent": 3.0,
+   "xheight_qt": 7.09375,
+   "capheight_qt": 9.453125,
+   "digits": [
+    7.8125,
+    4.8125,
+    7.8125,
+    7.8125,
+    7.8125,
+    7.8125,
+    7.8125,
+    6.8125,
+    7.8125,
+    7.8125
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 0.616,
+   "fraction_text_width": [
+    51.75,
+    81.75
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    402,
+    410,
+    411
+   ],
+   "xheight_em": 0.546,
+   "capheight_em": 0.728,
+   "gsub_tnum": true,
+   "axes": {},
+   "glyphs": 2937,
+   "name_version": "Version 4.001;git-9221beed3"
+  },
+  "inter-ls2": {
+   "label": "Inter, spaziatura -0,4 px",
+   "family": "Inter",
+   "groups": {
+    "fasi": 377.78,
+    "barra": 889.8,
+    "etichette": 1115.3,
+    "verifiche": 1676.38,
+    "numeri": 427.22
+   },
+   "groups600": {
+    "fasi": 383.78,
+    "barra": 905.8,
+    "etichette": 1121.3,
+    "verifiche": 1682.38,
+    "numeri": 437.22
+   },
+   "corpus": 495799.0,
+   "corpus_nohint": 489872.62,
+   "height": 16.0,
+   "ascent": 13.0,
+   "descent": 3.0,
+   "xheight_qt": 7.09375,
+   "capheight_qt": 9.453125,
+   "digits": [
+    7.609375,
+    4.609375,
+    7.609375,
+    7.609375,
+    7.609375,
+    7.609375,
+    7.609375,
+    6.609375,
+    7.609375,
+    7.609375
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 0.606,
+   "fraction_text_width": [
+    49.31,
+    79.31
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    402,
+    410,
+    411
+   ],
+   "xheight_em": 0.546,
+   "capheight_em": 0.728,
+   "gsub_tnum": true,
+   "axes": {},
+   "glyphs": 2937,
+   "name_version": "Version 4.001;git-9221beed3"
+  },
+  "inter-tnum": {
+   "label": "Inter, cifre tabellari (tnum)",
+   "family": "Inter",
+   "groups": {
+    "fasi": 400.0,
+    "barra": 940.0,
+    "etichette": 1170.0,
+    "verifiche": 1757.0,
+    "numeri": 461.0
+   },
+   "groups600": {
+    "fasi": 408.0,
+    "barra": 964.0,
+    "etichette": 1192.0,
+    "verifiche": 1800.0,
+    "numeri": 461.0
+   },
+   "corpus": 519732.0,
+   "corpus_nohint": 525262.41,
+   "height": 16.0,
+   "ascent": 13.0,
+   "descent": 3.0,
+   "xheight_qt": 7.09375,
+   "capheight_qt": 9.453125,
+   "digits": [
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    81.0,
+    81.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    402,
+    410,
+    411
+   ],
+   "xheight_em": 0.546,
+   "capheight_em": 0.728,
+   "gsub_tnum": true,
+   "axes": {},
+   "glyphs": 2937,
+   "name_version": "Version 4.001;git-9221beed3"
+  },
+  "intertight": {
+   "label": "Inter Tight",
+   "family": "Inter Tight",
+   "groups": {
+    "fasi": 374.0,
+    "barra": 880.0,
+    "etichette": 1091.0,
+    "verifiche": 1637.0,
+    "numeri": 405.0
+   },
+   "groups600": {
+    "fasi": 414.0,
+    "barra": 979.0,
+    "etichette": 1196.0,
+    "verifiche": 1831.0,
+    "numeri": 462.0
+   },
+   "corpus": 483658.0,
+   "corpus_nohint": 469578.08,
+   "height": 16.0,
+   "ascent": 13.0,
+   "descent": 3.0,
+   "xheight_qt": 7.09375,
+   "capheight_qt": 9.453125,
+   "digits": [
+    7.0,
+    5.0,
+    7.0,
+    8.0,
+    8.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 0.714,
+   "fraction_text_width": [
+    51.0,
+    72.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    568
+   ],
+   "xheight_em": 0.546,
+   "capheight_em": 0.728,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     100.0,
+     400.0,
+     900.0
+    ]
+   },
+   "glyphs": 2547,
+   "name_version": "Version 3.004"
+  },
+  "adwaita": {
+   "label": "Adwaita Sans",
+   "family": "Adwaita Sans",
+   "groups": {
+    "fasi": 409.0,
+    "barra": 962.0,
+    "etichette": 1201.0,
+    "verifiche": 1824.0,
+    "numeri": 453.0
+   },
+   "groups600": {
+    "fasi": 433.0,
+    "barra": 1003.0,
+    "etichette": 1246.0,
+    "verifiche": 1886.0,
+    "numeri": 481.0
+   },
+   "corpus": 536485.0,
+   "corpus_nohint": 524784.88,
+   "height": 16.0,
+   "ascent": 13.0,
+   "descent": 3.0,
+   "xheight_qt": 7.09375,
+   "capheight_qt": 9.453125,
+   "digits": [
+    8.0,
+    5.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 0.625,
+   "fraction_text_width": [
+    52.0,
+    82.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    859
+   ],
+   "xheight_em": 0.546,
+   "capheight_em": 0.728,
+   "gsub_tnum": true,
+   "axes": {
+    "opsz": [
+     14.0,
+     14.0,
+     32.0
+    ],
+    "wght": [
+     100.0,
+     400.0,
+     900.0
+    ]
+   },
+   "glyphs": 2937,
+   "name_version": "Version 4.001;git-9221beed3"
+  },
+  "noto": {
+   "label": "Noto Sans wdth 100",
+   "family": "Noto Sans",
+   "groups": {
+    "fasi": 397.0,
+    "barra": 932.0,
+    "etichette": 1152.0,
+    "verifiche": 1734.0,
+    "numeri": 413.0
+   },
+   "groups600": {
+    "fasi": 430.0,
+    "barra": 1011.0,
+    "etichette": 1237.0,
+    "verifiche": 1874.0,
+    "numeri": 425.0
+   },
+   "corpus": 511399.0,
+   "corpus_nohint": 520216.97,
+   "height": 18.0,
+   "ascent": 14.0,
+   "descent": 4.0,
+   "xheight_qt": 6.96875,
+   "capheight_qt": 9.28125,
+   "digits": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    72.0,
+    72.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    2001
+   ],
+   "xheight_em": 0.536,
+   "capheight_em": 0.714,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     100.0,
+     400.0,
+     900.0
+    ],
+    "wdth": [
+     62.5,
+     100.0,
+     100.0
+    ]
+   },
+   "glyphs": 4515,
+   "name_version": "Version 2.015"
+  },
+  "noto87": {
+   "label": "Noto Sans wdth 87,5",
+   "family": "Noto Sans",
+   "groups": {
+    "fasi": 375.0,
+    "barra": 874.0,
+    "etichette": 1078.0,
+    "verifiche": 1636.0,
+    "numeri": 405.0
+   },
+   "groups600": {
+    "fasi": 418.0,
+    "barra": 968.0,
+    "etichette": 1184.0,
+    "verifiche": 1804.0,
+    "numeri": 409.0
+   },
+   "corpus": 482935.0,
+   "corpus_nohint": 471190.84,
+   "height": 18.0,
+   "ascent": 14.0,
+   "descent": 4.0,
+   "xheight_qt": 6.96875,
+   "capheight_qt": 9.28125,
+   "digits": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    72.0,
+    72.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    2001
+   ],
+   "xheight_em": 0.536,
+   "capheight_em": 0.714,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     100.0,
+     400.0,
+     900.0
+    ],
+    "wdth": [
+     62.5,
+     100.0,
+     100.0
+    ]
+   },
+   "glyphs": 4515,
+   "name_version": "Version 2.015"
+  },
+  "noto75": {
+   "label": "Noto Sans wdth 75",
+   "family": "Noto Sans",
+   "groups": {
+    "fasi": 356.0,
+    "barra": 828.0,
+    "etichette": 1021.0,
+    "verifiche": 1528.0,
+    "numeri": 360.0
+   },
+   "groups600": {
+    "fasi": 367.0,
+    "barra": 873.0,
+    "etichette": 1064.0,
+    "verifiche": 1623.0,
+    "numeri": 367.0
+   },
+   "corpus": 453366.0,
+   "corpus_nohint": 426594.42,
+   "height": 18.0,
+   "ascent": 14.0,
+   "descent": 4.0,
+   "xheight_qt": 6.984375,
+   "capheight_qt": 9.28125,
+   "digits": [
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    63.0,
+    63.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    2001
+   ],
+   "xheight_em": 0.536,
+   "capheight_em": 0.714,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     100.0,
+     400.0,
+     900.0
+    ],
+    "wdth": [
+     62.5,
+     100.0,
+     100.0
+    ]
+   },
+   "glyphs": 4515,
+   "name_version": "Version 2.015"
+  },
+  "opensans": {
+   "label": "Open Sans wdth 100",
+   "family": "Open Sans",
+   "groups": {
+    "fasi": 393.0,
+    "barra": 922.0,
+    "etichette": 1142.0,
+    "verifiche": 1708.0,
+    "numeri": 412.0
+   },
+   "groups600": {
+    "fasi": 415.0,
+    "barra": 973.0,
+    "etichette": 1188.0,
+    "verifiche": 1795.0,
+    "numeri": 422.0
+   },
+   "corpus": 504783.0,
+   "corpus_nohint": 515825.83,
+   "height": 18.0,
+   "ascent": 14.0,
+   "descent": 4.0,
+   "xheight_qt": 6.953125,
+   "capheight_qt": 9.28125,
+   "digits": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    72.0,
+    72.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    520
+   ],
+   "xheight_em": 0.535,
+   "capheight_em": 0.714,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     300.0,
+     400.0,
+     800.0
+    ],
+    "wdth": [
+     75.0,
+     100.0,
+     100.0
+    ]
+   },
+   "glyphs": 1150,
+   "name_version": "Version 3.003"
+  },
+  "opensans87": {
+   "label": "Open Sans wdth 87,5",
+   "family": "Open Sans",
+   "groups": {
+    "fasi": 345.0,
+    "barra": 810.0,
+    "etichette": 1012.0,
+    "verifiche": 1513.0,
+    "numeri": 363.0
+   },
+   "groups600": {
+    "fasi": 365.0,
+    "barra": 847.0,
+    "etichette": 1052.0,
+    "verifiche": 1588.0,
+    "numeri": 402.0
+   },
+   "corpus": 446959.0,
+   "corpus_nohint": 448306.44,
+   "height": 18.0,
+   "ascent": 14.0,
+   "descent": 4.0,
+   "xheight_qt": 6.953125,
+   "capheight_qt": 9.28125,
+   "digits": [
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    63.0,
+    63.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    520
+   ],
+   "xheight_em": 0.535,
+   "capheight_em": 0.714,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     300.0,
+     400.0,
+     800.0
+    ],
+    "wdth": [
+     75.0,
+     100.0,
+     100.0
+    ]
+   },
+   "glyphs": 1150,
+   "name_version": "Version 3.003"
+  },
+  "opensans75": {
+   "label": "Open Sans wdth 75",
+   "family": "Open Sans",
+   "groups": {
+    "fasi": 298.0,
+    "barra": 682.0,
+    "etichette": 862.0,
+    "verifiche": 1273.0,
+    "numeri": 345.0
+   },
+   "groups600": {
+    "fasi": 317.0,
+    "barra": 736.0,
+    "etichette": 908.0,
+    "verifiche": 1369.0,
+    "numeri": 349.0
+   },
+   "corpus": 378251.0,
+   "corpus_nohint": 380824.8,
+   "height": 18.0,
+   "ascent": 14.0,
+   "descent": 4.0,
+   "xheight_qt": 6.953125,
+   "capheight_qt": 9.28125,
+   "digits": [
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    63.0,
+    63.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    520
+   ],
+   "xheight_em": 0.535,
+   "capheight_em": 0.714,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     300.0,
+     400.0,
+     800.0
+    ],
+    "wdth": [
+     75.0,
+     100.0,
+     100.0
+    ]
+   },
+   "glyphs": 1150,
+   "name_version": "Version 3.003"
+  },
+  "roboto": {
+   "label": "Roboto wdth 100",
+   "family": "Roboto",
+   "groups": {
+    "fasi": 371.0,
+    "barra": 865.0,
+    "etichette": 1074.0,
+    "verifiche": 1624.0,
+    "numeri": 407.0
+   },
+   "groups600": {
+    "fasi": 374.0,
+    "barra": 884.0,
+    "etichette": 1089.0,
+    "verifiche": 1656.0,
+    "numeri": 409.0
+   },
+   "corpus": 479328.0,
+   "corpus_nohint": 492159.61,
+   "height": 15.0,
+   "ascent": 12.0,
+   "descent": 3.0,
+   "xheight_qt": 6.875,
+   "capheight_qt": 9.25,
+   "digits": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    72.0,
+    72.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    477
+   ],
+   "xheight_em": 0.528,
+   "capheight_em": 0.711,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     100.0,
+     400.0,
+     900.0
+    ],
+    "wdth": [
+     75.0,
+     100.0,
+     100.0
+    ]
+   },
+   "glyphs": 1326,
+   "name_version": "Version 3.015; 2026"
+  },
+  "roboto87": {
+   "label": "Roboto wdth 87,5",
+   "family": "Roboto",
+   "groups": {
+    "fasi": 366.0,
+    "barra": 852.0,
+    "etichette": 1054.0,
+    "verifiche": 1594.0,
+    "numeri": 401.0
+   },
+   "groups600": {
+    "fasi": 366.0,
+    "barra": 851.0,
+    "etichette": 1056.0,
+    "verifiche": 1591.0,
+    "numeri": 407.0
+   },
+   "corpus": 471017.0,
+   "corpus_nohint": 465020.22,
+   "height": 15.0,
+   "ascent": 12.0,
+   "descent": 3.0,
+   "xheight_qt": 6.875,
+   "capheight_qt": 9.25,
+   "digits": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    72.0,
+    72.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    477
+   ],
+   "xheight_em": 0.528,
+   "capheight_em": 0.711,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     100.0,
+     400.0,
+     900.0
+    ],
+    "wdth": [
+     75.0,
+     100.0,
+     100.0
+    ]
+   },
+   "glyphs": 1326,
+   "name_version": "Version 3.015; 2026"
+  },
+  "roboto75": {
+   "label": "Roboto wdth 75",
+   "family": "Roboto",
+   "groups": {
+    "fasi": 338.0,
+    "barra": 784.0,
+    "etichette": 974.0,
+    "verifiche": 1476.0,
+    "numeri": 356.0
+   },
+   "groups600": {
+    "fasi": 330.0,
+    "barra": 783.0,
+    "etichette": 961.0,
+    "verifiche": 1475.0,
+    "numeri": 396.0
+   },
+   "corpus": 436227.0,
+   "corpus_nohint": 437832.28,
+   "height": 15.0,
+   "ascent": 12.0,
+   "descent": 3.0,
+   "xheight_qt": 6.875,
+   "capheight_qt": 9.25,
+   "digits": [
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    63.0,
+    63.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    477
+   ],
+   "xheight_em": 0.528,
+   "capheight_em": 0.711,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     100.0,
+     400.0,
+     900.0
+    ],
+    "wdth": [
+     75.0,
+     100.0,
+     100.0
+    ]
+   },
+   "glyphs": 1326,
+   "name_version": "Version 3.015; 2026"
+  },
+  "robotocond": {
+   "label": "Roboto Condensed (statico del wght)",
+   "family": "Roboto Condensed",
+   "groups": {
+    "fasi": 338.0,
+    "barra": 784.0,
+    "etichette": 974.0,
+    "verifiche": 1476.0,
+    "numeri": 356.0
+   },
+   "groups600": {
+    "fasi": 330.0,
+    "barra": 783.0,
+    "etichette": 961.0,
+    "verifiche": 1475.0,
+    "numeri": 396.0
+   },
+   "corpus": 436227.0,
+   "corpus_nohint": 437832.28,
+   "height": 15.0,
+   "ascent": 12.0,
+   "descent": 3.0,
+   "xheight_qt": 6.875,
+   "capheight_qt": 9.25,
+   "digits": [
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    63.0,
+    63.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    363
+   ],
+   "xheight_em": 0.528,
+   "capheight_em": 0.711,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     100.0,
+     400.0,
+     900.0
+    ]
+   },
+   "glyphs": 1321,
+   "name_version": "Version 3.008; 2023"
+  },
+  "robotoflex": {
+   "label": "Roboto Flex wdth 100",
+   "family": "Roboto Flex",
+   "groups": {
+    "fasi": 394.0,
+    "barra": 903.0,
+    "etichette": 1130.0,
+    "verifiche": 1702.0,
+    "numeri": 420.0
+   },
+   "groups600": {
+    "fasi": 428.0,
+    "barra": 989.0,
+    "etichette": 1218.0,
+    "verifiche": 1852.0,
+    "numeri": 425.0
+   },
+   "corpus": 503801.0,
+   "corpus_nohint": 490919.27,
+   "height": 15.0,
+   "ascent": 12.0,
+   "descent": 3.0,
+   "xheight_qt": 6.671875,
+   "capheight_qt": 9.25,
+   "digits": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    73.0,
+    73.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    1745
+   ],
+   "xheight_em": 0.514,
+   "capheight_em": 0.711,
+   "gsub_tnum": false,
+   "axes": {
+    "opsz": [
+     8.0,
+     14.0,
+     144.0
+    ],
+    "wght": [
+     100.0,
+     400.0,
+     1000.0
+    ],
+    "GRAD": [
+     -200.0,
+     0.0,
+     150.0
+    ],
+    "wdth": [
+     25.0,
+     100.0,
+     151.0
+    ],
+    "slnt": [
+     -10.0,
+     0.0,
+     0.0
+    ],
+    "XOPQ": [
+     27.0,
+     96.0,
+     175.0
+    ],
+    "YOPQ": [
+     25.0,
+     79.0,
+     135.0
+    ],
+    "XTRA": [
+     323.0,
+     468.0,
+     603.0
+    ],
+    "YTUC": [
+     528.0,
+     712.0,
+     760.0
+    ],
+    "YTLC": [
+     416.0,
+     514.0,
+     570.0
+    ],
+    "YTAS": [
+     649.0,
+     750.0,
+     854.0
+    ],
+    "YTDE": [
+     -305.0,
+     -203.0,
+     -98.0
+    ],
+    "YTFI": [
+     560.0,
+     738.0,
+     788.0
+    ]
+   },
+   "glyphs": 948,
+   "name_version": "Version 3.200;gftools[0.9.32]"
+  },
+  "robotoflex75": {
+   "label": "Roboto Flex wdth 75",
+   "family": "Roboto Flex",
+   "groups": {
+    "fasi": 380.0,
+    "barra": 874.0,
+    "etichette": 1083.0,
+    "verifiche": 1643.0,
+    "numeri": 415.0
+   },
+   "groups600": {
+    "fasi": 417.0,
+    "barra": 953.0,
+    "etichette": 1183.0,
+    "verifiche": 1794.0,
+    "numeri": 423.0
+   },
+   "corpus": 486904.0,
+   "corpus_nohint": 473775.41,
+   "height": 15.0,
+   "ascent": 12.0,
+   "descent": 3.0,
+   "xheight_qt": 6.671875,
+   "capheight_qt": 9.25,
+   "digits": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    73.0,
+    73.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    1745
+   ],
+   "xheight_em": 0.514,
+   "capheight_em": 0.711,
+   "gsub_tnum": false,
+   "axes": {
+    "opsz": [
+     8.0,
+     14.0,
+     144.0
+    ],
+    "wght": [
+     100.0,
+     400.0,
+     1000.0
+    ],
+    "GRAD": [
+     -200.0,
+     0.0,
+     150.0
+    ],
+    "wdth": [
+     25.0,
+     100.0,
+     151.0
+    ],
+    "slnt": [
+     -10.0,
+     0.0,
+     0.0
+    ],
+    "XOPQ": [
+     27.0,
+     96.0,
+     175.0
+    ],
+    "YOPQ": [
+     25.0,
+     79.0,
+     135.0
+    ],
+    "XTRA": [
+     323.0,
+     468.0,
+     603.0
+    ],
+    "YTUC": [
+     528.0,
+     712.0,
+     760.0
+    ],
+    "YTLC": [
+     416.0,
+     514.0,
+     570.0
+    ],
+    "YTAS": [
+     649.0,
+     750.0,
+     854.0
+    ],
+    "YTDE": [
+     -305.0,
+     -203.0,
+     -98.0
+    ],
+    "YTFI": [
+     560.0,
+     738.0,
+     788.0
+    ]
+   },
+   "glyphs": 948,
+   "name_version": "Version 3.200;gftools[0.9.32]"
+  },
+  "plex": {
+   "label": "IBM Plex Sans wdth 100",
+   "family": "IBM Plex Sans",
+   "groups": {
+    "fasi": 385.0,
+    "barra": 896.0,
+    "etichette": 1112.0,
+    "verifiche": 1690.0,
+    "numeri": 460.0
+   },
+   "groups600": {
+    "fasi": 407.0,
+    "barra": 947.0,
+    "etichette": 1167.0,
+    "verifiche": 1761.0,
+    "numeri": 461.0
+   },
+   "corpus": 498762.0,
+   "corpus_nohint": 497825.42,
+   "height": 17.0,
+   "ascent": 13.0,
+   "descent": 4.0,
+   "xheight_qt": 6.703125,
+   "capheight_qt": 9.078125,
+   "digits": [
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    84.0,
+    84.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    525
+   ],
+   "xheight_em": 0.516,
+   "capheight_em": 0.698,
+   "gsub_tnum": false,
+   "axes": {
+    "wght": [
+     100.0,
+     400.0,
+     700.0
+    ],
+    "wdth": [
+     75.0,
+     100.0,
+     100.0
+    ]
+   },
+   "glyphs": 1025,
+   "name_version": "Version 3.201"
+  },
+  "plex85": {
+   "label": "IBM Plex Sans wdth 85",
+   "family": "IBM Plex Sans",
+   "groups": {
+    "fasi": 368.0,
+    "barra": 861.0,
+    "etichette": 1058.0,
+    "verifiche": 1610.0,
+    "numeri": 405.0
+   },
+   "groups600": {
+    "fasi": 376.0,
+    "barra": 885.0,
+    "etichette": 1091.0,
+    "verifiche": 1660.0,
+    "numeri": 422.0
+   },
+   "corpus": 475050.0,
+   "corpus_nohint": 468772.58,
+   "height": 17.0,
+   "ascent": 13.0,
+   "descent": 4.0,
+   "xheight_qt": 6.703125,
+   "capheight_qt": 9.078125,
+   "digits": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    72.0,
+    72.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    525
+   ],
+   "xheight_em": 0.516,
+   "capheight_em": 0.698,
+   "gsub_tnum": false,
+   "axes": {
+    "wght": [
+     100.0,
+     400.0,
+     700.0
+    ],
+    "wdth": [
+     75.0,
+     100.0,
+     100.0
+    ]
+   },
+   "glyphs": 1025,
+   "name_version": "Version 3.201"
+  },
+  "plexcond": {
+   "label": "IBM Plex Sans Condensed (statico)",
+   "family": "IBM Plex Sans Condensed",
+   "groups": {
+    "fasi": 350.0,
+    "barra": 810.0,
+    "etichette": 1016.0,
+    "verifiche": 1526.0,
+    "numeri": 402.0
+   },
+   "groups600": {
+    "fasi": 367.0,
+    "barra": 857.0,
+    "etichette": 1059.0,
+    "verifiche": 1608.0,
+    "numeri": 417.0
+   },
+   "corpus": 452592.0,
+   "corpus_nohint": 449293.62,
+   "height": 17.0,
+   "ascent": 13.0,
+   "descent": 4.0,
+   "xheight_qt": 6.703125,
+   "capheight_qt": 9.078125,
+   "digits": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    72.0,
+    72.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    109,
+    109
+   ],
+   "xheight_em": 0.516,
+   "capheight_em": 0.698,
+   "gsub_tnum": false,
+   "axes": {},
+   "glyphs": 686,
+   "name_version": "Version 1.3"
+  },
+  "source": {
+   "label": "Source Sans 3",
+   "family": "Source Sans 3",
+   "groups": {
+    "fasi": 366.0,
+    "barra": 837.0,
+    "etichette": 1055.0,
+    "verifiche": 1563.0,
+    "numeri": 369.0
+   },
+   "groups600": {
+    "fasi": 401.0,
+    "barra": 937.0,
+    "etichette": 1149.0,
+    "verifiche": 1740.0,
+    "numeri": 415.0
+   },
+   "corpus": 464210.0,
+   "corpus_nohint": 460511.92,
+   "height": 18.0,
+   "ascent": 13.0,
+   "descent": 5.0,
+   "xheight_qt": 6.3125,
+   "capheight_qt": 8.578125,
+   "digits": [
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    64.0,
+    64.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    631
+   ],
+   "xheight_em": 0.478,
+   "capheight_em": 0.66,
+   "gsub_tnum": false,
+   "axes": {
+    "wght": [
+     200.0,
+     200.0,
+     900.0
+    ]
+   },
+   "glyphs": 2478,
+   "name_version": "Version 3.052;hotconv 1.1.0;makeotfexe 2"
+  },
+  "fira": {
+   "label": "Fira Sans",
+   "family": "Fira Sans",
+   "groups": {
+    "fasi": 403.0,
+    "barra": 930.0,
+    "etichette": 1154.0,
+    "verifiche": 1729.0,
+    "numeri": 393.0
+   },
+   "groups600": {
+    "fasi": 402.0,
+    "barra": 931.0,
+    "etichette": 1152.0,
+    "verifiche": 1729.0,
+    "numeri": 404.0
+   },
+   "corpus": 507850.0,
+   "corpus_nohint": 500747.67,
+   "height": 15.0,
+   "ascent": 12.0,
+   "descent": 3.0,
+   "xheight_qt": 6.84375,
+   "capheight_qt": 8.953125,
+   "digits": [
+    7.0,
+    6.0,
+    6.0,
+    6.0,
+    7.0,
+    7.0,
+    7.0,
+    6.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 0.857,
+   "fraction_text_width": [
+    60.0,
+    72.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    446,
+    478
+   ],
+   "xheight_em": 0.527,
+   "capheight_em": 0.689,
+   "gsub_tnum": true,
+   "axes": {},
+   "glyphs": 2708,
+   "name_version": "Version 4.203"
+  },
+  "firacond": {
+   "label": "Fira Sans Condensed",
+   "family": "Fira Sans Condensed",
+   "groups": {
+    "fasi": 347.0,
+    "barra": 814.0,
+    "etichette": 1016.0,
+    "verifiche": 1531.0,
+    "numeri": 362.0
+   },
+   "groups600": {
+    "fasi": 360.0,
+    "barra": 847.0,
+    "etichette": 1047.0,
+    "verifiche": 1599.0,
+    "numeri": 372.0
+   },
+   "corpus": 450816.0,
+   "corpus_nohint": 450648.14,
+   "height": 15.0,
+   "ascent": 12.0,
+   "descent": 3.0,
+   "xheight_qt": 6.84375,
+   "capheight_qt": 8.9375,
+   "digits": [
+    7.0,
+    5.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    5.0,
+    7.0,
+    6.0
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 0.714,
+   "fraction_text_width": [
+    51.0,
+    72.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    449,
+    477
+   ],
+   "xheight_em": 0.526,
+   "capheight_em": 0.688,
+   "gsub_tnum": true,
+   "axes": {},
+   "glyphs": 2708,
+   "name_version": "Version 4.203"
+  },
+  "barlow": {
+   "label": "Barlow",
+   "family": "Barlow",
+   "groups": {
+    "fasi": 371.0,
+    "barra": 881.0,
+    "etichette": 1077.0,
+    "verifiche": 1647.0,
+    "numeri": 393.0
+   },
+   "groups600": {
+    "fasi": 371.0,
+    "barra": 884.0,
+    "etichette": 1087.0,
+    "verifiche": 1656.0,
+    "numeri": 399.0
+   },
+   "corpus": 481933.0,
+   "corpus_nohint": 472967.61,
+   "height": 16.0,
+   "ascent": 13.0,
+   "descent": 3.0,
+   "xheight_qt": 6.578125,
+   "capheight_qt": 9.09375,
+   "digits": [
+    7.0,
+    5.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    6.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 0.714,
+   "fraction_text_width": [
+    56.0,
+    74.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    102,
+    106
+   ],
+   "xheight_em": 0.506,
+   "capheight_em": 0.7,
+   "gsub_tnum": true,
+   "axes": {},
+   "glyphs": 694,
+   "name_version": "Version 1.408"
+  },
+  "barlowsc": {
+   "label": "Barlow Semi Condensed",
+   "family": "Barlow Semi Condensed",
+   "groups": {
+    "fasi": 326.0,
+    "barra": 771.0,
+    "etichette": 948.0,
+    "verifiche": 1456.0,
+    "numeri": 349.0
+   },
+   "groups600": {
+    "fasi": 327.0,
+    "barra": 774.0,
+    "etichette": 958.0,
+    "verifiche": 1464.0,
+    "numeri": 357.0
+   },
+   "corpus": 426529.0,
+   "corpus_nohint": 423608.22,
+   "height": 16.0,
+   "ascent": 13.0,
+   "descent": 3.0,
+   "xheight_qt": 6.578125,
+   "capheight_qt": 9.09375,
+   "digits": [
+    7.0,
+    4.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    5.0,
+    6.0,
+    6.0
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 0.571,
+   "fraction_text_width": [
+    45.0,
+    72.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    103,
+    107
+   ],
+   "xheight_em": 0.506,
+   "capheight_em": 0.7,
+   "gsub_tnum": true,
+   "axes": {},
+   "glyphs": 694,
+   "name_version": "Version 1.408"
+  },
+  "archivo": {
+   "label": "Archivo wdth 100",
+   "family": "Archivo",
+   "groups": {
+    "fasi": 394.0,
+    "barra": 921.0,
+    "etichette": 1143.0,
+    "verifiche": 1705.0,
+    "numeri": 437.0
+   },
+   "groups600": {
+    "fasi": 420.0,
+    "barra": 1003.0,
+    "etichette": 1223.0,
+    "verifiche": 1854.0,
+    "numeri": 466.0
+   },
+   "corpus": 506286.0,
+   "corpus_nohint": 487361.06,
+   "height": 14.0,
+   "ascent": 11.0,
+   "descent": 3.0,
+   "xheight_qt": 6.84375,
+   "capheight_qt": 8.921875,
+   "digits": [
+    8.0,
+    6.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    7.0,
+    8.0,
+    8.0
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 0.75,
+   "fraction_text_width": [
+    63.0,
+    81.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    643
+   ],
+   "xheight_em": 0.526,
+   "capheight_em": 0.686,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     100.0,
+     600.0,
+     900.0
+    ],
+    "wdth": [
+     62.0,
+     100.0,
+     125.0
+    ]
+   },
+   "glyphs": 834,
+   "name_version": "Version 2.001"
+  },
+  "archivo87": {
+   "label": "Archivo wdth 87,5",
+   "family": "Archivo",
+   "groups": {
+    "fasi": 361.0,
+    "barra": 841.0,
+    "etichette": 1028.0,
+    "verifiche": 1550.0,
+    "numeri": 379.0
+   },
+   "groups600": {
+    "fasi": 384.0,
+    "barra": 912.0,
+    "etichette": 1104.0,
+    "verifiche": 1676.0,
+    "numeri": 421.0
+   },
+   "corpus": 457183.0,
+   "corpus_nohint": 436784.72,
+   "height": 14.0,
+   "ascent": 11.0,
+   "descent": 3.0,
+   "xheight_qt": 6.84375,
+   "capheight_qt": 8.921875,
+   "digits": [
+    6.0,
+    6.0,
+    7.0,
+    7.0,
+    6.0,
+    6.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    63.0,
+    63.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    643
+   ],
+   "xheight_em": 0.526,
+   "capheight_em": 0.686,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     100.0,
+     600.0,
+     900.0
+    ],
+    "wdth": [
+     62.0,
+     100.0,
+     125.0
+    ]
+   },
+   "glyphs": 834,
+   "name_version": "Version 2.001"
+  },
+  "archivo75": {
+   "label": "Archivo wdth 75",
+   "family": "Archivo",
+   "groups": {
+    "fasi": 323.0,
+    "barra": 742.0,
+    "etichette": 921.0,
+    "verifiche": 1378.0,
+    "numeri": 351.0
+   },
+   "groups600": {
+    "fasi": 346.0,
+    "barra": 800.0,
+    "etichette": 988.0,
+    "verifiche": 1484.0,
+    "numeri": 387.0
+   },
+   "corpus": 406657.0,
+   "corpus_nohint": 386033.83,
+   "height": 14.0,
+   "ascent": 11.0,
+   "descent": 3.0,
+   "xheight_qt": 6.84375,
+   "capheight_qt": 8.921875,
+   "digits": [
+    6.0,
+    5.0,
+    6.0,
+    7.0,
+    6.0,
+    6.0,
+    6.0,
+    5.0,
+    7.0,
+    6.0
+   ],
+   "digits_tabular": false,
+   "digits_1_vs_0": 0.833,
+   "fraction_text_width": [
+    54.0,
+    63.0
+   ],
+   "missing_special": [
+    "∥",
+    "⊥",
+    "⋯"
+   ],
+   "missing_used": [
+    "✕",
+    "⋯"
+   ],
+   "size_kb": [
+    643
+   ],
+   "xheight_em": 0.526,
+   "capheight_em": 0.686,
+   "gsub_tnum": true,
+   "axes": {
+    "wght": [
+     100.0,
+     600.0,
+     900.0
+    ],
+    "wdth": [
+     62.0,
+     100.0,
+     125.0
+    ]
+   },
+   "glyphs": 834,
+   "name_version": "Version 2.001"
+  },
+  "jbmono": {
+   "label": "JetBrains Mono 2.304 (monospazio)",
+   "family": "JetBrains Mono",
+   "groups": {
+    "fasi": 496.0,
+    "barra": 1192.0,
+    "etichette": 1448.0,
+    "verifiche": 2368.0,
+    "numeri": 528.0
+   },
+   "groups600": {
+    "fasi": 496.0,
+    "barra": 1192.0,
+    "etichette": 1448.0,
+    "verifiche": 2368.0,
+    "numeri": 528.0
+   },
+   "corpus": 683008.0,
+   "corpus_nohint": 665666.0,
+   "height": 17.0,
+   "ascent": 13.0,
+   "descent": 4.0,
+   "xheight_qt": 7.15625,
+   "capheight_qt": 9.484375,
+   "digits": [
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    96.0,
+    96.0
+   ],
+   "missing_special": [],
+   "missing_used": [],
+   "size_kb": [
+    267,
+    271
+   ],
+   "xheight_em": 0.55,
+   "capheight_em": 0.73,
+   "gsub_tnum": false,
+   "axes": {},
+   "glyphs": 1743,
+   "name_version": "Version 2.304; ttfautohint (v1.8.4.7-5d5"
+  },
+  "nerdjb": {
+   "label": "JetBrainsMono Nerd Font",
+   "family": "JetBrainsMono NF",
+   "groups": {
+    "fasi": 496.0,
+    "barra": 1192.0,
+    "etichette": 1448.0,
+    "verifiche": 2368.0,
+    "numeri": 528.0
+   },
+   "groups600": {
+    "fasi": 496.0,
+    "barra": 1192.0,
+    "etichette": 1448.0,
+    "verifiche": 2368.0,
+    "numeri": 528.0
+   },
+   "corpus": 683008.0,
+   "corpus_nohint": 665666.0,
+   "height": 17.0,
+   "ascent": 13.0,
+   "descent": 4.0,
+   "xheight_qt": 7.15625,
+   "capheight_qt": 9.484375,
+   "digits": [
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    96.0,
+    96.0
+   ],
+   "missing_special": [],
+   "missing_used": [],
+   "size_kb": [
+    2511
+   ],
+   "xheight_em": 0.55,
+   "capheight_em": 0.73,
+   "gsub_tnum": false,
+   "axes": {},
+   "glyphs": 12608,
+   "name_version": "Version 2.304; ttfautohint (v1.8.4.7-5d5"
+  },
+  "nerdjbpropo": {
+   "label": "JetBrainsMono Nerd Font Propo",
+   "family": "JetBrainsMono NFP",
+   "groups": {
+    "fasi": 496.0,
+    "barra": 1192.0,
+    "etichette": 1448.0,
+    "verifiche": 2368.0,
+    "numeri": 528.0
+   },
+   "groups600": {
+    "fasi": 496.0,
+    "barra": 1192.0,
+    "etichette": 1448.0,
+    "verifiche": 2368.0,
+    "numeri": 528.0
+   },
+   "corpus": 683008.0,
+   "corpus_nohint": 665666.0,
+   "height": 17.0,
+   "ascent": 13.0,
+   "descent": 4.0,
+   "xheight_qt": 7.15625,
+   "capheight_qt": 9.484375,
+   "digits": [
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    96.0,
+    96.0
+   ],
+   "missing_special": [],
+   "missing_used": [],
+   "size_kb": [
+    2511
+   ],
+   "xheight_em": 0.55,
+   "capheight_em": 0.73,
+   "gsub_tnum": false,
+   "axes": {},
+   "glyphs": 12608,
+   "name_version": "Version 2.304; ttfautohint (v1.8.4.7-5d5"
+  },
+  "nerdubuntu": {
+   "label": "Ubuntu Nerd Font Propo",
+   "family": "Ubuntu Nerd Font Propo",
+   "groups": {
+    "fasi": 389.0,
+    "barra": 908.0,
+    "etichette": 1133.0,
+    "verifiche": 1693.0,
+    "numeri": 409.0
+   },
+   "groups600": {
+    "fasi": 389.0,
+    "barra": 908.0,
+    "etichette": 1133.0,
+    "verifiche": 1693.0,
+    "numeri": 409.0
+   },
+   "corpus": 501744.0,
+   "corpus_nohint": 501647.8,
+   "height": 15.0,
+   "ascent": 12.0,
+   "descent": 3.0,
+   "xheight_qt": 6.765625,
+   "capheight_qt": 9.015625,
+   "digits": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    72.0,
+    72.0
+   ],
+   "missing_special": [],
+   "missing_used": [],
+   "size_kb": [
+    2477
+   ],
+   "xheight_em": 0.52,
+   "capheight_em": 0.693,
+   "gsub_tnum": true,
+   "axes": {},
+   "glyphs": 11871,
+   "name_version": "Version 0.83;Nerd Fonts 3.5.1"
+  },
+  "nerdubuntucond": {
+   "label": "Ubuntu Nerd Font Propo Condensed",
+   "family": "Ubuntu Nerd Font Propo",
+   "groups": {
+    "fasi": 321.0,
+    "barra": 750.0,
+    "etichette": 934.0,
+    "verifiche": 1404.0,
+    "numeri": 351.0
+   },
+   "groups600": {
+    "fasi": 321.0,
+    "barra": 750.0,
+    "etichette": 934.0,
+    "verifiche": 1404.0,
+    "numeri": 351.0
+   },
+   "corpus": 414406.0,
+   "corpus_nohint": 408940.25,
+   "height": 15.0,
+   "ascent": 12.0,
+   "descent": 3.0,
+   "xheight_qt": 6.765625,
+   "capheight_qt": 9.015625,
+   "digits": [
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    63.0,
+    63.0
+   ],
+   "missing_special": [],
+   "missing_used": [],
+   "size_kb": [
+    2471
+   ],
+   "xheight_em": 0.52,
+   "capheight_em": 0.693,
+   "gsub_tnum": true,
+   "axes": {},
+   "glyphs": 11872,
+   "name_version": "Version 0.83;Nerd Fonts 3.5.1"
+  },
+  "adwaitamono": {
+   "label": "Adwaita Mono",
+   "family": "Adwaita Mono",
+   "groups": {
+    "fasi": 496.0,
+    "barra": 1192.0,
+    "etichette": 1448.0,
+    "verifiche": 2368.0,
+    "numeri": 528.0
+   },
+   "groups600": {
+    "fasi": 496.0,
+    "barra": 1192.0,
+    "etichette": 1448.0,
+    "verifiche": 2368.0,
+    "numeri": 528.0
+   },
+   "corpus": 683008.0,
+   "corpus_nohint": 665666.0,
+   "height": 17.0,
+   "ascent": 13.0,
+   "descent": 4.0,
+   "xheight_qt": 6.765625,
+   "capheight_qt": 9.5625,
+   "digits": [
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0,
+    8.0
+   ],
+   "digits_tabular": true,
+   "digits_1_vs_0": 1.0,
+   "fraction_text_width": [
+    96.0,
+    96.0
+   ],
+   "missing_special": [],
+   "missing_used": [],
+   "size_kb": [
+    1386
+   ],
+   "xheight_em": 0.52,
+   "capheight_em": 0.735,
+   "gsub_tnum": false,
+   "axes": {},
+   "glyphs": 8818,
+   "name_version": "Version 34.8.0; ttfautohint (v1.8.4)"
+  }
+ }
+}

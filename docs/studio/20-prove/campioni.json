@@ -1,0 +1,25 @@
+{
+ "nota": "I campioni dello studio 20: dove sono nella cache (fuori dal repository), da dove vengono, con quale licenza. Solo quelli con licenza CC BY 4.0 e piccoli sono copiati in tests/data/ifc.",
+ "campioni": [
+  {"name": "meridiana-misto", "file": "meridiana/misto.ifc", "fonte": "esportazione di Meridiana (tetto piano con parapetto, falde a capanna e a padiglione, monofalda, 110 moduli, camino, impianto, evacuatore, albero)", "licenza": "dati di prova di Meridiana"},
+  {"name": "meridiana-25", "file": "meridiana/generato_25.ifc", "fonte": "esportazione di Meridiana: 25 capannoni piani, 2.900 moduli (tests/_fixtures.generated)", "licenza": "dati di prova di Meridiana"},
+  {"name": "bs-architecture", "file": "bs-architecture/Building-Architecture.ifc", "fonte": "https://github.com/buildingSMART/Sample-Test-Files, IFC 4.0.2.1/Simple-Scene/Building-Architecture.ifc (IFC manager for SketchUp)", "licenza": "CC BY 4.0, (C) buildingSMART International Ltd."},
+  {"name": "bs-hvac", "file": "bs-hvac/Building-Hvac.ifc", "fonte": "https://github.com/buildingSMART/Sample-Test-Files, IFC 4.0.2.1/Simple-Scene/Building-Hvac.ifc (solo impianti, nessun tetto)", "licenza": "CC BY 4.0, (C) buildingSMART International Ltd."},
+  {"name": "location", "file": "location/example-project-location.ifc", "fonte": "https://github.com/buildingsmart-community/Community-Sample-Test-Files, IFC 4.0.2.1 (IFC 4)/Example project location (Revit 2020, palestra di Amersfoort, EPSG:28992)", "licenza": "CC BY 4.0, (C) gli autori originali"},
+  {"name": "duplex", "file": "duplex/Duplex_A_20110907.ifc", "fonte": "https://github.com/buildingsmart-community/Community-Sample-Test-Files, IFC 2.3.0.1 (IFC 2x3)/Duplex Apartment (Revit 2011)", "licenza": "CC BY 4.0, BSI (2020) \"Duplex Apartment Test Files\", buildingSMART International"},
+  {"name": "clinic-arch", "file": "clinic-arch/Clinic_Architectural.ifc", "fonte": "https://github.com/buildingsmart-community/Community-Sample-Test-Files, IFC 2.3.0.1 (IFC 2x3)/Medical-Dental Clinic (Revit 2011)", "licenza": "CC BY 4.0, BSI (2020) \"Medical-Dental Test Files\", buildingSMART International"},
+  {"name": "esplanades", "file": "esplanades/1807_EP_AR_v18.ifc", "fonte": "https://github.com/buildingsmart-community/Community-Sample-Test-Files, IFC 2.3.0.1 (IFC 2x3)/Esplanades (ArchiCAD 22)", "licenza": "CC BY 4.0, (c) Esplan"},
+  {"name": "great-court", "file": "ios-great-court/geometrygym_great_court_roof.ifc", "fonte": "https://github.com/IfcOpenShell/files, geometrygym_great_court_roof.ifc (copertura del Great Court, 5.180 elementi, Grasshopper)", "licenza": "non dichiarata: solo misurato, non copiato"},
+  {"name": "schependomlaan", "file": "schependomlaan/IFC_Schependomlaan.ifc", "fonte": "https://github.com/buildingsmart-community/Community-Sample-Test-Files, IFC 2.3.0.1 (IFC 2x3)/Schependomlaan/Design model IFC (ArchiCAD 18)", "licenza": "uso scientifico e accademico (TU Eindhoven): solo misurato, non copiato"},
+  {"name": "root-compleet", "file": "root-compleet/ROOT-Compleet.ifczip", "fonte": "come sopra, Coordination model/ROOT-Compleet.ifczip (47 MB dentro lo zip)", "licenza": "uso scientifico e accademico: solo misurato"},
+  {"name": "clinic-plumbing", "file": "clinic-plumbing/Clinic_Plumbing.ifc", "fonte": "Community-Sample-Test-Files, Medical-Dental Clinic, Clinic_Plumbing.ifc (Revit 2011, impianti)", "licenza": "CC BY 4.0, BSI (2020) \"Medical-Dental Test Files\""},
+  {"name": "clinic-plumbing-x4", "file": "sintetico/Clinic_Plumbing_x4.ifc", "fonte": "sintetico: Clinic_Plumbing quattro volte nello stesso file, gli id spostati (misura_ifc.py --sintetico)", "licenza": "derivato CC BY 4.0, solo locale", "repeat": false},
+  {"name": "ios-infinite-loop", "file": "ios-infinite-loop/455--wall--infiniteLoop--augmented.ifc", "fonte": "https://github.com/IfcOpenShell/files: un muro che mandava in ciclo infinito IfcOpenShell", "licenza": "non dichiarata: solo misurato", "repeat": false},
+  {"name": "ios-timeout", "file": "ios-timeout/600--wall--timeout--augmented.ifc", "fonte": "https://github.com/IfcOpenShell/files: un muro lentissimo da fare", "licenza": "non dichiarata: solo misurato", "repeat": false},
+  {"name": "ios-segfault", "file": "ios-segfault/994--slab--segfault--augmented.ifc", "fonte": "https://github.com/IfcOpenShell/files: un solaio che faceva cadere IfcOpenShell", "licenza": "non dichiarata: solo misurato", "repeat": false},
+  {"name": "ios-proxy-36mb", "file": "ios-proxy-36mb/706--buildingElementProxy--segfault--accept-errors.ifc", "fonte": "https://github.com/IfcOpenShell/files: 36 MB, un proxy che faceva cadere IfcOpenShell", "licenza": "non dichiarata: solo misurato", "repeat": false},
+  {"name": "troncato", "file": "sintetico/Duplex_troncato.ifc", "fonte": "sintetico: il Duplex tagliato a metà", "licenza": "derivato CC BY 4.0, solo locale", "repeat": false},
+  {"name": "non-ifc", "file": "sintetico/non_ifc.ifc", "fonte": "sintetico: un testo con l'estensione .ifc", "licenza": "-", "repeat": false},
+  {"name": "vuoto", "file": "sintetico/vuoto.ifc", "fonte": "sintetico: un file vuoto", "licenza": "-", "repeat": false}
+ ]
+}

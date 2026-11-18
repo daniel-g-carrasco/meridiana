@@ -1,0 +1,71 @@
+{
+  "source_url": "https://polyhaven.com/a/street_lamp_01",
+  "author": "Josh Dean",
+  "name": "Street Lamp 01",
+  "license": "CC0-1.0",
+  "verified": "2026-11-04",
+  "statement": "Our assets are all licensed as CC0",
+  "prior_evidence_header": "Fonte: https://polyhaven.com/license\nURL finale: https://polyhaven.com/license\nData UTC: 2026-11-04T11:05:56.149993+00:00\nSHA256 HTML: 46158a6b319ae8ef55acd18bd96d986c9261fb0cc8086124e97bcbefe779a623\nNota: lineette U+2014 rese come due punti.",
+  "asset_api": {
+    "donated": true,
+    "name": "Street Lamp 01",
+    "type": 2,
+    "authors": {
+      "Josh Dean": "All"
+    },
+    "info": null,
+    "date_published": 1697760000,
+    "staging": null,
+    "categories": [
+      "lighting",
+      "industrial",
+      "collection: hidden_alley"
+    ],
+    "tags": [
+      "street",
+      "road",
+      "light",
+      "lamppost",
+      "outdoor",
+      "pole",
+      "sidewalk",
+      "night",
+      " urban",
+      "city"
+    ],
+    "max_resolution": [
+      8192,
+      8192
+    ],
+    "polycount": 30610,
+    "texel_density": 3976.4525897344943,
+    "dimensions": [
+      704.3362259864807,
+      386.49316132068634,
+      3870.5554008483887
+    ],
+    "sponsors": [
+      "7934315"
+    ],
+    "files_hash": "002d697fa195d73f627e82804612208853212519",
+    "description": "Free 8K model: ornate cast-iron street lamp with glass panes, exposed bulb, weathered black finish and detailed base, finial and mounting hardware.",
+    "category_id": "ca8e62db-af7b-55a5-b668-48f0f26a1c16",
+    "category": "Lighting/Street & Outdoor/Street Lamps",
+    "collections": [
+      "hidden_alley"
+    ],
+    "attributes": {
+      "condition": [
+        "weathered"
+      ],
+      "material": [
+        "metal",
+        "glass"
+      ]
+    },
+    "img_version": "c103ab4f",
+    "download_count": 32731,
+    "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/street_lamp_01.png?width=256&height=256&format=webp&v=c103ab4f"
+  },
+  "asset_api_sha256": "131cb59a1e7bf025beb1961e134d3438f45b8b17c59976c39811075dedcdd62b"
+}

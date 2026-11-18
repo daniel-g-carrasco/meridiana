@@ -1,0 +1,44 @@
+{
+ "geometry": "AdnQywADAAAAAAAA////+gAAB38AAAQIAAAACQAAACAAAAd2AAAD/gAAAAACAAAAB4AAAAAAAAAAFwAAB38AAAQI",
+ "state": "AAAA/wAAAAD9AAAAAwAAAAAAAAIuAAACkvwCAAAAAfsAAAAOAHAAcgBvAGoAZQBjAHQAAAAAdQAAApIAAABhAQAABQAAAAEAAAHuAAACYvwCAAAAAfwAAAB1AAACYgAAAMcA////+gAAAAEBAAAAAvsAAAAcAGEAcwBzAGkAcwB0AGEAbgB0AF8AZABvAGMAawAAAAAA/////wAAAFQBAAAX/AAABdMAAAGZAAABEAD////8AgAAAAL7AAAAFABwAHIAbwBwAGUAcgB0AGkAZQBzAQAAAAD/////AAAAxwEAAAX7AAAACABoAGUAbABwAAAAAAAAAAEnAAAAvwEAAAUAAAADAAAHgAAAAO/8AQAAAAH7AAAADABjAGgAZQBjAGsAcwEAAAAAAAAHgAAAApoBAAAjAAAFigAAAmIAAAAEAAAABAAAAAgAAAAI/AAAAAEAAAACAAAAAQAAAAoAdABvAG8AbABzAAAAAAD/////AAAAAAAAAAA=",
+ "split": "AAAA/wAAAAEAAAACAAACgAAAAccB/////wEAAAABAA==",
+ "view": "both",
+ "assistant": {
+  "model": [
+   "right",
+   "bottom",
+   125,
+   100
+  ],
+  "plant": [
+   "right",
+   "bottom",
+   125,
+   100
+  ],
+  "production": [
+   "right",
+   "bottom",
+   125,
+   100
+  ],
+  "consumption": [
+   "right",
+   "bottom",
+   125,
+   100
+  ],
+  "economics": [
+   "right",
+   "bottom",
+   125,
+   100
+  ],
+  "report": [
+   "right",
+   "bottom",
+   125,
+   100
+  ]
+ }
+}

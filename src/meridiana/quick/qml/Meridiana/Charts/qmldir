@@ -1,0 +1,19 @@
+module Meridiana.Charts
+ChartGuide 1.0 ChartGuide.qml
+InactiveInspector 1.0 InactiveInspector.qml
+ResultForm 1.0 ResultForm.qml
+BillsGrid 1.0 BillsGrid.qml
+ResultInspector 1.0 ResultInspector.qml
+ProductionInspector 1.0 ProductionInspector.qml
+ConsumptionInspector 1.0 ConsumptionInspector.qml
+EconomicsInspector 1.0 EconomicsInspector.qml
+Chart 1.0 Chart.qml
+ResultTable 1.0 ResultTable.qml
+ResultsPage 1.0 ResultsPage.qml
+ProductionPage 1.0 ProductionPage.qml
+ConsumptionPage 1.0 ConsumptionPage.qml
+EconomicsPage 1.0 EconomicsPage.qml
+StoragePage 1.0 StoragePage.qml
+ResultProperties 1.0 ResultProperties.qml
+Formula 1.0 Formula.qml
+Pedigree 1.0 Pedigree.qml

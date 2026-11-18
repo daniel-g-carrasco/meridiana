@@ -1,0 +1,9 @@
+module Meridiana.Properties
+ScrollEdges 1.0 ScrollEdges.qml
+PropertiesPage 1.0 PropertiesPage.qml
+PropertyForm 1.0 PropertyForm.qml
+PropertyEditor 1.0 PropertyEditor.qml
+ElidedLabel 1.0 ElidedLabel.qml
+RowList 1.0 RowList.qml
+FieldGrid 1.0 FieldGrid.qml
+PedigreePage 1.0 PedigreePage.qml

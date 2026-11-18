@@ -1,0 +1,408 @@
+{
+ "name": "Parcheggio Rho",
+ "job_id": "",
+ "series_id": "",
+ "bim_id": "6d1e1b52-8a49-5a52-9a3a-3a0f4a6c0b21",
+ "site": {
+  "lat": 45.4642,
+  "lon": 9.19,
+  "address": "Rho (MI)"
+ },
+ "climate": {},
+ "sun_window": {
+  "month": 12,
+  "day": 21,
+  "start": 10.0,
+  "end": 14.0,
+  "step_minutes": 10
+ },
+ "buildings": [],
+ "exclusions": [],
+ "consumption": {},
+ "rules": {},
+ "network": {
+  "distributor": "",
+  "pod": "",
+  "voltage_v": 0.0,
+  "phases": "",
+  "level": "",
+  "connection": "",
+  "available_kw": 0.0,
+  "requested_kw": 0.0,
+  "practice_code": ""
+ },
+ "variants": [
+  {
+   "id": "v1",
+   "name": "Base",
+   "note": "",
+   "design": {
+    "subfields": [
+     {
+      "id": "s1",
+      "name": "Fila A",
+      "ring": [
+       [
+        10.0,
+        5.0
+       ],
+       [
+        18.66025403784439,
+        10.0
+       ],
+       [
+        16.16025403784439,
+        14.330127018922195
+       ],
+       [
+        7.5,
+        9.330127018922195
+       ]
+      ],
+      "building": null,
+      "pitch": null,
+      "module": "generic-450",
+      "params": {
+       "mounting": "canopy",
+       "tilt": 8.0,
+       "azimuth": -30.0,
+       "edge": 0.2,
+       "stand_off": 0.1
+      },
+      "filled": true,
+      "removed": [],
+      "rows": [],
+      "manual": false,
+      "support": {
+       "enabled": true,
+       "tilt": 8.0,
+       "azimuth": -30.0,
+       "z0": 3.051352086755979,
+       "x0": 13.080127018922195,
+       "y0": 9.665063509461097
+      }
+     },
+     {
+      "id": "s2",
+      "name": "Fila B1",
+      "ring": [
+       [
+        40.0,
+        0.0
+       ],
+       [
+        55.0,
+        0.0
+       ],
+       [
+        55.0,
+        5.5
+       ],
+       [
+        40.0,
+        5.5
+       ]
+      ],
+      "building": null,
+      "pitch": null,
+      "module": "generic-450",
+      "params": {
+       "mounting": "canopy",
+       "tilt": 5.0,
+       "azimuth": 0.0,
+       "edge": 0.2,
+       "stand_off": 0.1
+      },
+      "filled": true,
+      "removed": [],
+      "rows": [],
+      "manual": false,
+      "support": {
+       "enabled": true,
+       "tilt": 5.0,
+       "azimuth": 0.0,
+       "z0": 2.740593824696291,
+       "x0": 47.5,
+       "y0": 2.75
+      }
+     },
+     {
+      "id": "s3",
+      "name": "Fila B2",
+      "ring": [
+       [
+        40.0,
+        5.5
+       ],
+       [
+        55.0,
+        5.5
+       ],
+       [
+        55.0,
+        11.0
+       ],
+       [
+        40.0,
+        11.0
+       ]
+      ],
+      "building": null,
+      "pitch": null,
+      "module": "generic-450",
+      "params": {
+       "mounting": "canopy",
+       "tilt": 5.0,
+       "azimuth": -180.0,
+       "edge": 0.2,
+       "stand_off": 0.1
+      },
+      "filled": true,
+      "removed": [],
+      "rows": [],
+      "manual": false,
+      "support": {
+       "enabled": true,
+       "tilt": 5.0,
+       "azimuth": -180.0,
+       "z0": 2.740593824696291,
+       "x0": 47.5,
+       "y0": 8.25
+      }
+     },
+     {
+      "id": "s4",
+      "name": "Fila C",
+      "ring": [
+       [
+        0.0,
+        40.0
+       ],
+       [
+        7.5,
+        40.0
+       ],
+       [
+        9.0,
+        46.0
+       ],
+       [
+        0.0,
+        45.0
+       ]
+      ],
+      "building": null,
+      "pitch": null,
+      "module": "generic-450",
+      "params": {
+       "mounting": "canopy",
+       "tilt": 10.0,
+       "azimuth": 0.0,
+       "edge": 0.2,
+       "stand_off": 0.1
+      },
+      "filled": true,
+      "removed": [],
+      "rows": [],
+      "manual": false,
+      "support": {
+       "enabled": true,
+       "tilt": 10.0,
+       "azimuth": 0.0,
+       "z0": 3.1408174517711624,
+       "x0": 3.75,
+       "y0": 42.5
+      }
+     }
+    ],
+    "modules": {
+     "generic-450": {
+      "manufacturer": "Generico",
+      "model": "450 W, 2278 x 1134 mm",
+      "length": 2.278,
+      "width": 1.134,
+      "power_kw": 0.45
+     },
+     "generic-550": {
+      "manufacturer": "Generico",
+      "model": "550 W, 2278 x 1134 mm",
+      "length": 2.278,
+      "width": 1.134,
+      "power_kw": 0.55
+     }
+    },
+    "energy": {},
+    "economics": {}
+   }
+  },
+  {
+   "id": "v2",
+   "name": "Senza la fila C",
+   "note": "",
+   "design": {
+    "subfields": [
+     {
+      "id": "s1",
+      "name": "Fila A",
+      "ring": [
+       [
+        10.0,
+        5.0
+       ],
+       [
+        18.66025403784439,
+        10.0
+       ],
+       [
+        16.16025403784439,
+        14.330127018922195
+       ],
+       [
+        7.5,
+        9.330127018922195
+       ]
+      ],
+      "building": null,
+      "pitch": null,
+      "module": "generic-450",
+      "params": {
+       "mounting": "canopy",
+       "tilt": 8.0,
+       "azimuth": -30.0,
+       "edge": 0.2,
+       "stand_off": 0.1
+      },
+      "filled": true,
+      "removed": [],
+      "rows": [],
+      "manual": false,
+      "support": {
+       "enabled": true,
+       "tilt": 8.0,
+       "azimuth": -30.0,
+       "z0": 3.051352086755979,
+       "x0": 13.080127018922195,
+       "y0": 9.665063509461097
+      }
+     },
+     {
+      "id": "s2",
+      "name": "Fila B1",
+      "ring": [
+       [
+        40.0,
+        0.0
+       ],
+       [
+        55.0,
+        0.0
+       ],
+       [
+        55.0,
+        5.5
+       ],
+       [
+        40.0,
+        5.5
+       ]
+      ],
+      "building": null,
+      "pitch": null,
+      "module": "generic-450",
+      "params": {
+       "mounting": "canopy",
+       "tilt": 5.0,
+       "azimuth": 0.0,
+       "edge": 0.2,
+       "stand_off": 0.1
+      },
+      "filled": true,
+      "removed": [],
+      "rows": [],
+      "manual": false,
+      "support": {
+       "enabled": true,
+       "tilt": 5.0,
+       "azimuth": 0.0,
+       "z0": 2.740593824696291,
+       "x0": 47.5,
+       "y0": 2.75
+      }
+     },
+     {
+      "id": "s3",
+      "name": "Fila B2",
+      "ring": [
+       [
+        40.0,
+        5.5
+       ],
+       [
+        55.0,
+        5.5
+       ],
+       [
+        55.0,
+        11.0
+       ],
+       [
+        40.0,
+        11.0
+       ]
+      ],
+      "building": null,
+      "pitch": null,
+      "module": "generic-450",
+      "params": {
+       "mounting": "canopy",
+       "tilt": 5.0,
+       "azimuth": -180.0,
+       "edge": 0.2,
+       "stand_off": 0.1
+      },
+      "filled": true,
+      "removed": [],
+      "rows": [],
+      "manual": false,
+      "support": {
+       "enabled": true,
+       "tilt": 5.0,
+       "azimuth": -180.0,
+       "z0": 2.740593824696291,
+       "x0": 47.5,
+       "y0": 8.25
+      }
+     }
+    ],
+    "modules": {
+     "generic-450": {
+      "manufacturer": "Generico",
+      "model": "450 W, 2278 x 1134 mm",
+      "length": 2.278,
+      "width": 1.134,
+      "power_kw": 0.45
+     },
+     "generic-550": {
+      "manufacturer": "Generico",
+      "model": "550 W, 2278 x 1134 mm",
+      "length": 2.278,
+      "width": 1.134,
+      "power_kw": 0.55
+     }
+    },
+    "energy": {},
+    "economics": {}
+   }
+  }
+ ],
+ "variant": "v1",
+ "underlays": [],
+ "report": {},
+ "resources": {},
+ "reserved": false,
+ "network_consent": {},
+ "created": "2026-10-30T10:00:00+00:00",
+ "modified": "2026-10-30T10:00:00+00:00",
+ "format": "meridiana-project",
+ "version": 20
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Meridiana IFC Export</Name>
+    <Assembly>PERCORSO_DELLA_DLL\MeridianaIfcExport.dll</Assembly>
+    <AddInId>6f3c2b1e-8e4a-4f6f-9a52-2d5f7a1c0b14</AddInId>
+    <FullClassName>MeridianaIfcExport.App</FullClassName>
+    <VendorId>MRDN</VendorId>
+    <VendorDescription>Meridiana, Daniel Grasso</VendorDescription>
+  </AddIn>
+</RevitAddIns>

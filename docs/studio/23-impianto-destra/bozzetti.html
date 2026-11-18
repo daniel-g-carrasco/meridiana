@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Impianto, scheda destra: bozzetti</title>
+<style>
+/* I colori e i raggi veri del tema chiaro di Meridiana (src/meridiana/theme_colors.py MERIDIANA_LIGHT, accento
+   bronzo; src/meridiana/ui/design.py Space, Radius, Type). Il «field» è il velo tonale calcolato dal tema:
+   qui approssimato. */
+:root {
+  --window: #f2f1ed; --panel: #f8f7f4; --card: #ffffff; --field: #ebe9e4; --field-hover: #e2dfd8;
+  --line: #d9d5cc; --line-soft: #e8e5de; --text: #1e1c19; --text2: #514c44; --muted: #6f685d;
+  --accent: #8b5a12; --good: #0ca30c; --warn: #b07a00; --warn-fill: #fab219; --bad: #d03b3b;
+  --select-bg: #e9dfcf;
+  --r-card: 8px; --r-control: 6px; --r-inner: 4px; --r-chip: 12px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--window); color: var(--text); font: 13px/1.35 Inter, "Segoe UI", system-ui, sans-serif; }
+.page { max-width: 1560px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+h2 { font-size: 18px; font-weight: 600; margin: 40px 0 6px; padding-top: 16px; border-top: 1px solid var(--line); }
+h3 { font-size: 14px; font-weight: 600; margin: 18px 0 6px; }
+p, li { color: var(--text2); }
+.lead { max-width: 900px; }
+.drafts { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.draft { width: 360px; }
+.draft.wide { width: 744px; }
+.draft .name { font-weight: 600; font-size: 14px; margin: 0 0 2px; }
+.draft .procon { font-size: 12px; color: var(--text2); margin: 0 0 8px; min-height: 48px; }
+.draft .procon b { color: var(--text); font-weight: 600; }
+.pro { color: var(--good); font-weight: 600; } .con { color: var(--bad); font-weight: 600; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+       color: var(--muted); border: 1px solid var(--line); border-radius: var(--r-chip); padding: 1px 8px; margin-left: 6px; vertical-align: middle; }
+.tag.rec { color: #fff; background: var(--accent); border-color: var(--accent); }
+
+/* la colonna destra: la scheda del pannello, 360 px come nelle schermate di Daniel */
+.panel { width: 360px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-card); padding: 6px; }
+.panel.tall { min-height: 420px; }
+.panel .title { font-weight: 600; font-size: 14px; padding: 4px 6px 8px; display: flex; justify-content: space-between; }
+.panel .title span:last-child { color: var(--muted); font-weight: 400; }
+.group { border: 1px solid var(--line); border-radius: var(--r-control); background: var(--panel); margin-bottom: 6px; overflow: hidden; }
+.group > .gh { background: var(--line-soft); padding: 5px 8px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.group > .gh .chev { width: 10px; height: 10px; display: inline-block; position: relative; }
+.group > .gh .chev::before { content: ""; position: absolute; left: 2px; top: 1px; width: 5px; height: 5px;
+   border-right: 1.7px solid var(--muted); border-bottom: 1.7px solid var(--muted); transform: rotate(45deg); }
+.group.closed > .gh .chev::before { transform: rotate(-45deg); left: 1px; top: 2px; }
+.group > .gh .help { margin-left: auto; width: 16px; height: 16px; border: 1px solid var(--line); border-radius: 8px;
+   font-size: 10px; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+.group > .gb { padding: 8px 12px 10px; }
+.group.flush > .gb { padding: 0; }
+.group.closed > .gb { display: none; }
+.group.fill { min-height: 380px; }
+.desc { color: var(--text2); }
+.sec { color: var(--text2); font-size: 12px; }
+.lbl { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 10px 0 4px; }
+.lbl:first-child { margin-top: 0; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: var(--r-control);
+       background: var(--field); border: 1px solid transparent; font-weight: 600; font-size: 13px; color: var(--text); white-space: nowrap; }
+.btn.ghost { background: transparent; font-weight: 400; color: var(--text2); }
+.btn.dis { color: #a39c90; background: transparent; }
+.btn.full { width: 100%; justify-content: center; }
+.btn.primary { background: var(--accent); color: #fff; }
+.btn .arrow { color: var(--muted); font-size: 10px; }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.tool { width: 28px; height: 28px; border-radius: var(--r-control); display: inline-flex; align-items: center; justify-content: center; color: var(--text2); }
+.tool.sm { width: 22px; height: 22px; border-radius: var(--r-inner); font-size: 12px; }
+.tool:hover, .tool.hot { background: rgba(30,28,25,.08); }
+.field { display: inline-flex; align-items: center; justify-content: space-between; height: 28px; padding: 0 8px;
+         border-radius: var(--r-control); background: var(--field); color: var(--text); gap: 8px; }
+.field .arrow { color: var(--muted); font-size: 10px; }
+.field.w { width: 100%; }
+.form { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; }
+.form .k { color: var(--text); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 5px; }
+.dot.ok { background: var(--good); } .dot.warn { background: var(--warn-fill); } .dot.bad { background: var(--bad); } .dot.free { background: transparent; border: 1px solid var(--line); }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
+.chip { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 11px; font-size: 12px; background: var(--field); color: var(--text2); }
+.chip.ok { background: #e2f4e2; color: #0a6f0a; } .chip.warn { background: #fbefcf; color: var(--warn); } .chip.bad { background: #f9e0e0; color: var(--bad); }
+.tile { background: var(--field); border-radius: var(--r-card); padding: 8px 10px; margin-bottom: 6px; }
+.tile.sel { outline: 2px solid var(--accent); outline-offset: -2px; }
+.handle { color: #b5aea2; cursor: grab; letter-spacing: -2px; font-size: 14px; margin-right: 4px; }
+.num { display: inline-flex; width: 20px; height: 20px; border-radius: 10px; background: var(--text2); color: #fff;
+       font-size: 11px; font-weight: 600; align-items: center; justify-content: center; margin-right: 6px; }
+.menu { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); padding: 4px; width: 210px;
+        box-shadow: none; font-size: 13px; }
+.menu div { padding: 6px 24px 6px 8px; border-radius: var(--r-inner); }
+.menu div.sel { background: rgba(30,28,25,.08); }
+.menu hr { border: 0; border-top: 1px solid var(--line-soft); margin: 4px 0; }
+.menu .danger { color: var(--bad); }
+.ital { font-style: italic; }
+/* tabelle: la vista bianca con angoli 6 (le tabelle «vere» dentro le schede sono bandite dal sistema grafico, qui
+   l'elenco è alto quanto le righe e scorre con la scheda) */
+table.t { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--card); border: 1px solid var(--line-soft);
+          border-radius: var(--r-control); overflow: hidden; font-size: 12px; }
+table.t th { background: var(--field); color: var(--text2); font-weight: 400; text-align: right; padding: 4px 8px; border-bottom: 1px solid var(--line-soft); font-size: 11px; }
+table.t th:first-child, table.t td:first-child { text-align: left; }
+table.t td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--line-soft); white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.t tr:last-child td { border-bottom: none; }
+table.t tr.sub td { background: var(--panel); color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 5px 8px 3px; }
+table.t tr.sel td { background: var(--select-bg); }
+table.t td.c { text-align: center; }
+.cell-ok { color: var(--good); } .cell-warn { color: var(--warn); font-weight: 600; } .cell-bad { color: var(--bad); font-weight: 600; }
+/* barre di margine */
+.gauge { position: relative; height: 6px; background: var(--line-soft); border-radius: 3px; overflow: hidden; }
+.gauge > i { position: absolute; top: 0; bottom: 0; background: var(--good); border-radius: 3px; }
+.gauge > i.warn { background: var(--warn-fill); } .gauge > i.bad { background: var(--bad); }
+.gauge > b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--text2); }
+.gauge > em { position: absolute; top: 0; bottom: 0; background: rgba(30,28,25,.10); }
+.gr { display: grid; grid-template-columns: 38px 1fr 64px; gap: 2px 8px; align-items: center; font-size: 11px; color: var(--text2); margin: 2px 0; }
+.gr .v { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+/* albero */
+.tree .n { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: var(--r-inner); }
+.tree .n.sel { background: var(--select-bg); }
+.tree .n .r { margin-left: auto; color: var(--text2); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tree .l1 { padding-left: 6px; font-weight: 600; }
+.tree .l2 { padding-left: 22px; }
+.tree .l3 { padding-left: 42px; }
+.tree .cv { width: 10px; height: 10px; display: inline-block; position: relative; }
+.tree .cv::before { content: ""; position: absolute; left: 2px; top: 1px; width: 5px; height: 5px; border-right: 1.7px solid var(--muted); border-bottom: 1.7px solid var(--muted); transform: rotate(45deg); }
+.tree .cv.cl::before { transform: rotate(-45deg); left: 1px; top: 2px; }
+/* griglia di schede ingresso */
+.mgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mcard { background: var(--card); border: 1px solid var(--line-soft); border-radius: var(--r-control); padding: 6px 8px; font-size: 12px; }
+.mcard.sel { border-color: var(--accent); }
+.mcard .h { display: flex; justify-content: space-between; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.mcard .s { display: flex; justify-content: space-between; color: var(--text2); padding: 1px 0; }
+.mcard .s.sel { background: var(--select-bg); margin: 0 -4px; padding: 1px 4px; border-radius: 3px; }
+.mcard .free { color: var(--muted); font-style: italic; }
+/* unifilare */
+svg text { font: 11px Inter, "Segoe UI", system-ui, sans-serif; fill: var(--text2); }
+svg text.b { font-weight: 600; fill: var(--text); }
+/* riquadro «com'è oggi» */
+.today { position: relative; }
+.today::after { content: "OGGI"; position: absolute; top: -9px; right: 12px; font-size: 10px; font-weight: 600; letter-spacing: .06em; color: #fff; background: var(--bad); padding: 1px 6px; border-radius: 8px; }
+.after { position: relative; }
+.after::after { content: "PROPOSTA"; position: absolute; top: -9px; right: 12px; font-size: 10px; font-weight: 600; letter-spacing: .06em; color: #fff; background: var(--good); padding: 1px 6px; border-radius: 8px; }
+.note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.words { width: 100%; border-collapse: collapse; max-width: 1100px; }
+.words th, .words td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.words th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+.words td.old { color: var(--muted); }
+.words td.new { font-weight: 600; white-space: nowrap; }
+.words td.txt { color: var(--text2); }
+kbd { font: 11px Inter, system-ui; background: var(--field); border-radius: 3px; padding: 0 4px; color: var(--text2); }
+.preview { background: var(--card); border: 1px solid var(--line-soft); border-radius: var(--r-control); padding: 8px 10px; margin: 8px 0 6px; }
+.preview .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.popover { width: 340px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); padding: 12px; }
+.popover h4 { margin: 0 0 2px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="page">
+<h1>Impianto, scheda di destra: bozzetti</h1>
+<p class="lead">Studio 23 (R296, R297, R298, R307, R308), 02/11/2026. Colonna di 360 px come nelle schermate di Daniel; colori
+e raggi del tema chiaro (accento bronzo); dati dell'impianto di prova: 736 moduli Trina Vertex S+ 450 W (331,2 kWp),
+2 × Huawei SUN2000-100KTL-M2 da 100 kW e 10 MPPT (200 kW AC, DC/AC 1,66), 36 stringhe di 18-22 moduli. Le tensioni e le
+correnti vengono dalle verifiche del programma sullo stesso impianto (cartella <code>foto/</code>): Uoc a -10 °C,
+Umpp alla cella a 60 e a 20 °C, finestra MPPT 200-1000 V, 26 A per MPPT.</p>
+
+<!-- ============================================================ 0. PANNELLI -->
+<h2>0. Pannelli: il gruppo che si chiude davvero e il testo con il suo margine</h2>
+<p class="lead">Oggi (schermate 35 e 36) il gruppo chiuso resta alto tutta la colonna e il testo libero tocca il bordo. Dal codice
+(<code>PlantSide._opened</code>): la sezione aperta prende lo <i>stretch</i> 1 della colonna; quando si chiude con un clic
+nessun'altra si apre, lo stretch resta suo e il riquadro vuoto si allunga. Il testo tocca il bordo perché il layout
+delle tre sezioni ha margini 0 e la frase è messa lì direttamente, mentre i gruppi interni dell'inverter hanno il
+loro padding.</p>
+<div class="drafts">
+  <div class="draft">
+    <p class="name">Com'è</p>
+    <p class="procon">Chiuso ma alto tutta la colonna; aperto, la frase senza margine a sinistra né sopra.</p>
+    <div class="panel tall today">
+      <div class="title"><span>Impianto</span><span>✕</span></div>
+      <div class="group closed fill"><div class="gh"><span class="chev"></span>Pannelli</div><div class="gb"></div></div>
+      <div class="group closed"><div class="gh"><span class="chev"></span>Inverter</div></div>
+      <div class="group closed"><div class="gh"><span class="chev"></span>Accumulo</div></div>
+    </div>
+    <div class="panel today" style="margin-top:16px">
+      <div class="title"><span>Impianto</span><span>✕</span></div>
+      <div class="group flush"><div class="gh"><span class="chev"></span>Pannelli</div>
+        <div class="gb" style="height:120px;display:flex;align-items:flex-end"><span class="desc">Seleziona un sottocampo in pianta per vederne qui la posa, oppure disegnane uno con «Sottocampo».</span></div></div>
+      <div class="group closed"><div class="gh"><span class="chev"></span>Inverter</div></div>
+      <div class="group closed"><div class="gh"><span class="chev"></span>Accumulo</div></div>
+    </div>
+  </div>
+  <div class="draft">
+    <p class="name">Come sarà</p>
+    <p class="procon">Chiuso = solo intestazione, lo spazio libero va in fondo (stretch finale). Testo libero in stile <i>description</i>
+      con margine 12 px ai lati e 8 sopra e sotto: una regola del corpo di ogni sezione, non della frase.</p>
+    <div class="panel tall after">
+      <div class="title"><span>Impianto</span><span>✕</span></div>
+      <div class="group closed"><div class="gh"><span class="chev"></span>Pannelli</div></div>
+      <div class="group closed"><div class="gh"><span class="chev"></span>Inverter</div></div>
+      <div class="group closed"><div class="gh"><span class="chev"></span>Accumulo</div></div>
+    </div>
+    <div class="panel after" style="margin-top:16px">
+      <div class="title"><span>Impianto</span><span>✕</span></div>
+      <div class="group"><div class="gh"><span class="chev"></span>Pannelli<span class="help">?</span></div>
+        <div class="gb">
+          <div class="desc">Nessun sottocampo selezionato.</div>
+          <div class="sec" style="margin-top:4px">Clicca un sottocampo in pianta per vederne qui la posa, oppure disegnane uno con «Sottocampo».</div>
+          <div class="lbl" style="margin-top:12px">Impianto</div>
+          <div>736 moduli · 331,2 kWp · 2 sottocampi</div>
+        </div></div>
+      <div class="group closed"><div class="gh"><span class="chev"></span>Inverter</div></div>
+      <div class="group closed"><div class="gh"><span class="chev"></span>Accumulo</div></div>
+    </div>
+    <p class="note">La stessa regola vale per «Nessuna batteria» in Accumulo (foto 06: anche lì il testo tocca il bordo).</p>
+  </div>
+</div>
+
+<!-- ============================================================ 1. INVERTER -->
+<h2>1. Inverter: l'elenco degli inverter attivi</h2>
+<p class="lead">Oggi tre gruppi dicono la stessa cosa (Inverter attivi, Inverter in lavorazione, Tutti gli inverter, l'ultimo nascosto
+sotto un pulsante in fondo alle stringhe) e l'elenco è per <i>modello</i> (× 2), non per inverter fisico: non si rinomina,
+non si ordina, non si vede la scheda. Nei bozzetti l'elenco è uno solo, per inverter fisico, e l'inverter evidenziato è
+quello «in lavorazione» che la sottoscheda Stringhe mostra.</p>
+<div class="drafts">
+  <div class="draft">
+    <p class="name">I-A. Schede per inverter <span class="tag rec">consigliato</span></p>
+    <p class="procon"><span class="pro">Pro</span> tutto su ogni scheda: nome, modello, stringhe, stato, DC/AC suo; il menu ⋯ raccoglie
+      rinomina, ordine, scheda, rimozione. <span class="con">Contro</span> alto con 6+ inverter (a 10 scorre).</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Inverter<span class="help">?</span></div>
+        <div class="gb">
+          <div class="desc" style="margin-bottom:8px">2 inverter · 200 kW AC · 331,2 kWp · DC/AC <b style="color:var(--warn)">1,66</b> <span class="sec">(oltre 1,30: taglio di potenza probabile)</span></div>
+          <div class="tile sel">
+            <div style="display:flex;align-items:center"><span class="handle">⋮⋮</span><span class="num">1</span><b>Capannone</b><span class="tool sm" style="margin-left:auto" title="Menu">⋯</span></div>
+            <div class="sec" style="margin:2px 0 0 30px">Huawei SUN2000-100KTL-M2 · 100 kW · 10 MPPT</div>
+            <div style="margin:4px 0 0 30px"><span class="dot warn"></span>20 stringhe su 10 MPPT · 400 moduli · 180 kWp · DC/AC 1,80</div>
+          </div>
+          <div class="tile">
+            <div style="display:flex;align-items:center"><span class="handle">⋮⋮</span><span class="num">2</span><b>Tettoia</b><span class="tool sm" style="margin-left:auto">⋯</span></div>
+            <div class="sec" style="margin:2px 0 0 30px">Huawei SUN2000-100KTL-M2 · 100 kW · 10 MPPT</div>
+            <div style="margin:4px 0 0 30px"><span class="dot ok"></span>16 stringhe su 8 MPPT · 336 moduli · 151,2 kWp · DC/AC 1,51</div>
+          </div>
+          <div class="btns"><span class="btn">Catalogo…</span><span class="btn">Scegli in automatico…</span></div>
+        </div></div>
+      <div style="margin:10px 0 0 110px" class="menu">
+        <div>Rinomina <span style="float:right;color:var(--muted)">F2</span></div>
+        <div>Sposta su</div><div>Sposta giù</div>
+        <hr><div>Scheda tecnica…</div><div class="sel">Stringa questo inverter…</div><div>Svuota le sue stringhe</div>
+        <hr><div class="danger">Togli dall'impianto</div>
+      </div>
+      <p class="note">Il menu ⋯ della scheda 1 aperto. Doppio clic o F2 sul nome: campo di testo al suo posto. Le schede si trascinano
+        per la maniglia ⋮⋮ (o Sposta su/giù); l'ordine è il numero dell'inverter nelle stringhe (1.3.2 → 2.3.2 se scambiati, con avviso).</p>
+    </div>
+  </div>
+  <div class="draft">
+    <p class="name">I-B. Righe compatte con barra dei comandi</p>
+    <p class="procon"><span class="pro">Pro</span> compatto (una riga per inverter, 10 inverter stanno in 300 px); i comandi sotto agiscono sulla riga
+      scelta, sempre visibili. <span class="con">Contro</span> meno informazioni a vista; scheda tecnica in un riquadro a parte.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Inverter<span class="help">?</span></div>
+        <div class="gb">
+          <div class="desc" style="margin-bottom:6px">2 inverter · 200 kW AC · DC/AC <b style="color:var(--warn)">1,66</b></div>
+          <table class="t">
+            <tr><th>#</th><th style="text-align:left">Nome</th><th>kW</th><th>Str.</th><th>kWp</th><th></th></tr>
+            <tr class="sel"><td>1</td><td style="text-align:left"><b>Capannone</b> <span class="sec">SUN2000-100KTL-M2</span></td><td>100</td><td>20</td><td>180,0</td><td class="c"><span class="dot warn" style="margin:0"></span></td></tr>
+            <tr><td>2</td><td style="text-align:left"><b>Tettoia</b> <span class="sec">SUN2000-100KTL-M2</span></td><td>100</td><td>16</td><td>151,2</td><td class="c"><span class="dot ok" style="margin:0"></span></td></tr>
+          </table>
+          <div style="display:flex;gap:2px;margin-top:6px;align-items:center">
+            <span class="tool" title="Sposta su">↑</span><span class="tool" title="Sposta giù">↓</span><span class="tool" title="Rinomina">✎</span>
+            <span class="tool" title="Scheda tecnica">ⓘ</span><span class="tool" title="Togli dall'impianto">✕</span>
+            <span class="btn" style="margin-left:auto">Stringa…</span>
+          </div>
+          <div class="lbl" style="margin-top:12px">Inverter 1 · Capannone</div>
+          <div class="sec">Huawei SUN2000-100KTL-M2 · 100 kW AC · 10 MPPT, 2 stringhe per MPPT · 26 A per MPPT · 200-1000 V · Umax 1100 V</div>
+          <div class="sec" style="margin-top:4px">20 stringhe su 10 MPPT · 400 moduli · 180 kWp · DC/AC 1,80</div>
+          <div class="btns"><span class="btn">Catalogo…</span><span class="btn">Scegli in automatico…</span></div>
+        </div></div>
+    </div>
+  </div>
+  <div class="draft">
+    <p class="name">Scheda tecnica (dal menu, uguale per I-A e I-B)</p>
+    <p class="procon">Una finestrella non modale con i dati del catalogo che le verifiche usano; da qui «Apri il datasheet» se il record ha l'indirizzo.</p>
+    <div class="popover">
+      <h4>Huawei SUN2000-100KTL-M2</h4>
+      <div class="sec" style="margin-bottom:8px">Inverter 1 · Capannone · dal catalogo (scheda tecnica del costruttore)</div>
+      <table class="t">
+        <tr><td style="text-align:left">Potenza AC nominale</td><td>100 kW</td></tr>
+        <tr><td style="text-align:left">Rendimento europeo</td><td>98,4 %</td></tr>
+        <tr><td style="text-align:left">Tensione DC massima</td><td>1100 V</td></tr>
+        <tr><td style="text-align:left">Finestra MPPT</td><td>200-1000 V</td></tr>
+        <tr><td style="text-align:left">MPPT · stringhe per MPPT</td><td>10 · 2</td></tr>
+        <tr><td style="text-align:left">Corrente massima per MPPT</td><td>26 A</td></tr>
+        <tr><td style="text-align:left">Isc massima per MPPT</td><td>40 A</td></tr>
+        <tr><td style="text-align:left">Fasi</td><td>3</td></tr>
+      </table>
+      <div class="btns"><span class="btn ghost">Apri il datasheet</span><span class="btn" style="margin-left:auto">Chiudi</span></div>
+    </div>
+  </div>
+</div>
+
+<h3>La stringatura automatica di un solo inverter: due modi di agganciarla</h3>
+<p class="lead">Daniel: «la sottoscheda inverter dovrebbe più servire a fare la stringatura automatica del singolo inverter,
+specificando il rapporto tra AC e CC». Oggi il rapporto DC/AC (campo «quando dimensionato da sé», 1,10) serve solo a
+«Dimensiona» e all'inverter fittizio quando nessuno è scelto; l'impianto reale a 1,66 non riceve alcun avviso
+finché l'anno non è calcolato. Qui il rapporto diventa l'obiettivo della stringatura di un inverter.</p>
+<div class="drafts">
+  <div class="draft">
+    <p class="name">S-1. Pannellino che si apre sotto la scheda dell'inverter <span class="tag rec">consigliato</span></p>
+    <p class="procon"><span class="pro">Pro</span> resta nel contesto, l'anteprima si legge accanto alla scheda; niente finestre.
+      <span class="con">Contro</span> allunga la colonna mentre è aperto.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Inverter<span class="help">?</span></div>
+        <div class="gb">
+          <div class="tile sel">
+            <div style="display:flex;align-items:center"><span class="handle">⋮⋮</span><span class="num">2</span><b>Tettoia</b><span class="tool sm hot" style="margin-left:auto">⋯</span></div>
+            <div class="sec" style="margin:2px 0 0 30px">Huawei SUN2000-100KTL-M2 · 100 kW · 10 MPPT</div>
+            <div style="margin:4px 0 0 30px"><span class="dot free"></span>nessuna stringa · 0 kWp</div>
+            <div style="margin:10px 0 0 0;border-top:1px solid var(--line);padding-top:8px">
+              <div class="lbl">Stringa questo inverter</div>
+              <div class="sec" style="margin-bottom:8px">Meridiana riempie gli MPPT dell'inverter 2 con i moduli indicati, in stringhe valide
+                per la sua finestra di tensione e le sue correnti, fermandosi vicino al rapporto DC/AC chiesto. Le stringhe degli altri inverter non cambiano.</div>
+              <div class="form">
+                <span class="k">Moduli da usare</span><span class="field"><span>Selezionati in pianta (336)</span><span class="arrow">▼</span></span>
+                <span class="k">Rapporto DC/AC voluto</span><span class="field" style="width:110px"><span>1,25</span><span class="arrow">▲▼</span></span>
+                <span class="k">Moduli in serie</span><span class="field" style="width:110px"><span>suggerito</span><span class="arrow">▲▼</span></span>
+                <span class="k">Percorso</span><span class="field"><span>Avanti e indietro</span><span class="arrow">▼</span></span>
+              </div>
+              <div class="preview">
+                <div class="k">Anteprima</div>
+                <div>16 stringhe da 21 moduli su 8 MPPT · 336 moduli · 151,2 kWp</div>
+                <div><span class="dot warn"></span>DC/AC 1,51: sopra l'1,25 chiesto, i moduli bastano per 1,51; togliere 58 moduli o aggiungere un inverter</div>
+                <div><span class="dot ok"></span>Uoc 916 V di 1100 · Umpp 641-715 V nella finestra 200-1000 · 26,8 A di 26 A per MPPT (l'inverter limita)</div>
+              </div>
+              <div class="btns"><span class="btn primary">Applica</span><span class="btn ghost">Annulla</span><span class="sec" style="margin-left:auto;align-self:center">un passo di Annulla</span></div>
+            </div>
+          </div>
+        </div></div>
+    </div>
+  </div>
+  <div class="draft">
+    <p class="name">S-2. Finestrella «Stringa l'inverter» con la scala del rapporto</p>
+    <p class="procon"><span class="pro">Pro</span> spazio per spiegare e per la scala 1,00-1,50 colorata (verde 1,10-1,30, come PVsyst 1,25-1,30);
+      funziona anche per «tutto l'impianto». <span class="con">Contro</span> una finestra in più; l'anteprima non è accanto alla pianta.</p>
+    <div class="popover">
+      <h4>Stringa l'inverter 2 · Tettoia</h4>
+      <div class="sec" style="margin-bottom:10px">Huawei SUN2000-100KTL-M2 · 100 kW · 10 MPPT, 2 stringhe per MPPT</div>
+      <div class="form">
+        <span class="k">Moduli da usare</span><span class="field"><span>Sottocampo «Tettoia» (336)</span><span class="arrow">▼</span></span>
+        <span class="k">Moduli in serie</span><span class="field" style="width:140px"><span>suggerito (21)</span><span class="arrow">▲▼</span></span>
+        <span class="k">Percorso delle stringhe</span><span class="field"><span>Una fila per MPPT</span><span class="arrow">▼</span></span>
+      </div>
+      <div class="lbl" style="margin-top:12px">Rapporto DC/AC voluto: 1,25</div>
+      <div class="gauge" style="height:8px;margin:6px 0 2px"><em style="left:0;width:20%"></em><i style="left:20%;width:40%"></i><em style="left:60%;right:0"></em><b style="left:50%"></b></div>
+      <div style="display:flex;justify-content:space-between" class="sec"><span>1,00</span><span>1,10</span><span>1,30</span><span>1,50</span></div>
+      <div class="sec" style="margin-top:6px">Potenza dei moduli su potenza AC dell'inverter. Fra 1,10 e 1,30 l'inverter lavora pieno senza tagliare quasi nulla;
+        sopra, taglia nelle ore migliori (il taglio reale si vede dopo il calcolo della produzione).</div>
+      <div class="preview">
+        <div class="k">Cosa farà Meridiana</div>
+        <div>16 stringhe da 21 moduli su 8 MPPT (2 MPPT liberi) · 151,2 kWp · DC/AC <b style="color:var(--warn)">1,51</b></div>
+        <div class="sec">Per restare a 1,25 servono 278 moduli: 58 restano fuori stringa, oppure si aggiunge un inverter.</div>
+      </div>
+      <div class="btns"><span class="btn ghost">Annulla</span><span class="btn primary" style="margin-left:auto">Stringa</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ 2. STRINGHE -->
+<h2>2. Stringhe: cinque disegni davvero diversi</h2>
+<p class="lead">La sottoscheda risponde a tre domande, in quest'ordine: <b>su ogni ingresso quante stringhe ci sono e vanno bene?</b>
+(a colpo d'occhio), <b>quale stringa è quale</b> (nome, colore in pianta, moduli), <b>la stringa scelta regge le verifiche?</b>
+(numeri e articoli). Oggi la tabella di testa (7 colonne in 340 px, «MPP…» troncato, angoli squadrati) e l'elenco sotto
+ripetono le stesse cinque righe per ciascuno dei 10 ingressi. Tutti i disegni mostrano l'inverter 1 «Capannone»; la stringa
+scelta è la 1.3.2 (MPPT 3, seconda stringa); l'MPPT 9 ha due stringhe di lunghezza diversa (20 e 18) e l'MPPT 10 una sola di 22.</p>
+<div class="drafts">
+
+  <!-- A. ALBERO -->
+  <div class="draft">
+    <p class="name">A. Albero: inverter › ingresso › stringa</p>
+    <p class="procon"><span class="pro">Pro</span> un solo elenco, familiare (come l'albero del progetto); gli ingressi si chiudono; il bilancio dell'ingresso sulla sua riga.
+      <span class="con">Contro</span> con 10 MPPT aperti sono 30 righe; i numeri stanno solo nel suggerimento.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Stringhe<span class="help">?</span></div>
+        <div class="gb tree" style="padding:6px 6px 10px">
+          <div class="n l1"><span class="cv"></span>Inverter 1 · Capannone<span class="r"><span class="dot warn"></span>20 str · 180 kWp</span></div>
+          <div class="n l2"><span class="cv cl"></span>MPPT 1<span class="r"><span class="dot warn"></span>2/2 · 20+20</span></div>
+          <div class="n l2"><span class="cv cl"></span>MPPT 2<span class="r"><span class="dot warn"></span>2/2 · 20+20</span></div>
+          <div class="n l2"><span class="cv"></span>MPPT 3<span class="r"><span class="dot warn"></span>2/2 · 20+20</span></div>
+          <div class="n l3"><span class="sw" style="background:#2a5ea8"></span>1.3.1<span class="r">20 mod · 872 V · <span class="dot warn" style="margin:0"></span></span></div>
+          <div class="n l3 sel"><span class="sw" style="background:#a4482b"></span>1.3.2<span class="r">20 mod · 872 V · <span class="dot warn" style="margin:0"></span></span></div>
+          <div class="n l3 sec" style="color:var(--muted)">＋ nuova stringa su MPPT 3</div>
+          <div class="n l2"><span class="cv cl"></span>MPPT 4<span class="r"><span class="dot warn"></span>2/2 · 20+20</span></div>
+          <div class="n l2"><span class="cv cl"></span>MPPT 5-8<span class="r"><span class="dot warn"></span>8 str · 20</span></div>
+          <div class="n l2"><span class="cv"></span>MPPT 9<span class="r"><span class="dot bad"></span>2/2 · 20+18</span></div>
+          <div class="n l3"><span class="sw" style="background:#5f6b1f"></span>1.9.1<span class="r">20 mod · 872 V</span></div>
+          <div class="n l3"><span class="sw" style="background:#5b4bb0"></span>1.9.2<span class="r">18 mod · 785 V · <span class="dot bad" style="margin:0"></span></span></div>
+          <div class="n l2"><span class="cv cl"></span>MPPT 10<span class="r"><span class="dot ok"></span>1/2 · 22</span></div>
+          <div class="n l1" style="margin-top:4px"><span class="cv cl"></span>Inverter 2 · Tettoia<span class="r"><span class="dot ok"></span>16 str · 151 kWp</span></div>
+        </div></div>
+      <p class="note">Sulla riga dell'ingresso: stringhe su quante ne prende, moduli in serie di ciascuna, il peggiore dei suoi stati. Sulla stringa: moduli, Uoc a -10 °C, stato.
+        «MPPT 5-8» è un'idea: ingressi uguali e tutti a posto si raggruppano finché non li apri.</p>
+    </div>
+  </div>
+
+  <!-- B. SCHEDE INGRESSO -->
+  <div class="draft">
+    <p class="name">B. Griglia di ingressi a schede <span class="tag rec">consigliato</span></p>
+    <p class="procon"><span class="pro">Pro</span> i 10 MPPT si vedono tutti in 200 px, come i morsetti sull'inverter; dove è libero si capisce subito;
+      la stringa scelta resta trovabile. <span class="con">Contro</span> due colonne strette: nomi corti, niente colonne di numeri.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Stringhe<span class="help">?</span></div>
+        <div class="gb">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="field" style="flex:1"><span>Inverter 1 · Capannone</span><span class="arrow">▼</span></span><span class="sec" style="white-space:nowrap">20 str · 180 kWp</span></div>
+          <div class="mgrid">
+            <div class="mcard"><div class="h"><span>MPPT 1</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#8b5a12"></span>1.1.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#2f6b4f"></span>1.1.2</span><span>20</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 2</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#1f6a7a"></span>1.2.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#8a3a6e"></span>1.2.2</span><span>20</span></div></div>
+            <div class="mcard sel"><div class="h"><span>MPPT 3</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#2a5ea8"></span>1.3.1</span><span>20</span></div><div class="s sel"><span><span class="sw" style="background:#a4482b"></span>1.3.2</span><span>20</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 4</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#4a4f57"></span>1.4.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#5f6b1f"></span>1.4.2</span><span>20</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 5</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#5b4bb0"></span>1.5.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#8b5a12"></span>1.5.2</span><span>20</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 6</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#2f6b4f"></span>1.6.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#1f6a7a"></span>1.6.2</span><span>20</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 7</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#8a3a6e"></span>1.7.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#2a5ea8"></span>1.7.2</span><span>20</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 8</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#a4482b"></span>1.8.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#4a4f57"></span>1.8.2</span><span>20</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 9</span><span class="dot bad" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#5f6b1f"></span>1.9.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#5b4bb0"></span>1.9.2</span><span style="color:var(--bad);font-weight:600">18</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 10</span><span class="dot ok" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#8b5a12"></span>1.10.1</span><span>22</span></div><div class="s free">＋ libero</div></div>
+          </div>
+          <div class="lbl" style="margin-top:12px">Stringa scelta · 1.3.2</div>
+          <div><span class="sw" style="background:#a4482b"></span>MPPT 3, seconda di 2 · 20 moduli · 9,0 kWp</div>
+          <div class="gr" style="margin-top:6px"><span>Uoc</span><div class="gauge"><i style="left:0;width:79%"></i><b style="left:100%"></b></div><span class="v">872 / 1100 V</span></div>
+          <div class="gr"><span>Umpp</span><div class="gauge"><em style="left:0;width:20%"></em><i style="left:61%;width:7%"></i></div><span class="v">610-681 V</span></div>
+          <div class="gr"><span>I MPPT</span><div class="gauge"><i class="warn" style="left:0;width:100%"></i><b style="left:97%"></b></div><span class="v">26,8 / 26 A</span></div>
+          <div class="sec" style="margin-top:6px"><span class="dot warn"></span>Corrente di MPPT 26,8 A su 26 A: l'inverter la limita e perde un poco di potenza (CEI 64-8/7 712.512)</div>
+          <div class="sec"><span class="dot ok"></span>Uoc a -10 °C entro la tensione massima dell'inverter e dei moduli</div>
+          <div class="sec"><span class="dot ok"></span>Umpp a 60 e a 20 °C dentro la finestra 200-1000 V</div>
+        </div></div>
+    </div>
+  </div>
+
+  <!-- C. UNIFILARE -->
+  <div class="draft">
+    <p class="name">C. Schema unifilare in miniatura</p>
+    <p class="procon"><span class="pro">Pro</span> è il disegno che l'elettrico ha in testa: inverter, MPPT come morsetti, stringhe come rami con i moduli;
+      lo si potrebbe stampare nella relazione. <span class="con">Contro</span> da disegnare a mano (QPainter), il clic sui rami è piccolo, poco spazio per i numeri.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Stringhe<span class="help">?</span></div>
+        <div class="gb" style="padding:6px 8px 8px">
+          <svg width="330" height="352" viewBox="0 0 330 352">
+            <rect x="262" y="14" width="60" height="330" rx="6" fill="var(--field)" stroke="var(--line)"/>
+            <text x="292.0" y="34" text-anchor="middle" class="b">Inv. 1</text>
+            <text x="292.0" y="48" text-anchor="middle">Capannone</text>
+            <text x="292.0" y="62" text-anchor="middle">100 kW</text>
+            <text x="292.0" y="325" text-anchor="middle">180 kWp</text>
+            <text x="292.0" y="338" text-anchor="middle">DC/AC 1,80</text>
+                        <g transform="translate(0,78)"><text x="204" y="-3">MPPT 1</text><line x1="262" y1="0" x2="198" y2="0" stroke="var(--text2)"/><line x1="198" y1="-6" x2="198" y2="6" stroke="var(--text2)"/><line x1="198" y1="-6" x2="150" y2="-6" stroke="#8b5a12" stroke-width="2"/><rect x="60" y="-11" width="90" height="10" rx="2" fill="#8b5a12"/><text x="56" y="-2" text-anchor="end">20</text><line x1="198" y1="6" x2="150" y2="6" stroke="#2f6b4f" stroke-width="2"/><rect x="60" y="1" width="90" height="10" rx="2" fill="#2f6b4f"/><text x="56" y="10" text-anchor="end">20</text><circle cx="271" cy="0" r="3.5" fill="#fab219"/></g>
+            <g transform="translate(0,102)"><text x="204" y="-3">MPPT 2</text><line x1="262" y1="0" x2="198" y2="0" stroke="var(--text2)"/><line x1="198" y1="-6" x2="198" y2="6" stroke="var(--text2)"/><line x1="198" y1="-6" x2="150" y2="-6" stroke="#1f6a7a" stroke-width="2"/><rect x="60" y="-11" width="90" height="10" rx="2" fill="#1f6a7a"/><text x="56" y="-2" text-anchor="end">20</text><line x1="198" y1="6" x2="150" y2="6" stroke="#8a3a6e" stroke-width="2"/><rect x="60" y="1" width="90" height="10" rx="2" fill="#8a3a6e"/><text x="56" y="10" text-anchor="end">20</text><circle cx="271" cy="0" r="3.5" fill="#fab219"/></g>
+            <g transform="translate(0,126)"><rect x="4" y="-13" width="254" height="26" rx="4" fill="var(--select-bg)"/><text x="204" y="-3" class="b">MPPT 3</text><line x1="262" y1="0" x2="198" y2="0" stroke="var(--text2)"/><line x1="198" y1="-6" x2="198" y2="6" stroke="var(--text2)"/><line x1="198" y1="-6" x2="150" y2="-6" stroke="#2a5ea8" stroke-width="2"/><rect x="60" y="-11" width="90" height="10" rx="2" fill="#2a5ea8"/><text x="56" y="-2" text-anchor="end">20</text><line x1="198" y1="6" x2="150" y2="6" stroke="#a4482b" stroke-width="3"/><rect x="60" y="1" width="90" height="10" rx="2" fill="#a4482b" stroke="var(--text)" stroke-width="1.5"/><text x="56" y="10" text-anchor="end" class="b">20 · 1.3.2</text><circle cx="271" cy="0" r="3.5" fill="#fab219"/></g>
+            <g transform="translate(0,150)"><text x="204" y="-3">MPPT 4</text><line x1="262" y1="0" x2="198" y2="0" stroke="var(--text2)"/><line x1="198" y1="-6" x2="198" y2="6" stroke="var(--text2)"/><line x1="198" y1="-6" x2="150" y2="-6" stroke="#4a4f57" stroke-width="2"/><rect x="60" y="-11" width="90" height="10" rx="2" fill="#4a4f57"/><text x="56" y="-2" text-anchor="end">20</text><line x1="198" y1="6" x2="150" y2="6" stroke="#5f6b1f" stroke-width="2"/><rect x="60" y="1" width="90" height="10" rx="2" fill="#5f6b1f"/><text x="56" y="10" text-anchor="end">20</text><circle cx="271" cy="0" r="3.5" fill="#fab219"/></g>
+            <g transform="translate(0,174)"><text x="204" y="-3">MPPT 5</text><line x1="262" y1="0" x2="198" y2="0" stroke="var(--text2)"/><line x1="198" y1="-6" x2="198" y2="6" stroke="var(--text2)"/><line x1="198" y1="-6" x2="150" y2="-6" stroke="#5b4bb0" stroke-width="2"/><rect x="60" y="-11" width="90" height="10" rx="2" fill="#5b4bb0"/><text x="56" y="-2" text-anchor="end">20</text><line x1="198" y1="6" x2="150" y2="6" stroke="#8b5a12" stroke-width="2"/><rect x="60" y="1" width="90" height="10" rx="2" fill="#8b5a12"/><text x="56" y="10" text-anchor="end">20</text><circle cx="271" cy="0" r="3.5" fill="#fab219"/></g>
+            <g transform="translate(0,198)"><text x="204" y="-3">MPPT 6</text><line x1="262" y1="0" x2="198" y2="0" stroke="var(--text2)"/><line x1="198" y1="-6" x2="198" y2="6" stroke="var(--text2)"/><line x1="198" y1="-6" x2="150" y2="-6" stroke="#2f6b4f" stroke-width="2"/><rect x="60" y="-11" width="90" height="10" rx="2" fill="#2f6b4f"/><text x="56" y="-2" text-anchor="end">20</text><line x1="198" y1="6" x2="150" y2="6" stroke="#1f6a7a" stroke-width="2"/><rect x="60" y="1" width="90" height="10" rx="2" fill="#1f6a7a"/><text x="56" y="10" text-anchor="end">20</text><circle cx="271" cy="0" r="3.5" fill="#fab219"/></g>
+            <g transform="translate(0,222)"><text x="204" y="-3">MPPT 7</text><line x1="262" y1="0" x2="198" y2="0" stroke="var(--text2)"/><line x1="198" y1="-6" x2="198" y2="6" stroke="var(--text2)"/><line x1="198" y1="-6" x2="150" y2="-6" stroke="#8a3a6e" stroke-width="2"/><rect x="60" y="-11" width="90" height="10" rx="2" fill="#8a3a6e"/><text x="56" y="-2" text-anchor="end">20</text><line x1="198" y1="6" x2="150" y2="6" stroke="#2a5ea8" stroke-width="2"/><rect x="60" y="1" width="90" height="10" rx="2" fill="#2a5ea8"/><text x="56" y="10" text-anchor="end">20</text><circle cx="271" cy="0" r="3.5" fill="#fab219"/></g>
+            <g transform="translate(0,246)"><text x="204" y="-3">MPPT 8</text><line x1="262" y1="0" x2="198" y2="0" stroke="var(--text2)"/><line x1="198" y1="-6" x2="198" y2="6" stroke="var(--text2)"/><line x1="198" y1="-6" x2="150" y2="-6" stroke="#a4482b" stroke-width="2"/><rect x="60" y="-11" width="90" height="10" rx="2" fill="#a4482b"/><text x="56" y="-2" text-anchor="end">20</text><line x1="198" y1="6" x2="150" y2="6" stroke="#4a4f57" stroke-width="2"/><rect x="60" y="1" width="90" height="10" rx="2" fill="#4a4f57"/><text x="56" y="10" text-anchor="end">20</text><circle cx="271" cy="0" r="3.5" fill="#fab219"/></g>
+            <g transform="translate(0,270)"><text x="204" y="-3">MPPT 9</text><line x1="262" y1="0" x2="198" y2="0" stroke="var(--text2)"/><line x1="198" y1="-6" x2="198" y2="6" stroke="var(--text2)"/><line x1="198" y1="-6" x2="150" y2="-6" stroke="#5f6b1f" stroke-width="2"/><rect x="60" y="-11" width="90" height="10" rx="2" fill="#5f6b1f"/><text x="56" y="-2" text-anchor="end">20</text><line x1="198" y1="6" x2="150" y2="6" stroke="#5b4bb0" stroke-width="2"/><rect x="69" y="1" width="81" height="10" rx="2" fill="#5b4bb0"/><text x="65" y="10" text-anchor="end" fill="var(--bad)" class="b">18</text><circle cx="271" cy="0" r="3.5" fill="#d03b3b"/></g>
+            <g transform="translate(0,294)"><text x="204" y="-3">MPPT 10</text><line x1="262" y1="0" x2="198" y2="0" stroke="var(--text2)"/><line x1="198" y1="-6" x2="198" y2="6" stroke="var(--text2)"/><line x1="198" y1="-6" x2="150" y2="-6" stroke="#8b5a12" stroke-width="2"/><rect x="51" y="-11" width="99" height="10" rx="2" fill="#8b5a12"/><text x="47" y="-2" text-anchor="end">22</text><line x1="198" y1="6" x2="150" y2="6" stroke="var(--line)" stroke-dasharray="3 3"/><text x="146" y="10" text-anchor="end" fill="var(--muted)">+ libero</text><circle cx="271" cy="0" r="3.5" fill="#0ca30c"/></g>
+          </svg>
+          <div class="sec">Barra = stringa (lunga quanti moduli, colore come in pianta); il pallino sull'MPPT è il peggiore dei suoi stati; clic su una barra = stringa scelta.</div>
+        </div></div>
+    </div>
+  </div>
+
+  <!-- D. TABELLA PIATTA RAGGRUPPATA -->
+  <div class="draft">
+    <p class="name">D. Tabella piatta raggruppata, verifiche a colpo d'occhio</p>
+    <p class="procon"><span class="pro">Pro</span> una riga per stringa con i numeri veri, i limiti nell'intestazione una sola volta; le celle fuori limite colorate.
+      <span class="con">Contro</span> 36 righe in tutto l'impianto (per questo è filtrata sull'inverter); a 240 px perde colonne come oggi.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Stringhe<span class="help">?</span></div>
+        <div class="gb">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="field" style="flex:1"><span>Inverter 1 · Capannone</span><span class="arrow">▼</span></span></div>
+          <div class="sec" style="margin-bottom:6px">Limiti dell'inverter: Uoc ≤ 1100 V · Umpp 200-1000 V · 26 A per MPPT</div>
+          <table class="t">
+            <tr><th>Stringa</th><th>Mod.</th><th>Uoc V</th><th>Umpp V</th><th>I A</th></tr>
+            <tr class="sub"><td colspan="4">MPPT 1 · 2 di 2</td><td class="c"><span class="dot warn" style="margin:0"></span></td></tr>
+            <tr><td><span class="sw" style="background:#8b5a12"></span>1.1.1</td><td>20</td><td>872</td><td>610-681</td><td class="cell-warn">26,8</td></tr>
+            <tr><td><span class="sw" style="background:#2f6b4f"></span>1.1.2</td><td>20</td><td>872</td><td>610-681</td><td class="cell-warn">26,8</td></tr>
+            <tr class="sub"><td colspan="4">MPPT 2 · 2 di 2</td><td class="c"><span class="dot warn" style="margin:0"></span></td></tr>
+            <tr><td><span class="sw" style="background:#1f6a7a"></span>1.2.1</td><td>20</td><td>872</td><td>610-681</td><td class="cell-warn">26,8</td></tr>
+            <tr><td><span class="sw" style="background:#8a3a6e"></span>1.2.2</td><td>20</td><td>872</td><td>610-681</td><td class="cell-warn">26,8</td></tr>
+            <tr class="sub"><td colspan="4">MPPT 3 · 2 di 2</td><td class="c"><span class="dot warn" style="margin:0"></span></td></tr>
+            <tr><td><span class="sw" style="background:#2a5ea8"></span>1.3.1</td><td>20</td><td>872</td><td>610-681</td><td class="cell-warn">26,8</td></tr>
+            <tr class="sel"><td><span class="sw" style="background:#a4482b"></span><b>1.3.2</b></td><td>20</td><td>872</td><td>610-681</td><td class="cell-warn">26,8</td></tr>
+            <tr class="sub"><td colspan="4">MPPT 4-8 · 10 stringhe uguali</td><td class="c"><span class="dot warn" style="margin:0"></span></td></tr>
+            <tr><td class="sec" colspan="5" style="text-align:left;color:var(--muted)">1.4.1 … 1.8.2 · 20 moduli · 872 V · 610-681 V · 26,8 A (apri)</td></tr>
+            <tr class="sub"><td colspan="4">MPPT 9 · 2 di 2</td><td class="c"><span class="dot bad" style="margin:0"></span></td></tr>
+            <tr><td><span class="sw" style="background:#5f6b1f"></span>1.9.1</td><td>20</td><td>872</td><td>610-681</td><td class="cell-warn">26,8</td></tr>
+            <tr><td><span class="sw" style="background:#5b4bb0"></span>1.9.2</td><td class="cell-bad">18</td><td>785</td><td class="cell-bad">549-613</td><td class="cell-warn">26,8</td></tr>
+            <tr class="sub"><td colspan="4">MPPT 10 · 1 di 2</td><td class="c"><span class="dot ok" style="margin:0"></span></td></tr>
+            <tr><td><span class="sw" style="background:#8b5a12"></span>1.10.1</td><td>22</td><td>959</td><td>671-749</td><td class="cell-ok">13,4</td></tr>
+            <tr><td colspan="5" style="text-align:left;color:var(--muted)">＋ nuova stringa su MPPT 10</td></tr>
+          </table>
+          <div class="sec" style="margin-top:6px">Nella riga 1.9.2 i 18 moduli sono fuori: Umpp a 60 °C 549 V è dentro la finestra, ma due lunghezze diverse sullo stesso MPPT
+            perdono potenza (la riga lo dice nel suggerimento e nella stringa scelta).</div>
+        </div></div>
+    </div>
+  </div>
+
+  <!-- E. RIGHE CON BARRE -->
+  <div class="draft">
+    <p class="name">E. Righe per ingresso con barre di margine</p>
+    <p class="procon"><span class="pro">Pro</span> il margine rispetto ai limiti si vede senza leggere numeri (quanto manca a 1100 V, dov'è la finestra);
+      le stringhe sono gettoni colorati cliccabili. <span class="con">Contro</span> tre barre per MPPT × 10 = alto; le barre vanno spiegate la prima volta.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Stringhe<span class="help">?</span></div>
+        <div class="gb">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="field" style="flex:1"><span>Inverter 1 · Capannone</span><span class="arrow">▼</span></span></div>
+          <div class="tile">
+            <div style="display:flex;align-items:center;gap:6px"><b>MPPT 3</b><span class="chip">1.3.1 · 20</span><span class="chip" style="background:var(--select-bg);color:var(--text);font-weight:600">1.3.2 · 20</span><span class="dot warn" style="margin-left:auto"></span></div>
+            <div class="gr" style="margin-top:6px"><span>Uoc</span><div class="gauge"><i style="left:0;width:79%"></i></div><span class="v">872 / 1100</span></div>
+            <div class="gr"><span>Umpp</span><div class="gauge"><em style="left:0;width:20%"></em><i style="left:61%;width:7%"></i></div><span class="v">610-681</span></div>
+            <div class="gr"><span>I</span><div class="gauge"><i class="warn" style="left:0;width:100%"></i></div><span class="v">26,8 / 26</span></div>
+          </div>
+          <div class="tile">
+            <div style="display:flex;align-items:center;gap:6px"><b>MPPT 9</b><span class="chip">1.9.1 · 20</span><span class="chip bad">1.9.2 · 18</span><span class="dot bad" style="margin-left:auto"></span></div>
+            <div class="gr" style="margin-top:6px"><span>Uoc</span><div class="gauge"><i style="left:0;width:79%"></i><i style="left:0;width:71%;opacity:.5"></i></div><span class="v">785-872 / 1100</span></div>
+            <div class="gr"><span>Umpp</span><div class="gauge"><em style="left:0;width:20%"></em><i class="bad" style="left:55%;width:13%"></i></div><span class="v">549-681</span></div>
+            <div class="gr"><span>I</span><div class="gauge"><i class="warn" style="left:0;width:100%"></i></div><span class="v">26,8 / 26</span></div>
+          </div>
+          <div class="tile">
+            <div style="display:flex;align-items:center;gap:6px"><b>MPPT 10</b><span class="chip">1.10.1 · 22</span><span class="chip" style="color:var(--muted)">＋</span><span class="dot ok" style="margin-left:auto"></span></div>
+            <div class="gr" style="margin-top:6px"><span>Uoc</span><div class="gauge"><i style="left:0;width:87%"></i></div><span class="v">959 / 1100</span></div>
+            <div class="gr"><span>Umpp</span><div class="gauge"><em style="left:0;width:20%"></em><i style="left:67%;width:8%"></i></div><span class="v">671-749</span></div>
+            <div class="gr"><span>I</span><div class="gauge"><i style="left:0;width:52%"></i></div><span class="v">13,4 / 26</span></div>
+          </div>
+          <div class="sec">… MPPT 1, 2, 4-8 uguali al 3 (chiusi in un solo riquadro «7 ingressi uguali»).</div>
+        </div></div>
+    </div>
+  </div>
+
+  <!-- F. STRINGA SCELTA -->
+  <div class="draft">
+    <p class="name">La «stringa scelta», per tutti i disegni</p>
+    <p class="procon">Oggi tre blocchi di testo. Proposta: identità in una riga, i tre numeri come barre (dal disegno E) e le verifiche come righe con segno,
+      articolo e condizioni; i comandi della stringa (Ridisegna, Sposta su…, Elimina) qui, non solo nel menu destro.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Stringa scelta · 1.3.2<span class="help">?</span></div>
+        <div class="gb">
+          <div><span class="sw" style="background:#a4482b"></span><b>1.3.2</b> · Inverter 1 Capannone · MPPT 3, seconda di 2</div>
+          <div class="sec">20 moduli Trina 450 W in serie · 9,0 kWp · fila 3, moduli 1-20</div>
+          <div class="lbl" style="margin-top:10px">Elettrico (a -10, 20 e 60 °C di cella)</div>
+          <div class="gr"><span>Uoc</span><div class="gauge"><i style="left:0;width:79%"></i></div><span class="v">872 / 1100 V</span></div>
+          <div class="gr"><span>Umpp</span><div class="gauge"><em style="left:0;width:20%"></em><i style="left:61%;width:7%"></i></div><span class="v">610-681 V</span></div>
+          <div class="gr"><span>Isc</span><div class="gauge"><i style="left:0;width:88%"></i></div><span class="v">35,2 / 40 A</span></div>
+          <div class="lbl" style="margin-top:10px">Verifiche</div>
+          <div class="sec"><span class="dot ok"></span>Uoc a -10 °C 872 V entro 1100 V dell'inverter e 1500 V dei moduli (CEI 64-8/7 712.512)</div>
+          <div class="sec"><span class="dot ok"></span>Umpp 610-681 V dentro la finestra MPPT 200-1000 V</div>
+          <div class="sec"><span class="dot ok"></span>Isc dell'ingresso 35,2 A di 40 A</div>
+          <div class="sec"><span class="dot warn"></span>Corrente di lavoro dell'ingresso 26,8 A su 26 A: l'inverter la limita e perde un poco di potenza</div>
+          <div class="sec"><span class="dot ok"></span>Moduli in serie 20, l'ingresso ne prende da 7 a 25</div>
+          <div class="sec" style="margin-top:6px;color:var(--muted)">Condizioni di progetto PVsyst (60 e 20 °C di cella, Uoc a -10 °C) finché la produzione non è calcolata.</div>
+          <div class="btns"><span class="btn">Ridisegna</span><span class="btn">Sposta su…</span><span class="btn ghost" style="color:var(--bad)">Elimina</span></div>
+        </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ 3. LE PAROLE -->
+<h2>3. Le parole nuove: «Dimensiona», «Proponi» e i testi</h2>
+<p class="lead">Oggi la barra dice Catalogo · Dimensiona (inverter) e Proponi · Completa · Disegna · Ricomincia (stringhe); il gruppo
+«Proposta e verifiche» (strategia, moduli in serie, temperatura minima) sta da solo in fondo. Proposta: i comandi che
+scrivono stringhe diventano uno, «Stringa in automatico…», con le sue opzioni dentro (ambito, percorso, moduli in serie,
+DC/AC, sostituisci o completa), e il rapporto DC/AC passa da «quando dimensionato da sé» a obiettivo dichiarato.</p>
+<table class="words">
+  <tr><th>Oggi</th><th>Proposta</th><th>Spiegazione (suggerimento e aiuto «?»)</th></tr>
+  <tr><td class="old">Dimensiona (barra)<br>Size the inverter by itself</td><td class="new">Scegli in automatico…</td>
+      <td class="txt">Meridiana sceglie gli inverter di una marca per i moduli posati: il minor numero di inverter, poi il minor numero di
+      modelli, poi il rapporto DC/AC più vicino a quello voluto. Ogni modulo finisce in una stringa valida. Sostituisce gli inverter
+      in elenco (un passo di Annulla). Finestra: prima la marca, poi l'anteprima «3 × SUN2000-100KTL-M2, DC/AC 1,10» con «Applica».</td></tr>
+  <tr><td class="old">Proponi ▾ (menu delle strategie)<br>Completa</td><td class="new">Stringa in automatico…</td>
+      <td class="txt">Una finestrella o un pannellino (S-1/S-2) con: <b>su cosa</b> (tutto l'impianto · l'inverter in lavorazione · i moduli selezionati in pianta),
+      <b>cosa fare</b> (sostituisci le stringhe che ci sono · aggiungi solo per i moduli senza stringa, cioè l'attuale «Completa»),
+      <b>percorso</b> (avanti e indietro lungo le file · una fila per stringa · a U su due file · una fila per MPPT), <b>moduli in serie</b> (suggerito o un numero),
+      <b>rapporto DC/AC voluto</b> (solo per un inverter). In fondo l'anteprima: «20 stringhe da 20 su 10 MPPT, 180 kWp, DC/AC 1,80» e lo stato. «Applica» è un passo di Annulla.</td></tr>
+  <tr><td class="old">Disegna</td><td class="new">Disegna una stringa</td>
+      <td class="txt">Invariato: clic sui moduli in pianta in ordine, o trascinamento; Invio chiude, Esc rinuncia. Dal «＋» di un ingresso parte già sull'ingresso giusto.</td></tr>
+  <tr><td class="old">Ricomincia</td><td class="new">Cancella tutte le stringhe</td>
+      <td class="txt">Dice cosa fa. «Dopo una domanda, ogni stringa dell'impianto è cancellata: i moduli restano posati (un passo di Annulla).» Nel menu di un inverter la versione sua: «Svuota le sue stringhe».</td></tr>
+  <tr><td class="old">Proposta e verifiche (gruppo)</td><td class="new">Condizioni delle verifiche (gruppo)</td>
+      <td class="txt">Resta solo la temperatura minima del sito (e, dopo il calcolo, le temperature di cella dell'anno): sono le condizioni di tutte le verifiche.
+      Strategia e moduli in serie si spostano dentro «Stringa in automatico…», dove servono.</td></tr>
+  <tr><td class="old">Rapporto DC/AC quando dimensionato da sé (0,50-2,00, 1,10)</td><td class="new">Rapporto DC/AC voluto</td>
+      <td class="txt">Potenza dei moduli (kWp) su potenza AC dell'inverter. Lo usa «Scegli in automatico» per scegliere la taglia e «Stringa in automatico»
+      per fermarsi; sull'impianto reale la riga dell'inverter mostra il suo valore e lo colora: verde 1,10-1,30, ocra oltre, grigio sotto 1,00.
+      Fonti: PVsyst 1,25-1,30 per perdite di sovraccarico trascurabili (studio 06, righe 2005 e 2863); 1,1-1,3 come valore tipico nel settore; Daniel «110-130».
+      Oggi il programma parte da 1,10 e l'impianto di prova sta a 1,66 senza avvisi.</td></tr>
+  <tr><td class="old">Inverter attivi · Inverter in lavorazione · Tutti gli inverter · Gestisci tutti gli inverter</td><td class="new">Inverter (un elenco solo)</td>
+      <td class="txt">L'elenco I-A o I-B. L'inverter evidenziato è quello che Stringhe mostra; «attivo» (con stringhe) e «senza stringhe» sono lo stato sulla sua riga, non gruppi diversi.</td></tr>
+</table>
+
+<h3>L'ordine proposto della sottoscheda Inverter, dall'alto</h3>
+<ol>
+  <li><b>Inverter</b>: l'elenco (I-A), i totali, «Catalogo…» e «Scegli in automatico…»; dal ⋯ di ciascuno: Rinomina, Sposta, Scheda tecnica, Stringa questo inverter…, Svuota, Togli.</li>
+  <li><b>Stringhe</b>: il disegno scelto (B o D), filtrato sull'inverter evidenziato; «Stringa in automatico…», «Disegna una stringa», «Cancella tutte le stringhe» in testa, non in fondo a 20 righe.</li>
+  <li><b>Stringa scelta</b>: come nel riquadro F, visibile solo con una stringa scelta.</li>
+  <li><b>Condizioni delle verifiche</b>: temperatura minima, temperature di cella, fonte.</li>
+  <li><b>Sottocampo selezionato</b> (dove manda le stringhe): solo con un sottocampo scelto; con la selezione a riquadro dei moduli (altro agente) «Stringa in automatico…» prende «i moduli selezionati».</li>
+</ol>
+</div>
+</body>
+</html>

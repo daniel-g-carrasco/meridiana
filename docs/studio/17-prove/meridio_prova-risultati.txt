@@ -1,0 +1,4 @@
+Meridio di 46 px, 60 fotogrammi per misura, offscreen, PySide6 6.12
+tema chiaro: respiro 0.13 ms/fotogramma, sguardo 0.03 ms/fotogramma (nove pixmap disegnate una volta in 1.6 ms), pensa 0.03 ms/fotogramma, SVG reso a ogni fotogramma 0.18 ms; apertura della chat 227 ms per 12 fotogrammi, 1.5 ms di disegno a fotogramma con l'opacità (QGraphicsOpacityEffect), 1.1 ms senza
+tema scuro: respiro 0.12 ms/fotogramma, sguardo 0.03 ms/fotogramma (nove pixmap disegnate una volta in 1.5 ms), pensa 0.03 ms/fotogramma, SVG reso a ogni fotogramma 0.19 ms; apertura della chat 225 ms per 12 fotogrammi, 1.4 ms di disegno a fotogramma con l'opacità (QGraphicsOpacityEffect), 1.0 ms senza
+Il personaggio a 20 fotogrammi al secondo costa respiro x 20 ms al secondo di CPU del thread della finestra; con «meno movimento» non si anima e costa 0.

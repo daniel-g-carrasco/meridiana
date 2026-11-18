@@ -1,0 +1,902 @@
+{
+"phases": [
+{
+"id": "model",
+"n": 1,
+"title": "Modellazione",
+"groups": [
+{
+"title": "Modifica",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_select",
+"word": "Seleziona",
+"text": "Seleziona",
+"key": "V",
+"tip": "Seleziona (V)\nSeleziona oggetti e moduli",
+"icon": "select",
+"enabled": true,
+"checkable": true
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_move",
+"word": "Sposta",
+"text": "Sposta",
+"key": "M",
+"tip": "Sposta (M)\nSposta la selezione con due punti o un valore scritto; R dentro Sposta la ruota, Ctrl tenuto al clic fa una copia",
+"icon": "move",
+"enabled": true,
+"checkable": true
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_rotate",
+"word": "Ruota",
+"text": "Ruota",
+"key": "",
+"tip": "Ruota\nRuota la selezione attorno al suo centro, a passi di 15°, o di un angolo scritto",
+"icon": "rotate",
+"enabled": true,
+"checkable": true
+}
+]
+}
+]
+},
+{
+"title": "Disegna",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_building",
+"word": "Edificio",
+"text": "Edificio",
+"key": "B",
+"tip": "Edificio (B)\nDisegna il contorno di un edificio",
+"icon": "building",
+"enabled": true,
+"checkable": true
+},
+{
+"cmd": "building_template",
+"word": "Modello",
+"text": "Edificio da modello…",
+"key": "",
+"tip": "Edificio da modello…\nUn rettangolo, una L, una T, una U o un trapezio con le sue quote, messo in pianta con un clic",
+"icon": "building_template",
+"enabled": true,
+"checkable": false
+},
+{
+"cmd": "import_ifc",
+"word": "Da IFC",
+"text": "Importa un modello IFC…",
+"key": "",
+"tip": "Importa un modello IFC…\nGli edifici del modello dell'architetto (.ifc, .ifczip): contorni, falde, altezze e ciò che sta sulle coperture, niente di più; una sola modifica, annullabile con Ctrl+Z",
+"icon": "import_ifc",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "carport",
+"word": "Pensilina",
+"text": "Pensilina per parcheggio…",
+"key": "",
+"tip": "Pensilina per parcheggio…\nMette la struttura di una pensilina: pilastri, travi e copertura, nessun modulo",
+"icon": "carport",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_pitch",
+"word": "Pitch",
+"text": "Pitch",
+"key": "P",
+"tip": "Pitch (P)\nDisegna una falda libera",
+"icon": "pitch",
+"enabled": true,
+"checkable": true
+},
+{
+"cmd": "tool_ridge",
+"word": "Colmo",
+"text": "Colmo",
+"key": "C",
+"tip": "Colmo (C)\nDisegna il colmo di un edificio: il tetto segue, a capanna o a padiglione secondo dove finisce il colmo",
+"icon": "ridge",
+"enabled": true,
+"checkable": true
+}
+]
+}
+]
+},
+{
+"title": "Ostacoli",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_exclusion",
+"word": "Esclusione",
+"text": "Esclusione",
+"key": "X",
+"tip": "Esclusione (X)\nDisegna un lucernario, un evacuatore, un impianto o un camminamento",
+"icon": "exclusion",
+"enabled": true,
+"checkable": true
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "object_3d",
+"word": "Oggetto 3D",
+"text": "Oggetto 3D…",
+"key": "O",
+"tip": "Oggetto 3D… (O)\nMetti un albero, un ostacolo del tetto, una persona o un'auto con un clic sulla pianta",
+"icon": "object_3d",
+"enabled": true,
+"checkable": false
+}
+]
+}
+]
+},
+{
+"title": "Precisione",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_measure",
+"word": "Misura",
+"text": "Misura",
+"key": "D",
+"tip": "Misura (D)\nMisura una distanza",
+"icon": "measure",
+"enabled": true,
+"checkable": true
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "square",
+"word": "Squadra",
+"text": "Squadra gli angoli",
+"key": "Q",
+"tip": "Squadra gli angoli (Q)\nGli angoli del contorno selezionato entro 13° dal retto diventano retti",
+"icon": "square",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "rectangle",
+"word": "Rettangolo",
+"text": "Rettangolo con tre clic",
+"key": "R",
+"tip": "Rettangolo con tre clic (R)\nDue vertici danno un lato, il terzo clic la profondità",
+"icon": "rectangle",
+"enabled": true,
+"checkable": true
+}
+]
+}
+]
+}
+]
+},
+{
+"id": "plant",
+"n": 2,
+"title": "Impianto",
+"groups": [
+{
+"title": "Modifica",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_select",
+"word": "Seleziona",
+"text": "Seleziona",
+"key": "V",
+"tip": "Seleziona (V)\nSeleziona oggetti e moduli",
+"icon": "select",
+"enabled": true,
+"checkable": true
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_move",
+"word": "Sposta",
+"text": "Sposta",
+"key": "M",
+"tip": "Sposta (M)\nSposta la selezione con due punti o un valore scritto; R dentro Sposta la ruota, Ctrl tenuto al clic fa una copia",
+"icon": "move",
+"enabled": true,
+"checkable": true
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_rotate",
+"word": "Ruota",
+"text": "Ruota",
+"key": "",
+"tip": "Ruota\nRuota la selezione attorno al suo centro, a passi di 15°, o di un angolo scritto",
+"icon": "rotate",
+"enabled": true,
+"checkable": true
+}
+]
+}
+]
+},
+{
+"title": "Pannelli",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_subfield",
+"word": "Sottocampo",
+"text": "Sottocampo",
+"key": "S",
+"tip": "Sottocampo (S)\nDisegna un'area per i moduli",
+"icon": "subfield",
+"enabled": true,
+"checkable": true
+},
+{
+"cmd": "tool_row",
+"word": "Fila",
+"text": "Fila di moduli",
+"key": "L",
+"tip": "Fila di moduli (L)\nDisegna una fila di moduli in un sottocampo: due clic, con il suo modulo e i suoi spazi",
+"icon": "row",
+"enabled": true,
+"checkable": true
+},
+{
+"cmd": "layout_east_west",
+"word": "Est-ovest",
+"text": "Posa est-ovest",
+"key": "",
+"tip": "Posa est-ovest\nDisegna coppie di moduli est-ovest in un sottocampo: due clic, lungo la linea",
+"icon": "layout_east_west",
+"enabled": true,
+"checkable": true
+},
+{
+"cmd": "canopy_layout",
+"word": "Pensilina",
+"text": "Su pensilina…",
+"key": "",
+"tip": "Su pensilina…\nI moduli posati su una pensilina: un sottocampo per falda, complanare alla copertura",
+"icon": "carport",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": true,
+"family": [
+{
+"cmd": "fill",
+"word": "Posa",
+"text": "Posa i moduli",
+"key": "",
+"tip": "Posa i moduli\nI moduli posati nel sottocampo selezionato con i suoi parametri e le regole dei Vigili del fuoco",
+"icon": "fill",
+"enabled": false,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "empty",
+"word": "Svuota",
+"text": "Svuota i moduli",
+"key": "",
+"tip": "Svuota i moduli\nI moduli tolti dal sottocampo selezionato; il contorno resta",
+"icon": "empty",
+"enabled": false,
+"checkable": false
+}
+]
+}
+]
+},
+{
+"title": "Inverter",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "inverter_catalog",
+"word": "Catalogo",
+"text": "Aggiungi un inverter dal catalogo…",
+"key": "",
+"tip": "Aggiungi un inverter dal catalogo…\nUn inverter dal catalogo aggiunto all'impianto della variante in mano",
+"icon": "inverter_catalog",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "inverter_auto",
+"word": "Scegli in autom.",
+"text": "Scegli gli inverter in automatico…",
+"key": "",
+"tip": "Scegli gli inverter in automatico…\nMeridiana sceglie gli inverter di una marca per i moduli posati: il minor numero di inverter, poi il minor numero di modelli, poi il rapporto DC/AC più vicino a quello voluto; ogni modulo in una stringa valida. Sostituiscono gli inverter in elenco (un passo di Annulla)",
+"icon": "inverter_auto",
+"enabled": true,
+"checkable": false
+}
+]
+}
+]
+},
+{
+"title": "Accumulo",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "battery_catalog",
+"word": "Configura",
+"text": "Configura accumulatore…",
+"key": "",
+"tip": "Configura accumulatore…\nConfigura accumulo, inverter associato e collegamento CA o CC",
+"icon": "battery_catalog",
+"enabled": true,
+"checkable": false
+}
+]
+}
+]
+},
+{
+"title": "Stringhe",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "strings_auto",
+"word": "Automatico",
+"text": "Stringa in automatico…",
+"key": "",
+"tip": "Stringa in automatico…\nLe stringhe di Meridiana, con le opzioni in una finestrella: su tutto l'impianto, sui moduli selezionati in pianta o su un inverter; al posto delle stringhe che ci sono (chiede prima) o solo per i moduli senza stringa; il percorso, i moduli in serie, il rapporto DC/AC voluto. Un passo di Annulla; dopo nulla le cambia",
+"icon": "strings_auto",
+"enabled": true,
+"checkable": false
+},
+{
+"cmd": "strings_complete",
+"word": "Completa",
+"text": "Completa le stringhe",
+"key": "",
+"tip": "Completa le stringhe\nLe stringhe di Meridiana solo per i moduli fuori stringa, prima sugli ingressi senza stringhe: le tue restano come sono",
+"icon": "strings_complete",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "strings_manual",
+"word": "Disegna",
+"text": "Disegna una stringa",
+"key": "",
+"tip": "Disegna una stringa\nUna nuova stringa sull'ingresso della stringa scelta (il primo ingresso libero se nessuna è scelta): clicca i suoi moduli sulla pianta in ordine o trascina sopra di essi; Backspace toglie l'ultimo, Invio o un doppio clic la chiudono, Esc la annulla",
+"icon": "strings_manual",
+"enabled": true,
+"checkable": true
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "tool_erase_string",
+"word": "Elimina stringa",
+"text": "Elimina una stringa",
+"key": "",
+"tip": "Elimina una stringa\nPassa su un modulo per illuminare la sua stringa, clic per eliminarla: i moduli restano posati. Esc per uscire",
+"icon": "erase_string",
+"enabled": true,
+"checkable": true
+},
+{
+"cmd": "tool_erase_inverter_strings",
+"word": "Inv. + stringhe",
+"text": "Elimina un inverter e le sue stringhe",
+"key": "",
+"tip": "Elimina un inverter e le sue stringhe\nPassa su un modulo per illuminare tutte le stringhe del suo inverter, clic per eliminare l'inverter e quelle stringhe. Esc per uscire",
+"icon": "erase_inverter_strings",
+"enabled": true,
+"checkable": true
+},
+{
+"cmd": "tool_erase_inverter",
+"word": "Elimina inv.",
+"text": "Elimina un inverter",
+"key": "",
+"tip": "Elimina un inverter\nPassa su un modulo per illuminare le stringhe del suo inverter, clic per eliminare l'inverter: le stringhe restano, su nessun inverter, finché non gliene dai un altro. Esc per uscire",
+"icon": "erase_inverter",
+"enabled": true,
+"checkable": true
+},
+{
+"cmd": "strings_clear",
+"word": "Cancella tutte",
+"text": "Elimina tutte le stringhe",
+"key": "",
+"tip": "Elimina tutte le stringhe\nTutte le stringhe eliminate, dopo una domanda: i moduli restano posati, fuori stringa (un passo di annulla)",
+"icon": "strings_clear",
+"enabled": true,
+"checkable": false
+}
+]
+}
+]
+}
+]
+},
+{
+"id": "production",
+"n": 3,
+"title": "Producibilità",
+"groups": [
+{
+"title": "Calcolo",
+"tools": [
+{
+"primary": true,
+"family": [
+{
+"cmd": "compute",
+"word": "Calcola",
+"text": "Calcola",
+"key": "F5",
+"tip": "Calcola (F5)\nProducibilità, consumi, bilancio ed economia della variante in mano, con il meteo in cache o scaricato",
+"icon": "compute",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "fetch_pvgis",
+"word": "Da PVGIS",
+"text": "Scarica il meteo da PVGIS",
+"key": "",
+"tip": "Scarica il meteo da PVGIS\nL'anno tipo e l'orizzonte del sito da PVGIS, poi il calcolo",
+"icon": "fetch_pvgis",
+"enabled": true,
+"checkable": false
+}
+]
+}
+]
+},
+{
+"title": "Confronto",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "new_variant",
+"word": "Nuova variante",
+"text": "Nuova variante da questa…",
+"key": "Ctrl+Shift+N",
+"tip": "Nuova variante da questa… (Ctrl+Shift+N)\nUna copia della variante in uso, da modificare senza perderla: il sito è in comune",
+"icon": "copy-plus",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "compare_variants",
+"word": "Varianti",
+"text": "Confronta le varianti…",
+"key": "Ctrl+Shift+C",
+"tip": "Confronta le varianti… (Ctrl+Shift+C)\nProduzione, autoconsumo ed economia di ogni variante, affiancate",
+"icon": "compare_variants",
+"enabled": true,
+"checkable": false
+}
+]
+}
+]
+}
+]
+},
+{
+"id": "consumption",
+"n": 4,
+"title": "Consumi",
+"groups": [
+{
+"title": "Dati",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "consumption_base",
+"word": "Base",
+"text": "Base dei consumi",
+"key": "",
+"tip": "Base dei consumi\nDa dove vengono i consumi: un anno, le fasce, le bollette, una curva o un profilo",
+"icon": "consumption_base",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "import_curve",
+"word": "Curva",
+"text": "Importa una curva di carico…",
+"key": "",
+"tip": "Importa una curva di carico…\nUna curva di carico misurata (CSV, a 15 minuti o oraria) come consumi",
+"icon": "import_curve",
+"enabled": true,
+"checkable": false
+}
+]
+}
+]
+}
+]
+},
+{
+"id": "economics",
+"n": 5,
+"title": "Bilancio ed economia",
+"groups": [
+{
+"title": "Calcolo",
+"tools": [
+{
+"primary": true,
+"family": [
+{
+"cmd": "compute",
+"word": "Calcola",
+"text": "Calcola",
+"key": "F5",
+"tip": "Calcola (F5)\nProducibilità, consumi, bilancio ed economia della variante in mano, con il meteo in cache o scaricato",
+"icon": "compute",
+"enabled": true,
+"checkable": false
+}
+]
+}
+]
+},
+{
+"title": "Confronto",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "new_variant",
+"word": "Nuova variante",
+"text": "Nuova variante da questa…",
+"key": "Ctrl+Shift+N",
+"tip": "Nuova variante da questa… (Ctrl+Shift+N)\nUna copia della variante in uso, da modificare senza perderla: il sito è in comune",
+"icon": "copy-plus",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "compare_variants",
+"word": "Varianti",
+"text": "Confronta le varianti…",
+"key": "Ctrl+Shift+C",
+"tip": "Confronta le varianti… (Ctrl+Shift+C)\nProduzione, autoconsumo ed economia di ogni variante, affiancate",
+"icon": "compare_variants",
+"enabled": true,
+"checkable": false
+}
+]
+}
+]
+}
+]
+},
+{
+"id": "report",
+"n": 6,
+"title": "Relazione",
+"groups": [
+{
+"title": "Confronto",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "new_variant",
+"word": "Nuova variante",
+"text": "Nuova variante da questa…",
+"key": "Ctrl+Shift+N",
+"tip": "Nuova variante da questa… (Ctrl+Shift+N)\nUna copia della variante in uso, da modificare senza perderla: il sito è in comune",
+"icon": "copy-plus",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "compare_variants",
+"word": "Confronta",
+"text": "Confronta le varianti…",
+"key": "Ctrl+Shift+C",
+"tip": "Confronta le varianti… (Ctrl+Shift+C)\nProduzione, autoconsumo ed economia di ogni variante, affiancate",
+"icon": "compare_variants",
+"enabled": true,
+"checkable": false
+}
+]
+}
+]
+},
+{
+"title": "Esporta",
+"tools": [
+{
+"primary": false,
+"family": [
+{
+"cmd": "export_report",
+"word": "Relazione",
+"text": "Esporta la relazione (PDF)…",
+"key": "Ctrl+E",
+"tip": "Esporta la relazione (PDF)… (Ctrl+E)\nProduzione, stringhe, consumi ed economia con ogni calcolo, in PDF",
+"icon": "export_report",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "export_ifc",
+"word": "IFC4",
+"text": "Esporta il modello in IFC4…",
+"key": "",
+"tip": "Esporta il modello in IFC4…\nIl progetto come modello IFC4 georiferito: edifici, coperture, ostacoli e ogni modulo con la sua stringa, per l'architetto o il coordinatore BIM",
+"icon": "export_ifc",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "export_csv",
+"word": "CSV",
+"text": "Esporta la serie oraria (CSV)…",
+"key": "",
+"tip": "Esporta la serie oraria (CSV)…\nL'anno tipo ora per ora, con il bilancio e un'intestazione che dice unità e fonte di ogni colonna: il registro dei calcoli, in un file CSV",
+"icon": "export_csv",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "save_revision",
+"word": "Revisione",
+"text": "Salva come nuova revisione",
+"key": "Ctrl+Shift+R",
+"tip": "Salva come nuova revisione (Ctrl+Shift+R)\nUn nuovo file accanto a questo, con il suffisso _R01, _R02...: il precedente resta com'era",
+"icon": "save_revision",
+"enabled": true,
+"checkable": false
+}
+]
+},
+{
+"primary": false,
+"family": [
+{
+"cmd": "copy_notes",
+"word": "Copia le note",
+"text": "Copia le note per la relazione",
+"key": "",
+"tip": "Copia le note per la relazione\nI paragrafi delle regole che si applicano, con le fonti, da incollare nella relazione tecnica",
+"icon": "copy_notes",
+"enabled": true,
+"checkable": false
+}
+]
+}
+]
+}
+]
+}
+],
+"icons": {
+"select": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 3l14 8-6 2-3 6z\"/></svg>\r\n",
+"move": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3\"/></svg>\r\n",
+"rotate": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" />\r\n  <path d=\"M3 3v5h5\" />\r\n</svg>\r\n",
+"building": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"1\"/><path d=\"M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2M10 21v-4h4v4\"/></svg>\r\n",
+"building_template": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z\" />\r\n  <rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\" />\r\n  <circle cx=\"17.5\" cy=\"17.5\" r=\"3.5\" />\r\n</svg>\r\n",
+"import_ifc": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M18 21V10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v11\" />\r\n  <path d=\"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 1.132-1.803l7.95-3.974a2 2 0 0 1 1.837 0l7.948 3.974A2 2 0 0 1 22 8z\" />\r\n  <path d=\"M6 13h12\" />\r\n  <path d=\"M6 17h12\" />\r\n</svg>\r\n",
+"carport": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 8l17-4 1 3L4 11zM6 11v10M19 8v13M10 17l1-3h5l1 3M9 17h9v3H9zM11 20v1m5-1v1\"/></svg>\r\n",
+"pitch": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 11l9-7 9 7M5 10v10h14V10\"/></svg>\r\n",
+"ridge": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\" />\r\n  <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" />\r\n</svg>\r\n",
+"exclusion": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M6.5 6.5l11 11\"/></svg>\r\n",
+"object_3d": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"9\" r=\"6\"/><path d=\"M12 15v6M8 21h8M12 18l2.5-2\"/></svg>\r\n",
+"measure": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2\"/></svg>\r\n",
+"square": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" />\r\n</svg>\r\n",
+"rectangle": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\" />\r\n</svg>\r\n",
+"subfield": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"1\"/><path d=\"M3 9h18M3 14h18M9 4v16M15 4v16\"/></svg>\r\n",
+"row": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 6h16M4 12h16M4 18h16\"/><circle cx=\"7\" cy=\"6\" r=\"1.6\"/><circle cx=\"12\" cy=\"12\" r=\"1.6\"/><circle cx=\"17\" cy=\"18\" r=\"1.6\"/></svg>\r\n",
+"layout_east_west": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 16l5-6 5 6 5-6 5 6M2 20h20M7 10v6m10-6v6M4 5H1m0 0 2-2M1 5l2 2M20 5h3m0 0-2-2m2 2-2 2\"/></svg>\r\n",
+"fill": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <rect width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\" />\r\n  <rect width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\" />\r\n  <rect width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\" />\r\n  <rect width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\" />\r\n</svg>\r\n",
+"empty": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21\" />\r\n  <path d=\"m5.082 11.09 8.828 8.828\" />\r\n</svg>\r\n",
+"inverter_catalog": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z\" />\r\n</svg>\r\n",
+"inverter_auto": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M15 4V2\" />\r\n  <path d=\"M15 16v-2\" />\r\n  <path d=\"M8 9h2\" />\r\n  <path d=\"M20 9h2\" />\r\n  <path d=\"M17.8 11.8 19 13\" />\r\n  <path d=\"M15 9h.01\" />\r\n  <path d=\"M17.8 6.2 19 5\" />\r\n  <path d=\"m3 21 9-9\" />\r\n  <path d=\"M12.2 6.2 11 5\" />\r\n</svg>\r\n",
+"battery_catalog": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"m11 7-3 5h4l-3 5\" />\r\n  <path d=\"M14.856 6H16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.935\" />\r\n  <path d=\"M22 14v-4\" />\r\n  <path d=\"M5.14 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2.936\" />\r\n</svg>\r\n",
+"strings_auto": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <circle cx=\"19\" cy=\"5\" r=\"2\" />\r\n  <circle cx=\"5\" cy=\"19\" r=\"2\" />\r\n  <path d=\"M5 17A12 12 0 0 1 17 5\" />\r\n</svg>\r\n",
+"strings_complete": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M16 5H3\" />\r\n  <path d=\"M11 12H3\" />\r\n  <path d=\"M16 19H3\" />\r\n  <path d=\"M18 9v6\" />\r\n  <path d=\"M21 12h-6\" />\r\n</svg>\r\n",
+"strings_manual": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <circle cx=\"6\" cy=\"19\" r=\"3\" />\r\n  <path d=\"M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15\" />\r\n  <circle cx=\"18\" cy=\"5\" r=\"3\" />\r\n</svg>\r\n",
+"erase_string": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\" />\r\n  <path d=\"m15 9-6 6\" />\r\n  <path d=\"m9 9 6 6\" />\r\n</svg>\r\n",
+"erase_inverter_strings": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M10 11v6\" />\r\n  <path d=\"M14 11v6\" />\r\n  <path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\" />\r\n  <path d=\"M3 6h18\" />\r\n  <path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\" />\r\n</svg>\r\n",
+"erase_inverter": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M10.768 5.111 13.44 2.44a1.5 1.5 0 012.474 1.561l-1.633 4.625\" />\r\n  <path d=\"m18.889 13.232.672-.672A1.5 1.5 0 0018.5 10h-2.844\" />\r\n  <path d=\"m2 2 20 20\" />\r\n  <path d=\"m7.94 7.94-3.5 3.499A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l5.5-5.5\" />\r\n</svg>\r\n",
+"strings_clear": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21\" />\r\n  <path d=\"m5.082 11.09 8.828 8.828\" />\r\n</svg>\r\n",
+"compute": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z\" />\r\n</svg>\r\n",
+"fetch_pvgis": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M12 13v8l-4-4\" />\r\n  <path d=\"m12 21 4-4\" />\r\n  <path d=\"M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284\" />\r\n</svg>\r\n",
+"copy-plus": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <line x1=\"15\" x2=\"15\" y1=\"12\" y2=\"18\" />\r\n  <line x1=\"12\" x2=\"18\" y1=\"15\" y2=\"15\" />\r\n  <rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\" />\r\n  <path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\" />\r\n</svg>\r\n",
+"compare_variants": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <circle cx=\"18\" cy=\"18\" r=\"3\" />\r\n  <circle cx=\"6\" cy=\"6\" r=\"3\" />\r\n  <path d=\"M13 6h3a2 2 0 0 1 2 2v7\" />\r\n  <path d=\"M11 18H8a2 2 0 0 1-2-2V9\" />\r\n</svg>\r\n",
+"consumption_base": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M10 5H3\" />\r\n  <path d=\"M12 19H3\" />\r\n  <path d=\"M14 3v4\" />\r\n  <path d=\"M16 17v4\" />\r\n  <path d=\"M21 12h-9\" />\r\n  <path d=\"M21 19h-5\" />\r\n  <path d=\"M21 5h-7\" />\r\n  <path d=\"M8 10v4\" />\r\n  <path d=\"M8 12H3\" />\r\n</svg>\r\n",
+"import_curve": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M4 11V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1\" />\r\n  <path d=\"M14 2v5a1 1 0 0 0 1 1h5\" />\r\n  <path d=\"M2 15h10\" />\r\n  <path d=\"m9 18 3-3-3-3\" />\r\n</svg>\r\n",
+"export_report": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z\" />\r\n  <path d=\"M14 2v5a1 1 0 0 0 1 1h5\" />\r\n  <path d=\"M10 9H8\" />\r\n  <path d=\"M16 13H8\" />\r\n  <path d=\"M16 17H8\" />\r\n</svg>\r\n",
+"export_ifc": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\" />\r\n  <path d=\"m3.3 7 8.7 5 8.7-5\" />\r\n  <path d=\"M12 22V12\" />\r\n</svg>\r\n",
+"export_csv": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" />\r\n  <path d=\"M21 9H3\" />\r\n  <path d=\"M21 15H3\" />\r\n</svg>\r\n",
+"save_revision": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <line x1=\"15\" x2=\"15\" y1=\"12\" y2=\"18\" />\r\n  <line x1=\"12\" x2=\"18\" y1=\"15\" y2=\"15\" />\r\n  <rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\" />\r\n  <path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\" />\r\n</svg>\r\n",
+"copy_notes": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\" />\r\n  <path d=\"M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2\" />\r\n  <path d=\"M16 4h2a2 2 0 0 1 2 2v4\" />\r\n  <path d=\"M21 14H11\" />\r\n  <path d=\"m15 10-4 4 4 4\" />\r\n</svg>\r\n",
+"plan": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z\" />\r\n  <path d=\"M15 5.764v15\" />\r\n  <path d=\"M9 3.236v15\" />\r\n</svg>\r\n",
+"3d": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\" />\r\n  <path d=\"m3.3 7 8.7 5 8.7-5\" />\r\n  <path d=\"M12 22V12\" />\r\n</svg>\r\n",
+"both": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" />\r\n  <path d=\"M12 3v18\" />\r\n</svg>\r\n",
+"fit": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M3 7V5a2 2 0 0 1 2-2h2\" />\r\n  <path d=\"M17 3h2a2 2 0 0 1 2 2v2\" />\r\n  <path d=\"M21 17v2a2 2 0 0 1-2 2h-2\" />\r\n  <path d=\"M7 21H5a2 2 0 0 1-2-2v-2\" />\r\n</svg>\r\n",
+"zoom_in": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M5 12h14\" />\r\n  <path d=\"M12 5v14\" />\r\n</svg>\r\n",
+"zoom_out": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"M5 12h14\" />\r\n</svg>\r\n",
+"site": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 21s-6-5.5-6-10a6 6 0 0112 0c0 4.5-6 10-6 10z\"/><circle cx=\"12\" cy=\"11\" r=\"2.2\"/></svg>\r\n",
+"folder-open": "<svg\r\n  xmlns=\"http://www.w3.org/2000/svg\"\r\n  width=\"24\"\r\n  height=\"24\"\r\n  viewBox=\"0 0 24 24\"\r\n  fill=\"none\"\r\n  stroke=\"currentColor\"\r\n  stroke-width=\"1.7\"\r\n  stroke-linecap=\"round\"\r\n  stroke-linejoin=\"round\"\r\n>\r\n  <path d=\"m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2\" />\r\n</svg>\r\n"
+},
+"tokens": {
+"light": {
+"window": "#f2f1ed",
+"panel": "#f8f7f4",
+"view": "#ffffff",
+"card": "#ffffff",
+"field": "#ebeae7",
+"line": "#d9d5cc",
+"line_soft": "#e8e5de",
+"card_line": "#d9d5cc",
+"text": "#1e1c19",
+"text2": "#514c44",
+"muted": "#6f685d",
+"accent": "#5b4bb0",
+"accent_fg": "#ffffff",
+"hover": "#1e1c1914",
+"press": "#1e1c1929",
+"danger": "#c53032",
+"select_bg": "#e2e1ef"
+},
+"dark": {
+"window": "#151515",
+"panel": "#252525",
+"view": "#1c1c1c",
+"card": "#252525",
+"field": "#1d1d1d",
+"line": "#404040",
+"line_soft": "#333333",
+"card_line": "#404040",
+"text": "#ededed",
+"text2": "#c4c4c4",
+"muted": "#9b9b9b",
+"accent": "#bfbbff",
+"accent_fg": "#151515",
+"hover": "#ededed14",
+"press": "#ededed29",
+"danger": "#ff716a",
+"select_bg": "#3c3c46"
+}
+},
+"missing": []
+}

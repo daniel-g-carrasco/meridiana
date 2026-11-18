@@ -1,0 +1,126 @@
+﻿PVObject_=pvVCalcul
+  Comment=File da 3
+  Version=8.0.18
+  DateCalcul=22/10/26 18:00
+  SystemKind=Sheds on ground
+  PVObject_SiteSimul=pvSite
+    Site=Rho
+    Country=Italia
+    Latitude=45.5226
+    Longitude=9.0300
+    Altitude=150
+    TimeZone=1.0
+  End of PVObject pvSite
+  Orientations, list of=1 TOrientGroup
+    PVObject_=pvOrient
+      Comment=Sud
+    NoOrient=1
+    FieldType=Sheds
+    FieldTilt=25.0
+    NSheds=3
+    Pitch=5.000
+    CollectorWidth=2.278
+    PVObject_ShdTableLin=pvShdFTable
+      FOCalcul=foLinear
+      SFTable=TInterpole2D
+        NBinX=19,10,
+        Line_1=0.000,0.000,+contd+
+        Line_1_contd=0.000,0.000,
+      End of TInterpolenD
+    End of PVObject pvShdFTable
+    End of TOrientGroup
+  End of Orientations
+  PVObject_PVMainArray=pvMainArray
+    Flags=$01900400
+  UFactor=29.0
+  Alpha=0.9
+  SoilingLoss=0.020
+    PVObject_SystemCircuit=pvCircuit
+      BaseNode=Start
+        InjectionPointNode Start;
+          Children=Start
+            InverterNode Start;
+              Children=Start
+                MPPTNode Start;
+                  NElements=2
+                  Children=Start
+                    StringNode Start;
+                      SubArrayId=1
+                    StringNode End;
+                  Children=End
+                MPPTNode End;
+              Children=End
+            InverterNode End;
+          Children=End
+        InjectionPointNode End;
+      BaseNode=End
+    End of PVObject pvCircuit
+    SubArrays=Start
+      PVObject_=pvSubArray
+        Comment=Campo
+        PVModule=ET-M772BH550GL.PAN
+        GInverter=CPS SCH275KTL-DO-US-800-250kW_275kVA_1.OND
+        NModSerie=15
+        NStringCh=2
+        NoOrientation=1
+        PQualityModP=-0.80
+        PMismMPP=1.00
+        PMismString=0.10
+        LIDLoss=1.50
+        RSCablagePC=1.50
+        PVObject_IAM=pvIAM
+          IAMMode=UserProfile
+          IAMProfile=TCubicProfile
+            NPtsMax=9
+            Point_1=0.0,1.00000
+            Point_2=30.0,0.99900
+            Point_3=50.0,0.98700
+            Point_4=60.0,0.96200
+            Point_5=70.0,0.89200
+            Point_6=75.0,0.81600
+            Point_7=80.0,0.68100
+            Point_8=85.0,0.44000
+            Point_9=90.0,0.00000
+          End of TCubicProfile
+        End of PVObject pvIAM
+      End of PVObject pvSubArray
+    EndTags
+  End of PVObject pvMainArray
+  PVObject_System=pvSystem
+    SystemType=Grid
+    PLimGrid=10.0
+  End of PVObject pvSystem
+  PVObject_Ombrage=pvShading
+    Comment=Scena
+    FracOmbreMod=1.0000000
+    ListeObjets, list of=1 TShdObject
+      PVObject_1=pvShdArrayShed
+        Comment=File sud
+        DOrigine=0.000,0.000,0.000
+        DInclin=25.0
+        DAzimut=0.0
+      NElemChamps=3
+      NoOrient=1
+      PanneauPVName=ET-M772BH550GL;1.134;2.278
+      ModSpacingX=0.020
+      ModSpacingY=0.020
+      NModInWidth=10
+      ModuleOrient=moPortrait
+        LongShed=11.520
+        LargShed=2.278
+        PitchNS=5.000
+      End of PVObject pvShdArrayShed
+    End of ListeObjets
+  End of PVObject pvShading
+  VarList, list of=1 TVarSimul
+    VarSimul_1=E_Grid
+      Varident=E_Grid
+      VarAcc=Hour
+      VarStore=Simul
+      WRFactor=10.0
+      Day_0101=+0+0+0+0+0+0+0+0+A+w+1C+RE+RE+1C+w+A+0+0+0+0+0+0+0+0
+      Day_0201=+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0+0
+    End of Data
+    End of VarSimul=viE_Grid
+  End of VarList
+End of PVObject pvVCalcul

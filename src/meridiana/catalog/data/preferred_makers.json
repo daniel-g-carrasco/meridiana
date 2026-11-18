@@ -1,0 +1,10 @@
+{
+ "status": "proposal of 05/11/2026, for Daniel to confirm: docs/studio/34-catalogo-marche-fonti.md",
+ "kinds": {
+  "modules": ["Jinko Solar", "LONGi", "Trina Solar", "JA Solar", "Canadian Solar", "Aiko", "REC", "Qcells", "FuturaSun", "Peimar", "3Sun", "SunPower", "Sunerg Solar"],
+  "inverters": ["Huawei", "SMA", "Fronius", "SolarEdge", "Sungrow", "GoodWe", "ZCS Azzurro", "Solis", "SOFAR", "FIMER"],
+  "microinverters": ["Enphase", "Hoymiles", "APsystems"],
+  "optimizers": ["SolarEdge", "Huawei", "Tigo"],
+  "batteries": ["Huawei", "BYD", "Pylontech", "Sungrow", "SolarEdge", "GoodWe", "ZCS Azzurro", "Enphase"]
+ }
+}

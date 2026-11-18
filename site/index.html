@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meridiana, photovoltaic design</title>
+  <meta name="description" content="Meridiana designs photovoltaic plants: site, buildings and roofs, module layout, hourly energy, strings, economics and a PDF report. Free software, for Windows and Linux.">
+  <link rel="icon" href="icon.png">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f5f4; --fg: #2e3436; --dim: #5e5c64; --card: #ffffff; --line: #d8d4cf;
+      --accent: #1a5fb4; --accent-fg: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #242424; --fg: #eeeeec; --dim: #a8a7a3; --card: #303030; --line: #3a3a3a; --accent: #78aeed; --accent-fg: #1a1a1a; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.6 system-ui, "Segoe UI", Cantarell, sans-serif; }
+    main { max-width: 680px; margin: 0 auto; padding: 56px 20px 72px; }
+    header { display: flex; align-items: center; gap: 22px; margin-bottom: 12px; }
+    header img { width: 92px; height: 92px; }
+    h1 { margin: 0; font-size: 2.1rem; letter-spacing: -0.01em; }
+    h2 { margin: 44px 0 8px; font-size: 1.25rem; }
+    .tagline { margin: 2px 0 0; color: var(--dim); font-size: 1.1rem; }
+    p { margin: 14px 0; }
+    .buttons { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0 6px; }
+    .btn { display: inline-block; padding: 10px 18px; border-radius: 9px; text-decoration: none; font-weight: 600;
+           background: var(--card); color: var(--fg); border: 1px solid var(--line); }
+    .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+    code { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: .05rem .35rem; font-size: .9em; }
+    figure { margin: 28px 0; }
+    figure img { width: 100%; height: auto; display: block; border-radius: 12px; border: 1px solid var(--line); }
+    figcaption { color: var(--dim); font-size: .93rem; margin-top: 8px; }
+    .small { color: var(--dim); font-size: .95rem; }
+    footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--dim); font-size: .92rem; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icon.png" alt="">
+    <div>
+      <h1>Meridiana</h1>
+      <p class="tagline">Photovoltaic design: map, building model, sun path, module layout and Italian standards.</p>
+    </div>
+  </header>
+
+  <p>
+    Meridiana designs photovoltaic plants: the site on a map or an orthophoto, buildings and roofs, the module
+    layout with the fire brigade rules, the hourly energy with every loss, the string checks, consumption and
+    economics, and a PDF report where every number says where it comes from. No account; your projects never
+    leave your computer.
+  </p>
+
+  <div class="buttons">
+    <a class="btn primary" href="https://github.com/daniel-g-carrasco/meridiana/releases/latest" data-asset="setup">Download for Windows</a>
+    <a class="btn" href="https://daniel-g-carrasco.github.io/meridiana/meridiana.flatpakref">Install on Linux (Flatpak)</a>
+    <a class="btn" href="https://github.com/daniel-g-carrasco/meridiana">Source on GitHub</a>
+  </div>
+  <p class="small">
+    Windows: the installer needs no administrator rights; a <a href="https://github.com/daniel-g-carrasco/meridiana/releases/latest" data-asset="portable">portable zip</a> is there too.
+    Every file of a release is signed with minisign: the public key and how to check a download are in the
+    <a href="https://github.com/daniel-g-carrasco/meridiana/blob/main/CODE_SIGNING.md">code signing policy</a>.
+    Linux: the Flatpak, once its repository is published; until then it builds from the
+    <a href="https://github.com/daniel-g-carrasco/meridiana#flatpak">manifest in the sources</a>.
+  </p>
+
+  <footer>
+    Made by <a href="https://github.com/daniel-g-carrasco">Daniel Grasso</a>. GPL-3.0-or-later.
+    <span id="version"></span>
+  </footer>
+</main>
+<script>
+  // the download buttons point at the latest release's own files
+  (async () => {
+    const api = "https://api.github.com/repos/daniel-g-carrasco/meridiana/releases/latest";
+    try {
+      let data = sessionStorage.getItem("release");
+      data = data ? JSON.parse(data) : await (await fetch(api, {headers: {Accept: "application/vnd.github+json"}})).json();
+      sessionStorage.setItem("release", JSON.stringify(data));
+      const find = (test) => (data.assets || []).find(a => test(a.name));
+      const setup = find(n => /^meridiana-setup-v.*-windows-x64\.exe$/.test(n));
+      const portable = find(n => /^meridiana-v.*-windows-x64-portable\.zip$/.test(n));
+      for (const [kind, asset] of [["setup", setup], ["portable", portable]]) {
+        const link = document.querySelector(`a[data-asset="${kind}"]`);
+        if (link && asset) link.href = asset.browser_download_url;
+      }
+      if (data.tag_name) document.getElementById("version").textContent = ` Latest version: ${data.tag_name.replace(/^v/, "")}.`;
+    } catch (e) { /* the links to the release page stay */ }
+  })();
+</script>
+</body>
+</html>

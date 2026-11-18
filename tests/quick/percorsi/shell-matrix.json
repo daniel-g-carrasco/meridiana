@@ -1,0 +1,19 @@
+{
+  "size": [1600, 960],
+  "steps": [
+    {"action": "snapshot", "expect": {"phase": "model"}},
+    {"action": "click", "target": "File", "expect": {"fileOpen": true}},
+    {"action": "click", "target": "Modellazione", "expect": {"fileOpen": false}},
+    {"action": "key", "key": "Ctrl+2", "expect": {"phase": "plant"}},
+    {"action": "key", "key": "Ctrl+3", "expect": {"phase": "production"}},
+    {"action": "key", "key": "Ctrl+4", "expect": {"phase": "consumption"}},
+    {"action": "key", "key": "Ctrl+5", "expect": {"phase": "economics"}},
+    {"action": "key", "key": "Ctrl+6", "expect": {"phase": "report"}},
+    {"action": "resize", "size": [1920, 1080]},
+    {"action": "key", "key": "Ctrl+1", "expect": {"phase": "model"}},
+    {"action": "click", "target": "File", "expect": {"fileOpen": true}},
+    {"action": "resize", "size": [1366, 900]},
+    {"action": "click", "target": "Modellazione", "expect": {"phase": "model", "fileOpen": false}},
+    {"action": "key", "key": "Alt", "expect": {"phase": "model", "fileOpen": false, "menuOpen": true}}
+  ]
+}

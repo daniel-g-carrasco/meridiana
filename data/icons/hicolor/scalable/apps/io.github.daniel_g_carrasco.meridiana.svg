@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Meridiana's icon: a blue half disc, the red gnomon on it and the yellow sun at its tip, light on the left and shadow on the right, on the square canvas of the family. The Inkscape master is meridiana-icona.svg; the PNG sizes are made from this file. -->
+  <defs>
+    <linearGradient id="sfumatura-tela" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3f1ea"/><stop offset="1" stop-color="#e0ddd4"/></linearGradient>
+    <linearGradient id="sfumatura-fianco" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d5d1c6"/><stop offset="0.0625" stop-color="#d4cfc4"/><stop offset="0.125" stop-color="#d1cdc1"/><stop offset="0.1875" stop-color="#cec9bd"/><stop offset="0.25" stop-color="#cac5b8"/><stop offset="0.3125" stop-color="#c6c1b3"/><stop offset="0.375" stop-color="#c3bdaf"/><stop offset="0.4375" stop-color="#c0baab"/><stop offset="0.5" stop-color="#bfb9aa"/><stop offset="0.5625" stop-color="#c0baab"/><stop offset="0.625" stop-color="#c3bdaf"/><stop offset="0.6875" stop-color="#c6c1b3"/><stop offset="0.75" stop-color="#cac5b8"/><stop offset="0.8125" stop-color="#cec9bd"/><stop offset="0.875" stop-color="#d1cdc1"/><stop offset="0.9375" stop-color="#d4cfc4"/><stop offset="1" stop-color="#d5d1c6"/></linearGradient>
+  </defs>
+  <path fill="url(#sfumatura-fianco)" d="M 108 32 H 404 A 84 84 0 0 1 488 116 V 412 A 84 84 0 0 1 404 496 H 108 A 84 84 0 0 1 24 412 V 116 A 84 84 0 0 1 108 32 Z"/>
+  <path fill="url(#sfumatura-tela)" d="M 108 16 H 404 A 84 84 0 0 1 488 100 V 396 A 84 84 0 0 1 404 480 H 108 A 84 84 0 0 1 24 396 V 100 A 84 84 0 0 1 108 16 Z"/>
+  <path fill="#5FA3BE" d="M 256 268.77 L 114.37 268.77 A 141.63 141.63 0 0 0 256 410.4 Z"/>
+  <path fill="#3F7488" d="M 256 268.77 L 256 410.4 A 141.63 141.63 0 0 0 397.63 268.77 Z"/>
+  <path fill="#D2603F" d="M 256 172.47 L 256 268.77 L 201.24 268.77 Z"/>
+  <path fill="#9E412C" d="M 256 172.47 L 310.76 268.77 L 256 268.77 Z"/>
+  <path fill="#F2C14E" d="M 256 85.6 A 37.77 37.77 0 0 0 256 161.13 Z"/>
+  <path fill="#D29A33" d="M 256 85.6 A 37.77 37.77 0 0 1 256 161.13 Z"/>
+</svg>

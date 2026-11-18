@@ -1,0 +1,25 @@
+main window at 1200 x 800: 77 visible buttons; 66 between 23 and 40 px on a side, 11 under 23 px on a side (Windows' minimum)
+  under 23 px: help-button 16 x 16 '?'
+  under 23 px: help-button 16 x 16 '?'
+  under 23 px: help-button 16 x 16 '?'
+  under 23 px: CloseButton 20 x 20 ''
+  under 23 px: CloseButton 20 x 20 ''
+  under 23 px: CloseButton 20 x 20 ''
+  under 23 px: CloseButton 20 x 20 ''
+  under 23 px: help-pin 21 x 21 ''
+  under 23 px: help-detach 21 x 21 ''
+  under 23 px: QCheckBox 22 x 28 ''
+  under 23 px: QCheckBox 22 x 28 ''
+  sizes between 23 and 40 px: [(27, 27), (29, 24), (31, 27), (35, 28), (42, 27), (43, 27), (47, 24), (52, 24), (66, 24), (70, 28), (80, 27), (97, 24)]
+.plan, one-finger tap on a module: selection ('', '') -> ('building', 'b1') (accept touch events: False); events at the viewport: MouseMove (synthesized by Qt), MousePress (synthesized by Qt), MouseRelease (synthesized by Qt)
+plan, two-finger pinch (20 px -> 100 px apart): scale 11.5112 -> 11.5112, selection now ('building', 'b1'); events: MouseMove (synthesized by Qt) x11, MouseRelease (synthesized by Qt)
+plan, two-finger drag down 100 px: translation (0.0, 0.0) -> (0.0, 0.0), selection now ('subfield', 's1'); events: MouseMove (synthesized by Qt), MousePress (synthesized by Qt), MouseMove (synthesized by Qt), Gesture, MouseMove (synthesized by Qt), Gesture, MouseMove (synthesized by Qt), Gesture, MouseMove (synthesized by Qt), Gesture, MouseMove (synthesized by Qt), Gesture, MouseMove (synthesized by Qt), Gesture, MouseMove (synthesized by Qt), Gesture, MouseMove (synthesized by Qt), Gesture, MouseMove (synthesized by Qt), Gesture, MouseMove (synthesized by Qt), Gesture, MouseRelease (synthesized by Qt)
+plan, a mouse click at the same point: selection ('building', 'b1')
+.3D, one-finger tap at the centre: buttons the navigator saw held {'left'}, picked [('point', nan, nan)], accept touch events: False; events at the view: MouseMove (synthesized by Qt), MousePress (synthesized by Qt), MouseRelease (synthesized by Qt)
+3D, a mouse click at the same point, for comparison: picked [('point', nan, nan)]
+3D, two-finger pinch: camera position [-0.36 33.27 25.27] -> [-0.36 33.27 25.27], camera moved: False; events: MouseMove (synthesized by Qt) x11, MouseRelease (synthesized by Qt)
+.
+----------------------------------------------------------------------
+Ran 3 tests in 11.884s
+
+OK

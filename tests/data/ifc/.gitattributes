@@ -1,0 +1,2 @@
+# the samples kept byte for byte, as their SHA-256 in README.md says
+*.ifc -text

@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Impianto, scheda destra: secondo giro</title>
+<style>
+:root {
+  --window: #f2f1ed; --panel: #f8f7f4; --card: #ffffff; --field: #ebe9e4; --field-hover: #e2dfd8;
+  --line: #d9d5cc; --line-soft: #e8e5de; --text: #1e1c19; --text2: #514c44; --muted: #6f685d;
+  --accent: #8b5a12; --good: #0ca30c; --warn: #b07a00; --warn-fill: #fab219; --bad: #d03b3b;
+  --select-bg: #e9dfcf; --hover: rgba(30,28,25,.08);
+  --r-card: 8px; --r-control: 6px; --r-inner: 4px; --r-chip: 12px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--window); color: var(--text); font: 13px/1.35 Inter, "Segoe UI", system-ui, sans-serif; }
+.page { max-width: 1560px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+h2 { font-size: 18px; font-weight: 600; margin: 40px 0 6px; padding-top: 16px; border-top: 1px solid var(--line); }
+h3 { font-size: 14px; font-weight: 600; margin: 18px 0 6px; }
+p, li { color: var(--text2); }
+.lead { max-width: 960px; }
+.drafts { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.draft { width: 360px; }
+.draft .name { font-weight: 600; font-size: 14px; margin: 0 0 2px; }
+.draft .procon { font-size: 12px; color: var(--text2); margin: 0 0 8px; min-height: 48px; }
+.pro { color: var(--good); font-weight: 600; } .con { color: var(--bad); font-weight: 600; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+       color: #fff; background: var(--accent); border-radius: var(--r-chip); padding: 1px 8px; margin-left: 6px; vertical-align: middle; }
+.panel { width: 360px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-card); padding: 6px; }
+.group { border: 1px solid var(--line); border-radius: var(--r-control); background: var(--panel); margin-bottom: 6px; overflow: hidden; }
+.group > .gh { background: var(--line-soft); padding: 5px 8px; font-weight: 600; display: flex; align-items: center; gap: 6px; min-height: 28px; }
+.chev { width: 10px; height: 10px; display: inline-block; position: relative; flex: none; }
+.chev::before { content: ""; position: absolute; left: 2px; top: 1px; width: 5px; height: 5px;
+   border-right: 1.7px solid var(--muted); border-bottom: 1.7px solid var(--muted); transform: rotate(45deg); }
+.chev.cl::before { transform: rotate(-45deg); left: 1px; top: 2px; }
+.help { width: 16px; height: 16px; border: 1px solid var(--line); border-radius: 8px; font-size: 10px; color: var(--muted);
+        display: inline-flex; align-items: center; justify-content: center; font-weight: 600; flex: none; }
+.group > .gh .help { margin-left: auto; }
+.group > .gb { padding: 8px 12px 10px; }
+.group.closed > .gb { display: none; }
+.desc { color: var(--text2); }
+.sec { color: var(--text2); font-size: 12px; }
+.mut { color: var(--muted); }
+.lbl { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 10px 0 4px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: var(--r-control);
+       background: var(--field); border: 1px solid transparent; font-weight: 600; font-size: 13px; color: var(--text); white-space: nowrap; }
+.btn.ghost { background: transparent; font-weight: 400; color: var(--text2); }
+.btn.primary { background: var(--accent); color: #fff; }
+.btn.sm { height: 24px; padding: 0 10px; font-size: 12px; }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+.tool { width: 28px; height: 28px; border-radius: var(--r-control); display: inline-flex; align-items: center; justify-content: center; color: var(--text2); flex: none; }
+.tool.sm { width: 22px; height: 22px; border-radius: var(--r-inner); font-size: 12px; }
+.tool.hot { background: var(--hover); }
+.field { display: inline-flex; align-items: center; justify-content: space-between; height: 28px; padding: 0 8px;
+         border-radius: var(--r-control); background: var(--field); color: var(--text); gap: 8px; white-space: nowrap; }
+.field.sm { height: 24px; font-size: 12px; }
+.field .arrow { color: var(--muted); font-size: 10px; }
+.form { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 5px; flex: none; }
+.dot.ok { background: var(--good); } .dot.warn { background: var(--warn-fill); } .dot.bad { background: var(--bad); } .dot.free { background: transparent; border: 1px solid var(--line); }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
+.chip { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 11px; font-size: 12px; background: var(--field); color: var(--text2); white-space: nowrap; }
+.chip.ok { background: #e2f4e2; color: #0a6f0a; } .chip.warn { background: #fbefcf; color: var(--warn); } .chip.bad { background: #f9e0e0; color: var(--bad); }
+.tile { background: var(--field); border-radius: var(--r-card); padding: 8px 10px; margin-bottom: 6px; }
+.tile.sel { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tile.white { background: var(--card); border: 1px solid var(--line-soft); }
+.handle { color: #b5aea2; letter-spacing: -2px; font-size: 14px; flex: none; width: 14px; }
+.num { display: inline-flex; width: 20px; height: 20px; border-radius: 10px; background: var(--text2); color: #fff;
+       font-size: 11px; font-weight: 600; align-items: center; justify-content: center; flex: none; }
+.num.big { width: 28px; height: 28px; border-radius: var(--r-control); font-size: 13px; }
+.menu { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); padding: 4px; width: 210px; font-size: 13px; }
+.menu div { padding: 6px 24px 6px 8px; border-radius: var(--r-inner); display: flex; }
+.menu div.sel { background: var(--hover); }
+.menu div .k { margin-left: auto; color: var(--muted); }
+.menu hr { border: 0; border-top: 1px solid var(--line-soft); margin: 4px 0; }
+.menu .danger { color: var(--bad); }
+.row { display: flex; align-items: center; gap: 6px; }
+.gauge { position: relative; height: 6px; background: var(--line-soft); border-radius: 3px; overflow: hidden; }
+.gauge > i { position: absolute; top: 0; bottom: 0; background: var(--good); border-radius: 3px; }
+.gauge > i.warn { background: var(--warn-fill); } .gauge > i.bad { background: var(--bad); }
+.gauge > b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--text2); }
+.gauge > em { position: absolute; top: 0; bottom: 0; background: rgba(30,28,25,.10); }
+.gr { display: grid; grid-template-columns: 38px 1fr 76px; gap: 2px 8px; align-items: center; font-size: 11px; color: var(--text2); margin: 2px 0; }
+.gr .v { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+.mgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mcard { background: var(--card); border: 1px solid var(--line-soft); border-radius: var(--r-control); padding: 6px 8px; font-size: 12px; }
+.mcard.sel { border-color: var(--accent); }
+.mcard .h { display: flex; justify-content: space-between; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.mcard .s { display: flex; justify-content: space-between; color: var(--text2); padding: 1px 0; }
+.mcard .s.sel { background: var(--select-bg); margin: 0 -4px; padding: 1px 4px; border-radius: 3px; }
+.mcard .free { color: var(--muted); font-style: italic; }
+.preview { background: var(--card); border: 1px solid var(--line-soft); border-radius: var(--r-control); padding: 8px 10px; margin: 8px 0 6px; }
+.preview .k, .k2 { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.popover { width: 340px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); padding: 12px; position: relative; }
+.popover h4 { margin: 0 0 2px; font-size: 14px; }
+.popover.anch::before { content: ""; position: absolute; left: -8px; top: 36px; width: 14px; height: 14px; background: var(--card);
+   border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: rotate(45deg); }
+.note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.sub { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+.vmenu { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); padding: 4px; width: 200px; font-size: 13px; }
+.vmenu div { padding: 6px 8px 6px 26px; border-radius: var(--r-inner); position: relative; }
+.vmenu div.on::before { content: "✓"; position: absolute; left: 8px; color: var(--text); }
+.vmenu div.sel { background: var(--hover); }
+/* la barra della fase a 1500 px */
+.win { width: 1500px; background: var(--window); border: 1px solid var(--line); border-radius: var(--r-card); padding: 8px 12px 12px; }
+.tabs { display: flex; gap: 2px; align-items: flex-end; height: 36px; padding: 0 4px; font-size: 13px; }
+.tabs span { padding: 0 12px; height: 32px; display: inline-flex; align-items: center; gap: 8px; color: var(--text2); border-radius: 6px 6px 0 0; }
+.tabs span.on { background: var(--panel); color: var(--text); font-weight: 600; border: 1px solid var(--line); border-bottom: none; height: 34px; }
+.tabs .disc { width: 18px; height: 18px; border-radius: 9px; background: var(--line); color: var(--text2); font-size: 11px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+.tabs span.on .disc { background: var(--accent); color: #fff; }
+.tabs .var { margin-left: auto; align-self: center; height: 24px; border-radius: 12px; background: var(--field); padding: 0 12px; font-size: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 0 var(--r-card) var(--r-card) var(--r-card); padding: 6px 8px; }
+.bar { height: 72px; display: flex; align-items: stretch; gap: 0; }
+.bgroup { display: flex; flex-direction: column; justify-content: space-between; padding: 2px 6px 0; }
+.bgroup .tools { display: flex; gap: 2px; }
+.bgroup .ttl { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); text-align: center; padding-bottom: 2px; }
+.tb { width: 56px; height: 50px; border-radius: var(--r-control); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; color: var(--text2); text-align: center; line-height: 1.1; }
+.tb i { width: 22px; height: 22px; border: 1.7px solid var(--text2); border-radius: 4px; display: block; }
+.tb.primary { background: var(--accent); color: #fff; } .tb.primary i { border-color: #fff; }
+.tb.wide { width: 70px; }
+.vline { width: 1px; background: var(--line); margin: 6px 4px; }
+.strip { margin-left: auto; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 12px; border-left: 1px solid var(--line); margin-top: 6px; margin-bottom: 6px; }
+.strip .today { font-size: 12px; line-height: 1.3; }
+.sgroup { width: 400px; border: 1px solid var(--line); border-radius: var(--r-control); background: var(--panel); height: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; padding: 4px 8px; align-items: center; }
+.sgroup .t { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sgroup .g { display: grid; grid-template-columns: 30px 1fr 54px; gap: 0 6px; align-items: center; font-size: 10px; color: var(--text2); }
+.sgroup .g .v { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+.sgroup .g .gauge { height: 4px; }
+.plan { height: 120px; margin-top: 8px; background: #fbfaf8; border: 1px solid var(--line); border-radius: var(--r-control); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; }
+.layout { display: flex; gap: 8px; margin-top: 8px; }
+.layout .plan { flex: 1; margin: 0; height: 420px; }
+</style>
+</head>
+<body>
+<div class="page">
+<h1>Impianto, scheda di destra: secondo giro</h1>
+<p class="lead">Studio 23, seconda tornata (02/11/2026), sulle scelte di Daniel: Pannelli come proposto (già nel programma), inverter I-A da
+rifinire, punto d'incontro S-1/S-2, Stringhe B con menu di vista e la «stringa scelta» come gruppo con barre e commenti. Stessi
+colori, raggi e larghezza (360 px) del primo foglio; stesso impianto di prova (736 moduli, 2 × Huawei SUN2000-100KTL-M2, 36 stringhe).
+Decisioni già prese e rispettate: DC/AC senza colore né frase prima del calcolo dell'anno; il riordino rinumera le stringhe con avviso.</p>
+
+<!-- ============================================================ A. IL GRUPPO DI UN INVERTER -->
+<h2>A. Il gruppo di un inverter: dove stanno maniglia, numero, titolo e contenuti</h2>
+<p class="lead">Nel primo foglio maniglia, numero e titolo erano in fila ma i contenuti rientravano a occhio (30 px) e il menu ⋯ stava da solo.
+Qui tre modi, ciascuno chiuso e aperto. Regola comune: ciò che si afferra (maniglia) sta al bordo sinistro, ciò che identifica (numero,
+nome) subito dopo, ciò che si legge sotto il nome allineato al nome, ciò che agisce (⋯) al bordo destro; il chevron dice che il gruppo
+si chiude come gli altri (R287).</p>
+<div class="drafts">
+  <div class="draft">
+    <p class="name">A1. Maniglia al bordo, numero a disco, contenuti allineati al nome</p>
+    <p class="procon"><span class="pro">Pro</span> è l'I-A messo in ordine: una colonna di 14 px per la maniglia, il disco, il nome; sotto, tutto parte dalla x del nome.
+      Chiuso resta una riga sola con il riassunto in grigio. <span class="con">Contro</span> maniglia sempre visibile, un po' di rumore con molti inverter.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Inverter<span class="help">?</span></div>
+        <div class="gb">
+          <div class="desc" style="margin-bottom:8px">2 inverter · 200 kW AC · 331,2 kWp · DC/AC 1,66</div>
+          <div class="tile sel">
+            <div class="row"><span class="handle">⋮⋮</span><span class="num">1</span><b>Capannone</b><span class="chev" style="margin-left:6px"></span><span class="tool sm" style="margin-left:auto">⋯</span></div>
+            <div style="margin-left:40px">
+              <div class="sec">Huawei SUN2000-100KTL-M2 · 100 kW · 10 MPPT</div>
+              <div style="margin-top:4px"><span class="dot warn"></span>20 stringhe su 10 MPPT · 400 moduli · 180 kWp</div>
+              <div class="sec">DC/AC 1,80</div>
+            </div>
+          </div>
+          <div class="tile">
+            <div class="row"><span class="handle">⋮⋮</span><span class="num">2</span><b>Tettoia</b><span class="chev cl" style="margin-left:6px"></span><span class="sec" style="margin-left:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span class="dot ok"></span>16 str · 151,2 kWp</span><span class="tool sm" style="margin-left:auto">⋯</span></div>
+          </div>
+          <div class="btns"><span class="btn">Catalogo…</span><span class="btn">Scegli in automatico…</span></div>
+        </div></div>
+    </div>
+    <p class="note">Misure: maniglia 14 px + 6, disco 20 + 6: il nome e i contenuti partono a 40 px dal bordo della scheda. Il chevron accanto al nome
+      (non al bordo, che è della maniglia).</p>
+  </div>
+  <div class="draft">
+    <p class="name">A2. Il numero è la maniglia <span class="tag">consigliato</span></p>
+    <p class="procon"><span class="pro">Pro</span> un solo oggetto a sinistra: un quadrato di 28 px con il numero, che si trascina (sotto il puntatore mostra i puntini);
+      il nome e il modello su due righe accanto, lo stato a destra; niente colonna in più. <span class="con">Contro</span> la presa non si vede finché non ci passi sopra
+      (suggerimento «Trascina per cambiare l'ordine»).</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Inverter<span class="help">?</span></div>
+        <div class="gb">
+          <div class="desc" style="margin-bottom:8px">2 inverter · 200 kW AC · 331,2 kWp · DC/AC 1,66</div>
+          <div class="tile sel">
+            <div class="row" style="align-items:flex-start">
+              <span class="num big">1</span>
+              <div style="flex:1;min-width:0"><div class="row"><b>Capannone</b><span class="chev"></span></div><div class="sec">Huawei SUN2000-100KTL-M2 · 100 kW · 10 MPPT</div></div>
+              <span class="tool sm">⋯</span>
+            </div>
+            <div style="margin:8px 0 0 34px">
+              <div><span class="dot warn"></span>20 stringhe su 10 MPPT · 400 moduli · 180 kWp · DC/AC 1,80</div>
+              <div class="sec" style="margin-top:2px">MPPT 9: due lunghezze diverse (20 e 18) · 26,8 A su 26 A per MPPT</div>
+            </div>
+          </div>
+          <div class="tile">
+            <div class="row" style="align-items:flex-start">
+              <span class="num big" style="background:#b5aea2;letter-spacing:-2px">⋮⋮</span>
+              <div style="flex:1;min-width:0"><div class="row"><b>Tettoia</b><span class="chev cl"></span></div><div class="sec">Huawei SUN2000-100KTL-M2 · 100 kW · 10 MPPT</div></div>
+              <span class="chip ok">16 str</span><span class="tool sm">⋯</span>
+            </div>
+          </div>
+          <div class="btns"><span class="btn">Catalogo…</span><span class="btn">Scegli in automatico…</span></div>
+        </div></div>
+    </div>
+    <p class="note">Il quadrato del 2 è disegnato com'è sotto il puntatore: il numero lascia il posto ai puntini della presa. Chiuso: nome, modello e un gettone con le stringhe.</p>
+  </div>
+  <div class="draft">
+    <p class="name">A3. Sotto-gruppi con intestazione piena, come gli altri gruppi</p>
+    <p class="procon"><span class="pro">Pro</span> stessa grammatica dei gruppi del pannello: intestazione in line_soft, chevron, «1 · Capannone», ⋯ e maniglia a destra;
+      il corpo è un modulo a due colonne. <span class="con">Contro</span> gruppi dentro un gruppo: più cornici, più alto; la maniglia a destra è lontana dalla mano.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Inverter<span class="help">?</span></div>
+        <div class="gb" style="padding:8px">
+          <div class="desc" style="margin:0 4px 8px">2 inverter · 200 kW AC · 331,2 kWp · DC/AC 1,66</div>
+          <div class="group" style="margin-bottom:6px"><div class="gh" style="font-weight:600"><span class="chev"></span>1 · Capannone<span class="tool sm" style="margin-left:auto">⋯</span><span class="handle" style="width:auto">⋮⋮</span></div>
+            <div class="gb">
+              <div class="form" style="grid-template-columns:auto 1fr">
+                <span class="mut">Modello</span><span>Huawei SUN2000-100KTL-M2</span>
+                <span class="mut">Potenza</span><span>100 kW AC · 10 MPPT</span>
+                <span class="mut">Stringhe</span><span><span class="dot warn"></span>20 su 10 MPPT · 400 moduli</span>
+                <span class="mut">Potenza DC</span><span>180 kWp · DC/AC 1,80</span>
+              </div>
+            </div></div>
+          <div class="group" style="margin-bottom:0"><div class="gh" style="font-weight:600"><span class="chev cl"></span>2 · Tettoia<span class="sec" style="font-weight:400;margin-left:8px"><span class="dot ok"></span>16 str · 151,2 kWp</span><span class="tool sm" style="margin-left:auto">⋯</span><span class="handle" style="width:auto">⋮⋮</span></div></div>
+          <div class="btns" style="margin:8px 4px 0"><span class="btn">Catalogo…</span><span class="btn">Scegli in automatico…</span></div>
+        </div></div>
+    </div>
+  </div>
+  <div class="draft">
+    <p class="name">Il menu ⋯ (uguale per A1, A2, A3)</p>
+    <p class="procon">Dal pulsante ⋯ o dal tasto destro sulla scheda. Le voci che scrivono dicono cosa cambia; «Togli» in rosso in fondo, dopo una linea.</p>
+    <div class="menu">
+      <div>Rinomina<span class="k">F2</span></div>
+      <div>Sposta su<span class="k">Alt+↑</span></div><div>Sposta giù<span class="k">Alt+↓</span></div>
+      <hr><div>Scheda tecnica…</div><div class="sel">Stringa questo inverter…</div><div>Svuota le sue stringhe</div>
+      <hr><div class="danger">Togli dall'impianto</div>
+    </div>
+    <p class="note">Spostare rinumera: «Inverter 2 → 1: le stringhe 2.x.y diventano 1.x.y» nella barra di stato, un passo di Annulla.</p>
+  </div>
+</div>
+
+<!-- ============================================================ B. S-1 E S-2 INSIEME -->
+<h2>B. Stringare un inverter: tre punti d'incontro fra il pannellino (S-1) e la finestrella (S-2)</h2>
+<p class="lead">S-1 teneva tutto nella scheda ma la allungava; S-2 aveva spazio e la scala del rapporto ma era una finestra in più. Tre vie di mezzo,
+tutte dentro la scheda A2 dell'inverter 2 (vuoto) dopo «Stringa questo inverter…». Il DC/AC resta un campo libero: nessun colore, nessuna frase di giudizio.</p>
+<div class="drafts">
+  <div class="draft">
+    <p class="name">M1. Riga compatta + «Altre opzioni…»</p>
+    <p class="procon"><span class="pro">Pro</span> il caso comune in una riga: moduli, DC/AC, Stringa; la finestrella arriva solo a chi la chiede.
+      <span class="con">Contro</span> due posti per le stesse opzioni; l'anteprima lunga sta solo nella finestrella.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Inverter<span class="help">?</span></div>
+        <div class="gb">
+          <div class="tile sel">
+            <div class="row" style="align-items:flex-start"><span class="num big">2</span>
+              <div style="flex:1;min-width:0"><div class="row"><b>Tettoia</b><span class="chev"></span></div><div class="sec">Huawei SUN2000-100KTL-M2 · 100 kW · 10 MPPT</div></div><span class="tool sm hot">⋯</span></div>
+            <div style="margin:8px 0 0 34px"><span class="dot free"></span><span class="sec">nessuna stringa</span></div>
+            <div class="sub" style="margin-left:34px">
+              <div class="k2" style="margin-bottom:6px">Stringa questo inverter</div>
+              <div class="row" style="flex-wrap:wrap"><span class="field sm" style="flex:1"><span>Selezionati in pianta (336)</span><span class="arrow">▼</span></span><span class="field sm" style="width:92px"><span>DC/AC 1,25</span><span class="arrow">▲▼</span></span></div>
+              <div class="sec" style="margin-top:6px">16 stringhe da 21 su 8 MPPT · 151,2 kWp · DC/AC 1,51</div>
+              <div class="btns" style="margin-top:6px"><span class="btn sm primary">Stringa</span><span class="btn sm ghost">Altre opzioni…</span><span class="btn sm ghost" style="margin-left:auto">Annulla</span></div>
+            </div>
+          </div>
+        </div></div>
+    </div>
+    <div class="popover anch" style="margin:12px 0 0 10px">
+      <h4>Altre opzioni · Stringa l'inverter 2 · Tettoia</h4>
+      <div class="form" style="margin-top:8px">
+        <span>Moduli da usare</span><span class="field"><span>Selezionati in pianta (336)</span><span class="arrow">▼</span></span>
+        <span>Rapporto DC/AC voluto</span><span class="field" style="width:120px"><span>1,25</span><span class="arrow">▲▼</span></span>
+        <span>Moduli in serie</span><span class="field" style="width:120px"><span>suggerito (21)</span><span class="arrow">▲▼</span></span>
+        <span>Percorso delle stringhe</span><span class="field"><span>Una fila per MPPT</span><span class="arrow">▼</span></span>
+        <span>Stringhe che ci sono</span><span class="field"><span>Sostituisci</span><span class="arrow">▼</span></span>
+      </div>
+      <div class="preview"><div class="k">Anteprima</div><div>16 stringhe da 21 moduli su 8 MPPT, 2 MPPT liberi · 151,2 kWp · DC/AC 1,51</div>
+        <div class="sec">Uoc 916 V di 1100 · Umpp 641-715 V nella finestra 200-1000 · 26,8 A su 26 A per MPPT</div></div>
+      <div class="btns"><span class="btn ghost">Annulla</span><span class="btn primary" style="margin-left:auto">Stringa</span></div>
+    </div>
+  </div>
+  <div class="draft">
+    <p class="name">M2. Pannellino che si allarga <span class="tag">consigliato</span></p>
+    <p class="procon"><span class="pro">Pro</span> un posto solo: parte con due campi e un'anteprima di una riga; «Mostra tutte le opzioni» apre serie, percorso,
+      sostituisci/completa e la riga della scala sotto, nella stessa scheda. Lo stato aperto o chiuso si ricorda. <span class="con">Contro</span> aperto del tutto la scheda è alta 320 px.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Inverter<span class="help">?</span></div>
+        <div class="gb">
+          <div class="tile sel">
+            <div class="row" style="align-items:flex-start"><span class="num big">2</span>
+              <div style="flex:1;min-width:0"><div class="row"><b>Tettoia</b><span class="chev"></span></div><div class="sec">Huawei SUN2000-100KTL-M2 · 100 kW · 10 MPPT</div></div><span class="tool sm hot">⋯</span></div>
+            <div class="sub" style="margin-left:34px">
+              <div class="k2">Stringa questo inverter</div>
+              <div class="sec" style="margin:2px 0 8px">Meridiana riempie gli MPPT con i moduli indicati, in stringhe valide per la sua finestra di tensione e le sue correnti, fino al rapporto DC/AC voluto.</div>
+              <div class="form">
+                <span>Moduli da usare</span><span class="field sm"><span>Selezionati in pianta (336)</span><span class="arrow">▼</span></span>
+                <span>Rapporto DC/AC voluto</span><span class="field sm" style="width:100px"><span>1,25</span><span class="arrow">▲▼</span></span>
+              </div>
+              <div class="row" style="margin-top:8px;color:var(--text2);font-size:12px"><span class="chev"></span>Tutte le opzioni</div>
+              <div class="form" style="margin:6px 0 0 16px">
+                <span>Moduli in serie</span><span class="field sm" style="width:100px"><span>suggerito</span><span class="arrow">▲▼</span></span>
+                <span>Percorso</span><span class="field sm"><span>Una fila per MPPT</span><span class="arrow">▼</span></span>
+                <span>Stringhe che ci sono</span><span class="field sm"><span>Sostituisci</span><span class="arrow">▼</span></span>
+              </div>
+              <div class="preview"><div class="k">Anteprima</div><div>16 stringhe da 21 su 8 MPPT · 151,2 kWp · DC/AC 1,51</div>
+                <div class="sec">2 MPPT liberi · Uoc 916 V di 1100 · Umpp 641-715 V · 26,8 A su 26 A</div></div>
+              <div class="btns" style="margin-top:4px"><span class="btn primary">Applica</span><span class="btn ghost">Annulla</span><span class="sec" style="margin-left:auto">un passo di Annulla</span></div>
+            </div>
+          </div>
+        </div></div>
+    </div>
+  </div>
+  <div class="draft">
+    <p class="name">M3. Finestrella ancorata al gruppo</p>
+    <p class="procon"><span class="pro">Pro</span> la scheda resta com'è (una riga «stringatura in corso…»); la finestrella sta appesa al bordo del pannello, non modale:
+      si può ancora cliccare la pianta per cambiare i moduli. <span class="con">Contro</span> copre la pianta a sinistra del pannello; su schermi stretti si stacca e diventa una finestra come S-2.</p>
+    <div style="display:flex;align-items:flex-start;gap:0">
+      <div class="popover anch" style="order:2;margin-left:-6px;width:300px">
+        <h4>Stringa l'inverter 2 · Tettoia</h4>
+        <div class="sec" style="margin-bottom:8px">I moduli si scelgono anche in pianta mentre la finestrella è aperta.</div>
+        <div class="form">
+          <span>Moduli</span><span class="field sm"><span>Selezionati (336)</span><span class="arrow">▼</span></span>
+          <span>DC/AC voluto</span><span class="field sm" style="width:90px"><span>1,25</span><span class="arrow">▲▼</span></span>
+          <span>In serie</span><span class="field sm" style="width:90px"><span>suggerito</span><span class="arrow">▲▼</span></span>
+          <span>Percorso</span><span class="field sm"><span>Una fila per MPPT</span><span class="arrow">▼</span></span>
+        </div>
+        <div class="preview"><div class="k">Anteprima</div><div>16 × 21 su 8 MPPT · 151,2 kWp · DC/AC 1,51</div></div>
+        <div class="btns"><span class="btn ghost">Annulla</span><span class="btn primary" style="margin-left:auto">Stringa</span></div>
+      </div>
+    </div>
+    <p class="note">Nel disegno la freccia punta alla scheda dell'inverter 2 che sta nel pannello a sinistra (qui omesso per spazio): la finestrella segue la scheda quando il pannello scorre.</p>
+  </div>
+</div>
+
+<!-- ============================================================ C. STRINGHE B + STRINGA SCELTA -->
+<h2>C. Stringhe B con il menu di vista, e la «stringa scelta» come gruppo</h2>
+<p class="lead">Il menu di vista sta a sinistra del «?»: un pulsante strumento con l'icona della vista e la freccina, voci «Ingressi a schede» e
+«Unifilare in miniatura», scelta ricordata. La stringa scelta esce dal fondo della colonna e diventa un gruppo con barre e commenti (stile E/F).
+Dove metterlo: Daniel propone la zona destra della barra di Impianto, al posto del riepilogo di oggi. Sotto, la barra intera a 1500 px.</p>
+<div class="drafts">
+  <div class="draft">
+    <p class="name">C1. Stringhe B con il menu di vista aperto</p>
+    <p class="procon">Il pulsante della vista è un QToolButton piatto con menu (come i filtri delle Verifiche), 28 px, prima del «?»; lo stesso gruppo disegna B o C secondo la voce.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Stringhe<span class="sec" style="font-weight:400;margin-left:4px">36 su 18 ingressi</span><span class="tool sm hot" style="margin-left:auto;width:auto;padding:0 4px;gap:2px">⊞<span style="font-size:9px">▼</span></span><span class="help">?</span></div>
+        <div class="gb">
+          <div class="vmenu" style="position:absolute;margin:-6px 0 0 120px"><div class="on sel">Ingressi a schede</div><div>Unifilare in miniatura</div></div>
+          <div class="row" style="margin-bottom:8px"><span class="field" style="flex:1"><span>Inverter 1 · Capannone</span><span class="arrow">▼</span></span><span class="sec">20 str · 180 kWp</span></div>
+          <div class="mgrid">
+            <div class="mcard"><div class="h"><span>MPPT 1</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#8b5a12"></span>1.1.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#2f6b4f"></span>1.1.2</span><span>20</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 2</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#1f6a7a"></span>1.2.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#8a3a6e"></span>1.2.2</span><span>20</span></div></div>
+            <div class="mcard sel"><div class="h"><span>MPPT 3</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#2a5ea8"></span>1.3.1</span><span>20</span></div><div class="s sel"><span><span class="sw" style="background:#a4482b"></span>1.3.2</span><span>20</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 4</span><span class="dot warn" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#4a4f57"></span>1.4.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#5f6b1f"></span>1.4.2</span><span>20</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 5-8</span><span class="dot warn" style="margin:0"></span></div><div class="s mut">8 stringhe da 20</div><div class="s mut">apri ▸</div></div>
+            <div class="mcard"><div class="h"><span>MPPT 9</span><span class="dot bad" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#5f6b1f"></span>1.9.1</span><span>20</span></div><div class="s"><span><span class="sw" style="background:#5b4bb0"></span>1.9.2</span><span style="color:var(--bad);font-weight:600">18</span></div></div>
+            <div class="mcard"><div class="h"><span>MPPT 10</span><span class="dot ok" style="margin:0"></span></div><div class="s"><span><span class="sw" style="background:#8b5a12"></span>1.10.1</span><span>22</span></div><div class="s free">＋ libero</div></div>
+          </div>
+          <div class="btns" style="margin-top:10px"><span class="btn">Stringa in automatico…</span><span class="btn">Disegna</span></div>
+        </div></div>
+    </div>
+  </div>
+  <div class="draft">
+    <p class="name">C2. Il gruppo «Stringa scelta» per esteso (stile E/F)</p>
+    <p class="procon">Identità in una riga, tre barre con i limiti, le verifiche come righe con segno e articolo, i comandi della stringa. Alto 230 px: è la misura che decide dove può stare.</p>
+    <div class="panel">
+      <div class="group"><div class="gh"><span class="chev"></span>Stringa scelta · 1.3.2<span class="help">?</span></div>
+        <div class="gb">
+          <div><span class="sw" style="background:#a4482b"></span><b>1.3.2</b> · Inverter 1 Capannone · MPPT 3, seconda di 2</div>
+          <div class="sec">20 moduli Trina 450 W in serie · 9,0 kWp · fila 3, moduli 1-20</div>
+          <div class="gr" style="margin-top:8px"><span>Uoc</span><div class="gauge"><i style="left:0;width:79%"></i></div><span class="v">872 / 1100 V</span></div>
+          <div class="gr"><span>Umpp</span><div class="gauge"><em style="left:0;width:20%"></em><i style="left:61%;width:7%"></i></div><span class="v">610-681 V</span></div>
+          <div class="gr"><span>I MPPT</span><div class="gauge"><i class="warn" style="left:0;width:100%"></i></div><span class="v">26,8 / 26 A</span></div>
+          <div class="sec" style="margin-top:8px"><span class="dot warn"></span>Corrente di lavoro 26,8 A su 26 A: l'inverter la limita e perde un poco di potenza</div>
+          <div class="sec"><span class="dot ok"></span>Uoc a -10 °C entro 1100 V dell'inverter e 1500 V dei moduli (CEI 64-8/7 712.512)</div>
+          <div class="sec"><span class="dot ok"></span>Umpp a 60 e a 20 °C dentro la finestra 200-1000 V · Isc 35,2 A di 40 A</div>
+          <div class="btns"><span class="btn">Ridisegna</span><span class="btn">Sposta su…</span><span class="btn ghost" style="color:var(--bad)">Elimina</span></div>
+        </div></div>
+    </div>
+  </div>
+</div>
+
+<h3>C3. La barra di Impianto a 1500 px con il gruppo nella zona destra</h3>
+<p class="lead">Oggi la zona destra della barra (R70, `PlantPage.strip`) è alta quanto la barra, 72 px con le parole o 44 con le sole icone, larga al
+massimo 50 caratteri (circa 300 px) e porta due righe piccole: gli inverter in una riga («2 × Huawei SUN2000-100KTL-M2, 200,0 kW AC»,
+oppure la stringa scelta con le sue tensioni) e «36 stringhe su 18 ingressi»; mentre si disegna una stringa, al loro posto la scheda del tracciato.
+Il gruppo C2 è alto 230 px: nella barra non ci sta. Ci sta la sua versione compressa (60 px): nome e percorso, le tre barre con i numeri, il peggiore dei commenti.</p>
+<div class="win">
+  <div class="tabs"><span><span class="disc">1</span>Sito</span><span><span class="disc">2</span>Modellazione</span><span class="on"><span class="disc">3</span>Impianto</span><span><span class="disc">4</span>Produzione</span><span><span class="disc">5</span>Consumi</span><span><span class="disc">6</span>Economia</span><span><span class="disc">7</span>Relazione</span><span class="var">Variante: Base ▼</span></div>
+  <div class="card">
+    <div class="bar">
+      <div class="bgroup"><div class="tools"><span class="tb"><i></i>Sottocampo</span><span class="tb"><i></i>Fila</span><span class="tb"><i></i>Est-ovest</span><span class="tb wide"><i></i>Su pensilina</span><span class="tb primary"><i></i>Posa</span><span class="tb"><i></i>Svuota</span></div><div class="ttl">Pannelli</div></div>
+      <div class="vline"></div>
+      <div class="bgroup"><div class="tools"><span class="tb"><i></i>Catalogo</span><span class="tb wide"><i></i>Scegli in automatico</span></div><div class="ttl">Inverter</div></div>
+      <div class="vline"></div>
+      <div class="bgroup"><div class="tools"><span class="tb"><i></i>Configura</span></div><div class="ttl">Accumulo</div></div>
+      <div class="vline"></div>
+      <div class="bgroup"><div class="tools"><span class="tb wide"><i></i>Stringa in automatico</span><span class="tb"><i></i>Disegna</span><span class="tb"><i></i>Seleziona</span><span class="tb"><i></i>Elimina</span><span class="tb wide"><i></i>Cancella tutte</span></div><div class="ttl">Stringhe</div></div>
+      <div class="strip">
+        <div class="sgroup">
+          <div>
+            <div class="t"><span class="sw" style="background:#a4482b"></span><b>1.3.2</b> · Inv. 1 Capannone · MPPT 3</div>
+            <div class="t sec">20 moduli · 9,0 kWp</div>
+            <div class="t sec"><span class="dot warn"></span>26,8 A su 26 A: l'inverter limita</div>
+          </div>
+          <div>
+            <div class="g"><span>Uoc</span><div class="gauge"><i style="left:0;width:79%"></i></div><span class="v">872/1100</span></div>
+            <div class="g"><span>Umpp</span><div class="gauge"><em style="left:0;width:20%"></em><i style="left:61%;width:7%"></i></div><span class="v">610-681</span></div>
+            <div class="g"><span>I</span><div class="gauge"><i class="warn" style="left:0;width:100%"></i></div><span class="v">26,8/26</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="plan">la pianta</div>
+  </div>
+</div>
+<p class="lead" style="margin-top:10px"><b>Ci sta?</b> A 1500 px sì: i quattro gruppi di strumenti con le parole prendono circa 1040 px (compresi «Seleziona» ed
+«Elimina» degli altri agenti, misurati su questo disegno), restano circa 430 px e il gruppo compresso ne vuole 400: giusto giusto. Con le sole icone (barra a 44 px) il gruppo si riduce a
+una riga: nome, percorso, le tre cifre senza barre. Sotto i 1350 px il gruppo entra nel menu di troppo-pieno della barra, come già accadde al
+riepilogo lungo (R277): lì torna il testo di due righe di oggi. <b>Cosa si perde del riepilogo di oggi:</b> la riga degli inverter («2 × Huawei…,
+200 kW AC») e «36 stringhe su 18 ingressi» spariscono dalla barra mentre una stringa è scelta; vanno nelle intestazioni della colonna, dove già
+compaiono nei bozzetti (il gruppo Inverter: «2 inverter · 200 kW AC · 331,2 kWp»; il gruppo Stringhe: «36 su 18 ingressi»). Senza stringa scelta la
+zona destra mostra il riepilogo di oggi, mentre si disegna la scheda del tracciato: tre stati, uno alla volta. <b>Cosa non ci sta comunque:</b> le
+verifiche per esteso con gli articoli e i comandi della stringa (Ridisegna, Sposta, Elimina).</p>
+
+<h3>C4. L'alternativa: il gruppo in cima alla colonna destra</h3>
+<div class="layout">
+  <div class="plan">la pianta (la barra come oggi, con il riepilogo di due righe a destra)</div>
+  <div class="panel" style="flex:none">
+    <div class="group"><div class="gh"><span class="chev"></span>Stringa scelta · 1.3.2<span class="help">?</span></div>
+      <div class="gb">
+        <div><span class="sw" style="background:#a4482b"></span><b>1.3.2</b> · Inverter 1 Capannone · MPPT 3, seconda di 2 · 20 moduli</div>
+        <div class="gr" style="margin-top:6px"><span>Uoc</span><div class="gauge"><i style="left:0;width:79%"></i></div><span class="v">872 / 1100 V</span></div>
+        <div class="gr"><span>Umpp</span><div class="gauge"><em style="left:0;width:20%"></em><i style="left:61%;width:7%"></i></div><span class="v">610-681 V</span></div>
+        <div class="gr"><span>I MPPT</span><div class="gauge"><i class="warn" style="left:0;width:100%"></i></div><span class="v">26,8 / 26 A</span></div>
+        <div class="sec" style="margin-top:6px"><span class="dot warn"></span>Corrente di lavoro 26,8 A su 26 A: l'inverter la limita e perde un poco di potenza</div>
+        <div class="sec"><span class="dot ok"></span>Uoc, Umpp e Isc entro i limiti (CEI 64-8/7 712.512)</div>
+        <div class="btns"><span class="btn sm">Ridisegna</span><span class="btn sm">Sposta su…</span><span class="btn sm ghost" style="color:var(--bad)">Elimina</span></div>
+      </div></div>
+    <div class="group closed"><div class="gh"><span class="chev cl"></span>Pannelli</div></div>
+    <div class="group"><div class="gh"><span class="chev"></span>Inverter<span class="help">?</span></div><div class="gb"><div class="sec">… le schede A2 e, sotto, Stringhe B …</div></div></div>
+    <div class="group closed"><div class="gh"><span class="chev cl"></span>Accumulo</div></div>
+  </div>
+</div>
+<p class="lead" style="margin-top:10px"><span class="pro">Pro</span> c'è tutto: barre, verifiche con l'articolo, comandi; compare solo con una stringa scelta e si chiude
+come gli altri gruppi; la barra resta com'è (nessun salto di larghezza fra le schermate, nessun troppo-pieno). <span class="con">Contro</span> spinge Pannelli
+e Inverter in basso di 200 px mentre è aperto; sta nella colonna, non vicino alla pianta.</p>
+
+<h3>Raccomandazione</h3>
+<ul>
+  <li><b>Inverter: A2</b> (il numero è la maniglia); menu ⋯ uguale per tutti.</li>
+  <li><b>Stringatura: M2</b> (pannellino che si allarga, stato ricordato); la stessa scheda, aperta su «tutto l'impianto», serve alla barra per «Stringa in automatico…».</li>
+  <li><b>Stringa scelta: tutt'e due i posti, con due misure</b>. Nella barra la versione compressa C3 (60 px, barre e il commento peggiore), che prende
+    il posto del riepilogo solo finché una stringa è scelta; in cima alla colonna destra il gruppo C4 per esteso, con verifiche e comandi.
+    Se dev'essere uno solo: la colonna (C4), perché la barra non regge né le verifiche né i comandi e sotto i 1350 px li perde del tutto.</li>
+  <li><b>Stringhe: B</b> con il menu di vista «Ingressi a schede / Unifilare in miniatura» a sinistra del «?».</li>
+</ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,68 @@
+{
+  "theme": "dark",
+  "language": "it",
+  "check_updates": false,
+  "last_update_check": "2026-10-21",
+  "last_folder": "C:\\Users\\utente\\Progetti",
+  "last_project": "C:\\Users\\utente\\Progetti\\Rho.meridiana",
+  "background": "osm",
+  "shortcuts": {
+    "fit": [
+      "Z"
+    ],
+    "tool_measure": [
+      "D",
+      "Shift+M"
+    ]
+  },
+  "accent": "plum",
+  "backgrounds": "tinted",
+  "navigation": "blender",
+  "orbit": "arcball",
+  "pivot": "selection",
+  "assistant": false,
+  "veil": 0.2,
+  "toolbar": "icons",
+  "assistant_docked": true,
+  "network_geocoding": false,
+  "network_pvgis": true,
+  "network_tiles": false,
+  "toolbar_place": "left",
+  "assistant_animated": false,
+  "assistant_style": "pixel",
+  "assistant_width": 360,
+  "assistant_height": 420,
+  "checks_view": "area",
+  "help_open": false,
+  "pivot_hint": false,
+  "menu_bar": true,
+  "recent": [
+    "C:\\Progetti\\Capannone.meridiana",
+    "C:\\Progetti\\Uffici.meridiana"
+  ],
+  "version": 17,
+  "report_profiles": [
+    {
+      "name": "Studio",
+      "signer": "Ing. Nome Cognome",
+      "register": "",
+      "firm": "Studio di prova",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "web": "",
+      "logo": ""
+    }
+  ],
+  "report_profile": "Studio",
+  "assistant_provider": "claude",
+  "assistant_local_url": "http://127.0.0.1:18931/v1",
+  "assistant_local_model": "qwen3.6-35b-a3b",
+  "assistant_cloud_model": "claude-sonnet-5-5",
+  "assistant_consent": {
+    "anthropic": [
+      "2026-10-24"
+    ]
+  },
+  "assistant_voice": true
+}
