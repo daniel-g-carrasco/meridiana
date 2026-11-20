@@ -150,6 +150,7 @@ Item {
             model: root.backend ? root.backend.underlays : []
             delegate: Image {
                 required property var modelData
+                objectName: "planUnderlay"
                 width: 1
                 height: 1
                 source: modelData.source

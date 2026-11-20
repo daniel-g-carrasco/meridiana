@@ -308,7 +308,7 @@ def window(report: Report, folder: Path) -> None:
         t = time.perf_counter()
         from . import report as pdf
         out = folder / "Self-test.pdf"
-        pdf.export_pdf(win.project, win.energy, out, None)
+        pdf.export_pdf(win.project, win._report_data(), out, None)
         size = out.stat().st_size if out.exists() else 0
         report.check("PDF report", size > 10_000 and out.read_bytes()[:5] == b"%PDF-", f"{size:,} bytes", t)
 

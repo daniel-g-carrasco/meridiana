@@ -2,7 +2,6 @@
 is on a side the command takes, and that side is lit; nothing in Select, nothing away from the sides."""
 import unittest
 
-from PySide6.QtCore import QPoint
 from PySide6.QtQml import QQmlEngine, QQmlExpression
 from PySide6.QtTest import QTest
 

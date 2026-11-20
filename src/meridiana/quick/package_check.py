@@ -41,7 +41,7 @@ def main(argv=None):
         if sys.stdout is not None:
             print(line, flush=True)
 
-    from PySide6.QtCore import Q_ARG, QEventLoop, QMetaObject, QObject, QTimer
+    from PySide6.QtCore import Q_ARG, QEventLoop, QMetaObject, QTimer
 
     from meridiana import i18n, model
     from meridiana.quick.app import QuickWindow, create_app
@@ -111,9 +111,9 @@ def main(argv=None):
         shot(f'settings-{section}')
     part.closeFile()
     pump(500)
-    host.window.setProperty('helpOpen', True)
+    host.window.runCommand('assistant')
     shot('meridio')
-    host.window.setProperty('helpOpen', False)
+    host.window.runCommand('assistant')
     report = host.parts.controllers['report']
     written, failed = [], []
     report.completed.connect(written.append)

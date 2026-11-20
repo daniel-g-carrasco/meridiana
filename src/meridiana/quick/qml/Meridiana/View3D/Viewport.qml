@@ -767,8 +767,9 @@ Control {
     M.Dialog {
         id: renameDialog
         objectName: "sceneRename"
-        x: Math.max(0,(root.width-width)/2); y: Math.max(0,(root.sceneHeight-height)/2)
-        width: Math.min(root.width,360)
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        width: Math.min(parent ? parent.width : root.width, M.ControlMetrics.dialogWidth.narrow)
         title: qsTr("Rename")
         acceptText: qsTr("OK"); rejectText: qsTr("Cancel")
         contentItem: M.TextField { id: renameField; objectName: "sceneRenameField"; onAccepted: renameDialog.accept() }

@@ -18,7 +18,7 @@ from quick.meridio.support import Host, KeyStore, Voice
 
 
 def _close(a: QColor, b: QColor, tolerance: int = 3) -> bool:
-    return all(abs(x - y) <= tolerance for x, y in zip(a.getRgb()[:3], b.getRgb()[:3]))
+    return all(abs(x - y) <= tolerance for x, y in zip(a.getRgb()[:3], b.getRgb()[:3], strict=True))
 
 
 class ConversationFades(unittest.TestCase):
@@ -102,7 +102,7 @@ class ConversationFades(unittest.TestCase):
             for py in list(range(top, top + round(8 * dpr))) + list(range(bottom - round(8 * dpr), bottom)):
                 for px in range(x0, x1, 2):
                     c = image.pixelColor(px, py)
-                    gap = max(abs(a - b) for a, b in zip(c.getRgb()[:3], ground.getRgb()[:3]))
+                    gap = max(abs(a - b) for a, b in zip(c.getRgb()[:3], ground.getRgb()[:3], strict=True))
                     if gap > worst[0]:
                         worst = (gap, (step, px, py, c.name()))
         self.assertLessEqual(worst[0], 70, f'text next to the edge too dark: {worst}')

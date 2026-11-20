@@ -26,7 +26,7 @@ def drift(a, b, path=''):
         if len(a) != len(b):
             return [f'{path}: {len(a)} contro {len(b)} elementi']
         out = []
-        for i, (x, y) in enumerate(zip(a, b)):
+        for i, (x, y) in enumerate(zip(a, b, strict=True)):
             out += drift(x, y, f'{path}[{i}]')
         return out
     if isinstance(a, (int, float)) and isinstance(b, (int, float)) and not isinstance(a, bool):

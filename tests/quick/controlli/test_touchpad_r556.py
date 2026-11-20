@@ -154,7 +154,7 @@ class Navigation(unittest.TestCase):
             engine.evaluate(source)
             act = engine.globalObject().property('wheelAction')
 
-            def call(*args):
+            def call(*args, act=act, engine=engine):
                 return act.call([engine.toScriptValue(a) for a in args]).toVariant()
             # two fingers, as WindowsTouchpad gives them: pixels in a phase
             self.assertEqual(call([0, 16], [0, 13], True, False, False, False)[:3], ['pan', 0, 13], name)

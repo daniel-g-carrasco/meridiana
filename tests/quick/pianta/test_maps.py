@@ -204,7 +204,6 @@ class LoaderTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from PySide6.QtGui import QGuiApplication
         from PySide6.QtWidgets import QApplication
         cls.app = QApplication.instance() or QApplication([])
 
@@ -251,17 +250,19 @@ class LoaderTests(unittest.TestCase):
 
     def test_quick_underlay_pixels_keep_north_up_and_are_above_the_veil(self):
         import base64
-        from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QUrl
+        from PySide6.QtCore import QBuffer, QIODevice, QUrl
+        from quick.gestures import item
         from PySide6.QtGui import QColor, QImage
         from PySide6.QtQml import QQmlApplicationEngine
         from meridiana.quick.backend.plan_tiles import MapController
         from meridiana.underlay import Underlay
         image = QImage(20, 10, QImage.Format.Format_RGB32)
         image.fill(QColor('#df3245'))
-        data = QByteArray()
-        buffer = QBuffer(data)
-        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-        image.save(buffer, 'PNG')
+        buffer = QBuffer()
+        self.assertTrue(buffer.open(QIODevice.OpenModeFlag.WriteOnly))
+        self.assertTrue(image.save(buffer, "PNG"))
+        buffer.close()
+        data = buffer.data()
         with tempfile.TemporaryDirectory() as cache:
             maps = MapController(Path(cache), offline=True)
             maps.configure(underlays=[Underlay('test', image=base64.b64encode(data).decode(),
@@ -281,7 +282,10 @@ class LoaderTests(unittest.TestCase):
             self.assertTrue(engine.rootObjects(), 'MapLayer QML must load')
             window = engine.rootObjects()[0]
             self.wait(lambda: window.isExposed())
-            self.wait(lambda: not window.grabWindow().isNull())
+            def image_loaded():
+                underlay = item(window, "planUnderlay")
+                return underlay is not None and underlay.property("sourceSize").width() == image.width()
+            self.wait(image_loaded)
             grab = window.grabWindow()
             dpr = grab.devicePixelRatio()
             self.assertEqual(grab.pixelColor(round(240 * dpr), round(160 * dpr)).name(), '#df3245')

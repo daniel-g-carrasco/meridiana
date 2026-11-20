@@ -7,7 +7,6 @@ import random
 import unittest
 from pathlib import Path
 
-from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QJSEngine
 

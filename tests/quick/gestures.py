@@ -3,6 +3,7 @@ import time
 
 from PySide6.QtCore import QEvent, QEventLoop, QObject, QPoint, QPointF, Qt, QTimer
 from PySide6.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
+from PySide6.QtQuick import QQuickItem
 
 
 def pump(milliseconds=16):
@@ -25,6 +26,8 @@ def item(window, name):
         pending = [window.contentItem()]
         while pending:
             obj = pending.pop()
+            if not isinstance(obj, QQuickItem):
+                continue
             if obj.objectName() == name:
                 return obj
             pending.extend(obj.childItems())

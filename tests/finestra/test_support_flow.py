@@ -15,7 +15,7 @@ class SupportFlow(unittest.TestCase):
         cls.app = _setup.qt_or_skip()
 
     def test_invitation_resume_all_targets_and_no_project_changes(self):
-        _setup.window(self, cfg=config.Config(background="none", tour_status="new"))
+        _setup.window(self, cfg=config.Config(background="none", tour_status="new", network_pvgis=False))
         win = self.win
         before = copy.deepcopy(win.project.to_json())
         win._offer_tour()

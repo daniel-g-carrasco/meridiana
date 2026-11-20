@@ -44,7 +44,6 @@ class MarkRecords(unittest.TestCase):
 class SymbolsQuick(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from PySide6.QtGui import QGuiApplication
         from PySide6.QtWidgets import QApplication
         cls.app = QApplication.instance() or QApplication([])
 

@@ -5,7 +5,6 @@ looks at the selection. The native mouse is in quick.percorsi.test_native_clic.
 """
 import unittest
 
-from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
 
 from meridiana import model

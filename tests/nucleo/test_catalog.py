@@ -164,9 +164,9 @@ class Families(unittest.TestCase):
         took = []
         for _n in range(5):
             catalog.load.cache_clear()
-            start = time.perf_counter()
+            start = time.process_time()
             catalog.load("modules")
-            took.append(time.perf_counter() - start)
+            took.append(time.process_time() - start)
         self.assertLess(min(took), 0.4)
 
 

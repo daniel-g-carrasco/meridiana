@@ -76,10 +76,16 @@ class Scales(unittest.TestCase):
                 self.assertIn(constant, source(name))
         self.assertIn("BUTTON = Button.HELP[0]", source("ui/help_box.py"))
         self.assertIn("ICON_TALL, ICON_LOW = Icon.TILE, Icon.BAR", source("ui/phasebar.py"))
-        # the report's paper has its own palette, independent of the window's theme (R314: in its Typst template)
+        # The report palette is shared by the Typst and editable exports.
+        from meridiana.report_typst import look as report_look
         look = (root / "report_typst" / "template.typ").read_text(encoding="utf-8")
-        for colour in ("#2e7d4f", "#b7791f", "#c0392b", "#2a7fc4", "#f3f3f0"):
-            self.assertIn(f'rgb("{colour}")', look)
+        self.assertIn("let S = D.style", look)
+        self.assertIn("in S.colours", look)
+        self.assertIn("rgb(S.tint)", look)
+        style = report_look.style()
+        self.assertEqual({key: style["colours"][key] for key in ("ok", "warn", "fail", "info")},
+                         {"ok": "#2e7d4f", "warn": "#b7791f", "fail": "#c0392b", "info": "#6b675f"})
+        self.assertEqual(style["tint"], "#f4f4f1")
 
     def test_the_catalogue_of_the_texts_is_closed_and_each_style_has_its_place(self):
         """R121 (Daniel, 25/10/2026: «alcune differenze ci devono essere ma non devono essere troppe e devono avere

@@ -47,11 +47,13 @@ class RoofTools(unittest.TestCase):
         self.assertEqual(win.undo.count(), steps)                # taking a corner changes nothing
         field.typed.emit("+2")
         self.assertEqual(win.undo.count(), steps + 1)
-        self.assertEqual(self.roof().type, "free")               # R411
+        self.assertEqual(self.roof().type, "flat")
+        self.assertTrue(self.roof().plane)                       # R455 stores the one tilted plane
         self.assertEqual(len(win.project.building("b1").pitches()), 1)
         self.assertEqual(backend.vertex_on, 2)                   # still the one taken
         win.undo.undo()
         self.assertEqual(self.roof().type, "flat")
+        self.assertFalse(self.roof().plane)
         self.assertAlmostEqual(win.project.building("b1").height, 6.0)
         win._vertex_make_pitched()
         self.assertEqual(self.roof().type, "free")

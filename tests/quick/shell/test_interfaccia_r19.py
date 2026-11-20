@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPointF, Qt
+from PySide6.QtQuick import QQuickItem
 
 import _setup
 from meridiana import i18n, jobs
@@ -25,6 +26,8 @@ def descendants(root):
     out, stack = [], [root]
     while stack:
         node = stack.pop()
+        if not isinstance(node, QQuickItem):
+            continue
         out.append(node)
         stack.extend(node.childItems())
     return out

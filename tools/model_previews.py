@@ -70,7 +70,7 @@ def render(kind, out: Path):
 def main():
     from PySide6.QtGui import QGuiApplication
     from meridiana import props
-    app = QGuiApplication.instance() or QGuiApplication(["previews", "-platform", "offscreen"])
+    _app = QGuiApplication.instance() or QGuiApplication(["previews", "-platform", "offscreen"])
     for kind in props.KINDS:
         render(kind, OUT / f"{kind}.png")
         print(kind)

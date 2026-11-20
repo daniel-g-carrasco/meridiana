@@ -114,7 +114,7 @@ class TwoProcesses(unittest.TestCase):
 
 
 class TwoStarts(unittest.TestCase):
-    """Two starts of Meridiana itself, offscreen, with settings in a temporary folder and a channel of their own: the
+    """Two starts of the Widgets window, offscreen, with settings in a temporary folder and a channel of their own: the
     second gives its project to the first window and ends; the first opens it (it is its last project)."""
 
     def test_a_second_start_with_a_project_gives_it_to_the_first_window(self):
@@ -131,7 +131,7 @@ class TwoStarts(unittest.TestCase):
             paths = Paths.from_env(settings)
             config.save(config.Config(background="none", network_pvgis=False, tour_status="done"), paths.config_file)
             first = subprocess.Popen(
-                [sys.executable, "-m", "meridiana"], cwd=str(folder), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                [sys.executable, "-m", "meridiana", "--widgets"], cwd=str(folder), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 env=environment(MERIDIANA_SCREENSHOT=str(folder / "first.png"), MERIDIANA_SCREENSHOT_DELAY="15",
                                 **settings))
             self.addCleanup(first.stderr.close)
@@ -144,7 +144,7 @@ class TwoStarts(unittest.TestCase):
                 qt.processEvents()
                 time.sleep(0.2)
             # the second start: no photograph of its own, so a window of its own would never end (timeout)
-            second = subprocess.run([sys.executable, "-m", "meridiana", str(project)], cwd=str(folder), timeout=60,
+            second = subprocess.run([sys.executable, "-m", "meridiana", "--widgets", str(project)], cwd=str(folder), timeout=60,
                                     capture_output=True, text=True, check=False, env=environment(**settings))
             self.assertEqual(0, second.returncode, second.stderr[-2000:])
             _out, errors = first.communicate(timeout=90)

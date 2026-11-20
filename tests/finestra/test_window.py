@@ -1153,7 +1153,7 @@ class Moving(Journeys):
         self.win._select("subfield", self.sid)
         self.win._transform("subfield", self.sid, {"mode": "move", "dx": 30.0, "dy": 0.0})
         self.assertEqual(self.win.snapshot(), before)
-        self.assertIn("pitch", self.win.hint.text())
+        self.assertIn("would leave its building", self.win.hint.text())
 
     def the_arrows_join_in_one_step(self):
         from PySide6.QtCore import Qt
@@ -1349,7 +1349,7 @@ class EnergyPages(Journeys):
         self.assertTrue(any(i.area == "rules" and i.text.startswith("N24") for i in page.items))
         page.copy_button.click()
         text = QGuiApplication.clipboard().text()
-        self.assertIn("4. MINIMUM RENEWABLE CAPACITY OBLIGATION", text)
+        self.assertRegex(text, r"(?m)^\d+\. MINIMUM RENEWABLE CAPACITY OBLIGATION$")
         self.assertIn("Source: ", text)
         self.win.undo.undo()
         self.assertEqual(self.win.project.rules, {})

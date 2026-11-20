@@ -1,7 +1,7 @@
 """R35/R389: cosmetic plan pens have Widgets' physical width on dense screens."""
 import unittest
 
-from PySide6.QtCore import QPointF, QUrl, Qt
+from PySide6.QtCore import QPointF, QUrl
 from PySide6.QtGui import QColor, QImage, QPainter, QPen
 from PySide6.QtQml import QQmlComponent
 from PySide6.QtTest import QTest
@@ -46,7 +46,7 @@ Rectangle {
             painter.drawLine(QPointF(50, 100), QPointF(450, 100))
             painter.end()
 
-            def coverage(image):
+            def coverage(image, dpr=dpr):
                 return sum(1-image.pixelColor(round(200*dpr), y).greenF()
                            for y in range(round(90*dpr), round(110*dpr)))
 

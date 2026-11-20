@@ -3883,7 +3883,7 @@
         "report"
       ],
       "sources": [
-        "src/meridiana/ui/assistant.py:1699"
+        "src/meridiana/ui/assistant.py:1703"
       ],
       "context": "Assistant.eventFilter",
       "note": "Tasto gestito localmente; verificare contesto, focus e conflitti nel nuovo controllo",
@@ -3905,7 +3905,7 @@
         "report"
       ],
       "sources": [
-        "src/meridiana/ui/assistant.py:1888"
+        "src/meridiana/ui/assistant.py:1892"
       ],
       "context": "Assistant.keyPressEvent",
       "note": "Tasto gestito localmente; verificare contesto, focus e conflitti nel nuovo controllo",
@@ -6118,7 +6118,7 @@
         "report"
       ],
       "sources": [
-        "src/meridiana/ui/assistant.py:782"
+        "src/meridiana/ui/assistant.py:786"
       ],
       "expression": "QMenu(self.more_button)",
       "source_hash": "bbd247f1e50ed4ef4e0fad945470d6dea25dc01771948f5f7ecb378375a7e81c",
@@ -6140,7 +6140,7 @@
         "report"
       ],
       "sources": [
-        "src/meridiana/ui/assistant.py:903"
+        "src/meridiana/ui/assistant.py:907"
       ],
       "expression": "self.field.addAction(icons.icon('arrow-up'), QLineEdit.ActionPosition.TrailingPosition)",
       "source_hash": "768759919b443e283464eeb883dbf8dc67da9789f2d7d3fcdf2e36e3f4d4ecfd",
@@ -6162,7 +6162,7 @@
         "report"
       ],
       "sources": [
-        "src/meridiana/ui/assistant.py:907"
+        "src/meridiana/ui/assistant.py:911"
       ],
       "expression": "self.field.addAction(QIcon(), QLineEdit.ActionPosition.TrailingPosition)",
       "source_hash": "8bb0ec7bbed2d2e959fa24dba7808208f4b2f65390a94aedadcf583d044b9245",
@@ -6184,7 +6184,7 @@
         "report"
       ],
       "sources": [
-        "src/meridiana/ui/assistant.py:1309"
+        "src/meridiana/ui/assistant.py:1313"
       ],
       "expression": "self.more_menu.addAction(self.attach_button.text(), self.attachmentRequested.emit)",
       "source_hash": "29d8216989ebc4588a24bec672be2d06aac6e4e948c5c46e00a19b86da2f17b8",
@@ -6206,7 +6206,7 @@
         "report"
       ],
       "sources": [
-        "src/meridiana/ui/assistant.py:1311"
+        "src/meridiana/ui/assistant.py:1315"
       ],
       "expression": "self.more_menu.addAction(self.view_button.text(), self.viewRequested.emit)",
       "source_hash": "42bc0e5b96cafe6327b9265c610271da18f08ca2b40536e86babad4dbd470cf5",
@@ -8714,7 +8714,7 @@
         "report"
       ],
       "sources": [
-        "src/meridiana/ui/assistant.py:658"
+        "src/meridiana/ui/assistant.py:662"
       ],
       "description": "The floating character; `area` is where he may stand (the main window: over every card, Daniel 24/10/2026),\nbetween `top` and `bottom` pixels; `home` the card he starts on (the views), in the area's pixels.",
       "bases": [
@@ -14402,23 +14402,8 @@
       ],
       "command": "next_phase",
       "group": "phases",
-      "status": "fatto",
-      "evidence": [
-        {
-          "kind": "test",
-          "path": "tests/quick/percorsi/test_native.py",
-          "symbol": "NativeJourney.test_ctrl_tab_changes_phase",
-          "sha256": "d965e0285425e3ba7e6d716d4306c2d319e79e770ece501a60994b8474225f02",
-          "run": "docs/quick/collaudo/run-native.json"
-        },
-        {
-          "kind": "visual",
-          "path": "docs/quick/collaudo/foto/fasi-linguette.png",
-          "sha256": "04cf758628158438bba66e08371b47a9688181777ac71ffd3261cc470bf07a5c",
-          "reviewed_by": "Claude, collaudo 05/11/2026; stessa linguetta attiva, hover fermo a parte: D02",
-          "comparison": "docs/quick/collaudo/index.html"
-        }
-      ],
+      "status": "in corso",
+      "evidence": [],
       "reason": "",
       "decision": ""
     },
@@ -14658,23 +14643,8 @@
       ],
       "command": "phase_model",
       "group": "phases",
-      "status": "fatto",
-      "evidence": [
-        {
-          "kind": "test",
-          "path": "tests/quick/percorsi/test_native.py",
-          "symbol": "NativeJourney.test_ctrl_digits_change_phase",
-          "sha256": "d965e0285425e3ba7e6d716d4306c2d319e79e770ece501a60994b8474225f02",
-          "run": "docs/quick/collaudo/run-native.json"
-        },
-        {
-          "kind": "visual",
-          "path": "docs/quick/collaudo/foto/fasi-linguette.png",
-          "sha256": "04cf758628158438bba66e08371b47a9688181777ac71ffd3261cc470bf07a5c",
-          "reviewed_by": "Claude, collaudo 05/11/2026; stessa linguetta attiva, hover fermo a parte: D02",
-          "comparison": "docs/quick/collaudo/index.html"
-        }
-      ],
+      "status": "in corso",
+      "evidence": [],
       "reason": "",
       "decision": ""
     },
@@ -14698,23 +14668,8 @@
       ],
       "command": "phase_plant",
       "group": "phases",
-      "status": "fatto",
-      "evidence": [
-        {
-          "kind": "test",
-          "path": "tests/quick/percorsi/test_native.py",
-          "symbol": "NativeJourney.test_ctrl_digits_change_phase",
-          "sha256": "d965e0285425e3ba7e6d716d4306c2d319e79e770ece501a60994b8474225f02",
-          "run": "docs/quick/collaudo/run-native.json"
-        },
-        {
-          "kind": "visual",
-          "path": "docs/quick/collaudo/foto/fasi-linguette.png",
-          "sha256": "04cf758628158438bba66e08371b47a9688181777ac71ffd3261cc470bf07a5c",
-          "reviewed_by": "Claude, collaudo 05/11/2026; stessa linguetta attiva, hover fermo a parte: D02",
-          "comparison": "docs/quick/collaudo/index.html"
-        }
-      ],
+      "status": "in corso",
+      "evidence": [],
       "reason": "",
       "decision": ""
     },
@@ -15741,62 +15696,62 @@
   "completion": {
     "model": {
       "total": 546,
-      "done": 3,
-      "percent": 0.55,
+      "done": 0,
+      "percent": 0.0,
       "states": {
         "da fare": 540,
         "differenza voluta": 3,
-        "fatto": 3
+        "in corso": 3
       }
     },
     "plant": {
       "total": 620,
-      "done": 3,
-      "percent": 0.48,
+      "done": 0,
+      "percent": 0.0,
       "states": {
         "da fare": 613,
         "differenza voluta": 4,
-        "fatto": 3
+        "in corso": 3
       }
     },
     "production": {
       "total": 417,
-      "done": 3,
-      "percent": 0.72,
+      "done": 0,
+      "percent": 0.0,
       "states": {
         "da fare": 410,
         "differenza voluta": 4,
-        "fatto": 3
+        "in corso": 3
       }
     },
     "consumption": {
       "total": 411,
-      "done": 3,
-      "percent": 0.73,
+      "done": 0,
+      "percent": 0.0,
       "states": {
         "da fare": 405,
         "differenza voluta": 3,
-        "fatto": 3
+        "in corso": 3
       }
     },
     "economics": {
       "total": 415,
-      "done": 3,
-      "percent": 0.72,
+      "done": 0,
+      "percent": 0.0,
       "states": {
         "da fare": 408,
         "differenza voluta": 4,
-        "fatto": 3
+        "in corso": 3
       }
     },
     "report": {
       "total": 442,
-      "done": 3,
-      "percent": 0.68,
+      "done": 0,
+      "percent": 0.0,
       "states": {
         "da fare": 436,
         "differenza voluta": 3,
-        "fatto": 3
+        "in corso": 3
       }
     }
   }

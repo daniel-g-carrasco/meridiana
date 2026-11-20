@@ -6,8 +6,10 @@ ModulePaths {
     id: batch
     property bool curves: true
     property bool sync: false       // built on the GUI thread at once: small layers that must never go blank (R496)
-    // the dashes follow the zoom the wheel settled on, not every step (R498): a new pattern is a new path
+    // the dashes follow the zoom the wheel settled on, not every step (R498): a new pattern is a new path. The GPU
+    // renderers lay a cosmetic dash out in the item's units, the software one in pixels already (CI, offscreen)
     property real viewScale: parent ? Math.max(.00002, Math.abs(parent.settledScale!==undefined ? parent.settledScale : parent.scale)) : 1
+    readonly property real dashScale: GraphicsInfo.api === GraphicsInfo.Software ? 1 : viewScale
     readonly property bool ready: {
         for (var i=0;i<shapes.count;i++) {
             var shape=shapes.itemAt(i)
@@ -28,7 +30,7 @@ ModulePaths {
                 strokeWidth: modelData.width
                 cosmeticStroke: true
                 strokeStyle: modelData.dashed ? ShapePath.DashLine : ShapePath.SolidLine
-                dashPattern: modelData.dashed ? [4/batch.viewScale, 2/batch.viewScale] : [4,2]
+                dashPattern: modelData.dashed ? [4/batch.dashScale, 2/batch.dashScale] : [4,2]
                 joinStyle: ShapePath.MiterJoin
                 fillRule: ShapePath.WindingFill
                 PathSvg { path: modelData.path }

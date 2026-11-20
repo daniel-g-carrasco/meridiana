@@ -46,7 +46,7 @@ CEILINGS = {
     "po_codifica_rotta": 0,         # regola 9: F7
     "po_chiavi_doppie": 0,          # regola 9: F7
     "po_controllo": 0,              # regola 9: F7 (tools/compile_po.py --check: codifica, chiavi, segnaposto, voci morte)
-    "po_testi_senza_voce": 29,      # regola 9: F7 (testi dati a _()/tr()/qsTr() senza voce: 29 scritti in italiano nel QML 3D)
+    "po_testi_senza_voce": 6,       # regola 9: testi dati a _()/tr()/qsTr() senza voce
     "prove_senza_init": 0,          # regola 10: F8
     "attese_qWait": 326,            # regola 10: F8 (_setup.wait_for(condizione) al posto del tempo fisso; r23-f8 340 -> 331; r26-pannelli 331 -> 326, le attese dei suggerimenti misurate)
     "attese_time_sleep": 56,        # regola 10: F8 (solo con un perché scritto accanto)

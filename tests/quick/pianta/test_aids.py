@@ -6,7 +6,6 @@ import unittest
 from pathlib import Path
 
 from PySide6.QtCore import Q_ARG, QMetaObject, QObject, QPoint, Qt, QUrl
-from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow  # noqa: F401
 from PySide6.QtTest import QSignalSpy, QTest

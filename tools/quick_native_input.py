@@ -23,7 +23,6 @@ import contextlib
 import ctypes
 from ctypes import wintypes
 import io
-import json
 import os
 from pathlib import Path
 import shutil

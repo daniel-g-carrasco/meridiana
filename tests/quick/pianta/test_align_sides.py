@@ -9,7 +9,7 @@ from PySide6.QtQml import QQmlEngine, QQmlExpression
 from PySide6.QtTest import QTest
 
 from meridiana import model
-from meridiana.quick.backend.plan_collect import REACH_PX, nearest_side
+from meridiana.quick.backend.plan_collect import nearest_side
 from quick.pianta import test_edit_window as edit
 
 setUpModule = edit.setUpModule

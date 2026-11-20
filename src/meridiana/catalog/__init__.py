@@ -44,9 +44,10 @@ def _read(name: str) -> list:
     path = DATA / name
     if not path.exists():
         return []
-    opener = gzip.open if path.suffix == ".gz" else open
-    with opener(path, "rt", encoding="utf-8") as fh:
-        data = json.load(fh)
+    payload = path.read_bytes()
+    if path.suffix == ".gz":
+        payload = gzip.decompress(payload)
+    data = json.loads(payload.decode("utf-8"))
     return data if isinstance(data, list) else []
 
 
@@ -89,7 +90,9 @@ BIFACIALITY_ESTIMATE = {"perc": 70.0, "topcon": 80.0, "hjt": 80.0}
 # (a handful of distinct words in 17,000 records) read once: the whole catalogue is classified in about 50 ms
 _CELLS = re.compile("|".join(f"(?P<{key}>{pattern})" for key, pattern in FAMILIES[:4]))
 _MATERIALS = re.compile("|".join(f"(?P<{key}>{pattern})" for key, pattern in FAMILIES[4:]))
-_ANY = re.compile("|".join(pattern for _key, pattern in FAMILIES))
+# Omitting the word boundaries lets the prefilter scan for literal prefixes.
+# The two complete patterns still decide which families matched.
+_ANY = re.compile("|".join(pattern.replace(r"\b", "") for _key, pattern in FAMILIES))
 _NOT_SAID = re.compile(r"\bnot\s+(?:printed|stated|named|given|declared|specified|mentioned)\b")
 _CLAUSES = re.compile(r"[.;]")
 
@@ -111,7 +114,8 @@ def _named_in_technology(technology: str) -> frozenset:
     return _named_in(technology.casefold())
 
 
-def _first_of(named) -> str:
+@lru_cache(maxsize=128)
+def _first_of(named: frozenset) -> str:
     return next((key for key, _pattern in FAMILIES if key in named), UNKNOWN_FAMILY)
 
 
@@ -384,9 +388,11 @@ def search(kind: str, text: str = "", source: str = "", low: float = 0.0, high: 
     these lifecycle states (all, when empty)."""
     records, haystacks = _ordered(kind)
     words = text.casefold().split()
-    if words:
-        first = words[0]
-        records = [r for r, h in zip(records, haystacks, strict=True) if first in h and all(w in h for w in words)]
+    if len(words) == 1:
+        records = [r for r, h in zip(records, haystacks, strict=True) if words[0] in h]
+    elif words:
+        first, *other_words = words
+        records = [r for r, h in zip(records, haystacks, strict=True) if first in h and all(w in h for w in other_words)]
     if source:
         records = [r for r in records if r.get("source") == source]
     if market:

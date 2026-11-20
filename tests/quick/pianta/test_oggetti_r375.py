@@ -90,7 +90,7 @@ class Editor(unittest.TestCase):
         family = [(x.kind, x.asset, tuple(x.at), x.rotation, x.height) for x in self.props]
         self.assertIn(len(family), (5, 6, 7))
         self.assertTrue({k for k, *_r in family} <= {"adult", "walking"})
-        for kind, asset, at, _turn, height in family:
+        for _kind, _asset, at, _turn, height in family:
             self.assertLessEqual(((at[0] - 10) ** 2 + (at[1] - 10) ** 2) ** .5, 6.0)
             self.assertTrue(1.75 * 0.9 - 1e-6 <= height <= 1.75 * 1.1 + 1e-6, height)
         self.session.undo.undo()

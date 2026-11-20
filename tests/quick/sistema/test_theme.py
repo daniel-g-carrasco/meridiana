@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from PySide6.QtCore import QUrl
-from PySide6.QtGui import QColor, QFont, QFontMetricsF, QGuiApplication, QPalette
+from PySide6.QtGui import QColor, QFont, QFontMetricsF, QPalette
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlComponent, QQmlEngine
 from PySide6.QtQuick import QQuickItem, QQuickWindow

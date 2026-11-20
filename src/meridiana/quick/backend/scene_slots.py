@@ -27,8 +27,8 @@ class DecorationSlots(QAbstractListModel):
         return {NAME: QByteArray(b'slotName'), GEOMETRY: QByteArray(b'slotGeometry'),
                 SOURCE: QByteArray(b'slotSource'), COUNT: QByteArray(b'slotCount')}
 
-    def rowCount(self, parent=QModelIndex()):
-        return 0 if parent.isValid() else len(self._rows)
+    def rowCount(self, parent=None):
+        return 0 if parent is not None and parent.isValid() else len(self._rows)
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         if not index.isValid() or not 0 <= index.row() < len(self._rows) or role not in FIELDS:

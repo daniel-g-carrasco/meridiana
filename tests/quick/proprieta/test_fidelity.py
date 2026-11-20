@@ -213,7 +213,7 @@ Window { visible: true; width: 380; height: 300
                 plant.dismiss()
                 for phase in ('production', 'consumption', 'economics', 'report', 'model'):
                     host.window.showPhase(phase)
-                    _setup.wait_until(self.app, lambda: host.window.property('phase') == phase, seconds=5)   # r21-f6c
+                    _setup.wait_until(self.app, lambda phase=phase: host.window.property('phase') == phase, seconds=5)   # r21-f6c
                     pump(40)
                     loaders = [item for item in visual_items(host.window) if item.objectName() == 'propertiesPartLoader']
                     loader = next(item for item in loaders if item.property('phaseId') == phase)

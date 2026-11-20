@@ -27,7 +27,7 @@ def main() -> int:
     manifests = registry.runtime_manifests()
     for path, manifest in manifests:
         errors.extend(f"{path.relative_to(ROOT)}: {error}"
-                      for error in registry.validate_runtime_commands(manifest))
+                      for error in registry.validate_runtime_commands(manifest, archived=True))
     for error in errors:
         print(error, file=sys.stderr)
     print(json.dumps({"items": len(document["items"]), "requests": len(registry.read_csv("richieste.csv")),

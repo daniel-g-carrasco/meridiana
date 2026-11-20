@@ -50,7 +50,7 @@ class IconProvider(QQuickImageProvider):
         image.fill(Qt.GlobalColor.transparent)
         if name.startswith('fade:'):
             from meridiana.ui.design import Radius
-            from meridiana.ui.fades import PAGE_STOPS, STOPS
+            from meridiana.ui.fades import STOPS
             ratio = float(parts[2])
             image.setDevicePixelRatio(ratio)
             width, height = dimensions.width() / ratio, dimensions.height() / ratio

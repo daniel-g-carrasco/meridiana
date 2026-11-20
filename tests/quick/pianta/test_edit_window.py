@@ -11,7 +11,7 @@ os.environ.setdefault("QSG_RENDER_LOOP", "basic")
 os.environ.setdefault("QSG_RHI_BACKEND", "d3d11")
 os.environ["QML_DISABLE_DISK_CACHE"] = "1"
 
-from PySide6.QtCore import QCoreApplication, QEvent, QObject, QPoint, QPointF, Qt, QUrl
+from PySide6.QtCore import QCoreApplication, QEvent, QLocale, QObject, QPoint, QPointF, Qt, QUrl
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
@@ -30,6 +30,7 @@ def setUpModule():
     global APP
     APP = QApplication.instance() or QApplication(["plan-edit-test"])
     i18n.setup("it")
+    QLocale.setDefault(QLocale("it_IT"))
 
 
 class EditWindowTest(unittest.TestCase):

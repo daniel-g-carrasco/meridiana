@@ -142,7 +142,7 @@ class DrawingParity(unittest.TestCase):
         self.widgets.energy_timer.stop()
         self.app.processEvents()
 
-    def same(self, label):
+    def same(self, label, expected=()):
         self.sequence += 1
         left, right = canonical_project(self.widgets.project), canonical_project(self.controller.session.project)
         folder = ROOT / "build/quick-parity/tools" / self._testMethodName
@@ -150,7 +150,7 @@ class DrawingParity(unittest.TestCase):
         for name, value in (("widgets", left), ("quick", right)):
             (folder / f"{self.sequence:02d}-{label}-{name}.json").write_text(
                 json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8")
-        self.assertEqual(compare(left, right), [], label)
+        self.assertEqual(compare(left, right), list(expected), label)
         self.assertFalse(self.controller.error, self.controller.error)
         self.assertFalse(self.warnings, self.warnings)
 
@@ -214,13 +214,16 @@ class DrawingParity(unittest.TestCase):
         self.same("rectangle")
 
     def test_subfield_and_exclusion_polygons(self):
-        for tool in ("subfield", "exclusion"):
-            self.tool(tool)
+        # Quick gives new sub-fields the current alignment default; Widgets retains its old default.
+        expected = ({"path": "$.variants[0].design.subfields[1].params.alignment",
+                     "widgets": None, "quick": "aligned", "missing": "Widgets"},)
+        for tool, options in (("subfield", {"fill": "area"}), ("exclusion", {})):
+            self.tool(tool, **options)
             for index, point in enumerate([(3, 3), (8, 3), (8, 8), (3, 8)], 1):
                 self.click(point)
                 self.capture(f"{tool}-point-{index}")
             self.key(Qt.Key_Return)
-            self.same(tool)
+            self.same(tool, expected)
             self.capture(f"{tool}-closed")
 
     def test_pitch_fields_swap_and_close(self):

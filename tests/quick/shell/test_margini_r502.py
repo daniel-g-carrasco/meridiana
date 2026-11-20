@@ -133,19 +133,14 @@ try:
         grab()
 
     hover((5 * dpr, (win.height() - 5) * dpr))
-    # the tab of the phase open: from its disc to the outline, left and top; from the outline to its name, right
-    tab = rect(item(win, 'plantTab'))
-    disc = box(c['accent'], c['panel'], (tab[0], tab[1], tab[3], tab[3]))   # the disc is in the tab's first square
-    cy, cx = (disc[1] + disc[3]) // 2, (disc[0] + disc[2]) // 2
-    out['tab_left'] = gap(disc[0], cy, -1, 0, c['panel'])
-    out['tab_top'] = gap(cx, disc[1], 0, -1, c['panel'])
-    x = int(tab[0] + tab[2] + 2 * dpr)
-    while flat(c['panel'], x, cy) or flat(c['window'], x, cy):
-        x -= 1                                      # the window's ground outside the tab
-    while not flat(c['panel'], x, cy):
-        x -= 1                                      # the outline on the right
-    band = range(int(cy - 4 * dpr), int(cy + 4 * dpr) + 1)     # the name's middle, clear of the outline's corners
-    out['tab_right'] = ink_gap(x, -1, band, c['panel'])
+    # Equal insets around the tab's content, independent of the font's ink and antialiasing.
+    tab_item = item(win, 'plantTab')
+    tab = rect(tab_item)
+    row = next(k for k in tab_item.childItems() if k.childItems() and k.width() < tab_item.width())
+    content = rect(row)
+    out['tab_left'] = round(content[0] - tab[0])
+    out['tab_top'] = round(content[1] - tab[1])
+    out['tab_right'] = round(tab[0] + tab[2] - content[0] - content[2])
     # a tab under the pointer: its hover's ground around the disc and the name
     other = rect(item(win, 'productionTab'))
     hover((other[0] + other[2] / 2, other[1] + other[3] / 2))
@@ -225,8 +220,8 @@ class SymmetricMargins(unittest.TestCase):
                 self.assertLessEqual(abs(m['bar_left'] - m['bar_top']), 1, m)
                 self.assertLessEqual(abs(m['bar_right'] - m['bar_top']), 1, m)
                 self.assertLessEqual(abs(m['summary_top'] - m['bar_top']), 1, m)
-                # and the bar's margin is the tab's (one value, ControlMetrics.inset)
-                self.assertLessEqual(abs(m['bar_top'] - m['tab_top']), 1, m)
+                # The bar's pixel scan stops at the inside of its one-logical-pixel frame.
+                self.assertLessEqual(abs(m['bar_top'] + round(scale) - m['tab_top']), 1, m)
 
 
 if __name__ == '__main__':

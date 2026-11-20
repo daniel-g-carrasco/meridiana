@@ -7,8 +7,6 @@ closed. The same for opening a project («Opened: name»).
 
     python -m unittest quick.shell.test_salvataggio_r537
 """
-import os
-import stat
 import tempfile
 import time
 import unittest
@@ -45,7 +43,6 @@ class SaveSignal(unittest.TestCase):
         self.shell.changed.connect(lambda: self.kinds.append(self.shell.property('noticeKind')))
 
     def tearDown(self):
-        os.chmod(self.file, stat.S_IWRITE | stat.S_IREAD)
         self.host.close()
         pump(50)
         self.temp.cleanup()
@@ -127,7 +124,8 @@ class SaveSignal(unittest.TestCase):
         self.assertEqual(model.Project.load(self.file)[0].name, 'Scritto')
 
     def test_an_error_stays_until_closed(self):
-        os.chmod(self.file, stat.S_IREAD)       # Windows: a read-only folder still takes files, a read-only file not
+        self.file.unlink()
+        self.file.mkdir()  # Atomic replacement of a directory with a file fails on both systems.
         self.rename('Non si salva')
         key(self.app, self.win, Qt.Key.Key_S, modifiers=Qt.KeyboardModifier.ControlModifier)
         self.wait_saved()

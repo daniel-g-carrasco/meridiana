@@ -136,7 +136,6 @@ def saddles(footprint, height: float, spec: dict | None = None) -> list[Pitch]:
     from its ridge (at `height`) to its edges at `tilt`, parted by level drainage channels `channel` m wide and
     `depth` m under the bands' edges. `direction` is the bearing of the bands' axis (degrees from North), `offset`
     slides the pattern along the normal. The pattern starts at the outline's upstream side and repeats across it."""
-    import shapely
     s = saddle_spec(spec)
     ring = [tuple(map(float, p)) for p in footprint]
     poly = Polygon(ring)

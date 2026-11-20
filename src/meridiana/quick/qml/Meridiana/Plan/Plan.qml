@@ -308,6 +308,7 @@ Rectangle {
         transformOrigin: Item.TopLeft
         property real settledScale: plan.settledZoom
         PolygonLayer {
+            objectName: "planPolygons"
             objects: plan.polygons.filter(function(o){return o.kind!=="prop" && o.kind!=="prop_mark"}); halo: true
             hatchSource: backend.hatchSource
             patternTransform: {

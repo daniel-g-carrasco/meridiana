@@ -14,10 +14,8 @@ process, never of another one. Every journey is in tests/quick/percorsi/modellaz
 import argparse
 import ctypes
 from ctypes import wintypes
-import json
 import os
 from pathlib import Path
-import shutil
 import sys
 import tempfile
 import time

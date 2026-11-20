@@ -171,7 +171,7 @@ def problems(po: Path, used: tuple[set, str] | None = None) -> list[str]:
             continue
         forms = {k: v for k, v in e.items() if k.startswith("msgstr") and v}
         source = msgid + e.get("msgid_plural", "")
-        for k, v in forms.items():
+        for v in forms.values():
             if BROKEN.search(v) and not BROKEN.search(source):
                 out.append(f"{name}: broken encoding in «{label}»: {v[:60]}")
             mine, theirs = set(FIELD.findall(source)), set(FIELD.findall(v))

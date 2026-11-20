@@ -94,7 +94,8 @@ INTENDED_DIFFERENCES = {
 # reason, validate_runtime_commands fails when the command leaves window.py, and test_registry when a recorded capture
 # has it (the entry must then go). The next capture run brings them in.
 CAPTURED_BEFORE = {
-    "export_dxf": "R513 (r20-dxf, 07/11/2026): the plan as DXF, after the captures of 04/11/2026",
+    "export_dxf": "The plan as DXF was added after the capture",
+    "side_left": "R549 moved Ctrl+B to the left side after the capture",
 }
 
 
@@ -216,12 +217,13 @@ def route(text: str) -> tuple[list[str], str]:
     return list(PHASE_IDS), "Trasversale / integrazione, distribuzione o processo: verificare la richiesta originale"
 
 
-def validate_runtime_commands(manifest: dict) -> list[str]:
+def validate_runtime_commands(manifest: dict, *, archived: bool = False) -> list[str]:
     """Compare actual captured QActions with both independent source definitions."""
     actual = set(manifest.get("commands", {}))
     expected = set(window_commands())
-    errors = [f"Runtime commands missing: {key}" for key in sorted(expected - actual - set(CAPTURED_BEFORE))]
-    errors.extend(f"Captured before, no longer a window command: {key}" for key in sorted(set(CAPTURED_BEFORE) - expected))
+    captured_before = set(CAPTURED_BEFORE) if archived else set()
+    errors = [f"Runtime commands missing: {key}" for key in sorted(expected - actual - captured_before)]
+    errors.extend(f"Captured before, no longer a window command: {key}" for key in sorted(captured_before - expected))
     errors.extend(f"Runtime commands not inventoried: {key}" for key in sorted(actual - expected))
     declared = {c.id for c in shortcuts.commands()}
     errors.extend(f"Shortcut command not registered in window: {key}" for key in sorted(declared - expected))
@@ -229,8 +231,9 @@ def validate_runtime_commands(manifest: dict) -> list[str]:
     for command in shortcuts.commands():
         if command.id in actual:
             keys = manifest["commands"][command.id].get("shortcuts", [])
-            if set(keys) != set(command.keys):
-                errors.append(f"Runtime shortcut differs: {command.id}: {keys!r} != {list(command.keys)!r}")
+            expected_keys = ("Ctrl+B",) if archived and command.id == "panel_project" else command.keys
+            if set(keys) != set(expected_keys):
+                errors.append(f"Runtime shortcut differs: {command.id}: {keys!r} != {list(expected_keys)!r}")
     return errors
 
 
@@ -552,6 +555,18 @@ def read_csv(name: str) -> list[dict]:
         return list(csv.DictReader(handle))
 
 
+def same_assertions(recorded: str | None, current: str) -> bool:
+    """Compare the Python statements, independently of ast.unparse formatting."""
+    if recorded == current:
+        return True
+    if recorded is None:
+        return False
+    try:
+        return ast.dump(ast.parse(recorded)) == ast.dump(ast.parse(current))
+    except SyntaxError:
+        return False
+
+
 def validate_csv_inventories() -> list[str]:
     errors = []
     parity = {row["id"]: row for row in load_registry()["items"]}
@@ -571,7 +586,9 @@ def validate_csv_inventories() -> list[str]:
             source_fields = ("source", "request_summary", "widgets_status", "widgets_references") if key == "row_id" else (
                 "source", "behavior", "assertions")
             for field in source_fields:
-                if actual[item].get(field) != expected[item][field]:
+                recorded, current = actual[item].get(field), expected[item][field]
+                same = same_assertions(recorded, current) if field == "assertions" else recorded == current
+                if not same:
                     errors.append(f"{name}: {item}: source content differs in {field}")
             for field in ("page_control", "verification_plan" if key == "test" else "quick_verification_plan"):
                 if not actual[item].get(field):

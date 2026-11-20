@@ -47,7 +47,7 @@ print("same" if again == shots else "different", round(first, 3), round(cached, 
 
 
 class Pictures(unittest.TestCase):
-    def test_the_layout_is_drawn_from_the_south_east_and_the_south_west_on_white_with_its_modules_in_navy(self):
+    def test_the_layout_is_drawn_from_the_south_east_and_the_south_west_on_white_with_its_modules_in_charcoal(self):
         from PySide6.QtGui import QImage
         _setup.qt_or_skip()
         out = Path(tempfile.mkdtemp())
@@ -73,16 +73,16 @@ class Pictures(unittest.TestCase):
             for x, y in ((2, 2), (image.width() - 3, 2)):          # the paper's white at the top corners
                 c = image.pixelColor(x, y)
                 self.assertGreater(min(c.red(), c.green(), c.blue()), 245, (vid, c.name()))
-            navy, sx, sy = 0, 0, 0
+            charcoal, sx, sy = 0, 0, 0
             for y in range(0, image.height(), 4):
                 for x in range(0, image.width(), 4):
                     c = image.pixelColor(x, y)
-                    if c.blue() > c.red() + 40 and c.red() < 110:     # the modules' navy, lit
-                        navy += 1
+                    if c.red() < 110 and 0 <= c.red() - c.blue() <= 12:  # the warm charcoal, lit
+                        charcoal += 1
                         sx += x
                         sy += y
-            self.assertGreater(navy, 0.03 * (image.width() // 4) * (image.height() // 4), vid)
-            centres.append((sx / navy, sy / navy))
+            self.assertGreater(charcoal, 0.03 * (image.width() // 4) * (image.height() // 4), vid)
+            centres.append((sx / charcoal, sy / charcoal))
         self.assertGreater(abs(centres[0][0] - centres[1][0]), 30)  # two views, not the same picture twice
 
 

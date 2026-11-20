@@ -2,7 +2,7 @@
 undo, the same selection lit on the plan. The gestures in the real window are in quick/percorsi/test_native_selezione."""
 import unittest
 
-from PySide6.QtCore import QObject, QUrl
+from PySide6.QtCore import QUrl
 from PySide6.QtQml import QQmlComponent, QQmlEngine
 from PySide6.QtWidgets import QApplication
 

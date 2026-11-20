@@ -141,7 +141,10 @@ class Dialog(unittest.TestCase):
         self.assertEqual(hows, ["file", "site", "origin"])
         norths = [b.property("north") for b in d.findChildren(QRadioButton) if b.property("north")]
         self.assertEqual(norths, ["map", "context"])        # the map and the TrueNorth disagree: the designer chooses
-        self.assertEqual(d.choice()[0], "site")             # an empty project: its site goes to the model
+        self.assertEqual(d.choice()[0], "origin")           # a place from the IFC requires an explicit choice
+        next(b for b in d.findChildren(QRadioButton) if b.property("how") == "site").setChecked(True)
+        self.assertEqual(d.choice()[0], "site")
+        self.assertIsNotNone(d.plan().site)
         self.assertEqual(len(d.plan().buildings), 1)
         next(b for b in d.findChildren(QRadioButton) if b.property("how") == "origin").setChecked(True)
         next(b for b in d.findChildren(QRadioButton) if b.property("north") == "context").setChecked(True)

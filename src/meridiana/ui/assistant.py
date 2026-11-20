@@ -80,17 +80,21 @@ def render(text: str, size: int, crisp: bool = False, dpr: float = 1.0) -> QPixm
     return pix
 
 
-@functools.lru_cache(maxsize=256)
 def picture(text: str, colour: str, size: int, thinking: bool = False, gaze: tuple[int, int] = (0, 0),
             blink: bool = False, expression: str = "", style: str = "smooth", rays: float = 0.0,
             parts: str = "all", dpr: float = 1.0) -> QPixmap:
     """Meridio drawn `size` pixels across, without his circle: once per look, not at every paint. `parts` picks
     the layer ("all", "rays", "face"); in the pixel style `rays` is turned into one of the eight steps."""
+    ray_frame = assistant.pixel_step(rays) if style == "pixel" else rays
+    return _picture(text, colour, size, thinking, gaze, blink, expression, style, ray_frame, parts, dpr)
+
+
+@functools.lru_cache(maxsize=256)
+def _picture(text, colour, size, thinking, gaze, blink, expression, style, ray_frame, parts, dpr):
     if style == "pixel":
-        text_svg = assistant.pixel_svg(text, colour, thinking, gaze, blink, expression, assistant.pixel_step(rays),
-                                       parts=parts)
+        text_svg = assistant.pixel_svg(text, colour, thinking, gaze, blink, expression, ray_frame, parts=parts)
         return render(text_svg, size, crisp=True, dpr=dpr)
-    return render(assistant.svg(text, colour, thinking, gaze, blink, expression, rays, parts=parts), size, dpr=dpr)
+    return render(assistant.svg(text, colour, thinking, gaze, blink, expression, ray_frame, parts=parts), size, dpr=dpr)
 
 
 def inner_size(width: int, style: str) -> int:

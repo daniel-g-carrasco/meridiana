@@ -21,7 +21,6 @@ from .scene_geometry import DotGeometry, RibbonGeometry, SceneGeometry, instance
 from .scene_slots import DecorationSlots
 
 from . import models3d
-from .models3d import ASSET_FOR_KIND      # R374: the kinds' models live in models3d (kept here for who imports it)
 
 
 def navigation_styles():
@@ -338,7 +337,7 @@ class SceneBackend(QObject):
         except (ValueError, KeyError):
             return
         segments = []
-        for (ax, ay), (bx, by) in zip(ring, list(ring[1:]) + list(ring[:1])):
+        for (ax, ay), (bx, by) in zip(ring, list(ring[1:]) + list(ring[:1]), strict=True):
             if (ax, ay) == (bx, by):
                 continue
             for za, zb in ((base, base), (base + top, base + top)):
@@ -625,7 +624,7 @@ class SceneBackend(QObject):
                 # R374: the fence along its path, one copy of the model per FENCE_MODULE metres of each segment,
                 # scaled along it to fit the segment whole (the model's length is its local X, as the core's)
                 placements = []
-                for (ax, ay), (bx, by) in zip(prop.path, prop.path[1:]):
+                for (ax, ay), (bx, by) in zip(prop.path, prop.path[1:], strict=False):
                     run = float(np.hypot(bx - ax, by - ay))
                     if run < 1e-6:
                         continue

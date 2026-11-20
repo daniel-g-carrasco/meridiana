@@ -1,7 +1,6 @@
 """«Add a module here» in the plan's menu: one module where the menu was opened, never a whole row (06/11/2026)."""
 import unittest
 
-from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
 
 from meridiana import model

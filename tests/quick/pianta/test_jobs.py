@@ -2,7 +2,6 @@
 import time
 import unittest
 
-from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
 
 from meridiana import jobs, model

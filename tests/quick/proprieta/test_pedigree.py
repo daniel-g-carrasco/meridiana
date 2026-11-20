@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from PySide6.QtCore import QPoint, QPointF, Qt, QUrl
-from PySide6.QtGui import QGuiApplication, QWheelEvent
+from PySide6.QtGui import QWheelEvent
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlComponent, QQmlEngine
 from PySide6.QtQuick import QQuickWindow

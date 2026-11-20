@@ -308,7 +308,7 @@ def main():
             return all(b <= g0 or a >= g1 for g0, g1 in grabbing)
         own = [(t, g) for t, g in blocks if outside(t - g / 1000, t)]
         span = [f for f in frames if f >= begin]
-        pairs = [(a, b) for a, b in zip(span, span[1:]) if outside(a, b)]
+        pairs = [(a, b) for a, b in zip(span, span[1:], strict=False) if outside(a, b)]
         gaps = [(b - a) * 1000 for a, b in pairs]
         during = [(b - a) * 1000 for a, b in pairs if a <= acted]
         holes = []

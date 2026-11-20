@@ -57,7 +57,7 @@ class IntegrationTest(unittest.TestCase):
                 host.shell.trigger('phase_model')
                 for phase in ('plant', 'production', 'consumption', 'economics', 'report', 'model'):
                     host.shell.trigger('phase_' + phase)
-                    wait_for(lambda: win.property('phase') == phase, 5)
+                    wait_for(lambda phase=phase: win.property('phase') == phase, 5)
                     pump(50)
                     ready()
                     self.assertEqual(win.property('phase'), phase)

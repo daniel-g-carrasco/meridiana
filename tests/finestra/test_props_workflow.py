@@ -28,7 +28,8 @@ class PropsWorkflow(unittest.TestCase):
         self.assertFalse(win.commands["object_3d"].icon().isNull())
         self.assertEqual(win.commands["object_3d"].shortcut().toString(), "O")
         kinds = [a.data() for a in win.prop_menu().actions() if a.data()]
-        self.assertEqual(set(kinds), set(props.KINDS) - {"opening"})
+        # Openings use their own tool. Site objects are offered in Quick.
+        self.assertEqual(set(kinds), set(props.KINDS).difference(props.SITE_KINDS, {"opening"}))
         for family in ("broadleaf", "chimney", "worker", "suv"):
             self.assertIn(family, kinds)
 

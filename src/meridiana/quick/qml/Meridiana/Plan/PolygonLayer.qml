@@ -8,8 +8,10 @@ Item {
     property bool modules: false
     property bool halo: false
     // the dashes follow the zoom the wheel settled on, as in ModuleBatch (R541): a dash pattern made again at every
-    // step of the wheel is every dashed outline laid out again at every frame
+    // step of the wheel is every dashed outline laid out again at every frame. The GPU renderers lay a cosmetic
+    // dash out in the item's units, the software one in pixels already (CI, offscreen)
     property real viewScale: parent ? Math.max(.00002, Math.abs(parent.settledScale!==undefined ? parent.settledScale : parent.scale)) : 1
+    readonly property real dashScale: GraphicsInfo.api === GraphicsInfo.Software ? 1 : viewScale
     property url hatchSource
     property matrix4x4 patternTransform: Qt.matrix4x4()
     Image { id: hatchImage; source: polygonsLayer.hatchSource; smooth: false }
@@ -44,7 +46,7 @@ Item {
                 strokeWidth: polygonsLayer.modules ? 1 : modelData.width
                 cosmeticStroke: true
                 strokeStyle: modelData.dashed ? ShapePath.DashLine : ShapePath.SolidLine
-                dashPattern: modelData.dashed ? [4/polygonsLayer.viewScale, 2/polygonsLayer.viewScale] : [4,2]
+                dashPattern: modelData.dashed ? [4/polygonsLayer.dashScale, 2/polygonsLayer.dashScale] : [4,2]
                 joinStyle: ShapePath.BevelJoin
                 PathPolyline { path: modelData.points }
                 PathLine {

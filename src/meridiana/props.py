@@ -927,7 +927,7 @@ def placed_solids(kind: str, at, z0: float = 0.0, rotation: float = 0.0, height=
     if path is not None and kind == "fence":
         # one thin box per segment: the hull of the whole path would shade everything a fence goes round
         half, out = m["width"] / 2, []
-        for (ax, ay), (bx, by) in zip(path, path[1:]):
+        for (ax, ay), (bx, by) in zip(path, path[1:], strict=False):
             dx, dy = bx - ax, by - ay
             run = math.hypot(dx, dy)
             if run < 1e-6:

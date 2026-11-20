@@ -6,9 +6,11 @@ from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPointF, Qt
 from PySide6.QtGui import QGuiApplication
+from PySide6.QtTest import QTest
 
 from _fixtures import capannone
 from meridiana import jobs
+from meridiana.quick import app as quick_app
 from meridiana.quick.app import QuickWindow, create_app
 from meridiana.quick.capture import grab
 from quick.gestures import click, drag, item, key, mouse, point, pump, wait_for
@@ -78,9 +80,29 @@ class ShellTest(unittest.TestCase):
             start = point(handle)
             self.host.bridge.calls.clear()
             calls = []
-            def profile(frame, event, arg, calls=calls):
-                if event == 'call' and '/meridiana/quick/' in frame.f_code.co_filename.replace('\\','/'):
-                    calls.append(frame.f_code.co_name)
+            # Event delivery, translations and image requests can accompany a QML redraw.
+            # A Python callback implementing the layout or drag itself still fails this guard.
+            services = {
+                ("translator.py", "GettextTranslator.translate"),
+                ("backend/window_frame.py", "AltTap.eventFilter"),
+                ("backend/controls.py", "IconProvider.requestImage"),
+                ("backend/controls.py", "IconProvider._render"),
+                ("backend/activity.py", "touch"),
+            }
+            # of the window's own lambdas only the one AltTap's press calls (app.py), not those of the commands
+            alt_press = next(n for n, line in enumerate(Path(quick_app.__file__).read_text(encoding="utf-8").splitlines(), 1)
+                             if "alt_tap.pressed.connect(lambda" in line)
+
+            def profile(frame, event, arg, calls=calls, services=services, alt_press=alt_press):
+                path = frame.f_code.co_filename.replace('\\', '/')
+                package, separator, relative = path.rpartition('/meridiana/quick/')
+                if event == 'call' and separator:
+                    callback = (relative, frame.f_code.co_qualname)
+                    if (callback == ("app.py", "QuickWindow.__init__.<locals>.<lambda>")
+                            and frame.f_code.co_firstlineno == alt_press):
+                        return
+                    if callback not in services:
+                        calls.append(callback)
             pump(500)     # the arrangement the resize of setUp left pending goes first: only the drag is measured here
             previous = sys.getprofile()
             sys.setprofile(profile)
@@ -168,9 +190,13 @@ class ShellTest(unittest.TestCase):
         mouse(self.app,self.win,QEvent.Type.MouseButtonPress,start,Qt.MouseButton.LeftButton,Qt.MouseButton.LeftButton)
         mouse(self.app,self.win,QEvent.Type.MouseMove,end,Qt.MouseButton.NoButton,Qt.MouseButton.LeftButton)
         workspace = item(self.win,'workspace')
+        self.assertEqual(workspace.property('draggedPanel'), 'project')
+        QTest.keyPress(self.win, Qt.Key.Key_Alt)
         self.assertEqual(workspace.property('targetZone'),'')
         wait_for(lambda: workspace.property('targetZone')=='right',seconds=2)
+        self.assertTrue(workspace.property('grouping'))
         mouse(self.app,self.win,QEvent.Type.MouseButtonRelease,end,Qt.MouseButton.LeftButton,Qt.MouseButton.NoButton)
+        QTest.keyRelease(self.win, Qt.Key.Key_Alt)
         pump(400)
         self.assertEqual(left.property('zone'),'right')
         self.assertTrue(left.isVisible())
@@ -184,7 +210,8 @@ class ShellTest(unittest.TestCase):
         pump(300)
         self.assertNotEqual(QPointF(mascot.x(),mascot.y()),before)
         key(self.app,self.win,Qt.Key.Key_Escape)
-        pump(300)
+        wait_for(lambda: not self.win.property('helpOpen'), seconds=3)
+        wait_for(lambda: abs(mascot.y() - before.y()) <= 1, seconds=3)
         self.assertAlmostEqual(mascot.x(),before.x(),delta=1)
         self.assertAlmostEqual(mascot.y(),before.y(),delta=1)
 

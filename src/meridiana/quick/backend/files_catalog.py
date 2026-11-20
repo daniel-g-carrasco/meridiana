@@ -1,7 +1,5 @@
 """File's browsing catalogue never chooses a product for the project."""
-from pathlib import Path
-from PySide6.QtCore import Slot, QUrl
-from meridiana.catalog import panond
+from PySide6.QtCore import Slot
 from .catalog import CatalogBackend
 
 

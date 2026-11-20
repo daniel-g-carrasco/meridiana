@@ -206,7 +206,7 @@ def inverter_record(**more) -> dict:
     return rec
 
 
-def write_cache(m: Meteo, cache_dir) -> None:
+def write_cache(m: Meteo, cache_dir, *, include_horizon: bool = False) -> None:
     """Put a weather year in the cache as PVGIS's would be, so that the window computes without the network."""
     from meridiana import atomic
     from meridiana.energy import meteo
@@ -217,6 +217,9 @@ def write_cache(m: Meteo, cache_dir) -> None:
                                               "year_min": 2026, "year_max": 2026}}},
            "columns": {c: [float(v) for v in m.data[c].to_numpy()] for c in meteo.COLUMNS}}
     atomic.write_json(meteo._cache_file(cache_dir, "tmy", m.latitude, m.longitude), raw, keep_backup=False)
+    if include_horizon:
+        horizon = {"fetched": m.fetched, "azimuth": [-180, -90, 0, 90], "elevation": [0, 0, 0, 0]}
+        atomic.write_json(meteo._cache_file(cache_dir, "horizon", m.latitude, m.longitude), horizon, keep_backup=False)
 
 
 _SKIES: dict = {}

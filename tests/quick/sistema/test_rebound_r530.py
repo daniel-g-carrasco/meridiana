@@ -58,7 +58,7 @@ class Rebound(unittest.TestCase):
         self.assertLessEqual(reach, -8, seen[:10])
         back = next(t for t, y in seen if t > .05 and y == 0)
         self.assertLessEqual(back, .11 + .18 + .08, seen)
-        gaps = [b - a for a, b in zip(frames, frames[1:])]
+        gaps = [b - a for a, b in zip(frames, frames[1:], strict=False)]
         print('R530 reach px', reach, 'back ms', round(1000 * back), 'frames', len(frames), 'longest gap ms', round(1000 * max(gaps or [0])))
         self.assertLess(max(gaps or [0]), .1)
         self.assertTrue(view.property('atYEnd'), 'the list stays at its end')

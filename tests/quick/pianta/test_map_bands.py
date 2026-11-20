@@ -3,7 +3,6 @@ background of the plan showed where a tile of the new view had not come yet, a p
 gesture settled, a zoom out until the coarser tiles came. Now a backdrop two zooms coarser lies under three times the
 view, and a tile on its way is stood in for by the nearest coarser one in memory, enlarged."""
 
-import time
 import unittest
 
 from meridiana import geo, tiles

@@ -5,7 +5,6 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from PySide6.QtCore import QPoint, QUrl, Qt
-from PySide6.QtGui import QGuiApplication
 from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication

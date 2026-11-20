@@ -339,7 +339,7 @@ def window(test, project=None, cfg=None, size=(1200, 800), answers=None, cache=N
     test.paths = paths or Paths(config=root / "config", state=root / "state", data=root / "data", cache=root / "cache")
     if cache is not None:
         from _fixtures import write_cache
-        write_cache(cache, test.paths.cache)
+        write_cache(cache, test.paths.cache, include_horizon=True)
     test.cfg = cfg if cfg is not None else config_module.Config(background="none", network_pvgis=False, font="inter",
                                                                 accent="bronze", backgrounds="meridiana")   # see meridiana_look
     # the window's font is loaded once per process and the Widgets' tests are measured on Inter: whatever test came

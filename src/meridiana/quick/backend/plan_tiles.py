@@ -509,8 +509,8 @@ class TileModel(QAbstractListModel):
         super().__init__(parent)
         self._rows = []
 
-    def rowCount(self, parent=QModelIndex()):
-        return 0 if parent.isValid() else len(self._rows)
+    def rowCount(self, parent=None):
+        return 0 if parent is not None and parent.isValid() else len(self._rows)
 
     def roleNames(self):
         return {Qt.ItemDataRole.UserRole + i: QByteArray(name.encode()) for i, name in enumerate(self.ROLES)}

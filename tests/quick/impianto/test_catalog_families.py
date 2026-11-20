@@ -93,7 +93,7 @@ class Real(unittest.TestCase):
         for kind in ('inverters', 'modules', 'optimizers'):
             with self.subTest(kind=kind):
                 backend = self.make(kind)
-                shown = lambda: [r for row in backend.model.rows for r in row.get('members', [row])]   # noqa: E731
+                shown = lambda backend=backend: [r for row in backend.model.rows for r in row.get('members', [row])]   # noqa: E731
                 narrow, everything = shown(), backend._all
                 self.assertTrue(narrow)
                 self.assertTrue(all(catalog.lifecycle_state(r) == catalog.CURRENT for r in narrow))

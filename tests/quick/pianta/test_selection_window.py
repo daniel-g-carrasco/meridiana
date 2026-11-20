@@ -10,7 +10,6 @@ from pathlib import Path
 os.environ.setdefault('QSG_RENDER_LOOP', 'basic')
 
 from PySide6.QtCore import QObject, QPoint, Qt, QUrl
-from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QSignalSpy, QTest

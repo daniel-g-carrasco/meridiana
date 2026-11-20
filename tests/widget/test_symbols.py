@@ -158,7 +158,7 @@ class Symbols(unittest.TestCase):
         self.assertTrue(near(at(40, 10), expected), at(40, 10).name())        # the disc above the triangle
         self.assertTrue(near(at(40, 38), expected), at(40, 38).name())        # the «!»: the pill shows through
         self.assertEqual(at(40, 76).name(), "#3c8f3c")                         # outside the disc: the roof
-        ochre = at(40, 58)
+        ochre = at(40, 51)
         self.assertGreater(ochre.red(), ochre.blue() + 60)                    # the triangle in its tone
 
     def test_the_dialogs_buttons_and_the_messages_have_the_symbols_on_every_system(self):

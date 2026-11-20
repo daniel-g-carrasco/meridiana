@@ -106,7 +106,7 @@ class CatalogueTest(unittest.TestCase):
         self.assertEqual(backend.filters['text'], 'remember')
 
     def test_editor_saves_each_kind_complex_values_and_stays_independent_of_project(self):
-        from meridiana.catalog import KINDS, personal
+        from meridiana.catalog import KINDS
         with tempfile.TemporaryDirectory() as directory:
             backend = self.make([], safe_root=directory)
             backend.setDestination(str(Path(directory) / 'all.json'))

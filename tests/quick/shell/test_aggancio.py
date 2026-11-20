@@ -99,7 +99,7 @@ class DockingTest(unittest.TestCase):
         self.release(end)
         self.assertNotEqual(first, (0.0, 0.0, 0.0, 0.0))
         # The drop zone's first frame is the outline's place, then it settles on the slice.
-        for a, b in zip(first, told):
+        for a, b in zip(first, told, strict=True):
             self.assertAlmostEqual(a, b, delta=1)
         self.assertNotEqual(settled, first)
         self.assertAlmostEqual(settled[1], 0, delta=1)

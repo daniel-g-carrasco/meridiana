@@ -53,6 +53,12 @@ class RegistryTest(unittest.TestCase):
         self.assertEqual(2, sum(row["request"] == "R31" for row in requests))
         self.assertEqual(1203, len(registry.test_rows()))     # 1196 until r20 (DXF, symbols, voice: 07/11/2026); r21-recuperi R398
 
+    def test_assertion_formatting_is_portable_and_changed_assertions_still_fail(self):
+        recorded = 'self.assertEqual(value, "text") ; assert ready'
+        self.assertTrue(registry.same_assertions(recorded, "self.assertEqual(value, 'text'); assert ready"))
+        self.assertFalse(registry.same_assertions(recorded, "self.assertEqual(value, 'text'); assert not ready"))
+        self.assertFalse(registry.same_assertions(recorded, "assert ("))
+
     def test_completion_counts_only_proven_done(self):
         document = {"items": [
             {"id": "a", "phases": ["model"], "status": "da fare"},
@@ -72,8 +78,9 @@ class RegistryTest(unittest.TestCase):
     def test_runtime_commands_detect_an_action_lost_in_the_real_window(self):
         commands = {c.id: {"shortcuts": list(c.keys)} for c in registry.shortcuts.commands()}
         self.assertEqual([], registry.validate_runtime_commands({"commands": commands}))
-        del commands["import_curve"]
-        self.assertIn("import_curve", "\n".join(registry.validate_runtime_commands({"commands": commands})))
+        for key in ("import_curve", "side_left"):
+            del commands[key]
+            self.assertIn(key, "\n".join(registry.validate_runtime_commands({"commands": commands})))
 
     def test_runtime_shortcut_cannot_disappear_while_its_command_survives(self):
         commands = {c.id: {"shortcuts": list(c.keys)} for c in registry.shortcuts.commands()}
@@ -86,7 +93,7 @@ class RegistryTest(unittest.TestCase):
         self.assertTrue(manifests, "Capture one real Widgets reference before claiming runtime parity")
         for path, manifest in manifests:
             with self.subTest(manifest=str(path)):
-                self.assertEqual([], registry.validate_runtime_commands(manifest))
+                self.assertEqual([], registry.validate_runtime_commands(manifest, archived=True))
                 # a command named as captured before must really be absent: a new capture that has it drops the entry
                 self.assertEqual([], sorted(set(registry.CAPTURED_BEFORE) & set(manifest.get("commands", {}))))
 

@@ -19,7 +19,7 @@ T.MenuItem {
     readonly property real markerGap: hasIcons ? Theme.space.M : Theme.space.S
     readonly property string caption: text.split("\t")[0].replace(/&(.)/g, "$1")
     implicitWidth: contentItem.implicitWidth + leftPadding + rightPadding
-    implicitHeight: Math.ceil(Theme.measureText(caption, "body").height) + 2 * ControlMetrics.menuItemPadV
+    implicitHeight: Math.ceil(Theme.measureText("Ag", "body").height) + 2 * ControlMetrics.menuItemPadV
     padding: ControlMetrics.menuItemPadV
     leftPadding: Theme.space.XS
     rightPadding: Theme.space.XXL + Theme.space.XS

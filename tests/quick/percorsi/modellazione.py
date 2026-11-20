@@ -8,8 +8,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from PySide6.QtCore import Q_ARG, QMetaObject, QObject, QPoint, QPointF, QRectF, Qt
-from PySide6.QtQuick import QQuickItem
+from PySide6.QtCore import QObject, QPoint, QPointF
 
 RHO = Path(__file__).resolve().parents[3] / 'docs/quick/compat/fixtures/rho.meridiana'
 VIEW = (-8.0, -8.0, 150.0, 90.0)      # west, south, width, height of the plan shown at the start
@@ -238,7 +237,7 @@ class Pilot:
             found = [i for i in self.walk() if self.shown(i) and i.property('text') and i.property('hovered') is not None
                      and i.property('enabled') is not False]
             texts = [str(i.property('text')).replace('&', '') for i in found]
-            chosen = next((i for name in names for i, t in zip(found, texts) if t == name), None)
+            chosen = next((i for name in names for i, t in zip(found, texts, strict=True) if t == name), None)
             if chosen is None:
                 self.say(f'  pulsante {names} non trovato')
                 return False
@@ -349,7 +348,6 @@ class Pilot:
         out['props'] = len(p.props)
         out['modules'] = modules
         out['kwp'] = round(kwp, 3)
-        runs = (p.energy.get('strings') or {})
         out['strings'] = _strings_summary(p)
         try:
             inverter = system.inverter_of(p) if hasattr(system, 'inverter_of') else None
@@ -1628,7 +1626,6 @@ def popup(p):
     p.spin(800)
     popup = p.host.stringing_popup
     p.host_calls = []
-    original = p.host._strings_asked
     popup.asked.connect(lambda options: p.say(f'  segnale asked: {options}'))
     p.say(f'finestrella visibile {popup.isVisible()}, geometria {popup.geometry()}, pulsante {popup.go.text()!r} abilitato {popup.go.isEnabled()}')
     q = popup.go.mapToGlobal(popup.go.rect().center())

@@ -1,7 +1,6 @@
 """R389: the complete object menu and its undoable commands, from window.context_actions."""
 import unittest
 
-from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
 
 from meridiana import model

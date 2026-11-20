@@ -283,7 +283,7 @@ class WiringScene:
         for i, legs, lane in plan:
             order, colour = orders[i], colours[i]
             chosen = i == editor.chosen_string
-            pts, heading = draw(order, colour, legs, 4.5 if chosen else 2.5, 190 if chosen else 140, i, chosen, lane,
+            pts, _heading = draw(order, colour, legs, 4.5 if chosen else 2.5, 190 if chosen else 140, i, chosen, lane,
                                 spots=i not in with_units)
             x, y = pts[0]
             dx, dy = heading(pts, 0)

@@ -385,16 +385,18 @@ class Corners(unittest.TestCase):
         self.field.typed.emit("+2")
         self.assertEqual(win.undo.count(), steps + 1)
         building = win.project.buildings[0]
-        self.assertEqual(building.roof.type, "free")
+        self.assertEqual(building.roof.type, "flat")
+        self.assertTrue(building.roof.plane)
         self.assertEqual(len(building.pitches()), 1)
         self.assertEqual(sorted(round(h.z - height, 2) for h in win.vertex_handles), [0.0, 1.0, 1.0, 2.0])
         self.assertEqual(b.vertex_on, 2)
         win.undo.undo()
         self.assertEqual(win.project.buildings[0].roof.type, "flat")
+        self.assertFalse(win.project.buildings[0].roof.plane)
         self.assertAlmostEqual(win.project.buildings[0].height, height)
 
     def test_the_modules_and_the_outline_go_with_it(self):
-        win, b = self.win, self.back
+        win = self.win
         win._select("building", self.flat)
         sf = win.project.subfields[0]
         self.assertTrue(_setup.wait_until(self.app, lambda: sf.id in win.results, 30))

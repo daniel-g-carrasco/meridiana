@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-from PySide6.QtGui import QGuiApplication, QImage
+from PySide6.QtGui import QImage
 from PySide6.QtCore import QRectF
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtSvg import QSvgRenderer

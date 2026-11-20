@@ -5,7 +5,6 @@ of a building dragged stays parallel; the modules set aside on an obstacle are d
 guides and as obstacles from the menu."""
 import unittest
 
-from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
 
 from meridiana import model

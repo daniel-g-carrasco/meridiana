@@ -49,11 +49,12 @@ try:
     from meridiana import atomic
     from meridiana.energy import meteo
     weather = Path(folder.name) / 'weather'
-    write_cache(clear_sky_meteo(), weather)
+    write_cache(clear_sky_meteo(), weather, include_horizon=True)
     for lat, lon in ((project.site.lat, project.site.lon), (45.5226, 9.03)):
         if meteo._cache_file(weather, 'tmy', lat, lon).exists():
             raw, _ = atomic.read_json(meteo._cache_file(weather, 'tmy', lat, lon))
-            project.climate = dict(getattr(project, 'climate', {}) or {}, tmy=raw)
+            horizon, _ = atomic.read_json(meteo._cache_file(weather, 'horizon', lat, lon))
+            project.climate = dict(getattr(project, 'climate', {}) or {}, tmy=raw, horizon=horizon)
             break
 except Exception as error:          # the capture goes on; the comparison then says what is missing
     print('no weather:', error, file=sys.stderr)
@@ -183,6 +184,10 @@ try:
         left = next(x for x in range(x0 + edge, x1) if any(inked(x, y) for y in rows[::2])) - x0
         right = x1 - next(x for x in range(x1 - edge, x0, -1) if any(inked(x, y) for y in rows[::2]))
         top = next(y for y in range(y0 + edge, y1) if any(inked(x, y) for x in cols[::2])) - y0
+        title = next((t for t in walk(frame.parentItem()) if t.objectName() == 'dialogTitle' and shown(t)), None)
+        if title is not None:
+            # A glyph's ascender changes the first dark row without changing the title's inset.
+            top = round(rect(title)[1] + title.property('topPadding') * dpr - r[1])
         bottom = y1 - next(y for y in range(y1 - edge, y0, -1) if any(inked(x, y) for x in cols[::2]))
         found = dict(left=left, right=right, top=top, bottom=bottom, width=round(r[2]))
         buttons = [o for o in walk(frame.parentItem()) if o.objectName() == 'dialogButtons' and shown(o)]
@@ -307,12 +312,16 @@ try:
         p, e = rect(popup_item), rect(entry)
         veil = over(raw['hover'], raw['card'])
         cy = int(e[1] + e[3] / 2)
-        xs = [x for x in range(int(p[0]), int(p[0] + p[2])) if dist(rgb(x, cy), veil) <= 6]
-        ys = [y for y in range(int(p[1]), int(p[1] + p[3])) if dist(rgb(xs[0] + 6 * dpr, y), veil) <= 6] if xs else []
-        found = dict(found=bool(xs))
-        if xs and ys:
-            found.update(left=xs[0] - int(p[0]), right=int(p[0] + p[2]) - 1 - xs[-1], height=len(ys),
-                         corner=dist(rgb(xs[0], ys[0]), veil) > 6, colour=list(rgb(xs[0] + 6 * dpr, cy)))
+        ground = entry.property('background')
+        self_colour = QColor(ground.property('color'))
+        self_visible = ground.isVisible() and self_colour.alpha() > 0
+        shape = rect(ground)
+        # Measure the actual hover rectangle. Pixels of the popup border and the text
+        # can have the same colour as the hover on the software renderer.
+        painted = dist(rgb(shape[0] + 6 * dpr, cy), veil) <= 6
+        found = dict(found=bool(self_visible and painted), left=round(shape[0] - p[0]),
+                     right=round(p[0] + p[2] - shape[0] - shape[2]), height=round(shape[3]),
+                     corner=ground.property('radius') > 0)
         out['menus'][name] = found
         save(f'menu-{name}', p)
 

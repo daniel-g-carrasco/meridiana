@@ -10,7 +10,7 @@ from pathlib import Path
 os.environ.setdefault('QSG_RENDER_LOOP', 'basic')
 
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QObject, QPoint, Qt, QUrl
-from PySide6.QtGui import QColor, QGuiApplication, QImage
+from PySide6.QtGui import QColor, QImage
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest

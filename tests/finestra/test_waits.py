@@ -121,13 +121,14 @@ class Arcs(WindowWithAYear):
 
         from meridiana import jobs
         from meridiana.energy import pipeline
+        from meridiana.ui.waiting import THRESHOLD_MS
         win = self.win
         # the plan: under the north arrow, only past the threshold, while the modules are laid
         plan = win.plan
         with mock.patch.object(jobs, "layout_of", slowed(jobs.layout_of, 0.9)):
             win._edited("building", self.bid, {"height": 13.0})
-            spin(self.app, 200)
-            self.assertTrue(plan.laying.isHidden())                 # under the threshold: nothing
+            self.assertTrue(plan.laying.isHidden())                 # no flash at the start
+            self.assertEqual(plan.laying_wait.timer.interval(), THRESHOLD_MS)
             self.assertTrue(self.wait_until(self.app, lambda: not plan.laying.isHidden(), 2))
             self.assertTrue(plan.laying.turning())
             self.assertLess(abs(plan.laying.geometry().center().x() - plan.north.geometry().center().x()), 2)
@@ -140,9 +141,10 @@ class Arcs(WindowWithAYear):
         with mock.patch.object(pipeline, "compute_or_say", slowed(pipeline.compute_or_say, 0.9)):
             win.energy = {}
             win.show_phase("production")                            # no year yet: computed by itself
-            spin(self.app, 150)
             self.assertTrue(page.spinner.isHidden())
             self.assertTrue(win.busy.isHidden())
+            self.assertEqual(page.computing.timer.interval(), THRESHOLD_MS)
+            self.assertEqual(win.busy_wait.timer.interval(), THRESHOLD_MS)
             self.assertTrue(self.wait_until(self.app, lambda: not page.spinner.isHidden(), 2))
             self.assertFalse(win.busy.isHidden())
             self.assertIn("Production", win.busy.text())

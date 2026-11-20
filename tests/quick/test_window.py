@@ -34,6 +34,7 @@ class QuickWindowTest(unittest.TestCase):
         results, keys, _ = jobs.layout_of(self.bridge.session.project)
         self.bridge.accept_layout(0, results, keys)
         self.win.show()
+        self.win.resize(1600, 960)
         pump(40)
         self.plan = item(self.win, 'plan')
 
@@ -67,7 +68,6 @@ class QuickWindowTest(unittest.TestCase):
 
     def test_year_chart_draws_the_same_points_in_both_geometry_modes(self):
         import math
-        from PySide6.QtCore import QPointF
         self.bridge._year = {'points': [QPointF(i/365, .5+.4*math.sin(i/20)) for i in range(366)],
                              'maximum': 1000., 'total': '100000', 'hours': 8760, 'source': 'Fixture'}
         self.bridge.yearChanged.emit()

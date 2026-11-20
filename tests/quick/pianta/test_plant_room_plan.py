@@ -6,7 +6,6 @@ building as before; the room is picked before the building under it.
 """
 import unittest
 
-from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
 
 import _setup

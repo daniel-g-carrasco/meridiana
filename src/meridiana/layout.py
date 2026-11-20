@@ -254,7 +254,7 @@ def _least_rectangles(area: Polygon) -> list[float]:
     one shapely's minimum_rotated_rectangle gave turned on the last digits of the points (R551)."""
     hull = list(area.convex_hull.exterior.coords)
     sizes = []
-    for (x1, y1), (x2, y2) in zip(hull, hull[1:]):
+    for (x1, y1), (x2, y2) in zip(hull, hull[1:], strict=False):
         if math.hypot(x2 - x1, y2 - y1) < EPS:
             continue
         ax = math.atan2(y2 - y1, x2 - x1)
