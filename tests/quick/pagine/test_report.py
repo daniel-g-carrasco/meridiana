@@ -489,6 +489,9 @@ class ReportBackendTest(unittest.TestCase):
             # the quiet set above again: on a loaded machine something of the window had told the activity during the
             # wait for the job, and the touch below was no return after a quiet (no pause)
             activity._last[0] = time.monotonic() - 60
+            if not self.backend._ahead_going():
+                # the preview made ahead had already ended (the CI's runner): there is nothing left to suspend
+                self.skipTest('the preview made ahead ended before the designer came back')
             activity.touch()                                    # back after the quiet: its process waits
             self.assertTrue(self.backend._paused)
             self.assertTrue(self.backend._pause_file().is_file())

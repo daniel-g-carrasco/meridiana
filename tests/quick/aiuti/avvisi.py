@@ -5,11 +5,16 @@ something of it is taken apart between two slices, Qt throws a result tile away 
 («Cannot create delegate», «Object or context destroyed during incubation»). ResultsPage.mendTiles makes the tiles
 again when one is still missing (R625), and the user sees the page whole. On the CI's runner (two cores, software
 OpenGL) it came now and then in tests that are about something else (22/11/2026): those two lines, of
-ResultsPage.qml only, are left out; any other warning, and the same lines of another file, still fail."""
+ResultsPage.qml and the pages made of it only, are left out; any other warning, and the same lines of another file, still fail."""
 from __future__ import annotations
 
 MENDED = ('QML Component: Cannot create delegate', 'Object or context destroyed during incubation')
 
 
+# ResultsPage and the pages made of it (Charts/ConsumptionPage.qml is a ResultsPage: Qt names either)
+PAGES = tuple(f'/Charts/{name}.qml' for name in ('ResultsPage', 'ProductionPage', 'ConsumptionPage', 'EconomicsPage',
+                                                  'StoragePage'))
+
+
 def real(warnings) -> list:
-    return [w for w in warnings if not ('/Charts/ResultsPage.qml' in str(w) and any(m in str(w) for m in MENDED))]
+    return [w for w in warnings if not (any(p in str(w) for p in PAGES) and any(m in str(w) for m in MENDED))]

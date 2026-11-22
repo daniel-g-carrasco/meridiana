@@ -191,6 +191,8 @@ class PhaseChanges(unittest.TestCase):
             popup.setProperty('visible', True)
             for _ in range(70):
                 pump(10)
+            # the tip opens after its delay, a timer: on the CI's runner the turns above ended before it
+            wait_for(lambda p=popup: p.property('visible'), seconds=5)
             self.assertTrue(popup.property('visible'), popup.objectName())
             self.win.showPhase('plant')
             self.assertTrue(loader.isVisible(), 'still drawn while leaving')
