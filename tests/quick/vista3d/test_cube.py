@@ -9,7 +9,7 @@ import sys
 import tempfile
 import unittest
 
-from PySide6.QtCore import QPoint, QUrl, Qt
+from PySide6.QtCore import QObject, QPoint, QUrl, Qt
 from PySide6.QtGui import QImage
 from PySide6.QtQml import QJSEngine
 from PySide6.QtQuick import QQuickView
@@ -17,10 +17,10 @@ from PySide6.QtTest import QSignalSpy, QTest
 from PySide6.QtWidgets import QApplication
 
 import _setup
-from meridiana import camera, navicube
+from meridiana.app.view import camera, navicube
 
 ROOT = Path(__file__).resolve().parents[3]
-QML = ROOT / "src/meridiana/quick/qml/Meridiana/View3D"
+QML = ROOT / "src/meridiana/gui/qml/Meridiana/View3D"
 APP = QApplication.instance() or QApplication([])
 setUpModule = _setup.keep_global_state
 
@@ -63,6 +63,24 @@ class CubeMathTest(unittest.TestCase):
                     self.assertEqual(self.call("pick", cells, x, y), list(navicube.pick(cam, 64, x, y)))
         self.assertEqual(seen, set(navicube.parts()))
 
+    def test_r643_sign_of_north_points_where_the_camera_shows_north(self):
+        """R643: the 3D view's sign of North turns to where the scene's North (-z) falls on the screen, as the
+        Widgets' camera projects it; looking North (bearing 0) it points up, whatever the height."""
+        import math
+        north = [0.0, 0.0, -1.0]
+        for bearing in (0, 30, 90, 135, 200, 315):
+            for elevation in (-89, -60, -35, -10):
+                cam = camera.Camera(rotation=camera.look(bearing, elevation))
+                right, up = cam.right(), cam.up()
+                x = sum(a * b for a, b in zip(north, right, strict=True))
+                y = sum(a * b for a, b in zip(north, up, strict=True))
+                expected = math.degrees(math.atan2(x, y))
+                got = self.call("screenNorth", bearing, elevation)
+                with self.subTest(bearing=bearing, elevation=elevation):
+                    self.assertAlmostEqual((got - expected + 180) % 360 - 180, 0, places=6)
+        for elevation in (-80, -35, -5):
+            self.assertAlmostEqual(self.call("screenNorth", 0, elevation), 0, places=9)
+
     def test_arrow_limits_and_plan_bearing(self):
         self.assertEqual(self.call("turned", 330, -80, "right"), [15, -80])
         self.assertEqual(self.call("turned", 30, -80, "up"), [30, -90])
@@ -73,7 +91,7 @@ class CubeMathTest(unittest.TestCase):
 class CubeEventsTest(unittest.TestCase):
     def setUp(self):
         self.view = QQuickView()
-        from meridiana.quick.backend.controls import install_controls
+        from meridiana.gui.backend.controls import install_controls
         self.view.engine().addImportPath(str(QML.parents[1]))
         self.theme = install_controls(self.view.engine())
         self.view.setSource(QUrl.fromLocalFile(str(QML / "ViewCube.qml")))
@@ -87,27 +105,42 @@ class CubeEventsTest(unittest.TestCase):
         self.view.deleteLater()
         APP.processEvents()
 
-    def test_face_arrow_home_and_empty_corner(self):
-        self.cube.setProperty("bearing", 0)
-        self.cube.setProperty("elevation", 0)
-        orient = QSignalSpy(self.cube.orientRequested)
-        home = QSignalSpy(self.cube.homeRequested)
-        QTest.mouseClick(self.view, Qt.MouseButton.LeftButton, pos=QPoint(56, 56))
-        self.assertEqual(orient.at(0), [0.0, 0.0])
-        QTest.mouseClick(self.view, Qt.MouseButton.LeftButton, pos=QPoint(108, 56))
-        self.assertEqual(orient.at(1), [45.0, 0.0])
-        QTest.mouseClick(self.view, Qt.MouseButton.LeftButton, pos=QPoint(9, 9))
-        self.assertEqual(home.count(), 1)
-        QTest.mouseClick(self.view, Qt.MouseButton.LeftButton, pos=QPoint(109, 2))
-        self.assertEqual(orient.count(), 2)
-
-    def test_compact_retains_cube_and_menu(self):
-        self.cube.setProperty("compact", True)
-        self.assertEqual(self.cube.property("width"), 76)
-        self.assertEqual(self.cube.property("height"), 76)
+    def test_compact_cube_orients_and_has_no_menu_target(self):
+        self.assertEqual(self.cube.width(), 76)
+        self.assertEqual(self.cube.height(), 76)
+        self.assertIsNone(self.cube.findChild(QObject, "viewCubeMenu"))
         orient = QSignalSpy(self.cube.orientRequested)
         QTest.mouseClick(self.view, Qt.MouseButton.LeftButton, pos=QPoint(38, 38))
         self.assertEqual(orient.count(), 1)
+        from ._fidelity_support import js
+        self.assertEqual(js(self.cube, "hit(67,68)"), "")
+        QTest.mouseClick(self.view, Qt.MouseButton.LeftButton, pos=QPoint(67, 68))
+        self.assertEqual(orient.count(), 1)
+        image = self.view.grabWindow()
+        dpr = image.devicePixelRatio()
+        background = image.pixelColor(round(74*dpr), round(74*dpr))
+        for x in range(63, 73):
+            for y in range(66, 73):
+                self.assertEqual(image.pixelColor(round(x*dpr), round(y*dpr)), background,
+                                 "The removed menu arrow must leave the corner empty")
+
+    def test_hover_on_faces_edges_and_corners_uses_common_neutral_colour(self):
+        from ._fidelity_support import data, js
+        self.assertTrue(js(self.cube, "Qt.colorEqual(hoverColor, Theme.colors.hover)"))
+        self.assertEqual(self.cube.property("drawingOpacity"), 1)
+        cells = data(self.cube, "projectedCells")
+        for count in (1, 2, 3):
+            cell = next(c for c in cells if sum(v != 0 for v in c["part"]) == count)
+            x = 38 + sum(p[0] for p in cell["polygon"]) / 4
+            y = 38 + sum(p[1] for p in cell["polygon"]) / 4
+            QTest.mouseMove(self.view, QPoint(1, 1))
+            QTest.qWait(30)
+            before = self.view.grabWindow()
+            QTest.mouseMove(self.view, QPoint(round(x), round(y)))
+            QTest.qWait(30)
+            self.assertEqual(self.cube.property("hoverTarget"), "part:" + ",".join(map(str, cell["part"])))
+            after = self.view.grabWindow()
+            self.assertNotEqual(before, after, cell["part"])
 
     def test_all_26_parts_receive_real_clicks(self):
         seen = set()
@@ -120,8 +153,8 @@ class CubeEventsTest(unittest.TestCase):
                 for part, polygon, _depth in navicube.faces(cam, 64):
                     if part in seen:
                         continue
-                    x = 56 + sum(p[0] for p in polygon) / 4
-                    y = 56 + sum(p[1] for p in polygon) / 4
+                    x = 38 + sum(p[0] for p in polygon) / 4
+                    y = 38 + sum(p[1] for p in polygon) / 4
                     before = orient.count()
                     QTest.mouseClick(self.view, Qt.MouseButton.LeftButton, pos=QPoint(round(x), round(y)))
                     self.assertEqual(orient.count(), before + 1, part)
@@ -131,36 +164,12 @@ class CubeEventsTest(unittest.TestCase):
                     seen.add(part)
         self.assertEqual(seen, set(navicube.parts()))
 
-    def test_double_click_fits_and_menu_changes_projection(self):
+    def test_double_click_still_fits_the_drawing(self):
         self.cube.setProperty("bearing", 0)
         self.cube.setProperty("elevation", 0)
         fit = QSignalSpy(self.cube.fitRequested)
-        projection = QSignalSpy(self.cube.orthographicRequested)
-        QTest.mouseDClick(self.view, Qt.MouseButton.LeftButton, pos=QPoint(56, 56))
+        QTest.mouseDClick(self.view, Qt.MouseButton.LeftButton, pos=QPoint(38, 38))
         self.assertEqual(fit.count(), 1)
-        QTest.mouseClick(self.view, Qt.MouseButton.LeftButton, pos=QPoint(103, 104))
-        QTest.qWait(50)
-        QTest.keyClick(self.view, Qt.Key.Key_Down)
-        QTest.keyClick(self.view, Qt.Key.Key_Return)
-        self.assertEqual(projection.count(), 1)
-        self.assertEqual(projection.at(0), [True])
-
-    def test_compact_menu_keeps_home_and_set_home(self):
-        self.cube.setProperty("compact", True)
-        # Room for the popup, as in the actual viewport. A 76px host clamps the
-        # whole menu under the click, hovering item 2 before the first Down.
-        self.view.resize(500,400)
-        QTest.qWait(50)
-        home = QSignalSpy(self.cube.homeRequested)
-        set_home = QSignalSpy(self.cube.setHomeRequested)
-        for steps in (1, 4):
-            QTest.mouseClick(self.view, Qt.MouseButton.LeftButton, pos=QPoint(67, 68))
-            QTest.qWait(50)
-            for _ in range(steps):
-                QTest.keyClick(self.view, Qt.Key.Key_Down)
-            QTest.keyClick(self.view, Qt.Key.Key_Return)
-        self.assertEqual(home.count(), 1)
-        self.assertEqual(set_home.count(), 1)
 
 
 @unittest.skipUnless(sys.platform == "win32" and os.environ.get("QT_QPA_PLATFORM") != "offscreen",

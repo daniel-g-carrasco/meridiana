@@ -9,11 +9,11 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
 import _setup
-from meridiana.quick.backend.controls import install_controls
-from meridiana.quick.backend import charts_bridge, charts_data
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.backend import charts_bridge, charts_data
 
 
-QML = _setup.ROOT / "src/meridiana/quick/qml"
+QML = _setup.ROOT / "src/meridiana/gui/qml"
 setUpModule = _setup.keep_global_state
 
 
@@ -60,7 +60,7 @@ class ResultPages(unittest.TestCase):
         while not predicate() and time.monotonic() < end:
             self.app.processEvents()
             QTest.qWait(10)
-            time.sleep(0.005)  # Let Python formula workers acquire the GIL between Qt event turns.
+            time.sleep(0.005)  # wait: a breath between two looks at the condition, so the workers' threads run
         self.assertTrue(predicate())
 
     def host(self, data=None, component="ResultsPage", width=760, height=600, properties="pageData: pagePayload"):
@@ -168,6 +168,25 @@ Window {{ visible: true; width: {width}; height: {height}; color: Theme.colors.v
         self.assertGreater(example.mapToScene(QPointF()).y(), equation.mapToScene(QPointF()).y())
         self.assertGreater(worked.mapToScene(QPointF()).y(), example.mapToScene(QPointF()).y())
         self.assertEqual(self.warnings, [])
+
+    def test_the_value_heading_ends_where_its_values_end_r660(self):
+        # Daniel 15/11/2026, Balance: «Value and unit» about 175 px (at scale 2) right of the end of its values
+        self.host(width=1100, height=700)
+        self.click(self.named("result-tab-2"))
+        self.wait(lambda: self.subject.property("displayedIndex") == 2)
+        self.wait(lambda: self.named("pedigree-value-head") is not None)
+        head = self.named("pedigree-value-head")
+        table = head.parentItem().parentItem().parentItem()
+        heading_end = head.mapToScene(QPointF(head.width(), 0)).x()
+        ends = []
+        for item in items(table):
+            if item.metaObject().className().startswith("Text") or item.metaObject().className().startswith("Copy"):
+                text = str(item.property("text") or "")
+                if text.strip() and text.strip().split()[0] in ("kW", "kWh") and item is not head:
+                    left = item.mapToScene(QPointF(0, 0)).x()
+                    ends.append(left + item.property("contentWidth"))
+        self.assertTrue(ends, "the values' units are found")
+        self.assertLessEqual(abs(heading_end - max(ends)), 4, (heading_end, ends))
 
     def test_narrow_large_text_keeps_tiles_and_all_copy_inside_page(self):
         self.host(width=340, height=700)
@@ -352,11 +371,27 @@ Window {{ visible: true; width: {width}; height: {height}; color: Theme.colors.v
                         self.subject.setProperty("contentY", 0)
                         QMetaObject.invokeMethod(self.subject, "select", Q_ARG("QVariant", index))
                         names = ["chart-" + chart["id"] for chart in tab["charts"]]
-                        self.wait(lambda i=index, wanted=names: self.subject.property("displayedIndex") == i
-                                  and all(self.named(name) is not None for name in wanted)
-                                  # the Loader holds its item: the chart's own minimum is in the page's height now
-                                  and all(self.named(name).parentItem().property("item") is not None for name in wanted),
-                                  seconds=10)
+                        def loaded(name):
+                            # the Loader holds its item: the chart's own minimum is in the page's height now
+                            chart = self.named(name)
+                            return chart is not None and chart.parentItem().property("item") is not None
+
+                        self.wait(lambda i=index, first=names[0]: self.subject.property("displayedIndex") == i
+                                  and loaded(first), seconds=10)
+                        # a chart is made when it comes into view (ResultsPage, chartLoader.intersects); since the cards'
+                        # margins of R633/R637 (15/11/2026) the second chart of a tab lies under a short window's edge:
+                        # the page is scrolled to it, as the designer does, and back to the top before measuring
+                        def at_the_end_loaded(wanted):
+                            # the end looked at again each time: the content grows while the first chart and the
+                            # tiles arrive, and a scroll made once left the second chart under the edge for good
+                            self.subject.setProperty("contentY", max(0, self.subject.property("contentHeight")
+                                                                      - self.subject.height()))
+                            return loaded(wanted)
+
+                        for name in names[1:]:
+                            if not loaded(name):
+                                self.wait(lambda wanted=name: at_the_end_loaded(wanted), seconds=10)
+                        self.subject.setProperty("contentY", 0)
                         settled, last = 0, None   # the layout settles first (text, the second chart arriving)
                         for _ in range(200):
                             self.app.processEvents()

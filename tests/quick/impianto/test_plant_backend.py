@@ -10,10 +10,10 @@ from _fixtures import capannone, inverter_record
 from PySide6.QtCore import QThreadPool
 from PySide6.QtWidgets import QApplication
 
-from meridiana import jobs
-from meridiana.session import ProjectSession
-from meridiana.energy import plant
-from meridiana.quick.backend.plant import PlantBackend
+from meridiana.app import jobs
+from meridiana.app.session import ProjectSession
+from meridiana.core.energy import plant
+from meridiana.gui.backend.plant import PlantBackend
 
 
 class PlantBackendTest(unittest.TestCase):
@@ -34,7 +34,7 @@ class PlantBackendTest(unittest.TestCase):
         until = time.monotonic() + 30
         while self.backend.busy and time.monotonic() < until:
             self.app.processEvents()
-            time.sleep(.005)
+            time.sleep(.005)  # wait: a breath between two looks at the condition, so the workers' threads run
         self.app.processEvents()
         self.assertFalse(self.backend.busy, self.backend.message)
 
@@ -55,14 +55,12 @@ class PlantBackendTest(unittest.TestCase):
         self.assertEqual(len(self.backend.units), 2)
 
     def test_r298_card_lines_and_electrical_bars_match_widgets(self):
-        from meridiana.ui.plant_page import string_figures, unit_lines
+        # the bars and the lines the Widgets drew for the same plant (recorded on 10/11/2026)
+        from quick.aiuti import riferimenti
         self.wired()
-        state = self.backend.state
-        old_bars, _rows = string_figures(state.strings[0])
         bars = self.backend.strings[0]['bars']
-        self.assertEqual([(b['label'], b['text'], b['low'], b['high'], b['state']) for b in bars],
-                         [b[1:] for b in old_bars])
-        self.assertEqual(self.backend.units[0]['lines'], list(unit_lines(state, state.units[0])))
+        riferimenti.check(self, {'bars': [(b['label'], b['text'], b['low'], b['high'], b['state']) for b in bars],
+                                 'lines': self.backend.units[0]['lines']})
 
     def test_r297_move_rename_remove_keep_physical_strings_and_undo(self):
         keys = self.wired()
@@ -160,6 +158,34 @@ class PlantBackendTest(unittest.TestCase):
         self.wait()
         self.assertEqual(self.session.snapshot(), before)
 
+    def test_r598_meridianas_strings_written_down_only_for_the_project_they_were_made_of(self):
+        # the plant comes from its job (app/plant_job.py) and is taken in pieces of the window's turns: the last one
+        # writes Meridiana's strings down (amend), and only when the project is still the one the plant was made of
+        self.backend.addInverter(inverter_record())
+        self.wait()
+        asks = []
+        ask, self.backend.builds.ask = self.backend.builds.ask, lambda: asks.append(True)    # no job meanwhile
+        self.addCleanup(setattr, self.backend.builds, 'ask', ask)
+        self.session.edit('auto', lambda p: p.energy.__setitem__('strings', {'auto': True}))
+
+        def made():
+            s = self.session
+            return s.photo(), dict(s.layout_keys), s.energy, s.state_key()
+        state = plant.build(self.session.project, self.session.good_results())
+        self.assertTrue(state.auto and state.search_complete and state.strings)
+        stale = made()
+        self.session.edit('Rename', lambda p: setattr(p, 'name', p.name + ' moved on'))
+        self.wait()
+        before, count = self.session.snapshot(), len(asks)
+        self.backend._adopt(state, stale)
+        self.assertEqual(self.session.snapshot(), before, 'an answer of before writes nothing')
+        self.assertTrue(self.backend.busy, 'the plant of the project now is asked instead')
+        self.wait()
+        self.assertGreater(len(asks), count)
+        self.assertEqual(self.backend.runs(), [])
+        self.backend._adopt(state, made())
+        self.assertEqual(self.backend.runs(), plant.runs_of(state), "of the project in hand: Meridiana's strings")
+
     def test_cancelled_search_cannot_apply_late_result(self):
         self.wired()
         before = self.session.snapshot()
@@ -170,7 +196,7 @@ class PlantBackendTest(unittest.TestCase):
         self.assertEqual(self.session.snapshot(), before)
 
     def test_stale_sizing_and_proposal_return_after_project_edit_without_applying(self):
-        from meridiana.energy.sizing import Result
+        from meridiana.core.energy.sizing import Result
         for kind in ('sizing', 'proposal'):
             with self.subTest(kind=kind):
                 entered, release = threading.Event(), threading.Event()
@@ -180,7 +206,7 @@ class PlantBackendTest(unittest.TestCase):
                     entered.set()
                     release.wait(10)
                     return Result(ok=True, entries=[], runs=[], ratio=1.1) if kind == 'sizing' else plant.Plant()
-                target = 'meridiana.energy.sizing.choose' if kind == 'sizing' else 'meridiana.energy.plant.proposal'
+                target = 'meridiana.core.energy.sizing.choose' if kind == 'sizing' else 'meridiana.core.energy.plant.proposal'
                 with patch(target, side_effect=slow):
                     if kind == 'sizing':
                         self.backend.startSizing('Acme', [inverter_record()])
@@ -196,7 +222,7 @@ class PlantBackendTest(unittest.TestCase):
                     self.assertIn('changed', self.backend.message)
 
     def test_optimizer_edit_and_explicit_groups_have_checks_and_one_undo(self):
-        from meridiana import catalog
+        from meridiana.data import catalog
         inv = next(r for r in catalog.search('inverters', manufacturer='SolarEdge', limit=None) if r['model'] == 'SE50K')
         self.backend.addInverter(inv)
         self.wait()

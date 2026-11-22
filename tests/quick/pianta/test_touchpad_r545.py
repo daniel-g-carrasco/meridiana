@@ -15,8 +15,8 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
-from meridiana import model
-from meridiana.quick.backend.plan import PlanController
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController
 from quick.gestures import wait_for
 
 if os.environ.get('QT_QPA_PLATFORM') == 'offscreen':
@@ -38,7 +38,7 @@ class SidewaysPlan(unittest.TestCase):
         self.engine.warnings.connect(lambda rows: self.errors.extend(row.toString() for row in rows))
         self.controller.install(self.engine)
         self.engine.rootContext().setContextProperty('planBackend', self.controller)
-        path = Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana/Plan/PlanWindow.qml'
+        path = Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana/Plan/PlanWindow.qml'
         self.engine.load(QUrl.fromLocalFile(str(path)))
         self.assertTrue(self.engine.rootObjects(), self.errors)
         self.window = self.engine.rootObjects()[0]
@@ -62,7 +62,7 @@ class SidewaysPlan(unittest.TestCase):
                             modifiers, phase, False, source, device or self.pad)
         event.setTimestamp(self.time)
         QGuiApplication.sendEvent(self.window, event)
-        self.app.processEvents()
+        wait_for(lambda: self.plan.property('pendingMotion') is None, 5)
 
     def gesture(self, step, count=10):
         self.send((0, 0), (0, 0), Qt.ScrollBegin)

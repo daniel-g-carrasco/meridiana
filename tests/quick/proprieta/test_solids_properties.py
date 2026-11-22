@@ -6,14 +6,14 @@ bodies of one building (R440), the inclined flat roof made level again (R455) an
 import unittest
 
 from _fixtures import capannone
-from meridiana import model
-from meridiana import roof_vertices as rv
-from meridiana.session import ProjectSession
+from meridiana.core.model import model
+from meridiana.core.geometry import roof_vertices as rv
+from meridiana.app.session import ProjectSession
 
 
 class SolidsProperties(unittest.TestCase):
     def setUp(self):
-        from meridiana.quick.backend.properties import PropertiesBackend
+        from meridiana.gui.backend.properties import PropertiesBackend
         p = capannone()
         p.buildings.append(model.Building(id='b2', name='Locale', footprint=[[10, 5], [16, 5], [16, 10], [10, 10]],
                                           height=12.0, group='ifc1'))

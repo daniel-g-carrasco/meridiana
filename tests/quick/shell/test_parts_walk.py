@@ -10,19 +10,18 @@ each handed to Python, met such an address sometimes. The walks of `charts_part`
 The test hands back such a wrapper among the children of every item, as PySide did, and the window must still be
 built, the guards and the marks made.
 """
-import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 import _setup
-from PySide6.QtCore import QMetaObject, QObject
+from PySide6.QtCore import QMetaObject
 from PySide6.QtQuick import QQuickItem
 
 from _fixtures import capannone
-from meridiana.quick.app import QuickWindow, create_app
-from quick.gestures import pump, wait_for
+from meridiana.gui.application import QuickWindow, create_app
+from quick.gestures import pump
 
 
 def setUpModule():
@@ -38,25 +37,13 @@ class ItemsWalkedInQml(unittest.TestCase):
         def with_stale(item):
             return list(original(item)) + [QMetaObject()]
 
-        def visual_items(root):
-            pending = [root]
+        def walk(root):
+            pending, items = [root], []
             while pending:
-                item = pending.pop()
-                if isinstance(item, QQuickItem):
-                    yield item
-                    pending.extend(original(item))
-
-        def visible_tools(host, command):
-            return [i for i in visual_items(host.window.contentItem())
-                    if i.objectName() == f'tool_{command}' and i.isVisible()]
-
-        def check_stale_mark(host, command):
-            wait_for(lambda: bool(visible_tools(host, command)))
-            self.assertEqual(len(visible_tools(host, command)), 1, command)
-            tool = visible_tools(host, command)[0]
-            marks = [item for item in original(tool)
-                     if isinstance(item, QQuickItem) and item.objectName() == f'stale-{command}']
-            self.assertEqual(len(marks), 1, tool.objectName())
+                node = pending.pop()
+                items.append(node)
+                pending.extend(original(node))
+            return items
 
         errors = []
         hook = sys.excepthook
@@ -68,20 +55,21 @@ class ItemsWalkedInQml(unittest.TestCase):
                 try:
                     # the stale wrapper is there for any walk from Python (on r20-unita: AttributeError at bind)
                     self.assertTrue(any(isinstance(k, QMetaObject) for k in host.window.contentItem().childItems()))
-                    loaders = [i for i in visual_items(host.window.contentItem())
-                               if i.objectName() == 'propertiesPartLoader']
+                    loaders = [i for i in walk(host.window.contentItem()) if i.objectName() == 'propertiesPartLoader']
                     self.assertTrue(loaders)
-                    for loader in loaders:
-                        self.assertTrue(any('InactiveInspector' in child.metaObject().className()
-                                            for child in loader.children() if isinstance(child, QObject)))
+                    guarded = [p for p in loaders if any('InactiveInspector' in c.metaObject().className()
+                                                         for c in p.children())]
+                    self.assertEqual(len(guarded), len(loaders), 'every inspector loader of the start has its guard')
                     host.window.show()
-                    host.window.resize(1600, 960)
                     host.shell.trigger('phase_plant')
-                    check_stale_mark(host, 'fill')
-                    host.shell.trigger('phase_production')
-                    check_stale_mark(host, 'compute')
-                    host.shell.trigger('phase_plant')
-                    check_stale_mark(host, 'fill')
+                    pump(400)
+                    host.shell.trigger('phase_model')
+                    pump(400)
+                    marks = [i for i in walk(host.window.contentItem()) if i.objectName() in ('stale-compute', 'stale-fill')]
+                    self.assertTrue(marks, 'the stale marks of the bar are made')
+                    for m in marks:             # a change of phase adds none to a tool that has one
+                        same = [k for k in original(m.parentItem()) if k.objectName() == m.objectName()]
+                        self.assertEqual(len(same), 1, m.parentItem().objectName())
                 finally:
                     host.close()
                     pump(50)
@@ -90,7 +78,6 @@ class ItemsWalkedInQml(unittest.TestCase):
             sys.excepthook = hook
         self.assertEqual(errors, [])
 
-    @unittest.skipUnless(os.name == "nt", "QuickWindow can identify dynamic QMetaObject wrappers on Windows only")
     def test_the_meta_objects_handed_to_python_go_with_the_window(self):
         # 07/11/2026: three tests of test_interfaccia_r19 met such a wrapper in the shell folder; PySide keeps a
         # QMetaObject wrapper valid after its QML object is gone, QuickWindow.close makes them invalid

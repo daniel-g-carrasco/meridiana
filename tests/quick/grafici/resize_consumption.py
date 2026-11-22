@@ -10,7 +10,7 @@ from collections import Counter
 from pathlib import Path
 
 from PySide6.QtCore import QPointF, QTimer, Qt, QCoreApplication, QEvent
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import drag, item, point, pump, wait_for
 
 

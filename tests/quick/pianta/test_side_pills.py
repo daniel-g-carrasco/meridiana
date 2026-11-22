@@ -4,7 +4,7 @@ import unittest
 
 from PySide6.QtTest import QTest
 
-from meridiana import model
+from meridiana.core.model import model
 from quick.pianta import test_edit_window as edit
 
 setUpModule = edit.setUpModule

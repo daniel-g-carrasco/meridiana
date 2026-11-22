@@ -6,10 +6,10 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import model
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.plan_edit import PlanEditor
-from meridiana.quick.backend.plan_tools import DrawingMachine
+from meridiana.core.model import model
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.plan_edit import PlanEditor
+from meridiana.gui.backend.plan_tools import DrawingMachine
 
 
 def machine(tool, **options):
@@ -114,7 +114,7 @@ class Editor(unittest.TestCase):
         self.editor.apply_command({"type": "prop_line", "kind": "fence", "points": [(0, -5), (20, -5), (20, 5)]})
         fence = self.props[-1]
         self.assertEqual((fence.kind, len(fence.path), fence.casts_shadow()), ("fence", 3, True))
-        from meridiana import props
+        from meridiana.core.geometry import props
         self.assertEqual(len(props.placed_solids("fence", fence.at, path=fence.path)), 2)
 
 

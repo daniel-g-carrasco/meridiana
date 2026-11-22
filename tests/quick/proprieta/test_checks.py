@@ -12,12 +12,16 @@ from PySide6.QtQuick import QQuickWindow
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from meridiana import checks, jobs, theme_colors
+from meridiana.core.rules import checks
+from meridiana.app import jobs
+from meridiana.app.interface import theme_colors
 from meridiana.i18n import setup
-from meridiana.quick.backend.checks import ChecksBackend, gather_session, install_checks, object_names
-from meridiana.session import ProjectSession
-from meridiana.ui.checks_page import ChecksPage
-from quick.parity.differential import Adapter, canonical_project, normalized, run_scenario
+from meridiana.app.checks_job import gather_session
+from meridiana.gui.backend.checks import ChecksBackend, install_checks
+from meridiana.app.session import ProjectSession
+from quick.aiuti import riferimenti
+from quick.aiuti.differential import canonical_project, normalized
+from quick.aiuti.caratteri import GLYPH_PX
 
 setUpModule = _setup.keep_global_state
 
@@ -43,6 +47,48 @@ def visual_item(root, name):
 
 
 class ChecksTest(unittest.TestCase):
+    def test_selecting_a_check_does_not_rebuild_the_view_controls(self):
+        root, _window, _tokens = self.scene(900, 500)
+        views = visual_item(root, 'checks-views')
+        resets = []
+        views.modelChanged.connect(lambda: resets.append(True))
+        self.backend.selectRow(1)
+        QTest.qWait(50)
+        self.assertEqual(self.backend.currentIndex, 1)
+        self.assertEqual(resets, [], 'Selecting a check leaves the grouping controls intact')
+
+    def test_scrolling_does_not_read_the_full_python_rows_for_each_index(self):
+        import sys
+        self.backend.show_items([checks.Item('fail', 'layout', f'Check {i}') for i in range(160)])
+        root, _window, _tokens = self.scene(900, 500)
+        reads = []
+        def count(frame, event, arg):
+            if event == 'call' and frame.f_code.co_name == 'rows' and frame.f_code.co_filename.endswith('checks.py'):
+                reads.append(1)
+        previous = sys.getprofile()
+        sys.setprofile(count)
+        try:
+            self.backend.selectRow(159)
+            QTest.qWait(100)
+        finally:
+            sys.setprofile(previous)
+        self.assertLessEqual(len(reads), 4, 'Scroll from the retained QML rows, without converting all Python rows repeatedly')
+        view = visual_item(root, 'checks-list')
+        self.assertEqual(self.backend.currentIndex, 159)
+        self.assertGreater(view.property('contentY'), 0)
+
+    def test_changing_delivery_view_keeps_the_same_check_delegate(self):
+        self.backend.show_items([checks.Item('fail', 'layout', 'A check to fix', target=('site',))])
+        root, _window, _tokens = self.scene(900, 500)
+        before = visual_item(root, 'checks-row-0')
+        self.assertIsNotNone(before)
+        self.backend.setView('delivery')
+        QTest.qWait(100)
+        self.assertEqual(visual_item(root, 'checks-row-0'), before)
+        self.backend.setView('level')
+        QTest.qWait(100)
+        self.assertEqual(visual_item(root, 'checks-row-0'), before)
+
     @classmethod
     def setUpClass(cls):
         cls.app = _setup.qt_or_skip()
@@ -51,12 +97,12 @@ class ChecksTest(unittest.TestCase):
     def setUp(self):
         self.session = ProjectSession(capannone())
         self.backend = ChecksBackend(self.session)
-        self.backend._timer.stop()
+        self.backend.feed.cancel()          # the rows of the sample, not those of the job (it has not started yet)
         self.backend.show_items(sample(), [checks.Item("info", "defaults", "Valore predefinito")])
         self.addCleanup(self.backend.close)
 
     def test_gather_identical_core_and_live_plant(self):
-        from meridiana.energy import system, plant
+        from meridiana.core.energy import system, plant
         results, _, _ = jobs.layout_of(self.session.project)
         project = self.session.project
         arrays = system.arrays_of(project, results)
@@ -74,33 +120,25 @@ class ChecksTest(unittest.TestCase):
         self.assertTrue(_setup.wait_until(self.app, lambda: not self.backend.busy, 30))
         self.assertFalse(self.backend.error)
         self.assertTrue(self.backend.items)
-        self.backend._gathered(-1, ([], [], "wrong"), "")
+        # an answer that is not of the inputs in hand (here: of none) is never shown, and the checks are asked again
+        feed = self.backend.feed
+        wrong = dict(feed.result, items=[], extras=[], notes="wrong")
+        feed._asked = None
+        feed._done(wrong, False)
         self.assertTrue(self.backend.items)
+        self.assertTrue(feed.busy(), "asked again")
+        feed.cancel()
         self.backend.close()
         self.assertNotIn(self.backend._session_changed, self.session.listeners)
 
     def test_widget_filter_view_differential(self):
-        widget = ChecksPage()
-        self.addCleanup(lambda: delete(widget))
-        widget.show_items(self.backend.items, self.backend.extras, object_names(self.session.project))
-        widget._expand()
-
-        def widget_snapshot():
-            return {"items": sorted(n for n, row in widget.rows.items()
-                                    if not row.isHidden() and row.parent().isExpanded())}
-
+        # the rows the Widgets' Checks page showed for the same filters and views (recorded on 10/11/2026)
         def quick_snapshot():
-            return {"items": sorted(row["itemIndex"] for row in self.backend.rows if not row["header"])}
-
-        result = run_scenario({"id": "R130-R345-views-filters", "observations": ["items"], "steps": [
-            {"command": "filter", "args": {"levels": ["fail", "warn"]}},
-            {"command": "view", "args": {"view": "object"}},
-            {"command": "view", "args": {"view": "area"}},
-            {"command": "filter", "args": {"levels": []}},
-            {"command": "view", "args": {"view": "delivery"}}]},
-            Adapter("Widgets", {"filter": widget.set_levels, "view": widget.set_view}, widget_snapshot, widget._expand),
-            Adapter("Quick", {"filter": self.backend.setLevels, "view": lambda view: self.backend.setView(view)}, quick_snapshot))
-        self.assertEqual(result["status"], "equal", result)
+            return sorted(row["itemIndex"] for row in self.backend.rows if not row["header"])
+        for command, value in (("filter", ["fail", "warn"]), ("view", "object"), ("view", "area"), ("filter", []),
+                               ("view", "delivery")):
+            self.backend.setLevels(value) if command == "filter" else self.backend.setView(value)
+            riferimenti.check(self, quick_snapshot())
 
     def test_detail_persists_filters_object_and_marks(self):
         self.backend.toggleDetail(0)
@@ -148,25 +186,30 @@ class ChecksTest(unittest.TestCase):
         self.backend.answerPreview(True)
         self.assertEqual(called, [True])
         self.backend.copyText(0)
-        self.assertEqual(self.app.clipboard().text(), sample()[0].text + "\n" + sample()[0].detail)
+        self.assertEqual(self.app.clipboard().text(), sample()[0].text + "\n" + sample()[0].detail + "\n" + sample()[0].source)
 
     def test_fill_relayout_energy_fixes_and_undo(self):
-        sf = self.session.subfield("s1")
-        sf.filled = False
+        # the project made ready through session.edit, as the program changes it: a project written behind the
+        # session's back leaves its photo behind (MERIDIANA_CHECK_PHOTO, R598 step 2), and the fix's own edit says so
+        def s1(project):
+            return next(sf for sf in project.subfields if sf.id == "s1")
+
+        def ready(project):
+            s1(project).filled = False
+            project.energy["strings"] = {"auto": True}
+        self.session.edit("Ready", ready)
         fixes = [("action", "fill", "subfield", "s1"), ("action", "relayout", "subfield", "s1"),
                  ("energy", "strings", None)]
-        self.session.project.energy["strings"] = {"auto": True}
         for fix in fixes:
-            before = canonical_project(self.session.project)
             if fix[1] == "relayout":
-                sf.manual = True
-                before = canonical_project(self.session.project)
+                self.session.edit("Manual", lambda p: setattr(s1(p), "manual", True))
+            before = canonical_project(self.session.project)
             self.backend.show_items([checks.Item("warn", "layout", "Fix", fix=fix, fix_label="Fix")])
             self.backend.requestFix(0)
             self.assertTrue(self.backend.preview)
             self.backend.answerPreview(False)
             self.assertEqual(canonical_project(self.session.project), before)
-            sf = self.session.subfield("s1")
+            self.session._check_photo()         # the fix and its cancel leave the photo the project in hand
 
     def scene(self, width=1366, height=900, dark=False):
         engine = QQmlEngine()
@@ -213,15 +256,19 @@ class ChecksTest(unittest.TestCase):
         self.backend.focusRequested.connect(shown.append)
         QTest.keyClick(window, Qt.Key.Key_Return)
         self.assertEqual(shown[-1], ["subfield", "s1"])
+        before = canonical_project(self.session.project)
         QTest.keyClick(window, Qt.Key.Key_Period, Qt.KeyboardModifier.ControlModifier)
         self.assertTrue(self.backend.preview)
         drop = root.findChild(type(root), "checks-preview-drop")
-        # The preview has just entered the layout. Click its polished position,
-        # as a user does on the following frame, not its former hidden position.
-        QTest.qWait(20)
+        # Wait for the preview's layout to reach a rendered frame before hit testing it.
+        frames = []
+        window.frameSwapped.connect(lambda: frames.append(True))
+        window.requestUpdate()
+        self.assertTrue(_setup.wait_until(self.app, lambda: bool(frames) and drop.isVisible(), 5))
         center = drop.mapToScene(drop.boundingRect().center())
         QTest.mouseClick(window, Qt.MouseButton.LeftButton, pos=QPoint(round(center.x()), round(center.y())))
         self.assertFalse(self.backend.preview)
+        self.assertEqual(canonical_project(self.session.project), before)
 
     def test_count_pill_pixels_and_click_filter(self):
         root, window, tokens = self.scene()
@@ -230,13 +277,15 @@ class ChecksTest(unittest.TestCase):
         image = window.grabWindow()
         dpr = image.devicePixelRatio()
         color = image.pixelColor(int((pos.x() + .5) * dpr), int((pos.y() + .5) * dpr))
-        expected = QColor(theme_colors.mix(tokens.colors["window"], self.backend.symbols["fail"]["tone"], .10))
+        # R664: with no filter every level is shown, its count on: the level's tone at 19 % (status_pill.tints, "on")
+        expected = QColor(theme_colors.mix(tokens.colors["window"], self.backend.symbols["fail"]["tone"], .19))
         for actual, target in zip(color.getRgb()[:3], expected.getRgb()[:3], strict=True):
             self.assertLessEqual(abs(actual - target), 2)
         center = pill.mapToScene(pill.boundingRect().center())
         QTest.mouseClick(window, Qt.MouseButton.LeftButton, pos=QPoint(round(center.x()), round(center.y())))
-        self.assertEqual(self.backend.levels, ["fail"])
-        self.assertEqual([r["itemIndex"] for r in self.backend.rows if not r["header"]], [0])
+        # R664: a click on a lit count hides its level (it was: shows that level alone)
+        self.assertNotIn("fail", self.backend.shownLevels)
+        self.assertNotIn("fail", [r["level"] for r in self.backend.rows if not r["header"]])
 
     def test_narrow_large_text_layout(self):
         root, window, tokens = self.scene(420, 640)
@@ -268,42 +317,22 @@ class ChecksTest(unittest.TestCase):
         self.assertGreaterEqual(empty.parentItem().height(), empty.height())
 
     def test_title_groups_follow_widgets_wrapping_and_keep_copy_on_first_row(self):
-        from meridiana.ui.title_tools import TitleTools
-
-        class Hint:
-            def __init__(self, width, height, minimum):
-                self.size = QSize(round(width), round(height))
-                self.minimum = QSize(round(minimum), round(height))
-            def isHidden(self):
-                return False
-            def sizeHint(self):
-                return self.size
-            def minimumSizeHint(self):
-                return self.minimum
-
+        # where the Widgets' title bar put the same groups (recorded on 10/11/2026): within 2 px across, 1 down
         root, window, tokens = self.scene(1300, 300)
         window.setMinimumSize(QSize(0, 0))
-        tools = visual_item(root, 'checks-tools')
         groups = [visual_item(root, name) for name in ('checks-views', 'checks-counts', 'checks-scopes', 'checks-notes')]
-        oracle = TitleTools()
-        self.addCleanup(oracle.deleteLater)
         for size in ('medium', 'large'):
             tokens.configure({'textSize': size})
             for width in (420, 900, 1300):
                 with self.subTest(size=size, width=width):
                     root.setWidth(width); window.resize(width, 300)
                     QTest.qWait(30)
-                    specs = [(groups[0].implicitWidth(), groups[0].height(), 120, 'start'),
-                             (groups[1].width(), groups[1].height(), groups[1].width(), 'start'),
-                             (groups[2].width(), groups[2].height(), groups[2].width(), 'end'),
-                             (20, 20, 20, 'tail')]
-                    oracle.items = [(Hint(w, h, least), align) for w, h, least, align in specs]
-                    matching = dict(zip([item for item, _align in oracle.items], groups, strict=True))
-                    placed, _ = oracle.plan(round(tools.width()), 0, 28)
-                    for hint, rect in placed:
-                        quick = matching[hint]
-                        self.assertLessEqual(abs(rect.x()-quick.x()), 2)
-                        self.assertLessEqual(abs(rect.y()-quick.y()), 1)
+                    # the Widgets' wrap was DirectWrite's: with FreeType's advances the groups wrap at other widths
+                    # (a group 440 px apart, not a pixel), so outside Windows only what follows is asserted
+                    # (quick/aiuti/caratteri.py)
+                    if not GLYPH_PX:
+                        riferimenti.check(self, [group.x() for group in groups], absolute=2)
+                        riferimenti.check(self, [group.y() for group in groups], absolute=1)
                     self.assertLess(groups[3].y(), 28, 'Copy stays beside Close, even when filters wrap')
                     boxes = [item.mapRectToScene(item.boundingRect()) for item in groups]
                     for i, box in enumerate(boxes):
@@ -334,14 +363,11 @@ class ChecksTest(unittest.TestCase):
         self.assertLessEqual(abs(symbol.mapToScene(QPointF()).x()-group_symbol.mapToScene(QPointF()).x()), 1)
 
     def test_tooltips_match_widgets_destinations_and_filters(self):
-        widget = ChecksPage()
-        self.addCleanup(lambda: delete(widget))
-        self.assertEqual(self.backend.labels['phaseTip'], widget.phase_button.toolTip())
-        self.assertEqual(self.backend.labels['objectTip'], widget.object_button.toolTip())
-        self.assertEqual(self.backend.labels['copyNotesTip'], widget.copy_button.toolTip())
-        for row in self.backend.rows:
-            if not row['header']:
-                self.assertEqual(row['eyeTip'], widget._eye_tip(self.backend.items[row['itemIndex']]))
+        # the tooltips of the Widgets' Checks page (recorded on 10/11/2026)
+        labels = {key: self.backend.labels[key] for key in ('phaseTip', 'objectTip', 'copyNotesTip')}
+        eyes = [row['eyeTip'] for row in self.backend.rows if not row['header']]
+        riferimenti.check(self, {'labels': labels, 'eyes': eyes})
+
 
     def test_group_card_border_continues_through_the_join_between_rows(self):
         self.backend.show_items([checks.Item('fail', 'layout', 'First'), checks.Item('fail', 'layout', 'Second')])
@@ -354,54 +380,42 @@ class ChecksTest(unittest.TestCase):
         bottom = last.mapToScene(QPointF(0, last.height())).y()
         def colour(x, y):
             return shot.pixelColor(int((x+.5)*dpr), int((y+.5)*dpr))
-        line = colour(left+8, top+10)
-        card = colour(left+12, top+10)
+        # R637: the group's card as wide as the list (the card's margin round the list is the panel's)
+        line = colour(left, top+10)
+        card = colour(left+4, top+10)
         self.assertGreater(abs(line.lightness()-card.lightness()), 5)
         for y in range(round(top+8), round(bottom-8)):
-            self.assertLessEqual(abs(colour(left+8, y).lightness()-line.lightness()), 3, f'Broken border at y={y}')
+            self.assertLessEqual(abs(colour(left, y).lightness()-line.lightness()), 3, f'Broken border at y={y}')
 
     def test_scroll_fades_follow_the_viewport_and_only_cover_hidden_content(self):
         self.backend.show_items([checks.Item('fail', 'layout', f'Verifica {n}') for n in range(24)])
         root, window, _ = self.scene(900, 260)
+        # R624: the rows dissolve into the panel at an edge with more checks beyond it (the drawn shape, Daniel's
+        # picture of the Checks scrolled half way: quick/controlli/test_dissolvenza_r624.py)
         view = visual_item(root, 'checks-list')
-        top = visual_item(root, 'scroll-fade-top')
-        bottom = visual_item(root, 'scroll-fade-bottom')
+        fades = visual_item(root, 'edgeFades')
+        self.assertIsNotNone(fades, 'the bar of the list brings the common soft ends')
+
+        def ends():
+            return fades.property('topBand') > 0, fades.property('bottomBand') > 0
         view.setProperty('contentY', 0)
-        _setup.wait_for(lambda: not top.isVisible() and bottom.isVisible(), 5000)
-        self.assertFalse(top.isVisible())
-        self.assertTrue(bottom.isVisible())
-        anchor = bottom.mapToScene(QPointF())
+        _setup.wait_for(lambda: ends() == (False, True), 5000)
+        self.assertEqual(ends(), (False, True))
+        anchor = fades.mapToScene(QPointF())
         view.setProperty('contentY', 80)
-        _setup.wait_for(lambda: top.isVisible() and bottom.isVisible(), 5000)
-        self.assertTrue(top.isVisible())
-        self.assertTrue(bottom.isVisible())
-        self.assertEqual(bottom.mapToScene(QPointF()), anchor, 'Fade stays over the viewport, not its scrolling content')
-        shown = window.grabWindow()
-        top.setVisible(False)
-        QTest.qWait(20)
-        bare = window.grabWindow()
-        dpr = shown.devicePixelRatio()
-        y = top.mapToScene(QPointF()).y()
-        strip = (0, round(y*dpr), round(view.width()*dpr), round(top.height()*dpr))
-        self.assertNotEqual(shown.copy(*strip), bare.copy(*strip), 'The visible fade must alter clipped row pixels')
+        _setup.wait_for(lambda: ends() == (True, True), 5000)
+        self.assertEqual(ends(), (True, True))
+        self.assertEqual(fades.mapToScene(QPointF()), anchor, 'the soft ends stay on the viewport, not on its content')
+        self.assertEqual(fades.width(), view.width())
         view.setProperty('contentY', view.property('contentHeight') - view.height())
-        _setup.wait_for(lambda: not bottom.isVisible(), 5000)
-        self.assertFalse(bottom.isVisible())
+        _setup.wait_for(lambda: ends() == (True, False), 5000)
+        self.assertEqual(ends(), (True, False))
 
     @unittest.skipUnless(os.environ.get("MERIDIANA_CHECKS_PHOTOS"), "Explicit native screenshot matrix")
     def test_native_screenshots(self):
-        from meridiana.config import Config
-        from meridiana.ui import sections
-        from meridiana.ui.theme import Theme
-        old_title = sections._TITLE[0]
-        self.addCleanup(lambda: sections._TITLE.__setitem__(0, old_title))
         folder = Path("build/quick-foto/proprieta")
         folder.mkdir(parents=True, exist_ok=True)
         for dark in (False, True):
-            look = Theme(Config(theme="dark" if dark else "light", accent="indigo", backgrounds="grey",
-                                font="plex"), app=self.app)
-            self.addCleanup(lambda look=look: delete(look))
-            sections.set_colours(look.tokens)
             for width, height in ((1366, 900), (1600, 960), (1920, 1080)):
                 with self.subTest(dark=dark, width=width):
                     root, window, tokens = self.scene(width, height, dark)
@@ -412,18 +426,6 @@ class ChecksTest(unittest.TestCase):
                     self.assertEqual((image.width(), image.height()),
                                      (round(width * image.devicePixelRatio()), round(height * image.devicePixelRatio())))
                     self.assertTrue(image.save(str(folder / (name + ".png"))))
-                    widget = ChecksPage()
-                    widget.set_colours(look.tokens)
-                    widget.show_items(self.backend.items, self.backend.extras, self.backend.names)
-                    widget.resize(width, height)
-                    widget.setMinimumSize(width, height)
-                    widget.show()
-                    widget.resize(width, height)
-                    widget.rows[0].setExpanded(self.backend._memory(self.backend.items[0]) in self.backend._opened)
-                    QTest.qWait(100)
-                    self.assertTrue(widget.grab().save(str(folder / (name + "-widgets.png"))))
-                    widget.close()
-                    delete(widget)
                     window.close()
 
 
@@ -461,7 +463,7 @@ class GroupsStayInPlaceTest(unittest.TestCase):
                 # scrolled anywhere, as in a panel of a few rows: a group above the viewport changes too
                 view.setProperty('contentY', chance.uniform(0, max(0, view.property('contentHeight') - view.height())))
                 self.backend.toggleGroup(chance.choice(headers)['key'])
-                QTest.qWait(chance.choice((0, 5, 40)))
+                QTest.qWait(chance.choice((0, 5, 40)))  # wait: random rests between the gestures, on purpose
                 QTest.qWait(30)
                 # the photo of 06/11: an opening arrow under the card, left of it: nothing of a row taken away is drawn
                 gone = [d.objectName() for d in content.childItems()

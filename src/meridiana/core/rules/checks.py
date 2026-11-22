@@ -1,0 +1,850 @@
+"""What needs the designer's attention, gathered from every part of the project: the layout's notes, the
+shade the obstacles cast, the strings' checks of CEI 64-8/7, what the connection asks, the production's
+notes, the guesses still standing in for data, and the rules that apply (rules.py), whose paragraphs go into
+the report. Each item has its level, where it comes from (a standard with its edition, article and page, or
+Meridiana's own reading) and the object or page it is about, so that the list leads to the place to act;
+some carry a fix the window can apply (and undo).
+
+No Qt here: the window shows the list (ui/checks_page.py)."""
+
+from __future__ import annotations
+
+import threading
+from dataclasses import dataclass, field
+
+from . import rules, registry
+from .types import Item
+from meridiana.i18n import _, ngettext, number
+
+LEVELS = ("fail", "warn", "info", "ok")
+OBSTACLE_SHADE = 0.03           # share of the irradiance lost to obstacles above which the layout is worth a look
+
+
+def solar_time(value: float) -> str:
+    hours = int(value)
+    return f"{hours:02d}:{round((value - hours) * 60):02d}"
+
+
+
+
+def for_document(items: list) -> list:
+    """The items a report prints: the window's list without what is addressed to the designer."""
+    return [it for it in items if not getattr(it, "window_only", False)]
+
+
+TEXT_LENGTH = 90                # the most characters a text may have: the detail takes the rest
+
+
+def _production_note(note: str, level: str, detail: str = "") -> Item:
+    """Keep model explanations available without turning the check's title into a paragraph."""
+    text = note
+    if len(note) > TEXT_LENGTH:
+        disconnected = _("Only modules connected to an existing inverter input contribute to production; "
+                         "unconnected modules produce zero.")
+        text = (_("Unconnected modules produce no energy") if note == disconnected else
+                _("Production: calculation notes"))
+        detail = note + ("\n\n" + detail if detail else "")
+    # the short title alone says nothing in a document: the note is in the detail
+    return Item(level, "production", text, "", ("phase", "production"), detail=detail,
+                window_only=text == _("Production: calculation notes"))
+
+
+
+
+
+
+
+
+def left_detail() -> str:
+    """Why modules in no string are a problem, and what to do."""
+    return _("A module in no string is connected to no inverter and contributes no energy to the plant's production. "
+             "Draw a string through it, or «Complete the strings»: "
+             "Meridiana proposes strings for the modules left out on the free inputs, and yours stay as they are.")
+
+
+
+
+
+
+def obstacle_shading_by_subfield(sim) -> dict[str, float]:
+    totals = {}
+    for a in sim.arrays:
+        sfid = str(a["key"]).split(".")[0]
+        weight = float(a.get("p_stc_kw") or 0.0) or 1.0
+        lost, power = totals.get(sfid, (0.0, 0.0))
+        totals[sfid] = (lost + weight * float(a.get("obstacle_shading") or 0.0), power + weight)
+    return {sfid: lost / power for sfid, (lost, power) in totals.items() if power}
+
+
+def component_items(project) -> list[Item]:
+    """The state of the components a project uses (R415): out of production or phasing out, from the written sources of the
+    catalogue, with what takes their place when one is known. The project does not change: the check says it, and each
+    project keeps the copy of the record it was designed with."""
+    from meridiana.data import catalog
+    from meridiana.core.energy import system
+    records = [("modules", m) for m in (project.modules or {}).values()]
+    for entry in system.inverter_entries(project.energy or {}):
+        if entry.get("record"):
+            records.append(("inverters", entry["record"]))
+        if entry.get("optimizer"):
+            records.append(("optimizers", entry["optimizer"]))
+    battery = ((project.energy or {}).get("storage") or {}).get("battery")
+    if battery:
+        records.append(("batteries", battery))
+    out, seen = [], set()
+    for kind, rec in records:
+        name = f"{rec.get('manufacturer', '')} {rec.get('model', '')}".strip()
+        if not rec.get("model") or name in seen:
+            continue
+        seen.add(name)
+        life = catalog.apply_lifecycle({"manufacturer": rec.get("manufacturer"), "model": rec.get("model"), "source": "curated"}, kind).get("lifecycle")
+        if not life or life.get("state") not in (catalog.DISCONTINUED, catalog.PHASING_OUT):
+            continue
+        text = (_("{name}: out of production") if life["state"] == catalog.DISCONTINUED else _("{name}: phasing out")).format(name=name)
+        if life.get("replacement"):
+            text += " · " + _("in its place: {model}").format(model=life["replacement"])
+        out.append(Item("warn" if life["state"] == catalog.DISCONTINUED else "info", "components", text, life.get("url", ""),
+                        ("phase", "plant"), detail=_("Read on {date}: «{text}»").format(date=life.get("checked", ""), text=life.get("text", ""))))
+    return out
+
+
+def gather(project, results: dict, energy: dict | None, inverter=None, chosen: bool = False) -> list[Item]:
+    """Every item, most serious first. `results` are the layouts by sub-field, `energy` what the energy job
+    gave (or None before it ran), `inverter` the InverterSpec of the project."""
+    items: list[Item] = []
+    energy = energy or {}
+    filled = False
+    from meridiana.core.model import imported, move
+    shown = imported.namer(project)           # R605: the names shown, never the import's saved path
+    for sf in project.subfields:
+        name = shown.subfield(sf)
+        lying = move.straddle(project, sf)
+        if lying is not None:
+            parts = move.can_split(project, sf)
+            items.append(Item(
+                "warn", "layout", _("{name}: on two pitches, computed on pitch {n}").format(
+                    name=name, n=lying.index + 1), "", ("subfield", sf.id),
+                ("action", "split_pitches", "subfield", sf.id) if parts else (),
+                _("Split on the ridge") if parts else "",
+                detail=_("{area} m² of it stand on another pitch, but all of it is computed on the plane of pitch {n}: "
+                         "its tilt and its azimuth, as if the roof did not change there. «Split on the ridge» makes "
+                         "one sub-field per pitch, each on its plane, and they keep moving together.").format(
+                    area=number(lying.other_area, 1), n=lying.index + 1)))
+        r = results.get(sf.id)
+        if isinstance(r, Exception):
+            items.append(Item("fail", "layout", _("{name}: the layout could not be computed ({error})").format(
+                name=name, error=r), "", ("subfield", sf.id),
+                detail=_("Nothing is laid and nothing is computed for this sub-field. Check its outline and the "
+                         "margins in its properties: an area too small, or outside its roof, gives no layout.")))
+            continue
+        if not sf.filled:
+            items.append(Item("info", "layout", _("{name}: the modules are not laid yet").format(name=name), "",
+                              # R564: «Fill», as the command of the bar (app/interface/layout_commands.py)
+                              ("subfield", sf.id), ("action", "fill", "subfield", sf.id), _("Fill"),
+                              detail=_("The sub-field has its outline but no modules, so nothing is computed for it. "
+                                       "«Fill» lays them with the module and the mounting of its properties."),
+                              window_only=True, same="unfilled"))
+            continue
+        filled = True
+        if sf.manual:
+            from meridiana.core.energy import system
+            items += manual_items(project, sf, r, system.shadow_exclusions, names=shown)
+        unmatched = len(getattr(r, "unmatched", None) or [])
+        if unmatched:
+            from meridiana.i18n import ngettext
+            items.append(Item("info", "layout", ngettext(
+                "{name}: {n} module taken out by hand is no longer in the layout",
+                "{name}: {n} modules taken out by hand are no longer in the layout", unmatched).format(
+                    name=name, n=unmatched), "", ("subfield", sf.id),
+                detail=_("The layout changed after they were taken out (another module, pitch or row): the place they "
+                         "had is not there any more. Check the layout, and take out again what should not be "
+                         "there."), window_only=True))
+        for note in getattr(r, "notes", []) or []:
+            national = registry.for_project(project).layout_note(name, sf.id, note)
+            items.append(national if national is not None else
+                         Item("warn", "layout", f"{name}: {_(note)}", "", ("subfield", sf.id)))
+    if not project.subfields:
+        items.append(Item("info", "layout", _("No sub-field yet: draw one on a roof or on the ground"), "",
+                          detail=_("The modules are laid in sub-fields: a sub-field is an outline on a roof or on the "
+                                   "ground with its module, its mounting and its distances. The Draw tools make "
+                                   "one."), window_only=True))
+
+    sim = energy.get("sim")
+    if sim is not None:
+        for sfid, lost in obstacle_shading_by_subfield(sim).items():
+            if lost > OBSTACLE_SHADE:
+                sf = next((s for s in project.subfields if s.id == sfid), None)
+                fix, label = (), ""
+                costly = False
+                # by hand the shadows are a check of their own (manual_items): the option would move nothing
+                if sf is not None and not sf.layout_params(profile_id=project.regulatory_profile).shade_free and not sf.manual:
+                    w = vars(project.fill_params(sf).window)
+                    fix = ("edit", "subfield", sfid, {"params.shade_free": True})
+                    now = getattr(results.get(sfid), "count", None)
+                    # the energy job counts them in its thread; computed here only when it did not
+                    counts = energy.get("shade_free_counts")
+                    then = counts.get(sfid) if counts is not None else count_out_of_shadows(project, sf)
+                    removed = 100 * (now - then) / now if now and then is not None else 0.0
+                    costly = removed > 100 * lost
+                    action = (_("Compare keeping the modules out of the obstacles' shadows on {day}/{month}, {start} "
+                                "to {end} solar time") if costly else
+                              _("Keep the modules out of the obstacles' shadows on {day}/{month}, {start} to {end} "
+                                "solar time"))
+                    label = action.format(day=w["day"], month=w["month"], start=solar_time(w["start"]),
+                                          end=solar_time(w["end"]))
+                    if now is not None and then is not None:
+                        label += ": " + _("{then} modules instead of {now}, {removed}% fewer, for {pct}% obstacle "
+                                          "shade").format(then=then, now=now, removed=number(removed, 0),
+                                                          pct=number(100 * lost, 1))
+                        if costly:
+                            label += ". " + _("This removes more modules than the shade costs; compare the "
+                                              "alternatives before applying it.")
+                detail = _("Chimneys, parapets and plant shade the modules nearby, and a shaded module drags its "
+                           "whole string. The correction removes the modules in shadow on the design day. Moving the "
+                           "sub-field is another road. A wider clearance around the obstacles removes only the modules "
+                           "next to the obstacles, usually fewer than the correction, and does not keep more modules.")
+                if costly:
+                    detail += " " + _("Here the correction takes away a larger share of the sub-field than the share "
+                                      "of irradiance lost to the obstacles: it is a choice to compare, not the obvious "
+                                      "solution.")
+                name = shown.subfield(sf) if sf is not None else sfid
+                items.append(Item("warn", "shade", _("{name}: the obstacles take {pct}% of the sub-field's annual "
+                                                     "irradiance after far shading").format(
+                    name=name, pct=number(100 * lost, 1)), _("Calculation of the obstacles' shading"),
+                    ("subfield", sfid), fix, label, detail=detail))
+        for note in sim.notes:
+            items.append(_production_note(note, "warn",
+                         _("The inverter cuts what the modules give above its AC power. A lower DC/AC "
+                           "ratio, a larger inverter or fewer modules shrink the loss; the Production "
+                           "page shows it among the losses.") if "clip" in note else ""))
+    elif filled:
+        items.append(Item("info", "production", energy.get("error_sim") or
+                          _("Compute the production to check the shading, the strings and the balance"), "",
+                          ("phase", "production"), ("compute",), _("Compute"),
+                          detail=_("Shading, strings and the balance come from the hourly year: until it is computed "
+                                   "the checks that need it are missing."), window_only=True))
+    for note in energy.get("notes") or []:
+        items.append(_production_note(note, "info"))
+
+    strings = energy.get("strings") or {}
+    plan = strings.get("plan")
+    better = strings.get("suggestion")
+    fix, fix_label = (), ""
+    if plan is not None and not plan.suggested and better is not None and better.ok:
+        fix = ("energy", "strings", None)
+        fix_label = _("Use the suggested strings: {n} in series, {per} on the inputs").format(
+            n=better.n_series, per=" + ".join(str(x) for x in better.strings_per_mppt))
+    if plan is not None:
+        for c in plan.checks:
+            if c.level in ("fail", "warn"):
+                items.append(Item(c.level, "strings", f"{c.label}: {c.detail}", registry.for_project(project).electrical().text("check_source"),
+                                  ("phase", "production"), fix, fix_label, detail=string_detail(c.key, profile_id=project.regulatory_profile)))
+        if plan.ok:
+            items.append(Item("ok", "strings", _("{n} modules in series, every check passed").format(n=plan.n_series),
+                              registry.for_project(project).electrical().text("check_source"), ("phase", "production")))
+    wiring = energy.get("wiring")
+    if wiring is not None and wiring.left:
+        items.append(Item("warn", "strings", _("{n} modules are in no string").format(n=len(wiring.left)),
+                          "", ("phase", "production"), fix, fix_label, detail=left_detail()))
+
+    f = rules.facts(project, results, energy, inverter)
+    if inverter is not None and filled:
+        items += connection(f.p_nominal_kw, inverter.phases, chosen, f.level, f.level_auto, profile_id=project.regulatory_profile)
+    if filled:
+        items += rule_items(f)
+
+    imported = (project.energy or {}).get("pvsyst_import") or {}
+    source = _("PVsyst file {file}").format(file=imported.get("file", ""))
+    details = {"missing": _("PVsyst's file does not carry it: enter it in Meridiana before trusting the results."),
+               "approximated": _("Meridiana has no exact equivalent: the value nearest to PVsyst's was taken, and the "
+                                 "results may differ a little."),
+               "not_imported": _("Meridiana does not read this part of PVsyst's file yet: enter it by hand if it "
+                                 "matters.")}
+    for level, key in (("warn", "missing"), ("info", "approximated"), ("info", "not_imported")):
+        items += [Item(level, "import", text, source, detail=details[key], window_only=True)
+                  for text in imported.get(key, [])]
+
+    from meridiana.core.energy.consumption import Consumption
+    if filled and not Consumption.from_dict(project.consumption, profile_id=project.regulatory_profile).has_data(
+            profile_id=project.regulatory_profile):
+        items.append(Item("info", "consumption", _("The consumption is guessed from the project: enter the bills or the "
+                                                   "POD's curve"), "", ("phase", "consumption"),
+                          detail=_("Without data Meridiana takes a user of the size of the system; self-consumption "
+                                   "and the balance depend on it. The Consumption page takes the yearly kWh, the "
+                                   "bills or the curve of the POD."), window_only=True))
+    econ = energy.get("econ")
+    if econ is not None and {"buy_f1", "sell", "capex_per_kwp"} <= set(_defaults(project)):
+        items.append(Item("info", "economics", _("Prices and costs are indicative defaults: enter those of the bill "
+                                                 "and of the offer"), "", ("phase", "economics"),
+                          detail=_("The balance and the payback are only as good as the prices: Meridiana's are "
+                                   "national averages. The Balance page takes the price of the bill, the sale price "
+                                   "and the cost of the offer."), window_only=True))
+    items += component_items(project)
+    items.sort(key=lambda i: LEVELS.index(i.level))
+    return condensed(items, project)
+
+
+# R605: the messages that say the same thing on several objects, by their key (Item.same), and the headline of the one
+# item that stands for two or more of them. A new key is one line here and `same=` on the item that says it.
+SAME = {
+    "unfilled": lambda n: ngettext("{n} sub-field without modules", "{n} sub-fields without modules", n),
+}
+CONDENSED = ("info",)           # the levels merged: an error or a warning stays one row per object, in evidence
+# the command one row for several objects offers on all of them at once, by its key; the targets follow the action
+# in the fix: ("action", <action>, <kind>, <id>, <id>...). «Fill all» is the bar's «Fill» on every sub-field listed
+# (app/interface/layout_commands.fill_all: one change, one step of the undo, the full ones left alone)
+SAME_FIX = {
+    "unfilled": ("fill_all", lambda: _("Fill all")),
+}
+
+
+def object_names(project) -> dict:
+    """(kind, id) -> the name shown of every building, sub-field (imported.namer: never the import's saved path) and
+    exclusion of the project, and the site's."""
+    from meridiana.core.model import imported, model
+    names = {("site", ""): _("Site: {name}").format(name=project.name)}
+    names.update({("building", b.id): b.name for b in project.buildings})
+    shown = imported.namer(project)
+    names.update({("subfield", sf.id): shown.subfield(sf) for sf in project.subfields})
+    kinds, numbers = model.exclusion_names(profile_id=project.regulatory_profile), project.exclusion_numbers()
+    names.update({("exclusion", e.id): f"{kinds.get(e.kind, e.kind)} {numbers[e.id]}" for e in project.exclusions})
+    return names
+
+
+def condensed(items: list[Item], project) -> list[Item]:
+    """The list with every two or more items of a level in CONDENSED that say the same thing (the same `same` key of
+    SAME, the same area) on different objects put in one: the headline with their number, the detail they share and
+    then the names of the objects, `members` their targets in order, no target, and as its fix the command of SAME_FIX
+    on all of them when there is one (each object keeps its own fix where it is). It takes the place of the first of them, so the order stays the most serious first; one alone
+    stays as it is. Calling it again changes nothing."""
+    groups: dict = {}
+    for n, it in enumerate(items):
+        if it.level in CONDENSED and it.same in SAME and not it.members and len(it.target) >= 2:
+            groups.setdefault((it.same, it.area), []).append(n)
+    merged, dropped, names = {}, set(), None
+    for (key, area), places in groups.items():
+        if len(places) < 2:
+            continue
+        names = names if names is not None else object_names(project)
+        those = [items[n] for n in places]
+        first = those[0]
+        members = tuple(tuple(it.target) for it in those)
+        shared = first.detail if all(it.detail == first.detail for it in those) else ""
+        listed = ", ".join(names.get(tuple(m[:2]), m[1]) for m in members)
+        fix, label = (), ""
+        kinds = {m[0] for m in members}
+        if key in SAME_FIX and len(kinds) == 1:
+            action, words = SAME_FIX[key]
+            fix, label = ("action", action, kinds.pop(), *(m[1] for m in members)), words()
+        merged[places[0]] = Item(first.level, area, SAME[key](len(those)).format(n=len(those)), first.source, (),
+                                 fix, label, detail=shared + "\n\n" + listed if shared else listed,
+                                 window_only=first.window_only, same=key, members=members)
+        dropped.update(places[1:])
+    if not merged:
+        return items
+    return [merged.get(n, it) for n, it in enumerate(items) if n not in dropped]
+
+
+
+def manual_items(project, sf, result, shade=None, names=None) -> list[Item]:
+    """The checks of a sub-field laid by hand (task 16c, step 6; study 16, C.5): what the automatic layout makes sure
+    of by building it, said on the rows as they are, as Aurora flags errors in colour without blocking (study 05):
+    the rows by hand (to know); under the fire-brigade rules the groups of modules closer than 2 m that reach beyond
+    20 m and the corridors left narrower than 2 m; the modules on an exclusion or beyond the edge band; the modules
+    in the obstacles' shadows on the design day (`shade`, energy.system.shadow_exclusions, the same rule as the layout
+    out of the shadows). Each with «Lay again automatically» as its fix. `names`: the namer of the project
+    (imported.namer) when the caller has one."""
+    from shapely.geometry import Polygon
+
+    from meridiana.core.model import imported
+
+    from meridiana.core.layout import layout
+    from meridiana.core.model import model
+    if result is None or isinstance(result, Exception) or not sf.manual:
+        return []
+    name = (names or imported.namer(project)).subfield(sf)
+    fix, label = ("action", "relayout", "subfield", sf.id), _("Lay again automatically")
+    here = ("subfield", sf.id)
+    items = [] if sf.flush else [Item("info", "layout", _("{name}: rows by hand, not laid again by the automatic layout").format(
+        name=name), "", here, fix, label,
+        detail=_("The rows were drawn, moved or exploded by hand: Meridiana lays them as they are and checks them, and "
+                 "a new pitch or new margins do not move them. «Lay again automatically» gives them back to the "
+                 "layout, and the changes by hand are lost."))]
+    aside = len(getattr(result, "blocked", None) or [])
+    if aside:
+        from meridiana.i18n import ngettext
+        # R445, decision 3: the modules set aside, drawn red; a click on one puts it back
+        items.append(Item("info", "layout", ngettext("{name}: {n} module set aside on an obstacle or off the roof",
+                                                     "{name}: {n} modules set aside on an obstacle or off the roof",
+                                                     aside).format(name=name, n=aside), "", here,
+                          detail=_("The modules drawn red stand on an exclusion with its clearance or past the roof's "
+                                   "edge: they are not laid and not counted. «Add a module» on one puts it back, the "
+                                   "designer's call; the checks then say it stands there.")))
+    placed = result.modules
+    if not placed:
+        return items
+    p = project.fill_params(sf)
+    frame = layout.Frame.of(result.azimuth, result.tilt, p.mounting in layout.FLUSH)
+    size = layout.Sizes.of(project.module_of(sf), p, result.tilt)
+    import numpy as np
+    import shapely
+    # the modules as one array of shapes: a sub-field of 4,000 modules exploded is checked in a few tens of ms
+    polys = shapely.polygons(np.array([m.corners for m in placed], dtype=float))
+
+    def touching(zone) -> int:
+        return int(np.count_nonzero(shapely.area(shapely.intersection(polys, zone)) > 1e-4))
+    items += registry.for_project(project).fire_group_items(
+        placed, p, frame, size, result, sf, here, fix, label, name=name)
+    names, numbers = model.exclusion_names(profile_id=project.regulatory_profile), project.exclusion_numbers()
+    for e in project.exclusions:
+        if e.building != sf.building or len(e.ring) < 3:
+            continue
+        grow = e.clearance + (p.fire_edge if p.fire_rules and e.kind in ("vent", "opening", "plant") else 0.0)
+        n = touching(Polygon([tuple(map(float, q)) for q in e.ring]).buffer(grow, join_style="mitre"))
+        if n:
+            from meridiana.i18n import ngettext
+            what = f"{names.get(e.kind, e.kind)} {numbers[e.id]}"
+            items.append(Item("warn", "layout", ngettext("{name}: {n} module on the exclusion {what}",
+                                                         "{name}: {n} modules on the exclusion {what}", n).format(
+                name=name, n=n, what=what), registry.for_project(project).fire(project, sf).source if grow > e.clearance else "", here, fix, label,
+                detail=registry.for_project(project).text("manual_edge_0")))
+    edge = max(p.edge, p.fire_edge if p.fire_rules else 0.0)
+    # a sub-field that is its modules (R445) has no band of its own: the band is from the roof's edge (DCPREV 14030
+    # 3.3.5.1 point 2, p. 15-16 of the file), a guide on the plan and a warning here, never a wall
+    base = (project.host_ring(sf) or []) if sf.flush else sf.ring
+    if edge > 0 and len(base) >= 3:
+        inner = Polygon([tuple(map(float, q)) for q in base]).buffer(0).buffer(-edge, join_style="mitre")
+        host = project.building(sf.building)
+        if sf.flush and host is not None and (host.part_of or project.parts_of(host.id)):
+            # the bodies of one building (R440): the band runs on the edge of them together, not between them
+            inner = Polygon([tuple(map(float, q)) for q in base]).buffer(0).intersection(project.fire_inner(host, edge))
+        inner = inner.buffer(layout.DISTANCE_TOLERANCE)
+        n = int(np.count_nonzero(shapely.area(shapely.difference(polys, inner)) > 1e-4))
+        if n:
+            from meridiana.i18n import ngettext
+            items.append(Item("warn", "layout", ngettext("{name}: {n} module beyond the edge band of {m} m",
+                                                         "{name}: {n} modules beyond the edge band of {m} m", n).format(
+                name=name, n=n, m=number(edge, 2)), registry.for_project(project).fire(project, sf).source if p.fire_rules and p.fire_edge >= p.edge else "",
+                here, fix, label,
+                detail=(registry.for_project(project).text("manual_edge_1") if sf.flush else
+                        registry.for_project(project).text("manual_edge_2"))))
+    if shade is not None:
+        n = in_shade(project, sf, result, shade)
+        if n:
+            from meridiana.i18n import ngettext
+            w = vars(p.window)
+            items.append(Item("warn", "shade", ngettext("{name}: {n} module in the shade on the design day",
+                                                        "{name}: {n} modules in the shade on the design day", n).format(
+                name=name, n=n), _("Calculation of the obstacles' shading"), here, fix, label,
+                detail=_("The obstacles cast their shadow on these modules on {day}/{month} between {start} and {end} "
+                         "solar time, the day the pitch is computed for. Move them out of it, or lay the sub-field "
+                         "again automatically out of the obstacles' shadows.").format(
+                    day=w["day"], month=w["month"], start=solar_time(w["start"]), end=solar_time(w["end"]))))
+    return items
+
+
+_SHADED: dict = {}              # layout key of a sub-field by hand -> its modules in the shade (as _COUNTS)
+
+
+def in_shade(project, sf, result, shade) -> int:
+    """How many modules of the layout are in the obstacles' shadows of the design window (`shade(project, sf,
+    window)` gives them as exclusions, energy.system.shadow_exclusions), kept by the layout's key."""
+    import json
+
+    from shapely.geometry import Polygon
+    # by hand the layout's key leaves the shadows out (model.layout_key): every building and obstacle casts them
+    casters = project.shadow_casters()
+    key = json.dumps([project.layout_key(sf), casters["buildings"], casters["obstacles"]], default=str)
+    with _COUNTS_LOCK:
+        if key in _SHADED:
+            return _SHADED[key]
+    areas = [Polygon(e.ring, e.holes or None) for e in shade(project, sf, project.fill_params(sf).window)]
+    n = 0
+    if areas and result.modules:
+        import numpy as np
+        import shapely
+        from shapely.ops import unary_union
+        dark = unary_union(areas)
+        polys = shapely.polygons(np.array([m.corners for m in result.modules], dtype=float))
+        n = int(np.count_nonzero(shapely.area(shapely.intersection(polys, dark)) > 1e-4))
+    with _COUNTS_LOCK:
+        while len(_SHADED) >= COUNTS_KEPT:
+            _SHADED.pop(next(iter(_SHADED)))
+        _SHADED[key] = n
+    return n
+
+
+ESTIMATE_AREAS = ("consumption", "economics", "import")     # the guesses and approximations standing in for data
+# the phase (phases.py) where each calculation's values are edited
+RECORD_PHASES = (("sim", "production"), ("plan", "plant"), ("load", "consumption"), ("econ", "economics"))
+
+
+def defaults_in_use(energy: dict | None) -> list[Item]:
+    """The values Meridiana chose because none was given, read from the records of the calculations (the same
+    table report.py prints last): one item each, for the «ready for delivery» view."""
+    energy = energy or {}
+    # the strings' plan: the first one of the plant (task 16d, as report.py takes it), or the one of before
+    plant = energy.get("plant")
+    plan = next((s.plan for s in getattr(plant, "strings", []) if s.plan is not None),
+                (energy.get("strings") or {}).get("plan"))
+    out, seen = [], set()
+    for name, phase in RECORD_PHASES:
+        holder = plan if name == "plan" else energy.get(name)
+        record = getattr(holder, "record", None)
+        for st in (record.steps if record is not None else []):
+            for q in st.inputs:
+                if q.source is None or q.source.kind != "default":
+                    continue
+                key = (st.title, q.label, q.text())
+                if key in seen:
+                    continue
+                seen.add(key)
+                out.append(Item("info", "defaults", _("{step}: {label} = {value}").format(step=st.title, label=q.label,
+                                                                                            value=q.text()),
+                                q.source.label, ("phase", phase),
+                                detail=_("Meridiana chose this value because none was given: check it before the "
+                                         "final design, or enter the one of the project.")))
+    return out
+
+
+@dataclass
+class Group:
+    """A section of the Checks panel: its items as indices into the list, the worst level inside."""
+    key: tuple                  # ("level", lv), ("object", kind, id), ("area", area), ("delivery", what)
+    name: str
+    kind: str = ""              # the kind of the object (building, subfield, exclusion, site), for its icon
+    items: list = field(default_factory=list)
+    level: str = "ok"
+    closed: bool = False        # shown closed by default (what passed)
+
+
+BY = ("level", "object", "area", "delivery")
+
+
+def delivery_names() -> dict:
+    return {"fail": _("To fix"), "warn": _("To check"), "defaults": _("Values still at their default"),
+            "estimates": _("Estimates in use")}
+
+
+def grouped(items: list[Item], by: str, names: dict | None = None, *, profile_id="it") -> list[Group]:
+    """The items in sections. By level, in the order of LEVELS (F2, the default; what passed closed); by object,
+    from `target` (the name from `names`, {(kind, id): name}; the site for what has no object), the groups
+    ordered by their worst level; by area, as the list comes (worst first); «delivery»: what is to fix and to
+    check, the values still at their default (area «defaults», from defaults_in_use) and the estimates in use
+    (ESTIMATE_AREAS), for the Report phase."""
+    if by not in BY:
+        raise ValueError(f"grouped by {by!r}")
+    names = names or {}
+    groups: dict = {}
+
+    def put(key, name, n, kind=""):
+        g = groups.get(key)
+        if g is None:
+            g = groups[key] = Group(key, name, kind, level=items[n].level)
+        else:
+            g.level = worst((g.level, items[n].level))
+        g.items.append(n)
+
+    level_words = level_names()
+    for n, it in enumerate(items):
+        if by == "level":
+            put(("level", it.level), level_words[it.level].capitalize(), n)
+        elif by == "object":
+            t = it.target
+            if len(t) >= 2 and t[0] in OBJECTS:
+                put(("object", t[0], t[1]), names.get((t[0], t[1]), t[1]), n, t[0])
+            else:
+                put(("object", "site", ""), names.get(("site", ""), _("Site")), n, "site")
+        elif by == "area":
+            put(("area", it.area), area_names(profile_id=profile_id).get(it.area, it.area), n)
+        else:
+            words = delivery_names()
+            if it.level in ("fail", "warn"):
+                put(("delivery", it.level), words[it.level], n)
+            elif it.area == "defaults":
+                put(("delivery", "defaults"), words["defaults"], n)
+            elif it.area in ESTIMATE_AREAS and it.level != "ok":
+                put(("delivery", "estimates"), words["estimates"], n)
+    out = list(groups.values())
+    if by == "level":
+        out.sort(key=lambda g: LEVELS.index(g.key[1]))
+        for g in out:
+            g.closed = g.key[1] == "ok"
+    elif by == "object":
+        out.sort(key=lambda g: LEVELS.index(g.level))        # stable: the list's order within a level
+    elif by == "delivery":
+        order = ("fail", "warn", "defaults", "estimates")
+        out.sort(key=lambda g: order.index(g.key[1]))
+    return out
+
+
+# where an item without a target is acted on, by its area: a phase of phases.py, None for every phase
+PHASE_OF_AREA = {"layout": "model", "shade": "model", "strings": "production", "connection": "production",
+                 "production": "production", "consumption": "consumption", "economics": "economics",
+                 "rules": "model", "defaults": None, "import": None}
+
+
+def phase_of(it: Item) -> str | None:
+    """The phase (phases.py) where the item is acted on: the one its target names, the model for an object or the
+    site, else by area; None for what belongs to every phase (what PVsyst's import left)."""
+    t = it.target
+    if len(t) >= 2 and t[0] == "phase":
+        return t[1]
+    if t and (t[0] in OBJECTS or t[0] == "site"):
+        return "model"
+    return PHASE_OF_AREA.get(it.area)
+
+
+def shown_in_phase(it: Item, phase: str) -> bool:
+    """What «Only this phase» keeps: the items acted on in `phase`, those of every phase, and those of the areas
+    the phase declares (phases.Phase.areas: the Plant's strings and connection, the Report's rules)."""
+    from meridiana.app.interface import phases
+    try:
+        areas = phases.by_id(phase).areas
+    except KeyError:
+        areas = ()
+    return phase_of(it) in (None, phase) or it.area in areas
+
+
+def in_phase(items: list[Item], phase: str) -> list[int]:
+    """The items of a phase («Only this phase»), as indices."""
+    return [n for n, it in enumerate(items) if shown_in_phase(it, phase)]
+
+
+_COUNTS: dict = {}              # layout key of the sub-field out of the shadows -> its count (task 18c, step 5)
+_COUNTS_LOCK = threading.Lock()
+COUNTS_KEPT = 32
+
+
+def count_out_of_shadows(project, sf) -> int | None:
+    """How many modules the sub-field would keep out of the obstacles' shadows: what the fix costs. A layout
+    with the shadows as exclusions (the energy job calls it in its thread), kept by everything that layout
+    reads (model.layout_key): a change of the losses or of the money computes the year again, not this."""
+    import copy
+
+    from meridiana.core.energy import system
+    alt = copy.deepcopy(sf)
+    alt.params["shade_free"] = True
+    key = project.layout_key(alt)
+    with _COUNTS_LOCK:
+        if key in _COUNTS:
+            return _COUNTS[key]
+    try:
+        count = project.fill(alt, shade=system.shadow_exclusions).count
+    except ValueError:
+        count = None
+    with _COUNTS_LOCK:
+        while len(_COUNTS) >= COUNTS_KEPT:
+            _COUNTS.pop(next(iter(_COUNTS)))
+        _COUNTS[key] = count
+    return count
+
+
+def _defaults(project) -> list:
+    from meridiana.core.energy.economics import Settings
+    return Settings.from_dict(project.economics, profile_id=project.regulatory_profile).defaults
+
+
+def counts(items: list[Item]) -> dict:
+    return {lv: sum(1 for i in items if i.level == lv) for lv in LEVELS}
+
+
+def level_names() -> dict:
+    return {"fail": _("to fix"), "warn": _("to check"), "info": _("to know"), "ok": _("passed")}
+
+
+def mark_text(items: list[Item], mark, inside: bool = False) -> str:
+    """What a mark of the project's tree stands for, in words, the worst first (Daniel, R30: «non si capisce cosa
+    sono»): «1 to check, 3 to know in this object and inside» for the site and the groups, «… about this object» for
+    an object."""
+    n = counts([items[i] for i in mark.items])
+    names = level_names()
+    what = ", ".join(f"{n[lv]} {names[lv]}" for lv in LEVELS if n[lv])
+    return (_("{counts} in this object and inside") if inside else _("{counts} about this object")).format(counts=what)
+
+
+OBJECTS = ("building", "subfield", "exclusion")
+SHOWN = ("fail", "warn", "info")        # what earns a mark on the views; what passed does not
+DRAWN = ("fail", "warn")                # R605: what earns a mark on a drawing (plan and 3D); information has none
+
+
+@dataclass
+class Mark:
+    """What the views show on an object (study 12, C1): the worst level of its items, how many there are, which."""
+    level: str
+    count: int
+    items: list = field(default_factory=list)       # indices into the list of items
+
+
+def worst(levels) -> str:
+    return min(levels, key=LEVELS.index)
+
+
+def marks(items: list[Item], levels=SHOWN) -> dict:
+    """(kind, id) -> Mark for every building, sub-field and exclusion an item is about, of the levels given."""
+    out: dict = {}
+    for n, it in enumerate(items):
+        if it.level not in levels or len(it.target) < 2 or it.target[0] not in OBJECTS:
+            continue
+        key = (it.target[0], it.target[1])
+        m = out.get(key)
+        if m is None:
+            out[key] = Mark(it.level, 1, [n])
+        else:
+            m.level, m.count = worst((m.level, it.level)), m.count + 1
+            m.items.append(n)
+    return out
+
+
+def tree_marks(items: list[Item], levels=SHOWN) -> dict:
+    """The marks of the project's tree, rising to the parents (study 12, C3): every object's, its group's
+    ("group", "building"|"subfield"|"exclusion") and the site's ("site", ""), which gathers every item of the levels
+    given, those about the site and the pages included."""
+    out = dict(marks(items, levels))
+    for (kind, _oid), m in list(out.items()):
+        g = out.get(("group", kind))
+        out[("group", kind)] = Mark(m.level if g is None else worst((g.level, m.level)), m.count + (g.count if g else 0),
+                                    (g.items if g else []) + m.items)
+    shown = [n for n, it in enumerate(items) if it.level in levels]
+    if shown:
+        out[("site", "")] = Mark(worst(items[n].level for n in shown), len(shown), shown)
+    return out
+
+
+def about(items: list[Item], kind: str, oid: str) -> list[int]:
+    """The items about an object, as Revit's «Show Related Warnings» (study 12, 6): indices into the list; an item
+    that stands for several objects (`members`, R605) is about each of them."""
+    return [n for n, it in enumerate(items) if (len(it.target) >= 2 and it.target[0] == kind and it.target[1] == oid)
+            or any(tuple(m[:2]) == (kind, oid) for m in it.members)]
+
+
+def filtered(items: list[Item], levels) -> list[int]:
+    """The items of the levels the filter keeps."""
+    return [n for n, it in enumerate(items) if it.level in levels]
+
+
+def plant_items(plant, *, profile_id="it") -> list[Item]:
+    """The checks of the strings and the inverters (task 16d, energy/plant.py), in the area «strings» of the Plant
+    phase: what each input's plan finds (CEI 64-8/7, the clauses stringing.py cites), the strings without an input
+    and those whose modules are gone, each inverter's overload and the balance of its inputs (calculation thresholds,
+    said as such), the modules in no string by inverter, and what keeps the strings from being checked. The fix of
+    the modules in no string is «Complete the strings» (Meridiana proposes them, the designer's strings stay); a
+    string that fails is the designer's to change: no fix rewrites the strings (R114, Daniel 25/10/2026)."""
+    if plant is None:
+        return []
+    from meridiana.core.energy import stringing
+    from meridiana.core.energy.plant import unit_label
+    from meridiana.i18n import ngettext
+    norm, here = registry.get(profile_id).electrical().text("check_source"), ("phase", "plant")
+    module_checks = ("opt_power", "opt_voc", "opt_isc", "opt_imp", "opt_toggle", "opt_fuses")
+    redo, redo_label = (), ""
+    complete = ("command", "strings_complete")
+    complete_label = _("Complete the strings")
+    items: list[Item] = []
+    for note in plant.notes:
+        # a short sentence in the panel, the note in the detail (task 17e: at most TEXT_LENGTH characters)
+        items.append(Item("info", "strings", _("The strings cannot be checked yet"), "", here, detail=note))
+    bad = 0
+    seen: set = set()
+    for (unit_no, k), slot in sorted(plant.inputs.items()):
+        unit = plant.unit(unit_no)
+        if slot.why:
+            bad += 1
+            items.append(Item("warn", "strings", _("{inverter}, input {k}: {why}").format(
+                inverter=unit_label(unit), k=k, why=slot.why), "", here))
+        # every plan of the input: one per length of its strings (they should be alike; by hand they may not)
+        plans = list({id(p): p for p in [slot.plan] + [plant.strings[i].plan for i in slot.strings] if p}.values())
+        for p in plans:
+            for c in p.checks:
+                if c.level not in ("fail", "warn"):
+                    continue
+                if unit.optimized:
+                    # the module on its optimizer is the same in every string of the inverter: said once
+                    per_module = c.key in module_checks
+                    where = (unit_label(unit) if per_module else
+                             _("{inverter}, a string of {n} modules").format(inverter=unit_label(unit), n=p.n_series))
+                    if unit.inputs > 1 and not per_module:
+                        where = _("{where}, Synergy unit {k}").format(where=where, k=k)
+                    key = (unit_no, None if per_module else k, c.key, None if per_module else (p.n_series, p.power_w))
+                else:
+                    per_input = c.key.startswith(("imp", "isc", "fuse"))        # their label names the input already
+                    where = (unit_label(unit) if per_input else
+                             _("{inverter}, input {k}, {n} in series").format(inverter=unit_label(unit), k=k,
+                                                                              n=p.n_series))
+                    key = (unit_no, k, c.key, None if per_input else p.n_series)
+                if key in seen:
+                    continue
+                seen.add(key)
+                bad += 1
+                items.append(Item(c.level, "strings", f"{where}: {c.label}: {c.detail}", c.source or norm, here, redo,
+                                  redo_label, detail=string_detail(c.key)))
+    for s in plant.strings:
+        if not plant.inputs.get((s.inverter, s.mppt)):
+            bad += 1
+            items.append(Item("fail", "strings", _("String {name}: on no input of an inverter").format(name=s.label),
+                              "", here, redo, redo_label))
+    for label, keys in plant.lost:
+        bad += 1
+        items.append(Item("warn", "strings", ngettext("String {name}: {n} module is no longer laid (the layout changed)",
+                                                      "String {name}: {n} modules are no longer laid (the layout "
+                                                      "changed)", len(keys)).format(name=label, n=len(keys)),
+                          "", here, redo, redo_label))
+    threshold = stringing.threshold_source().label
+    for _unit_no, unit_checks in sorted(plant.checks.items()):
+        for c in unit_checks:
+            if c.level in ("fail", "warn"):
+                bad += 1
+                items.append(Item(c.level, "strings", f"{c.label}: {c.detail}", c.source or threshold, here,
+                                  detail=string_detail(c.key) if c.key.startswith("opt_") else ""))
+            elif c.level == "info" and c.key in ("opt_suggested", "opt_pairs"):
+                items.append(Item("info", "strings", f"{c.label}: {c.detail}", c.source, here,
+                                  window_only=c.key == "opt_suggested"))
+    for unit_no, n in sorted(plant.left_by_unit.items()):
+        unit = plant.unit(unit_no)
+        text = (ngettext("{inverter}: {n} module in no string", "{inverter}: {n} modules in no string", n).format(
+            inverter=unit_label(unit), n=n) if unit is not None else
+            ngettext("{n} module in no string and on no inverter", "{n} modules in no string and on no inverter",
+                     n).format(n=n))
+        detail = " ".join([left_detail()] + list(getattr(plant, "corrections", [])))
+        items.append(Item("warn", "strings", text, "", here, complete, complete_label, detail=detail))
+    if plant.strings and not bad and not plant.left and any(slot.plan for slot in plant.inputs.values()):
+        used = sum(1 for slot in plant.inputs.values() if slot.used)
+        if getattr(plant, "optimized", False):
+            source = next((c.source for slot in plant.inputs.values() if slot.plan is not None
+                           for c in slot.plan.checks if c.key == "opt_count"), norm)
+            items.append(Item("ok", "strings", ngettext("{n} string of power optimizers, every check passed",
+                                                        "{n} strings of power optimizers, every check passed",
+                                                        len(plant.strings)).format(n=len(plant.strings)),
+                              source, here))
+        else:
+            items.append(Item("ok", "strings", ngettext("{n} string on {m} inputs, every check passed",
+                                                        "{n} strings on {m} inputs, every check passed",
+                                                        len(plant.strings)).format(n=len(plant.strings), m=used),
+                              norm, here))
+    return items
+
+
+def rule_items(f: rules.Facts):
+    return registry.get(f.profile_id).rule_items(f)
+
+
+def string_why(*, profile_id: str = "it"):
+    return registry.get(profile_id).check_call("string_why")
+
+
+def connection(p_kw: float, phases: int | None, chosen: bool, level: str='BT', auto: bool=True, *, profile_id: str = "it"):
+    return registry.get(profile_id).connection(p_kw, phases, chosen, level, auto)
+
+
+def string_detail(key: str, *, profile_id: str = "it"):
+    return registry.get(profile_id).check_call("string_detail", key)
+
+
+def area_names(*, profile_id: str = "it"):
+    return registry.get(profile_id).check_call("area_names")
+
+
+def __getattr__(name):
+    if name == "FIRE_SOURCE":
+        return registry.get("it").text("fire_source")
+    raise AttributeError(name)

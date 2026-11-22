@@ -8,8 +8,8 @@ from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath
 from PySide6.QtQml import QQmlComponent
 from PySide6.QtTest import QTest
 
-from meridiana.quick.backend.controls import install_controls
-from meridiana.ui.design import Radius
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.style.design import Radius, Stack
 from quick.pianta import test_window as window_tests
 
 setUpModule = window_tests.setUpModule
@@ -20,9 +20,12 @@ class Corners(unittest.TestCase):
     tearDown = window_tests.WindowTest.tearDown
 
     def test_all_four_corners_match_widgets_after_theme_resize_and_overdraw(self):
-        # Simulate map/geometry crossing every edge, above the regular scene.
+        # Simulate map/geometry crossing every edge, above the regular scene. R616: the corners are the step of the
+        # theme's scale over everything inside a view (Stack.VIEW_FRAME, 20; they were at 1000 and this at 900): the
+        # cover stands on the highest step under them, over the bars.
         component = QQmlComponent(self.engine)
-        component.setData(b'import QtQuick\nRectangle { anchors.fill: parent; color: "#237d62"; z: 900 }', QUrl())
+        component.setData(b'import QtQuick\nRectangle { anchors.fill: parent; color: "#237d62"; z: %d }'
+                          % (Stack.VIEW_FRAME - 1), QUrl())
         cover = component.create()
         self.assertIsNotNone(cover, component.errors())
         cover.setParentItem(self.plan)

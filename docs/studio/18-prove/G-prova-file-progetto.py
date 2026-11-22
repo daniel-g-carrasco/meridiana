@@ -147,7 +147,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 
 from meridiana import config  # noqa: E402
 from meridiana.paths import Paths  # noqa: E402
-from meridiana.ui import tileloader  # noqa: E402
+from meridiana.quick.backend import tileloader  # noqa: E402
 
 tileloader.TileLoader._pump = lambda self: None            # no network, whatever the plan asks
 app = QApplication.instance() or QApplication([])
@@ -209,7 +209,7 @@ for name in ("version_string", "version_zero", "building_is_string", "building_w
     tracemalloc.stop()
     print(f"      {time.perf_counter() - t:.2f} s; Python heap peak {peak / 1e6:.0f} MB (Qt's pixmaps are not counted)")
     if name.startswith("underlay"):
-        from meridiana.ui import underlays
+        from meridiana.quick.backend import underlays
         u = win.project.underlays[0] if win.project.underlays else None
         if u is not None:
             t2 = time.perf_counter()

@@ -32,7 +32,7 @@ def main() -> None:
     from PySide6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     from meridiana import jobs
-    from meridiana.ui import report_3d
+    from meridiana.quick.paper import report_3d
     p = project()
     results, _keys, _laid = jobs.layout_of(p)
     n = sum(len(getattr(r, "modules", []) or []) for r in results.values())

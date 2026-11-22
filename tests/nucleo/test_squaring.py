@@ -6,7 +6,7 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import squaring
+from meridiana.core.geometry import squaring
 
 
 class Squaring(unittest.TestCase):

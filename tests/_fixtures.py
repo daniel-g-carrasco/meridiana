@@ -9,11 +9,14 @@
 - `casa_a_falde()`: a house of 12 x 8 m with a gable roof at 30 degrees and a sub-field on its southern pitch;
 - `generated(...)`: many buildings in a grid, for the tests of speed (docs/studio/18-prove/A-architettura-prove.py);
 - `clear_sky_meteo()` and `write_cache()`: a weather year made without the network, put in the cache as PVGIS's;
+- `FakePvgis`: PVGIS without the network, for the jobs that fetch the weather (its recorded answers for Rho);
 - `inverter_record()`: a datasheet of an inverter of 20 kW with two inputs;
 - `PAN` and `OND`: a module and an inverter in PVsyst's text format, written by hand, and `written()` to put them in
   a file;
 - the tests' own minisign key and two payloads signed with it;
 - `flat()`: the tokens of a theme in one level;
+- `differences(a, b)`: where two objects differ by value, bit for bit (the year taken by the window and the one
+  computed directly, R598);
 - `view3d()` and `plan_view()`: the 3D view and the plan alone, showing a project as the window shows it (Qt)."""
 
 import tempfile
@@ -24,9 +27,9 @@ import pandas as pd
 
 import _setup  # noqa: F401
 
-from meridiana import model
-from meridiana.energy.meteo import Meteo
-from meridiana.energy.pedigree import Source
+from meridiana.core.model import model
+from meridiana.core.energy.meteo import Meteo
+from meridiana.core.energy.pedigree import Source
 
 RHO = {"lat": 45.5226, "lon": 9.0300, "address": "Rho (MI)"}
 
@@ -142,8 +145,9 @@ def mixed() -> model.Project:
 def exported(project: model.Project, folder: Path, name: str = "misto.ifc", **more) -> tuple[Path, dict, dict]:
     """`project` laid out and written as IFC4 in `folder`, its strings proposed: the file, the export's summary and
     the layouts (needs ifcopenshell)."""
-    from meridiana import ifc_export, jobs
-    from meridiana.energy import plant
+    from meridiana.app.exchange import ifc_export
+    from meridiana.app import jobs
+    from meridiana.core.energy import plant
     results, _keys, _laid = jobs.layout_of(project)
     strings = {(sf, key): s.label for s in plant.build(project, results, check=False).strings
                for sf, key, _c in s.modules}
@@ -151,50 +155,43 @@ def exported(project: model.Project, folder: Path, name: str = "misto.ifc", **mo
     return path, ifc_export.export(project, results, path, strings=strings, **more), results
 
 
-def view3d(test, project=None, size=(800, 600)):
-    """The 3D view alone (ui/view3d.py), shown at `size`, with the buildings, the obstacles and the modules of
-    `project` (the shed by default) framed as the window frames them at the start (MainWindow._show_3d), AutoCAD's
-    navigation, no animation; disposed of at the end of `test`. (view, results)."""
-    from meridiana import jobs, mesh
-    from meridiana.ui.view3d import View3D
-    app = _setup.qt_or_skip()
-    project = project or capannone()
-    results, _keys, _laid = jobs.layout_of(project)
-    view = View3D()
-    test.addCleanup(_setup.dispose, view)
-    view.resize(*size)
-    view.show()
-    parts = [mesh.building_triangles(b.footprint, b.pitches(), None) for b in project.buildings]
-    parts += [mesh.prism_triangles(o["ring"], o["z0"], o["z1"], mesh.OBSTACLE) for o in project.obstacle_prisms()]
-    cat = tuple(np.concatenate([p[i] for p in parts]) if parts else np.zeros((0, 3), np.float32) for i in range(3))
-    tables = [r.table for sf in project.subfields if sf.filled and not isinstance(r := results.get(sf.id), Exception)
-              and r is not None]
-    view.set_navigation("autocad", "turntable", "cursor", True)
-    view.backend.reduced_motion = True                  # the moves at once, to look at them
-    _setup.wait_until(app, lambda: view.backend.size[0] > 0, 5)
-    view.show_scene(cat, np.concatenate(tables) if tables else np.zeros((0, 20), np.float32), fit=True)
-    app.processEvents()
-    return view, results
-
-
-def plan_view(test, project=None, size=(800, 600)):
-    """The plan alone (ui/plan.py), no background, shown at `size` with `project` (the shed by default) and its
-    layouts, fitted; disposed of at the end of `test`. (plan, results)."""
-    from meridiana import jobs
-    from meridiana.ui.plan import PlanView
-    app = _setup.qt_or_skip()
-    project = project or capannone()
-    results, _keys, _laid = jobs.layout_of(project)
-    plan = PlanView(Path(tempfile.mkdtemp()))
-    test.addCleanup(_setup.dispose, plan)
-    plan.set_source("none")
-    plan.set_tool("select")                             # as the window starts it
-    plan.resize(*size)
-    plan.show()
-    plan.show_project(project, results)
-    plan.fit()
-    app.processEvents()
-    return plan, results
+def synthetic_plant(strings: int = 80, per_string: int = 25) -> model.Project:
+    """R711: a wholly synthetic plant of `strings` x `per_string` modules (2000 by default) with its inverters and
+    strings, as the probes' `sintetico-2000` of 20/11/2026: four flat roofs of 80 x 80 m, one sub-field each (450 W,
+    10 degrees), the modules beyond what the strings take removed, 100 kW inverters of 10 inputs, one string of
+    `per_string` consecutive modules on each input. No client data; the same project at every call."""
+    from meridiana.app import jobs
+    p = model.Project(name="Synthetic plant")
+    p.site = model.Site(**RHO)
+    corners = [(0, 0), (120, 0), (240, 0), (0, 130)]
+    for n, (x, y) in enumerate(corners, 1):
+        b = model.Building(id=p.new_id("b"), name=f"Building {n}", height=15.0, parapet=0.8,
+                           footprint=[[x, y], [x + 80, y], [x + 80, y + 80], [x, y + 80]])
+        p.buildings.append(b)
+        p.subfields.append(model.SubField(id=p.new_id("s"), name=f"Roof {n}", building=b.id, filled=True,
+                                          ring=[[x + 2, y + 2], [x + 77, y + 2], [x + 77, y + 78], [x + 2, y + 78]],
+                                          params={"tilt": 10.0}))
+    results, _keys, _laid = jobs.layout_of(p)
+    wanted = strings * per_string
+    share = -(-wanted // len(p.subfields))                  # the modules each roof keeps
+    runs, taken = [], 0
+    for sf in p.subfields:
+        keys = [m.key for m in results[sf.id].modules]
+        if len(keys) < share:
+            raise ValueError(f"{sf.id} lays {len(keys)} modules, {share} wanted")
+        kept, sf.removed = keys[:share], keys[share:]
+        for at in range(0, share, per_string):
+            if taken < strings:
+                runs.append([f"{sf.id}/{k}" for k in kept[at:at + per_string]])
+                taken += 1
+    record = inverter_record(manufacturer="Synthetic", model="SYN-100K", ac_power_nominal_w=100000,
+                             efficiency_euro_pct=98.0, mppt_voltage_min_v=200, mppt_count=10,
+                             dc_current_max_per_mppt_a=[26] * 10, dc_isc_max_per_mppt_a=[40] * 10)
+    units = -(-strings // 10)
+    p.energy = {"inverters": [{"record": dict(record), "count": 1, "name": ""} for _ in range(units)],
+                "strings": {"auto": False, "runs": [{"inverter": n // 10 + 1, "mppt": n % 10 + 1, "modules": modules}
+                                                     for n, modules in enumerate(runs)]}}
+    return p
 
 
 def inverter_record(**more) -> dict:
@@ -206,10 +203,10 @@ def inverter_record(**more) -> dict:
     return rec
 
 
-def write_cache(m: Meteo, cache_dir, *, include_horizon: bool = False) -> None:
+def write_cache(m: Meteo, cache_dir) -> None:
     """Put a weather year in the cache as PVGIS's would be, so that the window computes without the network."""
-    from meridiana import atomic
-    from meridiana.energy import meteo
+    from meridiana.data import atomic
+    from meridiana.core.energy import meteo
     raw = {"fetched": m.fetched,
            "meta": {"inputs": {"location": {"latitude": m.latitude, "longitude": m.longitude,
                                             "elevation": m.elevation, "irradiance_time_offset": m.time_offset_h},
@@ -217,9 +214,68 @@ def write_cache(m: Meteo, cache_dir, *, include_horizon: bool = False) -> None:
                                               "year_min": 2026, "year_max": 2026}}},
            "columns": {c: [float(v) for v in m.data[c].to_numpy()] for c in meteo.COLUMNS}}
     atomic.write_json(meteo._cache_file(cache_dir, "tmy", m.latitude, m.longitude), raw, keep_backup=False)
-    if include_horizon:
-        horizon = {"fetched": m.fetched, "azimuth": [-180, -90, 0, 90], "elevation": [0, 0, 0, 0]}
-        atomic.write_json(meteo._cache_file(cache_dir, "horizon", m.latitude, m.longitude), horizon, keep_backup=False)
+
+
+class FakePvgis:
+    """PVGIS without the network, for the jobs that fetch the weather (app/weather_job.py): `requests.get` answering
+    with the answers of PVGIS 5.3 recorded for Rho (calcoli/riferimenti, with their README) whatever the site asked,
+    so that what is fetched goes through pvlib's parser and meteo's cache as a real answer would. `fail`: every request
+    an error of the network. `hold(lat)`: the requests for that latitude wait until `release()` (`waiting` is set when
+    one does). `asked`: the (url, params) of every request. As a context manager it patches requests.get, in every
+    thread of the process."""
+
+    def __init__(self, fail: bool = False):
+        import threading
+        self.fail, self.asked, self._lock = fail, [], threading.Lock()
+        self._held, self._gate, self.waiting = None, threading.Event(), threading.Event()
+        self._gate.set()
+
+    def hold(self, lat: float) -> None:
+        self._held = round(float(lat), 4)
+        self._gate.clear()
+
+    def release(self) -> None:
+        self._gate.set()
+
+    def get(self, url, params=None, **_kwargs):
+        import gzip
+        import requests
+        params = dict(params or {})
+        with self._lock:
+            self.asked.append((url, params))
+        lat = params.get("lat", params.get("latitude"))
+        if self._held is not None and lat is not None and round(float(lat), 4) == self._held:
+            self.waiting.set()
+            self._gate.wait(120)
+        if self.fail:
+            raise requests.ConnectionError("no network (FakePvgis)")
+        name = {"tmy": "pvgis53-tmy-rho.json.gz", "printhorizon": "pvgis53-printhorizon-rho.json"}.get(
+            url.rstrip("/").rsplit("/", 1)[-1])
+        if name is None:
+            raise requests.ConnectionError(f"FakePvgis does not answer {url}")
+        body = (_setup.REFERENCES / name).read_bytes()
+        body = gzip.decompress(body) if name.endswith(".gz") else body
+        if name.startswith("pvgis53-tmy") and lat is not None:          # the typical year of the site asked
+            import json
+            raw = json.loads(body)
+            raw["inputs"]["location"].update(latitude=float(lat), longitude=float(params.get("lon", 0.0)))
+            body = json.dumps(raw).encode()
+        r = requests.Response()
+        r.status_code, r._content, r.url, r.reason = 200, body, url, "OK"
+        r.headers["Content-Type"] = "application/json"
+        r.encoding = "utf-8"
+        return r
+
+    def __enter__(self):
+        import requests
+        from unittest import mock
+        self._patch = mock.patch.object(requests, "get", side_effect=self.get)
+        self._patch.start()
+        return self
+
+    def __exit__(self, *_exc):
+        self.release()
+        self._patch.stop()
 
 
 _SKIES: dict = {}
@@ -344,4 +400,67 @@ def flat(tokens: dict) -> dict:
             out.update({f"{k}.{kk}": vv for kk, vv in v.items()})
         else:
             out[k] = v
+    return out
+
+
+def differences(a, b, path: str = "", skip: tuple = (), most: int = 10) -> list:
+    """Where `a` and `b` differ by value, bit for bit: arrays by type, shape and bytes, frames and series by their
+    values, index and types, floats by their bytes (a NaN is itself), dataclasses field by field, dicts, sequences
+    and sets by their items; the paths that end with one of `skip` (".near") not compared. At most `most`."""
+    import dataclasses
+    import struct
+    out: list = []
+
+    def walk(x, y, at):
+        if len(out) >= most or (skip and at.endswith(skip)):
+            return
+        if type(x) is not type(y):
+            out.append(f"{at}: {type(x).__name__} != {type(y).__name__}")
+        elif isinstance(x, np.ndarray) and x.dtype == object:     # their bytes are pointers: the items compared
+            if y.dtype != object or x.shape != y.shape:
+                out.append(f"{at}: array")
+            else:
+                walk(x.ravel().tolist(), y.ravel().tolist(), at)
+        elif isinstance(x, np.ndarray):
+            if x.dtype != y.dtype or x.shape != y.shape or np.ascontiguousarray(x).tobytes() != np.ascontiguousarray(y).tobytes():
+                out.append(f"{at}: array")
+        elif isinstance(x, (pd.DataFrame, pd.Series, pd.Index)):
+            if isinstance(x, pd.Index):
+                same = x.equals(y) and x.dtype == y.dtype
+            else:
+                same = x.equals(y) and x.index.equals(y.index) and (
+                    x.dtypes.equals(y.dtypes) if isinstance(x, pd.DataFrame) else x.dtype == y.dtype)
+            if not same:
+                out.append(f"{at}: {type(x).__name__}")
+            elif isinstance(x, pd.DataFrame):
+                for column in x.columns:
+                    walk(x[column].to_numpy(), y[column].to_numpy(), f"{at}[{column!r}]")
+            elif isinstance(x, pd.Series):
+                walk(x.to_numpy(), y.to_numpy(), f"{at}.values")
+        elif isinstance(x, float):
+            if struct.pack("<d", x) != struct.pack("<d", y):
+                out.append(f"{at}: {x!r} != {y!r}")
+        elif dataclasses.is_dataclass(x):
+            for item in dataclasses.fields(x):
+                walk(getattr(x, item.name), getattr(y, item.name), f"{at}.{item.name}")
+        elif isinstance(x, dict):
+            if set(x) != set(y):
+                out.append(f"{at}: keys {sorted(map(str, set(x) ^ set(y)))}")
+            for key in x:
+                if key in y:
+                    walk(x[key], y[key], f"{at}[{key!r}]")
+        elif isinstance(x, (list, tuple)):
+            if len(x) != len(y):
+                out.append(f"{at}: {len(x)} != {len(y)} items")
+                return
+            for i, (u, v) in enumerate(zip(x, y, strict=True)):
+                walk(u, v, f"{at}[{i}]")
+        elif isinstance(x, (set, frozenset)):
+            if x != y:
+                out.append(f"{at}: set")
+        elif hasattr(x, "__dict__") and not isinstance(x, type):
+            walk(vars(x), vars(y), at)
+        elif x != y:
+            out.append(f"{at}: {x!r} != {y!r}")
+    walk(a, b, path)
     return out

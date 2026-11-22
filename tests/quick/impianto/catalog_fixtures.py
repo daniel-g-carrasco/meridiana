@@ -10,7 +10,7 @@ def settle(backend):
     deadline = time.monotonic() + 10
     while backend.busy and time.monotonic() < deadline:
         APP.processEvents()
-        time.sleep(.002)
+        time.sleep(.002)  # wait: a breath between two looks at the condition, so the workers' threads run
     APP.processEvents()
     assert not backend.busy, backend.error
 
@@ -27,7 +27,7 @@ def module(n=0, **values):
 
 def required_values(kind):
     """Every field the calculations need for a kind, with a value that passes the window's checks."""
-    from meridiana.catalog import schema
+    from meridiana.data.catalog import schema
     values = dict(manufacturer='Maker', model=kind, datasheet_url='https://example.org/sheet.pdf')
     special = dict(voc=42, vmp=35, isc=13, imp=12, pmax=420, gamma_pmax=-0.3, beta_voc=-0.25, alpha_isc=0.05, length=1.9, width=1.1,
                    mppt_voltage_min_v=180, mppt_voltage_max_v=800, dc_voltage_max_v=1000, phases=3, coupling='dc',

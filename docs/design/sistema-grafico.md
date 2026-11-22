@@ -4,10 +4,10 @@ Le regole visive di Meridiana in un posto solo, scritte perché valgano anche pe
 «dai massima priorità all'armonizzazione estetica e di stile, facendo un ottimo lavoro. L'obiettivo è avere un
 template facilmente riutilizzabile per altri programmi»).
 
-- I numeri stanno in `src/meridiana/ui/design.py`: scale chiuse, nessun valore scritto a mano nei componenti.
-- I colori stanno nei gettoni del tema (`src/meridiana/theme_colors.py`), ricavati da un accento e da una scelta di
+- I numeri stanno in `src/meridiana/gui/style/design.py`: scale chiuse, nessun valore scritto a mano nei componenti.
+- I colori stanno nei gettoni del tema (`src/meridiana/app/interface/theme_colors.py`), ricavati da un accento e da una scelta di
   fondi.
-- La galleria `python -m meridiana.ui.gallery [light|dark] [--shot file.png]` mostra tutto su una pagina:
+- La galleria `python -m meridiana.gui.gallery [--theme light|dark] [--shot file.png]` mostra tutto su una pagina:
   gettoni, scale e componenti. È il controllo dell'armonia, perché un valore fuori scala si vede lì per primo, ed è
   la vetrina del modello.
 
@@ -46,7 +46,7 @@ Regole:
 | M | 8 | fra due schede (`Layout.GAP`), testo di un controllo dal bordo (`Line.TEXT_INSET`), fra le righe di un modulo |
 | L | 12 | dai lati della finestra (`Layout.EDGE`), titolo di una scheda dal bordo, dentro un riquadro |
 | XL | 16 | fra due gruppi di una pagina, dentro un riquadro della pagina File |
-| XXL | 24 | intorno a una pagina, altezza della sfumatura di fine contenuto |
+| XXL | 24 | intorno a una pagina |
 | XXXL | 32 | margini delle pagine grandi |
 
 ### Raggi (`Radius`), per profondità
@@ -56,7 +56,7 @@ Regole:
 | 8 (`CARD`) | scheda, riquadro, pagina, finestrella (menu, elenco a tendina, aiuto a comparsa) |
 | 6 (`VIEW`) | vista (pianta, 3D) dentro la sua scheda, a 6 px dal bordo (R77) |
 | 6 (`CONTROL`) | pulsante, campo, elenco, gruppo, tabella, pulsante strumento, barra della vista, etichette sopra la pianta |
-| 4 (`INNER`) | quello che sta dentro un controllo o una riga: voce di menu, selezione dentro una scheda, pulsantino su una riga, misure accanto al cursore, suggerimenti (Windows li arrotonda a 4) |
+| 4 (`INNER`) | quello che sta dentro un controllo o una riga: voce di menu, selezione dentro una scheda, pulsantino su una riga, misure accanto al cursore (i suggerimenti dal 14/11/2026 hanno il raggio dei menu, `CARD`, R615) |
 | 2 (`MARK`) | campioni di colore, tacche delle legende |
 
 ### Testo: il catalogo degli stili (`Text`)
@@ -150,6 +150,13 @@ Daniel, 25/10/2026 (R121): «deve includere tutti i tasti». Sei tipi, ciascuno 
 | `HELP` «?» | 16 | 8 | `label` | il «?» di un gruppo o di un riquadro |
 | `NAV` voce | 34 | 6 | `body` | le voci della pagina File |
 
+Quick (R671, 16/11/2026): un comando compatto a sola icona usa `Controls/Button.qml`, `flat: true`,
+`compact: true`, senza un fondo locale: quadrato `Theme.size.CHIP` (24), raggio `Theme.radius.CONTROL`,
+icona nel colore del testo, stessi veli al passaggio, premuto e acceso e stesso anello del fuoco.
+L'occhio delle Verifiche segue questa regola; il margine destro è `Theme.space.M`.
+Il titolo della verifica resta `body` anche quando è correlata, aperta o evidenziata; la selezione colora il fondo
+stesso della riga (`select_bg`), senza un rettangolo rientrato che lasci scoperti i bordi.
+
 #### I pulsanti della barra della fase (`Bar`, R333)
 
 Daniel, 03/11/2026: «armonizzare le dimensioni dei tasti, renderli più congruenti tra loro». Tre modi della barra (quale, lo
@@ -164,14 +171,26 @@ decide `arrangement.py`, R334), in ciascuno una sola altezza e una sola icona pe
 - **La regola delle larghezze**: la più piccola larghezza del passo che tiene la parola più `Bar.PAD`. Non una larghezza per
   parola: in italiano quattro larghezze sotto l'icona (48, 64, 80, più 96 e 112 per le parole lunghe), le stesse nella stessa
   posizione del gruppo. Il passo è più fine con la parola accanto, dove la parola è solo una parte del pulsante.
-- **Il pulsante diviso** è il pulsante semplice più la striscia: la parte comando segue la regola sulla **parola più lunga
-  del suo menu** (la barra non si muove quando la faccia cambia), la striscia è `Bar.STRIP`, 14, alta tutto il pulsante, in tutti i modi.
+- **Il pulsante diviso** è il pulsante semplice più la striscia: la parte comando è il pulsante semplice
+  (`PhaseToolButton`) e segue la regola sulla **parola più lunga fra quelle che possono andare sulla faccia**: la sua e
+  quelle dei modi del suo menu (la barra non si muove quando la faccia cambia); i comandi una tantum («Togli tutte le
+  misure») e le voci di un pulsante fisso stanno nel menu e non allargano il pulsante (R614, 14/11/2026: «Misura» era largo
+  il doppio di «Squadra»). La striscia è `Bar.STRIP`, 14, alta tutto il pulsante, in tutti i modi.
+- **Il contenuto sta in mezzo** (R614), sotto e accanto all'icona: l'aria che lascia il passo è uguale prima della parola
+  e dopo, fino al bordo o alla striscia.
 - Fra due pulsanti di un gruppo `Bar.GAP` (2). Fra due gruppi un filo alto quanto i pulsanti, con `Bar.GROUP_AIR` (8) per parte.
 - Il pulsante primario della fase (Posa, Calcola): velo `field` e parola `strong`, nessun accento; spento senza velo.
 
 **Il pulsante diviso** (`ui/phasebar.ToolMenuButton`, studio 26, G2): comando e striscia con il chevron, ciascuno col suo stato
-(passaggio, premuto, spento); al passaggio compare il filo fra i due. Con il comando spento la striscia resta viva. La striscia e il
-tasto destro aprono il menu con nomi e tasti. Cosa va sulla faccia:
+(passaggio, premuto, spento). Quick (R644, variante 2 scelta da Daniel il 16/11/2026, «ci sta la 2»): un fondo solo, `Controls/SplitGround.qml`, per `SplitButton` e `PhaseSplitButton`; acceso, tutto il pulsante è acceso con gli angoli tondi solo all'esterno, in due toni senza filo: la metà del comando in `press`, quella della striscia un gradino meno (`hover`), e il cambio di tono a tutta altezza fa da divisore; il puntatore sul comando gli aggiunge lo strato `hover`, sulla striscia la porta sopra il comando (`hover` + `press`), il menu aperto ancora di più (`press` due volte), così le due metà non hanno mai lo stesso tono; spento, sotto il puntatore tutto il pulsante in `hover` e la metà sotto il puntatore col suo strato. Con il comando spento la striscia resta viva. La striscia e il
+tasto destro aprono il menu con nomi e tasti.
+Quick (R674, 16/11/2026): anche mappa di fondo e irraggiamento nella barra della pianta usano `SplitButton`,
+con `compact: true`: altezza `ControlMetrics.viewButton` (27), metà comando della stessa larghezza e striscia
+`ControlMetrics.viewArrow` (16). Fondo, raggi, freccia e stati restano quelli comuni, senza copie locali.
+`commandOpensMenu` conserva il gesto della mappa di fondo; per l'irraggiamento il comando accende o spegne e
+la freccia apre il pannello. `Button.menuAnchor` aggancia il menu o pannello all'intero pulsante, anche quando
+lo apre la striscia. Il `ViewButton` 3D resta semplice: la variante con freccia, mai usata, è eliminata.
+Cosa va sulla faccia:
 1. un **modo di disegno** quando si accende, dal menu, con il suo tasto o da altrove, perché un modo acceso si deve vedere; un
    comando una tantum no;
 2. i **distruttivi** mai (`Tool.fixed`): quello acceso si vede sulla striscia premuta; «Cancella tutte» (`Tool.danger`) sta in
@@ -211,15 +230,24 @@ si sposta solo quanto basta per non stare sulla barra del sole. Le sue parole co
 almeno 60 caratteri al secondo, quello che resta da dire detto entro 3 secondi dall'ultimo pezzo arrivato. La camera della
 vista 3D va da una vista all'altra in `SLOW`.
 
-Regole del movimento (R83, misurate il 24/10/2026):
-- si muove solo una zona piccola: mai l'intera pagina (un fotogramma della pagina costava 23-45 ms, uno
-  dell'intestazione e della barra 5-8 ms, sotto i 16 ms dei 60 fotogrammi al secondo);
-- mai `QGraphicsOpacityEffect` su zone grandi: ridisegna tutto sotto di sé a ogni fotogramma; si dipingono due
-  fotografie con l'opacità del pittore, sotto un velo opaco (`ui/motion.Veil`);
-- il movimento parte dopo il lavoro che il cambio chiede alla finestra (il giro successivo del ciclo degli eventi),
-  così mostra tutti i fotogrammi; durante quel lavoro il velo tiene ferma l'immagine di prima;
-- quello che servirebbe al primo uso (la prima fotografia, la libreria dei grafici) si prepara a finestra ferma
-  dopo l'avvio.
+Cambio di fase in Qt Quick (R640, 16/11/2026):
+
+- Il velo unico resta per File e Impostazioni. Tra le fasi cambiano soltanto i contenuti, con
+  `Controls/PhaseFade.qml`: `OpacityAnimator`, durata `Theme.motion.FAST` e curva del tema.
+- `Workbench.leavingPhase` conserva la fase uscente per `FAST`, ritirata da una `PauseAnimation`.
+  I contenuti uscenti restano disegnati ma perdono subito l'accesso: suggerimenti, menu e pannelli si chiudono
+  con la regola comune degli elementi fuori portata. Un cambio rapido conserva soltanto l'ultima coppia.
+- I corpi dell'ispettore, le pagine centrali, il banner dell'anno e i gruppi della barra riusano lo stesso
+  componente. I fondi e i bordi delle schede non sfumano. Progetto entra ed esce da solo; durante l'uscita
+  gli spazi delle altre schede sono congelati, poi il tavolo recupera lo spazio libero.
+- Pianta, 3D e albero condivisi tra Modellazione e Impianto conservano gli oggetti e l'opacità, senza
+  richiedere aggiornamenti della scena o dell'albero. Le viste sotto le pagine restano allocate e disabilitate.
+- Con movimento ridotto il cambio è netto; attivarlo durante una dissolvenza la conclude subito.
+  Nessun Timer aggiunto al cambio di fase, nessuna scrittura Python per fotogramma.
+
+Restano valide le regole di R83: animare zone piccole, evitare gli effetti d'opacità dei vecchi Widgets su
+zone grandi e preparare il necessario al primo uso mentre la finestra è ferma. Il vecchio velo del cambio
+pagina non descrive più le transizioni tra fasi di Qt Quick.
 
 ## 3. I colori
 
@@ -233,7 +261,7 @@ I principali:
 | `text`, `text2`, `muted` | testo, secondario, spento |
 | `accent`, `accent_fg`, `accent_hover`, `accent_soft` | il colore scelto: la fase in mano e il fuoco, nessun pulsante pieno (R158) |
 | `hover`, `press` | lo strato del testo all'8 % e al 16 %: sotto il puntatore, premuto o acceso (R160) |
-| `select_bg`, `select_fg` | selezione in un elenco: un grigio che pende verso la tinta dell'accento (lo strumento acceso ha `press`, R158; il segmento scelto è rialzato in `panel` col filo) |
+| `select_bg`, `select_fg` | selezione in un elenco (anche la verifica aperta dal suo segno nelle Verifiche, R663 del 16/11/2026: prima un filo di 1 px della scala delle evidenziature, R617, che dal vivo non diceva «scelta»; Esc e un clic in un punto vuoto la tolgono, Tab e le frecce la spostano): un grigio che pende verso la tinta dell'accento (lo strumento acceso ha `press`, R158; il segmento scelto è rialzato in `panel` col filo) |
 | `danger`, stati `good`/`warning`/`critical` | errori e semaforo: sempre con un segno o una parola, mai solo col colore |
 
 Regole:
@@ -265,8 +293,10 @@ Regole:
 | Pagina della fase | foglio di stile (`#phase-pages`) | come una scheda |
 | Pulsante | foglio di stile, `Button.PUSH` | velo `field`, raggio 6, 28 px, stile `strong`; nessuno pieno di accento (R158); `destructive` col testo rosso; sotto il puntatore lo strato `hover` sopra il velo (R160) |
 | Pulsante strumento | `ui/phasebar.py`, foglio di stile, `Button.TOOL` | trasparente, raggio 6; `hover` sotto il puntatore, acceso e premuto in `press` (R158, R160) |
+| Finestra di dialogo | Quick: `Controls/Dialog.qml` (`M.Dialog`), per le finestre di File `Dialogs/DialogWindow.qml`; velo `Controls/ModalVeil.qml`; misure in `ControlMetrics` (`dialogPad`, `dialogGap`, `dialogEdge`, `dialogWidth`) | **una sola finestra** per tutto il programma (R586, Daniel 11/11/2026: «devono essere centralizzate»). Chi la usa dice solo cosa vorrebbe: `implicitWidth` (una di `dialogWidth`, o la sua misura con nome in `dialogSize`) e, se serve, `implicitHeight` (altrimenti quella del contenuto, `fitHeight`); un contenuto che scorre da sé e riempie lo spazio (catalogo, elenco, pagina in `ScrollPage`) lo dice con `bodyScrolls: false` e riceve l'altezza esatta, senza un secondo scorrimento; il contenuto si dichiara dentro (un elemento, che prende la larghezza della finestra). Nessuna finestra imposta `width`, `height`, `x`, `y`, `anchors` o `contentItem` (prova `quick.shell.test_dialoghi_r586.Sources`). La finestra non è mai più grande dello spazio lasciato dalla finestra principale a `dialogEdge` dai lati; se il contenuto è più alto **scorre nel corpo** con la barra nel margine destro e le dissolvenze delle pagine (`EdgeFades`), mentre titolo e pulsanti restano fermi; il campo col fuoco da tastiera resta in vista. Si apre al centro del genitore (la finestra principale, o una vista: `parent`; un posto suo con `homeX`/`homeY`, la stringatura accanto al pannello), **si sposta trascinando il titolo**, non esce da `dialogEdge` e alla riapertura torna al suo posto. Il velo è `ModalVeil` (anche per un `M.Popup` modale): mentre c'è, il tema vela anche la **barra del titolo** dove la colora il programma (`backend/window_frame.py`: Windows 11 con DWM, Wayland con la decorazione di Qt); Windows 10 e le barre del sistema (X11, decorazioni del compositore) restano come sono. I `FileDialog` sono la finestra del sistema e restano fuori |
 | Pista di segmenti | `ui/segments.py`: `Segments` (pulsanti), `on_bar` (una `QTabBar`: grafici, schede accorpate) | ogni scelta fra viste (R322, B1): pista `field` di 28 px e raggio 6, segmenti di 24 e raggio 4, testo `control` (tagliato coi puntini se manca lo spazio, il suggerimento lo dice intero); la scelta è un rettangolo in `panel` col filo `line` che **scorre** al segmento nuovo come la linguetta delle fasi (`OutCubic`, `Motion.FAST`, dopo il lavoro del cambio, subito con «riduci animazioni»); frecce sinistra e destra; con la tastiera sopra il filo è d'accento. Non esclusiva (`exclusive=False`: conteggi e filtri delle Verifiche, più d'uno acceso insieme): ogni acceso ha il suo rettangolo, che compare e scompare in dissolvenza |
-| Campo (testo, numero, elenco, data) | foglio di stile, `ui/style.pad_fields` | velo `field` senza bordo; bordo `field_line` al passaggio, 2 px di accento col fuoco; frecce piccole e spente; numeri allineati a sinistra |
+| Campo (testo, numero, elenco, data) | foglio di stile, `ui/style.pad_fields` | velo `field` senza bordo; bordo `field_line` al passaggio, 2 px di accento col fuoco; frecce piccole e spente; numeri allineati a sinistra ; Quick (R582): `Controls/TextField.qml`, `NumberField.qml`, `ComboBox.qml`, `OverlayField.qml`, una regola in `ControlMetrics`: la riga di testo sta con maiuscole e cifre sul mezzo del campo (`textBaseline`: linea di base a (altezza + altezza delle maiuscole) / 2, su un pixel intero dello schermo), il suggerimento del campo vuoto e l'unità del numero sulla stessa linea di base del testo; il testo parte a `fieldInset` (M + 2) dal bordo sinistro in tutti. Nessuna pagina sposta il testo di un campo per conto suo |
+| Frecce: due segni, due significati | Quick: `Controls/Arrow.qml` (`M.Arrow`), `Controls/Chevron.qml` (`M.Chevron`), `Controls/Steppers.qml`; misure in `ControlMetrics` (`arrowDepth`, `chevronBox`, `pixelSnap`) | scelta di Daniel dell'11/11/2026 (R592). **Freccia piena** dove si sceglie un valore: casella a scelta, pulsante con menu (anche la striscia di `SplitButton` e dei pulsanti della fase), sottomenu, passi di un numero (`Steppers`, in `NumberField` e nei numeri delle Proprietà), ordine di una colonna. Righe di pixel interi disegnate dal fornitore (`control:arrow-*`), 7 × 4 a 100 % in un riquadro 8 × 4, chiesta alla misura mostrata e posata su un pixel intero dello schermo: niente pixel a metà a 100, 125, 150, 175 e 200 %. **Freccia aperta** dove si apre o si chiude una sezione: gruppi, sezioni, albero Progetto, albero comune, Verifiche, catalogo, Meridio. È il disegno dell'albero Progetto (`control:chevron-down`, tratto 1,5 sul riquadro di 20), sempre a quella misura anche in un posto più piccolo, girata a destra quando è chiusa. Tutte e due grigie: `muted`, più scure sotto il puntatore o col fuoco (`text2` la piena, `text` l'aperta), il colore del testo spento da disattivate. Nessuna pagina disegna una freccia sua (`quick.controlli.test_frecce_r592`); restano a parte le frecce del calendario del sole (comandi «mese prima/dopo») e quelle del cubo 3D (orientamento) |
 | Gruppo | `ui/style.py` (`Group`) | cornice `line`, raggio 6, intestazione piena in `line_soft` per tutta la larghezza, «?» sulla riga del titolo; **richiudibile** (R287, riga sotto) |
 | Gruppo dentro un gruppo | `ui/style.py` (`Group.nested`) | a qualunque profondità, anche attraverso una pagina o un'area a scorrimento, non è una scheda (R343, Daniel 03/11/2026: «non mi piacciono le schede dentro le schede»): niente cornice né fascia piena, titolo `strong` su una linea `line` di 1 px per tutta la larghezza, il contenuto sul testo del padre senza margini propri (solo 6 px d'aria sotto la linea). Il chevron resta se è richiudibile, senza fondo: sotto il puntatore si scurisce lui. Regola unica: nessuno la chiede, il gruppo vede dove sta; rimesso fuori torna scheda con i suoi margini. Un titolo non ripete quello del padre: dentro la sezione Inverter gli inverter stanno senza gruppo, il «?» sull'intestazione della sezione |
 | Stile dentro un gruppo | `ui/style.py` (`MeridianaStyle`), `ui/scrollbars.py` | lo stile di `Group` è quello dell'applicazione (`ScrollStyle`) con in più i gruppi: col foglio di stile globale Qt passa lo stile di un widget ai figli, e con Fusion puro le aree dentro un gruppo avevano le barre con le frecce (R339) |
@@ -285,10 +315,11 @@ Regole:
 | Testata delle Verifiche | `ui/checks_page.ChecksPage.tools`, `ui/title_tools.py`, `ui/cards.CardTitle.set_tools` | la sola riga di testata (R345, Daniel 03/11/2026): titolo, pista delle viste, conteggi, a destra «Questa fase» e «Questo oggetto», «Copia le note per la relazione» come solo simbolo (20 px, `title-tool`, nome e suggerimento) e la X; strette, le parti vanno a capo ciascuna intera su righe sotto (mai tagliate né sovrapposte), una più larga di una riga si riduce al minimo (le parole delle piste con i puntini); la riga di sintesi sotto la testata c'è solo quando ha qualcosa da dire |
 | Schede delle Verifiche | `ui/checks_page.ChecksTree` | le voci di una sezione in una scheda, niente selezione; sotto il puntatore la voce intera col suo dettaglio prende lo strato `hover` (R153, R160); il segno tiene il suo colore anche sulla riga scelta |
 | Vista | `ui/cards.round_corners` | a 6 px dal bordo della sua scheda, quattro angoli a raggio 6 disegnati (non a maschera), 6 px fra due viste |
-| Barra della vista | `ui/viewbar.py` | soli simboli, nome e tasto nel suggerimento; raggio 6, pulsanti raggio 4; quando la barra larga mostra le parole, «Allinea a un lato» resta un'eccezione a sola icona (R183); «Nord in alto» non ha pulsante, restano N, bussola e menu del clic destro |
-| Nord, scala, fonte sulla pianta | `ui/plan_overlays.py` | stile B scelto il 24/10/2026: freccia sottile sotto la N, scala a linea con la lunghezza a destra, ciascuno in un riquadro trasparente al 55 % che lo avvolge con lo stesso margine; raggio 6, testo 12; mai uno sopra l'altro |
+| Barra della vista | `ui/viewbar.py` | soli simboli, nome e tasto nel suggerimento; raggio 6, pulsanti raggio 4; quando la barra larga mostra le parole, «Allinea a un lato» resta un'eccezione a sola icona (R183); «Nord in alto» non ha pulsante, restano N, il segno del nord (R643) e menu del clic destro |
+| Segno del nord (pianta, 3D, relazione) | disegno: `app/interface/north_sign.py` (letto dalla finestra con `Theme.signs.north` e dalla relazione in `report/figures.py`); finestra: `Controls/NorthSign.qml`, in pianta `Plan/Compass.qml`, in 3D `View3D/Viewport.qml` | R643 (Daniel 15/11/2026, proposta A dei bozzetti `meridiana-prove/r35-bussola`: «ago a due colori»), al posto del disco con la N e la freccina e dello stile B del 24/10/2026. Un ago a rombo in un riquadro di 100 unità: metà nord piena, metà sud tenue. **Sopra una vista**: disco di `ControlMetrics.northSign` (40 px) nel vetro `overlay.glass`, metà nord in `overlay.ink`, metà sud nello stesso inchiostro al 42 % (`north_sign.SOFT`); la N non c'è, la metà piena è il nord. Nord in alto: niente scritte. Vista ruotata: i gradi («37°», stile `label`, cifre di uguale larghezza) in una pillola di `northPill` (18 px) dello stesso vetro, raggio `CONTROL`, `Space.XS` sotto il disco, mai sulla mappa nuda; puntatore a mano e strato `overlay.hover` sul vetro; clic: nord in alto. Suggerimento con i gradi e l'ottante. In pianta in alto a destra a `Space.M` dai bordi, come prima; in 3D lo stesso segno piatto sullo schermo, sotto il cubo (`Space.S`), girato dove cade il nord della scena (`CubeMath.screenNorth`), clic: la camera guarda verso nord con la stessa altezza. **Sulla carta**: 12 mm (`PAPER_MM`), nero della relazione (`INK`), metà sud bianca col suo contorno di 0,3 mm (regge la fotocopia), «N» 2,8 mm semigrassetto sopra la punta, dritta; in alto a destra della pianta, nord in alto come la pianta stampata |
+| Scala, fonte sulla pianta | `Plan/ScaleBar.qml`, `Plan/MapNotice.qml` | scala a linea con la lunghezza a destra, ciascuna in un riquadro di vetro (`overlay.glass`) che la avvolge con lo stesso margine; raggio 6; mai uno sopra l'altro |
 | Riga delle fasi | `ui/phasebar.py` | linguette `control` (13 px), la fase in mano `strong`, con il disco del numero in `label`; sotto il puntatore un fondo `hover` di 28 px e raggio 6 come «File» (R160); la linguetta scelta e la scheda della barra sono una forma sola, unite da due angoli inversi del raggio delle schede (R84, come le linguette di GNOME); al cambio di fase la linguetta scorre fino alla nuova in 240 ms |
-| Pulsante «File» e pagina File | `ui/phasebar.py`, `ui/file_page.py` | a sinistra delle fasi e disegnato come loro: senza fondo, `hover` sotto il puntatore, `press` con la pagina aperta (R158, R160); la pagina è una scheda con l'elenco dei posti a sinistra (`body`) e riquadri a destra (`title` e `description`) |
+| Pulsante «File» e pagina File | `ui/phasebar.py`, `ui/file_page.py` | a sinistra delle fasi e disegnato come loro: senza fondo, `hover` sotto il puntatore, `press` con la pagina aperta (R158, R160); la pagina è una scheda con l'elenco dei posti a sinistra (`body`) e riquadri a destra (`title` e `description`) ; Quick (R578): ogni pagina di File e delle Impostazioni, comprese quelle che verranno, è larga al massimo `Layout.PAGE_WIDTH` (760, `Theme.layout.PAGE_WIDTH`) dopo il suo margine (`Layout.PAGE`): un solo valore in `File/FilePage.qml` (`right.pageWidth`) e in `File/FileSection.qml`, le colonne dei riquadri contate su quella larghezza; prova `quick.pagine.test_larghezza_r578` su ogni voce dell'elenco |
 | Barra dei menu | `ui/menubar.py` | nascosta: Alt la aggiunge al suo posto sopra la riga delle fasi e il resto della finestra scende per farle posto, e risale quando va via (R164, `motion.push`, 180 ms; la barra di stato resta ferma); Vista > Barra dei menu la tiene sempre |
 | Pulsanti delle schede | `ui/panel_buttons.py` | nella barra di stato, un'icona per scheda: piena se si vede, spenta se chiusa o coperta |
 | Aiuto | `ui/help_box.py` | scheda sotto Proprietà; il testo occupa lo spazio che c'è; un «?» o F1 lo blocca sull'argomento (puntina accanto al titolo), «Sgancia» lo mette in una finestrella sua (R44, R68) |
@@ -369,6 +400,41 @@ non sono segni di stato. La prova `tests/nucleo/test_symbols_sources.py` tiene l
   26/10/2026, «i contenuti ... arrivano fino al limite della scheda sfondandolo» (all'85 % sul bordo, e senza
   aria, quello che c'era sotto arrivava fino alla linea). Gli elenchi no: il loro margine in alto è quello
   dell'intestazione.
+  Quick (R590, Daniel 11/11/2026: «nel primo step di scrolling rimane proprio un taglio netto sulla scritta»): un
+  solo componente, `Controls/EdgeFades.qml`, messo da `M.ScrollPage` e da ogni `M.ScrollBar` verticale (anche
+  l'albero Progetto e le Verifiche, che avevano `Properties/ScrollEdges`, tolto). La sfumatura entra alta quanto il
+  contenuto già passato oltre il bordo (fino alla sua altezza piena), piena sul bordo dal primo pixel: prima entrava
+  intera ma trasparente in proporzione, e la riga tagliata restava nuda finché la lista non si era mossa di 24 px. In
+  `M.ScrollPage` l'aria sta dentro ciò che scorre (`airInside`, ora per tutte le pagine): il contenuto sfuma fino al
+  bordo del contenitore, senza la striscia vuota di 6 px dove spariva prima del bordo. La corsia della barra resta
+  fuori dalla sfumatura.
+  **La regola di oggi (R624, Daniel 15/11/2026: «la sfumatura deve essere una trasparenza gradiente del contenuto»,
+  «mantenerla ben centralizzata»)**: la sfumatura è il contenuto che diventa trasparente verso il bordo, e sotto si
+  vede quello che c'è (il pannello, la scheda, il fondo della relazione). Non è più una fascia di un colore dipinta
+  sopra: quella funzionava solo se il contenuto stava su quel colore, e sulle righe delle Verifiche (colore scheda
+  sopra il pannello) e sul foglio bianco della relazione nel tema scuro diventava un taglio netto o una fascia scura.
+  - Un solo componente: `Controls/EdgeFades.qml`, uno strato (`layer`) dell'area che scorre con lo shader
+    `Controls/edgefade.frag` (curva smoothstep: nessun gomito, quindi nessuna riga visibile dove la sfumatura comincia
+    o finisce). Lunghezza nel tema: `Size.FADE` (16 px, al massimo un quinto dell'area), uguale per elenchi, tabelle,
+    pagine, dialoghi e relazione. Il 15/11/2026 provata a 32 px (circa una riga): Daniel, dal programma vero,
+    preferisce 16 (R633).
+  - Nei pannelli di destra la cornice delle sottoschede di primo livello non sfuma (R633, «scheda sempre intera»): la
+    disegnano le testate tenute (`Controls/HeldHeads.qml`) sopra ciò che scorre, dalla testata (al suo posto o
+    tenuta) fino al fondo vero della sezione o, se la sezione prosegue oltre la parte visibile, fino al bordo visibile
+    (sopra le testate tenute in fondo, o l'aria della pagina), dove si chiude con il suo lato inferiore arrotondato.
+    Sfuma solo ciò che sta dentro.
+  - Lo mettono solo i componenti di scorrimento comuni (`M.ScrollPage`, `M.List`, `M.Tree`, `M.Table`, `M.Dialog`,
+    ogni `M.ScrollBar` verticale); parametri: l'area (`flickable`) e, se la barra sta dentro l'area, la sua corsia
+    (`barRoom`); nella pagina di un pannello, le testate tenute ai bordi (`held`, R633): sotto di loro il contenuto
+    non si vede e la sfumatura parte dal loro bordo, non da quello dell'area. Nessuna pagina fa una sfumatura da sé: gradienti, maschere, shader di dissolvenza fuori dal
+    componente fanno fallire `tests/quick/sistema/test_sfumature_r624.py` (eccezioni scritte lì, col perché).
+  - Compare solo dal lato dove c'è altro contenuto, alta quanto il contenuto già passato oltre il bordo (R590), e lo
+    strato è acceso solo allora (una superficie grande quanto l'area: circa 5 MB a scala 2 per un pannello 1000×300).
+  - Il renderer software di Qt (fuori schermo, le prove) non disegna shader: lì lo strato resta spento e il contenuto
+    è intero, senza sfumatura. Come appare si prova su Direct3D 11 con una finestra mai mostrata
+    (`tests/quick/controlli/test_dissolvenza_r624.py`, misura in `tests/quick/aiuti/dissolvenza.py`).
+  - A scala frazionaria (2,5) l'area che sta su mezzo pixel si sposta di un pixel quando lo strato si accende: niente
+    sfocatura, il testo resta nitido.
 - **Finestrelle** (`ui/popups.py`): suggerimenti, menu, elenchi a tendina e aiuto a comparsa entrano sfumando in
   110 ms; gli effetti di Qt, che a 200 % scattano, sono spenti. Su Windows 11 il sistema li arrotonda e disegna la
   loro ombra e il bordo nel colore `line`; altrove il foglio di stile disegna lo stesso bordo e, per i suggerimenti,
@@ -378,6 +444,11 @@ non sono segni di stato. La prova `tests/nucleo/test_symbols_sources.py` tiene l
   sotto diventano il nome (semigrassetto se segue una spiegazione), il tasto attenuato accanto, la spiegazione in
   un inchiostro più tenue 4 px sotto; a capo a 340 px; 6 px sopra e sotto e 8 ai lati (una riga: 28 px, come un
   controllo). Vale per ogni suggerimento, da dovunque venga, perché si formatta l'etichetta di Qt quando compare.
+  Colori (R615, Daniel 14/11/2026: «per i tooltip starei con il 92 %, ma invertirei i colori: tooltip chiaro con
+  tema chiaro e viceversa. Armonizziamo i loro colori di sfondo»): non più invertiti. Il fondo è quello dei menu e
+  delle finestrelle (`card`) all'opacità `TIP_ALPHA` = 92 % (il token `tooltip_bg`, in `theme_colors`), con il filo
+  `line` e il raggio `CARD` dei menu; il nome nel `text` del tema, spiegazione e tasto lo stesso `text` verso `card` (`TIP_SOFT` 0,22 e `TIP_KEY`
+  0,32: anche il tasto a 4,5:1 o più dal fondo, qualunque cosa ci sia sotto).
 - **Pagina File** (R157, riveduta con R178): entra in 180 ms con una dissolvenza e uno scorrimento di 16 px dal
   lato del menu (`ui/motion.enter`, `Entrance`). Il velo opaco tiene la fotografia di prima e dipinge quella della
   pagina: niente `QGraphicsOpacityEffect`, maschere o ridisposizioni ai fotogrammi. Con «meno movimento» la pagina è
@@ -404,7 +475,7 @@ non sono segni di stato. La prova `tests/nucleo/test_symbols_sources.py` tiene l
   (25/10/2026: «Energia acquistata (tutti i costi variabili, imposte comprese)» spingeva i campi del Bilancio oltre la
   scheda), due pulsanti che non ci stanno affiancati vanno uno sotto l'altro. Prima i contenuti uscivano dalla
   colonna Dati (24/10/2026).
-- **Trascinamento delle schede** (Quick: `Shell/Workbench.qml`, `DockPanel.qml`; R312, R504, studio 36): la scheda portata è un'immagine al puntatore (`cardLift`), senza animazione. Due segnali, uno dopo l'altro e dello stesso accento: **subito** il contorno d'aggancio (`M.DropOutline`) sul posto che la scheda avrà (la metà sopra o sotto della scheda accanto a cui va, sinistra o destra nella riga in basso, la scheda intera se va dietro come linguetta, la colonna o la riga intera se il lato è vuoto); **dopo l'attesa** di `Motion.DWELL` (280 ms, Daniel 06/11/2026: «ci sta») il segnaposto tratteggiato con il nome nasce dal contorno e le altre schede fanno spazio in `Motion.CAREFUL` (360 ms). Sul centro niente contorno: la scheda resta flottante dov'è lasciata. Mentre si porta una scheda la pianta e la vista 3D tengono la loro misura (le ritaglia lo spazio che cambia) e la prendono una volta sola al rilascio: così i buffer del 3D non si rifanno a ogni bersaglio. Le zone: bande di 32 px ai bordi (vince il lato più vicino), terzi sulla scheda, inerzia di 12 px.
+- **Trascinamento delle schede** (Quick: `Shell/Workbench.qml`, `DockPanel.qml`; R312, R504, R689, studio 36): la scheda portata conserva la misura iniziale, senza ingrandimento. Contorno immediato e segnaposto dopo DWELL promettono lo stesso posto finale esatto, con fondo neutro `hover` e bordo `card_line`; uno solo è mostrato alla volta. Le altre schede fanno spazio con CAREFUL ed EASE. Contenuti e viste restano alla misura naturale, tagliati dal contenitore che si muove; si impaginano all'inizio o alla fine, mai a ogni fotogramma. Le zone restano ferme durante il gesto: bande XXXL ai bordi e isteresi M anche alle diagonali. Le linguette si propongono solo con Alt. Le regole complete sono sotto, in «Spostamento delle schede».
 - **Rotella**: cambia un numero o una scelta solo nel campo che ha la tastiera; altrimenti fa scorrere la scheda
   (`ui/wheel.py`).
 - **Barre di scorrimento** (`ui/scrollbars.py`, R100; Daniel, 25/10/2026: «Le varie barre di scorrimento, quando
@@ -421,6 +492,84 @@ non sono segni di stato. La prova `tests/nucleo/test_symbols_sources.py` tiene l
   destra di ciò che scorre), e il cursore non va oltre 8 px dalle estremità (`scrollbars.END = Radius.CARD`),
   fuori dagli angoli tondi: R182, Daniel 26/10/2026, «mi piace di più la versione più attaccata al bordo destro
   della scheda ... anche se non deve sforare sopra e sotto».
+
+### Spostamento delle schede (R689, seguito del 16/11/2026)
+
+Un contenuto non si stira mai, né in larghezza né in altezza. Vale per la scheda portata,
+per il rilascio, per le schede vicine e per le viste. Il contenitore (fondo, bordo, angoli)
+cambia misura con CAREFUL ed EASE del tema. Il contenuto resta a scala 1 ed è tagliato
+con `clip`; quando la destinazione è nota, viene impaginato una volta alla misura finale.
+
+`Card.faceItem` separa testata e corpo dal fondo. `DockPanel` prepara questa superficie
+alla misura di `placed`, senza seguire le dimensioni intermedie del fondo animato.
+La fotografia del trasporto cattura soltanto quella superficie e conserva le dimensioni
+naturali, tagliata dal fantasma. Nessuna scala di sollevamento. Anche lasciata flottante,
+la scheda conserva la misura di partenza. `DockView` tiene il buffer alla misura naturale
+per tutto il gesto e il rilascio: il suo contenitore lo ritaglia. All'arrivo il contenuto
+vivo prende la misura vera; un eventuale raccordo usa soltanto la dissolvenza del tema.
+
+Contorno e segnaposto usano la disposizione finale di `slot` e `sliceRect`: stessi margini,
+GAP e angoli CARD del risultato. Il calcolo comprende lo spazio liberato all'origine e,
+con Alt, il gruppo di linguette, anche se la scheda bersaglio era affiancata.
+La loro geometria è ferma: animano le schede attorno. Non si mostrano due destinazioni
+contemporaneamente. Il fondo è `Theme.colors.hover`, il bordo `Theme.colors.card_line`,
+con spessore HAIR. Nessun colore d'accento nell'anteprima.
+
+Al rilascio vince la destinazione della promessa mostrata: non si ricalcola un bersaglio
+dalle coordinate dell'evento di rilascio. La fotografia raggiunge il posto dall'ultima
+posizione portata in un movimento solo; la scheda viva appare all'arrivo.
+Le aree d'aggancio restano quelle congelate all'inizio del gesto. L'isteresi M tiene
+la proposta anche vicino ai confini diagonali: lo spazio per restare è più largo di
+quello per entrare. L'anteprima si toglie quando il puntatore esce davvero dalla zona.
+
+Con movimento ridotto durate nulle, compresa l'attesa DWELL, e nessuna animazione
+geometrica. Le regole e le durate sono comuni a tutte le schede.
+
+### Menu del testo (R683, 16/11/2026)
+
+`TextActions` contiene stato, abilitazioni e azioni; `TextMenu` usa il Menu R662,
+senza uno stile parallelo. `TextKeys` instrada i tasti degli editor. Il servizio GUI
+`textEditing`, registrato da `install_controls`, fornisce traduzioni, tasti standard,
+appunti/MIME, testo leggibile da QTextDocument e incolla numerico. Nessun Qt entra in app/core.
+
+TextField, TextArea, NumberField, GrowingField e OverlayField ereditano lo stesso
+comportamento. Destro, Menu e Maiusc+F10 aprono il popup differito; pressione lunga
+usa gli eventi e la soglia di piattaforma. Il menu prende fuoco per la navigazione
+Qt e conserva la selezione. Il segnale nativo `editingFinished` può arrivare al
+passaggio al popup: i consumatori di TextField devono usare `commitRequested`,
+che differisce la conferma fino all'uscita reale. OverlayField differisce allo stesso
+modo `focusLost`. Identità/epoch, visibilità e disponibilità proteggono il bersaglio.
+
+Una sola guardia GUI di ShortcutOverride impedisce che Undo, Redo, Taglia, Copia,
+Incolla, Seleziona tutto e Canc raggiungano il progetto mentre si modifica testo,
+anche in un campo vuoto o readOnly. Le operazioni restano in TextActions; non si
+installano scorciatoie globali per campo. La cattura tasti delle Impostazioni
+disabilita esplicitamente il router. Password non esporta testo.
+
+`ReadableText` è TextArea bare readOnly, selezionabile anche da tastiera;
+`CopyLabel` serve per valori compatti o troncati e copia il valore completo.
+Pulsanti, assi, bussola e placeholder restano etichette. I tooltip transitori
+restano transitori: il controllo di origine espone Copia descrizione quando serve.
+Al momento dell'apertura si fissano selezione, intero, sorgente Markdown e
+descrizione: lo streaming non cambia ciò che il comando copierà.
+
+D1 B: un'unica politica numerica indica unità, tipo quantity facoltativo, limiti,
+precisione e locale. Incolla e Ctrl+V validano il risultato completo, anche al
+cursore o su selezione parziale; rifiutano ambiguità, unità incompatibili,
+multilinea e valori fuori limite. Le conversioni e le espressioni quantity restano
+nei campi che le supportavano. Una sostituzione QInputMethodEvent mantiene un
+solo undo locale e non riscrive gli appunti.
+
+Le copie semantiche usano TextActions anche nei menu esistenti: riga Verifiche con
+fonte senza duplicati, nome oggetto, riepiloghi, cella con unità, righe TSV da modello
+in ordine visibile, punto attivo del grafico, formula dalla sorgente TeX. La tabella
+ha un solo menu condiviso, senza crearne uno completo per cella. D2 B offre Markdown
+solo sui messaggi con sorgente formattata; D3 A rinvia il nuovo invito a Meridio.
+
+La relazione usa QPdfDocument.getAllText su QThreadPool; solo il filo GUI può
+scrivere gli appunti, verificando token e generazione. Leggi testo pagina apre
+ReadableText senza copiare. Cache e risultati tardivi rispettano la generazione;
+pagina senza testo non inventa un risultato. Nessun OCR o nuovo motore PDF.
 
 ## 6. Cosa non si fa
 
@@ -497,3 +646,50 @@ brutta, va rivista da un punto di vista estetico e di esposizione dei contenuti�
   una volta per ogni tipo di stringa, con gli ingressi su cui vale; le verifiche del capitolo per ambito.
 - **Copertina**: nel Completo dipinta a sé (`_paint_cover`); nel Sintetico un blocco chiuso da un filetto `<hr>`
   prima del primo capitolo. Intestazione e piè di pagina a 7,5 pt in `MUTED` dalla seconda pagina.
+
+## 9. Linee, pillole e contatori delle viste (R685, R692, 16/11/2026)
+
+La variante D usa un tratto sottile e un alone sempre presente, leggero e uniforme. Queste regole sostituiscono
+gli spessori e gli aloni precedenti del disegno, delle misure e delle selezioni. Il cubo e la barra della vista
+3D restano comandi di navigazione, con le proprie regole.
+
+I valori delle annotazioni stanno in `app/interface/view_colours.py.Annotation`, esposti da
+`gui/style/design.py.Annotation` e da `Theme.annotation`. I colori vengono dal tema e dai ruoli del disegno.
+
+| Elemento | Regola predefinita, in pixel logici |
+|---|---|
+| Linea | 1,5; alone nero con opacità 0,14, largo 2 in più del tratto; uguale in chiaro e scuro |
+| Tratteggio | 6 pieni, 4 vuoti, anche con zoom e rotazione; estremi piatti per conservare il vuoto |
+| Punto geometrico | 4,5; la zona che prende il clic conserva la sua misura separata |
+| Testo delle pillole | 11, peso normale 400; le preferenze del testo continuano ad applicarsi |
+| Direzione del testo | Lungo il lato o il segmento, angolo normalizzato in [-90°, 90°) |
+| Contatore | Disco alto 16 con una cifra; con più cifre cresce in larghezza mantenendo le estremità tonde |
+
+`Controls/ViewPath.qml` definisce lo stile delle ShapePath; `ViewStroke.qml` lo usa per i tratti singoli e
+`ViewPoint.qml` per i punti. `ViewMarks.js` contiene le forme degli agganci. `ViewMask.qml` applica lo stesso
+spessore e alone alla maschera di appartenenza della selezione. Le viste con molti elementi raggruppano i
+percorsi, mantenendo lo stile comune. I passaggi di solo riempimento hanno inchiostro trasparente: non aggiungono
+un secondo alone. Il vecchio alone nei dati della selezione è stato tolto.
+
+`LengthPill.qml` è la pillola comune di lati, stringhe, misure e totali; `SpanLabel.qml` ne conserva l'interfaccia
+per le misure. `CountBadge.qml` disegna i contatori, usato anche da Pill e CheckMark. Lati e stringhe misurano
+le collisioni sul rettangolo ruotato; le misure tengono conto anche delle pillole dei lati.
+
+[V] Software e Direct3D richiedono un adattamento diverso del tratto cosmetico e delle distanze del tratteggio;
+lo fa ViewPath. Le prove dei pixel verificano entrambe le scale 1 e 2,5 sui due renderer. Nella finestra completa
+Direct3D il renderer a curve perdeva alcuni poligoni della pianta, pur risultando pronto. I poligoni usano quindi
+GeometryRenderer dentro una sola superficie della vista con quattro campioni MSAA, dal tema; in software si
+disegna direttamente. I percorsi sullo schermo mantengono CurveRenderer. [I] Il costo della superficie su GPU e
+la fluidità con progetti grandi vanno controllati sullo schermo vero.
+
+Nel 3D `ViewRibbon.qml` fornisce il tratto e l'alone comuni a selezione, stringhe, ottimizzatori e passaggio del
+mouse. La sezione dei nastri e la prospettiva conservano i limiti del motore descritti nello studio 52.
+Le misure proiettate riusano MeasureLayer. Per R692 il lavoro `annotation_visibility` interseca i segmenti con
+le ombre geometriche dei triangoli reali della scena: edifici, moduli e facce IFC trasformate. Conserva gli
+intervalli visibili, senza sostituire le facce con le loro scatole. Il calcolo usa il processo dei lavori,
+con geometria riusata e cancellazione; le risposte di una camera precedente vengono scartate.
+
+La pillola di un tratto completamente coperto si nasconde; quella di un tratto coperto in parte usa la porzione
+visibile più lunga, quando vi entra, senza spostarsi oltre i suoi estremi. Anche punti, riferimenti, guide e
+tratto al puntatore rispettano i solidi. Durante un nuovo calcolo non si mostra la visibilità della camera
+precedente. Le guardie sulle sorgenti e le prove dei pixel sono elencate in `docs/revisioni/linee-d-verifiche.json`.

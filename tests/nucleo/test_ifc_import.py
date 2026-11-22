@@ -16,7 +16,10 @@ from pathlib import Path
 import _setup
 from _fixtures import RHO, exported, mixed
 
-from meridiana import geo, ifc_import, ifc_read, model, procmem
+from meridiana.core.geometry import geo
+from meridiana.app.exchange import ifc_import, ifc_read
+from meridiana.core.model import model
+from meridiana.core.compute import procmem
 
 IFC_DATA = _setup.DATA / "ifc"
 
@@ -36,11 +39,11 @@ class Memory(unittest.TestCase):
 
     def test_the_memory_of_a_process_counts_its_children_when_asked(self):
         # on Windows a venv's python.exe starts the interpreter as its child: the tree is what holds the memory
-        p = subprocess.Popen([sys.executable, "-c", "import time; x = bytearray(150 << 20); time.sleep(30)"])
+        p = subprocess.Popen([sys.executable, "-c", "import time; x = bytearray(150 << 20); time.sleep(30)"])  # wait: the child process stays alive until the test ends it
         self.addCleanup(p.kill)
         deadline = time.monotonic() + 20
         while time.monotonic() < deadline and (procmem.rss(p.pid, tree=True) or 0) < 150 << 20:
-            time.sleep(0.1)
+            time.sleep(0.1)  # wait: a breath between two looks at the condition, so the workers' threads run
         self.assertGreaterEqual(procmem.rss(p.pid, tree=True), 150 << 20)
         self.assertGreaterEqual(procmem.rss(p.pid, tree=True), procmem.rss(p.pid))
 
@@ -107,7 +110,7 @@ class RoundTrip(unittest.TestCase):
         self.assertEqual(self.plan.approximated, [])
 
     def test_one_undo_step_and_it_is_all_gone(self):
-        from meridiana.session import ProjectSession
+        from meridiana.app.session import ProjectSession
         session = ProjectSession(model.Project())
         session.project.site = model.Site(**RHO)
         session.edit("Import", lambda p: ifc_import.apply(p, self.plan))
@@ -291,7 +294,7 @@ class Worker(unittest.TestCase):
 
     def run_worker(self, path) -> tuple[int, list]:
         env = {**os.environ, "PYTHONPATH": str(_setup.ROOT / "src")}
-        out = subprocess.run([sys.executable, "-m", "meridiana.ifc_worker", str(path)], capture_output=True, text=True,
+        out = subprocess.run([sys.executable, "-m", "meridiana.app.exchange.ifc_worker", str(path)], capture_output=True, text=True,
                              encoding="utf-8", env=env, timeout=120, check=False)
         return out.returncode, [json.loads(line) for line in out.stdout.splitlines() if line.startswith("{")]
 

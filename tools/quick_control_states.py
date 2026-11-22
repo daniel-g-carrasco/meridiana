@@ -40,7 +40,7 @@ SPECS = {
     'Table': 'M.Table { width: 300; height: 190; columns: [{title:"Edificio",key:"name"},{title:"Potenza",key:"power",numeric:true}]; model: [{name:"Principale",power:"12,50"},{name:"Deposito",power:"5,00"}]; onRowActivated: probe.actions++ }',
     'Tree': 'M.Tree { width: 280; height: 170; model: [{text:"Progetto",id:"p",children:[{text:"Edificio",id:"b"}]},{text:"Impianto",id:"i"}]; onActivated: probe.actions++ }',
     'List': 'M.List { width: 280; height: 170; model: [{text:"Edificio",icon:"building"},{text:"Copertura",icon:"ridge"}]; onActivated: probe.actions++ }',
-    'Dialog': 'M.Dialog { objectName: "popup"; x: 8; y: 8; width: 330; title: "Proprieta"; acceptText: "Conferma"; rejectText: "Annulla"; onAccepted: probe.actions++; contentItem: M.Label { text:"Edificio principale" } }',
+    'Dialog': 'M.Dialog { objectName: "popup"; x: 8; y: 8; width: 330; title: "Proprieta"; acceptText: "Conferma"; rejectText: "Annulla"; onAccepted: probe.actions++; M.Label { text:"Edificio principale" } }',
     'EmptyState': 'M.EmptyState { width: 300; height: 190; title: "Nessun risultato"; description: "Calcola il progetto."; actionText: "Calcola"; onTriggered: probe.actions++ }',
     'ToolTip': 'M.Button { text: "Salva"; tip: "Conserva la copia precedente." }',
     'Pill': 'M.Pill { text: "Pronto" }',
@@ -79,8 +79,8 @@ def capture(theme, scale, names):
     from PySide6.QtQuick import QQuickItem, QQuickWindow
     from PySide6.QtTest import QTest
     from shiboken6 import delete
-    from meridiana.quick.backend.controls import install_controls
-    from meridiana.quick.capture import grab
+    from meridiana.gui.backend.controls import install_controls
+    from meridiana.gui.capture import grab
     from PIL import Image
 
     app = QGuiApplication.instance() or QGuiApplication(['control-states'])

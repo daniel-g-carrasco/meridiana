@@ -13,7 +13,7 @@ from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, Qt, QUrl
 from PySide6.QtGui import QWheelEvent
 from PySide6.QtQuick import QQuickView
 
-from meridiana.quick.backend.touchpad import (WINDOWS_PIXELS_PER_UNIT, WINDOWS_STREAM_MS, WheelKind,
+from meridiana.gui.backend.touchpad import (WINDOWS_PIXELS_PER_UNIT, WINDOWS_STREAM_MS, WheelKind,
                                               WindowsTouchpad)
 from quick.gestures import pump, wait_for
 
@@ -147,7 +147,7 @@ class Navigation(unittest.TestCase):
         from pathlib import Path
         from PySide6.QtQml import QJSEngine
         _setup.qt_or_skip()
-        qml = Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana'
+        qml = Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana'
         for name in ('Plan/Navigation.js', 'View3D/Navigation.js'):
             engine = QJSEngine()
             source = (qml / name).read_text(encoding='utf-8').replace('.pragma library', '')

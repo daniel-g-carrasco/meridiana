@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest import mock
 
 import _setup
-from meridiana import resources
+from meridiana.core.compute import resources
 
 GIB = resources.GIB
 setUpModule = _setup.keep_global_state         # configure() writes MERIDIANA_MEMORY_MODE for the processes it starts
@@ -22,7 +22,9 @@ class Modes(unittest.TestCase):
 
     def test_the_three_choices_and_what_each_may_spend(self):
         machine = (32 * GIB, 20 * GIB)
+        # study 56: what the caches of this process hold counts as available; none here
         with mock.patch.object(resources, "system_memory", lambda: machine), \
+                mock.patch.object(resources, "held", lambda: 0), \
                 mock.patch.object(resources, "memory_is_short", lambda: False):
             self.assertEqual(resources.Budget(mode="auto").bytes(), 18 * GIB)
             self.assertEqual(resources.Budget(mode="all").bytes(), 19 * GIB)
@@ -44,6 +46,7 @@ class Modes(unittest.TestCase):
                     self.assertTrue(resources.preload())
         # a PC with little free: everything down to a quarter, nothing ahead
         with mock.patch.object(resources, "system_memory", lambda: (8 * GIB, 5 * GIB)), \
+                mock.patch.object(resources, "held", lambda: 0), \
                 mock.patch.object(resources, "memory_is_short", lambda: True), \
                 mock.patch.dict(os.environ, {"MERIDIANA_PRELOAD": ""}):
             resources.configure("auto")
@@ -68,7 +71,7 @@ class Ahead(unittest.TestCase):
 
     def test_the_ifc_models_geometry_read_ahead_is_given_once(self):
         import numpy as np
-        from meridiana.quick.backend import scene_context
+        from meridiana.gui.backend import scene_context
         path = Path(self.temp.name) / "ifc-test.npz"
         np.savez(path, vertices=np.array([[0, 0, 0], [1, 0, 0], [0, 1, 2]], "<f4"),
                  faces=np.array([[0, 1, 2]], "<u4"), centre=np.zeros(3), pieces=np.array([[0, 3, 0, 1]]),
@@ -104,7 +107,7 @@ class Ahead(unittest.TestCase):
     def test_r27_the_reading_ahead_stops_when_the_window_closes(self):
         # r27: in r25 the process of the window sometimes did not end after the IFC import (the large test IFC, Dell): the thread
         # reading ahead is now stopped and waited for when the window closes, and what it made let go.
-        from meridiana.quick.backend import scene_context
+        from meridiana.gui.backend import scene_context
         path = self._mesh()
         self.addCleanup(scene_context.shutdown)
         started = threading.Event()
@@ -129,7 +132,7 @@ class Ahead(unittest.TestCase):
 
     def test_r27_the_reading_ahead_always_says_it_ended(self):
         # an error of any kind: the 3D that waits for it is never left waiting
-        from meridiana.quick.backend import scene_context
+        from meridiana.gui.backend import scene_context
         path = self._mesh()
         self.addCleanup(scene_context.shutdown)
 
@@ -137,7 +140,7 @@ class Ahead(unittest.TestCase):
             raise RuntimeError("broken on purpose")
         with mock.patch.dict(os.environ, {"MERIDIANA_PRELOAD": "1"}), \
                 mock.patch.object(scene_context, "prepared", broken), \
-                mock.patch("meridiana.log.complain") as complained:
+                mock.patch("meridiana.app.platform.log.complain") as complained:
             self.assertTrue(scene_context.preload(path))
             scene_context._THREADS[-1].join(5)
         self.assertEqual((scene_context._LOADING, scene_context._READY), ({}, {}))
@@ -147,7 +150,7 @@ class Ahead(unittest.TestCase):
     def test_r27_nothing_read_ahead_for_the_model_the_3d_shows(self):
         # the same file imported again: in r25 its geometry was read ahead and never taken (0.4-0.5 GB on the large test IFC)
         from PySide6.QtCore import QObject
-        from meridiana.quick.backend import scene_context
+        from meridiana.gui.backend import scene_context
         path = self._mesh()
         self.addCleanup(scene_context.shutdown)
         parent = QObject()
@@ -162,7 +165,7 @@ class Ahead(unittest.TestCase):
         # the dialog reads ahead without the storeys left out, the 3D asks with them: in r25 the 0.4 GB made ahead for
         # the large test IFC stayed for the session, never given
         from PySide6.QtCore import QObject
-        from meridiana.quick.backend import scene_context
+        from meridiana.gui.backend import scene_context
         path = self._mesh()
         self.addCleanup(scene_context.shutdown)
         with mock.patch.dict(os.environ, {"MERIDIANA_PRELOAD": "1"}):
@@ -176,33 +179,36 @@ class Ahead(unittest.TestCase):
             self.assertFalse(scene_context.preload(path))       # the file is shown, whatever the skip
 
     def test_the_reading_of_an_ifc_file_kept_for_the_session(self):
-        from meridiana.ui import ifc_import
-        self.addCleanup(ifc_import._KEPT.clear)
+        # R598: the reading is a job of the jobs' center and comes in pieces; the pieces are what is kept
+        from meridiana.app.exchange import ifc_job
+        self.addCleanup(ifc_job._KEPT.clear)
         path = Path(self.temp.name) / "model.ifc"
         path.write_text("ISO-10303-21;", encoding="ascii")
+
+        def unpacked():
+            unpack = ifc_job.Unpack(*ifc_job.kept(str(path)))
+            while not unpack.step():
+                pass
+            return unpack.result
         with mock.patch.dict(os.environ, {"MERIDIANA_PRELOAD": "1"}):
-            first = ifc_import.IfcReading(str(path))
-            first._keep({"buildings": [1, 2], "schema": "IFC4"})
-            again = ifc_import.IfcReading(str(path))
-            got = []
-            again.done.connect(got.append)
-            again.start()
-            self.assertIsNone(again.process)                         # no worker
-            self.assertTrue(_setup.wait_until(self.app, lambda: got, seconds=5))
-            self.assertEqual((got[0]["buildings"], got[0]["from_memory"]), ([1, 2], True))
-            got[0]["buildings"].append(3)                            # each asker has a copy of its own
-            self.assertEqual(again._kept() and len(__import__("pickle").loads(again._kept())["buildings"]), 2)
+            blobs = {}
+            layout = ifc_job.pack({"buildings": [1, 2], "schema": "IFC4"}, blobs.__setitem__)
+            ifc_job.keep(str(path), layout, blobs)
+            got = unpacked()
+            self.assertEqual(got["buildings"], [1, 2])
+            got["buildings"].append(3)                               # each asker has a copy of its own
+            self.assertEqual(unpacked()["buildings"], [1, 2])
             path.write_text("ISO-10303-21; changed", encoding="ascii")
             os.utime(path, ns=(time.time_ns(), path.stat().st_mtime_ns + 10**9))   # its time moved, as a save
-            self.assertIsNone(ifc_import.IfcReading(str(path))._kept())   # the file changed: read again
+            self.assertIsNone(ifc_job.kept(str(path)))               # the file changed: read again
         with mock.patch.dict(os.environ, {"MERIDIANA_PRELOAD": "0"}):
-            ifc_import.IfcReading(str(path))._keep({"x": 1})
-            self.assertIsNone(ifc_import.IfcReading(str(path))._kept())   # «Risparmia»: nothing kept
+            ifc_job.keep(str(path), layout, blobs)
+            self.assertIsNone(ifc_job.kept(str(path)))               # «Risparmia»: nothing kept
 
 
 class Activity(unittest.TestCase):
     def test_r27_the_designer_back_after_a_quiet_is_told_once(self):
-        from meridiana.quick.backend import activity
+        from meridiana.gui.backend import activity
         seen = []
 
         class Listener:
@@ -226,8 +232,8 @@ class Activity(unittest.TestCase):
     def test_r27_input_of_the_window_is_the_designer_at_work(self):
         from PySide6.QtCore import QEvent, QPointF, Qt
         from PySide6.QtGui import QMouseEvent, QWindow
-        from meridiana.quick.backend import activity
-        from meridiana.quick.backend.window_frame import AltTap
+        from meridiana.gui.backend import activity
+        from meridiana.gui.backend.window_frame import AltTap
         _setup.qt_or_skip()
         window = QWindow()
         AltTap(window, window)

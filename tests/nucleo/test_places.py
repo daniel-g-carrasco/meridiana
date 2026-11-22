@@ -8,7 +8,8 @@ from pathlib import Path
 import _setup  # noqa: F401
 from _fixtures import capannone_rho
 
-from meridiana import model, places
+from meridiana.core.model import model
+from meridiana.app.maps import places
 
 
 class Municipalities(unittest.TestCase):

@@ -1,0 +1,1 @@
+"""Minimal generic calculation scope."""

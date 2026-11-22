@@ -43,8 +43,8 @@ def main():
     engine.rootContext().setContextProperty("useMap", args.form == "map")
     preparations = []
     if args.renderer == "production":
-        from meridiana.quick.backend import charts_bridge, charts_data, charts_scene
-        from meridiana.quick.backend.tokens import install_theme
+        from meridiana.gui.backend import charts_bridge, charts_data, charts_scene
+        from meridiana.gui.backend.tokens import install_theme
         charts_bridge.register()
         _theme = install_theme(engine)  # Keep the context provider alive.
         original_prepare = charts_scene.prepare

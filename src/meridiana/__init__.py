@@ -8,6 +8,7 @@ variables) from them.
 """
 
 import sys
+from pathlib import Path
 
 __version__ = "0.2.1"
 
@@ -21,3 +22,9 @@ TEXTDOMAIN = SLUG
 ENV_PREFIX = "MERIDIANA"           # the developer aids: MERIDIANA_SCREENSHOT and the like
 GITHUB_REPO = "daniel-g-carrasco/meridiana"
 WEBSITE = f"https://github.com/{GITHUB_REPO}"
+
+# the two anchors of the paths (study 43, risk R3): the folder of the package and, in a checkout, the repository
+# (src/ is between them). A module finds a file by them, never by counting its own folders up from __file__: the
+# count breaks when the module moves to another layer.
+PACKAGE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = PACKAGE_DIR.parent.parent

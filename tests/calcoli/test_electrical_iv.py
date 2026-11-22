@@ -4,9 +4,9 @@ import unittest
 import _setup  # noqa: F401
 import numpy as np
 
-from meridiana.energy import electrical
-from meridiana.energy.components import ModuleSpec, TYPICAL_450
-from meridiana.energy.dependencies import load_pvlib
+from meridiana.core.energy import electrical
+from meridiana.core.energy.components import ModuleSpec, TYPICAL_450
+from meridiana.core.energy.dependencies import load_pvlib
 
 
 def module():
@@ -86,8 +86,8 @@ class Circuit(unittest.TestCase):
 
 class BlockGeometry(unittest.TestCase):
     def test_missing_cell_count_preserves_block_shadow_and_declares_lower_resolution(self):
-        from meridiana import layout
-        from meridiana.energy import nearshade
+        from meridiana.core.layout import layout
+        from meridiana.core.energy import nearshade
         pm = layout.PlacedModule(0, 0, 0, [(0, 0), (1, 0), (1, 2), (0, 2)], (0.5, 1), 0, 0, 0)
         solid = nearshade.prism([(0, -1), (.4, -1), (.4, .5), (0, .5)], 0, 2)
         sh = nearshade.shading([pm], solid, 0, 0, layout=(3, 2))
@@ -97,8 +97,8 @@ class BlockGeometry(unittest.TestCase):
         np.testing.assert_allclose(actual, expected)
 
     def test_block_areas_conserve_the_module_shadow_area(self):
-        from meridiana import layout
-        from meridiana.energy import nearshade
+        from meridiana.core.layout import layout
+        from meridiana.core.energy import nearshade
         pm = layout.PlacedModule(0, 0, 0, [(0, 0), (1, 0), (1, 2), (0, 2)], (0.5, 1), 0, 0, 0)
         solids = nearshade.prism([(0, -1), (0.4, -1), (0.4, 0.5), (0, 0.5)], 0, 2)
         sh = nearshade.shading([pm], solids, 0, 0, layout=(3, 2), cell_count=108)
@@ -110,7 +110,7 @@ class BlockGeometry(unittest.TestCase):
         np.testing.assert_allclose(cohorts @ np.linspace(0, 1, nearshade.CELL_LEVELS), block, atol=4e-5)
 
     def test_cell_shadow_quantization_converges_on_concentrated_and_distributed_patterns(self):
-        from meridiana.energy import nearshade
+        from meridiana.core.energy import nearshade
         m = module()
         patterns = np.array([[0] * 17 + [.13, .53, .81], [.21] * 20, [0] * 19 + [1.]])
         powers = {}
@@ -129,7 +129,7 @@ class HourByHour(unittest.TestCase):
     the electrical network computes the shaded hours of a module and takes its clear hours from another module."""
 
     def batch(self):
-        from meridiana.energy import nearshade
+        from meridiana.core.energy import nearshade
         rng = np.random.default_rng(7)
         hours, blocks, levels = 8, 6, nearshade.CELL_LEVELS
         fractions = np.zeros((hours, blocks, levels))

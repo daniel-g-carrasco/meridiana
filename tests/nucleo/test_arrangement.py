@@ -3,8 +3,8 @@ nothing that jumps to and fro near a threshold (Daniel: «nessun cambio a sorpre
 
 import unittest
 
-from meridiana import phases
-from meridiana.arrangement import (BAND, BESIDE, ICONS, UNDER, Arrangement, Choices, arrangement, changes, clean_pins,
+from meridiana.app.interface import phases
+from meridiana.app.interface.arrangement import (BAND, BESIDE, ICONS, UNDER, Arrangement, Choices, arrangement, changes, clean_pins,
                                    from_dict, pinned, shape_of)
 
 # the widths the bars ask for with the Italian words (BC-dopo.json, 03/11/2026)

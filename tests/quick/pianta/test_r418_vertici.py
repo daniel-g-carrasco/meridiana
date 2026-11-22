@@ -9,9 +9,10 @@ import unittest
 
 from shapely.geometry import Polygon
 
-from meridiana import layout, manual, model
-from meridiana.quick.backend.plan_edit import PlanEditor
-from meridiana.session import ProjectSession
+from meridiana.core.layout import layout, manual
+from meridiana.core.model import model
+from meridiana.gui.backend.plan_edit import PlanEditor
+from meridiana.app.session import ProjectSession
 
 TRAPEZIO = [[0, 2.6], [16.2, 0], [20.0, 21.2], [0.6, 22.0]]
 

@@ -1,6 +1,6 @@
 ; Inno Setup script for Meridiana (Inno Setup 6.4 or later: the windows-2025 runner has 6.7).
 ; Compiled by the CI with:  ISCC.exe /DAppVersion=X.Y.Z build-aux\windows\meridiana.iss
-; or by build-aux\windowsuild.ps1, which gives it the version of src\meridiana\__init__.py (r28).
+; or by build-aux\windows\build.ps1, which gives it the version of src\meridiana\__init__.py (r28).
 ; Expects the PyInstaller output in dist\Meridiana (repository root) and build-aux\windows\meridiana.ico
 ; (tools/make_ico.py).
 ;

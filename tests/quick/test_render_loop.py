@@ -13,7 +13,7 @@ import sys
 import unittest
 from pathlib import Path
 
-from meridiana.quick.app import render_loop
+from meridiana.gui.application import render_loop
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -33,7 +33,7 @@ class RenderLoop(unittest.TestCase):
         env = {k: v for k, v in os.environ.items() if k != 'QSG_RENDER_LOOP'}
         env.update(QT_QPA_PLATFORM='offscreen', PYTHONUTF8='1',
                    PYTHONPATH=os.pathsep.join((str(ROOT/'src'), str(ROOT/'tests'))))
-        code = ('import os\nfrom meridiana.quick.app import create_app\ncreate_app()\n'
+        code = ('import os\nfrom meridiana.gui.application import create_app\ncreate_app()\n'
                 'print("loop", os.environ.get("QSG_RENDER_LOOP"))\n')
         out = subprocess.run([sys.executable, '-c', code], env=env, capture_output=True, text=True, timeout=120,
                              cwd=ROOT)
@@ -42,7 +42,7 @@ class RenderLoop(unittest.TestCase):
     def test_a_loop_said_by_the_user_wins(self):
         env = dict(os.environ, QT_QPA_PLATFORM='offscreen', QSG_RENDER_LOOP='threaded', PYTHONUTF8='1',
                    PYTHONPATH=os.pathsep.join((str(ROOT/'src'), str(ROOT/'tests'))))
-        code = ('import os\nfrom meridiana.quick.app import create_app\ncreate_app()\n'
+        code = ('import os\nfrom meridiana.gui.application import create_app\ncreate_app()\n'
                 'print("loop", os.environ.get("QSG_RENDER_LOOP"))\n')
         out = subprocess.run([sys.executable, '-c', code], env=env, capture_output=True, text=True, timeout=120,
                              cwd=ROOT)

@@ -10,8 +10,9 @@ from PySide6.QtCore import QObject, QPointF, QCoreApplication, QEvent
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 
-from meridiana.quick.backend.controls import install_controls
+from meridiana.gui.backend.controls import install_controls
 from quick.gestures import pump, wait_for
+from quick.aiuti.caratteri import glyph
 
 
 def visual_items(window):
@@ -74,7 +75,7 @@ Window { visible: true; width: 380; height: 300
     def test_label_columns_use_widgets_wrapping_at_each_text_size(self):
         from PySide6.QtGui import QFont
         from PySide6.QtWidgets import QLabel
-        from meridiana.quick.backend.properties import PropertyField
+        from meridiana.gui.backend.properties import PropertyField
         for size in (10, 12, 15):
             font = QFont('IBM Plex Sans', size)
             for text in ('Name', 'Potenza del singolo modulo', 'Azimut dei moduli rispetto al nord',
@@ -110,29 +111,25 @@ Window { visible: true; width: 380; height: 300
         self.assertGreater(form_ink(image, QPointF(), 370), 100)
 
     def test_field_minimum_widths_follow_widgets_range_and_choice_metrics(self):
-        from meridiana.config import Config
-        from meridiana.ui.theme import Theme
-        from meridiana.ui.properties import spin, combo
-        from meridiana.quick.backend.properties import PropertyField
-        from shiboken6 import delete
-        look = Theme(Config(font='plex', theme='light'), app=self.app)
-        self.addCleanup(delete, look)
-        for lo, hi, unit, decimals in [(0, 1e9, 'kW', 2), (.5, 300, 'm', 2),
-                                        (0, 50000, 'V', 0), (-180, 180, '°', 1)]:
-            widget = spin(lo, hi, lo, ' ' + unit, decimals)
-            widget.ensurePolished()
+        # the minimum widths of the Widgets' fields for these ranges in IBM Plex Sans at 9.75 pt, their font
+        # (measured on 10/11/2026 with ui/properties.spin and combo, when the Widgets went)
+        from PySide6.QtGui import QFont
+        from meridiana.gui.backend.properties import PropertyField
+        from meridiana.gui.style import theme
+        family, _tight = theme._font_families('plex')
+        self.assertEqual(family, 'IBM Plex Sans')
+        font = QFont(family)
+        font.setPointSizeF(9.75)
+        for (lo, hi, unit, decimals), width in zip([(0, 1e9, 'kW', 2), (.5, 300, 'm', 2), (0, 50000, 'V', 0),
+                                                    (-180, 180, '°', 1)], (171, 120, 105, 109), strict=True):
             data = dict(kind='number', minimum=lo, maximum=hi, unit=unit, decimals=decimals, special='')
-            field = PropertyField(data, None)
-            self.assertEqual(field.editorMinimum(widget.font()), widget.minimumSizeHint().width(), unit)
-            delete(widget)
-        widget = combo([(1, 'A choice')], 1)
-        widget.ensurePolished()
-        self.assertEqual(PropertyField(dict(kind='choice'), None).editorMinimum(widget.font()), widget.minimumSizeHint().width())
-        delete(widget)
+            # the width of the longest number in the font: a pixel apart outside Windows (quick/aiuti/caratteri.py)
+            self.assertAlmostEqual(PropertyField(data, None).editorMinimum(font), width, delta=glyph(), msg=unit)
+        self.assertAlmostEqual(PropertyField(dict(kind='choice'), None).editorMinimum(font), 124, delta=glyph())
 
     def test_complete_pages_follow_selection_and_calculated_checks_in_workbench(self):
-        from meridiana import jobs
-        from meridiana.quick.app import QuickWindow
+        from meridiana.app import jobs
+        from meridiana.gui.application import QuickWindow
         with tempfile.TemporaryDirectory() as directory:
             host = QuickWindow(capannone(), Path(directory), real_views=True)
             try:
@@ -158,35 +155,36 @@ Window { visible: true; width: 380; height: 300
                 self.assertTrue(host.bridge.accept_layout(host.bridge.session.generation, results, keys))
                 self.assertEqual(host.bridge.session.results.keys(), results.keys())
                 checks = host.parts.controllers['checks']
-                self.assertTrue(_setup.wait_until(self.app, lambda: not checks.busy, seconds=15))
-                self.assertTrue(checks.items)
-                from meridiana.checks import Item
-                # A positioned core check reaches the plan as well as the tree.
+                # the checks are a job that starts after the layout is accepted: wait for what is meant, the
+                # items, not for a «not busy» that is also true before the job has started
+                self.assertTrue(_setup.wait_until(self.app, lambda: bool(checks.items) and not checks.busy, seconds=30))
+                from meridiana.core.rules.checks import Item
+                # A positioned core check reaches the plan and the 3D view; the tree carries no marks (R604).
                 checks.show_items([*checks.items, Item('warn', 'roof', 'Roof detail', target=('building', 'b1'))])
                 self.assertTrue(host.plan.marks)
                 inspectors = host.parts.controllers['inspectors']
                 self.assertTrue(inspectors.marks3d)
                 self.assertIsNotNone(host.window.findChild(QObject, 'check-scene-marks'))
-                from meridiana import mesh, viewaids
+                from meridiana.core.geometry import mesh
+                from meridiana.app.view import viewaids
                 x, y, z = viewaids.anchor(host.bridge.session.project, 'building', 'b1')
                 mark = next(m for m in inspectors.marks3d if m['kind'] == 'building' and m['oid'] == 'b1')
                 self.assertEqual(mark['point'], list(mesh.to_qt(x, y, z + .6)))
                 tree = host.parts.controllers['project_tree']
-                self.assertTrue(any(r['markCount'] for r in tree.rows))
+                self.assertFalse([r for r in tree.rows if any(k.startswith('mark') for k in r)])
                 host.window.showPhase('report')
                 _setup.wait_until(self.app, lambda: checks.view == 'delivery', seconds=5)     # r21-f6c: the phase changes once the frame is photographed (a frame after the gesture)
                 self.assertEqual(checks.view, 'delivery')
                 host.window.showPhase('model')
                 _setup.wait_until(self.app, lambda: checks.view == 'level', seconds=5)
                 self.assertEqual(checks.view, 'level')
-                help_service = host.parts.controllers['assistant_help']
-                from PySide6.QtTest import QSignalSpy
-                requested = QSignalSpy(help_service.changed)
-                backend.help('building')
-                self.assertEqual(requested.count(), 1)
-                layer = host.window.findChild(QObject, 'assistantLayer')
-                self.assertTrue(layer.property('opened'))
-                layer.dismiss()
+                # R597: the help of the selection is the card's «?», in its bubble (no more Meridio)
+                book = host.parts.controllers['help']
+                host.bridge.session.select('site', '')
+                self.assertEqual(book.cardKey, 'site')
+                host.bridge.session.select('building', 'b1')
+                self.assertEqual(book.cardKey, 'building')
+                self.assertTrue(book.entry('building')['text'])
                 inspectors = host.parts.controllers['inspectors']
                 inspectors.highlight_side('building', 'b1', 0)
                 overlay = host.window.findChild(QObject, 'property-side-highlight')
@@ -229,8 +227,8 @@ Window { visible: true; width: 380; height: 300
 
     @unittest.skipUnless(os.environ.get('MERIDIANA_QUICK_NATIVE') == '1', 'Native R377 frames are opt-in')
     def test_r377_actual_workbench_never_shows_an_empty_inspector(self):
-        from meridiana.quick.app import QuickWindow, create_app
-        from quick.parity.realwindow import FrameRecorder
+        from meridiana.gui.application import QuickWindow, create_app
+        from quick.aiuti.realwindow import FrameRecorder
         create_app()
         with tempfile.TemporaryDirectory() as directory:
             host = QuickWindow(capannone(), Path(directory), real_views=True)

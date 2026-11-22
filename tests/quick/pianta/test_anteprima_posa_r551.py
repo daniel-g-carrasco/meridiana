@@ -15,10 +15,11 @@ import unittest
 import _setup
 from shapely.geometry import Polygon
 
-from meridiana import layout, manual, model, move
-from meridiana.quick.backend.plan_edit import PlanEditor
-from meridiana.quick.backend.plan_tools import DrawingMachine
-from meridiana.session import ProjectSession
+from meridiana.core.layout import layout, manual
+from meridiana.core.model import model, move
+from meridiana.gui.backend.plan_edit import PlanEditor
+from meridiana.gui.backend.plan_tools import DrawingMachine
+from meridiana.app.session import ProjectSession
 
 setUpModule = _setup.keep_global_state
 

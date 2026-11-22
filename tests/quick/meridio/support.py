@@ -3,7 +3,7 @@ import threading
 
 from PySide6.QtCore import QObject, Signal
 from _fixtures import capannone_rho
-from meridiana.assistant import providers
+from meridiana.app.assistant import providers
 
 
 class KeyStore:
@@ -58,6 +58,12 @@ class Host:
 
     def phase_title(self):
         return "Model"
+
+    def place(self):
+        return self.phase()
+
+    def place_title(self):
+        return self.phase_title()
 
     def path(self):
         return None

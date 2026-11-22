@@ -7,8 +7,8 @@ import unittest
 
 from PySide6.QtWidgets import QApplication
 
-from meridiana import model
-from meridiana.quick.backend.plan import PlanController
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController
 
 APP = None
 

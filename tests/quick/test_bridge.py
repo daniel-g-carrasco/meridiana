@@ -2,14 +2,13 @@
 import tempfile
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
 from pathlib import Path
 
-from meridiana.quick.app import create_app
+from meridiana.gui.application import create_app
 
 from _fixtures import capannone
-from meridiana import jobs
-from meridiana.quick.bridge import Bridge
+from meridiana.app import jobs
+from meridiana.gui.bridge import Bridge
 from quick.gestures import wait_for
 
 
@@ -86,8 +85,7 @@ class BridgeTest(unittest.TestCase):
         hourly = pd.DataFrame({'e_kwh': [2.] * 8760},
                               index=pd.date_range('2025-01-01', periods=8760, freq='h', tz='Europe/Rome'))
         sim = SimpleNamespace(hourly=hourly, energy_kwh=17520.)
-        with patch.object(b, '_request_checks'):
-            b._finished(0, {'sim': sim}, [], {})
+        b._finished(0, {'sim': sim}, [], {})
         self.assertEqual(b.year['hours'], 8760)
         self.assertEqual(len(b.year['points']), 365)
         self.assertAlmostEqual(sum(b.year['daily']), b.year['totalValue'])
@@ -120,10 +118,10 @@ class BridgeTest(unittest.TestCase):
         b.session.results['s1'].notes.append('Fixture layout note')
         b.select('subfield', 's1', '')
         b.rename('PreviousName')
-        wait_for(lambda: not b.busy)
+        wait_for(lambda: not b.busy and not b.checks_feed.busy())
         self.assertTrue(any('PreviousName' in row['text'] for row in b.checkRows))
         b.rename('QuickName')
-        wait_for(lambda: not b.busy)
+        wait_for(lambda: not b.busy and not b.checks_feed.busy())
         self.assertTrue(any('QuickName' in row['text'] for row in b.checkRows))
         self.assertFalse(any('PreviousName' in row['text'] for row in b.checkRows))
         self.assertEqual(b.session.generation, 0)
@@ -134,7 +132,7 @@ class BridgeTest(unittest.TestCase):
         b.session.results['s1'] = ValueError('Broken layout')
         b.select('subfield', 's1', '')
         b.rename('BrokenField')
-        wait_for(lambda: not b.busy)
+        wait_for(lambda: not b.busy and not b.checks_feed.busy())
         self.assertTrue(any(row['level'] == 'fail' and 'BrokenField' in row['text'] for row in b.checkRows))
 
 

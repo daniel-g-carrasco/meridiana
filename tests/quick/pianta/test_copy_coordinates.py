@@ -8,8 +8,10 @@ import unittest
 import _setup
 from PySide6.QtGui import QGuiApplication
 
-from meridiana import coordinates, geo, i18n, model
-from meridiana.quick.backend.plan import PlanController
+from meridiana.core.geometry import coordinates, geo
+from meridiana import i18n
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController
 
 setUpModule = _setup.keep_global_state
 

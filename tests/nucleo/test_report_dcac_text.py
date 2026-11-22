@@ -3,13 +3,13 @@ import unittest
 from unittest import mock
 
 from meridiana import i18n
-from meridiana.report_typst import chapters
+from meridiana.app.report import chapters
 
 
 class CutEnergy(unittest.TestCase):
     def test_the_cut_is_printed_as_the_percentage_it_is(self):
         i18n.setup("en")
-        with mock.patch("meridiana.energy.plant.dcac", return_value=(1.35, 0.726)):
+        with mock.patch("meridiana.core.energy.plant.dcac", return_value=(1.35, 0.726)):
             text = chapters._dcac_text(object())
         self.assertIn("0.7 %", text)
         self.assertNotIn("72.6", text)

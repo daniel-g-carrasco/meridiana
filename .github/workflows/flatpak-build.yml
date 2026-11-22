@@ -7,11 +7,13 @@ on:
     branches: ['**']
     paths:
       - 'build-aux/flatpak/**'
+      - 'build-aux/flatpak-quick/**'
       - '.github/workflows/flatpak-build.yml'
       - 'requirements.txt'
   pull_request:
     paths:
       - 'build-aux/flatpak/**'
+      - 'build-aux/flatpak-quick/**'
       - '.github/workflows/flatpak-build.yml'
       - 'requirements.txt'
 
@@ -38,16 +40,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y flatpak flatpak-builder elfutils appstream librsvg2-common
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user --noninteractive flathub org.kde.Platform//6.11 org.kde.Sdk//6.11 io.qt.PySide.BaseApp//6.11
+          flatpak install --user --noninteractive flathub org.kde.Platform//6.11 org.kde.Sdk//6.11
       - name: Build without installing the app
         run: |
           flatpak-builder --user --disable-rofiles-fuse --ccache=false --repo=repo build-dir "$MANIFEST"
       - name: Check the packaged program offscreen
         run: |
           mkdir smoke
-          flatpak-builder --run --env=QT_QPA_PLATFORM=offscreen \
+          cp docs/quick/compat/fixtures/rho.meridiana tests/calcoli/riferimenti/pvgis53-tmy-rho.json.gz smoke/
+          flatpak-builder --run --env=QT_QPA_PLATFORM=offscreen --env=PYTHONPATH=/app/share/meridiana/src \
             --filesystem="$PWD/smoke" build-dir "$MANIFEST" \
-            sh -c 'meridiana --self-test "$1/self-test.txt"' sh "$PWD/smoke"
+            sh -c 'unset QT_PLUGIN_PATH QML2_IMPORT_PATH QML_IMPORT_PATH; python3 -m meridiana.gui.package_check "$1/rho.meridiana" "$1/check" --language en \
+              --weather "$1/pvgis53-tmy-rho.json.gz"' sh "$PWD/smoke"
       - name: Create the installable bundle and checksum
         run: |
           flatpak build-bundle repo meridiana-linux-x86_64.flatpak io.github.daniel_g_carrasco.meridiana stable \
@@ -60,5 +64,6 @@ jobs:
           path: |
             meridiana-linux-x86_64.flatpak
             meridiana-linux-x86_64.flatpak.sha256
-            smoke/self-test.txt
+            smoke/check/check.txt
+            smoke/check/check.json
           if-no-files-found: error

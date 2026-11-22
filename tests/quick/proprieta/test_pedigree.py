@@ -2,6 +2,7 @@
 import threading
 import time
 import unittest
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -16,9 +17,9 @@ from PySide6.QtTest import QTest
 from shiboken6 import delete
 
 from meridiana import i18n
-from meridiana.energy.pedigree import Quantity, Record, Source, Step, limits
-from meridiana.quick.backend.controls import install_controls
-from meridiana.quick.backend.properties_pedigree import PedigreeBackend
+from meridiana.core.energy.pedigree import Quantity, Record, Source, Step, limits
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.backend.properties_pedigree import PedigreeBackend
 
 
 def sample_records():
@@ -37,13 +38,15 @@ class PedigreeTest(unittest.TestCase):
         deadline = time.monotonic() + 10
         while not condition() and time.monotonic() < deadline:
             self.app.processEvents()
-            time.sleep(.005)
+            time.sleep(.005)  # wait: a breath between two looks at the condition, so the workers' threads run
         self.assertTrue(condition())
 
     def test_backend_imports_without_widgets(self):
         result = subprocess.run([sys.executable, "-c", "import sys; "
-            "from meridiana.quick.backend.properties_pedigree import PedigreeBackend; "
-            "assert 'PySide6.QtWidgets' not in sys.modules"], capture_output=True, text=True)
+            "from meridiana.gui.backend.properties_pedigree import PedigreeBackend; "
+            "assert 'PySide6.QtWidgets' not in sys.modules"], capture_output=True, text=True,
+            # the sources on the path as in the tests' own process: the CI installs only the requirements
+            env=dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[3] / "src")))
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_invalid_formula_keeps_error_for_readable_fallback(self):
@@ -80,7 +83,7 @@ class PedigreeTest(unittest.TestCase):
             return {"source": "data:image/png;base64,abc", "width": 50, "height": 20, "error": ""}
 
         backend.formulaReady.connect(lambda key, result: completed.append((key, result)))
-        with patch("meridiana.quick.backend.properties_pedigree.render_formula", render):
+        with patch("meridiana.gui.backend.properties_pedigree.render_formula", render):
             backend.show_records(sample_records())
             self.assertEqual(calls, [])
             first = backend.requestFormula("E=P t", 14, "#222222", "IBM Plex Sans", 1)
@@ -103,7 +106,7 @@ class PedigreeTest(unittest.TestCase):
         i18n.setup("it")
         self.addCleanup(i18n.setup, original_language)
         backend.show_records(sample_records())
-        path = Path("src/meridiana/quick/qml/Meridiana/Properties/PedigreePage.qml").resolve()
+        path = Path("src/meridiana/gui/qml/Meridiana/Properties/PedigreePage.qml").resolve()
         component = QQmlComponent(engine, QUrl.fromLocalFile(str(path)))
         root = component.createWithInitialProperties({"backend": backend})
         self.assertIsNotNone(root, "\n".join(e.toString() for e in component.errors()))

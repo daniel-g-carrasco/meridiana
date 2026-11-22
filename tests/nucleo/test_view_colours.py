@@ -6,8 +6,8 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import theme_colors as tc
-from meridiana import view_colours as vc
+from meridiana.app.interface import theme_colors as tc
+from meridiana.app.interface import view_colours as vc
 
 ROOFS = ("#e8e6e0", "#bdbab2", "#6b6660", "#2c2a28", "#9a5a3e", "#5d7a4a")     # light, grey, dark, tiles, grass
 OUTLINES = ("bld_stroke", "pitch", "sub_stroke", "exclusion", "sel", "hover", "guide", "draw")
@@ -15,11 +15,12 @@ OUTLINES = ("bld_stroke", "pitch", "sub_stroke", "exclusion", "sel", "hover", "g
 
 class SelectionIn3D(unittest.TestCase):
     """R360: the selection's ribbons thinner; measured on the screen 6.5 px across before, 2.5 after (the plan's 2.6). Its
-    dark edge makes it read where its tint alone would not."""
+    dark edge makes it read where its tint alone would not. R685 (16/11/2026): the selection and what is under the
+    pointer take the one line of the views, the tint tells them apart."""
 
     def test_thinner_than_they_were_and_with_a_dark_edge_outside_them(self):
         self.assertLess(vc.RIBBONS["select"], 4.0)
-        self.assertLess(vc.RIBBONS["hover"], vc.RIBBONS["select"])
+        self.assertEqual(vc.RIBBONS, {"select": vc.Annotation.STROKE, "hover": vc.Annotation.STROKE})
         self.assertGreater(vc.RIBBON_HALO, vc.RIBBONS["select"])
 
     def test_on_any_roof_the_tint_or_its_edge_stands_out(self):
@@ -81,7 +82,7 @@ class ThreeD(unittest.TestCase):
             self.assertGreater(tc.lch(vc.D3[key])[2], 200)           # and blue
 
     def test_the_selection_stands_out_from_the_roofs_the_walls_and_the_modules(self):
-        from meridiana import mesh
+        from meridiana.core.geometry import mesh
 
         def hexed(rgb):
             return "#" + "".join(f"{round(c * 255):02x}" for c in rgb)
@@ -134,20 +135,20 @@ class ThreeD(unittest.TestCase):
 
 
 class Strokes(unittest.TestCase):
-    """R35 (Daniel, 23/10/2026): «diamo un buono spessore a tutto»."""
+    """R685 (Daniel, 16/11/2026): thin lines, one width for every outline of the plan and the 3D view, with a light halo
+    always there and the same everywhere (it replaces R35's «diamo un buono spessore a tutto»)."""
 
-    def test_the_outlines_are_about_two_pixels_and_the_selection_thicker(self):
+    def test_the_outlines_are_one_thin_line_over_one_halo(self):
         w = vc.WIDTHS
-        for key in ("building", "subfield", "exclusion", "draw", "measure"):
-            self.assertGreaterEqual(w[key], 2.0, key)
-            self.assertLessEqual(w[key], 3.0, key)
-        self.assertGreaterEqual(w["pitch"], 1.5)
-        self.assertGreater(w["select"], w["building"])
-        self.assertGreater(w["hover"], w["pitch"])
-        self.assertGreater(w["halo"], 2.0)                           # the halo shows around the thicker stroke
-        self.assertLess(w["module_line"], 1.0)                       # the modules' lines stay thin
-        self.assertGreater(vc.RIBBONS["select"], vc.RIBBONS["hover"])
-        self.assertGreaterEqual(vc.RIBBON_HALO, w["select"] - 0.1)    # R360: with its edge, about the plan's line
+        halos = {"halo", "select_halo"}
+        for key in set(w) - halos:
+            self.assertEqual(w[key], vc.Annotation.STROKE, key)
+        for key in halos:
+            self.assertEqual(w[key], vc.Annotation.HALO_EXTRA, key)
+        self.assertLessEqual(vc.Annotation.STROKE, 2.0)              # thin, but still a line on a 4K screen
+        self.assertGreaterEqual(vc.Annotation.STROKE, 1.0)
+        self.assertGreater(vc.Annotation.HALO_EXTRA, 0)
+        self.assertEqual(vc.RIBBON_HALO, vc.Annotation.STROKE + vc.Annotation.HALO_EXTRA)   # 3D: the plan's line and halo
 
 
 if __name__ == "__main__":

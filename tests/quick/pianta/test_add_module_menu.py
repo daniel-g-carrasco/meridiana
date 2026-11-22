@@ -3,8 +3,8 @@ import unittest
 
 from PySide6.QtWidgets import QApplication
 
-from meridiana import model
-from meridiana.quick.backend.plan import PlanController
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController
 
 APP = None
 
@@ -53,7 +53,7 @@ class AddModuleMenu(unittest.TestCase):
         result = self.c.editor.results['s1']
         row = next(r for r in result.rows if r.places)
         last = max((m for m in result.modules if m.rid == row.id), key=lambda m: m.slot)
-        from meridiana import manual
+        from meridiana.core.layout import manual
         self.c.session.edit('take', manual.take(self.p, 's1', result))
 
         def shorten(q):

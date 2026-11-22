@@ -6,9 +6,11 @@ import unittest
 import _setup
 import numpy as np
 
-from meridiana import jobs, model, viewaids
-from meridiana.quick.backend.scene import SceneBackend
-from meridiana.session import ProjectSession
+from meridiana.app import jobs
+from meridiana.app.view import viewaids
+from meridiana.core.model import model
+from meridiana.gui.backend.scene import SceneBackend
+from meridiana.app.session import ProjectSession
 
 
 setUpModule = _setup.keep_global_state
@@ -139,33 +141,25 @@ class SelectionTest(unittest.TestCase):
             self.assertEqual(self.session.selection, expected)
 
     def test_same_point_picks_and_escape_chain_as_hidden_widgets_plan(self):
-        from meridiana.ui.plan import PlanView, to_scene
-
+        # what the Widgets' plan picked at the same points, and its Esc chain (recorded on 10/11/2026)
+        from quick.aiuti import riferimenti
         p = self.session.project
         p.subfields.append(model.SubField('empty', 'Empty', [[22, 2], [28, 2], [28, 10], [22, 10]], building='b'))
         p.exclusions.append(model.ExclusionItem('e', [[24, 4], [26, 4], [26, 6], [24, 6]], building='b'))
         p.props.append(model.Prop('o', kind='broadleaf', at=[25, 5], building='b'))
         self.scene.rebuild()
-        plan = PlanView(Path(self.tmp.name))
-        self.addCleanup(_setup.dispose, plan)
-        plan.show_project(p, self.session.good_results())
         module = self.session.good_results()['s'].modules[0]
+        picked = []
         for east, north in (module.centre, (23, 9), (25, 5), (29, 17), (70, 80)):
-            kind, oid, key = plan._pick(to_scene(east, north))
             self.session.select('site', '')
             self.scene.pick('buildings', -1, east, 7, -north)
-            expected = ('subfield', oid) if kind == 'module' else (kind or 'site', oid)
-            self.assertEqual(self.session.selection, expected)
-            self.assertEqual(self.session.selected_module, (oid, key) if kind == 'module' else ('', ''))
-        plan.set_selection('subfield', 's')
-        plan.selected_module = ('s', module.key)
+            picked.append((self.session.selection, self.session.selected_module))
+        riferimenti.check(self, picked)
         self.session.select('subfield', 's', ('s', module.key))
+        chain = []
         for _ in range(4):
-            moved = plan.selection_back()
-            self.assertEqual(self.scene.escapeSelection(), 'selection' if moved else '')
-            self.assertEqual(self.session.selection, plan.selection)
-            self.assertEqual(self.session.selected_module, plan.selected_module)
-
+            chain.append((self.scene.escapeSelection(), self.session.selection, self.session.selected_module))
+        riferimenti.check(self, chain)
 
 if __name__ == '__main__':
     unittest.main()

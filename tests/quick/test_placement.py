@@ -14,7 +14,7 @@ from PySide6.QtGui import QGuiApplication, QWindow
 from PySide6.QtWidgets import QApplication
 from PySide6.QtTest import QTest
 
-from meridiana.quick.app import keep_on_screen, screen_for, watch_placement
+from meridiana.gui.application import keep_on_screen, screen_for, watch_placement
 
 
 def setUpModule():

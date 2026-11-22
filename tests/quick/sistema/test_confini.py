@@ -11,13 +11,14 @@ from pathlib import Path
 import _setup
 from PySide6.QtCore import QUrl
 from PySide6.QtQml import QQmlApplicationEngine
-from meridiana import i18n, jobs
-from meridiana.quick.app import QuickWindow, create_app
-from meridiana.quick.backend.controls import install_controls
-from meridiana.quick.backend.tokens import install_theme
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.backend.tokens import install_theme
 from quick import confini
 from quick.gestures import pump
-from quick.parity.differential import connected_fixture
+from quick.aiuti.differential import connected_fixture
 
 setUpModule = _setup.keep_global_state
 

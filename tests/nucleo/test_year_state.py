@@ -3,8 +3,9 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import jobs, model
-from meridiana.session import ProjectSession
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.app.session import ProjectSession
 
 
 def project():
@@ -18,7 +19,7 @@ def project():
 class YearState(unittest.TestCase):
     def year(self, s, before=None):
         """As the Quick shell does: the year asked at launch, the layouts of the worker, then the year."""
-        generation = s.energy_asked(s._expected_keys())      # quick/bridge.py _asked_year
+        generation = s.energy_asked(s.expected_layout_keys())      # gui/bridge.py _asked_year
         if before:
             before(s)
         results, keys, _laid = jobs.layout_of(s.project, s.known_layouts())

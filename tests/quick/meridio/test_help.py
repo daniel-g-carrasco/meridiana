@@ -1,8 +1,8 @@
 """R383: one authoritative help catalogue, manual and resumable tour."""
 import unittest
-from meridiana import help as helps, tour
-from meridiana.config import Config
-from meridiana.quick.backend.assistant_help import AssistantHelp
+from meridiana.app.interface import help as helps, tour
+from meridiana.app.platform.config import Config
+from meridiana.gui.backend.assistant_help import AssistantHelp
 
 
 class HelpTest(unittest.TestCase):
@@ -25,7 +25,7 @@ class HelpTest(unittest.TestCase):
             self.assertTrue(service.openManual(chapter))
             self.assertTrue(service.manualText)
         before = service.manualText
-        self.assertFalse(service.openManual('../../CLAUDE.md'))
+        self.assertFalse(service.openManual('../../README.md'))
         self.assertFalse(service.openManual('https://example.com'))
         self.assertEqual(service.manualText, before)
 

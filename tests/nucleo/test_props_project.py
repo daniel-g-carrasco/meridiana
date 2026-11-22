@@ -7,8 +7,10 @@ import unittest
 import _setup
 import numpy as np
 
-from meridiana import mesh, model, move, props, sun, viewaids
-from meridiana.energy import system
+from meridiana.core.geometry import mesh, props, sun
+from meridiana.core.model import model, move
+from meridiana.app.view import viewaids
+from meridiana.core.energy import system
 
 
 def site() -> model.Project:
@@ -84,7 +86,7 @@ class Moving(unittest.TestCase):
         self.assertEqual(p.prop(made).rotation, 90.0)
 
     def test_a_car_under_a_canopy_stands_on_the_ground(self):
-        from meridiana import canopies
+        from meridiana.core.model import canopies
         p = model.Project()
         bid = canopies.add(p, canopies.Spec(), (0.0, 0.0))
         b = p.building(bid)
@@ -185,7 +187,7 @@ class Ifc(unittest.TestCase):
         import tempfile
         from pathlib import Path
 
-        from meridiana import ifc_export
+        from meridiana.app.exchange import ifc_export
         p = site()
         p.props = [model.Prop(id="o1", kind="broadleaf", at=[30.0, 5.0]),
                    model.Prop(id="o2", kind="adult", at=[32.0, 5.0])]

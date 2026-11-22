@@ -22,9 +22,10 @@ from PySide6.QtGui import QGuiApplication, QVector3D  # noqa: E402
 from PySide6.QtQml import QQmlApplicationEngine  # noqa: E402
 from PySide6.QtQuick3D import QQuick3DGeometry  # noqa: E402
 from quick.gestures import pump, wait_for  # noqa: E402
-from meridiana import jobs, model  # noqa: E402
-from meridiana.quick.backend.scene_geometry import instance_file  # noqa: E402
-from meridiana.quick.backend.plan_scene import scene_of  # noqa: E402
+from meridiana.app import jobs
+from meridiana.core.model import model  # noqa: E402
+from meridiana.gui.backend.scene_geometry import instance_file  # noqa: E402
+from meridiana.gui.backend.plan_scene import scene_of  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
 

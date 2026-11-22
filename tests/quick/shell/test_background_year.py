@@ -8,10 +8,11 @@ import unittest
 from unittest import mock
 
 from _fixtures import capannone
-from meridiana import config, resources
-from meridiana.quick.app import create_app
-from meridiana.quick.backend import shell_compute
-from meridiana.quick.backend.shell_compute import ShellBridge
+from meridiana.app.platform import config
+from meridiana.core.compute import resources
+from meridiana.gui.application import create_app
+from meridiana.gui.backend import shell_compute
+from meridiana.gui.backend.shell_compute import ShellBridge
 
 
 class Held(shell_compute.Worker):
@@ -46,7 +47,7 @@ class BackgroundYear(unittest.TestCase):
             self.app.processEvents()
             if condition():
                 return True
-            time.sleep(.01)
+            time.sleep(.01)  # wait: a breath between two looks at the condition, so the workers' threads run
         return False
 
     def held(self):
@@ -117,7 +118,7 @@ class BackgroundYear(unittest.TestCase):
             self.assertFalse(self.bridge.background_timer.isActive())
 
     def shell_text(self):
-        from meridiana.quick.backend.shell import ShellController
+        from meridiana.gui.backend.shell import ShellController
         return ShellController(self.bridge).yearState['text']
 
     def test_switched_off_nothing_starts_by_itself(self):

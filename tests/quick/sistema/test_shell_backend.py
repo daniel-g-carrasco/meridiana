@@ -4,10 +4,10 @@ import unittest
 from pathlib import Path
 
 from _fixtures import capannone
-from meridiana import phases, shortcuts
-from meridiana.quick.app import create_app
-from meridiana.quick.bridge import Bridge
-from meridiana.quick.backend.shell import ShellController
+from meridiana.app.interface import phases, shortcuts
+from meridiana.gui.application import create_app
+from meridiana.gui.bridge import Bridge
+from meridiana.gui.backend.shell import ShellController
 
 
 class ShellBackendTest(unittest.TestCase):
@@ -60,7 +60,7 @@ class ShellBackendTest(unittest.TestCase):
         self.assertIn('V', select['tip'])
 
     def test_check_groups_and_filters_keep_core_order_and_targets(self):
-        from meridiana.checks import Item
+        from meridiana.core.rules.checks import Item
         self.bridge._checks = [vars(Item('ok','layout','Passed',target=('building','b1'))),
                                vars(Item('warn','production','Review',target=('phase','production'))),
                                vars(Item('info','rules','Explain',target=('building','b1')))]

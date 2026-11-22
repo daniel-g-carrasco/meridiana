@@ -3,9 +3,12 @@ import argparse
 import tempfile
 from pathlib import Path
 
-from meridiana import checks, jobs, model, theme_colors
-from meridiana.quick.app import QuickWindow, create_app, tokens
-from meridiana.quick.sample import SAMPLE
+from meridiana.core.rules import checks
+from meridiana.app import jobs
+from meridiana.app.interface import theme_colors
+from meridiana.core.model import model
+from meridiana.gui.application import QuickWindow, create_app, tokens
+from meridiana.gui.sample import SAMPLE
 from quick.gestures import pump
 
 

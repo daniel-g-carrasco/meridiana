@@ -5,13 +5,13 @@ import unittest
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPointF, Qt
-from PySide6.QtQuick import QQuickItem
 
 import _setup
-from meridiana import i18n, jobs
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import item, mouse, pump
-from quick.parity.differential import connected_fixture
+from quick.aiuti.differential import connected_fixture
 
 if os.environ.get('QT_QPA_PLATFORM') == 'offscreen':
     os.environ.setdefault('QSG_RENDER_LOOP', 'basic')
@@ -26,8 +26,6 @@ def descendants(root):
     out, stack = [], [root]
     while stack:
         node = stack.pop()
-        if not isinstance(node, QQuickItem):
-            continue
         out.append(node)
         stack.extend(node.childItems())
     return out
@@ -66,10 +64,12 @@ class Workbench(unittest.TestCase):
         pump(30)
 
     def footer_rects(self):
-        names = ('statusHint', 'statusWarnings', 'statusProgress', 'statusPanelLeft', 'statusMeridio')
+        names = ('statusHint', 'statusProgress', 'statusPanelLeft', 'statusMeridio')
         return {name: scene_rect(item(self.win, name)) for name in names if item(self.win, name) is not None}
 
     def test_r484_the_pointer_is_shown_by_the_scale_and_nothing_in_the_bar_moves_with_it(self):
+        # Selected roof handles must not intercept the coordinate probe after the tour.
+        self.session.select('site', '')
         self.phase('model')
         self.assertFalse([n for n in descendants(self.win.contentItem()) if n.objectName() == 'statusCursor'],
                          'no more coordinates in the status bar')
@@ -121,38 +121,26 @@ class Workbench(unittest.TestCase):
         self.assertTrue(pill.property('pad') > 0)
         self.assertAlmostEqual(words.x(), pill.property('pad'), delta=0.5)      # its margin, the scale's
 
-    def test_r485_the_counts_are_the_pills_of_the_checks_panel_and_as_wide_as_two_digits(self):
+    def test_r623_the_status_bar_shows_no_counts_of_the_checks(self):
+        # Daniel (15/11/2026): «togli da qua sotto in basso a destra i vari segnetti di to fix, to check, to know»; the
+        # counts stay in the Checks panel, opened by Ctrl+J, Ctrl+Shift+M or the panels' menu of the bar
         self.phase('model')
-        from PySide6.QtCore import QUrl
-        from PySide6.QtQml import QQmlComponent
-        # the bar's counts are the panel's pills (M.Pill, variant count), not buttons with an icon
-        source = (Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana/Shell/Workbench.qml').read_text(encoding='utf-8')
-        bar = source[source.index('objectName: "statusWarnings"'):source.index('objectName: "statusMeasure"')]
-        self.assertIn('M.Pill', bar)
-        self.assertIn('variant: "count"', bar)
-        self.assertIn('minText: "99"', bar)
-        self.assertIn('checkable: false', bar)
-        # as wide for 2 as for 11: a count of one digit more moves nothing
-        component = QQmlComponent(self.host.engine)
-        component.setData(b'import QtQuick\nimport Meridiana.Controls as M\n'
-                          b'Row { M.Pill { variant: "count"; objectName: "a"; level: "warn"; text: "2"; minText: "99"; checkable: false }\n'
-                          b'M.Pill { variant: "count"; objectName: "b"; level: "warn"; text: "11"; minText: "99"; checkable: false } }',
-                          QUrl('file:///r485.qml'))
-        row = component.create()
-        self.assertIsNotNone(row, component.errorString())
-        row.setParentItem(self.win.contentItem())
-        row.setVisible(False)
-        pump(50)
-        one, two = row.childItems()
-        self.assertEqual(one.width(), two.width())
-        self.assertGreater(one.width(), 0)
-        live = [n for n in descendants(item(self.win, 'statusWarnings')) if (n.objectName() or '').startswith('statusCount_')]
-        counts = [c for c in self.host.shell.property('checkCounts') if c['id'] in ('warn', 'fail') and c['count'] > 0]
-        self.assertEqual(len(live), len(counts))
+        pump(1500)                                  # the checks of the opening, done
+        bar = item(self.win, 'statusPanelLeft').parentItem()
+        names = [n.objectName() or '' for n in descendants(bar)]
+        self.assertFalse([n for n in names if n.startswith('statusCount') or n == 'statusWarnings'], names)
+        work = set(descendants(item(self.win, 'statusProgress')))                # its own pill counts the jobs
+        pills = [n for n in descendants(bar) if n.metaObject().className().startswith('Pill') and n not in work]
+        self.assertEqual([(p.objectName(), p.property('text'), p.parentItem().objectName()) for p in pills], [],
+                         'no pill of a count in the status bar')
+        source = (Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana/Shell/Workbench.qml').read_text(encoding='utf-8')
+        foot = source[source.index('footer: RowLayout'):source.index('objectName: "statusMeasure"')]
+        self.assertNotIn('checkCounts', foot)
+        self.assertNotIn('M.Pill', foot)
 
     def test_r486_the_hint_is_as_far_from_the_side_as_the_panels(self):
         self.phase('model')
-        from meridiana.ui.design import Layout
+        from meridiana.gui.style.design import Layout
         hint = item(self.win, 'statusHint')
         self.assertAlmostEqual(scene_rect(hint)[0], Layout.EDGE, delta=0.5)          # the panels' and the bar's end
         # its middle on the bar's middle, as the buttons beside it
@@ -278,7 +266,7 @@ class Workbench(unittest.TestCase):
 
     # R482: the title bars of Windows in the theme
     def test_r482_the_frame_follows_the_theme(self):
-        from meridiana.quick.backend import window_frame
+        from meridiana.gui.backend import window_frame
         calls = []
         real = window_frame.set_dark_frame
         window_frame.set_dark_frame = lambda window, dark: calls.append((window, dark)) or True
@@ -341,16 +329,13 @@ class Workbench(unittest.TestCase):
         _setup.wait_until(self.app, lambda: False, seconds=.6)
         self.assertEqual(self.win.property('phase'), 'plant')
 
-    def test_r483_file_and_the_phases_change_under_a_picture_that_fades(self):
+    def test_r483_file_changes_under_a_veil_that_fades(self):
         self.phase('model')
         pump(500)
         timings = {}
         for what, change, check in (
                 ('File', lambda: self.win.setProperty('fileOpen', True), lambda f: f[4]),
-                ('back to the plan from File', lambda: self.win.showPhase('model'), lambda f: not f[4] and f[3] == 'model'),
-                ('to Producibilità', lambda: self.win.showPhase('production'), lambda f: f[3] == 'production'),
-                ('back to Impianto', lambda: self.win.showPhase('plant'), lambda f: f[3] == 'plant'),
-                ('back to Modellazione', lambda: self.win.showPhase('model'), lambda f: f[3] == 'model')):
+                ('back to the plan from File', lambda: self.win.showPhase('model'), lambda f: not f[4] and f[3] == 'model')):
             start, changed, frames = self.transition_frames(change)
             self.assertTrue(frames and all(check(f) for f in frames), f'{what}: the page changed at once')
             self.check_fade(frames, what)
@@ -421,7 +406,7 @@ class Workbench(unittest.TestCase):
         self.assertTrue(character.isVisible())
     # R474: the whole guided tour, the highlight on the step's item at every step, never the one before
     def test_r474_every_step_of_the_tour_highlights_its_own_item(self):
-        from meridiana import tour
+        from meridiana.app.interface import tour
         self.phase('model')
         pump(400)
         layer = item(self.win, 'assistantLayer')
@@ -473,7 +458,7 @@ class Workbench(unittest.TestCase):
                                   colours)
         self.assertNotIn('<table', inner)
         self.assertNotIn('bgcolor', inner)
-        source = (Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana/Assistant/Conversation.qml').read_text(encoding='utf-8')
+        source = (Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana/Assistant/Conversation.qml').read_text(encoding='utf-8')
         self.assertIn('objectName: "ownMessage"', source)
         from meridiana.i18n import _
         words = _("The model on this PC is not running yet. I look for another one on this PC…")
@@ -492,7 +477,7 @@ class FrameAttribute(unittest.TestCase):
             "import sys",
             "from PySide6.QtGui import QGuiApplication, QWindow",
             "app = QGuiApplication(sys.argv)",
-            "from meridiana.quick.backend.window_frame import dark_frame, set_dark_frame",
+            "from meridiana.gui.backend.window_frame import dark_frame, set_dark_frame",
             "w = QWindow(); w.create()",
             "out = []",
             "for dark in (True, False, True):",

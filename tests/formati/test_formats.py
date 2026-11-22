@@ -18,7 +18,10 @@ from unittest import mock
 
 import _setup
 
-from meridiana import atomic, config, model, session
+from meridiana.data import atomic
+from meridiana.app.platform import config
+from meridiana.app import session
+from meridiana.core.model import model
 
 FOLDER = _setup.FORMATS
 
@@ -58,6 +61,13 @@ BROUGHT = {
     30: {"layout_defaults"},                                  # R523
     31: {"edges_3d"},                                         # study 41, slice E
     32: {"memory_mode"},                                      # R548
+    33: {"tree_folds"},                                       # R575
+    34: {"sun_map_quantity", "sun_map_colour", "sun_map_step", "sun_map_day", "sun_map_scale"},   # study 45, R588
+    35: set(),                                                # R619: the new figure's looks, no new key
+    36: {"assistant_prepare_on_start"},
+    37: set(),                                                # R699: the sticker is the only appearance
+    38: {"report_outline_open"},                              # R696: the report's contents, open or folded
+    39: {"density"},                                          # the kit's density of the trees and lists
 }
 
 
@@ -110,6 +120,8 @@ class SettingsFiles(unittest.TestCase):
                         self.assertEqual(got, kept if raw.get("assistant_voice_name") else getattr(defaults, f.name))
                     elif f.name in ("accent", "backgrounds") and version < 3:
                         self.assertEqual(got, {"accent": "bronze", "backgrounds": "meridiana"}[f.name])
+                    elif f.name == "assistant_style" and version < 37:
+                        self.assertEqual(got, "sticker", "R699: every former appearance becomes the sticker")
                     elif f.name == "font" and version < 26:
                         self.assertEqual(got, "inter", "Historical settings retain their original font")
                     elif f.name in raw:

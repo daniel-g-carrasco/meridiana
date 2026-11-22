@@ -3,8 +3,8 @@ import unittest
 
 from PySide6.QtWidgets import QApplication
 
-from meridiana import model
-from meridiana.quick.backend.plan import PlanController
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController
 
 APP = None
 
@@ -137,6 +137,29 @@ class Context(unittest.TestCase):
         self.c.session.undo.undo()
         self.assertEqual(self.c.session.project.to_json(), before)
 
+    def test_idle_phase_changes_do_not_publish_unrelated_tool_state(self):
+        states = []
+        self.c.stateChanged.connect(lambda: states.append(True))
+        names = ('phase', 'clickKinds', 'hint', 'stringsVisible')
+        notices = {name: [] for name in names}
+        for name, signal in zip(names, (self.c.phaseChanged, self.c.pickingChanged,
+                                       self.c.hintChanged, self.c.stringsVisibleChanged), strict=True):
+            signal.connect(lambda name=name: notices[name].append(True))
+        for phase in ('production', 'economics', 'plant', 'plant', 'model'):
+            before = {name: getattr(self.c, name) for name in names}
+            for rows in notices.values():
+                rows.clear()
+            self.c.setPhase(phase)
+            for name in names:
+                self.assertEqual(len(notices[name]), int(before[name] != getattr(self.c, name)), name)
+        self.assertEqual(states, [], 'Phase and picking have their own notifications')
+        self.assertEqual(self.c.phase, 'modelling')
+        self.c.setTool('building')
+        states.clear()
+        self.c.setPhase('model')
+        self.assertEqual(self.c.tool, 'select')
+        self.assertTrue(states, 'Leaving an active tool still publishes its changed state')
+
     def test_phase_string_visibility_and_aids_persist_across_tools(self):
         self.assertFalse(self.c.stringsVisible)
         self.c.setPhase('plant')
@@ -156,7 +179,7 @@ class Context(unittest.TestCase):
         self.c.setPhase('plant')
         self.assertFalse(self.c.editor.runs())
         self.assertEqual(len(self.c.unwiredPaths), len(self.c.editor.results['s1'].modules))     # their own layer (R496)
-        from meridiana import theme_colors
+        from meridiana.app.interface import theme_colors
         self.assertTrue(all(row['stroke'] == theme_colors.STATUS['critical'] for row in self.c.unwiredPaths))
         self.assertFalse(self.c.wireFills)
         self.c.setPhase('model')

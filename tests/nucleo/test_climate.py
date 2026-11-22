@@ -9,8 +9,10 @@ from unittest import mock
 import _setup  # noqa: F401
 from _fixtures import capannone_rho, clear_sky_meteo, write_cache
 
-from meridiana import atomic, model
-from meridiana.energy import meteo, pipeline
+from meridiana.data import atomic
+from meridiana.core.model import model
+from meridiana.core.energy import meteo
+from meridiana.app import pipeline
 
 
 class Climate(unittest.TestCase):
@@ -31,16 +33,16 @@ class Climate(unittest.TestCase):
     def test_an_explicit_fetch_refreshes_the_embedded_data(self):
         project = capannone_rho()
         project.climate = {"tmy": self.raw}
-        with mock.patch("meridiana.energy.meteo.typical_year", return_value=clear_sky_meteo()) as fetch, \
-                mock.patch("meridiana.energy.meteo.horizon", return_value=meteo.Horizon.flat()):
+        with mock.patch("meridiana.core.energy.meteo.typical_year", return_value=clear_sky_meteo()) as fetch, \
+                mock.patch("meridiana.core.energy.meteo.horizon", return_value=meteo.Horizon.flat()):
             pipeline.compute(project, {}, self.cache, True, refresh=True)
         self.assertTrue(fetch.call_args.kwargs["refresh"])
 
     def test_allowing_the_network_does_not_refresh_a_valid_cache(self):
         project = capannone_rho()
         project.climate = {"tmy": self.raw}
-        with mock.patch("meridiana.energy.meteo.typical_year", return_value=clear_sky_meteo()) as fetch, \
-                mock.patch("meridiana.energy.meteo.horizon", return_value=meteo.Horizon.flat()):
+        with mock.patch("meridiana.core.energy.meteo.typical_year", return_value=clear_sky_meteo()) as fetch, \
+                mock.patch("meridiana.core.energy.meteo.horizon", return_value=meteo.Horizon.flat()):
             pipeline.compute(project, {}, self.cache, True)
         self.assertFalse(fetch.call_args.kwargs["refresh"])
 

@@ -4,22 +4,22 @@ import json
 import math
 import time
 from pathlib import Path
-from types import SimpleNamespace
 import unittest
 
 os.environ.setdefault("QSG_RENDER_LOOP", "basic")
 os.environ.setdefault("QSG_RHI_BACKEND", "d3d11")
 os.environ["QML_DISABLE_DISK_CACHE"] = "1"
 
-from PySide6.QtCore import QCoreApplication, QEvent, QLocale, QObject, QPoint, QPointF, Qt, QUrl
+from PySide6.QtCore import QCoreApplication, QEvent, QObject, QPoint, QPointF, Qt, QUrl
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
-from meridiana import i18n, model, move
-from meridiana.quick.backend.plan import PlanController
-from meridiana.session import ProjectSession
+from meridiana import i18n
+from meridiana.core.model import model, move
+from meridiana.gui.backend.plan import PlanController
+from meridiana.app.session import ProjectSession
 
 APP = None
 ROOT = Path(__file__).resolve().parents[3]
@@ -30,7 +30,6 @@ def setUpModule():
     global APP
     APP = QApplication.instance() or QApplication(["plan-edit-test"])
     i18n.setup("it")
-    QLocale.setDefault(QLocale("it_IT"))
 
 
 class EditWindowTest(unittest.TestCase):
@@ -49,7 +48,7 @@ class EditWindowTest(unittest.TestCase):
         self.engine.warnings.connect(lambda es: self.warnings.extend(e.toString() for e in es))
         self.controller.install(self.engine)
         self.engine.rootContext().setContextProperty("planBackend", self.controller)
-        self.engine.load(QUrl.fromLocalFile(str(ROOT / "src/meridiana/quick/qml/Meridiana/Plan/PlanWindow.qml")))
+        self.engine.load(QUrl.fromLocalFile(str(ROOT / "src/meridiana/gui/qml/Meridiana/Plan/PlanWindow.qml")))
         self.assertTrue(self.engine.rootObjects(), self.warnings)
         self.window = self.engine.rootObjects()[0]
         self.window.resize(1366, 900)
@@ -131,7 +130,7 @@ class EditWindowTest(unittest.TestCase):
         start = self.screen(points[0])
         QTest.mousePress(self.window, Qt.LeftButton, mods, start)
         if hold:
-            QTest.qWait(hold)
+            QTest.qWait(hold)  # wait: the press held as long as the test asks
         for point in points[1:]:
             pos = QPointF(self.screen(point))
             event = QMouseEvent(QEvent.MouseMove, pos, pos, self.window.mapToGlobal(pos.toPoint()),
@@ -336,7 +335,6 @@ class EditWindowTest(unittest.TestCase):
     def test_side_pills_notch_outside_nonoverlap_and_widgets_geometry(self):
         from PySide6.QtCore import QRectF
         from PySide6.QtGui import QPolygonF
-        from meridiana.ui.plan import PlanView
         ring = [[0, 0], [12, 0], [12, 8], [6.3, 8], [6.3, 7.7], [6, 7.7], [6, 8], [0, 8]]
 
         def fixture(project):
@@ -354,21 +352,20 @@ class EditWindowTest(unittest.TestCase):
             self.assertIsNotNone(pill)
             raw = pill.parentItem().property("pills")
             actual = raw.toVariant() if hasattr(raw, "toVariant") else raw
-            font = next(child.property("font") for child in pill.childItems() if child.property("font") is not None)
-            receiver = SimpleNamespace(font=lambda font=font: font,
-                                       mapFromScene=lambda point: self.layer.mapToScene(point).toPoint())
-            reference = PlanView._side_pills(receiver, ring)
-            self.assertEqual([p["side"] for p in actual], [p[0] for p in reference])
+            # Compact rotated labels replace the former horizontal Widgets boxes.
+            boxes = [QRectF(got["x"], got["y"], got["width"], got["height"]) for got in actual]
+            self.assertTrue(actual)
+            for got in actual:
+                self.assertTrue(0 <= got['side'] < len(ring))
+                self.assertTrue(got['text'].endswith(' m'))
+            self.assertTrue(all(b.height() < 19 for b in boxes))
+            for got in actual:
+                self.assertTrue(-90 <= got['direction'] < 90)
             shape = QPolygonF([self.layer.mapToScene(QPointF(x, -y)) for x, y in ring])
             boxes = []
-            for got, (side, expected, whole, text) in zip(actual, reference, strict=True):
+            for got in actual:
+                side, whole = got["side"], got["whole"]
                 box = QRectF(got["x"], got["y"], got["width"], got["height"])
-                self.assertEqual(got["whole"], whole, (angle, side))
-                self.assertEqual(got["text"], text)
-                self.assertLessEqual(abs(box.center().x()-expected.center().x()), 1)
-                self.assertLessEqual(abs(box.center().y()-expected.center().y()), 1)
-                self.assertLessEqual(abs(box.width()-expected.width()), 1)
-                self.assertLessEqual(abs(box.height()-expected.height()), 1)
                 self.assertFalse(shape.containsPoint(box.center(), Qt.OddEvenFill), (angle, side))
                 self.assertFalse(any(box.intersects(other) for other in boxes))
                 if side in (3, 4, 5):
@@ -474,7 +471,9 @@ class EditWindowTest(unittest.TestCase):
         ridges = overlay.property('hoveredRidges').toVariant()
         self.assertEqual(len(ridges), 1)
         self.assertEqual(self.controller.calls['pointer'], 0)
-        self.assertEqual(ridges[0]['width'], 3.8)
+        # R617: the ridge under the pointer on the highlights' scale, as wide as the hover's halo (it was 3.8 by hand)
+        from meridiana.gui.style.design import Highlight
+        self.assertAlmostEqual(ridges[0]['width'], Highlight.HOVER + Highlight.HALO)
         self.capture('20-colmo-hover')
 
     def test_move_from_empty_selection_cancel_copy_and_return_from_rotate(self):
@@ -506,6 +505,131 @@ class EditWindowTest(unittest.TestCase):
         self.assertFalse(self.controller.sideEditing)
         self.assertEqual(self.session.snapshot(), before)
 
+    def test_r707_corners_and_measures_show_while_the_object_is_large_enough(self):
+        # R707 (study 55, 3.4): the corners of what is selected show while its shorter side is at least 16 px on
+        # screen, the measures of its sides while its longer side is at least 80 px; smaller, a corner is not taken
+        self.select_building()
+
+        def descendants(item):
+            for child in item.childItems():
+                yield child
+                yield from descendants(child)
+
+        def seen(name):
+            return [item for item in descendants(self.plan) if item.objectName().startswith(name) and item.isVisible()]
+        levels = self.controller.levels
+        short, long = self.plan.property('gripSpan').toVariant()
+        self.assertTrue(short > 0 and long >= short)
+        for side, wanted in ((levels['vertexSide'] * 1.2, True), (levels['vertexSide'] * .8, False)):
+            self.plan.setProperty('zoom', side / short)
+            APP.processEvents()
+            self.assertEqual(bool(seen('vertexGrip')), wanted, side)
+            self.assertEqual(self.plan.property('cornersShown'), wanted)
+        for side, wanted in ((levels['measureSide'] * 1.2, True), (levels['measureSide'] * .8, False)):
+            self.plan.setProperty('zoom', side / long)
+            APP.processEvents()
+            self.assertEqual(self.plan.property('measuresShown'), wanted, side)
+            self.assertEqual(bool(seen('sidePill')), wanted, side)
+
+    def test_r707_from_far_the_site_is_one_mark_of_one_size_that_frames_it(self):
+        # R707 (study 55, 3.3): when the site is under 80 px on screen the drawing goes out and one mark comes in, in
+        # the site's colour, with the project's name; under 48 px the mark alone, the same size at every zoom out,
+        # and a click on it frames the site again. A rename is said at once.
+        def find(name):
+            return self.plan.findChild(QObject, name)
+        levels = self.controller.levels
+        bounds = self.controller.bounds
+        span = max(bounds[2], bounds[3])
+        mark, world, drop, name = find('planSiteMark'), find('worldLayer'), find('planSiteDrop'), find('planSiteName')
+        self.plan.setProperty('zoom', levels['siteIn'] * 1.2 / span)
+        APP.processEvents()
+        self.assertFalse(mark.isVisible())
+        self.assertTrue(world.isVisible())
+        self.assertEqual(world.opacity(), 1)
+        sizes = []
+        for factor in (.8, .1, .001):
+            self.plan.setProperty('zoom', levels['siteAlone'] * factor / span)
+            APP.processEvents()
+            self.assertTrue(mark.isVisible(), factor)
+            self.assertEqual(mark.opacity(), 1)
+            self.assertFalse(world.isVisible(), factor)
+            sizes.append((drop.width(), drop.height()))
+        self.assertEqual(len(set(sizes)), 1)
+        self.assertEqual(drop.property('color').name(), '#ff38c8')
+        self.assertTrue(self.controller.site['text'].startswith(self.session.project.name))
+        self.session.edit('rename', lambda project: setattr(project, 'name', 'Capannoni di prova'))
+        APP.processEvents()
+        self.assertTrue(self.controller.site['text'].startswith('Capannoni di prova'))
+        self.plan.setProperty('zoom', levels['siteAlone'] * .5 / span)
+        APP.processEvents()
+        self.assertTrue(name.isVisible())
+        frame = find('planSiteFrame')
+        centre = frame.mapToScene(QPointF(frame.width() / 2, frame.height() - 2))
+        QTest.mouseClick(self.window, Qt.LeftButton, Qt.NoModifier, centre.toPoint())
+        APP.processEvents()
+        self.assertGreater(span * self.plan.property('zoom'), levels['siteIn'])
+        self.assertFalse(mark.isVisible())
+        self.assertTrue(world.isVisible())
+
+    def test_the_site_mark_stays_on_the_site_while_the_map_is_dragged(self):
+        # Daniel 21/11/2026: from far, the magenta drop moved while the map was dragged. It was placed with the camera
+        # the geometry's image was last drawn at (renderCamera), while the image (motionSnapshot) is moved to the
+        # camera in hand at every frame and drawn again only past a stretch or at rest. Offscreen the image is drawn
+        # at every step: here renderCamera is held where a drag on a real screen leaves it.
+        mark, snap = self.plan.findChild(QObject, 'planSiteMark'), self.plan.findChild(QObject, 'motionSnapshot')
+        bounds = self.controller.bounds
+        self.plan.setProperty('zoom', self.controller.levels['siteAlone'] * .5 / max(bounds[2], bounds[3]))
+        APP.processEvents()
+        held = self.plan.property('renderCamera').toVariant()
+        sx, sy = bounds[0] + bounds[2] / 2, bounds[1] + bounds[3] / 2
+        margin = self.plan.property('motionMargin')
+        for prop, step in (('panX', 37), ('panY', -29), ('panX', 120), ('zoom', 1.1)):
+            value = self.plan.property(prop)
+            self.plan.setProperty(prop, value * step if prop == 'zoom' else value + step)
+            self.plan.setProperty('renderCamera', held)
+            APP.processEvents()
+            self.assertTrue(mark.isVisible())
+            a = math.radians(self.plan.property('bearing'))
+            # the site where the image shows it: drawn at `held`, moved and scaled by the snapshot
+            gx = held['x'] + held['zoom'] * (sx * math.cos(a) - sy * math.sin(a))
+            gy = held['y'] + held['zoom'] * (sx * math.sin(a) + sy * math.cos(a))
+            ratio = self.plan.property('zoom') / held['zoom']
+            want = (snap.x() + ratio * (gx + margin), snap.y() + ratio * (gy + margin))
+            self.assertLess(math.hypot(mark.x() - want[0], mark.y() - want[1]), .5, prop)
+
+    def test_r714_from_far_the_checks_marks_are_summed_up_on_the_site_drop(self):
+        # Daniel 21/11/2026: zooming out the warning's triangle stayed over the site's drop. Every level of mark: one
+        # by one while the modules are at least levels.marks px, gone under levels.building, and from far the worst
+        # one with the number of checks on the drop.
+        def find(name):
+            return self.plan.findChild(QObject, name)
+        b = self.controller.bounds
+        x, y = b[0] + b[2] / 2, -(b[1] + b[3] / 2)
+        self.controller.setMarks([(x, y, 'warn', 2, ['building', 'b1']), (x + 3, y, 'info', 1, ['building', 'b1']),
+                                  (x - 3, y, 'ok', 1, ['building', 'b1']), (x, y + 3, 'fail', 1, ['building', 'b1'])])
+        APP.processEvents()
+
+        def singles():
+            return [item for item in self.plan.childItems() if item.objectName() == '' and
+                    item.property('views') is True and item.isVisible()]
+        levels, size = self.controller.levels, self.controller.moduleSize
+        self.plan.setProperty('zoom', levels['string'] / size)
+        APP.processEvents()
+        self.assertEqual(len(singles()), 4)
+        self.plan.setProperty('zoom', levels['building'] * .9 / size)
+        APP.processEvents()
+        self.assertEqual(singles(), [], 'under the Site level no mark one by one')
+        self.plan.setProperty('zoom', levels['siteAlone'] * .5 / max(b[2], b[3]))
+        APP.processEvents()
+        self.assertEqual(singles(), [])
+        badge = find('planSiteChecks')
+        self.assertTrue(badge.isVisible())
+        self.assertEqual(badge.property('name'), 'stop')
+        self.assertEqual(badge.property('count'), 5)
+        self.controller.setMarks([])
+        APP.processEvents()
+        self.assertFalse(badge.isVisible())
+
     def test_vertex_grips_follow_camera(self):
         self.select_building()
 
@@ -517,8 +641,8 @@ class EditWindowTest(unittest.TestCase):
         grips = [item for item in descendants(self.plan) if item.objectName().startswith('vertexGrip')]
         self.assertEqual(len(grips), 4)
         for grip in grips:
-            self.assertEqual((grip.width(), grip.height(), grip.property('radius')), (10, 10, 5))
-            self.assertEqual(grip.property('color').alpha(), 0)
+            self.assertEqual((grip.width(), grip.height(), grip.property('radius')), (4.5, 4.5, 2.25))
+            self.assertEqual(grip.property('color').name(), self.controller.planColors['label_fg'])
         for prop, value in [("panX", self.plan.property("panX")+73),
                             ("zoom", self.plan.property("zoom")*.8), ("bearing", 25)]:
             self.plan.setProperty(prop, value)
@@ -526,7 +650,7 @@ class EditWindowTest(unittest.TestCase):
             expected = [self.layer.mapToScene(QPointF(x, -y))
                         for x, y in self.session.project.buildings[0].footprint]
             for grip in grips:
-                actual = grip.mapToScene(QPointF(5, 5))
+                actual = grip.mapToScene(grip.boundingRect().center())
                 self.assertLess(min(math.hypot(actual.x()-p.x(), actual.y()-p.y()) for p in expected), .01, prop)
 
     def test_box_crossing_lasso_shift(self):
@@ -630,7 +754,7 @@ class EditWindowTest(unittest.TestCase):
 
     def test_string_name_chip_matches_widgets_and_culls_collisions(self):
         from PySide6.QtGui import QColor
-        from meridiana.ui.plan import ChipItem
+        from quick.aiuti import riferimenti
         self.controller.setPhase("plant")
 
         def fixture(project):
@@ -644,31 +768,44 @@ class EditWindowTest(unittest.TestCase):
         other = self.visual("stringLabel-name-1")
         self.assertIsNotNone(other)
         self.assertFalse(label.mapRectToScene(label.boundingRect()).intersects(other.mapRectToScene(other.boundingRect())))
-        text = next(child for child in label.childItems() if child.property("text") is not None)
+        text = next(child for child in label.childItems() if child.objectName() == "lengthPillValue")
         font = text.property("font")
         colour = self.controller.editor.wiring_scene(.02)["colours"][0]
-        expected = ChipItem("1.1.1", font, colour, "check", self.controller.planColors, swatch=True)
-        self.assertEqual(text.property("text"), expected.text)
-        self.assertTrue(font.bold())
+        # the Widgets' chip for the same string (recorded on 10/11/2026): its words, its symbol, its width (R555 14: its
+        # height is now the sides' pill's, M.LengthPill, 19 against the Widgets' 22; the third record is no longer read)
+        symbol = next(child for child in label.childItems() if child.metaObject().className().startswith("PlanSymbol"))
+        riferimenti.check(self, [text.property("text"), symbol.property("name")])
+        riferimenti.check(self, label.width(), absolute=4)
+        h = label.height()
+        self.assertAlmostEqual(h, self.visual("stringLabels").property("line"), delta=.01)
+        self.assertFalse(font.bold())                   # the type of the sides' measures
         self.assertAlmostEqual(label.property("radius"), label.height()/2)
-        # R514: the ends alike (the dot and the state's disc each (h - 14) / 2 from their end), no longer the Widgets'
-        # width: the text between them with Theme.space.XS on each side
-        gap = (label.height() - 14) / 2
-        self.assertAlmostEqual(label.width(), 2 * gap + 8 + 14 + 2 * 4 + text.property('contentWidth'), delta=1)
-        self.assertLessEqual(abs(label.width()-expected.rect.width()), 4)
-        self.assertLessEqual(abs(label.height()-expected.rect.height()), 1)
-        dot = next(child for child in label.childItems() if child.width() == child.height() == 8)
-        self.assertAlmostEqual(dot.x()+4, ((label.height()-14)/2+4))      # R514: the dot as far from its end as the state disc
-        self.assertAlmostEqual(dot.y()+4, label.height()/2)
+        # R514, R577, R555 (14): the string's colour in the side's disc, the state in a disc as large at the other end,
+        # each in the centre of its round end, the text between them with Theme.space.XS on each side
+        disc = h - 4
+        self.assertAlmostEqual(label.width(), 2 + disc + 4 + text.property('contentWidth') + 4 + disc + 2, delta=1)
+        dot = next(child for child in label.childItems() if child.width() == child.height() == disc
+                   and child.metaObject().className() == "QQuickRectangle")
+        self.assertAlmostEqual(dot.x()+disc/2, label.height()/2)
+        self.assertAlmostEqual(text.x(), dot.x()+disc+4)
+        self.assertAlmostEqual(dot.y()+disc/2, label.height()/2)
         self.assertEqual(dot.property("color"), QColor(colour))
-        symbol = next(child for child in label.childItems() if child.property("size") == 14)
-        self.assertEqual(symbol.property("name"), expected.symbol_name)
+        self.assertAlmostEqual(symbol.width(), disc)
         self.assertAlmostEqual(symbol.x()+symbol.width()/2, label.width()-label.height()/2)
         self.assertAlmostEqual(symbol.y()+symbol.height()/2, label.height()/2)
         self.capture("19-stringa-etichetta")
         self.controller.chooseString(1)
         self.assertIsNotNone(self.visual("stringLabel-name-1"))
         self.assertIsNotNone(self.visual("stringLabel-name-0"))
+        # R577: the names passed over the view bar (they have their own z over the dots); the bars, the compass, the
+        # scale and the notices lie over every label of the drawing; R616: the pointer's coordinates too (they had no z
+        # and the names passed over them)
+        labels = self.visual("stringLabels")
+        for name in ("planViewBar", "compass", "scaleBar", "planCursor", "mapCredit", "optimizerLegend"):
+            chrome = self.visual(name)
+            self.assertIsNotNone(chrome, name)
+            self.assertIs(chrome.parentItem(), labels.parentItem(), name)
+            self.assertGreater(chrome.z(), labels.z(), name)
 
     def test_a_click_on_a_string_label_reaches_the_module_under_it(self):
         # 06/11/2026: the name label took the click and chose its string; the module under it could not be selected.
@@ -707,6 +844,8 @@ class EditWindowTest(unittest.TestCase):
         counts = []
         self.controller.sceneChanged.connect(lambda: counts.append((len(self.controller.objects), len(self.controller.modules))))
         self.controller.overlayChanged.connect(lambda: counts.append((len(self.controller.objects), len(self.controller.modules))))
+        # An idle phase change retains geometry without rebuilding the scene or overlays.
+        self.controller.phaseChanged.connect(lambda: counts.append((len(self.controller.objects), len(self.controller.modules))))
         for phase in ("model", "plant", "model"):
             self.controller.setPhase(phase)
             QTest.qWait(25)
@@ -720,7 +859,7 @@ class EditWindowTest(unittest.TestCase):
         self.assertEqual(self.controller.hint, "")
 
     def test_native_phase_frames_keep_modules_visible(self):
-        from quick.parity.realwindow import FrameRecorder, wait_frames
+        from quick.aiuti.realwindow import FrameRecorder, wait_frames
         left = self.screen(self.result.modules[0].centre)
         right = self.screen(self.result.modules[4].centre)
         region = [left.x()-10, left.y()-10, right.x()-left.x()+20, 20]

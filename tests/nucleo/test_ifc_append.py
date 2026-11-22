@@ -10,7 +10,8 @@ from pathlib import Path
 import numpy as np
 
 import _setup
-from meridiana import ifc_append, ifc_export, ifc_import, ifc_read, ifc_scan, ifc_worker, model
+from meridiana.app.exchange import ifc_append, ifc_export, ifc_import, ifc_read, ifc_scan, ifc_worker
+from meridiana.core.model import model
 from nucleo.test_ifc_scan import SAMPLE
 
 OWNER = """#200=IFCPERSON($,$,'x',$,$,$,$,$);

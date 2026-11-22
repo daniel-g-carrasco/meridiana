@@ -15,9 +15,9 @@ from PySide6.QtQml import QQmlEngine, QQmlComponent, QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow
 from PySide6.QtTest import QSignalSpy
 
-from meridiana import model
-from meridiana.energy.pipeline import EnergyResult
-from meridiana.session import ProjectSession
+from meridiana.core.model import model
+from meridiana.app.pipeline import EnergyResult
+from meridiana.app.session import ProjectSession
 from quick.grafici.fixtures import build_results
 
 
@@ -27,10 +27,10 @@ setUpModule = _setup.keep_global_state
 class ResultController(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.path = _setup.ROOT / "src/meridiana/quick/backend/charts_controller.py"
+        cls.path = _setup.ROOT / "src/meridiana/gui/backend/charts_controller.py"
         if not cls.path.exists():
             return
-        cls.api = importlib.import_module("meridiana.quick.backend.charts_controller")
+        cls.api = importlib.import_module("meridiana.gui.backend.charts_controller")
         cls.app = _setup.qt_or_skip()
         cls.real = build_results()
 
@@ -51,7 +51,7 @@ class ResultController(unittest.TestCase):
         self.assertEqual(self.controller.error, "")
 
     def test_real_result_is_published_atomically_and_getters_do_no_conversion(self):
-        from meridiana.quick.backend import charts_data
+        from meridiana.gui.backend import charts_data
 
         published = []
         self.controller.productionChanged.connect(
@@ -102,7 +102,7 @@ class ResultController(unittest.TestCase):
         self.assertTrue(self.controller.economics["empty"])
 
     def test_calculated_basis_survives_edits_and_is_never_read_from_live_plant(self):
-        from meridiana.energy.calculation_basis import CalculationBasis
+        from meridiana.core.energy.calculation_basis import CalculationBasis
         result = self.payload()
         result.basis = CalculationBasis(('INV1', 'INV2'), 42, 50, 1, 'Battery', 8., 12.)
         session = ProjectSession(model.Project())
@@ -117,7 +117,7 @@ class ResultController(unittest.TestCase):
         self.assertEqual(self.controller.production['basis'], before)
 
     def test_old_async_result_cannot_repopulate_a_new_project(self):
-        from meridiana.quick.backend import charts_data
+        from meridiana.gui.backend import charts_data
 
         entered, release = threading.Event(), threading.Event()
         original = charts_data.production
@@ -158,7 +158,7 @@ class ResultController(unittest.TestCase):
         self.assertEqual(self.controller.revision, before)
 
     def test_adapter_failure_reports_error_and_retains_previous_complete_snapshot(self):
-        from meridiana.quick.backend import charts_data
+        from meridiana.gui.backend import charts_data
 
         self.controller.update_results(self.payload())
         self.settled()
@@ -220,7 +220,7 @@ QtObject {
         self.assertEqual(self.controller.error, "Recorded failure")
 
     def test_real_bridge_check_failure_does_not_cancel_a_valid_year_being_adapted(self):
-        from meridiana.quick.bridge import Bridge
+        from meridiana.gui.bridge import Bridge
 
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -241,7 +241,7 @@ QtObject {
         with patch.object(self.api, "_pages", side_effect=delayed):
             bridge.session.energy_done(bridge.session.energy_asked(), self.payload().as_dict())
             self.assertTrue(_setup.wait_until(self.app, entered.is_set))
-            bridge._checks_finished(bridge._check_serial, [], "Recorded check failure")
+            bridge._checks_failed("Recorded check failure")
             release.set()
             self.assertTrue(_setup.wait_until(self.app, lambda: not self.controller._jobs))
         self.assertIs(bridge.session.energy["sim"], self.real.sim)
@@ -251,7 +251,7 @@ QtObject {
         self.assertEqual(self.controller.error, "Recorded check failure")
 
     def test_real_bridge_failed_computation_retains_previous_year_and_its_input_key(self):
-        from meridiana.quick.bridge import Bridge
+        from meridiana.gui.bridge import Bridge
 
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -272,16 +272,16 @@ QtObject {
 
     def test_controller_import_needs_no_widgets(self):
         script = (
-            "import sys; import meridiana.quick.backend.charts_controller; "
-            "assert not any(n.startswith(('PySide6.QtWidgets', 'meridiana.ui', 'pyqtgraph')) for n in sys.modules)"
+            "import sys; import meridiana.gui.backend.charts_controller; "
+            "assert not any(n.startswith(('PySide6.QtWidgets', 'pyqtgraph')) for n in sys.modules)"
         )
         proc = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
         self.assertEqual(proc.returncode, 0, proc.stderr)
 
     def test_shell_page_urls_load_real_results_and_forward_commands(self):
-        from meridiana.quick.backend.tokens import install_theme
+        from meridiana.gui.backend.tokens import install_theme
 
-        directory = _setup.ROOT / "src/meridiana/quick/qml/Meridiana/Charts"
+        directory = _setup.ROOT / "src/meridiana/gui/qml/Meridiana/Charts"
         for name in ("ProductionPage", "ConsumptionPage", "EconomicsPage", "StoragePage"):
             self.assertTrue((directory / (name + ".qml")).exists(), f"{name} URL is not implemented")
         engine = QQmlApplicationEngine()

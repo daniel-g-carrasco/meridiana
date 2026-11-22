@@ -8,9 +8,9 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
-from meridiana import model
-from meridiana.quick.backend import plan as plan_backend
-from meridiana.quick.backend.plan import PlanController
+from meridiana.core.model import model
+from meridiana.gui.backend import plan as plan_backend
+from meridiana.gui.backend.plan import PlanController
 
 RHO = Path(__file__).resolve().parents[3] / 'docs/quick/compat/fixtures/rho.meridiana'
 APP = None

@@ -19,7 +19,7 @@ from quick.percorsi.test_native import ROOT, _run
 JOURNEY = r'''
 import json
 from PySide6.QtCore import QMetaObject, QPointF, Q_ARG, Q_RETURN_ARG, Qt
-from meridiana import jobs
+from meridiana.app import jobs
 
 seen = {}
 laid, laid_keys, _unused = jobs.layout_of(host.bridge.session.project, host.bridge.session.known_layouts())

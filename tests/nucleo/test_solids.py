@@ -7,9 +7,10 @@ saddle-backed bands (R455). Old projects write as they were: the new fields only
 import json
 import unittest
 
-from meridiana import model, move, roofs
-from meridiana import roof_vertices as rv
-from meridiana.energy import system
+from meridiana.core.model import model, move
+from meridiana.core.geometry import roofs
+from meridiana.core.geometry import roof_vertices as rv
+from meridiana.core.energy import system
 
 
 def rect(x0, y0, x1, y1):
@@ -47,7 +48,7 @@ class BaseHeight(unittest.TestCase):
         self.assertIn("buildings[0].base", str(caught.exception))
 
     def test_the_shadow_solid_and_the_3d_walls_start_at_the_base(self):
-        from meridiana import mesh
+        from meridiana.core.geometry import mesh
         p = shed(base=4.0)
         b = p.buildings[0]
         p.buildings.append(model.Building("b2", "Altro", rect(60, 0, 80, 20), 6.0))
@@ -233,7 +234,7 @@ class Exports(unittest.TestCase):
     """The base in the exports: the IFC walls stand from it, the DXF says it; the import reads it."""
 
     def test_the_ifc_import_gives_a_raised_body_its_base_and_the_body_under_it(self):
-        from meridiana import ifc_import
+        from meridiana.app.exchange import ifc_import
         plan = ifc_import.Plan()
         plan.buildings = [model.Building("", "Corpo 1", rect(0, 0, 40, 20), 8.0),
                           model.Building("", "Corpo 2", rect(10, 5, 30, 10), 11.0),
@@ -277,7 +278,7 @@ class Exports(unittest.TestCase):
     def test_the_dxf_says_the_base(self):
         import tempfile
         from pathlib import Path
-        from meridiana import dxf_export
+        from meridiana.app.exchange import dxf_export
         if not dxf_export.available():
             self.skipTest("no ezdxf")
         p = shed(base=4.0)

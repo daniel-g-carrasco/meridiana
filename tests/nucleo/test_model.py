@@ -13,7 +13,7 @@ from pathlib import Path
 import _setup
 from _fixtures import capannone_rho as sample
 
-from meridiana import model
+from meridiana.core.model import model
 
 
 class Variants(unittest.TestCase):
@@ -131,8 +131,8 @@ class Workflow(unittest.TestCase):
         import numpy as np
         from shapely.geometry import Point
 
-        from meridiana import sun
-        from meridiana.energy import nearshade, system
+        from meridiana.core.geometry import sun
+        from meridiana.core.energy import nearshade, system
         p = model.Project(site=model.Site(lat=45.5, lon=9.2))
         p.buildings.append(model.Building(id="b1", name="Tetto", footprint=[[0, 0], [30, 0], [30, 20], [0, 20]],
                                           height=6.0))
@@ -168,6 +168,23 @@ class Workflow(unittest.TestCase):
         p.exclusions.append(model.ExclusionItem(id="e10", ring=[[5, 5], [6, 5], [6, 6]], kind="walkway",
                                                 building="b1"))
         self.assertFalse(any(o["id"] == "e10" for o in p.obstacle_prisms()))
+
+    def test_the_prism_of_one_obstacle_is_the_one_the_whole_list_gives(self):
+        """obstacle_prism_of (R598, passo 2): the outline and the handles of the obstacle selected made from its prism
+        alone; the same prism as the first of obstacle_prisms() with its id that is not a parapet, for an exclusion
+        that rises, one that does not, a canopy's columns and beams (they carry the canopy's id), what is not there."""
+        from meridiana.core.model import canopies
+        p = sample()
+        p.exclusions.append(model.ExclusionItem(id="e9", ring=[[50, 5], [52, 5], [52, 7], [50, 7]], kind="tree"))
+        p.exclusions.append(model.ExclusionItem(id="e10", ring=[[5, 5], [6, 5], [6, 6]], kind="walkway",
+                                                building="b1"))
+        canopy = canopies.add(p, canopies.Spec(stalls=4, rows=1), (80, 5))
+        whole = p.obstacle_prisms()
+        for oid in [e.id for e in p.exclusions] + [b.id for b in p.buildings] + [canopy, "nothing"]:
+            self.assertEqual(p.obstacle_prism_of(oid),
+                             next((o for o in whole if o["id"] == oid and o["kind"] != "parapet"), None), oid)
+        self.assertIsNone(p.obstacle_prism_of("e10"))
+        self.assertIn(p.obstacle_prism_of(canopy)["kind"], ("column", "beam"))
 
     def test_a_parapet_runs_inside_the_outline(self):
         from shapely.geometry import Polygon
@@ -544,8 +561,8 @@ class Imports(unittest.TestCase):
         shadows for a sub-field out of them come from the caller (energy.system.shadow_exclusions)."""
         import subprocess
         import sys
-        code = ("import sys; sys.path.insert(0, r'" + str(_setup.ROOT / "src") + "'); import meridiana.model; "
-                "print(sorted(m for m in sys.modules if m.startswith('meridiana.energy') or m in ('pandas', 'pvlib')))")
+        code = ("import sys; sys.path.insert(0, r'" + str(_setup.ROOT / "src") + "'); import meridiana.core.model.model; "
+                "print(sorted(m for m in sys.modules if m.startswith('meridiana.core.energy') or m in ('pandas', 'pvlib')))")
         out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
         self.assertEqual(out.stdout.strip(), "[]")
 
@@ -556,7 +573,7 @@ class Imports(unittest.TestCase):
         with self.assertRaises(ValueError) as caught:
             p.fill(sf)
         self.assertIn("shadow function", str(caught.exception))
-        from meridiana.energy import system
+        from meridiana.core.energy import system
         self.assertGreater(p.fill(sf, shade=system.shadow_exclusions).count, 0)
 
 

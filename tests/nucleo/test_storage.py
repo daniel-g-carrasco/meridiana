@@ -1,6 +1,6 @@
 """Storage compatibility and AC equivalent regression cases."""
 import unittest
-from meridiana.energy.storage import check_storage, operating_battery
+from meridiana.core.energy.storage import check_storage, operating_battery
 
 
 class StorageTest(unittest.TestCase):
@@ -43,7 +43,7 @@ class StorageTest(unittest.TestCase):
         self.assertEqual(check_storage(self.b, self.i, "dc", float("nan")).status, "incompatible")
 
     def test_deleted_inverter_invalidates_binding(self):
-        from meridiana.energy.storage import validate_connection
+        from meridiana.core.energy.storage import validate_connection
         settings = dict(battery=self.b, storage_coupling="dc", storage_inverter=self.i)
         validate_connection(settings, [{"record": self.i}])
         with self.assertRaises(ValueError):
@@ -51,7 +51,7 @@ class StorageTest(unittest.TestCase):
 
     def test_round_trip_applied_once(self):
         import numpy as np
-        from meridiana.energy.economics import dispatch
+        from meridiana.core.energy.economics import dispatch
         settings = dict(battery=self.b, battery_units=1, storage_coupling="dc",
                         storage_inverter=self.i, storage_efficiency_pct=81)
         battery = operating_battery(settings)
@@ -61,7 +61,7 @@ class StorageTest(unittest.TestCase):
         self.assertAlmostEqual(soc[-1], 0)
 
     def test_audit_does_not_promote_url_to_verified(self):
-        from meridiana.catalog.audit import audit_record
+        from meridiana.data.catalog.audit import audit_record
         result = audit_record(dict(model="bad", imp=10, isc=9, datasheet_url="https://example.test"), "modules")
         self.assertIn("imp > isc", result["issues"])
         self.assertEqual(result["fields"]["imp"], "source_declared")

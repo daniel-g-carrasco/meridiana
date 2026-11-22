@@ -351,12 +351,12 @@ def launch_on_hidden_desktop(argv, *, log, desktop='meridiana-collaudo', env=Non
 # The program side.
 def _quick_host(args, work):
     from PySide6.QtCore import QTimer
-    from meridiana import model
-    from meridiana.quick.app import QuickWindow, create_app
-    from meridiana.quick.sample import recorded_weather
+    from meridiana.core.model import model
+    from meridiana.gui.application import QuickWindow, create_app
+    from meridiana.gui.sample import recorded_weather
     app = create_app()
     project, notice = model.Project.load(args.project)
-    # The same steps as meridiana.quick.app.main, on a temporary profile.
+    # The same steps as meridiana.gui.application.main, on a temporary profile.
     recorded_weather(project, work)
     host = QuickWindow(project, work, real_views=True, theme={'theme': args.theme} if args.theme else None)
     host.window.resize(args.width, args.height)
@@ -365,28 +365,6 @@ def _quick_host(args, work):
     if not args.no_calc:
         QTimer.singleShot(0, host.bridge.recompute)
     return app, host, host.window
-
-
-def _widgets_host(args, work):
-    import unittest
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent/'tests'))
-    import _setup
-    from meridiana import config, i18n, model
-    from meridiana.quick.sample import recorded_weather
-    from meridiana.ui.theme import load_fonts
-    app = _setup.qt_or_skip()
-    i18n.setup('it')
-    load_fonts('plex')
-    project, notice = model.Project.load(args.project)
-    case = unittest.TestCase()
-    cfg = config.Config(theme=args.theme or 'light', font='plex', accent='indigo', backgrounds='grey', background='auto' if args.keep_maps else 'none',
-                        network_tiles=args.keep_maps, network_pvgis=False, check_updates=False, assistant_animated=False)
-    window = _setup.window(case, project, cfg, size=[args.width, args.height])
-    recorded_weather(project, case.paths.cache)
-    window.show()
-    window.move(0, 0)
-    case_holder = type('Host', (), {'case': case, 'window': window})()
-    return app, case_holder, window
 
 
 def serve(args):
@@ -398,7 +376,7 @@ def serve(args):
     if Path(args.project).resolve() != project_copy.resolve():
         shutil.copy2(args.project, project_copy)
     args.project = project_copy
-    app, host, window = (_quick_host if args.engine == 'quick' else _widgets_host)(args, work)
+    app, host, window = _quick_host(args, work)
     native = NativeInput(window, app)
     native.spin(500)
     native.activate()
@@ -423,7 +401,7 @@ def serve(args):
         return None
 
     def grab(name):
-        image = window.grabWindow() if args.engine == 'quick' else window.grab().toImage()
+        image = window.grabWindow()
         path = ctl/name
         path.parent.mkdir(parents=True, exist_ok=True)
         image.save(str(path))
@@ -460,8 +438,7 @@ def serve(args):
         partial.rename(ctl/f'res-{index}.txt')
         index += 1
         last = time.time()
-    if args.engine == 'quick':
-        host.close()
+    host.close()
     os._exit(0)
 
 
@@ -514,7 +491,8 @@ def main():
     sub = parser.add_subparsers(dest='command', required=True)
     for name in ('start', 'serve'):
         command = sub.add_parser(name)
-        command.add_argument('--engine', choices=('quick', 'widgets'), default='quick')
+        # only the Quick window is left (r30, phase B): the option stays for the callers that name it
+        command.add_argument('--engine', choices=('quick',), default='quick')
         command.add_argument('--ctl', required=True)
         sample = Path(__file__).resolve().parents[1] / 'docs/quick/compat/fixtures/rho.meridiana'
         command.add_argument('--project', default=str(sample))

@@ -78,7 +78,7 @@ print(json.dumps(seen, default=str))
 
 
 def _project(folder: Path) -> Path:
-    from meridiana import model
+    from meridiana.core.model import model
     p = model.Project(name='Prova solidi')
     p.site = model.Site(lat=45.52, lon=9.04, address='Rho (MI)')
     p.buildings.append(model.Building(id='b1', name='Capannone', footprint=[[0, 0], [40, 0], [40, 20], [0, 20]],

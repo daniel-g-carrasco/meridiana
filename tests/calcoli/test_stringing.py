@@ -5,8 +5,8 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana.energy import stringing
-from meridiana.energy.components import InverterSpec, ModuleSpec
+from meridiana.core.energy import stringing
+from meridiana.core.energy.components import InverterSpec, ModuleSpec
 
 
 def module(**k) -> ModuleSpec:
@@ -70,7 +70,7 @@ class Layout(unittest.TestCase):
         self.assertFalse(stringing.plan(module(), inverter(), 12, [0, 0], -10.0, 70.0).ok)
 
     def test_a_real_inverter_and_module_of_the_catalogue(self):
-        from meridiana import catalog
+        from meridiana.data import catalog
         inv = catalog.search("inverters", "SUN2000-20KTL-M5", source="curated")
         mod = catalog.search("modules", "LR7-54HVH", source="curated")
         if not inv or not mod:
@@ -97,7 +97,7 @@ class Layout(unittest.TestCase):
 
 class Wiring(unittest.TestCase):
     def laid(self, **params):
-        from meridiana import layout
+        from meridiana.core.layout import layout
         roof = [(0.0, 0.0), (30.0, 0.0), (30.0, 14.0), (0.0, 14.0)]
         return layout.compute(roof, params=layout.Params(pitch_mode="value", pitch=4.0, **params), lat=45.5,
                               lon=9.0).modules
@@ -129,7 +129,7 @@ class Wiring(unittest.TestCase):
 
 def grid(rows: int, per_row: int, x0: float = 0.0) -> list:
     """Modules facing South in `rows` rows of `per_row`, 1.2 m apart along the row and 3 m between the rows."""
-    from meridiana import layout
+    from meridiana.core.layout import layout
     out = []
     for r in range(rows):
         for s in range(per_row):
@@ -142,7 +142,7 @@ def grid(rows: int, per_row: int, x0: float = 0.0) -> list:
 def plant_project(entries: list, strings: dict | None = None, targets: dict | None = None):
     """A project with the inverters `entries` and the strings `strings` («auto»: Meridiana's proposal, as a project of
     before format 14 had it, written down at the first layout by the window)."""
-    from meridiana import model
+    from meridiana.core.model import model
     p = model.Project(name="Prova")
     p.energy = {"inverters": [{"record": rec, "count": n, "name": ""} for rec, n in entries]}
     if strings is not None:
@@ -166,11 +166,11 @@ class Plant(unittest.TestCase):
     them, the checks for each input and inverter, the modules in no string by inverter."""
 
     def group(self, placed, sfid="s1"):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         return plant.Group(f"{sfid}.0", sfid, sfid, module(), placed)
 
     def test_ten_strings_on_three_mppt_are_three_three_four(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         self.assertEqual(stringing.spread(10, 3), [3, 3, 4])
         self.assertEqual(stringing.spread(7, 2), [3, 4])
         self.assertEqual(stringing.spread(2, 3), [0, 1, 1])
@@ -185,7 +185,7 @@ class Plant(unittest.TestCase):
         self.assertTrue(all(len(s.modules) == 12 for s in out.strings))      # identical strings on every input
 
     def test_the_strings_of_a_sub_field_go_to_the_input_it_names(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         two = inverter_rec(mppt_count=2, dc_isc_max_per_mppt_a=[80, 80], dc_current_max_per_mppt_a=[60, 60])
         p = plant_project([(two, 2)], {"auto": True, "strategy": "rows", "n_series": 12}, {"s1": (2, 2)})
         out = plant.build(p, groups=[plant.Group("s1.0", "s1", "s1", module(), grid(2, 12), (2, 2))])
@@ -195,7 +195,7 @@ class Plant(unittest.TestCase):
     def test_an_inverter_overloaded_beyond_three_percent_fails_on_a_program_threshold(self):
         import numpy as np
 
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         year = np.r_[np.full(1000, 12000.0), np.zeros(7760)]
         self.assertAlmostEqual(stringing.overload_loss(year, 10000.0, 1.0), 100 * 2000 / 12000)
         self.assertEqual(stringing.overload_check("Inverter 1", 3.1).level, "fail")
@@ -211,7 +211,7 @@ class Plant(unittest.TestCase):
         out = plant.build(p, groups=[self.group(placed)], t_cell_max_year=62.0, p_dc_hourly=hours)
         overload = next(c for c in out.checks[1] if c.key == "overload")
         self.assertEqual(overload.level, "fail")
-        from meridiana import checks
+        from meridiana.core.rules import checks
         item = next(i for i in checks.plant_items(out) if "beyond the nominal power" in i.text)
         self.assertEqual((item.level, item.area, item.target), ("fail", "strings", ("phase", "plant")))
         self.assertIn("not a standard", item.source)
@@ -222,21 +222,21 @@ class Plant(unittest.TestCase):
         self.assertEqual(stringing.imbalance_check("I", [1.0, 4.0]).level, "warn")
 
     def test_the_modules_in_no_string_are_counted_by_inverter(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         two = inverter_rec(dc_isc_max_per_mppt_a=[20, 20])          # one string per input
         p = plant_project([(two, 1)], {"auto": True, "strategy": "rows", "n_series": 12})
         out = plant.build(p, groups=[self.group(grid(3, 13))])
         self.assertEqual(len(out.strings), 2)
         self.assertEqual(len(out.left), 3 * 13 - 24)
         self.assertEqual(out.left_by_unit, {1: 15})
-        from meridiana import checks
+        from meridiana.core.rules import checks
         self.assertTrue(any("15 modules in no string" in i.text for i in checks.plant_items(out)))
 
     def test_the_checks_of_the_plant_say_why_and_what_to_do_and_their_defaults(self):
         """The detail of the Checks panel (task 17e) on the plant's items too (task 16d): an input's check by its
         key, the modules in no string; the defaults of the strings' plan in «ready for delivery», in the Plant."""
-        from meridiana import checks
-        from meridiana.energy import plant
+        from meridiana.core.rules import checks
+        from meridiana.core.energy import plant
         p = plant_project([(inverter_rec(), 1)], {"auto": True, "strategy": "rows", "n_series": 26})
         out = plant.build(p, groups=[self.group(grid(2, 26) + grid(1, 3, 40.0))])
         items = checks.plant_items(out)
@@ -249,13 +249,13 @@ class Plant(unittest.TestCase):
         defaults = checks.defaults_in_use({"plant": out})
         cold = next(i for i in defaults if "lowest temperature of the site" in i.text)
         self.assertEqual(cold.target, ("phase", "plant"))
-        from meridiana import model
+        from meridiana.core.model import model
         none = checks.plant_items(plant.build(model.Project(name="Prova"), groups=[self.group(grid(1, 12))]))
         self.assertLessEqual(len(none[0].text), checks.TEXT_LENGTH)              # the note itself in the detail
         self.assertIn("catalogue", none[0].detail)
 
     def test_before_the_year_the_strings_are_checked_at_pvsyst_design_conditions(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         p = plant_project([(inverter_rec(), 1)], {"auto": True, "strategy": "rows", "n_series": 12})
         out = plant.build(p, groups=[self.group(grid(1, 12))])
         self.assertEqual((out.t_cell_max, out.t_cell_cold, out.t_min, out.year), (60.0, 20.0, -10.0, False))
@@ -269,8 +269,8 @@ class Plant(unittest.TestCase):
         self.assertEqual((year.t_cell_max, year.t_cell_cold, year.year), (65.0, -10.0, True))
 
     def test_without_a_catalogue_inverter_nothing_is_proposed_and_it_is_said(self):
-        from meridiana import model
-        from meridiana.energy import plant
+        from meridiana.core.model import model
+        from meridiana.core.energy import plant
         p = model.Project(name="Prova")
         out = plant.build(p, groups=[self.group(grid(2, 12))])
         self.assertFalse(out.strings)
@@ -286,7 +286,7 @@ class Strategies(unittest.TestCase):
     """PVsyst's «Auto Attribution» strategies on a layout of 3 rows of 8 modules (task 16d, step 4)."""
 
     def test_back_and_forth_runs_along_a_row_and_back_along_the_next(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         strings, left, starts = plant.order(grid(3, 8), 8, "serpentine")
         self.assertEqual(keys(strings), [[f"0:{s}" for s in range(8)], [f"1:{s}" for s in range(7, -1, -1)],
                                          [f"2:{s}" for s in range(8)]])
@@ -299,7 +299,7 @@ class Strategies(unittest.TestCase):
         self.assertEqual(len(left), 24 - 20)
 
     def test_one_row_per_string_leaves_the_end_of_each_row_out(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         strings, left, _starts = plant.order(grid(3, 8), 8, "rows")
         self.assertEqual(keys(strings), [[f"{r}:{s}" for s in range(8)] for r in range(3)])
         strings, left, _starts = plant.order(grid(3, 8), 6, "rows")
@@ -307,7 +307,7 @@ class Strategies(unittest.TestCase):
         self.assertEqual(sorted(pm.key for pm in left), ["0:6", "0:7", "1:6", "1:7", "2:6", "2:7"])
 
     def test_u_goes_out_along_one_row_and_back_along_the_next(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         strings, left, starts = plant.order(grid(3, 8), 8, "u")
         self.assertEqual(keys(strings), [["0:0", "0:1", "0:2", "0:3", "1:3", "1:2", "1:1", "1:0"],
                                          ["0:4", "0:5", "0:6", "0:7", "1:7", "1:6", "1:5", "1:4"],
@@ -318,7 +318,7 @@ class Strategies(unittest.TestCase):
         self.assertLess(math.dist(first[0].centre, first[-1].centre), 3.1)     # both ends at the same side
 
     def test_the_modules_left_out_are_counted_without_laying_the_strings(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         for rows, per in ((3, 8), (5, 13), (2, 7)):
             placed = grid(rows, per)
             lengths = [per] * rows
@@ -329,7 +329,7 @@ class Strategies(unittest.TestCase):
                                          len(plant.order(placed, n, strategy)[1]))
 
     def test_one_row_per_mppt_puts_the_strings_of_a_row_on_one_input(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         three = inverter_rec(mppt_count=3, dc_current_max_per_mppt_a=[60] * 3, dc_isc_max_per_mppt_a=[80] * 3)
         p = plant_project([(three, 1)], {"auto": True, "strategy": "row_per_mppt", "n_series": 4})
         out = plant.build(p, groups=[plant.Group("s1.0", "s1", "s1", module(), grid(3, 8))])
@@ -345,13 +345,13 @@ class ByHand(unittest.TestCase):
     today's layout, survive a row moved and are said lost when the row is gone."""
 
     def plant_of(self, placed, runs, auto=False):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         p = plant_project([(inverter_rec(dc_isc_max_per_mppt_a=[80, 80], dc_current_max_per_mppt_a=[60, 60]), 1)],
                           {"auto": auto, "strategy": "rows", "n_series": 8, "runs": runs})
         return plant.build(p, groups=[plant.Group("s1.0", "s1", "s1", module(), placed)])
 
     def test_touching_the_proposal_makes_it_the_designers(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         proposal = self.plant_of(grid(3, 8), [], auto=True)
         runs = plant.runs_of(proposal)
         self.assertEqual(len(runs), 3)
@@ -376,7 +376,7 @@ class ByHand(unittest.TestCase):
     def test_a_string_skips_a_module_starts_or_ends_where_asked_and_says_its_voltages(self):
         """R57 (Daniel, 24/10/2026): a module in the middle skipped and the rest kept, the string cut to start or
         end at a module (what is cut off is left in no string), its voltages against the limits in one line."""
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         run = {"inverter": 1, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]}
         runs, i = plant.remove_module([run], "s1/0:3")                  # skipped: the rest stays, in its order
         self.assertEqual((i, runs[0]["modules"]), (0, [f"s1/0:{s}" for s in (0, 1, 2, 4, 5, 6, 7)]))
@@ -397,7 +397,7 @@ class ByHand(unittest.TestCase):
 
     def test_the_dcac_ratio_and_its_energy_cut_once_the_year_is_there(self):
         """R62: the ratio of the plant, and the energy cut only when a year was given (None before)."""
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         run = {"inverter": 1, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]}
         mine = self.plant_of(grid(1, 8), [run])
         ratio, loss = plant.dcac(mine)
@@ -410,7 +410,7 @@ class ByHand(unittest.TestCase):
     def test_a_change_checks_again_only_the_inputs_it_touched(self):
         from unittest import mock
 
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         plant._PLANS.clear()
         runs = [{"inverter": 1, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]},
                 {"inverter": 1, "mppt": 2, "modules": [f"s1/1:{s}" for s in range(8)]}]
@@ -424,7 +424,7 @@ class ByHand(unittest.TestCase):
         self.assertEqual(out.strings[1].plan.n_series, 7)
 
     def test_a_string_by_hand_survives_a_row_moved_and_is_said_lost_when_the_row_goes(self):
-        from meridiana import checks
+        from meridiana.core.rules import checks
         runs = [{"inverter": 1, "mppt": 1, "modules": ["s1/1:0", "s1/1:1", "s1/1:2"]}]
         here = self.plant_of(grid(3, 8), runs)
         moved = self.plant_of(grid(3, 8, x0=5.0), runs)                  # the same keys, other places
@@ -444,11 +444,11 @@ class AutomaticErrors(unittest.TestCase):
     """Errors reproduced before R187: a proposal must respect every unit and every input, not only the first."""
 
     def group(self, placed):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         return plant.Group("s1.0", "s1", "s1", module(), placed)
 
     def test_mixed_inverter_models_do_not_put_a_long_string_on_a_narrow_input(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         wide = inverter_rec(model="WIDE", mppt_count=1, dc_current_max_per_mppt_a=[60],
                             dc_isc_max_per_mppt_a=[80])
         narrow = inverter_rec(model="NARROW", mppt_count=1, mppt_voltage_max_v=500,
@@ -461,7 +461,7 @@ class AutomaticErrors(unittest.TestCase):
                         [(s.label, len(s.modules), s.why) for s in out.strings])
 
     def test_an_explicit_input_never_receives_more_strings_than_its_current_allows(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         one = inverter_rec(mppt_count=1, dc_current_max_per_mppt_a=[16], dc_isc_max_per_mppt_a=[20])
         p = plant_project([(one, 1)], {"auto": True, "strategy": "serpentine", "n_series": 12})
         out = plant.build(p, groups=[plant.Group("s1.0", "s1", "s1", module(), grid(3, 12), (1, 1))])
@@ -504,8 +504,8 @@ class HandCalculated(unittest.TestCase):
 class ParallelStrings(unittest.TestCase):
     def test_different_orientations_on_one_input_say_why_they_are_not_uniform(self):
         import dataclasses
-        from meridiana import checks
-        from meridiana.energy import plant
+        from meridiana.core.rules import checks
+        from meridiana.core.energy import plant
         rec = inverter_rec(mppt_count=1, dc_current_max_per_mppt_a=[60], dc_isc_max_per_mppt_a=[80])
         runs = [{"inverter": 1, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]},
                 {"inverter": 1, "mppt": 1, "modules": [f"s2/0:{s}" for s in range(8)]}]
@@ -521,7 +521,7 @@ class ParallelStrings(unittest.TestCase):
         self.assertTrue(any("orientation" in i.text for i in checks.plant_items(out)))
 
     def test_different_lengths_on_one_input_say_why_they_are_not_uniform(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         rec = inverter_rec(mppt_count=1, dc_current_max_per_mppt_a=[60], dc_isc_max_per_mppt_a=[80])
         runs = [{"inverter": 1, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]},
                 {"inverter": 1, "mppt": 1, "modules": [f"s1/1:{s}" for s in range(7)]}]
@@ -532,7 +532,7 @@ class ParallelStrings(unittest.TestCase):
         self.assertTrue(all("same length" in s.why for s in out.strings))
 
     def test_an_input_without_a_known_mppt_window_is_to_be_checked(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         rec = inverter_rec(mppt_count=1, mppt_voltage_min_v=None, mppt_voltage_max_v=None)
         runs = [{"inverter": 1, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]}]
         out = plant.build(plant_project([(rec, 1)], {"runs": runs}), groups=[plant.Group(
@@ -550,12 +550,12 @@ class OnlyWhenAsked(unittest.TestCase):
         return plant_project(entries, {"strategy": "rows", "n_series": 8, "runs": runs or []})
 
     def group(self, placed):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         return plant.Group("s1.0", "s1", "s1", module(), placed)
 
     def test_without_strings_of_the_designer_nothing_is_laid_and_every_module_is_left(self):
-        from meridiana import checks
-        from meridiana.energy import plant
+        from meridiana.core.rules import checks
+        from meridiana.core.energy import plant
         p = self.project([(inverter_rec(), 1)])
         out = plant.build(p, groups=[self.group(grid(3, 8))])
         self.assertFalse(out.auto)
@@ -565,7 +565,7 @@ class OnlyWhenAsked(unittest.TestCase):
         self.assertIn("contributes no energy", left.detail)
 
     def test_an_inverter_added_makes_no_string_and_the_strings_stay_on_their_inverters(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         a, b = inverter_rec(model="A"), inverter_rec(model="B")
         runs = [{"inverter": 1, "mppt": 1, "modules": [f"s1/0:{s}" for s in range(8)]},
                 {"inverter": 2, "mppt": 2, "modules": [f"s1/1:{s}" for s in range(8)]}]
@@ -587,7 +587,7 @@ class OnlyWhenAsked(unittest.TestCase):
         self.assertEqual(plant.renumber(runs, [], after, {}), runs)              # sized by itself before: as it was
 
     def test_propose_lays_the_strategy_once_and_complete_keeps_the_designers_strings(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         two = inverter_rec(dc_isc_max_per_mppt_a=[80, 80], dc_current_max_per_mppt_a=[60, 60])
         p = self.project([(two, 1)])
         groups = [self.group(grid(3, 8))]
@@ -605,7 +605,7 @@ class OnlyWhenAsked(unittest.TestCase):
                          ["s1/0:0", "s1/0:1"])
 
     def test_complete_without_a_free_input_uses_the_room_left_and_proposes_nothing_beyond_it(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         one = inverter_rec(mppt_count=1, dc_isc_max_per_mppt_a=[20], dc_current_max_per_mppt_a=[16])  # 1 string
         p = self.project([(one, 1)])
         groups = [self.group(grid(2, 8))]
@@ -618,7 +618,7 @@ class OnlyWhenAsked(unittest.TestCase):
         self.assertEqual((completed[1]["inverter"], completed[1]["mppt"]), (1, 1))
 
     def test_a_string_deleted_or_drawn_again_takes_its_modules_from_the_others(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         runs = [{"inverter": 1, "mppt": 1, "modules": ["s1/0:0", "s1/0:1"]},
                 {"inverter": 1, "mppt": 2, "modules": ["s1/0:2", "s1/0:3"]}]
         self.assertEqual(plant.delete_run(runs, 0), [runs[1]])
@@ -635,7 +635,7 @@ if __name__ == "__main__":
 class CompletingCompatibility(unittest.TestCase):
     def test_completion_preserves_orientation_tilt_and_module_type_on_used_mppt(self):
         import dataclasses
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         rec = inverter_rec(mppt_count=1, dc_current_max_per_mppt_a=[60], dc_isc_max_per_mppt_a=[80])
         p = plant_project([(rec, 1)], {"runs": [], "n_series": 8})
         left = plant.Group("s1.0", "s1", "South", module(), grid(1, 8))
@@ -649,7 +649,7 @@ class CompletingCompatibility(unittest.TestCase):
         self.assertEqual(len(plant.propose(p, groups=[left, same], keep=keep)), 2)
 
     def test_mixed_manual_string_reports_actual_power_and_warns_about_module_types(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         a = plant.Group("a.0", "a", "A", module(), grid(1, 8))
         b = plant.Group("b.0", "b", "B", module(model="600", pmax=600), grid(1, 8))
         runs = [{"inverter": 1, "mppt": 1, "modules": [f"{g.sfid}/{pm.key}" for g in (a,b) for pm in g.placed]}]
@@ -683,7 +683,7 @@ class InputTopology(unittest.TestCase):
         self.assertTrue(any(c.key == "connections0" and c.level == "warn" for c in p.checks))
 
     def test_total_operating_current_is_checked_across_independent_mppts(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         rec = inverter_rec(dc_current_max_a=25, dc_current_max_per_mppt_a=[20,20])
         g = plant.Group("s1.0", "s1", "Field", module(), grid(2,8))
         runs = [{"inverter":1,"mppt":r+1,"modules":[f"s1/{r}:{i}" for i in range(8)]} for r in range(2)]

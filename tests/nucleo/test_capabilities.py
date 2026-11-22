@@ -7,7 +7,7 @@ import unittest
 
 import _setup
 
-from meridiana import capabilities, tiles
+from meridiana.app.maps import capabilities, tiles
 
 FOLDER = _setup.DATA / "mappe"
 

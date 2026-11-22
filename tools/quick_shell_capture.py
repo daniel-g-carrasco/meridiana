@@ -6,9 +6,9 @@ from pathlib import Path
 from PySide6.QtCore import QCoreApplication, QEvent, QObject, Qt
 
 from _fixtures import capannone
-from meridiana import jobs
-from meridiana.quick.app import QuickWindow, create_app
-from meridiana.quick.capture import grab
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
+from meridiana.gui.capture import grab
 from quick.gestures import pump, wait_for
 
 
@@ -17,8 +17,8 @@ def capture(args, app):
         host = QuickWindow(capannone(), Path(temporary), theme={'theme': args.theme})
         results, keys, _ = jobs.layout_of(host.bridge.session.project)
         host.bridge.accept_layout(0, results, keys)
-        host.bridge._request_checks()
-        wait_for(lambda: not host.bridge._check_jobs)
+        host.bridge.request_checks()
+        wait_for(lambda: not host.bridge.checks_feed.busy())
         # A captioned HWND is limited to this isolated desktop's work area.
         # Capture the same client area without its native caption, at the exact
         # requested logical size even when it exceeds the desktop at DPR 2.

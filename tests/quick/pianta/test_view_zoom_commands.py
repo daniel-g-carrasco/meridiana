@@ -19,9 +19,9 @@ class ViewZoomCommands(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         from PySide6.QtCore import QObject, QTimer
-        from meridiana import model
-        from meridiana.quick.app import QuickWindow, create_app
-        from meridiana.quick.sample import recorded_weather
+        from meridiana.core.model import model
+        from meridiana.gui.application import QuickWindow, create_app
+        from meridiana.gui.sample import recorded_weather
         cls.work = Path(tempfile.mkdtemp(prefix='meridiana-r538-'))
         shutil.copy2(RHO, cls.work / RHO.name)
         cls.app = create_app()

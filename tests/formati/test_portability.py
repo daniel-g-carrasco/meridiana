@@ -9,8 +9,13 @@ from unittest import mock
 import _setup  # noqa: F401
 from _fixtures import capannone, clear_sky_meteo, inverter_record, write_cache
 
-from meridiana import atomic, catalog, jobs, model, paths, portability
-from meridiana.energy import meteo, pipeline
+from meridiana.data import atomic, catalog
+from meridiana.app import jobs
+from meridiana.app.platform import paths
+from meridiana.app.project import portability
+from meridiana.core.model import model
+from meridiana.core.energy import meteo
+from meridiana.app import pipeline
 
 
 class AutonomousProject(unittest.TestCase):

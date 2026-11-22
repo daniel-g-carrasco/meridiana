@@ -11,8 +11,10 @@ from pathlib import Path
 import _setup  # noqa: F401
 from _fixtures import capannone, exported, mixed
 
-from meridiana import ifc_export, ifc_import, ifc_read, jobs, model
-from meridiana.energy import plant as plants
+from meridiana.app.exchange import ifc_export, ifc_import, ifc_read
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.core.energy import plant as plants
 
 def need_ifcopenshell():
     import importlib.util

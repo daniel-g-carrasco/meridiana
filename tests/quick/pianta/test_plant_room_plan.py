@@ -9,8 +9,9 @@ import unittest
 from PySide6.QtWidgets import QApplication
 
 import _setup
-from meridiana import i18n, model, move
-from meridiana.quick.backend.plan import PlanController
+from meridiana import i18n
+from meridiana.core.model import model, move
+from meridiana.gui.backend.plan import PlanController
 
 APP = None
 

@@ -2,9 +2,9 @@
 import unittest
 
 import _setup  # noqa: F401
-from meridiana import catalog
-from meridiana.energy.components import InverterSpec
-from meridiana.energy.optimizers import Optimizer, module_groups
+from meridiana.data import catalog
+from meridiana.core.energy.components import InverterSpec
+from meridiana.core.energy.optimizers import Optimizer, module_groups
 
 
 class InputTopology(unittest.TestCase):
@@ -61,8 +61,8 @@ class InputTopology(unittest.TestCase):
                 module_groups(list('abcde'), 2, sizes)
 
     def test_explicit_single_groups_count_as_separate_optimizers(self):
-        from meridiana.energy import optimizers
-        from meridiana.energy.components import ModuleSpec
+        from meridiana.core.energy import optimizers
+        from meridiana.core.energy.components import ModuleSpec
         opt = Optimizer.from_record(next(r for r in catalog.search('optimizers', manufacturer='SolarEdge', limit=None)
                                         if r['model'] == 'S1000'))
         inv = optimizers.fixed_voltage(next(r for r in catalog.search('inverters', manufacturer='SolarEdge', limit=None)

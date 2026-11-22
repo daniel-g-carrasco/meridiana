@@ -5,7 +5,8 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import checks, model
+from meridiana.core.rules import checks
+from meridiana.core.model import model
 
 
 def levels(items, needle):
@@ -76,7 +77,7 @@ class Gather(unittest.TestCase):
         self.assertTrue(any(i.text == "Copertura: non resta spazio dentro i margini" for i in items))
 
     def test_fixes_lay_the_modules_and_go_back_to_the_suggested_strings(self):
-        from meridiana.energy.stringing import Check, StringPlan
+        from meridiana.core.energy.stringing import Check, StringPlan
         p = self.project()
         results = {sf.id: p.fill(sf) for sf in p.subfields}
         mine = StringPlan(24, [2, 2], [Check("voc", "Open-circuit voltage within the inverter's", False, "1.580 V")])
@@ -212,7 +213,7 @@ class Gather(unittest.TestCase):
         inverter sized by itself, a clipping note (task 17e: every kind of item the window shows)."""
         from types import SimpleNamespace
 
-        from meridiana.energy.stringing import Check, StringPlan
+        from meridiana.core.energy.stringing import Check, StringPlan
         p = self.project()
         results = {sf.id: p.fill(sf) for sf in p.subfields}
         plan = StringPlan(24, [2, 2], [Check("uoc", "Uoc max within the maximum DC voltage", False, "1.580 V of 1.500 V"),
@@ -265,7 +266,7 @@ class Gather(unittest.TestCase):
         self.assertTrue(rule.detail)                                 # a rule's first paragraph
 
     def test_the_values_still_at_their_default_come_from_the_records(self):
-        from meridiana.energy.pedigree import Quantity, Record, Source, Step
+        from meridiana.core.energy.pedigree import Quantity, Record, Source, Step
         rec = Record("Economics")
         rec.add(Step("price", "Price of the energy bought", "", "", [
             Quantity("p", "price in F1", 0.25, "€/kWh", Source("default", "indicative default"), 3),
@@ -291,7 +292,7 @@ def _shade_free(sf):
 
 
 def _shadows():
-    from meridiana.energy import system
+    from meridiana.core.energy import system
     return system.shadow_exclusions
 
 
@@ -331,7 +332,7 @@ class ByHand(unittest.TestCase):
     task, through the whole list (more in test_manual.py)."""
 
     def test_a_row_dragged_onto_a_skylight_and_one_26_metres_long_under_the_fire_rules(self):
-        from meridiana import manual
+        from meridiana.core.layout import manual
         from _fixtures import laid
         from _fixtures import tetto_con_lucernario as project
         p = project(fire=True)
@@ -353,7 +354,7 @@ class Grouped(unittest.TestCase):
     """The three views of the Checks panel and the «ready for delivery» one, as sections of indices (task 17e)."""
 
     def items(self):
-        from meridiana.checks import Item
+        from meridiana.core.rules.checks import Item
         return [Item("fail", "layout", "a", target=("subfield", "s1")),
                 Item("warn", "shade", "b", target=("subfield", "s1")),
                 Item("warn", "connection", "c", target=("site",)),
@@ -400,7 +401,7 @@ class Grouped(unittest.TestCase):
             checks.grouped(self.items(), "colour")
 
     def test_the_phase_of_an_item(self):
-        from meridiana.checks import Item
+        from meridiana.core.rules.checks import Item
         items = self.items()
         self.assertEqual([checks.phase_of(i) for i in items],
                          ["model", "model", "model", "model", "consumption", "economics", "production", "model"])
@@ -421,7 +422,7 @@ class Marks(unittest.TestCase):
     marks rising to the groups and the site, the items about an object, the filter by level."""
 
     def items(self):
-        from meridiana.checks import Item
+        from meridiana.core.rules.checks import Item
         return [Item("warn", "layout", "a", target=("subfield", "s1")),
                 Item("fail", "layout", "b", target=("subfield", "s1")),
                 Item("info", "layout", "c", target=("subfield", "s2")),
@@ -431,7 +432,7 @@ class Marks(unittest.TestCase):
                 Item("warn", "layout", "g", target=("exclusion", "e1"))]
 
     def test_a_mark_per_object_with_its_worst_level_and_count(self):
-        from meridiana import checks
+        from meridiana.core.rules import checks
         m = checks.marks(self.items())
         self.assertEqual(set(m), {("subfield", "s1"), ("subfield", "s2"), ("exclusion", "e1")})
         self.assertEqual((m[("subfield", "s1")].level, m[("subfield", "s1")].count, m[("subfield", "s1")].items),
@@ -441,7 +442,7 @@ class Marks(unittest.TestCase):
         self.assertNotIn(("subfield", "s2"), only_bad)
 
     def test_the_tree_marks_rise_to_the_groups_and_the_site(self):
-        from meridiana import checks
+        from meridiana.core.rules import checks
         t = checks.tree_marks(self.items())
         self.assertEqual((t[("group", "subfield")].level, t[("group", "subfield")].count), ("fail", 3))
         self.assertEqual((t[("group", "exclusion")].level, t[("group", "exclusion")].count), ("warn", 1))
@@ -450,14 +451,14 @@ class Marks(unittest.TestCase):
         self.assertEqual(checks.tree_marks([]), {})
 
     def test_the_items_about_an_object_and_the_filter(self):
-        from meridiana import checks
+        from meridiana.core.rules import checks
         self.assertEqual(checks.about(self.items(), "subfield", "s1"), [0, 1])
         self.assertEqual(checks.about(self.items(), "building", "b1"), [])
         self.assertEqual(checks.filtered(self.items(), ("fail", "warn")), [0, 1, 4, 6])
         self.assertEqual(checks.worst(["info", "warn", "ok"]), "warn")
 
     def test_a_mark_of_the_tree_in_words_the_worst_first(self):
-        from meridiana import checks
+        from meridiana.core.rules import checks
         items = self.items()
         t = checks.tree_marks(items)
         self.assertEqual(checks.mark_text(items, t[("subfield", "s1")]), "1 to fix, 1 to check about this object")

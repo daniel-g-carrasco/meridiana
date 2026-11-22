@@ -10,9 +10,9 @@ from pathlib import Path
 
 import _setup  # noqa: F401
 
-from meridiana import model
-from meridiana.pvsyst import mapping, pvobject, records
-from meridiana.pvsyst import project as pvproject
+from meridiana.core.model import model
+from meridiana.app.exchange.pvsyst import mapping, pvobject, records
+from meridiana.app.exchange.pvsyst import project as pvproject
 
 DATA = _setup.DATA / "pvsyst"
 PRJ = DATA / "Prova Rho_Project.PRJ"

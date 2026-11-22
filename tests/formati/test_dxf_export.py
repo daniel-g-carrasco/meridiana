@@ -11,8 +11,10 @@ from pathlib import Path
 import _setup  # noqa: F401
 from _fixtures import capannone, mixed
 
-from meridiana import dxf_export, geo, jobs
-from meridiana.energy import plant as plants
+from meridiana.app.exchange import dxf_export
+from meridiana.app import jobs
+from meridiana.core.geometry import geo
+from meridiana.core.energy import plant as plants
 
 
 def need_ezdxf():
@@ -237,8 +239,8 @@ class Frames(unittest.TestCase):
         self.assertEqual([p.name for p in Path(self.folder.name).iterdir()], ["fermato.dxf"])
 
     def test_the_optimizers_one_block_for_each_group(self):
-        from meridiana import catalog
-        from meridiana.energy import optimizers
+        from meridiana.data import catalog
+        from meridiana.core.energy import optimizers
         se = next(r for r in catalog.search("inverters", manufacturer="SolarEdge", limit=None) if r["model"] == "SE50K")
         self.project.energy["inverters"] = [{"record": se, "count": 1, "name": ""}]
         self.project.energy["strings"] = {"auto": True}

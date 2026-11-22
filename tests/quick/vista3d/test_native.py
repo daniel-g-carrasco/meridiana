@@ -16,9 +16,12 @@ from PySide6.QtQuick import QSGRendererInterface, QQuickWindow
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQuickControls2 import QQuickStyle
 
-from meridiana import camera, i18n, jobs, model
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.scene_host import SceneWindow
+from meridiana.app.view import camera
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.scene_host import SceneWindow
 
 ROOT = Path(__file__).resolve().parents[3]
 NATIVE = os.environ.get('MERIDIANA_QUICK_3D_NATIVE') == '1'
@@ -65,7 +68,7 @@ class NativeSceneTest(unittest.TestCase):
         until = time.perf_counter()+seconds
         while time.perf_counter() < until:
             self.app.processEvents()
-            time.sleep(0.004)
+            time.sleep(0.004)  # wait: a breath between two looks at the condition, so the workers' threads run
 
     def js(self, source):
         expression = QQmlExpression(QQmlEngine.contextForObject(self.host.view), self.host.view, source)

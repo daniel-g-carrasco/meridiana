@@ -11,10 +11,11 @@ import numpy as np
 import _setup  # noqa: F401
 from _fixtures import capannone, clear_sky_meteo, inverter_record, write_cache
 
-from meridiana import jobs, session
-from meridiana.energy import pipeline, pvgis, system
-from meridiana.energy.pedigree import Source
-from meridiana.energy.simulate import ArrayOptimizers, Optimizers, simulate
+from meridiana.app import jobs, session
+from meridiana.app import pipeline
+from meridiana.core.energy import pvgis, system
+from meridiana.core.energy.pedigree import Source
+from meridiana.core.energy.simulate import ArrayOptimizers, Optimizers, simulate
 
 
 class ConnectedProduction(unittest.TestCase):

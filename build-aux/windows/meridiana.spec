@@ -5,16 +5,17 @@
 #   python tools/compile_po.py                 (msgfmt, or the compiler of that file where there is none)
 #   python tools/make_ico.py
 #   pyinstaller --noconfirm build-aux/windows/meridiana.spec
-#   dist\Meridiana\Meridiana.exe --self-test report.txt          (offscreen; 0 when every check passed)
+#   dist\Meridiana\Meridiana.exe -m meridiana.gui.package_check PROJECT OUT   (offscreen; 0 when the year and
+#                                                                 the report came; build.ps1 runs it)
 # A folder, never one file: a single exe would unpack some 400 MB at every start.
-# r28 (09/11/2026): the Qt Quick window is the one the package opens (`Meridiana.exe`; `--widgets` the old one); the
-# whole build, with the version of src/meridiana/__init__.py, is build-aux/windows/build.ps1.
+# The Qt Quick window is the one the package opens (`Meridiana.exe`); the whole build, with the version of
+# src/meridiana/__init__.py, is build-aux/windows/build.ps1.
 #
 # What goes in: the program; Qt Quick 3D and the QML modules the 3D scene imports; QtPdf, QtSvg, QtMultimedia and
 # QtTextToSpeech (Meridio's voices: the system's through SAPI or WinRT); Qt's own translations in Italian and
 # English; Typst (the typst wheel) for the report's layout, its template beside its module; matplotlib for the
 # formulas (Agg only), pvlib with the tables its functions read at run
-# time, scipy, shapely, pyqtgraph, requests, anthropic and keyring; Meridiana's catalogues (share/locale), icons and
+# time, scipy, shapely, requests, anthropic and keyring; Meridiana's catalogues (share/locale), icons and
 # fonts (share/), the manual (share/manuale), the 3D scene and the product catalogue (next to their modules), and
 # Kokoro's worker and runtime. Model weights are not shipped or downloaded by the build.
 #
@@ -35,10 +36,13 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules, coll
 ROOT = Path(SPECPATH).parent.parent
 SRC = ROOT / 'src' / 'meridiana'
 
-if not (ROOT / 'locale' / 'it' / 'LC_MESSAGES' / 'meridiana.mo').is_file():
+if not all((ROOT / 'locale' / 'it' / 'LC_MESSAGES' / f'meridiana.{kind}').is_file() for kind in ('mo', 'qm')):
     sys.exit('locale/ is missing: run python tools/compile_po.py first (the bundle would speak English only)')
 if not (ROOT / 'build-aux' / 'windows' / 'meridiana.ico').is_file():
     sys.exit('build-aux/windows/meridiana.ico is missing: run python tools/make_ico.py first')
+for language in ('', 'en'):
+    if not (ROOT / 'docs' / 'manuale' / language / 'README.md').is_file():
+        sys.exit('Both Italian and English manuals are required in docs/manuale and docs/manuale/en')
 
 import pvlib  # noqa: E402  (the venv's: its tables)
 
@@ -49,21 +53,24 @@ datas = [
     (str(ROOT / 'data' / 'fonts'), 'share/fonts'),
     (str(ROOT / 'data' / 'natural_earth'), 'share/natural_earth'),
     (str(ROOT / 'data' / 'istat'), 'share/istat'),
-    (str(ROOT / 'docs' / 'manuale'), 'share/manuale'),          # read inside the program (help.manual_dir)
+    (str(ROOT / 'docs' / 'manuale'), 'share/manuale'),          # recursive: Italian, en/ and both glossaries
     (str(ROOT / 'locale'), 'share/locale'),
-    (str(SRC / 'ui' / 'qml'), 'meridiana/ui/qml'),              # view3d.QML_FILE, next to its module
-    # r28: the Qt Quick window, the program's own since R542 (quick/app.py; parts.py, plan.py, tokens.py... load
+    # r28: the Qt Quick window, the program's own since R542 (gui/application.py; parts.py, plan.py, tokens.py... load
     # them beside their modules): its QML modules with their scripts and shaders, and the two loose views
-    (str(SRC / 'quick' / 'qml'), 'meridiana/quick/qml'),
-    (str(SRC / 'quick' / 'Plan.qml'), 'meridiana/quick'),
-    (str(SRC / 'quick' / 'YearChart.qml'), 'meridiana/quick'),
+    (str(SRC / 'gui' / 'qml'), 'meridiana/gui/qml'),
+    (str(SRC / 'gui' / 'Plan.qml'), 'meridiana/gui'),
+    (str(SRC / 'gui' / 'YearChart.qml'), 'meridiana/gui'),
+    (str(SRC / 'gui' / 'paper' / 'ReportScene.qml'), 'meridiana/gui/paper'),   # the report's 3D pictures (report_3d.QML_FILE)
     (str(ROOT / 'data' / 'models'), 'share/models'),            # the 3D props and their previews (scene_assets.py)
-    (str(ROOT / 'data' / 'meridio'), 'share/meridio'),          # Meridio's drawing (quick/app.py, mascotSource)
-    (str(SRC / 'catalog' / 'data'), 'meridiana/catalog/data'),  # catalog.DATA
-    (str(SRC / 'report_typst' / 'template.typ'), 'meridiana/report_typst'),   # the report's look (R314)
+    (str(ROOT / 'data' / 'meridio'), 'share/meridio'),          # Meridio's drawing (gui/application.py, mascotSource)
+    (str(SRC / 'data' / 'catalog' / 'data'), 'meridiana/data/catalog/data'),  # catalog.DATA
+    (str(SRC / 'app' / 'report' / 'template.typ'), 'meridiana/app/report'),   # the report's look (R314)
+    # run as a file by LibreOffice's own Python to measure the editable copies (office.SCRIPT, R506): a module frozen in
+    # the archive is not a file it can run
+    (str(SRC / 'app' / 'report' / 'lo_measure.py'), 'meridiana/app/report'),
     (str(ROOT / 'data' / 'typst'), 'share/typst'),              # the mitex package of the formulas (R460)
-    (str(SRC / 'assistant' / 'kokoro_worker.py'), 'meridiana/assistant'),
-    (str(SRC / 'assistant' / 'reading_it.json'), 'meridiana/assistant'),       # how Meridio reads aloud (R493)
+    (str(SRC / 'app' / 'assistant' / 'kokoro_worker.py'), 'meridiana/app/assistant'),
+    (str(SRC / 'app' / 'assistant' / 'reading_it.json'), 'meridiana/app/assistant'),       # how Meridio reads aloud (R493)
 ]
 # pvlib's tables read at run time (the Linke turbidity of the Ineichen sky, the altitude of a place, the reference
 # spectrum); not its copies of the CEC and Sandia libraries (Meridiana has its own catalogue) nor its sample years
@@ -89,12 +96,11 @@ a = Analysis(
     pathex=[str(ROOT / 'src')],
     datas=datas,
     binaries=voice_binaries,
-    # pyqtgraph comes with its data and its Qt templates through hook-pyqtgraph of pyinstaller-hooks-contrib;
     # keyring finds its Windows backend by entry point (hook-keyring)
     # IfcOpenShell's api.run resolves these export operations by name at run time.
     # typst: the report's layout, a compiled module (typst._typst) imported only when a report is made
     # r28: every module of the program: the Quick finds its parts by name (parts.discover) and starts its workers as
-    # `Meridiana.exe -m meridiana.quick.backend...` (meridiana_main.py), which no import of the window names
+    # `Meridiana.exe -m meridiana.gui.backend...` (meridiana_main.py), which no import of the window names
     hiddenimports=[*collect_submodules('meridiana'), *voice_imports, 'keyring.backends.Windows', 'ifcopenshell.geom', 'typst', 'typst._typst',
                    *collect_submodules('ifcopenshell.express.rules'),
                    *['ifcopenshell.api.' + family for family in

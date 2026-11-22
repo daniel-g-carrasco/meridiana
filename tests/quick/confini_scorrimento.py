@@ -16,7 +16,7 @@ import tempfile
 from pathlib import Path
 
 from PySide6.QtCore import QCoreApplication, QEvent, QMetaObject, QPointF, QRectF, Q_ARG, Qt
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import item, pump, wait_for
 
 FILE_SECTIONS = ("new", "open", "registry", "export", "catalogues", "help")

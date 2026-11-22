@@ -13,3 +13,50 @@ La Relazione raccoglie gli elaborati. Il pannello di destra li elenca con il lor
 - **Le varianti a confronto** (Varianti > Confronta le varianti…, Ctrl+Maiusc+C): producibilità, autoconsumo ed economia di ogni variante, una accanto all'altra.
 
 Prima di consegnare, le [Verifiche](verifiche.md) nel modo «Pronto per la consegna» raccolgono ciò che è da correggere e da controllare, i valori predefiniti e le stime ancora in uso. Gli altri elaborati (pianta quotata, DXF, IFC4, elenchi CSV) arriveranno con i loro compiti.
+
+## Navigare nell'anteprima
+
+L'Indice accanto ai fogli elenca capitoli e paragrafi. Un clic porta all'inizio
+della loro pagina; mentre scorri, la voce in vista si evidenzia. Le frecce
+dell'albero aprono o chiudono i paragrafi. La croce chiude l'Indice; il pulsante
+Indice lo riapre. Il programma ricorda la scelta anche al prossimo avvio.
+
+La barra fissa mostra «Pagina n di N». Nel campo accanto scrivi un numero fra
+1 e N e premi Invio. Con il fuoco sull'anteprima, PagSu/PagGiù passano alla pagina
+precedente o successiva; Inizio/Fine e Ctrl+Inizio/Fine portano alla prima o
+all'ultima. Rotella e touchpad scorrono come prima; Ctrl+rotella cambia lo zoom.
+I tasti di navigazione restano locali all'anteprima: nei campi servono a modificare
+il testo. Se il report si rigenera, ritrovi il capitolo o paragrafo in vista alla
+sua nuova pagina. Se è stato rimosso, resta il capitolo o la pagina più vicina.
+
+## Copiare il testo di una pagina
+
+Sul foglio della relazione, il tasto destro, Menu o Maiusc+F10 offre Copia testo
+pagina e Leggi testo pagina… Il primo copia il testo della pagina; il secondo apre
+un riquadro selezionabile per scegliere un estratto e non cambia gli appunti.
+L'estrazione avviene in sottofondo. Se chiudi o cambi anteprima, un risultato
+vecchio non viene copiato.
+
+Una pagina solo immagine può non contenere testo selezionabile: il programma lo
+segnala e disabilita la copia dopo la verifica. Non esegue OCR. L'ordine estratto
+dipende dal PDF: tabelle e formule possono richiedere un controllo rispetto al foglio.
+Le esportazioni della relazione restano disponibili.
+
+## Ambito del profilo normativo
+
+Il profilo normativo è salvato nel progetto ed è distinto dal profilo professionale che firma la relazione.
+Cambiare lingua o firma non cambia i calcoli. I progetti dei formati precedenti usano Italia.
+
+Con il profilo IEC generico la relazione riporta: «Profilo IEC generico: calcoli fisici e dati dichiarati;
+obblighi locali e conformità normativa non valutati». Le verifiche elettriche riguardano soltanto i dati fisici
+conosciuti; i dati mancanti sono indicati e non danno un esito positivo di conformità.
+
+Il generico conserva geometria, sole, ombre, simulazione, accumulo e conti finanziari comuni. Richiede stringhe
+manuali e dati dichiarati degli apparecchi. Senza consumo esplicito usa zero; i totali dichiarati sono distribuiti
+uniformemente sulle ore effettive, mentre una curva oraria importata è conservata. Usa una sola fascia ALL e,
+se manca un fuso esplicito, UTC. Non inserisce festività o distanze antincendio nazionali.
+
+Prezzi e costi non dichiarati sono zero: inserire bolletta e offerta prima di valutare l'investimento.
+Non applica CER, TRASE, contributi o detrazioni nazionali, anche se quei valori sono conservati nel file.
+I riferimenti IEC sono bibliografici; la relazione non attesta la conformità a essi né l'autorizzazione a costruire.
+La verifica degli obblighi locali resta da svolgere separatamente. Non è stato introdotto un nuovo selettore di profilo.

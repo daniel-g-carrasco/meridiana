@@ -8,7 +8,7 @@ import unittest
 
 import _setup
 
-from meridiana import roofs, skeleton
+from meridiana.core.geometry import roofs, skeleton
 
 RECT = [(0.0, 0.0), (16.0, 0.0), (16.0, 10.0), (0.0, 10.0)]
 L_SHAPE = [(0.0, 0.0), (20.0, 0.0), (20.0, 8.0), (8.0, 8.0), (8.0, 20.0), (0.0, 20.0)]

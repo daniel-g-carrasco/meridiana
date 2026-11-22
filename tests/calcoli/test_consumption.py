@@ -12,8 +12,8 @@ import pandas as pd
 
 import _setup  # noqa: F401
 
-from meridiana.energy import bands, consumption
-from meridiana.energy.consumption import Consumption
+from meridiana.core.energy import bands, consumption
+from meridiana.core.energy.consumption import Consumption
 
 
 def at(text: str) -> str:

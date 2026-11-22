@@ -10,9 +10,10 @@ import numpy as np
 from PySide6.QtCore import QCoreApplication, QEvent, QThreadPool
 from PySide6.QtTest import QSignalSpy
 
-from meridiana import jobs, model, move
-from meridiana.quick.backend.scene_jobs import SceneLayouts
-from meridiana.session import ProjectSession
+from meridiana.app import jobs
+from meridiana.core.model import model, move
+from meridiana.gui.backend.scene_jobs import SceneLayouts
+from meridiana.app.session import ProjectSession
 
 setUpModule = _setup.keep_global_state
 

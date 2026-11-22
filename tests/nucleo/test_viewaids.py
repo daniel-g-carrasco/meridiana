@@ -5,7 +5,8 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import model, viewaids
+from meridiana.core.model import model
+from meridiana.app.view import viewaids
 
 
 def sample() -> model.Project:

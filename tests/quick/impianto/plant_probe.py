@@ -10,9 +10,9 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlEngine, QQmlComponent
 from PySide6.QtQuick import QQuickWindow
-from meridiana import jobs
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.plant import create_page, PAGE_URL
+from meridiana.app import jobs
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.plant import create_page, PAGE_URL
 
 app = QApplication([])
 p = capannone()

@@ -9,8 +9,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import Mock, patch
 
 import _setup
-from meridiana import config, i18n, tiles
-from meridiana.quick.backend.plan_sources import MapSourcesController
+from meridiana.app.platform import config
+from meridiana import i18n
+from meridiana.app.maps import tiles
+from meridiana.gui.backend.plan_sources import MapSourcesController
 
 def setUpModule():
     _setup.keep_global_state()
@@ -153,7 +155,7 @@ class SourceTests(unittest.TestCase):
         self.assertTrue(_setup.wait_until(self.app, lambda: not page.busy, 5))
         self.assertEqual(page.currentSource["layer"], "0")
         original = page.currentSource
-        with patch("meridiana.capabilities.MAX_BYTES", 100):
+        with patch("meridiana.app.maps.capabilities.MAX_BYTES", 100):
             page.readCapabilities()
             self.assertTrue(_setup.wait_until(self.app, lambda: not page.busy, 5))
             self.assertIn("Not readable", page.readState)
@@ -185,7 +187,7 @@ class SourceTests(unittest.TestCase):
             self.assertEqual(value, wanted)
 
     def test_missing_keyring_has_no_secret_or_raw_exception_in_ui(self):
-        from meridiana.assistant import keys
+        from meridiana.app.assistant import keys
         page, store = self.page()
         store.get.side_effect = keys.KeyringMissing("backend unavailable")
         page.add(); page.updateField("url", "https://tiles.example.org/{z}/{x}/{y}?key={key}")
@@ -202,14 +204,14 @@ class SourceTests(unittest.TestCase):
     def test_qml_component_loads_with_complete_editor_fields(self):
         from PySide6.QtCore import QObject, QUrl
         from PySide6.QtQml import QQmlComponent, QQmlEngine
-        from meridiana.quick.backend.tokens import install_theme
+        from meridiana.gui.backend.tokens import install_theme
         page, _store = self.page()
         engine = self.engine = QQmlEngine()
         QQmlEngine.setObjectOwnership(page, QQmlEngine.CppOwnership)
         install_theme(engine)
         self.addCleanup(engine.deleteLater)
         component = self.component = QQmlComponent(engine, QUrl.fromLocalFile(str(
-            _setup.ROOT / "src/meridiana/quick/qml/Meridiana/Plan/MapSources.qml")))
+            _setup.ROOT / "src/meridiana/gui/qml/Meridiana/Plan/MapSources.qml")))
         self.assertFalse(component.errors(), [e.toString() for e in component.errors()])
         item = self.item = component.createWithInitialProperties({"backend": page, "width": 800, "height": 720})
         self.assertIsNotNone(item, [e.toString() for e in component.errors()])
@@ -234,7 +236,7 @@ class SourceWindowTests(unittest.TestCase):
         from PySide6.QtGui import QKeyEvent
         from PySide6.QtQuick import QQuickView
         from PySide6.QtTest import QSignalSpy, QTest
-        from meridiana.quick.backend.tokens import install_theme
+        from meridiana.gui.backend.tokens import install_theme
         page, store = self.page()
         i18n.setup("it")
         self.view = view = QQuickView()
@@ -243,7 +245,7 @@ class SourceWindowTests(unittest.TestCase):
         view.engine().warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
         view.setInitialProperties({"backend": page})
         view.setResizeMode(QQuickView.SizeRootObjectToView)
-        view.setSource(QUrl.fromLocalFile(str(_setup.ROOT / "src/meridiana/quick/qml/Meridiana/Plan/MapSources.qml")))
+        view.setSource(QUrl.fromLocalFile(str(_setup.ROOT / "src/meridiana/gui/qml/Meridiana/Plan/MapSources.qml")))
         self.assertFalse(view.errors(), [e.toString() for e in view.errors()])
         view.resize(900, 900); view.show()
         self.addCleanup(view.close)

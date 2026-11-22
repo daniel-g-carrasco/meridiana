@@ -16,10 +16,12 @@ from PySide6.QtQml import QQmlExpression, QQmlEngine  # noqa: E402
 from PySide6.QtQuick import QQuickWindow, QSGRendererInterface  # noqa: E402
 from PySide6.QtQuickControls2 import QQuickStyle  # noqa: E402
 
-from meridiana import i18n, jobs, model  # noqa: E402
-from meridiana.quick.backend.scene_assets import catalog  # noqa: E402
-from meridiana.quick.backend.scene_host import SceneWindow  # noqa: E402
-from meridiana.session import ProjectSession  # noqa: E402
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.core.model import model  # noqa: E402
+from meridiana.gui.backend.scene_assets import catalog  # noqa: E402
+from meridiana.gui.backend.scene_host import SceneWindow  # noqa: E402
+from meridiana.app.session import ProjectSession  # noqa: E402
 
 
 def main():

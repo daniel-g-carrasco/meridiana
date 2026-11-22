@@ -7,6 +7,8 @@ closed. The same for opening a project («Opened: name»).
 
     python -m unittest quick.shell.test_salvataggio_r537
 """
+import os
+import stat
 import tempfile
 import time
 import unittest
@@ -15,9 +17,10 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Qt
 
 from _fixtures import capannone
-from meridiana import model
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana.core.model import model
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import key, pump
+from quick.aiuti.tempi import timed
 
 
 class SaveSignal(unittest.TestCase):
@@ -43,6 +46,8 @@ class SaveSignal(unittest.TestCase):
         self.shell.changed.connect(lambda: self.kinds.append(self.shell.property('noticeKind')))
 
     def tearDown(self):
+        os.chmod(self.folder, stat.S_IRWXU)
+        os.chmod(self.file, stat.S_IWRITE | stat.S_IREAD)
         self.host.close()
         pump(50)
         self.temp.cleanup()
@@ -88,6 +93,7 @@ class SaveSignal(unittest.TestCase):
         self.assertEqual(self.shell.property('noticeKind'), '', 'the confirmation goes by itself')
         self.assertTrue(any(k == 'done' for k in self.kinds))
 
+    @timed('a save under 300 ms')
     def test_a_quick_save_does_not_flash(self):
         self.rename('Veloce')
         key(self.app, self.win, Qt.Key.Key_S, modifiers=Qt.KeyboardModifier.ControlModifier)
@@ -100,7 +106,7 @@ class SaveSignal(unittest.TestCase):
 
         def slow(kind, path, work, finish):
             def late():
-                time.sleep(0.6)
+                time.sleep(0.6)  # wait: a save made slow on purpose
                 return work()
             job(kind, path, late, finish)
         files._begin = slow
@@ -124,8 +130,12 @@ class SaveSignal(unittest.TestCase):
         self.assertEqual(model.Project.load(self.file)[0].name, 'Scritto')
 
     def test_an_error_stays_until_closed(self):
-        self.file.unlink()
-        self.file.mkdir()  # Atomic replacement of a directory with a file fails on both systems.
+        # Windows: a read-only folder still takes files, a read-only file not. Linux the other way round: the save
+        # writes a new file and puts it in the old one's place, which a read-only file allows and a read-only folder not
+        if os.name == 'nt':
+            os.chmod(self.file, stat.S_IREAD)
+        else:
+            os.chmod(self.folder, stat.S_IREAD | stat.S_IEXEC)     # given back in tearDown
         self.rename('Non si salva')
         key(self.app, self.win, Qt.Key.Key_S, modifiers=Qt.KeyboardModifier.ControlModifier)
         self.wait_saved()

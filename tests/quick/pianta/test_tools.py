@@ -3,14 +3,48 @@ import math
 import unittest
 from shapely.geometry import Polygon
 
-from meridiana import i18n, model
-from meridiana.quick.backend.plan_tools import DrawingMachine
+from meridiana import i18n
+from meridiana.app.view.measure_tool import IGNORED, LEAVE, USED, MeasureTool
+from meridiana.app.view.plan_probe import PlanProbe
+from meridiana.core.model import model
+from meridiana.gui.backend.plan_tools import DrawingMachine
 
 
 def machine(tool="building", **options):
     m = DrawingMachine(metres_per_pixel=0.001)
     m.set_tool(tool, **options)
     return m
+
+
+class Measuring:
+    """The measuring tool with the plan's probe, as the plan drives it (gui/backend/plan_measure.py), without Qt: the
+    tool Measure left DrawingMachine for app/view/measure_tool.py (study 46)."""
+
+    def __init__(self, project=None, metres_per_pixel=1 / 12):
+        self.tool, self.probe, self.mpp = MeasureTool(), PlanProbe(project), metres_per_pixel
+
+    def at(self, point, mods=frozenset()):
+        return self.probe.probe(point, self.mpp, self.tool.wanted(mods))
+
+    def move(self, point, mods=frozenset()):
+        self.tool.move(self.at(point, mods), mods)
+
+    def click(self, point, mods=frozenset()):
+        self.tool.click(self.at(point, mods), mods)
+
+    def double(self, point, mods=frozenset()):
+        """Qt's double click: a click, then the double click on the same point."""
+        self.click(point, mods)
+        self.tool.double_click(None, mods)
+
+    def points(self):
+        return [p.point[:2] for p in self.tool.points]
+
+    def lengths(self, index=-1):
+        return [s.plan for s in self.tool.measures[index].spans()]
+
+    def guides(self):
+        return self.tool.display("plan")["guides"]
 
 
 def write(m, text):
@@ -85,11 +119,58 @@ class DrawingTest(unittest.TestCase):
             self.assertEqual(m.points, [])
 
     def test_measure_persists_until_next_click(self):
-        m = machine("measure")
-        m.click((0, 0)); m.click((3, 4)); m.move((80, 90))
-        self.assertEqual(m.preview["length"], 5)
+        """Study 46, choice 3: a measure made stays (in the session's list) and the next click begins another one."""
+        m = Measuring(metres_per_pixel=0.001)
+        m.click((0, 0)); m.double((3, 4)); m.move((80, 90))
+        self.assertEqual(len(m.tool.measures), 1)
+        self.assertAlmostEqual(m.lengths()[0], 5)
         m.click((8, 9))
-        self.assertEqual(m.points, [(8., 9.)])
+        self.assertEqual(m.points(), [(8., 9.)])
+        self.assertEqual(len(m.tool.measures), 1)           # the one made stays, the new one is in hand
+        with self.assertRaises(ValueError):             # the tool left the drawing machine (study 46)
+            machine("measure")
+
+    def test_second_measure_is_free_of_the_first_r563(self):
+        """R563 (Daniel 13/11/2026: «la seconda riparte dalla partenza della prima»): after a measure the guides still
+        left from its first point, followed the pointer and pulled the next click on to them."""
+        m = Measuring()
+        m.move((25, 5)); m.click((25, 5)); m.move((32, 5)); m.double((32, 5))
+        self.assertEqual((m.tool.state, m.tool.points), ("idle", []))
+        self.assertEqual([p.point[:2] for p in m.tool.measures[0].points], [(25., 5.), (32., 5.)])
+        self.assertAlmostEqual(m.lengths()[0], 7)
+        self.assertEqual(m.guides(), [])                    # the guide that led to the second point ends with it
+        # 0.3 m east of the line going north from the first point, within the snaps' reach (10 px = 0.83 m)
+        m.move((25.3, 12))
+        pointer = m.tool.display("plan")["pointer"]
+        self.assertEqual((pointer["at"][:2], m.guides(), pointer["kind"]), ([25.3, 12.], [], "free"))
+        self.assertEqual(len(m.tool.display("plan")["done"]), 1)      # the measure made stays
+        m.click((25.3, 12))
+        self.assertEqual((m.tool.state, m.points(), m.guides()), ("measuring", [(25.3, 12.)], []))
+        m.move((25.3, 2))               # the new measure has its own guides, from its own first point
+        self.assertEqual({tuple(g["a"][:2]) for g in m.guides()}, {(25.3, 12.)})
+        m.double((25.3, 2))
+        self.assertEqual([p.point[:2] for p in m.tool.measures[-1].points], [(25.3, 12.), (25.3, 2.)])
+        self.assertAlmostEqual(m.lengths()[0], 10)
+
+    def test_measure_keys_r563(self):
+        m = Measuring()
+        ctrl, shift = frozenset({"ctrl"}), frozenset({"shift"})
+        m.click((25, 5), ctrl); m.double((32, 5), ctrl)
+        # Shift held after a measure locked a direction that the next measure then followed from its first point
+        m.move((30, 9), shift)
+        self.assertEqual(m.tool.key("Shift", modifiers=shift), IGNORED)      # nothing in hand: nothing to hold
+        m.click((30, 9), shift | ctrl); m.move((33, 16), shift | ctrl)
+        self.assertEqual(m.points(), [(30., 9.)])
+        self.assertEqual(m.tool.target.point[:2], (33., 16.))
+        m.click((33, 16), ctrl)
+        self.assertEqual(m.tool.key("Backspace"), USED)     # one step back: the first point again, the second to be given
+        self.assertEqual((m.tool.state, m.points()), ("measuring", [(30., 9.)]))
+        m.double((33, 13), ctrl)
+        self.assertAlmostEqual(m.lengths()[0], 5)
+        m.click((40, 9), ctrl)
+        self.assertEqual(m.tool.key("Escape"), USED)        # the measure in hand goes, the tool stays
+        self.assertEqual((m.tool.state, m.tool.points, len(m.tool.measures)), ("idle", [], 2))
+        self.assertEqual(m.tool.key("Escape"), LEAVE)       # then the tool goes (the plan gives Select back)
 
     def test_prop_and_linear_prop_return_to_selection(self):
         m = machine("prop", kind="tree")
@@ -256,7 +337,7 @@ class HintTest(unittest.TestCase):
     def test_real_catalogue_translates_every_drawing_message(self):
         import ast
         from pathlib import Path
-        from meridiana.quick.backend import plan_tools, plan_locale
+        from meridiana.gui.backend import plan_tools, plan_locale
         main = i18n.translation_for("it")              # one catalogue since r21-f7: the plan's short forms in "plan"
         plan = {k.split("\x04", 1)[1] for k in main._catalog
                 if isinstance(k, str) and k.startswith(plan_locale.CONTEXT + "\x04")}

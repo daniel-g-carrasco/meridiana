@@ -19,7 +19,7 @@ JOURNEY = r'''
 import json
 from pathlib import Path
 from PySide6.QtCore import QPointF
-from meridiana import model
+from meridiana.core.model import model
 
 seen = {}
 wait_until(lambda: host.plan is not None, 60)
@@ -73,7 +73,7 @@ seen['ring'] = drawn.ring
 seen['drawn'] = dict(flush=drawn.flush, params=drawn.params, module=drawn.module, rows=len(drawn.rows),
                      places=[len(r['places']) for r in drawn.rows])
 draft = session.project.new_subfield('_d', '', seen['preview_ring'], 'b1', None)     # the outline drawn, snapped
-from meridiana import manual
+from meridiana.core.layout import manual
 seen['expected'] = len(manual.corners(session.project, draft, manual.grid(session.project, draft)))
 seen['bands'] = [e.kind for e in session.project.exclusions].count('band')
 seen['first_same'] = json.dumps(model._subfield_json(session.project.subfields[0]), sort_keys=True) == before
@@ -97,7 +97,8 @@ print(json.dumps(seen, default=str))
 
 
 def _project(folder: Path) -> Path:
-    from meridiana import manual, model
+    from meridiana.core.layout import manual
+    from meridiana.core.model import model
     p = model.Project(name='Prova posa')
     p.site = model.Site(lat=45.52, lon=9.04, address='Rho (MI)')
     p.buildings.append(model.Building(id='b1', name='Capannone', footprint=[[0, 0], [40, 0], [40, 20], [0, 20]],

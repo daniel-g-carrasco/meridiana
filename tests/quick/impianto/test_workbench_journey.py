@@ -6,10 +6,11 @@ from pathlib import Path
 
 import _setup
 from PySide6.QtCore import QCoreApplication, QEvent, QPointF, Qt
-from meridiana import i18n, jobs
-from meridiana.quick.app import QuickWindow, create_app
-from quick.gestures import click, drag, item, key, point, pump, wait_for, wheel
-from quick.parity.differential import connected_fixture
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
+from quick.gestures import click, drag, in_current_phase, item, key, point, pump, wait_for, wheel
+from quick.aiuti.differential import connected_fixture
 
 
 setUpModule = _setup.keep_global_state
@@ -39,7 +40,7 @@ class WorkbenchJourney(unittest.TestCase):
                 while pending:
                     candidate = pending.pop()
                     pending.extend(candidate.childItems())
-                    if candidate.objectName() == name and candidate.isVisible():
+                    if candidate.objectName() == name and candidate.isVisible() and in_current_phase(win, candidate):
                         control = candidate
                         break
                 self.assertIsNotNone(control, name)
@@ -77,7 +78,7 @@ class WorkbenchJourney(unittest.TestCase):
                 dot = shown('stale-compute')
                 self.assertEqual(dot.parentItem().objectName(), 'tool_compute')
                 self.assertFalse(dot.isVisible())
-                from meridiana.energy.pipeline import EnergyResult
+                from meridiana.app.pipeline import EnergyResult
                 from quick.grafici.fixtures import build_results
                 year = build_results()
                 session.energy_done(session.energy_asked(), EnergyResult(
@@ -105,6 +106,8 @@ class WorkbenchJourney(unittest.TestCase):
                 actions.catalog.select(0, False)
                 press('dialogAccept')                                    # R518: «Choose» is the window's own button (named by r22-f2)
                 settle()
+                # the choice is answered a turn later or more on a loaded machine: the window closed, or the question
+                wait_for(lambda: actions.dialog != 'catalog' or actions.catalog.confirmation, 30)
                 if actions.dialog == 'catalog':                         # the module does not go with it: said, then taken
                     self.assertTrue(actions.catalog.confirmation)
                     actions.catalog.chooseAnyway()
@@ -149,10 +152,13 @@ class WorkbenchJourney(unittest.TestCase):
                 settle()
                 self.assertEqual(plant.units[0]['name'], 'Inverter tetto')
                 capture('inverter-rinominato')
-                inspector = item(win, 'plant-inverters')
+                inspector = item(win, 'plant-page')            # R631: the panel's one scroll
                 view_button = item(win, 'plant-strings-view')
+                # R633: the heads held at the page's edges cover what scrolls under them: the button in the room between
+                held = next(c for c in inspector.childItems() if c.objectName() == 'heldHeads')
                 for _attempt in range(30):
-                    if 20 <= view_button.mapToItem(inspector, QPointF(12, 12)).y() < inspector.height()-25:
+                    top, bottom = held.property('topInset') + 20, inspector.height() - held.property('bottomInset') - 25
+                    if top <= view_button.mapToItem(inspector, QPointF(12, 12)).y() < bottom:
                         break
                     wheel(app, win, point(inspector), notches=1)
                 press('plant-strings-view')

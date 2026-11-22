@@ -7,7 +7,7 @@ import _setup
 from PySide6.QtCore import QUrl
 from PySide6.QtQml import QQmlComponent
 from _fixtures import capannone, inverter_record
-from meridiana.quick.app import QuickWindow
+from meridiana.gui.application import QuickWindow
 
 
 setUpModule = _setup.keep_global_state
@@ -63,7 +63,7 @@ class InstalledPhasesTest(unittest.TestCase):
         self.assertNotIn(editor._on_change, editor.session.listeners)
 
     def test_strings_view_is_remembered_in_the_isolated_profile(self):
-        from meridiana import config
+        from meridiana.app.platform import config
         actions = self.host.parts.controllers['plantActions']
         before = self.host.bridge.session.project.to_json()
         actions.setStringsView('diagram')
@@ -74,7 +74,7 @@ class InstalledPhasesTest(unittest.TestCase):
         self.assertEqual(self.host.bridge.session.project.to_json(), before)
 
     def test_real_inspectors_load_without_qml_errors(self):
-        from meridiana.quick.backend.parts import QML
+        from meridiana.gui.backend.parts import QML
         for file in ('Plant/PlantSide.qml', 'Charts/ProductionInspector.qml',
                      'Charts/ConsumptionInspector.qml', 'Charts/EconomicsInspector.qml'):
             with self.subTest(file=file):

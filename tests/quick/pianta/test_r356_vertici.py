@@ -7,10 +7,11 @@ import unittest
 
 from PySide6.QtWidgets import QApplication
 
-from meridiana import model, sides
-from meridiana.quick.backend.plan import PlanController
-from meridiana.quick.backend.plan_edit import PlanEditor
-from meridiana.session import ProjectSession
+from meridiana.core.model import model
+from meridiana.core.geometry import sides
+from meridiana.gui.backend.plan import PlanController
+from meridiana.gui.backend.plan_edit import PlanEditor
+from meridiana.app.session import ProjectSession
 
 APP = None
 RECT = [[0, 0], [30, 0], [30, 20], [0, 20]]

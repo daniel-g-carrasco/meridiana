@@ -96,9 +96,9 @@ class FakeServer:
                             for _i in range(200):          # at most 10 s, then on
                                 if not server.hold.is_set():
                                     break
-                                time.sleep(0.05)
+                                time.sleep(0.05)  # wait: the fake server holds its answer while the test keeps it held
                         if server.pause:
-                            time.sleep(server.pause)
+                            time.sleep(server.pause)  # wait: the fake server answers as slowly as the test asks
                 except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                     server.closed_by_client.set()
 
@@ -125,7 +125,7 @@ class Offline:
     model, family, cloud = "", "openai", False
 
     def stream(self, system, messages, tools):
-        from meridiana.assistant.providers import ProviderError
+        from meridiana.app.assistant.providers import ProviderError
         raise ProviderError("offline", "connection refused")
         yield                                           # a generator, as the providers are
 
@@ -197,7 +197,7 @@ class Host:
     gathers them, what was asked of the window noted in `went`."""
 
     def __init__(self, project, energy=None, selection=("site", ""), phase="model", lay=True):
-        from meridiana import checks
+        from meridiana.core.rules import checks
         self.project = project
         self._energy = energy or {}
         self._selection = selection
@@ -226,7 +226,7 @@ class Host:
         return self._phase
 
     def rules_facts(self):
-        from meridiana import rules
+        from meridiana.core.rules import rules
         return rules.facts(self.project, self._layouts, self._energy, None)
 
     def go_to(self, target):
@@ -240,7 +240,7 @@ def with_problems(host: Host) -> Host:
     """The checks of the trial of study 14, 4.4, before the real ones: the open-circuit voltage of a string above
     the inverter's at -10 °C (fail, its fix the strings made again), the shade of the obstacles on the sub-field
     «Sud» (warn, its fix the layout out of the shadows). Written as the program writes them in Italian."""
-    from meridiana import checks
+    from meridiana.core.rules import checks
     uoc = checks.Item("fail", "strings", "Inverter tetto, ingresso 2, 18 in serie: Uoc max 1043 V oltre i 1000 V "
                       "dell'inverter", "CEI 64-8/7:2024, 712.512.1.1", ("phase", "plant"),
                       ("energy", "strings.auto", True), "Rifai le stringhe in automatico",
@@ -255,7 +255,7 @@ def with_problems(host: Host) -> Host:
 def nothing_local(extra=(), **_more):
     """The search for local models (assistant/local.survey) on a PC without any: nothing running, nothing on the
     disk, a PC of 32 GB with a card of 8 (Daniel's, 25/10/2026)."""
-    from meridiana.assistant import local
+    from meridiana.app.assistant import local
     return local.Survey([], local.Machine(31.6, 8.0, "NVIDIA RTX A2000 8GB Laptop GPU"))
 
 

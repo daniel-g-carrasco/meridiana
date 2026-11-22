@@ -1,4 +1,4 @@
-"""Run the plan tests in isolated Qt processes, including Widgets parity modules."""
+"""Run the plan tests in isolated Qt processes, one module at a time."""
 import os
 import json
 from pathlib import Path

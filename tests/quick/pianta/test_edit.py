@@ -5,9 +5,10 @@ from unittest.mock import patch
 
 from shapely.geometry import Polygon
 
-from meridiana import manual, model, move
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.plan_edit import PlanEditor
+from meridiana.core.layout import manual
+from meridiana.core.model import model, move
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.plan_edit import PlanEditor
 
 
 def project():
@@ -43,7 +44,7 @@ class EditorTest(unittest.TestCase):
         modules = [SimpleNamespace(key=str(i), corners=[(i*2, 0), (i*2+1, 0),
                                                        (i*2+1, 1), (i*2, 1)]) for i in range(20000)]
         self.editor.set_results({"s1": SimpleNamespace(modules=modules)})
-        with patch("meridiana.quick.backend.plan_edit.Polygon", wraps=Polygon) as polygons:
+        with patch("meridiana.gui.backend.plan_edit.Polygon", wraps=Polygon) as polygons:
             self.assertEqual(self.editor.pick((39998.5, .5)), ("module", "s1", "19999"))
             self.assertEqual(self.editor.pick((39998, 0)), ("module", "s1", "19999"))
             self.assertLess(polygons.call_count, 10, "Point picking must not construct every module polygon")
@@ -400,7 +401,7 @@ class EditorTest(unittest.TestCase):
         self.assertIsNone(e.draft)
 
     def test_inverter_erasers_match_core(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         for erase_strings in (False, True):
             with self.subTest(strings=erase_strings):
                 self.session.project.energy = {"inverters": [{"record": {"model": "test", "ac_power_nominal_w": 20000}, "count": 2}],
@@ -481,7 +482,7 @@ class EditorTest(unittest.TestCase):
         self.assertEqual([o for o in scene["objects"] if o["kind"] == "string_line"], [])
 
     def test_wiring_colour_neighbours_and_number_thinning(self):
-        from meridiana.quick.backend.plan_wiring import number_indices
+        from meridiana.app.view.plan_wiring import number_indices
         e = self.editor
         self.session.project.energy["strings"] = {"runs": [
             {"inverter": 1, "mppt": 1, "modules": ["s1/" + self.result.modules[i].key]} for i in (0, 1)]}
@@ -492,7 +493,7 @@ class EditorTest(unittest.TestCase):
         self.assertEqual(number_indices([(i, 0) for i in range(12)], 1), [1, 10, 12])
 
     def test_wiring_names_use_real_state_or_unchecked_default(self):
-        from meridiana import theme_colors
+        from meridiana.app.interface import theme_colors
         e = self.editor
         self.session.project.energy["strings"] = {"runs": [
             {"inverter": 1, "mppt": 1, "modules": ["s1/"+self.module.key]}]}

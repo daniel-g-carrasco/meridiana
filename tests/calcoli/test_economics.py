@@ -8,8 +8,8 @@ import pandas as pd
 
 import _setup  # noqa: F401
 
-from meridiana.energy import economics
-from meridiana.energy.economics import Settings
+from meridiana.core.energy import economics
+from meridiana.core.energy.economics import Settings
 
 
 def year_index():

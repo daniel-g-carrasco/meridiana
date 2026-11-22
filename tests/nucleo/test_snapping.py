@@ -4,7 +4,7 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana.snapping import Snapper, ortho
+from meridiana.core.geometry.snapping import Snapper, ortho
 
 SCALE = 0.05          # metres per pixel: a roof seen at a working zoom
 
@@ -141,6 +141,56 @@ class Ortho(unittest.TestCase):
         self.assertAlmostEqual((x - 3.0) * 3 + (y - 4.0) * 4, 0.0)      # perpendicular to the first side
         x, y = ortho(chain, (7.0, 7.0))                     # mostly along it
         self.assertAlmostEqual((x - 3.0) * 4 - (y - 4.0) * 3, 0.0)      # parallel to it
+
+
+class MeasuringSwitches(unittest.TestCase):
+    """What the measuring tool asks for (study 46): only some objects, no guides; the drawing's answer is unchanged."""
+
+    def setUp(self):
+        self.s = Snapper()
+        self.s.set_references([((0.0, 0.0), (20.0, 0.0)), ((20.0, 0.0), (20.0, 10.0))])
+
+    def test_only_the_kinds_asked(self):
+        near_mid = (10.1, 0.1)
+        self.assertEqual(self.s.snap(near_mid, [], SCALE).kind, "midpoint")
+        r = self.s.snap(near_mid, [], SCALE, kinds=frozenset({"vertex", "edge"}))
+        self.assertEqual((r.kind, r.point), ("edge", (10.1, 0.0)))
+        r = self.s.snap(near_mid, [], SCALE, kinds=frozenset({"vertex"}))
+        self.assertEqual((r.kind, r.point), ("free", near_mid))
+        self.assertEqual(self.s.snap((19.9, 0.1), [], SCALE, kinds=frozenset({"midpoint"})).kind, "free")
+        self.assertEqual(self.s.snap((19.9, 0.1), [], SCALE, kinds=frozenset({"vertex"})).kind, "vertex")
+
+    def test_no_directions_leaves_a_point_in_free_space_where_it_is(self):
+        chain = [(30.0, 30.0)]
+        cursor = (37.0, 37.3)                               # 0.3 m off the 45° step: the polar guide takes it
+        self.assertEqual(self.s.snap(cursor, chain, SCALE).kind, "direction")
+        r = self.s.snap(cursor, chain, SCALE, directions=False)
+        self.assertEqual((r.kind, r.point, r.guides), ("free", cursor, []))
+        self.assertAlmostEqual(r.length, ((7.0 ** 2) + (7.3 ** 2)) ** 0.5)
+
+    def test_the_nearest_segment(self):
+        self.assertEqual(self.s.nearest_segment((19.8, 5.0), SCALE), ((20.0, 0.0), (20.0, 10.0)))
+        self.assertIsNone(self.s.nearest_segment((15.0, 5.0), SCALE))
+
+    def test_the_references_far_from_the_cursor_change_no_answer(self):
+        """The references are filtered by their boxes before snapping: the answers are those of the whole list."""
+        import random
+        rng = random.Random(46)
+        segments = []
+        for _ in range(300):
+            a = (rng.uniform(0, 100), rng.uniform(0, 100))
+            segments.append((a, (a[0] + rng.uniform(-8, 8), a[1] + rng.uniform(-8, 8))))
+        filtered, whole = Snapper(), Snapper()
+        filtered.set_references(segments)
+        whole.set_references(segments)
+        whole._near = lambda c, tol, reach=6: (whole.segments, whole.points)     # no filter: the answers of before
+        chain = [(50.0, 50.0), (60.0, 52.0)]
+        for _ in range(400):
+            c = (rng.uniform(0, 100), rng.uniform(0, 100))
+            for ch in ([], chain[:1], chain):
+                a, b = filtered.snap(c, ch, 0.2), whole.snap(c, ch, 0.2)
+                self.assertEqual((a.kind, a.point, a.guides), (b.kind, b.point, b.guides), (c, ch))
+            self.assertEqual(filtered.nearest_segment(c, 0.2), whole.nearest_segment(c, 0.2))
 
 
 if __name__ == "__main__":

@@ -9,8 +9,9 @@ from unittest.mock import patch
 from PySide6.QtCore import QUrl
 
 import _setup
-from meridiana import model, i18n
-from meridiana.session import ProjectSession
+from meridiana.core.model import model
+from meridiana import i18n
+from meridiana.app.session import ProjectSession
 
 
 setUpModule = _setup.keep_global_state
@@ -23,7 +24,7 @@ class ResultEditorsTest(unittest.TestCase):
         i18n.setup('it')
 
     def editor(self, phase):
-        from meridiana.quick.backend.charts_editor import ResultEditor
+        from meridiana.gui.backend.charts_editor import ResultEditor
         session = ProjectSession(model.Project())
         editor = ResultEditor(session, phase)
         self.addCleanup(editor.close)
@@ -43,6 +44,34 @@ class ResultEditorsTest(unittest.TestCase):
                 self.assertEqual(getattr(session.project, section)[key], expected)
                 session.undo.undo()
                 self.assertEqual(getattr(session.project, section), before)
+
+    def test_an_editor_behind_another_phase_makes_its_fields_when_shown_or_asked(self):
+        # R598: 40 sub-fields filled at once held the window for seconds while the Production inspector made its
+        # form again behind another phase. The page says whether it is on show (`shown`): behind, a change makes
+        # nothing and tells only what is read live; the fields are made when it is shown, or asked from Python
+        session, editor = self.editor('production')
+        made, told = [], []
+        refresh = editor.refresh
+        editor.refresh = lambda: (made.append(True), refresh())[1]
+        editor.changed.connect(lambda: told.append(True))
+        session.edit('soiling', lambda p: p.energy.setdefault('losses', {}).__setitem__('soiling', 3.0))
+        self.assertEqual(len(made), 1, 'nobody watches (no page): made at every change, as before')
+        editor.setProperty('shown', False)
+        del made[:], told[:]
+        session.edit('soiling', lambda p: p.energy['losses'].__setitem__('soiling', 4.0))
+        session.edit('soiling', lambda p: p.energy['losses'].__setitem__('soiling', 5.0))
+        self.assertEqual(made, [], 'behind another phase: nothing made')
+        self.assertEqual(len(told), 2, 'what is read live is told')
+        self.assertEqual(editor.field('losses.soiling').data['value'], 5.0, 'asked from Python: made now')
+        self.assertEqual(len(made), 1)
+        session.edit('soiling', lambda p: p.energy['losses'].__setitem__('soiling', 6.0))
+        self.assertEqual(len(made), 1)
+        editor.setProperty('shown', True)
+        self.assertEqual(len(made), 2, 'shown: made once, with every change that came meanwhile')
+        self.assertEqual(editor.field('losses.soiling').data['value'], 6.0)
+        editor.setProperty('shown', True)
+        session.edit('soiling', lambda p: p.energy['losses'].__setitem__('soiling', 7.0))
+        self.assertEqual(len(made), 3, 'on show: made at the change')
 
     def test_same_field_survives_refresh_but_old_file_draft_is_rejected(self):
         session, editor = self.editor('economics')
@@ -74,6 +103,22 @@ class ResultEditorsTest(unittest.TestCase):
         self.assertEqual(session.project.consumption['bands_kwh'], {})
         session.undo.undo()
         self.assertEqual(session.project.consumption, before)
+
+    def test_bills_are_prepared_once_and_invalidated_by_edits_and_undo(self):
+        from meridiana.gui.backend import charts_editor
+        session, editor = self.editor('consumption')
+        with patch.object(charts_editor.profiles, 'get', wraps=charts_editor.profiles.get) as policy:
+            first = editor.bills
+            columns = editor.billColumns
+            totals = editor.billTotals
+            self.assertEqual(editor.bills, first)
+            self.assertEqual(editor.billTotals, totals)
+            self.assertEqual(policy.call_count, 1)
+        session.edit('bill', lambda p: p.consumption.update(monthly_bands_kwh=[{columns[0]: 123}]))
+        self.assertEqual(editor.bills[0][columns[0]], 123)
+        self.assertEqual(editor.billTotals[columns[0]], 123)
+        session.undo.undo()
+        self.assertEqual(editor.bills, first)
 
     def test_monthly_bill_and_total_use_real_values(self):
         session, editor = self.editor('consumption')
@@ -115,7 +160,7 @@ class ResultEditorsTest(unittest.TestCase):
             entered.set()
             release.wait(5)
             return [['2025-01-01 00:00', 9]]
-        with patch('meridiana.quick.backend.charts_editor.cons.read_curve', read):
+        with patch('meridiana.gui.backend.charts_editor.cons.read_curve', read):
             try:
                 editor.importCurve(QUrl.fromLocalFile(str(Path.cwd() / 'unused.csv')))
                 self.assertTrue(entered.wait(2))

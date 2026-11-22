@@ -7,7 +7,8 @@ import unittest
 import _setup
 import numpy as np
 
-from meridiana import model, props
+from meridiana.core.model import model
+from meridiana.core.geometry import props
 
 
 class Kinds(unittest.TestCase):
@@ -77,7 +78,7 @@ class Asset(unittest.TestCase):
     """Format 30: `asset`, the model of the catalogue drawn for the object, written only when set."""
 
     def test_the_format_number_and_the_empty_migration(self):
-        self.assertEqual(model.FORMAT_VERSION, 30)
+        self.assertEqual(model.FORMAT_VERSION, 33)      # 31 the regulatory identity, 32 the obstacles' base, 33 the models' names
         self.assertEqual(model.MIGRATIONS[29]({"a": 1}), {"a": 1})
 
     def test_written_only_when_set_and_kept_through_a_save(self):
@@ -108,7 +109,7 @@ class Asset(unittest.TestCase):
 
 class Catalogue(unittest.TestCase):
     def test_every_active_model_is_reachable_from_a_kind_and_every_mapped_model_is_active(self):
-        from meridiana.quick.backend import models3d, scene_assets
+        from meridiana.gui.backend import models3d, scene_assets
         active = {row["key"] for row in scene_assets.catalog(active_only=True)}
         self.assertEqual(len(active), 32)
         self.assertIn("bicycle_innerscene", active)
@@ -121,7 +122,7 @@ class Catalogue(unittest.TestCase):
             self.assertIn(kind, props.KINDS)
 
     def test_the_picker_groups_hold_every_kind_once_but_the_opening(self):
-        from meridiana.quick.backend import models3d
+        from meridiana.gui.backend import models3d
         shown = [k for _title, kinds in models3d.GROUPS for k in kinds]
         self.assertEqual(len(shown), len(set(shown)))
         self.assertEqual(set(props.KINDS) - set(shown), {"opening"})
@@ -130,7 +131,7 @@ class Catalogue(unittest.TestCase):
                 self.assertTrue(entry["preview"].endswith(entry["id"] + ".png"), entry)
 
     def test_the_choices_of_a_kind_and_the_model_drawn(self):
-        from meridiana.quick.backend import models3d
+        from meridiana.gui.backend import models3d
         self.assertEqual([k for k, _n in models3d.choices("lamp")], ["streetlight", "street_light"])
         self.assertEqual(len(models3d.choices("adult")), 8)
         self.assertEqual(models3d.choices("truck"), [])

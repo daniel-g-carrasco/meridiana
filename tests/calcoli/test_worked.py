@@ -13,13 +13,14 @@ import numpy as np
 import _setup  # noqa: F401
 from _fixtures import capannone, capannone_rho, clear_sky_meteo, inverter_record, write_cache
 
-from meridiana import jobs
-from meridiana.energy import pipeline, pvgis, system, worked
-from meridiana.energy.components import InverterSpec
-from meridiana.energy.meteo import Horizon
-from meridiana.energy.pedigree import Source
-from meridiana.energy.simulate import Losses, simulate
-from meridiana.report_typst.steps import for_window, numbered
+from meridiana.app import jobs
+from meridiana.app import pipeline
+from meridiana.core.energy import pvgis, system, worked
+from meridiana.core.energy.components import InverterSpec
+from meridiana.core.energy.meteo import Horizon
+from meridiana.core.energy.pedigree import Source
+from meridiana.core.energy.simulate import Losses, simulate
+from meridiana.app.report.steps import for_window, numbered
 
 
 def calc_value(sim, of: list, hour):
@@ -110,7 +111,7 @@ class Coherence:
     def check_views(self):
         """The report's block and the window's carry the lines; the list «symbol = value» is gone."""
         blocks = numbered([self.sim.record])[0]
-        from meridiana.energy.pedigree import Record   # noqa: F401
+        from meridiana.core.energy.pedigree import Record   # noqa: F401
         plain = [{"title": self.sim.record.title,
                   "steps": [dict(key=s.key, title=s.title, formula=s.formula, explanation=s.explanation,
                                  inputs=[], result=None, reference=s.reference, worked=s.worked, example=s.example,

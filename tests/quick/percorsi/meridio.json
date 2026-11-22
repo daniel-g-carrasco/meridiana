@@ -49,22 +49,6 @@
     },
     {
       "action": "click",
-      "target": "suggestions",
-      "assistant": {
-        "opened": true,
-        "docked": false
-      }
-    },
-    {
-      "action": "click",
-      "target": "suggestions",
-      "assistant": {
-        "opened": true,
-        "docked": false
-      }
-    },
-    {
-      "action": "click",
       "target": "dock",
       "assistant": {
         "opened": true,

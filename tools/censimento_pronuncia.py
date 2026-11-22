@@ -23,10 +23,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-from meridiana.assistant import reading  # noqa: E402
+from meridiana.app.assistant import reading  # noqa: E402
 
 OUT = ROOT / "docs" / "meridio" / "censimento-pronuncia.json"
-CATALOG = ROOT / "src" / "meridiana" / "catalog" / "data"
+CATALOG = ROOT / "src" / "meridiana" / "data" / "catalog" / "data"
 WORD = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ]+(?![A-Za-zÀ-ÖØ-öø-ÿ'’])")
 ENGLISH = re.compile(r"[kwyjx]|sh|th|ck|oo|ee|ea|ay|ey|oy|ow|aw|ph|wh|ou(?![nrl]?[aeio])")
 # le parole italiane che finiscono per consonante (articoli, preposizioni, troncamenti, punti cardinali)

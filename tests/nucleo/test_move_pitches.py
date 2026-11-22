@@ -4,7 +4,10 @@ import unittest
 
 from shapely.geometry import Polygon
 
-from meridiana import checks, layout, model, move, session
+from meridiana.core.rules import checks
+from meridiana.core.layout import layout
+from meridiana.core.model import model, move
+from meridiana.app import session
 
 
 def gable() -> model.Project:

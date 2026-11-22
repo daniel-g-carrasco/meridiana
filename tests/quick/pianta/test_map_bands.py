@@ -5,8 +5,9 @@ view, and a tile on its way is stood in for by the nearest coarser one in memory
 
 import unittest
 
-from meridiana import geo, tiles
-from meridiana.quick.backend import plan_maps
+from meridiana.core.geometry import geo
+from meridiana.app.maps import tiles
+from meridiana.gui.backend import plan_maps
 
 from . import test_map_offline as offline
 from .test_map_offline import wms
@@ -116,7 +117,7 @@ class BandsOnTheRealLoader(unittest.TestCase):
                                            offline.OfflineMapTests.cache)
 
     def test_no_bare_band_after_a_pan_or_a_zoom_out_while_the_tiles_come(self):
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         server = self.server(poisoned=lambda path: False)
         maps = plan_tiles.MapController(self.cache(), sources={'pcn': wms(server.root, detail_zoom=18)},
                                         origin=ORIGIN)

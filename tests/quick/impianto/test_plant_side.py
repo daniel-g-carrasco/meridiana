@@ -1,6 +1,7 @@
-"""R407, R406: the right panel of the Plant says, shows and does what ui/plant_page does, inside its card.
+"""R407, R406: the right panel of the Plant says, shows and does what the Widgets' plant page did, inside its card.
 
-Words against the functions of the Widgets; the shape on the real workbench, walked by quick/confini.py."""
+The words against those the Widgets said (recorded on 10/11/2026, quick/aiuti/riferimenti.py); the shape on the real
+workbench, walked by quick/confini.py."""
 import os
 import tempfile
 import unittest
@@ -8,14 +9,15 @@ from pathlib import Path
 
 import _setup
 from PySide6.QtCore import QPointF, Qt
-from meridiana import i18n, jobs
-from meridiana.energy import plant as core
-from meridiana.quick.app import QuickWindow, create_app
-from meridiana.quick.backend import plant_presenter as presenter
-from meridiana.ui import plant_page as widgets
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.core.energy import plant as core
+from meridiana.gui.application import QuickWindow, create_app
+from meridiana.gui.backend import plant_presenter as presenter
 from quick import confini
+from quick.aiuti import riferimenti
 from quick.gestures import click, item, key, point, pump, wait_for
-from quick.parity.differential import connected_fixture
+from quick.aiuti.differential import connected_fixture
 
 setUpModule = _setup.keep_global_state
 
@@ -25,13 +27,21 @@ if os.environ.get('QT_QPA_PLATFORM') == 'offscreen':
     os.environ.setdefault('QSG_RENDER_LOOP', 'basic')
 
 
+def section_of(head):
+    """The section a head belongs to (R633: the head is the section's SectionHead, one item down)."""
+    node = head.parentItem()
+    while node is not None and node.property('sectionControl') is not True:
+        node = node.parentItem()
+    return node
+
+
 def built(project):
     results, _keys, _laid = jobs.layout_of(project)
     return core.build(project, results)
 
 
 class Words(unittest.TestCase):
-    """Copied from ui/plant_page: these stay equal, or the two programs say different things."""
+    """The words the Widgets said for the same plant, recorded when they went."""
 
     @classmethod
     def setUpClass(cls):
@@ -41,15 +51,11 @@ class Words(unittest.TestCase):
         cls.state = built(cls.project)
 
     def test_the_lines_of_the_panel(self):
-        self.assertEqual(presenter.summary(self.state), widgets.summary(self.state))
-        self.assertEqual(presenter.totals(self.state), widgets.plant_totals(self.state))
-        for unit in self.state.units:
-            self.assertEqual(presenter.unit_lines(self.state, unit), list(widgets.unit_lines(self.state, unit)))
+        riferimenti.check(self, {'summary': presenter.summary(self.state), 'totals': presenter.totals(self.state),
+                                 'units': [presenter.unit_lines(self.state, unit) for unit in self.state.units]})
 
     def test_a_string_says_its_rows_as_the_group_of_the_string_chosen(self):
-        for s in self.state.strings:
-            rows = [(r['level'], r['text']) for r in presenter.rows_of(s)]
-            self.assertEqual(rows, widgets.string_figures(s)[1] or [('', i18n._('No check yet: the strings are being laid.'))])
+        riferimenti.check(self, [[(r['level'], r['text']) for r in presenter.rows_of(s)] for s in self.state.strings])
 
     def test_an_input_says_its_state_and_what_it_takes(self):
         words = {'ok': i18n._('correct'), 'warn': i18n._('to be checked'), 'fail': i18n._('out of limit')}
@@ -106,10 +112,14 @@ class Panel(unittest.TestCase):
         panel = item(self.win, 'plant-inverters')
         group = item(self.win, 'plant-inverters-group')
         scene = group.mapToScene(QPointF(0, 0))
-        self.assertEqual(scene.x() - panel.mapToScene(QPointF(0, 0)).x(), 8)     # SECTION_MARGINS
+        self.assertEqual(scene.x(), panel.mapToScene(QPointF(0, 0)).x())         # R631: the section's margins only
         self.assertEqual(strings.mapToScene(QPointF(0, 0)).x(), scene.x())       # nothing round them
         self.assertEqual(strings.width(), group.width())
-        self.assertEqual(panel.width() - group.width() - 8, 10)                  # the bar's room, kept (R100)
+        # R631, R637: the section as wide as the panel's page, the bar's room (R100) in the card's margin beyond it
+        page = item(self.win, 'plant-page')
+        section = section_of(item(self.win, 'plant-section-inverter'))
+        right = page.mapToScene(QPointF(page.width(), 0)).x() - section.mapToScene(QPointF(section.width(), 0)).x()
+        self.assertEqual(right, 0)
 
     def test_r406_the_panels_sentences_go_to_the_status_bar_and_never_under_the_sections(self):
         long = ' '.join(['Impianto > Stringhe: 57 stringhe assegnate; 76 moduli restano senza collegamento.'] * 8)
@@ -122,15 +132,21 @@ class Panel(unittest.TestCase):
         self.assertFalse(any(long in str(c.property('text') or '') for c in side.childItems()))
         self.plant.tell('')
 
-    def test_r337_one_section_as_tall_as_what_it_holds_and_it_scrolls_only_past_the_room(self):
+    def test_r337_r631_one_section_as_tall_as_what_it_holds_and_the_panel_scrolls_it(self):
         side = item(self.win, 'plant-inspector')
+        page = item(self.win, 'plant-page')
         self.actions.openSection('storage')
         pump(350)
         self.assertLess(item(self.win, 'plant-section-storage').height(), side.height())
         self.actions.openSection('inverter')
         pump(350)
+        # R631: the Inverter section is as tall as all it holds; the panel's page scrolls it, nothing inside it does
         panel = item(self.win, 'plant-inverters')
-        self.assertLessEqual(panel.mapToScene(QPointF(0, panel.height())).y(), side.mapToScene(QPointF(0, side.height())).y())
+        section = section_of(item(self.win, 'plant-section-inverter'))
+        self.assertEqual(item(self.win, 'plant-section-body-inverter').height(), panel.implicitHeight())
+        self.assertGreater(section.height(), panel.implicitHeight())
+        self.assertEqual(page.property('contentY'), 0)               # another section opened: from the top
+        self.assertGreaterEqual(page.property('contentHeight'), section.y() + section.height())
         self.assertInBounds()
 
     def test_r341_narrow_the_rows_go_under_their_labels_and_nothing_is_cut(self):
@@ -154,8 +170,7 @@ class Panel(unittest.TestCase):
         self.assertEqual(self.actions.section, 'inverter')
         group = item(self.win, 'plant-string-chosen')
         self.assertTrue(group.isVisible())
-        panel = item(self.win, 'plant-inverters')
-        panel.setProperty('contentY', 0)
+        item(self.win, 'plant-page').setProperty('contentY', 0)
         pump(150)
         self.assertInBounds()
         for name in ('plant-string-redraw', 'plant-string-move', 'plant-string-delete'):
@@ -175,23 +190,28 @@ class Panel(unittest.TestCase):
         editor = self.actions._plan.editor
         self.assertTrue(editor.strings_mode)
         strings_mode = False        # R529: with no section open a click on a module selects it, as with Panels
-        click(self.app, self.win, point(item(self.win, 'plant-section-inverter')))
-        pump(350)
-        self.assertEqual(self.actions.section, '')
         heads = [item(self.win, f'plant-section-{k}') for k in ('panels', 'inverter', 'storage')]
-        for head in heads:            # all three closed: each section is its head and its line
-            self.assertLess(head.parentItem().height(), head.height() + 4, head.objectName())
+
+        def closed():           # all three closed: each section is its head and its line, its fold ended
+            return all(section_of(h).height() < h.height() + 4 for h in heads)
+
+        seen = {}
+
+        def opened(name):       # the section open and its unfolding ended: its height the same as at the last look
+            head = item(self.win, f'plant-section-{name}')
+            height = section_of(head).height()
+            still, seen[name] = seen.get(name) == height, height
+            return self.actions.section == name and height > head.height() + 4 and still
+        click(self.app, self.win, point(item(self.win, 'plant-section-inverter')))
+        wait_for(lambda: self.actions.section == '' and closed(), 10)
         self.assertEqual(editor.strings_mode, strings_mode)      # closing gives the modules' clicks back
         click(self.app, self.win, point(item(self.win, 'plant-section-storage')))
-        pump(350)
-        self.assertEqual(self.actions.section, 'storage')
+        wait_for(lambda: opened('storage'), 10)
         click(self.app, self.win, point(item(self.win, 'plant-section-storage')))
-        pump(350)
-        self.assertEqual(self.actions.section, '')
+        wait_for(lambda: self.actions.section == '' and closed(), 10)
         click(self.app, self.win, point(item(self.win, 'plant-section-inverter')))
-        pump(350)
-        self.assertEqual(self.actions.section, 'inverter')
-        self.assertGreater(item(self.win, 'plant-section-inverter').parentItem().height(), side.height() / 3)
+        wait_for(lambda: opened('inverter'), 10)
+        self.assertGreater(section_of(item(self.win, 'plant-section-inverter')).height(), side.height() / 3)
 
     def test_r297_the_cards_only_of_the_inverters_chosen_and_the_working_one_filled(self):
         cards = [u for u in self.plant.units if u['card']]
@@ -207,8 +227,7 @@ class Panel(unittest.TestCase):
         # Daniel 07/11/2026: «non si riesce ad aprire la scheda inverter»: «Scheda tecnica…» of the card's menu closed
         # the menu and opened nothing (seen with the native mouse too, tools/quick_native_input.py).
         number = next(u for u in self.plant.units if u['card'])['number']
-        panel = item(self.win, 'plant-inverters')
-        panel.setProperty('contentY', 0)
+        item(self.win, 'plant-page').setProperty('contentY', 0)
         pump(150)
         card = item(self.win, f'inverter-card-{number}')
         more = next(c for c in _all(card) if c.property('iconName') == 'ellipsis')
@@ -239,7 +258,9 @@ def _popups(window):
     while pending:
         current = pending.pop()
         pending.extend(current.childItems())
-        if current.metaObject().className().startswith('QQuickPopupItem') and current.isVisible():
+        # the stage of Meridio (Controls/Stage.qml, R628) is a popup open for as long as the window, 0 x 0: not one of these
+        if (current.metaObject().className().startswith('QQuickPopupItem') and current.isVisible()
+                and current.width() * current.height() > 0):
             found.append(current)
     return found
 

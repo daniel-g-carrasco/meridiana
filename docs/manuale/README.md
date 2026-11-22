@@ -1,6 +1,10 @@
 # Manuale di Meridiana
 
-Il manuale accompagna il programma: si apre da Aiuto > Manuale e dai collegamenti «Manuale ›» del riquadro d'aiuto, che portano al paragrafo giusto. C'è un capitolo per fase, nell'ordine della riga delle fasi; le Verifiche hanno un capitolo a sé perché valgono in tutte le fasi.
+Il manuale è disponibile in italiano (`docs/manuale`) e in inglese
+(`docs/manuale/en`). Ogni modifica si apporta in tutte e due le lingue; le prove
+controllano struttura, ancore, comandi e termini dell'interfaccia.
+
+Il manuale accompagna il programma: si apre da Aiuto > Manuale e dai collegamenti «Manuale ›» del riquadro d'aiuto, che portano al paragrafo giusto. C'è un capitolo per fase, nell'ordine della riga delle fasi (si passa da una fase all'altra con un clic sulla sua linguetta o con la rotella del mouse sopra le linguette); le Verifiche hanno un capitolo a sé perché valgono in tutte le fasi.
 
 Bozza del 24/10/2026 (compito 17d), scritta dai calcoli e dalle regole del programma: la sostanza tecnica e le fonti sono da rileggere con Daniel.
 
@@ -13,6 +17,34 @@ Bozza del 24/10/2026 (compito 17d), scritta dai calcoli e dalle regole del progr
 - **Ctrl+?** apre l'elenco delle scorciatoie da tastiera.
 
 I tre comandi stanno anche nel menu Aiuto: un tasto F non è mai l'unica via (sui portatili i tasti F sono spesso tasti multimediali).
+
+**Vista > Schermo intero** (F11) porta la finestra su tutto lo schermo, senza cornice e barra delle applicazioni; F11 di nuovo la riporta com'era, ingrandita o al suo posto. Esc non esce dallo schermo intero, perché serve agli strumenti. All'avvio la finestra non parte mai a schermo intero.
+
+## Menu del testo
+
+Nei campi apri il menu con il tasto destro, il tasto Menu o Maiusc+F10. La pressione
+lunga è disponibile quando la piattaforma la riconosce. Il menu offre Annulla,
+Ripeti, Taglia, Copia, Incolla, Elimina e Seleziona tutto; i comandi non disponibili
+sono spenti. Elimina riguarda la selezione. Durante la modifica, le scorciatoie
+agiscono sul testo; aprire il menu conserva la bozza. Le password non si copiano.
+
+Nei testi di lettura puoi selezionare un estratto. Copia usa la selezione, oppure
+l'intero testo quando non c'è selezione. Con una selezione parziale compare anche
+Copia tutto o Copia messaggio. I valori abbreviati si copiano completi. Nei fumetti
+di Meridio Copia produce testo leggibile; Copia in Markdown compare soltanto se
+il messaggio ha una sorgente formattata e copia il messaggio intero già mostrato.
+Il testo viene fissato all'apertura del menu, anche durante una risposta in corso.
+
+Nei numeri, Incolla e Ctrl+V accettano virgola o punto decimale e il suffisso del
+campo. Le conversioni fra unità, come centimetri in metri, e le espressioni sono
+disponibili nei campi di quantità che già le supportano. Un valore ambiguo come
+1.500, un'unità incompatibile, più righe o un numero fuori limite vengono rifiutati
+senza cambiare il campo. Un incolla valido si annulla con un solo Annulla.
+
+Le tabelle copiano la cella con l'unità oppure le righe selezionate in formato TSV,
+nell'ordine visualizzato. I grafici copiano il punto attivo con le sue serie e unità;
+le formule offrono Copia formula (LaTeX). Nelle Verifiche resta Chiedi a Meridio;
+la copia della riga comprende dettaglio e fonte, senza duplicati.
 
 ## Impostazioni
 
@@ -29,16 +61,19 @@ In **File > Nuovo**, nei dati facoltativi, scegli cliente e commessa. Il nome de
 ## Posa, pensiline e modello BIM
 
 La fase **Modellazione** serve solo al modello: Modifica, Disegna (edificio, da modello, pensilina, falda, colmo,
-esclusione) e Precisione. I moduli si posano nella fase **Impianto**, nell'ordine pannelli, inverter, accumulo:
-il gruppo Pannelli ha Sottocampo, Fila, Est-ovest, Su pensilina, Posa e Svuota.
+esclusione) e Precisione. I moduli si posano nella fase **Impianto**, nell'ordine moduli, inverter, accumulo:
+il gruppo Moduli ha un solo pulsante, **Posa** (S), che disegna il sottocampo con i suoi moduli. Il suo menu ha
+anche **Fila di moduli** (L), **Area con posa automatica** (un'area che la posa automatica riempie con i margini, le
+regole di prevenzione incendi e la potenza obiettivo, la stessa voce del clic destro sul tetto), **Riempi** e
+**Svuota** (per il sottocampo selezionato, come nel suo menu).
 
-**Est-ovest** è uno strumento come **Fila**: due clic dentro un sottocampo (o la lunghezza scritta e Invio) posano
-coppie di moduli rivolte ai due lati lungo la linea, anche su una falda inclinata; il sottocampo diventa est-ovest
-nello stesso passo di annullamento. La proposta elettrica separa i due orientamenti.
+Per le coppie est-ovest si sceglie il montaggio «Coppie est-ovest» nelle Proprietà del sottocampo, poi **Riempi** o
+**Fila di moduli**. La proposta elettrica separa i due orientamenti.
 
 **Pensilina** disegna la struttura: posti per fila, una o due file, larghezza e profondità del posto, altezza
 libera, pendenza, rotazione e pilastri (a sbalzo su una fila, o su due file). Pilastri e travi compaiono nella
-vista 3D, nelle ombre, nella relazione e nell'IFC. I moduli si posano dopo, in Impianto, con **Su pensilina**.
+vista 3D, nelle ombre, nella relazione e nell'IFC. I moduli si posano dopo, in Impianto, con il clic destro sulla
+pensilina (in pianta o nella vista 3D): **Moduli su pensilina…**.
 Le verifiche strutturali non sono comprese.
 
 Il **piano di posa ausiliario** può essere attivato anche su un sottocampo esistente: quota al centro, inclinazione
@@ -90,9 +125,10 @@ Nella pagina del registro, **Collega cartella** aggiunge una cartella esistente 
 
 ## Meridio, l'assistente
 
+Meridio ha sempre l'aspetto adesivo, con il bordo bianco. Le Impostazioni non offrono una scelta di disegno; anche i profili precedenti usano l'adesivo.
+
 - **Ctrl+L**, o un clic sul personaggio, apre la conversazione. Meridio legge il progetto (verifiche, risultati, regole, il manuale) e risponde con le fonti; se una cifra viene da un valore di serie o da una stima lo dice; non cambia niente da solo: propone, e la proposta si applica con un clic e si annulla con Ctrl+Z.
 - **Da dove prende norme e soglie**: solo dalle fonti che il programma porta con sé, cioè le regole e le verifiche con le loro fonti, le 80 attività dell'Allegato I del DPR 151/2011, questo manuale e i documenti che gli alleghi. Risponde prima alla domanda, poi dice su che cosa si fonda e quali dati del progetto ha letto; se la risposta dipende da un dato che non ha, dice che cosa succede in ogni caso e chiede quel dato. Se nessuna fonte ha la risposta lo dice e nomina il documento che la darebbe: una cifra a memoria non la scrive.
-- **Le domande pronte** sotto la conversazione seguono quello che vi siete appena detti e lo stato del progetto: se Meridio chiude con «Vuoi che te lo proponga?» la prima è «Sì, proponimelo»; se l'anno non è calcolato, «Che cosa manca per calcolare l'anno?». Si mandano con un clic o con 1, 2, 3 nel campo vuoto.
 - **Dove pensa**: con il modello locale del PC (di serie: niente esce dal PC) o con Claude, se lo scegli, con la tua chiave e il tuo consenso; un progetto segnato riservato resta sempre sul PC.
 
 ### Progetti e attività locali
@@ -104,12 +140,17 @@ Nella pagina del registro, **Collega cartella** aggiunge una cartella esistente 
 
 ### Un modello locale in pochi passi
 
-File > Impostazioni > Assistente > **Modelli locali su questo PC** cerca da sola i programmi che servono modelli (Ollama, LM Studio, llama.cpp, Jan, Lemonade, Docker Model Runner, ogni server compatibile con OpenAI), dice quali sono avviati e quali solo installati, elenca i modelli e consiglia quello che usa meglio gli strumenti e sta nella memoria del PC.
+File > Impostazioni > Assistente > **Modelli locali su questo PC** cerca da sola i programmi che servono modelli (Ollama, LM Studio, llama.cpp, Jan, Lemonade, Docker Model Runner, ogni server compatibile con OpenAI), dice quali sono avviati e quali solo installati, elenca i modelli e consiglia un modello leggero capace di usare gli strumenti: fra quelli adatti preferisce quello che sta nella scheda video o lascia più RAM libera.
 - **Usa questo** mette server, modello e tipo di server nei campi; la scelta vale e si salva subito.
 - **Prova** fa una domanda breve: deve tornare come chiamata di uno strumento, come quelle di Meridio. La prima volta il modello si carica dal disco: può volerci un minuto.
-- **Se non c'è niente**, la pagina dà i passi con i comandi da copiare: installare Ollama (da ollama.com/download, oppure `winget install Ollama.Ollama`) e scaricare il modello adatto al PC, per esempio `ollama pull qwen3.6:35b-a3b` su un PC con 32 GB di RAM e una scheda da 8 GB. Con Ollama non serve impostare altro: Meridiana gli chiede da sé il contesto e il ragionamento spento.
-- Chi preferisce llama.cpp: `winget install llama.cpp`, poi `llama-server -hf unsloth/Qwen3.6-35B-A3B-GGUF:UD-IQ4_XS -c 16384` (la porta 9931 è quella di serie di Meridio).
+- **Se non c'è niente**, la pagina dà i passi con i comandi da copiare: installare Ollama (da ollama.com/download, oppure `winget install Ollama.Ollama`) e scaricare il modello adatto al PC, per esempio `ollama pull qwen3.5:9b` su un PC con 32 GB di RAM e una scheda da 8 GB. Con Ollama non serve impostare altro: Meridiana gli chiede da sé il contesto e il ragionamento spento.
+- Chi preferisce llama.cpp: `winget install llama.cpp`, poi `llama-server -hf unsloth/Qwen3.5-9B-GGUF:Q4_K_M -c 16384` (la porta 9931 è quella di serie di Meridio).
 - Se il modello locale non risponde mentre gli fai una domanda, Meridio cerca da sé un altro modello sul PC e te lo propone con un clic.
+
+- Il suggerito di serie è **Qwen3.5-9B**, circa 6,6 GB da scaricare, stimato per una scheda da 8 GB; con poca memoria propone il 4B. Una scelta esplicita già salvata viene conservata. I modelli più grandi restano selezionabili.
+- Aprendo Meridio, o entrando nella casella, il modello locale viene preparato in secondo piano se non è già caricato. **Preparo il modello…** compare nella casella: puoi scrivere e inviare, la domanda aspetta la preparazione. Con memoria libera insufficiente o non rilevabile la preparazione viene saltata e il suggerimento lo spiega; puoi comunque inviare una domanda.
+- **Prepara Meridio all'avvio del programma**, in Impostazioni > Assistente, è disattivata di serie. Se la attivi, il lavoro parte tre secondi dopo l'apertura della finestra, con priorità bassa nella coda dei lavori e lo stesso controllo della memoria libera.
+- Le finestre condividono il modello sullo stesso server. Ollama lo conserva per 30 minuti; chiudere Meridiana non lo scarica, perché un'altra finestra potrebbe usarlo.
 
 ## I capitoli
 

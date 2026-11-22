@@ -9,8 +9,8 @@ from PySide6.QtWidgets import QApplication
 
 from _setup import wait_until
 
-from meridiana import model
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana.core.model import model
+from meridiana.gui.application import QuickWindow, create_app
 from ._fidelity_support import data, settle
 
 
@@ -49,6 +49,73 @@ class IntegratedSceneTest(unittest.TestCase):
         self.view.viewRequested.emit('both')
         self.assertEqual(self.host.window.property('viewMode'),'both')
         self.assertFalse(self.view.property('showViewSelector'))
+
+    def test_cube_toolbar_routes_commands_and_tracks_camera_projection(self):
+        from PySide6.QtTest import QSignalSpy
+        from quick.gestures import click, item, point, pump
+        from ._fidelity_support import js
+        win = self.host.window
+        win.setProperty('viewMode', '3d')
+        pump(500)
+        cube = item(win, 'viewCube')
+        home = QSignalSpy(cube.homeRequested)
+        projection = QSignalSpy(cube.orthographicRequested)
+        fit = QSignalSpy(cube.fitRequested)
+        set_home = QSignalSpy(cube.setHomeRequested)
+        buttons = [item(win, name) for name in ('sceneHome', 'sceneParallel', 'sceneFit', 'sceneSetHome')]
+        self.assertEqual([b.property('iconName') for b in buttons], ['house', '3d', 'fit', 'pin'])
+        self.assertEqual([b.x() for b in buttons], sorted(b.x() for b in buttons))
+        self.assertIn('(Home)', buttons[0].property('tip'))
+        self.assertIn('(F)', buttons[2].property('tip'))
+        for index in (3, 0, 2):
+            click(self.app, win, point(buttons[index]))
+            pump(30)
+        self.assertEqual(home.count(), 1)
+        self.assertEqual(fit.count(), 1)
+        self.assertEqual(set_home.count(), 1)
+        self.assertIsNotNone(data(self.view, 'homeState'))
+        for wanted in (True, False, True):
+            click(self.app, win, point(buttons[1]))
+            pump(30)
+            self.assertEqual(data(self.view, 'cameraState.ortho'), wanted)
+            self.assertEqual(buttons[1].property('checked'), wanted)
+            self.assertEqual(projection.at(projection.count()-1), [wanted])
+        # A camera change outside the button must keep the indicator in sync.
+        js(self.view, 'cameraState = Object.assign({}, cameraState, {ortho: false})')
+        pump(30)
+        self.assertFalse(buttons[1].property('checked'))
+
+    def test_cube_toolbar_moves_below_cube_in_a_narrow_view(self):
+        from quick.gestures import click, item, point, pump
+        from ._fidelity_support import js
+        win = self.host.window
+        win.setProperty('viewMode', '3d')
+        pump(500)
+        toolbar = item(win, 'sceneToolbar')
+        cube = item(win, 'viewCube')
+        js(self.view, "width = 250")
+        pump(500)
+        self.assertGreaterEqual(toolbar.y(), cube.y() + cube.height())
+        self.assertLessEqual(toolbar.x() + toolbar.width(), self.view.width())
+        # As the phase toolbar, the row scrolls when even its own width does not fit.
+        js(self.view, "width = 140")
+        pump(100)
+        scroll = item(win, 'sceneToolbarScroll')
+        self.assertGreater(scroll.property('contentWidth'), scroll.width())
+        from PySide6.QtCore import QPoint
+        from PySide6.QtGui import QWheelEvent
+        pos = scroll.mapToScene(QPointF(scroll.width()/2, scroll.height()/2))
+        for _ in range(1):
+            QCoreApplication.sendEvent(win, QWheelEvent(pos, pos, QPoint(), QPoint(-120, 0),
+                Qt.NoButton, Qt.NoModifier, Qt.ScrollPhase.NoScrollPhase, False))
+            pump(100)
+        self.assertGreater(scroll.property('contentX'), 0)
+        js(scroll, "contentX = contentWidth - width")
+        pump(80)
+        before = data(self.view, 'cameraState')
+        click(self.app, win, point(item(win, 'sceneZoomOut')))
+        pump(80)
+        self.assertNotEqual(data(self.view, 'cameraState'), before)
 
     def test_move_and_select_stay_synchronised_with_plan(self):
         self.host.plan.setTool('move')

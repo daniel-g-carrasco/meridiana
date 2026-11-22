@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild src/meridiana/mapcoverage.py, the outlines of the areas the map sources cover (tiles.py, R36).
+"""Rebuild src/meridiana/data/tables/mapcoverage.py, the outlines of the areas the map sources cover (tiles.py, R36).
 
   python tools/map_coverage.py FOLDER          FOLDER holds the three files of Natural Earth below
 
@@ -29,7 +29,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "src" / "meridiana" / "mapcoverage.py"
+OUT = ROOT / "src" / "meridiana" / "data" / "tables" / "mapcoverage.py"
 PRECISION = 1000                      # three decimals of a degree
 TOLERANCE = 0.008                     # the simplification, in degrees (about 800 m of latitude)
 SEA = 0.02                            # how far over the sea an area reaches, in degrees (about 2 km)

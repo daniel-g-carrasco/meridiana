@@ -5,8 +5,8 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import quantity
-from meridiana.quantity import QuantityError, parse
+from meridiana.app.interface import quantity
+from meridiana.app.interface.quantity import QuantityError, parse
 
 
 class GoodCases(unittest.TestCase):

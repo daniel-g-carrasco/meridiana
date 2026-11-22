@@ -5,7 +5,7 @@ import unittest
 import _setup  # noqa: F401
 import numpy as np
 
-from meridiana import props
+from meridiana.core.geometry import props
 
 
 TREE_CASES = (

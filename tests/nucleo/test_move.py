@@ -7,7 +7,8 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import model, move, session
+from meridiana.core.model import model, move
+from meridiana.app import session
 
 
 def project() -> model.Project:
@@ -128,7 +129,7 @@ class WhatMovesWithWhat(unittest.TestCase):
 class FreePitchFromThePlan(unittest.TestCase):
     def test_a_pitch_is_found_by_its_place_in_the_roof_as_the_plan_names_it(self):
         """The plan calls a pitch "<building>:<place>", and one drawn by hand has no id (found 02/11/2026)."""
-        from meridiana import roofs
+        from meridiana.core.geometry import roofs
         ring = [(0.0, 0.0), (20.0, 0.0), (20.0, 10.0), (0.0, 10.0)]
         second = [(0.0, 10.0), (20.0, 10.0), (20.0, 20.0), (0.0, 20.0)]
         b = model.Building(id="b1", name="B", footprint=ring[:2] + [(20.0, 20.0), (0.0, 20.0)], height=6.0)

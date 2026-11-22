@@ -12,8 +12,9 @@ from pathlib import Path
 import _setup  # noqa: F401
 from _fixtures import capannone, exported
 
-from meridiana import ifc_export, ifc_import, ifc_place, ifc_read, model
-from meridiana.session import ProjectSession
+from meridiana.app.exchange import ifc_export, ifc_import, ifc_place, ifc_read
+from meridiana.core.model import model
+from meridiana.app.session import ProjectSession
 
 HERE = dict(lat=45.52, lon=9.04, address="Rho (MI)")
 
@@ -170,12 +171,12 @@ class Arithmetic(unittest.TestCase):
             written = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(corners(again, ids), corners(self.p, ids))
         self.assertEqual(again.resources["ifc_reference"]["shift"], self.p.resources["ifc_reference"]["shift"])
-        self.assertEqual((written["version"], model.FORMAT_VERSION), (30, 30))      # no new field (29: R523, 30: R374)
+        self.assertEqual(written["version"], model.FORMAT_VERSION)
 
 
 class MeridioKnowsIt(unittest.TestCase):
     def test_design_rules_explains_the_place_mode_with_the_programs_numbers(self):
-        from meridiana.assistant import design_rules
+        from meridiana.app.assistant import design_rules
         [first, *_rest] = design_rules.search("come posiziono il modello IFC importato con le coordinate?")["rules"]
         self.assertEqual(first["id"], "ifc.place")
         for words in ("Esc", "Shift", "UTM", f"{ifc_import.FAR_KM:g} km", "Replace", "Beside", "Ctrl+Z"):
@@ -256,7 +257,8 @@ class ExportsLieOnTheArchitectsModel(unittest.TestCase):
         self.assertTrue(all(outline.contains(Point(float(x), float(y))) for x, y, _z in at))
 
     def test_the_dxf_in_the_files_frame_has_the_outline_at_the_architects_coordinates(self):
-        from meridiana import dxf_export, jobs
+        from meridiana.app.exchange import dxf_export
+        from meridiana.app import jobs
         if not dxf_export.available():
             self.skipTest("ezdxf is not installed")
         import ezdxf

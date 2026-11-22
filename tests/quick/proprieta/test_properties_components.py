@@ -6,7 +6,7 @@ from PySide6.QtCore import QObject, Qt
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 
-from meridiana.quick.backend.controls import install_controls
+from meridiana.gui.backend.controls import install_controls
 
 
 class ComponentTest(unittest.TestCase):

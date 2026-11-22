@@ -7,8 +7,9 @@ from unittest.mock import patch
 
 from PySide6.QtWidgets import QApplication
 
-from meridiana import config
-from meridiana.quick.backend.settings import SettingsBackend
+from meridiana.app.platform import config
+from meridiana.gui.backend.settings import SettingsBackend
+from meridiana.gui.backend.settings_schema import EXTRA_FLAGS
 
 
 class SettingsTest(unittest.TestCase):
@@ -22,6 +23,12 @@ class SettingsTest(unittest.TestCase):
         self.path = Path(self.folder.name) / 'config.json'
         self.cfg = config.Config(font='inter', extra={'future': {'keep': [1, 2]}})   # from Inter to Plex and back
         self.backend = SettingsBackend(self.cfg, self.path)
+
+    def test_meridio_has_no_drawing_choice(self):
+        self.backend.showSection('assistant')
+        self.assertNotIn('assistant_style', [field['key'] for field in self.backend.fields])
+        self.assertFalse(self.backend.setValue('assistant_style', 'solid'))
+        self.assertEqual(self.cfg.assistant_style, 'sticker')
 
     def test_immediate_atomic_persistence_undo_and_extra(self):
         changes = []
@@ -37,11 +44,31 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual({'future': {'keep': [1, 2]}}, config.load(self.path).extra)
         self.assertIn(('font', 'inter'), changes)
 
+    def test_a_change_here_never_takes_back_the_local_model_another_holder_chose(self):
+        # R613: Meridio's choice saved by another holder of the profile (a second window on it); a theme changed
+        # here, and its undo, wrote back the default server and no model
+        from meridiana.app.assistant.local import Model, Runtime, Survey
+        config.save(self.cfg, self.path)
+        here, there = SettingsBackend(config.load(self.path), self.path), SettingsBackend(config.load(self.path), self.path)
+        there.services._local_finished(Survey([Runtime('ollama', url='http://127.0.0.1:11434', running=True,
+                                                       models=[Model('gemma4:26b-a4b-it-qat')])]), '')
+        self.assertTrue(there.services.useLocal(0))
+        chosen = ('local', 'http://127.0.0.1:11434', 'gemma4:26b-a4b-it-qat', 'ollama')
+
+        def local(cfg):
+            return (cfg.assistant_provider, cfg.assistant_local_url, cfg.assistant_local_model,
+                    cfg.assistant_local_runtime)
+        self.assertTrue(here.setValue('theme', 'dark'))
+        self.assertEqual((chosen, 'dark'), (local(config.load(self.path)), config.load(self.path).theme))
+        self.assertEqual(chosen, local(here.cfg), 'the holder that saved holds the choice too')
+        self.assertTrue(here.undoLast())
+        self.assertEqual((chosen, 'system'), (local(config.load(self.path)), config.load(self.path).theme))
+
     def test_failed_save_rolls_back_memory_history_and_signals(self):
         before = deepcopy(self.cfg)
         changes = []
         self.backend.changed.connect(lambda *args: changes.append(args))
-        with patch('meridiana.quick.backend.settings.config.save', side_effect=OSError('disk full')):
+        with patch('meridiana.gui.backend.settings.config.save', side_effect=OSError('disk full')):
             self.assertFalse(self.backend.setValue('theme', 'dark'))
         self.assertEqual(before, self.cfg)
         self.assertFalse(self.backend.canUndo)
@@ -78,7 +105,7 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(['Ctrl+9'], self.cfg.shortcuts['future_command'])
 
     def test_profiles_rename_default_and_remove_without_stale_reference(self):
-        from meridiana import reports
+        from meridiana.app.report import reports
         self.assertEqual(reports.NOBODY, self.backend.defaultProfile)
         self.assertTrue(self.backend.addProfile())
         name = self.cfg.report_profiles[0]['name']
@@ -93,7 +120,7 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual('Daniel Grasso', self.cfg.report_profiles[0]['signer'])
 
     def test_map_drafts_preserved_but_not_used_until_valid(self):
-        from meridiana import tiles
+        from meridiana.app.maps import tiles
         self.assertTrue(self.backend.addMapSource())
         item = self.cfg.map_sources[0]
         self.assertNotIn(item['key'], tiles.catalogue(self.cfg.map_sources))
@@ -106,15 +133,15 @@ class SettingsTest(unittest.TestCase):
 
     def test_all_config_fields_accounted_for_and_every_category_exposed(self):
         from dataclasses import fields
-        from meridiana.quick.backend.settings import SECTIONS, INTERNAL_FIELDS
+        from meridiana.gui.backend.settings import SECTIONS, INTERNAL_FIELDS
         classified = set(INTERNAL_FIELDS) | {key for values in SECTIONS.values() for key in values}
-        self.assertEqual({f.name for f in fields(config.Config)}, classified - {'reduced_motion'})
+        self.assertEqual({f.name for f in fields(config.Config)}, classified - set(EXTRA_FLAGS))
         self.assertEqual({'appearance', 'navigation', 'keyboard', 'privacy', 'assistant', 'report', 'maps', 'performance'},
                          {category['key'] for category in self.backend.categories})
 
     def test_memory_budget_and_background_year_are_set_from_the_settings(self):
-        from meridiana import resources
-        from meridiana.quick.backend import settings_schema
+        from meridiana.core.compute import resources
+        from meridiana.gui.backend import settings_schema
         rows = {row['key']: row for row in settings_schema.fields_for('performance', self.cfg)}
         self.assertEqual(list(rows), ['edges_3d', 'memory_mode', 'background_year', 'background_year_wait_s',
                                       'background_year_workers', 'background_year_battery_factor'])
@@ -136,7 +163,7 @@ class SettingsTest(unittest.TestCase):
         self.assertTrue(self.backend.setValue('memory_mode', 'auto'))
 
     def test_the_edges_of_the_3d_are_chosen_among_three_and_saved(self):
-        from meridiana.quick.backend import settings_schema
+        from meridiana.gui.backend import settings_schema
         row = next(r for r in settings_schema.fields_for('performance', self.cfg) if r['key'] == 'edges_3d')
         self.assertEqual((row['kind'], [o['value'] for o in row['options']]), ('choice', ['full', 'moving', 'low']))
         self.assertTrue(row['description'])
@@ -147,7 +174,7 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(config.load(self.path).edges_3d, 'moving')
 
     def test_theme_updates_and_reduced_motion_roundtrip(self):
-        from meridiana.quick.backend.tokens import ThemeTokens
+        from meridiana.gui.backend.tokens import ThemeTokens
         theme = ThemeTokens()
         backend = SettingsBackend(self.cfg, self.path, theme)
         self.assertTrue(backend.setValue('theme', 'dark'))
@@ -162,7 +189,7 @@ class SettingsTest(unittest.TestCase):
         self.assertFalse(self.backend.setCloudProfile('openai', 'model-test', 'http://example.org'))
         self.assertTrue(self.backend.setCloudProfile('anthropic', 'model-test', 'https://api.anthropic.com'))
         self.assertEqual('model-test', self.cfg.assistant_cloud_model)
-        with patch('meridiana.assistant.keys.put') as put:
+        with patch('meridiana.app.assistant.keys.put') as put:
             self.assertTrue(self.backend.setSecret('openai', 'private-token', 'meridiana-assistant'))
             put.assert_called_once_with('openai', 'private-token', 'meridiana-assistant')
         self.assertNotIn('private-token', self.path.read_text(encoding='utf8'))
@@ -175,9 +202,7 @@ class SettingsTest(unittest.TestCase):
         self.backend.setValue('network_tiles', False)
         self.assertFalse(service.readCapabilities(0))
         source_key = self.cfg.map_sources[0]['key']
-        fixture = Path('tests/formati/file/mappe/wmts-pdok.xml')
-        if not fixture.exists():
-            fixture = next(Path('tests').rglob('wmts-pdok.xml'))
+        fixture = Path(__file__).resolve().parents[2] / 'data/mappe/wmts-pdok.xml'
         data = fixture.read_bytes()
         self.assertTrue(service.accept_capabilities(source_key, 'https://example.org/wmts', data))
         self.assertTrue(service.chooseLayer(0, 'Actueel_orthoHR'))
@@ -189,7 +214,7 @@ class SettingsTest(unittest.TestCase):
         self.assertFalse(service.accept_capabilities(source_key, 'https://example.org/wmts', data))
 
     def test_local_model_choice_is_one_undo_transaction(self):
-        from meridiana.assistant.local import Model, Runtime, Survey
+        from meridiana.app.assistant.local import Model, Runtime, Survey
         original = (self.cfg.assistant_local_url, self.cfg.assistant_local_model, self.cfg.assistant_local_runtime)
         survey = Survey([Runtime('ollama', url='http://127.0.0.1:11434', running=True, models=[Model('test-model')])])
         self.backend.services._local_finished(survey, '')
@@ -199,7 +224,7 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(original, (self.cfg.assistant_local_url, self.cfg.assistant_local_model, self.cfg.assistant_local_runtime))
 
     def test_every_simple_setting_persists_and_undo_keeps_external_changes(self):
-        from meridiana.quick.backend.settings_schema import SECTIONS, TABLE_FIELDS, choices
+        from meridiana.gui.backend.settings_schema import SECTIONS, TABLE_FIELDS, choices
         options = choices(self.cfg)
         for keys in SECTIONS.values():
             for key in keys:
@@ -220,7 +245,7 @@ class SettingsTest(unittest.TestCase):
                         value = 'sample'
                     self.assertTrue(self.backend.setValue(key, value), self.backend.error)
                     loaded = config.load(self.path)
-                    self.assertEqual(value, loaded.extra.get(key, False) if key == 'reduced_motion' else getattr(loaded, key))
+                    self.assertEqual(value, loaded.extra.get(key, False) if key in EXTRA_FLAGS else getattr(loaded, key))
                     self.cfg.last_folder = 'external-folder'
                     self.assertTrue(self.backend.undoLast())
                     self.assertEqual(previous, self.backend.values[key])
@@ -229,7 +254,7 @@ class SettingsTest(unittest.TestCase):
     def test_local_model_test_and_voice_download_are_worker_jobs(self):
         import time
         from PySide6.QtTest import QTest
-        from meridiana.assistant import local
+        from meridiana.app.assistant import local
         service = self.backend.services
 
         def wait_done(predicate):
@@ -238,14 +263,14 @@ class SettingsTest(unittest.TestCase):
                 QTest.qWait(10)
             self.assertFalse(predicate())
 
-        with patch('meridiana.assistant.local.check', return_value=local.Check(True, 0.1, True)) as check:
+        with patch('meridiana.app.assistant.local.check', return_value=local.Check(True, 0.1, True)) as check:
             self.assertTrue(service.testLocal())
             wait_done(lambda: service.testBusy)
             check.assert_called_once()
             self.assertIn('0', service.testStatus)
         self.assertFalse(service.downloadVoice())
         self.backend.setValue('assistant_kokoro_dir', str(Path(self.folder.name) / 'voices'))
-        with patch('meridiana.assistant.speech.download_model') as download:
+        with patch('meridiana.app.assistant.speech.download_model') as download:
             self.assertTrue(service.downloadVoice())
             wait_done(lambda: service.downloadBusy)
             self.assertEqual(Path(self.folder.name) / 'voices', download.call_args.args[0])
@@ -263,7 +288,7 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(original, self.cfg.report_profiles[0]['name'])
 
     def test_shortcut_can_be_taken_explicitly_from_another_command(self):
-        from meridiana import shortcuts
+        from meridiana.app.interface import shortcuts
         self.assertFalse(self.backend.setShortcut('open', ['Ctrl+S']))
         self.assertTrue(self.backend.shortcutConflict)
         self.assertTrue(self.backend.takeShortcut())
@@ -274,7 +299,7 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(['Ctrl+S'], shortcuts.bindings(self.cfg.shortcuts)['save'])
 
     def test_close_flushes_typing_and_ignores_late_worker_results(self):
-        from meridiana.assistant.local import Survey
+        from meridiana.app.assistant.local import Survey
         self.backend.stageValue('assistant_local_model', 'kept-on-close')
         self.backend.close()
         self.assertEqual('kept-on-close', config.load(self.path).assistant_local_model)

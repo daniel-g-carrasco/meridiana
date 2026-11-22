@@ -20,7 +20,6 @@ every distribution (source, installer, Flatpak: the packages are being rebuilt f
 | numpy | 2.5.4 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 |
 | scipy | 1.18.1 | BSD |
 | matplotlib | 3.11.2 | the matplotlib licence (PSF-style, BSD-compatible) |
-| pyqtgraph | 0.14.0 | MIT |
 | pypdf (the report's attachments, merged into its PDF) | 6.21.2 | BSD-3-Clause |
 | typst, the Python binding of the Typst compiler (the report's layout, R314) | 0.15.0 | Apache-2.0 |
 | mitex, the Typst package that composes the TeX of the report's formulas (carried in `data/typst/mitex`, R460) | 0.2.7 | Apache-2.0 (`data/typst/mitex/LICENSE`) |
@@ -44,8 +43,7 @@ What these bring along (h5py, contourpy, cycler, fonttools, kiwisolver, pillow, 
 pytz, tzdata, urllib3, idna, charset-normalizer, certifi, colorama; for anthropic and keyring: httpx2, httpcore2,
 anyio, h11, sniffio, pydantic, pydantic-core, jiter, docstring-parser, truststore, opentelemetry-api, the jaraco
 packages, more-itertools) is under BSD, MIT, MIT-CMU, Apache-2.0 or, for certifi, MPL-2.0 licences; each package carries its own licence file in the installed environment.
-pyqtgraph carries colour maps as data the program does not use: the CET ones under CC-BY 4.0, viridis and its
-kin under CC0, with their notices in `pyqtgraph/colors/maps`. PyInstaller (GPL-2.0-or-later with the bootloader exception) and Inno
+PyInstaller (GPL-2.0-or-later with the bootloader exception) and Inno
 Setup are build tools and are not distributed.
 
 ## Code adapted from other projects

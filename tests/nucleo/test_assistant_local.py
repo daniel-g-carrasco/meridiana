@@ -16,8 +16,8 @@ import _setup  # noqa: F401
 from _fakes import FakeRuntime, FakeServer, Host, ollama_answer, ollama_routes, text_answer, tool_answer
 from _fixtures import capannone_rho
 
-from meridiana.assistant import conversation, local, providers
-from meridiana.assistant.local import Machine, Model, Runtime
+from meridiana.app.assistant import conversation, local, providers
+from meridiana.app.assistant.local import Machine, Model, Runtime
 
 DANIEL = Machine(31.6, 8.0, "NVIDIA RTX A2000 8GB Laptop GPU")     # the PC of 25/10/2026
 
@@ -187,6 +187,22 @@ class OnTheDisk(unittest.TestCase):
 
 
 class Choice(unittest.TestCase):
+    def test_light_tool_model_preserves_memory_on_gpu_and_cpu(self):
+        rt = Runtime("ollama", running=True, models=[
+            Model("qwen3.6:35b-a3b", 22_600_000_000, tools=True, loaded=True),
+            Model("qwen3.5:9b", 6_600_000_000, tools=True),
+            Model("gpt-oss:20b", 12_000_000_000, tools=True)])
+        for pc in (Machine(32, 8), Machine(16), Machine(64, 24)):
+            with self.subTest(pc=pc):
+                self.assertEqual(local.choose([rt], pc).model.name, "qwen3.5:9b")
+                self.assertEqual(local.suggested(pc).key, "qwen3.5-9b")
+
+    def test_a_smaller_but_weaker_tool_model_does_not_displace_the_light_default(self):
+        rt = Runtime("ollama", running=True, models=[
+            Model("ministral-3:8b", 3_000_000_000, tools=True),
+            Model("qwen3.5:9b", 6_600_000_000, tools=True)])
+        self.assertEqual(local.choose([rt], Machine(16)).model.name, "qwen3.5:9b")
+
     def test_the_memory_for_a_model_the_card_s_and_the_ram_less_what_the_pc_keeps(self):
         self.assertAlmostEqual(DANIEL.budget_gb, 8 + 31.6 * 0.75, places=3)
         self.assertAlmostEqual(Machine(16.0).budget_gb, 10.0)
@@ -208,11 +224,11 @@ class Choice(unittest.TestCase):
             Model("gemma4:26b-a4b-it-qat", 16_000_000_000, tools=True), Model("granite4.2:8b", 5_300_000_000,
                                                                                tools=False)])
         choice = local.choose([ollama], DANIEL)
-        self.assertEqual((choice.model.name, choice.fits, choice.candidate.key), ("qwen3.6:35b-a3b", True,
-                                                                                   "qwen3.6-35b"))
+        self.assertEqual((choice.model.name, choice.fits, choice.candidate.key), ("gemma4:26b-a4b-it-qat", True,
+                                                                                   "gemma4-26b"))
         reason = choice.reason(DANIEL)
-        self.assertIn("qwen3.6:35b-a3b on Ollama: tried with Meridio's tools", reason)
-        self.assertIn("It takes about 27 GB; this PC has about 32 for a model.", reason)
+        self.assertIn("gemma4:26b-a4b-it-qat on Ollama: the best in Italian", reason)
+        self.assertIn("It takes about 19 GB; this PC has about 32 for a model.", reason)
         small = local.choose([ollama], Machine(16.0))           # 10 GB for a model: only the 4B fits
         self.assertEqual((small.model.name, small.fits), ("qwen3.5:4b", True))
 
@@ -233,8 +249,8 @@ class Choice(unittest.TestCase):
         self.assertIsNone(local.match("my-own-model"))
 
     def test_on_a_pc_without_models_the_model_to_download_is_the_best_that_fits(self):
-        self.assertEqual(local.suggested(DANIEL).ollama, "qwen3.6:35b-a3b")    # 27 GB of 32
-        self.assertEqual(local.suggested(Machine(32.0)).ollama, "gemma4:26b-a4b-it-qat")
+        self.assertEqual(local.suggested(DANIEL).ollama, "qwen3.5:9b")    # lightweight default
+        self.assertEqual(local.suggested(Machine(32.0)).ollama, "qwen3.5:9b")
         self.assertEqual(local.suggested(Machine(16.0)).ollama, "qwen3.5:9b")
         self.assertEqual(local.suggested(Machine(8.0)).ollama, "qwen3.5:4b")
         # R07 review: RAM known and too small for any (budget 0, as typed in the guide's question) is not «unknown»:
@@ -245,15 +261,15 @@ class Choice(unittest.TestCase):
 
     def test_the_steps_with_their_commands_for_windows_linux_and_with_ollama_already_there(self):
         c, steps = local.guide(DANIEL, "win32")
-        self.assertEqual(c.key, "qwen3.6-35b")
+        self.assertEqual(c.key, "qwen3.5-9b")
         self.assertEqual([s.command for s in steps],
-                         ["winget install Ollama.Ollama", "ollama pull qwen3.6:35b-a3b", ""])
+                         ["winget install Ollama.Ollama", "ollama pull qwen3.5:9b", ""])
         self.assertIn("ollama.com/download", steps[0].text)
-        self.assertIn("about 24 GB", steps[1].text)
+        self.assertIn("about 7 GB", steps[1].text)
         _c, steps = local.guide(DANIEL, "linux")
         self.assertEqual(steps[0].command, "curl -fsSL https://ollama.com/install.sh | sh")
         _c, steps = local.guide(DANIEL, "win32", have_ollama=True)
-        self.assertEqual(steps[0].command, "ollama pull qwen3.6:35b-a3b")
+        self.assertEqual(steps[0].command, "ollama pull qwen3.5:9b")
 
     def test_the_survey_finds_the_running_one_and_chooses(self):
         server = FakeRuntime(ollama_routes())
@@ -311,6 +327,18 @@ class OllamaOwnApi(unittest.TestCase):
 
     def chats(self, server) -> list[dict]:
         return [body for path, body in server.requests if path == "/api/chat"]
+
+    def test_every_local_request_uses_the_same_resident_options_and_name(self):
+        server = self.serve(chat=[ollama_answer("ok"), ollama_answer("summary")])
+        for model, limit in ((" qwen3.5:9b ", 10), ("qwen3.5:9b", 500)):
+            provider = providers.Ollama(model=model, base_url=server.base, max_tokens=limit, think=False)
+            list(provider.stream("S", [{"role": "user", "content": "question or summary"}], []))
+        a, b = self.chats(server)
+        self.assertEqual(a["model"], b["model"])
+        self.assertEqual(provider.resident_options(), {"num_ctx": 16384})
+        self.assertEqual({k: v for k, v in a["options"].items() if k != "num_predict"},
+                         {k: v for k, v in b["options"].items() if k != "num_predict"})
+        self.assertEqual(a["keep_alive"], b["keep_alive"])
 
     def test_the_context_the_reasoning_off_and_the_tools_go_with_the_question(self):
         server = self.serve(chat=[ollama_answer(calls=[("read_checks", {"min_level": "warn"})]),

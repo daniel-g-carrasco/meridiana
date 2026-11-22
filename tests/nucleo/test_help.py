@@ -8,13 +8,16 @@ import unittest
 
 import _setup
 
-from meridiana import help as helps
-from meridiana import i18n, phases, rules
+from meridiana.app.interface import help as helps
+from meridiana import i18n
+from meridiana.app.interface import phases
+from meridiana.core.rules import rules
 
 SRC = _setup.ROOT / "src" / "meridiana"
 CATALOGUE = _setup.ROOT / "locale" / "it" / "LC_MESSAGES" / "meridiana.mo"
 # the texts the references may come from (the instruction of the task: no new citation of a standard)
-REFERENCES = (SRC / "rules.py").read_text(encoding="utf-8") + (SRC / "checks.py").read_text(encoding="utf-8")
+REFERENCES = "".join((SRC / path).read_text(encoding="utf-8") for path in (
+    "core/rules/profiles/it/rules.py", "core/rules/profiles/it/checks.py", "core/rules/checks.py"))
 # a standard or a law named in a text, with the clause that may follow it
 STANDARD = re.compile(r"\b(CEI|IEC|UNI|EN|DCPREV|DM|DPR|NTC|D\.Lgs\.|Legislative Decree)\s+([0-9][0-9A-Za-z./:-]*)"
                       r"(?:,?\s+(?:sect\.\s+|art\.\s+)?(\d+(?:\.\d+)+))?")
@@ -90,7 +93,8 @@ class Texts(unittest.TestCase):
                 self.assertIsNotNone(helps.get(helps.for_phase(phase.id)))
 
     def test_every_step_of_how_it_is_computed_exists_in_the_computation(self):
-        energy = "".join(p.read_text(encoding="utf-8") for p in (SRC / "energy").glob("*.py"))
+        energy = "".join(p.read_text(encoding="utf-8") for p in [*(SRC / "core" / "energy").glob("*.py"),
+                                                                    SRC / "app" / "pipeline.py"])
         for hid, h in helps.texts().items():
             if not h.pedigree:
                 continue
@@ -120,7 +124,7 @@ class Manual(unittest.TestCase):
 
     def test_the_chapters_are_there_each_with_its_title_and_their_links_lead_somewhere(self):
         folder = helps.manual_dir()
-        self.assertEqual(sorted(p.name for p in folder.glob("*.md")), sorted(helps.CHAPTERS))
+        self.assertEqual(sorted(p.name for p in folder.glob("*.md")), sorted((*helps.CHAPTERS, "glossario.md")))
         link = re.compile(r"\]\(([^)#\s]*)(?:#([^)\s]*))?\)")
         for name in helps.CHAPTERS:
             text = (folder / name).read_text(encoding="utf-8")

@@ -8,8 +8,9 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import model, roof_join, roofs
-from meridiana.energy import system
+from meridiana.core.model import model
+from meridiana.core.geometry import roof_join, roofs
+from meridiana.core.energy import system
 
 
 def rect(x0, y0, x1, y1):
@@ -230,7 +231,7 @@ class Building(unittest.TestCase):
         p = model.Project(name="Prova")
         b = self.house(free_pitches=[pitch(rect(0, 0, 20, 10), 0, 6.0, 0.0)])
         p.buildings.append(b)
-        from meridiana import session
+        from meridiana.app import session
         s = session.ProjectSession(p)
         before = s.energy_key()
         b.roof.free_pitches[0]["z"] = [6.0, 6.0, 9.0, 6.0]
@@ -294,6 +295,7 @@ class Format(unittest.TestCase):
     def test_what_is_new_goes_through_a_save_and_a_bad_file_is_refused(self):
         data = self.old()
         data["version"] = model.FORMAT_VERSION
+        data["regulatory_profile"] = "it"
         roof = data["buildings"][0]["roof"]
         roof.update(joined=True, welds=[[[0, 2], [1, 1]]], detached=[[0, 3]])
         roof["free_pitches"][0]["z"] = [6.0, 6.0, 8.0, 8.0]

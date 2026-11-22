@@ -13,8 +13,8 @@ from pathlib import Path
 import _setup
 from PySide6.QtGui import QColor, QGuiApplication, QPalette
 
-from meridiana.quick.backend import window_frame
-from meridiana.quick.backend.tokens import ThemeTokens
+from meridiana.gui.backend import window_frame
+from meridiana.gui.backend.tokens import ThemeTokens
 
 
 def setUpModule():
@@ -79,7 +79,7 @@ class FrameColoursOnWindows(unittest.TestCase):
             "import sys",
             "from PySide6.QtGui import QColor, QGuiApplication, QWindow",
             "app = QGuiApplication(sys.argv)",
-            "from meridiana.quick.backend import window_frame as f",
+            "from meridiana.gui.backend import window_frame as f",
             "w = QWindow(); w.create()",
             "for ground, text in (('#151515', '#ededed'), ('#f1f1f1', '#1e1e1e')):",
             "    c = {'ground': QColor(ground), 'text': QColor(text), 'quiet': QColor(text)}",

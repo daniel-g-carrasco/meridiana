@@ -9,7 +9,10 @@ import unittest
 import _setup  # noqa: F401
 from _fixtures import tetto_con_lucernario
 
-from meridiana import checks, manual, model, sides
+from meridiana.core.rules import checks
+from meridiana.core.layout import manual
+from meridiana.core.model import model
+from meridiana.core.geometry import sides
 
 setUpModule = _setup.keep_global_state
 

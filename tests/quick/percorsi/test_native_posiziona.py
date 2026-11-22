@@ -19,7 +19,7 @@ JOURNEY = r'''
 import json, tempfile
 from pathlib import Path
 from PySide6.QtCore import QPointF
-from meridiana import model
+from meridiana.core.model import model
 
 seen = {}
 wait_until(lambda: host.plan is not None, 60)
@@ -141,7 +141,7 @@ print(json.dumps(seen, default=str))
 
 
 def _project(folder: Path) -> Path:
-    from meridiana import model
+    from meridiana.core.model import model
     p = model.Project(name='Prova posa IFC')
     p.site = model.Site(lat=45.52, lon=9.04, address='Rho (MI)')
     p.buildings.append(model.Building(id='b1', name='Capannone', footprint=[[0, 0], [40, 0], [40, 20], [0, 20]],

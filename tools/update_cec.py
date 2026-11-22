@@ -6,13 +6,13 @@
   python tools/update_cec.py --dry-run            say what would change and write nothing
 
 The source is https://raw.githubusercontent.com/NREL/SAM/develop/deploy/libraries/CEC%20Modules.csv (BSD-3-Clause,
-the notice is in src/meridiana/catalog/data/LICENSE-NREL-SAM.txt and in ATTRIBUTIONS.md). It has the one-diode
+the notice is in src/meridiana/data/catalog/data/LICENSE-NREL-SAM.txt and in ATTRIBUTIONS.md). It has the one-diode
 parameters the energy model fits, the long and the short side of the module, and a bifacial flag; every row
 carries the version of the list and its date («2026.7.3», «6/23/2026»), which the records keep as `list_version`
 and `list_date` so that a report can say which list a number comes from. It has no cell type and no
-bifaciality factor: the catalogue works those out from the text (catalog.family_of) and says so. The bundled records also store these derived fields for loading.
+bifaciality factor: the catalogue works those out from the text (catalog.family_of) and says so.
 
-The file written is src/meridiana/catalog/data/modules_cec.json.gz, one record for each row, in the order of the
+The file written is src/meridiana/data/catalog/data/modules_cec.json.gz, one record for each row, in the order of the
 list; the old file stays in git. Rows that cannot be read are listed and left out, never mended."""
 
 from __future__ import annotations
@@ -28,15 +28,7 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "src"))
-
-from meridiana.catalog import enrich_module  # noqa: E402
-
-# what the catalogue works out at loading and the file carries already: the classification of 21,000 modules
-# is the slow part of loading (tests/nucleo/test_catalog.py, under 400 ms)
-STORED = ("cell_family", "efficiency_pct", "efficiency_derived")
-
-DATA = ROOT / "src" / "meridiana" / "catalog" / "data"
+DATA = ROOT / "src" / "meridiana" / "data" / "catalog" / "data"
 OUTPUT = DATA / "modules_cec.json.gz"
 LICENCE = DATA / "LICENSE-NREL-SAM.txt"
 URL = "https://raw.githubusercontent.com/NREL/SAM/develop/deploy/libraries/CEC%20Modules.csv"
@@ -105,12 +97,6 @@ def convert(row: dict) -> dict:
     }
 
 
-def with_stored(record: dict) -> dict:
-    """The record with the fields of STORED that catalog.enrich_module works out for it, and no others."""
-    full = enrich_module(dict(record))
-    return {**record, **{key: full[key] for key in STORED if key in full}}
-
-
 def parse(text: str) -> tuple[list[dict], list[tuple[str, str]]]:
     """The records of a «CEC Modules.csv», and the rows left out as (name, why). A name that comes twice is kept
     once, with the figures of its last row, which is what the file in use did (a module already chosen keeps
@@ -126,7 +112,7 @@ def parse(text: str) -> tuple[list[dict], list[tuple[str, str]]]:
             continue
         row = dict(zip(header, values, strict=False))
         try:
-            record = with_stored(convert(row))
+            record = convert(row)
         except ValueError as error:
             left_out.append(((row.get("Name") or "").strip() or "(no name)", str(error)))
             continue

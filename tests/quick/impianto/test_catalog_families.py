@@ -7,10 +7,11 @@ from pathlib import Path
 from PySide6.QtTest import QSignalSpy
 
 from quick.impianto.catalog_fixtures import module, required_values, settle
-from meridiana import catalog
-from meridiana.catalog import compat, schema
+from meridiana.data import catalog
+from meridiana.app import catalog_compat as compat
+from meridiana.data.catalog import schema
 from meridiana.i18n import number
-from meridiana.quick.backend.catalog import CatalogBackend
+from meridiana.gui.backend.catalog import CatalogBackend
 
 
 class Real(unittest.TestCase):
@@ -87,7 +88,7 @@ class Real(unittest.TestCase):
         # R434, Daniel 06/11/2026 (after R458 voce 7): the catalogue opens on what is current and sold for Europe,
         # with «Show all (n)» beside the filters, n the products left out; one click shows every product (2.474
         # inverters, as the Widgets list), «Clear» goes back to the opening filters. Each kind the same.
-        from meridiana.quick.backend import catalog as quick_catalog
+        from meridiana.gui.backend import catalog as quick_catalog
         quick_catalog._REMEMBERED.clear()                   # the filters a test before left in this process
         self.addCleanup(quick_catalog._REMEMBERED.clear)
         for kind in ('inverters', 'modules', 'optimizers'):
@@ -226,7 +227,7 @@ class Window(unittest.TestCase):
             self.assertEqual(sorted(r['pmax'] for r in rows), [420, 425])
 
     def test_a_sheet_fills_the_window_with_page_and_sureness_and_saves_nothing(self):
-        from meridiana.catalog import datasheet
+        from meridiana.data.catalog import datasheet
         with tempfile.TemporaryDirectory() as directory:
             sheet = Path(directory) / 'sheet.txt'
             sheet.write_text("""JinkoLike JK460-470N
@@ -279,7 +280,7 @@ Dimensions 1762x1134x30 mm
 class OptimizerLine(unittest.TestCase):
     def test_every_inverter_with_optimizers_says_which(self):
         from types import SimpleNamespace as NS
-        from meridiana.quick.backend.plant_presenter import optimizer_line
+        from meridiana.gui.backend.plant_presenter import optimizer_line
         choice = NS(optimizer=NS(name='SolarEdge S1400'), per=2, suggested=True)
         self.assertIn('S1400', optimizer_line(NS(optimized=True, choice=choice)))
         self.assertTrue(optimizer_line(NS(optimized=True, choice=None)))
@@ -317,7 +318,7 @@ class Compat(unittest.TestCase):
 class Rules(unittest.TestCase):
     """R423, with cases from the sheets."""
     def huawei(self, optimizer, inverter):
-        from meridiana.catalog import rules
+        from meridiana.data.catalog import rules
         return rules.rule(dict(manufacturer='Huawei', model=optimizer), dict(manufacturer='Huawei', model=inverter))
 
     def test_huawei_merc_on_a_50ktl_is_shorter_than_on_a_40ktl(self):
@@ -332,20 +333,20 @@ class Rules(unittest.TestCase):
         self.assertEqual(self.huawei('SUN2000-600W-PA0', 'SUN2000-20K-MB0').p_string_w, 12000)
 
     def test_what_a_sheet_does_not_say_stays_unknown(self):
-        from meridiana.catalog import rules
+        from meridiana.data.catalog import rules
         self.assertEqual(self.huawei('SUN2000-600W-P', 'SUN2000-20K-MB0').state, rules.UNKNOWN)
         tigo = rules.rule(dict(manufacturer='Tigo', model='TS4-A-O'), dict(manufacturer='SMA', model='STP 20-50'))
         self.assertEqual(tigo.state, rules.UNKNOWN)
         self.assertTrue(tigo.source)
 
     def test_another_makers_inverter_is_refused_by_its_sheets(self):
-        from meridiana.catalog import rules
+        from meridiana.data.catalog import rules
         self.assertEqual(rules.rule(dict(manufacturer='Huawei', model='MERC-1100W-P'), dict(manufacturer='SMA', model='STP 20-50')).state, rules.NO)
         self.assertEqual(rules.rule(dict(manufacturer='Sungrow', model='SP600S'), dict(manufacturer='Sungrow', model='SH10RT-20')).state, rules.NO)
         self.assertEqual(rules.rule(dict(manufacturer='Sungrow', model='SP600S'), dict(manufacturer='Sungrow', model='SH5.0RS')).state, rules.UNKNOWN)
 
     def test_solaredge_tables_as_printed(self):
-        from meridiana.energy import optimizers
+        from meridiana.core.energy import optimizers
         table = optimizers.COM_S
         self.assertEqual(table['S1000']['SE33.3K'], (14, 27, 30, 60, 13500.0, 15750.0, 18500.0, 3))     # DS-000105-IT p. 3
         self.assertEqual(table['S1200']['SE30K'], (15, 29, 30, 60, 17000.0, 19250.0, 23000.0, 2))
@@ -365,7 +366,7 @@ class Rules(unittest.TestCase):
 class Saved(unittest.TestCase):
     def test_a_project_keeps_the_copy_it_was_designed_with(self):
         """A project that names a US inverter or a row of before the classes opens the same: nothing looks it up."""
-        from meridiana import model
+        from meridiana.core.model import model
         project = model.Project(name='Prova')
         record = dict(next(r for r in catalog.load('inverters') if 'US' in (r.get('markets') or [])))
         project.energy = {'inverters': [dict(record=record, count=1, name='')]}

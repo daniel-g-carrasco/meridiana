@@ -7,9 +7,9 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import catalog
-from meridiana.energy import optimizers, plant
-from meridiana.energy.components import ModuleSpec
+from meridiana.data import catalog
+from meridiana.core.energy import optimizers, plant
+from meridiana.core.energy.components import ModuleSpec
 
 
 def module(**k) -> ModuleSpec:
@@ -33,7 +33,7 @@ def rules(opt: str, inv: str):
 
 
 def grid(rows: int, per_row: int, azimuth: float = 0.0, x0: float = 0.0) -> list:
-    from meridiana import layout
+    from meridiana.core.layout import layout
     out = []
     for r in range(rows):
         for s in range(per_row):
@@ -45,7 +45,7 @@ def grid(rows: int, per_row: int, azimuth: float = 0.0, x0: float = 0.0) -> list
 
 def project(model: str, count: int = 1, optimizer: str | None = None, per: int | None = None,
             strings: dict | None = None):
-    from meridiana import model as m
+    from meridiana.core.model import model as m
     p = m.Project(name="Prova")
     entry = {"record": inverter(model), "count": count, "name": ""}
     if optimizer:
@@ -272,7 +272,7 @@ class TheProposal(unittest.TestCase):
 
     def test_a_commercial_roof_on_a_synergy_inverter_is_found_quickly_within_each_unit(self):
         # R267: 100 x 495 W with S1000 on an SE50K exhausted 200,000 steps before; a valid plan exists
-        from meridiana.energy import stringing
+        from meridiana.core.energy import stringing
         rec = catalog.search("modules", "LR7-54HVH-495M", source="curated")[0]
         g = group(grid(9, 12)[:100])
         g.module = ModuleSpec.from_record(rec)
@@ -313,7 +313,7 @@ class TheProposal(unittest.TestCase):
         self.assertTrue(plant._representable(0, set()))
 
     def test_the_s1400_fuse_condition_is_acceptable_and_a_loss_warning_is_not(self):
-        from meridiana.energy import stringing
+        from meridiana.core.energy import stringing
         plan = stringing.StringPlan(n_series=30, strings_per_mppt=[1])
         s = plant.String(1, 1, [("s1", "0:0", (0, 0))], state="check", plan=plan)
         plan.checks = [stringing.Check("opt_fuses", "S1400", True, "fuses", "warn")]
@@ -324,7 +324,7 @@ class TheProposal(unittest.TestCase):
         self.assertFalse(plant.acceptable(s))
 
     def test_the_optimizers_are_proposed_when_none_is_chosen_and_it_is_said(self):
-        from meridiana import checks
+        from meridiana.core.rules import checks
         out = plant.build(project("SE5000H"), groups=[group(grid(2, 10))])
         self.assertTrue(out.units[0].choice.suggested)
         self.assertEqual(out.units[0].choice.optimizer.model, "S440")
@@ -333,7 +333,7 @@ class TheProposal(unittest.TestCase):
         self.assertTrue(any(it.level == "ok" and "DS-000091-IT" in it.source for it in items))
 
     def test_a_string_too_short_by_hand_fails_on_solaredges_table_with_its_source(self):
-        from meridiana import checks
+        from meridiana.core.rules import checks
         keys = [f"s1/{pm.key}" for pm in grid(1, 6)]
         by_hand = {"auto": False, "runs": [{"inverter": 1, "mppt": 1, "modules": keys}]}
         out = plant.build(project("SE5000H", optimizer="S500", strings=by_hand), groups=[group(grid(1, 6))])
@@ -379,21 +379,21 @@ class TheYear(unittest.TestCase):
         cls.meteo = clear_sky_meteo()
 
     def array(self, n=20, placed=None, obstacles=None):
-        from meridiana.energy.simulate import ArraySpec
+        from meridiana.core.energy.simulate import ArraySpec
         a = ArraySpec("s1.0", "Sud", 30.0, 0.0, n, module(), "open")
         if placed is not None:
             a.placed, a.obstacles = placed, obstacles or []
         return a
 
     def optimizers(self, share=1.0, single=1.0, strings=None):
-        from meridiana.energy.pedigree import Source
-        from meridiana.energy.simulate import ArrayOptimizers, Optimizers
+        from meridiana.core.energy.pedigree import Source
+        from meridiana.core.energy.simulate import ArrayOptimizers, Optimizers
         return Optimizers({"s1.0": ArrayOptimizers(share, single, 0.986, 380.0, "SolarEdge S500",
                                                    Source("data", "datasheet of SolarEdge S500", optimizers.RES))},
                           strings or [])
 
     def test_the_optimizers_take_the_mismatch_away_and_convert_with_their_efficiency(self):
-        from meridiana.energy.simulate import simulate
+        from meridiana.core.energy.simulate import simulate
         plain = simulate(self.meteo, [self.array()])
         opt = simulate(self.meteo, [self.array()], optimizers=self.optimizers())
         steps = {c.key: c for c in opt.chain}
@@ -412,7 +412,7 @@ class TheYear(unittest.TestCase):
         self.assertAlmostEqual(next(c for c in two.chain if c.key == "mismatch").change, -1.0, places=6)
 
     def test_a_string_beyond_its_continuous_power_is_cut_at_the_peaks(self):
-        from meridiana.energy.simulate import simulate
+        from meridiana.core.energy.simulate import simulate
         free = simulate(self.meteo, [self.array()], optimizers=self.optimizers(strings=[({"s1.0": 20}, 99000.0)]))
         cut = simulate(self.meteo, [self.array()], optimizers=self.optimizers(strings=[({"s1.0": 20}, 5700.0)]))
         self.assertNotIn("string_limit", [c.key for c in free.chain])
@@ -425,7 +425,7 @@ class TheYear(unittest.TestCase):
     def test_the_dc_wiring_goes_with_the_power_at_the_fixed_voltage(self):
         import numpy as np
 
-        from meridiana.energy.simulate import Losses, simulate
+        from meridiana.core.energy.simulate import Losses, simulate
         opt = self.optimizers()
         a, b = (simulate(self.meteo, [self.array()], losses=Losses(dc_wiring=w), optimizers=opt) for w in (1.5, 0.0))
         wiring = 1.0 - a.hourly.p_dc.to_numpy().sum() / b.hourly.p_dc.to_numpy().sum()
@@ -435,9 +435,9 @@ class TheYear(unittest.TestCase):
         self.assertTrue(np.all(a.hourly.p_dc.to_numpy() <= b.hourly.p_dc.to_numpy() + 1e-9))
 
     def test_the_shade_costs_less_optimizer_by_optimizer_than_string_by_string(self):
-        from meridiana import layout
-        from meridiana.energy import nearshade
-        from meridiana.energy.simulate import simulate
+        from meridiana.core.layout import layout
+        from meridiana.core.energy import nearshade
+        from meridiana.core.energy.simulate import simulate
         roof = [(0.0, 0.0), (14.0, 0.0), (14.0, 8.0), (0.0, 8.0)]
         placed = layout.compute(roof, params=layout.Params(tilt=30.0, pitch_mode="value", pitch=4.0), lat=45.5,
                                 lon=9.0).modules
@@ -455,7 +455,7 @@ class TheYear(unittest.TestCase):
     def test_every_formula_of_the_optimizers_can_be_drawn(self):
         from matplotlib.mathtext import MathTextParser
 
-        from meridiana.energy.simulate import simulate
+        from meridiana.core.energy.simulate import simulate
         parser = MathTextParser("path")
         year = simulate(self.meteo, [self.array()], optimizers=self.optimizers(strings=[({"s1.0": 20}, 5700.0)]))
         out = plant.build(project("SE5000H", optimizer="S440"), groups=[group(grid(2, 12))])
@@ -470,7 +470,7 @@ class TheYear(unittest.TestCase):
     def test_the_optimizers_applied_downstream_give_what_simulate_gives_with_them(self):
         import dataclasses
 
-        from meridiana.energy.simulate import simulate, with_strings
+        from meridiana.core.energy.simulate import simulate, with_strings
         opt = self.optimizers(strings=[({"s1.0": 20}, 5700.0)])
         whole = simulate(self.meteo, [self.array()], optimizers=opt)
         again = with_strings(simulate(self.meteo, [self.array()]), None, opt)
@@ -501,8 +501,10 @@ class ThePipeline(unittest.TestCase):
 
         from _fixtures import clear_sky_meteo, write_cache
 
-        from meridiana import checks, jobs, model
-        from meridiana.energy import pipeline
+        from meridiana.core.rules import checks
+        from meridiana.app import jobs
+        from meridiana.core.model import model
+        from meridiana.app import pipeline
         cache = Path(tempfile.mkdtemp())
         write_cache(clear_sky_meteo(45.5226, 9.03), cache)
         p = model.Project(name="Prova")
@@ -513,7 +515,7 @@ class ThePipeline(unittest.TestCase):
                                           building="b1", params={"tilt": 15.0}, filled=True))
         p.energy["inverters"] = [{"record": inverter("SE6000H"), "count": 1, "name": ""}]
         results, _keys, _laid = jobs.layout_of(p)
-        from meridiana.energy import plant as plant_model
+        from meridiana.core.energy import plant as plant_model
         p.energy["strings"] = plant_model.touched({}, plant_model.propose(p, results))     # «Propose the strings»
         with mock.patch.object(pipeline, "with_network", wraps=pipeline.with_network) as again:
             out = pipeline.compute(p, results, cache, fetch=False)
@@ -532,7 +534,7 @@ class TheAssistant(unittest.TestCase):
     def test_meridio_reads_the_strings_of_optimizers_with_their_limits_and_sources(self):
         import json
 
-        from meridiana.assistant import tools
+        from meridiana.app.assistant import tools
         placed = grid(2, 12)
         by_hand = {"auto": False, "runs": [{"inverter": 1, "mppt": 1, "modules": [f"s1/{pm.key}" for pm in placed]}]}
         out = plant.build(project("SE5000H", optimizer="S440", strings=by_hand),
@@ -564,7 +566,7 @@ class OrientationAndTopology(unittest.TestCase):
         self.assertEqual(out.strings[0].state, "ok")
 
     def test_manual_multifacing_string_warns_but_a_mixed_optimizer_pair_fails(self):
-        from meridiana import checks
+        from meridiana.core.rules import checks
         east, west = group(grid(1, 14, azimuth=-90), "east"), group(grid(1, 14, azimuth=90), "west")
         a = [f"east/{pm.key}" for pm in east.placed]
         b = [f"west/{pm.key}" for pm in west.placed]

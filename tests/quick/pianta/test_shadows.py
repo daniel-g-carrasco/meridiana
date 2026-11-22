@@ -1,7 +1,7 @@
 import unittest
 
-from meridiana import model
-from meridiana.quick.backend.plan_shadows import shadow_paths
+from meridiana.core.model import model
+from meridiana.gui.backend.plan_shadows import shadow_paths
 
 
 class ShadowTest(unittest.TestCase):

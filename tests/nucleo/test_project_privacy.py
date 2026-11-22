@@ -4,7 +4,7 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import model
+from meridiana.core.model import model
 
 
 class NetworkConsent(unittest.TestCase):

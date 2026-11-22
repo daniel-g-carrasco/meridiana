@@ -10,9 +10,10 @@ import _setup
 import numpy as np
 from shapely.geometry import Point, Polygon
 
-from meridiana import jobs, model
-from meridiana.quick.backend.scene import SceneBackend
-from meridiana.session import ProjectSession
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.gui.backend.scene import SceneBackend
+from meridiana.app.session import ProjectSession
 
 
 setUpModule = _setup.keep_global_state

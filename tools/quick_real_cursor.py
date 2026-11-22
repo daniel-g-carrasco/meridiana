@@ -1,6 +1,6 @@
-"""Run one modelling journey on Quick or on Widgets with the real cursor and real keys.
+"""Run one modelling journey on the Quick window with the real cursor and real keys.
 
-    python tools/quick_real_cursor.py <quick|widgets> <journey|probe> <out dir> [--until HH:MM] [--dry]
+    python tools/quick_real_cursor.py quick <journey|probe> <out dir> [--until HH:MM] [--dry]
 
 Safety, none of this may be removed:
 - it stops if the cursor moves without it, and puts the cursor back at the end;
@@ -242,9 +242,9 @@ class RealHand:
 
 
 def start_quick(project_file, work):
-    from meridiana import model
-    from meridiana.quick.app import QuickWindow, create_app
-    from meridiana.quick.sample import recorded_weather
+    from meridiana.core.model import model
+    from meridiana.gui.application import QuickWindow, create_app
+    from meridiana.gui.sample import recorded_weather
     from PySide6.QtCore import Qt, QTimer
     app = create_app()
     project, notice = model.Project.load(project_file)
@@ -259,50 +259,9 @@ def start_quick(project_file, work):
     return app, host, w, int(w.winId()), notice
 
 
-def start_widgets(project_file, work):
-    from unittest import mock
-    from PySide6.QtCore import QLocale, Qt
-    from PySide6.QtWidgets import QApplication, QMessageBox
-    from meridiana import config, i18n, model
-    from meridiana.paths import Paths
-    from meridiana.quick.sample import recorded_weather
-    from meridiana.ui import qt_translations
-    from meridiana.ui.theme import load_fonts
-    from meridiana.ui.window import MainWindow
-    app = QApplication([])
-    app.setQuitOnLastWindowClosed(False)
-    i18n.setup('it')
-    QLocale.setDefault(QLocale('it_IT'))
-    qt_translations.install(app, 'it')
-    load_fonts('plex')
-    paths = Paths.from_env()
-    cfg = config.Config(theme='light', font='plex', accent='indigo', backgrounds='grey', language='it',
-                        background='none', network_tiles=False, network_pvgis=False, network_geocoding=False,
-                        check_updates=False, assistant_animated=False, assistant_voice=False, tour_status='done')
-    project, notice = model.Project.load(project_file)
-    recorded_weather(project, paths.cache)
-    win = MainWindow(paths, cfg)
-    dialogs = []
-
-    def answer(kind):
-        def side_effect(*args, **kwargs):
-            dialogs.append((kind, str(args[1:3])[:300]))
-            return QMessageBox.StandardButton.Yes if kind == 'question' else QMessageBox.StandardButton.Ok
-        return side_effect
-    for kind in ('question', 'information', 'warning', 'critical'):
-        mock.patch.object(QMessageBox, kind, side_effect=answer(kind)).start()
-    win.message_boxes = dialogs
-    win.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
-    win.resize(1600, 960)
-    win.move(60, 40)
-    win.show()
-    win.open_path(project_file)
-    return app, win, win.windowHandle(), int(win.winId()), notice
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('engine', choices=('quick', 'widgets'))
+    parser.add_argument('engine', choices=('quick',))      # the only window left (r30, phase B)
     parser.add_argument('journey')
     parser.add_argument('out', type=Path)
     parser.add_argument('--until', default='13:55')
@@ -317,8 +276,7 @@ def main():
                       QSG_RHI_BACKEND='d3d11', PYTHONUTF8='1')
     from quick.percorsi import modellazione
     project_file = modellazione.base_project(work, args.journey)
-    starter = start_quick if args.engine == 'quick' else start_widgets
-    app, host, window, hwnd, notice = starter(project_file, work)
+    app, host, window, hwnd, notice = start_quick(project_file, work)
     hand = RealHand(app, window, hwnd, args.until)
     log = (args.out/f'{args.journey}-{args.engine}.log').open('w', encoding='utf8')
     code = 0

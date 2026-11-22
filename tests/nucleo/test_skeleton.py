@@ -10,7 +10,7 @@ import _setup
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 
-from meridiana import skeleton
+from meridiana.core.geometry import skeleton
 
 REFERENCE = _setup.ROOT / "docs" / "studio" / "16-prove" / "scheletro-riferimento.json"
 MM = 1e-3

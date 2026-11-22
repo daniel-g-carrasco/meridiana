@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import _setup  # noqa: F401
 from _fixtures import capannone
-from meridiana.assistant import conversation, privacy, providers
+from meridiana.app.assistant import conversation, privacy, providers
 
 
 class ArchiveAliasRoundtripTest(unittest.TestCase):

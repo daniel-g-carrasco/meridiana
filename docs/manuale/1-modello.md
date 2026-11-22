@@ -2,7 +2,11 @@
 
 La Modellazione è il disegno: il sito, gli edifici con le coperture, le pensiline, le esclusioni; i sottocampi e i moduli si posano poi nella fase Impianto. Si disegna in pianta con gli strumenti della barra della fase e si controlla nella vista 3D. Le proprietà dell'oggetto selezionato stanno nel pannello di destra; il riquadro d'aiuto in fondo spiega il campo in cui sei. Passando fra oggetti con gli stessi campi, la pagina e il suo scorrimento restano fermi e cambiano solo i valori.
 
-Gli strumenti hanno una lettera (predefinita, si cambia in File > Impostazioni > Tastiera): Seleziona V, Edificio B, Falda P, Sottocampo S, Esclusione X, Fila L, Sposta M (con Ruota dentro), Misura D, Rettangolo per tre clic R, Squadra gli angoli Q; F3 gli agganci e F8 l'orto, come in AutoCAD. Le lettere non agiscono mentre scrivi in un campo.
+Gli strumenti hanno una lettera (predefinita, si cambia in File > Impostazioni > Tastiera): Seleziona V, Edificio B, Falda P, Posa S, Esclusione X, Fila L, Sposta M (con Ruota dentro), Misura D, Rettangolo per tre clic R, Squadra gli angoli Q; F3 gli agganci e F8 l'orto, come in AutoCAD. Le lettere non agiscono mentre scrivi in un campo.
+
+Il cubo delle viste, in alto a destra nel 3D, resta compatto: un clic su una faccia, uno spigolo o un angolo orienta la vista; un doppio clic adatta il disegno. Il passaggio del puntatore usa il velo neutro comune e lascia leggibili i nomi. I comandi sono nella barretta del 3D, in quest'ordine: Vai alla vista Home (casa), Proiezione parallela (cubo), Adatta al disegno (cornici), Imposta questa vista come Home (puntina), poi i due zoom. La proiezione parallela resta premuta quando è attiva. Home e F restano disponibili nella vista e compaiono nei suggerimenti. Se manca spazio accanto al cubo, la barretta scende sotto; se supera la larghezza della vista, scorre in orizzontale come la barra di fase.
+
+Le linee del disegno e delle misure hanno un tratto sottile, con lo stesso alone leggero su fondo chiaro e scuro, e punti piccoli. Le pillole delle lunghezze seguono la linea con testo di peso normale, sempre leggibile senza capovolgere la testa. Nella vista 3D i solidi coprono le misure e il tratto in corso: una misura nascosta del tutto perde anche la sua pillola; se resta visibile una parte abbastanza lunga, la pillola si appoggia a quella parte.
 
 ## Il sito
 
@@ -78,7 +82,7 @@ I tre valori sono quelli della posa (`layout.py`, `fire_edge`, `fire_group`, `fi
 
 ## Il sottocampo
 
-Il sottocampo è l'area disegnata per i moduli, su una falda o a terra. Meridiana posa i moduli al suo interno con il montaggio, le distanze e le regole di prevenzione incendi dell'edificio su cui sta. «Posa i moduli» avvia la posa; sotto i pulsanti compaiono i moduli posati con la potenza Po,cc, l'azimut e l'inclinazione, per le file inclinate il passo, la distanza libera e l'angolo limite, e i gruppi di prevenzione incendi. «Togli i moduli» li toglie e lascia il contorno.
+Il sottocampo è l'area disegnata per i moduli, su una falda o a terra. Con **Posa** (S) il sottocampo nasce già con i suoi moduli, il contorno stretto su di loro. Con **Area con posa automatica** (nel menu di Posa, o col clic destro sul tetto) si disegna un'area vuota: **Riempi** la riempie con il montaggio, le distanze e le regole di prevenzione incendi dell'edificio su cui sta. Su un sottocampo già pieno Riempi è spento e dice perché. Sotto i pulsanti compaiono i moduli posati con la potenza Po,cc, l'azimut e l'inclinazione, per le file inclinate il passo, la distanza libera e l'angolo limite, e i gruppi di prevenzione incendi. **Svuota** li toglie e lascia il contorno.
 
 ### Le file a mano
 

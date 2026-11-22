@@ -8,6 +8,214 @@ software centres show.
 
 ## [Unreleased]
 
+### Added
+- Optional gesture traces include the display refresh rate and the 3D camera. Camera snapshots stay on the GUI
+  thread; the render thread records timing data without reading QML properties.
+- Meridiana has its own icon: a blue half disc, a red gnomon standing on it and a small yellow sun, on the
+  ivory square of the family; a drawing of its own for 16-24 pixels on Windows.
+
+- Full English manual alongside the Italian edition, using the interface's command names. Meridio reads the
+  program's language with Italian fallback for missing sections. Both editions ship with Windows and Flatpak;
+  tests keep their structure, anchors, command explanations and interface terminology aligned.
+- Full screen: View > Full screen, F11 by default (changeable in Settings > Keyboard), puts the window over the whole
+  screen and F11 again takes it back as it was, maximized or at its place and size; the menu shows it on. Esc does
+  not leave it, and a start is never full screen.
+- Project-specific regulatory profiles, saved with an explicit timezone in project format 31. Existing projects
+  retain the Italian profile and Europe/Rome timezone.
+- An obstacle can stand above the roof or the ground: «Base height» in its properties (project format 32), for a
+  duct on supports or a pipe rack. It casts its shadow from its base to its top (the sun passes under it), the 3D
+  view, the IFC and the DXF show it there, the plan draws its outline dashed; the modules stay out of its outline as
+  before. Projects without one open, compute and save as they did.
+- An imported model's node in the Project tree can be renamed like a building (menu, F2, the Name field of its
+  properties); the name is saved in the project (format 33) and used wherever the model is named. Inside the node
+  only the bodies with a sub-field of yours or with room for at least 7 modules of the project are listed; the
+  others are in «Other bodies».
+- «Fill all» on the Checks row that stands for several sub-fields without modules: one change, one undo step.
+- A minimal generic IEC calculation scope for declared equipment, manual strings, consumption and prices.
+  Reports and assistance state that local obligations and regulatory conformity are not assessed; national
+  incentives and automatic electrical sizing are unavailable in this scope.
+- A new sign of North, the same in the plan, the 3D view and the report: a two-tone needle, its North half full. In
+  the plan it is smaller than the old disc and says nothing while North is up; turned, the degrees stand under it on
+  their own ground and a click brings North up again. The 3D view shows it under the view cube, turned with the
+  camera; a click looks North. The report prints it 12 mm tall in black, with the «N» over its tip.
+
+### Fixed
+
+- Zooming the plan no longer loses resolution: the drawing under the fingers is drawn again as the zoom
+  proceeds, instead of one picture stretched up to four times. Deep zooms on plants of thousands of modules
+  have far fewer stalls; dashed sub-field outlines are real dashes near the modules, not a ragged line that
+  took seconds to build.
+- A pause while zooming the plan in and out no longer stops the window for half a second: the names of the
+  strings keep their pills, and the strings' drawing for a new scale is prepared in the background and kept
+  for the scales already seen, within the memory setting (Settings > Performance).
+- Zooming near the modules of a large plant, the plan draws only the part in view, and its signals no longer
+  lay the names of the strings out again when nothing changed: the longest stops while zooming in and out
+  are about half as long.
+- Zooming the plan no longer rebuilds the drawing of the strings at each change of scale: lines, fills, dots
+  and names stay as they are, and only the arrowheads and the numbers follow the zoom. With the wheel, on a
+  plant of 2000 modules, the stops while zooming in and out near the modules are almost gone.
+- The window answers more readily while the program computes in the background: the keys of the text fields
+  are now watched on the field being edited, not on every event of the program.
+- The plan shows what can be read at each zoom: from far the modules lose their outlines and are drawn a row
+  at a time, the colours of the strings fade out, the strings' lines come from the scale where they can be
+  followed and a dot on every module only near the modules. Zooming across a plant of ten thousand modules
+  is about twice as smooth.
+- From far, the strings' names give way to one label for each inverter, in the middle of its strings: how many
+  strings it has, or how many are to check, and their state.
+- The corners and the side measures of what is selected show only while it is large enough on screen to read
+  and to take them: no more heap of points and labels over a building of a few pixels.
+- Il cambio di fase dissolve soltanto i contenuti: schede, bordi e fondo della barra restano in vista.
+  Pianta, 3D e albero condivisi conservano il loro stato; i popup della fase uscente si chiudono.
+  Con movimento ridotto il cambio è immediato. Il velo di File e Impostazioni resta invariato.
+
+- A check's mark on the plan or in the 3D view shows the hand under the pointer and says the words of its checks in a
+  tooltip; a click selects what it marks and shows its checks. In the 3D view the marks took no pointer at all.
+- A split button of the bar with its tool on («Measure», «Building», «Pitch») is lit whole, no longer its first half
+  alone, in two tones: the tool's half pressed, the arrow's half a step less, the change of tone the divider. Under
+  the pointer the tool's half goes darker and the arrow's half rises over the tool's; with its menu open, more.
+- Meridio is there over File and the Settings too: the status bar's «Meridio», «Ask Meridio» in a help bubble and
+  Meridio taking you to a setting now open his conversation there (they did nothing before); he lights the setting
+  he takes you to, says which page you are on and has questions ready for File and the Settings. Docked, he floats
+  while File is open. A page fading in no longer makes him blink.
+- While Meridio works on an answer, a short line in the place of the answer says what he is doing («Thinking…»,
+  «Reading the checks…»), with a soft glint running across it; the first words take its place without moving the
+  page. It replaces the three dots of the status line, which stepped and stalled.
+- Meridio's answers no longer carry his name over each (27 px a one-line answer), nor do your messages carry «You»
+  (27 px each); screen readers still say who speaks.
+- Meridio's field no longer shows its scroll bar when its text fits: with some fonts and text sizes a written
+  line is a pixel taller than the font's metrics say, and the field thought it had something to scroll.
+- Meridio is a little larger (50 px, was 46) and the white border of his sticker look a little wider (3.0 px, was
+  2.6). His size has one source, which the window and his drawing read.
+- In a narrow window the column of the pages of File and of the Settings gives Meridio his room on its right, as
+  long as it stays a reading column wide (440 px); narrower, he may stand over its edge.
+- Meridio answers in the program's language: with the program in English nothing of what he is told is Italian but
+  the quotations (the manual, the laws), which are marked as such with the language to answer in, and the rule is
+  said again at the end of his instructions and with each question. His voice reads a text in its own language
+  (Italian with the Italian voice, English with the English one), whatever the program's.
+- Over File and the Settings Meridio stands on the free side of the page, right of its column, instead of over its
+  words; back in the project he is where he was, and docked he is the panels' tab again. The «–» of his bubble only
+  hides him: with Meridio low on the right of the window it could be taken by the bubble's resize grip and do
+  nothing.
+- Meridio's bubble: while its corner is dragged, its words, buttons and field follow the new size at every point,
+  not only at the release; only the messages in view are laid out during the gesture, the others at the release. The
+  corner's grip no longer keeps its cursor and its clicks over the whole bubble after a resize.
+- The status bar's «Meridio» (and Ctrl+L) always brings Meridio back in view, inside the window and over the rest,
+  also when the Settings had turned him off. Docked with his conversation open, hiding the right side (or every card)
+  no longer leaves him nowhere: he floats until his side comes back.
+- Meridio's bubble: no more «Binding loop» warnings in the log while the guided tour moves him.
+- Plan and 3D view: the bars over a view stay over the drawing. On the plan the strings' names and discs passed
+  over the pointer's coordinates, and the side highlighted from the properties over every bar; in the 3D view the
+  checks' marks passed over the view cube and the tools. What stands over what is now one scale of the theme.
+- Windows (dialogs): a window taller than the room left by the main window no longer runs out of its frame. Its
+  content scrolls inside it, fading at the edges, while its title and its buttons stay where they are, at every size
+  of the main window. The windows of File (Import an IFC model, New project, Site, the models, Shortcuts, Update,
+  Report a problem, About) are now the same window as all the others, with their title and buttons in the same
+  places.
+- Windows (dialogs) can be moved by dragging their title. They stop at the edges of the main window and open again
+  in the middle.
+- While a window is open the title bar of the main window is shaded too, as the rest of the window, on Windows 11 and
+  on Linux under Wayland where the program colours the bar itself. Windows 10 and the title bars drawn by the system
+  (X11, server-side decorations) stay as they are.
+- Measure: a second measure no longer starts from the first one. After a measure the dashed guide still left from
+  its first point, followed the pointer and pulled the next click on to it, and that click showed nothing at all.
+  Now the measure made stays until the next click, which starts a new one exactly where it is given (corners,
+  midpoints and edges still snap), and the points of a measure are marked. Shift held between two measures no
+  longer moves the start of the second.
+- Every page of File and of the Settings stops at the same width, 760 px after its margin, as the Settings already
+  did: on a wide window the recent projects, the tiles and the pages of New project and Clients and jobs no longer
+  stretch across the whole window.
+- What scrolls in a panel, a page or a list fades out right up to the edge of its box from the first step of the
+  wheel: a line cut by the edge stood bare until the content had moved by the height of the fade, and pages stopped
+  their text 6 px under a section's heading, leaving a sharp cut there. The project tree and the checks use the same
+  fade as everything else.
+- Arrows have two meanings, each drawn one way everywhere: a full grey arrow where a value is chosen (drop-down
+  lists, buttons with a menu, submenus, the steps of a number, the order of a table column), drawn on whole pixels so
+  it is sharp at every display scale (the arrow of drop-down lists was blurred), and the open arrow of the project
+  tree, with its line, where a section or a group opens and closes (the checks, the groups of the panels, the
+  catalogue, the trees and Meridio had thinner ones).
+- The text of every input box stands in the middle of the box at every text size: the hint of an empty box (the
+  address in New project, the search in Clients and jobs) sat higher than the text of a filled one, the unit of a
+  number was not on the number's line, and numbers and drop-down lists started their text 2 px before text boxes.
+- IFC import: the glazing of a shed or a lantern modelled as a sloping curtain wall becomes part of the roof, as a
+  glazed roof already did, so the shed casts its shadow as one volume. Its mullions are no longer obstacles: each
+  one stood as a wall from the roof to its top (up to 4 m for a mullion of 5 cm), taking a strip of modules and
+  casting the shadow of a wall. Upright curtain walls, chimneys and parapets on a roof stay obstacles. A project
+  imported before keeps its obstacles until the model is imported again.
+- IFC import: a window or a wall in the facade of a taller body, above a lower roof in front of it, is no longer an
+  obstacle of that lower roof when the taller body's roof stops short of its facade (three windows of one model
+  stood as walls of 5.6 m); the taller body casts that shadow. Reimport the model to apply it.
+- An IFC reading that runs past its three minutes stops at once and says what to export instead, without a second
+  reading of the simple shapes that could not end either and only made the wait longer; the second reading stays
+  after a crash of the reader. The model's 3D geometry is kept in the cache of the session's profile, like the other
+  caches.
+- Reading a large IFC model is about twice as fast (one model of 91 MB: from 120-170 s to 70-95 s), so it no
+  longer runs past the three minutes allowed and ends with «the reading took more than 60 s and was stopped» at the
+  first import; the window stays freer while it reads, an edge dragged just after opening such a project follows
+  the pointer, and a crash of the program itself now leaves its trace in `fatal.log` next to the log.
+- An imported IFC model's true geometry in the 3D view has its openings and its cuts: walls were drawn whole across
+  their windows and doors, walls under a sloping or saw-tooth roof as full rectangles instead of following it, and
+  steel members past the cut at their ends (on one model met, the walls beside the inclined glazing of a saw-tooth
+  roof; on another, some 250 walls and members, 88 of them sticking out by up to 21 m). Cuts by half spaces, plain
+  or bounded by an outline, and openings of any extruded or convex shape are made; the few cut by other solids are
+  drawn as before. A model imported before keeps its old drawing until it is imported again.
+- With an imported IFC model shown in the 3D view, the placement planes the import offers on its roofs are no longer
+  drawn over the model's own roof, where the two flickered in jagged stripes; the planes stay selectable and their
+  modules are drawn. Placement planes the designer adds are drawn as before.
+- With an imported IFC model shown in the 3D view, the obstacles read from it are no longer drawn as upright prisms
+  over the model: a sloping mullion of a saw-tooth glazing showed as a full wall several metres high. The obstacles
+  stay in the layout and the calculations and remain selectable; obstacles the designer adds are drawn as before.
+
+- Installing from source asks for Shapely 2.1 or later (it accepted 2.0, with which reading an IFC model stopped on
+  a missing function); the Windows and Flatpak recipes ask for the same.
+- An IFC roof whose planes come as many faces, in a model placed in national grid coordinates (millions of metres
+  from the file's origin), comes in as its planes again: each triangle stood alone, so the roof showed lines fanning
+  out from one corner in plan and in the import's preview, the narrow ones were left out, and a sub-field on one
+  of them laid few modules or none (on the model met: the main roof's 158 pieces are now 127, its largest plane one
+  pitch of 756 m2 with 204 modules where its slivers laid 0 to 71).
+- Placing a large IFC model holds the window for less: the 3D view of a large project is made in the background
+  after a change (the status bar says «Drawing the 3D view…» past a moment, the view before stays until then), the
+  model's true geometry is read while it is being placed rather than after the click, and the model laid is selected
+  once instead of twice. On the model met the longest wait after the click went from about 2 s to about 1.2 s.
+- A building imported with a great many hand-drawn pitches or sides (158 pitches on 191 sides in the case met) no
+  longer freezes the window a few seconds after the project opens, nor when it is chosen: beyond 12 pitches or 24 sides
+  Properties says how many there are instead of listing them one by one.
+- An imported IFC model's true geometry is drawn on its buildings in the 3D view: it was drawn about the scene's
+  origin (26.5 m off and 8.1 m low on a real model), and its zero is now the ground floor in the model's own heights,
+  not the storeys' Elevation attribute (which would have lifted it 84 m once placed). The import says the zero it
+  took. Projects imported before open right without a new import; bodies made of the model's solids need one.
+- An imported IFC model's true geometry no longer vanishes from the 3D view after the first change (an obstacle's
+  height, a building moved, the modules laid): its pieces stay for as long as the same model is shown.
+- An imported IFC model's true geometry no longer shows surfaces that are not in the file: faces shaped as an L or
+  with a courtyard are closed inside their outline, holes (window frames, openings in a face) stay open, and an arc
+  of a profile stays an arc instead of becoming its whole circle (a road's curve had become a disc 5.5 km wide). A
+  model imported before keeps its old geometry until it is imported again.
+- An IFC model's terrain (a toposolid, a C-TOPO layer, a «Terreno» material) is recognised: it no longer becomes an
+  obstacle «tree» over the whole lawn, nor a body when the model's solids are taken, nor a shadow, and it is left out
+  of the 3D and of its framing; the import offers to draw it in the 3D, off at first. Projects imported before are
+  unchanged.
+- An obstacle read from an IFC model has its element's plan: a wall in U or a railing around a roof keeps the
+  modules out of itself only, instead of the whole convex area it encloses (a ring is cut in two pieces), and the
+  windows and panels of a higher body's facade are no longer «poles» about 11 m tall on the lower roof beside it.
+- On the plan the strings' names and discs no longer pass over the view bar, the compass, the scale and the notices;
+  in a string's name the coloured dot stands in the centre of the round end, as the state's disc at the other end.
+- On the plan the lines of the strings are no longer cut by the outline of a chosen sub-field: the outlines of what is
+  chosen or under the pointer lie over the strings' fills and under their lines.
+
+### Changed
+- Meridio has smaller symmetric side flaps and rounder tips, and always uses the sticker appearance with a white
+  border, including the status-bar icon. The drawing selector is removed from Settings; existing profiles migrate
+  automatically.
+
+- Meridio's field takes a longer message on many lines: Shift+Return breaks the line, Return sends. It grows by whole
+  lines up to six, never past a third of the conversation, then its text scrolls inside it; after the send it is one
+  line again. The wheel over it scrolls its text when it has some to scroll, else the conversation.
+- Meridio's ready questions are gone (the rows under the conversation, their button and the keys 1, 2, 3): the
+  conversation takes their room.
+- The Project tree lists the sub-fields and the exclusions under their building, with the sub-fields and kWp of each
+  building; buildings and groups close and open (arrow, click, Right and Left keys) and are remembered for each project
+  in the user's settings; a selection made on the plan or in the 3D view opens its groups; names come in their natural
+  order («Lastra 2» before «Lastra 10»). A project of 2 000 sub-fields shows the rows of its buildings only.
+
 ### Icon, 2026-11-17
 
 - Meridiana has its own icon: on the square canvas shared by the apps of the same family, a blue half disc, a red gnomon
@@ -17,7 +225,7 @@ software centres show.
 
 ## [0.2.1] - 2026-11-09
 
-### Catalogue, 2026-11-09 (r29)
+### Catalogue, 2026-11-09
 
 - Three products added from their official datasheets: the Sungrow SG150CX (V7) and SG15RT-P2 (V2) inverters and the
   Eurener MEPV NEXA DG bifacial glass-glass module, with its 480, 490 and 500 W classes (Italian sheet itagcg, 2026-06).
@@ -26,7 +234,7 @@ software centres show.
 
 The first release of Meridiana: everything below this line, with the Qt Quick window as the program's own.
 
-### The Windows package of the Qt Quick window, 2026-11-09 (r28)
+### The Windows package of the Qt Quick window, 2026-11-09
 
 - The Windows installer opens the Qt Quick window, with its QML, Quick 3D, the 3D props, Meridio and every module of
   the program; the window's workers (the computation, the tasks, the report) run as `Meridiana.exe -m ...`.

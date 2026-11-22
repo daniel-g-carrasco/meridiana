@@ -7,7 +7,7 @@ from datetime import date, datetime
 
 import _setup
 
-from meridiana import geo, sun
+from meridiana.core.geometry import geo, sun
 
 REFERENCE = json.loads(_setup.fixture_text("sun_reference.json"))["rows"]
 

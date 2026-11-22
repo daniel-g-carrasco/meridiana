@@ -9,7 +9,9 @@ from pathlib import Path
 import numpy as np
 
 import _setup
-from meridiana import canopies, mesh, model, move, session
+from meridiana.core.model import canopies, model, move
+from meridiana.core.geometry import mesh
+from meridiana.app import session
 
 
 def corners_z(b, ring):

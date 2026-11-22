@@ -31,7 +31,7 @@ def months_since(text: str, today: dt.date) -> int | None:
 
 
 def old_rows(months: int, today: dt.date) -> list[str]:
-    from meridiana import catalog
+    from meridiana.data import catalog
     out = []
     for kind in catalog.KINDS:
         for rec in catalog.load(kind):
@@ -48,7 +48,7 @@ def old_rows(months: int, today: dt.date) -> list[str]:
 
 
 def rule_problems() -> list[str]:
-    from meridiana import catalog
+    from meridiana.data import catalog
     import re
     out = []
     for rule in catalog.lifecycle_rules():
@@ -59,7 +59,7 @@ def rule_problems() -> list[str]:
 
 
 def source_problems() -> list[str]:
-    from meridiana import catalog
+    from meridiana.data import catalog
     out = []
     addresses = sorted({r["url"] for r in catalog.lifecycle_rules()} | {
         rec["datasheet_url"] for kind in catalog.KINDS for rec in catalog.load(kind)
@@ -79,7 +79,7 @@ def source_problems() -> list[str]:
 def ladders(ratio: float) -> tuple[dict, list[str]]:
     """The AC powers (kW) of each maker's inverters for Europe, by phases, and the jumps above `ratio` times the size before
     them; below 1 kW and above 125 kW a jump is not looked at."""
-    from meridiana import catalog
+    from meridiana.data import catalog
     powers: dict = {}
     for rec in catalog.load("inverters"):
         if rec.get("source") != "curated" or not set(rec.get("markets") or []) & {"EU", "IT", "global"}:
@@ -98,7 +98,7 @@ def ladders(ratio: float) -> tuple[dict, list[str]]:
 
 
 def without_state(preferred: dict) -> dict:
-    from meridiana import catalog
+    from meridiana.data import catalog
     out = {}
     for kind, makers in preferred.items():
         for maker in makers:
@@ -115,7 +115,7 @@ def main(argv=None) -> int:
     parser.add_argument("--online", action="store_true", help="also ask whether the addresses still answer")
     parser.add_argument("--json", dest="as_json", action="store_true")
     args = parser.parse_args(argv)
-    from meridiana import catalog
+    from meridiana.data import catalog
     preferred = json.loads((catalog.DATA / "preferred_makers.json").read_text(encoding="utf-8"))["kinds"]
     today = dt.date.today()
     ladder, jumps = ladders(args.jump)

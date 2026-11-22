@@ -6,6 +6,11 @@ own background (Theme.colors.view) inside a card of another colour, with a paddi
 list. The veils are measured here on a copy of that structure: they take the colour of the ground they lie on, they
 cover only the edges (the list's top and bottom band, the padding above and below it included, never the border or
 the bar), and they come in with the scrolling, without a jump.
+
+R624 (Daniel 15/11/2026: «la sfumatura deve essere una trasparenza gradiente del contenuto», «mantenerla ben
+centralizzata») took the veils away: the soft ends are the content's own transparency (Controls/EdgeFades.qml, a
+shader), drawn and judged in quick.controlli.test_dissolvenza_r624. What stays true here, with Qt's software renderer
+(offscreen, where no shader is drawn): the bar paints no band of colour over the edges any more, the content is whole.
 """
 import os
 import unittest
@@ -14,7 +19,7 @@ import _setup
 from PySide6.QtCore import QUrl
 from PySide6.QtQuick import QQuickView
 
-from meridiana.quick.backend.controls import install_controls
+from meridiana.gui.backend.controls import install_controls
 from quick.gestures import pump
 
 if os.environ.get('QT_QPA_PLATFORM') == 'offscreen':
@@ -82,22 +87,20 @@ class ConversationVeils(unittest.TestCase):
         dpr = image.devicePixelRatio() or 1
         return lambda x, yy: image.pixelColor(int(x * dpr), int(yy * dpr))
 
-    def test_veils_take_the_lists_ground_cover_the_padding_and_come_in_without_a_jump(self):
-        # scrolled well inside: the content (dark) is veiled to the list's white at the very edge, padding included
+    def test_no_veil_is_painted_over_the_edges_r624(self):
+        from PySide6.QtQuick import QSGRendererInterface
+        if self.view.rendererInterface().graphicsApi() != QSGRendererInterface.GraphicsApi.Software:
+            self.skipTest("a graphics API draws the content's fade (EdgeFades): quick.controlli.test_dissolvenza_r624")
         pixel = self.at(200)
         x = 20 + 7 + 100                                      # in the list, clear of the bar
-        for y in (20 + 2, 20 + 7, 260 - 20 - 3, 260 - 20 - 7):
-            self.assertGreater(pixel(x, y).lightness(), 235, f'the edge at {y} is the list\'s ground, not the content')
-        # the veil's colour is the white of the list, not the card's: no tinted band
-        tint = pixel(x, 20 + 7 + 2)
-        self.assertLess(abs(tint.red() - tint.blue()), 6, tint.name())
-        # the middle of the list is not veiled
+        # the content (dark) reaches the list's edge as it is: no band of the list's ground, nor of the card's
+        for y in (20 + 7 + 2, 260 - 20 - 7 - 3):
+            self.assertLess(pixel(x, y).lightness(), 60, f'the edge at {y} is the content, not a veil')
         self.assertLess(pixel(x, 130).lightness(), 60)
-        # one pixel of scrolling: the veil comes in by as much, not at once
+        # one pixel of scrolling changes nothing at the edge
         before = self.at(0)(x, 20 + 7 + 3).lightness()
         after = self.at(1)(x, 20 + 7 + 3).lightness()
         self.assertLess(abs(after - before), 60, (before, after))
-
 
 if __name__ == '__main__':
     unittest.main()

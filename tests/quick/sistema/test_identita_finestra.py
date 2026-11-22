@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 
 PROBE = """
-from meridiana.quick import app
+from meridiana.gui import application as app
 qt = app.create_app()
 print(qt.desktopFileName())
 print(qt.applicationName())

@@ -7,7 +7,8 @@ from pathlib import Path
 import numpy as np
 import _setup  # noqa: F401
 from _fixtures import RHO
-from meridiana import ifc_export, ifc_import, ifc_read, model
+from meridiana.app.exchange import ifc_export, ifc_import, ifc_read
+from meridiana.core.model import model
 
 
 def fixture(path, kind='tessellation', unit='m', mapped=False):

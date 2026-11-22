@@ -9,8 +9,9 @@ import unittest
 
 from PySide6.QtCore import QCoreApplication
 
-from meridiana import ifc_import, ifc_place, model
-from meridiana.quick.backend.plan import PlanController
+from meridiana.app.exchange import ifc_import, ifc_place
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController
 
 APP = None
 MPP = 0.05
@@ -95,7 +96,7 @@ class PlacePlan(unittest.TestCase):
 
     def test_on_the_shed_the_question_and_its_four_answers(self):
         self.c.pointer(20.0, 10.0, 1, MPP)
-        from meridiana import view_colours
+        from meridiana.app.interface import view_colours
         self.assertEqual(self.ghost()[1]['stroke'], view_colours.PHOTO['sweep_remove'])      # red over the shed
         self.c.pointer(80.0, 40.0, 1, MPP)
         self.assertEqual(self.ghost()[1]['stroke'], view_colours.PHOTO['sel'])

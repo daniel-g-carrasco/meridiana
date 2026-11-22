@@ -1,0 +1,18 @@
+{
+  "profile_id": "generic",
+  "revision": 1,
+  "timezone": "UTC",
+  "bands": [
+    "ALL"
+  ],
+  "holidays": [],
+  "no_data_kwh": 0.0,
+  "uniform_annual_kwh": 8760.0,
+  "uniform_hourly_kwh": 1.0,
+  "purchase_price": 0.2,
+  "sale_price": 0.1,
+  "saving_first_year": 876.0,
+  "incentive_first_year": 0.0,
+  "deduction_first_year": 0.0,
+  "conformity_assessed": false
+}

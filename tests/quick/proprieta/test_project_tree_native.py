@@ -1,23 +1,22 @@
-"""Native D3D11 tree gestures and Widgets/Quick tree photos (R389, R30, R136)."""
+"""Native D3D11 tree gestures and tree photos (R389, R30, R136). Once beside the Widgets' tree; only the Quick is
+left (r30, phase B)."""
 import copy
 import os
-from pathlib import Path
-import tempfile
 import unittest
 
 import _setup
 from _fixtures import capannone_rho
 from PySide6.QtCore import QObject, QPoint, QUrl, Qt
-from PySide6.QtGui import QImage, QPainter
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 
-from meridiana import config, i18n
-from meridiana.paths import Paths
-from meridiana.quick.backend.controls import install_controls
-from meridiana.quick.backend.project_tree import ProjectTreeBackend
-from meridiana.session import ProjectSession
-from quick.parity.realwindow import FrameRecorder, native_app
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.backend.project_tree import ProjectTreeBackend
+from meridiana.app.session import ProjectSession
+from quick.aiuti.realwindow import FrameRecorder, native_app
 
 
 @unittest.skipUnless(os.environ.get('MERIDIANA_QUICK_NATIVE') == '1', 'Native GPU evidence is opt-in')
@@ -29,15 +28,10 @@ class ProjectTreeNativeTest(unittest.TestCase):
 
     def setUp(self):
         i18n.setup('it')
-        temp = tempfile.TemporaryDirectory()
-        self.addCleanup(temp.cleanup)
-        folder = Path(temp.name)
-        paths = Paths(**{k: folder / k for k in ('config', 'state', 'data', 'cache')})
-        cfg = config.Config(theme='light', accent='indigo', backgrounds='grey', font='plex', background='none')
-        self.widgets = _setup.window(self, capannone_rho(), paths=paths, cfg=cfg)
-        self.widgets.tree.setFixedWidth(320)
-        self.backend = ProjectTreeBackend(ProjectSession(copy.deepcopy(self.widgets.project)))
-        self.backend.set_checks(self.widgets.checks_page.items)
+        project = model.Project.from_json(copy.deepcopy(capannone_rho().to_json()))
+        self.backend = ProjectTreeBackend(ProjectSession(project))
+        results, keys, _laid = jobs.layout_of(project)
+        self.backend.session.layout_done(self.backend.session.generation, results, keys)
         self.addCleanup(self.backend.close)
         self.engine = QQmlApplicationEngine()
         self.theme = install_controls(self.engine)
@@ -79,7 +73,7 @@ Window {
         QTest.mouseClick(self.window, button, Qt.NoModifier, QPoint(round(point.x()), round(point.y())))
         self.app.processEvents()
 
-    def test_native_click_keyboard_context_rename_marks_and_photos(self):
+    def test_native_click_keyboard_context_rename_and_photos(self):
         self.assertFalse(self.warnings, self.warnings)
         self.click(self.row('building', 'b1'))
         self.assertEqual(self.backend.session.selection, ('building', 'b1'))
@@ -100,44 +94,14 @@ Window {
         self.assertEqual(self.backend.session.project.buildings[0].name, 'Capannone nuovo')
         QTest.keyClick(self.window, Qt.Key_Z, Qt.ControlModifier)
         self.assertEqual(self.backend.session.project.buildings[0].name, 'Capannone')
-        marks = []
-        self.backend.checksRequested.connect(lambda *args: marks.append(args))
-        mark = self.visual('tree-mark-site-')
-        if mark.property('visible'):
-            from meridiana.ui import status_pill
-            from meridiana.ui.design import Text, text_font
-            count = next(row['markCount'] for row in self.backend.rows if row['kind'] == 'site')
-            font = text_font(Text.LABEL, self.widgets.tree.font())
-            self.assertEqual(mark.width(), status_pill.size_hint(str(count), font, 24).width())
-            self.click(mark)
-            self.assertEqual(marks[-1][:2], ('site', ''))
+        self.assertIsNone(self.visual('tree-mark-site-'))           # R604: no marks of the checks in the tree
         self.backend.select('subfield', 's1')
-        self.widgets._select('subfield', 's1')
         QTest.mouseMove(self.window, QPoint(900, 700))
-        import json
-        geometry = []
-        root_item = self.widgets.tree.topLevelItem(0)
-        stack = [root_item]
-        while stack:
-            item = stack.pop(0)
-            kind, oid = item.data(0, Qt.UserRole)
-            rect = self.widgets.tree.visualItemRect(item)
-            quick_row = self.row(kind, oid)
-            geometry.append(dict(kind=kind, oid=oid, widgets=[rect.y(), rect.height()],
-                                 quick=[quick_row.y(), quick_row.height()]))
-            self.assertLessEqual(abs(rect.y() - quick_row.y()), 1, (kind, oid, geometry[-1]))
-            self.assertLessEqual(abs(rect.height() - quick_row.height()), 1, (kind, oid, geometry[-1]))
-            stack[0:0] = [item.child(i) for i in range(item.childCount())]
         out = _setup.ROOT / 'build' / 'quick-foto' / 'proprieta'
         out.mkdir(parents=True, exist_ok=True)
-        (out / 'tree-geometry.json').write_text(json.dumps(geometry, indent=2), encoding='utf-8')
         scale = os.environ.get('QT_SCALE_FACTOR', '1')
         for dark in (False, True):
             self.theme.configure({'theme': 'dark' if dark else 'light'})
-            self.widgets.theme.cfg.theme = 'dark' if dark else 'light'
-            self.widgets.theme.applied = None
-            self.widgets.theme.apply()
-            self.widgets._show_tree()
             for width, height in ((1366, 900), (1600, 960), (1920, 1080)):
                 self.window.resize(width, height)
                 with FrameRecorder(self.window, names=('tree-page',)) as frames:
@@ -151,21 +115,6 @@ Window {
                                  (round(width * shot.devicePixelRatio()), round(height * shot.devicePixelRatio())))
                 stem = f'tree-{"dark" if dark else "light"}-{width}x{height}-scale{scale}'
                 shot.save(str(out / (stem + '.png')))
-                quick = shot.copy(0, 0, round(320 * shot.devicePixelRatio()), shot.height())
-                old_window = self.widgets.grab().toImage()
-                origin = self.widgets.tree.mapTo(self.widgets, QPoint(0, 0))
-                dpr = old_window.devicePixelRatio()
-                old = old_window.copy(round(origin.x() * dpr), round(origin.y() * dpr),
-                                      round(self.widgets.tree.width() * dpr), round(self.widgets.tree.height() * dpr))
-                old_ground = old.pixelColor(round(100 * dpr), round(300 * dpr))
-                new_ground = quick.pixelColor(round(100 * quick.devicePixelRatio()), round(300 * quick.devicePixelRatio()))
-                self.assertEqual(old_ground.name(), new_ground.name())
-                comparison = QImage(quick.width() + old.width(), max(quick.height(), old.height()), QImage.Format_ARGB32)
-                comparison.fill(Qt.GlobalColor.white)
-                painter = QPainter(comparison)
-                old.setDevicePixelRatio(1); quick.setDevicePixelRatio(1)
-                painter.drawImage(0, 0, old); painter.drawImage(old.width(), 0, quick); painter.end()
-                comparison.save(str(out / (stem + '-widgets-quick.png')))
         page = self.window.findChild(QObject, 'tree-page')
         page.setProperty('showVariants', True)
         self.app.processEvents()

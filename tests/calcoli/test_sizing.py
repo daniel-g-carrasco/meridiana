@@ -4,9 +4,10 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import layout, model
-from meridiana.energy import plant, sizing
-from meridiana.energy.components import ModuleSpec
+from meridiana.core.layout import layout
+from meridiana.core.model import model
+from meridiana.core.energy import plant, sizing
+from meridiana.core.energy.components import ModuleSpec
 
 
 def module(**changes) -> ModuleSpec:
@@ -165,8 +166,8 @@ class Combinations(unittest.TestCase):
 
 class Catalogue(unittest.TestCase):
     def test_three_real_brands_size_a_small_plant_with_a_complete_proposal(self):
-        from meridiana import catalog
-        from meridiana.energy.components import ModuleSpec
+        from meridiana.data import catalog
+        from meridiana.core.energy.components import ModuleSpec
         rec = catalog.search("modules", "LR7-54HVH", source="curated")[0]
         gs = groups([24])
         gs[0].module = ModuleSpec.from_record(rec)
@@ -223,7 +224,7 @@ class Impossible(unittest.TestCase):
 
 
 def real_groups(counts: list[int], module_model: str) -> list:
-    from meridiana import catalog
+    from meridiana.data import catalog
     spec = ModuleSpec.from_record(catalog.search("modules", module_model, source="curated")[0])
     out = groups(counts)
     for g in out:
@@ -232,12 +233,12 @@ def real_groups(counts: list[int], module_model: str) -> list:
 
 
 def catalog_load(kind: str):
-    from meridiana import catalog
+    from meridiana.data import catalog
     return catalog.load(kind)
 
 
 def brand(name: str) -> list[dict]:
-    from meridiana import catalog
+    from meridiana.data import catalog
     return [r for r in catalog.load("inverters") if r.get("manufacturer") == name]
 
 

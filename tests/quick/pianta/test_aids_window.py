@@ -6,9 +6,10 @@ from PySide6.QtCore import QPoint, QPointF, Qt
 from PySide6.QtGui import QFontMetricsF
 from PySide6.QtTest import QTest
 
-from meridiana.quick.backend.controls import install_controls
-from meridiana.ui import design
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.style import design
 from quick.pianta import test_edit_window as edit
+from quick.aiuti.puntini import assert_dots_follow
 from quick.pianta.test_window import settle_zoom
 
 setUpModule = edit.setUpModule
@@ -41,7 +42,7 @@ class AidsWindow(unittest.TestCase):
             self.assertLessEqual(abs(editor.x()-pill.x()), 1)
             self.assertLessEqual(abs(editor.y()-pill.y()), 1)
             self.assertTrue(editor.boundingRect().contains(field.mapRectToItem(editor, field.boundingRect())))
-            self.assertEqual(field.property('font').pixelSize(), design.Type.SMALL)
+            self.assertEqual(field.property('font').pixelSize(), design.Annotation.LABEL_SIZE)
             metrics = QFontMetricsF(field.property('font'))
             self.assertLessEqual(abs(field.property('baselineOffset')-design.Space.XXS-metrics.ascent()), 1)
             self.assertEqual(field.x(), design.Space.XXS+editor.property('disc')+design.Space.XS)
@@ -55,7 +56,7 @@ class AidsWindow(unittest.TestCase):
         compass, scale, bar = (self.visual(n) for n in ('compass', 'scaleBar', 'planViewBar'))
         self.assertEqual((compass.x(), compass.y()), (self.plan.width()-compass.width()-8, 8))
         self.assertEqual((scale.x(), scale.y()), (8, self.plan.height()-scale.height()-8))
-        self.assertIn('sud', compass.property('tooltipText').lower())
+        self.assertIn('nord', compass.property('tooltipText').lower())
         before = [(item.x(), item.y()) for item in (compass, scale)]
         QTest.mousePress(self.window, Qt.MiddleButton, Qt.NoModifier, QPoint(600, 400))
         QTest.mouseMove(self.window, QPoint(640, 375))
@@ -89,11 +90,12 @@ class AidsWindow(unittest.TestCase):
         self.assertAlmostEqual((self.plan.world(self.plan.width()/2, self.plan.height()/2)-centre).manhattanLength(), 0)
         self.assertEqual(self.session.snapshot(), before)
         self.assertIn('(N)', compass.property('tooltipText'))
+        self.assertEqual(compass.property('degreesText'), '30°')
         for angle in (90, 120):
             self.plan.rotateView(angle-self.plan.property('bearing'))
-            letter = compass.property('letterCentre')
-            self.assertLess(letter.x(), 28)
-            self.assertGreaterEqual(letter.y(), 28-1e-8)
+            tip = compass.property('tipPoint')
+            self.assertLess(tip.x(), 20)
+            self.assertGreaterEqual(tip.y(), 20-1e-8)
         a = self.plan.screen(10, 5)
         self.plan.setProperty('panX', self.plan.property('panX')+40)
         self.plan.setProperty('panY', self.plan.property('panY')-25)
@@ -101,8 +103,9 @@ class AidsWindow(unittest.TestCase):
         self.plan.setProperty('panX', self.plan.property('panX')-40)
         self.plan.setProperty('panY', self.plan.property('panY')+25)
         QTest.mouseClick(self.window, Qt.LeftButton, Qt.NoModifier,
-                         compass.mapToScene(QPointF(28, 28)).toPoint())
+                         compass.mapToScene(QPointF(20, 20)).toPoint())
         self.assertEqual(compass.property('headingText'), '0° N')
+        self.assertEqual(compass.property('degreesText'), '')
         self.assertEqual(self.plan.property('bearing'), 0)
         self.assertEqual(self.plan.property('zoom'), zoom)
         self.assertLess((self.plan.world(self.plan.width()/2, self.plan.height()/2)-centre).manhattanLength(), 1e-8)
@@ -146,7 +149,9 @@ class AidsWindow(unittest.TestCase):
             before = pills('stringLabel-')
             self.assertTrue(before, f'zoom {low}: no pills')
             self.plan.setProperty('zoom', high)        # one notch of a long gesture: not settled yet
-            self.app_events()      # bindings follow at once: no wait, the zoom has not settled
+            from _setup import wait_until
+            # R701: inspect the frame receiving the camera, before the 300 ms zoom settlement.
+            self.assertTrue(wait_until(edit.APP, lambda: not self.plan.property('annotationPending'), .2))
             self.assertNotEqual(self.plan.property('settledZoom'), high)
             during = pills('stringLabel-')
             self.assertEqual(sizes(during), sizes(before), f'zoom {low} -> {high}, while zooming')
@@ -182,15 +187,16 @@ class AidsWindow(unittest.TestCase):
         self.controller.setPhase('plant')
         self.controller.chooseString(0)
         for angle in (0, 30, 115):
-            for zoom in (40, 64, 28):
+            for zoom in (44, 64, 28):       # two scales of the modules and one of the strings (R707), none on a threshold
                 self.plan.setProperty('bearing', angle)
                 self.plan.setProperty('zoom', zoom)
                 self.plan.setProperty('panX', 137)
                 self.plan.setProperty('panY', 377)
                 settle_zoom(self.plan, self.controller)  # R541: the strings' names laid out again once the zoom settles
-                QTest.qWait(180)  # the map/label LOD changes when the camera settles
-                numbers = [o for o in descendants(self.plan) if o.objectName() == 'stringLabel-number-0']
-                self.assertTrue(numbers)
+                QTest.qWait(180)  # wait: the map's and the labels' level changes when the camera settles
+                numbers = [o for o in descendants(self.plan) if o.objectName() == 'stringLabel-number-0' and o.isVisible()]
+                # R707: the numbers of the chosen string from the scale of the modules (40 px a module)
+                self.assertEqual(bool(numbers), self.controller.moduleSize*zoom >= self.controller.levels['module'], zoom)
                 for label in numbers:
                     record = label.property('modelData')
                     if hasattr(record, 'toVariant'):
@@ -200,15 +206,14 @@ class AidsWindow(unittest.TestCase):
                     actual = label.mapToScene(QPointF(label.width()/2, label.height()/2))
                     # R467: beside its module and off the module's dot, the same distance at every camera
                     gap = math.hypot(expected.x()-actual.x(), expected.y()-actual.y())
-                    self.assertGreater(gap, 4 + label.height()/2 - 1e-6)
-                    self.assertLess(gap, 4 + 7 + label.width()/2 + 1e-6)
-                dots = [o for o in self.plan.childItems() if o.property('location') is not None
-                        and o.width() == o.height() == 8]
-                self.assertEqual(len(dots), len(chosen))
-                for dot, record in zip(dots, self.controller.dots, strict=True):
-                    self.assertEqual(dot.property('radius'), 4)
-                    expected = self.plan.screen(record['x'], record['y'])
-                    self.assertLess((dot.mapToScene(QPointF(4, 4))-expected).manhattanLength(), 1e-6)
+                    self.assertGreater(gap, 2.25 + label.height()/2 - 1e-6)
+                    self.assertLess(gap, 7 + max(label.width(), label.height())/2 + label.height() + 4 + 1e-6)
+                # R706: the dots are a layer of the drawing, one stroke each where its module is; they cannot drift
+                # from the modules any more, drawn as they are with them
+                # R707: a dot on each module from 40 px a module, the string's first alone between 14 and 40
+                every = self.controller.moduleSize*zoom >= self.controller.levels['module']
+                self.assertEqual(len(self.controller.dots), len(chosen) if every else 1, zoom)
+                assert_dots_follow(self, self.plan, self.controller.dots)
         self.plan.setProperty('zoom', 2)
         settle_zoom(self.plan, self.controller)
         QTest.qWait(180)

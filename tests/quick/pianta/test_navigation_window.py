@@ -12,8 +12,9 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 
-from meridiana import model, navigation
-from meridiana.quick.backend.plan import PlanController
+from meridiana.core.model import model
+from meridiana.app.interface import navigation
+from meridiana.gui.backend.plan import PlanController
 
 
 class NavigationWindow(unittest.TestCase):
@@ -28,7 +29,7 @@ class NavigationWindow(unittest.TestCase):
         self.engine.warnings.connect(lambda rows: self.errors.extend(row.toString() for row in rows))
         self.controller.install(self.engine)
         self.engine.rootContext().setContextProperty('planBackend', self.controller)
-        path = Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana/Plan/PlanWindow.qml'
+        path = Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana/Plan/PlanWindow.qml'
         self.engine.load(QUrl.fromLocalFile(str(path)))
         self.assertTrue(self.engine.rootObjects(), self.errors)
         self.window = self.engine.rootObjects()[0]
@@ -37,12 +38,18 @@ class NavigationWindow(unittest.TestCase):
         self.plan = self.window.findChild(QObject, 'plan')
 
     def tearDown(self):
+        self.flush_motion()
         self.window.close()
         self.controller.close()
         self.engine.deleteLater()
         self.app.processEvents()
 
+    def flush_motion(self):
+        from _setup import wait_until
+        self.assertTrue(wait_until(self.app, lambda: self.plan.property('pendingMotion') is None, 5))
+
     def reset_view(self):
+        self.flush_motion()
         for name, value in (('zoom', 2.), ('panX', 250.), ('panY', 250.)):
             self.plan.setProperty(name, value)
         self.controller.calls.clear()
@@ -58,6 +65,7 @@ class NavigationWindow(unittest.TestCase):
                 self.reset_view()
                 QTest.mousePress(self.window, Qt.MiddleButton, Qt.NoModifier, QPoint(400, 300))
                 QTest.mouseMove(self.window, QPoint(425, 315), 5)
+                self.flush_motion()
                 QTest.mouseRelease(self.window, Qt.MiddleButton, Qt.NoModifier, QPoint(425, 315))
                 kind = navigation.Navigator(style)._match({'middle'}, set())
                 factor = 1.2 ** (-15 / 40)
@@ -75,15 +83,19 @@ class NavigationWindow(unittest.TestCase):
         QTest.mousePress(self.window, Qt.LeftButton, Qt.NoModifier, QPoint(400, 300))
         QTest.mousePress(self.window, Qt.RightButton, Qt.NoModifier, QPoint(400, 300))
         QTest.mouseMove(self.window, QPoint(420, 310), 5)
+        self.flush_motion()
         self.assertAlmostEqual(self.plan.property('panX'), 270)
         QTest.mouseRelease(self.window, Qt.LeftButton, Qt.NoModifier, QPoint(420, 310))
         QTest.mouseMove(self.window, QPoint(440, 320), 5)
+        self.flush_motion()
         QTest.mouseRelease(self.window, Qt.RightButton, Qt.NoModifier, QPoint(440, 320))
         self.assertAlmostEqual(self.plan.property('panX'), 270)
         self.assertEqual(self.controller.calls['click'], 0)
         QTest.keyPress(self.window, Qt.Key_Space)
         QTest.mouseMove(self.window, QPoint(460, 330), 5)
+        self.flush_motion()
         QTest.mouseMove(self.window, QPoint(480, 340), 5)
+        self.flush_motion()
         QTest.keyRelease(self.window, Qt.Key_Space)
         self.assertGreater(self.plan.property('panX'), 270)
         self.assertEqual(self.controller.calls['pointer'], 0)
@@ -108,6 +120,7 @@ class NavigationWindow(unittest.TestCase):
                                 Qt.MouseEventNotSynthesized, device)
             QGuiApplication.sendEvent(self.window, event)
             self.app.processEvents()
+            self.flush_motion()
             if kind == 'pan':
                 self.assertAlmostEqual(self.plan.property('panX'), 250 + dx)
                 self.assertAlmostEqual(self.plan.property('panY'), 250 + dy)
@@ -129,6 +142,7 @@ class NavigationWindow(unittest.TestCase):
             event = QNativeGestureEvent(kind, pad, 2, p, p, p, value, QPointF())
             self.app.sendEvent(self.window, event)
         self.app.processEvents()
+        self.flush_motion()
         self.assertAlmostEqual(self.plan.property('zoom'), 2.5)
         self.assertAlmostEqual(self.plan.property('panX'), 400-150*1.25)
         self.assertAlmostEqual(self.plan.property('panY'), 300-50*1.25)
@@ -142,6 +156,7 @@ class NavigationWindow(unittest.TestCase):
             self.app.sendEvent(self.window, QWheelEvent(QPointF(400,300), QPointF(400,300),pixel,QPoint(),
                 Qt.NoButton,Qt.NoModifier,phase,False))
             self.app.processEvents()
+            self.flush_motion()
         self.assertEqual(self.plan.property('zoom'), 2)
         self.assertEqual(self.plan.property('panX'), 260)
         self.assertEqual(self.plan.property('panY'), 245)
@@ -151,12 +166,15 @@ class NavigationWindow(unittest.TestCase):
         self.controller.setNavigation('autocad')
         self.reset_view()
         QTest.mouseMove(self.window,QPoint(400,300))
+        self.flush_motion()
         QTest.keyPress(self.window,Qt.Key_Space)
         QTest.mouseMove(self.window,QPoint(460,330))
+        self.flush_motion()
         for kind in (QEvent.KeyPress,QEvent.KeyRelease):
             self.app.sendEvent(self.window,QKeyEvent(kind,Qt.Key_Space,Qt.NoModifier,' ',True,1))
         self.assertTrue(self.plan.property('spaceHeld'))
         QTest.mouseMove(self.window,QPoint(470,340))
+        self.flush_motion()
         QTest.keyRelease(self.window,Qt.Key_Space)
         self.assertFalse(self.plan.property('spaceHeld'))
         self.assertFalse(self.controller.drawing.points)
@@ -164,6 +182,7 @@ class NavigationWindow(unittest.TestCase):
         QTest.mousePress(self.window,Qt.LeftButton,Qt.NoModifier,QPoint(470,340))
         QTest.mousePress(self.window,Qt.RightButton,Qt.NoModifier,QPoint(470,340))
         QTest.mouseMove(self.window,QPoint(500,370))
+        self.flush_motion()
         QTest.mouseRelease(self.window,Qt.RightButton,Qt.NoModifier,QPoint(500,370))
         QTest.mouseRelease(self.window,Qt.LeftButton,Qt.NoModifier,QPoint(500,370))
         self.assertFalse(self.controller.drawing.points)

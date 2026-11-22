@@ -12,9 +12,9 @@ from pathlib import Path
 import numpy as np
 
 import _setup  # noqa: F401
-from meridiana import catalog
-from meridiana.energy import electrical as iv, electrical_network as en, optimizers
-from meridiana.energy.components import ModuleSpec
+from meridiana.data import catalog
+from meridiana.core.energy import electrical as iv, electrical_network as en, optimizers
+from meridiana.core.energy.components import ModuleSpec
 
 
 def module() -> ModuleSpec:
@@ -144,7 +144,7 @@ ROOFS = {"Huawei": (("Huawei", "SUN2000-10KTL-M1"), ("Huawei", "SUN2000-450W-P2"
 
 
 def roof(inverter, optimizer, width: float, depth: float, pitch: float):
-    from meridiana import model
+    from meridiana.core.model import model
     p = model.Project(name="Prova")
     p.site = model.Site(lat=45.5226, lon=9.0300, address="Rho (MI)")
     p.buildings.append(model.Building(id="b1", name="Capannone", footprint=[[0, 0], [width + 2, 0],
@@ -171,8 +171,9 @@ class SmallRoofs(unittest.TestCase):
         write_cache(clear_sky_meteo(45.5226, 9.03), cls.cache)
 
     def year(self, maker: str, shaded: bool):
-        from meridiana import jobs
-        from meridiana.energy import pipeline, plant
+        from meridiana.app import jobs
+        from meridiana.app import pipeline
+        from meridiana.core.energy import plant
         inverter, optimizer, width, wide, _eta = ROOFS[maker]
         size = (width, 10.0, 3.0) if shaded else (wide, 3.5, 6.0)
         plain = roof(inverter, None, *size)

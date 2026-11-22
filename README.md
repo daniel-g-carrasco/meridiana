@@ -9,6 +9,7 @@
 
 <p align="center">
   <a href="https://github.com/daniel-g-carrasco/meridiana/releases/latest">Download</a> ·
+  <a href="docs/manuale/en/README.md">Manual (English)</a> ·
   <a href="docs/manuale/README.md">Manual (Italian)</a> ·
   <a href="docs/funzionalita.md">Functions and their state (Italian)</a> ·
   <a href="CHANGELOG.md">Changelog</a>
@@ -90,7 +91,8 @@ Across the phases:
 - **Meridio**, an assistant that answers questions about the open project with a language model running on the
   computer (Ollama, LM Studio, llama.cpp and similar local servers) or, if you choose it and give your own key, with
   Claude with explicit consent. Reserved projects stay local;
-- a **manual** inside the program (F1 for contextual help), also readable [in Italian](docs/manuale/README.md);
+- a **manual** inside the program (F1 for contextual help), also readable in
+  [English](docs/manuale/en/README.md) and [Italian](docs/manuale/README.md);
 - **background work with progress and cancellation** for lengthy calculations, IFC imports and report generation.
   Heavy jobs use separate processes so you can keep working in the window.
 
@@ -108,7 +110,9 @@ Windows 10 or 11, 64 bit. Download `meridiana-setup-vX.Y.Z-windows-x64.exe` from
 
 > [!NOTE]
 > The installer is not signed with an Authenticode certificate yet, so the first time Windows SmartScreen shows
-> "Windows protected your PC": choose **More info**, then **Run anyway**.
+> "Windows protected your PC": choose **More info**, then **Run anyway**. Each file of a release has a
+> [minisign](https://jedisct1.github.io/minisign/) signature (`.minisig`): the key and the command that checks a
+> download are in [CODE_SIGNING.md](docs/CODE_SIGNING.md).
 
 Settings stay in `%APPDATA%\Meridiana`, caches and recovery copies in `%LOCALAPPDATA%\Meridiana`; uninstalling
 leaves them.
@@ -221,3 +225,9 @@ and PVGIS (the weather data). Comparisons with PVGIS and PVsyst are in
 
 Meridiana is licensed under the GPL-3.0-or-later ([LICENSE](LICENSE)). Qt Quick 3D, which draws the 3D view, is
 available under the GPL v3 or a commercial licence: the program as a whole is GPL v3.
+
+To refresh the screenshots after a UI change, run `python tools/readme_screenshots.py` from the checkout with the
+development dependencies installed. The [capture script](tools/readme_screenshots.py) builds its own demonstration
+project, computes recorded test weather offline and captures the real window offscreen at 1600 × 1000 pixels.
+It uses a temporary profile and replaces only the seven README PNGs in `docs/images/`. With `--live` it captures
+the window full screen on the real desktop instead, with the map tiles from the network (the images above).

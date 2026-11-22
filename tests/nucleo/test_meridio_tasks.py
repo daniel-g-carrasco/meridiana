@@ -7,8 +7,8 @@ from pathlib import Path
 
 import _setup  # noqa: F401
 
-from meridiana import registry
-from meridiana.assistant import tools
+from meridiana.data import registry
+from meridiana.app.assistant import tools
 
 
 class TaskHost:

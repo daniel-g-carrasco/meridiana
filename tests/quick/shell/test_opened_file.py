@@ -14,8 +14,8 @@ from pathlib import Path
 from PySide6.QtCore import Qt
 
 from _fixtures import capannone
-from meridiana import model
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana.core.model import model
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import key, pump
 
 

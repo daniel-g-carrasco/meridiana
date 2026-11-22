@@ -1,0 +1,4 @@
+module Meridiana.View3D
+Viewport 1.0 Viewport.qml
+ViewCube 1.0 ViewCube.qml
+ViewRibbon 1.0 ViewRibbon.qml

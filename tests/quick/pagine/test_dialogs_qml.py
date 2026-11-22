@@ -7,11 +7,11 @@ from PySide6.QtCore import QObject, Qt
 import _setup
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
-from meridiana.config import Config
+from meridiana.app.platform.config import Config
 from meridiana import i18n
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.controls import install_controls
-from meridiana.quick.backend.dialogs import DialogsBackend
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.backend.dialogs import DialogsBackend
 
 setUpModule = _setup.keep_global_state
 
@@ -35,7 +35,10 @@ class DialogQuickTest(unittest.TestCase):
         engine.loadData(b"""import QtQuick
 import Meridiana.Dialogs
 import Meridiana.Theme
-Window { width:1100; height:800; visible:true; color:Theme.colors.window; DialogsPage {anchors.fill:parent;backend:dialogBackend} }""")
+Window { width:1100; height:800; visible:true; color:Theme.colors.window
+    // R586: the page in its window, as DialogLayer shows it (DialogWindow, the common M.Dialog)
+    DialogWindow { backend: dialogBackend; visible: dialogBackend.kind !== ""
+        onClosed: if (dialogBackend.kind !== "") dialogBackend.cancel() } }""")
         self.assertTrue(engine.rootObjects(), warnings)
         window = engine.rootObjects()[0]
         window.setWidth(int(os.getenv("MERIDIANA_DIALOG_WIDTH","1366")))
@@ -55,11 +58,11 @@ Window { width:1100; height:800; visible:true; color:Theme.colors.window; Dialog
             backend.open(kind)
             if kind == 'ifc':
                 from _fixtures import capannone
-                from meridiana.ifc_import import Plan
+                from meridiana.app.exchange.ifc_import import Plan
                 backend._planned_ifc(Plan(buildings=capannone().buildings, taken=['A building']))
                 backend.changed.emit()
             QTest.qWait(70)
-            self.assertTrue(window.findChild(QObject, "dialog_cancel"))
+            self.assertTrue(window.findChild(QObject, "dialogBody"))
             if os.getenv("MERIDIANA_DIALOG_PHOTOS"):
                 folder = Path("build/quick-foto/pagine")
                 folder.mkdir(parents=True, exist_ok=True)
@@ -113,7 +116,7 @@ Window { width:1100; height:800; visible:true; color:Theme.colors.window; Dialog
         backend.open("site")
         QTest.qWait(50)
         type_text("site_query", "42.1, 12.5")
-        click("dialog_accept")
+        click("dialogAccept")
         self.assertEqual(backend.session.project.site.lat, 42.1)
         backend.session.undo.undo()
         self.assertNotEqual(backend.session.project.site.lat, 42.1)
@@ -124,13 +127,13 @@ Window { width:1100; height:800; visible:true; color:Theme.colors.window; Dialog
         backend.open("canopy")
         QTest.qWait(50)
         type_text("dialog_stalls", "6")
-        click("dialog_accept")
+        click("dialogAccept")
         self.assertEqual(placements[0][1].stalls, 6)
         backend.open("update")
         QTest.qWait(50)
         closed = []
         backend.closed.connect(lambda: closed.append(True))
-        button = window.findChild(QObject, "dialog_cancel")
+        button = window.findChild(QObject, "dialogReject")
         point = button.mapToScene(button.boundingRect().center()).toPoint()
         QTest.mouseClick(
             window, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, point

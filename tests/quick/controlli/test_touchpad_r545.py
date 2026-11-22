@@ -15,8 +15,8 @@ from PySide6.QtCore import QPoint, QPointF, Qt, QUrl
 from PySide6.QtGui import QGuiApplication, QInputDevice, QPointingDevice, QWheelEvent
 from PySide6.QtQuick import QQuickView
 
-from meridiana.quick.backend.controls import install_controls
-from meridiana.quick.backend.touchpad import GTK_SCROLL_FACTOR, TouchpadPace
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.backend.touchpad import GTK_SCROLL_FACTOR, TouchpadPace
 from quick.gestures import pump, wait_for
 
 if os.environ.get('QT_QPA_PLATFORM') == 'offscreen':

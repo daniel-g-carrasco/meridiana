@@ -5,7 +5,7 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import geo
+from meridiana.core.geometry import geo
 
 MILANO = geo.Origin(lat=45.4642, lon=9.1900)
 

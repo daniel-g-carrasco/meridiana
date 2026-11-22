@@ -6,7 +6,8 @@ import unittest
 import _setup  # noqa: F401
 import numpy as np
 
-from meridiana import layout, mesh, roofs
+from meridiana.core.layout import layout
+from meridiana.core.geometry import mesh, roofs
 
 HOUSE = [(0.0, 0.0), (12.0, 0.0), (12.0, 8.0), (0.0, 8.0)]
 L_SHAPE = [(0.0, 0.0), (10.0, 0.0), (10.0, 4.0), (4.0, 4.0), (4.0, 10.0), (0.0, 10.0)]
@@ -159,6 +160,37 @@ class Outline(unittest.TestCase):
         corners = [e for e in edges if np.allclose(e[0][[0, 2]], e[1][[0, 2]])]       # the vertical edges
         self.assertEqual(sorted(round(float(c[1][1]), 6) for c in corners), [6.0] * 4)
 
+    def test_the_roof_s_height_at_many_points_is_the_rule_s_exactly(self):
+        """roof_heights (R598, passo 2: the selection of a model's body asked thousands of distances to whole rings)
+        gives, bit for bit, the rule of _roof_z: the highest pitch within the tolerance, else the first nearest one,
+        at its closest point. A roof of 24 pitches in levels and slopes, points on them, between them, beside them,
+        far from all, on their corners."""
+        import random
+        rng = random.Random(7)
+        pitches = []
+        for i in range(6):
+            for j in range(4):
+                x0, y0 = i * 9.0 + rng.uniform(0, 0.05), j * 7.0
+                ring = [(x0, y0), (x0 + 9.0, y0), (x0 + 9.0, y0 + 7.0), (x0 + 4.5, y0 + 8.5), (x0, y0 + 7.0)]
+                pitches.append(roofs.Pitch(ring, rng.choice([0.0, 5.0, 20.0]), rng.uniform(0, 360),
+                                           rng.uniform(4, 12), x0, y0))
+        points = [(rng.uniform(-20, 75), rng.uniform(-20, 50)) for _ in range(400)]
+        points += [q for p in pitches for q in p.ring] + [(1e4, 1e4), (27.0, 14.0 + mesh.ROOF_TOLERANCE)]
+
+        def rule(x, y):
+            best, nearest = None, (math.inf, 0.0)
+            for p in pitches:
+                d, qx, qy = mesh._closest_on_ring(p.ring, x, y)
+                z = p.z(qx, qy)
+                if d <= mesh.ROOF_TOLERANCE:
+                    best = z if best is None else max(best, z)
+                if d < nearest[0]:
+                    nearest = (d, z)
+            return best if best is not None else nearest[1]
+        at = mesh.roof_heights(pitches)
+        self.assertEqual([at(x, y) for x, y in points], [rule(x, y) for x, y in points])
+        self.assertEqual(mesh.roof_heights([])(1.0, 2.0), 0.0)
+
     def test_a_prism_and_a_ring(self):
         edges = mesh.prism_edges(L_SHAPE, 6.0, 7.5)
         self.assertEqual(len(edges), 3 * len(L_SHAPE))
@@ -296,7 +328,7 @@ class ProjectScene(unittest.TestCase):
     def test_the_scene_has_the_buildings_the_obstacles_the_modules_in_their_colour_and_the_edges(self):
         from _fixtures import capannone_rho
 
-        from meridiana import jobs
+        from meridiana.app import jobs
         p = capannone_rho()
         p.subfields[0].filled = True
         results, _keys, _laid = jobs.layout_of(p)

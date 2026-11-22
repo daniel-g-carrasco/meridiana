@@ -9,6 +9,10 @@ here = os.path.dirname(os.path.realpath(__file__))
 for candidate in (os.path.join(here, "..", "src"), "/app/share/meridiana"):
     if os.path.isdir(os.path.join(candidate, "meridiana")):
         sys.path.insert(0, os.path.abspath(candidate))
+        # the processes the window starts (`python -m meridiana.gui.backend...`: the computation, the tasks, the
+        # report) find the package where this launcher found it: without it, a start from a checkout computed no year
+        os.environ["PYTHONPATH"] = os.pathsep.join(p for p in (os.path.abspath(candidate),
+                                                               os.environ.get("PYTHONPATH", "")) if p)
         break
 
 from meridiana.__main__ import main  # noqa: E402

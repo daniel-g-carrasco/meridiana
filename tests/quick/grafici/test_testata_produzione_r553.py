@@ -18,11 +18,12 @@ import _setup
 from PySide6.QtCore import QPointF
 from PySide6.QtGui import QColor
 
-from meridiana import i18n, jobs
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
 from quick import confini
 from quick.gestures import item, pump, wait_for
-from quick.parity.differential import connected_fixture
+from quick.aiuti.differential import connected_fixture
 
 setUpModule = _setup.keep_global_state
 
@@ -102,10 +103,15 @@ class ProductionHead(unittest.TestCase):
         pump(400)
         credit = item(self.win, 'mapCredit')
         world = item(self.win, 'worldLayer')
-        self.assertIs(credit.parentItem(), world.parentItem())
-        siblings = credit.parentItem().childItems()
-        self.assertGreater(siblings.index(credit), siblings.index(world), 'drawn after the project, so above it')
-        self.assertEqual(QColor(credit.property('color')).alpha(), 255)
+        # R706: the project's drawing is in the plan's geometry surface, shown on screen by its one image
+        # (motionSnapshot); the credit stands beside that image in the plan, above it
+        snapshot = item(self.win, 'motionSnapshot')
+        self.assertIs(snapshot.property('sourceItem'), world.parentItem(), 'the image shows the drawing')
+        self.assertIs(credit.parentItem(), snapshot.parentItem())
+        self.assertGreater(credit.z(), snapshot.z(), 'above the project: a bar over the view')
+        # R555 (1): on the one ground of what is written over the views (it was full: the drawing passed under it)
+        from meridiana.app.interface import theme_colors
+        self.assertEqual(QColor(credit.property('color')), QColor(theme_colors.qt_hex(theme_colors.OVERLAY['glass'])))
 
 
 if __name__ == '__main__':

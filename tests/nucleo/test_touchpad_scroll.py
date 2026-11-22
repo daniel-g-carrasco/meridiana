@@ -2,7 +2,7 @@
 import unittest
 
 import _setup  # noqa: F401
-from meridiana.navigation import wheel_action
+from meridiana.app.interface.navigation import wheel_action
 
 
 class TouchpadScroll(unittest.TestCase):

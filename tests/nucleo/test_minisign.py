@@ -8,7 +8,7 @@ import unittest
 import _setup  # noqa: F401
 from _fixtures import PAYLOAD, PUBLIC_KEY, SIGNED_V8, SIGNED_V9
 
-from meridiana import minisign
+from meridiana.app import minisign
 
 
 def digest_of(data: bytes) -> bytes:
@@ -57,7 +57,7 @@ class MinisignTest(unittest.TestCase):
         with self.assertRaisesRegex(minisign.SignatureError, "trusted comment"):
             minisign.verify(digest_of(PAYLOAD), "\n".join(lines), PUBLIC_KEY)
         # the project's own key: not the one that signed it
-        from meridiana import updates
+        from meridiana.app import updates
         with self.assertRaisesRegex(minisign.SignatureError, "another key"):
             minisign.verify(digest_of(PAYLOAD), SIGNED_V9, updates.PUBLIC_KEY)
         # the legacy form, over the whole file

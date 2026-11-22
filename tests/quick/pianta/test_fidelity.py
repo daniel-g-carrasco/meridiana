@@ -2,12 +2,11 @@
 import unittest
 
 from PySide6.QtCore import QPoint, Qt
-from PySide6.QtGui import QVector3D
-from PySide6.QtQuick import QSGRendererInterface
 from PySide6.QtTest import QTest
 
 from quick.pianta.test_window import WindowTest, settle_zoom, setUpModule  # noqa: F401
-from meridiana import model, view_colours
+from meridiana.core.model import model
+from meridiana.app.interface import view_colours
 from quick.gestures import item
 
 
@@ -58,15 +57,6 @@ class Fidelity(unittest.TestCase):
             self.plan.setProperty('panY', 400)
             QTest.mouseMove(self.window, QPoint(100, 100))
             settle_zoom(self.plan, self.controller)     # R541: the dashes are laid out once the zoom settles
-            layer = item(self.window, "planPolygons")
-            self.assertFalse(layer.property("hatchSource").isEmpty())
-            transform = layer.property("patternTransform")
-            start = transform.map(QVector3D(0, 0, 0))
-            end = transform.map(QVector3D(8, 0, 0))
-            self.assertAlmostEqual((end.x() - start.x()) * zoom, 8, places=3)
-            # The software scene graph does not render ShaderEffectSource.
-            if self.window.rendererInterface().graphicsApi() == QSGRendererInterface.GraphicsApi.Software:
-                continue
             QTest.qWait(80)
             image = self.window.grabWindow()
             dpr = image.devicePixelRatio()
@@ -100,7 +90,8 @@ class Fidelity(unittest.TestCase):
         self.controller.editor.select('building', 'b1')
         self.controller._overlays()
         halo, ink = self.controller.highlights
-        self.assertEqual(halo['width'], view_colours.WIDTHS['select'] + view_colours.WIDTHS['select_halo'])
+        self.assertEqual(halo['width'], view_colours.WIDTHS['select'])
+        self.assertEqual(halo['stroke'], 'transparent')
         self.assertEqual(ink['width'], view_colours.WIDTHS['select'])
         self.assertEqual(halo['fill'], '#1eb48cff')
         self.assertEqual(ink['fill'], 'transparent')

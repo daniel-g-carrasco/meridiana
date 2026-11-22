@@ -29,11 +29,11 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from meridiana import catalog  # noqa: E402
-from meridiana.energy import meteo  # noqa: E402
-from meridiana.energy.components import InverterSpec, ModuleSpec  # noqa: E402
-from meridiana.energy.pedigree import Source  # noqa: E402
-from meridiana.energy.simulate import ArraySpec, Losses, simulate  # noqa: E402
+from meridiana.data import catalog  # noqa: E402
+from meridiana.core.energy import meteo  # noqa: E402
+from meridiana.core.energy.components import InverterSpec, ModuleSpec  # noqa: E402
+from meridiana.core.energy.pedigree import Source  # noqa: E402
+from meridiana.core.energy.simulate import ArraySpec, Losses, simulate  # noqa: E402
 
 THERMAL = {29.0: "open", 20.0: "semi", 15.0: "integrated"}      # Meridiana's cases by their Uc
 NODES = [("globhor", "GlobHor (kWh/m²)", "ghi"), ("globinc", "GlobInc (kWh/m²)", "poa"),

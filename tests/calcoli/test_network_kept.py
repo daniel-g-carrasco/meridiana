@@ -9,10 +9,10 @@ from types import SimpleNamespace
 import _setup  # noqa: F401
 import numpy as np
 
-from meridiana import layout
-from meridiana.energy import electrical_network as network
-from meridiana.energy import plant, simulate
-from meridiana.energy.components import InverterSpec, ModuleSpec, TYPICAL_450
+from meridiana.core.layout import layout
+from meridiana.core.energy import electrical_network as network
+from meridiana.core.energy import plant, simulate
+from meridiana.core.energy.components import InverterSpec, ModuleSpec, TYPICAL_450
 
 SPEC = {'ac_power_nominal_w': 20000, 'mppt_count': 2, 'mppt_voltage_min_v': 1, 'mppt_voltage_max_v': 1000,
         'dc_current_max_per_mppt_a': [30, 30]}

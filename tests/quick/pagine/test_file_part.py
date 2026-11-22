@@ -6,8 +6,8 @@ import unittest
 from PySide6.QtCore import QCoreApplication, QEvent, QEventLoop, QThreadPool, QTimer, Qt
 from PySide6.QtTest import QTest
 
-from meridiana.model import Project
-from quick.parity.realwindow import native_app
+from meridiana.core.model.model import Project
+from quick.aiuti.realwindow import native_app
 
 
 def wait_frame(milliseconds):
@@ -20,12 +20,12 @@ def wait_frame(milliseconds):
 class FilePartTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from meridiana.quick.app import create_app
+        from meridiana.gui.application import create_app
         create_app()
         cls.app = native_app()
 
     def setUp(self):
-        from meridiana.quick.app import QuickWindow
+        from meridiana.gui.application import QuickWindow
         self.temp = TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.host = QuickWindow(Project(), Path(self.temp.name), real_views=True)

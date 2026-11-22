@@ -17,9 +17,9 @@ from PySide6.QtCore import QRectF, Qt, QUrl
 from PySide6.QtGui import QImage, QPainter
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQuick import QQuickView
-from meridiana.quick.backend.checks import ChecksBackend
-from meridiana.quick.backend.controls import install_controls
-from meridiana.ui import symbols
+from meridiana.gui.backend.checks import ChecksBackend
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.style import symbols
 
 app = QApplication(sys.argv)
 scale = float(os.environ['QT_SCALE_FACTOR'])

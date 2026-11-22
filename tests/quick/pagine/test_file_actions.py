@@ -5,8 +5,8 @@ from types import SimpleNamespace
 import unittest
 
 from PySide6.QtCore import QObject
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.files_actions import FileActions
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.files_actions import FileActions
 
 
 class FileActionsTest(unittest.TestCase):

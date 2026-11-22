@@ -6,9 +6,9 @@ from pathlib import Path
 
 from PySide6.QtCore import QProcess
 from _fixtures import capannone
-from meridiana.quick.app import create_app
-from meridiana.quick.backend.shell_compute import ShellBridge
-from meridiana.quick.sample import recorded_weather
+from meridiana.gui.application import create_app
+from meridiana.gui.backend.shell_compute import ShellBridge
+from meridiana.gui.sample import recorded_weather
 from quick.gestures import wait_for
 
 
@@ -67,8 +67,8 @@ import sys, tempfile
 from pathlib import Path
 from PySide6.QtCore import QTimer, qInstallMessageHandler
 from _fixtures import capannone
-from meridiana.quick.app import QuickWindow, create_app
-from meridiana.quick.sample import recorded_weather
+from meridiana.gui.application import QuickWindow, create_app
+from meridiana.gui.sample import recorded_weather
 
 def said(kind, context, text):
     if 'TypeError' in text or 'ReferenceError' in text:

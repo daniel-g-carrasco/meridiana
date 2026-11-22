@@ -26,7 +26,8 @@ from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QApplication
 
 from meridiana import theme_colors
-from meridiana.ui import design, icons
+from meridiana.ui import design
+from meridiana.quick.style import icons
 
 W, H = 1600, 960
 OUT = HERE / "bozzetti"

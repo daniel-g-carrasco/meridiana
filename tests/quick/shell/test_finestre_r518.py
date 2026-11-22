@@ -32,10 +32,11 @@ import _setup
 from PySide6.QtCore import QEvent, QObject, QPointF, QRectF, Qt, QUrl
 from PySide6.QtGui import QColor
 from PySide6.QtQml import QQmlComponent
-from meridiana import i18n, jobs
-from meridiana.quick.app import QuickWindow, create_app
-from quick.gestures import click, item, mouse, pump
-from quick.parity.differential import connected_fixture
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
+from quick.gestures import click, item, mouse, pump, wait_for
+from quick.aiuti.differential import connected_fixture
 
 app = _setup.qt_or_skip()
 create_app()
@@ -46,15 +47,14 @@ folder = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
 # the tests' clear-sky year inside the project, so that the comparison of the variants has its figures offline
 try:
     from _fixtures import clear_sky_meteo, write_cache
-    from meridiana import atomic
-    from meridiana.energy import meteo
+    from meridiana.data import atomic
+    from meridiana.core.energy import meteo
     weather = Path(folder.name) / 'weather'
-    write_cache(clear_sky_meteo(), weather, include_horizon=True)
+    write_cache(clear_sky_meteo(), weather)
     for lat, lon in ((project.site.lat, project.site.lon), (45.5226, 9.03)):
         if meteo._cache_file(weather, 'tmy', lat, lon).exists():
             raw, _ = atomic.read_json(meteo._cache_file(weather, 'tmy', lat, lon))
-            horizon, _ = atomic.read_json(meteo._cache_file(weather, 'horizon', lat, lon))
-            project.climate = dict(getattr(project, 'climate', {}) or {}, tmy=raw, horizon=horizon)
+            project.climate = dict(getattr(project, 'climate', {}) or {}, tmy=raw)
             break
 except Exception as error:          # the capture goes on; the comparison then says what is missing
     print('no weather:', error, file=sys.stderr)
@@ -184,10 +184,6 @@ try:
         left = next(x for x in range(x0 + edge, x1) if any(inked(x, y) for y in rows[::2])) - x0
         right = x1 - next(x for x in range(x1 - edge, x0, -1) if any(inked(x, y) for y in rows[::2]))
         top = next(y for y in range(y0 + edge, y1) if any(inked(x, y) for x in cols[::2])) - y0
-        title = next((t for t in walk(frame.parentItem()) if t.objectName() == 'dialogTitle' and shown(t)), None)
-        if title is not None:
-            # A glyph's ascender changes the first dark row without changing the title's inset.
-            top = round(rect(title)[1] + title.property('topPadding') * dpr - r[1])
         bottom = y1 - next(y for y in range(y1 - edge, y0, -1) if any(inked(x, y) for x in cols[::2]))
         found = dict(left=left, right=right, top=top, bottom=bottom, width=round(r[2]))
         buttons = [o for o in walk(frame.parentItem()) if o.objectName() == 'dialogButtons' and shown(o)]
@@ -301,6 +297,12 @@ try:
         if any(name == k or name.startswith(k) for k in out['dialogs']) or name in ('plant-proposal-dialog', 'plant-catalog-dialog',
                 'plant-storage-dialog', 'plant-clear-dialog', 'plant-maker-dialog', 'plant-datasheet-dialog', 'shellCommandDialog', 'variantDialog'):
             continue
+        if name == 'sceneRename':
+            # Plant starts on the plan alone. Open its 3D view as the user does
+            # before measuring a dialog whose width is bounded by that viewport.
+            win.runCommand('view_3d')
+            viewport = other.property('parent')
+            wait_for(lambda: viewport.isVisible() and viewport.width() >= 360, seconds=5)
         if not other.property('title'):
             other.setProperty('title', 'Titolo di prova')     # the plan's windows get theirs when they open
         dialog(name, lambda o=other: o.metaObject().invokeMethod(o, 'open'), lambda o=other: o.metaObject().invokeMethod(o, 'close'))
@@ -312,16 +314,12 @@ try:
         p, e = rect(popup_item), rect(entry)
         veil = over(raw['hover'], raw['card'])
         cy = int(e[1] + e[3] / 2)
-        ground = entry.property('background')
-        self_colour = QColor(ground.property('color'))
-        self_visible = ground.isVisible() and self_colour.alpha() > 0
-        shape = rect(ground)
-        # Measure the actual hover rectangle. Pixels of the popup border and the text
-        # can have the same colour as the hover on the software renderer.
-        painted = dist(rgb(shape[0] + 6 * dpr, cy), veil) <= 6
-        found = dict(found=bool(self_visible and painted), left=round(shape[0] - p[0]),
-                     right=round(p[0] + p[2] - shape[0] - shape[2]), height=round(shape[3]),
-                     corner=ground.property('radius') > 0)
+        xs = [x for x in range(int(p[0]), int(p[0] + p[2])) if dist(rgb(x, cy), veil) <= 6]
+        ys = [y for y in range(int(p[1]), int(p[1] + p[3])) if dist(rgb(xs[0] + 6 * dpr, y), veil) <= 6] if xs else []
+        found = dict(found=bool(xs))
+        if xs and ys:
+            found.update(left=xs[0] - int(p[0]), right=int(p[0] + p[2]) - 1 - xs[-1], height=len(ys),
+                         corner=dist(rgb(xs[0], ys[0]), veil) > 6, colour=list(rgb(xs[0] + 6 * dpr, cy)))
         out['menus'][name] = found
         save(f'menu-{name}', p)
 
@@ -347,7 +345,7 @@ try:
     pump(300)
     actions.openSection('inverter')
     pump(500)
-    item(win, 'plant-inverters').setProperty('contentY', 0)
+    item(win, 'plant-page').setProperty('contentY', 0)
     pump(200)
     card = item(win, 'inverter-card-' + str(next(u for u in plant.units if u['card'])['number']))
     more = next(o for o in walk(card) if o.property('iconName') == 'ellipsis')

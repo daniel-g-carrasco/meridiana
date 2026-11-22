@@ -8,7 +8,9 @@ from unittest import mock
 
 import _setup  # noqa: F401
 
-from meridiana import model, recovery
+from meridiana import PACKAGE_DIR
+from meridiana.core.model import model
+from meridiana.app.project import recovery
 
 
 class Copies(unittest.TestCase):
@@ -42,7 +44,8 @@ class Copies(unittest.TestCase):
 OWNER = """
 import sys
 from pathlib import Path
-from meridiana import model, recovery
+from meridiana.core.model import model
+from meridiana.app.project import recovery
 state = Path(sys.argv[1])
 mark = recovery.claim(state)
 recovery.write(state, Path(sys.argv[2]), model.Project(name="Still open").to_json())
@@ -64,7 +67,7 @@ class Instances(unittest.TestCase):
         import os
         import subprocess
         import sys
-        src = str(Path(recovery.__file__).resolve().parents[1])
+        src = str(PACKAGE_DIR.parent)          # the folder the package is in (src/)
         process = subprocess.Popen([sys.executable, "-c", OWNER, str(self.state), str(self.file)],
                                    env=dict(os.environ, PYTHONPATH=src), stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -94,7 +97,7 @@ class Instances(unittest.TestCase):
             finally:
                 os.close(fd)
             self.assertLess(time.monotonic(), deadline, "the lock of the process killed was never let go")
-            time.sleep(0.05)
+            time.sleep(0.05)  # wait: a look every 50 ms until the killed process's lock is let go (deadline above)
 
     def test_the_copy_of_a_meridiana_still_running_is_not_offered_to_another(self):
         process = self.owner()

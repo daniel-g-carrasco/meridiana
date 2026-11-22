@@ -9,13 +9,14 @@ from pathlib import Path
 
 os.environ.setdefault('QSG_RENDER_LOOP', 'basic')
 
-from PySide6.QtCore import QObject, QPoint, Qt, QUrl
+from PySide6.QtCore import QCoreApplication, QObject, QPoint, QPointF, Qt, QUrl
+from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QApplication
-from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtQml import QQmlApplicationEngine, QQmlExpression
 from PySide6.QtTest import QSignalSpy, QTest
 
-from meridiana import model
-from meridiana.quick.backend.plan import PlanController, qml_objects
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController, qml_objects
 
 
 class SelectionWindow(unittest.TestCase):
@@ -27,7 +28,7 @@ class SelectionWindow(unittest.TestCase):
         end = time.monotonic() + 5
         while not condition() and time.monotonic() < end:
             self.app.processEvents()
-            time.sleep(.001)
+            time.sleep(.001)  # wait: a breath between two looks at the condition, so the workers' threads run
         self.assertTrue(condition())
 
     def test_live_twenty_thousand_modules_shift_pixels_and_local_frame_times(self):
@@ -43,7 +44,7 @@ class SelectionWindow(unittest.TestCase):
         engine.warnings.connect(lambda values: errors.extend(x.toString() for x in values))
         controller.install(engine)
         engine.rootContext().setContextProperty('planBackend', controller)
-        path = Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana/Plan/PlanWindow.qml'
+        path = Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana/Plan/PlanWindow.qml'
         engine.load(QUrl.fromLocalFile(str(path)))
         self.assertTrue(engine.rootObjects(), errors)
         window = engine.rootObjects()[0]
@@ -59,7 +60,19 @@ class SelectionWindow(unittest.TestCase):
             controller.calls.clear()
             QTest.mouseMove(window, QPoint(101, 81))
             self.wait(lambda: overlay.property('hovered') is not None)
-            QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, QPoint(80, 60))
+            # Begin a fast rectangular drag before yielding to software rendering. Waiting for an expensive frame
+            # between press and first move would turn this test into the deliberate hold-and-drag lasso (>350 ms).
+            QTest.mousePress(window, Qt.LeftButton, Qt.NoModifier, QPoint(80, 60), 0)
+            mouse = window.findChild(QObject, 'planMouse')
+            # The test covers the rectangular mask, not hold duration. Start its simulated press clock after the
+            # press has returned: offscreen software can spend >350 ms rendering that press alone.
+            clock = QQmlExpression(engine.contextForObject(mouse), mouse, 'pressedAt=Date.now()')
+            clock.evaluate()
+            self.assertFalse(clock.hasError(), clock.error().toString())
+            point = QPointF(440, 650)
+            QCoreApplication.sendEvent(window, QMouseEvent(QMouseEvent.Type.MouseMove, point, point, point,
+                                                         Qt.NoButton, Qt.LeftButton, Qt.NoModifier))
+            self.assertFalse(mouse.property('lasso'))
             times, queries, paints, presented = [], [], [], []
             swaps = QSignalSpy(window.frameSwapped)
             for i in range(20):
@@ -74,7 +87,8 @@ class SelectionWindow(unittest.TestCase):
                 times.append((time.perf_counter() - started) * 1000)
                 queries.append(overlay.property('queryMilliseconds'))
                 paints.append(overlay.property('paintMilliseconds'))
-            self.assertEqual(overlay.property('candidateCount'), 20000)
+            self.assertEqual(overlay.property('candidateCount'), 20000,
+                             {name: overlay.property(name) for name in ('live', 'sweeping', 'ring', 'viewScale', 'offsetX', 'offsetY')})
             self.assertEqual(overlay.property('action'), 'add')
             self.assertEqual(controller.calls['pointer'], 0)
             self.assertEqual(controller.calls['sweep'], 0)

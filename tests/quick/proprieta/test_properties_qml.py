@@ -8,8 +8,8 @@ from PySide6.QtCore import QObject, QPoint, Qt
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 
-from meridiana.quick.backend.properties import PropertiesBackend, install_properties
-from meridiana.session import ProjectSession
+from meridiana.gui.backend.properties import PropertiesBackend, install_properties
+from meridiana.app.session import ProjectSession
 
 
 class PropertiesQmlTest(unittest.TestCase):
@@ -95,7 +95,7 @@ Window { visible: true; width: 380; height: 900
         self.assertEqual(self.session.undo.count(), 0)
 
     def test_r377_every_rendered_frame_contains_form_content(self):
-        from quick.parity.realwindow import FrameRecorder, wait_frames
+        from quick.aiuti.realwindow import FrameRecorder, wait_frames
         with FrameRecorder(self.window) as recorder:
             for kind, oid in [('subfield', self.session.project.subfields[0].id), ('site', ''),
                               ('building', self.session.project.buildings[0].id)]:

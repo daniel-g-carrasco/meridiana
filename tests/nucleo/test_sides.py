@@ -5,7 +5,7 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import sides
+from meridiana.core.geometry import sides
 
 RECT = [[0, 0], [40, 0], [40, 20], [0, 20]]
 ELL = [[0, 0], [30, 0], [30, 10], [10, 10], [10, 25], [0, 25]]

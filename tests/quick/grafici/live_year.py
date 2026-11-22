@@ -6,9 +6,10 @@ import tempfile
 import time
 
 from PySide6.QtCore import QCoreApplication, QEvent, Qt
-from meridiana import jobs, model
-from meridiana.quick.app import QuickWindow, create_app
-from meridiana.quick.sample import recorded_weather
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.gui.application import QuickWindow, create_app
+from meridiana.gui.sample import recorded_weather
 from quick.gestures import key, pump, wait_for
 
 

@@ -3,9 +3,10 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import jobs, model
-from meridiana.energy import plant
-from meridiana.session import ProjectSession
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.core.energy import plant
+from meridiana.app.session import ProjectSession
 
 
 def project():
@@ -28,6 +29,17 @@ class Realign(unittest.TestCase):
         self.assertEqual(gone, [("1.1.1", 1, ["s1"]), ("1.2.1", 1, ["s1"])])
         kept, gone = plant.realign(runs, set(), kept={"s1", "s2"})
         self.assertEqual((kept, gone), (runs, []))
+
+    def test_the_modules_laid_are_those_of_the_layouts_in_hand_but_the_removed(self):
+        p = project()
+        results, _keys, _laid = jobs.layout_of(p)
+        p.subfields += [model.SubField(id=sid, name=sid, building="b1", ring=p.subfields[0].ring) for sid in ("s2", "s3")]
+        mods = results["s1"].modules
+        p.subfields[0].removed.append(mods[0].key)
+        results = {"s1": results["s1"], "s3": ValueError("no room")}
+        laid, kept = plant.laid_of(p.subfields, results)
+        self.assertEqual(laid, {f"s1/{m.key}" for m in mods[1:]}, "the one taken out by the designer is not laid")
+        self.assertEqual(kept, {"s2", "s3"}, "no layout in hand, or one that failed: their keys stay")
 
     def test_groups_that_no_longer_split_their_string_are_made_again(self):
         run = {"inverter": 1, "mppt": 1, "modules": ["a", "b", "c", "d", "e"], "optimizer_group_sizes": [2, 2]}

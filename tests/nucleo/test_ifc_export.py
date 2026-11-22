@@ -11,7 +11,7 @@ from pathlib import Path
 import _setup  # noqa: F401
 from _fixtures import RHO, exported, mixed
 
-from meridiana import geo
+from meridiana.core.geometry import geo
 
 
 def need_ifcopenshell():
@@ -62,7 +62,7 @@ class Export(unittest.TestCase):
         cls.path, cls.summary, cls.results = exported(cls.project, cls.folder)
 
     def test_the_file_is_valid_ifc4_with_every_module_laid(self):
-        from meridiana import ifc_export
+        from meridiana.app.exchange import ifc_export
         self.assertEqual(ifc_export.validate(self.path), [])
         laid = sum(r.count for r in self.results.values())
         self.assertEqual(self.summary["modules"], laid)
@@ -119,7 +119,7 @@ class Export(unittest.TestCase):
         self.assertAlmostEqual(centre[2], pm.z, places=3)
 
     def test_a_stop_half_way_writes_nothing_and_keeps_the_old_file(self):
-        from meridiana import ifc_export
+        from meridiana.app.exchange import ifc_export
         target = self.folder / "fermato.ifc"
         target.write_text("old", encoding="utf-8")
 

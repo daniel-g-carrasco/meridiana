@@ -7,8 +7,8 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import catalog
-from meridiana.energy.components import ModuleSpec
+from meridiana.data import catalog
+from meridiana.core.energy.components import ModuleSpec
 
 
 class Catalogue(unittest.TestCase):
@@ -164,9 +164,9 @@ class Families(unittest.TestCase):
         took = []
         for _n in range(5):
             catalog.load.cache_clear()
-            start = time.process_time()
+            start = time.perf_counter()
             catalog.load("modules")
-            took.append(time.process_time() - start)
+            took.append(time.perf_counter() - start)
         self.assertLess(min(took), 0.4)
 
 

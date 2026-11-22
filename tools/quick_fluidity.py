@@ -88,9 +88,9 @@ def main():
     sys.path[:0] = [str(ROOT/'src'), str(ROOT/'tests')]
     from PySide6.QtCore import QPointF, QTimer, Qt
     from PySide6.QtGui import QSurfaceFormat
-    from meridiana import model
-    from meridiana.quick.app import QuickWindow, create_app
-    from meridiana.quick.sample import recorded_weather
+    from meridiana.core.model import model
+    from meridiana.gui.application import QuickWindow, create_app
+    from meridiana.gui.sample import recorded_weather
     from quick.gestures import click, drag, item, key, point, pump, wait_for, wheel
     if args.no_vsync:
         fmt = QSurfaceFormat.defaultFormat()
@@ -106,7 +106,7 @@ def main():
         target_screen = app.screens()[args.screen]
     project_hash = hashlib.sha256(args.project.read_bytes()).hexdigest()
     source_hashes = {str(f.relative_to(ROOT)): hashlib.sha256(f.read_bytes()).hexdigest()
-                     for f in sorted((ROOT/'src/meridiana/quick').rglob('*'))
+                     for f in sorted((ROOT/'src/meridiana/gui').rglob('*'))
                      if f.is_file() and f.suffix in {'.py', '.qml', '.js', '.frag', '.vert', '.qsb'}}
     harness_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     rows = []
@@ -141,7 +141,7 @@ def main():
             win.setPosition(origin.x()+80, origin.y()+40)
         win.show()
         if args.layout_only:
-            from meridiana.jobs import layout_of
+            from meridiana.app.jobs import layout_of
             results, keys, _ = layout_of(p)
             bridge.accept_layout(bridge.session.generation, results, keys)
         else:

@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 import _setup  # noqa: F401
-from meridiana.assistant import images
+from meridiana.gui.backend import assistant_images as images
 
 
 def _qimage(data: bytes):

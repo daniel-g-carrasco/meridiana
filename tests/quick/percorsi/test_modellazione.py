@@ -1,4 +1,4 @@
-"""Modelling journeys on a hidden desktop: what the collaudo found, and what must keep matching the Widgets.
+"""Modelling journeys on a hidden desktop: what the collaudo found.
 
 A method marked expectedFailure names a defect of docs/quick/collaudo/difetti-modellazione.csv: when the correction
 arrives the mark must go, because unittest reports an unexpected success. Run with
@@ -51,14 +51,14 @@ class ModellingJourneys(unittest.TestCase):
         self.assertEqual(steps[-1]['strings']['targets'], ['1/1', '1/2', '1/3'])
 
     def test_automatic_proposal_and_year_match_the_widgets(self):
-        quick, widgets = self.journey('quick', 'proposta')[-1], self.journey('widgets', 'proposta')[-1]
-        for key in ('modules', 'kwp', 'checks'):
-            self.assertEqual(quick[key], widgets[key], key)
-        self.assertEqual(quick['strings']['sizes'], widgets['strings']['sizes'])
-        self.assertEqual(quick['strings']['targets'], widgets['strings']['targets'])
-        # The outlines differ by the rounding of a pixel: see the report, 0.005 % in the proof run.
-        self.assertAlmostEqual(quick['energy_kwh']['kwh'], widgets['energy_kwh']['kwh'], delta=widgets['energy_kwh']['kwh']*.001)
-
+        # once compared with the same journey on the Widgets window (equal, the year within 0.1 %); only the Quick is
+        # left: the proposal lays strings on every input it fills and the year is computed
+        quick = self.journey('quick', 'proposta')[-1]
+        self.assertGreater(quick['modules'], 0)
+        self.assertGreater(quick['kwp'], 0)
+        self.assertTrue(quick['strings']['sizes'])
+        self.assertTrue(quick['strings']['targets'])
+        self.assertGreater(quick['energy_kwh']['kwh'], 0)
 
 if __name__ == '__main__':
     unittest.main()

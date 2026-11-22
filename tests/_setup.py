@@ -3,14 +3,16 @@ dispose of a window, put back what a module changes of the process. Every test m
 
 The tests are in folders (study 18, D 7.1), each a package that `python -m unittest discover -s tests` finds from
 the root: nucleo (the core, no Qt), calcoli (the energy and its references), formati (the files of every version),
-widget (one widget at a time, offscreen), finestra (the MainWindow itself), esterni (only when asked with an
-environment variable). The projects and the data they share are in _fixtures.py."""
+quick (the Qt Quick window, one subgroup at a time), esterni (only when asked with an environment variable). The
+projects and the data they share are in _fixtures.py."""
 
+import atexit
 import os
 import sys
 import tempfile
 from pathlib import Path
 
+_REAL_ENV = dict(os.environ)        # before the tests' home: where the user's own folders of Meridiana are
 # The journeys on a hidden desktop open the proof project of the real profile, kept apart from the tests' home.
 os.environ.setdefault("MERIDIANA_REAL_HOME", str(Path.home()))
 _TEST_HOME = tempfile.TemporaryDirectory(prefix="meridiana-tests-")
@@ -31,8 +33,103 @@ os.environ.setdefault("PYTHON_KEYRING_BACKEND", "keyring.backends.null.Keyring")
 # nothing prepared ahead behind a test's back (R548: the report's preview, the IFC model's geometry), whatever memory
 # the PC has free: the tests of the precaching ask for it (MERIDIANA_PRELOAD=1)
 os.environ.setdefault("MERIDIANA_PRELOAD", "0")
+# study 56: Qt's disk caches of compiled QML and pipelines never in a test, also in a start of the program itself (the
+# tests of qt_cache and of the start ask for them in a profile of their own)
+os.environ["MERIDIANA_QT_DISK_CACHE"] = "0"
+# and no thread that trims the caches behind a test's back when the PC is short of memory (resources.watch)
+os.environ["MERIDIANA_MEMORY_WATCH"] = "0"
+# R598, study 48 chapter 6 step 0: every session.photo() compared with the project in hand (app/session.py,
+# CHECK_PHOTO): a job started on a photo that is not the project would compute something else. Off in the program.
+os.environ.setdefault("MERIDIANA_CHECK_PHOTO", "1")
 
 WINDOWS = sys.platform == "win32"
+
+
+# R594: no test writes in the user's own folders of Meridiana (%APPDATA%\Meridiana and %LOCALAPPDATA%\Meridiana on
+# Windows, the XDG folders elsewhere): a reading of an IFC put its geometry in %LOCALAPPDATA%\Meridiana\cache\ifc
+# during tests/quick/pagine. Their files are taken at the start of the run and compared at its end
+# (tools/run_tests.py, and the exit of «python -m unittest»): what is new, changed or gone is listed, and the run fails.
+
+def profile_roots(environ=None) -> list[Path]:
+    """The user's folders of Meridiana for an environment (the real one by default), none inside another."""
+    from meridiana.app.platform.paths import Paths
+    p = Paths.from_env(_REAL_ENV if environ is None else environ)
+    roots = {p.config, p.state, p.data, p.cache}
+    if os.name == "nt":
+        roots.add(p.state.parent)                   # %LOCALAPPDATA%\Meridiana, its own files too
+    roots = sorted(Path(r) for r in roots)
+    return [r for r in roots if not any(o != r and o in r.parents for o in roots)]
+
+
+def profile_files(roots: list[Path]) -> dict:
+    """Every file under `roots`: its size and time of change."""
+    out = {}
+    for root in roots:
+        for folder, _dirs, files in os.walk(root):
+            for name in files:
+                path = os.path.join(folder, name)
+                try:
+                    st = os.stat(path)
+                except OSError:
+                    continue
+                out[path] = (st.st_size, st.st_mtime_ns)
+    return out
+
+
+def profile_changes(before: dict, after: dict) -> list[str]:
+    """What changed between two profile_files: «new», «changed» or «gone», with the path."""
+    return sorted([f"new {p}" for p in after if p not in before]
+                  + [f"changed {p}" for p in after if p in before and after[p] != before[p]]
+                  + [f"gone {p}" for p in before if p not in after])
+
+
+PROFILE_ROOTS = profile_roots()
+_PROFILE_BEFORE = profile_files(PROFILE_ROOTS)
+_PROFILE_CHECKED = []
+
+
+def profile_written() -> list[str]:
+    """What the run has written in the user's folders of Meridiana since it started (once: the runner asks, or the exit
+    of the interpreter)."""
+    _PROFILE_CHECKED.append(True)
+    return profile_changes(_PROFILE_BEFORE, profile_files(PROFILE_ROOTS))
+
+
+def _profile_at_exit() -> None:
+    if _PROFILE_CHECKED:
+        return
+    written = profile_written()
+    if written:
+        sys.stderr.write("FAILED: the tests wrote in the user's folders of Meridiana (R594):\n  "
+                         + "\n  ".join(written) + "\n")
+        sys.stderr.flush()
+        os._exit(1)
+
+
+atexit.register(_profile_at_exit)
+
+_PHOTO_CHECKED = []
+
+
+def photo_mismatches() -> list[str]:
+    """Every session.photo() of the run that was not the project in hand (MERIDIANA_CHECK_PHOTO): the run fails with
+    them even when the exception was raised in a slot Qt only printed (once: the runner asks, or the exit)."""
+    _PHOTO_CHECKED.append(True)
+    session = sys.modules.get("meridiana.app.session")
+    return list(getattr(session, "PHOTO_MISMATCHES", []))
+
+
+def _photo_at_exit() -> None:
+    if _PHOTO_CHECKED:
+        return
+    found = photo_mismatches()
+    if found:
+        sys.stderr.write(f"FAILED: {len(found)} session.photo() not the project in hand:\n" + "\n".join(found) + "\n")
+        sys.stderr.flush()
+        os._exit(1)
+
+
+atexit.register(_photo_at_exit)
 
 
 def _italian_catalogue() -> None:
@@ -73,30 +170,6 @@ def qt_or_skip():
     return app
 
 
-_LOOKS: dict = {}
-
-
-def meridiana_look(theme: str = "light", accent: str = "bronze"):
-    """Meridiana's look on the application, as the window sets it before it builds its widgets (ui/theme.py): Fusion
-    with its scroll bars (ui/scrollbars.py) and Inter once per process (as the program does: not put back), the
-    fonts of the catalogue for Qt's classes, the palette and the style sheet of
-    `theme` (put back by keep_global_state after the module). For a widget tested alone whose sizes or colours
-    depend on it; the Theme object, kept alive here."""
-    from meridiana import config
-    from meridiana.ui.theme import Theme
-    app = qt_or_skip()
-    key = (theme, accent)
-    if key not in _LOOKS:
-        # the Widgets' tests are measured on the look of before R390/R391 (Inter, Meridiana's backgrounds): the new
-        # settings' defaults (Plex, grey, indigo) are the Quick's and are proved in tests/formati
-        _LOOKS[key] = Theme(config.Config(theme=theme, accent=accent, background="none", font="inter",
-                                          backgrounds="meridiana"), app=app)
-    else:
-        _LOOKS[key].applied = None
-        _LOOKS[key].apply()
-    return _LOOKS[key]
-
-
 def wait_until(app, condition, seconds: float = 20.0) -> bool:
     """The events of the application turned until `condition()` holds, at most `seconds`: whether it did. Never a
     fixed wait: a test waits for what it means (study 18, D 5.4)."""
@@ -106,7 +179,7 @@ def wait_until(app, condition, seconds: float = 20.0) -> bool:
         app.processEvents()
         if condition():
             return True
-        time.sleep(0.01)
+        time.sleep(0.01)  # wait: a breath between two looks at the condition, so the workers' threads run
     return condition()
 
 
@@ -117,48 +190,12 @@ def turn_events(app, ms: float) -> None:
     end = time.perf_counter() + ms / 1000
     while time.perf_counter() < end:
         app.processEvents()
-        time.sleep(0.002)
-
-
-def wait_settled(app, probe, turns: int = 5, seconds: float = 5.0) -> bool:
-    """The events turned until `probe()` gives the same value `turns` times running (a layout of docks and splitters
-    that settles after a resize): whether it did within `seconds`. A condition, in the place of a fixed wait."""
-    import time
-    end, last, same = time.monotonic() + seconds, object(), 0
-    while time.monotonic() < end:
-        app.processEvents()
-        value = probe()
-        same = same + 1 if value == last else 0
-        if same >= turns:
-            return True
-        last = value
-        time.sleep(0.01)
-    return False
-
-
-def keyboard_or_skip(test, widget) -> None:
-    """The keyboard on `widget`, its window activated and waited for; or the test is skipped saying why. Wayland and
-    some desktops of the CI give no focus to a window the user did not activate: what needs the keyboard is then
-    not tried, and the result says so instead of passing in silence (study 18, D 5.4)."""
-    from PySide6.QtTest import QTest
-    from PySide6.QtWidgets import QApplication
-    window = widget.window()
-    window.activateWindow()
-    if not QTest.qWaitForWindowActive(window, 2000):
-        test.skipTest("the window did not get the keyboard (Wayland, a CI desktop): this part is not tried")
-    # a field of a page just built is shown when the events turn (a layout shows what is added to it later, queued):
-    # in a window active already nothing turned them, and a field not yet visible takes no keyboard
-    QApplication.processEvents()
-    widget.setFocus()
-    QApplication.processEvents()
-    focus = QApplication.focusWidget()
-    if not (widget.hasFocus() or (focus is not None and widget.isAncestorOf(focus))):
-        test.skipTest("the field did not get the keyboard (Wayland, a CI desktop): this part is not tried")
+        time.sleep(0.002)  # wait: a breath between two looks at the condition, so the workers' threads run
 
 
 def _qt_state(app) -> dict:
     from PySide6.QtGui import QPalette
-    from meridiana.ui import qt_translations
+    from meridiana.gui import qt_translations
     # a QGuiApplication (the Quick's, quick.app.create_app) has no style sheet: None, and nothing to put back
     sheet = app.styleSheet() if hasattr(app, "styleSheet") else None
     return {"palette": QPalette(app.palette()), "sheet": sheet, "qt_words": list(qt_translations._INSTALLED),
@@ -166,7 +203,7 @@ def _qt_state(app) -> dict:
 
 
 def _restore_qt(app, state: dict) -> None:
-    from meridiana.ui import qt_translations
+    from meridiana.gui import qt_translations
     if qt_translations._INSTALLED != state["qt_words"]:
         qt_translations.install(app, "en")
         for t in state["qt_words"]:
@@ -180,7 +217,7 @@ def _restore_qt(app, state: dict) -> None:
         app.setStyleSheet(state["sheet"])
     if app.palette() != state["palette"]:
         app.setPalette(state["palette"])
-    from meridiana.ui.theme import SystemAccent
+    from meridiana.gui.style.theme import SystemAccent
     system = app.findChild(SystemAccent)
     if system is not None:
         system.motion.emit(system.reduced_motion)  # the listeners back to what the system asks
@@ -301,84 +338,6 @@ def dispose(window) -> None:
     window.close()
     window.deleteLater()
     QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
-
-
-def window(test, project=None, cfg=None, size=(1200, 800), answers=None, cache=None, paths=None, pause=False,
-           auto_checks=False):
-    """The MainWindow of a test, the one way the tests of finestra/ make it (study 18, D 7.1): its folders in a new
-    temporary place (or `paths`), `cfg` (no background by default: no network), `project` saved to `test.file` and
-    opened, shown at `size`, its layouts waited for; a weather year written in the cache when `cache` is a Meteo.
-    Every message box is answered at once and noted in `test.dialogs` as (kind, (title, text)); `answers` changes
-    the answer of a kind ("question": Discard by default). The window is disposed of at the end of the test, after
-    the patches are undone; the test gets `test.win`, `test.paths`, `test.cfg` and `test.file`.
-    The layout asked by an edit or by a project opened starts at the next turn of the events, not after the 150 ms
-    the window waits to gather what is typed (MainWindow.relayout_timer): every layout of every test waited for
-    them, about 10 s of the suite (task 18e). `pause` keeps the window's pause, for a test that measures what an
-    edit asks for (finestra/test_speed.py). The pause of the year (energy_timer, 500 ms) stays: a year started by
-    itself would land in the middle of the tests that compute one. The window's own pause before it arranges itself for
-    a new size (arrange_timer) is skipped too, and the Checks panel stays where the test leaves it at any height,
-    unless `auto_checks` (finestra/test_arrange.py: a window of the tests is mostly lower than 900 px)."""
-    import tempfile
-    from unittest import mock
-
-    from PySide6.QtWidgets import QMessageBox
-
-    from meridiana import config as config_module
-    from meridiana.paths import Paths
-    from meridiana.ui.window import MainWindow
-    app = qt_or_skip()
-    test.dialogs = []
-    chosen = {"question": QMessageBox.StandardButton.Discard, "information": QMessageBox.StandardButton.Ok,
-              "warning": QMessageBox.StandardButton.Ok, **(answers or {})}
-    for name, answer in chosen.items():
-        patcher = mock.patch.object(QMessageBox, name, side_effect=lambda *a, n=name, r=answer, **k:
-                                    (test.dialogs.append((n, a[1:3])), r)[1])
-        patcher.start()
-        test.addCleanup(patcher.stop)
-    root = Path(tempfile.mkdtemp())
-    test.paths = paths or Paths(config=root / "config", state=root / "state", data=root / "data", cache=root / "cache")
-    if cache is not None:
-        from _fixtures import write_cache
-        write_cache(cache, test.paths.cache, include_horizon=True)
-    test.cfg = cfg if cfg is not None else config_module.Config(background="none", network_pvgis=False, font="inter",
-                                                                accent="bronze", backgrounds="meridiana")   # see meridiana_look
-    # the window's font is loaded once per process and the Widgets' tests are measured on Inter: whatever test came
-    # first, every window of a test starts on it (a test that wants Plex changes it, as test_theme does)
-    test.cfg.font = "inter"
-    from meridiana.ui import theme as theme_module
-    if theme_module._FAMILY and theme_module._CHOSEN[0] != "inter":     # only when another test left Plex
-        theme_module.change_font("inter")
-    from meridiana.ui import window as window_module
-    # the results pages are made when their phase is first shown, not at rest after the start (a test that wants
-    # that calls win._start_rest_build() with the constants of ui/window.py patched)
-    rest = mock.patch.object(window_module, "REST_BUILD_MS", None)
-    rest.start()
-    test.addCleanup(rest.stop)
-    win = MainWindow(test.paths, test.cfg)
-    test.addCleanup(dispose, win)                  # cleanups run last first: the window goes before the patches
-    if not pause:
-        win.relayout_timer.setInterval(0)
-    win.arrange_timer.setInterval(0)
-    win.auto_checks = auto_checks
-    # Meridio's local model is not running here: said at once, without the two seconds Windows takes to refuse a
-    # connection to a closed port (finestra/test_assistant_chat.py puts a fake server in its place)
-    from _fakes import nothing_local, offline
-    win.assistant_chat.make_local = offline
-    # and nothing else on this PC: the search for local models (R105) does not knock at the PC's real ports
-    win.assistant_chat.survey = nothing_local
-    test.win = win
-    test.file = None
-    if project is not None:
-        test.file = root / "prova.meridiana"
-        project.save(test.file)
-        win.open_path(test.file)
-    win.resize(*size)
-    win.show()
-    wanted = [sf.id for sf in win.project.subfields if sf.filled]
-    if not wait_until(app, lambda: all(sid in win.results for sid in wanted), 30):
-        test.fail("the layout did not come back")
-    app.processEvents()
-    return win
 
 
 os.environ.setdefault("LANGUAGE", "en")        # the tests read the source strings

@@ -3,7 +3,7 @@
 Runs inside the program through tools/quick_native_input.py, on its own desktop, on a synthetic project. It only
 records what it sees: the assertions are in test_native_selezione.py.
 """
-from meridiana import model
+from meridiana.core.model import model
 
 
 def synthetic(path):
@@ -119,7 +119,7 @@ from pathlib import Path
 import tempfile
 from PySide6.QtCore import QPointF, Qt
 
-from meridiana import model
+from meridiana.core.model import model
 
 seen = {}
 plan = find(win, name='plan')

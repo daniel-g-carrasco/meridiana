@@ -10,8 +10,8 @@ import numpy as np
 from PySide6.QtWidgets import QApplication
 
 from _setup import wait_until
-from meridiana import config
-from meridiana.assistant import kokoro_worker, speech
+from meridiana.app.platform import config
+from meridiana.app.assistant import kokoro_worker, speech
 
 RATE = 24000
 SENTENCE = speech.speakable(speech.LISTEN["it"], "it")
@@ -65,7 +65,7 @@ class SettingsTest(unittest.TestCase):
                 path.write_text(json.dumps({"version": 28, "assistant_voice_name": name}), encoding="utf-8")
                 cfg = config.load(path)
                 self.assertEqual((cfg.assistant_voice_pitch, cfg.assistant_voice_speed), expected, name)
-        self.assertEqual(config.CONFIG_VERSION, 32)          # 29 brought the voice (R492), 30 R523, 31 the 3D's edges, 32 R548
+        self.assertEqual(config.CONFIG_VERSION, 39)          # 29 brought the voice (R492), 30 R523, 31 the 3D's edges, 32 R548, 33 R575, 34 R588, 35 R619, 36 local preparation, 37 sticker only, 38 R696, 39 density
 
 
 class ModelTest(unittest.TestCase):
@@ -92,8 +92,8 @@ class ModelTest(unittest.TestCase):
         self.assertAlmostEqual(len(chosen) / len(plain), 1 / 1.15, delta=0.04)  # about 1/1.15
 
     def test_listen_in_the_settings_writes_the_sentence_with_the_settings(self):
-        from meridiana.quick.backend.settings import SettingsBackend
-        from meridiana.quick.backend import settings_schema
+        from meridiana.gui.backend.settings import SettingsBackend
+        from meridiana.gui.backend import settings_schema
         cfg = config.Config()
         backend = SettingsBackend(cfg)
         played = []

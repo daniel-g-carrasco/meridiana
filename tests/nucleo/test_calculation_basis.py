@@ -6,8 +6,8 @@ from types import SimpleNamespace
 import _setup  # noqa: F401
 import pandas as pd
 
-from meridiana.energy.calculation_basis import basis_of
-from meridiana.energy.economics import Battery, Settings, balance
+from meridiana.core.energy.calculation_basis import basis_of
+from meridiana.core.energy.economics import Battery, Settings, balance
 
 
 class CalculationBasis(unittest.TestCase):

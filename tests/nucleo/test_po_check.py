@@ -44,7 +44,7 @@ class PlanTexts(unittest.TestCase):
     def test_the_plan_reads_its_short_forms_from_the_one_catalogue(self):
         sys.path.insert(0, str(ROOT / "src"))
         from meridiana import i18n
-        from meridiana.quick.backend.plan_locale import _
+        from meridiana.gui.backend.plan_locale import _
         before = i18n.language()
         self.addCleanup(i18n.setup, before)
         i18n.setup("it")

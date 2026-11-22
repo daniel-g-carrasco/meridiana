@@ -11,7 +11,7 @@ from PySide6.QtGui import QColor, QPainter
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QApplication
 
-from meridiana.quick.backend import charts_scene as scene
+from meridiana.gui.backend import charts_scene as scene
 
 
 class SceneTest(unittest.TestCase):
@@ -57,7 +57,7 @@ class SceneTest(unittest.TestCase):
                     self.assertIn("Test energy", path.read_text(encoding="utf-8"))
 
     def test_zoom_export_remaps_ticks_and_clips_lines_markers_and_hidden_series(self):
-        from meridiana.quick.backend.charts_bridge import ChartServices
+        from meridiana.gui.backend.charts_bridge import ChartServices
         from PySide6.QtCore import QUrl
 
         data = dict(kind="line", title="Zoomed year", xs=list(range(101)),
@@ -105,7 +105,7 @@ class SceneTest(unittest.TestCase):
 
     def test_distinct_formulas_do_not_register_the_fonts_again(self):
         from matplotlib import font_manager
-        from meridiana.quick.backend.charts_bridge import _formula
+        from meridiana.gui.backend.charts_bridge import _formula
 
         first = _formula(r"E=P\cdot t", "#121212", "IBM Plex Sans", 11, 1)
         count = len(font_manager.fontManager.ttflist)

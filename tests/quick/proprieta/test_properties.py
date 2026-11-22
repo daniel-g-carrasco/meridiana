@@ -3,12 +3,12 @@ import copy
 import unittest
 
 from _fixtures import capannone
-from meridiana.session import ProjectSession
+from meridiana.app.session import ProjectSession
 
 
 class PropertiesTest(unittest.TestCase):
     def setUp(self):
-        from meridiana.quick.backend.properties import PropertiesBackend
+        from meridiana.gui.backend.properties import PropertiesBackend
         self.session = ProjectSession(capannone())
         self.backend = PropertiesBackend(self.session)
         self.addCleanup(self.backend.close)
@@ -61,7 +61,7 @@ class PropertiesTest(unittest.TestCase):
         self.assertIsNone(building.roof.ridge_height)
 
     def test_vvf_activity_and_categories_are_coherent(self):
-        from meridiana import vvf_activities as vvf
+        from meridiana.core.rules import vvf_activities as vvf
         self.select_building()
         self.assertTrue(self.backend.commit('fire.activity', 75))
         fire = self.session.project.buildings[0].fire
@@ -108,7 +108,7 @@ class PropertiesTest(unittest.TestCase):
             self.assertEqual(self.session.project.network.voltage_v, 1000)
 
     def test_support_plane_edit_preserves_elevation_at_area_centre(self):
-        from meridiana.quick.backend.properties_schema import support_reference
+        from meridiana.gui.backend.properties_schema import support_reference
         sf = self.session.project.subfields[0]
         self.session.select('subfield', sf.id)
         self.assertTrue(self.backend.commit('support.enabled', True))
@@ -120,7 +120,7 @@ class PropertiesTest(unittest.TestCase):
         self.assertEqual(self.session.project.subfields[0].support.tilt, 0)
 
     def test_free_roof_numbers_remove_corner_heights_and_validate_ridge(self):
-        from meridiana.model import Roof
+        from meridiana.core.model.model import Roof
         b = self.session.project.buildings[0]
         b.roof = Roof(type='free', free_pitches=[dict(ring=[[0, 0], [10, 0], [10, 5], [0, 5]],
             eave_side=0, eave=4., tilt=20., z=[4., 4., 5., 5.])])
@@ -151,6 +151,31 @@ class PropertiesTest(unittest.TestCase):
         self.backend.undo()
         self.assertTrue(self.session.project.subfields[0].manual)
 
+    def test_an_exclusions_base_height_is_edited_as_its_height_one_undo_step(self):
+        # format 32: the base under the height, a number in metres; the 3D prism starts there, the layout stays
+        from meridiana.core.model import model
+        p = self.session.project
+        p.exclusions.append(model.ExclusionItem(id='e1', ring=[[18, 8], [20, 8], [20, 10], [18, 10]], kind='plant',
+                                                building=p.buildings[0].id, height=4.0))
+        self.session.select('exclusion', 'e1')
+        ids = [f['id'] for s in self.backend.sections for f in (x.data for x in s['fields'])]
+        self.assertEqual(ids[ids.index('height') + 1], 'base')
+        self.assertEqual(self.backend.field('base').data['value'], 0.0)
+        self.assertTrue(self.backend.field('base').data['tip'])
+        self.assertTrue(self.backend.commit('base', '3 m'), self.backend.error)
+        self.assertEqual(p.exclusions[0].base, 3.0)
+        self.assertEqual(self.session.undo.count(), 1)
+        prism = p.obstacle_prism(p.exclusions[0])
+        self.assertEqual((prism['z0'] - prism['z1'], prism['z1']), (-1.0, p.buildings[0].height + 4.0))
+        self.assertFalse(self.backend.commit('base', '-1'))
+        self.assertTrue(self.backend.commit('base', '5'))                 # above its top: said, not refused
+        notes = [f['id'] for s in self.backend.sections for f in (x.data for x in s['fields'])]
+        self.assertIn('base_above', notes)
+        self.assertIsNone(p.obstacle_prism(p.exclusions[0]))
+        self.backend.undo()
+        self.backend.undo()
+        self.assertEqual(self.session.project.exclusions[0].base, 0.0)
+
 
 if __name__ == '__main__':
     unittest.main()
@@ -161,7 +186,7 @@ class FormsKeptTest(unittest.TestCase):
     again with their values changed, and QML is told of a new form only once per shape."""
 
     def setUp(self):
-        from meridiana.quick.backend.properties import PropertiesBackend
+        from meridiana.gui.backend.properties import PropertiesBackend
         self.session = ProjectSession(capannone())
         self.backend = PropertiesBackend(self.session)
         self.addCleanup(self.backend.close)

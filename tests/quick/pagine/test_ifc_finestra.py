@@ -13,11 +13,13 @@ from PySide6.QtCore import QObject
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 
-from meridiana import i18n, model, rvt_read
-from meridiana.config import Config
-from meridiana.quick.backend.controls import install_controls
-from meridiana.quick.backend.dialogs import DialogsBackend
-from meridiana.session import ProjectSession
+from meridiana import i18n
+from meridiana.app.exchange import rvt_read
+from meridiana.core.model import model
+from meridiana.app.platform.config import Config
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.backend.dialogs import DialogsBackend
+from meridiana.app.session import ProjectSession
 
 setUpModule = _setup.keep_global_state
 HERE = {"lat": 46.0, "lon": 13.0, "address": "46.00000000, 13.00000000"}
@@ -102,8 +104,9 @@ class Backend(unittest.TestCase):
         self.assertEqual((kind, data["follow"], data["name"]), ("ifc", True, "palazzetto"))
         self.assertEqual(data["place"].site_name, "Cantiere Asti")
         self.assertEqual(self.backend.session.project.buildings, [])
-        self.backend.session.project.buildings.append(model.Building(id="b1", name="Disegnato",
-                                                                     footprint=[[0, 0], [9, 0], [9, 9], [0, 9]]))
+        # drawn as the window draws (session.edit): the IFC plan is made on the session's photo (R598)
+        self.backend.session.edit("Draw", lambda p: p.buildings.append(model.Building(
+            id="b1", name="Disegnato", footprint=[[0, 0], [9, 0], [9, 9], [0, 9]])))
         self.backend.open("ifc")
         self.backend._state["fileName"] = "palazzetto.ifc"
         self.read(found("Cantiere Asti"))

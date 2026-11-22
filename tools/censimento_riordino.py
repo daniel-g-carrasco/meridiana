@@ -1,7 +1,7 @@
 """Census of the disorder in the Quick interface, for docs/revisioni/piano-riordino-r21.md (07/11/2026).
 
-Read only. Prints, for the QML, the backend, the two interfaces, the tests and the catalogues, the numbers the plan
-quotes; `--json` prints them as one object, so a guard can compare them with a ceiling («never more than today»).
+Read only. Prints, for the QML, the backend, the tools, the tests and the catalogues, the numbers the plan
+quotes (since r30, phase B, without the Widgets window: its numbers are gone with it); `--json` prints them as one object, so a guard can compare them with a ceiling («never more than today»).
 
     python tools/censimento_riordino.py
     python tools/censimento_riordino.py --json
@@ -17,10 +17,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-QUICK = ROOT / "src" / "meridiana" / "quick"
+QUICK = ROOT / "src" / "meridiana" / "gui"
 QML = QUICK / "qml" / "Meridiana"
 BACKEND = QUICK / "backend"
-UI = ROOT / "src" / "meridiana" / "ui"
 TESTS = ROOT / "tests"
 
 # Qt Quick controls that have an M. counterpart in Controls/, or should: outside Controls/ they are the raw ones
@@ -34,6 +33,14 @@ QT_BAR_RE = re.compile(r"ScrollBar\.vertical:\s*(?:C\.|QQ\.|T\.)?ScrollBar\s*\{"
 NUMBER_RE = re.compile(r"^\s*(anchors\.(?:margins|leftMargin|rightMargin|topMargin|bottomMargin)|(?:left|right|top|bottom)?[pP]adding"
                        r"|spacing|radius|implicitHeight|implicitWidth|height|width|font\.pixelSize|border\.width)\s*:\s*(\d+(?:\.\d+)?)\s*$")
 HEX_RE = re.compile(r'"#[0-9a-fA-F]{6,8}"')
+# R555 (4) (Daniel 08/11/2026: «censire gli altri elementi da uniformare (margini, altezze, raggi, trasparenze) e portarli
+# ai componenti comuni»): a measure, a gap, a radius, an opacity or a time given as a bare number anywhere in a line (the
+# one-line objects too, which NUMBER_RE does not see), 0, 1 and -1 aside; the guard keeps their count from growing
+INLINE_RE = re.compile(r"(?:^|[;{\s])((?:anchors\.|Layout\.)?(?:width|height|x|y|implicitWidth|implicitHeight|margins|leftMargin"
+                       r"|rightMargin|topMargin|bottomMargin|horizontalCenterOffset|verticalCenterOffset|padding|leftPadding"
+                       r"|rightPadding|topPadding|bottomPadding|spacing|radius|opacity|interval|duration|blur|font\.pixelSize"
+                       r"|border\.width|strokeWidth|preferredWidth|preferredHeight|minimumWidth|minimumHeight|maximumWidth"
+                       r"|maximumHeight))\s*:\s*(-?\.?\d+(?:\.\d+)?)\s*(?=$|[;}])")
 # an easing written by hand (Easing.OutCubic); easing.type: Theme.motion.EASE is the theme's (F4)
 EASING_RE = re.compile(r"easing\.type:.*\bEasing\.")
 DURATION_RE = re.compile(r"duration:\s*\d+")
@@ -72,7 +79,7 @@ def _block(lines: list[str], start: int) -> str:
 
 def census_qml() -> dict:
     out = {"files": 0, "lines": 0, "controls": 0, "raw": collections.Counter(), "raw_lines": collections.defaultdict(list),
-           "qt_bars": [], "numbers": [], "hex": [], "hex_in_controls": [], "easing": [], "duration": [], "unicode": [],
+           "qt_bars": [], "numbers": [], "inline": [], "hex": [], "hex_in_controls": [], "easing": [], "duration": [], "unicode": [],
            "shapepath_outside": collections.Counter(), "theme_uses": 0, "metrics_uses": 0, "qstr": 0, "tr": 0, "labels": 0, "texts": 0}
     for path in qml_files():
         r = rel(path)
@@ -92,6 +99,9 @@ def census_qml() -> dict:
                 out["raw_lines"][m.group(1)].append(f"{r}:{n}")
             if QT_BAR_RE.search(code) and not in_controls:
                 out["qt_bars"].append(f"{r}:{n}")
+            for m in INLINE_RE.finditer(code):
+                if m.group(2) not in ("0", "1", "-1") and "/Theme/" not in r and not r.endswith("ControlMetrics.qml"):
+                    out["inline"].append(f"{r}:{n}:{m.group(1)} {m.group(2)}")
             m = NUMBER_RE.match(code)
             if m and m.group(2) not in ("0", "1"):
                 out["numbers"].append(f"{r}:{n}:{m.group(1)} {m.group(2)}")
@@ -150,43 +160,16 @@ def census_backend() -> dict:
                 if re.search(rx, line):
                     c[rel(p)] += 1
         counts[name] = {"total": sum(c.values()), "files": len(c), "top": c.most_common(4)}
-    ui_modules = set()
-    for p in quick_py:
-        for m in re.finditer(r"(?:from|import)\s+(?:meridiana\.ui|\.\.\.?ui)(?:\.(\w+))?", p.read_text(encoding="utf-8")):
-            ui_modules.add(m.group(1) or "(package)")
-    # duplicates with the old interface
-    ui_bodies = {}
-    for p in UI.glob("*.py"):
-        for k, v in _bodies(p).items():
-            ui_bodies.setdefault((k, v), []).append(p.name)
-    identical = []
-    for p in files:
-        for k, v in _bodies(p).items():
-            if (k, v) in ui_bodies:
-                identical.append((p.name, ui_bodies[(k, v)][0], k))
-    pairs = {}
-    for b, u in [("assistant_chat.py", "assistant_chat.py"), ("plan_edit.py", "plan.py"), ("assistant_local.py", "assistant_local.py"),
-                 ("checks.py", "checks_page.py"), ("charts_data.py", "charts.py"), ("catalog.py", "catalog_dialog.py")]:
-        nb, nu = _names(BACKEND / b), _names(UI / u)
-        pairs[f"{b} ~ ui/{u}"] = f"{len(nb & nu)}/{len(nb)}"
     return {"modules": len(files), "lines": sum(sizes.values()), "quick_py_lines": sum(len(p.read_text(encoding='utf-8').splitlines()) for p in quick_py),
             "biggest": sorted(sizes.items(), key=lambda kv: -kv[1])[:12], "classes": len(re.findall(r"^class ", text, re.M)),
             "signals": len(re.findall(r"\bSignal\(", text)), "slots": len(re.findall(r"@Slot\(", text)), "properties": len(re.findall(r"\bProperty\(", text)),
-            "patterns": counts, "ui_modules_imported": sorted(ui_modules), "identical_with_ui": identical, "shared_names": pairs}
+            "patterns": counts}
 
 
 def census_interfaces() -> dict:
-    ui_files = sorted(UI.glob("*.py"))
-    ui_lines = {p.stem: len(p.read_text(encoding="utf-8").splitlines()) for p in ui_files}
-    needed = set(census_backend()["ui_modules_imported"]) - {"(package)"}
-    ui_qml = sorted((UI / "qml").rglob("*.qml")) if (UI / "qml").is_dir() else []
     tools = sorted((ROOT / "tools").glob("*.py"))
-    widget_tools = [t.name for t in tools if re.search(r"meridiana\.ui\.(window|view3d|plan)\b|from meridiana\.ui import", t.read_text(encoding="utf-8"))]
-    return {"ui_modules": len(ui_files), "ui_lines": sum(ui_lines.values()), "ui_qml_files": len(ui_qml),
-            "ui_qml_lines": sum(len(p.read_text(encoding="utf-8").splitlines()) for p in ui_qml),
-            "needed_by_quick": len(needed), "needed_lines": sum(ui_lines.get(m, 0) for m in needed),
-            "needed_sizes": sorted(((m, ui_lines.get(m, 0)) for m in needed), key=lambda kv: -kv[1]),
-            "tools": len(tools), "tools_widgets": len(widget_tools), "tools_quick": sum(1 for t in tools if "quick" in t.name or "meridiana.quick" in t.read_text(encoding="utf-8"))}
+    return {"tools": len(tools),
+            "tools_quick": sum(1 for t in tools if "quick" in t.name or "meridiana.gui" in t.read_text(encoding="utf-8"))}
 
 
 def census_tests() -> dict:
@@ -199,7 +182,9 @@ def census_tests() -> dict:
         per[key] += 1
         perl[key] += len(text.splitlines())
         tests[key] += len(re.findall(r"^\s*def test_", text, re.M))
-    patterns = {"qWait": r"qWait\(", "time.sleep": r"time\.sleep\(", "processEvents": r"processEvents\(", "grab": r"\.grab(?:Window|ToImage|Image)?\(",
+    patterns = {"qWait": r"qWait\(", "time.sleep": r"time\.sleep\(",
+                # rule 10 (Daniel 21/11/2026): a fixed wait counts only without its reason on the line, `# wait: ...`
+                "qWait_bare": r"qWait\((?!.*#\s*wait:)", "time.sleep_bare": r"time\.sleep\((?!.*#\s*wait:)", "processEvents": r"processEvents\(", "grab": r"\.grab(?:Window|ToImage|Image)?\(",
                 "pixel": r"pixel(?:Color)?\(", "keep_global_state": r"keep_global_state", "findChild": r"findChild", "childItems": r"childItems\(\)",
                 "skip": r"skip(?:Test|If|Unless)\(", "QT_QPA_PLATFORM": r"QT_QPA_PLATFORM"}
     counts = {}
@@ -211,9 +196,7 @@ def census_tests() -> dict:
                     c[rel(p)] += 1
         counts[name] = {"total": sum(c.values()), "files": len(c)}
     no_init = [rel(d) for d in {p.parent for p in files if p.name.startswith("test_")} if not (d / "__init__.py").exists()]
-    widget_tests = tests["widget"] + tests["finestra"]
     return {"files": len(files), "lines": sum(perl.values()), "tests": sum(tests.values()), "per_folder": {k: (per[k], perl[k], tests[k]) for k in sorted(per)},
-            "widgets_only": {"files": per["widget"] + per["finestra"], "lines": perl["widget"] + perl["finestra"], "tests": widget_tests},
             "quick": {"files": sum(v for k, v in per.items() if k.startswith("quick")), "tests": sum(v for k, v in tests.items() if k.startswith("quick"))},
             "patterns": counts, "dirs_without_init": sorted(no_init),
             "native_files": sum(1 for p in (TESTS / "quick" / "percorsi").glob("*.py") if "native" in p.name)}
@@ -345,14 +328,9 @@ def main(argv: list[str]) -> int:
     print("  più grandi:", ", ".join(f"{Path(k).name} {v}" for k, v in b["biggest"]))
     for k, v in b["patterns"].items():
         print(f"  {k:16} {v['total']:4} in {v['files']:3} file  {v['top'][:3]}")
-    print(f"  moduli di ui importati dalla Quick: {len(b['ui_modules_imported'])}: {', '.join(b['ui_modules_imported'])}")
-    print(f"  funzioni identiche backend/ui (4+ istruzioni): {len(b['identical_with_ui'])} {[x[2] for x in b['identical_with_ui']]}")
-    print(f"  nomi in comune: {b['shared_names']}")
-    print(f"\nInterfacce: ui/ {i['ui_modules']} moduli, {i['ui_lines']} righe + {i['ui_qml_files']} QML ({i['ui_qml_lines']} righe); "
-          f"la Quick ne usa {i['needed_by_quick']} moduli, {i['needed_lines']} righe ({round(100 * i['needed_lines'] / i['ui_lines'])} %)")
-    print(f"  tools/: {i['tools']} script, {i['tools_widgets']} sui Widgets, {i['tools_quick']} sulla Quick")
-    print(f"\nProve: {t['files']} file, {t['lines']} righe, {t['tests']} prove; Widgets (widget + finestra): {t['widgets_only']['files']} file, "
-          f"{t['widgets_only']['lines']} righe, {t['widgets_only']['tests']} prove; Quick: {t['quick']['files']} file, {t['quick']['tests']} prove")
+    print(f"\ntools/: {i['tools']} script, {i['tools_quick']} sulla Quick")
+    print(f"\nProve: {t['files']} file, {t['lines']} righe, {t['tests']} prove; Quick: {t['quick']['files']} file, "
+          f"{t['quick']['tests']} prove")
     for k, v in t["patterns"].items():
         print(f"  {k:18} {v['total']:4} in {v['files']:3} file")
     print(f"  cartelle di prove senza __init__.py: {t['dirs_without_init'] or 'nessuna'}; file di prove native in percorsi: {t['native_files']}")

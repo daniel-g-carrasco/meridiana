@@ -16,7 +16,9 @@ from pathlib import Path
 
 import _setup  # noqa: F401
 
-from meridiana import ifc_import, ifc_scan, model, procmem
+from meridiana.app.exchange import ifc_import, ifc_scan
+from meridiana.core.model import model
+from meridiana.core.compute import procmem
 
 DATA = Path(__file__).resolve().parents[1] / "data" / "ifc"
 LONG_IFC = Path(os.environ.get("MERIDIANA_LONG_IFC_FILE", "-"))
@@ -209,7 +211,7 @@ class Sample(unittest.TestCase):
         self.assertEqual(len(zoned.zone_rings), 2)
 
     def _found(self) -> dict:
-        from meridiana import ifc_worker
+        from meridiana.app.exchange import ifc_worker
         s = ifc_scan.scan(self.path)
         return {"schema": s.schema, "buildings": [], "obstacles": [], "supports": [], "counts": {}, "site": None,
                 "true_north": 0.0, "map": None, "solids": [ifc_worker.compact(e) for e in s.elements],
@@ -239,7 +241,7 @@ class Files(unittest.TestCase):
 
     def test_the_worker_gives_the_solids(self):
         env = {**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[2] / "src")}
-        out = subprocess.run([sys.executable, "-m", "meridiana.ifc_worker", str(DATA / "Building-Hvac.ifc")],
+        out = subprocess.run([sys.executable, "-m", "meridiana.app.exchange.ifc_worker", str(DATA / "Building-Hvac.ifc")],
                              capture_output=True, text=True, encoding="utf-8", env=env, timeout=120)
         lines = [json.loads(x) for x in out.stdout.splitlines() if x.strip()]
         result = next(x["result"] for x in lines if "result" in x)
@@ -248,7 +250,7 @@ class Files(unittest.TestCase):
         self.assertIn("scan", {x.get("what") for x in lines})
         p = ifc_import.plan(result, model.Project(), "origin")
         self.assertGreater(len(p.buildings), 0)
-        out = subprocess.run([sys.executable, "-m", "meridiana.ifc_worker", str(DATA / "Building-Architecture.ifc")],
+        out = subprocess.run([sys.executable, "-m", "meridiana.app.exchange.ifc_worker", str(DATA / "Building-Architecture.ifc")],
                              capture_output=True, text=True, encoding="utf-8", env=env, timeout=120)
         result = json.loads(out.stdout.strip().splitlines()[-1])["result"]
         self.assertEqual(result["mode"], "direct")                # the roofs as before, the solids with them
@@ -261,7 +263,7 @@ class LargeIfcModel(unittest.TestCase):
     def test_read_and_made_bodies_in_time(self):
         env = {**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[2] / "src")}
         t0 = time.monotonic()
-        p = subprocess.Popen([sys.executable, "-m", "meridiana.ifc_worker", str(LONG_IFC)], stdout=subprocess.PIPE,
+        p = subprocess.Popen([sys.executable, "-m", "meridiana.app.exchange.ifc_worker", str(LONG_IFC)], stdout=subprocess.PIPE,
                              stderr=subprocess.DEVNULL, env=env)
         peak = 0
         try:

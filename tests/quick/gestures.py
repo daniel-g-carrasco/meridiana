@@ -3,7 +3,6 @@ import time
 
 from PySide6.QtCore import QEvent, QEventLoop, QObject, QPoint, QPointF, Qt, QTimer
 from PySide6.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
-from PySide6.QtQuick import QQuickItem
 
 
 def pump(milliseconds=16):
@@ -26,14 +25,26 @@ def item(window, name):
         pending = [window.contentItem()]
         while pending:
             obj = pending.pop()
-            if not isinstance(obj, QQuickItem):
-                continue
             if obj.objectName() == name:
                 return obj
             pending.extend(obj.childItems())
     if found is None:
         raise AssertionError('Missing Quick item: ' + name)
     return found
+
+
+def in_current_phase(window, node):
+    """A fading body's visibility is not its phase: inspect the retained owner's phase id."""
+    phase = window.property('phase')
+    while node is not None:
+        phase_id = node.property('phaseId')
+        if isinstance(phase_id, str) and phase_id:
+            return phase_id == phase
+        name = node.objectName()
+        if name.startswith('phasePageLoader-'):
+            return name.removeprefix('phasePageLoader-') == phase
+        node = node.parentItem()
+    return True
 
 
 def point(obj, x=None, y=None):

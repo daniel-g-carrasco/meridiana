@@ -6,10 +6,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from meridiana import dxf_export, jobs
-from meridiana.energy import plant
-from meridiana.quick.backend.plan_edit import PlanEditor
-from meridiana.session import ProjectSession
+from meridiana.app.exchange import dxf_export
+from meridiana.app import jobs
+from meridiana.core.energy import plant
+from meridiana.gui.backend.plan_edit import PlanEditor
+from meridiana.app.session import ProjectSession
 from calcoli.test_string_faces import P2, capannone
 from quick.pianta import test_edit_window as edit
 
@@ -67,7 +68,8 @@ class OverTwoFaces(unittest.TestCase):
         self.assertEqual(len(refs), 6)
 
     def test_the_3d_shows_the_string_climbing_over_the_ridge_and_the_optimizers(self):
-        from meridiana import mesh, viewaids
+        from meridiana.core.geometry import mesh
+        from meridiana.app.view import viewaids
         lines, crosses = viewaids.string_segments(self.project, self.results)
         (run,) = self.project.energy["strings"]["runs"]
         n = len(run["modules"])
@@ -82,7 +84,7 @@ class OverTwoFaces(unittest.TestCase):
         self.assertEqual(len(crosses), 2 * len(some))
 
     def test_the_report_says_the_string_over_two_faces(self):
-        from meridiana.report_typst import chapters
+        from meridiana.app.report import chapters
 
         class Ctx:
             project = self.project

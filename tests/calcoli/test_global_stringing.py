@@ -4,9 +4,10 @@ import time
 import unittest
 
 import _setup  # noqa: F401
-from meridiana import layout, model
-from meridiana.energy import plant, sizing, stringing
-from meridiana.energy.components import ModuleSpec
+from meridiana.core.layout import layout
+from meridiana.core.model import model
+from meridiana.core.energy import plant, sizing, stringing
+from meridiana.core.energy.components import ModuleSpec
 
 
 def module(name='M', imp=5):
@@ -103,7 +104,7 @@ class Global(unittest.TestCase):
                 self.assertTrue(out.search_complete)
 
     def test_optimizer_family_is_searched_and_the_chosen_hardware_is_persistable(self):
-        from meridiana import catalog
+        from meridiana.data import catalog
         rec = next(r for r in catalog.search('inverters', manufacturer='SolarEdge', limit=None)
                    if r['model'] == 'SE3000H')
         out = plant.proposal(project([(rec, 1)]), groups=[group(6)])

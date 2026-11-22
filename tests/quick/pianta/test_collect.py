@@ -1,7 +1,7 @@
 """R301: temporary edge/point tools preserve the drawing they interrupt."""
 import unittest
 
-from meridiana.quick.backend.plan_collect import Collector
+from meridiana.gui.backend.plan_collect import Collector
 
 
 class CollectorTest(unittest.TestCase):
@@ -46,7 +46,7 @@ class CollectorTest(unittest.TestCase):
         the chosen side ends horizontal and at the bottom, the outline above it."""
         import math
         import random
-        from meridiana.quick.backend.plan_collect import align_angle
+        from meridiana.gui.backend.plan_collect import align_angle
         rng = random.Random(477)
 
         def screen(point, bearing):          # Plan.qml, screen(): the drawing's point (x, y) at this bearing

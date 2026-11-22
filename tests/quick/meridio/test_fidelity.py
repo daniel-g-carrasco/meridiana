@@ -7,9 +7,9 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
-from meridiana import config
-from meridiana.quick.backend.assistant import build_page
-from meridiana.quick.backend.assistant_chat import AssistantChat
+from meridiana.app.platform import config
+from meridiana.gui.backend.assistant import build_page
+from meridiana.gui.backend.assistant_chat import AssistantChat
 from quick.meridio.support import Host, KeyStore, Voice
 
 
@@ -140,28 +140,3 @@ class FidelityTest(unittest.TestCase):
             point = button.mapToItem(area, button.width()/2, button.height()/2)
             self.assertGreaterEqual(point.y(), 0)
             self.assertLess(point.y(), area.height())
-
-    def test_r197_wrapped_suggestions_fit_the_button_with_large_text(self):
-        from quick.gestures import item
-        chat = AssistantChat(Host(), config.Config(assistant_introduced=True, assistant_local_model='fake'), key_store=KeyStore(), voice=Voice())
-        self.addCleanup(chat.close)
-        _, window, root, _ = self.scene(chat, textSize='large', font='plex')
-        chat._suggestions = ['Quanti moduli in serie al massimo, e perché?',
-                             "C'è altro da sistemare prima della relazione?",
-                             "Il rapporto DC/AC è ragionevole qui?"]
-        chat.changed.emit()
-        root.setProperty('bubbleHeight', 600)
-        wrapped = False
-        for width in (320, 370, 400):
-            root.setProperty('bubbleWidth', width)
-            QTest.qWait(150)
-            for index in range(1, 4):
-                button = item(window, 'assistantSuggestion'+str(index))
-                self.assertTrue(button.isVisible())
-                label = next(child for child in button.property('contentItem').childItems()
-                             if child.property('text') == button.property('text'))
-                wrapped |= label.property('lineCount') > 1
-                self.assertGreaterEqual(label.height(), label.property('contentHeight'))
-                bottom = label.mapToItem(button, 0, label.height()).y()
-                self.assertLessEqual(bottom, button.height()-button.property('bottomPadding'), (width, index))
-        self.assertTrue(wrapped, 'This regression needs at least one multiline question')

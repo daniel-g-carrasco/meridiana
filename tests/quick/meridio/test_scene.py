@@ -7,7 +7,8 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
-from meridiana.quick.backend.assistant import build_page
+from meridiana.app.assistant import SIZE
+from meridiana.gui.backend.assistant import build_page
 
 
 class SceneTest(unittest.TestCase):
@@ -51,23 +52,25 @@ class SceneTest(unittest.TestCase):
         root.setProperty('tail', 'left')
         root.placeBubble()
         QTest.qWait(40)
-        count = engine._assistant_images.requests
         saves = []
         root.placementSaved.connect(lambda *args: saves.append(args))
         self.mouse(window, QEvent.Type.MouseButtonPress, (123, 423))
+        count = None
         for x in range(120, 1000, 20):
             self.mouse(window, QEvent.Type.MouseMove, (x + 23, 423))
+            # R619: picked up he is surprised (his eyes asked once); then moving asks for nothing
+            count = engine._assistant_figure.requests if count is None else count
             self.assertEqual(root.property('avatarX'), x)
             # A frame is grabbed at every step. No stale screenshot replaces the live subtree.
             image = window.grabWindow()
             self.assertFalse(image.isNull())
-            expected_side = 'left' if x + 46 + 4 + 320 <= 1366 else 'right'
+            expected_side = 'left' if x + SIZE + 4 + 320 <= 1366 else 'right'
             self.assertEqual(root.property('tail'), expected_side)
-            expected_x = x + 50 if expected_side == 'left' else x - 324
+            expected_x = x + SIZE + 4 if expected_side == 'left' else x - 324      # his side and the gap
             self.assertEqual(root.property('bubbleX'), expected_x)
         self.mouse(window, QEvent.Type.MouseButtonRelease, (1003, 423))
         self.assertEqual(len(saves), 1)
-        self.assertEqual(engine._assistant_images.requests, count)
+        self.assertEqual(engine._assistant_figure.requests, count)
 
     def test_help_avoids_its_target_and_escape_restores_float(self):
         engine, window, root = self.scene(options={'reducedMotion': True})
@@ -176,9 +179,8 @@ class SceneTest(unittest.TestCase):
         self.mouse(window, QEvent.Type.MouseButtonRelease, (start.x()-100, start.y()-30))
         self.assertEqual((root.property('avatarX'), root.property('avatarY')), (before[0]-100, before[1]-30))
 
-    def test_pixel_style_and_small_docked_large_text_have_pixels(self):
+    def test_sticker_and_small_docked_large_text_have_pixels(self):
         _, window, root = self.scene(options={'textSize': 'large', 'theme': 'dark'}, width=700, height=500)
-        root.setProperty('characterStyle', 'pixel')
         root.setProperty('docked', True)
         QTest.qWait(60)
         self.assertFalse(window.grabWindow().isNull())

@@ -10,7 +10,7 @@ from pathlib import Path
 import _setup
 
 from meridiana import EXE_NAME, SLUG
-from meridiana.paths import Paths, nearest_folder
+from meridiana.app.platform.paths import Paths, nearest_folder
 
 
 def absolute(name: str) -> str:

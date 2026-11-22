@@ -5,10 +5,11 @@ import unittest
 from pathlib import Path
 
 import _setup
-from meridiana import i18n, jobs
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import item, pump
-from quick.parity.differential import connected_fixture
+from quick.aiuti.differential import connected_fixture
 
 # no keep_global_state: in the shell folder an earlier module leaves a QGuiApplication, without styleSheet
 
@@ -152,7 +153,7 @@ class Workbench(unittest.TestCase):
 
     def test_r468_every_tooltip_waits_as_in_the_widgets(self):
         import re
-        root = Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml'
+        root = Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml'
         attached = [f'{p.relative_to(root)}:{n}' for p in root.rglob('*.qml')
                     for n, line in enumerate(p.read_text(encoding='utf-8').splitlines(), 1)
                     if re.search(r'\bToolTip\.(visible|text|delay)\s*:', line)]
@@ -219,19 +220,29 @@ class Workbench(unittest.TestCase):
 
 
     def test_r469_every_question_mark_is_the_one_help_mark(self):
-        # R21-F3 (Daniel 07/11/2026): one «?» in the program, M.HelpMark, the round icon of the cards' header (20 px,
-        # the icon at 12, a flat button): it was R469's square of the Widgets with a hair line round it
-        marks = []
+        # R21-F3 (Daniel 07/11/2026): one «?» in the program, M.HelpMark; R596 (Daniel 13/11/2026): a full disc of 16 px
+        # in a zone of 20, standing on the whole pixel of the window (it was a 12 px icon on half a pixel, blurred)
+        # each phase's marks measured while it is shown: a phase change may make the rows and their marks again
+        # (the trees and lists of the kit), and a mark held from a phase before is then already deleted
+        count = 0
         for name in self.PHASES:
             self.phase(name)
-            marks += [(name, m) for m in descendants(self.win.contentItem())
-                      if m.metaObject().indexOfProperty('helpMark') >= 0 and m.property('visible')]
-        self.assertGreater(len(marks), 3)
+            marks = [(name, m) for m in descendants(self.win.contentItem())
+                     if m.metaObject().indexOfProperty('helpMark') >= 0 and m.property('visible')]
+            count += len(marks)
+            self.check_help_marks(marks)
+        self.assertGreater(count, 3)
+
+    def check_help_marks(self, marks):
         for name, mark in marks:
             self.assertEqual((mark.implicitWidth(), mark.implicitHeight()), (20, 20), name)
             if mark.isVisible():
                 self.assertEqual((mark.width(), mark.height()), (20, 20), name)
-            self.assertTrue(mark.property('flat'), f'{name}: a flat button, no line round it')
+            if mark.isVisible():
+                at = mark.mapToScene(mark.boundingRect().topLeft())
+                self.assertEqual((at.x(), at.y()), (round(at.x()), round(at.y())), f'{name}: {mark.objectName()} on a half pixel')
+            disc = next(c for c in descendants(mark) if c.objectName() == 'helpDisc')
+            self.assertEqual((disc.width(), disc.height()), (16, 16), name)
 
 
     def test_r475_a_second_click_closes_the_menu_and_passing_over_the_next_title_opens_it(self):

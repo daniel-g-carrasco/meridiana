@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import _setup  # noqa: F401
 
-from meridiana import compare
+from meridiana.app import compare
 
 
 def out(kwh, npv, payback=None, near=-2.0):

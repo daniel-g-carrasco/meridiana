@@ -10,7 +10,7 @@ from pathlib import Path
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QJSEngine
 
-from meridiana import navigation
+from meridiana.app.interface import navigation
 
 
 def style_data(style):
@@ -30,7 +30,7 @@ class NavigationParity(unittest.TestCase):
 
     def setUp(self):
         self.engine = QJSEngine()
-        source = Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana/Plan/Navigation.js'
+        source = Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana/Plan/Navigation.js'
         result = self.engine.evaluate(source.read_text(encoding='utf-8').replace('.pragma library', ''))
         self.assertFalse(result.isError(), result.toString())
 

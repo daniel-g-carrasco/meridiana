@@ -88,7 +88,7 @@ def picture(path: Path, colour=(120, 110, 100)) -> None:
 class EditableExports(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from meridiana.report_typst import editable, engine
+        from meridiana.app.report import editable, engine
         try:
             cls.build = engine.Build()
         except engine.EngineMissing as error:
@@ -194,7 +194,7 @@ class EditableExports(unittest.TestCase):
 
     def test_symbols_as_text(self):
         """R506: a symbol is text in the cell (italic letters, real subscripts, Greek), not a formula object."""
-        from meridiana.report_typst.editable import symbol_pieces
+        from meridiana.app.report.editable import symbol_pieces
         pieces = [(p.text, p.italic, p.pos) for p in symbol_pieces(r"\eta_{200}/\eta_{STC}")]
         self.assertEqual(pieces, [("η", True, ""), ("200", False, "sub"), ("/", False, ""), ("η", True, ""),
                                   ("STC", True, "sub")])
@@ -292,7 +292,7 @@ class EditableExports(unittest.TestCase):
 
     def test_libreoffice_measure(self):
         """With a LibreOffice on the computer, the ODT's formulas get its size and both files the contents' pages."""
-        from meridiana.report_typst import editable, office
+        from meridiana.app.report import editable, office
         if office.found() is None:
             self.skipTest("no LibreOffice")
         # a profile of its own (07/11/2026: a soffice.bin left by a run of the night held the shared one, and this
@@ -344,7 +344,7 @@ class EditableExports(unittest.TestCase):
                     self.assertLess(share, 0.001, f"{kind}: {name} has blue pixels")
 
     def test_missing_library_says_which(self):
-        from meridiana.report_typst import editable
+        from meridiana.app.report import editable
         self.assertEqual(editable.missing_libraries("odt"), [])
         self.assertEqual(editable.missing_libraries("docx"), [])
         with self.assertRaises(ValueError):

@@ -3,13 +3,16 @@ from pathlib import Path
 import tempfile
 import unittest
 
+import _setup
+
 from PySide6.QtCore import QCoreApplication, QEvent, QObject, QPoint, QPointF, Qt
 from PySide6.QtGui import QColor, QKeyEvent, QMouseEvent, QWheelEvent
 from PySide6.QtWidgets import QApplication
 
-from meridiana import model, view_colours
-from meridiana.quick.app import QuickWindow, create_app
-from meridiana.ui import design
+from meridiana.core.model import model
+from meridiana.app.interface import view_colours
+from meridiana.gui.application import QuickWindow, create_app
+from meridiana.gui.style import design
 from ._fidelity_support import data, settle
 
 
@@ -83,6 +86,24 @@ class OverlayFieldTest(unittest.TestCase):
             self.mouse(QEvent.Type.MouseMove, x0+dx*i/6, y0+dy*i/6, Qt.MouseButton.NoButton, middle, mods)
         self.mouse(QEvent.Type.MouseButtonRelease, x0+dx, y0+dy, middle)
 
+    def test_text_menu_keeps_overlay_and_project_draft(self):
+        from PySide6.QtTest import QTest
+        field = self.open_field()
+        input_ = field.findChild(QObject, 'overlayFieldInput')
+        previous = input_.property('text')
+        undo = self.host.bridge.session.undo.count()
+        input_.forceActiveFocus()
+        QTest.keyClick(self.window, Qt.Key_F10, Qt.ShiftModifier)
+        self.assertTrue(_setup.wait_for(lambda: any(o.objectName() == 'textContextMenu' and o.property('visible')
+                                                   for o in field.findChildren(QObject)), 500))
+        QTest.keyClick(self.window, Qt.Key_Down)
+        self.assertTrue(field.isVisible())
+        self.assertEqual(self.host.bridge.session.undo.count(), undo)
+        QTest.keyClick(self.window, Qt.Key_Escape)
+        self.assertTrue(_setup.wait_for(lambda: input_.hasActiveFocus(), 500))
+        self.assertTrue(field.isVisible())
+        self.assertEqual(input_.property('text'), previous)
+
     def test_field_holds_its_corner_through_orbit_pan_and_zoom(self):
         field = self.open_field()
         first = self.offset(field)
@@ -141,7 +162,7 @@ class OverlayFieldTest(unittest.TestCase):
         self.assertEqual(field.property('label'), 'Quota da terra')
         self.assertEqual(field.property('unit'), 'm')
         input_ = field.findChild(QObject, 'overlayFieldInput')
-        self.assertEqual(input_.property('font').pixelSize(), design.Type.SMALL)
+        self.assertEqual(input_.property('font').pixelSize(), view_colours.Annotation.LABEL_SIZE)   # R685: the views' labels
         self.assertEqual(field.property('text'), '8,89')
         # As wide as what it holds: the word, the value, the unit, and the margins, nothing more
         self.assertLess(field.width(), 200)
@@ -190,7 +211,7 @@ class OverlayFieldTest(unittest.TestCase):
         # Over a corner already taken, Ctrl gives it back: the minus
         self.open_field()
         self.mouse(QEvent.Type.MouseMove, *at, mods=ctrl)
-        self.assertEqual(sign.property('sign'), 'remove')
+        self.assertEqual(sign.property('sign'), 'remove', str((at, self.corner(), self.view.property('hotCorner'), data(self.view, 'verticesData.map(v=>v.selected)'), data(self.view, '[width,sceneHeight]'))))
         text = sign.findChild(QObject, 'pointerSignText')
         self.assertEqual(text.property('name'), 'control:minus')
         self.mouse(QEvent.Type.MouseMove, at[0]+3, at[1]+3)

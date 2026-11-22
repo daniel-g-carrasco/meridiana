@@ -9,9 +9,10 @@ from types import SimpleNamespace
 import _setup  # noqa: F401
 from _fixtures import capannone
 
-from meridiana import jobs, model
-from meridiana.energy import plant as plants
-from meridiana.report_typst import figures
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.core.energy import plant as plants
+from meridiana.app.report import figures
 
 
 INVERTER = {"manufacturer": "Acme", "model": "AC-20K", "ac_power_nominal_w": 20000, "efficiency_euro_pct": 97.5,
@@ -45,6 +46,35 @@ class PlantPlan(unittest.TestCase):
         self.assertEqual(sheet.optimizers, 0)
         self.assertEqual(sheet.title, "")
 
+    def test_r643_both_plans_print_the_windows_needle_twelve_mm_north_up_inside_the_figure(self):
+        """R643 (Daniel 15/11/2026, proposal A): the plans of the report print the needle the window draws
+        (app/interface/north_sign.py: the same two halves), 12 mm, in the report's black, North up, «N» over the
+        tip, within the figure's box."""
+        from meridiana.app.interface import north_sign
+        p = capannone()
+        results, pl = laid(p)
+        [sheet] = figures.plant_sheets(p, results, pl)
+        for svg in (figures.plan_svg(p, results).decode(), sheet.svg.decode()):
+            for half in (north_sign.NORTH, north_sign.SOUTH):
+                self.assertEqual(svg.count(f'd="{half}"'), 1)
+            group = re.search(r'<g transform="translate\(([-\d.]+) ([-\d.]+)\) scale\(([\d.]+)\) rotate\(([-\d.]+) 50 50\)" '
+                              r'stroke="(#[0-9a-f]{6})"', svg)
+            self.assertIsNotNone(group)
+            x, y, k, turn, ink = group.groups()
+            self.assertEqual((float(turn), ink), (0.0, figures.INK))
+            box = [float(v) for v in re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', svg).groups()]
+            width_mm = float(re.search(r'width="([\d.]+)mm"', svg).group(1))
+            mm = box[0] / width_mm
+            self.assertAlmostEqual(float(k) * north_sign.BOX / mm, north_sign.PAPER_MM, places=2)
+            # the needle (20 units wide, 80 tall) and its «N» inside the figure
+            left, top = float(x) + 40 * float(k), float(y)
+            self.assertGreater(left, 0)
+            self.assertLess(left + 20 * float(k), box[0])
+            pivot = top + 50 * float(k)
+            self.assertGreater(pivot - north_sign.LETTER_AT * float(k) - north_sign.PAPER_LETTER_MM * mm, 0)
+            self.assertLess(top + 90 * float(k), box[1])
+            self.assertIn('text-anchor="middle" fill="#1a1a1a">N</text>', svg)
+
     def test_two_roofs_far_apart_get_a_sheet_each_with_their_own_strings(self):
         p = capannone()
         b = model.Building(id=p.new_id("b"), name="Magazzino", footprint=[[400, 300], [440, 300], [440, 320], [400, 320]],
@@ -63,8 +93,8 @@ class PlantPlan(unittest.TestCase):
             self.assertEqual(set(labels(sheet.svg)), names)
 
     def test_the_optimizers_are_drawn_one_for_each_group_of_modules(self):
-        from meridiana import catalog
-        from meridiana.energy import optimizers
+        from meridiana.data import catalog
+        from meridiana.core.energy import optimizers
         p = capannone()
         se = next(r for r in catalog.search("inverters", manufacturer="SolarEdge", limit=None) if r["model"] == "SE50K")
         results, pl = laid(p, se, 1)

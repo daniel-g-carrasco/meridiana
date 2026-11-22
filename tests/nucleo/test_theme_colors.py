@@ -8,7 +8,7 @@ import unittest
 import _setup  # noqa: F401
 from _fixtures import flat
 
-from meridiana import theme_colors as tc
+from meridiana.app.interface import theme_colors as tc
 
 # study 13, 12.4: name, seed, light accent and white on it, dark accent and on the view #101318,
 # assistant light / dark, the status the accent was moved away from in light / dark ("" if not moved)
@@ -194,6 +194,40 @@ class Palette(unittest.TestCase):
                         self.assertGreaterEqual(tc.contrast(a[fg], a[bg]), least, f"{where}: {fg} on {bg}")
                     self.assertLess(tc.contrast(pal["Disabled"]["Text"], a["Base"]), tc.contrast(a["Text"], a["Base"]))
 
+    def test_r615_the_tooltip_stands_on_the_menus_ground_with_the_theme_s_text(self):
+        """R615 (Daniel 14/11/2026): no longer inverted. The tooltip's ground is the menus' (`card`, the ground of
+        Menu.qml and Popup.qml) at TIP_ALPHA, in both themes and every backgrounds; the system's tooltip the same,
+        opaque, with the text."""
+        self.assertEqual(tc.TIP_ALPHA, 0.92)
+        for backgrounds in tc.BACKGROUNDS:
+            for dark in (False, True):
+                t = tc.derive("#8b5a12", dark, backgrounds).tokens
+                where = f"{backgrounds} {'dark' if dark else 'light'}"
+                self.assertEqual(t["tooltip_bg"], t["card"] + f"{round(tc.TIP_ALPHA * 255):02x}", where)
+                self.assertNotIn("tooltip_fg", t, where)
+                a = tc.palette(t, dark)["Active"]
+                self.assertEqual((a["ToolTipBase"], a["ToolTipText"]), (t["card"], t["text"]), where)
+                # light on light, dark on dark
+                self.assertEqual(tc.luminance(t["card"]) > 0.5, not dark, where)
+
+    def test_r615_the_tooltip_s_inks_read_whatever_lies_under_it(self):
+        """R615 (Daniel 14/11/2026): the name, the explanation and the key at 4.5:1 or more from the tooltip's ground
+        as it is seen, `card` at TIP_ALPHA over black and over white (the worst an orthophoto can give), in both
+        themes, for every colour and backgrounds. The key was 3.5:1 on the light theme at TIP_KEY 0.42."""
+        self.assertLess(tc.TIP_SOFT, tc.TIP_KEY)        # the key stays softer than the explanation
+        failures = []
+        for seed in list(tc.PRESETS.values()) + ["#0078d4", "#c88800"] + random_seeds(40):
+            for backgrounds in tc.BACKGROUNDS:
+                for dark in (False, True):
+                    t = tc.derive(seed, dark, backgrounds).tokens
+                    grounds = [tc.mix(under, t["card"], tc.TIP_ALPHA) for under in ("#000000", "#ffffff")]
+                    for what, k in (("name", 0.0), ("explanation", tc.TIP_SOFT), ("key", tc.TIP_KEY)):
+                        ink = tc.mix(t["text"], t["card"], k)
+                        low = min(tc.contrast(ink, g) for g in grounds)
+                        if low < tc.TIP_INK:
+                            failures.append(f"{seed} {backgrounds} {'dark' if dark else 'light'}: {what} {low:.2f}")
+        self.assertEqual(failures, [])
+
     def test_every_token_is_a_colour(self):
         for backgrounds in tc.BACKGROUNDS:
             for dark in (False, True):
@@ -304,6 +338,28 @@ class StringTints(unittest.TestCase):
             self.assertLess(gap, 30.0, name)
         self.assertNotEqual(tc.string_tints(tc.PRESETS["bronze"]), tc.string_tints(tc.PRESETS["blue"]))
         self.assertEqual(tc.string_tints("#8B5A12"), tc.string_tints("#8b5a12"))
+
+
+class HelpMarkColours(unittest.TestCase):
+    """R596 (Daniel 13/11/2026): the help mark's one grey disc, with no accent, measured in both themes, with the
+    three backgrounds and the ready-made colours. No line round it on any ground (Daniel 14/11/2026: «mi piace senza
+    il bordino»): the theme has no colour for one."""
+
+    def test_the_disc_reads_and_has_no_line(self):
+        for name, seed, *_rest in TABLE:
+            for dark in (False, True):
+                for backgrounds in tc.BACKGROUNDS:
+                    with self.subTest(name=name, dark=dark, backgrounds=backgrounds):
+                        t = tc.derive(seed, dark, backgrounds).tokens
+                        disc = t["help_disc"]
+                        self.assertGreaterEqual(tc.contrast(t["help_ink"], disc), tc.HELP_INK, "the «?» at rest")
+                        for state in ("help_disc_hover", "help_disc_press"):
+                            self.assertGreaterEqual(tc.contrast(t["text"], t[state]), tc.HELP_INK, state)
+                        # under the pointer and pressed it moves away from the ground it stands on, as every control
+                        self.assertGreater(tc.contrast(t["help_disc_press"], t["panel"]),
+                                           tc.contrast(t["help_disc_hover"], t["panel"]))
+                        self.assertNotEqual(disc, t["accent"])
+                        self.assertNotIn("help_edge", t)
 
 
 if __name__ == "__main__":

@@ -14,7 +14,8 @@ from unittest import mock
 import _setup
 from _fixtures import PAYLOAD, PUBLIC_KEY, SIGNED_V8, SIGNED_V9
 
-from meridiana import SLUG, updates
+from meridiana import SLUG
+from meridiana.app import updates
 
 DOWNLOADS = f"https://github.com/daniel-g-carrasco/{SLUG}/releases/download/v0.4.0/"
 SETUP_NAME = f"{SLUG}-setup-v0.4.0-windows-x64.exe"
@@ -156,13 +157,13 @@ class DownloadTest(unittest.TestCase):
 
 class KeyTest(unittest.TestCase):
     def test_the_ci_checks_its_signatures_with_the_key_the_app_trusts(self):
-        # the release job of the CI (task 18f) signs and checks with this key; CODE_SIGNING.md gives it to whoever
-        # checks a download by hand
-        workflow = (_setup.ROOT / ".github" / "workflows" / "test.yml").read_text(encoding="utf-8")
+        # the release job of release.yml (task 18f, study 43 D2) signs and checks with this key; CODE_SIGNING.md
+        # gives it to whoever checks a download by hand
+        workflow = (_setup.ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
         self.assertIn(f"PUBLIC_KEY: {updates.PUBLIC_KEY}\n", workflow)
         self.assertIn("minisign -V -P \"$PUBLIC_KEY\"", workflow)
         self.assertIn("file:$(basename \"$f\")", workflow)          # the trusted comment names the file
-        signing = (_setup.ROOT / "CODE_SIGNING.md").read_text(encoding="utf-8")
+        signing = (_setup.ROOT / "docs" / "CODE_SIGNING.md").read_text(encoding="utf-8")
         self.assertIn(updates.PUBLIC_KEY, signing)
 
 

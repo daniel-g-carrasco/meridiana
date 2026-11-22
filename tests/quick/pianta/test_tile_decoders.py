@@ -22,8 +22,8 @@ PROBE = textwrap.dedent('''
     from pathlib import Path
     from PySide6.QtGui import QColor, QImage
     from PySide6.QtWidgets import QApplication
-    from meridiana import tiles
-    from meridiana.quick.backend import plan_tiles
+    from meridiana.app.maps import tiles
+    from meridiana.gui.backend import plan_tiles
     app = QApplication([])
     cache = Path(sys.argv[1])
     source = tiles.Source('pcn', 'Ortho', 'wms', 'http://127.0.0.1:9/ogc', 'Ortofoto', rank=40, max_zoom=20,

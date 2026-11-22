@@ -9,9 +9,9 @@ import unittest
 from unittest import mock
 
 from _fixtures import capannone
-from meridiana.quick.app import create_app
-from meridiana.quick.backend import shell_compute
-from meridiana.quick.backend.shell_compute import ShellBridge
+from meridiana.gui.application import create_app
+from meridiana.gui.backend import shell_compute
+from meridiana.gui.backend.shell_compute import ShellBridge
 
 
 class Compute(unittest.TestCase):
@@ -31,7 +31,7 @@ class Compute(unittest.TestCase):
             self.app.processEvents()
             if condition():
                 return True
-            time.sleep(.01)
+            time.sleep(.01)  # wait: a breath between two looks at the condition, so the workers' threads run
         return False
 
     def test_a_year_ends_and_nothing_stays_busy(self):

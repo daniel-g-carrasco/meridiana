@@ -6,7 +6,7 @@ from pathlib import Path
 from PySide6.QtCore import QCoreApplication, QEvent, Qt
 
 from _fixtures import capannone
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import item, key, mouse, point, pump, wait_for
 
 

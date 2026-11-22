@@ -19,9 +19,9 @@ def build_results() -> SimpleNamespace:
     """
     import requests
 
-    from meridiana.energy import consumption, economics, meteo, pvgis
-    from meridiana.energy.components import ModuleSpec
-    from meridiana.energy.simulate import ArraySpec, simulate
+    from meridiana.core.energy import consumption, economics, meteo, pvgis
+    from meridiana.core.energy.components import ModuleSpec
+    from meridiana.core.energy.simulate import ArraySpec, simulate
 
     references = Path(__file__).resolve().parents[2] / "calcoli" / "riferimenti"
     out = SimpleNamespace()

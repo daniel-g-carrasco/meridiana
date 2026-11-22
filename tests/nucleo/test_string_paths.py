@@ -6,7 +6,7 @@ import unittest
 import _setup  # noqa: F401
 import numpy as np
 
-from meridiana import string_paths
+from meridiana.core.geometry import string_paths
 
 W, H = 1.13, 2.28
 
@@ -102,6 +102,18 @@ class Lines(unittest.TestCase):
             self.assertEqual(routed[i][0][0][-1], before[i][0][-1])
         distance = shapely.distance(shapely.LineString(routed[0][0][0]), shapely.LineString(routed[1][0][0]))
         self.assertGreaterEqual(distance * 25.0, 3.0)
+
+    def test_a_router_asked_again_at_another_gap_answers_as_a_new_one(self):
+        # R706: what does not depend on the gap (the legs, who meets whom) is found once; the lanes are those a
+        # router that starts from nothing finds, and it says which strings follow the gap
+        strings = [[0, 9], [1, 10], [4, 5]]
+        r = string_paths.Router(block(2, 6, 0.8))
+        for gap in (6.0 / 25.0, 6.0 / 10.0, 6.0 / 60.0, 6.0 / 25.0):
+            with self.subTest(gap=gap):
+                self.assertEqual(r.legs_together(strings, gap),
+                                 string_paths.Router(block(2, 6, 0.8)).legs_together(strings, gap))
+        self.assertEqual(r.follows_gap(strings), [False, True, False])
+        self.assertEqual(r.follows_gap([[0, 1, 2]]), [False])
 
     def test_touching_rows_get_distinct_dash_lanes(self):
         strings = [[6, 8], [1, 13], [0, 14]]

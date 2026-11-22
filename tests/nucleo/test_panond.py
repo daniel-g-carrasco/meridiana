@@ -7,8 +7,8 @@ import _setup
 from _fixtures import OND, PAN
 from _fixtures import written as write
 
-from meridiana.catalog import panond
-from meridiana.energy.components import InverterSpec, ModuleSpec
+from meridiana.data.catalog import panond
+from meridiana.core.energy.components import InverterSpec, ModuleSpec
 
 
 class Module(unittest.TestCase):
@@ -82,7 +82,7 @@ class RealFiles(unittest.TestCase):
         self.assertEqual(rec["iam_profile"]["iam"][-2:], [0.66, 0.0])
         m = ModuleSpec.from_record(rec)
         self.assertAlmostEqual(float(m.power_at_25(1000.0)), 550.0, delta=550.0 * 0.01)
-        from meridiana.energy import nearshade
+        from meridiana.core.energy import nearshade
         self.assertEqual(nearshade.blocks_of(m.cells, m.diodes, m.twin), (3, 2))
 
     def test_a_manufacturers_inverter_with_its_byte_order_mark(self):

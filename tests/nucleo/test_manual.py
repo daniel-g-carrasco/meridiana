@@ -10,7 +10,10 @@ import _setup
 from _fixtures import laid
 from _fixtures import tetto_con_lucernario as project
 
-from meridiana import checks, manual, model, session
+from meridiana.core.rules import checks
+from meridiana.core.layout import manual
+from meridiana.core.model import model
+from meridiana.app import session
 
 setUpModule = _setup.keep_global_state          # what the module changes of the process, put back after it
 
@@ -272,7 +275,7 @@ class ManualChecks(unittest.TestCase):
         p.subfields[0].filled = True
         auto = laid(p)
         manual.take(p, "s1", auto)(p)
-        from meridiana.energy import system
+        from meridiana.core.energy import system
         shaded = [i for i in checks.manual_items(p, p.subfields[0], laid(p), system.shadow_exclusions)
                   if i.area == "shade"]
         self.assertEqual(len(shaded), 1)
@@ -320,7 +323,7 @@ class SameOutputs(unittest.TestCase):
 
     def pair(self):
         """The same project twice: automatic, and by hand with every row exploded into its modules."""
-        from meridiana import jobs
+        from meridiana.app import jobs
         p = project()
         p.site = model.Site(lat=45.5226, lon=9.03, address="Rho (MI)")
         p.subfields[0].ring = [[1, 1], [30, 1], [30, 14], [1, 14]]
@@ -337,7 +340,7 @@ class SameOutputs(unittest.TestCase):
         return p, q, a, b
 
     def test_the_strings_are_the_same(self):
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         p, q, a, b = self.pair()
         one, two = plant.build(p, a), plant.build(q, b)
         self.assertTrue(one.strings)
@@ -352,14 +355,14 @@ class SameOutputs(unittest.TestCase):
 
     def test_the_report_of_the_strings_is_the_same(self):
         _setup.qt_or_skip()
-        from meridiana.energy import plant
-        from meridiana.ui.report import plant_html
+        from meridiana.core.energy import plant
+        from meridiana.gui.paper.report import plant_html
         p, q, a, b = self.pair()
         self.assertEqual(plant_html(p, plant.build(p, a)), plant_html(q, plant.build(q, b)))
 
     def test_the_figures_of_the_comparison_are_the_same(self):
-        from meridiana import compare
-        from meridiana.energy import pipeline
+        from meridiana.app import compare
+        from meridiana.app import pipeline
         p, q, a, b = self.pair()
         one = compare.summary(pipeline.compute_or_say(p, a, self.cache, False).as_dict())
         two = compare.summary(pipeline.compute_or_say(q, b, self.cache, False).as_dict())

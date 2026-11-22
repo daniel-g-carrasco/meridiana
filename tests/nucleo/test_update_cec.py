@@ -13,7 +13,7 @@ from pathlib import Path
 
 import _setup
 
-from meridiana import catalog
+from meridiana.data import catalog
 
 TOOL = _setup.ROOT / "tools" / "update_cec.py"
 spec = importlib.util.spec_from_file_location("update_cec", TOOL)
@@ -38,10 +38,7 @@ class Reading(unittest.TestCase):
         self.assertEqual(len(self.records), 10)
         self.assertEqual(self.left_out, [])
         for r in self.records:
-            self.assertEqual(set(r) - set(update_cec.STORED), KEYS, r["id"])
-            # the fields worked out at loading, written once: the rule's family, the efficiency from the size
-            self.assertEqual(r["cell_family"], catalog.family_of(r), r["id"])
-            self.assertEqual("efficiency_pct" in r, bool(r["length"] and r["width"]), r["id"])
+            self.assertEqual(set(r), KEYS, r["id"])
             self.assertEqual(r["source"], "cec")
             self.assertEqual(set(r["sdm"]), {"I_L_ref", "I_o_ref", "R_s", "R_sh_ref", "a_ref", "Adjust"})
 
@@ -87,7 +84,7 @@ class Reading(unittest.TestCase):
         shipped = {r["id"]: r for r in catalog.load("modules") if r["source"] == "cec"}
         for r in self.records:
             kept = shipped[r["id"]]
-            self.assertEqual({k: v for k, v in kept.items() if k in KEYS | set(update_cec.STORED)}, r, r["id"])
+            self.assertEqual({k: v for k, v in kept.items() if k in KEYS}, r, r["id"])
 
 
 class WhatCannotBeRead(unittest.TestCase):

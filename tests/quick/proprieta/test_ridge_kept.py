@@ -2,7 +2,8 @@
 import math
 import unittest
 
-from meridiana import model, roofs
+from meridiana.core.model import model
+from meridiana.core.geometry import roofs
 
 
 def rect(x0, y0, x1, y1):
@@ -19,8 +20,8 @@ class RidgeKept(unittest.TestCase):
 
     def start(self, roof, height=6.0):
         from _fixtures import capannone
-        from meridiana.quick.backend.properties import PropertiesBackend
-        from meridiana.session import ProjectSession
+        from meridiana.gui.backend.properties import PropertiesBackend
+        from meridiana.app.session import ProjectSession
         self.project = capannone()
         self.building = self.project.buildings[0]
         self.building.footprint, self.building.height, self.building.roof = rect(0, 0, 40, 20), height, roof

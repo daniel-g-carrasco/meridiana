@@ -5,10 +5,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 import _setup
-from meridiana import config, model
-from meridiana.paths import Paths
-from meridiana.session import ProjectSession
-from quick.parity.differential import canonical_project, compare
+from meridiana.app.platform import config
+from meridiana.core.model import model
+from meridiana.app.platform.paths import Paths
+from meridiana.app.session import ProjectSession
+from quick.aiuti.differential import canonical_project, compare
 
 setUpModule = _setup.keep_global_state
 
@@ -27,7 +28,7 @@ class FileCommandsTest(unittest.TestCase):
         self.assertEqual(['start'], called)
 
     def setUp(self):
-        from meridiana.quick.backend.files import FilesBackend
+        from meridiana.gui.backend.files import FilesBackend
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         root = Path(self.tmp.name)
@@ -40,7 +41,7 @@ class FileCommandsTest(unittest.TestCase):
         self.backend.failed.connect(self.errors.append)
 
     def test_frozen_project_roundtrips_both_extensions(self):
-        from quick.parity.formats import frozen_cases
+        from quick.aiuti.formats import frozen_cases
         for case in frozen_cases():
             if case.kind != 'project':
                 continue
@@ -127,9 +128,9 @@ class FileCommandsTest(unittest.TestCase):
 
     def test_file_actions_match_widgets_sections(self):
         from unittest.mock import patch
-        from meridiana.quick.backend.files import page_sections
+        from meridiana.gui.backend.files import page_sections
         # gettext's empty msgid is the catalogue header, never visible copy.
-        with patch('meridiana.quick.backend.files._', side_effect=lambda s: s or 'Project-Id-Version: meridiana'):
+        with patch('meridiana.gui.backend.files._', side_effect=lambda s: s or 'Project-Id-Version: meridiana'):
             self.assertTrue(all(t['description'] == '' for t in page_sections()['catalogues']['tiles']))
         actions = {tile['action'] for group in self.backend.sections.values()
                    for tile in group.get('tiles', [])}

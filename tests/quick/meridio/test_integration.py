@@ -11,7 +11,8 @@ from shiboken6 import delete
 from _fixtures import capannone_rho
 import _setup
 from _setup import wait_until
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana.app.assistant import SIZE
+from meridiana.gui.application import QuickWindow, create_app
 from quick.meridio.support import KeyStore, Provider, Voice
 
 
@@ -23,8 +24,8 @@ class IntegrationTest(unittest.TestCase):
     def setUp(self):
         temp = tempfile.TemporaryDirectory(prefix='r13-meridio-')
         self.addCleanup(temp.cleanup)
-        with patch('meridiana.quick.backend.assistant_chat.keys', KeyStore()), \
-                patch('meridiana.ui.voice.Voice', return_value=Voice()):
+        with patch('meridiana.gui.backend.assistant_chat.keys', KeyStore()), \
+                patch('meridiana.gui.backend.voice.Voice', return_value=Voice()):
             self.host = QuickWindow(capannone_rho(), Path(temp.name), real_views=True,
                                     theme={'reducedMotion': True})
         self.window = self.host.window
@@ -60,7 +61,7 @@ class IntegrationTest(unittest.TestCase):
         self.assertTrue(wait_until(self.app, lambda: bool(fake.requests) and not chat.busy, 5))
         self.assertIs(chat.host.project, self.host.bridge.session.project)
         self.assertIn('progetto', chat.messages[-1]['bodyHtml'])
-        from meridiana.assistant.tools import Proposal
+        from meridiana.app.assistant.tools import Proposal
         before = chat.host.project.name
         chat._show_proposal(Proposal('rename', 'Rename', 'site', '', [('name', before, 'R13')],
                                     change=lambda project: setattr(project, 'name', 'R13')))
@@ -71,8 +72,9 @@ class IntegrationTest(unittest.TestCase):
         self.assertEqual(chat.host.project.name, before)
         self.assertEqual(self.host.warnings, [])
 
-    def test_properties_help_avoids_panel_and_escape_returns_position(self):
-        self.assertIn('assistant', self.host.parts.controllers)
+    def test_a_section_help_opens_its_bubble_and_leaves_meridio_where_he_is(self):
+        # R597 (Daniel 13/11/2026): the «?» opens the bubble anchored to it, not Meridio (he went to the other side of
+        # the window, about 1200 px from the «?» pressed); «Ask Meridio» is in the bubble's foot
         layer = self.window.findChild(QObject, 'assistantLayer')
         self.assertTrue(wait_until(self.app, lambda: not layer.property('relocating'), 2))
         before = (layer.property('avatarX'), layer.property('avatarY'))
@@ -81,21 +83,22 @@ class IntegrationTest(unittest.TestCase):
         self.assertTrue(button.isVisible())
         p = button.mapToScene(QPointF(button.width()/2, button.height()/2))
         QTest.mouseClick(self.window, Qt.MouseButton.LeftButton, pos=QPoint(round(p.x()), round(p.y())))
-        _setup.wait_for(lambda: layer.property('page') == 'help' and layer.property('opened'), 5000)
-        self.assertEqual(layer.property('page'), 'help')
-        self.assertTrue(layer.property('opened'))
-        QTest.keyClick(self.window, Qt.Key.Key_Escape)
+        _setup.wait_for(lambda: button.property('shown'), 5000)
+        bubble = button.findChild(QObject, 'helpBubble')
+        self.assertIsNotNone(bubble)
         self.assertFalse(layer.property('opened'))
-        self.assertTrue(wait_until(self.app, lambda: not layer.property('relocating'), 2))
         self.assertEqual((layer.property('avatarX'), layer.property('avatarY')), before)
-        QTest.mouseClick(self.window, Qt.MouseButton.LeftButton, pos=QPoint(round(p.x()), round(p.y())))
-        QTest.qWait(100)
-        close = self.window.findChild(QObject, 'assistantHelpClose')
-        at = close.mapToScene(QPointF(close.width()/2, close.height()/2))
+        ask = bubble.findChild(QObject, 'helpBubbleAsk')
+        self.assertTrue(ask.property('visible'))
+        chat = self.host.parts.controllers['assistant']
+        at = ask.mapToScene(QPointF(ask.width()/2, ask.height()/2))
+        _setup.wait_for(lambda: bubble.property('opacity') == 1, 2000)
         QTest.mouseClick(self.window, Qt.MouseButton.LeftButton, pos=at.toPoint())
-        self.assertTrue(wait_until(self.app, lambda: not layer.property('relocating'), 2))
-        self.assertFalse(layer.property('opened'))
-        self.assertEqual((layer.property('avatarX'), layer.property('avatarY')), before)
+        _setup.wait_for(lambda: layer.property('opened'), 5000)
+        self.assertTrue(layer.property('opened'), '«Ask Meridio» opens the conversation')
+        from meridiana.app.interface import help as helps
+        self.assertEqual(chat.draft, helps.question(helps.get('site')), "the key's question in his field")
+        self.assertFalse(button.property('shown'))
         self.assertEqual(self.host.warnings, [])
 
     def test_docked_conversation_is_a_real_panel_and_help_stays_there(self):
@@ -129,8 +132,8 @@ class IntegrationTest(unittest.TestCase):
         layer = self.window.findChild(QObject, 'assistantLayer')
         home = layer.property('homeRect')
         before = (layer.property('avatarX'), layer.property('avatarY'))
-        self.assertAlmostEqual(before[0], home.x()+home.width()-58, delta=1)
-        self.assertAlmostEqual(before[1], home.y()+home.height()-90, delta=1)
+        self.assertAlmostEqual(before[0], home.x()+home.width()-(SIZE + 12), delta=1)       # his side and his margin
+        self.assertAlmostEqual(before[1], home.y()+home.height()-(SIZE + 12 + 32), delta=1)  # and the sun bar
         self.window.setFlags(Qt.WindowType.Window | Qt.WindowType.FramelessWindowHint)
         self.window.show()
         self.window.resize(1600, 960)
@@ -141,8 +144,8 @@ class IntegrationTest(unittest.TestCase):
         layer = self.window.findChild(QObject, 'assistantLayer')
         QTest.qWait(500)
         home = layer.property('homeRect')
-        self.assertAlmostEqual(layer.property('avatarX'), home.x()+home.width()-58, delta=1)
-        self.assertAlmostEqual(layer.property('avatarY'), home.y()+home.height()-90, delta=1)
+        self.assertAlmostEqual(layer.property('avatarX'), home.x()+home.width()-(SIZE + 12), delta=1)       # his side and his margin
+        self.assertAlmostEqual(layer.property('avatarY'), home.y()+home.height()-(SIZE + 12 + 32), delta=1)  # and the sun bar
         layer.setProperty('bubbleHeight', 600)
         layer.open()
         QTest.qWait(100)
@@ -171,8 +174,9 @@ class IntegrationTest(unittest.TestCase):
         self.assertGreater(layer.property('homeRect').x(), 0)
         self.assertGreater(layer.property('homeRect').y(), 0)
         self.assertIs(chat.cfg, self.host.cfg)
-        self.assertTrue(settings.setValue('assistant_style', 'pixel'))
-        self.assertEqual(layer.property('characterStyle'), 'pixel')
+        settings.showSection('assistant')
+        self.assertNotIn('assistant_style', [field['key'] for field in settings.fields])
+        self.assertFalse(settings.setValue('assistant_style', 'solid'))
         self.assertTrue(settings.setValue('assistant_animated', False))
         self.assertFalse(layer.property('animated'))
         layer.setProperty('avatarX', 120)       # where a drag leaves him, then saved (R500: for every phase)

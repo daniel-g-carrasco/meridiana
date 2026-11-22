@@ -5,7 +5,7 @@ from pathlib import Path
 
 import _setup  # noqa: F401
 from _fixtures import capannone_rho, exported
-from meridiana import model, move
+from meridiana.core.model import model, move
 
 
 class BIM(unittest.TestCase):
@@ -54,7 +54,7 @@ class BIM(unittest.TestCase):
         import numpy as np
         import ifcopenshell.geom
         import ifcopenshell.util.element
-        from meridiana import ifc_export, ifc_import, ifc_read
+        from meridiana.app.exchange import ifc_export, ifc_import, ifc_read
         sf = self.p.subfields[0]
         sf.filled = False
         sf.support = model.SupportPlane(z0=18, x0=20, y0=10, tilt=23, azimuth=37)

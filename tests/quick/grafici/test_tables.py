@@ -10,11 +10,11 @@ from PySide6.QtWidgets import QApplication
 
 import _setup
 from meridiana.i18n import _
-from meridiana.quick.backend.controls import install_controls
-from meridiana.quick.backend import charts_bridge, charts_data
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.backend import charts_bridge, charts_data
 
 
-QML = _setup.ROOT / "src/meridiana/quick/qml"
+QML = _setup.ROOT / "src/meridiana/gui/qml"
 setUpModule = _setup.keep_global_state
 
 

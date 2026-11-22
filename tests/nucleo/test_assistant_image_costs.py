@@ -3,8 +3,8 @@ the bill counts them when a provider says nothing, so that the line under the co
 import unittest
 
 import _setup  # noqa: F401
-from meridiana.assistant import costs, providers
-from meridiana.assistant.conversation import Conversation, Round
+from meridiana.app.assistant import costs, providers
+from meridiana.app.assistant.conversation import Conversation, Round
 
 IMAGE = {"name": "vista.png", "media_type": "image/png", "data": "AAAA", "width": 1568, "height": 980}
 

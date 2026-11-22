@@ -4,7 +4,10 @@ without defaults draws as before, and its file is as before."""
 import json
 import unittest
 
-from meridiana import config, layout, manual, model, session as session_mod
+from meridiana.app.platform import config
+from meridiana.app import session as session_mod
+from meridiana.core.layout import layout, manual
+from meridiana.core.model import model
 
 
 def project(flat=False, subject=False):

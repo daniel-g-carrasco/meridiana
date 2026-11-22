@@ -9,12 +9,12 @@ import numpy as np
 import _setup  # noqa: F401
 from _fixtures import clear_sky_meteo
 
-from meridiana import layout
-from meridiana.energy import nearshade
-from meridiana.energy.components import InverterSpec, ModuleSpec
-from meridiana.energy.meteo import Horizon
-from meridiana.energy.pedigree import Source
-from meridiana.energy.simulate import ArraySpec, Losses, profile_iam, simulate
+from meridiana.core.layout import layout
+from meridiana.core.energy import nearshade
+from meridiana.core.energy.components import InverterSpec, ModuleSpec
+from meridiana.core.energy.meteo import Horizon
+from meridiana.core.energy.pedigree import Source
+from meridiana.core.energy.simulate import ArraySpec, Losses, profile_iam, simulate
 
 METEO = clear_sky_meteo()
 
@@ -51,7 +51,7 @@ class Module(unittest.TestCase):
         """Before 23/10/2026 the five De Soto parameters were fitted to the STC point alone and the typical
         module came out at 100.7% at 200 W/m² (an artefact: study 18, B-calcoli 6.1); now the fit is held
         to LOW_LIGHT_DEFAULT (97.5%) and the pedigree says the value is conventional."""
-        from meridiana.energy.components import LOW_LIGHT_DEFAULT
+        from meridiana.core.energy.components import LOW_LIGHT_DEFAULT
         m = module()
         p = m.sdm()
         self.assertEqual((p["form"], p["origin"], p["low_light_from"]), ("pvsyst", "fit", "default"))
@@ -78,7 +78,7 @@ class Module(unittest.TestCase):
         self.assertEqual((low.value, low.source.kind), (96.0, "data"))
 
     def test_a_pvsyst_files_one_diode_parameters_drive_the_low_light(self):
-        from meridiana.catalog import panond
+        from meridiana.data.catalog import panond
         rec, said = panond.module(_setup.DATA / "pvsyst" / "ET-M772BH550GL.PAN")
         self.assertEqual(rec["pvsyst_sdm"], {"R_sh_ref": 300.0, "R_sh_0": 2000.0, "R_sh_exp": 5.5, "R_s": 0.203,
                                              "gamma_ref": 0.98, "mu_gamma": -0.0001})
@@ -276,7 +276,7 @@ class Physics(unittest.TestCase):
         array step again: every number equals a whole simulate with the strings (task 18c, step 3)."""
         import dataclasses
 
-        from meridiana.energy.simulate import with_strings
+        from meridiana.core.energy.simulate import with_strings
         roof = [(0.0, 0.0), (14.0, 0.0), (14.0, 8.0), (0.0, 8.0)]
         placed = layout.compute(roof, params=layout.Params(tilt=30.0, pitch_mode="value", pitch=4.0), lat=45.5,
                                 lon=9.0).modules
@@ -474,7 +474,7 @@ class SecondOpinion(unittest.TestCase):
     chain applies it, and the loss figure built with the LID the chain uses."""
 
     def test_pvgis_is_asked_for_the_2025_model_and_the_horizon_of_the_chain(self):
-        from meridiana.energy import pvgis
+        from meridiana.core.energy import pvgis
         p = pvgis.params_of(45.5, 9.2, 9.0, 30.0, 0.0, 14.0, building=True, horizon=True)
         self.assertEqual(p["pvtechchoice"], "crystSi2025")
         self.assertEqual(p["usehorizon"], 1)
@@ -482,8 +482,8 @@ class SecondOpinion(unittest.TestCase):
         self.assertEqual(pvgis.params_of(45.5, 9.2, 9.0, 30.0, 0.0, 14.0, horizon=False)["usehorizon"], 0)
 
     def test_the_lid_given_to_pvgis_is_the_one_of_the_chain(self):
-        from meridiana.energy.simulate import lid_pct
-        from meridiana.energy.system import pvgis_loss
+        from meridiana.core.energy.simulate import lid_pct
+        from meridiana.core.energy.system import pvgis_loss
         from dataclasses import replace
         m = replace(module(), first_year_loss=2.0)                   # a datasheet saying 2% in the first year
         self.assertEqual(lid_pct(Losses(), m), 2.0)                  # the datasheet's first-year loss
@@ -517,7 +517,7 @@ class Inverters(unittest.TestCase):
         write_cache(METEO, cls.cache)
 
     def project(self, energy: dict):
-        from meridiana import model
+        from meridiana.core.model import model
         p = model.Project(name="Prova")
         p.site = model.Site(lat=45.5226, lon=9.0300, address="Rho (MI)")
         p.buildings.append(model.Building(id="b1", name="Capannone", footprint=[[0, 0], [40, 0], [40, 20], [0, 20]],
@@ -530,15 +530,15 @@ class Inverters(unittest.TestCase):
         return p
 
     def year(self, p):
-        from meridiana import jobs
-        from meridiana.energy import pipeline
+        from meridiana.app import jobs
+        from meridiana.app import pipeline
         results, _keys, _laid = jobs.layout_of(p)
         out = pipeline.compute(p, results, self.cache, fetch=False)
         self.assertIsNone(out.error_sim)
         return out
 
     def test_two_different_inverters_with_their_sub_fields_give_the_sum_of_their_ac_power(self):
-        from meridiana.energy import system
+        from meridiana.core.energy import system
         a, b = inverter_record("A10", 10000.0), inverter_record("B5", 5000.0, mppts=1)
         p = self.project({"inverters": [{"record": a, "count": 1, "name": ""}, {"record": b, "count": 1, "name": ""}]})
         specs = system.inverters_of(p, 30000.0)
@@ -555,7 +555,7 @@ class Inverters(unittest.TestCase):
     def test_a_project_of_yesterday_opens_and_gives_the_same_year(self):
         import json
 
-        from meridiana import model
+        from meridiana.core.model import model
         rec = inverter_record("A10", 10000.0)
         today = self.project({"inverters": [{"record": rec, "count": 2, "name": ""}]})
         old = json.loads(json.dumps(self.project({}).to_json()))
@@ -564,8 +564,8 @@ class Inverters(unittest.TestCase):
         opened = model.Project.from_json(old)
         self.assertEqual(opened.energy["inverters"], [{"record": rec, "count": 2, "name": ""}])
         in_memory = self.project({"inverter": rec, "inverter_count": 2})     # a dictionary of before, never saved
-        from meridiana import jobs
-        from meridiana.energy import plant
+        from meridiana.app import jobs
+        from meridiana.core.energy import plant
         runs = plant.propose(today, jobs.layout_of(today)[0])
         for p in (today, opened, in_memory):
             p.energy["strings"] = {"runs": runs}  # compare the same explicit electrical connections
@@ -574,7 +574,7 @@ class Inverters(unittest.TestCase):
         self.assertAlmostEqual(years[0].p_ac_kw, 20.0)
 
     def test_sized_by_itself_takes_as_many_alike_as_the_ratio_asks(self):
-        from meridiana.energy import system
+        from meridiana.core.energy import system
         rec = inverter_record("A10", 10000.0)
         self.assertEqual(system.sized_count(36000.0, 1.2, rec), 3)
         self.assertEqual(system.sized_count(36500.0, 1.2, rec), 4)

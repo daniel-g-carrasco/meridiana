@@ -6,7 +6,7 @@ import unittest
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtTest import QTest
 
-from quick.parity.realwindow import native_app
+from quick.aiuti.realwindow import native_app
 
 
 def find_item(root, name):
@@ -25,7 +25,7 @@ class FileFidelityTest(unittest.TestCase):
         cls.app = native_app()
 
     def setUp(self):
-        from meridiana.quick.backend.files_page import build_page
+        from meridiana.gui.backend.files_page import build_page
         self.temp = TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.host = build_page('settings', folder=Path(self.temp.name), width=1600, height=960)

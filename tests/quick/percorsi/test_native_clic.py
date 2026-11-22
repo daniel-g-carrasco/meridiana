@@ -47,7 +47,7 @@ for x, y in ((5, 3), (30, 3), (30, 15), (5, 15), (5, 3)):
 spin(0.5)
 sf = session.project.subfields[0]
 host.bridge._enabled = True
-host.bridge.layout_timer.start()
+host.bridge._ask_layout()
 wait_until(lambda: sf.id in session.good_results(), 20); spin(0.8)
 native.key('esc'); spin(0.2)
 mods = list(session.good_results()[sf.id].modules)

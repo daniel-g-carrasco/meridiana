@@ -9,7 +9,8 @@ import numpy as np
 
 import _setup  # noqa: F401
 
-from meridiana import camera, gizmo, mesh
+from meridiana.app.view import camera, gizmo
+from meridiana.core.geometry import mesh
 
 W, H = 800.0, 600.0
 

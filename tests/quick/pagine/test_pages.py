@@ -7,7 +7,7 @@ from pathlib import Path
 import _setup
 from PySide6.QtCore import QObject, QPoint, Qt
 from PySide6.QtTest import QTest
-from quick.parity.realwindow import FrameRecorder, native_app, wait_frames
+from quick.aiuti.realwindow import FrameRecorder, native_app, wait_frames
 
 
 class PagesNativeTest(unittest.TestCase):
@@ -16,7 +16,7 @@ class PagesNativeTest(unittest.TestCase):
         cls.app = native_app()
 
     def setUp(self):
-        from meridiana.quick.backend.files_page import build_page
+        from meridiana.gui.backend.files_page import build_page
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.host = build_page('file', folder=Path(self.tmp.name))
@@ -26,7 +26,7 @@ class PagesNativeTest(unittest.TestCase):
         self.assertTrue(_setup.wait_until(self.app, lambda: not self.window.grabWindow().isNull()))
 
     def click(self, name):
-        from quick.parity.geometry import capture_quick
+        from quick.aiuti.geometry import capture_quick
         items = capture_quick(self.window)['widgets']
         item = next(i for i in items if i['id'] == name)
         x, y, w, h = item['rect']

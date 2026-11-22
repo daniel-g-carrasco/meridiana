@@ -27,7 +27,9 @@ class AlignBadge(unittest.TestCase):
         QTest.qWait(40)
 
     def lit(self):
-        return [d for d in self.controller._draft if d.get('stroke') == '#ffb000']
+        # R617: the side taken is the plan's one lit side (Controls/LitSide, «collectSide»), drawn from collectSide
+        side = self.visual('collectSide')
+        return [self.controller.collectSide] if side is not None and side.isVisible() else []
 
     def test_badge_and_lit_side_only_on_a_side_while_align_waits(self):
         badge = self.visual('collectBadge')

@@ -4,16 +4,16 @@ import unittest
 
 import _setup  # noqa: F401  isolate the user's profile before loading Qt
 from _fixtures import capannone, inverter_record
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QObject, QPoint, Qt
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlComponent, QQmlEngine
 from PySide6.QtQuick import QQuickItem, QQuickWindow
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from meridiana import jobs
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.plant import create_page, PAGE_URL
+from meridiana.app import jobs
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.plant import create_page, PAGE_URL
 
 
 class PlantPageTest(unittest.TestCase):
@@ -48,7 +48,7 @@ class PlantPageTest(unittest.TestCase):
         deadline = time.monotonic() + 30
         while self.backend.busy and time.monotonic() < deadline:
             self.app.processEvents()
-            time.sleep(.005)
+            time.sleep(.005)  # wait: a breath between two looks at the condition, so the workers' threads run
         QTest.qWait(80)
         self.assertFalse(self.backend.busy)
 
@@ -87,15 +87,15 @@ class PlantPageTest(unittest.TestCase):
         self.click('drawString')
         self.assertEqual(requests, [(1, 1, -1)])
 
-    def test_r396_calculate_and_layout_are_commands_without_false_dot(self):
+    def test_r396_calculate_is_a_command_without_false_dot(self):
         events = []
         self.backend.calculateRequested.connect(lambda: events.append('calculate'))
-        self.backend.layoutRequested.connect(lambda: events.append('layout'))
         self.click('calculate')
-        self.click('layout')
-        self.assertEqual(events, ['calculate', 'layout'])
+        self.assertEqual(events, ['calculate'])
         self.assertFalse(self.item('calculateDot').isVisible())
-        self.assertFalse(self.item('layoutDot').isVisible())
+        # R564 (Daniel 14/11/2026): «Lay out» left the panel: it was the bar's «Fill», in Layout's menu now
+        self.assertIsNone(self.window.findChild(QObject, 'layout'))
+        self.assertFalse(hasattr(self.backend, 'layoutRequested'))
 
     def test_string_selection_delete_undo_with_real_keyboard(self):
         keys = [f's1/{m.key}' for m in self.session.results['s1'].modules][:20]

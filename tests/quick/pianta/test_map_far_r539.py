@@ -5,8 +5,9 @@ its capabilities): further out its nearest level is drawn around the site, the s
 
 import unittest
 
-from meridiana import geo, tiles
-from meridiana.quick.backend import plan_maps
+from meridiana.core.geometry import geo
+from meridiana.app.maps import tiles
+from meridiana.gui.backend import plan_maps
 
 from .test_map_offline import wms
 

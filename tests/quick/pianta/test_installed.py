@@ -6,8 +6,8 @@ from pathlib import Path
 from PySide6.QtCore import QCoreApplication, QEvent, QPoint, Qt
 from PySide6.QtTest import QTest
 
-from meridiana import model
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana.core.model import model
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import item, pump, wait_for
 
 APP = None
@@ -58,6 +58,56 @@ class Installed(unittest.TestCase):
         self.assertFalse(self.c.drawing.points)
         QTest.keyClick(self.root, Qt.Key_Escape)
         self.assertEqual(self.c.tool, 'select')
+        self.assertFalse(self.host.warnings, self.host.warnings)
+
+    def test_the_menu_of_measure_chooses_the_mode_and_ortho_gives_the_guides(self):
+        """Study 46: Measure's button holds Distance, Height and «Remove all», each a command of the shell; the 15°
+        guides are no entry of it (Daniel 14/11/2026): they follow the plan's Ortho, the window's command of F8."""
+        model_phase = next(p for p in self.host.shell.phases if p['id'] == 'model')
+        button = next(t for g in model_phase['groups'] for t in g['tools'] if t['command'] == 'tool_measure')
+        self.assertEqual([(t['command'], t['enabled']) for t in button['more']],
+                         [('measure_distance', True), ('measure_height', True), ('measure_clear', True)])
+        bridge = self.c.measure
+        self.addCleanup(bridge.setMode, 'distance')
+        self.host.shell.trigger('measure_height')
+        self.assertEqual((self.c.tool, bridge.mode), ('measure', 'height'))
+        self.assertEqual(self.c.hint, bridge.hint)
+        # the mode chosen is in the hint: the height's foot, in the catalogue's language or in the source's
+        self.assertTrue(any(word in self.c.hint for word in ('foot', 'piede')), self.c.hint)
+        self.host.shell.trigger('tool_measure')                          # the button itself keeps the mode
+        self.assertEqual(bridge.mode, 'height')
+        polar = bridge.polar
+        self.assertEqual(polar, self.c.drawing.orthogonal)
+        self.host.shell.trigger('ortho')                                 # F8, the view bar's button: one setting
+        self.addCleanup(lambda: self.c.drawing.orthogonal == polar or self.c.viewAction('ortho'))
+        self.assertEqual((bridge.polar, self.c.orthoEnabled, self.c.drawing.orthogonal), (not polar,) * 3)
+        self.host.shell.trigger('ortho')
+        self.assertEqual((bridge.polar, self.c.drawing.orthogonal), (polar, polar))
+        self.host.shell.trigger('measure_distance')
+        self.assertEqual((self.c.tool, bridge.mode), ('measure', 'distance'))
+        self.assertFalse(self.host.warnings, self.host.warnings)
+
+    def test_remove_all_measurements_from_the_menu_and_the_project_stays_clean(self):
+        """Study 46, 3.6 (Daniel's choice 3): the measures are of the session; «Remove all measurements» in Measure's
+        menu takes them away; making and removing them never touches the project, its undo or the window's title."""
+        session, bridge = self.host.bridge.session, self.c.measure
+        session.mark_saved()
+        title, steps = self.root.title(), (len(session.undo.steps), session.undo.index)
+        self.host.shell.trigger('tool_measure')
+        for x, y in ((10, 10), (60, 10)):
+            bridge.click('plan', x, y, 0, 1.0)
+        bridge.key('Enter', '', 0)
+        self.host.shell.trigger('tool_select')
+        self.assertEqual(bridge.count, 1)
+        self.host.shell.trigger('measure_clear')
+        self.assertEqual((bridge.count, self.c.tool), (0, 'select'))     # the tool in hand stays
+        self.host.shell.trigger('measure_clear')                        # none made: nothing happens
+        self.assertEqual(bridge.count, 0)
+        pump(20)
+        self.assertFalse(session.dirty())
+        self.assertEqual((len(session.undo.steps), session.undo.index), steps)
+        self.assertEqual(self.root.title(), title)
+        self.assertNotIn('*', self.root.title())
         self.assertFalse(self.host.warnings, self.host.warnings)
 
     def test_preferences_and_view_commands_act_on_the_installed_plan(self):

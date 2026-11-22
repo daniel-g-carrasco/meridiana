@@ -9,7 +9,9 @@ from pathlib import Path
 import _setup  # noqa: F401
 from _fixtures import capannone as sample
 
-from meridiana import model, recovery, session
+from meridiana.core.model import model
+from meridiana.app.project import recovery
+from meridiana.app import session
 
 
 def rename(name: str):
@@ -300,7 +302,7 @@ class Files(unittest.TestCase):
         self.assertIsNone(s.autosaved)
 
     def test_the_state_key_counts_an_image_without_writing_it_whole(self):
-        from meridiana.underlay import Underlay
+        from meridiana.core.model.underlay import Underlay
         s = session.ProjectSession(sample())
         image = "A" * 4000
         s.project.underlays.append(Underlay(id="u1", name="plan.png", image=image, width=20, height=15))
@@ -319,8 +321,9 @@ class Outdated(unittest.TestCase):
     counted."""
 
     def test_the_year_is_outdated_from_the_change_itself_and_clean_again_with_the_same_inputs(self):
-        from meridiana import jobs, model
-        from meridiana.session import ProjectSession
+        from meridiana.app import jobs
+        from meridiana.core.model import model
+        from meridiana.app.session import ProjectSession
         p = model.Project(name="Prova")
         b = model.Building(id=p.new_id("b"), name="Capannone", footprint=[[0, 0], [40, 0], [40, 20], [0, 20]],
                            height=9.5)
@@ -344,6 +347,183 @@ class Outdated(unittest.TestCase):
         self.assertFalse(s.energy_outdated())                   # a name moves nothing
         s.edit("losses", lambda q: q.energy.update({"losses": {"soiling": 3.0}}))
         self.assertTrue(s.energy_outdated())
+
+
+def add_shed(ids: list):
+    """A change as an import makes it: two bodies added, their ids written down."""
+    def change(p):
+        for x in (100, 140):
+            b = model.Building(id=p.new_id("b"), name="Corpo", footprint=[[x, 0], [x + 20, 0], [x + 20, 10], [x, 10]])
+            p.buildings.append(b)
+            ids.append(b.id)
+    return change
+
+
+class Spread(unittest.TestCase):
+    """edit(spread=True) and select(spread=True) (R598, passo 2): a heavy change that moves no module, a model
+    imported, told to the views a piece each on the window's turns, the body it selects with it, what the window does
+    after once they have heard (after_told); one undo for it all."""
+
+    def setUp(self):
+        from meridiana.app.work.center import Center
+        self.center = Center(lambda: None)
+        self.addCleanup(self.center.close)
+
+    def pump(self):
+        while self.center.pump(budget=0.0):
+            pass
+
+    def session(self, pieces=True):
+        s = session.ProjectSession(sample())
+        if pieces:
+            s.pieces = self.center.piece
+        heard = []
+        s.subscribe(lambda t: heard.append(("tree", sorted(t), s.selection)))
+        s.subscribe(lambda t: heard.append(("plan", sorted(t), s.selection)), at_once=True)
+        return s, heard
+
+    def test_the_views_hear_the_import_and_its_selection_a_piece_each_then_what_follows(self):
+        s, heard = self.session()
+        ids = []
+        topics = s.edit("Import", add_shed(ids), spread=True)
+        s.select("building", ids[0], spread=True)
+        s.after_told(lambda: heard.append(("placed", [], s.selection)))
+        self.assertEqual(heard, [], "nobody told before the window's turns: the gesture ends at once")
+        self.assertEqual(s.selection, ("building", ids[0]))
+        self.assertTrue(s.telling())
+        self.pump()
+        told = sorted(topics | {"selection"})
+        self.assertEqual(heard, [("plan", told, ("building", ids[0])), ("tree", told, ("building", ids[0])),
+                                 ("placed", [], ("building", ids[0]))],
+                         "the plan first, each view once with the change and the selection, then what follows")
+        self.assertFalse(s.telling())
+        names = set(self.center.stats()["by_name"])
+        self.assertTrue(any(n.startswith("tell:") for n in names) and any(n.startswith("told:") for n in names), names)
+        s.undo.undo()
+        self.assertEqual([b.id for b in s.project.buildings], [s.project.buildings[0].id], "one undo takes it all")
+        self.assertEqual(s.undo.count(), 1)
+
+    def test_a_selection_after_the_views_heard_is_a_piece_of_its_own(self):
+        s, heard = self.session()
+        ids = []
+        s.edit("Import", add_shed(ids), spread=True)
+        self.center.pump(budget=0.0)                        # the plan told, the tree waits
+        s.select("building", ids[1], spread=True)
+        self.pump()
+        self.assertEqual([(h[0], "selection" in h[1]) for h in heard], [("plan", False), ("tree", True), ("plan", True)])
+
+    def test_a_change_meanwhile_tells_the_views_still_waiting_first(self):
+        s, heard = self.session()
+        ids = []
+        s.edit("Import", add_shed(ids), spread=True)
+        s.after_told(lambda: heard.append(("placed", [], s.selection)))
+        self.center.pump(budget=0.0)
+        s.edit("Rename", rename("Magazzino"))               # a gesture: every view told of the import first
+        self.assertEqual([h[0] for h in heard], ["plan", "tree", "placed", "tree", "plan"])
+        self.assertIn("project:geometry", heard[1][1])
+        self.assertEqual(heard[3][1], ["checks", "project:text"])
+        self.pump()
+        self.assertEqual(len(heard), 5, "the piece left behind tells nobody twice")
+
+    def test_a_plain_change_and_a_plain_selection_are_told_at_once_as_before(self):
+        s, heard = self.session()
+        s.edit("Rename", rename("Magazzino"))
+        s.select("building", s.project.buildings[0].id, spread=True)    # nothing waits: as any selection
+        self.assertEqual([h[0] for h in heard], ["tree", "plan", "tree", "plan"])
+        self.assertFalse(s.telling())
+
+    def test_without_the_window_s_pieces_a_spread_change_is_any_change(self):
+        s, heard = self.session(pieces=False)
+        ids = []
+        s.edit("Import", add_shed(ids), spread=True)
+        s.select("building", ids[0], spread=True)
+        placed = []
+        s.after_told(lambda: placed.append(True))
+        self.assertEqual([(h[0], "selection" in h[1]) for h in heard],
+                         [("tree", False), ("plan", False), ("tree", True), ("plan", True)])
+        self.assertEqual(placed, [True])
+
+
+class KeyAndPhoto(unittest.TestCase):
+    """state_key() kept for the photo it was made on, and the snapshot "before" of a change taken from the photo
+    (R598, passo 2): the same key as key_of(project) and the same undo in every case, fewer copies."""
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp())
+        self.file = self.root / "prova.meridiana"
+        sample().save(self.file)
+
+    def same(self, s):
+        self.assertEqual(s.state_key(), session.ProjectSession.key_of(s.project))
+
+    def test_the_key_is_the_key_of_the_project_in_hand_through_edits_undo_saves_and_other_projects(self):
+        from unittest import mock
+        s = session.ProjectSession()
+        s.open(self.file)
+        self.same(s)
+        self.assertFalse(s.dirty())
+        real = session.ProjectSession.key_of
+        with mock.patch.object(session, "CHECK_PHOTO", False), \
+                mock.patch.object(session.ProjectSession, "key_of", side_effect=real) as made:     # the tests' check off
+            s.edit("Rename", rename("Magazzino"))
+            for _ in range(5):
+                self.assertTrue(s.dirty())
+            self.assertEqual(made.call_count, 1, "made once for the photo of the change, then kept")
+        self.same(s)
+        s.undo.undo()
+        self.same(s)
+        self.assertFalse(s.dirty())
+        s.undo.redo()
+        self.same(s)
+        s.amend(lambda p: p.energy.__setitem__("strings", {"runs": []}))
+        self.same(s)
+        s.save()
+        self.same(s)
+        self.assertFalse(s.dirty())
+        s.edit("Name", lambda p: setattr(p, "name", "Dopo"))
+        written = session.project_from(s.photo())
+        key = s.state_key()
+        written.save(self.root / "copia.meridiana")
+        self.assertTrue(s.adopt_save(s.project, written, self.root / "copia.meridiana", key,
+                                     session.saved_parts(written)))
+        self.same(s)
+        self.assertFalse(s.dirty())
+        with self.assertRaises(ZeroDivisionError):
+            s.edit("Broken", lambda p: (setattr(p, "name", "half"), 1 / 0))
+        self.same(s)
+        other = sample("Altro")
+        s.take(other, None, saved=False, photo=session.photo_of(other))
+        self.same(s)
+        self.assertTrue(s.dirty())
+        s.take(sample("Senza"), None, saved=True)
+        self.same(s)
+        self.assertFalse(s.dirty())
+
+    def test_inside_a_change_the_key_is_that_of_the_project_being_changed(self):
+        s = session.ProjectSession()
+        s.open(self.file)
+        s.photo()
+        inside = []
+        s.edit("Rename", lambda p: (setattr(p, "name", "Durante"),
+                                    inside.append(s.state_key() == session.ProjectSession.key_of(p))))
+        self.assertEqual(inside, [True])
+
+    def test_the_snapshot_before_a_change_is_the_photo_and_the_undo_is_the_same(self):
+        from unittest import mock
+        s = session.ProjectSession()
+        s.open(self.file)
+        first = s.photo()
+        s.edit("Rename", rename("Magazzino"))
+        self.assertIs(s.undo.steps[-1].before, first, "the photo in hand, no copy")
+        real = session.ProjectSession.snapshot
+        with mock.patch.object(session.ProjectSession, "snapshot", autospec=True, side_effect=real) as made:
+            s.edit("Rename", rename("Deposito"))
+            self.assertEqual(made.call_count, 1, "only the snapshot after the change")
+        self.assertIs(s.undo.steps[-1].before, s.undo.steps[-2].after)
+        s.undo.undo()
+        s.undo.undo()
+        self.assertEqual(s.project.to_json(), model.Project.load(self.file)[0].to_json())
+        self.assertFalse(s.dirty())
 
 
 if __name__ == "__main__":

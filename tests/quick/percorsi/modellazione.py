@@ -1,4 +1,4 @@
-"""Modelling journeys, the same gestures on Quick and on Widgets, in East/North metres on the plan.
+"""Modelling journeys on the Quick window, in East/North metres on the plan.
 
 A hand is tools/quick_real_cursor.py RealHand (the system's cursor) or NativeInput of
 tools/quick_native_input.py (native messages on a hidden desktop): both offer the same calls.
@@ -16,7 +16,7 @@ VIEW = (-8.0, -8.0, 150.0, 90.0)      # west, south, width, height of the plan s
 
 def base_project(folder, journey):
     """The Rho project with its modules and system, its drawing and strings gone, as a new file in `folder`."""
-    from meridiana import model
+    from meridiana.core.model import model
     project, _notice = model.Project.load(RHO)
     project.buildings, project.subfields, project.exclusions, project.props = [], [], [], []
     project.energy.pop('strings', None)
@@ -31,13 +31,12 @@ class Pilot:
         self.engine, self.app, self.host, self.window, self.hand = engine, app, host, window, hand
         self.out, self.journey, self.log = Path(out), journey, log
         self.records = []
-        self.quick = engine == 'quick'
 
     # the program
 
     @property
     def session(self):
-        return self.host.bridge.session if self.quick else self.host.session
+        return self.host.bridge.session
 
     @property
     def project(self):
@@ -55,13 +54,7 @@ class Pilot:
 
     def prepare(self):
         self.spin(1500)
-        if self.quick:
-            self.layer = self.window.findChild(QObject, 'worldLayer')
-        else:
-            from PySide6.QtCore import QTimer
-            self.watch = QTimer()
-            self.watch.timeout.connect(self._modal)
-            self.watch.start(400)
+        self.layer = self.window.findChild(QObject, 'worldLayer')
         self.fit(*VIEW)
         self.hand.click(*self.neutral())
         self.spin(200)
@@ -71,23 +64,16 @@ class Pilot:
         """Plan alone, the same scale and centre in both programs: direct calls, the journey is about what comes next."""
         if not getattr(self, 'plan_alone', False):
             self.plan_alone = True
-            self.host.shell.trigger('view_plan') if self.quick else self.host.commands['view_plan'].trigger()
+            self.host.shell.trigger('view_plan')
             self.spin(600)
         cx, cy = west+width/2, south+height/2
-        if self.quick:
-            plan = self.window.findChild(QObject, 'plan')
-            zoom = 1/mpp
-            plan.setProperty('fitted', False)
-            plan.setProperty('zoom', zoom)
-            plan.setProperty('panX', plan.width()/2-cx*zoom)
-            plan.setProperty('panY', plan.height()/2+cy*zoom)
-            size = (plan.width(), plan.height())
-        else:
-            v = self.host.plan
-            v.resetTransform()
-            v.scale(1/mpp, 1/mpp)
-            v.centerOn(QPointF(cx, -cy))
-            size = (v.viewport().width(), v.viewport().height())
+        plan = self.window.findChild(QObject, 'plan')
+        zoom = 1/mpp
+        plan.setProperty('fitted', False)
+        plan.setProperty('zoom', zoom)
+        plan.setProperty('panX', plan.width()/2-cx*zoom)
+        plan.setProperty('panY', plan.height()/2+cy*zoom)
+        size = (plan.width(), plan.height())
         self.spin(400)
         self.say(f'vista: metri per pixel {self.mpp():.5f}, pianta {size}, angoli {self.world(west, south)} {self.world(west+width, south+height)}')
 
@@ -106,11 +92,7 @@ class Pilot:
 
     def neutral(self):
         """A place of the test window without a command: the status line at the bottom."""
-        if self.quick:
-            return self.centre(self.item('statusHint'))
-        bar = self.host.statusBar()
-        p = bar.mapToGlobal(bar.rect().center())
-        return p.x(), p.y()
+        return self.centre(self.item('statusHint'))
 
     # finding things
 
@@ -133,54 +115,29 @@ class Pilot:
         return (visible or found or [None])[0]
 
     def world(self, x, y):
-        if self.quick:
-            p = self.layer.mapToGlobal(QPointF(x, -y))
-            return round(p.x()), round(p.y())
-        v = self.host.plan
-        p = v.viewport().mapToGlobal(v.mapFromScene(QPointF(x, -y)))
-        return p.x(), p.y()
+        p = self.layer.mapToGlobal(QPointF(x, -y))
+        return round(p.x()), round(p.y())
 
     # gestures
 
     def phase(self, pid):
-        if self.quick:
-            self.hand.click(*self.centre(self.item(pid+'Tab')))
-        else:
-            tabs = self.host.tabs
-            index = tabs.index_of_phase(pid)
-            bar = tabs.tabBar()
-            p = bar.mapToGlobal(bar.tabRect(index).center())
-            self.hand.click(p.x(), p.y())
+        self.hand.click(*self.centre(self.item(pid+'Tab')))
         self.spin(500)
         self.say(f'fase {pid}')
 
     def tool(self, command):
         """The button of the bar with the real cursor. A command in a split button's menu goes through its
         command, and the log says so."""
-        if self.quick:
-            item = self.item('tool_'+command)
-            if item is not None and self.shown(item) and item.property('enabled') is not False:
-                self.hand.click(*self.centre(item))
-            else:
-                self.say(f'  {command}: senza pulsante visibile, comando diretto')
-                self.host.shell.trigger(command)
-            if command == 'tool_subfield':
-                # R445: the Quick's sub-field is its modules; this journey matches the Widgets, whose sub-field is
-                # an area the layout fills: «Fill an area» (the plan's menu) gives the same here
-                self.host.plan.activateTool('subfield', {'fill': 'area'})
+        item = self.item('tool_'+command)
+        if item is not None and self.shown(item) and item.property('enabled') is not False:
+            self.hand.click(*self.centre(item))
         else:
-            button = None
-            for bar in self.host.findChildren(QObject):
-                buttons = getattr(bar, 'buttons', None)
-                if isinstance(buttons, dict) and command in buttons and buttons[command].isVisible():
-                    button = buttons[command]
-                    break
-            if button is not None and button.isEnabled():
-                p = button.mapToGlobal(button.rect().center())
-                self.hand.click(p.x(), p.y())
-            else:
-                self.say(f'  {command}: senza pulsante visibile, comando diretto')
-                self.host.commands[command].trigger()
+            self.say(f'  {command}: senza pulsante visibile, comando diretto')
+            self.host.shell.trigger(command)
+        if command == 'tool_subfield':
+            # R445: the Quick's sub-field is its modules; this journey wants an area the layout fills, as the
+            # old window's: «Fill an area» (the plan's menu)
+            self.host.plan.activateTool('subfield', {'fill': 'area'})
         self.spin(200)
 
     def at(self, x, y):
@@ -222,7 +179,7 @@ class Pilot:
         self.settle()
         if self.session.state_key() == before:
             self.say(f'  Ctrl+{key.upper()} senza effetto: {command} con il comando diretto')
-            self.host.shell.trigger(command) if self.quick else self.host.commands[command].trigger()
+            self.host.shell.trigger(command)
             self.settle()
 
     def centres(self, index):
@@ -233,32 +190,21 @@ class Pilot:
 
     def button(self, *names):
         """Click the first visible push button with one of these labels; the log lists what it found."""
-        if self.quick:
-            found = [i for i in self.walk() if self.shown(i) and i.property('text') and i.property('hovered') is not None
-                     and i.property('enabled') is not False]
-            texts = [str(i.property('text')).replace('&', '') for i in found]
-            chosen = next((i for name in names for i, t in zip(found, texts, strict=True) if t == name), None)
-            if chosen is None:
-                self.say(f'  pulsante {names} non trovato')
-                return False
-            self.hand.click(*self.centre(chosen))
-        else:
-            from PySide6.QtWidgets import QAbstractButton, QApplication
-            found = [b for w in QApplication.topLevelWidgets() if w.isVisible() for b in w.findChildren(QAbstractButton)
-                     if b.isVisible() and b.isEnabled() and b.text()]
-            chosen = next((b for name in names for b in found if b.text().replace('&', '') == name), None)
-            if chosen is None:
-                self.say(f'  pulsante {names} non trovato')
-                return False
-            q = chosen.mapToGlobal(chosen.rect().center())
-            self.hand.click(q.x(), q.y(), popup=True)
+        found = [i for i in self.walk() if self.shown(i) and i.property('text') and i.property('hovered') is not None
+                 and i.property('enabled') is not False]
+        texts = [str(i.property('text')).replace('&', '') for i in found]
+        chosen = next((i for name in names for i, t in zip(found, texts, strict=True) if t == name), None)
+        if chosen is None:
+            self.say(f'  pulsante {names} non trovato')
+            return False
+        self.hand.click(*self.centre(chosen))
         self.spin(400)
         self.say(f'  pulsante premuto: {names}')
         return True
 
     def trigger(self, command):
         self.say(f'  {command}: comando diretto')
-        self.host.shell.trigger(command) if self.quick else self.host.commands[command].trigger()
+        self.host.shell.trigger(command)
         self.spin(300)
 
     def edit(self, text, change):
@@ -279,10 +225,7 @@ class Pilot:
 
     def photo(self, name):
         path = self.out/f'{self.journey}-{self.engine}-{name}.png'
-        if self.quick:
-            self.window.grabWindow().save(str(path))
-        else:
-            self.host.grab().save(str(path))
+        self.window.grabWindow().save(str(path))
         return path
 
     def settle(self, seconds=6):
@@ -307,13 +250,13 @@ class Pilot:
         return self.host.plan.tool
 
     def hint(self):
-        return self.host.plan.hint if self.quick else ''
+        return self.host.plan.hint
 
     # what is on record
 
     def state(self):
-        from meridiana import checks
-        from meridiana.energy import system
+        from meridiana.core.rules import checks
+        from meridiana.core.energy import system
         p, s = self.project, self.session
         out = {'tool': str(self.tool_name()), 'undo': s.undo.count() if callable(s.undo.count) else s.undo.count,
                'can_undo': s.undo.can_undo(), 'can_redo': s.undo.can_redo()}
@@ -413,15 +356,9 @@ def facts(pilot):
     """What the driver needs to know about a window; no input beyond the first click."""
     pilot.say(f'hint {pilot.hint()!r} tool {pilot.tool_name()!r}')
     pilot.mark('facts')
-    if pilot.quick:
-        names = sorted({i.objectName() for i in pilot.walk() if i.objectName().startswith(('tool_', 'planView'))
-                        and pilot.shown(i)})
-        pilot.say(f'pulsanti {names}')
-    else:
-        for bar in pilot.host.findChildren(QObject):
-            buttons = getattr(bar, 'buttons', None)
-            if isinstance(buttons, dict) and buttons:
-                pilot.say(f'{type(bar).__name__}: {sorted(buttons)[:30]}')
+    names = sorted({i.objectName() for i in pilot.walk() if i.objectName().startswith(('tool_', 'planView'))
+                    and pilot.shown(i)})
+    pilot.say(f'pulsanti {names}')
     module = pilot.project.modules
     pilot.say(f'moduli {str(module)[:400]}')
     pilot.say(f'energy {str(pilot.project.energy)[:400]}')
@@ -711,9 +648,8 @@ def pensilina(p):
     p.spin(1200)
     p.photo('dialogo')
     p.mark('Pensilina premuto')
-    if p.quick:
-        p.button('Mettilo in pianta')
-        p.spin(300)
+    p.button('Mettilo in pianta')
+    p.spin(300)
     p.say(f'dopo il dialogo: strumento {p.tool_name()}')
     p.click(30, 30)
     p.spin(800)
@@ -728,8 +664,7 @@ def pensilina(p):
     p.photo('su-pensilina')
     p.mark('Su pensilina premuto')
     p.say(f'finestre: {dialog_text(p)}')
-    if p.quick:
-        p.button('Posa', 'OK', 'Applica', 'Sì')
+    p.button('Posa', 'OK', 'Applica', 'Sì')
     p.spin(1500)
     p.mark('Su pensilina confermato')
     p.key('esc')
@@ -1084,7 +1019,7 @@ def vista3d(p):
 @journey
 def salva(p):
     """Save with the program's command on a file in the output folder, read it again, count again."""
-    from meridiana import model
+    from meridiana.core.model import model
     target = p.out/f'salva-{p.engine}.meridiana'
     p.phase('model')
     p.tool('tool_building')
@@ -1118,8 +1053,6 @@ def salva(p):
     p.spin(6000)
     state = p.mark('prima di salvare')
     p.session.path = target
-    if not p.quick:
-        p.host.session.path = target
     p.trigger('save')
     p.spin(1500)
     p.say(f'file scritto: {target.exists()} {target.stat().st_size if target.exists() else 0} byte; path {p.session.path}')
@@ -1146,10 +1079,6 @@ def automatica(p):
     strings_setup(p)
     p.tool('strings_auto')
     p.spin(800)
-    if not p.quick:
-        from PySide6.QtWidgets import QAbstractButton, QApplication
-        p.say(f"finestre {[(type(w).__name__, w.isVisible()) for w in QApplication.topLevelWidgets() if w.isVisible()]}")
-        p.say(f"pulsanti {[b.text() for w in QApplication.topLevelWidgets() if w.isVisible() for b in w.findChildren(QAbstractButton) if b.isVisible() and b.text()][-12:]}")
     p.button('Stringa')
     start = time.perf_counter()
     while time.perf_counter()-start < 30 and not _strings_summary(p.project)['runs']:
@@ -1261,10 +1190,8 @@ def piccoli(p):
 
 def _message(p):
     """What the status line says now."""
-    if p.quick:
-        item = p.item('statusHint')
-        return str(item.property('text'))[:140] if item is not None else ''
-    return p.host.statusBar().currentMessage()[:140] or str(p.host.hint.text())[:140]
+    item = p.item('statusHint')
+    return str(item.property('text'))[:140] if item is not None else ''
 
 
 def wait_layout(p, label, seconds=90):
@@ -1334,13 +1261,7 @@ def ritardo(p):
 
 def prop(p, key, value):
     """A value through the panel's own way in: the commit of the form, the signal of the inspector."""
-    if p.quick:
-        done = p.host.parts.controllers['properties'].commit(key, value)
-    else:
-        from meridiana.ui.properties import Properties
-        inspector = next((o for o in p.host.findChildren(Properties)), None) if hasattr(Properties, 'edited') else None
-        inspector.edited.emit(inspector.kind, inspector.oid, {key: value})
-        done = True
+    done = p.host.parts.controllers['properties'].commit(key, value)
     p.spin(200)
     p.say(f'  proprieta {key} = {value}: {done}')
     return done
@@ -1371,8 +1292,7 @@ def proprieta(p):
         p.session.select('subfield', p.project.subfields[0].id)
         p.spin(300)
         p.say('selezione per funzione')
-    if p.quick:
-        prop(p, 'automatic', False)
+    prop(p, 'automatic', False)
     for key, value in (('params.tilt', 30.0), ('params.azimuth', 20.0), ('params.portrait', False), ('params.stack', 2),
                        ('params.edge', 1.5), ('params.mounting', 'flush'), ('params.mounting', 'east_west'),
                        ('params.mounting', 'tilted_anchored')):
@@ -1490,11 +1410,8 @@ def file(p):
 
 @journey
 def proposta(p):
-    """The automatic proposal itself, through the button in Quick and through the button and then the function in Widgets."""
+    """The automatic proposal itself, through its button."""
     import time
-    if not p.quick:
-        tell = p.host.tell
-        p.host.tell = lambda text, *a, **k: (p.say(f'  messaggio: {text}'), tell(text, *a, **k))[1]
     p.fit(-5, -5, 75, 40, .08)
     strings_setup(p)
     p.tool('strings_auto')
@@ -1504,14 +1421,6 @@ def proposta(p):
     while time.perf_counter()-start < 12 and not _strings_summary(p.project)['runs']:
         p.spin(300)
     p.say(f'dopo il pulsante: {_strings_summary(p.project)["runs"]} stringhe in {time.perf_counter()-start:.1f} s')
-    if not p.quick and not _strings_summary(p.project)['runs']:
-        p.say(f'  posa ferma {p.host._layouts_settled()}, lavoro in corso {p.host.string_proposal_job}')
-        p.settle(10)
-        p.host._strings_propose('serpentine')
-        start = time.perf_counter()
-        while time.perf_counter()-start < 20 and not _strings_summary(p.project)['runs']:
-            p.spin(300)
-        p.say(f'per funzione: {_strings_summary(p.project)["runs"]} stringhe in {time.perf_counter()-start:.1f} s')
     p.mark('proposta')
     p.compute(90)
     p.mark('proposta con il calcolo')
@@ -1576,21 +1485,20 @@ def ritardo2(p):
 def esc(p):
     """Esc after each kind of tool button, in both phases: does it reach the plan? Every shortcut used twice is listed."""
     events = []
-    if p.quick:
-        listed = shortcut_objects(p)
-        for o in listed:
-            name = str(o.property('sequences') or o.property('sequence'))
-            o.activated.connect(lambda n=name: events.append(('attivata', n)))
-            o.activatedAmbiguously.connect(lambda n=name: events.append(('ambigua', n)))
+    listed = shortcut_objects(p)
+    for o in listed:
+        name = str(o.property('sequences') or o.property('sequence'))
+        o.activated.connect(lambda n=name: events.append(('attivata', n)))
+        o.activatedAmbiguously.connect(lambda n=name: events.append(('ambigua', n)))
 
-        def duplicates(label):
-            keys = {}
-            for o in listed:
-                if o.property('enabled'):
-                    seen = o.property('sequences') or [o.property('sequence')]
-                    for k in seen:
-                        keys.setdefault(str(k), []).append(o.parent().metaObject().className()[:28])
-            p.say(f'{label}: doppie {[(k, v) for k, v in keys.items() if len(v) > 1]}')
+    def duplicates(label):
+        keys = {}
+        for o in listed:
+            if o.property('enabled'):
+                seen = o.property('sequences') or [o.property('sequence')]
+                for k in seen:
+                    keys.setdefault(str(k), []).append(o.parent().metaObject().className()[:28])
+        p.say(f'{label}: doppie {[(k, v) for k, v in keys.items() if len(v) > 1]}')
     p.phase('model')
     p.tool('tool_building')
     p.polygon((0, 0), (60, 0), (60, 30), (0, 30))
@@ -1598,8 +1506,7 @@ def esc(p):
     for phase, tools in (('model', ('tool_building', 'tool_pitch', 'tool_exclusion', 'tool_measure')),
                          ('plant', ('tool_subfield', 'strings_manual', 'tool_erase_string'))):
         p.phase(phase)
-        if p.quick:
-            duplicates(phase)
+        duplicates(phase)
         for command in tools:
             p.tool(command)
             before = p.tool_name()
@@ -1612,41 +1519,6 @@ def esc(p):
                 p.say('  non torna a Seleziona: lo rimetto dal pulsante')
                 p.tool('tool_select')
     p.mark('fine')
-
-
-@journey
-def popup(p):
-    """Widgets only: why «Stringa» in the little window gives no strings. The window, the button by function, the signal."""
-    import time
-    tell = p.host.tell
-    p.host.tell = lambda text, *a, **k: (p.say(f'  messaggio: {text}'), tell(text, *a, **k))[1]
-    p.fit(-5, -5, 75, 40, .08)
-    strings_setup(p)
-    p.tool('strings_auto')
-    p.spin(800)
-    popup = p.host.stringing_popup
-    p.host_calls = []
-    popup.asked.connect(lambda options: p.say(f'  segnale asked: {options}'))
-    p.say(f'finestrella visibile {popup.isVisible()}, geometria {popup.geometry()}, pulsante {popup.go.text()!r} abilitato {popup.go.isEnabled()}')
-    q = popup.go.mapToGlobal(popup.go.rect().center())
-    p.say(f'centro del pulsante {q}')
-    p.hand.click(q.x(), q.y(), popup=True)
-    p.spin(500)
-    p.say(f'dopo il clic: visibile {popup.isVisible()}, lavoro {p.host.string_proposal_job}')
-    start = time.perf_counter()
-    while time.perf_counter()-start < 8 and not _strings_summary(p.project)['runs']:
-        p.spin(300)
-    p.say(f'dopo il clic: {_strings_summary(p.project)["runs"]} stringhe')
-    if not _strings_summary(p.project)['runs']:
-        p.tool('strings_auto')
-        p.spin(800)
-        popup.go.click()
-        p.spin(500)
-        p.say(f'clic per funzione: visibile {popup.isVisible()}, lavoro {p.host.string_proposal_job}')
-        start = time.perf_counter()
-        while time.perf_counter()-start < 8 and not _strings_summary(p.project)['runs']:
-            p.spin(300)
-        p.say(f'dopo il clic per funzione: {_strings_summary(p.project)["runs"]} stringhe; {str(p.project.energy.get("strings"))[:200]}')
 
 
 @journey
@@ -1680,7 +1552,7 @@ def ingressi(p):
         p.key('esc')
         p.key('esc')
         p.key('esc')
-        p.say(f'scelta dopo Esc: {p.host.plan.chosenString if p.quick else p.host.chosen_string}')
+        p.say(f'scelta dopo Esc: {p.host.plan.chosenString}')
     p.mark('tre stringhe a mano')
 
 
@@ -1708,10 +1580,6 @@ def scorciatoie(p):
     p.key('enter')
     p.key('esc')
     p.key('esc')
-    if not p.quick:
-        p.undo()
-        p.mark('annulla')
-        return
     events = []
     listed = shortcut_objects(p)
     for o in listed:
@@ -1743,8 +1611,6 @@ def scorciatoie(p):
 
 
 def dialog_text(p):
-    if not p.quick:
-        return getattr(p.host, 'message_boxes', [])[-3:]
     found = [i for i in p.walk() if p.shown(i) and i.property('text') and i.property('hovered') is not None
              and i.mapToGlobal(QPointF(0, 0)).y() > 100]
     return [str(i.property('text')) for i in found][-8:]
@@ -1798,7 +1664,7 @@ def on_hidden(app, host, window, native, engine, journey, out):
     """Inside the program started by tools/quick_native_input.py: see modellazione_nascosto.py."""
     Path(out).mkdir(parents=True, exist_ok=True)
     with (Path(out)/f'{journey}-{engine}.log').open('w', encoding='utf8') as log:
-        pilot = Pilot(engine, app, host if engine == 'quick' else host.window, window, NativeHand(native, window), out, journey, log)
+        pilot = Pilot(engine, app, host, window, NativeHand(native, window), out, journey, log)
         pilot.prepare()
         run(pilot, journey)
     print('fine', journey, engine, len(pilot.records))

@@ -3,7 +3,8 @@ the eave is written, as the default, with the eave kept as the choice."""
 import math
 import unittest
 
-from meridiana import model, roof_vertices, roofs
+from meridiana.core.model import model
+from meridiana.core.geometry import roof_vertices, roofs
 
 
 def rect(x0, y0, x1, y1):

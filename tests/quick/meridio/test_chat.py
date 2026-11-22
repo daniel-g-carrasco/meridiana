@@ -6,9 +6,9 @@ from types import SimpleNamespace
 from PySide6.QtWidgets import QApplication
 
 from _setup import wait_until
-from meridiana import config
-from meridiana.assistant import attachments, conversation, providers, setup, tools
-from meridiana.quick.backend.assistant_chat import AssistantChat
+from meridiana.app.platform import config
+from meridiana.app.assistant import attachments, conversation, providers, setup, tools
+from meridiana.gui.backend.assistant_chat import AssistantChat
 from quick.meridio.support import Host, Provider, Voice
 
 
@@ -36,7 +36,6 @@ class ChatTest(unittest.TestCase):
         self.assertIn("<b>Ready</b>", self.chat.messages[-1]["bodyHtml"])
         self.assertNotEqual(self.local.requests[0][3], threading.get_ident())
         self.assertIn("15", self.chat.costLine)
-        self.assertTrue(self.chat.suggestions)
 
     def test_cloud_waits_for_card_and_reserved_project_stays_local(self):
         setup.remember(self.cfg, "openai", "test-model")
@@ -92,6 +91,73 @@ class ChatTest(unittest.TestCase):
         self.assertEqual(len(self.host.edits), 1)
         self.assertFalse(self.chat.cards)
         self.assertEqual(proposal.state, "applied")
+
+    def test_apply_over_a_value_changed_since_the_proposal_changes_nothing_and_says_why(self):
+        made = tools.run("propose_edit", {"kind": "subfield", "id": "s1", "changes": {"params.tilt": 20},
+                                          "reason": "x"}, self.host, tools.State())
+        self.chat._show_proposal(made.proposal)
+        self.host.project.subfields[0].params["tilt"] = 25.0
+        self.chat.cardAction(self.chat.cards[-1]["id"], "apply")
+        self.assertFalse(self.host.edits)
+        self.assertEqual(self.host.project.subfields[0].params["tilt"], 25.0)
+        self.assertEqual(made.proposal.state, "failed")
+        self.assertIn("tilt", str(self.chat.messages[-1]))
+        self.assertFalse(self.chat.cards)
+
+    def answering(self, *answers):
+        def stream(system, messages, specs):
+            self.local.requests.append((system, [dict(m) for m in messages], specs, threading.get_ident()))
+            yield providers.Text(answers[min(len(self.local.requests), len(answers)) - 1])
+            yield providers.Done("end")
+        self.local.stream = stream
+
+    def shown(self):
+        return " ".join(m["bodyHtml"] for m in self.chat.messages if not m.get("outgoing"))
+
+    def test_an_internal_key_in_brackets_is_asked_again_once_and_never_shown(self):
+        self.answering("La potenza è ([model.dc_power_nominal_w]).", "La potenza è 65 kWp.")
+        self.chat.ask("Potenza?")
+        self.idle()
+        self.assertEqual(len(self.local.requests), 2)
+        self.assertIn("not words of Meridiana", str(self.local.requests[1][1][-1]))
+        self.assertNotIn("square brackets", self.local.requests[0][0])       # the local model is not told of them
+        self.assertNotIn("dc_power_nominal_w", self.shown())
+        self.assertIn("65 kWp", self.shown())
+
+    def test_twice_wrong_he_says_he_cannot_answer_and_a_known_word_is_put_in_its_place(self):
+        self.answering("Vedi [dc_ac_ratio].")
+        self.chat.ask("Rapporto?")
+        self.idle()
+        self.assertEqual(len(self.local.requests), 2)
+        self.assertNotIn("dc_ac_ratio", self.shown())
+        self.assertIn("reliably", self.shown())
+        self.chat.newConversation()
+        self.local.requests.clear()
+        self.answering("Nella fase (come [PHASE]) vedi i parametri.")
+        self.chat.ask("Che cosa vedo?")
+        self.idle()
+        self.assertEqual(len(self.local.requests), 1)
+        self.assertIn("(come Model)", self.shown())
+
+    def test_a_catalogue_not_yet_read_is_read_off_the_window_thread_before_the_search_runs(self):
+        from unittest.mock import patch
+        from meridiana.data import catalog
+        rounds = [[providers.ToolCall("c1", "search_catalog", {"kind": "batteries", "query": ""}),
+                   providers.Done("tools")], [providers.Text("Trovate."), providers.Done("end")]]
+
+        def stream(system, messages, specs):
+            self.local.requests.append((system, [dict(m) for m in messages], specs, threading.get_ident()))
+            yield from rounds[len(self.local.requests) - 1]
+        self.local.stream = stream
+        read_on = []
+        with patch.object(catalog, "ready", return_value=False), \
+                patch.object(catalog, "prepare", side_effect=lambda kind: read_on.append(threading.get_ident())):
+            self.chat.ask("Batterie?")
+            self.idle()
+        self.assertEqual(len(read_on), 1)
+        self.assertNotEqual(read_on[0], threading.get_ident())
+        self.assertEqual(len(self.local.requests), 2)
+        self.assertIn("products", self.local.requests[1][1][-1]["content"])
 
     def test_history_and_tasks_are_confirmed_then_dispatched_to_host(self):
         from unittest.mock import Mock
@@ -161,7 +227,7 @@ class ChatTest(unittest.TestCase):
         self.assertIn("X1", str(cards[0]["lines"]))
 
     def test_a_datasheet_is_offered_for_review_with_no_model(self):
-        from meridiana.catalog import datasheet
+        from meridiana.data.catalog import datasheet
         reading = datasheet.Reading("sheet.pdf", "modules")
         reading.proposals = [datasheet.Proposal("modules", {"manufacturer": "Jinko Solar", "model": "JKM475N"})]
         item = attachments.Attachment("sheet.pdf", "application/pdf", "text", "sheet.pdf", "C:/x/sheet.pdf", reading)
@@ -308,7 +374,7 @@ class ChatTest(unittest.TestCase):
         picture.fill("blue")
         mime = QMimeData()
         mime.setImageData(picture)
-        with patch("meridiana.quick.backend.assistant_chat.QGuiApplication.clipboard",
+        with patch("meridiana.gui.backend.assistant_chat.QGuiApplication.clipboard",
                    return_value=SimpleNamespace(mimeData=lambda: mime)):
             self.assertTrue(self.chat.pasteClipboard())
             self.assertTrue(wait_until(self.app, lambda: not self.chat.attachment_jobs, 5))
@@ -331,7 +397,7 @@ class ChatTest(unittest.TestCase):
         self.assertFalse(self.chat.busy)
 
     def test_card_text_and_headers_cannot_inject_html(self):
-        from meridiana.quick.backend.assistant_chat import message_html
+        from meridiana.gui.backend.assistant_chat import message_html
         body = message_html("| <img src=x> | B |\n| --- | --- |\n| 1 | 2 |")
         self.assertNotIn("<img", body)
         self.assertIn("&lt;img", body)
@@ -339,39 +405,8 @@ class ChatTest(unittest.TestCase):
         self.assertNotIn("<table", fenced)
         self.assertIn("<pre>", fenced)
 
-    def test_r362_busy_retains_suggestions_and_disables_actions(self):
-        from unittest.mock import Mock
-        before = list(self.chat.suggestions)
-        self.assertTrue(before)
-        self.chat.pool = SimpleNamespace(start=Mock())
-        self.chat.ask("Wait for model")
-        self.assertEqual(self.chat.suggestions, before)
-        self.assertFalse(self.chat.suggestionsEnabled)
-        self.chat.stop()
-        self.assertTrue(self.chat.suggestionsEnabled)
-
-    def test_qml_suggestion_binding_updates_when_confirmation_appears_and_is_discarded(self):
-        from PySide6.QtCore import QUrl
-        from PySide6.QtQml import QQmlComponent, QQmlEngine
-        engine = QQmlEngine()
-        engine.rootContext().setContextProperty("chat", self.chat)
-        component = QQmlComponent(engine)
-        component.setData(b'import QtQml\nQtObject { property int count: chat.suggestions.length }', QUrl())
-        bound = component.create()
-        self.assertIsNotNone(bound, str(component.errors()))
-        try:
-            before = bound.property("count")
-            self.assertGreater(before, 0)
-            proposal = tools.Proposal("confirm-task", "Task", "task", "", [], item={"action": "create"})
-            self.chat._show_proposal(proposal)
-            self.assertEqual(bound.property("count"), 0)
-            self.chat.cardAction(self.chat.cards[-1]["id"], "discard")
-            self.assertEqual(bound.property("count"), before)
-        finally:
-            bound.setParent(engine)
-
     def test_catalog_reviews_report_id_and_save_removes_only_its_own_card(self):
-        from meridiana.catalog import KINDS
+        from meridiana.data.catalog import KINDS
         kind = next(iter(KINDS))
         requested = []
         self.chat.catalogReviewRequested.connect(lambda *args: requested.append(args))

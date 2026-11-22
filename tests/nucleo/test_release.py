@@ -81,7 +81,7 @@ class TextsTest(unittest.TestCase):
         # a rule of the house: a colon, a comma or a full stop instead
         offenders = []
         for folder, pattern in (("src", "*.py"), ("po", "*.po"), ("data", "*.xml"), ("data", "*.desktop"),
-                                ("docs", "*.md"), (".", "*.md")):
+                                ("docs", "*.md"), (".claude", "*.md"), (".", "*.md")):
             # every folder with all its subfolders (the studies are in docs/studio); the root only its own files
             found = (ROOT / folder).glob(pattern) if folder == "." else (ROOT / folder).rglob(pattern)
             for path in found:

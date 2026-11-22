@@ -1,4 +1,5 @@
-"""R96/R359/R360/R365: compare the live Quick data with the Widgets reference."""
+"""R96/R359/R360/R365: the live Quick data against what the Widgets' sun bar said (recorded on 10/11/2026,
+quick/aiuti/riferimenti.py)."""
 from pathlib import Path
 import tempfile
 import unittest
@@ -6,10 +7,12 @@ import unittest
 from PySide6.QtCore import QLocale
 from PySide6.QtWidgets import QApplication
 
-from meridiana import i18n, jobs, model
-from meridiana.quick.backend.scene import SceneBackend
-from meridiana.session import ProjectSession
-from meridiana.ui.sunbar import SunBar
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.gui.backend.scene import SceneBackend
+from meridiana.app.session import ProjectSession
+from quick.aiuti import riferimenti
 
 
 class SunFidelityTest(unittest.TestCase):
@@ -25,40 +28,34 @@ class SunFidelityTest(unittest.TestCase):
         self.session = ProjectSession(model.Project())
         self.backend = SceneBackend(self.session, Path(self.tmp.name))
         self.addCleanup(self.backend.close)
-        self.reference = SunBar()
-        p = self.session.project
-        self.reference.set_site(p.site.lat, p.site.lon, p.sun_window)
-        self.addCleanup(self.reference.deleteLater)
 
     def test_initial_design_day_and_apparent_sun_match_widgets(self):
         actual = self.backend.sunData
-        self.assertEqual((actual['month'], actual['day']),
-                         (self.reference.day.date().month(), self.reference.day.date().day()))
-        self.assertAlmostEqual(actual['hour'], self.reference.hour.value() / 6)
-        self.assertAlmostEqual(actual['elevation'], self.reference.position().apparent)
-        self.assertEqual(actual['short'], self.reference.short.text())
-        self.assertEqual(actual['description'], self.reference.words.text())
+        riferimenti.check(self, {key: actual[key] for key in ('month', 'day', 'hour', 'elevation', 'short',
+                                                               'description')}, relative=1e-7)
 
     def test_play_day_matches_ten_minute_step_and_sunrise_wrap(self):
         self.backend.setSun(2026, 12, 21, 0)
-        self.reference.hour.setValue(0)
-        self.reference._toggle(True)
         self.backend.playSun(True)
-        self.assertAlmostEqual(self.backend.sunData['hour'], self.reference.hour.value() / 6)
-        self.reference._tick()
+        hours = [self.backend.sunData['hour']]
         self.backend.stepSun()
-        self.assertAlmostEqual(self.backend.sunData['hour'], self.reference.hour.value() / 6)
-        self.reference.timer.stop()
+        hours.append(self.backend.sunData['hour'])
+        riferimenti.check(self, hours)
+
+    def test_the_hour_rests_on_ten_minutes(self):
+        """Daniel 17/11/2026: «io terrei 10 minuti, al minuto è troppo granulare»: the slider, the wheel and Play all
+        on the same ten-minute grid."""
+        self.backend.setSun(2026, 7, 10, (14 * 60 + 37) / 60)
+        self.assertEqual(self.backend.sunData['clock'], '14:40')
+        self.backend.stepSun()
+        self.assertEqual(self.backend.sunData['clock'], '14:50')
 
     def test_site_change_resets_to_design_but_rename_keeps_chosen_hour(self):
         self.backend.setSun(2026, 7, 10, 15)
         self.session.edit('Rename', lambda p: setattr(p, 'name', 'Renamed'))
         self.assertEqual(self.backend.sunData['hour'], 15)
         self.session.edit('Site', lambda p: setattr(p.site, 'lon', p.site.lon + 2))
-        p = self.session.project
-        self.reference.set_site(p.site.lat, p.site.lon, p.sun_window)
-        self.assertEqual(self.backend.sunData['day'], self.reference.day.date().day())
-        self.assertAlmostEqual(self.backend.sunData['hour'], self.reference.hour.value() / 6)
+        riferimenti.check(self, [self.backend.sunData['day'], self.backend.sunData['hour']])
 
     def test_bad_date_leaves_sun_in_place_and_reports_error(self):
         old = dict(self.backend.sunData)
@@ -115,8 +112,10 @@ class SunFidelityTest(unittest.TestCase):
     def test_fill_restores_automatic_modules_but_keeps_manual_omissions(self):
         for manual in (False,True):
             with self.subTest(manual=manual):
-                self.session.project.subfields = [model.SubField('s1','Field',[[0,0],[10,0],[10,8],[0,8]],
-                                                               filled=False,manual=manual,removed=['r0c0'])]
+                # through session.edit, as the program changes it: a write behind its back leaves the jobs' photo behind
+                field = model.SubField('s1','Field',[[0,0],[10,0],[10,8],[0,8]],filled=False,manual=manual,
+                                       removed=['r0c0'])
+                self.session.edit('Field', lambda p, field=field: setattr(p, 'subfields', [field]))
                 self.session.select('subfield','s1')
                 before=self.session.snapshot()
                 self.backend.contextCommand('fill','')

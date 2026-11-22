@@ -2,7 +2,7 @@
 import unittest
 from types import SimpleNamespace
 
-from meridiana.quick.backend.parts import Part, Parts
+from meridiana.gui.backend.parts import Part, Parts
 
 
 class PartsTest(unittest.TestCase):

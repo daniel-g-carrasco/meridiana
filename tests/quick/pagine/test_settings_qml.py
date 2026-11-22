@@ -9,8 +9,8 @@ from PySide6.QtQuick import QQuickView
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
-from meridiana.config import Config
-from meridiana.quick.backend.settings import install_settings
+from meridiana.app.platform.config import Config
+from meridiana.gui.backend.settings import install_settings
 
 
 HOST = '''import QtQuick
@@ -82,7 +82,7 @@ class SettingsQuickTest(unittest.TestCase):
 
     def test_real_checkbox_undo_and_reset_confirmation_no_extra_window(self):
         self.backend.section = 'privacy'
-        QTest.qWait(30)  # let the new controls complete their first layout before clicking
+        QTest.qWait(30)  # wait: the new controls' first layout before clicking
         before = len(self.app.topLevelWindows())
         self.click('setting_network_geocoding')
         self.assertFalse(self.cfg.network_geocoding)

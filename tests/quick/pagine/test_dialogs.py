@@ -5,10 +5,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 import _setup
-from meridiana import canopies, config, shortcuts, templates
-from meridiana.registry import Registry
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.dialogs import DialogsBackend
+from meridiana.core.model import canopies
+from meridiana.app.platform import config
+from meridiana.app.interface import shortcuts
+from meridiana.core.geometry import templates
+from meridiana.data.registry import Registry
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.dialogs import DialogsBackend
 
 setUpModule = _setup.keep_global_state
 
@@ -207,7 +210,7 @@ class DialogsTest(unittest.TestCase):
             cid = next(iter(self.backend.bindings))
             self.backend.assignShortcut(cid, "Ctrl+Shift+9")
             old = dict(self.cfg.shortcuts)
-            with patch("meridiana.config.save", side_effect=OSError("disk full")):
+            with patch("meridiana.app.platform.config.save", side_effect=OSError("disk full")):
                 self.assertFalse(self.backend.accept())
             self.assertEqual(self.cfg.shortcuts, old)
             self.assertTrue(self.backend.accept())

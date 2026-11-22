@@ -1,0 +1,1 @@
+"""Statically registered regulatory implementations."""

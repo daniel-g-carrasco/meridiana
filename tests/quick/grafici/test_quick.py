@@ -13,11 +13,11 @@ from PySide6.QtWidgets import QApplication
 
 import _setup
 from meridiana import i18n
-from meridiana.quick.backend import charts_bridge, charts_data
-from meridiana.quick.backend import charts_scene
+from meridiana.gui.backend import charts_bridge, charts_data
+from meridiana.gui.backend import charts_scene
 
 ROOT = Path(__file__).resolve().parents[3]
-QML = ROOT / "src/meridiana/quick/qml"
+QML = ROOT / "src/meridiana/gui/qml"
 setUpModule = _setup.keep_global_state
 
 
@@ -33,10 +33,10 @@ def item_named(item, name):
 
 def theme_class():
     try:
-        from meridiana.quick.backend.tokens import ThemeTokens
+        from meridiana.gui.backend.tokens import ThemeTokens
         return ThemeTokens, QML
     except ModuleNotFoundError:
-        sibling = ROOT.parent / "meridiana-wt-r12-sistema/src/meridiana/quick"
+        sibling = ROOT.parent / "meridiana-wt-r12-sistema/src/meridiana/gui"
         spec = importlib.util.spec_from_file_location("quick_theme_for_chart_tests", sibling / "backend/tokens.py")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -52,7 +52,7 @@ class QuickTest(unittest.TestCase):
 
     def setUp(self):
         self.engine = QQmlApplicationEngine()
-        from meridiana.quick.backend.controls import install_controls
+        from meridiana.gui.backend.controls import install_controls
         self.theme = install_controls(self.engine)
         self.engine.addImportPath(str(QML))
         self.engine.rootContext().setContextProperty("themeTokens", self.theme)
@@ -82,7 +82,7 @@ Window { width: 1000; height: 600; visible: true
         # band and card from the theme's tokens, so they read in light and dark on any card.
         from PySide6.QtGui import QColor
         engine = QQmlApplicationEngine()
-        from meridiana.quick.backend.controls import install_controls
+        from meridiana.gui.backend.controls import install_controls
         theme = install_controls(engine)
         engine.addImportPath(str(QML))
         data = charts_data.bars(["gen", "feb", "mar"], [("F1", [10, 20, 15]), ("F2", [5, 4, 6])], "kWh",
@@ -177,7 +177,11 @@ Window { width: 900; height: 520; visible: true; color: Theme.colors.window
         # Qt can send a fresh hover after replacing the item under the pointer.
         self.assertNotIn("two", self.chart.property("readout"))
         if self.chart.property("readout"):
-            self.assertIn("3000", self.chart.property("readout").replace("\u00a0", "").replace(".", ""))
+            # the thousands' separator of any locale: \u00ab3.000\u00bb in Italian, \u00ab3,000\u00bb in English (Linux in C or en_US)
+            readout = self.chart.property("readout")
+            for separator in ("\u00a0", "\u202f", ".", ","):
+                readout = readout.replace(separator, "")
+            self.assertIn("3000", readout)
         self.assertFalse(self.warnings, self.warnings)
 
     def test_band_pan_and_export_range_remain_in_domain(self):

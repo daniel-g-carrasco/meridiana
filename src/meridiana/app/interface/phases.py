@@ -1,0 +1,307 @@
+"""The six phases of the work, described once (design document, 2.1 and 3.3; study 17, B4; Daniel, 23/10/2026:
+«bella la suddivisione in fasi»): 1 Modelling, 2 Plant, 3 Production, 4 Consumption, 5 Balance and economics,
+6 Report. Each phase has its number and title, the groups of its bar with the commands in order, the inspector
+the right panel shows and the areas of the checks it produces. No Qt here:
+the window builds the row of the phases and the bar of each from this, and never reasons with «index == 0».
+
+The Modelling holds the model alone, the site, the buildings, the roofs, the canopies as structures, the
+obstacles; the modules are laid in the Plant, before the inverters and the storage (R277, study 22, 3.1-3.3;
+Daniel, 30/10/2026: «in Impianto, con ordine, si metteranno i pannelli, poi gli inverter e poi l'accumulo»). The
+phase is the interface's only: a project keeps none of it, and the ids stay those of before («model», «plant»).
+
+The phases are places, not stages (design 2.1): every one is always open, none asks for the previous one to be
+finished; the numbers say the natural order of the work, and are keys too: Ctrl+1 to Ctrl+6 (Daniel, 24/10/2026,
+past C8), with Ctrl+Tab, Ctrl+PgDown and Ctrl+PgUp to move between them.
+
+A command the bar cites must exist in shortcuts.py, except the ones a later task brings (`planned`: the task's
+name): they stay here so that the bar is designed once, and the bar leaves them out until the window has their
+action; then they come in by themselves, where they were designed.
+Nothing of the views (the sun, the background) is here: that stays in the views' own bars (R27, C5)."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from meridiana.i18n import _, pgettext
+
+
+@dataclass(frozen=True)
+class Tool:
+    """A button of the bar: the command it starts, the word under its icon (one line: a long name is shortened
+    here and stays whole in the tooltip), the icon (ui/icons.NAMES; the command's id when empty), whether it is
+    the one button of the phase that stands out, and the task that brings it when it is not there yet. `more` are the
+    commands that share the button, in a menu (R306, as AutoCAD's flyouts; R333: a button in two parts, the command and
+    the strip that opens the others, each with its name and key). A mode of drawing chosen goes on the button; a command
+    run once does not (study 26, section 4). `fixed`: the button never changes, whatever is chosen, what deletes
+    (rule 2); `danger`: the last of a menu, apart and in red."""
+    command: str
+    label: str = ""
+    icon: str = ""
+    primary: bool = False
+    planned: str = ""
+    more: tuple = ()
+    fixed: bool = False
+    danger: bool = False
+
+    def family(self) -> tuple:
+        """The tool and those that share its button."""
+        return (self, *self.more)
+
+
+@dataclass(frozen=True)
+class Group:
+    id: str
+    title: str
+    tools: tuple                    # the buttons of the group: a button's other commands are in Tool.more
+
+    def every(self) -> list[Tool]:
+        """Every tool of the group, those in the menus of its buttons too."""
+        return [f for t in self.tools for f in t.family()]
+
+
+@dataclass(frozen=True)
+class Phase:
+    id: str
+    number: int
+    title: str
+    groups: tuple
+    inspector: str                  # "properties", "plant" (panels, inverters, storage: R277), "results" or
+                                    # "deliverables"
+    areas: tuple                    # of checks.area_names()
+
+    @property
+    def label(self) -> str:
+        """As the row of the phases writes it: «1 Modellazione»."""
+        return f"{self.number} {self.title}"
+
+    def tools(self, planned: bool = False, every: bool = False) -> list[Tool]:
+        """The buttons of the bar in their order; `planned` includes those a later task brings, `every` the commands
+        in the buttons' menus (R306)."""
+        return [t for g in self.groups for t in (g.every() if every else g.tools) if planned or not t.planned]
+
+    def commands(self) -> list[str]:
+        """Every command the bar cites, planned ones and those in the buttons' menus included."""
+        return [t.command for t in self.tools(planned=True, every=True)]
+
+
+INSPECTORS = ("properties", "plant", "results", "deliverables")
+
+
+def phases() -> list[Phase]:
+    """The six phases in order, with the groups of the design document (3.3)."""
+    T = Tool
+    return [
+        Phase("model", 1, _("Modelling"), (
+            Group("edit", _("Edit"), (
+                T("tool_select", icon="select"),
+                T("tool_move", _("Move"), icon="move"),
+                T("tool_rotate", _("Rotate"), icon="rotate"))),
+            Group("draw", _("Draw"), (
+                # R306: «edificio [...] con i modelli, la falda con il colmo»; R315: the buildings of an IFC model
+                T("tool_building", icon="building", more=(T("building_template", _("Template")),
+                                                          T("import_ifc", _("From IFC")))),
+                T("carport", _("Canopy")),
+                T("tool_pitch", icon="pitch", more=(T("tool_ridge", icon="ridge"),)))),     # R275: the roof from its ridge
+            # the objects of the scene (trees, roof obstacles, cars, people: R269, study 22, 3.2 and question 10)
+            Group("obstacles", _("Obstacles"), (
+                T("tool_exclusion", icon="exclusion"),  # an exclusion is an obstacle on the roof (a vent, a skylight)
+                T("object_3d", _("3D object"), icon="object_3d"))),
+            Group("precision", _("Precision"), (
+                # study 46: the measuring modes; the 15° guides are the plan's Ortho (its bar's button and F8), one
+                # setting for drawing and measuring (Daniel, 14/11/2026), not an entry here
+                T("tool_measure", icon="measure", more=(T("measure_distance", pgettext("measure", "Distance"), icon="measure"),
+                                                        T("measure_height", pgettext("measure", "Height"), icon="up"),
+                                                        T("measure_clear", _("Remove all measurements"), icon="empty"))),
+                T("square", _("Square")),
+                T("rectangle", _("Rectangle"))))),
+            "properties", ("shade", "import")),
+        # the work in the order Daniel asked for (R277): the modules, then the inverters, then the storage; the
+        # strings close, they need both
+        # Select, Move and Rotate as in the Modelling (R295): here they work on what moves in the Plant, the sub-fields,
+        # the rows and the modules, and they do not change phase
+        Phase("plant", 2, _("Plant"), (
+            Group("edit", _("Edit"), (
+                T("tool_select", icon="select"),
+                T("tool_move", _("Move"), icon="move"),
+                T("tool_rotate", _("Rotate"), icon="rotate"))),
+            Group("modules", _("Modules"), (
+                # R306: where the modules go, the rows by hand in its menu. R564 (Daniel 14/11/2026): one button,
+                # «Layout», with the area of the automatic layout, «Fill» and «Empty» in its menu (layout_commands.py);
+                # East-west and «On a canopy» left it (the canopy's own menu has it): with two buttons fewer the
+                # summary of the modules laid comes up into the bar
+                # (the short words are the button's when one of them is on it, and set its width: the menu says the
+                # catalogue's whole names)
+                T("tool_subfield", icon="subfield", more=(T("tool_row", _("Row"), icon="row"),
+                                                          T("fill_area", _("Auto area"), icon="fill_area"),
+                                                          T("fill", _("Fill")),
+                                                          T("empty", _("Empty")))),)),
+            Group("inverter", _("Inverter"), (
+                T("inverter_catalog", _("Catalogue")),
+                T("inverter_auto", _("Choose auto."), icon="inverter_auto"))),       # R307: «Scegli in automatico…»
+            Group("storage", _("Storage"), (T("battery_catalog", _("Configure")),)),
+            Group("strings", _("Strings"), (
+                # R308: «Propose» and «Complete» are one command with its options (study 23, M3); «Complete» stays
+                # in its menu for the checks' fixes
+                T("strings_auto", _("Automatic"), icon="strings_auto", more=(
+                    T("strings_complete", _("Complete"), icon="strings_complete"),)),
+                T("strings_manual", _("Draw")),
+                # R299, R306: what is deleted, from the modules on the plan; «Clear all» deletes them all, after a
+                # question
+                T("tool_erase_string", _("Delete string"), icon="erase_string", fixed=True, more=(
+                    T("tool_erase_inverter_strings", _("Inv. + strings"), icon="erase_inverter_strings"),
+                    T("tool_erase_inverter", _("Delete inv."), icon="erase_inverter"),
+                    T("strings_clear", _("Clear all"), danger=True)))))),
+            "plant", ("layout", "strings", "connection")),
+        Phase("production", 3, _("Production"), (
+            Group("compute", _("Computation"), (
+                T("compute", _("Compute"), primary=True),
+                T("fetch_pvgis", _("From PVGIS")))),
+            Group("compare", _("Comparison"), (
+                T("new_variant", _("New variant"), icon="copy-plus"),
+                T("pvgis_side", _("PVGIS beside"), planned="17c"),
+                T("compare_variants", _("Variants"))))),
+            "results", ("production", "shade")),
+        Phase("consumption", 4, _("Consumption"), (
+            Group("data", _("Data"), (
+                T("consumption_base", _("Base")),
+                T("import_curve", _("Curve")))),),
+            "results", ("consumption",)),
+        Phase("economics", 5, _("Balance and economics"), (
+            Group("compute", _("Computation"), (
+                T("compute", _("Compute"), primary=True),)),
+            Group("compare", _("Comparison"), (
+                T("new_variant", _("New variant"), icon="copy-plus"),
+                T("compare_variants", _("Variants")),))),
+            "results", ("economics",)),
+        Phase("report", 6, _("Report"), (
+            Group("compare", _("Comparison"), (
+                T("new_variant", _("New variant"), icon="copy-plus"),
+                T("compare_variants", _("Compare")))),
+            Group("signature", _("Signature"), (         # R331: the logo and the profile from the phase itself
+                T("report_logo", _("Logo"), icon="image"),
+                T("report_profile", _("Profile"), icon="user"))),
+            Group("export", _("Export"), (
+                T("export_report", _("Report")),
+                T("export_dxf", _("DXF")),
+                T("export_ifc", _("IFC4")),
+                T("export_csv", _("CSV")),
+                T("save_revision", _("Revision")),
+                T("copy_notes", _("Copy the notes"))))),
+            "deliverables", ("rules",)),
+    ]
+
+
+def ids() -> list[str]:
+    return [p.id for p in phases()]
+
+
+def by_id(pid: str) -> Phase:
+    """KeyError when no phase has that id."""
+    for p in phases():
+        if p.id == pid:
+            return p
+    raise KeyError(pid)
+
+
+# the plan's tools that work wherever the plan is (the Modelling and the Plant, which borrows it): choosing what to
+# edit, moving it, turning it and measuring never take the designer to another phase (R277, R295)
+PLAN_PHASES = ("model", "plant")
+SHARED_TOOLS = ("tool_select", "tool_move", "tool_rotate", "tool_measure")
+
+
+def home(command: str, current: str) -> str:
+    """The phase a command of the plan works in, seen from the phase `current`: `current` itself when its bar has
+    the command, or when the command is shared by the phases of the plan; else the first phase whose bar has it;
+    else the Modelling. «Layout» asked in the Modelling opens the Plant, «Building» asked in the Plant opens
+    the Modelling, «Select» stays where it is (R277)."""
+    if current in PLAN_PHASES and (command in SHARED_TOOLS or command in by_id(current).commands()):
+        return current
+    for p in phases():
+        if command in p.commands():
+            return p.id
+    return "model"
+
+
+def by_number(number: int) -> Phase:
+    for p in phases():
+        if p.number == number:
+            return p
+    raise KeyError(number)
+
+
+def index_of(pid: str) -> int:
+    return ids().index(pid)
+
+
+def next(pid: str) -> str:               # noqa: A001  the name the design uses
+    """The phase after `pid`; after the last, the first again (as Ctrl+Tab goes round in a browser)."""
+    order = ids()
+    return order[(order.index(pid) + 1) % len(order)]
+
+
+def previous(pid: str) -> str:
+    order = ids()
+    return order[(order.index(pid) - 1) % len(order)]
+
+
+# the deliverables of the Report phase (design 2.7 and 7.3): each with its state in the inspector
+
+@dataclass(frozen=True)
+class Deliverable:
+    id: str
+    title: str
+    command: str                    # the command that makes it, or "" when a later task brings it
+    state: str                      # "done", "stale", "todo", "unavailable", "planned"
+    note: str                       # why, or when
+
+
+def _made(did: str, title: str, command: str, production_ready: bool, exports: dict, state_key: str) -> Deliverable:
+    """A deliverable the program makes from the year: done, to make again, to make, not available."""
+    done = exports.get(did)
+    if done is not None:
+        name, when, key = done
+        if key == state_key:
+            return Deliverable(did, title, command, "done", _("{file}, {when}").format(file=name, when=when))
+        return Deliverable(did, title, command, "stale",
+                           _("The project changed after {when}: export it again").format(when=when))
+    if production_ready:
+        return Deliverable(did, title, command, "todo", _("Not exported yet"))
+    return Deliverable(did, title, command, "unavailable", _("Compute the production first"))
+
+
+def deliverables(production_ready: bool, exports: dict, state_key: str) -> list[Deliverable]:
+    """The state of each deliverable: `exports` is id -> (file name, when, the project's state key at the time),
+    as the window keeps them; `state_key` is the project's now. Made after the project changed, a deliverable is
+    «to make again» (design 7.3). The hourly series is the register of the calculations (energy/register.py), on
+    its own or beside the report."""
+    out = [_made("report", _("Technical report (PDF)"), "export_report", production_ready, exports, state_key),
+           _made("csv", _("Hourly series (CSV)"), "export_csv", production_ready, exports, state_key)]
+    # the model (IFC4, R91): the project's geometry, it needs no computed year
+    model_ifc = exports.get("ifc")
+    if model_ifc is None:
+        out.append(Deliverable("ifc", _("Model (IFC4)"), "export_ifc", "todo", _("Not exported yet")))
+    else:
+        name, when, key = model_ifc
+        out.append(Deliverable("ifc", _("Model (IFC4)"), "export_ifc", "done" if key == state_key else "stale",
+                               _("{file}, {when}").format(file=name, when=when) if key == state_key else
+                               _("The project changed after {when}: export it again").format(when=when)))
+    # the plan (DXF, R513): the project's geometry and strings, it needs no computed year either
+    plan_dxf = exports.get("dxf")
+    if plan_dxf is None:
+        out.append(Deliverable("dxf", _("Plan with the modules (DXF)"), "export_dxf", "todo", _("Not exported yet")))
+    else:
+        name, when, key = plan_dxf
+        out.append(Deliverable("dxf", _("Plan with the modules (DXF)"), "export_dxf",
+                               "done" if key == state_key else "stale",
+                               _("{file}, {when}").format(file=name, when=when) if key == state_key else
+                               _("The project changed after {when}: export it again").format(when=when)))
+    for did, title, task in (
+            # in the technical report since task 16d; a file of its own with the report's task
+            ("strings", _("List of modules and strings"), "relazione"),):
+        out.append(Deliverable(did, title, "", "planned", _("Comes with task {task}").format(task=task)))
+    return out
+
+
+def state_names() -> dict:
+    return {"done": _("done"), "stale": _("to make again"), "todo": _("to make"), "unavailable": _("not available"),
+            "planned": _("not yet")}

@@ -51,7 +51,7 @@ native.click(*at(5, 3), settle=250)
 spin(0.5)
 sf = session.project.subfields[0]
 host.bridge._enabled = True          # the layouts after a change start with the first year: here without it
-host.bridge.layout_timer.start()
+host.bridge._ask_layout()
 seen['drawn'] = dict(flush=sf.flush, manual=sf.manual, rows=len(sf.rows), ring=ring_of())
 wait_until(lambda: sf.id in session.good_results(), 20); spin(0.8)
 got = session.good_results().get(sf.id)
@@ -134,7 +134,7 @@ print(json.dumps(seen, default=str))
 
 
 def _project(folder: Path) -> Path:
-    from meridiana import model
+    from meridiana.core.model import model
     p = model.Project(name='Prova sottocampo')
     p.site = model.Site(lat=45.52, lon=9.04, address='Rho (MI)')
     p.buildings.append(model.Building(id='b1', name='Capannone', footprint=[[0, 0], [40, 0], [40, 20], [0, 20]],

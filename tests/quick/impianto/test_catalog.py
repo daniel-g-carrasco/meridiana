@@ -8,7 +8,7 @@ from unittest.mock import patch
 from PySide6.QtTest import QSignalSpy
 
 from quick.impianto.catalog_fixtures import module, required_values, settle
-from meridiana.quick.backend.catalog import CatalogBackend
+from meridiana.gui.backend.catalog import CatalogBackend
 
 
 class CatalogueTest(unittest.TestCase):
@@ -92,7 +92,7 @@ class CatalogueTest(unittest.TestCase):
             self.assertFalse((Path(directory) / 'personal.json').exists())
 
     def test_all_five_kinds_offer_required_editor_fields_and_keep_filters(self):
-        from meridiana.catalog import KINDS, personal
+        from meridiana.data.catalog import KINDS, personal
         backend = self.make([module()])
         backend.setFilter('text', 'remember')
         for kind in KINDS:
@@ -106,7 +106,7 @@ class CatalogueTest(unittest.TestCase):
         self.assertEqual(backend.filters['text'], 'remember')
 
     def test_editor_saves_each_kind_complex_values_and_stays_independent_of_project(self):
-        from meridiana.catalog import KINDS
+        from meridiana.data.catalog import KINDS
         with tempfile.TemporaryDirectory() as directory:
             backend = self.make([], safe_root=directory)
             backend.setDestination(str(Path(directory) / 'all.json'))
@@ -161,7 +161,7 @@ class CatalogueTest(unittest.TestCase):
 
     def test_personal_destination_is_confined_and_cannot_be_a_shipped_catalogue(self):
         backend = self.make([])
-        from meridiana.catalog import DATA
+        from meridiana.data.catalog import DATA
         self.assertFalse(backend.setDestination(str(DATA / 'modules_curated.json')))
 
     def test_italian_editor_formats_numbers_and_preserves_the_original_precision(self):

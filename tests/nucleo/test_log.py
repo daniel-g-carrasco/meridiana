@@ -9,7 +9,7 @@ from pathlib import Path
 
 import _setup  # noqa: F401
 
-from meridiana import log
+from meridiana.app.platform import log
 
 
 class File(unittest.TestCase):

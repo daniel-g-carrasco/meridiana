@@ -6,7 +6,9 @@ import uuid
 
 import _setup  # noqa: F401
 from _fixtures import capannone
-from meridiana import mesh, model, move, session
+from meridiana.core.geometry import mesh
+from meridiana.core.model import model, move
+from meridiana.app import session
 
 
 class Support(unittest.TestCase):
@@ -95,7 +97,7 @@ class Support(unittest.TestCase):
             self.assertAlmostEqual(float(z), p.surface_of(sf).z(float(x), -float(minus_y)), places=4)
 
     def test_support_follows_its_free_pitch_and_view_aids_use_its_height(self):
-        from meridiana import viewaids
+        from meridiana.app.view import viewaids
         p = capannone()
         b, sf = p.buildings[0], p.subfields[0]
         b.roof = model.Roof(type='free', free_pitches=[

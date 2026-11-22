@@ -3,12 +3,15 @@ keep the same fields and defaults as energy/simulate.py, energy/consumption.py a
 from_dict says the unknown keys and refuses the wrong types with their path."""
 
 import dataclasses
+import ast
+import inspect
+import pickle
 import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import settings
-from meridiana.energy import consumption, economics, simulate
+from meridiana.core.model import settings
+from meridiana.core.energy import consumption, economics, simulate
 
 
 def fields_of(kls, skip=()) -> dict:
@@ -17,6 +20,50 @@ def fields_of(kls, skip=()) -> dict:
 
 
 class Mirror(unittest.TestCase):
+    def test_connection_cutoffs_keep_the_same_values_and_public_aliases(self):
+        from meridiana.core.rules import rules as facade
+        from meridiana.core.rules.profiles.it import checks, rules, thresholds
+        expected = (11.08, 20.0, 100.0)
+        self.assertEqual((thresholds.SPI_KW, thresholds.BACKUP_KW, thresholds.LV_KW), expected)
+        self.assertEqual((checks.SPI_KW, checks.BACKUP_KW, checks.LV_KW), expected)
+        self.assertEqual((rules.SPI_KW, rules.BACKUP_KW, rules.MV_KW), expected)
+        self.assertEqual(facade.MV_KW, 100.0)
+
+    def test_runtime_settings_do_not_redeclare_literal_defaults(self):
+        for runtime, schema in ((simulate.Losses, settings.Losses),
+                                (consumption.Consumption, settings.ConsumptionSettings),
+                                (economics.Settings, settings.EconomicsSettings)):
+            common = {f.name for f in dataclasses.fields(schema)}
+            tree = ast.parse(inspect.getsource(runtime))
+            duplicated = [node.target.id for node in tree.body[0].body if isinstance(node, ast.AnnAssign)
+                          and node.target.id in common and isinstance(node.value, (ast.Constant, ast.Call))]
+            self.assertEqual(duplicated, [], runtime.__qualname__)
+
+    def test_runtime_types_field_order_and_serialization_stay_public(self):
+        for runtime, schema, module in ((simulate.Losses, settings.Losses, 'simulate'),
+                                        (consumption.Consumption, settings.ConsumptionSettings, 'consumption'),
+                                        (economics.Settings, settings.EconomicsSettings, 'economics')):
+            data = dataclasses.asdict(schema())
+            value = runtime.from_dict(data)
+            self.assertIs(type(value), runtime)
+            self.assertIsNot(runtime, schema)
+            self.assertEqual(runtime.__module__, f'meridiana.core.energy.{module}')
+            self.assertEqual([f.name for f in dataclasses.fields(runtime) if f.name != 'defaults'], list(data))
+            actual = dataclasses.asdict(pickle.loads(pickle.dumps(value)))
+            actual.pop('defaults', None)
+            self.assertEqual(actual, data)
+
+    def test_mutable_defaults_are_separate_for_every_schema_and_runtime_instance(self):
+        demand = consumption.Consumption()
+        demand.bands_kwh['F1'] = 10.0
+        demand.measured.append(['2026-01-01T00:00', 1.0])
+        self.assertEqual(consumption.Consumption().bands_kwh, {})
+        self.assertEqual(settings.ConsumptionSettings().measured, [])
+        economic = economics.Settings()
+        economic.battery['model'] = 'Sample'
+        self.assertEqual(economics.Settings().battery, {})
+        self.assertEqual(settings.EconomicsSettings().battery, {})
+
     def test_the_losses_the_consumption_and_the_economics_match_the_energy_side(self):
         self.assertEqual(fields_of(settings.Losses), fields_of(simulate.Losses))
         self.assertEqual(fields_of(settings.ConsumptionSettings), fields_of(consumption.Consumption))

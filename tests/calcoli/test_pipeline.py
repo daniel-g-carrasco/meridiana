@@ -11,8 +11,11 @@ from unittest import mock
 import _setup  # noqa: F401
 from _fixtures import clear_sky_meteo, write_cache
 
-from meridiana import checks, compare, jobs, model
-from meridiana.energy import meteo, pipeline
+from meridiana.core.rules import checks
+from meridiana.app import compare, jobs
+from meridiana.core.model import model
+from meridiana.core.energy import meteo
+from meridiana.app import pipeline
 
 
 def project(with_chimney: bool = False) -> model.Project:
@@ -68,7 +71,7 @@ class Pipeline(unittest.TestCase):
         self.assertAlmostEqual(compare.summary(d)["kwh"], out.sim.energy_kwh)
 
     def test_the_strings_of_a_catalogue_inverter_make_the_year_run_again_with_the_shade(self):
-        from meridiana import catalog
+        from meridiana.data import catalog
         p = project(with_chimney=True)
         p.energy["inverters"] = [{"record": next(r for r in catalog.search("inverters", "SCA100K-T-US-480")),
                                   "count": 1, "name": ""}]
@@ -121,7 +124,7 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(complained.call_args[0][0], "energy")
 
     def test_the_layout_job_prepares_the_3d_table_of_each_layout(self):
-        from meridiana import mesh
+        from meridiana.core.geometry import mesh
         p = project()
         results, _keys, _laid = jobs.layout_of(p)
         r = results["s1"]
@@ -151,8 +154,9 @@ class PipelineSteps(unittest.TestCase):
 
         from _fixtures import clear_sky_meteo, write_cache
 
-        from meridiana import jobs, model
-        from meridiana.energy import pipeline
+        from meridiana.app import jobs
+        from meridiana.core.model import model
+        from meridiana.app import pipeline
         cache = Path(tempfile.mkdtemp())
         write_cache(clear_sky_meteo(), cache)
         p = model.Project(name="Prova")
@@ -180,7 +184,7 @@ class PipelineSteps(unittest.TestCase):
     def test_the_electrical_network_tells_how_far_it_is_and_stops_in_the_middle(self):
         """R266: the network was told at each chunk with the same «3 of 4», the bar stood at 50 % for a minute or
         more on a large plant; now it says how far it is (from 2 to 3), and a Cancel stops it between two chunks."""
-        from meridiana import catalog
+        from meridiana.data import catalog
         cache = Path(tempfile.mkdtemp())
         write_cache(clear_sky_meteo(45.5226, 9.03), cache)
         p = project()

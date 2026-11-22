@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 import _setup  # noqa: F401
-from meridiana import model
+from meridiana.core.model import model
 
 
 class Groups(unittest.TestCase):

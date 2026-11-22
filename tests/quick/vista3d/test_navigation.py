@@ -8,10 +8,11 @@ import _setup
 import numpy as np
 from PySide6.QtQml import QJSEngine
 
-from meridiana import camera, navigation
+from meridiana.app.view import camera
+from meridiana.app.interface import navigation
 
 
-QML = Path(__file__).resolve().parents[3] / "src/meridiana/quick/qml/Meridiana/View3D"
+QML = Path(__file__).resolve().parents[3] / "src/meridiana/gui/qml/Meridiana/View3D"
 _app = None
 setUpModule = _setup.keep_global_state
 

@@ -33,7 +33,7 @@ def squeeze(text: str) -> str:
 class Engine(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from meridiana.report_typst import engine
+        from meridiana.app.report import engine
         if not engine.available():
             raise unittest.SkipTest("the typst package is not installed")
         cls.engine = engine
@@ -45,7 +45,7 @@ class Engine(unittest.TestCase):
             return build.compile(doc)
 
     def test_a_row_is_never_split_between_two_pages_and_the_header_is_on_every_page(self):
-        from meridiana.report_typst import blocks
+        from meridiana.app.report import blocks
         long = "a long description that takes a few lines of the cell, " * 7       # 6 lines: a paragraph that can split
         rows = [(f"Start{k:02d}", f"{long} End{k:02d}", f"{k},5") for k in range(50)]
         result = self.compile(document([blocks.table(rows, ["Column", "What", "Value"], right=(2,))]))
@@ -62,7 +62,7 @@ class Engine(unittest.TestCase):
                 self.assertIn(f"page {i + 1} of {len(texts)}", t)
 
     def test_the_users_texts_are_printed_as_they_are_never_read_as_markup(self):
-        from meridiana.report_typst import blocks
+        from meridiana.app.report import blocks
         doc = document([blocks.para(STRANGE), blocks.table([(STRANGE, "1")], [STRANGE, "n"]),
                         blocks.facts([(STRANGE, STRANGE)]), blocks.section(STRANGE)],
                        head_title=STRANGE, head_sub=STRANGE, foot_left=STRANGE, title=STRANGE)
@@ -88,7 +88,7 @@ class Engine(unittest.TestCase):
     def test_the_programs_fonts_and_none_of_the_system(self):
         from pypdf import PdfReader
 
-        from meridiana.report_typst import blocks
+        from meridiana.app.report import blocks
         families = set(self.engine.fonts().families())
         self.assertLessEqual({"IBM Plex Sans", "IBM Plex Math", "IBM Plex Mono"}, families)
         # the fonts inside Typst may stay (for a letter neither of ours has); the system's are never asked
@@ -110,7 +110,7 @@ class Engine(unittest.TestCase):
     def test_the_logo_is_in_the_corner_of_every_header_and_without_it_the_header_closes_up(self):
         from pypdf import PdfReader
 
-        from meridiana.report_typst import blocks, figures
+        from meridiana.app.report import blocks, figures
         png = figures._png([b"\x10\x60\x80" * 40] * 20, 40)
         body = [blocks.para("Testo")] + [{"k": "pagebreak"}, blocks.para("Ancora")]
         with_logo = self.compile(document(copy.deepcopy(body), logo="logo.png"), {"logo.png": png})
@@ -127,7 +127,7 @@ class Engine(unittest.TestCase):
         self.assertIn("Head title", pages_text(without.pdf)[0])
 
     def test_a_file_that_is_no_image_is_not_taken_for_one(self):
-        from meridiana.report_typst import engine
+        from meridiana.app.report import engine
         self.assertEqual(engine.image_format(b"\x89PNG\r\n\x1a\n...."), "png")
         self.assertEqual(engine.image_format(b"\xff\xd8\xff\xe0"), "jpg")
         self.assertIsNone(engine.image_format(b"%PDF-1.7"))
@@ -148,7 +148,7 @@ class Engine(unittest.TestCase):
         self.assertIn("page 6 of 8", texts[2])                      # after the three pages of the first
 
     def test_a_document_compiles_in_well_under_a_second(self):
-        from meridiana.report_typst import blocks
+        from meridiana.app.report import blocks
         rows = [(f"Riga {k}", f"{k * 1.5:.1f}", f"{k},0") for k in range(40)]
         body = [blocks.section("Prova"), blocks.table(rows, ["A", "B", "C"], right=(1, 2)), blocks.facts(rows[:8])] * 3
         self.compile(document(body))                                  # the fonts read once
@@ -159,8 +159,8 @@ class Engine(unittest.TestCase):
 
 class Register(unittest.TestCase):
     def test_codes_follow_the_groups_and_a_step_is_found_by_the_end_of_its_key(self):
-        from meridiana.energy.pedigree import Quantity, Record, Step
-        from meridiana.report_typst.register import Register as R
+        from meridiana.core.energy.pedigree import Quantity, Record, Step
+        from meridiana.app.report.register import Register as R
         rec = Record("Produzione", [Step("sun", "Sole", "", ""), Step("s1.0.poa", "Piano", "", "",
                                                                      result=Quantity("", "G", 3.0, "kWh/m²"))])
         reg = R(True, [rec])
@@ -177,9 +177,9 @@ class Steps(unittest.TestCase):
     """R460: a step as the report and the window lay it out (report_typst/steps.py), one source for both."""
 
     def test_a_step_numbered_on_with_its_values_split_on_the_comma_and_the_numbers_put_in(self):
-        from meridiana.energy.pedigree import Quantity, Record, Source, Step
+        from meridiana.core.energy.pedigree import Quantity, Record, Source, Step
         from meridiana.i18n import setup
-        from meridiana.report_typst import steps
+        from meridiana.app.report import steps
         setup("it")
         try:
             worked = [r"E = 10{,}25\,\mathrm{kW} \cdot 2{,}1\,\mathrm{h} = \mathbf{21{,}5}\,\mathrm{kWh}"]
@@ -214,7 +214,7 @@ class NoPlant(unittest.TestCase):
     def test_a_project_without_modules_is_said_not_stopped_on_a_division_by_zero_r459(self):
         from _fixtures import capannone
 
-        from meridiana.report_typst.compose import NoPlant, compose, no_plant
+        from meridiana.app.report.compose import NoPlant, compose, no_plant
         problem = no_plant({"results": {}})
         self.assertIn("no module is laid", problem)
         with self.assertRaises(NoPlant) as caught:

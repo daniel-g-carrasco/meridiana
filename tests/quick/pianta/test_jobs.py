@@ -4,8 +4,9 @@ import unittest
 
 from PySide6.QtWidgets import QApplication
 
-from meridiana import jobs, model
-from meridiana.quick.backend.plan import PlanController
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController
 
 
 class LayoutTest(unittest.TestCase):
@@ -28,7 +29,7 @@ class LayoutTest(unittest.TestCase):
         deadline = time.monotonic()+10
         while controller.busy and time.monotonic()<deadline:
             self.app.processEvents()
-            time.sleep(.002)
+            time.sleep(.002)  # wait: a breath between two looks at the condition, so the workers' threads run
         self.assertFalse(controller.busy)
         after = controller.session.results['s1'].modules[0].centre
         self.assertAlmostEqual(after[1]-before[1],20.)

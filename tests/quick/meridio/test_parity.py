@@ -1,17 +1,16 @@
-"""One synthetic provider, the same conversation in Widgets and Quick (R389)."""
+"""One synthetic provider: the conversation of the Quick, as the Widgets had it (R389)."""
 import unittest
-from unittest.mock import patch
 
 from PySide6.QtCore import QObject, QPoint, QPointF, Qt
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
 from _setup import wait_until
-from meridiana.config import Config
-from meridiana.quick.backend.assistant import build_page
-from meridiana.quick.backend.assistant_chat import AssistantChat
-from quick.meridio.support import Host, Provider, Voice, KeyStore
+from meridiana.app.platform.config import Config
+from meridiana.gui.backend.assistant import build_page
+from meridiana.gui.backend.assistant_chat import AssistantChat
+from quick.meridio.support import Host, KeyStore, Provider, Voice
 
 
 class ParityTest(unittest.TestCase):
@@ -28,30 +27,14 @@ class ParityTest(unittest.TestCase):
         return chat, fake
 
     def test_identical_prompt_tools_messages_bill_and_answers(self):
-        from meridiana.ui.assistant import Assistant
-        from meridiana.ui.assistant_chat import Chat
+        # the prompt, the tools, the messages, the bill and the answers the Widgets gave for the same question
+        # (recorded on 10/11/2026, quick/aiuti/riferimenti.py)
+        from quick.aiuti import riferimenti
         quick, fake = self.quick()
-        area = QWidget()
-        area.resize(1366, 900)
-        avatar = Assistant(area)
-        avatar.reduced_motion = True
-        self.addCleanup(lambda: delete(area))
-        cfg = Config(assistant_introduced=True, assistant_local_model='test-model')
-        keys = KeyStore()
-        with patch('meridiana.ui.voice.Voice', return_value=Voice()), patch('meridiana.ui.assistant_chat.keys.get', side_effect=keys.get):
-            widgets = Chat(avatar, Host(), cfg)
-        widgets.keys = keys
-        old_fake = Provider(text=fake.text)
-        widgets.make_local = lambda: old_fake
-        self.addCleanup(widgets._gone)
-        question = 'Spiegami le verifiche delle stringhe.'
-        quick.ask(question)
-        avatar.ask(question)
-        self.assertTrue(wait_until(self.app, lambda: not quick.busy and widgets.job is None, 5))
-        self.assertEqual(fake.requests[0][:3], old_fake.requests[0][:3])
-        self.assertEqual(quick.conversation.messages, widgets.conversation.messages)
-        self.assertEqual(quick.conversation.bill, widgets.conversation.bill)
-        self.assertEqual(quick.view.messages, avatar.messages)
+        quick.ask('Spiegami le verifiche delle stringhe.')
+        self.assertTrue(wait_until(self.app, lambda: not quick.busy, 5))
+        riferimenti.check(self, {'request': fake.requests[0][:3], 'messages': quick.conversation.messages,
+                                 'bill': quick.conversation.bill, 'view': quick.view.messages})
 
     def test_real_qml_field_enter_stream_cards_and_provider_menu(self):
         chat, fake = self.quick()

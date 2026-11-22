@@ -5,7 +5,7 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import shortcuts as sc
+from meridiana.app.interface import shortcuts as sc
 
 
 class TheMap(unittest.TestCase):

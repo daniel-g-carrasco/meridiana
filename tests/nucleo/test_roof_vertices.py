@@ -10,7 +10,9 @@ import numpy as np
 import _setup  # noqa: F401
 from nucleo.test_gizmo import H, W, cam
 
-from meridiana import gizmo, mesh, model, move, roof_join, roof_vertices as rv
+from meridiana.app.view import gizmo
+from meridiana.core.geometry import mesh, roof_join, roof_vertices as rv
+from meridiana.core.model import model, move
 
 
 def rect(x0, y0, x1, y1):
@@ -428,8 +430,14 @@ class Drag(unittest.TestCase):
         self.assertAlmostEqual(drag.update(c, tx, ty, W, H), 1.3)
         self.assertAlmostEqual(drag.update(c, tx, ty, W, H, {"shift"}), 1.26)
         self.assertAlmostEqual(drag.update(c, tx, ty, W, H, snaps=False), 1.26, places=2)
-        # across the vertical nothing changes
-        self.assertAlmostEqual(drag.update(c, tx + 80, ty, W, H, {"shift"}), drag.update(c, tx + 80, ty, W, H, {"shift"}))
+        # Orthographic rays make the transverse displacement independent of height.
+        c.ortho = True
+        px, py = c.project(origin, W, H)
+        drag = gizmo.HeightDrag.begin(c, px, py, W, H, origin)
+        tx, ty = c.project(origin + gizmo.UP * 1.26, W, H)
+        baseline = drag.update(c, tx, ty, W, H, {"shift"})
+        self.assertAlmostEqual(baseline, 1.26)
+        self.assertAlmostEqual(drag.update(c, tx + 80, ty, W, H, {"shift"}), baseline)
 
 
 class Everywhere(unittest.TestCase):
@@ -442,7 +450,7 @@ class Everywhere(unittest.TestCase):
         return p
 
     def test_the_surface_of_a_sub_field_and_the_shadows_are_those_of_its_part(self):
-        from meridiana.energy import system
+        from meridiana.core.energy import system
         p = self.folded()
         b = p.buildings[0]
         (one, two) = b.pitches()
@@ -461,7 +469,7 @@ class Everywhere(unittest.TestCase):
         import tempfile
         from pathlib import Path
 
-        from meridiana import ifc_export
+        from meridiana.app.exchange import ifc_export
         try:
             import ifcopenshell
         except ImportError:

@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
-"""Show the procedural props in Meridiana's 3D view and optionally capture all review pictures."""
+"""The scenes of the procedural props: a line-up with scale references, a realistic shed with a car park, one kind
+alone (tests/nucleo/test_props.py builds them). The viewer that showed them, on the 3D view of the Widgets window,
+went with it (r30, phase B)."""
 
 from __future__ import annotations
 
-import argparse
-import os
 from pathlib import Path
 import sys
 
@@ -13,7 +12,8 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from meridiana import layout, mesh, props, roofs  # noqa: E402
+from meridiana.core.layout import layout
+from meridiana.core.geometry import mesh, props, roofs  # noqa: E402
 
 
 def _join(parts):
@@ -120,104 +120,3 @@ def shot_jobs():
     """The twelve captures in Gallery.apply's theme, scene and viewpoint order."""
     return [(theme, scene, view) for scene in ("galleria", "realistica") for theme in ("light", "dark")
             for view in ("assonometrica", "fronte", "alto")]
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--shots", action="store_true", help="Capture both scenes, themes and three viewpoints")
-    parser.add_argument("--output", type=Path, default=ROOT / "docs" / "revisioni" / "foto" / "oggetti-3d")
-    parser.add_argument("--scene", choices=("galleria", "realistica", "auto", "alberi", "lineari", *props.KINDS),
-                        default="galleria")
-    parser.add_argument("--theme", choices=("light", "dark"), default="light")
-    parser.add_argument("--view", choices=("assonometrica", "fronte", "alto"), default="assonometrica")
-    args = parser.parse_args()
-    os.environ.setdefault("QML_DISABLE_DISK_CACHE", "1")
-    os.environ.setdefault("QT_DISABLE_SHADER_DISK_CACHE", "1")
-
-    from PySide6.QtCore import QTimer
-    from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
-
-    from meridiana import camera
-    from meridiana.config import Config
-    from meridiana.ui import design
-    from meridiana.ui.theme import Theme
-    from meridiana.ui.view3d import View3D
-
-    app = QApplication([])
-    app.setApplicationName("Meridiana props gallery")
-
-    class Gallery(QWidget):
-        def __init__(self):
-            super().__init__()
-            self.setObjectName("props-gallery")
-            self.setWindowTitle("Meridiana, oggetti 3D")
-            column = QVBoxLayout(self)
-            column.setContentsMargins(12, 12, 12, 12)
-            self.caption = QLabel()
-            design.set_text(self.caption, design.Text.HEADING)
-            column.addWidget(self.caption)
-            self.view = View3D()
-            self.view.fitted = True
-            self.view.cube.hide()
-            self.view.marks.hide()
-            column.addWidget(self.view, 1)
-            self.resize(1600, 1000)
-
-        def apply(self, theme_name, scene_name, view_name):
-            theme = Theme(Config(theme=theme_name, background="none"), app=app)
-            self.setStyleSheet(f"QWidget#props-gallery {{ background: {theme.tokens['panel']}; }}")
-            shape, table = (lineup_scene() if scene_name == "galleria" else realistic_scene()
-                            if scene_name == "realistica" else detail_scene(scene_name))
-            self.view.show_scene(shape, table)
-            bearings = {"assonometrica": (35.0, -32.0), "fronte": (0.0, -12.0), "alto": (0.0, -90.0)}
-            aspect = max(self.view.width(), 1) / max(self.view.height(), 1)
-            self.view.backend.camera = camera.axonometric(shape[0], *bearings[view_name], aspect, margin=0.04)
-            self.view.backend.cameraChanged.emit()
-            self.view.backend.changed.emit()
-            self.view.set_sun(42.0, 135.0)
-            self.view._changed()
-            scene_text = ("Oggetti e riferimenti di scala" if scene_name == "galleria" else
-                          "Capannone e parcheggio" if scene_name in ("realistica", "auto", "alberi", "lineari") else
-                          scene_name)
-            theme_text = "chiaro" if theme_name == "light" else "scuro"
-            self.caption.setText(f"{scene_text} | {view_name} | tema {theme_text}")
-
-    window = Gallery()
-    window.show()
-    if not args.shots:
-        window.apply(args.theme, args.scene, args.view)
-        return app.exec()
-
-    output = args.output.resolve()
-    output.mkdir(parents=True, exist_ok=True)
-    jobs = ([(theme, args.scene, "assonometrica") for theme in ("light", "dark")] if args.scene in props.KINDS else
-            [(args.theme, args.scene, view) for view in ("assonometrica", "fronte", "alto")]
-            if args.scene in ("auto", "alberi", "lineari") else shot_jobs())
-    failures = []
-
-    def capture(index):
-        if not window.view.drawn() or window.view.image.isNull():
-            failures.append("the 3D view produced no image")
-        else:
-            theme, scene, view = jobs[index]
-            name = f"{scene}-{'chiaro' if theme == 'light' else 'scuro'}-{view}.png"
-            path = output / name
-            if not window.grab().save(str(path)):
-                failures.append(f"could not save {path}")
-            else:
-                print(path, flush=True)
-        advance(index + 1)
-
-    def advance(index):
-        if failures or index == len(jobs):
-            app.exit(1 if failures else 0)
-            return
-        window.apply(*jobs[index])
-        QTimer.singleShot(700, lambda: capture(index))
-
-    QTimer.singleShot(300, lambda: advance(0))
-    return app.exec()
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

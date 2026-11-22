@@ -1,5 +1,5 @@
 """The true geometry of an IFC for the 3D (ifc_mesh, r21-ifc-vista) and its place next to the import's bodies
-(quick/backend/scene_context): the sample of test_ifc_scan with a colour, read, made, saved, placed."""
+(gui/backend/scene_context): the sample of test_ifc_scan with a colour, read, made, saved, placed."""
 import math
 import tempfile
 import unittest
@@ -8,7 +8,8 @@ from pathlib import Path
 import numpy as np
 
 import _setup  # noqa: F401  (paths and the common setup)
-from meridiana import ifc_import, ifc_mesh, ifc_scan, ifc_worker, model
+from meridiana.app.exchange import ifc_import, ifc_mesh, ifc_scan, ifc_worker
+from meridiana.core.model import model
 from nucleo.test_ifc_scan import SAMPLE
 
 STYLE = """#100=IFCCOLOURRGB($,1.,0.,0.);
@@ -70,14 +71,14 @@ class Mesh(unittest.TestCase):
         self.assertEqual(again["context"]["seconds"], 0.0)                # read back, not made again
         app = _setup.qt_or_skip()
         self.assertIsNotNone(app)
-        from meridiana.quick.backend import scene_context
+        from meridiana.gui.backend import scene_context
         project = model.Project()
         plan = ifc_import.plan(found, project, "origin", None, name="t", source_name="t.ifc", solids="elements")
         ids = ifc_import.apply(project, plan)
         self.assertEqual(project.resources["ifc_reference"]["context"]["mesh"], ctx["mesh"])
         ctxs = scene_context.IfcContext(None)
         # the bodies turned and moved together, as the mouse does: the true geometry follows them
-        from meridiana import move
+        from meridiana.core.model import move
         angle = 30.0
         for b in project.buildings:
             c, s = math.cos(math.radians(angle)), math.sin(math.radians(angle))
@@ -107,7 +108,8 @@ class Mesh(unittest.TestCase):
         # the bodies of the import are the faint ones
         self.assertEqual(scene_context.members(project, scene_context.reference(project)), set(ids))
         self.assertEqual(scene_context.ghost_ranges([("building", ids[0], 12), ("site", "", 2), ("building", "x", 4)],
-                                                    {ids[0]}), [(0, 12)])
+                                                    {("building", ids[0])}), [(0, 12)])
+        self.assertIn(("building", ids[0]), scene_context.derived(project, scene_context.reference(project)))
         # an anchor reshaped: the frame is lost, nothing is drawn (the bodies stay)
         project.buildings[0].footprint = [[0, 0], [9, 0], [9, 9]]
         self.assertEqual(ctxs.entries(project), [])

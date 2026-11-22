@@ -11,10 +11,11 @@ import _setup  # noqa: F401  isolate the user's profile before loading Qt
 from _fixtures import capannone, inverter_record
 from PySide6.QtWidgets import QApplication
 
-from meridiana import jobs, model
-from meridiana.energy import sizing
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.plant import PlantBackend
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.core.energy import sizing
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.plant import PlantBackend
 
 
 def site() -> model.Project:
@@ -57,7 +58,7 @@ class FreeModulesInThePlant(unittest.TestCase):
         until = time.monotonic() + seconds
         while self.backend.busy and time.monotonic() < until:
             self.app.processEvents()
-            time.sleep(.005)
+            time.sleep(.005)  # wait: a breath between two looks at the condition, so the workers' threads run
         self.app.processEvents()
         self.assertFalse(self.backend.busy, self.backend.message)
 
@@ -123,7 +124,7 @@ class FreeModulesInThePlant(unittest.TestCase):
         self.assertEqual(self.backend.freeModules, 0, (free, self.backend.message))
 
     def test_the_option_comes_on_by_itself(self):
-        from meridiana.quick.backend.plant_part import PlantActions
+        from meridiana.gui.backend.plant_part import PlantActions
 
         class Host:
             plan = None
@@ -158,7 +159,7 @@ class FreeModulesInThePlant(unittest.TestCase):
 
 class TheMenu(unittest.TestCase):
     def test_the_plan_menu_in_plant_has_the_command(self):
-        from meridiana.quick.backend import plan_menu
+        from meridiana.gui.backend import plan_menu
 
         class Editor:
             selection = ('', '')
@@ -202,9 +203,9 @@ class TheWindows(unittest.TestCase):
         import tempfile
         from pathlib import Path
         from meridiana import i18n
-        from meridiana.quick.app import QuickWindow, create_app
+        from meridiana.gui.application import QuickWindow, create_app
         from quick.gestures import wait_for
-        from quick.parity.differential import connected_fixture
+        from quick.aiuti.differential import connected_fixture
         if os.environ.get('QT_QPA_PLATFORM') == 'offscreen':
             os.environ.setdefault('QSG_RENDER_LOOP', 'basic')
         cls.addClassCleanup(i18n.setup, i18n.language())
@@ -264,7 +265,7 @@ class TheWindows(unittest.TestCase):
 
     def test_the_plan_menu_opens_the_sizing_with_the_option(self):
         from quick.gestures import pump
-        from meridiana.quick.backend import plan_menu
+        from meridiana.gui.backend import plan_menu
         controller = self.host.parts.controllers['plan']
         texts = [e['text'] for e in plan_menu.entries(controller)]
         self.assertIn('Proponi inverter e stringhe per i moduli scollegati', texts)

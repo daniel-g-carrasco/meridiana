@@ -48,10 +48,10 @@ class LanguageTest(unittest.TestCase):
 
     def test_plurals(self):
         i18n.setup("it")
-        self.assertEqual(i18n.ngettext("{n} module laid in {ms} ms", "{n} modules laid in {ms} ms", 2),
-                         "{n} moduli posati in {ms} ms")
-        self.assertEqual(i18n.ngettext("{n} module laid in {ms} ms", "{n} modules laid in {ms} ms", 1),
-                         "{n} modulo posato in {ms} ms")
+        # a plural of the checks (checks.py); the one of before, «{n} module laid in {ms} ms», was the Widgets' status bar
+        one, many = "{name}: {n} module on the exclusion {what}", "{name}: {n} modules on the exclusion {what}"
+        self.assertEqual(i18n.ngettext(one, many, 2), "{name}: {n} moduli sull'esclusione {what}")
+        self.assertEqual(i18n.ngettext(one, many, 1), "{name}: {n} modulo sull'esclusione {what}")
 
     def test_numbers_in_the_language_of_the_window(self):
         i18n.setup("it")

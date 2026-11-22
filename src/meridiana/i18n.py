@@ -10,14 +10,13 @@ import os
 import sys
 from pathlib import Path
 
-from . import TEXTDOMAIN
+from . import REPO_ROOT, TEXTDOMAIN
 
 _translation: gettext.NullTranslations = gettext.NullTranslations()
 
 
 def _locale_dirs():
-    root = Path(__file__).resolve().parent.parent.parent
-    yield root / "locale"                     # source checkout
+    yield REPO_ROOT / "locale"                # source checkout
     if getattr(sys, "frozen", False):          # the Windows build
         yield Path(getattr(sys, "_MEIPASS", "")) / "share" / "locale"
     for prefix in ("/app", "/usr/local", "/usr"):
@@ -55,7 +54,18 @@ def setup(language: str = "") -> None:
     for directory in _locale_dirs():
         if gettext.find(TEXTDOMAIN, str(directory), languages=languages or None):
             _translation = gettext.translation(TEXTDOMAIN, str(directory), languages=languages or None)
-            return
+            break
+    for listener in tuple(_listeners):
+        listener()
+
+
+_listeners: list = []
+
+
+def on_change(listener) -> None:
+    """`listener()` after every setup(): the window's QML catalogue follows the language (gui/application.py)."""
+    if listener not in _listeners:
+        _listeners.append(listener)
 
 
 def translation_for(language: str) -> gettext.NullTranslations:
@@ -65,6 +75,21 @@ def translation_for(language: str) -> gettext.NullTranslations:
         if gettext.find(TEXTDOMAIN, str(directory), languages=[language]):
             return gettext.translation(TEXTDOMAIN, str(directory), languages=[language])
     return gettext.NullTranslations()
+
+
+def qt_catalogue() -> Path | None:
+    """The QML's catalogue of the language loaded now: the .qm tools/compile_po.py makes beside the .mo, read by
+    Qt's own translator (gui/translator.py); English has one of its plurals alone."""
+    for directory in _locale_dirs():
+        path = directory / language() / "LC_MESSAGES" / f"{TEXTDOMAIN}.qm"
+        if path.is_file():
+            return path
+    return None
+
+
+def catalogue() -> gettext.NullTranslations:
+    """The catalogue loaded now (setup replaces it), for a bridge that needs its pgettext and ngettext: the QML's."""
+    return _translation
 
 
 def _(message: str) -> str:
@@ -81,6 +106,10 @@ def ngettext(singular: str, plural: str, n: int) -> str:
 
 def pgettext(context: str, message: str) -> str:
     return _translation.pgettext(context, message)
+
+
+def npgettext(context: str, singular: str, plural: str, n: int) -> str:
+    return _translation.npgettext(context, singular, plural, n)
 
 
 def language() -> str:
@@ -103,10 +132,14 @@ def setup_as_window(default: str = "it") -> None:
     setup(os.environ.get(WINDOW_LANGUAGE) or default)
 
 
-def number(value: float, decimals: int = 2, sign: bool = False, grouping: bool = False) -> str:
+def number(value: float, decimals: int | None = 2, sign: bool = False, grouping: bool = False) -> str:
     """A measure as the language of the window writes it: 3,58 in Italian, 3.58 in English; with grouping
-    12.345,6 and 12,345.6. The spin boxes follow the same language (app.py sets Qt's default locale)."""
-    text = f"{value:{'+' if sign else ''}{',' if grouping else ''}.{decimals}f}"
+    12.345,6 and 12,345.6. The spin boxes follow the same language (app.py sets Qt's default locale).
+    `decimals` None: as many as the value has, up to six figures (Python's «g»: 450, 13,5, 0,045), for a value read
+    from a file and said back as it was written. Every number in a text for the user comes through here (r35-segni,
+    Daniel 14/11/2026: «centralizziamo»; guard numeri_a_mano in tests/quick/sistema/test_riordino.py)."""
+    shape = "g" if decimals is None else f".{decimals}f"
+    text = f"{value:{'+' if sign else ''}{',' if grouping else ''}{shape}}"
     return text.translate(str.maketrans(",.", ".,")) if language() == "it" else text
 
 

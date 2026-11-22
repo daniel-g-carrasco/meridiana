@@ -10,7 +10,7 @@ from _fakes import FakeAnthropic, FakeRuntime, FakeServer, Host, ollama_answer, 
 from _fixtures import capannone_rho
 
 from meridiana import i18n
-from meridiana.assistant import context, conversation, persona, providers
+from meridiana.app.assistant import context, conversation, persona, providers
 
 CATALOGUE = _setup.ROOT / "locale" / "it" / "LC_MESSAGES" / "meridiana.mo"
 
@@ -57,7 +57,9 @@ class Instructions(unittest.TestCase):
 
     def test_the_text_is_the_same_at_every_call_so_that_the_providers_read_it_from_their_cache(self):
         self.assertEqual(persona.system("Meridio", "it"), persona.system("Meridio", "it"))
-        self.assertEqual(context.system("Meridio", "it"), persona.system("Meridio", "it"))
+        self.assertEqual(context.system("Meridio", "it"), context.system("Meridio", "it"))
+        # R649: his character, then the rule on the language
+        self.assertTrue(context.system("Meridio", "it").startswith(persona.system("Meridio", "it")))
         self.assertNotIn("{", persona.system("Meridio", "it"))     # every placeholder filled
 
     def test_no_em_dash_and_no_placeholder_left_in_his_words(self):

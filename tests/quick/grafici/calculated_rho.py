@@ -1,12 +1,14 @@
-"""Freeze the actual Rho pipeline output for equal Widgets/Quick photographs."""
+"""Freeze the actual Rho pipeline output (a pickle) for reproducible photographs of the result pages."""
 import argparse
 import pickle
 import time
 from pathlib import Path
 
-from meridiana import jobs, model, i18n
-from meridiana.energy.pipeline import compute
-from meridiana.quick.sample import recorded_weather
+from meridiana.app import jobs
+from meridiana import i18n
+from meridiana.core.model import model
+from meridiana.app.pipeline import compute
+from meridiana.gui.sample import recorded_weather
 
 
 def main():

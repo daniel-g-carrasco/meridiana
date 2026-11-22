@@ -3,11 +3,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QObject, Qt
 
 from _fixtures import capannone
-from meridiana.quick.app import QuickWindow, create_app
-from quick.gestures import click, item, key, point, pump
+from meridiana.gui.application import QuickWindow, create_app
+from quick.gestures import click, in_current_phase, item, key, point, pump, wait_for
 
 
 class FidelityTest(unittest.TestCase):
@@ -67,7 +67,8 @@ class FidelityTest(unittest.TestCase):
         self.assertAlmostEqual(left.width(), 310, delta=2)
         self.assertAlmostEqual(right.width(), 370, delta=2)
         self.win.showPhase('production')
-        pump(30)
+        self.assertFalse(left.isEnabled(), 'Project loses input as soon as its phase leaves')
+        wait_for(lambda: not left.isVisible(), seconds=.4)
         self.assertFalse(left.isVisible())
         self.win.showPhase('model')
         pump(30)
@@ -78,7 +79,7 @@ class FidelityTest(unittest.TestCase):
         while pending:
             child = pending.pop()
             pending.extend(child.childItems())
-            if child.objectName() == 'nameField' and child.isVisible():
+            if child.objectName() == 'nameField' and child.isVisible() and in_current_phase(self.win, child):
                 visible.append(child)
         self.assertEqual(visible, [field], 'The borrowed inspector must stay alive')
         self.win.runCommand('panel_project')
@@ -87,8 +88,9 @@ class FidelityTest(unittest.TestCase):
         self.assertFalse(left.isVisible(), 'Closing a panel is remembered across phases')
 
     def test_status_has_three_panel_controls_and_help(self):
-        for name in ('statusPanelLeft', 'statusPanelBottom', 'statusPanelRight', 'statusHelp', 'statusWarnings'):
+        for name in ('statusPanelLeft', 'statusPanelBottom', 'statusPanelRight', 'statusHelp'):
             self.assertTrue(item(self.win, name).isVisible())
+        self.assertIsNone(self.win.findChild(QObject, 'statusWarnings'), 'R623: no counts of the checks in the status bar')
         self.win.showPhase('production')
         pump(30)
         self.assertTrue(item(self.win, 'tool_compute').property('flat'), 'R396: Calculate has no fixed background')

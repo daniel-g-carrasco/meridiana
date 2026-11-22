@@ -6,11 +6,11 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import catalog
-from meridiana.catalog import rules
-from meridiana.energy import optimizer_strings as mlpe
-from meridiana.energy import optimizers, plant
-from meridiana.energy.components import ModuleSpec
+from meridiana.data import catalog
+from meridiana.data.catalog import rules
+from meridiana.core.energy import optimizer_strings as mlpe
+from meridiana.core.energy import optimizers, plant
+from meridiana.core.energy.components import ModuleSpec
 
 T_MIN = -10.0
 
@@ -81,7 +81,7 @@ class Huawei(unittest.TestCase):
         s = setup("SUN2000-450W-P2", "Huawei", "SUN2000-10KTL-M1")
         m = module(pmax=400, voc=49.0, vmp=41.0)
         self.assertEqual(mlpe.length_range(s, m, T_MIN, (5, 20)), (6, 25))  # 10,000 W / 400 W = 25 (guide DE p. 9)
-        from meridiana.energy import stringing
+        from meridiana.core.energy import stringing
         spec = plant.InverterSpec.from_record(record("inverters", "Huawei", "SUN2000-10KTL-M1"), count=1)
         plain = stringing.plan(m, spec, 25, [1, 0], T_MIN, 60.0)
         self.assertEqual({c.key: c.level for c in plain.checks}["uoc"], "fail")   # 25 x 53.3 V > 1,100 V
@@ -212,7 +212,7 @@ class SolarEdgeMixing(unittest.TestCase):
 
 
 def grid(rows: int, per_row: int, azimuth: float = 0.0) -> list:
-    from meridiana import layout
+    from meridiana.core.layout import layout
     out = []
     for r in range(rows):
         for c in range(per_row):
@@ -224,7 +224,7 @@ def grid(rows: int, per_row: int, azimuth: float = 0.0) -> list:
 
 def project(maker: str, inverter: str, optimizer_maker: str, optimizer: str, per: int | None = None,
             strings: dict | None = None):
-    from meridiana import model as m
+    from meridiana.core.model import model as m
     p = m.Project(name="Prova")
     entry = {"record": record("inverters", maker, inverter), "count": 1, "name": "",
              "optimizer": record("optimizers", optimizer_maker, optimizer)}

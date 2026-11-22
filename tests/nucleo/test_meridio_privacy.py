@@ -6,7 +6,7 @@ import unittest
 import _setup  # noqa: F401
 from _fixtures import capannone
 
-from meridiana.assistant import privacy, tools
+from meridiana.app.assistant import privacy, tools
 
 
 def row(name, series, revision, modified):

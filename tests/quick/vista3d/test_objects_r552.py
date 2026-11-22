@@ -17,9 +17,10 @@ import numpy as np
 from PySide6.QtCore import QCoreApplication, QEvent, QObject
 from PySide6.QtWidgets import QApplication
 
-from meridiana import mesh, model
-from meridiana.quick.app import QuickWindow, create_app
-from meridiana.quick.backend.scene_assets import load_model
+from meridiana.core.geometry import mesh
+from meridiana.core.model import model
+from meridiana.gui.application import QuickWindow, create_app
+from meridiana.gui.backend.scene_assets import load_model
 from ._fidelity_support import data, js, settle
 
 PICKER = {'mode': 'place', 'step': 5.0, 'align': True, 'radius': 6.0, 'variation': 20.0, 'repeat': True, 'seed': 0}
@@ -44,7 +45,8 @@ class PlacedObjectsTest(unittest.TestCase):
         self.host = QuickWindow(p, Path(self.tmp.name), real_views=True)
         self.host.window.show()
         settle(self.app, .1)
-        self.host.window.setProperty('viewMode', 'both')
+        # the 3D on show (R598: one not on show makes nothing); off screen this window has room for one view at a time
+        self.host.window.setProperty('viewMode', '3d')
         settle(self.app, .1)
         self.view = self.host.window.findChild(QObject, 'viewport3d')
         self.view.setProperty('reducedMotion', True)

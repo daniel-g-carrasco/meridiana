@@ -1,8 +1,8 @@
 import unittest
 import tempfile
 from pathlib import Path
-from meridiana.assistant import attachments
-from meridiana.catalog import personal
+from meridiana.app.assistant import attachments
+from meridiana.data.catalog import personal
 
 
 class AttachmentTest(unittest.TestCase):
@@ -81,8 +81,8 @@ class PersonalTest(unittest.TestCase):
             personal.validate('batteries', {**record, 'voltage_range_v': [500, 200]})
 
     def test_review_curated_structured_ratings_and_invalidate_verification(self):
-        from meridiana import catalog
-        from meridiana.catalog.audit import audit_record
+        from meridiana.data import catalog
+        from meridiana.data.catalog.audit import audit_record
         for kind, model in [('inverters', 'SUN2000-20K-MB0'), ('batteries', 'LUNA2000-7-S1')]:
             with self.subTest(model=model):
                 original = next(r for r in catalog.load(kind) if r['model'] == model)

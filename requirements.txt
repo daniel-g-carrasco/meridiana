@@ -2,9 +2,8 @@
 # energy models and the charts. The tests need nothing more; the lint is ruff. PySide6 and pvlib are pinned:
 # their Python APIs have changed between versions (QQuick3DInstancing.getInstanceBuffer, tried on 6.12.0;
 # pvlib.iotools.get_pvgis_tmy returns (data, metadata) since 0.13, tried on 0.16.1). scipy 1.15 brings the
-# vectorised root finder pvlib's "chandrupatla" maximum power point uses. pyqtgraph draws the window's charts
-# (study 17, D2, accepted by Daniel on 23/10/2026: 1-4 ms at the pointer on 8.760 points, matplotlib 150-190);
-# matplotlib stays for the formulas and the PDF report.
+# vectorised root finder pvlib's "chandrupatla" maximum power point uses. The window draws its charts in QML;
+# matplotlib stays for the formulas and the PDF report (pyqtgraph, the charts of the Widgets window, went with it).
 #
 # Qt comes as the three wheels it is made of, not as the PySide6 meta-package: that one also pulls
 # PySide6_WebEngine (132 MB to download, 300 MB more in a bundle), which Meridiana never imports.
@@ -14,14 +13,13 @@
 PySide6_Essentials==6.12.0
 PySide6_Addons==6.12.0
 PySide6_Pdf==6.12.0.140
-shapely>=2.0
+shapely>=2.1
 numpy>=1.26
 pandas>=2.2
 requests>=2.31
 pvlib==0.16.1
 scipy>=1.15
 matplotlib>=3.9
-pyqtgraph>=0.14
 # The report's attachments (the datasheets in PDF after the last chapter): pypdf (BSD-3-Clause, pure Python) puts
 # their pages into the report. A datasheet encrypted with AES against changes is drawn by QtPdf instead: pypdf
 # reads those only with the cryptography package, which Meridiana does not require.

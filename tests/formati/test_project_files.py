@@ -13,7 +13,7 @@ from pathlib import Path
 import _setup
 from _fixtures import capannone_rho as sample
 
-from meridiana import model
+from meridiana.core.model import model
 
 
 class Files(unittest.TestCase):
@@ -241,7 +241,7 @@ class Formats(unittest.TestCase):
     def test_the_thirteenth_format_keeps_the_optimizers_of_an_inverter(self):
         """Task 22: a SolarEdge inverter keeps its power optimizers in its entry; an older Meridiana would drop them at
         the first change of a count, so they have a format of their own and a file before migrates unchanged."""
-        from meridiana.energy import system
+        from meridiana.core.energy import system
         folder = _setup.FORMATS
         p, notice = model.Project.load(folder / "progetto-v13.meridiana")
         self.assertIsNone(notice)
@@ -265,7 +265,7 @@ class Formats(unittest.TestCase):
         whose strings were Meridiana's live proposal (no «auto», or «auto» true) keeps it as an explicit «auto», which
         the window writes down at the first layout; strings by hand stay by hand; a file of 14 without strings has
         none."""
-        from meridiana.energy import plant
+        from meridiana.core.energy import plant
         folder = _setup.FORMATS
         p, notice = model.Project.load(folder / "progetto-v14.meridiana")
         self.assertIsNone(notice)
@@ -406,6 +406,8 @@ class Formats(unittest.TestCase):
         again = model.Project.from_json(copy.deepcopy(before)).to_json()
         self.assertEqual((before.pop("version"), again.pop("version")), (28, model.FORMAT_VERSION))
         self.assertNotIn("layout_defaults", again)
+        self.assertEqual(again.pop("regulatory_profile"), "it")
+        self.assertEqual(again["site"].pop("timezone"), "Europe/Rome")
         self.assertEqual(set(again) - set(before), set())
         new, _notice = model.Project.load(folder / "progetto-v29.meridiana")
         self.assertTrue(new.layout_defaults)
@@ -418,7 +420,9 @@ class Formats(unittest.TestCase):
         folder = _setup.FORMATS
         before = json.loads((folder / "progetto-v29.meridiana").read_text(encoding="utf-8"))
         again = model.Project.from_json(copy.deepcopy(before)).to_json()
-        self.assertEqual((before.pop("version"), again.pop("version")), (29, 30))
+        self.assertEqual((before.pop("version"), again.pop("version")), (29, model.FORMAT_VERSION))
+        self.assertEqual(again.pop("regulatory_profile"), "it")
+        self.assertEqual(again["site"].pop("timezone"), "Europe/Rome")
         self.assertEqual(set(again) - set(before), set())
         self.assertEqual([x["kind"] for x in again["props"]], [x["kind"] for x in before["props"]])
         self.assertTrue(all("asset" not in x for x in again["props"]))
@@ -428,6 +432,48 @@ class Formats(unittest.TestCase):
         raw = model.Project.from_json(new.to_json()).to_json()["props"]
         self.assertEqual([x.get("asset") for x in raw][-3:], ["street_light", None, None])
         self.assertNotIn("asset", raw[-1])
+
+    def test_the_thirty_first_format_is_written_as_it_was_and_the_thirty_second_has_a_raised_obstacle(self):
+        # format 32: an obstacle's `base` goes into the file only when it is raised, so a file of 31 saved again
+        # differs by its version alone; the frozen file of 32 holds a plant 3 m above the roof, 4 m at its top
+        folder = _setup.FORMATS
+        before = json.loads((folder / "progetto-v31.meridiana").read_text(encoding="utf-8"))
+        again = model.Project.from_json(copy.deepcopy(before)).to_json()
+        self.assertEqual((before.pop("version"), again.pop("version")), (31, model.FORMAT_VERSION))
+        self.assertEqual(again, before)
+        self.assertEqual(model.MIGRATIONS[31]({"a": 1}), {"a": 1})
+        new, _notice = model.Project.load(folder / "progetto-v32.meridiana")
+        raised = next(e for e in new.exclusions if e.id == "e32")
+        self.assertEqual((raised.base, raised.height), (3.0, 4.0))
+        self.assertTrue(all(e.base == 0.0 for e in new.exclusions if e.id != "e32"))
+        prism = new.obstacle_prism(raised)
+        zs = model.roof_z(new.building("b1"), raised.ring)          # the gable roof of the file, 4 degrees
+        self.assertEqual((prism["z0"], prism["z1"]), (min(zs) + 3.0, max(zs) + 4.0))
+        raw = model.Project.from_json(new.to_json()).to_json()["exclusions"]
+        self.assertEqual([x.get("base") for x in raw], [None, None, 3.0])
+
+    def test_the_thirty_second_format_is_written_as_it_was_and_the_thirty_third_names_a_model(self):
+        # format 33 (R604): the names given to the imported models go into the file only when set and only for a
+        # group that still has a body, so a file of 32 saved again differs by its version alone; the frozen file of 33
+        # names the group of its one building
+        folder = _setup.FORMATS
+        before = json.loads((folder / "progetto-v32.meridiana").read_text(encoding="utf-8"))
+        again = model.Project.from_json(copy.deepcopy(before)).to_json()
+        self.assertEqual((before.pop("version"), again.pop("version")), (32, model.FORMAT_VERSION))
+        self.assertEqual(again, before)
+        self.assertEqual(model.MIGRATIONS[32]({"a": 1}), {"a": 1})
+        new, notice = model.Project.load(folder / "progetto-v33.meridiana")
+        self.assertIsNone(notice)
+        self.assertEqual(new.model_names, {"ifc1": "Capannone importato"})
+        self.assertEqual(model.Project.from_json(new.to_json()).model_names, {"ifc1": "Capannone importato"})
+        new.buildings[0].group = ""                 # the group gone: its name is not written any more
+        self.assertNotIn("model_names", new.to_json())
+        for bad in ({"ifc1": ""}, {"ifc1": "  "}, {"ifc1": 3}, ["ifc1"]):
+            with self.subTest(bad=bad):
+                data = json.loads((folder / "progetto-v33.meridiana").read_text(encoding="utf-8"))
+                data["model_names"] = bad
+                with self.assertRaises(ValueError):
+                    model.Project.from_json(data)
 
 
 if __name__ == "__main__":

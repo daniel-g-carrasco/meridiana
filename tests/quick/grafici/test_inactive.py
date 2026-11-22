@@ -5,7 +5,7 @@ import _setup
 from PySide6.QtCore import QObject, QUrl
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow  # noqa: F401
-from meridiana.quick.backend.parts import QML
+from meridiana.gui.backend.parts import QML
 from quick.gestures import pump
 
 

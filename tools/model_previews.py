@@ -20,8 +20,8 @@ MARGIN = 6
 
 
 def triangles(kind):
-    from meridiana import props
-    from meridiana.quick.backend import models3d, scene_assets
+    from meridiana.core.geometry import props
+    from meridiana.gui.backend import models3d, scene_assets
     key = models3d.ASSET_FOR_KIND.get(kind)
     if key is not None:
         p, n, c = scene_assets.load_model(key)
@@ -69,7 +69,7 @@ def render(kind, out: Path):
 
 def main():
     from PySide6.QtGui import QGuiApplication
-    from meridiana import props
+    from meridiana.core.geometry import props
     _app = QGuiApplication.instance() or QGuiApplication(["previews", "-platform", "offscreen"])
     for kind in props.KINDS:
         render(kind, OUT / f"{kind}.png")

@@ -7,7 +7,8 @@ from types import SimpleNamespace
 
 import _setup  # noqa: F401
 
-from meridiana import checks, model, rules
+from meridiana.core.rules import checks, rules
+from meridiana.core.model import model
 
 
 def ids(f):

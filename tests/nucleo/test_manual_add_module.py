@@ -6,7 +6,7 @@ import _setup  # noqa: F401
 from _fixtures import laid
 from _fixtures import tetto_con_lucernario as project
 
-from meridiana import manual
+from meridiana.core.layout import manual
 
 
 class AddModule(unittest.TestCase):

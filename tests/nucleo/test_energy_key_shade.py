@@ -8,8 +8,8 @@ from _fixtures import capannone
 
 class ShadeInTheKey(unittest.TestCase):
     def test_an_obstacle_or_a_building_changed_changes_the_key(self):
-        from meridiana import model
-        from meridiana.session import ProjectSession as Session
+        from meridiana.core.model import model
+        from meridiana.app.session import ProjectSession as Session
         session = Session(capannone())
         p = session.project
         before = session.energy_key()
@@ -27,8 +27,8 @@ class ShadeInTheKey(unittest.TestCase):
     def test_walls_stopping_under_the_building_height_change_the_key(self):
         """A roof drawn by hand with a corner under the height: the shadows' solid stops there (R303), and a year
         computed before that is told apart; a roof that stays at its height keeps the key of before."""
-        from meridiana import roofs
-        from meridiana.session import ProjectSession as Session
+        from meridiana.core.geometry import roofs
+        from meridiana.app.session import ProjectSession as Session
         session = Session(capannone())
         b = session.project.buildings[0]
         ring = [tuple(q) for q in b.footprint]

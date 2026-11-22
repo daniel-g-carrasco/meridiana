@@ -10,8 +10,8 @@ from pathlib import Path
 
 import _setup  # noqa: F401
 
-from meridiana import model, underlay
-from meridiana.underlay import Underlay
+from meridiana.core.model import model, underlay
+from meridiana.core.model.underlay import Underlay
 
 setUpModule = _setup.keep_global_state          # what the module changes of the process, put back after it
 
@@ -149,7 +149,7 @@ class Imported(unittest.TestCase):
         from PySide6.QtCore import QBuffer, QByteArray, QIODevice
         from PySide6.QtGui import QImage
 
-        from meridiana.ui import underlays
+        from meridiana.gui.backend import underlays
         image = QImage(40, 30, QImage.Format.Format_RGB32)
         image.fill(0xff8040)
         data = QByteArray()
@@ -178,7 +178,7 @@ class Imported(unittest.TestCase):
         from PySide6.QtCore import QMarginsF
         from PySide6.QtGui import QColor, QPageSize, QPainter, QPdfWriter
 
-        from meridiana.ui import underlays
+        from meridiana.gui.backend import underlays
         if not underlays.pdf_available():
             self.skipTest("Qt's PDF module is not there")
         f = Path(tempfile.mkdtemp()) / "tavola.pdf"
@@ -194,7 +194,7 @@ class Imported(unittest.TestCase):
         self.assertEqual((w, h), (round(595 * 200 / 72), round(842 * 200 / 72)))   # A4 at 200 dpi
 
     def test_what_is_not_an_image_is_refused_with_the_reason(self):
-        from meridiana.ui import underlays
+        from meridiana.gui.backend import underlays
         bad = Path(tempfile.mkdtemp()) / "note.png"
         bad.write_text("not an image")
         with self.assertRaises(ValueError) as caught:

@@ -1,8 +1,9 @@
 """R389: unchanged core geometry must reach the Quick scene without lost modules."""
 import unittest
 
-from meridiana import jobs, model
-from meridiana.quick.backend import plan_scene
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.gui.backend import plan_scene
 
 
 class SceneTest(unittest.TestCase):
@@ -25,6 +26,18 @@ class SceneTest(unittest.TestCase):
             self.assertEqual(drawn['key'], original.key)
             self.assertEqual(drawn['rid'], original.rid)
             self.assertEqual(drawn['points'], [[float(x), -float(y)] for x, y in original.corners])
+
+    def test_a_raised_obstacle_is_dashed_and_one_on_the_roof_is_drawn_as_before(self):
+        # format 32: the dashed outline says «above», as for a sub-field
+        project = model.Project()
+        project.exclusions.append(model.ExclusionItem(id='e1', ring=[[0, 0], [2, 0], [2, 2], [0, 2]], height=4.0))
+        project.exclusions.append(model.ExclusionItem(id='e2', ring=[[5, 0], [7, 0], [7, 2], [5, 2]], height=4.0,
+                                                      base=3.0))
+        drawn = {x['oid']: x for x in plan_scene.scene_of(project, {})['objects'] if x['kind'] == 'exclusion'}
+        self.assertNotIn('dashed', drawn['e1'])
+        self.assertTrue(drawn['e2']['dashed'])
+        self.assertEqual({k: v for k, v in drawn['e2'].items() if k not in ('dashed', 'oid', 'points')},
+                         {k: v for k, v in drawn['e1'].items() if k not in ('oid', 'points')})
 
     def test_batched_geometry_preserves_20000_quads_and_all_borders(self):
         modules = [{'points': [[x * 2, 0], [x * 2 + 1, 0], [x * 2 + 1, 2], [x * 2, 2]]}

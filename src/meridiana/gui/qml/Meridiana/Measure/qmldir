@@ -1,0 +1,4 @@
+module Meridiana.Measure
+MeasureLayer 1.0 MeasureLayer.qml
+SnapMenu 1.0 SnapMenu.qml
+MeasureKeys 1.0 MeasureKeys.js

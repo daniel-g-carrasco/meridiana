@@ -9,7 +9,8 @@ from pathlib import Path
 from unittest import mock
 
 import _setup  # noqa: F401  (paths and the common setup)
-from meridiana import ifc_worker, resources
+from meridiana.app.exchange import ifc_worker
+from meridiana.core.compute import resources
 from nucleo.test_ifc_scan import SAMPLE
 
 
@@ -20,8 +21,9 @@ class Cache(unittest.TestCase):
         self.path = Path(self.tmp.name) / "m.ifc"
         self.path.write_text(SAMPLE, encoding="utf-8")
         self.folder = str(Path(self.tmp.name) / "context")
-        # the sample stands for a large model: past the limit the roofs are not looked for, the scan is the answer
-        patch = mock.patch.object(ifc_worker, "IFCOS_LIMIT", 10)
+        # the sample stands for a large model: too large for the memory allowed, the roofs are not looked for, the scan
+        # is the answer (R34: the memory decides, not a size)
+        patch = mock.patch.object(ifc_worker, "allowed_memory", return_value=10)
         patch.start()
         self.addCleanup(patch.stop)
 
@@ -32,7 +34,7 @@ class Cache(unittest.TestCase):
         first = self.read()
         self.assertEqual(first["mode"], "scan")
         self.assertTrue(os.path.isfile(ifc_worker.result_file(self.folder, str(self.path))))
-        with mock.patch("meridiana.ifc_scan.scan", side_effect=AssertionError("the file was read again")):
+        with mock.patch("meridiana.app.exchange.ifc_scan.scan", side_effect=AssertionError("the file was read again")):
             again = self.read()
         self.assertIn("cached", again["times"])
         self.assertEqual(again["solids"], json.loads(json.dumps(first["solids"])))

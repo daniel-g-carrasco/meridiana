@@ -1,6 +1,7 @@
 """The core runs without Qt (NQ, for a future interface that is not Qt): the energy system, the model and the
 session, imported in a fresh interpreter, never load PySide6; nor does any other module of the package outside the
-interface's side (ui/, quick/, app.py, single_instance.py, __main__.py)."""
+interface's side (gui/ and __main__.py). tests/nucleo/test_strati.py reads the imports; this one imports for real, so
+it sees a Qt brought by a library too."""
 
 import subprocess
 import sys
@@ -9,7 +10,7 @@ import unittest
 import _setup
 
 SRC = str(_setup.ROOT / "src")
-INTERFACE = ("meridiana.ui", "meridiana.quick", "meridiana.app", "meridiana.single_instance", "meridiana.__main__")
+INTERFACE = ("meridiana.gui", "meridiana.__main__")
 
 
 def run(code: str) -> str:
@@ -20,7 +21,7 @@ def run(code: str) -> str:
 
 class NoQt(unittest.TestCase):
     def test_the_system_the_model_and_the_session_do_not_load_pyside6(self):
-        out = run("import meridiana.energy.system, meridiana.model, meridiana.session\n"
+        out = run("import meridiana.core.energy.system, meridiana.core.model.model, meridiana.app.session\n"
                   "print(sorted(m for m in sys.modules if m.split('.')[0] in ('PySide6', 'shiboken6')))")
         self.assertEqual(out, "[]")
 

@@ -1,6 +1,6 @@
 """Rows on the plane of a pitch (R278, R279, R280; 30/10/2026): the east-west pair stands on the pitch, whatever its
 tilt and azimuth; a row drawn with the Row tool follows the line drawn, from its first click, also on a pitch; the
-east-west tool lays pairs along the line drawn, in one step undone."""
+east-west tool lays pairs along the line drawn."""
 
 import math
 import unittest
@@ -10,8 +10,9 @@ import numpy as np
 from _fixtures import laid
 from _fixtures import tetto_con_lucernario as project
 
-from meridiana import geo, layout, manual, mesh, model
-from meridiana.energy.nearshade import modules_corners
+from meridiana.core.geometry import geo, mesh
+from meridiana.core.layout import layout, manual
+from meridiana.core.energy.nearshade import modules_corners
 
 setUpModule = _setup.keep_global_state
 
@@ -129,43 +130,6 @@ class RowFollowsTheLine(unittest.TestCase):
         self.assertAlmostEqual(gaps[0], 0.02, places=6)
 
 
-class RowOnTheTurnedPlan(unittest.TestCase):
-    """R280 as Daniel drew it: two clicks on the plan turned, a line oblique on the screen and on the plan."""
-
-    def test_two_clicks_on_a_turned_plan(self):
-        from PySide6.QtCore import QEvent, QPointF, Qt
-        from PySide6.QtGui import QMouseEvent
-        from PySide6.QtWidgets import QApplication
-
-        from meridiana.ui.plan import from_scene, to_scene
-        _setup.qt_or_skip()
-        win = _setup.window(self, project())
-        plan = win.plan
-        plan.rotate_view(30.0)
-        plan.fit()
-        win._set_tool("row")
-        plan.snaps_on = False
-        clicks = [plan.mapFromScene(to_scene(*q)) for q in ((10.0, 8.0), (30.0, 20.0))]
-        # read now: the work a click starts may frame the plan again (with pvlib loaded the window strings on its own)
-        start, end = (from_scene(plan.mapToScene(q)) for q in clicks)
-        for point in clicks:
-            for kind in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonRelease):
-                held = Qt.MouseButton.LeftButton if kind == QEvent.Type.MouseButtonPress else Qt.MouseButton.NoButton
-                QApplication.sendEvent(plan.viewport(), QMouseEvent(
-                    kind, QPointF(point), QPointF(plan.viewport().mapToGlobal(point)), Qt.MouseButton.LeftButton,
-                    held, Qt.KeyboardModifier.NoModifier))
-        sf = win.project.subfields[0]
-        self.assertTrue(sf.manual)
-        r = win.project.fill(sf)
-        d = np.subtract(end, start) / math.dist(start, end)
-        first = min((c for m in r.modules for c in m.corners), key=lambda c: math.dist(c, start))
-        self.assertLess(math.dist(first, start), 1e-3)
-        for m in r.modules:
-            e = np.subtract(m.corners[0], m.corners[3])
-            self.assertLess(abs(e[0] * d[1] - e[1] * d[0]) / np.linalg.norm(e), 1e-5)
-        self.assertEqual(r.count, int((math.dist(start, end) + 0.02) // (1.134 + 0.02)))
-
-
 class EastWestTool(unittest.TestCase):
     """R279: a line drawn with the east-west tool lays pairs along it, in one step undone."""
 
@@ -191,22 +155,6 @@ class EastWestTool(unittest.TestCase):
         h = heights(surface, c.reshape(-1, 3)).reshape(len(c), 4)
         self.assertTrue(np.allclose(h.min(axis=1), layout.Params().stand_off, atol=1e-6))    # every foot on it
         self.assertEqual(len({round(m.tilt, 3) for m in r.modules}), 2)                    # two real orientations
-
-    def test_the_window_tool_is_one_undo_step(self):
-        _setup.qt_or_skip()
-        p = model.Project()
-        p.subfields = [model.SubField(id="s1", name="Ground", ring=[[0, 0], [20, 0], [20, 20], [0, 20]])]
-        win = _setup.window(self, p)
-        win.commands["layout_east_west"].trigger()
-        self.assertEqual(win.plan.tool, "east_west")
-        win._row_drawn([2.0, 2.0], [2.0, 12.0])
-        sf = win.project.subfields[0]
-        self.assertEqual(sf.params.get("mounting"), "east_west")
-        self.assertTrue(sf.manual and win.project.fill(sf).count > 0)
-        win.undo.undo()
-        sf = win.project.subfields[0]
-        self.assertNotIn("mounting", sf.params)
-        self.assertFalse(sf.manual)
 
 
 if __name__ == "__main__":

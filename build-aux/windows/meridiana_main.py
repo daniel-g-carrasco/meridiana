@@ -1,7 +1,7 @@
 """Entry point of the Windows build (PyInstaller freezes this file).
 
 The Qt Quick window starts its workers as `sys.executable -m <module> ...` (the computation, the tasks, the report:
-quick/backend/shell_compute.py, shell_tasks.py, report.py). In the package sys.executable is Meridiana.exe, so a
+gui/backend/shell_compute.py, shell_tasks.py, report.py). In the package sys.executable is Meridiana.exe, so a
 first argument `-m` runs that module of the package, as Python would; the pools' processes (multiprocessing, spawn)
 come back here too and are taken by freeze_support."""
 

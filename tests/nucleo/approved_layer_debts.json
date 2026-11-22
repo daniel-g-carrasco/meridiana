@@ -1,0 +1,21 @@
+[
+  "core/energy/meteo.py -> data/atomic",
+  "core/energy/meteo.py -> requests",
+  "core/energy/optimizer_strings.py -> data/catalog/rules",
+  "core/energy/optimizers.py -> data/catalog",
+  "core/energy/optimizers.py -> data/catalog/rules",
+  "core/energy/plant.py -> data/catalog",
+  "core/energy/pvgis.py -> data/atomic",
+  "core/energy/pvgis.py -> requests",
+  "core/energy/sizing.py -> data/catalog",
+  "core/energy/system.py -> app/exchange/ifc_shade",
+  "core/geometry/mesh.py -> app/jobs",
+  "core/model/model.py -> app/exchange/ifc_shade",
+  "core/model/model.py -> app/project/portability",
+  "core/model/model.py -> app/report/reports",
+  "core/model/model.py -> data/atomic",
+  "core/model/model.py -> data/project_archive",
+  "core/rules/checks.py -> app/interface/phases",
+  "core/rules/checks.py -> data/catalog",
+  "data/catalog/personal.py -> app/platform/paths"
+]

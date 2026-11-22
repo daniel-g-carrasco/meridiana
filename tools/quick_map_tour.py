@@ -57,8 +57,8 @@ class Journal:
 
 def instrument(journal: Journal):
     """The loader's, the memory's and the plan's moments, written as they happen (no behaviour changed)."""
-    from meridiana import resources
-    from meridiana.quick.backend import plan_maps, plan_tiles
+    from meridiana.core.compute import resources
+    from meridiana.gui.backend import plan_maps, plan_tiles
     L = plan_tiles.TileLoader
     sent_at = {}
 
@@ -204,9 +204,9 @@ def main():
     instrument(journal)
 
     from PySide6.QtCore import QObject, Qt, QTimer
-    from meridiana import model
-    from meridiana.quick.app import QuickWindow, create_app
-    from meridiana.quick.sample import recorded_weather
+    from meridiana.core.model import model
+    from meridiana.gui.application import QuickWindow, create_app
+    from meridiana.gui.sample import recorded_weather
     from quick_real_cursor import RealHand, Stop
     from quick.percorsi import modellazione
     app = create_app()

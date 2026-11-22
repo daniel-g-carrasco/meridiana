@@ -9,7 +9,7 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana.energy import plant, sizing, stringing
+from meridiana.core.energy import plant, sizing, stringing
 from calcoli.test_sizing import groups, inverter, project
 
 
@@ -264,7 +264,7 @@ class SmallFaceGoesOnOverTheNextOne(unittest.TestCase):
     def case(self, building="b1", azimuth=0.0, across=False):
         from unittest import mock
 
-        from meridiana.energy import faces
+        from meridiana.core.energy import faces
         from calcoli.test_sizing import grid
         gs = groups([54, 5])                        # rows of 12: 4 whole and one of 6; the small face: 5 modules
         small = grid(5, azimuth)

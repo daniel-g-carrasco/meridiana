@@ -7,7 +7,8 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import layout, manual, model
+from meridiana.core.layout import layout, manual
+from meridiana.core.model import model
 
 MODULE = layout.Module(power_kw=0.475)
 MILANO = dict(lat=45.46, lon=9.19)

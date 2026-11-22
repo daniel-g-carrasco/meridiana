@@ -2,6 +2,7 @@
 """The settings file: a round trip, the settings of a newer version kept,
 a damaged file replaced by the previous save and said, format versions."""
 
+import copy
 import json
 import os
 import tempfile
@@ -11,11 +12,24 @@ from unittest import mock
 
 import _setup  # noqa: F401
 
-from meridiana import config
-from meridiana.config import Config, backup_file, load, save
+from meridiana.app.platform import config
+from meridiana.app.platform.config import Config, backup_file, load, save
 
 
 class ConfigTest(unittest.TestCase):
+    def test_old_solid_profiles_open_and_save_as_stickers(self):
+        for version in (34, 35, 36):
+            with self.subTest(version=version), tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp) / "config.json"
+                path.write_text(json.dumps({"version": version, "assistant_style": "solid",
+                                            "assistant_animated": False, "assistant_width": 460}), encoding="utf-8")
+                cfg = load(path)
+                self.assertEqual(cfg.assistant_style, "sticker")
+                self.assertEqual((cfg.assistant_animated, cfg.assistant_width, cfg.notices), (False, 460, []))
+                save(cfg, path)
+                self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["assistant_style"], "sticker")
+                self.assertEqual(load(path), cfg)
+
     def test_roundtrip_and_unknown_keys(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "c" / "config.json"
@@ -131,7 +145,7 @@ class ConfigTest(unittest.TestCase):
             self.assertFalse(load(path).assistant)
 
     def test_version_5_gets_the_veil_over_the_imagery_at_forty_percent(self):
-        from meridiana import view_colours
+        from meridiana.app.interface import view_colours
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "config.json"
             path.write_text(json.dumps({"version": 5, "background": "osm"}), encoding="utf-8")
@@ -195,11 +209,11 @@ class ConfigTest(unittest.TestCase):
             cfg = load(path)
             self.assertEqual((cfg.toolbar, cfg.toolbar_place, cfg.assistant_animated, cfg.assistant_style,
                               cfg.assistant_width, cfg.assistant_height, cfg.notices),
-                             ("icons", "left", True, "smooth", 320, 500, []))
-            cfg.assistant_style, cfg.assistant_width = "pixel", 460
+                             ("icons", "left", True, "sticker", 320, 500, []))   # 35: the sun's smooth (R619)
+            cfg.assistant_style, cfg.assistant_width = "sticker", 460
             save(cfg, path)
             again = load(path)
-            self.assertEqual((again.assistant_style, again.assistant_width), ("pixel", 460))
+            self.assertEqual((again.assistant_style, again.assistant_width), ("sticker", 460))
 
     def test_version_11_gets_the_checks_panel_by_level(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -209,7 +223,7 @@ class ConfigTest(unittest.TestCase):
                                         "network_tiles": False}), encoding="utf-8")
             cfg = load(path)
             self.assertEqual((cfg.toolbar_place, cfg.assistant_style, cfg.network_tiles, cfg.checks_view, cfg.notices),
-                             ("left", "pixel", False, "level", []))
+                             ("left", "sticker", False, "level", []))        # 35: the pixel sun (R619)
             cfg.checks_view = "object"
             save(cfg, path)
             self.assertEqual(load(path).checks_view, "object")
@@ -256,10 +270,16 @@ class ConfigTest(unittest.TestCase):
             self.assertEqual(cfg, Config(network_tiles=False, font="inter"))
             self.assertEqual((cfg.toolbar, cfg.toolbar_place, cfg.assistant_animated, cfg.assistant_style,
                               cfg.assistant_width, cfg.assistant_height, cfg.checks_view, cfg.help_open),
-                             ("text", "top", True, "smooth", 320, 500, "level", True))
+                             ("text", "top", True, "sticker", 320, 500, "level", True))   # 35: R619
             save(cfg, path)
             self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["version"], config.CONFIG_VERSION)
-            self.assertEqual(config.CONFIG_VERSION, 32)
+            self.assertEqual(config.CONFIG_VERSION, 39)
+            self.assertTrue(cfg.report_outline_open)      # 38: the report's contents open (R696)
+            self.assertEqual(cfg.density, "normal")       # 39: the density of the trees and lists, as before
+            self.assertFalse(cfg.assistant_prepare_on_start)
+            self.assertEqual((cfg.sun_map_quantity, cfg.sun_map_colour, cfg.sun_map_step, cfg.sun_map_day,
+                              cfg.sun_map_scale), ("loss", "auto", 0.5, "12-21", "amber"))   # 34: the sun map (R588)
+            self.assertEqual(cfg.tree_folds, {})      # 33: the tree's groups as they start (R575)
             self.assertEqual(cfg.edges_3d, "full")    # 31: the 3D's edges as drawn before (study 41, E)
             self.assertEqual(cfg.memory_mode, "auto")  # 32: the memory's choice, automatic (R548)
             self.assertEqual(cfg.inverter_brand_favourites, [])       # no maker starred yet (R268)
@@ -274,7 +294,7 @@ class ConfigTest(unittest.TestCase):
 
     def test_version_13_moves_a_measure_on_m_to_d_and_leaves_the_other_keys_of_the_designer(self):
         """M is Move from version 14 and Measure goes to D (study 16, B; Daniel, 23/10/2026)."""
-        from meridiana import shortcuts
+        from meridiana.app.interface import shortcuts
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "config.json"
             for keys, measure in (({"tool_measure": ["M", "Shift+M"]}, ["D", "Shift+M"]),
@@ -323,7 +343,7 @@ class ConfigTest(unittest.TestCase):
             self.assertEqual((cfg.assistant_provider, cfg.assistant_local_url, cfg.assistant_local_model,
                               cfg.assistant_cloud_model, cfg.assistant_consent, cfg.assistant_voice),
                              ("local", "http://127.0.0.1:9931/v1", "", "claude-haiku-5-5", {}, False))
-            self.assertEqual(cfg.assistant_style, "pixel")
+            self.assertEqual(cfg.assistant_style, "sticker")       # 35: the pixel sun is gone (R619)
             cfg.assistant_consent = {"anthropic": ["2026-10-24"]}
             save(cfg, path)
             self.assertEqual(load(path).assistant_consent, {"anthropic": ["2026-10-24"]})
@@ -348,6 +368,35 @@ class ConfigTest(unittest.TestCase):
                     path.write_text(json.dumps({"version": config.CONFIG_VERSION, "assistant_cloud_profiles": bad}),
                                     encoding="utf-8")
                     self.assertEqual([n.kind for n in load(path).notices], ["recovered"])
+
+    def test_a_save_of_other_settings_never_takes_back_the_local_model_chosen_by_another_holder(self):
+        """R613: two holders of one profile (two windows on it, or settings read before the choice) each write the
+        whole file; the later one, saving only the theme, put the default server and no model back."""
+        chosen = ("http://127.0.0.1:11434", "gemma4:26b-a4b-it-qat", "ollama")
+
+        def local(cfg):
+            return cfg.assistant_local_url, cfg.assistant_local_model, cfg.assistant_local_runtime
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            save(Config(), path)
+            meridio, other = load(path), load(path)
+            meridio.assistant_local_url, meridio.assistant_local_model, meridio.assistant_local_runtime = chosen
+            save(meridio, path)
+            other.theme = "dark"
+            save(other, path)
+            again = load(path)
+            self.assertEqual(local(again), chosen)
+            self.assertEqual(again.theme, "dark")
+            self.assertEqual(local(other), chosen, "the holder that saved also holds the choice now")
+            candidate = copy.deepcopy(meridio)             # Settings writes a copy (SettingsBackend._commit)
+            candidate.veil = 0.6
+            save(candidate, path)
+            again = load(path)
+            self.assertEqual((local(again), again.theme, again.veil), (chosen, "dark", 0.6))
+            meridio.theme = "light"                        # what a holder changed itself is written as it is
+            save(meridio, path)
+            self.assertEqual(load(path).theme, "light")
 
     def test_no_secret_is_ever_saved(self):
         text = json.dumps(Config(assistant_provider="claude").to_json()).lower()

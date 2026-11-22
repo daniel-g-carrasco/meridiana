@@ -5,7 +5,7 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import navigation as nav
+from meridiana.app.interface import navigation as nav
 
 
 def drag(n: nav.Navigator, buttons: str, mods: str = "") -> list[str]:

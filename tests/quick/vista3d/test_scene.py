@@ -7,10 +7,12 @@ from pathlib import Path
 import numpy as np
 from PySide6.QtWidgets import QApplication
 
-from meridiana import jobs, mesh, model
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.scene import SceneBackend
-from meridiana.quick.backend.scene_geometry import instance_file
+from meridiana.app import jobs
+from meridiana.core.geometry import mesh
+from meridiana.core.model import model
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.scene import SceneBackend
+from meridiana.gui.backend.scene_geometry import instance_file
 
 
 def project():
@@ -39,7 +41,7 @@ class SceneTests(unittest.TestCase):
         before = self.session.snapshot()
         self.scene.hover('modules',0,0,0,0)
         sfid, key = self.scene._module_keys[0]
-        from meridiana import viewaids
+        from meridiana.app.view import viewaids
         expected = viewaids.outline(self.session.project,self.session.good_results(),'module',sfid,key)
         np.testing.assert_allclose(self.scene.hoverData['edges'],expected)
         self.assertEqual(self.session.selection,('site',''))

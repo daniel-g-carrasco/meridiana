@@ -1,33 +1,14 @@
-"""Starting on Linux: on a desktop Qt has no theme for (niri, sway, Hyprland) the portal's theme is used,
-so the dark preference and the desktop's file dialogs are followed; elsewhere nothing is touched."""
+"""Starting on Windows: the program's identity (the mutex an update looks for, the AppUserModelID of its shortcuts)
+and what the installer writes for it. (The theme of a Linux desktop Qt does not know is no longer chosen here:
+tried on Niri on 10/11/2026, the Flatpak follows the system's dark preference and opens the system's file dialogs
+by itself.)"""
 
 import unittest
 from unittest import mock
 
 import _setup
 
-from meridiana import app
-
-
-class LinuxTheme(unittest.TestCase):
-    def theme(self, environ: dict, platform: str = "linux") -> str | None:
-        with mock.patch.object(app.sys, "platform", platform):
-            app.linux_theme(environ)
-        return environ.get("QT_QPA_PLATFORMTHEME")
-
-    def test_niri_and_other_compositors_get_the_portal(self):
-        for desktop in ("niri", "sway", "Hyprland", ""):
-            self.assertEqual(self.theme({"XDG_CURRENT_DESKTOP": desktop}), "xdgdesktopportal", desktop)
-
-    def test_desktops_with_a_qt_theme_keep_it(self):
-        for desktop in ("KDE", "GNOME", "ubuntu:GNOME", "X-Cinnamon", "XFCE", "LXQt"):
-            self.assertIsNone(self.theme({"XDG_CURRENT_DESKTOP": desktop}), desktop)
-
-    def test_a_theme_chosen_by_the_user_stays(self):
-        self.assertEqual(self.theme({"XDG_CURRENT_DESKTOP": "niri", "QT_QPA_PLATFORMTHEME": "gtk3"}), "gtk3")
-
-    def test_windows_is_left_alone(self):
-        self.assertIsNone(self.theme({"XDG_CURRENT_DESKTOP": "niri"}, platform="win32"))
+from meridiana.gui import startup as app
 
 
 class WindowsIdentity(unittest.TestCase):

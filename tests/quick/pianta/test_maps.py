@@ -6,12 +6,13 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from meridiana import geo, tiles
+from meridiana.core.geometry import geo
+from meridiana.app.maps import tiles
 
 
 class MapStateTests(unittest.TestCase):
     def state(self):
-        from meridiana.quick.backend.plan_maps import PlanMaps
+        from meridiana.gui.backend.plan_maps import PlanMaps
         return PlanMaps(geo.Origin(45.5226, 9.03))
 
     def test_automatic_near_far_manual_and_unknown_source(self):
@@ -79,7 +80,7 @@ class MapStateTests(unittest.TestCase):
         self.assertTrue(state.wanted)
 
     def test_custom_source_requires_credit_and_dpr_chooses_sharper_tiles(self):
-        from meridiana.quick.backend.plan_maps import PlanMaps
+        from meridiana.gui.backend.plan_maps import PlanMaps
         custom = dict(key='user-test', name='Test', kind='xyz',
                       url='https://example.test/{z}/{x}/{y}.png', attribution='')
         state = PlanMaps(geo.Origin(45, 9), custom_sources=[custom])
@@ -94,8 +95,8 @@ class MapStateTests(unittest.TestCase):
         self.assertEqual(state.attribution, 'Test credit')
 
     def test_quad_transform_maps_all_corners_and_underlay_orientation(self):
-        from meridiana.quick.backend.plan_maps import quad_matrix, underlay_record
-        from meridiana.underlay import Underlay
+        from meridiana.gui.backend.plan_maps import quad_matrix, underlay_record
+        from meridiana.core.model.underlay import Underlay
         corners = [(2, 3), (6, 2), (7, 8), (1, 7)]
         matrix = quad_matrix(corners)
         for (u, v), (x, y) in zip(((0, 0), (1, 0), (1, 1), (0, 1)), corners, strict=True):
@@ -111,7 +112,7 @@ class MapStateTests(unittest.TestCase):
         self.assertEqual(item['opacity'], .4)
 
     def test_late_tiles_are_discarded_and_a_date_line_site_never_requests_the_whole_world(self):
-        from meridiana.quick.backend.plan_maps import PlanMaps
+        from meridiana.gui.backend.plan_maps import PlanMaps
         state = PlanMaps(geo.Origin(0, 179.9999))
         state.set_source('osm')
         state.set_view((-200, -200, 200, 200), 1)
@@ -185,7 +186,7 @@ class LocalServer:
 
 class LoaderTests(unittest.TestCase):
     def test_camera_settlement_keeps_unchanged_map_items_and_announces_visibility(self):
-        from meridiana.quick.backend.plan_tiles import MapController
+        from meridiana.gui.backend.plan_tiles import MapController
         with tempfile.TemporaryDirectory() as cache:
             maps = MapController(Path(cache), offline=True)
             maps.setSource('none')
@@ -216,13 +217,13 @@ class LoaderTests(unittest.TestCase):
         deadline = time.monotonic() + 5
         while not condition() and time.monotonic() < deadline:
             self.app.processEvents()
-            time.sleep(.002)
+            time.sleep(.002)  # wait: a breath between two looks at the condition, so the workers' threads run
         self.assertTrue(condition())
 
     def test_cached_tile_is_async_deduplicated_offline_and_has_exact_pixels(self):
         import threading
         from PySide6.QtGui import QColor, QImage
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         with tempfile.TemporaryDirectory() as cache:
             loader = plan_tiles.TileLoader(Path(cache))
             loader.offline = True
@@ -250,31 +251,29 @@ class LoaderTests(unittest.TestCase):
 
     def test_quick_underlay_pixels_keep_north_up_and_are_above_the_veil(self):
         import base64
-        from PySide6.QtCore import QBuffer, QIODevice, QUrl
-        from quick.gestures import item
+        from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QUrl
         from PySide6.QtGui import QColor, QImage
         from PySide6.QtQml import QQmlApplicationEngine
-        from meridiana.quick.backend.plan_tiles import MapController
-        from meridiana.underlay import Underlay
+        from meridiana.gui.backend.plan_tiles import MapController
+        from meridiana.core.model.underlay import Underlay
         image = QImage(20, 10, QImage.Format.Format_RGB32)
         image.fill(QColor('#df3245'))
-        buffer = QBuffer()
-        self.assertTrue(buffer.open(QIODevice.OpenModeFlag.WriteOnly))
-        self.assertTrue(image.save(buffer, "PNG"))
-        buffer.close()
-        data = buffer.data()
+        data = QByteArray()
+        buffer = QBuffer(data)
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        image.save(buffer, 'PNG')
         with tempfile.TemporaryDirectory() as cache:
             maps = MapController(Path(cache), offline=True)
             maps.configure(underlays=[Underlay('test', image=base64.b64encode(data).decode(),
                                              width=20, height=10, x=-10, y=5, scale=1, opacity=1)])
             maps.setVeil(.8)
             engine = QQmlApplicationEngine()
-            from meridiana.quick.backend.controls import install_controls
+            from meridiana.gui.backend.controls import install_controls
             install_controls(engine)
-            engine.addImportPath(str(Path(__file__).resolve().parents[3]/"src/meridiana/quick/qml"))
+            engine.addImportPath(str(Path(__file__).resolve().parents[3]/"src/meridiana/gui/qml"))
             maps.install(engine)
             engine.rootContext().setContextProperty('mapsBackend', maps)
-            layer = Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana/Plan'
+            layer = Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana/Plan'
             engine.loadData(('import QtQuick\nimport QtQuick.Window\nimport "' + layer.as_uri() +
                              '"\nWindow { width: 480; height: 320; visible: true; '
                              'MapLayer { anchors.fill: parent; backend: mapsBackend; viewScale: 10; '
@@ -282,10 +281,13 @@ class LoaderTests(unittest.TestCase):
             self.assertTrue(engine.rootObjects(), 'MapLayer QML must load')
             window = engine.rootObjects()[0]
             self.wait(lambda: window.isExposed())
-            def image_loaded():
-                underlay = item(window, "planUnderlay")
-                return underlay is not None and underlay.property("sourceSize").width() == image.width()
-            self.wait(image_loaded)
+            self.wait(lambda: not window.grabWindow().isNull())
+            # Exposure can precede decoding and uploading a data-URL image.
+            def underlay_drawn():
+                frame = window.grabWindow()
+                ratio = frame.devicePixelRatio()
+                return frame.pixelColor(round(240*ratio), round(160*ratio)).name() == '#df3245'
+            self.wait(underlay_drawn)
             grab = window.grabWindow()
             dpr = grab.devicePixelRatio()
             self.assertEqual(grab.pixelColor(round(240 * dpr), round(160 * dpr)).name(), '#df3245')
@@ -298,7 +300,7 @@ class LoaderTests(unittest.TestCase):
             engine.deleteLater()
 
     def test_xml_failure_retries_then_falls_back_and_keeps_the_saved_choice(self):
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         server = LocalServer()
         self.addCleanup(server.close)
         sources = {
@@ -322,7 +324,7 @@ class LoaderTests(unittest.TestCase):
 
     def test_custom_key_never_enters_cache_or_errors_and_missing_key_sends_nothing(self):
         from dataclasses import replace
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         server = LocalServer()
         self.addCleanup(server.close)
         custom = dict(key='user-test', name='Designer', kind='xyz', attribution='Designer credit',
@@ -331,7 +333,7 @@ class LoaderTests(unittest.TestCase):
             loader = plan_tiles.TileLoader(Path(cache), sources=tiles.catalogue([custom]))
             failed = []
             loader.tileFailed.connect(lambda *args: failed.append(args))
-            with mock.patch('meridiana.assistant.keys.get', return_value='secret-1234') as looked_up, \
+            with mock.patch('meridiana.app.assistant.keys.get', return_value='secret-1234') as looked_up, \
                     mock.patch.object(plan_tiles, 'RETRIES', (.0,)):
                 loader.request('user-test', 3, 1, 2)
                 self.wait(lambda: bool(failed))
@@ -359,7 +361,7 @@ class LoaderTests(unittest.TestCase):
             loader.close()
 
     def test_obsolete_retry_does_not_send_a_request_after_the_view_changes(self):
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         server = LocalServer()
         self.addCleanup(server.close)
         source = tiles.Source('osm', 'Test', 'xyz', server.root + '/bad/{z}/{x}/{y}.png', 'credit')
@@ -373,7 +375,7 @@ class LoaderTests(unittest.TestCase):
             loader.close()
 
     def test_corrupt_cache_requests_image_online_and_offline_never_asks(self):
-        from meridiana.quick.backend.plan_tiles import TileLoader
+        from meridiana.gui.backend.plan_tiles import TileLoader
         server = LocalServer()
         self.addCleanup(server.close)
         source = tiles.Source('osm', 'Local', 'xyz', server.root + '/good/{z}/{x}/{y}.png', 'Credit')
@@ -398,7 +400,7 @@ class LoaderTests(unittest.TestCase):
     def test_offline_stops_pending_queue_and_a_destroyed_loader_cancels_retry(self):
         from PySide6.QtCore import QCoreApplication, QEvent
         from PySide6.QtTest import QTest
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         server = LocalServer()
         self.addCleanup(server.close)
         source = tiles.Source('osm', 'Local', 'xyz', server.root + '/bad/{z}/{x}/{y}.png', 'Credit')
@@ -420,8 +422,8 @@ class LoaderTests(unittest.TestCase):
             self.assertEqual(len(server.asked), 1)
 
     def test_missing_keyring_and_removed_source_send_no_requests(self):
-        from meridiana.assistant import keys
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.app.assistant import keys
+        from meridiana.gui.backend import plan_tiles
         server = LocalServer()
         self.addCleanup(server.close)
         custom = dict(key='user-test', name='Designer', kind='xyz', attribution='Credit',
@@ -430,8 +432,8 @@ class LoaderTests(unittest.TestCase):
             loader = plan_tiles.TileLoader(Path(cache), sources=tiles.catalogue([custom]))
             failed = []
             loader.tileFailed.connect(lambda *args: failed.append(args))
-            with mock.patch('meridiana.assistant.keys.get', side_effect=keys.KeyringMissing('no backend')) as asked, \
-                    mock.patch('meridiana.log.complain'):
+            with mock.patch('meridiana.app.assistant.keys.get', side_effect=keys.KeyringMissing('no backend')) as asked, \
+                    mock.patch('meridiana.app.platform.log.complain'):
                 loader.request('user-test', 3, 1, 2)
                 loader.request('user-test', 3, 1, 3)
                 loader.request('gone-source', 3, 1, 4)
@@ -443,18 +445,18 @@ class LoaderTests(unittest.TestCase):
     def test_quick_world_draws_country_pixels_and_labels_at_a_real_window(self):
         from PySide6.QtCore import QRectF, QUrl
         from PySide6.QtQml import QQmlApplicationEngine
-        from meridiana.quick.backend.plan_tiles import MapController
+        from meridiana.gui.backend.plan_tiles import MapController
         with tempfile.TemporaryDirectory() as cache:
             maps = MapController(Path(cache), offline=True)
             maps.setSource('none')
             maps.updateView(-21e6, -11e6, 21e6, 11e6, 35000, 1)
             engine = QQmlApplicationEngine()
-            from meridiana.quick.backend.controls import install_controls
+            from meridiana.gui.backend.controls import install_controls
             install_controls(engine)
-            engine.addImportPath(str(Path(__file__).resolve().parents[3]/"src/meridiana/quick/qml"))
+            engine.addImportPath(str(Path(__file__).resolve().parents[3]/"src/meridiana/gui/qml"))
             maps.install(engine)
             engine.rootContext().setContextProperty('mapsBackend', maps)
-            layer = Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana/Plan'
+            layer = Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana/Plan'
             engine.loadData(('import QtQuick\nimport QtQuick.Window\nimport "' + layer.as_uri() +
                              '"\nWindow { width: 1200; height: 750; visible: true; '
                              'MapLayer { anchors.fill: parent; backend: mapsBackend; viewScale: 1 / 35000; '
@@ -486,7 +488,8 @@ class LoaderTests(unittest.TestCase):
             for land in ('#52665b', '#5c6858', '#4e6261'):
                 self.assertTrue(land in colors, land)
             dpr = grab.devicePixelRatio()
-            self.assertEqual(grab.pixelColor(round(600 * dpr), round(210 * dpr)).name(), '#ff38c8')
+            # R707: the site's mark is the plan's (planSiteMark, test_edit_window), the map draws no second one
+            self.assertNotEqual(grab.pixelColor(round(600 * dpr), round(210 * dpr)).name(), '#ff38c8')
             window.close()
             maps.close()
             engine.deleteLater()
@@ -495,7 +498,7 @@ class LoaderTests(unittest.TestCase):
         from PySide6.QtCore import QUrl
         from PySide6.QtGui import QColor, QImage, QPainter
         from PySide6.QtQml import QQmlApplicationEngine
-        from meridiana.quick.backend.plan_tiles import MapController
+        from meridiana.gui.backend.plan_tiles import MapController
         z, x, y = 15, 17200, 11700
         west, south, east, north = geo.tile_bounds(x, y, z)
         lon, lat = geo.mercator_to_lonlat((west + east) / 2, (south + north) / 2)
@@ -514,12 +517,12 @@ class LoaderTests(unittest.TestCase):
             maps._ready('local', z, x, y, image)
             maps.setVeil(.5)
             engine = QQmlApplicationEngine()
-            from meridiana.quick.backend.controls import install_controls
+            from meridiana.gui.backend.controls import install_controls
             install_controls(engine)
-            engine.addImportPath(str(Path(__file__).resolve().parents[3]/"src/meridiana/quick/qml"))
+            engine.addImportPath(str(Path(__file__).resolve().parents[3]/"src/meridiana/gui/qml"))
             maps.install(engine)
             engine.rootContext().setContextProperty('mapsBackend', maps)
-            layer = Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana/Plan'
+            layer = Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana/Plan'
             engine.loadData(('import QtQuick\nimport QtQuick.Window\nimport "' + layer.as_uri() +
                              '"\nWindow { width: 600; height: 400; visible: true; '
                              'MapLayer { anchors.fill: parent; backend: mapsBackend; viewScale: 1; '

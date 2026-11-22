@@ -1,11 +1,12 @@
-"""R389: runtime inventory against the original Properties controls.
+"""R389: runtime inventory of the Properties' fields, against those of the original Properties controls.
 
 The child owns QApplication: the Quick suite may already own QGuiApplication.
-The oracle reads actual bound Widgets, including their ranges and option models;
-it never parses Python source or rebuilds a second copy of the Quick schema.
+Until 10/11/2026 the oracle read the actual bound Widgets, with their ranges and option models; when they went, the
+Quick's fields of that day (equal to them) were recorded: quick/aiuti/riferimenti.py.
 """
-from collections import Counter, defaultdict
+from collections import Counter
 import copy
+import os
 import subprocess
 import sys
 import unittest
@@ -36,127 +37,32 @@ class InventoryCases(unittest.TestCase):
 
     def setUp(self):
         from _fixtures import capannone
-        from meridiana.quick.backend.properties import PropertiesBackend
-        from meridiana.session import ProjectSession
-        from meridiana.ui.properties import Properties
-        from shiboken6 import delete
+        from meridiana.gui.backend.properties import PropertiesBackend
+        from meridiana.app.session import ProjectSession
         self.project = capannone()
         self.session = ProjectSession(self.project)
         self.backend = PropertiesBackend(self.session)
-        self.widget = Properties()
-        self.addCleanup(delete, self.widget)
         self.addCleanup(self.backend.close)
 
-    def visible(self, widget):
-        from PySide6.QtCore import Qt
-        page = self.widget.widget()
-        while widget is not None and widget is not page:
-            if widget.testAttribute(Qt.WidgetAttribute.WA_WState_ExplicitShowHide) and widget.isHidden():
-                return False
-            widget = widget.parentWidget()
-        return True
-
-    def label(self, widget):
-        from PySide6.QtWidgets import QCheckBox, QFormLayout
-        if isinstance(widget, QCheckBox):
-            return widget.accessibleName() or widget.text()
-        # The Widgets date shares a single Day row: the month is its second spin.
-        if widget is getattr(self.widget, "sun_month", None):
-            return "Month"
-        for form in self.widget.widget().findChildren(QFormLayout):
-            candidate = widget
-            while candidate is not None and candidate is not self.widget.widget():
-                label = form.labelForField(candidate)
-                if label is not None:
-                    return label.text()
-                candidate = candidate.parentWidget()
-        self.fail(f"No label for {widget!r}")
-
-    def widget_fields(self):
-        from PySide6.QtCore import Qt
-        from PySide6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QLineEdit, QSpinBox, QWidget
-        editable = (QCheckBox, QComboBox, QDoubleSpinBox, QLineEdit, QSpinBox)
-        fields, seen = [], set()
-        for widget, _value, _setter in self.widget._binds:
-            if id(widget) in seen or not isinstance(widget, editable) or not self.visible(widget):
-                continue
-            seen.add(id(widget))
-            field = dict(label=self.label(widget), enabled=widget.isEnabled())
-            if isinstance(widget, (QDoubleSpinBox, QSpinBox)):
-                field.update(kind="number", value=widget.value(), minimum=widget.minimum(),
-                    maximum=widget.maximum(), step=widget.singleStep(),
-                    decimals=widget.decimals() if isinstance(widget, QDoubleSpinBox) else 0,
-                    unit=getattr(widget, "unit", widget.suffix().strip()), special=widget.specialValueText())
-            elif isinstance(widget, QComboBox):
-                field.update(kind="choice", value=widget.currentData(), options=[
-                    dict(value=widget.itemData(i), label=widget.itemText(i),
-                         enabled=bool(widget.model().flags(widget.model().index(i, 0)) & Qt.ItemFlag.ItemIsEnabled))
-                    for i in range(widget.count())])
-            elif isinstance(widget, QCheckBox):
-                field.update(kind="check", value=widget.isChecked())
-            else:
-                field.update(kind="text", value=widget.text())
-            fields.append(field)
-        # Catch editable controls omitted from _binds, without counting a spin's
-        # internal line edit or the search line inside the activities combo.
-        all_controls = []
-        for widget in self.widget.widget().findChildren(QWidget):
-            if not isinstance(widget, editable) or not self.visible(widget):
-                continue
-            if isinstance(widget, QLineEdit) and isinstance(widget.parentWidget(), (QDoubleSpinBox, QSpinBox, QComboBox)):
-                continue
-            all_controls.append(widget)
-        self.assertEqual(set(map(id, all_controls)), seen, "Unbound editable Widgets control")
-        return fields
-
     def compare(self, kind, obj=None):
-        from PySide6.QtWidgets import QPushButton
-        if kind == "site":
-            self.session.select("", "")
-            self.widget.show_site(self.project, not (self.project.buildings or self.project.subfields))
-        else:
-            self.session.select(kind, obj.id)
-            if kind == "subfield":
-                self.widget.show_subfield(self.project, obj, None)
-            else:
-                getattr(self.widget, "show_" + kind)(obj)
+        from quick.aiuti import riferimenti
+        self.session.select("", "") if kind == "site" else self.session.select(kind, obj.id)
         self.backend.refresh()
-        actual = [field.data for section in self.backend.sections for field in section["fields"]
+        keys = ("label", "kind", "enabled", "value", "minimum", "maximum", "decimals", "unit", "step", "special",
+                "options")
+        actual = [{key: field.data[key] for key in keys if key in field.data}
+                  for section in self.backend.sections for field in section["fields"]
                   if field.data["id"] not in QUICK_ONLY
                   if field.data["kind"] in ("text", "number", "choice", "check") and field.data["visible"]]
-        expected = self.widget_fields()
+        actions = [(field.data["label"], field.data["enabled"]) for section in self.backend.sections
+                   for field in section["fields"] if field.data["kind"] == "action" and field.data["visible"]
+                   and field.data["id"] not in QUICK_ONLY]
         type(self).configurations[kind] += 1
-        type(self).field_count += len(expected)
-        self.assertEqual(Counter((f["label"], f["kind"]) for f in actual),
-                         Counter((f["label"], f["kind"]) for f in expected), "Editable field inventory")
-        grouped = defaultdict(list)
-        for field in actual:
-            grouped[field["label"], field["kind"]].append(field)
-        for old in expected:
-            new = grouped[old["label"], old["kind"]].pop(0)
-            with self.subTest(field=new["id"]):
-                self.assertEqual(new["enabled"], old["enabled"])
-                if old["kind"] == "number":
-                    for key in ("minimum", "maximum", "decimals", "unit", "step", "special"):
-                        self.assertEqual(new[key], old[key], key)
-                    self.assertAlmostEqual(new["value"], old["value"], delta=.5 * 10 ** -old["decimals"] + 1e-9)
-                else:
-                    self.assertEqual(new["value"], old["value"])
-                    self.assertIs(type(new["value"]), type(old["value"]))
-                if old["kind"] == "choice":
-                    self.assertEqual(new["options"], old["options"])
-                    self.assertEqual([type(o["value"]) for o in new["options"]],
-                                     [type(o["value"]) for o in old["options"]])
-        actual_actions = [field.data for section in self.backend.sections for field in section["fields"]
-                          if field.data["kind"] == "action" and field.data["visible"]
-                          and field.data["id"] not in QUICK_ONLY]
-        old_buttons = [button for button in self.widget.widget().findChildren(QPushButton)
-                       if self.visible(button) and button.text() and button.text() != "?"]
-        self.assertEqual(Counter((field["label"], field["enabled"]) for field in actual_actions),
-                         Counter((button.text(), button.isEnabled()) for button in old_buttons), "Action inventory")
+        type(self).field_count += len(actual)
+        riferimenti.check(self, {"fields": actual, "actions": sorted(actions)})
 
     def test_site_reserved_network_and_rules(self):
-        from meridiana import model
+        from meridiana.core.model import model
         self.compare("site")
         self.project.network = model.Network(distributor="E-distribuzione", pod="IT001E12345678",
             voltage_v=20000, phases="3", level="MT", connection="new", available_kw=80.5,
@@ -169,7 +75,7 @@ class InventoryCases(unittest.TestCase):
                 self.compare("site")
 
     def test_every_roof_shape_and_canopy(self):
-        from meridiana import model
+        from meridiana.core.model import model
         building = self.project.buildings[0]
         for kind in ("flat", "mono", "gable", "hip", "free"):
             for canopy in (False, True):
@@ -191,8 +97,8 @@ class InventoryCases(unittest.TestCase):
                 self.compare("building", building)
 
     def test_all_mountings_pitch_modes_support_and_azimuth(self):
-        from meridiana import model
-        from meridiana.fields import mounting_names, pitch_mode_names
+        from meridiana.core.model import model
+        from meridiana.app.interface.fields import mounting_names, pitch_mode_names
         sf = self.project.subfields[0]
         for mounting in mounting_names():
             for pitch in pitch_mode_names():
@@ -205,24 +111,21 @@ class InventoryCases(unittest.TestCase):
                         self.compare("subfield", sf)
 
     def test_manual_and_filled_layout_actions(self):
-        from PySide6.QtWidgets import QPushButton
         sf = self.project.subfields[0]
         for manual in (False, True):
             for filled in (False, True):
                 with self.subTest(manual=manual, filled=filled):
                     sf.manual, sf.filled = manual, filled
                     self.compare("subfield", sf)
-                    captions = {button.text() for button in self.widget.widget().findChildren(QPushButton)}
                     quick = {f.data["label"] for section in self.backend.sections for f in section["fields"]
                              if f.data["kind"] == "action"}
-                    expected = "Lay again automatically" if manual and filled else "Lay again" if filled else "Lay the modules"
-                    self.assertIn(expected, captions)
+                    # R564: the words of the bar and of the menus (layout_commands): «Fill», «Empty»
+                    expected = "Lay again automatically" if manual and filled else "Fill"
                     self.assertIn(expected, quick)
-                    self.assertEqual("Take them out" in captions, filled)
-                    self.assertEqual("Take them out" in quick, filled)
+                    self.assertEqual("Empty" in quick, filled)
 
     def test_all_exclusions_implicit_and_explicit_height(self):
-        from meridiana import model
+        from meridiana.core.model import model
         for kind in model.exclusion_names():
             for height in (None, 2.35):
                 with self.subTest(kind=kind, height=height):
@@ -232,7 +135,8 @@ class InventoryCases(unittest.TestCase):
                     self.compare("exclusion", obj)
 
     def test_every_prop_kind_default_and_explicit_dimensions(self):
-        from meridiana import model, props
+        from meridiana.core.model import model
+        from meridiana.core.geometry import props
         # R374 (r22-f2): the kinds of the catalogue of models (the new vehicles, the fixed objects of the site) are
         # Quick only: the Widgets, frozen, know neither them nor their measures (a wanted difference)
         quick_only = set(props.SITE_KINDS) | {"truck", "pickup", "sports_car", "bicycle"}
@@ -258,8 +162,13 @@ class InventoryCases(unittest.TestCase):
 
 class InventorySubprocessTest(unittest.TestCase):
     def test_original_widgets_field_inventory(self):
+        # the tests' helpers and the sources on the path, as in the tests' own process: the CI installs only the
+        # requirements, not the program
+        tests = Path(__file__).resolve().parents[2]
+        path = os.pathsep.join([str(tests), str(tests.parent / "src")])
         result = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--inventory"],
-                                capture_output=True, text=True, encoding="utf-8", timeout=180)
+                                capture_output=True, text=True, encoding="utf-8", timeout=180,
+                                env=dict(os.environ, PYTHONPATH=path))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 

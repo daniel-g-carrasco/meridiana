@@ -9,7 +9,8 @@ import xml.etree.ElementTree as ET
 
 import _setup  # noqa: F401
 
-from meridiana import assistant, theme_colors
+from meridiana.app import assistant
+from meridiana.app.interface import theme_colors
 
 SVG = "{http://www.w3.org/2000/svg}"
 
@@ -130,7 +131,7 @@ class PixelCharacter(unittest.TestCase):
         self.assertEqual([assistant.pixel_step(a) for a in (0, 3.75, 7.5, 29.9, 30, 33.75, 360)], [0, 1, 2, 7, 0, 1, 0])
 
     def test_the_drawings_shipped_in_data_are_the_ones_the_program_draws(self):
-        from meridiana import paths
+        from meridiana.app.platform import paths
         for name, text in (("meridio.svg", assistant.svg("#1e1c19", "#4f6f95")),
                            ("meridio-pixel.svg", assistant.pixel_svg("#1e1c19", "#4f6f95"))):
             shipped = paths.shipped("meridio", name)
@@ -271,10 +272,6 @@ class Places(unittest.TestCase):
         self.assertEqual(assistant.clamp((700, 10), (800, 500), (320, 380)), (480, 10))
         self.assertEqual(assistant.clamp((10, 10), (100, 100), (320, 380)), (0, 0))      # too big: the corner
 
-    def test_three_questions_ready_for_each_tab(self):
-        for tab in assistant.TABS:
-            self.assertEqual(len(assistant.questions(tab)), 3)
-        self.assertIn("roof", assistant.questions("model")[0])          # the Modelling is the model alone (R277)
 
 
 class SpeechBubble(unittest.TestCase):
@@ -315,7 +312,7 @@ class SpeechBubble(unittest.TestCase):
 
     def test_the_size_is_kept_to_what_the_area_holds(self):
         self.assertEqual(assistant.bubble_size((320, 400), (1000, 800)), (320, 400))
-        beside = 380 - 46 - assistant.GAP - 2 * assistant.MARGIN                   # 306: narrower than asked
+        beside = 380 - assistant.SIZE - assistant.GAP - 2 * assistant.MARGIN       # narrower than asked
         self.assertEqual(assistant.bubble_size((320, 400), (380, 300)), (beside, 300 - 24))
         self.assertEqual(assistant.bubble_size((320, 400), (500, 300)), (320, 276))
         self.assertEqual(assistant.bubble_size((320, 400), (200, 150)), (200, 150))   # a tiny area: the area
@@ -326,7 +323,8 @@ class BubbleResized(unittest.TestCase):
 
     AREA = (0, 0, 1000, 800)
     SMALL, LARGE = assistant.BUBBLE_MIN, (900, 700)
-    HIM = (500, 500, assistant.SIZE, assistant.SIZE)            # his middle: 523, 523
+    HIM = (500, 500, assistant.SIZE, assistant.SIZE)            # his middle: 500 + SIZE / 2 (MIDDLE)
+    MIDDLE = 500 + assistant.SIZE / 2
 
     def drag(self, rect, corner, delta, tail="right"):
         return assistant.resized(rect, corner, delta, self.AREA, self.SMALL, self.LARGE, self.HIM, tail)
@@ -351,11 +349,11 @@ class BubbleResized(unittest.TestCase):
     def test_getting_smaller_the_side_with_the_tail_still_reaches_him(self):
         margin = assistant.BUBBLE_RADIUS + assistant.TAIL_HALF + assistant.TAIL_CLEAR
         x, y, w, h = self.drag((150, 200, 346, 500), "bottom-left", (0, -900))      # the bottom comes up
-        self.assertEqual(y + h, int(523 + margin + 0.5))
+        self.assertEqual(y + h, int(self.MIDDLE + margin + 0.5))
         x, y, w, h = self.drag((150, 300, 346, 500), "top-left", (0, 900))          # the top comes down
-        self.assertEqual(y, int(523 - margin))
+        self.assertEqual(y, int(self.MIDDLE - margin))
         x, y, w, h = self.drag((400, 550, 500, 300), "bottom-right", (-900, 0), "top")
-        self.assertEqual(x + w, max(400 + self.SMALL[0], int(523 + margin + 0.5)))
+        self.assertEqual(x + w, max(400 + self.SMALL[0], int(self.MIDDLE + margin + 0.5)))
 
     def test_it_never_grows_to_reach_him(self):
         # a place where the side does not reach him (a window that changed): the grip does as it is told

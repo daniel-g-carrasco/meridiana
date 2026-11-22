@@ -8,8 +8,8 @@ import unittest
 
 import _setup
 
-from meridiana.catalog import DATA, KINDS
-from meridiana.catalog.audit import audit_record
+from meridiana.data.catalog import DATA, KINDS
+from meridiana.data.catalog.audit import audit_record
 
 
 spec = importlib.util.spec_from_file_location("audit_catalog_sources", _setup.ROOT / "tools/audit_catalog_sources.py")

@@ -20,7 +20,8 @@ import unittest
 from pathlib import Path
 
 from _fixtures import capannone, inverter_record
-from meridiana.quick.sample import recorded_weather
+from meridiana.data import frames
+from meridiana.gui.sample import recorded_weather
 from nucleo.test_pool_orphans import alive, wait_gone
 
 SRC = Path(__file__).resolve().parents[3] / "src"
@@ -47,7 +48,7 @@ class LivePipe(unittest.TestCase):
         recorded_weather(project, self.folder)
         self.input = pickle.dumps((project, {}, self.folder, "", True, {}), protocol=5)
         env = dict(os.environ, MERIDIANA_WORKERS="2", PYTHONPATH=str(SRC), PYTHONUTF8="1")
-        self.serve = subprocess.Popen([sys.executable, "-m", "meridiana.quick.backend.shell_compute", "--serve",
+        self.serve = subprocess.Popen([sys.executable, "-m", "meridiana.gui.backend.shell_compute", "--serve",
                                        "--parent", str(os.getpid())],
                                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=env)
         self.addCleanup(self._close_pipes)
@@ -75,7 +76,7 @@ class LivePipe(unittest.TestCase):
                     return line
             if self.serve.poll() is not None:
                 self.fail(f"the process of the computation ended ({self.serve.returncode}) waiting for {word!r}")
-            time.sleep(0.05)
+            time.sleep(0.05)  # wait: a breath between two looks at the condition, so the workers' threads run
         self.fail(f"no {word!r} within {seconds} s: the year stood still (last lines: {self.lines[-3:]})")
 
     def year(self, name):
@@ -85,7 +86,7 @@ class LivePipe(unittest.TestCase):
         self.serve.stdin.write(f"job {folder}\n".encode())
         self.serve.stdin.flush()
         self.expect("done")             # nothing more is sent while the year runs
-        energy, metrics = pickle.loads((folder / "result.bin").read_bytes())
+        energy, metrics = frames.loads(frames.read(folder / "result.bin"))      # a frame (data/frames.py)
         self.assertIsNone(metrics.get("error"), metrics.get("error"))
         return energy["sim"].energy_kwh, metrics
 

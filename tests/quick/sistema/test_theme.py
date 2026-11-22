@@ -10,9 +10,9 @@ from PySide6.QtQml import QQmlComponent, QQmlEngine
 from PySide6.QtQuick import QQuickItem, QQuickWindow
 from PySide6.QtTest import QTest
 
-from meridiana import theme_colors
-from meridiana.quick.backend.tokens import ThemeTokens, install_theme
-from meridiana.ui import design
+from meridiana.app.interface import theme_colors
+from meridiana.gui.backend.tokens import ThemeTokens, install_theme
+from meridiana.gui.style import design
 
 
 class ThemeTest(unittest.TestCase):
@@ -40,12 +40,12 @@ class ThemeTest(unittest.TestCase):
             install_theme(second, provider)
 
     def test_system_accent_follows_the_existing_platform_reader(self):
-        from meridiana.ui.theme import SystemAccent
+        from meridiana.gui.style.theme import SystemAccent
         system = SystemAccent.of(self.app)
         before = system.value
         try:
             system.value = '#2f6b4f'
-            with patch('meridiana.quick.backend.tokens.sys.platform', 'linux'):
+            with patch('meridiana.gui.backend.tokens.sys.platform', 'linux'):
                 provider = ThemeTokens({'accent': 'system'})
                 self.assert_colors(provider.colors, theme_colors.derive(system.value, False, 'grey').tokens)
                 system.value = '#5b4bb0'
@@ -56,11 +56,11 @@ class ThemeTest(unittest.TestCase):
             system.changed.emit(before)
 
     def test_windows_system_accent_follows_live_palette_without_changing_explicit_theme(self):
-        from meridiana.ui.theme import SystemAccent
+        from meridiana.gui.style.theme import SystemAccent
         SystemAccent.of(self.app)
         original = self.app.palette()
         try:
-            with patch('meridiana.quick.backend.tokens.sys.platform', 'win32'):
+            with patch('meridiana.gui.backend.tokens.sys.platform', 'win32'):
                 provider = ThemeTokens({'accent': 'system'})
                 explicit = ThemeTokens({'accent': 'indigo'})
                 explicit_before = explicit.colors.copy()
@@ -113,7 +113,7 @@ class ThemeTest(unittest.TestCase):
         self.assertEqual(tokens.textSize, 'medium')
         self.assertFalse(tokens.dark)
         self.assert_colors(tokens.colors, theme_colors.derive(theme_colors.PRESETS['indigo'], False, 'grey').tokens)
-        from meridiana.quick.app import tokens as legacy_tokens
+        from meridiana.gui.application import tokens as legacy_tokens
         self.assertEqual(tokens.tokens, legacy_tokens())
 
     def test_measurement_uses_chosen_font_style_caps_and_condensed(self):

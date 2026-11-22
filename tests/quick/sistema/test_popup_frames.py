@@ -12,7 +12,7 @@ from PySide6.QtQml import QQmlComponent, QQmlEngine
 from PySide6.QtQuick import QQuickWindow
 from PySide6.QtTest import QTest
 
-from meridiana.quick.backend.controls import install_controls
+from meridiana.gui.backend.controls import install_controls
 
 setUpModule = _setup.keep_global_state
 
@@ -109,18 +109,18 @@ class MenuFramesTest(unittest.TestCase):
         def stall():
             if not stalled and menu.property('visible'):
                 stalled.append(True)
-                time.sleep(.25)
+                time.sleep(.25)  # wait: a frame made slow on purpose: the menu under load
         window.frameSwapped.connect(stall, Qt.ConnectionType.DirectConnection)
         self.addCleanup(lambda: window.frameSwapped.disconnect(stall))
         menu.setProperty('visible', True)
-        QTest.qWait(700)
+        QTest.qWait(700)  # wait: the menu's arrival with the slow frame, whole
         self.assertTrue(stalled)
         self.check_reveal(frames, (menu.property('implicitHeight'), menu.property('implicitWidth')), 'under load')
 
     def test_r480_the_button_stays_pressed_while_its_menu_is_open_and_a_second_click_closes_it(self):
         window, root, title, menu = self.scene()
         self.click(window, title)
-        QTest.qWait(250)
+        _setup.wait_for(lambda: bool(menu.property('visible')), 3000)
         self.assertTrue(menu.property('visible'))
         self.assertTrue(title.property('menuShown'))
         self.assertEqual(menu.property('opener'), title)
@@ -131,22 +131,22 @@ class MenuFramesTest(unittest.TestCase):
         QTest.qWait(50)
         self.assertTrue(title.property('menuShown'))
         self.click(window, title)
-        QTest.qWait(150)
+        _setup.wait_for(lambda: not menu.property('visible'), 3000)
         self.assertFalse(menu.property('visible'), 'the second click closes it')
-        QTest.qWait(450)
+        QTest.qWait(450)  # wait: past Menu.closedAt's 400 ms: a click now opens, it does not close
         self.click(window, title)
-        QTest.qWait(150)
+        _setup.wait_for(lambda: bool(menu.property('visible')), 3000)
         self.assertTrue(menu.property('visible'), 'and the third opens it again')
         self.app.sendEvent(window, QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Escape, Qt.KeyboardModifier.NoModifier))
         self.app.sendEvent(window, QKeyEvent(QEvent.Type.KeyRelease, Qt.Key.Key_Escape, Qt.KeyboardModifier.NoModifier))
-        QTest.qWait(150)
+        _setup.wait_for(lambda: not menu.property('visible'), 3000)
         self.assertFalse(menu.property('visible'), 'Esc closes it')
-        QTest.qWait(450)
+        QTest.qWait(450)  # wait: past Menu.closedAt's 400 ms: a click now opens, it does not close
         self.click(window, title)
-        QTest.qWait(150)
+        _setup.wait_for(lambda: bool(menu.property('visible')), 3000)
         self.assertTrue(menu.property('visible'))
         self.click(window, root.findChild(QObject, 'elsewhere'))
-        QTest.qWait(150)
+        _setup.wait_for(lambda: not menu.property('visible'), 3000)
         self.assertFalse(menu.property('visible'), 'a click outside closes it')
         self.assertFalse(title.property('menuShown'))
 
@@ -155,7 +155,7 @@ class MenuFramesTest(unittest.TestCase):
         window, _root, title, menu = self.scene()
         pos = title.mapToScene(QPointF(title.width() / 2, title.height() / 2))
         self.mouse(window, QEvent.Type.MouseMove, pos, Qt.MouseButton.NoButton)
-        QTest.qWait(900)                                     # the tooltip shown, as when one rests on a button
+        QTest.qWait(900)  # wait: the tooltip shown, as when one rests on a button
         states = []
 
         def frame():
@@ -165,9 +165,9 @@ class MenuFramesTest(unittest.TestCase):
         window.frameSwapped.connect(frame, Qt.ConnectionType.DirectConnection)
         self.addCleanup(lambda: window.frameSwapped.disconnect(frame))
         self.mouse(window, QEvent.Type.MouseButtonPress, pos, Qt.MouseButton.LeftButton)
-        QTest.qWait(60)
+        QTest.qWait(60)  # wait: the press held as long as a click's
         self.mouse(window, QEvent.Type.MouseButtonRelease, pos, Qt.MouseButton.NoButton)
-        QTest.qWait(300)
+        QTest.qWait(300)  # wait: the frames watched for as long as the menu takes to come
         self.assertTrue(menu.property('visible'))
         self.assertTrue(states and all(s[0] for s in states), f'the pressed ground went off in a frame: {states}')
         # the tooltip shown before the press goes at once (no fade under the menu that comes) and does not come back
@@ -176,7 +176,7 @@ class MenuFramesTest(unittest.TestCase):
     def test_r491_an_open_menu_keeps_its_width_when_an_entry_changes(self):
         window, root, title, menu = self.scene()
         self.click(window, title)
-        QTest.qWait(250)
+        _setup.wait_for(lambda: bool(menu.property('visible')), 3000)
         width, x = menu.property('width'), menu.property('x')
         root.findChild(QObject, 'long').setProperty('text', 'Salva')     # the longest entry gets short
         QTest.qWait(100)

@@ -1,31 +1,23 @@
-# The Flatpak of Meridiana, for local builds and the CI (task 18f; study 18, H 4).
-#
-#   flatpak install --user flathub org.kde.Sdk//6.11 io.qt.PySide.BaseApp//6.11
-#   flatpak-builder --user --repo=repo build-dir build-aux/flatpak/io.github.daniel_g_carrasco.meridiana.yaml
-#   flatpak-builder --run build-dir build-aux/flatpak/io.github.daniel_g_carrasco.meridiana.yaml meridiana --self-test
-#   flatpak build-bundle repo meridiana.flatpak io.github.daniel_g_carrasco.meridiana stable
-#
-# Qt and PySide come from the KDE runtime and the PySide BaseApp (6.11: no 6.12 on Flathub yet, 23/10/2026; the
-# program pins PySide 6.12.0 for the instancing of the 3D view, tried here on 6.11.2 by the self-test). The other
-# Python packages are pinned wheels (python3-requirements.json, written by flatpak-pip-generator from
-# requirements-flatpak.txt): no network at build time.
+# The single active Flatpak recipe, used by CI and local builds.
+# KDE runtime/SDK 6.11 supplies the OS libraries; PySide6 wheels supply Qt 6.12,
+# matching requirements.txt. The launcher clears the runtime Qt plugin paths.
+# The former Quick recipe is kept as .yaml.reference for historical builds.
+# Build: flatpak-builder --user --repo=repo build-dir build-aux/flatpak/io.github.daniel_g_carrasco.meridiana.yaml
 app-id: io.github.daniel_g_carrasco.meridiana
 default-branch: stable
-# A standalone bundle cannot fetch the app's Locale extension from a published remote. Keep its catalogue
-# inside the app, so the installer contains Italian without requiring a separate bundle.
+# A standalone bundle cannot fetch the app's Locale extension from a published remote: the Italian catalogue
+# stays inside the app.
 separate-locales: false
 runtime: org.kde.Platform
 runtime-version: '6.11'
 sdk: org.kde.Sdk
-base: io.qt.PySide.BaseApp
-base-version: '6.11'
 command: meridiana
 
 finish-args:
   - --share=ipc
   - --socket=wayland
   - --socket=fallback-x11
-  - --device=dri                      # Qt Quick 3D on the GPU
+  - --device=dri                      # Qt Quick and Qt Quick 3D on the GPU
   # PVGIS (weather, horizon, estimate), Nominatim (an address), the map tiles, GitHub: each with its switch in
   # Preferences > Privacy
   - --share=network
@@ -39,36 +31,70 @@ finish-args:
   - --talk-name=org.freedesktop.secrets
 
 cleanup-commands:
-  # what the BaseApp brings for building PySide and the program does not run. Not its cleanup-BaseApp.sh: that one
-  # takes QtPdf away with QtWebEngine (Meridiana opens PDFs as underlays with QtPdf) and uninstalls «packaging»,
-  # which matplotlib needs
-  - rm -rf /app/lib/libclang* /app/lib/libLLVM* /app/lib/python3*/site-packages/shiboken6_generator*
+  # Qt's tools in the wheels, which the program does not run
+  - cd /app/lib/python3*/site-packages/PySide6 && rm -rf scripts doc designer assistant linguist lrelease lupdate qmlformat qmllint qmlls qsb balsam balsamui svgtoqml
   - rm -rf /app/bin/pyside6-*
-  - cd /app/lib/python3*/site-packages/PySide6 && rm -rf scripts doc designer assistant lrelease lupdate qmlformat qmllint qmlls qsb balsam balsamui
-  - rm -rf /app/bin/QtWebEngineProcess /app/lib/libexec/QtWebEngineProcess /app/lib/libexec/webenginedriver
-  - rm -rf /app/lib/*-linux-gnu/libQt6WebEngine* /app/lib/libQt6WebEngine* /app/lib/qml/QtWebEngine
-  - rm -rf /app/resources/qtwebengine*.pak /app/resources/v8_context_snapshot.bin /app/qtwebengine_dictionaries
-  - find /app/share/locale -type d -name qtwebengine_dictionaries -prune -exec rm -rf {} +
-  - rm -rf /app/translations/qtwebengine_locales /app/lib/python3*/site-packages/PySide6/QtWebEngine*
   # PyOpenGL (32 MB), for pyqtgraph's 3D, which the charts do not use
   - rm -rf /app/lib/python3*/site-packages/OpenGL /app/lib/python3*/site-packages/pyopengl-*
 
 modules:
+  # MIT Kerberos for libgssapi_krb5.so.2: the Qt 6.12 of the wheels links it from QtNetwork (QtQml, QtQuick and
+  # 332 of the wheels' libraries need it), and neither the KDE runtime nor its SDK 6.11 has it (ldd in the runtime,
+  # 05/11/2026; the build stopped at «import PySide6.QtQuick3D» without it). Only the libraries stay.
+  - name: krb5
+    subdir: src
+    config-opts:
+      - --disable-static
+      - --disable-rpath
+      - --without-ldap
+      - --localstatedir=/var/lib
+      - --runstatedir=/run
+    cleanup:
+      - /bin
+      - /sbin
+      - /include
+      - /lib/pkgconfig
+      - /share/man
+      - /share/examples
+      - /share/et
+      - /var
+    sources:
+      - type: archive
+        url: https://kerberos.org/dist/krb5/1.22/krb5-1.22.1.tar.gz
+        sha256: 1a8832b8cad923ebbf1394f67e2efcf41e3a49f460285a66e35adec8fa0053af
+
+  # what the old recipe took from the BaseApp: PySide6 6.12, shiboken6, numpy, packaging (first: the modules
+  # below resolve their dependencies on them)
+  - ../flatpak-quick/python3-qt612.json
+  # the other Python packages, the same as the other recipe's (requirements-flatpak.txt)
   - python3-requirements.json
+  # the report's editable copies, ODT and DOCX (R460): lxml, python-docx, odfpy with defusedxml, latex2mathml;
+  # typing_extensions is already in python3-requirements.json
+  - ../flatpak-quick/python3-report-editable.json
+  # the plan as a DXF (R513): ezdxf, pure Python (its C accelerators are optional); pyparsing, typing_extensions,
+  # numpy and fonttools are already in the modules above
+  - ../flatpak-quick/python3-ezdxf.json
   # The voice runtime is bundled; model weights are downloaded only by explicit user action.
   - python3-kokoro.json
 
   - name: meridiana
     buildsystem: simple
     build-commands:
-      # the package and what it reads next to itself (the 3D scene, the product catalogue, the voice's worker)
+      # the tree as in a checkout: src/ (the package with the Quick QML), data/, po/ (one catalogue,
+      # compiled into /app/share/locale below), bin/meridiana (the launcher of the sources: --version, --help), the manual, the recorded weather of Rho
       - install -d /app/share/meridiana
-      - cp -r src/meridiana /app/share/meridiana/meridiana
+      - cp -r src data po bin /app/share/meridiana/
       - find /app/share/meridiana -name __pycache__ -prune -exec rm -rf {} +
-      # what paths.shipped finds in /app/share/meridiana: fonts, icons, the manual
-      - cp -r data/fonts data/icons data/natural_earth data/istat /app/share/meridiana/
+      # the bytecode made here, from the clean tree (R452): /app is read-only, so without it every start compiled the
+      # package in memory again (0.35-0.4 s later on the first drawing, docs/revisioni/pacchetto-flatpak-20261105-r16.md).
+      # Unchecked hashes: the sources under /app never change after the build, and the mtimes Flatpak resets do not count
+      - python3 -m compileall -q -j 0 --invalidation-mode unchecked-hash /app/share/meridiana/src
+      # Recursive: the Italian chapters, en/ and both glossaries. Fail if either language is absent.
       - cp -r docs/manuale /app/share/meridiana/manuale
-      - install -Dm755 bin/meridiana /app/bin/meridiana
+      - test -s /app/share/meridiana/manuale/README.md
+      - test -s /app/share/meridiana/manuale/en/README.md
+      - install -Dm644 tests/calcoli/riferimenti/pvgis53-tmy-rho.json.gz -t /app/share/meridiana/tests/calcoli/riferimenti
+      - install -Dm755 build-aux/flatpak-quick/meridiana-quick.sh /app/bin/meridiana
       - python3 tools/compile_po.py --dest /app/share/locale
       - install -Dm644 data/io.github.daniel_g_carrasco.meridiana.desktop -t /app/share/applications
       - install -Dm644 data/io.github.daniel_g_carrasco.meridiana.metainfo.xml -t /app/share/metainfo
@@ -78,10 +104,11 @@ modules:
       - install -Dm644 data/icons/hicolor/64x64/apps/io.github.daniel_g_carrasco.meridiana.png -t /app/share/icons/hicolor/64x64/apps
       - install -Dm644 data/icons/hicolor/128x128/apps/io.github.daniel_g_carrasco.meridiana.png -t /app/share/icons/hicolor/128x128/apps
       - install -Dm644 data/icons/hicolor/256x256/apps/io.github.daniel_g_carrasco.meridiana.png -t /app/share/icons/hicolor/256x256/apps
-      # fail the build early on an invalid desktop entry or metainfo
+      # fail the build early on an invalid desktop entry or metainfo, or on a Qt that does not load
       - desktop-file-validate /app/share/applications/io.github.daniel_g_carrasco.meridiana.desktop
       - appstreamcli validate --no-net /app/share/metainfo/io.github.daniel_g_carrasco.meridiana.metainfo.xml
       - /app/bin/meridiana --version
+      - env -u QT_PLUGIN_PATH python3 -c "from PySide6 import QtCore, QtQuick3D, QtPdf; print('Qt', QtCore.qVersion())"
     sources:
       - type: dir
         path: ../..
@@ -100,5 +127,4 @@ modules:
           - build
           - build-logs
           - smoke
-          - tests
           - docs/studio

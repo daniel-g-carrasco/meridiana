@@ -11,8 +11,11 @@ from pathlib import Path
 import numpy as np
 
 import _setup  # noqa: F401
-from meridiana import catalog, jobs, model
-from meridiana.energy import faces, pipeline, plant
+from meridiana.data import catalog
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.core.energy import faces, plant
+from meridiana.app import pipeline
 
 M1 = ("Huawei", "SUN2000-10KTL-M1")         # 2 MPPT, one input each
 P2 = ("Huawei", "SUN2000-450W-P2")

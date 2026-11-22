@@ -7,7 +7,7 @@ import unittest
 import _setup  # noqa: F401
 from shapely.geometry import Polygon
 
-from meridiana import roofs, sides, templates
+from meridiana.core.geometry import roofs, sides, templates
 
 
 class Templates(unittest.TestCase):

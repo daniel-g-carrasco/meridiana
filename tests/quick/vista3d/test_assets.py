@@ -24,7 +24,7 @@ def tool(name):
 class AssetsTest(unittest.TestCase):
     def test_catalog_exists_with_selected_full_meshes(self):
         self.assertTrue((ROOT / "data/models/catalog.json").is_file())
-        from meridiana.quick.backend.scene_assets import catalog, load_model
+        from meridiana.gui.backend.scene_assets import catalog, load_model
 
         records = {a["key"]: a for a in catalog()}
         for key, triangles in {
@@ -38,7 +38,7 @@ class AssetsTest(unittest.TestCase):
             self.assertEqual(len(load_model(key)[0]), triangles * 3)
 
     def test_all_arrays_are_grounded_unit_normals_immutable_and_cached(self):
-        from meridiana.quick.backend.scene_assets import catalog, load_model
+        from meridiana.gui.backend.scene_assets import catalog, load_model
 
         for record in catalog():
             with self.subTest(key=record["key"]):
@@ -59,7 +59,7 @@ class AssetsTest(unittest.TestCase):
                 )
 
     def test_full_poses_are_different(self):
-        from meridiana.quick.backend.scene_assets import catalog, load_model
+        from meridiana.gui.backend.scene_assets import catalog, load_model
 
         stand, walk = load_model("casual_standing")[0], load_model("casual_walking")[0]
         self.assertGreater(float(np.max(np.linalg.norm(stand - walk, axis=1))), 0.15)
@@ -93,7 +93,7 @@ class AssetsTest(unittest.TestCase):
                 self.assertLess(height, 1.05)
 
     def test_only_approved_cc0_in_active_catalog_and_provenance_present(self):
-        from meridiana.quick.backend.scene_assets import catalog
+        from meridiana.gui.backend.scene_assets import catalog
 
         records = catalog()
         self.assertEqual(len(records), 34)
@@ -111,7 +111,7 @@ class AssetsTest(unittest.TestCase):
         )
 
     def test_unknown_model_rejected(self):
-        from meridiana.quick.backend.scene_assets import load_model
+        from meridiana.gui.backend.scene_assets import load_model
 
         with self.assertRaises(KeyError):
             load_model("../../private")

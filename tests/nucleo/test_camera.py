@@ -10,7 +10,7 @@ import numpy as np
 
 import _setup  # noqa: F401
 
-from meridiana import camera as cam
+from meridiana.app.view import camera as cam
 
 W, H = 800.0, 600.0
 

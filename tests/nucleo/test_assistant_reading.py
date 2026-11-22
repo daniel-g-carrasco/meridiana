@@ -6,7 +6,7 @@ The sources: «it.po» a translation the program shows (checks, settings, report
 
 import unittest
 
-from meridiana.assistant import reading, speech
+from meridiana.app.assistant import reading, speech
 
 CASES = [
     ('Meridio', "Ciao, sono Meridio. Il tuo impianto da 45 kWp produce circa 58.000 kWh all'anno.",

@@ -6,7 +6,7 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import vvf_activities as vvf
+from meridiana.core.rules import vvf_activities as vvf
 
 
 class Annex(unittest.TestCase):

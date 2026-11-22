@@ -8,9 +8,9 @@ from pathlib import Path
 
 from PySide6.QtCore import QEventLoop, QObject, QTimer
 
-from meridiana import model
-from meridiana.quick.app import QuickWindow, create_app
-from meridiana.quick.sample import SAMPLE, recorded_weather
+from meridiana.core.model import model
+from meridiana.gui.application import QuickWindow, create_app
+from meridiana.gui.sample import SAMPLE, recorded_weather
 
 
 def pump(milliseconds):

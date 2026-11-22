@@ -11,11 +11,15 @@ from pandas.testing import assert_frame_equal
 import _setup
 from _fixtures import capannone, clear_sky_meteo, inverter_record, write_cache
 
-from meridiana import jobs, model, props
-from meridiana.energy import pipeline, system
-from meridiana.quick.backend.scene import SceneBackend
-from meridiana.quick.backend.scene_assets import catalog, load_model
-from meridiana.session import ProjectSession
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.core.geometry import props
+from meridiana.app import pipeline
+from meridiana.core.energy import system
+from meridiana.gui.backend.scene import SceneBackend
+from meridiana.gui.backend import scene_assets
+from meridiana.gui.backend.scene_assets import catalog, load_model
+from meridiana.app.session import ProjectSession
 
 setUpModule = _setup.keep_global_state
 
@@ -149,12 +153,16 @@ class DecorativeEnergyTests(unittest.TestCase):
             )
         session = ProjectSession(project)
         snapshot = session.snapshot()
-        load_model.cache_clear()
-        self.addCleanup(load_model.cache_clear)
+        # the catalogue's models are kept within the budget's models (study 56): read from the disk once each
+        scene_assets._MODELS.clear()
+        self.addCleanup(scene_assets._MODELS.clear)
+        reads = []
+        real_read = scene_assets._read_model
+        scene_assets._read_model = lambda key: reads.append(key) or real_read(key)
+        self.addCleanup(setattr, scene_assets, "_read_model", real_read)
         scene = self.scene(session)
-        first_cache = load_model.cache_info()
-        self.assertEqual(first_cache.misses, 2)
-        self.assertEqual(first_cache.currsize, 2)
+        self.assertEqual(sorted(reads), ["car", "casual_standing"])
+        self.assertEqual(len(scene_assets._MODELS), 2)
         self.assertEqual(len(scene._asset_geometry), 2)
         geometry = {row["key"]: row["geometry"] for row in scene.decorations}
         self.assertEqual(set(geometry), {"car", "casual_standing"})
@@ -176,7 +184,7 @@ class DecorativeEnergyTests(unittest.TestCase):
             self.assertEqual(len(data), 20 + 200 * 80)
             self.assertEqual(len(set(row["ids"])), 200)
         scene.rebuild()
-        self.assertEqual(load_model.cache_info().misses, 2)
+        self.assertEqual(len(reads), 2)
         self.assertEqual(len(scene._asset_geometry), 2)
         for row in scene.decorations:
             self.assertIs(row["geometry"], geometry[row["key"]])

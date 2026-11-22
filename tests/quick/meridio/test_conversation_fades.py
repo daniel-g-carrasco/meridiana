@@ -11,10 +11,10 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
-from meridiana import config
-from meridiana.quick.backend.assistant import build_page
-from meridiana.quick.backend.assistant_chat import AssistantChat
-from quick.meridio.support import Host, KeyStore, Voice
+from meridiana.app.platform import config
+from meridiana.gui.backend.assistant import build_page
+from meridiana.gui.backend.assistant_chat import AssistantChat
+from quick.meridio.support import Host, KeyStore, Provider, Voice
 
 
 def _close(a: QColor, b: QColor, tolerance: int = 3) -> bool:
@@ -30,6 +30,8 @@ class ConversationFades(unittest.TestCase):
         chat = AssistantChat(Host(), config.Config(assistant_introduced=True, assistant_local_model='fake'),
                              key_store=KeyStore(), voice=Voice())
         self.addCleanup(chat.close)
+        provider = Provider()
+        chat.make_local = lambda: provider
         engine, window, theme = build_page(chat=chat, options={'reducedMotion': True})
         self.assertTrue(QTest.qWaitForWindowExposed(window))
         QTest.qWait(150)
@@ -80,35 +82,20 @@ class ConversationFades(unittest.TestCase):
         self.assertEqual(above[:5], [], f'{len(above)} pixels of text above the view')
         self.assertEqual(below[:5], [], f'{len(below)} pixels of text below the view')
 
-    def test_a_line_cut_by_the_edge_is_hidden_by_the_veil(self):
-        """Daniel's photo: «a meno che 1,35 volte il fusibile...» cut in half by the top edge and still dark. Whatever
-        the scrolling, the 8 pixels next to each edge show text at most faintly (a veil 12 px tall over lines 20 px
-        tall left the cut half almost bare)."""
+    def test_a_line_cut_by_the_edge_is_under_the_soft_ends(self):
+        """Daniel's photo: «a meno che 1,35 volte il fusibile...» cut in half by the top edge and still dark. Since
+        R624 the conversation's text dissolves into the box at both edges (the common EdgeFades of its M.ScrollPage);
+        how the dissolve looks is drawn on a graphics API by quick/controlli/test_dissolvenza_r624.py (off screen,
+        here, Qt's software renderer draws no shader and the text stays whole)."""
         window, root, theme = self.scene()
         scroll = root.findChild(QObject, 'conversationScroll')
         flick = scroll.property('contentItem')
-        ground = QColor(theme.colors['view'])
-        middle = (flick.property('contentHeight') - flick.property('height')) / 2
-        worst = (0, None)
-        for step in range(0, 24, 3):
-            flick.setProperty('contentY', middle + step)
-            QTest.qWait(60)
-            image = window.grabWindow()
-            dpr = image.devicePixelRatio()
-            top_left = flick.mapToItem(window.contentItem(), QPointF(0, 0))
-            x0, x1 = round(top_left.x() * dpr), round((top_left.x() + flick.property('width')) * dpr)
-            top = round(top_left.y() * dpr)
-            bottom = round((top_left.y() + flick.property('height')) * dpr)
-            for py in list(range(top, top + round(8 * dpr))) + list(range(bottom - round(8 * dpr), bottom)):
-                for px in range(x0, x1, 2):
-                    c = image.pixelColor(px, py)
-                    gap = max(abs(a - b) for a, b in zip(c.getRgb()[:3], ground.getRgb()[:3], strict=True))
-                    if gap > worst[0]:
-                        worst = (gap, (step, px, py, c.name()))
-        self.assertLessEqual(worst[0], 70, f'text next to the edge too dark: {worst}')
-        fades = [item for item in root.findChildren(QObject) if item.objectName() in ('topFade', 'bottomFade')]
-        shown = [f for f in fades if f.property('visible') and _inside(f, scroll)]
-        self.assertEqual(len(shown), 2, 'both veils over the conversation half way through it')
+        flick.setProperty('contentY', (flick.property('contentHeight') - flick.property('height')) / 2)
+        QTest.qWait(60)
+        fades = [item for item in root.findChildren(QObject) if item.objectName() == 'edgeFades' and _inside(item, scroll)]
+        self.assertEqual(len(fades), 1, 'the conversation has the common soft ends')
+        self.assertGreater(fades[0].property('topBand'), 0)
+        self.assertGreater(fades[0].property('bottomBand'), 0)
 
 
 def _inside(item, ancestor) -> bool:

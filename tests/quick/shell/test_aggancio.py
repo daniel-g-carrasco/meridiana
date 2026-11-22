@@ -8,13 +8,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QMetaObject, QPointF, QRect, Qt
+from PySide6.QtCore import Q_ARG, QEvent, QMetaObject, QObject, QPointF, QRect, Qt
 from PySide6.QtGui import QKeyEvent
 
 from _fixtures import capannone
-from meridiana import jobs
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import click, drag, item, mouse, point, pump, wait_for
+from quick.aiuti.finestra_libera import settled
 
 
 class DockingTest(unittest.TestCase):
@@ -34,6 +35,9 @@ class DockingTest(unittest.TestCase):
         pump(100)
         item(self.win, 'plan').fit()
         self.workspace = item(self.win, 'workspace')
+        # the window's first arrangement comes after Workbench's arrangeTimer and its motion: read before it, the
+        # revision was 0 and it changed during the carry (3 != 0) with nothing dropped
+        self.assertTrue(settled(self.win), 'the window kept drawing')
 
     def tearDown(self):
         warnings = self.host.warnings[:]
@@ -60,16 +64,18 @@ class DockingTest(unittest.TestCase):
         """The zone answered after the dwell for `panel` carried to (x, y); the card is then dropped there."""
         end = self.carry(panel, x, y)
         wait_for(lambda: self.workspace.property('dragTarget') is not None, seconds=2)
-        zone = self.workspace.property('targetZone')
+        wait_for(lambda: self.workspace.property('targetZone') ==
+                 self.workspace.property('candidate').split('|')[0], seconds=2)
         self.release(end)
-        return zone
+        return item(self.win, panel+'Panel' if panel == 'checks' else
+                    'leftPanel' if panel == 'project' else 'rightPanel').property('zone')
 
     def rect(self, name):
         obj = item(self.win, name)
         return (obj.x(), obj.y(), obj.width(), obj.height())
 
-    def test_the_outline_answers_at_once_and_the_drop_zone_grows_out_of_it(self):
-        # Study 36, proposal 1: an accent outline on the place before the dwell, the dashed drop zone after it.
+    def test_the_outline_and_placeholder_promise_the_exact_destination(self):
+        # R689 follow-up: the neutral outline and placeholder show the same exact final slot.
         # r23-unita: the drop zone's first place is read when the target is chosen, not after the wait's slice of
         # events: on a busy PC that slice already held frames of the growth (2 runs in 3 of the whole suite, r23-f8)
         appeared = []
@@ -89,7 +95,7 @@ class DockingTest(unittest.TestCase):
         if self.workspace.property('dragTarget') is None:
             self.assertEqual(self.workspace.property('revision'), revision)
         self.assertAlmostEqual(told[0], card[0], delta=1); self.assertAlmostEqual(told[1], card[1], delta=1)
-        self.assertAlmostEqual(told[2], card[2], delta=1); self.assertAlmostEqual(told[3], card[3]/2, delta=1.5)
+        self.assertAlmostEqual(told[2], card[2], delta=1)
         wait_for(lambda: self.workspace.property('dragTarget') is not None, seconds=2)
         self.assertTrue(appeared, 'dragTargetChanged told when the target came')
         first = appeared[0]
@@ -97,11 +103,13 @@ class DockingTest(unittest.TestCase):
         pump(450)
         settled = self.rect('dropZone')
         self.release(end)
+        for a, b in zip(told, self.rect('checksPanel'), strict=True):
+            self.assertAlmostEqual(a, b, delta=1)
         self.assertNotEqual(first, (0.0, 0.0, 0.0, 0.0))
-        # The drop zone's first frame is the outline's place, then it settles on the slice.
+        # The promise remains fixed while the neighbouring cards make room.
         for a, b in zip(first, told, strict=True):
             self.assertAlmostEqual(a, b, delta=1)
-        self.assertNotEqual(settled, first)
+        self.assertEqual(settled, first)
         self.assertAlmostEqual(settled[1], 0, delta=1)
         self.assertFalse(outline.isVisible())
 
@@ -122,9 +130,11 @@ class DockingTest(unittest.TestCase):
         # Shown again it is in place at once, not sliding over from where it last was.
         properties = item(self.win, 'rightPanel')
         self.assertAlmostEqual(outline.x(), properties.x(), delta=1)
-        self.assertAlmostEqual(outline.y(), properties.y()+properties.height()/2, delta=1.5)
+        promised = self.rect('dropOutline')
         self.release(at)
         self.assertEqual(item(self.win, 'checksPanel').property('zone'), 'right')
+        for a, b in zip(promised, self.rect('checksPanel'), strict=True):
+            self.assertAlmostEqual(a, b, delta=1)
 
     def test_the_views_keep_their_size_while_a_card_is_carried(self):
         # The real views, the 3D among them: the fixture of setUp has the placeholders.
@@ -222,8 +232,10 @@ class DockingTest(unittest.TestCase):
             outline = item(self.win, 'dropOutline')
             self.assertTrue(outline.property('shown'))
             pump(250)
-            self.assertAlmostEqual(outline.height(), height/2, delta=2)
+            promised = self.rect('dropOutline')
             self.release(end)
+            for a, b in zip(promised, self.rect('checksPanel'), strict=True):
+                self.assertAlmostEqual(a, b, delta=1)
             self.win.runCommand('default_layout'); pump(450)
 
     def test_alt_held_makes_the_middle_a_tab_and_letting_it_go_takes_it_back(self):
@@ -239,7 +251,7 @@ class DockingTest(unittest.TestCase):
         self.assertFalse(hint.property('shown'))
         project = item(self.win, 'leftPanel')
         pump(250)
-        self.assertEqual(self.rect('dropOutline'), (project.x(), project.y(), project.width(), project.height()))
+        promised = self.rect('dropOutline')
         self.alt(QEvent.Type.KeyRelease)
         self.assertEqual(self.workspace.property('candidate'), 'left|project|after')
         self.alt(QEvent.Type.KeyPress)
@@ -249,6 +261,8 @@ class DockingTest(unittest.TestCase):
         checks = item(self.win, 'checksPanel')
         self.assertEqual(checks.property('zone'), 'left')
         self.assertFalse(checks.property('stacked'))
+        for a, b in zip(promised, self.rect('checksPanel'), strict=True):
+            self.assertAlmostEqual(a, b, delta=1)
         self.assertFalse(self.win.property('menuOpen'))
 
     def test_alt_tapped_while_a_card_is_carried_does_not_open_the_menu(self):
@@ -265,23 +279,39 @@ class DockingTest(unittest.TestCase):
         self.assertTrue(self.win.property('menuOpen'))
 
 
-    # R528: the cards in tabs have the segmented control of Checks at their head, under the title, as wide as the
-    # body; a click brings a card forward, a tab carried away takes its card out of the group.
+    # R528: the cards in tabs have the segmented control of Checks at their head (R632: in the head's row, as wide as
+    # their words); a click brings a card forward, a tab carried away takes its card out of the group.
     def group(self):
         item(self.win, 'checksPanel').setProperty('zone', 'left')
         QMetaObject.invokeMethod(self.workspace, 'arrangementChanged')
         pump(600)
         return item(self.win, 'projectGroupTabs')
 
+    def head(self, panel):
+        """The body's top from the card's top, the tabs' rectangle in the card, the cross's middle in the card."""
+        bar = item(self.win, panel.property('panelId') + 'GroupTabs')
+        cross = panel.findChild(QObject, 'cardClose')
+        at, c = bar.mapToItem(panel, QPointF(0, 0)), cross.mapToItem(panel, QPointF(0, cross.height()/2))
+        return panel.property('contentItem').y(), (at.x(), at.y(), bar.width(), bar.height()), c.y()
+
     def test_the_cards_in_tabs_have_the_segments_at_their_head(self):
         self.assertFalse(item(self.win, 'projectGroupTabs').isVisible())
-        bar, project = self.group(), item(self.win, 'leftPanel')
+        project = item(self.win, 'leftPanel')
+        alone, _, _ = self.head(project)
+        bar = self.group()
         self.assertTrue(bar.isVisible())
         self.assertEqual(bar.property('currentIndex'), 0)
         body = project.property('contentItem')
-        self.assertEqual((bar.x(), bar.width()), (body.x(), body.width()))
-        self.assertLess(bar.y(), 80)                                    # at the head, not at the foot
-        self.assertGreaterEqual(body.y(), bar.y()+bar.height())
+        # R632 (Daniel 15/11/2026: «dare a queste linguette delle dimensioni più piccole [...] e spostarle [...] nella
+        # riga sopra? praticamente di fianco a "?" e alla "X"»): in the head's row, at the left where the title is, as
+        # wide as their words, the cross at their middle; the row of their own is gone
+        top, (x, y, w, h), cross = self.head(project)
+        self.assertEqual(w, bar.property('implicitWidth'))              # their words' width, not stretched
+        self.assertLess(w, body.width())
+        self.assertEqual(x, project.findChild(QObject, 'cardClose').parentItem().x())   # where the title starts
+        self.assertAlmostEqual(y + h/2, cross, delta=0.5)               # one row with the cross
+        self.assertGreaterEqual(top, y + h)                             # the body under them
+        self.assertLess(top - alone, h)                                 # no row of their own: at most their height more
         # R528 (r23-f5): the tabs say the titles: the head does not say the card's title again above them
         self.assertFalse(project.property('titleShown'))
         self.assertTrue(item(self.win, 'rightPanel').property('titleShown'))
@@ -291,6 +321,29 @@ class DockingTest(unittest.TestCase):
         self.assertTrue(checks.isVisible())
         self.assertFalse(project.isVisible())
         self.assertEqual(item(self.win, 'checksGroupTabs').property('currentIndex'), 1)
+
+    def test_the_tabs_keep_their_words_width_on_every_side(self):
+        # R632: «quando si impilano scheda in basso, con Verifiche, diventano larghissime»: at the bottom and on the
+        # right too, the tabs are as wide as their words, in the head's row
+        pump(600)                       # the window's own arrangement after its resize (Workbench.arrange), done
+        for zone, moved, front in (('bottom', 'rightPanel', 'checksPanel'), ('right', 'checksPanel', 'rightPanel')):
+            with self.subTest(zone):
+                item(self.win, 'checksPanel').setProperty('opened', True)    # closed at the start in a low window
+                item(self.win, moved).setProperty('zone', zone)
+                QMetaObject.invokeMethod(self.workspace, 'arrangementChanged')
+                panel = item(self.win, front)
+                QMetaObject.invokeMethod(self.workspace, 'selectPanel', Q_ARG('QVariant', panel.property('panelId')))
+                pump(600)
+                bar = item(self.win, panel.property('panelId') + 'GroupTabs')
+                self.assertTrue(bar.isVisible())
+                top, (x, y, w, h), cross = self.head(panel)
+                self.assertEqual(w, bar.property('implicitWidth'))
+                self.assertLess(w, panel.width() / 2)
+                self.assertAlmostEqual(y + h/2, cross, delta=0.5)
+                self.assertGreaterEqual(top, y + h)
+                item(self.win, moved).setProperty('zone', 'right' if moved == 'rightPanel' else 'bottom')
+                QMetaObject.invokeMethod(self.workspace, 'arrangementChanged')
+                pump(600)
 
     def test_a_narrow_column_cuts_the_names_and_the_tooltip_says_them_whole(self):
         bar = self.group()

@@ -9,8 +9,11 @@ import unittest
 from pathlib import Path
 
 import _setup  # noqa: F401
-from meridiana import catalog, jobs, model
-from meridiana.energy import optimizer_strings, pipeline, plant
+from meridiana.data import catalog
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.core.energy import optimizer_strings, plant
+from meridiana.app import pipeline
 
 
 def record(kind: str, maker: str, name: str) -> dict:

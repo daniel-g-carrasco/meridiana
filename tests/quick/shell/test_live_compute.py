@@ -12,9 +12,9 @@ import unittest
 from pathlib import Path
 
 from _fixtures import capannone
-from meridiana.quick.app import create_app
-from meridiana.quick.backend.shell_compute import Calculator, LiveWorker, ShellBridge
-from meridiana.quick.sample import recorded_weather
+from meridiana.gui.application import create_app
+from meridiana.gui.backend.shell_compute import Calculator, LiveWorker, ShellBridge
+from meridiana.gui.sample import recorded_weather
 from nucleo.test_pool_orphans import alive, wait_gone
 
 SRC = Path(__file__).resolve().parents[3] / "src"
@@ -24,14 +24,14 @@ WINDOW = r'''
 import os, subprocess, sys, time
 sys.path.insert(0, sys.argv[1])
 env = dict(os.environ, MERIDIANA_WORKERS="2", PYTHONPATH=sys.argv[1])
-serve = subprocess.Popen([sys.executable, "-m", "meridiana.quick.backend.shell_compute", "--serve",
+serve = subprocess.Popen([sys.executable, "-m", "meridiana.gui.backend.shell_compute", "--serve",
                           "--parent", str(os.getpid())],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=env)
 assert serve.stdout.readline().startswith(b"ready")
 serve.stdin.write(b"warm\n"); serve.stdin.flush()
 line = serve.stdout.readline().split()
 print(serve.pid, *[int(p) for p in line[1:]], flush=True)
-time.sleep(600)
+time.sleep(600)  # wait: the child process stays alive until the test ends it
 '''
 
 
@@ -54,7 +54,7 @@ class LiveCompute(unittest.TestCase):
             self.app.processEvents()
             if condition():
                 return True
-            time.sleep(.01)
+            time.sleep(.01)  # wait: a breath between two looks at the condition, so the workers' threads run
         return False
 
     def year(self):
@@ -118,7 +118,7 @@ class Unanswered(unittest.TestCase):
             end = time.perf_counter() + 60
             while not calculator.ready and time.perf_counter() < end:
                 app.processEvents()
-                time.sleep(.01)
+                time.sleep(.01)  # wait: a breath between two looks at the condition, so the workers' threads run
             self.assertTrue(calculator.ready)
             first = calculator.process.processId()
 
@@ -137,7 +137,7 @@ class Unanswered(unittest.TestCase):
             end = time.perf_counter() + 5
             while calculator.restarts == 0 and time.perf_counter() < end:
                 app.processEvents()
-                time.sleep(.01)
+                time.sleep(.01)  # wait: a breath between two looks at the condition, so the workers' threads run
             self.assertEqual(calculator.restarts, 1)
             self.assertNotEqual(calculator.process.processId(), first)
         finally:

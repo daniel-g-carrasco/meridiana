@@ -7,7 +7,8 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import geo, tiles
+from meridiana.core.geometry import geo
+from meridiana.app.maps import tiles
 
 RHO = geo.Origin(lat=45.5226, lon=9.0300)
 

@@ -7,8 +7,8 @@ import typing
 import unittest
 
 import _setup  # noqa: F401
-from meridiana.assistant import providers
-from meridiana.assistant.conversation import Conversation, collect
+from meridiana.app.assistant import providers
+from meridiana.app.assistant.conversation import Conversation, collect
 
 PNG = base64.b64encode(b"\x89PNG\r\n\x1a\n-not-a-real-picture-").decode()
 IMAGE = {"name": "vista.png", "media_type": "image/png", "data": PNG, "width": 1568, "height": 980}

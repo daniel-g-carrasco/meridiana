@@ -1,12 +1,12 @@
-"""The functions Daniel uses, one step each, on the Widgets window and on the Quick one, offscreen, on a copy of Rho.
+"""The functions Daniel uses, one step each, on the Quick window, offscreen, on a copy of Rho (once the comparison
+with the Widgets window of 05/11/2026; only the Quick is left, the engine is always «quick»).
 
-    python tests/quick/confronto/giro.py <quick|widgets> <out dir> [step ...]
+    python tests/quick/confronto/giro.py quick <out dir> [step ...]
 
-The same steps on both programs: a gesture where a synthetic event can make it (keys, clicks on the plan and on the
-lists), the command of the menu otherwise, and the function behind a file chooser where a chooser would open (said
-in the record as «per funzione»). After every step: what the session holds (the core is the same), the texts with a
-number that the window shows, the photo of the window. Writes <out>/giro-<engine>.json, .log and the photos
-<step>-<engine>.png (and <step>-<engine>-dialogo.png for a Widgets dialog, which is a window of its own).
+A gesture where a synthetic event can make it (keys, clicks on the plan and on the lists), the command of the menu
+otherwise, and the function behind a file chooser where a chooser would open (said in the record as «per funzione»).
+After every step: what the session holds, the texts with a number that the window shows, the photo of the window.
+Writes <out>/giro-quick.json, .log and the photos <step>-quick.png.
 Nothing reaches the screen, the pointer or the keyboard: QT_QPA_PLATFORM is offscreen, the profile is a new temporary
 folder (percorsi_offscreen sets APPDATA and LOCALAPPDATA before Meridiana is imported).
 """
@@ -21,7 +21,7 @@ import traceback
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import percorsi_offscreen as po  # noqa: E402  (sets the platform and the profile first)
 
-from PySide6.QtCore import QObject, QPoint, QPointF, QTimer  # noqa: E402
+from PySide6.QtCore import QObject, QPointF  # noqa: E402
 
 RHO = po.ROOT / 'docs/quick/compat/fixtures/rho.meridiana'
 IFC = po.ROOT/'tests'/'data'/'ifc'/'Building-Architecture.ifc'
@@ -37,7 +37,9 @@ def step(function):
 class Giro:
     def __init__(self, engine, out):
         from quick.percorsi import modellazione
-        self.engine, self.quick = engine, engine == 'quick'
+        if engine != 'quick':
+            raise ValueError(f'only the Quick window is left, not {engine!r}')
+        self.engine = engine
         self.out = Path(out).resolve()
         self.out.mkdir(parents=True, exist_ok=True)
         self.folder = po.WORK/'progetto'
@@ -45,37 +47,25 @@ class Giro:
         self.file = self.folder/RHO.name
         shutil.copy2(RHO, self.file)
         self.started = time.perf_counter()
-        if self.quick:
-            # the same settings as the Widgets window of the test: no map from the network, no PVGIS, no updates
-            from meridiana import config
-            from meridiana.paths import Paths
-            base = po.WORK/'quick-profile'
-            quiet = config.Config(background='none', network_tiles=False, network_pvgis=False, check_updates=False,
-                                  assistant_animated=False)
-            config.save(quiet, Paths(*(base/n for n in ('config', 'state', 'data', 'cache'))).config_file)
-            self.app, self.host, self.window = po.quick_host(self.file, po.WORK)
-            # quick_host asks the first computation, as meridiana.quick.app.main
-        else:
-            self.app, self.host, self.window = po.widgets_host(self.file, po.WORK)
-            # the test helper saves the project in a folder of its own and opens that copy: the file is that one
-            self.file = Path(self.host.session.path)
-            self.folder = self.file.parent
-        self.hand = po.OffscreenHand(self.app, self.window, self.quick)
+        # no map from the network, no PVGIS, no updates
+        from meridiana.app.platform import config
+        from meridiana.app.platform.paths import Paths
+        base = po.WORK/'quick-profile'
+        quiet = config.Config(background='none', network_tiles=False, network_pvgis=False, check_updates=False,
+                              assistant_animated=False)
+        config.save(quiet, Paths(*(base/n for n in ('config', 'state', 'data', 'cache'))).config_file)
+        self.app, self.host, self.window = po.quick_host(self.file, po.WORK)
+        self.hand = po.OffscreenHand(self.app, self.window)
         self.log = (self.out/f'giro-{engine}.log').open('w', encoding='utf8')
         self.pilot = modellazione.Pilot(engine, self.app, self.host, self.window, self.hand, self.out, 'giro', self.log)
         self.records = []
         self.current = 'avvio'
-        self.dialogs = []
-        if not self.quick:
-            self.watch = QTimer()
-            self.watch.timeout.connect(self._modal)
-            self.watch.start(300)
 
     # what is there
 
     @property
     def session(self):
-        return self.host.bridge.session if self.quick else self.host.session
+        return self.host.bridge.session
 
     @property
     def project(self):
@@ -96,7 +86,7 @@ class Giro:
         return bool(condition())
 
     def counts(self):
-        from meridiana.energy import system
+        from meridiana.core.energy import system
         s, p = self.session, self.project
         modules = sum(getattr(s.results.get(sf.id), 'count', 0) or 0 for sf in p.subfields)
         strings = (p.energy.get('strings') or {}).get('runs') or []
@@ -120,110 +110,46 @@ class Giro:
         return out
 
     def phase(self):
-        if self.quick:
-            return str(self.window.property('phase'))
-        phase = self.host.phase
-        return str(phase() if callable(phase) else phase)
+        return str(self.window.property('phase'))
 
     def texts(self):
         """The texts with a digit that the window shows, top to bottom."""
         found = []
-        if self.quick:
-            def walk(item, shown=True):
-                shown = shown and item.isVisible() and item.opacity() > 0
-                if not shown:
-                    return
-                text = item.property('text')
-                if isinstance(text, str) and text and DIGITS.search(text) and item.width() > 0 and item.height() > 0:
-                    p = item.mapToScene(QPointF(0, 0))
-                    if 0 <= p.x() < self.window.width() and 0 <= p.y() < self.window.height():
-                        found.append((round(p.y()), round(p.x()), text))
-                for child in item.childItems():
-                    walk(child, shown)
-            walk(self.window.contentItem())
-        else:
-            from PySide6.QtWidgets import QAbstractButton, QLabel, QLineEdit
-            for cls in (QLabel, QAbstractButton, QLineEdit):
-                for w in self.window.findChildren(cls):
-                    text = w.text()
-                    if text and DIGITS.search(text) and w.isVisible() and not w.visibleRegion().isEmpty():
-                        p = w.mapTo(self.window, QPoint(0, 0))
-                        found.append((p.y(), p.x(), text))
+        def walk(item, shown=True):
+            shown = shown and item.isVisible() and item.opacity() > 0
+            if not shown:
+                return
+            text = item.property('text')
+            if isinstance(text, str) and text and DIGITS.search(text) and item.width() > 0 and item.height() > 0:
+                p = item.mapToScene(QPointF(0, 0))
+                if 0 <= p.x() < self.window.width() and 0 <= p.y() < self.window.height():
+                    found.append((round(p.y()), round(p.x()), text))
+            for child in item.childItems():
+                walk(child, shown)
+        walk(self.window.contentItem())
         return [t for _y, _x, t in sorted(found)][:400]
 
     # what is shown
 
     def photo(self, name):
         path = self.out/f'{name}-{self.engine}.png'
-        image = self.window.grabWindow() if self.quick else self.window.grab()
+        image = self.window.grabWindow()
         image.save(str(path))
         return path.name
 
-    def _modal(self):
-        """A Widgets dialog is a window of its own: photographed, its words kept, then closed without applying."""
-        from PySide6.QtWidgets import QApplication, QDialog, QLabel
-        dialog = QApplication.activeModalWidget()
-        others = [w for w in QApplication.topLevelWidgets() if w.isVisible() and isinstance(w, QDialog) and w is not dialog]
-        for w in ([dialog] if dialog is not None else []) + others:
-            if getattr(w, '_seen_by_giro', False):
-                continue
-            w._seen_by_giro = True
-            name = f'{self.current}-{self.engine}-dialogo.png'
-            w.grab().save(str(self.out/name))
-            words = [x.text() for x in w.findChildren(QLabel) if x.isVisible() and x.text()][:12]
-            self.dialogs.append({'passo': self.current, 'classe': type(w).__name__, 'titolo': w.windowTitle(),
-                                 'testi': words, 'foto': name})
-            self.say(f'  dialogo {type(w).__name__} {w.windowTitle()!r}')
-            if getattr(self, 'keep_dialog', False):
-                continue
-            w.reject() if hasattr(w, 'reject') else w.close()
-
     def close_popups(self):
-        if self.quick:
-            self.hand.key('esc')
-            self.spin(300)
-        else:
-            from PySide6.QtWidgets import QApplication, QDialog
-            self._modal()
-            for w in QApplication.topLevelWidgets():
-                if w.isVisible() and isinstance(w, QDialog):
-                    w.reject()
-            self.spin(200)
+        self.hand.key('esc')
+        self.spin(300)
 
     def command(self, cid):
         """The command as the menu runs it."""
-        if self.quick:
-            done = self.host.shell.trigger(cid)
-            self.spin(400)
-            return done
-        action = self.host.commands.get(cid) or self._menu_action(cid)
-        enabled = action.isEnabled()
-        action.trigger()
+        done = self.host.shell.trigger(cid)
         self.spin(400)
-        return enabled
-
-    MENU_TEXTS = {'browse_optimizers': 'Ottimizzatori…', 'browse_inverters': 'Inverter…', 'browse_modules': 'Moduli fotovoltaici…'}
-
-    def _menu_action(self, cid):
-        """A command of the Widgets menus without an entry in MainWindow.commands (the Catalogues)."""
-        def walk(menu):
-            for a in menu.actions():
-                if a.menu():
-                    yield from walk(a.menu())
-                else:
-                    yield a
-        for top in self.host.menuBar().actions():
-            if top.menu():
-                for a in walk(top.menu()):
-                    if a.text().replace('&', '') == self.MENU_TEXTS.get(cid):
-                        return a
-        raise KeyError(cid)
+        return done
 
     def checks_shown(self):
-        if self.quick:
-            item = next((i for i in self.pilot.walk() if i.objectName() == 'checks-page'), None)
-            return item is not None and self.pilot.shown(item) and self._shown_up(item)
-        return self.host.checks_dock.isVisible()
+        item = next((i for i in self.pilot.walk() if i.objectName() == 'checks-page'), None)
+        return item is not None and self.pilot.shown(item) and self._shown_up(item)
 
     @staticmethod
     def _shown_up(item):
@@ -240,10 +166,8 @@ class Giro:
         return self.checks_shown()
 
     def notice(self):
-        if self.quick:
-            plan = self.host.plan
-            return {'hint': str(getattr(plan, 'hint', '')), 'notice': str(getattr(plan, 'notice', ''))}
-        return {'hint': self.host.hint.text()}
+        plan = self.host.plan
+        return {'hint': str(getattr(plan, 'hint', '')), 'notice': str(getattr(plan, 'notice', ''))}
 
     def show_phase(self, pid):
         self.command('phase_'+pid)
@@ -263,9 +187,7 @@ class Giro:
         self.say(f'motore {self.engine}, progetto {self.file}')
         for name in names:
             self.current = name
-            self.dialogs = []
-            if self.quick:
-                self.pilot.layer = self.window.findChild(QObject, 'worldLayer')
+            self.pilot.layer = self.window.findChild(QObject, 'worldLayer')
             start = time.perf_counter()
             record = {'passo': name, 'motore': self.engine}
             try:
@@ -282,13 +204,10 @@ class Giro:
                 record['foto'] = self.photo(name)
             except Exception:
                 record['foto_errore'] = traceback.format_exc()[-600:]
-            record['dialoghi'] = list(self.dialogs)
             self.records.append(record)
             self.say(f'[{name}] {record["esito_driver"]} {record["secondi"]} s {json.dumps(record.get("fatti"), ensure_ascii=False, default=str)[:600]}')
             (self.out/f'giro-{self.engine}.json').write_text(json.dumps(self.records, ensure_ascii=False, indent=1, default=str),
                                                            encoding='utf8')
-            if not self.quick:
-                self.close_popups()
 
 
 # the steps, in the order of the work
@@ -298,7 +217,7 @@ def apertura(g):
     """File: the project opened, its layouts back."""
     g.wait(lambda: all(sf.id in g.session.results for sf in g.project.subfields if sf.filled), 120)
     g.pilot.settle(60)
-    title = g.window.property('title') if g.quick else g.window.windowTitle()
+    title = g.window.property('title')
     return {'conteggi': g.counts(), 'percorso_sessione': str(g.session.path), 'titolo': title,
             'modificato': bool(g.session.dirty()) if callable(getattr(g.session, 'dirty', None)) else None}
 
@@ -314,8 +233,7 @@ def calcolo_f5(g):
     before = g.session.energy_generation
     g.hand.key('f5')
     g.spin(1500)
-    started = g.session.energy_generation != before or bool(getattr(g.host.bridge, 'computing', False) if g.quick
-                                                             else g.host.energy_job is not None)
+    started = g.session.energy_generation != before or bool(getattr(g.host.bridge, 'computing', False))
     t0 = time.perf_counter()
     g.wait(lambda: g.session.energy_generation != before and g.session.energy.get('sim') is not None
            and not g.session.energy_stale(), 420)
@@ -346,11 +264,8 @@ def non_aggiornato(g):
     g.spin(1500)
     out = {'per_funzione': 'inclinazione del primo sottocampo +5 gradi con session.edit',
            'stale_nucleo': bool(g.session.energy_stale())}
-    if g.quick:
-        out['fasi_segnate'] = list(g.host.shell.stalePhases)
-        out['stato_anno'] = dict(g.host.shell.yearState)
-    else:
-        out['fasi_segnate'] = [p for p in ('production', 'consumption', 'economics', 'report') if g.host.tabs.is_stale(p)]
+    out['fasi_segnate'] = list(g.host.shell.stalePhases)
+    out['stato_anno'] = dict(g.host.shell.yearState)
     g.photo('non_aggiornato-segno')
     g.hand.key('z', ('ctrl',))
     g.pilot.settle(60)
@@ -359,8 +274,7 @@ def non_aggiornato(g):
     if not out['ctrl_z_torna']:
         out['ctrl_z_comando'] = g.undo_all_to(key)
     out['stale_dopo_annulla'] = bool(g.session.energy_stale())
-    out['fasi_segnate_dopo'] = (list(g.host.shell.stalePhases) if g.quick else
-                                [p for p in ('production', 'consumption', 'economics', 'report') if g.host.tabs.is_stale(p)])
+    out['fasi_segnate_dopo'] = (list(g.host.shell.stalePhases))
     return out
 
 
@@ -383,9 +297,8 @@ def impianto(g):
     g.show_phase('plant')
     g.spin(2500)
     out = {'conteggi': g.counts()}
-    if g.quick:
-        summary = g.host.parts.controllers.get('plantSummary')
-        out['riepilogo'] = summary.property('totals') if summary is not None else None
+    summary = g.host.parts.controllers.get('plantSummary')
+    out['riepilogo'] = summary.property('totals') if summary is not None else None
     return out
 
 
@@ -395,10 +308,9 @@ def _dialog_step(g, cid, wait_s=3):
     ok = g.command(cid)
     g.spin(wait_s*1000)
     out = {'comando_attivo': ok}
-    if g.quick:
-        names = sorted({i.objectName() for i in g.pilot.walk() if i.objectName() and g.pilot.shown(i)
-                        and any(k in i.objectName().lower() for k in ('catalog', 'dialog', 'sizing', 'proposal', 'popup'))})
-        out['oggetti_visibili'] = names[:30]
+    names = sorted({i.objectName() for i in g.pilot.walk() if i.objectName() and g.pilot.shown(i)
+                    and any(k in i.objectName().lower() for k in ('catalog', 'dialog', 'sizing', 'proposal', 'popup'))})
+    out['oggetti_visibili'] = names[:30]
     return out
 
 
@@ -441,54 +353,31 @@ def schede_componenti(g):
     """Where the data sheet of an inverter and of an optimizer is offered (presence of the control, not opened)."""
     g.show_phase('plant')
     g.spin(1000)
-    if g.quick:
-        names = sorted({i.objectName() for i in g.pilot.walk() if 'sheet' in i.objectName().lower()})
-        return {'controlli': names}
-    from PySide6.QtWidgets import QAbstractButton
-    from PySide6.QtGui import QAction
-    texts = sorted({a.text() for a in g.window.findChildren(QAction) if 'cheda' in a.text()} |
-                   {b.text() for b in g.window.findChildren(QAbstractButton) if 'cheda' in b.text()})
-    return {'controlli': texts}
+    names = sorted({i.objectName() for i in g.pilot.walk() if 'sheet' in i.objectName().lower()})
+    return {'controlli': names}
 
 
 def _tree_click(g, kind, oid, ctrl=False):
     """A click on the row of the left panel; returns how it was made."""
-    if g.quick:
-        tree = g.host.parts.controllers['project_tree']
-        name = f'tree-row-{kind}-{oid}'
-        items = [i for i in g.pilot.walk() if i.objectName() == name and g.pilot.shown(i)]
-        if not items:
-            g.command('panel_project')
-            g.spin(800)
-            items = [i for i in g.pilot.walk() if i.objectName() == name and g.pilot.shown(i)]
-        if items:
-            x, y = g.pilot.centre(items[0])
-            g.hand.click(x, y, modifiers=('ctrl',) if ctrl else ())
-            g.spin(400)
-            return 'clic sulla riga'
-        if ctrl:
-            many = list(g.session.selected_many() or []) or [g.session.selection[1]]
-            tree.selectMany(kind, many+[oid])
-        else:
-            tree.select(kind, oid)
-        g.spin(400)
-        return 'per funzione (riga non trovata)'
-    from PySide6.QtCore import Qt
-    tree = g.host.tree
-    if not tree.isVisible():
+    tree = g.host.parts.controllers['project_tree']
+    name = f'tree-row-{kind}-{oid}'
+    items = [i for i in g.pilot.walk() if i.objectName() == name and g.pilot.shown(i)]
+    if not items:
         g.command('panel_project')
-    found = None
-    for item in tree.findItems('*', Qt.MatchFlag.MatchWildcard | Qt.MatchFlag.MatchRecursive):
-        if tuple(item.data(0, Qt.ItemDataRole.UserRole) or ()) == (kind, oid):
-            found = item
-    if found is None:
-        return 'riga non trovata'
-    tree.scrollToItem(found)
-    rect = tree.visualItemRect(found)
-    p = tree.viewport().mapToGlobal(rect.center())
-    g.hand.click(p.x(), p.y(), modifiers=('ctrl',) if ctrl else ())
+        g.spin(800)
+        items = [i for i in g.pilot.walk() if i.objectName() == name and g.pilot.shown(i)]
+    if items:
+        x, y = g.pilot.centre(items[0])
+        g.hand.click(x, y, modifiers=('ctrl',) if ctrl else ())
+        g.spin(400)
+        return 'clic sulla riga'
+    if ctrl:
+        many = list(g.session.selected_many() or []) or [g.session.selection[1]]
+        tree.selectMany(kind, many+[oid])
+    else:
+        tree.select(kind, oid)
     g.spin(400)
-    return 'clic sulla riga'
+    return 'per funzione (riga non trovata)'
 
 
 @step
@@ -525,8 +414,7 @@ def _plan_on_building(g):
     side = (east+w+30)-(min(xs)-10)
     g.pilot.plan_alone = True
     g.pilot.fit(min(xs)-10, min(ys)-side*0.25, side, side*0.6, mpp=side/700)
-    if g.quick:
-        g.pilot.layer = g.window.findChild(QObject, 'worldLayer')
+    g.pilot.layer = g.window.findChild(QObject, 'worldLayer')
     from shapely.geometry import Point, Polygon
     others = [Polygon(e.ring) for e in g.project.exclusions] + [Polygon(sf.ring) for sf in g.project.subfields]
     shape = Polygon(b.footprint)
@@ -633,7 +521,7 @@ def copia_trascinando(g):
 
 
 def _view(g):
-    return str(g.window.property('viewMode')) if g.quick else str(g.host.current_view)
+    return str(g.window.property('viewMode'))
 
 
 @step
@@ -674,36 +562,17 @@ def verifiche(g):
     g.show_phase('plant')
     shown = g.open_checks()
     from collections import Counter
-    from meridiana import checks
+    from meridiana.core.rules import checks
     out = {'pannello_aperto': shown}
-    if g.quick:
-        out['conteggi_finestra'] = g.host.shell.checkCounts
-        backend = g.host.parts.controllers['checks']
-        out['righe'] = [(r.get('key') if r.get('header') else '', r.get('text')) for r in (backend.property('rows') or [])][:60]
-    else:
-        tree = g.host.checks_page.tree
-        rows = []
-        for i in range(tree.topLevelItemCount()):
-            top = tree.topLevelItem(i)
-            rows.append(('gruppo', _item_text(tree, top)))
-            rows += [('', _item_text(tree, top.child(j))) for j in range(top.childCount())]
-        out['righe'] = rows[:60]
+    out['conteggi_finestra'] = g.host.shell.checkCounts
+    backend = g.host.parts.controllers['checks']
+    out['righe'] = [(r.get('key') if r.get('header') else '', r.get('text')) for r in (backend.property('rows') or [])][:60]
     try:
         items = checks.gather(g.project, g.session.good_results(), g.session.energy, None, True)
         out['nucleo'] = dict(Counter(i.level for i in items))
     except Exception as error:
         out['nucleo'] = repr(error)[:200]
     return out
-
-
-def _item_text(tree, item):
-    from PySide6.QtWidgets import QLabel
-    if item.text(0):
-        return item.text(0)
-    widget = tree.itemWidget(item, 0)
-    if widget is None:
-        return ''
-    return ' '.join(x.text() for x in widget.findChildren(QLabel) if x.text())[:80]
 
 
 def overlaps_quick(g):
@@ -752,73 +621,37 @@ def verifiche_gruppi(g):
     """Every group of the Checks opened and closed with a click on its header; after each click, the rows drawn."""
     g.show_phase('plant')
     out = {'passi': [], 'pannello_aperto': g.open_checks()}
-    if g.quick:
-        backend = g.host.parts.controllers['checks']
-        keys = [r.get('key') for r in (backend.property('rows') or []) if r.get('header')]
-        out['gruppi'] = keys
-        for round_ in (1, 2):
-            for key in keys:
-                # the list makes only the rows near its view: the header is brought to the top first, as the wheel would
-                index = next((n for n, r in enumerate(backend.property('rows') or []) if r.get('header') and r.get('key') == key), -1)
-                lst = next((i for i in g.pilot.walk() if i.objectName() == 'checks-list'), None)
-                if lst is not None and index >= 0:
-                    from PySide6.QtCore import Q_ARG, QMetaObject
-                    QMetaObject.invokeMethod(lst, 'positionViewAtIndex', Q_ARG(int, index), Q_ARG(int, 1))
-                    g.spin(500)
-                item = next((i for i in g.pilot.walk() if i.objectName() == 'checks-group-'+key and g.pilot.shown(i)
-                             and Giro._shown_up(i)), None)
-                if item is None:
-                    out['passi'].append({'gruppo': key, 'giro': round_, 'clic': 'intestazione non visibile'})
-                    continue
-                x, y = g.pilot.centre(item)
-                g.hand.click(x, y)
-                g.spin(900)
-                state = overlaps_quick(g)
-                state.pop('righe', None) if not state.get('sovrapposte') and not state.get('intestazioni_doppie') else None
-                out['passi'].append({'gruppo': key, 'giro': round_, **state})
-                g.photo(f'{g.current}-{round_}-' + key.replace('|', '_'))
-        return out
-    tree = g.host.checks_page.tree
+    backend = g.host.parts.controllers['checks']
+    keys = [r.get('key') for r in (backend.property('rows') or []) if r.get('header')]
+    out['gruppi'] = keys
     for round_ in (1, 2):
-        for i in range(tree.topLevelItemCount()):
-            top = tree.topLevelItem(i)
-            rect = tree.visualItemRect(top)
-            if rect.isEmpty():
-                tree.scrollToItem(top)
-                rect = tree.visualItemRect(top)
-            p = tree.viewport().mapToGlobal(rect.center())
-            was = top.isExpanded()
-            g.hand.click(p.x(), p.y())
-            g.spin(500)
-            if top.isExpanded() == was:                  # the click did not toggle it: the tree's own call
-                top.setExpanded(not was)
-                how = 'setExpanded'
-            else:
-                how = 'clic'
-            g.spin(300)
-            rects = []
-            for j in range(tree.topLevelItemCount()):
-                t = tree.topLevelItem(j)
-                r = tree.visualItemRect(t)
-                rects.append((r.top(), r.height(), t.text(0)))
-                if t.isExpanded():
-                    for k in range(t.childCount()):
-                        r = tree.visualItemRect(t.child(k))
-                        rects.append((r.top(), r.height(), t.child(k).text(0)))
-            shown = sorted(x for x in rects if x[1] > 0 and x[0]+x[1] > 0 and x[0] < tree.viewport().height())
-            bad = [f'{a[2][:30]} sotto {b[2][:30]}' for a, b in zip(shown, shown[1:], strict=False) if b[0] < a[0]+a[1]]
-            out['passi'].append({'gruppo': _item_text(tree, top)[:40], 'giro': round_, 'come': how, 'sovrapposte': bad})
-            g.photo(f'{g.current}-{round_}-{i}')
+        for key in keys:
+            # the list makes only the rows near its view: the header is brought to the top first, as the wheel would
+            index = next((n for n, r in enumerate(backend.property('rows') or []) if r.get('header') and r.get('key') == key), -1)
+            lst = next((i for i in g.pilot.walk() if i.objectName() == 'checks-list'), None)
+            if lst is not None and index >= 0:
+                from PySide6.QtCore import Q_ARG, QMetaObject
+                QMetaObject.invokeMethod(lst, 'positionViewAtIndex', Q_ARG(int, index), Q_ARG(int, 1))
+                g.spin(500)
+            item = next((i for i in g.pilot.walk() if i.objectName() == 'checks-group-'+key and g.pilot.shown(i)
+                         and Giro._shown_up(i)), None)
+            if item is None:
+                out['passi'].append({'gruppo': key, 'giro': round_, 'clic': 'intestazione non visibile'})
+                continue
+            x, y = g.pilot.centre(item)
+            g.hand.click(x, y)
+            g.spin(900)
+            state = overlaps_quick(g)
+            state.pop('righe', None) if not state.get('sovrapposte') and not state.get('intestazioni_doppie') else None
+            out['passi'].append({'gruppo': key, 'giro': round_, **state})
+            g.photo(f'{g.current}-{round_}-' + key.replace('|', '_'))
     return out
 
 
 @step
 def verifiche_aree(g):
     """The same, with the checks grouped by area (Strings, Shading, Production...), as Daniel had them."""
-    if g.quick:
-        g.host.parts.controllers['checks'].setView('area')
-    else:
-        g.host.checks_page.set_view('area')
+    g.host.parts.controllers['checks'].setView('area')
     g.spin(800)
     out = verifiche_gruppi(g)
     out['vista'] = 'area'
@@ -839,22 +672,21 @@ def salva(g):
         g.spin(3000)
         after = g.file.stat().st_mtime_ns, g.file.stat().st_size
         out['scritto_col_comando'] = after != before
-    if g.quick:
-        files = g.host.parts.controllers['files']
-        out['dopo_ctrl_s'] = {k: str(files.property(k))[:200] for k in ('status', 'error', 'section', 'projectPath')}
-        out['pagina_file_aperta'] = bool(g.window.property('fileOpen'))
-        g.photo('salva-ctrl_s')
-        g.window.setProperty('fileOpen', False)
-        g.spin(500)
-        out['salva_come'] = files.saveAs(str(g.file))           # what the chooser would do with the same name
-        g.spin(1500)
-        out['percorso_dopo_salva_come'] = str(g.session.path)
-        mark = g.file.stat().st_mtime_ns
-        g.spin(1100)
-        g.hand.key('s', ('ctrl',))
-        g.spin(3000)
-        out['ctrl_s_dopo_salva_come'] = g.file.stat().st_mtime_ns != mark
-    from meridiana import model
+    files = g.host.parts.controllers['files']
+    out['dopo_ctrl_s'] = {k: str(files.property(k))[:200] for k in ('status', 'error', 'section', 'projectPath')}
+    out['pagina_file_aperta'] = bool(g.window.property('fileOpen'))
+    g.photo('salva-ctrl_s')
+    g.window.setProperty('fileOpen', False)
+    g.spin(500)
+    out['salva_come'] = files.saveAs(str(g.file))           # what the chooser would do with the same name
+    g.spin(1500)
+    out['percorso_dopo_salva_come'] = str(g.session.path)
+    mark = g.file.stat().st_mtime_ns
+    g.spin(1100)
+    g.hand.key('s', ('ctrl',))
+    g.spin(3000)
+    out['ctrl_s_dopo_salva_come'] = g.file.stat().st_mtime_ns != mark
+    from meridiana.core.model import model
     again, _notice = model.Project.load(g.file)
     out['riletto'] = {'edifici': len(again.buildings), 'sottocampi': len(again.subfields),
                       'stringhe': len((again.energy.get('strings') or {}).get('runs') or [])}
@@ -877,22 +709,14 @@ def salva_revisione(g):
 
 @step
 def recenti(g):
-    if g.quick:
-        files = g.host.parts.controllers['files']
-        recent = files.property('recent')
-        g.window.setProperty('fileOpen', True)
-        g.spin(1500)
-        g.photo('recenti-pagina')
-        g.window.setProperty('fileOpen', False)
-        g.spin(500)
-        return {'recenti': [str(r)[:160] for r in (recent or [])][:6]}
-    recent = list(g.host.cfg.recent)
-    g.host.open_file_page('open')
+    files = g.host.parts.controllers['files']
+    recent = files.property('recent')
+    g.window.setProperty('fileOpen', True)
     g.spin(1500)
     g.photo('recenti-pagina')
-    g.hand.key('esc')
+    g.window.setProperty('fileOpen', False)
     g.spin(500)
-    return {'recenti': [str(r)[:160] for r in recent][:6]}
+    return {'recenti': [str(r)[:160] for r in (recent or [])][:6]}
 
 
 @step
@@ -901,24 +725,17 @@ def relazione_pdf(g):
     g.spin(2000)
     target = po.WORK/f'relazione-{g.engine}.pdf'
     start = time.perf_counter()
-    if g.quick:
-        report = g.host.parts.controllers['report']
-        g.spin(3000)
-        before_state = {k: str(report.property(k))[:200] for k in ('busy', 'ready', 'error', 'exportState', 'status', 'pageCount')}
-        outdated = bool(g.session.year_outdated())
-        report.exportPdf(str(target))
-        how = 'per funzione: report.exportPdf (al posto della finestra di scelta del file)'
-        g.spin(3000)
-        during = {k: str(report.property(k))[:200] for k in ('busy', 'ready', 'error', 'exportState', 'status', 'progress')}
-    else:
-        from unittest import mock
-        from PySide6.QtWidgets import QFileDialog
-        with mock.patch.object(QFileDialog, 'getSaveFileName', return_value=(str(target), '')):
-            g.command('export_report')
-        how = 'comando export_report, scelta del file sostituita'
+    report = g.host.parts.controllers['report']
+    g.spin(3000)
+    before_state = {k: str(report.property(k))[:200] for k in ('busy', 'ready', 'error', 'exportState', 'status', 'pageCount')}
+    outdated = bool(g.session.year_outdated())
+    report.exportPdf(str(target))
+    how = 'per funzione: report.exportPdf (al posto della finestra di scelta del file)'
+    g.spin(3000)
+    during = {k: str(report.property(k))[:200] for k in ('busy', 'ready', 'error', 'exportState', 'status', 'progress')}
     g.wait(lambda: target.exists() and target.stat().st_size > 0, 300)
     g.spin(1000)
-    if g.quick and not target.exists():
+    if not target.exists():
         # asked while the preview was being made: asked again once the page is ready, as the designer would
         g.wait(lambda: not report.property('busy'), 300)
         g.spin(1000)
@@ -929,9 +746,8 @@ def relazione_pdf(g):
         how += '; la prima richiesta, fatta mentre l anteprima era in corso, non ha scritto nulla: ripetuta a pagina pronta'
         during['seconda_richiesta_s'] = round(time.perf_counter()-second, 1)
     out = {'come': how, 'secondi': round(time.perf_counter()-start, 1), 'scritto': target.exists()}
-    if g.quick:
-        out.update(prima=before_state, durante=during, anno_vecchio=outdated,
-                   dopo={k: str(report.property(k))[:200] for k in ('busy', 'error', 'exportState', 'status')})
+    out.update(prima=before_state, durante=during, anno_vecchio=outdated,
+               dopo={k: str(report.property(k))[:200] for k in ('busy', 'error', 'exportState', 'status')})
     if target.exists():
         data = target.read_bytes()
         out['byte'] = len(data)
@@ -946,39 +762,17 @@ def preferenze(g):
     g.spin(2000)
     g.photo('preferenze-aperte')
     out = {}
-    if g.quick:
-        out['aperta'] = bool(g.window.property('fileOpen'))
-        g.window.setProperty('fileOpen', False)
-    else:
-        out['aperta'] = g.host.file_page.isVisible()
-        g.command('phase_model')
+    out['aperta'] = bool(g.window.property('fileOpen'))
+    g.window.setProperty('fileOpen', False)
     g.spin(800)
     return out
 
 
 def _set(g, key, value):
-    """Quick: the call of its Preferences page. Widgets: the combo box of its Preferences page, chosen and
-    activated as a click on its item does."""
-    if g.quick:
-        g.host.parts.controllers['settings'].setValue(key, value)
-        g.spin(1500)
-        return 'settings.setValue'
-    from PySide6.QtWidgets import QComboBox
-    words = {('theme', 'dark'): 'Scuro', ('theme', 'light'): 'Chiaro', ('text_size', 'large'): 'Grande',
-             ('text_size', 'medium'): 'Medio'}[(key, value)]
-    g.command('preferences')
-    g.spin(800)
-    for combo in g.host.file_page.findChildren(QComboBox):
-        texts = [combo.itemText(i) for i in range(combo.count())]
-        hit = next((i for i, t in enumerate(texts) if t.startswith(words)), None)
-        if hit is not None and combo.isVisible():
-            combo.setCurrentIndex(hit)
-            combo.activated.emit(hit)
-            g.spin(1500)
-            g.host.file_page.close_page() if hasattr(g.host.file_page, 'close_page') else g.hand.key('esc')
-            g.spin(800)
-            return 'casella della pagina Preferenze: ' + combo.itemText(hit)
-    return 'casella non trovata'
+    """The call of the Quick's Preferences page."""
+    g.host.parts.controllers['settings'].setValue(key, value)
+    g.spin(1500)
+    return 'settings.setValue'
 
 
 @step
@@ -993,25 +787,20 @@ def tema_scuro(g):
 
 @step
 def testo_grande(g):
-    how = _set(g, 'textSize' if g.quick else 'text_size', 'large')
+    how = _set(g, 'textSize', 'large')
     g.show_phase('model')
     g.photo('testo_grande-grande')
-    _set(g, 'textSize' if g.quick else 'text_size', 'medium')
+    _set(g, 'textSize', 'medium')
     return {'come': how}
 
 
 @step
 def meridio(g):
     out = {}
-    if not g.quick:
-        out['visibile_prima'] = g.host.assistant_dock.isVisible()
     g.hand.key('l', ('ctrl',))
     g.spin(2500)
-    if not g.quick:
-        out['visibile'] = g.host.assistant_dock.isVisible()
-    else:
-        out['oggetti'] = sorted({i.objectName() for i in g.pilot.walk() if g.pilot.shown(i)
-                                 and 'assist' in i.objectName().lower()})[:12]
+    out['oggetti'] = sorted({i.objectName() for i in g.pilot.walk() if g.pilot.shown(i)
+                             and 'assist' in i.objectName().lower()})[:12]
     return out
 
 
@@ -1030,35 +819,23 @@ def import_ifc(g):
     g.show_phase('model')
     key = g.session.state_key()
     before = len(g.project.buildings)
-    if g.quick:
-        dialogs = g.host.parts.controllers['dialogs']
-        g.command('import_ifc')
-        g.spin(800)
-        dialogs.readFile(str(IFC))
-        g.spin(1500)
-        g.wait(lambda: (dialogs.property('state') or {}).get('ifcRead') or
-               ((not dialogs.property('busy')) and (dialogs.property('state') or {}).get('error')), 120)
-        g.spin(800)
-        g.photo('import_ifc-finestra')
-        state = dialogs.property('state') or {}
-        clicked = g.pilot.button('Aggiungi il modello')
-        if not clicked:
-            dialogs.accept()                  # what «Aggiungi il modello» calls
-        how = ('comando import_ifc, file dato alla finestra (readFile), poi ' +
-               ('clic su «Aggiungi il modello»' if clicked else 'accept(), la funzione di «Aggiungi il modello»'))
-        extra = {'letto': state.get('ifcRead'), 'clic': clicked,
-                 'stato': {k: str(v)[:160] for k, v in state.items() if isinstance(v, (str, bool, int, float))}}
-    else:
-        from meridiana import ifc_import
-        seen = []
-
-        def confirm(found):
-            seen.append(found)
-            return ifc_import.plan(found, g.project, 'origin', 'context')
-        g.host._import_ifc(str(IFC), confirm=confirm)
-        g.wait(lambda: g.host.ifc_reading is None, 120)
-        how = 'per funzione: _import_ifc con la conferma della finestra data (come tests/finestra/test_ifc_window.py)'
-        extra = {'letto': len(seen)}
+    dialogs = g.host.parts.controllers['dialogs']
+    g.command('import_ifc')
+    g.spin(800)
+    dialogs.readFile(str(IFC))
+    g.spin(1500)
+    g.wait(lambda: (dialogs.property('state') or {}).get('ifcRead') or
+           ((not dialogs.property('busy')) and (dialogs.property('state') or {}).get('error')), 120)
+    g.spin(800)
+    g.photo('import_ifc-finestra')
+    state = dialogs.property('state') or {}
+    clicked = g.pilot.button('Aggiungi il modello')
+    if not clicked:
+        dialogs.accept()                  # what «Aggiungi il modello» calls
+    how = ('comando import_ifc, file dato alla finestra (readFile), poi ' +
+           ('clic su «Aggiungi il modello»' if clicked else 'accept(), la funzione di «Aggiungi il modello»'))
+    extra = {'letto': state.get('ifcRead'), 'clic': clicked,
+             'stato': {k: str(v)[:160] for k, v in state.items() if isinstance(v, (str, bool, int, float))}}
     g.pilot.settle(30)
     after = len(g.project.buildings)
     names = [b.name for b in g.project.buildings[before:]]
@@ -1081,8 +858,6 @@ def main(engine, out, names):
         g.run(names or ORDER)
     finally:
         g.log.close()
-        if not g.quick:
-            g.watch.stop()
         print('fine', engine, len(g.records), f'{time.perf_counter()-g.started:.0f} s')
         po.dispose(engine, g.host)
 

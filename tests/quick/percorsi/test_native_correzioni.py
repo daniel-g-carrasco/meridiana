@@ -26,7 +26,7 @@ ctypes_ubyte = ctypes.c_ubyte
 seen = {}
 away = (1100, 300)
 # Started without the year: the layout, as the computation's process would give it.
-from meridiana import jobs
+from meridiana.app import jobs
 laid, laid_keys, _unused = jobs.layout_of(host.bridge.session.project, host.bridge.session.known_layouts())
 host.bridge.accept_layout(host.bridge.session.generation, laid, laid_keys)
 spin(1.0)
@@ -666,7 +666,7 @@ class Corrections(unittest.TestCase):
 
     def test_d18_d26_the_bar_of_the_year(self):
         self.assertTrue(self.seen['progress_shown'])
-        self.assertIn('Produzione', self.seen['progress_text'])
+        self.assertIn('Producibilità', self.seen['progress_text'])     # the title; the step is the phase beside it
         self.assertFalse(self.seen['busy_after_cancel'])
         self.assertFalse(self.seen['progress_after_cancel'])
         self.assertTrue(self.seen['second_year_progress'])

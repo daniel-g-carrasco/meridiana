@@ -1,6 +1,6 @@
 """Guard of the symbols (R518, Daniel 07/11/2026: «tutti i simboli vanno centralizzati»): no Unicode character used as
 an icon inside a text of the QML (a star, an arrow, a check, a box): a symbol is an M.Icon, drawn by the icon provider
-(quick/backend/controls.py, ui/icons.py, ui/symbols.py), with its name, size and colour from the theme. Those glyphs
+(gui/backend/controls.py, ui/icons.py, ui/symbols.py), with its name, size and colour from the theme. Those glyphs
 are not in the program's font: where Qt finds no other font with them they come out as an empty box (the stars of
 «Dimensiona l'inverter da solo», the arrow of the map sources' combo, offscreen captures of 07/11).
 
@@ -15,7 +15,7 @@ import sys
 import unittest
 from pathlib import Path
 
-QML = Path(__file__).resolve().parents[3] / 'src' / 'meridiana' / 'quick' / 'qml' / 'Meridiana'
+QML = Path(__file__).resolve().parents[3] / 'src' / 'meridiana' / 'gui' / 'qml' / 'Meridiana'
 # «•» is not in it: the bullet of a list is typography, text like the «–» of a missing value (regola 4, R21-F3)
 ICON_CHARS = set('★☆⌄▾▸▴▿▯✓✔✕✖×⋯⋮⌃⏷⏵➜←→↑↓›‹●○◆◇■□▲▼▶◀⚠ⓘ−')
 STRING = re.compile(r'"([^"]*)"')
@@ -51,8 +51,8 @@ class Symbols(unittest.TestCase):
 
 
     def test_one_help_mark(self):
-        """R21-F3 (Daniel 07/11/2026): one «?» in the program, Controls/HelpMark (the round circle-question-mark): no
-        other button with a «?» for text, no other circle-question-mark drawn outside it."""
+        """R21-F3 (Daniel 07/11/2026): one «?» in the program, Controls/HelpMark (R596: the full grey disc with the
+        «?» of the font): no other button with a «?» for text, no other circle-question-mark drawn outside it."""
         found = []
         for path in sorted(QML.rglob('*.qml')):
             rel = path.relative_to(QML).as_posix()

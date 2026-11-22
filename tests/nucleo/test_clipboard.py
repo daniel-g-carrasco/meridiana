@@ -4,8 +4,11 @@ import unittest
 
 from shapely.geometry import Polygon
 
-from meridiana import checks, clipboard, layout, model, session
-from meridiana.energy import plant
+from meridiana.core.rules import checks
+from meridiana.core.model import clipboard, model
+from meridiana.core.layout import layout
+from meridiana.app import session
+from meridiana.core.energy import plant
 
 
 def project() -> model.Project:
@@ -109,7 +112,7 @@ class SubField(unittest.TestCase):
         self.assertEqual((new.manual, new.rows, new.removed), (False, [], []))
 
     def test_the_parts_of_a_split_are_taken_together(self):
-        from meridiana import move
+        from meridiana.core.model import move
         p = project()
         p.subfields[0].ring = [[10, 7], [20, 7], [20, 13], [10, 13]]
         move.split_on_pitches(p, "s1")(p)

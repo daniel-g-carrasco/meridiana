@@ -21,12 +21,12 @@ from PySide6.QtWidgets import QApplication
 
 import _setup
 from meridiana import i18n
-from meridiana.quick.backend.controls import install_controls
-from meridiana.quick.backend import charts_bridge, charts_data
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.backend import charts_bridge, charts_data
 from quick.grafici.fixtures import build_results
 
 
-QML = _setup.ROOT / "src/meridiana/quick/qml"
+QML = _setup.ROOT / "src/meridiana/gui/qml"
 
 
 def dimensions(value):
@@ -44,7 +44,7 @@ def wait(app, predicate, seconds=15):
     while not predicate() and time.monotonic() < end:
         app.processEvents()
         QTest.qWait(10)
-        time.sleep(0.005)
+        time.sleep(0.005)  # wait: a breath between two looks at the condition, so the workers' threads run
     if not predicate():
         raise RuntimeError("The result did not become ready for a photograph")
 

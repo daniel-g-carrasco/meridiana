@@ -7,7 +7,7 @@ import _setup  # noqa: F401
 from _fakes import Host
 from _fixtures import capannone_rho
 
-from meridiana.assistant import tools
+from meridiana.app.assistant import tools
 
 
 class Navigation(unittest.TestCase):

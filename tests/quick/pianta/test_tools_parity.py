@@ -1,8 +1,9 @@
-"""R389 drawing gestures through real Widgets and QQuickWindow events.
+"""R389 drawing gestures through real QQuickWindow events: after each, the project the Widgets' plan made of the
+same gestures (recorded on 10/11/2026 from the Widgets' side, when they went: quick/aiuti/riferimenti.py).
 
 Tool activation replaces a toolbar choice, and canopy/prop options replace the
 already accepted chooser. Every point and drawing key reaches a real Qt window.
-Snapshots retain the complete Project.to_json payload except modified.
+Snapshots retain the complete Project.to_json payload except modified, the BIM identity and the creation time.
 """
 from __future__ import annotations
 
@@ -18,13 +19,14 @@ os.environ.setdefault("QSG_RENDER_LOOP", "basic")
 
 import _setup
 from PySide6.QtCore import QEvent, QObject, QPoint, QPointF, Qt, QUrl
-from PySide6.QtGui import QKeyEvent, QTransform
+from PySide6.QtGui import QKeyEvent
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 
-from meridiana import canopies, config, i18n, model
-from meridiana.quick.backend.plan import PlanController
-from quick.parity.differential import canonical_project, compare
+from meridiana.core.model import canopies, model
+from meridiana import i18n
+from meridiana.gui.backend.plan import PlanController
+from quick.aiuti import riferimenti
 
 
 setUpModule = _setup.keep_global_state
@@ -44,18 +46,14 @@ class DrawingParity(unittest.TestCase):
                                                 footprint=[[0, 0], [20, 0], [20, 20], [0, 20]]))
         project.subfields.append(model.SubField(id="s1", name="Panels", building="b1",
                                                ring=[[1, 1], [19, 1], [19, 19], [1, 19]]))
-        self.widgets = _setup.window(self, project, cfg=config.Config(background="none", network_pvgis=False,
-                                                                     language=language),
-                                     size=(1366, 900))
-        self.widgets._view_mode("plan")
-        self.widgets.energy_timer.stop()
-        self.controller = PlanController(copy.deepcopy(self.widgets.project))
+        # the project as a window opens it: saved and read again
+        self.controller = PlanController(model.Project.from_json(copy.deepcopy(project.to_json())))
         self.engine = QQmlApplicationEngine()
         self.warnings = []
         self.engine.warnings.connect(lambda errors: self.warnings.extend(e.toString() for e in errors))
         self.controller.install(self.engine)
         self.engine.rootContext().setContextProperty("planBackend", self.controller)
-        self.engine.load(QUrl.fromLocalFile(str(ROOT / "src/meridiana/quick/qml/Meridiana/Plan/PlanWindow.qml")))
+        self.engine.load(QUrl.fromLocalFile(str(ROOT / "src/meridiana/gui/qml/Meridiana/Plan/PlanWindow.qml")))
         self.assertTrue(self.engine.rootObjects(), self.warnings)
         self.quick = self.engine.rootObjects()[0]
         self.quick.show()
@@ -74,22 +72,12 @@ class DrawingParity(unittest.TestCase):
 
     def frame(self):
         self.app.processEvents()
-        self.widgets.plan.setTransform(QTransform.fromScale(self.scale, self.scale))
-        self.widgets.plan.centerOn(15, -10)
         self.quick_plan.setProperty("zoom", self.scale)
         self.quick_plan.setProperty("panX", 400)
         self.quick_plan.setProperty("panY", 500)
         self.quick_plan.setProperty("fitted", True)
 
     def tool(self, name, **options):
-        if name == "prop":
-            self.widgets.place_prop(options["kind"])
-        elif name == "prop_line":
-            self.widgets.place_prop(options["kind"])
-        elif name == "canopy":
-            self.widgets.place_carport(canopies.Spec(**options["spec"]))
-        else:
-            self.widgets._set_tool(name)
         self.controller.setTool(name)
         # The pending dialog value, not a mutation or a simulated gesture.
         if options:
@@ -97,37 +85,45 @@ class DrawingParity(unittest.TestCase):
         self.frame()
 
     def locations(self, point):
-        # Widgets may fit the plan after a phase is lent to Plant or a layout returns.
-        # Reset only the viewport transform, never the project or the draft.
+        # Reset only the viewport, never the project or the draft.
         self.frame()
         x, y = point
-        widgets = self.widgets.plan.mapFromScene(QPointF(x, -y))
-        self.assertTrue(self.widgets.plan.viewport().rect().contains(widgets), (point, widgets))
-        scene = self.widgets.plan.mapToScene(widgets)
-        self.assertAlmostEqual(scene.x(), x, places=7)
-        self.assertAlmostEqual(-scene.y(), y, places=7)
-        quick = QPoint(round(400 + self.scale * x), round(500 - self.scale * y))
-        return widgets, quick
+        return QPoint(round(400 + self.scale * x), round(500 - self.scale * y))
 
     def click(self, point, modifiers=Qt.NoModifier):
-        widgets, quick = self.locations(point)
-        QTest.mouseClick(self.widgets.plan.viewport(), Qt.LeftButton, modifiers, widgets)
-        QTest.mouseClick(self.quick, Qt.LeftButton, modifiers, quick)
+        QTest.mouseClick(self.quick, Qt.LeftButton, modifiers, self.locations(point))
         self.settle()
 
     def pointer(self, point, modifiers=Qt.NoModifier):
-        widgets, quick = self.locations(point)
-        # No OS cursor relocation: these are local events to each receiving surface.
+        p = self.locations(point)
+        # No OS cursor relocation: a local event to the window.
         from PySide6.QtGui import QMouseEvent
-        for target, p in ((self.widgets.plan.viewport(), widgets), (self.quick, quick)):
-            event = QMouseEvent(QEvent.MouseMove, QPointF(p), QPointF(p), Qt.NoButton, Qt.NoButton, modifiers)
-            self.app.sendEvent(target, event)
+        event = QMouseEvent(QEvent.MouseMove, QPointF(p), QPointF(p), Qt.NoButton, Qt.NoButton, modifiers)
+        self.app.sendEvent(self.quick, event)
         self.app.processEvents()
 
+    def double(self, point, modifiers=Qt.NoModifier):
+        QTest.mouseDClick(self.quick, Qt.LeftButton, modifiers, self.locations(point))
+        self.settle()
+
+    def move(self, point, modifiers=Qt.NoModifier):
+        """The pointer through the application, as a real one (a move sent to the window alone is dropped by Qt Quick
+        after a double click); no OS cursor moves."""
+        QTest.mouseMove(self.quick, self.locations(point))
+        self.app.processEvents()
+
+    def drawn(self, name):
+        """The items of the plan's overlay named `name` and shown (a Repeater's delegates are items only)."""
+        def walk(item):
+            for child in item.childItems():
+                yield child
+                yield from walk(child)
+        overlay = self.quick.findChild(QObject, "toolOverlay")
+        return [i for i in walk(overlay) if i.objectName() == name and i.isVisible()]
+
     def key(self, key, text="", modifiers=Qt.NoModifier):
-        for target in (self.widgets.plan, self.quick):
-            self.app.sendEvent(target, QKeyEvent(QEvent.KeyPress, key, modifiers, text))
-            self.app.sendEvent(target, QKeyEvent(QEvent.KeyRelease, key, modifiers, text))
+        self.app.sendEvent(self.quick, QKeyEvent(QEvent.KeyPress, key, modifiers, text))
+        self.app.sendEvent(self.quick, QKeyEvent(QEvent.KeyRelease, key, modifiers, text))
         self.settle()
 
     def text(self, text):
@@ -136,21 +132,17 @@ class DrawingParity(unittest.TestCase):
             self.key(key, char)
 
     def settle(self):
-        self.widgets.energy_timer.stop()
-        self.assertTrue(_setup.wait_until(self.app, lambda: self.widgets._layouts_settled(), 15))
         self.assertTrue(_setup.wait_until(self.app, lambda: not self.controller.busy, 15))
-        self.widgets.energy_timer.stop()
         self.app.processEvents()
 
-    def same(self, label, expected=()):
+    def same(self, label):
         self.sequence += 1
-        left, right = canonical_project(self.widgets.project), canonical_project(self.controller.session.project)
-        folder = ROOT / "build/quick-parity/tools" / self._testMethodName
+        right = riferimenti.project(self.controller.session.project)
+        folder = ROOT / "build/quick-foto/pianta/tools-states" / self._testMethodName
         folder.mkdir(parents=True, exist_ok=True)
-        for name, value in (("widgets", left), ("quick", right)):
-            (folder / f"{self.sequence:02d}-{label}-{name}.json").write_text(
-                json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8")
-        self.assertEqual(compare(left, right), list(expected), label)
+        (folder / f"{self.sequence:02d}-{label}-quick.json").write_text(
+            json.dumps(right, ensure_ascii=False, indent=2), encoding="utf-8")
+        riferimenti.check(self, right, name=f"{self.sequence:02d}-{label}")
         self.assertFalse(self.controller.error, self.controller.error)
         self.assertFalse(self.warnings, self.warnings)
 
@@ -159,14 +151,12 @@ class DrawingParity(unittest.TestCase):
             return
         folder = ROOT / "build/quick-foto/pianta/tools"
         folder.mkdir(parents=True, exist_ok=True)
-        self.widgets.plan.viewport().repaint()
         QTest.qWait(80)
         image = self.quick.grabWindow()
         self.assertFalse(image.isNull())
         self.assertTrue(image.save(str(folder / f"{self._testMethodName}-{label}-quick.png")))
-        self.assertTrue(self.widgets.plan.grab().save(str(folder / f"{self._testMethodName}-{label}-widgets.png")))
         if os.environ.get("MERIDIANA_QUICK_TOOL_MATRIX"):
-            from meridiana.quick.backend.tokens import install_theme
+            from meridiana.gui.backend.tokens import install_theme
             original = self.quick.size()
             for width, height in ((1600, 960), (1920, 1080)):
                 for theme in ("light", "dark"):
@@ -214,16 +204,32 @@ class DrawingParity(unittest.TestCase):
         self.same("rectangle")
 
     def test_subfield_and_exclusion_polygons(self):
-        # Quick gives new sub-fields the current alignment default; Widgets retains its old default.
-        expected = ({"path": "$.variants[0].design.subfields[1].params.alignment",
-                     "widgets": None, "quick": "aligned", "missing": "Widgets"},)
-        for tool, options in (("subfield", {"fill": "area"}), ("exclusion", {})):
-            self.tool(tool, **options)
+        # R445: the outline becomes the occupied modules, not the drawn polygon.
+        # Four 1.134 m modules with three 0.02 m gaps span 4.596 m, centred at x=5.5;
+        # the 2.278 m length projects to 2.2434 m at the default ten-degree tilt.
+        # The following exclusion snaps to the new outline's x coordinates.
+        for tool in ("subfield", "exclusion"):
+            self.tool(tool)
             for index, point in enumerate([(3, 3), (8, 3), (8, 8), (3, 8)], 1):
                 self.click(point)
                 self.capture(f"{tool}-point-{index}")
             self.key(Qt.Key_Return)
-            self.same(tool, expected)
+            if tool == "subfield":
+                sf = self.controller.session.project.subfields[-1]
+                self.assertTrue(sf.filled and sf.manual and sf.flush)
+                self.assertEqual(sf.params['alignment'], 'aligned')
+                self.assertEqual(len(sf.rows), 1)
+                self.assertEqual(len(sf.rows[0]['places']), 4)
+                self.assertAlmostEqual(min(p[0] for p in sf.ring), 3.202)
+                self.assertAlmostEqual(max(p[0] for p in sf.ring), 7.798)
+                self.assertAlmostEqual(max(p[1] for p in sf.ring), 5.2434)
+            else:
+                exclusion = self.controller.session.project.exclusions[-1]
+                self.assertEqual(exclusion.kind, 'skylight')
+                for point, expected in zip(exclusion.ring, [[3.202, 3.0], [7.798, 3.0], [7.798, 8.0], [3.202, 8.0]], strict=True):
+                    self.assertAlmostEqual(point[0], expected[0])
+                    self.assertAlmostEqual(point[1], expected[1])
+            self.same(tool)
             self.capture(f"{tool}-closed")
 
     def test_pitch_fields_swap_and_close(self):
@@ -251,10 +257,8 @@ class DrawingParity(unittest.TestCase):
         for tool in ("row", "east_west"):
             self.tool(tool)
             self.click((3, 5)); self.pointer((13, 5)); self.text("10"); self.capture(tool)
-            expected, bad = self.widgets._row_preview((3, 5), (13, 5))
             row = self.controller.drawing.preview["row"]
-            self.assertEqual(len(row["quads"]), len(expected))
-            self.assertEqual(row["bad"], bad)
+            riferimenti.check(self, [len(row["quads"]), row["bad"]])
             self.card_visible()
             self.key(Qt.Key_Return)
             self.same(tool)
@@ -273,31 +277,62 @@ class DrawingParity(unittest.TestCase):
         self.click((25, 5)); self.same("canopy"); self.capture("canopy-placed")
 
     def test_measure_and_escape_three_levels(self):
+        # study 46: a simple measure is a click and a double click; its pill on the span, the project untouched
         self.tool("measure")
-        self.click((3, 3), Qt.ControlModifier); self.click((6, 7), Qt.ControlModifier); self.pointer((10, 10))
-        self.assertAlmostEqual(math.dist(*self.widgets.plan.measure), 5)
-        self.assertAlmostEqual(self.controller.drawing.preview["length"], 5)
-        self.assertIn("5", self.card_visible())
+        self.click((3, 3), Qt.ControlModifier); self.double((6, 7), Qt.ControlModifier); self.move((10, 10))
+        measures = self.controller.measure.tool.measures
+        self.assertEqual(len(measures), 1)
+        self.assertAlmostEqual(measures[0].spans()[0].plan, 5)
+        self.assertEqual([p.property("value") for p in self.drawn("measurePill")], ["5.00 m"])
         self.capture("measurement"); self.same("measurement")
         self.tool("building"); self.click((25, 5)); self.text("12"); self.capture("esc-typed")
         self.key(Qt.Key_Escape)
-        self.assertEqual(self.widgets.plan.typed, self.controller.drawing.typed)
-        self.assertEqual(len(self.widgets.plan.chain), len(self.controller.drawing.points))
+        riferimenti.check(self, [self.controller.drawing.typed, len(self.controller.drawing.points)])
         self.capture("esc-number-cleared")
         self.key(Qt.Key_Escape)
-        self.assertFalse(self.widgets.plan.chain)
         self.assertFalse(self.controller.drawing.points)
         self.capture("esc-draft-cleared")
         self.key(Qt.Key_Escape)
-        self.assertEqual(self.widgets.plan.tool, self.controller.tool)
+        self.assertEqual(self.controller.tool, "select")
         self.capture("esc-select")
         self.same("escaped")
+
+    def test_two_measures_one_after_the_other_r563(self):
+        """R563: the clicks Daniel made (13/11/2026), with the snaps on: a measure, then another one that starts by
+        the first. What the overlay draws is read from the window (the measures' layer, study 46)."""
+        def at(point):
+            self.move(point); self.click(point)
+
+        tool = self.controller.measure.tool
+        self.tool("measure")
+        at((25, 5))
+        # the first click shows where the measure starts: its mark, and the one that follows the pointer
+        self.assertEqual((len(self.drawn("measureMark")), len(self.drawn("measurePointer"))), (1, 1))
+        self.move((32, 5)); self.double((32, 5))
+        self.assertEqual((tool.state, [p.point[:2] for p in tool.measures[0].points]), ("idle", [(25., 5.), (32., 5.)]))
+        self.assertEqual([p.property("value") for p in self.drawn("measurePill")], ["7.00 m"])
+        # towards the second measure, 4 px beside the line going north from the first point of the first one
+        self.move((25.3, 12))
+        self.assertEqual(self.drawn("measureGuides"), [])
+        self.assertEqual(len(self.drawn("measureMark")), 2)     # the measure made is still there
+        self.assertEqual([p.property("value") for p in self.drawn("measurePill")], ["7.00 m"])
+        at((25.3, 12))
+        start = tool.points[0].point[:2]
+        self.assertEqual(len(tool.points), 1)
+        self.assertLess(math.dist(start, (25.3, 12)), 0.05)     # where the click was (a pixel is 0.083 m), not 25.0
+        self.assertGreater(abs(start[0] - 25), 0.2)
+        self.assertEqual((self.drawn("measureGuides"), len(self.drawn("measureMark"))), ([], 3))
+        self.move((25.3, 2)); self.double((25.3, 2))
+        second = tool.measures[-1]
+        self.assertEqual((tool.state, len(tool.measures), second.points[0].point[:2]), ("idle", 2, start))
+        self.assertAlmostEqual(second.spans()[0].plan, math.dist(start, second.points[1].point[:2]))
+        self.assertAlmostEqual(second.spans()[0].plan, 10, delta=0.1)
+        self.assertFalse(self.warnings, self.warnings)
 
     def test_pitch_polygon_and_backspace(self):
         self.tool("pitch"); self.key(Qt.Key_R, "r")
         self.click((0, 0)); self.click((20, 0)); self.click((20, 10)); self.click((0, 10))
         self.key(Qt.Key_Backspace)
-        self.assertEqual(len(self.widgets.plan.chain), 3)
         self.assertEqual(len(self.controller.drawing.points), 3)
         self.capture("backspace")
         self.click((0, 10)); self.key(Qt.Key_Return)
@@ -308,42 +343,33 @@ class DrawingParity(unittest.TestCase):
         # At 12 px/m this is 5 pixels from a known corner, inside the common 10 px reach.
         # No pointer() call is sent: a pen or touch press need not have a hover.
         self.click((20 + 5 / 12, 20))
-        self.assertEqual(self.widgets.plan.chain, [(20., 20.)])
         self.assertEqual(self.controller.drawing.points, [(20., 20.)])
         self.same("snap-touch")
 
     def test_function_key_reaches_orthogonal_switch(self):
         self.tool("building")
         self.click((25, 2)); self.pointer((30, 4))
-        self.widgets.activateWindow()
-        self.widgets.plan.setFocus()
-        self.app.processEvents()
-        QTest.keyClick(self.widgets.plan, Qt.Key_F8)
         self.quick.requestActivate()
         self.app.processEvents()
         QTest.keyClick(self.quick, Qt.Key_F8)
-        self.assertTrue(self.widgets.plan.ortho)
         self.assertTrue(self.controller.drawing.orthogonal)
         self.click((30, 4))
-        self.assertEqual(self.widgets.plan.chain[-1], (30., 2.))
         self.assertEqual(self.controller.drawing.points[-1], (30., 2.))
         self.same("ortho")
 
     def test_row_preview_outside_area_stays_visible(self):
         self.tool("row")
         self.click((15, 5)); self.pointer((25, 5)); self.text("10")
-        expected, bad = self.widgets._row_preview((15, 5), (25, 5))
-        self.assertTrue(bad)
         row = self.controller.drawing.preview["row"]
         self.assertTrue(row["bad"])
-        self.assertEqual(len(row["quads"]), len(expected))
-        self.assertGreater(len(expected), 0)
+        self.assertGreater(len(row["quads"]), 0)
+        riferimenti.check(self, len(row["quads"]))
         self.card_visible(); self.capture("outside")
         self.key(Qt.Key_Return)
         self.same("outside-row-kept")
 
     def test_pitch_card_stays_in_narrow_view_with_large_text(self):
-        from meridiana.quick.backend.tokens import install_theme
+        from meridiana.gui.backend.tokens import install_theme
         self.tool("pitch"); self.click((0, 0)); self.click((20, 0)); self.pointer((20, 10))
         install_theme(self.engine, {"textSize": "large"})
         self.quick.resize(480, 400)
@@ -370,7 +396,6 @@ class DrawingParity(unittest.TestCase):
         if not self.controller.drawing.rectangle:
             self.key(Qt.Key_R, "r")
         references = [((5.6, -50.), (5.6, 30.))]
-        self.widgets.plan.snapper.set_references(references)
         self.controller.drawing.set_references(references)
         self.click((4, 4), Qt.ControlModifier); self.click((5.25, 4), Qt.ControlModifier)
         self.pointer((5.25, 5)); self.capture("small-depth")
@@ -380,31 +405,25 @@ class DrawingParity(unittest.TestCase):
 
     def test_shift_press_holds_direction_and_release_unlocks(self):
         self.tool("building"); self.click((25, 0)); self.pointer((30, 5))
-        for target in (self.widgets.plan, self.quick):
-            self.app.sendEvent(target, QKeyEvent(QEvent.KeyPress, Qt.Key_Shift, Qt.ShiftModifier))
+        self.app.sendEvent(self.quick, QKeyEvent(QEvent.KeyPress, Qt.Key_Shift, Qt.ShiftModifier))
         self.pointer((35, 2), Qt.ShiftModifier)
         p = self.controller.drawing.pointer
         self.assertAlmostEqual(p[0]-25, p[1])
-        self.assertEqual(self.widgets.plan.snap.point, p)
         self.capture("shift-locked")
-        for target in (self.widgets.plan, self.quick):
-            self.app.sendEvent(target, QKeyEvent(QEvent.KeyRelease, Qt.Key_Shift, Qt.NoModifier))
-        self.assertIsNone(self.widgets.plan.lock_dir)
+        self.app.sendEvent(self.quick, QKeyEvent(QEvent.KeyRelease, Qt.Key_Shift, Qt.NoModifier))
         self.assertIsNone(self.controller.drawing.lock_direction)
         self.pointer((35, 2)); self.click((35, 2))
-        self.assertEqual(self.widgets.plan.chain[-1], self.controller.drawing.points[-1])
+        riferimenti.check(self, self.controller.drawing.points[-1])
         self.assertNotAlmostEqual(self.controller.drawing.pointer[0]-25, self.controller.drawing.pointer[1])
         self.same("shift-release")
 
     def test_pitch_refuses_low_ridge_then_accepts_height_and_tab(self):
         self.tool("pitch"); self.key(Qt.Key_Tab)
         self.assertFalse(self.controller.drawing.pitch_card["swapped"])
-        self.assertFalse(self.widgets.plan.pitch_card["swapped"])
         self.click((0, 0)); self.click((20, 0)); self.pointer((10, 5))
         self.key(Qt.Key_Down); self.text("20"); self.key(Qt.Key_Return)
         self.key(Qt.Key_Down); self.text("5"); self.key(Qt.Key_Return)
         self.assertIsNone(self.controller.drawing.pitch_card["ridge"])
-        self.assertIsNone(self.widgets.plan.pitch_card["ridge"])
         self.assertTrue(self.controller.drawing.error)
         self.capture("low-ridge-refused")
         self.text("9"); self.key(Qt.Key_Return)
@@ -429,11 +448,9 @@ class DrawingParity(unittest.TestCase):
         def shape(project):
             project.buildings[0].footprint = [[0, 0], [20, 0], [20, 8], [8, 8], [8, 20], [0, 20]]
             project.subfields.clear()
-        self.widgets.edit("L fixture", shape)
         self.controller.session.edit("L fixture", shape)
         self.settle(); self.tool("ridge")
         self.click((25, 20))
-        self.assertEqual(self.widgets.plan.chain, [])
         self.assertEqual(self.controller.drawing.points, [])
         self.assertTrue(self.controller.drawing.error)
         self.capture("outside-refused")

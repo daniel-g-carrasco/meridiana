@@ -22,14 +22,14 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 from tools import update_cec
-from meridiana.catalog.audit import audit_catalogue
+from meridiana.data.catalog.audit import audit_catalogue
 
 COMMIT = "cba319ded1c32a7f5b3ac76545a29e1f7181d238"
 HASHES = {
     "CEC Modules.csv": "a28cf8956a839ed98bb941809b439e4907f5b4c237bd9299bc123fb502c29aff",
     "CEC Inverters.csv": "0c1b2188415dad6928f91f1a4c9a820dadc80962549f903d57d9282ba3753760",
 }
-DATA = ROOT / "src/meridiana/catalog/data"
+DATA = ROOT / "src/meridiana/data/catalog/data"
 
 
 def verify_payload(payload, expected):

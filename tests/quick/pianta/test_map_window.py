@@ -15,9 +15,10 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 
-from meridiana import geo, model
-from meridiana.quick.backend.plan import PlanController
-from meridiana.underlay import Underlay
+from meridiana.core.geometry import geo
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController
+from meridiana.core.model.underlay import Underlay
 
 
 class MapWindow(unittest.TestCase):
@@ -29,7 +30,7 @@ class MapWindow(unittest.TestCase):
         deadline = time.monotonic() + 8
         while not condition() and time.monotonic() < deadline:
             self.app.processEvents()
-            time.sleep(.002)
+            time.sleep(.002)  # wait: a breath between two looks at the condition, so the workers' threads run
         self.assertTrue(condition())
 
     def setUp(self):
@@ -51,7 +52,7 @@ class MapWindow(unittest.TestCase):
         self.engine.warnings.connect(lambda errors: self.errors.extend(error.toString() for error in errors))
         self.controller.install(self.engine)
         self.engine.rootContext().setContextProperty('planBackend', self.controller)
-        root = Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana/Plan/PlanWindow.qml'
+        root = Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana/Plan/PlanWindow.qml'
         self.engine.load(QUrl.fromLocalFile(str(root)))
         self.assertTrue(self.engine.rootObjects(), self.errors)
         self.window = self.engine.rootObjects()[0]

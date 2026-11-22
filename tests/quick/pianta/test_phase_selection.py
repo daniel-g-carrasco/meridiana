@@ -5,10 +5,11 @@ import unittest
 from PySide6.QtWidgets import QApplication
 from shapely.geometry import Polygon
 
-from meridiana import i18n, model
-from meridiana.quick.backend.plan import PlanController
-from meridiana.quick.backend.plan_edit import VERTEX_PX, nearest_vertex
-from meridiana.session import ProjectSession
+from meridiana import i18n
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController
+from meridiana.gui.backend.plan_edit import VERTEX_PX, nearest_vertex
+from meridiana.app.session import ProjectSession
 
 app = QApplication.instance() or QApplication([])
 
@@ -188,7 +189,7 @@ class Corners(Base):
 
     def test_a_free_pitch_has_its_corners(self):
         ring = [[0, 0], [20, 0], [20, 20], [0, 20]]
-        from meridiana import roofs
+        from meridiana.core.geometry import roofs
 
         def free(p):
             b = p.building("b1")
@@ -346,7 +347,7 @@ class Split(Base):
     def test_the_check_fix_splits(self):
         from types import SimpleNamespace
 
-        from meridiana.quick.backend.checks import ChecksBackend
+        from meridiana.gui.backend.checks import ChecksBackend
         self.astride()
         fake = SimpleNamespace(session=self.session)
         item = SimpleNamespace(fix=("action", "split_pitches", "subfield", "s1"), fix_label="Split")

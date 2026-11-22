@@ -1,13 +1,14 @@
-"""Remaining R389 plan contracts driven through the real Quick event adapter."""
+"""Remaining R389 plan contracts driven through the real Quick event adapter (what the Widgets did, recorded on
+10/11/2026: quick/aiuti/riferimenti.py)."""
 import math
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
 
 from PySide6.QtCore import QPoint, QPointF, Qt
 from PySide6.QtTest import QTest
 
-from meridiana import model, move
+from meridiana.core.model import model, move
+from quick.aiuti import riferimenti
 from quick.pianta import test_edit_window as edit
 
 setUpModule = edit.setUpModule
@@ -41,10 +42,8 @@ class Contracts(unittest.TestCase):
         # R550: beside the pointer as every tooltip (ControlMetrics.besidePointer)
         self.assertAlmostEqual(card.parentItem().x(), point_in_view.x()+2, delta=1)
         self.assertAlmostEqual(card.parentItem().y(), point_in_view.y()+21, delta=1)
-        from meridiana.ui.plan import PlanView
-        reference = SimpleNamespace(gesture=self.controller.editor.gesture,
-                                    _transform_now=lambda: self.controller.preview, move_mods=set())
-        self.assertEqual(card.property('text').splitlines(), PlanView._move_labels(reference))
+        # the lines the Widgets' plan wrote for the same rotation (recorded on 10/11/2026)
+        riferimenti.check(self, card.property('text').splitlines())
         folder = Path(__file__).resolve().parents[3]/'build/quick-foto/pianta/contracts'
         folder.mkdir(parents=True, exist_ok=True)
         self.assertTrue(self.window.grabWindow().save(str(folder/'rotate-card.png')))
@@ -146,32 +145,17 @@ class Contracts(unittest.TestCase):
         self.assertFalse(overlay.property('sweeping'))
 
     def test_viewbar_buttons_match_widgets_geometry_and_groups(self):
-        import _setup
-        from PySide6.QtGui import QAction
-        from PySide6.QtWidgets import QWidget, QMenu
-        from meridiana.ui import icons
-        from meridiana.ui.viewbar import ViewBar
-        theme = _setup.meridiana_look()
-        root = QWidget()
-        self.addCleanup(root.close)
-        self.addCleanup(root.deleteLater)
-        menu = QMenu(root)
-        groups = [[] for _ in range(5)]
-        for row in self.controller.viewTools:
-            action = QAction(icons.icon(row['icon']), row['tip'], root)
-            action.setObjectName(row['command'])
-            if row['command'] == 'background':
-                action.setMenu(menu)
-            groups[row['group']].append(action)
-        reference = ViewBar(root, groups)
-        reference.set_colours(theme.tokens)
-        root.resize(600, 200)
-        root.show()
+        # the bar and its buttons where the Widgets' view bar had them (recorded on 10/11/2026)
         QTest.qWait(30)
-        reference.adjustSize()
         quick = self.visual('planViewBar')
-        self.assertEqual((quick.width(), quick.height()), (reference.width(), reference.height()))
-        for action, button in reference.buttons.items():
-            actual = self.visual('planView-'+action.objectName())
+        buttons = {}
+        for row in self.controller.viewTools:
+            actual = self.visual('planView-'+row['command'])
+            if row['command'] == 'sun_map':
+                # the sun map's button (study 45) is shown only where the window has a map, never in the plan alone:
+                # the Widgets had none, and the bar without it keeps their geometry
+                self.assertFalse(actual.isVisible())
+                continue
             at = actual.mapToItem(quick, QPointF(0, 0))
-            self.assertEqual((at.x(), at.y(), actual.width(), actual.height()), button.geometry().getRect())
+            buttons[row['command']] = (at.x(), at.y(), actual.width(), actual.height())
+        riferimenti.check(self, {'bar': (quick.width(), quick.height()), 'buttons': buttons})

@@ -12,8 +12,10 @@ from unittest import mock
 import _setup  # noqa: F401
 import numpy as np
 
-from meridiana import geo, ifc_export, ifc_import, ifc_read, mesh, model, roofs
-from meridiana.session import ProjectSession
+from meridiana.core.geometry import geo, mesh, roofs
+from meridiana.app.exchange import ifc_export, ifc_import, ifc_read
+from meridiana.core.model import model
+from meridiana.app.session import ProjectSession
 
 HERE = {"lat": 46.0, "lon": 13.0, "address": "46.00000000, 13.00000000"}
 
@@ -410,6 +412,43 @@ class Rise(unittest.TestCase):
         through = np.vstack([under, (0.0, 0.0, 6.5)])
         self.assertAlmostEqual(ifc_read._rise(through, [(shape, pitch)]), 1.5, places=6)
         self.assertIsNone(ifc_read._rise(np.array([(50.0, 50.0, 1.0)]), [(shape, pitch)]))
+
+    def test_a_pitch_away_from_the_points_is_passed_over_and_the_highest_under_them_counts(self):
+        # r32-lentezze: only the pitches whose box meets the points are looked at; the answer is the same
+        from shapely.geometry import Polygon
+        flat = {"normal": [0.0, 0.0, 1.0], "point": [0, 0, 5.0]}
+        high = {"normal": [0.0, 0.0, 1.0], "point": [0, 0, 7.0]}
+        far = {"normal": [0.0, 0.0, 1.0], "point": [0, 0, 100.0]}
+        pitches = [(Polygon(_rect(500, 500, 510, 510)), far), (Polygon(_rect(-10, -10, 10, 10)), flat),
+                   (Polygon(_rect(0, 0, 10, 10)), high)]
+        pts = np.array([(5.0, 5.0, 8.0), (-5.0, -5.0, 5.5)])
+        self.assertAlmostEqual(ifc_read._rise(pts, pitches), 1.0, places=6)
+        self.assertIsNone(ifc_read._rise(np.zeros((0, 3)), pitches))
+        self.assertIsNone(ifc_read._rise(pts, []))
+
+
+class FaceSets(unittest.TestCase):
+    def test_the_faces_of_a_polygonal_face_set_through_its_point_index_and_placed(self):
+        # r32-lentezze: the faces of a set read as one array and moved at once, each face its own points
+        need_ifcopenshell()
+        import ifcopenshell
+        f = ifcopenshell.file(schema="IFC4")
+        coords = f.createIfcCartesianPointList3D([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0),
+                                                   (0.0, 0.0, 2.0)])
+        faces = [f.createIfcIndexedPolygonalFace([1, 2, 3, 4]), f.createIfcIndexedPolygonalFace([1, 2, 5])]
+        plain = f.createIfcPolygonalFaceSet(coords, True, faces, None)
+        got = ifc_read._item_faces(plain)
+        self.assertEqual([len(x) for x in got], [4, 3])
+        np.testing.assert_array_equal(got[1], [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 0.0, 2.0)])
+        # PnIndex: the face's indices go through it (5 4 3 2 1, the points reversed)
+        indexed = f.createIfcPolygonalFaceSet(coords, True, faces, [5, 4, 3, 2, 1])
+        np.testing.assert_array_equal(ifc_read._item_faces(indexed)[1], [(0.0, 0.0, 2.0), (0.0, 1.0, 0.0),
+                                                                          (0.0, 0.0, 0.0)])
+        rot = np.array([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+        moved = ifc_read._moved(got, rot, np.array([10.0, 0.0, 0.0]), 0.001)
+        self.assertEqual([len(x) for x in moved], [4, 3])
+        np.testing.assert_allclose(moved[1][2], (10.0, 0.0, 0.002))
+        np.testing.assert_allclose(moved[0][1], (10.0, 0.001, 0.0))
 
 
 if __name__ == "__main__":

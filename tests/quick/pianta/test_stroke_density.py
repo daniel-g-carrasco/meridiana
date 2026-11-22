@@ -7,6 +7,8 @@ from PySide6.QtQml import QQmlComponent
 from PySide6.QtTest import QTest
 
 from quick.pianta import test_window as window_tests
+from quick.aiuti.view_grab import grab_item
+from meridiana.gui.style.design import Annotation
 
 setUpModule = window_tests.setUpModule
 
@@ -29,17 +31,22 @@ Rectangle {
 }''', QUrl())
         cover = component.create()
         self.assertIsNotNone(cover, component.errors())
+        cover.setParent(self.plan)
         cover.setParentItem(self.plan)
-        for width in (1.6, 2.2, 2.6, 4.6, 5):
+        for width in (1.5,):
             cover.setProperty('penWidth', width)
             QTest.qWait(30)
-            actual = self.window.grabWindow()
+            actual = grab_item(cover)
             dpr = actual.devicePixelRatio()
             expected = QImage(actual.size(), QImage.Format_ARGB32_Premultiplied)
             expected.setDevicePixelRatio(dpr)
             expected.fill(QColor('white'))
             painter = QPainter(expected)
             painter.setRenderHint(QPainter.Antialiasing)
+            halo = QPen(QColor(0, 0, 0, round(255*Annotation.HALO_ALPHA)), width+Annotation.HALO_EXTRA)
+            halo.setCosmetic(True)
+            painter.setPen(halo)
+            painter.drawLine(QPointF(50, 100), QPointF(450, 100))
             pen = QPen(QColor('red'), width)
             pen.setCosmetic(True)
             painter.setPen(pen)

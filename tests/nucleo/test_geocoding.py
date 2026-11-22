@@ -5,7 +5,7 @@ import unittest
 
 import _setup
 
-from meridiana.services import geocoding
+from meridiana.app.maps import geocoding
 
 setUpModule = _setup.keep_global_state          # what the module changes of the process, put back after it
 

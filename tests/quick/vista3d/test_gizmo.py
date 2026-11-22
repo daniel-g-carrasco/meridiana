@@ -7,11 +7,12 @@ import _setup
 import numpy as np
 from PySide6.QtQml import QJSEngine
 
-from meridiana import camera, gizmo, mesh
+from meridiana.app.view import camera, gizmo
+from meridiana.core.geometry import mesh
 
 
 setUpModule = _setup.keep_global_state
-QML = Path(__file__).resolve().parents[3] / "src/meridiana/quick/qml/Meridiana/View3D"
+QML = Path(__file__).resolve().parents[3] / "src/meridiana/gui/qml/Meridiana/View3D"
 W, H = 1600, 1000
 
 

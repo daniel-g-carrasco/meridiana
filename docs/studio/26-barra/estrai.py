@@ -19,7 +19,7 @@ from meridiana import config, i18n, phases, theme_colors  # noqa: E402
 i18n._locale_dirs = lambda: [Path(sys.argv[1])]
 i18n.setup("it")
 from meridiana import shortcuts  # noqa: E402
-from meridiana.ui import icons  # noqa: E402
+from meridiana.quick.style import icons  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 

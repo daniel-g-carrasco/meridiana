@@ -13,7 +13,7 @@ is really visible (the clips of its ancestors applied):
     sovrapposto       two texts of the same layer over each other
     scheda-grande     a card or a popup larger than the window, or out of it
     senza-barra       a list that scrolls without a scroll bar
-    senza-sfumature   a list that scrolls without the soft ends of Controls/EdgeFades (ui/fades.py)
+    senza-sfumature   a list that scrolls without the soft ends of Controls/EdgeFades (R624)
     deformato         a control under the size its contents ask, or an icon button out of its proportions
     margini           a popup whose padding differs left and right
 
@@ -138,7 +138,11 @@ class _Walk:
             here['status'] = True
         if cls.startswith('QQuickOverlay') or cls.startswith('QQuickPopupItem'):
             here['layer'] = 'popup:'+str(id(item)) if cls.startswith('QQuickPopupItem') else 'overlay'
-            if cls.startswith('QQuickPopupItem'):
+            # R628: Meridio's stage is a popup of no size, a place in the overlay and not a frame: what it holds is on
+            # the window as before, its own surfaces their frames
+            if cls.startswith('QQuickPopupItem') and item.width() * item.height() == 0:
+                here.update(card=None, clip=UNCLIPPED, cuts=(), layer=state['layer'])
+            elif cls.startswith('QQuickPopupItem'):
                 here.update(card=_rect(item.mapRectToScene(item.boundingRect())), clip=UNCLIPPED, cuts=())
                 self._popup(item, here)
         elif cls.startswith('Card_QML') or cls.startswith('DockPanel_QML') or item.property('sectionControl') is True:
@@ -150,7 +154,12 @@ class _Walk:
         if flickable:
             here['scroll'] = self._flickable(item, here)
         if item.clip():      # the box, not boundingRect: a field's is as wide as its text
-            rect = _rect(item.mapRectToScene(QRectF(0, 0, item.width(), item.height())))
+            box = QRectF(0, 0, item.width(), item.height())
+            held = self._held(item) if flickable else None
+            if held is not None:      # R633: nothing of the content is drawn under the heads held at the page's edges
+                top, bottom = held.property('topInset') or 0, held.property('bottomInset') or 0
+                box = QRectF(0, top, item.width(), max(0.0, item.height() - top - bottom))
+            rect = _rect(item.mapRectToScene(box))
             here['clip'] = _intersect(here['clip'], rect)
             here['cuts'] = here['cuts']+(name,)
         if _is_text(cls, item):
@@ -176,8 +185,16 @@ class _Walk:
                 self.add('senza-sfumature', '', state['path'], _rect(item.mapRectToScene(item.boundingRect())))
         return (old[0] or v, old[1] or h)
 
+    @staticmethod
+    def _held(flickable):
+        """The heads held at the edges of a panel's page (Controls/HeldHeads.qml), beside its flickable."""
+        parent = flickable.parentItem()
+        if parent is None:
+            return None
+        return next((c for c in parent.childItems() if c.objectName() == 'heldHeads'), None)
+
     def _has_fades(self, flickable):
-        names = ('topFade', 'bottomFade', 'scroll-fade-top', 'scroll-fade-bottom')
+        names = ('edgeFades',)          # R624: the one component of the soft ends
         for start in (flickable, flickable.parentItem()):
             pending = [(start, 0)] if start is not None else []
             while pending:
@@ -205,6 +222,11 @@ class _Walk:
         if not isinstance(text, str) or not text.strip() or item.width() <= 0 or item.height() <= 0:
             return
         local = item.boundingRect()
+        if item.inherits('QQuickTextEdit'):
+            # a text edit's boundingRect holds its cursor's rectangle too, a few pixels past the last letter even when
+            # it is read-only and shows no cursor (M.ReadableText): the laid out text is its content, from its padding
+            local = QRectF(item.property('leftPadding') or 0, item.property('topPadding') or 0,
+                           item.property('contentWidth'), item.property('contentHeight'))
         if item.inherits('QQuickText'):     # elided or wrapped, the laid out text stays in the box: no enum to read
             if local.width() > item.width()+TOLERANCE:
                 self.add('sforato', text, state['path'], _rect(item.mapRectToScene(local)),
@@ -221,7 +243,10 @@ class _Walk:
         parent = item.parentItem()
         if item.inherits('QQuickTextInput') or (parent is not None and parent.inherits('QQuickTextInput')):
             scroll_h = True
-        if (rect[2]-shown[2] > TOLERANCE and not scroll_h) or (rect[3]-shown[3] > TOLERANCE and not scroll_v):
+        # R633: past ControlMetrics.heldShare of the page the farthest held heads go on scrolling out of it, cut by
+        # their own held copy's frame (HeldHeads.qml): meant, not a text with no room
+        held_out = bool(state['cuts']) and state['cuts'][-1].startswith('held:')
+        if not held_out and ((rect[2]-shown[2] > TOLERANCE and not scroll_h) or (rect[3]-shown[3] > TOLERANCE and not scroll_v)):
             self.add('tagliato', text, state['path'], rect, f'shown {shown[2]:.0f}x{shown[3]:.0f} by {state["cuts"][-1:]}')
         self._bounds(shown, rect, state, text)
         self.texts.append((shown, text, state['layer'], state['path'], item))
@@ -439,7 +464,7 @@ def walk_states(host, dialogs=True):
 
 
 def file_sections(files):
-    from meridiana.quick.backend.settings import SECTIONS
+    from meridiana.gui.backend.settings import SECTIONS
     return [*FILE_SECTIONS, *(f'preferences:{section}' for section in SECTIONS)]
 
 
@@ -488,9 +513,9 @@ def summary(report):
 
 
 def _open(project_path, cache):
-    from meridiana import model
-    from meridiana.quick.app import QuickWindow
-    from meridiana.quick.sample import recorded_weather
+    from meridiana.core.model import model
+    from meridiana.gui.application import QuickWindow
+    from meridiana.gui.sample import recorded_weather
     project, _notice = model.Project.load(project_path)
     recorded_weather(project, cache)
     return QuickWindow(project, cache, real_views=True, theme={'theme': 'light'})
@@ -580,7 +605,7 @@ def main():
         os.environ['QT_QPA_PLATFORM'] = args.platform
     if os.environ.get('QT_QPA_PLATFORM') == 'offscreen':
         os.environ.setdefault('QSG_RENDER_LOOP', 'basic')       # see tests/quick/sistema/test_confini.py
-    from meridiana.quick.app import create_app
+    from meridiana.gui.application import create_app
     app = create_app()
     start = time.perf_counter()
     with tempfile.TemporaryDirectory(prefix='meridiana-confini-', ignore_cleanup_errors=True) as work:

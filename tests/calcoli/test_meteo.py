@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-from meridiana.energy import meteo, pvgis
+from meridiana.core.energy import meteo, pvgis
 
 REF = _setup.REFERENCES
 

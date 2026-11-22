@@ -15,7 +15,7 @@ import _setup  # noqa: F401
 from _fakes import FakeAnthropic, FakeServer, Host, recorded, text_answer, tool_answer, with_problems
 from _fixtures import capannone_rho
 
-from meridiana.assistant import context, conversation, costs, privacy, providers, text, tools
+from meridiana.app.assistant import context, conversation, costs, privacy, providers, text, tools
 from meridiana.i18n import number
 
 
@@ -94,8 +94,9 @@ class Recorded(unittest.TestCase):
 class DanielConversation(unittest.TestCase):
     def test_the_r170_conversation_gives_the_model_unambiguous_answers(self):
         from types import SimpleNamespace
-        from meridiana import checks, model
-        from meridiana.energy.simulate import ChainStep
+        from meridiana.core.rules import checks
+        from meridiana.core.model import model
+        from meridiana.core.energy.simulate import ChainStep
 
         p = capannone_rho()
         p.subfields[0].name = "Copertura"
@@ -423,7 +424,7 @@ class Tools(unittest.TestCase):
 
     def test_production_results_name_the_plant_and_array_bases_of_obstacle_shade(self):
         from types import SimpleNamespace
-        from meridiana.energy.simulate import ChainStep
+        from meridiana.core.energy.simulate import ChainStep
         sim = SimpleNamespace(
             p_stc_kw=65.0, p_ac_kw=50.0, energy_kwh=80000.0, specific_yield=1230.0, pr=0.8,
             monthly={}, notes=[], arrays=[{"key": "s1.0", "name": "Copertura est", "obstacle_shading": 0.033}],
@@ -439,7 +440,7 @@ class Tools(unittest.TestCase):
         self.assertIn("after far shading", out["obstacle_shading"][0]["basis"])
 
     def test_check_counts_follow_the_filters_and_an_object_finds_checks_in_every_area(self):
-        from meridiana import checks
+        from meridiana.core.rules import checks
         host = problems_host()
         host._checks = [
             checks.Item("fail", "layout", "Copertura: posa", target=("subfield", "s1")),
@@ -590,8 +591,8 @@ class Words(unittest.TestCase):
 class ClientWithheld(unittest.TestCase):
     def test_the_reports_client_is_withheld_as_the_projects_name(self):
         """R61 brought a client's name into the project (Project.report): towards the cloud it is a placeholder."""
-        from meridiana import model
-        from meridiana.assistant import privacy
+        from meridiana.core.model import model
+        from meridiana.app.assistant import privacy
         p = model.Project(name="Capannone Rossi")
         p.site.address = "Via Garibaldi 12, Rho"
         p.report = {"client": "Rossi Costruzioni Srl"}

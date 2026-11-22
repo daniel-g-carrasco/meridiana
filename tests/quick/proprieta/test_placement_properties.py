@@ -2,13 +2,15 @@
 import unittest
 
 from _fixtures import capannone
-from meridiana import jobs, layout, model
-from meridiana.session import ProjectSession
+from meridiana.app import jobs
+from meridiana.core.layout import layout
+from meridiana.core.model import model
+from meridiana.app.session import ProjectSession
 
 
 class PlacementProperties(unittest.TestCase):
     def setUp(self):
-        from meridiana.quick.backend.properties import PropertiesBackend
+        from meridiana.gui.backend.properties import PropertiesBackend
         self.project = capannone()
         self.session = ProjectSession(self.project)
         self.backend = PropertiesBackend(self.session)
@@ -92,7 +94,7 @@ class PlacementProperties(unittest.TestCase):
 
 class TakenOutAcrossRows(unittest.TestCase):
     def test_a_module_taken_out_between_new_rows_goes_to_the_nearest_one(self):
-        from meridiana import manual
+        from meridiana.core.layout import manual
         p = model.Project(name="prova")
         sf = model.SubField(id="s1", name="S", ring=[[0, 2.6], [16.2, 0], [20.0, 21.2], [0.6, 22.0]],
                             params={"alignment": "aligned", "pitch_mode": "value", "pitch": 4.0}, filled=True)
@@ -129,7 +131,7 @@ class PowerAskedR22(PlacementProperties):
         self.assertIn("back", self.data("target_rule")["value"])
 
     def test_a_sub_field_drawn_as_its_modules_takes_the_power_asked(self):
-        from meridiana import manual
+        from meridiana.core.layout import manual
         manual.make_flush(self.session.project, self.sf)
         self.lay()
         whole = self.session.results[self.sf.id].count
@@ -145,7 +147,7 @@ class PowerAskedR22(PlacementProperties):
 
 class DefaultsR22(unittest.TestCase):
     def test_the_defaults_have_the_power_asked(self):
-        from meridiana.quick.backend.properties_schema import build_schema
+        from meridiana.gui.backend.properties_schema import build_schema
         p = model.Project(name="prova")
         p.layout_defaults = {"params": {"target_kwp": 12.0}}
         keys = [f["id"] for section in build_schema(ProjectSession(p), "defaults", None) for f in section["fields"]]

@@ -11,8 +11,8 @@ from PySide6.QtQuick import QQuickItem, QQuickView
 from PySide6.QtTest import QTest
 
 from quick.impianto.catalog_fixtures import APP, module, settle
-from meridiana.quick.backend.catalog import CatalogBackend, PAGE_URL
-from meridiana.quick.backend.controls import install_controls
+from meridiana.gui.backend.catalog import CatalogBackend, PAGE_URL
+from meridiana.gui.backend.controls import install_controls
 
 
 def item(root, name):
@@ -81,7 +81,7 @@ class ShowAllTest(unittest.TestCase):
     """R434, Daniel 06/11/2026: the catalogue opens on what is current and for Europe, «Show all (n)» beside the
     filters, in sight, and a click on it shows every product; «Clear» goes back."""
     def test_show_all_beside_the_filters_brings_every_product(self):
-        from meridiana.quick.backend import catalog as quick_catalog
+        from meridiana.gui.backend import catalog as quick_catalog
         quick_catalog._REMEMBERED.clear()
         self.addCleanup(quick_catalog._REMEMBERED.clear)
         temporary = tempfile.TemporaryDirectory()

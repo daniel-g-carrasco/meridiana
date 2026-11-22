@@ -67,20 +67,28 @@ def models_of(corpus: Path) -> list[tuple[str, Path]]:
     return [(f"m{i + 1:02d}", p) for i, p in enumerate(files)]
 
 
-def read(path: Path, mode: str, budget: float, memory: int) -> tuple[dict | None, str, str, float]:
+def read(path: Path, mode: str, budget: float, memory: int, context: Path | None = None) -> tuple[dict | None, str, str, float]:
     """(found, outcome, why, peak bytes): the worker as the window starts it, its stdout read, its time and memory
     watched. Never raises for what a model does."""
-    from meridiana import procmem
+    from meridiana.core.compute import procmem
     env = dict(os.environ, PYTHONPATH=str(ROOT / "src"), PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
-    from meridiana.ifc_worker import main as _worker
+    from meridiana.app.exchange.ifc_worker import main as _worker
     extra = ["--budget", str(round(budget * 0.7))] if "--budget" in (_worker.__code__.co_consts or ()) else []
-    p = subprocess.Popen([sys.executable, "-m", "meridiana.ifc_worker", str(path), "--mode", mode, *extra], env=env,
+    context_args = ['--context', str(context)] if context else []
+    p = subprocess.Popen([sys.executable, "-m", "meridiana.app.exchange.ifc_worker", str(path), "--mode", mode, *extra, *context_args], env=env,
                          stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, cwd=str(ROOT))
     box: dict = {"lines": []}
 
     def pump():
         for raw in p.stdout:
-            if raw.startswith(b'{"result"') or raw.startswith(b'{"error"'):
+            if raw.startswith(b'{"result_file"'):
+                # a large answer comes through a file, which whoever reads it removes (as the window does)
+                kept = Path(json.loads(raw.decode("utf-8", "replace"))["result_file"])
+                try:
+                    box["lines"].append(b'{"result": ' + kept.read_bytes() + b"}")
+                finally:
+                    kept.unlink(missing_ok=True)
+            elif raw.startswith(b'{"result"') or raw.startswith(b'{"error"'):
                 box["lines"].append(raw)
     th = threading.Thread(target=pump, daemon=True)
     th.start()
@@ -114,7 +122,9 @@ def checks(found: dict) -> dict:
     from shapely.geometry import Polygon
     from shapely.ops import unary_union
 
-    from meridiana import ifc_import, mesh, model
+    from meridiana.app.exchange import ifc_import
+    from meridiana.core.geometry import mesh
+    from meridiana.core.model import model
 
     def shape(ring):
         s = Polygon(ring)
@@ -141,7 +151,8 @@ def checks(found: dict) -> dict:
     raw_top, raw_area = None, 0.0
     frame = ifc_import.Frame(found, place, how, project.site)
     raw_planes = []
-    for b in found.get("buildings") or []:
+    from meridiana.app.exchange import ifc_ground
+    for b in ifc_ground.grounded(found).get("buildings") or []:     # R602: each above the zero the plan used
         ground = float(b.get("ground") or 0.0)
         for p in b.get("pitches") or []:
             member = ifc_import._Pitch(p, frame, ground)
@@ -244,7 +255,7 @@ def row_of(code: str, path: Path, found: dict | None, outcome: str, why: str, mo
 
 
 def run(args) -> int:
-    from meridiana import procmem
+    from meridiana.core.compute import procmem
     corpus = Path(args.corpus)
     out = corpus / "banco" / args.label
     out.mkdir(parents=True, exist_ok=True)

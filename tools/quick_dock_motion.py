@@ -35,8 +35,8 @@ def main():
     os.environ['QSG_RENDER_LOOP'] = args.render_loop
     from PySide6.QtCore import QEvent, QTimer, Qt
     from _fixtures import capannone
-    from meridiana import jobs
-    from meridiana.quick.app import QuickWindow, create_app
+    from meridiana.app import jobs
+    from meridiana.gui.application import QuickWindow, create_app
     from quick.gestures import item, mouse, point, pump, wait_for
     app = create_app()
     beat, gaps, frames = [time.perf_counter()], [], [0]

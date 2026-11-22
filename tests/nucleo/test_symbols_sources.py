@@ -18,7 +18,7 @@ FORBIDDEN = {chr(c) for c in (*range(0x2713, 0x2719), 0x26A0, 0x26D4, 0x2139, 0x
                               0x24D8, 0x1F6C8, 0x2611, 0x2612, 0x21B6, 0xFE0F)}
 # file (relative to src/meridiana) -> why its characters stay
 ALLOWED = {
-    "ui/symbols.py": "html(): the character when the temporary folder cannot be written, the last resort",
+    "gui/style/symbols.py": "html(): the character when the temporary folder cannot be written, the last resort",
 }
 # Lucide's icons that say a status: the window's symbols are used for those (icons.py NAMES, icons.icon("..."))
 STATUS_ICONS = {"check", "check-check", "circle-check", "circle-check-big", "square-check", "badge-check",
@@ -59,7 +59,7 @@ class SymbolsAreTheOnlySigns(unittest.TestCase):
                     bad = sorted(set(code) & FORBIDDEN)
                     if bad:
                         found.append(f"{path.relative_to(SRC).as_posix()}:{number}: {bad}")
-        self.assertEqual(found, [], "use ui/symbols.py (icon, paint, sign, html), or justify it in ALLOWED")
+        self.assertEqual(found, [], "use gui/style/symbols.py (icon, paint, sign, html), or justify it in ALLOWED")
 
     def test_the_allowed_files_still_need_their_characters(self):
         for rel in ALLOWED:
@@ -68,7 +68,7 @@ class SymbolsAreTheOnlySigns(unittest.TestCase):
 
     def test_no_lucide_icon_says_a_status(self):
         found = []
-        icons_py = ast.parse((SRC / "ui" / "icons.py").read_text(encoding="utf-8"))
+        icons_py = ast.parse((SRC / "gui" / "style" / "icons.py").read_text(encoding="utf-8"))
         for node in ast.walk(icons_py):
             if isinstance(node, ast.Assign) and any(getattr(t, "id", "") == "NAMES" for t in node.targets):
                 found += [f"icons.NAMES: {v.value}" for v in node.value.values
@@ -79,18 +79,18 @@ class SymbolsAreTheOnlySigns(unittest.TestCase):
                         and getattr(node.func.value, "id", "") == "icons" and node.args
                         and isinstance(node.args[0], ast.Constant) and node.args[0].value in STATUS_ICONS):
                     found.append(f"{path.relative_to(SRC).as_posix()}:{node.lineno}: icons.icon({node.args[0].value!r})")
-        self.assertEqual(found, [], "a status is a symbol of ui/symbols.py")
+        self.assertEqual(found, [], "a status is a symbol of gui/style/symbols.py")
 
 
 class TheReportDrawsTheWindowsSymbols(unittest.TestCase):
     def test_the_shapes_module_has_no_qt(self):
-        tree = ast.parse((SRC / "symbol_shapes.py").read_text(encoding="utf-8"))
+        tree = ast.parse((SRC / "app" / "interface" / "symbol_shapes.py").read_text(encoding="utf-8"))
         modules = [n.module or "" for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
         modules += [a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names]
         self.assertFalse([m for m in modules if "PySide6" in m or "Qt" in m], modules)
 
     def test_the_marks_of_the_report_are_the_same_tracks(self):
-        from meridiana import symbol_shapes
+        from meridiana.app.interface import symbol_shapes
         marks = symbol_shapes.report_marks()
         self.assertEqual(set(marks), {"ok", "warn", "fail", "info"})
         for level, name in symbol_shapes.LEVEL.items():
@@ -101,7 +101,7 @@ class TheReportDrawsTheWindowsSymbols(unittest.TestCase):
         self.assertIn(symbol_shapes.TRIANGLE, marks["warn"])               # the warning's triangle, as wide as the disc
 
     def test_the_template_draws_them_and_no_longer_its_own(self):
-        template = (SRC / "report_typst" / "template.typ").read_text(encoding="utf-8")
+        template = (SRC / "app" / "report" / "template.typ").read_text(encoding="utf-8")
         mark = template[template.index("#let mark("):template.index("#let fitted(")]
         self.assertIn("D.marks", mark)
         self.assertFalse(re.search(r"\b(polygon|curve|circle|line)\(", mark), "the template draws its own marks again")

@@ -9,8 +9,8 @@ import numpy as np
 
 import _setup  # noqa: F401
 
-from meridiana import layout
-from meridiana.energy import nearshade
+from meridiana.core.layout import layout
+from meridiana.core.energy import nearshade
 
 
 def flat_modules(y0=2.0, y1=4.0, z=0.0, count=10):
@@ -193,8 +193,9 @@ class OwnRoof(unittest.TestCase):
     def test_one_arm_of_an_l_shades_the_other_on_a_winter_morning(self):
         from datetime import date
 
-        from meridiana import model, sun
-        from meridiana.energy import system
+        from meridiana.core.model import model
+        from meridiana.core.geometry import sun
+        from meridiana.core.energy import system
         p = model.Project(name="L")
         p.site = model.Site(lat=45.5226, lon=9.03)
         p.buildings.append(model.Building(id="b1", name="Casa", footprint=[[0, 0], [20, 0], [20, 8], [8, 8], [8, 18],

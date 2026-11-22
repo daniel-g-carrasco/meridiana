@@ -8,12 +8,14 @@ import unittest
 from pathlib import Path
 
 import _setup
-from meridiana import i18n, jobs
-from meridiana.quick.app import QuickWindow, create_app
-from meridiana.quick.backend import plant_summary as summary
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
+from meridiana.gui.backend import plant_summary as summary
 from quick import confini
 from quick.gestures import item, pump, wait_for
-from quick.parity.differential import connected_fixture
+from quick.aiuti.differential import connected_fixture
+from quick.aiuti.finestra_libera import settled
 
 setUpModule = _setup.keep_global_state
 
@@ -60,7 +62,11 @@ class Bar(unittest.TestCase):
         self.plant.clear_choice()
         self.session.select('', '')
         self.win.resize(1600, 960)
-        pump(700)       # the bar's mode follows the window's size after a short wait
+        # the bar's mode follows the window's size after a short wait (Workbench's arrangeTimer) and its motion: a
+        # fixed 700 ms was too short with the machine loaded, after a module that left the window low, and R419 took
+        # the bar of the low window (44 px) for where the summary stands, the arrangement then came during the test
+        # (67 px) and «something moved»: the selection moves nothing (its tools and the bar's needs stay the same)
+        self.assertTrue(settled(self.win), 'the window kept drawing')
 
     def test_the_totals_are_the_plants_figures(self):
         said = values(self.summary.totals)
@@ -79,7 +85,9 @@ class Bar(unittest.TestCase):
     def test_it_follows_a_string_deleted_and_taken_back(self):
         before = values(self.summary.totals)
         self.plant.deleteString(0)
-        wait_for(lambda: values(self.summary.totals)['Stringhe'] != before['Stringhe'], 20)
+        # the count of strings and the modules connected can come one after the other (on Linux, in the whole group)
+        wait_for(lambda: values(self.summary.totals)['Stringhe'] != before['Stringhe']
+                 and values(self.summary.totals)['Collegati'] != before['Collegati'], 20)
         after = values(self.summary.totals)
         self.assertNotEqual(after['Collegati'], before['Collegati'])
         self.assertEqual(after['Moduli posati'], before['Moduli posati'])
@@ -172,8 +180,8 @@ class Optimizers(unittest.TestCase):
         cls.app = _setup.qt_or_skip()
         create_app()
         i18n.setup('it')
-        from meridiana import catalog
-        from meridiana.energy import plant as core
+        from meridiana.data import catalog
+        from meridiana.core.energy import plant as core
         record = next(r for r in catalog.search('inverters', manufacturer='SolarEdge', limit=None) if r['model'] == 'SE50K')
         project = connected_fixture()
         results, keys, _laid = jobs.layout_of(project)
@@ -190,7 +198,9 @@ class Optimizers(unittest.TestCase):
         cls.plant = cls.host.parts.controllers['plant']
         cls.host.shell.trigger('phase_plant')
         wait_for(lambda: not cls.plant.busy and cls.plant.strings, 60)
-        pump(200)
+        # the units' squares are drawn by the plan's overlays after the plant's answer, a turn of events later or more
+        # on a loaded machine: a fixed 200 ms found none (0 != 20, on Linux and once in three on Windows)
+        wait_for(lambda: any(b['fill'] != 'transparent' for b in cls.host.plan.optimizerPaths), 30)
 
     @classmethod
     def tearDownClass(cls):
@@ -217,7 +227,7 @@ class Optimizers(unittest.TestCase):
         self.assertEqual(len(lines[0]['points']), 40 // self.plant.units[0]['per'])
 
     def test_a_pair_of_one_module_stands_off_the_module_with_its_cable(self):
-        from meridiana import string_paths
+        from meridiana.core.geometry import string_paths
         import numpy as np
         quad = np.array([[[0, 0], [2, 0], [2, 1], [0, 1]], [[2, 0], [4, 0], [4, 1], [2, 1]]], dtype=float)
         (alone, ) = string_paths.optimizer_units(quad, [[0]])

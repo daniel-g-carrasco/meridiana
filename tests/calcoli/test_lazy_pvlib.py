@@ -20,7 +20,7 @@ class ConcurrentImport(unittest.TestCase):
             from pathlib import Path
             from types import SimpleNamespace
             import requests
-            from meridiana.energy import meteo, stringing
+            from meridiana.core.energy import meteo, stringing
 
             assert 'pvlib' not in sys.modules
             root_entered = threading.Event()
@@ -37,7 +37,7 @@ class ConcurrentImport(unittest.TestCase):
                         child_entered.wait(0.4)
                     elif threading.current_thread().name == 'sizing':
                         child_entered.set()
-                        time.sleep(0.1)
+                        time.sleep(0.1)  # wait: the sizing thread made slow on purpose, so the two overlap
                     self.wrapped.exec_module(module)
 
             class Finder(importlib.abc.MetaPathFinder):

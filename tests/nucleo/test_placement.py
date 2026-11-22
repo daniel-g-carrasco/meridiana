@@ -9,7 +9,8 @@ import _setup  # noqa: F401
 import shapely
 from shapely.geometry import Polygon
 
-from meridiana import layout, model
+from meridiana.core.layout import layout
+from meridiana.core.model import model
 
 SHAPES = {
     "rectangle": [(0, 0), (30, 0), (30, 18), (0, 18)],
@@ -389,7 +390,7 @@ class TheProject(unittest.TestCase):
         self.assertEqual(model.new_params("ground"), {"mounting": "ground", "alignment": "aligned"})
 
     def test_fill_gives_the_shadows_only_when_a_power_is_asked(self):
-        from meridiana.energy import system
+        from meridiana.core.energy import system
         p = self.project()
         sf = p.subfields[0]
         calls = []
@@ -405,7 +406,7 @@ class TheProject(unittest.TestCase):
         self.assertEqual(r.count, 22)
 
     def test_the_power_asked_avoids_the_shadow_of_the_plant(self):
-        from meridiana.energy import system
+        from meridiana.core.energy import system
         p = self.project()
         sf = p.subfields[0]
         sf.params["target_kwp"] = 40.0

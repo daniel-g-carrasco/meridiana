@@ -7,9 +7,11 @@ import unittest
 from pathlib import Path
 
 import _setup
-from meridiana import i18n, manual, model
-from meridiana.quick.app import QuickWindow, create_app
-from quick.gestures import item, pump, wait_for
+from meridiana import i18n
+from meridiana.core.layout import manual
+from meridiana.core.model import model
+from meridiana.gui.application import QuickWindow, create_app
+from quick.gestures import click, item, point, pump, wait_for
 
 setUpModule = _setup.keep_global_state
 
@@ -66,6 +68,8 @@ class Defaults(unittest.TestCase):
         self.session.select('site', '')
         self.actions.openSection('panels')
         pump(400)
+        # R598: after an undo that moved modules the views hear a selection a piece each on the window's turns
+        wait_for(lambda: not self.session.telling() and self.panels.kind == 'defaults', 10)
 
     def test_without_a_selection_the_panel_says_and_shows_the_defaults(self):
         self.assertEqual(self.panels.kind, 'defaults')
@@ -115,15 +119,47 @@ class Defaults(unittest.TestCase):
         self.session.undo.undo()
         self.assertEqual(len(self.session.project.subfields), 1)
 
+    def test_the_defaults_choose_their_module_in_the_catalogue(self):
+        """R629 (Daniel 15/11/2026: «da dove ho la possibilità di scegliere un modulo?»): next to the defaults' module the
+        catalogue, as for a sub-field; the module taken there is the next sub-fields' and joins the project's."""
+        from meridiana.data import catalog
+        side = item(self.win, 'plant-inspector')
+        wait_for(lambda: within(side, 'editor:module') is not None, 10)
+        button = within(side, 'action:catalog_module')       # beside the field and alive: a click opens the catalogue
+        self.assertIsNotNone(button)
+        self.assertIsNone(within(side, 'previous:catalog_module'))
+        click(self.app, self.win, point(button))
+        wait_for(lambda: self.actions.dialog == 'catalog', 10)
+        self.assertEqual((self.actions.dialog, self.host.parts.controllers['catalog'].kind), ('catalog', 'modules'))
+        record = catalog.search('modules', 'LONGi', source='curated', limit=1)[0]
+        before = model._subfield_json(self.session.project.subfields[0])
+        self.host.parts.controllers['catalog'].chosen.emit('modules', dict(record))
+        mid = str(record['id'])
+        self.assertEqual(self.actions.dialog, '')
+        self.assertIn(mid, self.session.project.modules)
+        self.assertEqual(self.session.project.default_module(), mid)
+        self.assertEqual(model._subfield_json(self.session.project.subfields[0]), before)
+        wait_for(lambda: self.panels.field('module').data['value'] == mid, 10)
+        self.session.undo.undo()
+        self.assertEqual((self.session.project.layout_defaults, self.session.project.default_module()), ({}, 'generic-450'))
+
     def test_with_a_sub_field_selected_the_panel_is_its_own_and_gives_and_takes_the_defaults(self):
         self.session.select('subfield', 's1')
         pump(400)
+        wait_for(lambda: not self.session.telling() and self.panels.kind == 'subfield', 10)
         self.assertEqual(self.panels.kind, 'subfield')
         side = item(self.win, 'plant-inspector')
         self.assertEqual(within(side, 'plant-panels-heading').property('text'), 'Sottocampo «Esistente»')
         wait_for(lambda: within(side, 'action:defaults_take') is not None, 10)
         self.assertIsNotNone(within(side, 'action:defaults_apply'))
-        self.session.project.subfields[0].params['gap'] = 0.05
+        # R629: the fields' companions on the form on show answer (they were made with the form, hidden)
+        for name in ('catalog_module', 'automatic'):
+            self.assertIsNone(within(side, 'previous:' + name), name)
+        self.assertIsNotNone(within(side, 'action:catalog_module'))
+        self.assertIsNotNone(within(side, 'editor:automatic'))
+        params = dict(self.session.project.subfields[0].params)
+        # through session.edit, as the program changes it: a write behind its back leaves the jobs' photo behind
+        self.session.edit('Gap', lambda p: p.subfields[0].params.__setitem__('gap', 0.05))
         self.panels.trigger('defaults_take')
         self.assertEqual(self.session.project.layout_defaults, {'module': 'generic-450',
                                                                 'params': {'alignment': 'aligned', 'gap': 0.05}})
@@ -132,6 +168,8 @@ class Defaults(unittest.TestCase):
         self.assertEqual(self.session.project.subfields[0].params, {'mounting': 'tilted_anchored',
                                                                     'alignment': 'aligned'})
         self.session.undo.undo()
+        self.session.undo.undo()                # the gap as it was
+        self.assertEqual(self.session.project.subfields[0].params, params)
 
 
 if __name__ == '__main__':

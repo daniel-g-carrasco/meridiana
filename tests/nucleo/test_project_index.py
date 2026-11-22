@@ -8,7 +8,8 @@ from unittest import mock
 import _setup  # noqa: F401
 from _fixtures import capannone
 
-from meridiana import project_index, registry
+from meridiana.app.project import project_index
+from meridiana.data import registry
 
 
 class ProjectIndexTest(unittest.TestCase):
@@ -51,7 +52,7 @@ class ProjectIndexTest(unittest.TestCase):
     def test_an_unchanged_file_is_not_read_again_and_a_damaged_one_stays_visible(self):
         path = self.project_file()
         first = project_index.scan([(self.folder, self.metadata)], {})
-        with mock.patch("meridiana.model.Project.from_json", side_effect=AssertionError("read again")):
+        with mock.patch("meridiana.core.model.model.Project.from_json", side_effect=AssertionError("read again")):
             second = project_index.scan([(self.folder, self.metadata)],
                                         {row["path"]: row for row in first})
         self.assertEqual(second, first)
@@ -65,11 +66,11 @@ class ProjectIndexTest(unittest.TestCase):
         self.project_file()
         first = project_index.scan([(self.folder, self.metadata)], {})
         changed = {**self.metadata, "client_name": "Renamed client", "reserved": True}
-        with mock.patch("meridiana.model.Project.from_json", side_effect=AssertionError("read again")):
+        with mock.patch("meridiana.core.model.model.Project.from_json", side_effect=AssertionError("read again")):
             second = project_index.scan([(self.folder, changed)], {row["path"]: row for row in first})
         self.assertEqual(second[0]["client_name"], "Renamed client")
         self.assertTrue(second[0]["reserved"])
-        with mock.patch("meridiana.model.Project.from_json", side_effect=AssertionError("read again")):
+        with mock.patch("meridiana.core.model.model.Project.from_json", side_effect=AssertionError("read again")):
             third = project_index.scan([(self.folder, self.metadata)], {row["path"]: row for row in second})
         self.assertFalse(third[0]["reserved"])
 

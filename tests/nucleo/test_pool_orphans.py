@@ -16,10 +16,10 @@ MAKER = r'''
 import os, sys, time, concurrent.futures
 sys.path.insert(0, sys.argv[1])
 os.environ["MERIDIANA_WORKERS"] = "2"
-from meridiana import resources
+from meridiana.core.compute import resources
 concurrent.futures.wait(resources.warm(), timeout=120)
 print(" ".join(str(p) for p in sorted(resources._POOL._processes)), flush=True)
-time.sleep(600)
+time.sleep(600)  # wait: the child process stays alive until the test ends it
 '''
 
 
@@ -57,7 +57,7 @@ def wait_gone(pids, seconds=20.0):
         left = [p for p in pids if alive(p)]
         if not left:
             return []
-        time.sleep(0.2)
+        time.sleep(0.2)  # wait: a breath between two looks at the condition, so the workers' threads run
     return [p for p in pids if alive(p)]
 
 

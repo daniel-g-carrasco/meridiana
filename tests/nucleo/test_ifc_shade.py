@@ -8,8 +8,9 @@ from pathlib import Path
 import numpy as np
 
 import _setup  # noqa: F401  (paths and the common setup)
-from meridiana import ifc_import, ifc_shade, ifc_worker, model
-from meridiana.energy import nearshade, system
+from meridiana.app.exchange import ifc_import, ifc_shade, ifc_worker
+from meridiana.core.model import model
+from meridiana.core.energy import nearshade, system
 from nucleo.test_ifc_scan import SAMPLE
 
 

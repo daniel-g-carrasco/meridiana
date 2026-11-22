@@ -12,8 +12,9 @@ from unittest import mock
 
 import _setup  # noqa: F401
 
-from meridiana import model, project_index, recovery
-from meridiana.underlay import Underlay
+from meridiana.core.model import model
+from meridiana.app.project import project_index, recovery
+from meridiana.core.model.underlay import Underlay
 
 
 class ProjectArchive(unittest.TestCase):
@@ -66,7 +67,7 @@ class ProjectArchive(unittest.TestCase):
         original = self.path.read_bytes()
         p.name = "Modified"
         before = copy.deepcopy(p.to_json())
-        import meridiana.project_archive as archive
+        import meridiana.data.project_archive as archive
         real_replace = archive.os.replace
 
         def fail_target(source, target):
@@ -111,7 +112,7 @@ class ProjectArchive(unittest.TestCase):
             model.Project.load(self.path)
 
     def test_archive_paths_duplicates_and_unlisted_members_are_rejected(self):
-        from meridiana import project_archive as archive
+        from meridiana.data import project_archive as archive
         for name in ("../outside", "/outside", "assets/../outside", "unlisted"):
             with self.subTest(name=name):
                 self.project().save(self.path)
@@ -128,7 +129,7 @@ class ProjectArchive(unittest.TestCase):
             archive.read(self.path)
 
     def test_limits_apply_before_resource_decode_and_decompression(self):
-        from meridiana import project_archive as archive
+        from meridiana.data import project_archive as archive
         p = self.project()
         with mock.patch.object(archive, "RESOURCE_LIMIT", 4):
             with self.assertRaisesRegex(ValueError, "limit"):
@@ -143,7 +144,7 @@ class ProjectArchive(unittest.TestCase):
                 archive.read(self.path)
 
     def test_entry_limit_is_checked_before_zipfile_allocates_the_directory(self):
-        from meridiana import project_archive as archive
+        from meridiana.data import project_archive as archive
         self.project().save(self.path)
         with mock.patch.object(archive, "ENTRY_LIMIT", 2), \
                 mock.patch.object(zipfile, "ZipFile", side_effect=AssertionError("directory already allocated")):
@@ -151,7 +152,7 @@ class ProjectArchive(unittest.TestCase):
                 archive.read(self.path)
 
     def test_resource_references_are_only_interpreted_in_known_binary_fields(self):
-        from meridiana import project_archive as archive
+        from meridiana.data import project_archive as archive
         data = self.project().to_json()
         data["resources"]["extension"] = {"$asset": "not-an-asset"}
         archive.write(self.path, data)
@@ -185,14 +186,14 @@ class ProjectArchive(unittest.TestCase):
         self.assertEqual(p.to_json(), before)
 
     def test_changed_project_json_with_an_invalid_hash_is_rejected(self):
-        from meridiana import project_archive as archive
+        from meridiana.data import project_archive as archive
         self.project().save(self.path)
         self.rewrite(lambda entries: entries.update({"project.json": b"{}"}))
         with self.assertRaises(ValueError):
             archive.read(self.path)
 
     def test_non_finite_numbers_are_rejected_even_when_the_archive_digest_is_valid(self):
-        from meridiana import project_archive as archive
+        from meridiana.data import project_archive as archive
         for number in (b"1e999", b"-1e999", b"NaN", b"Infinity"):
             with self.subTest(number=number):
                 self.project().save(self.path)
@@ -212,7 +213,7 @@ class ProjectArchive(unittest.TestCase):
                     archive.read(self.path)
 
     def test_invalid_known_resource_container_is_rejected_as_a_document_error(self):
-        from meridiana import project_archive as archive
+        from meridiana.data import project_archive as archive
         self.project().save(self.path)
 
         def malformed(entries):
@@ -228,7 +229,7 @@ class ProjectArchive(unittest.TestCase):
             archive.read(self.path)
 
     def test_resaving_a_loaded_project_keeps_its_embedded_report_profile_and_logo(self):
-        from meridiana import portability
+        from meridiana.app.project import portability
         logo = self.folder / "logo.png"
         logo.write_bytes(b"logo data")
         p = self.project()
@@ -242,7 +243,7 @@ class ProjectArchive(unittest.TestCase):
         self.assertEqual(Path(profile["logo"]).read_bytes(), b"logo data")
 
     def test_failed_backup_replace_does_not_replace_the_project(self):
-        from meridiana import project_archive as archive
+        from meridiana.data import project_archive as archive
         p = self.project()
         p.save(self.path)
         original = self.path.read_bytes()

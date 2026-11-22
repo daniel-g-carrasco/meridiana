@@ -1,7 +1,7 @@
 """Editing a run preserves physical optimizer memberships, including single occupied inputs."""
 import unittest
 import _setup  # noqa: F401
-from meridiana.energy import plant
+from meridiana.core.energy import plant
 
 
 class PhysicalGroups(unittest.TestCase):
@@ -37,8 +37,10 @@ class PhysicalGroups(unittest.TestCase):
             plant.set_run(self.runs, 0, list('acbde'))
 
     def test_runtime_and_saved_runs_use_actual_optimizer_count_and_reject_invalid_partitions(self):
-        from meridiana import catalog, layout, model
-        from meridiana.energy.components import ModuleSpec
+        from meridiana.data import catalog
+        from meridiana.core.layout import layout
+        from meridiana.core.model import model
+        from meridiana.core.energy.components import ModuleSpec
         rec = next(r for r in catalog.search('inverters', manufacturer='SolarEdge', limit=None)
                    if r['model'] == 'SE50K')
         opt = next(r for r in catalog.search('optimizers', manufacturer='SolarEdge', limit=None)

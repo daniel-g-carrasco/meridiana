@@ -5,11 +5,11 @@ from types import SimpleNamespace
 import _setup  # noqa: F401
 import numpy as np
 
-from meridiana import layout
-from meridiana.energy import electrical_network as network
-from meridiana.energy import electrical as iv
-from meridiana.energy import plant, simulate
-from meridiana.energy.components import InverterSpec, ModuleSpec, TYPICAL_450
+from meridiana.core.layout import layout
+from meridiana.core.energy import electrical_network as network
+from meridiana.core.energy import electrical as iv
+from meridiana.core.energy import plant, simulate
+from meridiana.core.energy.components import InverterSpec, ModuleSpec, TYPICAL_450
 
 
 class Network(unittest.TestCase):
@@ -171,7 +171,7 @@ class SharedShapes(unittest.TestCase):
     def test_the_curves_computed_do_not_grow_with_the_modules(self):
         from unittest import mock
 
-        from meridiana.energy import nearshade
+        from meridiana.core.energy import nearshade
         counts = []
         for slots in (4, 24):           # 16 and 96 modules, the same four places in the rows
             first, wiring, _strings = self.plant(slots)
@@ -188,7 +188,7 @@ class HoursOfAnotherModule(unittest.TestCase):
     light, temperature and cohorts) are taken from it; the curve is the one the module gets computed alone."""
 
     def test_a_module_takes_the_hours_it_shares_and_gets_its_own_curve(self):
-        from meridiana.energy import nearshade
+        from meridiana.core.energy import nearshade
         m = ModuleSpec.from_record(dict(TYPICAL_450, length=1.762, width=1.134))
         a = SimpleNamespace(key='s1.0', module=m)
         rng = np.random.default_rng(11)

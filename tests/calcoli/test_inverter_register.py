@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import _setup  # noqa: F401
 import numpy as np
 import pandas as pd
-from meridiana.energy import register
+from meridiana.app.report import energy_register as register
 
 setUpModule = _setup.keep_global_state
 

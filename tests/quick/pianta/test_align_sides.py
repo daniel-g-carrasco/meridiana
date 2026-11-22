@@ -8,8 +8,9 @@ from PySide6.QtCore import QPointF, Qt
 from PySide6.QtQml import QQmlEngine, QQmlExpression
 from PySide6.QtTest import QTest
 
-from meridiana import model
-from meridiana.quick.backend.plan_collect import nearest_side
+from meridiana.app.interface import view_colours
+from meridiana.core.model import model
+from meridiana.gui.backend.plan_collect import nearest_side
 from quick.pianta import test_edit_window as edit
 
 setUpModule = edit.setUpModule
@@ -91,8 +92,11 @@ class AlignSidesWindow(unittest.TestCase):
                     hover = self.controller.collector.hover
                     self.assertEqual(hover is not None, taken, hover)
                     self.assertEqual(badge.isVisible(), taken)
-                    lit = [d for d in self.controller._draft if d.get('stroke') == '#ffb000']
-                    self.assertEqual(len(lit), 1 if taken else 0)
+                    # R617: the side taken is lit by the plan's one lit side (Controls/LitSide), in the drawing's colour
+                    lit = self.visual('collectSide')
+                    self.assertEqual(len(self.controller.collectSide), 2 if taken else 0)
+                    self.assertEqual(lit.isVisible(), taken)
+                    self.assertEqual(lit.property('ink').name(), view_colours.PHOTO['draw'])
                     if taken:
                         self.assertEqual((hover[0], hover[1], hover[3]), ('building', 'b1', 0))
             # a click 10 px off the line takes that side

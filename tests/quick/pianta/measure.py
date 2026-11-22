@@ -20,8 +20,10 @@ from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QQmlApplicationEngine  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
-from meridiana import i18n, jobs, model  # noqa: E402
-from meridiana.quick.backend.plan import PlanController, qml_objects  # noqa: E402
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.core.model import model  # noqa: E402
+from meridiana.gui.backend.plan import PlanController, qml_objects  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -48,7 +50,7 @@ def main():
     errors = []
     engine.warnings.connect(lambda values: errors.extend(x.toString() for x in values))
     backend.install(engine)
-    from meridiana.quick.backend.tokens import install_theme
+    from meridiana.gui.backend.tokens import install_theme
     install_theme(engine).configure({'theme': 'dark' if args.dark else 'light'})
     columns = math.ceil(math.sqrt(args.count * .6))
     raw = [dict(kind='module', oid='s1', key=str(i), rid=str(i//columns),
@@ -63,7 +65,7 @@ def main():
         backend._bounds = [0., 0., columns*1.3, math.ceil(args.count/columns)*2.5]
     engine.rootContext().setContextProperty('planBackend', backend)
     start = time.perf_counter()
-    engine.load(QUrl.fromLocalFile(str(ROOT/'src/meridiana/quick/qml/Meridiana/Plan/PlanWindow.qml')))
+    engine.load(QUrl.fromLocalFile(str(ROOT/'src/meridiana/gui/qml/Meridiana/Plan/PlanWindow.qml')))
     if not engine.rootObjects():
         raise RuntimeError(errors)
     window = engine.rootObjects()[0]

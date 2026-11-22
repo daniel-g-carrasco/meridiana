@@ -8,14 +8,16 @@ import unittest
 from unittest import mock
 
 from _fixtures import capannone
-from meridiana import i18n, model, year_store
-from meridiana.quick.app import create_app
-from meridiana.quick.backend import shell_compute
-from meridiana.quick.backend.report import ReportBackend
-from meridiana.quick.backend.shell import ShellController
-from meridiana.quick.backend.shell_compute import ShellBridge
-from meridiana.quick.sample import recorded_weather
-from meridiana.paths import Paths
+from meridiana import i18n
+from meridiana.data import year_store
+from meridiana.core.model import model
+from meridiana.gui.application import create_app
+from meridiana.gui.backend import shell_compute
+from meridiana.gui.backend.report import ReportBackend
+from meridiana.gui.backend.shell import ShellController
+from meridiana.gui.backend.shell_compute import ShellBridge
+from meridiana.gui.sample import recorded_weather
+from meridiana.app.platform.paths import Paths
 
 
 class YearKept(unittest.TestCase):
@@ -46,10 +48,10 @@ class YearKept(unittest.TestCase):
         end = time.perf_counter() + seconds
         while time.perf_counter() < end and bridge.busy:
             cls.app.processEvents()
-            time.sleep(.01)
+            time.sleep(.01)  # wait: a breath between two looks at the condition, so the workers' threads run
         for _turn in range(50):
             cls.app.processEvents()
-            time.sleep(.002)
+            time.sleep(.002)  # wait: a breath between two looks at the condition, so the workers' threads run
         assert not bridge.busy
 
     def reopen(self):
@@ -65,11 +67,22 @@ class YearKept(unittest.TestCase):
         self.assertTrue(path.is_file())
         print(f'R437: year kept, {path.stat().st_size} bytes, project file {self.file.stat().st_size} bytes')
 
+    def opened(self):
+        """A project opened again with its year asked: the year of the store, read on a thread of the jobs and taken
+        on the window's turns (R598), without a computation."""
+        bridge = self.reopen()
+        with mock.patch.object(shell_compute, 'Worker', side_effect=AssertionError('nothing to compute')):
+            bridge.recompute()
+            self.wait(bridge)
+        return bridge
+
     def test_opening_again_the_numbers_are_there_at_once(self):
         bridge = self.reopen()
         self.assertEqual(bridge.session.energy, {})
         with mock.patch.object(shell_compute, 'Worker', side_effect=AssertionError('nothing to compute')):
             bridge.recompute()
+            self.assertTrue(bridge._busy, 'the year of the store on its way, read off the window')
+            self.wait(bridge)
         self.assertFalse(bridge._busy)      # the checks of the year may still be on their way in their thread
         self.assertIsNone(bridge._job)
         self.assertEqual(bridge.session.energy['sim'].energy_kwh, self.kwh)
@@ -77,19 +90,18 @@ class YearKept(unittest.TestCase):
         self.assertTrue(bridge.session.results)
 
     def test_opening_through_the_session_finds_it_too(self):
-        bridge = self.reopen()
-        bridge.recompute()
+        bridge = self.opened()
         bridge.session.open(self.file, self.cache)
         self.assertEqual(bridge.session.energy, {})
         self.assertTrue(bridge.timer.isActive())
         with mock.patch.object(shell_compute, 'Worker', side_effect=AssertionError('nothing to compute')):
             bridge.timer.stop()
             bridge._launch()
+            self.wait(bridge)
         self.assertEqual(bridge.session.energy['sim'].energy_kwh, self.kwh)
 
     def test_a_change_marks_it_with_what_changed_and_undo_clears_it(self):
-        bridge = self.reopen()
-        bridge.recompute()
+        bridge = self.opened()
         shell = ShellController(bridge)
         self.assertEqual(shell.yearState['state'], 'current')
         kept = bridge.session.energy['sim']
@@ -106,8 +118,7 @@ class YearKept(unittest.TestCase):
         self.assertIs(session.energy['sim'], kept)
 
     def test_a_change_of_the_modules_says_so_and_a_file_of_before_opens_the_same(self):
-        bridge = self.reopen()
-        bridge.recompute()
+        bridge = self.opened()
         session = bridge.session
         session.edit('Tilt', lambda p: p.subfields[0].params.__setitem__('tilt', 22.0))
         bridge.timer.stop()
@@ -120,7 +131,7 @@ class YearKept(unittest.TestCase):
     def test_a_year_damaged_is_as_one_not_there(self):
         bridge = self.reopen()
         fingerprint = bridge.session.year_fingerprint()
-        key = bridge.session.energy_key(bridge.session._expected_keys())
+        key = bridge.session.expected_key()
         self.assertIsNotNone(year_store.read(self.cache, fingerprint, key))
         self.assertIsNone(year_store.read(self.cache, fingerprint, key + 'x'))
         other = Path(self.folder.name)/'other'
@@ -135,8 +146,7 @@ class YearKept(unittest.TestCase):
         return backend
 
     def test_the_report_asks_before_going_out_with_old_numbers(self):
-        bridge = self.reopen()
-        bridge.recompute()
+        bridge = self.opened()
         report = self.report(bridge)
         self.assertFalse(report.exportState['stale'])
         asked, commands = [], []
@@ -159,10 +169,11 @@ class YearKept(unittest.TestCase):
             self.assertEqual(start.call_args[0][0], 'export')
 
     def test_the_report_exported_is_said_to_no_longer_answer(self):
-        bridge = self.reopen()
-        bridge.recompute()
+        bridge = self.opened()
         report = self.report(bridge)
-        report._remember_export(Path('x.pdf'), bridge.session.year_fingerprint(), '05/11/2026')
+        from meridiana.app import report_job        # what the export's job remembers once the file is in its place
+        report_job.remember(report._exports_path(), str(bridge.session.path), Path('x.pdf'),
+                            bridge.session.year_fingerprint(), '05/11/2026')
         self.assertFalse(report.exportState['behind'])
         self.assertIn('05/11/2026', report.exportState['exported'])
         bridge.session.edit('Losses', lambda p: p.energy.setdefault('losses', {}).__setitem__('soiling', 9.0))
@@ -174,7 +185,7 @@ class YearKept(unittest.TestCase):
 
     def test_the_pdf_carries_its_mark(self):
         from pypdf import PdfReader, PdfWriter
-        from meridiana.quick.backend.report_worker import mark_pdf
+        from meridiana.gui.backend.report_worker import mark_pdf
         path = Path(self.folder.name)/'marked.pdf'
         writer = PdfWriter()
         writer.add_blank_page(100, 100)

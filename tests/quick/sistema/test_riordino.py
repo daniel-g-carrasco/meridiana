@@ -35,21 +35,23 @@ CEILINGS = {
     "controlli_grezzi": 5,          # regola 1: r21-f1 96 -> 86, r22-f2 86 -> 48 (Popup, Menu, ComboBox, TextArea, RadioButton, ProgressBar a zero), r23-f1 48 -> 18 (pagine a M.ScrollPage; ListView con M.ScrollBar non contate), r23-f5 18 -> 6 (via il prototipo legacy, le 3 colonne di RegistryPage a M.ScrollPage), r23-tabelle 6 -> 5 (la Flickable di PlantTable: le stringhe in M.Table); restano 5 contenitori e aree in due direzioni con il perché (docs/quick/stato/r23-tabelle.md)
     "barre_qt": 0,                  # regola 2: r21-f1 9 -> 2; r23-f5 2 -> 0 (via quick/Main.qml, prototipo legacy)
     "misure_a_numero": 0,           # regola 3: F4 72 -> 3, F1 le 3 della barra di PedigreePage (r21-unita: 0)
+    "valori_a_mano": 294,           # r39-dal-kit: -1 (the Alt bar's and the trees' measures from the kit); 20/11/2026: 299 at the merge of the layers and the public tree (the ceiling down to the census), 295 with the plan's fades and the view cube in the tokens; r35-meridio-fianco: -2 (la misura di Meridio in un punto solo, R642); r35-lavori: -10 (the heavy jobs off the window, R598: values gone with the code moved to the common mechanism); r35-bussola: -19(the sign of North, R643: its drawing in app/interface/north_sign.py, its sizes in ControlMetrics.northSign and northPill); r35-evidenziature-unite: -3 (the highlights on one scale, design.Highlight: the hover's widths, the veils of a sweep); r35-pannello-destro: -1 (the side panels' one body, M.PanelPage, its margins in ControlMetrics); r35-linguette: -1 (the docked cards' tabs in the head's row, the grip's stroke a token); r35-sfumature: -5 (le sfumature senza il velo a immagine e i suoi colori, R624); 371 (la figura nuova di Meridio); r35-finestre: le misure delle finestre a ControlMetrics; r35-segni: -5 (il minimo della lista delle scorciatoie in righe, la misura del segno sui disegni in ControlMetrics.viewMark, l ingresso dello schema senza il suo mezzo pixel); regola 3, R555 (4): misure, spazi, raggi, trasparenze e tempi a numero anche negli oggetti su una riga; r34-armonia: 419 all inizio, 398 (gli spazi uguali a un passo di Theme.space portati al tema, la barra del sole, la casella); r34-righello unito: 393 (il disegno delle misure nel componente comune); r35-pillole: 392 (le etichette delle stringhe sulla pillola dei lati)
     "colori_esadecimali": 1,        # regola 3: F3 (49 -> 1: il segnaposto «#1c6e8c» di SettingsPage è un testo d'esempio)
     "colori_in_controls": 0,        # regola 3: F3 (6 -> 0)
     "easing_a_mano": 0,             # regola 3: F4 (44 -> 0)
     "durate_a_mano": 0,             # regola 3: F4 (5 -> 2), r23-f5 2 -> 0 (via ActionButton, prototipo legacy)
     "unicode_come_simbolo": 0,      # regola 4: F3 (10 -> 0; il punto elenco «•» è testo)
-    "findChild_nel_backend": 1,     # regola 7: F6c 40 -> 23, r23-f6 23 -> 1 (resta gallery.py:108, strumento delle catture: la finestra di prova la fa lui)
-    "setProperty_nel_backend": 1,   # regola 7: F6c 55 -> 34, r23-f6 34 -> 1 (resta assistant_chat.py:1408: una Card di Qt Widgets, non QML)
+    "findChild_nel_backend": 4,     # regola 7: F6c 40 -> 23, r23-f6 23 -> 1 (resta gallery.py:108, strumento delle catture: la finestra di prova la fa lui); r30-struttura 1 -> 4: non righe nuove, le 3 di paper/report_3d.py arrivate da ui/ (che il censimento non guardava): la scena su carta della relazione, mossa dal Python con QQuickRenderControl, senza finestra; debito scritto in docs/quick/stato/r30-struttura.md
+    "setProperty_nel_backend": 11,  # 8 report scene inputs, 1 assistant card, 2 package-check help captures; all already in the approved base
     "moduli_backend_oltre_800": 8,  # regola 8: F6 (d); zero a fine F6
     "po_codifica_rotta": 0,         # regola 9: F7
     "po_chiavi_doppie": 0,          # regola 9: F7
     "po_controllo": 0,              # regola 9: F7 (tools/compile_po.py --check: codifica, chiavi, segnaposto, voci morte)
-    "po_testi_senza_voce": 6,       # regola 9: testi dati a _()/tr()/qsTr() senza voce
+    "numeri_a_mano": 98,            # r35-bussola: 98 (the report's North drawn by north_sign.paper_svg, one place for its coordinates); regola 9, r35-segni (Daniel 14/11/2026: «centralizziamo»): numeri scritti a mano; 139 righe all inizio, 38 portate a i18n.number e a Qt.locale(), restano 101 che l utente non legge (coordinate di SVG e PDF, formati di file, indirizzi delle mappe, chiavi, i passi in inglese per il modello di Meridio con i numeri all italiana per scelta, gli analizzatori), elenco in docs/quick/stato/r35-segni.md
+    "po_testi_senza_voce": 0,       # 20/11/2026: 0, every text has its entry; regola 9: F7 (testi dati a _()/tr()/qsTr() senza voce: 29 scritti in italiano nel QML 3D); r30-struttura B3 29 -> 6, via i Widgets
     "prove_senza_init": 0,          # regola 10: F8
-    "attese_qWait": 326,            # regola 10: F8 (_setup.wait_for(condizione) al posto del tempo fisso; r23-f8 340 -> 331; r26-pannelli 331 -> 326, le attese dei suggerimenti misurate)
-    "attese_time_sleep": 56,        # regola 10: F8 (solo con un perché scritto accanto)
+    "attese_qWait": 280,            # 22/11/2026: one fewer (test_string_drawing waits for its labels); 21/11/2026 (Daniel, scelta 14): only the waits without their reason on the line (# wait: ...), 281: 14 with their reason, 7 in test_popup_frames on a condition; regola 10: F8 (_setup.wait_for(condizione) al posto del tempo fisso; r23-f8 340 -> 331; r26-pannelli 331 -> 326, le attese dei suggerimenti misurate; r30-struttura B3 326 -> 282, via le prove dei Widgets)
+    "attese_time_sleep": 0,         # 21/11/2026 (Daniel, scelta 14): every time.sleep left has its reason on the line; regola 10: F8 (solo con un perché scritto accanto); r30-struttura B3 56 -> 40, via le prove dei Widgets
 }
 
 # the raw control and what Controls/ offers in its place («nasce in F2»: it does not exist yet, F2 makes it)
@@ -123,10 +125,37 @@ def _numbers(c: Census):
     return out
 
 
+def _inline(c: Census):
+    out = []
+    for item in c.part("qml")["inline"]:
+        ref, detail = item.rsplit(":", 1)
+        prop = detail.split()[0].split(".")[-1]
+        use = "Theme.radius" if prop == "radius" else "Theme.motion" if prop in ("interval", "duration")             else "Theme.line" if prop in ("width", "strokeWidth") and "border" in detail else "ControlMetrics o Theme.*"
+        out.append(f"{ref}  {detail} -> {use}")
+    return out
+
+
 def _over_800(c: Census):
     big = c.part("backend")["biggest"]
     assert big[-1][1] <= 800, "the census lists only the 12 biggest modules: more than 12 are over 800 lines"
     return [f"{name}  {n} righe -> spezzare per argomento sotto le 800" for name, n in big if n > 800]
+
+
+# r35-segni: a number written by hand in a text (Python: a format with decimals or «g», «%.2f», a point turned into
+# a comma, a round() given to a message; QML: toFixed, a locale named by hand, a point turned into a comma). What is
+# left is not for the user to read: SVG and PDF coordinates, file formats, map URLs, cache keys, the passages for
+# Meridio's model, the parsers (docs/quick/stato/r35-segni.md)
+NUMBER_PY = (r"\{[^{}'\"]*:[+,_]?(?:\.\d+)?[fg]\}|%\.\d+f|\.replace\(\s*['\"]\.['\"]\s*,\s*['\"],['\"]\s*\)"
+             r"|\.format\(.*\b\w+=round\(|\{round\(")
+NUMBER_QML = r"\.toFixed\(|Qt\.locale\(\s*\"|\.replace\(\s*\"\.\"\s*,\s*\",\"\s*\)"
+
+
+def _numbers_by_hand(c: Census):
+    src = ROOT / "src" / "meridiana"
+    py = sorted(f for f in src.rglob("*.py") if f != src / "i18n.py")
+    qml = sorted([*src.rglob("*.qml"), *src.rglob("*.js")])
+    return [f"{ref}  -> i18n.number(valore, decimali) nel Python, toLocaleString(Qt.locale(), 'f', decimali) nel QML"
+            for ref in _scan(py, NUMBER_PY) + _scan(qml, NUMBER_QML)]
 
 
 def _po(key):
@@ -139,6 +168,7 @@ GUARDS = {
     "controlli_grezzi": Guard(1, "controlli grezzi di QtQuick.Controls fuori da Controls/", "il componente M. indicato accanto a ogni riga", _raw),
     "barre_qt": Guard(2, "barre di scorrimento di Qt", "M.ScrollBar (corsia, velature, rimbalzo); M.ScrollPage e M.List la portano già",
                       lambda c: [f"{ref}  -> M.ScrollBar" for ref in c.part("qml")["qt_bars"]]),
+    "valori_a_mano": Guard(3, "misure, spazi, raggi, trasparenze e tempi a numero (anche negli oggetti su una riga)", "Theme.space / Theme.size / Theme.radius / Theme.motion / ControlMetrics, con un nome e il suo perché", _inline),
     "misure_a_numero": Guard(3, "misure, spazi e raggi scritti a numero", "Theme.space / Theme.size / Theme.radius / ControlMetrics; un valore nuovo nasce lì con il suo perché", _numbers),
     "colori_esadecimali": Guard(3, "colori esadecimali nelle pagine", "un token di Theme.colors (o Theme.status, Theme.options)",
                                 lambda c: [f"{ref}  -> Theme.colors" for ref in c.part("qml")["hex"]]),
@@ -158,13 +188,14 @@ GUARDS = {
     "po_codifica_rotta": Guard(9, "righe dei cataloghi con la codifica rotta", "UTF-8 valido (tools/compile_po.py --check)", _po("odd_encoding_lines")),
     "po_chiavi_doppie": Guard(9, "chiavi doppie nei cataloghi (msgctxt + msgid)", "una voce sola, con i riferimenti di tutti e due", _po("duplicate_keys")),
     "po_controllo": Guard(9, "problemi di tools/compile_po.py --check", "UTF-8 valido, una chiave per voce, gli stessi segnaposto, nessuna voce morta", _po("check_problems")),
+    "numeri_a_mano": Guard(9, "numeri formattati a mano nei testi (decimali, virgola, locale)", "meridiana.i18n.number nel Python (None: le cifre che il valore ha), Number.toLocaleString(Qt.locale(), 'f', decimali) nel QML", _numbers_by_hand),
     "po_testi_senza_voce": Guard(9, "testi dati a _()/tr()/qsTr() senza voce nel catalogo", "la voce in po/it.po (testo in inglese, traduzione in italiano)", _po("calls_without_entry")),
     "prove_senza_init": Guard(10, "cartelle di prove senza __init__.py", "un __init__.py vuoto nella cartella",
                               lambda c: [f"{d}  -> __init__.py" for d in c.part("tests")["dirs_without_init"]]),
-    "attese_qWait": Guard(10, "attese a tempo fisso (qWait) nelle prove", "_setup.wait_for(condizione) (PySide6 non ha qWaitFor), o un perché scritto accanto",
-                          lambda c: [f"{ref}  -> qWaitFor" for ref in _scan(c.test_py(), r"qWait\(")]),
-    "attese_time_sleep": Guard(10, "time.sleep nelle prove", "qWaitFor(condizione), o un perché scritto accanto",
-                               lambda c: [f"{ref}  -> qWaitFor" for ref in _scan(c.test_py(), r"time\.sleep\(")]),
+    "attese_qWait": Guard(10, "attese a tempo fisso (qWait) nelle prove", "_setup.wait_for(condizione) (PySide6 non ha qWaitFor), o il perché sulla stessa riga: `# wait: <motivo>`",
+                          lambda c: [f"{ref}  -> qWaitFor" for ref in _scan(c.test_py(), r"qWait\((?!.*#\s*wait:)")]),
+    "attese_time_sleep": Guard(10, "time.sleep nelle prove", "una condizione, o il perché sulla stessa riga: `# wait: <motivo>`",
+                               lambda c: [f"{ref}  -> qWaitFor" for ref in _scan(c.test_py(), r"time\.sleep\((?!.*#\s*wait:)")]),
 }
 assert set(GUARDS) == set(CEILINGS)
 
@@ -231,8 +262,8 @@ class RiordinoTest(unittest.TestCase):
         tests = self.census.part("tests")["patterns"]
         self.assertEqual(len(GUARDS["findChild_nel_backend"].compute(self.census)), backend["findChild"]["total"])
         self.assertEqual(len(GUARDS["setProperty_nel_backend"].compute(self.census)), backend["setProperty"]["total"])
-        self.assertEqual(len(GUARDS["attese_qWait"].compute(self.census)), tests["qWait"]["total"])
-        self.assertEqual(len(GUARDS["attese_time_sleep"].compute(self.census)), tests["time.sleep"]["total"])
+        self.assertEqual(len(GUARDS["attese_qWait"].compute(self.census)), tests["qWait_bare"]["total"])
+        self.assertEqual(len(GUARDS["attese_time_sleep"].compute(self.census)), tests["time.sleep_bare"]["total"])
 
     def test_the_base_knows_every_guard(self):
         self.assertEqual(set(self.base), set(GUARDS), f"{BASE.name} is missing or old: python {Path(__file__).name} --aggiorna")

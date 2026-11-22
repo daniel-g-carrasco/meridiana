@@ -1,0 +1,25 @@
+{
+  "base": "236dcc12101869a291653423cf1e8187cffc47eb",
+  "python": "3.12.6",
+  "platform": "Windows-11-10.0.26100-SP0",
+  "versions": {
+    "numpy": "2.5.4",
+    "pandas": "3.0.6",
+    "pvlib": "0.16.1",
+    "shapely": "2.2.0",
+    "PySide6": "6.12.0"
+  },
+  "languages": [
+    "it",
+    "en"
+  ],
+  "command": "python -m profili.snapshot --capture",
+  "normalization": [
+    "project.name (synthetic)",
+    "project.bim_id",
+    "project.created",
+    "project.modified",
+    "report date.today fixed to 2026-11-11"
+  ],
+  "comparison": "Exact JSON equality and numpy array_equal, no numeric tolerance on this environment."
+}

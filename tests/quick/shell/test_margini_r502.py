@@ -15,6 +15,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from quick.aiuti.caratteri import glyph
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -26,10 +27,11 @@ import _setup
 from PySide6.QtCore import QEvent, QPointF, Qt, QUrl
 from PySide6.QtGui import QColor
 from PySide6.QtQml import QQmlComponent
-from meridiana import i18n, jobs
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import item, mouse, pump
-from quick.parity.differential import connected_fixture
+from quick.aiuti.differential import connected_fixture
 
 app = _setup.qt_or_skip()
 create_app()
@@ -133,14 +135,19 @@ try:
         grab()
 
     hover((5 * dpr, (win.height() - 5) * dpr))
-    # Equal insets around the tab's content, independent of the font's ink and antialiasing.
-    tab_item = item(win, 'plantTab')
-    tab = rect(tab_item)
-    row = next(k for k in tab_item.childItems() if k.childItems() and k.width() < tab_item.width())
-    content = rect(row)
-    out['tab_left'] = round(content[0] - tab[0])
-    out['tab_top'] = round(content[1] - tab[1])
-    out['tab_right'] = round(tab[0] + tab[2] - content[0] - content[2])
+    # the tab of the phase open: from its disc to the outline, left and top; from the outline to its name, right
+    tab = rect(item(win, 'plantTab'))
+    disc = box(c['accent'], c['panel'], (tab[0], tab[1], tab[3], tab[3]))   # the disc is in the tab's first square
+    cy, cx = (disc[1] + disc[3]) // 2, (disc[0] + disc[2]) // 2
+    out['tab_left'] = gap(disc[0], cy, -1, 0, c['panel'])
+    out['tab_top'] = gap(cx, disc[1], 0, -1, c['panel'])
+    x = int(tab[0] + tab[2] + 2 * dpr)
+    while flat(c['panel'], x, cy) or flat(c['window'], x, cy):
+        x -= 1                                      # the window's ground outside the tab
+    while not flat(c['panel'], x, cy):
+        x -= 1                                      # the outline on the right
+    band = range(int(cy - 4 * dpr), int(cy + 4 * dpr) + 1)     # the name's middle, clear of the outline's corners
+    out['tab_right'] = ink_gap(x, -1, band, c['panel'])
     # a tab under the pointer: its hover's ground around the disc and the name
     other = rect(item(win, 'productionTab'))
     hover((other[0] + other[2] / 2, other[1] + other[3] / 2))
@@ -212,16 +219,17 @@ class SymmetricMargins(unittest.TestCase):
             with self.subTest(scale=scale, margins=m):
                 # the tab open: left and right as the top, in device pixels, within one
                 self.assertLessEqual(abs(m['tab_left'] - m['tab_top']), 1, m)
-                self.assertLessEqual(abs(m['tab_right'] - m['tab_top']), 1, m)
+                # the right side follows the width of the tab's word: the font's (quick/aiuti/caratteri.py)
+                self.assertLessEqual(abs(m['tab_right'] - m['tab_top']), glyph(1), m)
                 # a tab under the pointer: its hover as far from the disc on the left as at the top, and from the name
                 self.assertLessEqual(abs(m['hover_left'] - m['hover_top']), 1, m)
-                self.assertLessEqual(abs(m['hover_right'] - m['hover_top']), 1, m)
+                self.assertLessEqual(abs(m['hover_right'] - m['hover_top']), glyph(1), m)
                 # the bar: «Seleziona» as far from the card's left side as from its top, the summary from its right
                 self.assertLessEqual(abs(m['bar_left'] - m['bar_top']), 1, m)
                 self.assertLessEqual(abs(m['bar_right'] - m['bar_top']), 1, m)
                 self.assertLessEqual(abs(m['summary_top'] - m['bar_top']), 1, m)
-                # The bar's pixel scan stops at the inside of its one-logical-pixel frame.
-                self.assertLessEqual(abs(m['bar_top'] + round(scale) - m['tab_top']), 1, m)
+                # and the bar's margin is the tab's (one value, ControlMetrics.inset)
+                self.assertLessEqual(abs(m['bar_top'] - m['tab_top']), 1, m)
 
 
 if __name__ == '__main__':

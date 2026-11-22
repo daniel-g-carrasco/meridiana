@@ -9,7 +9,7 @@ from unittest import mock
 
 import _setup  # noqa: F401
 
-from meridiana import registry
+from meridiana.data import registry
 
 
 class RegistryTest(unittest.TestCase):

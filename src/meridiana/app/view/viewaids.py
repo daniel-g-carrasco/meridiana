@@ -1,0 +1,353 @@
+"""What the views show beside the drawing (study 12, V1-V3; study 15, 3.3 and 3.11): the round length of the
+plan's scale bar, what lies under the cursor with its height, and the quick measure of the selection for the
+status bar. No Qt here: the plan draws them."""
+
+from __future__ import annotations
+
+import math
+
+from shapely.geometry import Point, Polygon
+
+from meridiana.i18n import _, ngettext, number
+
+STEPS = (1.0, 2.0, 5.0)
+
+
+def scale_bar(metres_per_pixel: float, longest_px: float = 120.0) -> tuple[float, float]:
+    """The longest round length (1, 2 or 5 times a power of ten, in metres) whose bar fits in `longest_px`, and
+    its length on screen in pixels."""
+    if metres_per_pixel <= 0 or not math.isfinite(metres_per_pixel):
+        raise ValueError("the scale must be a positive number")
+    most = metres_per_pixel * longest_px
+    power = 10.0 ** math.floor(math.log10(most))
+    length = max(s * power for s in STEPS if s * power <= most * (1 + 1e-9))
+    return length, length / metres_per_pixel
+
+
+def length_text(metres: float) -> str:
+    """A length as the scale bar writes it: «50 cm», «5 m», «200 m», «2 km»."""
+    if metres < 1:
+        return _("{n} cm").format(n=number(metres * 100, 0))
+    if metres >= 1000:
+        return _("{n} km").format(n=number(metres / 1000, 0 if metres % 1000 == 0 else 1))
+    return _("{n} m").format(n=number(metres, 0))
+
+
+def _thing(project, kind: str, oid: str):
+    if kind == "building":
+        return project.building(oid)
+    if kind == "subfield":
+        return next((s for s in project.subfields if s.id == oid), None)
+    if kind == "exclusion":
+        return next((e for e in project.exclusions if e.id == oid), None)
+    if kind == "prop":                              # R269: a 3D object
+        return project.prop(oid)
+    return None
+
+
+def _ring(thing, kind: str) -> list:
+    """The outline of a building, a sub-field, an exclusion or a 3D object (the plan's)."""
+    return thing.footprint if kind == "building" else thing.footprint() if kind == "prop" else thing.ring
+
+
+def height_at(project, kind: str, oid: str, x: float, y: float) -> float:
+    """The height of what is under the cursor at (x, y): the roof of a building at that point (its pitch), the
+    top of an obstacle, the ground (0) for what lies on it. A module (`oid` its sub-field) is at the height of
+    its sub-field: it said 0 before (review, 23/10/2026)."""
+    if kind == "module":
+        kind = "subfield"
+    if kind == "pitch":
+        bid, _sep, i = oid.partition(":")
+        b = project.building(bid)
+        pitches = b.pitches() if b is not None else []
+        return pitches[int(i)].z(x, y) if i.isdigit() and int(i) < len(pitches) else 0.0
+    thing = _thing(project, kind, oid)
+    if thing is None:
+        return 0.0
+    if kind == "subfield" and thing.support is not None and thing.support.enabled:
+        return float(project.surface_of(thing).z(x, y))
+    bid = thing.id if kind == "building" else getattr(thing, "building", None)
+    b = project.building(bid)
+    z = 0.0
+    if b is not None:
+        here = Point(x, y)
+        pitches = b.pitches()
+        if pitches:
+            k = min(range(len(pitches)), key=lambda i: Polygon(pitches[i].ring).distance(here))
+            z = pitches[k].z(x, y)
+        else:
+            z = b.height
+    if kind == "exclusion":
+        z += thing.obstacle_height()
+    if kind == "prop":
+        z = project.prop_base(thing) + thing.measures()["height"]
+    return z
+
+
+def under_text(project, kind: str, oid: str, key: str, x: float, y: float, kind_names: dict | None = None) -> str:
+    """What is under the cursor, as the status bar says it: «Sub-field Sud, module r3c12 (12,40; 7,85; z 9,92 m)»,
+    as FreeCAD's preselection does (study 15, 3.3). The coordinates alone when nothing is there."""
+    where = _("E {x}  N {y}  z {z} m").format(x=number(x), y=number(y), z=number(height_at(project, kind, oid, x, y)))
+    if kind in ("", "site"):
+        return _("E {x}  N {y} m").format(x=number(x), y=number(y))
+    if kind == "pitch":
+        bid, _sep, i = oid.partition(":")
+        b = project.building(bid)
+        name = _("{building}, pitch {n}").format(building=b.name if b else bid, n=int(i) + 1 if i.isdigit() else i)
+    elif kind == "module":
+        sf = _thing(project, "subfield", oid)
+        from meridiana.core.model import imported
+        name = _("{subfield}, module {key}").format(subfield=imported.subfield_name(project, sf) if sf else oid,
+                                                    key=key)
+    else:
+        thing = _thing(project, kind, oid)
+        if kind == "exclusion":
+            name = (kind_names or {}).get(getattr(thing, "kind", ""), _("Exclusion")) + f" {oid}"
+        elif kind == "prop" and thing is not None:
+            name = project.prop_label(thing)
+        elif kind == "subfield" and thing is not None:
+            from meridiana.core.model import imported
+            name = imported.subfield_name(project, thing)       # R605: a plane the import made by its short name
+        else:
+            name = getattr(thing, "name", oid)
+    return f"{name}  ·  {where}"
+
+
+def anchor(project, kind: str, oid: str) -> tuple[float, float, float] | None:
+    """Where the mark of an object goes: the middle of its outline (a point inside it), at its height."""
+    thing = _thing(project, kind, oid)
+    if thing is None:
+        return None
+    ring = _ring(thing, kind)
+    if len(ring) < 3:
+        return None
+    p = Polygon([tuple(map(float, q)) for q in ring]).representative_point()
+    return float(p.x), float(p.y), height_at(project, kind, oid, float(p.x), float(p.y))
+
+
+MARK_JOIN = 0.5         # m in plan: marks whose anchors are closer than this stand on one point and are drawn as one
+MARK_TIP_LINES = 3      # the checks' texts a mark's tooltip shows, before «and n more»
+
+
+def mark_tip(found: list) -> str:
+    """What a mark on a drawing says under the pointer (R641): the texts of its checks, (level, text) pairs, the worst
+    first, one a line, the same text once; past MARK_TIP_LINES, how many more."""
+    from meridiana.core.rules import checks
+    texts = list(dict.fromkeys(text for _level, text in sorted(found, key=lambda f: checks.LEVELS.index(f[0]))))
+    lines = texts[:MARK_TIP_LINES]
+    if len(texts) > MARK_TIP_LINES:
+        lines.append(_("and {n} more").format(n=len(texts) - MARK_TIP_LINES))
+    return "\n".join(lines)
+
+
+def drawn_marks(project, items) -> list[dict]:
+    """The checks' marks of the drawings, the plan's and the 3D view's alike (R605): one for every object with items
+    of the levels checks.DRAWN (errors and warnings: information has no mark on a drawing) at its anchor, with its
+    worst level and how many; marks closer than MARK_JOIN become one, with the worst level, the counts added and the
+    object (and the anchor) of the most serious, the first on a tie. Each {x, y, z, level, count, kind, oid, tip}, in
+    the order of the list; `tip` the texts of its checks (mark_tip)."""
+    from meridiana.core.rules import checks
+    found = []
+    for (kind, oid), mark in checks.marks(items, checks.DRAWN).items():
+        point = anchor(project, kind, oid)
+        if point is not None:
+            found.append(dict(x=point[0], y=point[1], z=point[2], level=mark.level, count=mark.count, kind=kind,
+                              oid=oid, texts=[(items[i].level, items[i].text) for i in mark.items]))
+    # the groups of marks that touch, through any of them (a chain of close marks is one heap on screen)
+    group = list(range(len(found)))
+
+    def top(i):
+        while group[i] != i:
+            group[i] = group[group[i]]
+            i = group[i]
+        return i
+    for i, a in enumerate(found):
+        for j in range(i + 1, len(found)):
+            b = found[j]
+            if math.hypot(a["x"] - b["x"], a["y"] - b["y"]) < MARK_JOIN:
+                group[top(j)] = top(i)
+    heaps: dict = {}
+    for i, m in enumerate(found):
+        heaps.setdefault(top(i), []).append(m)
+    out = []
+    for heap in heaps.values():
+        head = min(heap, key=lambda m: checks.LEVELS.index(m["level"]))      # the first of the most serious
+        mark = {**head, "count": sum(m["count"] for m in heap),
+                "tip": mark_tip([text for m in heap for text in m["texts"]])}
+        del mark["texts"]
+        out.append(mark)
+    return out
+
+
+def measure(project, results: dict, kind: str, oid: str) -> dict:
+    """The quick measure of the selection (study 15, 3.11): perimeter and area of its outline, and for a sub-field
+    the modules laid and their power; a row its own (row_measure). {} for nothing measurable."""
+    if kind == "row":
+        return row_measure(project, results, oid)
+    thing = _thing(project, kind, oid)
+    if thing is None:
+        return {}
+    ring = _ring(thing, kind)
+    pts = [tuple(map(float, p)) for p in ring]
+    if len(pts) < 3:
+        return {}
+    out = {"length": sum(math.dist(a, b) for a, b in zip(pts, pts[1:] + pts[:1], strict=True)),
+           "area": abs(Polygon(pts).area)}
+    if kind == "subfield":
+        r = results.get(oid)
+        if thing.filled and r is not None and not isinstance(r, Exception):
+            out["modules"] = r.count
+            out["kwp"] = r.count * project.module_of(thing).power_kw
+            out["tilt"], out["azimuth"] = r.tilt, r.azimuth
+    return out
+
+
+def row_measure(project, results: dict, oid: str) -> dict:
+    """The quick measure of a row (task 16c, "<sub-field>/<row>"): its length, its modules and their power."""
+    sfid, _sep, rid = oid.partition("/")
+    sf, r = _thing(project, "subfield", sfid), results.get(sfid)
+    if sf is None or r is None or isinstance(r, Exception):
+        return {}
+    mine = [m for m in r.modules if m.rid == rid]
+    if not mine:
+        return {}
+    from shapely.geometry import MultiPoint
+    box = MultiPoint([c for m in mine for c in m.corners]).minimum_rotated_rectangle
+    pts = [tuple(map(float, p)) for p in list(box.exterior.coords)[:-1]] if box.geom_type == "Polygon" else []
+    sides_ = [math.dist(a, b) for a, b in zip(pts, pts[1:] + pts[:1], strict=True)]
+    return {"row": max(sides_) if sides_ else 0.0, "modules": len(mine),
+            "kwp": len(mine) * project.module_of(sf).power_kw}
+
+
+def measure_text(m: dict) -> str:
+    if not m:
+        return ""
+    if "row" in m:
+        return "  ·  ".join([_("row of {l} m").format(l=number(m["row"])),
+                             ngettext("{n} module", "{n} modules", m["modules"]).format(n=m["modules"]),
+                             _("{kw} kWp").format(kw=number(m["kwp"]))])
+    parts = [_("perimeter {p} m").format(p=number(m["length"])), _("area {a} m²").format(a=number(m["area"], 1))]
+    if "modules" in m:
+        parts.append(ngettext("{n} module", "{n} modules", m["modules"]).format(n=m["modules"]))
+        parts.append(_("{kw} kWp").format(kw=number(m["kwp"])))
+    return "  ·  ".join(parts)
+
+
+LIFT = 0.04             # an outline on a roof stands this much above it, not to be hidden in its surface
+
+
+def string_segments(project, results: dict) -> tuple:
+    """The strings in 3D (R433, R456): for each string the segments from the centre of each module to the next one's, a
+    little above the modules, so that a string that goes on over another face is seen climbing over the ridge; and
+    a cross on each module with a power optimizer (on some modules only, those named). (strings (M, 2, 3), crosses
+    (K, 2, 3)) in Qt axes."""
+    import numpy as np
+
+    from meridiana.core.geometry import mesh
+    from meridiana.core.energy import plant
+    good = {k: v for k, v in results.items() if not isinstance(v, Exception) and v is not None}
+    where = {(sfid, m.key): m for sfid, r in good.items() for m in getattr(r, "modules", [])}
+    runs = ((project.energy or {}).get("strings") or {}).get("runs") or []
+    lift = 0.12
+    lines, crosses = [], []
+    if not runs or not where:
+        return np.zeros((0, 2, 3)), np.zeros((0, 2, 3))
+
+    def point(m):
+        return mesh.to_qt(float(m.centre[0]), float(m.centre[1]), float(m.z) + lift)
+
+    import math
+
+    from meridiana.core.energy import faces
+    face_of = faces.faces_of(project)
+    for r in runs:
+        refs = [tuple(k.split("/", 1)) for k in r.get("modules") or [] if tuple(k.split("/", 1)) in where]
+        for a, b in zip(refs, refs[1:], strict=False):
+            ma, mb = where[a], where[b]
+            fa, fb = face_of.get(a[0]), face_of.get(b[0])
+            if fa is None or fb is None or faces.same_face(fa, fb):
+                lines.append((point(ma), point(mb)))
+                continue
+            # over the ridge: through a point above the higher module by the slope over half the way
+            half = 0.5 * math.dist(ma.centre, mb.centre)
+            rise = half * math.tan(math.radians(max(ma.tilt, mb.tilt, 0.0)))
+            mid = mesh.to_qt((ma.centre[0] + mb.centre[0]) / 2, (ma.centre[1] + mb.centre[1]) / 2,
+                             max(ma.z, mb.z) + rise + lift)
+            lines += [(point(ma), mid), (mid, point(mb))]
+    try:
+        state = plant.wired(project, good)
+    except (ValueError, KeyError, TypeError):
+        state = None
+    for s in getattr(state, "strings", []) or []:
+        u = state.unit(s.inverter)
+        for sfid, key, _c in s.modules:
+            if not plant.module_optimized(u, sfid, key):
+                continue
+            m = where.get((sfid, key))
+            if m is None:
+                continue
+            c = np.asarray(m.corners, dtype=float)
+            x, y = float(m.centre[0]), float(m.centre[1])
+            for i, j in ((0, 2), (1, 3)):
+                a = (x + 0.18 * (c[i][0] - x), y + 0.18 * (c[i][1] - y))
+                b = (x + 0.18 * (c[j][0] - x), y + 0.18 * (c[j][1] - y))
+                crosses.append((mesh.to_qt(a[0], a[1], float(m.z) + lift), mesh.to_qt(b[0], b[1], float(m.z) + lift)))
+    return (np.asarray(lines, dtype=float).reshape(-1, 2, 3), np.asarray(crosses, dtype=float).reshape(-1, 2, 3))
+
+
+def outline(project, results: dict, kind: str, oid: str, key: str = ""):
+    """The edges the 3D view outlines for an object (mesh.ribbons draws them): (M, 2, 3) in Qt axes. A building
+    with its corners and pitches, a pitch, a sub-field on its roof, an exclusion as the prism it rises to, a
+    module (`key`, `oid` its sub-field) on its face. Nothing (0 segments) for what is not there."""
+    import numpy as np
+
+    from meridiana.core.geometry import mesh
+    from meridiana.core.model import model
+    none = np.zeros((0, 2, 3))
+    if kind == "building":
+        b = project.building(oid)
+        return mesh.building_edges(b.footprint, b.pitches(), b.base) if b is not None and len(b.footprint) >= 3 else none
+    if kind == "pitch":
+        bid, _sep, i = oid.partition(":")
+        b = project.building(bid)
+        pitches = b.pitches() if b is not None else []
+        if not i.isdigit() or int(i) >= len(pitches):
+            return none
+        p = pitches[int(i)]
+        return mesh.ring_edges([(float(x), float(y), p.z(float(x), float(y)) + LIFT) for x, y in p.ring])
+    if kind == "module":
+        sf = _thing(project, "subfield", oid)
+        r = results.get(oid)
+        if sf is None or r is None or isinstance(r, Exception):
+            return none
+        m = next((pm for pm in r.modules if pm.key == key), None)
+        if m is None:
+            return none
+        size = project.module_of(sf)
+        along, across = (size.width, size.length) if sf.layout_params(profile_id=project.regulatory_profile).portrait else (size.length, size.width)
+        return mesh.module_edges(m, along, across)
+    if kind == "row":                              # task 16c: every module of the row, "<sub-field>/<row>"
+        sfid, _sep, rid = oid.partition("/")
+        sf, r = _thing(project, "subfield", sfid), results.get(sfid)
+        if sf is None or r is None or isinstance(r, Exception):
+            return none
+        size = project.module_of(sf)
+        along, across = (size.width, size.length) if sf.layout_params(profile_id=project.regulatory_profile).portrait else (size.length, size.width)
+        parts = [mesh.module_edges(m, along, across) for m in r.modules if m.rid == rid]
+        return np.concatenate(parts) if parts else none
+    thing = _thing(project, kind, oid)
+    if kind == "prop" and thing is not None:       # R269: the box it stands in
+        z0 = project.prop_base(thing)
+        return mesh.prism_edges(thing.footprint(), z0, z0 + thing.measures()["height"])
+    if thing is None or len(thing.ring) < 3:
+        return none
+    ring = [(float(x), float(y)) for x, y in thing.ring]
+    if kind == "exclusion":
+        prism = project.obstacle_prism_of(oid)
+        if prism is not None:
+            return mesh.prism_edges(prism["ring"], prism["z0"], prism["z1"])
+    b = project.building(getattr(thing, "building", None))
+    zs = ([project.surface_of(thing).z(x, y) for x, y in ring]
+          if kind == "subfield" and thing.support is not None and thing.support.enabled else
+          model.roof_z(b, ring) if b is not None else [0.0] * len(ring))
+    return mesh.ring_edges([(x, y, z + LIFT) for (x, y), z in zip(ring, zs, strict=True)])

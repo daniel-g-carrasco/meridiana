@@ -5,8 +5,10 @@ import unittest
 from PySide6.QtCore import QPointF, QRectF
 from PySide6.QtTest import QTest
 
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.plan_edit import PlanEditor
+import _setup
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.plan_edit import PlanEditor
+from quick.aiuti.puntini import assert_dots_follow, dots_layer
 from quick.pianta import test_edit
 from quick.pianta import test_edit_window as edit
 
@@ -124,23 +126,42 @@ class LabelsWindow(unittest.TestCase):
             self.plan.setProperty('panX', 300)
             self.plan.setProperty('panY', 500)
             QTest.qWait(250)
-            pills = [o for o in self.labels('name') if o.width() > o.height()]
-            if kind == 'far':
-                pills = [o for o in pills if o.objectName() == 'stringLabel-name--1']    # an inverter's notice
+            # R707: from far the strings' names give way to one pill for each inverter, with its state alone
+            pills = [o for o in self.labels('inverter' if kind == 'far' else 'name') if o.width() > o.height() and o.isVisible()]
             self.assertTrue(pills, kind)
+            if kind == 'far':
+                self.assertFalse([o for o in self.labels('name') if o.isVisible()], 'no name of a string from far')
             for pill in pills:
                 parts = list(pill.childItems())
-                dot = next(o for o in parts if o.metaObject().className() == 'QQuickRectangle' and o.isVisible()
-                           and o.width() == o.height() and o.width() < pill.height())
+                dot = next((o for o in parts if o.metaObject().className() == 'QQuickRectangle' and o.isVisible()
+                            and o.width() == o.height() and o.width() < pill.height()), None)
+                self.assertEqual(dot is None, kind == 'far', 'a string has its colour in a disc, an inverter has none')
                 text = next(o for o in parts if o.metaObject().className() == 'QQuickText')
                 mark = next(o for o in parts if o.metaObject().className().startswith('PlanSymbol') and o.isVisible())
                 h = pill.height()
                 gap = pill.width() - mark.x() - mark.width()
                 self.assertAlmostEqual(mark.y(), (h - mark.height()) / 2, delta=.01, msg=kind)       # in the middle
                 self.assertAlmostEqual(gap, mark.y(), delta=.01, msg=kind)                          # round the end
-                self.assertAlmostEqual(dot.x(), gap, delta=.01, msg=kind)                           # both ends alike
+                # R577: both ends alike means each mark in the centre of its round end (the dot is smaller than the
+                # disc: as far from the edge as the disc, it stood 3 px off the centre)
+                if dot is not None:
+                    self.assertAlmostEqual(dot.x() + dot.width() / 2, h / 2, delta=.01, msg=kind)
+                self.assertAlmostEqual(mark.x() + mark.width() / 2, pill.width() - h / 2, delta=.01, msg=kind)
                 end = text.x() + text.property('contentWidth')
                 self.assertLessEqual(end, mark.x() + .01, (kind, text.property('text'), end, mark.x()))   # never under
+
+    def test_r580_the_strings_lines_lie_over_the_outlines_of_what_is_chosen(self):
+        # the outline of a chosen sub-field cut the lines of its strings: the outlines of the selection and of the
+        # hover lie over the strings' fills (a chosen module shows) and under their lines
+        self.strings()
+        layer = self.visual('worldLayer')
+        self.assertIsNotNone(layer)
+        order = [o.objectName() for o in layer.childItems()]
+        marks = order.index('highlightLayer')
+        for name in ('wireFills', 'unwiredBatch', 'draftFills'):
+            self.assertLess(order.index(name), marks, name)
+        for name in ('wiresBatch', 'optimizerBatch', 'draftWires', 'draftBand'):
+            self.assertGreater(order.index(name), marks, name)
 
     def test_labels_lie_over_every_dot_and_cover_none(self):
         self.strings()
@@ -151,17 +172,35 @@ class LabelsWindow(unittest.TestCase):
                 self.plan.setProperty('zoom', zoom)
                 self.plan.setProperty('panX', 300)
                 self.plan.setProperty('panY', 500)
-                QTest.qWait(180)
+                # the labels are laid out at the settled zoom, 300 ms after the last change (R541): wait for it,
+                # not for a fixed time (read before it, a label only scaled could still lie on a dot)
+                self.assertTrue(_setup.wait_until(edit.APP, lambda z=zoom: abs(self.plan.property('settledZoom') - z) < 1e-6,
+                                                  5.0), (angle, zoom))
+                # then the names laid out for that zoom: the chosen string's three (a fixed 50 ms read, under load,
+                # the names of every string still shown before the layout)
+                self.assertTrue(_setup.wait_until(edit.APP, lambda: len(self.labels('name')) == 3, 5.0),
+                                (angle, zoom, len(self.labels('name'))))
+                # and the numbers laid out with them: under load they came a turn after the names (a number of the
+                # layout before over a dot, once on Windows); a number that stays on a dot still fails below
+                def hits():
+                    dots = self.dots()
+                    return [d for label in self.labels('name') + self.labels('number')
+                            for d in dots if covers(label.mapRectToScene(QRectF(0, 0, label.width(), label.height())), d)]
+                _setup.wait_until(edit.APP, lambda: not hits(), 3.0)
                 dots = self.dots()
                 self.assertTrue(dots)
-                dot_items = [o for o in self.plan.childItems() if o.property('location') is not None
-                             and o.width() == o.height() == 8]
+                # R706: the dots are a layer of the drawing; the labels' layer stands over the drawing's
+                assert_dots_follow(self, self.plan, self.controller.dots)
+                dot_items = [dots_layer(self.plan)]
+                def layer(item):
+                    while item.parentItem() is not self.plan:
+                        item = item.parentItem()
+                    return item
                 names, numbers = self.labels('name'), self.labels('number')
                 self.assertEqual(len(names), 3, (angle, zoom))
                 self.assertTrue(numbers)
                 for label in names + numbers:
-                    holder = label.parentItem()
-                    self.assertGreater(holder.z(), max(d.z() for d in dot_items), 'labels over the dots')
+                    self.assertGreater(layer(label).z(), max(layer(d).z() for d in dot_items), 'labels over the dots')
                     rect = label.mapRectToScene(QRectF(0, 0, label.width(), label.height()))
                     hit = [d for d in dots if covers(rect, d)]
                     self.assertEqual(hit, [], (label.objectName(), angle, zoom, rect))
@@ -180,6 +219,49 @@ class LabelsWindow(unittest.TestCase):
             centre = self.plan.screen(*module.centre)
             actual = label.mapToScene(QPointF(label.width()/2, label.height()/2))
             self.assertLess((centre-actual).manhattanLength(), 40)
+
+    def test_r555_a_name_is_the_sides_pill_and_gives_way_in_one_manner(self):
+        # R555 (14) (Daniel 09/11/2026: «a un certo zoom le pillole delle stringhe perdono i segni a destra senza motivo
+        # (lo spazio guadagnato è quasi nullo); più simili a quelle delle quote dei lati»). Before: between 6 and 14 px
+        # a module the name lost its state for 3 px (70 -> 67), 22 px high against the sides' 19, and under 6 px it
+        # was a bare disc of 12 px of its own drawing.
+        self.strings()
+        c = self.controller
+        c.set_string_details(c._module_tips, c._module_tip_default, c.editor.string_optimizers, {0: 'ok', 1: 'warn', 2: 'fail'})
+        size = c.property('moduleSize')
+        widths, line = {}, None
+        for level, pixels in (('near', 20), ('mid', 9), ('far', 4)):
+            self.plan.setProperty('zoom', pixels / size)
+            self.plan.setProperty('panX', 300)
+            self.plan.setProperty('panY', 500)
+            layer = next(o for o in self.descendants(self.plan) if o.objectName() == 'stringLabels')
+            # laid out at the settled zoom: the level of this zoom, its names there
+            # R707: a name for each string from the strings' scale; below it one pill for each inverter (the three
+            # strings are one inverter's: one pill), with how many strings it has, and from far its name alone
+            kind = 'name' if level == 'near' else 'inverter'
+            _setup.wait_until(edit.APP, lambda layer=layer, level=level, kind=kind: layer.property('level') == level and any(
+                o.isVisible() for o in self.labels(kind)), 5)
+            self.assertEqual(layer.property('level'), level)
+            line = layer.property('line')
+            names = [o for o in self.labels(kind) if o.isVisible()]
+            self.assertEqual(len(names), 3 if level == 'near' else 1, level)
+            if level != 'near':
+                self.assertFalse([o for o in self.labels('name') if o.isVisible()], level)
+                said = names[0].property('value')
+                self.assertEqual(('·' in said, said.startswith('Inverter 1')), (level == 'mid', True), said)
+            for pill in names:
+                kinds, meta = [], pill.metaObject()
+                while meta is not None:
+                    kinds.append(meta.className())
+                    meta = meta.superClass()
+                self.assertTrue(any(k.startswith('LengthPill') for k in kinds), ('the sides\' pill', kinds))
+                self.assertAlmostEqual(pill.height(), line, delta=.01, msg=level)
+                marks = [o for o in pill.childItems() if o.metaObject().className().startswith('PlanSymbol')
+                         and o.isVisible()]
+                widths.setdefault(level, set()).add(round(pill.width(), 2))
+                self.assertEqual(len(marks), 1, f'{level}: the state at the end of the name')
+        self.assertGreater(min(widths['mid']), max(widths['far']), 'from far the inverter says its name alone')
+        self.assertFalse(self.warnings, self.warnings)
 
 
 if __name__ == "__main__":

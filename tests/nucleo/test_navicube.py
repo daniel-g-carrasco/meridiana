@@ -7,8 +7,8 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import camera as cam
-from meridiana import navicube as nc
+from meridiana.app.view import camera as cam
+from meridiana.app.view import navicube as nc
 
 
 def looking(bearing, elevation) -> cam.Camera:

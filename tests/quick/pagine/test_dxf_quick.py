@@ -11,10 +11,11 @@ import _setup
 from PySide6.QtCore import QCoreApplication, QObject
 from PySide6.QtQml import QQmlApplicationEngine
 
-from meridiana import dxf_export, i18n
-from meridiana.quick.backend.controls import install_controls
-from meridiana.quick.backend.files_actions import FileActions
-from meridiana.session import ProjectSession
+from meridiana.app.exchange import dxf_export
+from meridiana import i18n
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.backend.files_actions import FileActions
+from meridiana.app.session import ProjectSession
 
 
 def item(root, name):
@@ -87,7 +88,7 @@ ApplicationWindow { width: 900; height: 700; visible: true
             end = time.monotonic() + 60
             while self.actions.busy and time.monotonic() < end:
                 QCoreApplication.processEvents()
-                time.sleep(0.01)
+                time.sleep(0.01)  # wait: a breath between two looks at the condition, so the workers' threads run
             self.assertFalse(self.actions.busy)
             written = target.with_suffix(".dxf")
             self.assertTrue(written.exists(), self.actions.status)

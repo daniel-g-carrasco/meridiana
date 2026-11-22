@@ -7,7 +7,8 @@ import unittest
 import _setup  # noqa: F401
 from shapely.geometry import Polygon
 
-from meridiana import layout, sun
+from meridiana.core.layout import layout
+from meridiana.core.geometry import sun
 
 ROOF = [(0.0, 0.0), (40.0, 0.0), (40.0, 20.0), (0.0, 20.0)]   # 40 x 20 m, sides along East and North
 MILANO = dict(lat=45.4642, lon=9.19)

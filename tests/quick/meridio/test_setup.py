@@ -7,10 +7,10 @@ from unittest.mock import Mock, patch
 from PySide6.QtWidgets import QApplication
 
 from _setup import wait_until
-from meridiana import config
-from meridiana.assistant import local, setup
-from meridiana.quick.backend.assistant_local import LocalModels
-from meridiana.quick.backend.assistant_setup import AssistantSetup
+from meridiana.app.platform import config
+from meridiana.app.assistant import local, setup
+from meridiana.gui.backend.assistant_local import LocalModels
+from meridiana.gui.backend.assistant_setup import AssistantSetup
 
 
 class SetupTest(unittest.TestCase):

@@ -10,7 +10,9 @@ import unittest
 import _setup  # noqa: F401
 from shapely.geometry import Point, Polygon
 
-from meridiana import model, roof_vertices, roofs, rules
+from meridiana.core.model import model
+from meridiana.core.geometry import roof_vertices, roofs
+from meridiana.core.rules import rules
 
 
 def project():
@@ -63,9 +65,9 @@ class SaddleDirection(unittest.TestCase):
             roofs.axis_bearing((1, 1), (1.001, 1))
 
     def test_the_trace_on_the_plan_writes_the_direction(self):
-        from meridiana.quick.backend.properties import PropertiesBackend
-        from meridiana.quick.backend.properties_part import Inspectors
-        from meridiana.session import ProjectSession
+        from meridiana.gui.backend.properties import PropertiesBackend
+        from meridiana.gui.backend.properties_part import Inspectors
+        from meridiana.app.session import ProjectSession
         p = project()
         p.buildings[0].roof = model.Roof(type="saddles", saddles=roofs.saddle_spec({"direction": 90.0}))
         session = ProjectSession(p)

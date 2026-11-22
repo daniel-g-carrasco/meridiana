@@ -12,8 +12,8 @@ from PySide6.QtQuick import QQuickItem, QQuickWindow
 from PySide6.QtTest import QTest
 from shiboken6 import delete
 
-from meridiana.quick.backend.controls import IconProvider, install_controls
-from meridiana.quick.capture import grab
+from meridiana.gui.backend.controls import IconProvider, install_controls
+from meridiana.gui.capture import grab
 
 
 class ControlsTest(unittest.TestCase):
@@ -66,6 +66,11 @@ class ControlsTest(unittest.TestCase):
         self.assertEqual(root.property('count'), 1)
 
     def test_number_field_italian_commit_and_validation(self):
+        # the field writes and reads in the window's language (create_app sets Qt's locale; r35-segni: it was Italian
+        # whatever the language): Italian here, English below
+        from PySide6.QtCore import QLocale
+        self.addCleanup(QLocale.setDefault, QLocale())
+        QLocale.setDefault(QLocale(QLocale.Language.Italian, QLocale.Country.Italy))
         root, window = self.scene('''M.NumberField { width: 180; value: 12.5
             minimum: 0; maximum: 100; unit: "kW"; decimals: 2 }''')
         self.assertEqual(root.property('text'), '12,50')
@@ -79,6 +84,20 @@ class ControlsTest(unittest.TestCase):
         QTest.keyClick(window, Qt.Key.Key_Return)
         self.assertEqual(root.property('value'), 27.75)
         self.assertFalse(root.property('acceptableInput'))
+
+    def test_number_field_follows_the_window_language(self):
+        from PySide6.QtCore import QLocale
+        self.addCleanup(QLocale.setDefault, QLocale())
+        QLocale.setDefault(QLocale(QLocale.Language.English, QLocale.Country.UnitedKingdom))
+        root, window = self.scene('''M.NumberField { width: 180; value: 12.5
+            minimum: 0; maximum: 100; unit: "kW"; decimals: 2 }''')
+        self.assertEqual(root.property('text'), '12.50')
+        root.forceActiveFocus()
+        QTest.keyClick(window, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
+        for char in '27.75':
+            QTest.keyClick(window, char)
+        QTest.keyClick(window, Qt.Key.Key_Return)
+        self.assertEqual(root.property('value'), 27.75)
 
     def test_initial_types_load(self):
         for name in ('Label', 'Icon', 'Button', 'ToolButton', 'SplitButton', 'MenuItem',
@@ -233,12 +252,12 @@ class ControlsTest(unittest.TestCase):
         self.assertEqual(root.property('actions'), 1)
 
     def test_dialog_escape_and_accept(self):
-        root, window = self.scene('''Item { width: 500; height: 300
+        root, window = self.scene('''Item { id: scene; width: 500; height: 300
             property int accepts: 0; property int rejects: 0
             M.Button { text: "Open"; onClicked: dialog.open() }
             M.Dialog { id: dialog; objectName: "dialog"; title: "Confirm"; acceptText: "OK"; rejectText: "Cancel"
-                x: 30; y: 60; onAccepted: parent.accepts++; onRejected: parent.rejects++
-                contentItem: M.Label { text: "Details" }
+                onAccepted: scene.accepts++; onRejected: scene.rejects++
+                M.Label { text: "Details" }
             }
         }''')
         QTest.mouseClick(window, Qt.MouseButton.LeftButton, pos=QPoint(20, 12))
@@ -299,12 +318,41 @@ class ControlsTest(unittest.TestCase):
         QTest.qWait(120)
         QMetaObject.invokeMethod(root, 'reduce')
         QTest.qWait(20)
-        self.assertEqual(fill.x(), 80)
-        self.assertEqual(fill.width(), 80)
+        self.assertEqual(fill.x(), 90)          # R607: the running piece is a quarter of the thread, in its middle
+        self.assertEqual(fill.width(), 60)
         root.setProperty('indeterminate', False)
         QTest.qWait(20)
         self.assertEqual(fill.x(), 0)
         self.assertEqual(fill.width(), 120)
+
+    def test_r555_the_running_piece_never_goes_past_the_groove(self):
+        # R555 (15) (Daniel 09/11/2026: «i bordi delle barre restano tagliati»): the piece that runs without an end was
+        # clipped by the groove's box, so coming in and going out its flat middle covered the groove's round ends
+        # square. It lies on the groove now, shorter at its ends, its own ends round.
+        root, window = self.scene('''import Meridiana.Theme
+            M.ProgressBar { width: 240; indeterminate: true
+                function move() { Theme.configure({reducedMotion: false}) }
+            }''')
+        QMetaObject.invokeMethod(root, 'move')
+        fill = root.findChild(QQuickItem, 'progressFill')
+        track = fill.parentItem()
+        ends = set()
+
+        def seen():
+            # every frame looked at while the animation runs: the piece on the groove, and which end the run is at
+            run, span = track.property('runX'), track.property('runWidth')
+            if run is None:                     # before R555 the piece was its run
+                run, span = fill.x(), fill.width()
+            if fill.isVisible():
+                self.assertGreaterEqual(fill.x(), 0, run)
+                self.assertLessEqual(fill.x() + fill.width(), root.width() + 1e-6, run)
+            if run < 0 < run + span:
+                ends.add('in')
+            if run < root.width() < run + span:
+                ends.add('out')
+            return ends == {'in', 'out'}
+        _setup.wait_until(QGuiApplication.instance(), seen, 10)
+        self.assertEqual(ends, {'in', 'out'}, 'the run seen at both ends of the groove')
 
     def test_segments_keep_external_binding_after_user_activation(self):
         root, window = self.scene('''Item { width: 400; height: 200

@@ -40,7 +40,7 @@ def r142(out: Path) -> None:
 def r134(out: Path) -> None:
     from PySide6.QtCore import QRectF
 
-    from meridiana.string_paths import Router
+    from meridiana.core.geometry.string_paths import Router
 
     _setup.keep_global_state()
     Stringing.setUpClass()

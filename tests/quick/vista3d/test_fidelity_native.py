@@ -11,9 +11,10 @@ from PySide6.QtQuick import QQuickWindow, QSGRendererInterface
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtTest import QTest
 
-from meridiana import i18n, model
-from meridiana.quick.backend.scene_host import SceneWindow
-from meridiana.session import ProjectSession
+from meridiana import i18n
+from meridiana.core.model import model
+from meridiana.gui.backend.scene_host import SceneWindow
+from meridiana.app.session import ProjectSession
 from ._fidelity_support import click, data, js, pixels, settle
 
 

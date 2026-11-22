@@ -43,8 +43,11 @@ def year(name: str, source: Path, out: Path, cached: Path | None):
     if cached.exists():
         with open(cached, "rb") as f:
             return pickle.load(f)
-    from meridiana import checks, jobs, model, rules
-    from meridiana.energy import pipeline, system
+    from meridiana.core.rules import checks, rules
+    from meridiana.app import jobs
+    from meridiana.core.model import model
+    from meridiana.app import pipeline
+    from meridiana.core.energy import system
     folder = Path(tempfile.mkdtemp(prefix=f"confronto-{name}-"))
     copy = folder / source.name
     shutil.copy2(source, copy)
@@ -79,7 +82,7 @@ def prepare(args) -> None:
     saved = year(args.name, Path(args.project), out, Path(args.year) if args.year else None)
     project, data = saved["project"], saved["data"]
     project.report = {**(getattr(project, "report", None) or {}), **REPORT}
-    from meridiana.ui import report, report_3d
+    from meridiana.gui.paper import report, report_3d
     steps = report._prepared(project, data, dict(PROFILE))
     while True:
         try:
@@ -115,7 +118,7 @@ def export(args) -> None:
     out = Path(args.out)
     from meridiana import i18n
     i18n.setup("it")
-    from meridiana.report_typst import editable
+    from meridiana.app.report import editable
     document = json.loads((out / "document.json").read_text(encoding="utf-8"))
     for kind in ("odt", "docx"):
         stats = editable.export(json.loads(json.dumps(document)), out / "root", out / f"relazione.{kind}", kind)

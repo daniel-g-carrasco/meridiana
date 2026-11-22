@@ -12,7 +12,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from meridiana import geo, tiles
+from meridiana.core.geometry import geo
+from meridiana.app.maps import tiles
 
 
 def png(colour='#4f905c'):
@@ -43,7 +44,7 @@ class StickyErrors:
                     owner.asked.append(self.path)
                     owner.parallel += 1
                     owner.most = max(owner.most, owner.parallel)
-                time.sleep(.003)
+                time.sleep(.003)  # wait: a tile fetch made slow on purpose, so that two overlap
                 bad = owner.down or ('TRANSPARENT' not in self.path and owner.poisoned(self.path))
                 body = b'<ServiceExceptionReport>msShapefileOpen(): Unable to access file.</ServiceExceptionReport>' \
                     if bad else owner.image
@@ -87,14 +88,14 @@ class OfflineMapTests(unittest.TestCase):
         deadline = time.monotonic() + seconds
         while not condition() and time.monotonic() < deadline:
             self.app.processEvents()
-            time.sleep(.002)
+            time.sleep(.002)  # wait: a breath between two looks at the condition, so the workers' threads run
         self.assertTrue(condition())
 
     def spin(self, seconds):
         deadline = time.monotonic() + seconds
         while time.monotonic() < deadline:
             self.app.processEvents()
-            time.sleep(.002)
+            time.sleep(.002)  # wait: a breath between two looks at the condition, so the workers' threads run
 
     def server(self, **options):
         server = StickyErrors(**options)
@@ -109,7 +110,7 @@ class OfflineMapTests(unittest.TestCase):
     # the cause: an error kept for the exact address, a whole view of the orthophoto lost, then back, then lost
 
     def test_an_error_kept_for_an_address_is_asked_again_with_another_address(self):
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         server = self.server()
         loader = plan_tiles.TileLoader(self.cache(), sources={'pcn': wms(server.root)})
         got, failed = [], []
@@ -126,7 +127,7 @@ class OfflineMapTests(unittest.TestCase):
     def test_the_plan_keeps_the_orthophoto_where_the_server_kept_errors(self):
         """A third of the addresses of a view poisoned, as on 07/11/2026 at zoom 17: before, three failed tiles
         moved the whole plan to the replacement map for three minutes, and back, and away again."""
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         server = self.server(poisoned=lambda path: hash(path) % 3 == 0)
         sources = {'pcn': wms(server.root),
                    'osm': tiles.Source('osm', 'Map', 'xyz', server.root + '/map/{z}/{x}/{y}.png?TRANSPARENT',
@@ -146,7 +147,7 @@ class OfflineMapTests(unittest.TestCase):
     def test_a_tile_on_show_survives_the_memory_it_was_pushed_out_of(self):
         from PySide6.QtCore import QSize
         from PySide6.QtGui import QColor, QImage
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         cache = self.cache()
         loader = plan_tiles.TileLoader(cache, sources={'pcn': wms('http://127.0.0.1:9')})
         images = plan_tiles.MapImages(reread=loader.read)
@@ -167,7 +168,7 @@ class OfflineMapTests(unittest.TestCase):
 
     def test_the_tiles_on_show_leave_the_memory_last(self):
         from PySide6.QtGui import QImage
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         images = plan_tiles.MapImages()
         image = QImage(256, 256, QImage.Format.Format_RGB32)
         shown = {('pcn', 18, n, 0) for n in range(3)}
@@ -182,7 +183,7 @@ class OfflineMapTests(unittest.TestCase):
     def test_a_superseded_identifier_still_gives_its_tile(self):
         from PySide6.QtCore import QSize
         from PySide6.QtGui import QImage
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         images = plan_tiles.MapImages()
         image = QImage(256, 256, QImage.Format.Format_RGB32)
         images.put('1', ('pcn', 18, 1, 1), image)
@@ -203,7 +204,7 @@ class OfflineMapTests(unittest.TestCase):
         return path
 
     def test_a_stale_tile_is_shown_at_once_and_stays_when_the_renewal_fails(self):
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         server = self.server()
         server.down = True
         cache = self.cache()
@@ -224,7 +225,7 @@ class OfflineMapTests(unittest.TestCase):
         loader.close()
 
     def test_a_stale_tile_is_renewed_when_the_server_answers(self):
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         server = self.server(poisoned=lambda path: False)
         cache = self.cache()
         source = tiles.Source('osm', 'Map', 'xyz', server.root + '/map/{z}/{x}/{y}.png', 'Map', imagery='map')
@@ -243,7 +244,7 @@ class OfflineMapTests(unittest.TestCase):
         for key in ('it-bz', 'it-tn', 'it-toscana', 'it-fvg', 'eox-2016'):
             self.assertEqual(tiles.SOURCES[key].max_age_days, 0, key)
         self.assertGreaterEqual(tiles.SOURCES['osm'].max_age_days, 7)
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         server = self.server(poisoned=lambda path: False)
         cache = self.cache()
         loader = plan_tiles.TileLoader(cache, sources={'pcn': wms(server.root, max_age_days=0)})
@@ -258,7 +259,7 @@ class OfflineMapTests(unittest.TestCase):
         loader.close()
 
     def test_a_tile_that_arrives_after_the_view_moved_on_is_kept_on_disk(self):
-        from meridiana.quick.backend import plan_tiles
+        from meridiana.gui.backend import plan_tiles
         server = self.server(poisoned=lambda path: False)
         loader = plan_tiles.TileLoader(self.cache(), sources={'pcn': wms(server.root)})
         loader.request('pcn', 18, 5, 6)
@@ -271,7 +272,7 @@ class OfflineMapTests(unittest.TestCase):
     # the area of the project, kept
 
     def test_the_area_of_a_project_is_kept_once_at_every_useful_zoom_politely_and_resumes(self):
-        from meridiana.quick.backend import plan_offline
+        from meridiana.gui.backend import plan_offline
         server = self.server(poisoned=lambda path: hash(path) % 5 == 0)
         cache = self.cache()
         source = wms(server.root, bulk=True, detail_zoom=18)
@@ -290,7 +291,7 @@ class OfflineMapTests(unittest.TestCase):
         self.assertEqual(progress[-1], (len(area), len(area)))
         self.assertLessEqual(server.most, plan_offline.IN_FLIGHT)
         self.assertLessEqual(plan_offline.IN_FLIGHT, 2)
-        from meridiana.quick.backend.plan_tiles import tile_path
+        from meridiana.gui.backend.plan_tiles import tile_path
         self.assertTrue(all(tile_path(cache, source, z, x, y).exists() for z, x, y in area))
         asked = len(server.asked)
         again = plan_offline.AreaDownload(cache, source, area)
@@ -303,12 +304,12 @@ class OfflineMapTests(unittest.TestCase):
         self.assertEqual(tiles.SOURCES['pcn'].detail_zoom, 18)
         for key in ('osm', 'opentopomap', 'de-bb', 'eox-2016'):
             self.assertFalse(tiles.SOURCES[key].bulk, key)
-        from meridiana.quick.backend import plan_offline
+        from meridiana.gui.backend import plan_offline
         with self.assertRaises(ValueError):
             plan_offline.AreaDownload(self.cache(), tiles.SOURCES['osm'], [(17, 1, 1)])
 
     def test_the_plan_keeps_its_area_and_then_works_without_network(self):
-        from meridiana.quick.backend import plan_offline, plan_tiles
+        from meridiana.gui.backend import plan_offline, plan_tiles
         server = self.server(poisoned=lambda path: False)
         cache = self.cache()
         sources = {'pcn': wms(server.root, bulk=True, detail_zoom=18)}

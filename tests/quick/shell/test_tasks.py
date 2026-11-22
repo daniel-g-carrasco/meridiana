@@ -8,10 +8,10 @@ from types import SimpleNamespace
 from PySide6.QtCore import QObject, QProcess
 
 from _fixtures import capannone
-from meridiana.quick.app import create_app
-from meridiana.quick.backend.shell import ShellController
-from meridiana.quick.backend.shell_compute import ShellBridge
-from meridiana.quick.backend.shell_tasks import ShellTasks
+from meridiana.gui.application import create_app
+from meridiana.gui.backend.shell import ShellController
+from meridiana.gui.backend.shell_compute import ShellBridge
+from meridiana.gui.backend.shell_tasks import ShellTasks
 from quick.gestures import wait_for
 
 
@@ -70,7 +70,7 @@ class TasksTest(unittest.TestCase):
 
     def test_csv_uses_the_session_hourly_register(self):
         import pandas as pd
-        from meridiana.ui.report import write_register_csv
+        from meridiana.gui.paper.report import write_register_csv
         from meridiana import i18n
         i18n.setup('it')
         index = pd.date_range('2025-01-01', periods=2, freq='h', tz='Europe/Rome')

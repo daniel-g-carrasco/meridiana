@@ -10,9 +10,9 @@ from pathlib import Path
 import numpy as np
 from PySide6.QtWidgets import QApplication
 
-from meridiana import model
-from meridiana.quick.backend.scene import SceneBackend
-from meridiana.session import ProjectSession
+from meridiana.core.model import model
+from meridiana.gui.backend.scene import SceneBackend
+from meridiana.app.session import ProjectSession
 
 
 def project():

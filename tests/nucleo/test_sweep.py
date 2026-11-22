@@ -6,8 +6,9 @@ import unittest
 import numpy as np
 from _fixtures import capannone, inverter_record, laid
 
-from meridiana import manual, sweep
-from meridiana.energy import plant
+from meridiana.core.layout import manual
+from meridiana.core.geometry import sweep
+from meridiana.core.energy import plant
 
 
 class Sweep(unittest.TestCase):

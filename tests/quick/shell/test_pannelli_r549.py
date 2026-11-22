@@ -19,7 +19,7 @@ from PySide6.QtCore import Q_ARG, QMetaObject, Qt
 
 from _fixtures import capannone
 from meridiana.i18n import _
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import click, item, key, point, pump, wait_for
 
 # Daniel's quick-shell.json at 17:25 of 08/11/2026 (the close after the start without panels), the floating sizes cut

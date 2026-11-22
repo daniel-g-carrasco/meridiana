@@ -1,4 +1,4 @@
-"""Interaction tests of the light plan (quick/Plan.qml, the Workbench's plan without the real views) and of its year
+"""Interaction tests of the light plan (gui/Plan.qml, the Workbench's plan without the real views) and of its year
 chart, against a QQuickWindow, never Widgets or a native mouse. F5 (r23-f5) took away the legacy prototype
 (quick/Main.qml): the tests of its own panels and fields went with it, the plan's and the chart's run on the Workbench.
 The Workbench's cards cover the middle of the light plan: the tests of geometry under the pointer (zoom, image,
@@ -11,10 +11,10 @@ from pathlib import Path
 from PySide6.QtCore import QPointF
 
 from _fixtures import capannone
-from meridiana import jobs
-from meridiana.quick.app import QuickWindow, create_app
-from meridiana.quick.capture import grab
-from quick.gestures import click, item, point, pump
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
+from meridiana.gui.capture import grab
+from quick.gestures import click, item, point, pump, wait_for
 
 
 class QuickWindowTest(unittest.TestCase):
@@ -32,11 +32,15 @@ class QuickWindowTest(unittest.TestCase):
         self.win, self.bridge = self.host.window, self.host.bridge
         item(self.win, 'plan').setProperty('renderer', self.renderer)
         results, keys, _ = jobs.layout_of(self.bridge.session.project)
+        self.laid = sum(len(r.modules) for r in results.values())
         self.bridge.accept_layout(0, results, keys)
         self.win.show()
-        self.win.resize(1600, 960)
         pump(40)
         self.plan = item(self.win, 'plan')
+        # R598: the bridge hands its scene of the layout on a turn of the jobs (bridge.scene, after up to PERIOD_MS),
+        # the views a piece each after it; the light plan fits on the first scene with the modules
+        wait_for(lambda: not self.bridge.session.telling() and self.bridge.moduleCount == self.laid
+                 and self.plan.property('fitted'))
 
     def tearDown(self):
         warnings = list(self.host.warnings)
@@ -47,6 +51,7 @@ class QuickWindowTest(unittest.TestCase):
 
     def test_modules_are_present_and_click_selects_the_hit_module(self):
         self.assertGreater(self.plan.property('zoom'), .02)
+        self.assertGreater(self.bridge.moduleCount, 0, 'the layout is on the plan, not an empty scene')
         self.assertEqual(self.plan.property('renderedModules'), self.bridge.moduleCount)
         self.assertEqual(self.plan.property('polygonCount'), len(self.bridge.scene))
         self.assertEqual(self.plan.property('paintedModules'), self.bridge.moduleCount)

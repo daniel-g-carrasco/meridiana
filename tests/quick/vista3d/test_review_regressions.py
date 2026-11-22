@@ -9,9 +9,11 @@ import numpy as np
 from PySide6.QtWidgets import QApplication
 
 import _setup
-from meridiana import jobs, model, roof_vertices, sun
-from meridiana.quick.backend.scene import SceneBackend
-from meridiana.session import ProjectSession
+from meridiana.app import jobs
+from meridiana.core.model import model
+from meridiana.core.geometry import roof_vertices, sun
+from meridiana.gui.backend.scene import SceneBackend
+from meridiana.app.session import ProjectSession
 
 setUpModule = _setup.keep_global_state
 

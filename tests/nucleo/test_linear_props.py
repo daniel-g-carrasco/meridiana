@@ -4,7 +4,8 @@ import unittest
 
 import numpy as np
 
-from meridiana import mesh, model, move, props
+from meridiana.core.geometry import mesh, props
+from meridiana.core.model import model, move
 
 
 class LinearProps(unittest.TestCase):

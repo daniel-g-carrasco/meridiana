@@ -7,7 +7,7 @@ import _setup  # noqa: F401
 from _fakes import Host
 from _fixtures import capannone
 
-from meridiana.assistant import tools
+from meridiana.app.assistant import tools
 
 
 def row(name, series, revision, modified, kind="roof", power=100.0, mounting="tilted_anchored"):

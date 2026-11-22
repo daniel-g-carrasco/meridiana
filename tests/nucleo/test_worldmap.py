@@ -4,7 +4,8 @@ import unittest
 
 import _setup  # noqa: F401
 
-from meridiana import paths, worldmap
+from meridiana.app.platform import paths
+from meridiana.app.maps import worldmap
 
 
 class WorldMap(unittest.TestCase):

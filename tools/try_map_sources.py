@@ -25,7 +25,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from meridiana import __version__, geo, tiles  # noqa: E402
+from meridiana import __version__
+from meridiana.app.maps import tiles
+from meridiana.core.geometry import geo  # noqa: E402
 
 USER_AGENT = f"Meridiana/{__version__} (+https://github.com/daniel-g-carrasco/meridiana)"
 SMALL = 1000                    # bytes: below this an image is probably blank

@@ -8,7 +8,7 @@ import _setup  # noqa: F401
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 
-from meridiana import roofs
+from meridiana.core.geometry import roofs
 
 HOUSE = [(0.0, 0.0), (12.0, 0.0), (12.0, 8.0), (0.0, 8.0)]     # 12 x 8 m, long side East-West
 L_PLAN = [(0, 0), (20, 0), (20, 8), (8, 8), (8, 18), (0, 18)]  # 20 x 18 m, arms 8 m wide (study 16, A.2)

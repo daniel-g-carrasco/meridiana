@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 
 from _fixtures import capannone
-from meridiana import jobs
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import item, point, pump
 
 

@@ -1,7 +1,7 @@
 """Real control states, compared with the authoritative Widgets palette and geometry."""
 import unittest
 
-from PySide6.QtCore import QPoint, QUrl, Qt
+from PySide6.QtCore import QObject, QPoint, QUrl, Qt
 from PySide6.QtGui import QColor
 from PySide6.QtQml import QQmlComponent, QQmlEngine
 from PySide6.QtQuick import QQuickItem, QQuickWindow
@@ -9,8 +9,8 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
 
-from meridiana.quick.backend.controls import install_controls
-from meridiana.quick.capture import grab
+from meridiana.gui.backend.controls import install_controls
+from meridiana.gui.capture import grab
 
 
 class FidelityTest(unittest.TestCase):
@@ -67,15 +67,15 @@ class FidelityTest(unittest.TestCase):
                 self.assertEqual(self.pixel(window, 90, 0), theme.colors['field_line'])
                 field.forceActiveFocus(Qt.FocusReason.TabFocusReason)
                 QTest.qWait(30)
-                self.assertEqual(self.pixel(window, 90, 0), theme.colors['accent'])
+                self.assertEqual(self.pixel(window, 90, 0), theme.colors['focus'])   # R555 (11): the focus' grey, not the accent
 
     def test_icons_keep_widgets_edges_at_screen_scale(self):
         from itertools import product
         from PySide6.QtCore import QRect
         from PySide6.QtGui import QIcon, QImage, QPainter
-        from meridiana import theme_colors
-        from meridiana.ui.icons import icon
-        from meridiana.ui.theme import qpalette
+        from meridiana.app.interface import theme_colors
+        from meridiana.gui.style.icons import icon
+        from meridiana.gui.style.theme import qpalette
 
         palette = QApplication.palette()
 
@@ -108,7 +108,7 @@ class FidelityTest(unittest.TestCase):
     def test_toolbar_icon_position_and_edges_match_widgets(self):
         from PySide6.QtCore import QRect
         from PySide6.QtGui import QImage, QPainter
-        from meridiana.ui.icons import icon
+        from meridiana.gui.style.icons import icon
 
         # Measured from the real QToolButton in phasebar, 64 by 52, Plex medium.
         # Odd widths retain the same integral left edge, as QWidget geometry does.
@@ -138,7 +138,8 @@ class FidelityTest(unittest.TestCase):
         QTest.mousePress(window, Qt.MouseButton.LeftButton, pos=QPoint(70, 14))
         QTest.qWait(20)
         self.assertTrue(field.hasActiveFocus())
-        self.assertEqual(self.pixel(window, 90, 0), theme.colors['accent'])
+        # Daniel 14/11/2026: no focus ring after a click, the field under the pointer keeps its hover's line
+        self.assertEqual(self.pixel(window, 90, 0), theme.colors['field_line'])
         QTest.mouseRelease(window, Qt.MouseButton.LeftButton, pos=QPoint(70, 14))
 
     def test_tab_into_field_selects_text_like_line_edit(self):
@@ -178,7 +179,14 @@ class FidelityTest(unittest.TestCase):
         QTest.mouseClick(window, Qt.MouseButton.LeftButton, pos=QPoint(60, 14))
         QTest.qWait(30)
         self.assertTrue(root.hasActiveFocus())
-        self.assertEqual(self.pixel(window, 60, 0), theme.colors['accent'])
+        # R555 (7), (11): the ring shows for the keyboard only, in the focus' grey
+        self.assertNotEqual(self.pixel(window, 60, 0), theme.colors['focus'])
+        self.assertNotEqual(self.pixel(window, 60, 0), theme.colors['accent'])
+        root.forceActiveFocus(Qt.FocusReason.TabFocusReason)
+        root.setFocus(False)
+        root.forceActiveFocus(Qt.FocusReason.TabFocusReason)
+        QTest.qWait(30)
+        self.assertEqual(self.pixel(window, 60, 0), theme.colors['focus'])
 
     def test_checkbox_reserves_focus_and_checked_ground(self):
         root, window, theme = self.scene('M.CheckBox { width: 200; text: "Ombre"; checked: true }')
@@ -204,7 +212,16 @@ class FidelityTest(unittest.TestCase):
         from PySide6.QtCore import QObject
         tip = root.findChild(QObject, 'tip')
         self.assertLessEqual(tip.property('width'), 340)
-        self.assertEqual(tip.property('background').property('radius'), 4)
+        # R615: the menus' corner and ground (`card` at TIP_ALPHA, theme_colors), in both themes
+        from meridiana.gui.style.design import Radius
+        ground = tip.property('background')
+        self.assertEqual(ground.property('radius'), Radius.CARD)
+        for name in ('light', 'dark'):
+            theme.configure({'theme': name})
+            QTest.qWait(20)
+            self.assertEqual(QColor(ground.property('color')).name(QColor.NameFormat.HexArgb),
+                             theme.colors['tooltip_bg'], name)
+            self.assertEqual(theme.colors['tooltip_bg'][3:], theme.colors['card'][1:], name)
 
     def test_slider_keyboard_and_track(self):
         slider, window, theme = self.scene('M.Slider { width: 240; from: 0; to: 100; value: 50; stepSize: 1 }')
@@ -241,8 +258,21 @@ class FidelityTest(unittest.TestCase):
             property real viewportWidth: view.width
         }''')
         self.assertEqual(root.property('viewportWidth'), 288)
-        # The bar's ink is in the reserved room, outside the clipped viewport.
-        self.assertEqual(self.pixel(window, 294, 18), theme.colors['line'])
+        # The bar's ink is in the reserved room, outside the clipped viewport: since r39 GNOME's thumb (the kit), the
+        # text's colour at 20 %, 4 wide in the middle of the room, the ground beside it
+        self.assertNotEqual(self.pixel(window, 294, 18), self.pixel(window, 299, 18))
+
+    def test_closed_sides_shade_and_open_ones_dissolve(self):
+        """The kit's hybrid (Daniel 21/11/2026): a list in its frame shows GNOME's shadow at the edge with more rows
+        beyond it; without its frame it dissolves, no shadow."""
+        for framed in (True, False):
+            with self.subTest(framed=framed):
+                root, window, theme = self.scene(f'''M.List {{ width: 300; height: 150; framed: {str(framed).lower()}
+                    model: Array.from({{length: 40}}, (_, i) => "Riga " + i) }}''')
+                top = root.findChild(QObject, 'topUndershoot')
+                bottom = root.findChild(QObject, 'bottomUndershoot')
+                self.assertFalse(top.property('visible'))
+                self.assertEqual(bottom.property('visible'), framed)
 
     def test_lists_select_on_press_before_release_like_widgets(self):
         for control, model in (('List', '["Capannone", "Uffici"]'),
@@ -265,10 +295,10 @@ class FidelityTest(unittest.TestCase):
 
     def test_dialog_return_accepts_default_button(self):
         from PySide6.QtCore import QObject, QMetaObject
-        root, window, theme = self.scene('''Item { width: 500; height: 300; property bool accepted: false
+        root, window, theme = self.scene('''Item { id: scene; width: 500; height: 300; property bool accepted: false
             M.Dialog { objectName: "dialog"; acceptText: "Conferma"; rejectText: "Annulla"
-                onAccepted: parent.accepted = true
-                contentItem: M.Label { text: "Confermare?" }
+                onAccepted: scene.accepted = true
+                M.Label { text: "Confermare?" }
             }
         }''')
         dialog = root.findChild(QObject, 'dialog')
@@ -340,7 +370,7 @@ class FidelityTest(unittest.TestCase):
                 tip: "Salva (Ctrl+S)\\nConserva la copia precedente e salva tutte le modifiche al progetto nella cartella scelta." }
         }''')
         QTest.mouseMove(window, QPoint(580, 435))
-        QTest.qWait(900)            # the first tooltip after 700 ms (R468)
+        QTest.qWait(900)  # wait: the first tooltip after 700 ms (R468)
         tip = root.findChild(QObject, 'controlTip')
         parent = tip.property('parent')
         point = parent.mapToScene(QPoint(0, 0))
@@ -425,47 +455,45 @@ class FidelityTest(unittest.TestCase):
                     Rectangle { width: 240; height: 300; color: Theme.colors.accent
                         TapHandler { onTapped: root.clicks++ } }
                 }
-                M.EdgeFades { flickable: port; page: true }
+                M.EdgeFades { flickable: port }
             }'''.replace('Item { width:', 'Item { id: root; width:', 1), dark)
             port = root.findChild(QQuickItem, 'port')
-            top = root.findChild(QQuickItem, 'topFade')
-            bottom = root.findChild(QQuickItem, 'bottomFade')
-            self.assertFalse(top.isVisible())
-            self.assertTrue(bottom.isVisible())
+            fades = root.findChild(QQuickItem, 'edgeFades')
+
+            def ends(fades=fades):
+                return fades.property('topBand') > 0, fades.property('bottomBand') > 0
+            # R624: a dissolve only at an edge with more content beyond it (the band: Size.FADE, at most a fifth)
+            self.assertEqual(ends(), (False, True))
+            self.assertEqual(fades.property('bottomBand'), 16)       # Size.FADE (a fifth of the 100 px is more)
             QTest.mouseClick(window, Qt.MouseButton.LeftButton, pos=QPoint(120, 97))
             self.assertEqual(root.property('clicks'), 1)
             port.setProperty('contentY', 100)
             QTest.qWait(30)
-            self.assertTrue(top.isVisible())
-            self.assertTrue(bottom.isVisible())
+            self.assertEqual(ends(), (True, True))
             port.setProperty('contentY', 200)
             QTest.qWait(30)
-            self.assertTrue(top.isVisible())
-            self.assertFalse(bottom.isVisible())
+            self.assertEqual(ends(), (True, False))
             port.setProperty('contentHeight', 100)
             port.setProperty('contentY', 0)
             QTest.qWait(30)
-            self.assertFalse(top.isVisible())
-            self.assertFalse(bottom.isVisible())
+            self.assertEqual(ends(), (False, False))
+            self.assertFalse(fades.property('active'))
 
-    def test_progress_keeps_fusion_scanlines_at_screen_scale(self):
-        from PySide6.QtCore import QSize
-        from PySide6.QtGui import QImage, QPainter
-        from meridiana.quick.backend.controls import IconProvider
+    def test_r607_progress_is_a_grey_thread_at_screen_scale(self):
+        # R607 (Daniel 14/11/2026, the sketches of r35-pillole: «il filo grigio (A)»): 2 px with round ends, the track
+        # in the soft line, what is done in the grey of the secondary text, no accent (was Fusion's 6 px skin)
         root, window, theme = self.scene('M.ProgressBar { width: 240; value: 0.5 }', True)
         actual = grab(window)
         dpr = actual.devicePixelRatio()
-        expected = QImage(round(32*dpr), round(6*dpr), QImage.Format.Format_ARGB32_Premultiplied)
-        expected.fill(QColor(theme.colors['panel']))
-        provider = IconProvider(theme)
-        painter = QPainter(expected)
-        for part in ('groove', 'fill'):
-            skin = provider.requestImage(f'progress:{part}/0/{dpr}/on', QSize(), QSize())
-            skin.setDevicePixelRatio(1)
-            painter.drawImage(0, 0, skin)
-        painter.end()
-        for y in range(expected.height()):
-            self.assertEqual(actual.pixelColor(round(50*dpr), y), expected.pixelColor(round(12*dpr), y), y)
+        self.assertEqual(root.height(), 2)
+        done = actual.pixelColor(round(60*dpr), round(1*dpr))
+        left = actual.pixelColor(round(180*dpr), round(1*dpr))
+        self.assertLessEqual(max(abs(done.red() - QColor(theme.colors['text2']).red()),
+                                 abs(done.blue() - QColor(theme.colors['text2']).blue())), 8, done.name())
+        self.assertLessEqual(max(abs(left.red() - QColor(theme.colors['line_soft']).red()),
+                                 abs(left.blue() - QColor(theme.colors['line_soft']).blue())), 8, left.name())
+        below = actual.pixelColor(round(60*dpr), round(3*dpr) + 1)
+        self.assertEqual(below.name(), QColor(theme.colors['panel']).name(), 'nothing drawn under the 2 px')
 
     def test_segment_frames_do_not_call_python_control_providers(self):
         import sys
@@ -476,7 +504,7 @@ class FidelityTest(unittest.TestCase):
                 contentY: 20
                 NumberAnimation on contentY { from: 20; to: 120; duration: 1000; loops: Animation.Infinite }
             }
-            M.EdgeFades { flickable: port; page: true }
+            M.EdgeFades { flickable: port }
         }''')
         theme.configure({'reducedMotion': False})
         QTest.qWait(150)
@@ -499,7 +527,8 @@ class FidelityTest(unittest.TestCase):
             for _ in range(12):
                 QTest.qWait(10)
                 positions.append(raised.x())
-                progress_positions.append(fill.x())
+                # R555 (15): the piece runs on the groove, shorter at its ends: where it is and how long it is
+                progress_positions.append((fill.x(), fill.width()))
                 image = grab(window)
                 self.assertFalse(image.isNull())
         finally:

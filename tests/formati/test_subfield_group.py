@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from meridiana import model, move
+from meridiana.core.model import model, move
 
 
 def project():
@@ -21,8 +21,7 @@ class Group(unittest.TestCase):
     def test_no_new_format_number(self):
         data = project().to_json()
         self.assertEqual(data["version"], model.FORMAT_VERSION)
-        self.assertEqual(model.FORMAT_VERSION, 30)      # 27 is R445 (flush, kept, band), 28 the solids (study 37),
-        # 29 R523 (the layout of the next sub-fields), 30 R374 (a 3D object's model): R426 adds no number
+        self.assertEqual(model.FORMAT_VERSION, 33)      # R426 itself adds no format; 31 the regulatory identity, 32 the obstacles' base, 33 the models' names.
 
     def test_a_sub_field_out_of_a_group_is_written_as_before(self):
         design = next(v["design"] for v in project().to_json()["variants"])

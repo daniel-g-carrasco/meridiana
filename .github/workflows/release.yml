@@ -1,0 +1,233 @@
+name: Release
+
+# The Windows package and the release (study 43, step D2), apart from test.yml so that it never counts as a red
+# test on a plain commit:
+# - "version" on a v* tag: the tag matches __version__ (by hand it says the version and goes on).
+# - "windows" on a v* tag or by hand (workflow_dispatch): the suite on the runner's desktop, the Quick frames on
+#   Direct3D 11 (quick.shell.test_native_frames with MERIDIANA_QUICK_NATIVE=1), the PyInstaller bundle and what it
+#   must hold, the bundle's check (meridiana.gui.package_check), the portable zip, the Inno Setup installer, a silent
+#   install and an update over the running program. The same steps as build-aux/windows/build.ps1 on the PC.
+# - "release" on a v* tag: signs the installer and the zip with minisign and uploads them. It does nothing until
+#   the secret MINISIGN_SECRET_KEY exists (an environment secret of "release", docs/progetto.md section 4).
+# test.yml runs the Linux suite on the same commit: a tag is pushed only on a commit whose CI is green.
+#
+# The actions are pinned to a commit (rule of the template, docs/05-ci-rilascio.md): the SHAs are those of the tags
+# read with gh api on 23/10/2026.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+# read-only for every job: only "release" writes (the release itself), and it runs nothing of the build
+permissions:
+  contents: read
+
+# a tag is never cancelled; two runs by hand on one branch, the newer wins
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: The tag matches __version__
+        run: |
+          v="$(python3 -c 'import sys; sys.path.insert(0, "src"); import meridiana as p; print(p.__version__)')"
+          echo "__version__ = $v"
+          case "${GITHUB_REF}" in
+            refs/tags/v*)
+              if [ "v$v" != "${GITHUB_REF_NAME}" ]; then
+                echo "tag ${GITHUB_REF_NAME} does not match __version__ = $v"; exit 1
+              fi ;;
+          esac
+
+  windows:
+    # a tag, or asked by hand: the suite on a real desktop, then the package
+    needs: version
+    runs-on: windows-2025
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      # (a step's name never holds a colon followed by a space: YAML takes it for a key, and GitHub refuses the
+      # whole file; the runs of 23-25/10/2026 failed in 0 s for one)
+      - name: Python packages, Qt as its three wheels without WebEngine
+        run: |
+          python -m pip install -r requirements.txt pyinstaller==6.22.3
+          python -c "import PySide6.QtQuick3D, PySide6.QtPdf; print('Quick3D and Pdf present')"
+      - name: The catalogues, with the compiler of compile_po.py (the runner has no msgfmt)
+        run: python tools/compile_po.py
+      - name: Tests by group on the runner's desktop
+        run: |
+          foreach ($group in "nucleo", "calcoli", "formati") {
+            Write-Output "tests/$group"
+            python -W default tools/run_tests.py "tests/$group"
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+          }
+      - name: Quick interface subgroups on the runner desktop
+        run: python -W default tools/quick_rif_tests.py
+        env:
+          # the timed tests measure the runner here: they are checked on Daniel's computers (tests/quick/aiuti/tempi.py)
+          MERIDIANA_TIMED: skip
+      # on the runner's desktop, not offscreen: Direct3D 11 (WARP) draws the frames that the detectors read
+      - name: Quick frames on Direct3D 11
+        run: python -W default -m unittest quick.shell.test_native_frames
+        env:
+          MERIDIANA_QUICK_NATIVE: '1'
+          PYTHONPATH: 'tests;src;.'
+          PYTHONUTF8: '1'
+      - name: Build with PyInstaller
+        run: |
+          python tools/make_ico.py
+          pyinstaller --noconfirm build-aux/windows/meridiana.spec
+      - name: What the bundle must and must not contain
+        run: |
+          $i = "dist\Meridiana\_internal"
+          foreach ($f in @("$i\PySide6\translations\qtbase_it.qm", "$i\PySide6\qml\QtQuick3D\qmldir",
+                           "$i\PySide6\qml\QtQuick3D\Helpers\qmldir", "$i\PySide6\plugins\platforms\qwindows.dll",
+                           "$i\PySide6\plugins\texttospeech\qtexttospeech_sapi.dll",
+                           "$i\PySide6\plugins\multimedia\windowsmediaplugin.dll",
+                           "$i\share\locale\it\LC_MESSAGES\meridiana.mo", "$i\share\fonts\inter\Inter-Regular.ttf",
+                           "$i\share\icons\lucide\map.svg", "$i\share\manuale\README.md",
+                           "$i\meridiana\gui\paper\ReportScene.qml", "$i\meridiana\gui\qml\Meridiana\Shell\Workbench.qml",
+                           "$i\meridiana\data\catalog\data\modules_cec.json.gz", "$i\meridiana\app\assistant\kokoro_worker.py",
+                           "$i\meridiana\app\report\lo_measure.py", "$i\pvlib\data\LinkeTurbidities.h5")) {
+            if (-not (Test-Path $f)) { Write-Error "missing: $f"; exit 1 }
+          }
+          foreach ($f in @("$i\PySide6\Qt6WebEngineCore.dll", "$i\PySide6\qml\QtWebEngine", "$i\PySide6\Qt63DRender.dll",
+                           "$i\PySide6\Qt6Charts.dll", "$i\PySide6\avcodec-*.dll", "$i\PySide6\plugins\qmltooling",
+                           "$i\PySide6\plugins\texttospeech\qtexttospeech_mock.dll", "$i\onnxruntime")) {
+            if (Test-Path $f) { Write-Error "must not be there: $f"; exit 1 }
+          }
+          "bundle: {0:N0} MB" -f ((Get-ChildItem dist\Meridiana -Recurse -File | Measure-Object Length -Sum).Sum / 1MB)
+      # offscreen, as build.ps1 runs it and as it was tried on the PC (r28): the window, the year by the computation's
+      # process, every phase, the report; the 3D pictures of the report need a graphics card and are not asked for here
+      - name: Check of the bundle (the Quick window offscreen, a profile of its own, a sample project)
+        run: |
+          New-Item -ItemType Directory -Force smoke | Out-Null
+          $p = Start-Process dist\Meridiana\Meridiana.exe -PassThru -ArgumentList `
+            '-m', 'meridiana.gui.package_check', "$PWD\docs\quick\compat\fixtures\rho.meridiana", "$PWD\smoke", '--language', 'en', `
+            '--weather', "$PWD\tests\calcoli\riferimenti\pvgis53-tmy-rho.json.gz"
+          if (-not $p.WaitForExit(900000)) { Stop-Process $p -Force; Write-Error "the check did not end"; exit 1 }
+          Get-Content smoke\check.txt
+          if ($p.ExitCode -ne 0) { Write-Error "package_check: exit code $($p.ExitCode)"; exit 1 }
+      - name: Portable zip
+        run: |
+          $v = if ($env:GITHUB_REF_NAME -like 'v*') { $env:GITHUB_REF_NAME } else { 'dev' }
+          7z a -tzip -mx=5 "dist\meridiana-$v-windows-x64-portable.zip" .\dist\Meridiana | Out-Null
+      - name: Installer (Inno Setup, preinstalled on windows-2025)
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { Write-Error "ISCC.exe not found: the image changed, download it as the GTK workflow did"; exit 1 }
+          $version = if ($env:GITHUB_REF_NAME -like 'v*') { $env:GITHUB_REF_NAME.Substring(1) } else { 'dev' }
+          & $iscc "/DAppVersion=$version" "build-aux\windows\meridiana.iss"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Silent install, start, update over the running program, the project type
+        run: |
+          $setup = (Get-ChildItem dist -Filter 'meridiana-setup-*.exe' | Select-Object -First 1).FullName
+          $opts = '/VERYSILENT', '/CURRENTUSER', '/SUPPRESSMSGBOXES', '/NORESTART'
+          $p = Start-Process $setup -ArgumentList $opts -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "install: $($p.ExitCode)"; exit 1 }
+          $open = (Get-ItemProperty 'HKCU:\Software\Classes\Meridiana.Project\shell\open\command').'(default)'
+          if ($open -notlike '*Meridiana.exe*%1*') { Write-Error "the .mer files are not associated: $open"; exit 1 }
+          Start-Process "$env:LOCALAPPDATA\Programs\Meridiana\Meridiana.exe"
+          Start-Sleep 20
+          if (-not (Get-Process Meridiana -ErrorAction SilentlyContinue)) { Write-Error 'the program did not start'; exit 1 }
+          $p = Start-Process $setup -ArgumentList ($opts + '/LOG=update.log') -PassThru
+          if (-not $p.WaitForExit(300000)) { Write-Error 'Setup did not finish'; exit 1 }
+          if ($p.ExitCode -ne 0) { Write-Error "update over a running program: $($p.ExitCode)"; exit 1 }
+          Start-Sleep 20
+          if (-not (Get-Process Meridiana -ErrorAction SilentlyContinue)) { Write-Error 'the program was not started again'; exit 1 }
+          Get-Process Meridiana | Stop-Process
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        if: always()
+        with:
+          name: meridiana-windows
+          if-no-files-found: ignore
+          path: |
+            dist/meridiana-setup-*.exe
+            dist/meridiana-*-windows-x64-portable.zip
+            smoke/
+            update.log
+            build/quick-parity/
+
+  release:
+    # a v* tag: the installer and the zip, signed, on the release. The only job that can write; it runs nothing
+    # of the build. The environment "release" holds the secret (and, if Daniel adds the rule, asks his approval
+    # before the job starts); without the secret the job says so and stops before signing anything.
+    needs: windows
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: write
+    env:
+      MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+    steps:
+      - name: Signing switched on?
+        id: key
+        run: |
+          if [ -z "$MINISIGN_SECRET_KEY" ]; then
+            echo "::notice::No MINISIGN_SECRET_KEY: the release is not signed nor published (the Windows files are the artifact of the windows job)"
+            echo "on=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "on=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        if: steps.key.outputs.on == 'true'
+        with:
+          name: meridiana-windows
+          path: artifact
+      - name: Sign with the project's key (minisign), checked before anything is uploaded
+        if: steps.key.outputs.on == 'true'
+        # the installed app runs an update only with this signature (updates.py, the same public key:
+        # tests/nucleo/test_updates.py KeyTest); the trusted comment names the file, so another release's
+        # installer is not taken for this one
+        env:
+          PUBLIC_KEY: RWRF+AifJvn/zhz0o7MBObIYHgw9+sWoc4GaBK+qYnJY0AqeJm540y0a
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq minisign
+          key="$RUNNER_TEMP/minisign.key"
+          (umask 077
+           case "$MINISIGN_SECRET_KEY" in
+             "untrusted comment:"*) printf '%s\n' "$MINISIGN_SECRET_KEY" ;;
+             *) printf 'untrusted comment: releases\n%s\n' "$MINISIGN_SECRET_KEY" ;;
+           esac | tr -d '\r' > "$key")
+          for f in "artifact/dist/meridiana-setup-${GITHUB_REF_NAME}-windows-x64.exe" \
+                   "artifact/dist/meridiana-${GITHUB_REF_NAME}-windows-x64-portable.zip"; do
+            test -f "$f"
+            minisign -S -s "$key" -m "$f" -x "$f.minisig" \
+              -t "timestamp:$(date +%s) file:$(basename "$f") hashed" </dev/null
+            minisign -V -P "$PUBLIC_KEY" -m "$f" -x "$f.minisig"
+          done
+          rm -f "$key"
+      - name: The release, created if the Flatpak workflow has not yet, with the files attached
+        if: steps.key.outputs.on == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          setup="artifact/dist/meridiana-setup-${GITHUB_REF_NAME}-windows-x64.exe"
+          zip="artifact/dist/meridiana-${GITHUB_REF_NAME}-windows-x64-portable.zip"
+          gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 \
+            || gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" \
+                 --title "Meridiana ${GITHUB_REF_NAME#v}" --generate-notes
+          gh release upload "${GITHUB_REF_NAME}" "$setup" "$zip" "$setup.minisig" "$zip.minisig" \
+            --repo "${GITHUB_REPOSITORY}" --clobber

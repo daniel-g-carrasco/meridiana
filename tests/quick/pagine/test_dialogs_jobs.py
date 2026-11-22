@@ -10,10 +10,12 @@ from unittest.mock import patch
 from PySide6.QtCore import QThread, QThreadPool
 import _setup
 from PySide6.QtTest import QTest
-from meridiana import config, ifc_read, updates
-from meridiana.pvsyst import project as pvproject, mapping
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.dialogs import DialogsBackend
+from meridiana.app.platform import config
+from meridiana.app.exchange import ifc_read
+from meridiana.app import updates
+from meridiana.app.exchange.pvsyst import project as pvproject, mapping
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.dialogs import DialogsBackend
 
 setUpModule = _setup.keep_global_state
 DATA = Path(__file__).resolve().parents[2] / "data"
@@ -143,7 +145,7 @@ class DialogJobsTest(unittest.TestCase):
             out = []
             self.backend.installerReady.connect(out.append)
             with patch(
-                "meridiana.updates.download",
+                "meridiana.app.updates.download",
                 side_effect=ValueError("signature does not match"),
             ):
                 self.backend.downloadUpdate()
@@ -151,7 +153,7 @@ class DialogJobsTest(unittest.TestCase):
             self.assertFalse(out)
             self.assertIn("signature", self.backend.status)
             with patch(
-                "meridiana.updates.download", return_value=Path(folder) / "setup.exe"
+                "meridiana.app.updates.download", return_value=Path(folder) / "setup.exe"
             ) as download:
                 self.backend.downloadUpdate()
                 wait(lambda: not self.backend.busy)

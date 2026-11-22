@@ -1,5 +1,9 @@
 # Confronti geometrici e fotogrammi nativi
 
+La prima sezione è storia: il confronto con la finestra Qt Widgets (`quick.parity`, `tools/quick_rif_compare.py`)
+è stato tolto il 10/11/2026 con la finestra (ramo `r30-struttura`). Valgono il banco delle finestre vere e i suoi
+limiti, nelle sezioni dopo.
+
 ## Contratto tra i due alberi
 
 `quick.parity.geometry.capture_quick` legge gli elementi visivi QML, compresi i
@@ -50,7 +54,7 @@ Codice di uscita 1 se vi sono differenze non approvate. File esistenti rifiutati
 
 ## Banco di prova delle finestre vere
 
-`tests/quick/parity/realwindow.py` e riusabile dai rami Quick. Prima di creare
+`tests/quick/aiuti/realwindow.py` e riusabile dai rami Quick. Prima di creare
 l'applicazione impostare `MERIDIANA_QUICK_NATIVE=1`, togliere
 `QT_QPA_PLATFORM=offscreen` e chiamare `native_app()`. Su Windows forza Direct3D
 11 solo in questo percorso nativo. Offscreen e minimal saltano esplicitamente:
@@ -58,7 +62,7 @@ non costituiscono prova della scheda video. Le prove native devono partire in
 un processo separato dal gruppo che usa QApplication/offscreen.
 
 ```python
-from quick.parity.realwindow import FrameRecorder, PythonCalls, assert_frames, wait_frames
+from quick.aiuti.realwindow import FrameRecorder, PythonCalls, assert_frames, wait_frames
 
 with FrameRecorder(window, names=['leftPanel', 'rightPanel']) as recorder:
     wait_frames(recorder, 2)
@@ -107,7 +111,7 @@ cattura e la verifica della presentazione sul monitor. Questo banco dimostra
 contenuto GPU, geometria e finestre osservate nel processo, non certifica ogni
 fotogramma presentato da Windows.
 
-Le prove di guasto in `test_realwindow.py` introducono un fotogramma uniforme,
+Le prove di guasto in `tests/quick/shell/test_native_frames.py` introducono un fotogramma uniforme,
 una regione scomparsa, un salto, una finestra inattesa e chiamate Python. La
 prova nativa introduce anche una finestra QQuickWindow aggiuntiva e nasconde
 contenuto vero. Passare queste prove dimostra che i controlli reagiscono ai

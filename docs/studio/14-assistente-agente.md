@@ -920,3 +920,11 @@ engine/llama-b11669/llama-server -m models/Qwen3.6-35B-A3B-UD-IQ4_XS.gguf \
 ```
 
 Per togliere tutto: `rm -rf ~/fvtest/llm`.
+
+### Condivisione del modello locale (R681, 16/11/2026)
+
+[V] Tutti i programmi e profili devono usare lo stesso server Ollama, lo stesso nome canonico
+(tag esplicito, `:latest` se omesso) e `num_ctx=16384`. Il costruttore `Ollama.request` condivide
+queste opzioni fra domande, riassunti e preparazione. `num_predict` cambia solo la generazione.
+`keep_alive=30m` resta invariato. Alla chiusura non si scaricano i pesi: un'altra finestra pu? usarli.
+[I] Il riuso della cache del prefisso dipende anche dall'ordine identico di istruzioni e strumenti.

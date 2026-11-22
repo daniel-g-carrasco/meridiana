@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import _setup  # noqa: F401  puts src/ on the path
 
-from meridiana import reports
+from meridiana.app.report import reports
 
 STUDIO = {"name": "Studio", "signer": "A", "logo": "a.png"}
 OTHER = {"name": "Altro", "signer": "B", "logo": ""}

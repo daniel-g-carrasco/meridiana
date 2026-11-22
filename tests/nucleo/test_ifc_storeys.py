@@ -8,7 +8,8 @@ from pathlib import Path
 import _setup  # noqa: F401  (paths and the common setup)
 from _fixtures import exported, mixed
 
-from meridiana import ifc_import, ifc_read, ifc_worker, model
+from meridiana.app.exchange import ifc_import, ifc_read, ifc_worker
+from meridiana.core.model import model
 
 
 class Storeys(unittest.TestCase):
@@ -56,7 +57,7 @@ class Storeys(unittest.TestCase):
         self.assertEqual(len(same["obstacles"]), len(self.found["obstacles"]))
 
     def test_the_3d_leaves_out_the_shapes_of_the_storeys_not_taken(self):
-        from meridiana import ifc_mesh
+        from meridiana.app.exchange import ifc_mesh
         mesh = ifc_mesh.load(self.found["context"]["mesh"])
         names = ifc_import.storeys_of(self.found)
         skip = [s["id"] for s in self.found["solids"] if s.get("storey") != names[0]]

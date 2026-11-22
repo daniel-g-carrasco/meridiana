@@ -12,7 +12,7 @@ def settle(app, seconds=0.15):
     end = time.perf_counter() + seconds
     while time.perf_counter() < end:
         app.processEvents()
-        time.sleep(0.003)
+        time.sleep(0.003)  # wait: a breath between two looks at the condition, so the workers' threads run
 
 
 def js(obj, source):

@@ -6,11 +6,12 @@ from PySide6.QtCore import QUrl
 from PySide6.QtQml import QQmlComponent, QQmlEngine
 from PySide6.QtWidgets import QApplication
 
-from meridiana import i18n, model
-from meridiana.quick.backend.plan import PlanController
-from meridiana.quick.backend.project_tree import ProjectTreeBackend
-from meridiana.quick.backend.properties import PropertiesBackend
-from meridiana.session import ProjectSession
+from meridiana import i18n
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController
+from meridiana.gui.backend.project_tree import ProjectTreeBackend
+from meridiana.gui.backend.properties import PropertiesBackend
+from meridiana.app.session import ProjectSession
 
 app = QApplication.instance() or QApplication([])
 
@@ -179,7 +180,7 @@ class Rule(unittest.TestCase):
 
     def run_rule(self, selected, anchor, oid, ctrl=False, shift=False):
         from pathlib import Path
-        import meridiana.quick as quick
+        import meridiana.gui as quick
         qml = Path(quick.__file__).parent/"qml"
         engine = QQmlEngine()
         engine.addImportPath(str(qml))

@@ -6,7 +6,7 @@ program designs with (catalog/data/optimizer_rules.json, preferred_makers.json, 
 import json
 import unittest
 
-from meridiana.assistant import design_rules, tools
+from meridiana.app.assistant import design_rules, tools
 
 
 class _Host:

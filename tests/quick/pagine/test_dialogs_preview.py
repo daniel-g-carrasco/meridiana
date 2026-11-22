@@ -1,13 +1,13 @@
-"""The native Quick preview retains the Widgets geometry, projection and clickable measures."""
+"""The native Quick preview keeps the geometry, the projection and the clickable measures of the Widgets' preview
+(recorded on 10/11/2026, quick/aiuti/riferimenti.py)."""
 import unittest
 
 from PySide6.QtGui import QImage, QPainter
 import _setup
-from meridiana.session import ProjectSession
-from meridiana.quick.backend.dialogs import DialogsBackend
-from meridiana.quick.backend.dialogs_preview import DialogPreview
-from meridiana.ui.template_dialog import TemplateDialog
-from meridiana.ui.canopy_dialog import CanopyDialog
+from meridiana.app.session import ProjectSession
+from meridiana.gui.backend.dialogs import DialogsBackend
+from meridiana.gui.backend.dialogs_preview import DialogPreview
+from quick.aiuti import riferimenti
 
 setUpModule = _setup.keep_global_state
 
@@ -21,24 +21,21 @@ class DialogPreviewTest(unittest.TestCase):
         preview.setWidth(400)
         preview.setHeight(300)
         preview.backend = backend
-        for kind, widget_class in [('template', TemplateDialog), ('canopy', CanopyDialog)]:
+        for kind in ('template', 'canopy'):
             with self.subTest(kind=kind):
                 backend.open(kind)
-                widget = widget_class()
-                self.addCleanup(widget.deleteLater)
-                old = widget.preview
-                old.resize(400, 300)
-                preview.textFont = old.font()
-                self.assertEqual(old.faces, preview.faces)
-                self.assertEqual(old.guides, preview.guides)
-                self.assertEqual(old._pills, preview._pills)
+                riferimenti.check(self, {'faces': preview.faces, 'guides': preview.guides, 'pills': preview._pills,
+                                         'view': (preview.azimuth, preview.elevation),
+                                         'projected': [(q.x(), q.y()) for q in map(preview.project, preview._all_points())]},
+                                  # the drawing stands in the room the hint under it leaves, and the hint wraps where
+                                  # the font says (with FreeType a line more or less: the drawing 18 px apart)
+                                  wrap_paths=('$.projected',))
+                for q in map(preview.project, preview._all_points()):
+                    self.assertTrue(0 <= q.x() <= preview.width() and 0 <= q.y() <= preview.height(), (q.x(), q.y()))
                 backend.highlightField('bay_width' if kind == 'canopy' else 'width')
                 self.assertEqual({1, 3}, preview.highlight)
                 backend.highlightField('')
                 self.assertFalse(preview.highlight)
-                self.assertEqual((old.azimuth, old.elevation), (preview.azimuth, preview.elevation))
-                for point in preview._all_points():
-                    self.assertEqual(old.project(point), preview.project(point))
                 image = QImage(400, 300, QImage.Format.Format_ARGB32_Premultiplied)
                 painter = QPainter(image)
                 preview.paint(painter)

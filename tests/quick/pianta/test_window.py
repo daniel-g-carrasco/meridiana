@@ -9,8 +9,9 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtTest import QTest
 
-from meridiana import i18n, model
-from meridiana.quick.backend.plan import PlanController
+from meridiana import i18n
+from meridiana.core.model import model
+from meridiana.gui.backend.plan import PlanController
 
 
 APP = None
@@ -34,7 +35,14 @@ def settle_zoom(plan, controller=None, seconds: float = 5.0) -> None:
 
     def settled():
         backend = getattr(controller, '_scale_settle', None) if controller is not None else timer
-        return plan.property('settledZoom') == plan.property('zoom') and not (backend is not None and backend.isActive())
+        # R706: the strings' scene of the new scale is made off the window's thread, and comes a little later
+        jobs = getattr(controller, '_wiring_jobs', None) if controller is not None else None
+        # R707: what the strings show follows the scale (their dots, the levels of detail): the backend must have
+        # been told the scale the view settled on, which comes a little after the plan's own settling
+        told = getattr(controller, '_mpp', None) if controller is not None else None
+        zoom = plan.property('zoom')
+        return (plan.property('settledZoom') == zoom and (not told or not zoom or abs(told*zoom-1) < 1e-6)
+                and not (backend is not None and backend.isActive()) and not (jobs is not None and jobs.busy))
     if not wait_until(QCoreApplication.instance(), settled, seconds):
         raise AssertionError(f"the plan's zoom did not settle in {seconds} s")
 
@@ -48,7 +56,7 @@ class WindowTest(unittest.TestCase):
         self.engine.warnings.connect(lambda errors: self.warnings.extend(e.toString() for e in errors))
         self.controller.install(self.engine)
         self.engine.rootContext().setContextProperty('planBackend', self.controller)
-        root = Path(__file__).resolve().parents[3] / 'src/meridiana/quick/qml/Meridiana/Plan/PlanWindow.qml'
+        root = Path(__file__).resolve().parents[3] / 'src/meridiana/gui/qml/Meridiana/Plan/PlanWindow.qml'
         self.engine.load(QUrl.fromLocalFile(str(root)))
         self.assertTrue(self.engine.rootObjects(), self.warnings)
         self.window = self.engine.rootObjects()[0]
@@ -144,14 +152,14 @@ class WindowTest(unittest.TestCase):
     def test_twenty_thousand_modules_render_past_sixteen_bit_batch_limit(self):
         import math
         from PySide6.QtCore import QObject
-        from meridiana.quick.backend.plan import qml_objects
+        from meridiana.gui.backend.plan import qml_objects
         raw=[dict(kind='module',oid='s1',key=str(i),rid=str(i//140),
                   points=[[i%140*1.3,i//140*2.5],[i%140*1.3+1.13,i//140*2.5],
                           [i%140*1.3+1.13,i//140*2.5+2.27],[i%140*1.3,i//140*2.5+2.27]])
              for i in range(20000)]
         self.controller._modules=qml_objects(raw)
         self.controller._bounds=[0.,0.,140*1.3,math.ceil(20000/140)*2.5]
-        self.controller.sceneChanged.emit()
+        self.controller.modulesChanged.emit()
         self.plan.fit()
         import time
         limit = time.monotonic()+10
@@ -192,7 +200,8 @@ class WindowTest(unittest.TestCase):
         def event(kind,value):
             e=QNativeGestureEvent(kind,pad,2,at,at,QPointF(self.window.mapToGlobal(at.toPoint())),value,QPointF())
             APP.sendEvent(self.window,e)
-            APP.processEvents()
+            from _setup import wait_until
+            self.assertTrue(wait_until(APP, lambda: self.plan.property('pendingMotion') is None, 5))
         scale=self.plan.property('zoom')
         panx,pany=self.plan.property('panX'),self.plan.property('panY')
         event(Qt.BeginNativeGesture,0)

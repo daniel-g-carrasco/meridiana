@@ -3,8 +3,10 @@ import unittest
 from urllib.parse import parse_qs, urlparse
 
 import _setup
-from meridiana import config, feedback, tour
-from meridiana.assistant import tools
+from meridiana.app.platform import config
+from meridiana.app import feedback
+from meridiana.app.interface import tour
+from meridiana.app.assistant import tools
 
 setUpModule = _setup.keep_global_state
 

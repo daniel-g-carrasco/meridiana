@@ -9,8 +9,8 @@ from pathlib import Path
 
 import _setup  # noqa: F401
 
-from meridiana.pvsyst import mapping, pvobject
-from meridiana.pvsyst import project as pvproject
+from meridiana.app.exchange.pvsyst import mapping, pvobject
+from meridiana.app.exchange.pvsyst import project as pvproject
 
 SAMPLES = Path(os.environ.get("MERIDIANA_PVSYST_SAMPLES", "") or "-no-folder-")
 

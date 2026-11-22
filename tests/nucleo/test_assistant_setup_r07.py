@@ -6,12 +6,12 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import _setup  # noqa: F401
-from meridiana.assistant import providers, speech
+from meridiana.app.assistant import providers, speech
 
 
 class Setup(unittest.TestCase):
     def test_seven_cloud_choices_require_model_and_key(self):
-        from meridiana.assistant import setup
+        from meridiana.app.assistant import setup
         self.assertEqual(set(setup.CLOUD), {'openai', 'anthropic', 'qwen', 'gemini', 'kimi', 'mistral', 'deepseek'})
         cfg = SimpleNamespace(assistant_cloud_profiles={}, assistant_cloud_model='legacy')
         self.assertEqual(setup.available(cfg, lambda _p: ''), [])
@@ -19,7 +19,7 @@ class Setup(unittest.TestCase):
         self.assertEqual(setup.available(cfg, lambda p: 'test' if p == 'mistral' else ''), ['mistral'])
 
     def test_factory_routes_cloud_and_hides_keys(self):
-        from meridiana.assistant import setup
+        from meridiana.app.assistant import setup
         for provider in setup.CLOUD:
             with self.subTest(provider=provider):
                 result = setup.make(provider, {'model': 'example', 'endpoint': setup.CLOUD[provider].endpoint}, 'secret-test')
@@ -32,7 +32,7 @@ class Setup(unittest.TestCase):
     def test_the_two_claude_models_of_the_menu_keep_their_effort_and_a_typed_model_gets_the_defaults(self):
         """R07 review: the generic factory dropped what task 14 measured for the menu's models (Haiku low effort,
         Sonnet medium with the refusal fallback); only a model typed by the designer gets the API's defaults."""
-        from meridiana.assistant import setup
+        from meridiana.app.assistant import setup
         default = setup.CLOUD['anthropic'].endpoint
         haiku = setup.make('anthropic', {'model': 'claude-haiku-5-5', 'endpoint': default}, 'k')
         sonnet = setup.make('anthropic', {'model': 'claude-sonnet-5-5', 'endpoint': default}, 'k')
@@ -44,7 +44,7 @@ class Setup(unittest.TestCase):
         self.assertEqual((proxied.effort, proxied.fallbacks), ('medium', False))   # a beta not promised by a proxy
 
     def test_one_place_writes_the_cloud_model(self):
-        from meridiana.assistant import setup
+        from meridiana.app.assistant import setup
         cfg = SimpleNamespace(assistant_cloud_profiles={'anthropic': {'model': 'claude-haiku-5-5',
                                                                       'endpoint': 'https://proxy.example.org'}},
                               assistant_cloud_model='claude-haiku-5-5')
@@ -56,7 +56,7 @@ class Setup(unittest.TestCase):
         self.assertEqual(before['anthropic']['model'], 'claude-haiku-5-5')   # a copy of the settings is untouched
 
     def test_endpoint_cannot_store_query_credentials(self):
-        from meridiana.assistant import setup
+        from meridiana.app.assistant import setup
         for endpoint in ('https://user:pass@server/v1', 'https://server/v1?key=secret', 'https://server/v1#secret'):
             with self.assertRaises(ValueError):
                 setup.validate_endpoint(endpoint)
@@ -109,12 +109,12 @@ class Setup(unittest.TestCase):
             self.assertEqual(list(provider.stream('', [], [])), [providers.Done('stopped')])
 
     def test_unknown_ram_never_recommends_the_largest_download(self):
-        from meridiana.assistant import local
+        from meridiana.app.assistant import local
         self.assertLess(local.suggested(local.Machine()).ollama_gb, 5)
 
     def test_cloud_tool_signature_and_reasoning_are_returned_unchanged(self):
         import json
-        from meridiana.assistant.conversation import Conversation, collect
+        from meridiana.app.assistant.conversation import Conversation, collect
         chunks = [
             {'choices': [{'delta': {'reasoning_content': 'hidden', 'tool_calls': [
                 {'index': 0, 'id': 'c1', 'function': {'name': 'ping', 'arguments': '{}'},

@@ -14,10 +14,11 @@ import unittest
 from pathlib import Path
 
 import _setup
-from meridiana import i18n, jobs
-from meridiana.quick.app import QuickWindow, create_app
+from meridiana import i18n
+from meridiana.app import jobs
+from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import pump, wait_for
-from quick.parity.differential import connected_fixture
+from quick.aiuti.differential import connected_fixture
 
 setUpModule = _setup.keep_global_state
 
@@ -117,7 +118,7 @@ class PlantDialogs(unittest.TestCase):
             self.assertFalse(dialog.property('contentFramed'), name)
             self.assertEqual([dialog.property(side) for side in ('leftPadding', 'rightPadding', 'topPadding', 'bottomPadding')], sides, name)
             self.assertGreater(dialog.property('frameWidth'), 0, name)
-            card = dialog.property('contentItem')
+            card = dialog.property('body')          # R586: the item the window was given
             self.assertTrue(card.property('bare'), name)
             self.assertEqual(card.property('color').alpha(), 0, name)          # no ground of its own
             self.assertNotEqual(dialog.property('title'), '', name)
