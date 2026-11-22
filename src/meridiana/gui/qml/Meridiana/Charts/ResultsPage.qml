@@ -35,7 +35,7 @@ M.ScrollPage {
     // half made («Cannot create delegate»): shown with a tile missing, the tiles are made again from the same data.
     // Only when the tile is still missing a while later: a tile still being made in the background is missing too,
     // and making the tiles again then threw it away half made, the very loss this mends (on Linux)
-    Timer { id: mendCheck; interval: 1500; onTriggered: root.mendTiles(true) }
+    Timer { id: mendCheck; interval: Theme.motion.PATIENCE; onTriggered: root.mendTiles(true) }
     function mendTiles(confirmed) {
         const wanted = (root.pageData.tiles || []).length
         if (!root.visible || tiles.shown.length >= wanted) return
@@ -104,6 +104,7 @@ M.ScrollPage {
                                         Math.floor((width + spacing) / (wantedWidth + spacing))))
             Repeater {
                 id: tileRepeater
+                readonly property bool mendsItself: true     // mendTiles; PhaseLoader.integrity leaves it alone
                 // the number of tiles, not the array: new results with as many tiles keep the tiles made (a new array
                 // threw away the tiles still being made in the background, «Cannot create delegate»); each reads its own
                 // never fewer than were made: a tile thrown away while Qt was still making it in the background lost the

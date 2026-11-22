@@ -17,6 +17,7 @@ from meridiana.app import jobs
 from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import click, drag, point, pump, wait_for
 from quick.meridio.support import KeyStore, Voice
+from quick.aiuti.avvisi import real
 
 
 def find(window, name):
@@ -66,7 +67,7 @@ class FreeSideTest(unittest.TestCase):
         self.addCleanup(self.close)
 
     def close(self):
-        warnings = self.host.warnings[:]
+        warnings = real(self.host.warnings)
         self.host.close()
         self.app.processEvents()
         self.assertEqual(warnings, [])

@@ -9,6 +9,7 @@ from PySide6.QtCore import QPointF
 from _fixtures import capannone
 from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import drag, item, point, pump, wait_for
+from quick.aiuti.avvisi import real
 
 setUpModule = _setup.keep_global_state
 
@@ -91,7 +92,7 @@ class ViewMargins(unittest.TestCase):
                     workspace.setProperty('previousLayout', None)
                     win.runCommand('default_layout')
                     pump(500)
-                self.assertEqual(host.warnings, [])
+                self.assertEqual(real(host.warnings), [])
             finally:
                 host.close()
                 pump(100)

@@ -233,7 +233,8 @@ def render_borders(out):
             ready = []
             result.ready.connect(lambda: ready.append(True))
             start = time.perf_counter()
-            while not ready and time.perf_counter() - start < 10:
+            # a limit, not a measure: on the CI's runner (software OpenGL, two cores) a grab took more than 10 s
+            while not ready and time.perf_counter() - start < 60:
                 pump(2)
             if not ready:
                 raise AssertionError('GPU capture timed out')

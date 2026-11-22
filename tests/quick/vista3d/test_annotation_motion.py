@@ -12,6 +12,7 @@ from PySide6.QtGui import QWheelEvent
 from meridiana.app.view.measure_tool import Measure, Probe
 from meridiana.core.model.model import Building, Project
 from quick.vista3d._fidelity_support import data, js, settle
+from quick.aiuti.avvisi import real
 
 setUpModule = _setup.keep_global_state
 
@@ -99,5 +100,5 @@ class AnnotationMotion(unittest.TestCase):
         self.assertFalse(visible_state(layer)['pills'])
         js(view, 'cameraState={position:[12,3,40],target:[12,3,-6],rotation:[1,0,0,0],fov:60,ortho:false}')
         self.assertTrue(_setup.wait_until(app, lambda: visible_state(layer)['lines'] and visible_state(layer)['pills'], 30))
-        self.assertFalse(host.warnings, host.warnings)
+        self.assertFalse(real(host.warnings), host.warnings)
         host.close()

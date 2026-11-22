@@ -96,6 +96,8 @@ class FieldTest(unittest.TestCase):
         wait_for(lambda: bool(self.fake.requests) and not self.chat.busy, 5)
         self.assertTrue(self.fake.requests[-1][1][-1]['content'].endswith('prima\nseconda'), self.fake.requests[-1][1])
         self.assertEqual(self.field.property('text'), '')
+        # the field goes back to one line a turn after the text is emptied, or more on a loaded runner (45 != 28)
+        wait_for(lambda: abs(self.field.height() - self.one) <= 0.5, 5)
         self.assertAlmostEqual(self.field.height(), self.one, delta=0.5, msg='after the send: not one line again')
 
     def test_spaces_and_empty_lines_are_not_sent(self):

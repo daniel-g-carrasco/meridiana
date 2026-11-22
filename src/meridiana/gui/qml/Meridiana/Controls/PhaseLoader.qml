@@ -18,7 +18,9 @@ WholeLoader {
         while (pending.length) {
             const node = pending.pop()
             if (node instanceof Loader && node.status === Loader.Loading) { check.restart(); return }
-            if (node instanceof Repeater)
+            // a Repeater that mends its own delegates (the result tiles, made a turn after their page) is left to
+            // it: still being made, its tiles looked missing, and the body made again threw them away half made
+            if (node instanceof Repeater && !node.mendsItself)
                 for (let i = 0; i < node.count; i++) missing = missing || !node.itemAt(i)
             for (const child of node.children || []) pending.push(child)
         }
