@@ -20,6 +20,7 @@ from meridiana.app import jobs
 from meridiana.app.session import photo_of, project_from
 from meridiana.gui.application import QuickWindow, create_app
 from quick.aiuti.finestra_libera import settled, software_frames, window_stays_free
+from quick.aiuti.tempi import timed
 
 # the calls of the layout's job on the window's thread, asserted under 5 ms: its submit, its restart after the quiet,
 # its request (build), its answer taken (on_done), its Cancel. The others are measured and printed: the plan's
@@ -81,6 +82,7 @@ class LayoutFree(unittest.TestCase):
         self.wait_idle('the strings told')
         return sf, mods[5]
 
+    @timed('no call of the window over its few ms')
     def test_1_the_window_stays_free_from_a_canc_to_the_end_of_the_views_round(self):
         sf, module = self.strung()
         self.host.plan.editor.select('subfield', sf.id, module.key)
@@ -118,6 +120,7 @@ class LayoutFree(unittest.TestCase):
         self.assertIn('layout.on_done', by_name)
         self.assertIn('layout.build', by_name)
 
+    @timed('no call of the window over its few ms')
     def test_1b_the_plans_strings_are_never_made_on_the_windows_thread(self):
         """R598 (passo 1b): a Canc of a module in a string, the module added back from the plan's menu, Undo; each to
         the end of the views' round and of the plant. The plan never makes its scene of the strings on the window's

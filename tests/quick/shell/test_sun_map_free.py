@@ -12,6 +12,7 @@ from _fixtures import clear_sky_meteo, mixed, write_cache
 from meridiana.app.sun_map import SunMap
 from meridiana.gui.application import QuickWindow, create_app
 from quick.aiuti.finestra_libera import window_stays_free
+from quick.aiuti.tempi import timed
 
 
 class SunMapFree(unittest.TestCase):
@@ -56,6 +57,7 @@ class SunMapFree(unittest.TestCase):
         finally:
             timer.stop()
 
+    @timed('no call of the window over its few ms')
     def test_the_window_stays_free_while_the_map_is_computed(self):
         self.assertTrue(_setup.wait_for(lambda: not self.host.bridge.busy and not self.work.rows, 120000),
                         'the opening of the window has ended')

@@ -16,6 +16,7 @@ import _setup
 from _fixtures import clear_sky_meteo, generated, write_cache
 from meridiana.gui.application import QuickWindow, create_app
 from quick.aiuti.finestra_libera import settled, software_frames, window_stays_free
+from quick.aiuti.tempi import timed
 
 ONLY = ("submit:layout", "restart:layout", "layout.", "cancel:layout", "warm:layout", "changed")
 
@@ -53,6 +54,7 @@ class FillAllFree(unittest.TestCase):
     def quiet(self) -> bool:
         return not self.bridge.busy and self.bridge._layout is None and not self.session.telling()
 
+    @timed('no call of the window over its few ms')
     def test_fill_all_lays_them_through_the_layout_job_with_its_row_and_one_undo(self):
         # nothing filled at the start: no layout keys to answer for, only the window's own work to end
         self.assertTrue(_setup.wait_for(self.quiet, 180000), 'the opening has ended')

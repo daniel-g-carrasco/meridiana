@@ -52,6 +52,7 @@ def year_stays_free(center):
 
 
 class YearGuard(unittest.TestCase):
+    @timed('no call of the window over its few ms')
     def test_large_synthetic_values_are_rejected_for_both_paths(self):
         _setup.qt_or_skip()
         for name in ("year.step", "year_read.on_done"):

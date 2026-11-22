@@ -12,6 +12,7 @@ import _setup
 from meridiana.core.model import model
 from meridiana.gui.application import QuickWindow, create_app
 from quick.aiuti.finestra_libera import window_stays_free
+from quick.aiuti.tempi import timed
 
 SAMPLE = Path(__file__).resolve().parents[2] / "data" / "ifc" / "vetrata-inclinata.ifc"
 
@@ -38,6 +39,7 @@ class IfcImportFree(unittest.TestCase):
         cls.host.close()
         cls.folder.cleanup()
 
+    @timed('no call of the window over its few ms')
     def test_the_window_stays_free_from_the_reading_to_the_model_in_the_3d(self):
         self.assertTrue(_setup.wait_for(lambda: not self.host.bridge.busy and not self.work.rows, 120000),
                         'the opening of the window has ended')

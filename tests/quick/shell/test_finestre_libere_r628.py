@@ -30,6 +30,7 @@ from unittest.mock import patch
 import _setup
 from PySide6.QtCore import QEvent, QMetaObject, QObject, QPointF, QRectF, Qt
 from PySide6.QtTest import QTest
+from quick.aiuti.tempi import timed
 
 HOLD = 56           # ControlMetrics.dialogHold: 2 x Theme.size.CONTROL
 
@@ -454,6 +455,7 @@ class Free(unittest.TestCase):
         self.assertLess(s.ASSISTANT_WINDOW, s.POPUP)
 
     # ---- the beat ----------------------------------------------------------------------------------------------
+    @timed('no call of the window over its few ms')
     def test_r628_the_catalogue_resizes_without_steps(self):
         from quick.aiuti.finestra_libera import window_stays_free
         dialog = self.open('catalog')

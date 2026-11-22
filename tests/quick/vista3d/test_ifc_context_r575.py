@@ -25,6 +25,7 @@ from meridiana.app.exchange import ifc_export, ifc_import, ifc_mesh, ifc_worker
 from meridiana.core.model import model
 from meridiana.gui.application import QuickWindow, create_app
 from ._fidelity_support import settle
+from quick.aiuti.tempi import timed
 
 SAMPLE = Path(__file__).resolve().parents[2] / 'data' / 'ifc' / 'r575-sintetico.ifc'
 ROOF = 109                       # the record of «TETTO», the roof the body «Edificio» is made of
@@ -298,6 +299,7 @@ class ContextNeverWaitedTest(unittest.TestCase):
         self.addCleanup(release.set)
         return release, started
 
+    @timed('no call of the window over its few ms')
     def test_the_bodies_first_then_the_model_without_the_scene_made_again(self):
         import _setup
         from quick.aiuti.finestra_libera import window_stays_free

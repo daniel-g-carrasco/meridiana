@@ -27,6 +27,7 @@ import _setup
 from PySide6.QtCore import QObject
 
 from quick.aiuti.finestra_libera import software_frames, window_stays_free
+from quick.aiuti.tempi import timed
 
 setUpModule = _setup.keep_global_state
 
@@ -120,6 +121,7 @@ class KeptPagesTest(unittest.TestCase):
         # the same pages, nothing made or let go (on r34-unita the Settings had one page, made again at each section)
         self.assertEqual(before, {key: items(kept(self.right)[key]) for key in FILE + SETTINGS})
 
+    @timed('no call of the window over its few ms')
     def test_2_the_passage_between_two_sections_stays_quick(self):
         for section in FILE + SETTINGS:              # every page made once (off screen they are made when asked)
             self.go(section)

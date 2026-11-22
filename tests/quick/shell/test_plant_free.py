@@ -26,6 +26,7 @@ from meridiana.gui.application import QuickWindow, create_app
 from meridiana.gui.backend import plant_jobs
 from meridiana.gui.backend.plant_presenter import present
 from quick.aiuti.finestra_libera import settled, software_frames, window_stays_free
+from quick.aiuti.tempi import timed
 
 # the calls of the plant's job on the window's thread, asserted under 5 ms: its submit and start (restart, after the
 # quiet), its request (build), its answer (on_done)
@@ -70,6 +71,7 @@ class PlantFree(unittest.TestCase):
         return plant.build(project_from(photo_of(self.session.project)), self.session.good_results(),
                            t_cell_max_year=hot, p_dc_hourly=power, exposure=faces.year_of(sim))
 
+    @timed('no call of the window over its few ms')
     def test_a_canc_of_a_module_in_a_string_the_plant_stays_off_the_windows_thread(self):
         self.assertTrue(_setup.wait_for(self.idle, 180000), 'the opening of the window has ended')
         runs = (self.session.project.energy.get('strings') or {}).get('runs') or []

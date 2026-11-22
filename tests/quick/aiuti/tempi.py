@@ -35,6 +35,16 @@ TIMED = (
     'quick.pianta.test_measure_plan',
     'quick.pianta.test_motion_budget',
     'quick.meridio.test_edges_r698',
+    'quick.pagine.test_ifc_libera',
+    'quick.pagine.test_pagine_r630',
+    'quick.shell.test_fill_all_free',
+    'quick.shell.test_finestre_libere_r628',
+    'quick.shell.test_layout_free',
+    'quick.shell.test_plant_free',
+    'quick.shell.test_sun_map_free',
+    'quick.shell.test_work_bar',
+    'quick.vista3d.test_ifc_context_r575',
+    'quick.vista3d.test_measure_3d',
 )
 
 

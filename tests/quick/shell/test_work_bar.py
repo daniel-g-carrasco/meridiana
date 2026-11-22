@@ -17,6 +17,7 @@ from meridiana.gui.application import QuickWindow, create_app
 from meridiana.i18n import _
 from quick.aiuti.finestra_libera import settled, window_stays_free
 from quick.gestures import click, item, point
+from quick.aiuti.tempi import timed
 
 
 class WorkBar(unittest.TestCase):
@@ -180,6 +181,7 @@ class WorkBar(unittest.TestCase):
         self.assertTrue(_setup.wait_for(lambda: not bridge.busy, 120000), bridge.error)
         self.assertTrue(_setup.wait_for(lambda: not self.work.rows, 5000))
 
+    @timed('no call of the window over its few ms')
     def test_the_window_stays_free_while_a_job_runs_in_its_process(self):
         settled(self.win)                   # the window still from the tests before (study 48, chapter 5)
         with window_stays_free(self.center) as seen:

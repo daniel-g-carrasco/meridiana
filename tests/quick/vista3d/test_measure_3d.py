@@ -26,6 +26,7 @@ from meridiana import i18n
 from meridiana.core.model import model
 from quick.aiuti.finestra_libera import window_stays_free
 from ._fidelity_support import data, js
+from quick.aiuti.tempi import timed
 
 setUpModule = _setup.keep_global_state
 T20 = math.tan(math.radians(20))
@@ -242,6 +243,7 @@ class MeasureInThe3DView(unittest.TestCase):
         self.assertTrue(_setup.wait_until(self.app, lambda: not self.view.property("measuring")))
         self.assertEqual(self.host.plan.tool, "select")
 
+    @timed('no call of the window over its few ms')
     def test_nothing_is_looked_for_while_the_pointer_moves(self):
         self.click((0, 0, 6))
         x, y = self.screen((24, 0, 6))
