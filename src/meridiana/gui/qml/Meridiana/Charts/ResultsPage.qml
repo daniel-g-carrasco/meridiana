@@ -35,7 +35,7 @@ M.ScrollPage {
     // half made («Cannot create delegate»): shown with a tile missing, the tiles are made again from the same data.
     // Only when the tile is still missing a while later: a tile still being made in the background is missing too,
     // and making the tiles again then threw it away half made, the very loss this mends (on Linux)
-    Timer { id: mendCheck; interval: Theme.motion.PATIENCE; onTriggered: root.mendTiles(true) }
+    Timer { id: mendCheck; interval: Theme.motion.PATIENCE * 5; onTriggered: root.mendTiles(true) }
     function mendTiles(confirmed) {
         const wanted = (root.pageData.tiles || []).length
         if (!root.visible || tiles.shown.length >= wanted) return

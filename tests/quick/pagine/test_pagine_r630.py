@@ -104,7 +104,17 @@ class KeptPagesTest(unittest.TestCase):
             self.go(section)
         loaders = kept(self.right)
         self.assertTrue(all(loaders[key].childItems() for key in FILE + SETTINGS), 'every page asked is made')
-        before = {key: items(loaders[key]) for key in FILE + SETTINGS}
+        # a page fills a part of itself after it is made (Meridio's page its list, on the CI's runner and in the WSL
+        # 72 items later): the count is read once it holds still for half a second
+        seen = [None, time.monotonic()]
+
+        def still():
+            now = {key: items(loaders[key]) for key in FILE + SETTINGS}
+            if now != seen[0]:
+                seen[0], seen[1] = now, time.monotonic()
+            return time.monotonic() - seen[1] >= 0.5
+        self.assertTrue(_setup.wait_until(self.app, still, 15), 'the pages kept changing')
+        before = seen[0]
         for section in ['save', 'preferences:navigation', 'open', 'preferences:privacy']:
             self.go(section)
         # the same pages, nothing made or let go (on r34-unita the Settings had one page, made again at each section)

@@ -222,6 +222,8 @@ def render_borders(out):
         host.keep_on_screen = lambda: None
         host._placement.timeout.disconnect()
         win.resize(1400, 900)
+        frames = []
+        win.frameSwapped.connect(lambda: frames.append(True))
         win.show()
 
         def settle():
@@ -244,6 +246,13 @@ def render_borders(out):
             settle()
             if win.rendererInterface().graphicsApi() in (QSGRendererInterface.GraphicsApi.Software,
                                                        QSGRendererInterface.GraphicsApi.Unknown):
+                return 3
+            # OpenGL asked but no context made (the CI's runner: «QRhiGles2: Failed to create temporary context»):
+            # no frame is ever drawn and a grab never ends; there are no pixels to read
+            start = time.perf_counter()
+            while not frames and time.perf_counter() - start < 20:
+                pump(10)
+            if not frames:
                 return 3
             for phase in ('plant', 'production', 'economics', 'report', 'model'):
                 win.showPhase(phase)

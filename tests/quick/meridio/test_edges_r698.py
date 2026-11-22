@@ -76,6 +76,10 @@ class EdgesTest(unittest.TestCase):
                            QSG_RENDER_LOOP='basic', QT_SCALE_FACTOR=scale)
                 result = subprocess.run([sys.executable, '-m', 'quick.meridio.test_edges_r698', '--render', str(path)],
                                         env=env, capture_output=True, text=True, timeout=120)
+                if result.returncode and 'No offscreen RHI available' in result.stderr:
+                    # a machine without an OpenGL context for an offscreen RHI (the CI's runner: «QRhiGles2: Failed
+                    # to create temporary context»): the edges are drawn by the RHI, there is nothing to measure
+                    raise unittest.SkipTest('no offscreen RHI on this machine')
                 if result.returncode:
                     raise AssertionError(result.stdout + result.stderr)
                 if result.stderr:
