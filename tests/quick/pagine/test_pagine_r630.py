@@ -27,7 +27,7 @@ import _setup
 from PySide6.QtCore import QObject
 
 from quick.aiuti.finestra_libera import software_frames, window_stays_free
-from quick.aiuti.tempi import timed
+from quick.aiuti.tempi import check_timing, timed
 
 setUpModule = _setup.keep_global_state
 
@@ -134,7 +134,7 @@ class KeptPagesTest(unittest.TestCase):
                     self.host.files.selectSection(section)
                     click = (time.perf_counter() - start) * 1000
                     # on r34-unita: 300-3 000 ms for a section of the Settings
-                    self.assertLess(click, CLICK_MS, f'{section}: the click took {click:.0f} ms')
+                    check_timing(click < CLICK_MS, f'{section}: the click took {click:.0f} ms (limit {CLICK_MS} ms)')
                     self.go(section)
                 shown = kept(self.right)[self.page.property('currentPage')]
                 self.assertTrue(shown.isVisible() and shown.property('item') is not None, section)

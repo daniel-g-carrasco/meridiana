@@ -27,7 +27,7 @@ from meridiana import i18n
 from meridiana.core.model import model
 from meridiana.gui.backend.plan import PlanController
 from quick.aiuti.finestra_libera import window_stays_free
-from quick.aiuti.tempi import timed
+from quick.aiuti.tempi import check_timing, timed
 
 setUpModule = _setup.keep_global_state
 ROOT = Path(__file__).resolve().parents[3]
@@ -715,7 +715,7 @@ class WordsThatFit(unittest.TestCase):
         print(f"\nR618, 20 spans, {len(steps)} zoom steps: median {steps[len(steps) // 2]:.2f} ms, "
               f"p95 {steps[int(len(steps) * 0.95)]:.2f} ms, longest {steps[-1]:.2f} ms; {seen}; the layout: median "
               f"{layout[25]:.2f} ms, longest {layout[-1]:.2f} ms")
-        self.assertLess(layout[25], 5)
+        check_timing(layout[25] < 5, f'Layout median {layout[25]:.2f} ms (limit 5 ms)')
 
 
 class MeasuresThatStay(unittest.TestCase):

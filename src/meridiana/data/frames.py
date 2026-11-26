@@ -141,9 +141,9 @@ def made_with(blob) -> list:
     view = memoryview(blob)
     _head, _count, names, _lengths, at = _layout(view)
     out = []
-    for one in pickle.loads(view[at:at + names]) if names else ():
+    for one in pickle.loads(view[at:at + names]) if names else ():  # noqa: S301 - private IPC or own year cache
         try:
-            out.append(pickle.loads(one))
+            out.append(pickle.loads(one))  # noqa: S301 - names from the same internal frame
         except (ImportError, AttributeError, pickle.UnpicklingError):   # one gone: the rebuild will say what is wrong
             continue
     return out
@@ -177,7 +177,7 @@ def loads(blob) -> object:
     collecting = gc.isenabled()
     gc.disable()
     try:
-        return pickle.loads(view[start:start + head], buffers=buffers)
+        return pickle.loads(view[start:start + head], buffers=buffers)  # noqa: S301 - private IPC or own year cache
     finally:
         if collecting:
             gc.enable()

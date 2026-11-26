@@ -305,7 +305,7 @@ class Unpack:
         """One piece unpickled; True when the whole answer is made (`result`)."""
         if self.at < len(self.order):
             key, i, cut = self.order[self.at]
-            value = pickle.loads(self.blobs[piece_key(key, i)])
+            value = pickle.loads(self.blobs[piece_key(key, i)])  # noqa: S301 - pieces encoded by pack() after IFC parsing
             if cut:
                 self.result.setdefault(key, []).extend(value)
             else:

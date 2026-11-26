@@ -72,7 +72,7 @@ def main(argv: list[str]) -> None:
     def run(run_id, function, blob, share, quota, name):
         ctx = Context(run_id, share, kept.setdefault(name, {}), out.send)
         try:
-            result = resolve(function)(pickle.loads(blob), ctx)
+            result = resolve(function)(pickle.loads(blob), ctx)  # noqa: S301 - job request from the parent's private pipe
             ctx.flush()
             end = ("done", run_id, result)
         except resources.Stopped:

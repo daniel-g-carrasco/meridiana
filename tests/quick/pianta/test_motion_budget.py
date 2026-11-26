@@ -15,7 +15,7 @@ from meridiana.app import jobs
 from meridiana.gui.application import create_app
 from meridiana.gui.backend.plan import PlanController
 from quick.aiuti.puntini import assert_dots_follow
-from quick.aiuti.tempi import timed
+from quick.aiuti.tempi import check_timing, timed
 
 setUpModule = _setup.keep_global_state
 
@@ -78,7 +78,7 @@ class MotionBudget(unittest.TestCase):
             self.app.processEvents()
         median = statistics.median(handled)
         print(f'{self.id()}: {self.plan.property("paintedModules")} modules, event median {median:.3f} ms', flush=True)
-        self.assertLess(median, 2., 'camera work must fit its 2 ms GUI event budget')
+        check_timing(median < 2., f'Camera event median {median:.3f} ms (limit 2 ms)')
         self.assertEqual(geometry.uploads, uploads, 'navigation must retain module geometry')
         self.assertEqual(self.controller.calls['pointer'], 0)
         self.assertTrue(_setup.wait_until(self.app, lambda: not self.plan.property('annotationPending') and

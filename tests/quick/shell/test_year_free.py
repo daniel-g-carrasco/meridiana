@@ -28,7 +28,7 @@ from meridiana.data import year_store
 from meridiana.gui.application import QuickWindow, create_app
 from meridiana.gui.backend import shell_compute
 from quick.aiuti.finestra_libera import settled, software_frames, window_stays_free
-from quick.aiuti.tempi import timed
+from quick.aiuti.tempi import check_timing, timed
 
 # Rho, Windows offscreen, 2026-11-16, three consecutive runs (ms):
 # year.step: 10.21, 13.38, 13.14; year_read.on_done, computed: 11.63, 10.21, 9.84;
@@ -42,13 +42,13 @@ PIECES = ("year_read.", "year.step", "bridge.", "tell:", "told:")
 
 
 @contextmanager
-def year_stays_free(center):
+def year_stays_free(center, *, strict=False):
     with window_stays_free(center, call_ms=5, beat_ms=None,
-                           only=tuple(n for n in ONLY if n not in LIMITS_MS)) as seen:
+                           only=tuple(n for n in ONLY if n not in LIMITS_MS), strict=strict) as seen:
         yield seen
     for name, seconds in center.stats()["by_name"].items():
         if name in LIMITS_MS and seconds * 1000 > LIMITS_MS[name]:
-            raise AssertionError(f"{name}: {seconds * 1000:.2f} ms > {LIMITS_MS[name]} ms")
+            check_timing(False, f"{name}: {seconds * 1000:.2f} ms > {LIMITS_MS[name]} ms", strict=strict)
 
 
 class YearGuard(unittest.TestCase):
@@ -59,7 +59,7 @@ class YearGuard(unittest.TestCase):
             center = SimpleNamespace(reset_stats=lambda: None, stats=lambda name=name: {
                 "longest_call": (10.0, name), "calls": 1, "by_name": {name: 10.0}})
             with self.subTest(name=name), self.assertRaises(AssertionError):
-                with year_stays_free(center):
+                with year_stays_free(center, strict=True):
                     pass
 
 

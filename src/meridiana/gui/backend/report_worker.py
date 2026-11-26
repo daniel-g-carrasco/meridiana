@@ -78,7 +78,7 @@ def main(folder, app=None, name="request.pickle"):
     from meridiana.gui.paper import report, report_3d
     folder = Path(folder)
     with (folder / name).open("rb") as stream:
-        request = pickle.load(stream)
+        request = pickle.load(stream)  # noqa: S301 - ReportBackend's request in the private job directory
     i18n.setup(request["language"])
     app = app or QGuiApplication([])
     project = project_from(request["project"])          # the session's photo (R598)
@@ -86,7 +86,7 @@ def main(folder, app=None, name="request.pickle"):
     energy = request["energy"]
     if "year_file" in energy:       # a preview: the year written once for every preview of it (study 41)
         with Path(energy["year_file"]).open("rb") as stream:
-            energy = {**pickle.load(stream), **energy["extra"]}
+            energy = {**pickle.load(stream), **energy["extra"]}  # noqa: S301 - staged year from the trusted report job
     energy = {**energy, **supplied(project, energy)}
     images = []
     if request["mode"] == "preview":

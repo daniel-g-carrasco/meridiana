@@ -191,7 +191,7 @@ class WorkBar(unittest.TestCase):
         print(f'\n  guard, sample job in a process: {seen}')
         # the guard is red when one delivery on the window's thread takes 20 ms
         with self.assertRaises(AssertionError) as caught:
-            with window_stays_free(self.center):
+            with window_stays_free(self.center, strict=True):
                 got = {'done': []}
                 self.center.submit(sample.kind(), {'steps': 5, 'pause': 0.02}, on_partial=lambda k, d: work(0.02),
                                    on_done=lambda r, stale: got['done'].append(r))

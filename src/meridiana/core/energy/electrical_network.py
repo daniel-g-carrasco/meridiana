@@ -618,7 +618,7 @@ def _parts_of_file(args):
         import pickle
         _JOBS.clear()
         with open(path, 'rb') as f:
-            job = _JOBS[path] = pickle.load(f)
+            job = _JOBS[path] = pickle.load(f)  # noqa: S301 - file created by this job for its pool
     return _timed_parts(job, take, numbers)
 
 

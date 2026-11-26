@@ -35,7 +35,7 @@ def frames(read):
         body = _exact(read, size)
         if body is None:
             return
-        yield pickle.loads(body)
+        yield pickle.loads(body)  # noqa: S301 - private pipes between the parent and its own worker
 
 
 def _exact(read, n: int) -> bytes | None:

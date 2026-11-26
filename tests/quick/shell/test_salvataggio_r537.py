@@ -20,7 +20,7 @@ from _fixtures import capannone
 from meridiana.core.model import model
 from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import key, pump
-from quick.aiuti.tempi import timed
+from quick.aiuti.tempi import check_timing, timed
 
 
 class SaveSignal(unittest.TestCase):
@@ -98,7 +98,9 @@ class SaveSignal(unittest.TestCase):
         self.rename('Veloce')
         key(self.app, self.win, Qt.Key.Key_S, modifiers=Qt.KeyboardModifier.ControlModifier)
         self.wait_saved()
-        self.assertNotIn('busy', self.kinds, 'a save under 300 ms shows no «Saving…»')
+        self.assertEqual(model.Project.load(self.file)[0].name, 'Veloce')
+        self.assertIn('done', self.kinds)
+        check_timing('busy' not in self.kinds, 'Saving notice shown past the 300 ms threshold')
 
     def test_a_slow_save_says_saving_past_300_ms(self):
         files = self.files

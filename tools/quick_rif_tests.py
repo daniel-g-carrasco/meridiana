@@ -7,6 +7,7 @@ the parity subgroup twice and mix QApplication/QGuiApplication lifetimes.
 from __future__ import annotations
 
 import argparse
+import ast
 import os
 from pathlib import Path
 import subprocess
@@ -50,30 +51,59 @@ def groups(root=ROOT):
 def timed_modules(root=ROOT):
     """The modules of tests/quick/aiuti/tempi.py TIMED, read from the file: importing it would import the Quick's
     package, and its QApplication, in this process."""
-    import ast
     tree = ast.parse((root / 'tests/quick/aiuti/tempi.py').read_text(encoding='utf-8'))
     for node in tree.body:
         if isinstance(node, ast.Assign) and any(getattr(t, 'id', '') == 'TIMED' for t in node.targets):
-            return list(ast.literal_eval(node.value))
+            names = list(ast.literal_eval(node.value))
+            tests = root / 'tests'
+            marked = {'.'.join(path.relative_to(tests).with_suffix('').parts)
+                      for path in (tests / 'quick').rglob('test_*.py')
+                      if '@timed(' in path.read_text(encoding='utf-8')}
+            if not names or len(names) != len(marked) or set(names) != marked:
+                raise ValueError(f'Timed modules differ from @timed marks: missing {sorted(marked - set(names))}, '
+                                 f'extra {sorted(set(names) - marked)} (listed {len(names)})')
+            return names
     raise ValueError('TIMED not found in tests/quick/aiuti/tempi.py')
+
+
+def timed_test_ids(name, root=ROOT):
+    """Marked test methods addressed by a module or the name of one of its classes."""
+    parts = name.split('.')
+    path = root / 'tests' / Path(*parts).with_suffix('.py')
+    if not path.is_file():
+        path = root / 'tests' / Path(*parts[:-1]).with_suffix('.py')
+        module = '.'.join(parts[:-1])
+    else:
+        module = name
+    if not path.is_file():
+        return set()
+    tree = ast.parse(path.read_text(encoding='utf-8'))
+    return {f'{module}.{cls.name}.{method.name}' for cls in tree.body if isinstance(cls, ast.ClassDef)
+            if module == name or cls.name == parts[-1]
+            for method in cls.body if isinstance(method, ast.FunctionDef) and method.name.startswith('test_')
+            if any(isinstance(mark, ast.Call) and isinstance(mark.func, ast.Name) and mark.func.id == 'timed'
+                   for mark in method.decorator_list)}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--list', action='store_true')
-    parser.add_argument('--shard', metavar='I/N', help='run only shard I (from 0) of N, of about the same length')
-    parser.add_argument('--timed', action='store_true',
-                        help='run only the modules with a timed test (tests/quick/aiuti/tempi.py), with their thresholds')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--shard', metavar='I/N', help='run only shard I (from 0) of N, of about the same length')
+    mode.add_argument('--timed', action='store_true', help='run timed modules with strict local thresholds')
+    mode.add_argument('--timed-ci', action='store_true', help='run timed modules with threshold warnings and strict coverage')
     args = parser.parse_args()
     env = {**os.environ, 'PYTHONUTF8': '1', 'PYTHONPATH': os.pathsep.join([str(ROOT / 'tests'), str(ROOT / 'src'), str(ROOT)])}
     failures = []
-    chosen = groups()
-    if args.timed:
+    if args.timed or args.timed_ci:
         env.pop('MERIDIANA_TIMED', None)
-        chosen = [(name, [sys.executable, '-m', 'unittest', name]) for name in timed_modules()]
-    elif args.shard:
-        index, count = (int(part) for part in args.shard.split('/'))
-        chosen = shard(chosen, index, count)
+        prefix = ['tools/run_tests.py', '--timed-ci', '--names'] if args.timed_ci else ['-m', 'unittest']
+        chosen = [(name, [sys.executable, *prefix, name]) for name in timed_modules()]
+    else:
+        chosen = groups()
+        if args.shard:
+            index, count = (int(part) for part in args.shard.split('/'))
+            chosen = shard(chosen, index, count)
     for name, command in chosen:
         print(f'::group::{name}', flush=True)
         if args.list:

@@ -30,7 +30,7 @@ from unittest.mock import patch
 import _setup
 from PySide6.QtCore import QEvent, QMetaObject, QObject, QPointF, QRectF, Qt
 from PySide6.QtTest import QTest
-from quick.aiuti.tempi import timed
+from quick.aiuti.tempi import check_timing, reporting, timed
 
 HOLD = 56           # ControlMetrics.dialogHold: 2 x Theme.size.CONTROL
 
@@ -84,12 +84,15 @@ class Windows(unittest.TestCase):
             self.skipTest('the inner run')
         work = tempfile.mkdtemp(prefix='meridiana-r628-')
         try:
-            done = subprocess.run([sys.executable, '-m', 'unittest', '-v', 'quick.shell.test_finestre_libere_r628.Free'],
+            name = 'quick.shell.test_finestre_libere_r628.Free'
+            args = ([str(ROOT / 'tools/run_tests.py'), '--timed-ci', '--names', name] if reporting()
+                    else ['-m', 'unittest', '-v', name])
+            done = subprocess.run([sys.executable, *args],
                                   cwd=ROOT / 'tests', env=child_env(work), capture_output=True, text=True,
                                   encoding='utf-8', errors='replace', timeout=900)
         finally:
             shutil.rmtree(work, ignore_errors=True)
-        print('\n'.join(line for line in done.stdout.splitlines() if line.startswith('R628')))
+        print('\n'.join(line for line in done.stdout.splitlines() if line.startswith(('R628', '::warning ', 'Timed coverage:'))))
         self.assertEqual(done.returncode, 0, done.stderr[-6000:])
 
 
@@ -477,7 +480,7 @@ class Free(unittest.TestCase):
                     t = time.perf_counter()
                     drawn.clear()
                     self.move(QPointF(start.x() + dx * i / steps, start.y() + dy * i / steps))
-                    _setup.wait_for(lambda: bool(drawn), 2000)
+                    self.assertTrue(_setup.wait_for(lambda: bool(drawn), 2000), 'the step draws a frame')
                     times.append((time.perf_counter() - t) * 1000)
                 self.win.frameSwapped.disconnect(frame)
                 self.release(QPointF(start.x() + dx, start.y() + dy))
@@ -493,7 +496,7 @@ class Free(unittest.TestCase):
             Free.measures = dict(moved=moved, resized=resized, moved_max=max(moves), resized_max=max(sizes),
                                  beat=seen.beat_ms)
             # the window follows the hand at every step: a resize costs about what a move costs, never a second
-            self.assertLess(resized, max(3 * moved, moved + 30), (moves, sizes))
+            check_timing(resized < max(3 * moved, moved + 30), (moves, sizes))
         finally:
             QMetaObject.invokeMethod(dialog, 'askedSize')
             self.close('catalog', dialog)
