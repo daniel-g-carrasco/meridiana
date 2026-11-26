@@ -271,7 +271,7 @@ class SunMapInThePlan(unittest.TestCase):
             return real(*args)
         with mock.patch.object(plan_map, 'image_of', slow):
             with self.assertRaises(AssertionError) as caught:
-                with window_stays_free(self.center, call_ms=5, beat_ms=None):
+                with window_stays_free(self.center, call_ms=5, beat_ms=None, only=('sun_map.surface',), strict=True):
                     self.bridge.setScale('viridis')
                     self.drawn()
         self.assertIn('sun_map.surface', str(caught.exception))

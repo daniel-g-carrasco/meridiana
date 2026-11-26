@@ -193,7 +193,7 @@ class ShellTasks(QObject):
             return
         self._busy = False
         path = Path(self.temporary.name) / 'output.bin'
-        result = pickle.loads(path.read_bytes()) if code == 0 and path.exists() else {
+        result = pickle.loads(path.read_bytes()) if code == 0 and path.exists() else {  # noqa: S301 - own worker's result
             'error': bytes(self.process.readAllStandardError()).decode('utf-8', 'replace') or str(code)}
         self.temporary.cleanup()
         if 'error' in result:
@@ -271,7 +271,8 @@ def work(folder):
     from meridiana.app import jobs
     i18n.setup_as_window()
     from meridiana.app.session import project_from
-    kind, photo, known, energy, cache, target, *more = pickle.loads((folder / 'input.bin').read_bytes())
+    # The window serializes this request into its own temporary job directory.
+    kind, photo, known, energy, cache, target, *more = pickle.loads((folder / 'input.bin').read_bytes())  # noqa: S301
     what = more[0] if more else 'all'
     try:
         project = project_from(photo)       # the session's photo (R598), made a project here, in the process

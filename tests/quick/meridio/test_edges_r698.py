@@ -14,7 +14,7 @@ import time
 import unittest
 
 import _setup
-from quick.aiuti.tempi import timed
+from quick.aiuti.tempi import check_timing, timed
 
 
 def setUpModule():
@@ -96,11 +96,12 @@ class EdgesTest(unittest.TestCase):
     def test_moving_avatar_fits_one_60_hz_frame(self):
         # No numeric frame budget existed in quick/meridio (R619 checks frame
         # shutdown and R647 only prints times). Add a 60 Hz p95 budget, 16.67 ms.
-        for case in self.cases:
-            if 'frame_p95_ms' in case:
-                with self.subTest(dpr=case['dpr'], style=case['style']):
-                    self.assertNotIn('Software', case['api'])
-                    self.assertLess(case['frame_p95_ms'], 1000 / 60, case)
+        measured = [case for case in self.cases if 'frame_p95_ms' in case]
+        self.assertTrue(measured, 'no moving frames measured')
+        for case in measured:
+            with self.subTest(dpr=case['dpr'], style=case['style']):
+                self.assertNotIn('Software', case['api'])
+                check_timing(case['frame_p95_ms'] < 1000 / 60, case)
 
 
 if __name__ == '__main__':

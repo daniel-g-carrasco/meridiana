@@ -29,6 +29,8 @@ import contextlib
 import time
 from dataclasses import dataclass, field
 
+from .tempi import check_timing
+
 BEAT_MS = 5
 
 
@@ -72,11 +74,11 @@ def settled(window, quiet_ms: int = 1000, ms: int = 60000) -> bool:
 
 
 @contextlib.contextmanager
-def window_stays_free(center, call_ms: float = 5, beat_ms: float | None = 50, only: tuple = ()):
+def window_stays_free(center, call_ms: float = 5, beat_ms: float | None = 50, only: tuple = (), *, strict=False):
     """`only`: the prefixes of the names of the calls the step brought to the mechanism, the ones asserted; the others
     (a later step's, study 48 chapter 6: the views told in pieces, the threads of the window that hold the
     interpreter meanwhile) measured and kept in `seen.left`, for the test to name them with their numbers. Without
-    it every call is asserted. Never a way to loosen the threshold of what a step has brought in."""
+    it every call is asserted. Use strict for a test that deliberately exercises the guard's failure."""
     from PySide6.QtCore import Qt, QTimer
     seen = Seen()
     last = [time.perf_counter()]
@@ -107,7 +109,7 @@ def window_stays_free(center, call_ms: float = 5, beat_ms: float | None = 50, on
             name = max(kept, key=kept.get) if kept else ""
             seen.call_ms, seen.call_name = (kept[name] * 1000 if name else 0.0), name
     if seen.call_ms > call_ms:
-        raise AssertionError(f"the window waited for a call of {seen.call_ms:.1f} ms > {call_ms} ms: "
-                             f"{seen.call_name} ({seen})")
+        check_timing(False, f"the window waited for a call of {seen.call_ms:.1f} ms > {call_ms} ms: "
+                     f"{seen.call_name} ({seen})", strict=strict)
     if beat_ms is not None and seen.beat_ms > beat_ms:
-        raise AssertionError(f"the window stood still {seen.beat_ms:.1f} ms > {beat_ms} ms ({seen})")
+        check_timing(False, f"the window stood still {seen.beat_ms:.1f} ms > {beat_ms} ms ({seen})", strict=strict)

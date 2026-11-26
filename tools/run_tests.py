@@ -43,6 +43,14 @@ from pathlib import Path
 LIMIT = float(os.environ.get("MERIDIANA_TEST_LIMIT", "600"))
 ROOT = Path(__file__).resolve().parent.parent
 RUNS = ROOT / "build" / "test-runs"            # the log and the result of every suite of the last run
+R628 = "quick.shell.test_finestre_libere_r628"
+DELEGATE_SKIP = f"setUpClass ({R628}.Free)"
+TIMED_SKIPS = {
+    "setUpClass (quick.meridio.test_edges_r698.EdgesTest)": "no offscreen RHI on this machine",
+    "quick.pagine.test_pagine_r630.MadeAheadTest.test_4_on_a_graphics_api_the_pages_made_ahead_appear":
+        "Qt Quick has no RHI here: the pages are made as they are asked (software renderer)",
+    DELEGATE_SKIP: "run by Windows, on a screen large enough",
+}
 
 
 class WatchedResult(unittest.TextTestResult):
@@ -50,7 +58,12 @@ class WatchedResult(unittest.TextTestResult):
 
     times: dict = {}                            # test id -> seconds (the set-ups of a class and a module are not in it)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ids = set()
+
     def startTest(self, test):
+        self.ids.add(test.id())
         if LIMIT > 0:
             faulthandler.cancel_dump_traceback_later()
             faulthandler.dump_traceback_later(LIMIT, exit=True)
@@ -66,9 +79,36 @@ def slowest(count: int) -> list[tuple[str, float]]:
     return sorted(WatchedResult.times.items(), key=lambda item: -item[1])[:count]
 
 
-def main(start: str, names: list[str] | None = None, durations: int = 0, report: str | None = None) -> int:
+def timed_coverage(expected, result) -> bool:
+    missing, unexpected = expected - result.ids, []
+    for test, reason in result.skipped:
+        name = test.id()
+        delegated = f"{R628}.Windows.test_r628_free_windows_on_the_program_s_window" in result.ids
+        if TIMED_SKIPS.get(name) != reason or (name == DELEGATE_SKIP and not delegated):
+            unexpected.append((name, reason))
+        elif name.startswith("setUpClass ("):
+            prefix = name.removeprefix("setUpClass (").removesuffix(")") + "."
+            missing = {case for case in missing if not case.startswith(prefix)}
+    print(f"Timed coverage: {len(expected & result.ids)} of {len(expected)} marked tests started, "
+          f"{len(result.skipped)} skips in module, {len(unexpected)} unexpected", flush=True)
+    for test, reason in result.skipped:
+        print(f"Skipped: {test.id()}: {reason}")
+    if missing or unexpected:
+        print(f"Incomplete timed coverage: missing {sorted(missing)}, unexpected skips {unexpected}", file=sys.stderr)
+    return bool(expected) and not (missing or unexpected)
+
+
+def main(start: str, names: list[str] | None = None, durations: int = 0, report: str | None = None, *,
+         timed_ci: bool = False) -> int:
     # the repository on the path as with «python -m unittest» from it: tests that import tools.* (parity) found it
     sys.path.insert(1, str(ROOT))
+    if timed_ci:
+        from tools.quick_rif_tests import timed_test_ids
+        expected = timed_test_ids(names[0])
+        if not expected:
+            print(f"No marked tests selected: {names[0]}", file=sys.stderr)
+            return 1
+        os.environ["MERIDIANA_TIMED"] = "warn"
     faulthandler.enable()
     runner = unittest.TextTestRunner(resultclass=WatchedResult)
     began = time.perf_counter()
@@ -81,6 +121,8 @@ def main(start: str, names: list[str] | None = None, durations: int = 0, report:
     faulthandler.cancel_dump_traceback_later()
     seconds = time.perf_counter() - began
     code = 0 if program.result.wasSuccessful() else 1
+    if timed_ci and not timed_coverage(expected, program.result):
+        code = 1
     # R594: a run that wrote in the user's own folders of Meridiana fails, with what it wrote (tests/_setup.py)
     setup = sys.modules.get("_setup")
     written = setup.profile_written() if setup is not None else []
@@ -337,10 +379,13 @@ def cli() -> tuple[int, bool]:
     parser.add_argument("--list", action="store_true", help="with --changed or --all: say the suites, do not run")
     parser.add_argument("--durations", type=int, default=0, metavar="N", help="the N slowest tests at the end")
     parser.add_argument("--report", help="(one suite) the file where its result is written, as JSON")
+    parser.add_argument("--timed-ci", action="store_true", help="verify timed test selection and warn on measured thresholds")
     parser.add_argument("--suite-limit", type=float, default=2400, help="seconds after which a suite is killed")
     args = parser.parse_args()
+    if args.timed_ci and (not args.names or len(args.names) != 1):
+        parser.error("--timed-ci requires one module or class with --names")
     if args.names:
-        return main("", args.names, args.durations, args.report), True
+        return main("", args.names, args.durations, args.report, timed_ci=args.timed_ci), True
     if not (args.all or args.changed or len(args.paths) > 1 or args.parallel):
         if len(args.paths) != 1:
             parser.error("a folder of tests, --all or --changed")

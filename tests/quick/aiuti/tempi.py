@@ -5,23 +5,24 @@ Their thresholds are the program's own and they stay as they are: on Daniel's co
 these tests run with the others and a slow step is red. On the CI's runners (two cores, no graphics card, a
 software renderer, other jobs on the same host) the same step takes from one and a half to four times as long, and
 what a red there says is the runner, not the program (22/11/2026). So the CI runs them apart (tools/quick_rif_tests.py
---timed): they are measured and a slow one gives a warning, the run is not red for it; the shards skip them with
+--timed-ci): an explicit threshold can warn, while the remaining checks still run. The shards skip marked tests with
 MERIDIANA_TIMED=skip.
 
     MERIDIANA_TIMED unset    they run and their thresholds are asserted (the default, on every computer)
     MERIDIANA_TIMED=skip     they are skipped, with the reason (the CI's shards)
+    MERIDIANA_TIMED=warn     explicit thresholds in marked tests warn (the CI's timed job)
 
-A test is marked for its time only. What a marked test checks besides the time is still checked on the CI, in the
-timing job, but as a warning: keep such checks in a test of their own where they can be. TIMED below is the list of
-the modules the timing job runs: a new mark goes in it too (tests/quick/sistema/test_tempi.py checks that the two
-agree)."""
+Use check_timing for a measured threshold. Ordinary assertions, timeouts waiting for a result and errors still fail.
+TIMED lists the modules with marked tests; the runner verifies that the list and the tests agree."""
 from __future__ import annotations
 
 import functools
 import os
 import unittest
+from contextvars import ContextVar
 
 ENV = 'MERIDIANA_TIMED'
+_case = ContextVar('timed_case', default=None)
 
 # the modules with a test marked `timed`, as python -m unittest names them
 TIMED = (
@@ -52,6 +53,20 @@ def skipped() -> bool:
     return os.environ.get(ENV, '').strip().lower() == 'skip'
 
 
+def reporting() -> bool:
+    return os.environ.get(ENV) == 'warn'
+
+
+def check_timing(within_limit: bool, detail, *, strict: bool = False) -> None:
+    if within_limit:
+        return
+    case = _case.get()
+    if case is None or strict or not reporting():
+        raise AssertionError(detail)
+    message = f'{case}: {detail}'.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+    print(f'::warning title=Timed tests::{message}', flush=True)
+
+
 def timed(what: str):
     """Mark a test whose assertion is a time: `what` says which (it is the reason of the skip)."""
     def mark(test):
@@ -59,7 +74,11 @@ def timed(what: str):
         def run(self, *args, **kwargs):
             if skipped():
                 raise unittest.SkipTest(f'timed ({what}): measured in the CI\'s timing job, {ENV}=skip')
-            return test(self, *args, **kwargs)
+            token = _case.set(self.id())
+            try:
+                return test(self, *args, **kwargs)
+            finally:
+                _case.reset(token)
         run.timed = what
         return run
     return mark

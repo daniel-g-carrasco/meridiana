@@ -11,7 +11,7 @@ from _fixtures import casa_a_falde, inverter_record, clear_sky_meteo, write_cach
 from meridiana.app import jobs, pipeline
 from meridiana.gui.application import QuickWindow, create_app
 from quick.gestures import pump, wait_for
-from quick.aiuti.tempi import timed
+from quick.aiuti.tempi import check_timing, timed
 
 def setUpModule():
     _setup.keep_global_state()
@@ -101,8 +101,8 @@ class PhaseLatency(unittest.TestCase):
                         worst_frame = max((b-a)*1000 for a, b in zip([start]+frames, frames, strict=False))
                         print(f'{phase}: visible {visible_ms:.1f}, frame {worst_frame:.1f}, turn {worst_turn:.1f} ms')
                         # Headroom for shared Windows runners; the benchmark keeps the 100/50 ms goals.
-                        self.assertLess(visible_ms, 500, 'Phase visible too late')
-                        self.assertLess(worst_frame, 500, 'A frame was blocked')
+                        check_timing(visible_ms < 500, f'Phase visible after {visible_ms:.1f} ms (limit 500 ms)')
+                        check_timing(worst_frame < 500, f'Longest frame {worst_frame:.1f} ms (limit 500 ms)')
             finally:
                 host.close()
 

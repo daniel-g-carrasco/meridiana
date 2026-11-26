@@ -132,9 +132,7 @@ jobs:
           if-no-files-found: ignore
           path: build/quick-parity/
 
-  # the tests that assert a time (a phase within 500 ms, no call of the window over 5 ms, a 60 Hz frame, a save under
-  # 300 ms), with their thresholds: on a runner without a graphics card they measure the runner, so a slow one is a
-  # warning and the job stays green; the thresholds block on Daniel's computers (tests/quick/aiuti/tempi.py)
+  # Explicit timing thresholds warn on the shared runner. Test failures, errors and incomplete coverage block.
   timed:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-24.04
@@ -153,10 +151,7 @@ jobs:
           sudo apt-get install -y -q --no-install-recommends gettext libegl1 libgl1 libxkbcommon0 libfontconfig1             libdbus-1-3 libpulse0 libspeechd2
       - run: python -m pip install -r requirements.txt
       - run: python tools/compile_po.py
-      - name: Timed tests, measured, a warning when slow
-        run: |
-          if ! python -W default tools/quick_rif_tests.py --timed; then
-            echo "::warning title=Timed tests::a timed test was over its threshold on this runner (see the log); the thresholds are checked on Daniel's computers"
-          fi
+      - name: Timed tests with functional checks
+        run: python -W default tools/quick_rif_tests.py --timed-ci
         env:
           QT_QPA_PLATFORM: offscreen

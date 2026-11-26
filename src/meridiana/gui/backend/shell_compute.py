@@ -716,7 +716,8 @@ def worker(folder, live=False):
     restore = None
     before = (dict(electrical_network._STATS), nearshade._CACHE.hits, nearshade._CACHE.misses)
     try:
-        project, known, cache, fingerprint, *rest = pickle.loads((folder / 'input.bin').read_bytes())
+        # The window serializes this request into its own temporary job directory.
+        project, known, cache, fingerprint, *rest = pickle.loads((folder / 'input.bin').read_bytes())  # noqa: S301
         if isinstance(project, dict):       # the session's photo (R598); a Project from the measures' scripts
             from meridiana.app.session import project_from
             project = project_from(project)
