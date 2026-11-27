@@ -10,6 +10,7 @@ from meridiana.app.view.measure_tool import Measure, Probe
 from meridiana.core.model.model import Building, Project, Roof
 from quick.aiuti.view_grab import grab_item
 from quick.vista3d._fidelity_support import js, pixels, settle
+from quick.aiuti.avvisi import real
 
 setUpModule = _setup.keep_global_state
 
@@ -47,6 +48,6 @@ class NativeAnnotations(unittest.TestCase):
                 settle(app, .1)
                 blank = pixels(grab_item(plan))[y-5:y+6, x-10:x+11].astype(int)
                 self.assertGreater(np.count_nonzero(np.any(np.abs(drawn-blank) > 20, axis=2)), 10)
-                self.assertFalse(host.warnings, host.warnings)
+                self.assertFalse(real(host.warnings), host.warnings)
             finally:
                 host.close()

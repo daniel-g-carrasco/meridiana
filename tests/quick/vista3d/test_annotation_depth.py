@@ -9,6 +9,7 @@ import _setup
 from meridiana.app.view.measure_tool import Measure, Probe
 from meridiana.core.model.model import Building, Project
 from quick.vista3d._fidelity_support import js, pixels, settle
+from quick.aiuti.avvisi import real
 
 setUpModule = _setup.keep_global_state
 
@@ -81,4 +82,4 @@ class AnnotationDepth(unittest.TestCase):
         measure((20,10,3),(23,10,3))
         empty_box = picture()
         self.assertGreater(int(np.count_nonzero(np.any(empty_box != baseline,axis=2))),40)
-        self.assertFalse(host.warnings, host.warnings)
+        self.assertFalse(real(host.warnings), host.warnings)

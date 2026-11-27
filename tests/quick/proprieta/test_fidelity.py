@@ -13,6 +13,7 @@ from PySide6.QtTest import QTest
 from meridiana.gui.backend.controls import install_controls
 from quick.gestures import pump, wait_for
 from quick.aiuti.caratteri import glyph
+from quick.aiuti.avvisi import real
 
 
 def visual_items(window):
@@ -219,7 +220,7 @@ Window { visible: true; width: 380; height: 300
                     self.assertIsNotNone(loader.property('item'), phase + ' inspector must load')
                     if phase in ('production', 'consumption', 'economics'):
                         self.assertIs(loader.property('item').property('backend'), host.parts.controllers[phase + 'Editor'])
-                self.assertFalse(host.warnings, host.warnings)
+                self.assertFalse(real(host.warnings), host.warnings)
             finally:
                 host.close()
                 QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
@@ -253,7 +254,7 @@ Window { visible: true; width: 380; height: 300
                 for n, frame in enumerate(recorder.frames):
                     ink = form_ink(frame.image, origin, panel.width())
                     self.assertGreater(ink, 100, f'Empty inspector in actual frame {n}')
-                self.assertFalse(host.warnings, host.warnings)
+                self.assertFalse(real(host.warnings), host.warnings)
             finally:
                 host.close()
                 QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)

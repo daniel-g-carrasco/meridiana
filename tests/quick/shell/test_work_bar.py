@@ -39,8 +39,18 @@ class WorkBar(unittest.TestCase):
         cls.folder.cleanup()
 
     def setUp(self):
-        self.assertTrue(_setup.wait_for(lambda: not self.host.bridge.busy and not self.work.rows, 60000),
-                        'the opening of the window has ended')
+        # the checks too (app/checks_job.Feed): asked after the year or the layout of the test before, their job
+        # joined the next test's on a loaded machine (a second row, the pill shown, 27/11/2026); quiet for a moment,
+        # not at the first poll that finds no row
+        feed, since = self.host.bridge.checks_feed, []
+
+        def quiet():
+            if self.host.bridge.busy or feed.busy() or self.work.rows:
+                since.clear()
+                return False
+            since[:] = since or [time.perf_counter()]
+            return time.perf_counter() - since[0] >= 0.5
+        self.assertTrue(_setup.wait_for(quiet, 60000), 'the opening of the window and the checks have ended')
 
     def tearDown(self):
         for row in list(self.center.rows()):
